@@ -15,6 +15,16 @@ const tests = [
     lastDate: '2026-03-15',
     score: '평균 69점',
   },
+  {
+    id: 'cares' as PageId,
+    title: 'CARES 검사',
+    desc: '진로준비도(Career Readiness)를 측정하여 진로탐색, 자기이해, 정보수집, 의사결정, 실행계획 수준을 진단합니다.',
+    icon: 'fa-solid fa-compass',
+    color: '#059669',
+    tags: ['진로준비도', '자기이해', '의사결정'],
+    lastDate: '2026-03-20',
+    score: '평균 74점',
+  },
 ];
 
 export default function CareerDiagnosis({ onNavigate }: CareerDiagnosisProps) {
@@ -60,6 +70,35 @@ export default function CareerDiagnosis({ onNavigate }: CareerDiagnosisProps) {
             </div>
           </div>
         ))}
+      </div>
+
+      {/* AI 종합평가 버튼 */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
+        <button
+          className="btn"
+          onClick={() => onNavigate('ai-evaluation')}
+          style={{
+            background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+            color: '#fff',
+            padding: '14px 36px',
+            fontSize: 16,
+            fontWeight: 700,
+            borderRadius: 10,
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            boxShadow: '0 4px 16px rgba(99,102,241,.25)',
+            transition: 'transform .2s, box-shadow .2s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(99,102,241,.35)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(99,102,241,.25)'; }}
+        >
+          <i className="fa-solid fa-brain" />
+          모든 검사 AI 종합평가
+          <i className="fa-solid fa-arrow-right" />
+        </button>
       </div>
     </div>
   );

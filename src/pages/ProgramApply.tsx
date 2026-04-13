@@ -22,6 +22,7 @@ const programs = [
     applied: false,
     category: '취업역량',
     thumb: 'fa-solid fa-file-circle-check',
+    aiRecommend: true,
   },
   {
     title: '모의면접 캠프',
@@ -38,6 +39,7 @@ const programs = [
     applied: false,
     category: '면접준비',
     thumb: 'fa-solid fa-comments',
+    aiRecommend: true,
   },
   {
     title: 'IT PM 직무 특강',
@@ -54,6 +56,7 @@ const programs = [
     applied: false,
     category: '직무탐색',
     thumb: 'fa-solid fa-laptop-code',
+    aiRecommend: false,
   },
   {
     title: '포트폴리오 워크숍',
@@ -70,6 +73,7 @@ const programs = [
     applied: false,
     category: '취업역량',
     thumb: 'fa-solid fa-object-group',
+    aiRecommend: true,
   },
   {
     title: '기업탐방 프로그램',
@@ -86,6 +90,7 @@ const programs = [
     applied: false,
     category: '직무탐색',
     thumb: 'fa-solid fa-city',
+    aiRecommend: false,
   },
   {
     title: '취업캠프 (2박3일)',
@@ -102,6 +107,7 @@ const programs = [
     applied: false,
     category: '취업캠프',
     thumb: 'fa-solid fa-tent',
+    aiRecommend: false,
   },
 ];
 
@@ -161,8 +167,13 @@ export default function ProgramApply({ onToast }: ProgramApplyProps) {
                 {prog.seats === 0 && !prog.applied && (
                   <div className="cn-card-badge cn-badge-closed">마감</div>
                 )}
-                <div className="cn-card-category" style={{ color: prog.color, background: `${prog.color}15`, borderColor: `${prog.color}30` }}>
-                  {prog.category}
+                <div className="cn-card-tags">
+                  {prog.aiRecommend && (
+                    <div className="cn-card-category cn-ai-tag">AI추천</div>
+                  )}
+                  <div className="cn-card-category" style={{ color: prog.color, background: `${prog.color}15`, borderColor: `${prog.color}30` }}>
+                    {prog.category}
+                  </div>
                 </div>
               </div>
 

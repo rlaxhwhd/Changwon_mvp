@@ -134,6 +134,119 @@ body {
   color: var(--green-600);
 }
 
+/* ── V3 BMW-style Header ── */
+.top-header--v3 .header-bar--v3 {
+  background: #262626;
+  border-bottom: none;
+}
+.top-header--v3 .header-bar-inner {
+  padding: 12px 24px;
+}
+.top-header--v3 .design-switch-btn {
+  color: #bbbbbb;
+  border-color: #444;
+}
+.top-header--v3 .design-switch-btn.active {
+  background: #1c69d4;
+  border-color: #1c69d4;
+  color: #fff;
+}
+.btn--v3-logout {
+  background: transparent;
+  color: #bbbbbb;
+  border: 1px solid #555;
+  border-radius: 0;
+  font-weight: 400;
+  font-size: 13px;
+  padding: 6px 14px;
+  transition: all .2s;
+}
+.btn--v3-logout:hover {
+  color: #fff;
+  border-color: #fff;
+}
+
+/* ── V3 Text Navigation Bar ── */
+.text-nav-wrap {
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+}
+.text-nav {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+}
+.text-nav-item {
+  position: relative;
+  cursor: pointer;
+  padding: 14px 39px;
+  transition: background .2s;
+}
+.text-nav-item:hover {
+  background: #262626;
+}
+.text-nav-item.active {
+  background: #262626;
+}
+.text-nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #1c69d4;
+}
+.text-nav-link {
+  font-size: 14px;
+  font-weight: 700;
+  color: #ccc;
+  letter-spacing: 0.5px;
+  line-height: 1.3;
+  white-space: nowrap;
+  text-transform: none;
+  transition: color .2s;
+}
+.text-nav-item:hover .text-nav-link,
+.text-nav-item.active .text-nav-link {
+  color: #fff;
+}
+
+/* V3 Dropdown */
+.text-nav-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #262626;
+  border: 1px solid #444;
+  border-radius: 0;
+  min-width: 200px;
+  padding: 4px 0;
+  z-index: 300;
+  animation: v3DropIn .15s ease;
+}
+@keyframes v3DropIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+.text-nav-dropdown-item {
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 400;
+  color: #bbb;
+  cursor: pointer;
+  transition: all .15s;
+  line-height: 1.3;
+}
+.text-nav-dropdown-item:hover {
+  background: #333;
+  color: #fff;
+}
+
 /* ── Hero Banner ── */
 .hero-banner {
   background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 50%, #E0F2F1 100%);
@@ -1898,11 +2011,23 @@ tbody td {
 }
 .cn-badge-applied { background: #22C55E; color: #fff; }
 .cn-badge-closed { background: #EF4444; color: #fff; }
+.cn-card-tags {
+  position: absolute; top: 10px; right: 10px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 5px;
+}
 .cn-card-category {
-  position: absolute; top: 12px; right: 12px;
   padding: 3px 10px; border-radius: 999px;
   font-size: 11px; font-weight: 600;
   border: 1px solid;
+  white-space: nowrap;
+  text-align: center;
+}
+.cn-ai-tag {
+  background: #262626 !important;
+  color: #fff !important;
+  border-color: #444 !important;
+  font-weight: 700;
+  letter-spacing: 0.3px;
 }
 
 /* Card body */
@@ -2476,16 +2601,16 @@ tbody td {
 .s5-hero-btn-primary {
   display: inline-flex; align-items: center; gap: 12px;
   padding: 14px 28px; border-radius: 9999px;
-  background: #00d4ff; color: #0a0a1a;
+  background: #1c69d4; color: #fff;
   font-size: 15px; font-weight: 700; border: none; cursor: pointer;
   transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
-  box-shadow: 0 4px 24px rgba(0,212,255,0.35);
+  box-shadow: 0 4px 24px rgba(28,105,212,0.35);
   font-family: inherit;
 }
 .s5-hero-btn-primary:hover {
   transform: scale(1.02);
-  background: #00e5ff;
-  box-shadow: 0 6px 32px rgba(0,212,255,0.5);
+  background: #0653b6;
+  box-shadow: 0 6px 32px rgba(28,105,212,0.5);
 }
 .s5-hero-btn-primary:active { transform: scale(0.98); }
 .s5-hero-btn-arrow {
@@ -2954,13 +3079,13 @@ tbody td {
 .road-label-card {
   position: absolute;
   background: #fff;
-  border: 1px solid #E2E8F0;
+  border: 2px solid #CBD5E1;
   border-radius: 12px;
   padding: 10px 14px;
   min-width: 130px;
   text-align: center;
   z-index: 2;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
 }
 .road-label-card.top {
   transform: translate(-50%, calc(-100% - 38px));
@@ -2985,11 +3110,11 @@ tbody td {
   height: 30px;
   transform: translateX(-50%);
 }
-.road-label-card.completed { border-color: #C7D2FE; }
+.road-label-card.completed { border-color: #A5B4FC; }
 .road-label-card.completed::after { background: #818CF8; }
 .road-label-card.in-progress {
-  border-color: #818CF8;
-  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.18);
+  border-color: #6366F1;
+  box-shadow: 0 4px 18px rgba(99, 102, 241, 0.25);
 }
 .road-label-card.in-progress::after { background: #6366F1; }
 .road-label-card.locked::after { background: #E2E8F0; }

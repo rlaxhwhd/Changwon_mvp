@@ -38,6 +38,7 @@ const historyData = [
 export default function Aptitude() {
   const [itemModal, setItemModal] = useState<number | null>(null);
   const [historyDrawer, setHistoryDrawer] = useState(false);
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
   const total = 80;
   const item = itemModal !== null ? items[itemModal] : null;
 
@@ -106,15 +107,50 @@ export default function Aptitude() {
             <div style={{ fontSize: 48, fontWeight: 700, color: '#4F46E5' }}>{total}<span style={{ fontSize: 20, color: '#9CA3AF' }}>/100</span></div>
             <span className="badge badge-green" style={{ fontSize: 12, padding: '4px 12px', marginTop: 8 }}>양호</span>
           </div>
-          <div className="ai-comment" style={{ marginTop: 'auto' }}>
-            <div className="ai-label"><i className="fa-solid fa-robot" /> AI 분석</div>
-            <p>
-              김민준님의 인적성검사 총점은 <strong>80점</strong>으로 양호한 수준입니다.
-              특히 <strong>지각속도(88점)</strong>와 <strong>언어이해(85점)</strong>에서 높은 점수를 보여주고 있습니다.
-              <strong>공간지각(72점)</strong> 영역이 상대적으로 낮으므로, 해당 유형의 문제를 추가 연습하면
-              전체 점수를 더 끌어올릴 수 있습니다.
-            </p>
+          <div style={{ textAlign: 'center', marginTop: 16 }}>
+            <button
+              className={`btn ${showAiAnalysis ? 'btn-outline' : ''}`}
+              style={showAiAnalysis
+                ? { padding: '10px 28px', fontSize: 14 }
+                : { background: '#6366F1', color: '#fff', padding: '10px 28px', fontSize: 14 }}
+              onClick={() => setShowAiAnalysis(!showAiAnalysis)}
+            >
+              <i className="fa-solid fa-robot" /> AI 평가분석 {showAiAnalysis ? '접기' : '보기'}
+            </button>
           </div>
+          {showAiAnalysis && (
+            <div className="ai-comment" style={{ marginTop: 12 }}>
+              <div className="ai-label"><i className="fa-solid fa-robot" /> AI 인적성 평가 분석</div>
+              <p style={{ marginBottom: 10, lineHeight: 1.8, fontSize: 13 }}>
+                김민준님의 인적성검사 총점은 <strong>{total}점</strong>으로
+                {total >= 80 ? ' 양호한 수준입니다.' : total >= 60 ? ' 보통 수준입니다.' : ' 보완이 필요합니다.'}
+              </p>
+              <p style={{ marginBottom: 10, lineHeight: 1.8, fontSize: 13 }}>
+                <strong>강점 영역:</strong> {items.filter(it => it.score >= 80).map(it => `${it.name}(${it.score}점)`).join(', ') || '없음'}
+                <br />
+                <strong>보완 영역:</strong> {items.filter(it => it.score < 75).map(it => `${it.name}(${it.score}점)`).join(', ') || '없음'}
+              </p>
+              <p style={{ marginBottom: 10, lineHeight: 1.8, fontSize: 13 }}>
+                <strong>종합 제언:</strong> {items.reduce((min, it) => it.score < min.score ? it : min).name} 영역이 {items.reduce((min, it) => it.score < min.score ? it : min).score}점으로 가장 낮습니다.
+                {' '}{items.reduce((min, it) => it.score < min.score ? it : min).suggestion}
+              </p>
+              <p style={{ lineHeight: 1.8, fontSize: 13 }}>
+                1차 검사 대비 총점이 <strong>67점 → 80점(+13점)</strong> 상승하여 꾸준한 성장세를 보이고 있습니다.
+                공간지각 영역을 80점 이상으로 끌어올리면 상위권 진입이 가능합니다.
+              </p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                {items.map(it => (
+                  <span key={it.name} className="badge" style={{
+                    background: it.score >= 80 ? '#DCFCE7' : it.score >= 75 ? '#FEF3C7' : '#FEE2E2',
+                    color: it.score >= 80 ? '#16A34A' : it.score >= 75 ? '#92400E' : '#DC2626',
+                    fontSize: 11,
+                  }}>
+                    {it.name} {it.score}점
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

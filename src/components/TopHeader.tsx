@@ -29,8 +29,8 @@ const CATEGORIES_V2: Category[] = [
     icon: 'fa-solid fa-clipboard-check',
     label: '진단센터',
     items: [
-      { id: 'career-diagnosis', label: '진로취업진단' },
-      { id: 'personality-diagnosis', label: '성격심리진단' },
+      { id: 'career-diagnosis', label: '진로취업진단 (9CORE·CARES)' },
+      { id: 'personality-diagnosis', label: '성격심리진단 (인적성·MBTI)' },
     ],
   },
   {
@@ -62,6 +62,13 @@ const CATEGORIES_V2: Category[] = [
     ],
   },
   {
+    icon: 'fa-solid fa-brain',
+    label: 'AI커리어\n라운지',
+    items: [
+      { id: 'dashboard', label: 'AI커리어라운지' },
+    ],
+  },
+  {
     icon: 'fa-solid fa-briefcase',
     label: '취업지원',
     items: [
@@ -74,7 +81,6 @@ const CATEGORIES_V2: Category[] = [
     icon: 'fa-solid fa-user-gear',
     label: '마이페이지',
     items: [
-      { id: 'dashboard', label: '대시보드' },
       { id: 'my-home', label: '마이홈' },
       { id: 'my-portfolio', label: '포트폴리오관리' },
       { id: 'my-programs', label: '역량프로그램현황' },
@@ -133,10 +139,12 @@ export default function TopHeader({ onNavigate, onToast, designVersion, onDesign
     setOpenIdx(null);
   };
 
+  const isV3 = designVersion === 3;
+
   return (
-    <header className="top-header">
+    <header className={`top-header ${isV3 ? 'top-header--v3' : ''}`}>
       {/* ── Logo Bar ── */}
-      <div className="header-bar">
+      <div className={`header-bar ${isV3 ? 'header-bar--v3' : ''}`}>
         <div className="header-bar-inner">
           <div className="header-left" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
             <div className="design-switcher">
@@ -152,47 +160,86 @@ export default function TopHeader({ onNavigate, onToast, designVersion, onDesign
             </div>
           </div>
           <div className="header-logo" onClick={() => onNavigate('home')} style={{ cursor: 'pointer' }}>
-            <i className="fa-solid fa-graduation-cap" style={{ color: '#4F46E5', fontSize: 20 }} />
-            <div>
-              <div style={{ fontSize: 10, color: '#6B7280', letterSpacing: 1, lineHeight: 1 }}>학생경력개발관리시스템</div>
-              <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: '#1F2937' }}>DREAMCATCH</div>
-            </div>
+            {isV3 ? (
+              <div>
+                <div style={{ fontSize: 10, color: isV3 ? '#bbbbbb' : '#6B7280', letterSpacing: 2, lineHeight: 1, textTransform: 'uppercase' }}>학생경력개발관리시스템</div>
+                <div style={{ fontSize: 20, fontWeight: 300, letterSpacing: 4, color: '#fff', textTransform: 'uppercase' }}>DREAMCATCH</div>
+              </div>
+            ) : (
+              <>
+                <i className="fa-solid fa-graduation-cap" style={{ color: '#4F46E5', fontSize: 20 }} />
+                <div>
+                  <div style={{ fontSize: 10, color: '#6B7280', letterSpacing: 1, lineHeight: 1 }}>학생경력개발관리시스템</div>
+                  <div style={{ fontSize: 18, fontWeight: 800, letterSpacing: 2, color: '#1F2937' }}>DREAMCATCH</div>
+                </div>
+              </>
+            )}
           </div>
-          <button className="btn btn-sm" style={{ background: '#22C55E', color: '#fff', borderRadius: 6 }}
+          <button className={`btn btn-sm ${isV3 ? 'btn--v3-logout' : ''}`}
+            style={isV3 ? {} : { background: '#22C55E', color: '#fff', borderRadius: 6 }}
             onClick={() => onToast('로그아웃 되었습니다')}>
             <i className="fa-solid fa-right-from-bracket" /> 로그아웃
           </button>
         </div>
       </div>
 
-      {/* ── Icon Navigation ── */}
-      <div className="icon-nav-wrap" ref={dropdownRef}>
-        <div className="icon-nav">
-          {cats.map((cat, idx) => (
-            <div key={idx} className="icon-nav-item" onClick={() => handleCategoryClick(idx)}>
-              <div className={`icon-nav-circle ${openIdx === idx ? 'active' : ''}`}>
-                <i className={cat.icon} />
-              </div>
-              <span className="icon-nav-label">{cat.label}</span>
+      {/* ── Navigation ── */}
+      {isV3 ? (
+        /* BMW-style text navigation bar */
+        <div className="text-nav-wrap" ref={dropdownRef}>
+          <div className="text-nav">
+            {cats.map((cat, idx) => (
+              <div key={idx} className={`text-nav-item ${openIdx === idx ? 'active' : ''}`} onClick={() => handleCategoryClick(idx)}>
+                <span className="text-nav-link">{cat.label.replace('\n', ' ')}</span>
 
-              {/* Dropdown */}
-              {openIdx === idx && cat.items.length > 1 && (
-                <div className="icon-dropdown">
-                  {cat.items.map((item, ii) => (
-                    <div key={ii} className="icon-dropdown-item"
-                      onClick={(e) => { e.stopPropagation(); handleItemClick(item); }}>
-                      {item.label}
-                      {item.id === '__external__' && (
-                        <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 10, marginLeft: 6, opacity: .5 }} />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
+                {/* Dropdown */}
+                {openIdx === idx && cat.items.length > 1 && (
+                  <div className="text-nav-dropdown">
+                    {cat.items.map((item, ii) => (
+                      <div key={ii} className="text-nav-dropdown-item"
+                        onClick={(e) => { e.stopPropagation(); handleItemClick(item); }}>
+                        {item.label}
+                        {item.id === '__external__' && (
+                          <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 10, marginLeft: 6, opacity: .5 }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        /* Icon navigation for other versions */
+        <div className="icon-nav-wrap" ref={dropdownRef}>
+          <div className="icon-nav">
+            {cats.map((cat, idx) => (
+              <div key={idx} className="icon-nav-item" onClick={() => handleCategoryClick(idx)}>
+                <div className={`icon-nav-circle ${openIdx === idx ? 'active' : ''}`}>
+                  <i className={cat.icon} />
+                </div>
+                <span className="icon-nav-label">{cat.label}</span>
+
+                {/* Dropdown */}
+                {openIdx === idx && cat.items.length > 1 && (
+                  <div className="icon-dropdown">
+                    {cat.items.map((item, ii) => (
+                      <div key={ii} className="icon-dropdown-item"
+                        onClick={(e) => { e.stopPropagation(); handleItemClick(item); }}>
+                        {item.label}
+                        {item.id === '__external__' && (
+                          <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 10, marginLeft: 6, opacity: .5 }} />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </header>
   );
 }

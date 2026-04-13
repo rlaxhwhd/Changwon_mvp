@@ -26,6 +26,8 @@ import ProgramReview from './pages/ProgramReview';
 import PsychTest from './pages/PsychTest';
 import NineCore from './pages/NineCore';
 import Aptitude from './pages/Aptitude';
+import Cares from './pages/Cares';
+import Mbti from './pages/Mbti';
 import CounselForm from './pages/CounselForm';
 import CompanyInfo from './pages/CompanyInfo';
 import Notice from './pages/Notice';
@@ -116,6 +118,10 @@ function App() {
         return <NineCore />;
       case 'aptitude':
         return <Aptitude />;
+      case 'cares':
+        return <Cares />;
+      case 'mbti':
+        return <Mbti />;
       case 'counsel-career':
         return <CounselForm type="career" onToast={showToast} />;
       case 'counsel-employ':

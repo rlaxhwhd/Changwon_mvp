@@ -265,6 +265,74 @@ export default function Dashboard({ onToast, onNavigate }: DashboardProps) {
         </div>
       </div>
 
+      {/* ── 9CORE AI 평가 ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+        <div className="card">
+          <div className="card-title">
+            <i className="fa-solid fa-chart-radar" style={{ color: '#6366F1' }} /> 9CORE AI 평가
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            {[
+              { name: '의사소통', score: 78 },
+              { name: '문제해결', score: 82 },
+              { name: '자기관리', score: 70 },
+              { name: '대인관계', score: 65 },
+              { name: '정보활용', score: 88 },
+              { name: '글로벌', score: 35 },
+              { name: '리더십', score: 60 },
+              { name: '창의융합', score: 72 },
+              { name: '직업윤리', score: 75 },
+            ].map(c => (
+              <div key={c.name} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 12, width: 64, flexShrink: 0 }}>{c.name}</span>
+                <div className="progress-bar" style={{ flex: 1 }}>
+                  <div className="fill" style={{
+                    width: `${c.score}%`,
+                    background: c.score >= 80 ? '#22C55E' : c.score >= 60 ? '#F59E0B' : '#EF4444'
+                  }} />
+                </div>
+                <span style={{ fontSize: 12, fontWeight: 700, width: 32, textAlign: 'right',
+                  color: c.score >= 80 ? '#22C55E' : c.score >= 60 ? '#F59E0B' : '#EF4444' }}>{c.score}</span>
+              </div>
+            ))}
+          </div>
+          <div className="ai-comment" style={{ fontSize: 12 }}>
+            <div className="ai-label"><i className="fa-solid fa-robot" /> AI 분석</div>
+            정보활용(88점)과 문제해결(82점)이 강점입니다. 글로벌 역량(35점)은 시급한 보완이 필요합니다.
+            TOEIC 학습과 국제 교류 프로그램 참여를 권장합니다.
+          </div>
+        </div>
+
+        <div className="card">
+          <div className="card-title">
+            <i className="fa-solid fa-list-check" style={{ color: '#22C55E' }} /> 역량프로그램 AI 평가
+          </div>
+          <div style={{ marginBottom: 12 }}>
+            {[
+              { name: '취업역량강화 캠프', hours: 40, category: '취업', score: 86 },
+              { name: 'AI 활용 자소서 특강', hours: 3, category: 'AI', score: 78 },
+              { name: '창업아이디어 경진대회', hours: 16, category: '창업', score: 70 },
+            ].map((p, i) => (
+              <div key={i} style={{ padding: 10, background: '#F9FAFB', borderRadius: 8, marginBottom: 8 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                  <span style={{ fontSize: 13, fontWeight: 600 }}>{p.name}</span>
+                  <span className="badge" style={{ background: '#EEF2FF', color: '#4F46E5', fontSize: 11 }}>{p.category}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#6B7280' }}>
+                  <span>{p.hours}시간 이수</span>
+                  <span style={{ color: '#6366F1', fontWeight: 700 }}>기여도 {p.score}%</span>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="ai-comment" style={{ fontSize: 12 }}>
+            <div className="ai-label"><i className="fa-solid fa-robot" /> AI 분석</div>
+            총 3개 프로그램 수료(59시간). 취업 분야 집중도가 높습니다.
+            진로탐색 및 디지털 역량 프로그램 추가 이수를 권장합니다.
+          </div>
+        </div>
+      </div>
+
       <div className="card" style={{ marginBottom: 24 }}>
         <div className="card-title">
           <span><i className="fa-solid fa-robot" style={{ color: '#6366F1' }} /> AI 종합 코멘트</span>

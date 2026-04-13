@@ -44,6 +44,7 @@ export default function NineCore() {
   const [abilityModal, setAbilityModal] = useState<number | null>(null);
   const [historyDrawer, setHistoryDrawer] = useState(false);
   const [craReportDate, setCraReportDate] = useState<string | null>(null);
+  const [showAiAnalysis, setShowAiAnalysis] = useState(false);
   const avg = Math.round(cores.reduce((a, c) => a + c.score, 0) / cores.length);
   const ability = abilityModal !== null ? cores[abilityModal] : null;
 
@@ -105,6 +106,46 @@ export default function NineCore() {
           <div style={{ height: 320 }}>
             <Radar data={radarData} options={radarOptions} />
           </div>
+          <div style={{ textAlign: 'center', marginTop: 12 }}>
+            <button
+              className={`btn ${showAiAnalysis ? 'btn-outline' : ''}`}
+              style={showAiAnalysis
+                ? { padding: '10px 28px', fontSize: 14 }
+                : { background: '#6366F1', color: '#fff', padding: '10px 28px', fontSize: 14 }}
+              onClick={() => setShowAiAnalysis(!showAiAnalysis)}
+            >
+              <i className="fa-solid fa-robot" /> AI 평가분석 {showAiAnalysis ? '접기' : '보기'}
+            </button>
+          </div>
+          {showAiAnalysis && (
+            <div className="ai-comment" style={{ marginTop: 12 }}>
+              <div className="ai-label"><i className="fa-solid fa-robot" /> AI 역량 평가 분석</div>
+              <p style={{ marginBottom: 10, lineHeight: 1.8, fontSize: 13 }}>
+                김민준님의 9CORE 역량 평균 점수는 <strong>{avg}점</strong>으로
+                {avg >= 75 ? ' 양호한 수준입니다.' : avg >= 60 ? ' 보통 수준으로 일부 보완이 필요합니다.' : ' 전반적인 역량 강화가 필요합니다.'}
+              </p>
+              <p style={{ marginBottom: 10, lineHeight: 1.8, fontSize: 13 }}>
+                <strong>강점 역량:</strong> {cores.filter(c => c.score >= 80).map(c => `${c.name}(${c.score}점)`).join(', ') || '없음'}
+                <br />
+                <strong>보완 역량:</strong> {cores.filter(c => c.score < 60).map(c => `${c.name}(${c.score}점)`).join(', ') || '없음'}
+              </p>
+              <p style={{ marginBottom: 10, lineHeight: 1.8, fontSize: 13 }}>
+                <strong>종합 제언:</strong> {cores.reduce((min, c) => c.score < min.score ? c : min).name} 역량이 {cores.reduce((min, c) => c.score < min.score ? c : min).score}점으로 가장 낮습니다.
+                {' '}{cores.reduce((min, c) => c.score < min.score ? c : min).suggestion}
+              </p>
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginTop: 8 }}>
+                {cores.map(c => (
+                  <span key={c.name} className="badge" style={{
+                    background: c.score >= 80 ? '#DCFCE7' : c.score >= 60 ? '#FEF3C7' : '#FEE2E2',
+                    color: c.score >= 80 ? '#16A34A' : c.score >= 60 ? '#92400E' : '#DC2626',
+                    fontSize: 11,
+                  }}>
+                    {c.name} {c.score}점
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="card">

@@ -15,6 +15,16 @@ const tests = [
     lastDate: '2026-03-15',
     score: '총점 80점',
   },
+  {
+    id: 'mbti' as PageId,
+    title: 'MBTI 검사',
+    desc: '성격 유형(외향/내향, 감각/직관, 사고/감정, 판단/인식)을 분석하여 자기이해와 진로탐색에 활용합니다.',
+    icon: 'fa-solid fa-masks-theater',
+    color: '#EC4899',
+    tags: ['성격유형', 'MBTI', '자기이해'],
+    lastDate: '2026-03-18',
+    score: 'ENFP',
+  },
 ];
 
 export default function PersonalityDiagnosis({ onNavigate }: PersonalityDiagnosisProps) {
@@ -60,6 +70,35 @@ export default function PersonalityDiagnosis({ onNavigate }: PersonalityDiagnosi
             </div>
           </div>
         ))}
+      </div>
+
+      {/* AI 종합평가 버튼 */}
+      <div style={{ display: 'flex', justifyContent: 'center', marginTop: 32 }}>
+        <button
+          className="btn"
+          onClick={() => onNavigate('ai-evaluation')}
+          style={{
+            background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
+            color: '#fff',
+            padding: '14px 36px',
+            fontSize: 16,
+            fontWeight: 700,
+            borderRadius: 10,
+            border: 'none',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            gap: 10,
+            boxShadow: '0 4px 16px rgba(99,102,241,.25)',
+            transition: 'transform .2s, box-shadow .2s',
+          }}
+          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateY(-2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 8px 24px rgba(99,102,241,.35)'; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = ''; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(99,102,241,.25)'; }}
+        >
+          <i className="fa-solid fa-brain" />
+          모든 검사 AI 종합평가
+          <i className="fa-solid fa-arrow-right" />
+        </button>
       </div>
     </div>
   );
