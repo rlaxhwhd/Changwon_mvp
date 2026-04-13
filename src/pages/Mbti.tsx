@@ -129,7 +129,7 @@ export default function Mbti() {
       </div>
 
       {sel && (
-        <Modal title={`${sel.label} 상세`} size="md" onClose={() => setSel(null)}>
+        <Modal open={!!sel} title={`${sel.label} 상세`} size="md" onClose={() => setSel(null)}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 16 }}>
             <span style={{ fontSize: 36, fontWeight: 800, color: sel.color }}>{sel.left.score >= sel.right.score ? sel.left.code : sel.right.code}</span>
             <div>
@@ -142,7 +142,7 @@ export default function Mbti() {
       )}
 
       {aiOpen && (
-        <Modal title="MBTI AI 평가분석" size="lg" onClose={() => setAiOpen(false)}>
+        <Modal open={aiOpen} title="MBTI AI 평가분석" size="lg" onClose={() => setAiOpen(false)}>
           {aiLoading ? (
             <div style={{ textAlign: 'center', padding: 40 }}>
               <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 32, color: '#EC4899' }} />

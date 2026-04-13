@@ -123,7 +123,7 @@ export default function Cares() {
       </div>
 
       {sel && (
-        <Modal title={sel.name} size="md" onClose={() => setSel(null)}>
+        <Modal open={!!sel} title={sel.name} size="md" onClose={() => setSel(null)}>
           <p style={{ marginBottom: 16, lineHeight: 1.7 }}>{sel.detail}</p>
           <h4 style={{ marginBottom: 8 }}>세부 항목</h4>
           {sel.subItems.map(sub => (
@@ -143,7 +143,7 @@ export default function Cares() {
       )}
 
       {aiOpen && (
-        <Modal title="CARES AI 평가분석" size="lg" onClose={() => setAiOpen(false)}>
+        <Modal open={aiOpen} title="CARES AI 평가분석" size="lg" onClose={() => setAiOpen(false)}>
           {aiLoading ? (
             <div style={{ textAlign: 'center', padding: 40 }}>
               <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 32, color: '#059669' }} />
