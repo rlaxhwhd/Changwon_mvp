@@ -1,102 +1,144 @@
-import HeroBanner from '../components/HeroBanner';
-import type { PageId } from '../types';
+import { useNavigate } from 'react-router-dom';
+import PageHeader from '../components/PageHeader';
 
-interface HomeProps {
-  onNavigate: (page: PageId) => void;
-  onToast: (msg: string, type?: 'info' | 'success') => void;
+interface Stat {
+  icon: string;
+  label: string;
+  value: string;
+  trend?: string;
 }
 
-const programs = [
-  { title: '이력서 클리닉', desc: 'AI 기반 이력서 첨삭 및 맞춤 피드백', date: '04.15 ~ 04.20', seats: 12, icon: 'fa-solid fa-file-lines', color: '#6366F1', category: '취업역량' },
-  { title: '모의면접 캠프', desc: '실전 면접 시뮬레이션 및 전문가 코칭', date: '04.22 ~ 04.25', seats: 8, icon: 'fa-solid fa-microphone', color: '#3B82F6', category: '면접준비' },
-  { title: 'IT PM 직무 특강', desc: '현직 PM이 알려주는 실무 노하우', date: '05.01', seats: 30, icon: 'fa-solid fa-chalkboard-user', color: '#22C55E', category: '직무탐색' },
-  { title: '포트폴리오 워크숍', desc: '프로젝트 포트폴리오 제작 실습', date: '05.08 ~ 05.10', seats: 15, icon: 'fa-solid fa-palette', color: '#F59E0B', category: '취업역량' },
-  { title: '기업탐방 프로그램', desc: 'IT 기업 현장 방문 및 직무 체험', date: '05.15', seats: 20, icon: 'fa-solid fa-building', color: '#EF4444', category: '직무탐색' },
-  { title: '취업캠프 (2박3일)', desc: '집중 취업 준비 부트캠프', date: '05.20 ~ 05.22', seats: 0, icon: 'fa-solid fa-campground', color: '#8B5CF6', category: '취업캠프' },
+const STATS: Stat[] = [
+  { icon: 'fa-solid fa-route', label: 'CURRENT STAGE', value: '3 / 7', trend: '▲ 1 stage this month' },
+  { icon: 'fa-solid fa-star', label: 'MILEAGE POINTS', value: '2,840', trend: '▲ +420 this week' },
+  { icon: 'fa-solid fa-bullseye', label: 'MISSIONS CLEARED', value: '14', trend: '▲ 3 active' },
+  { icon: 'fa-solid fa-chart-line', label: 'CAREER READINESS', value: '72%', trend: '▲ +8% this semester' },
 ];
 
-const notices = [
-  { id: 1, date: '2026-03-28', title: '2026-1학기 진로취업 프로그램 신청 안내', isNew: true },
-  { id: 2, date: '2026-03-25', title: 'AI 역량 분석 서비스 오픈', isNew: true },
-  { id: 3, date: '2026-03-20', title: '상반기 채용 박람회 안내', isNew: false },
-  { id: 4, date: '2026-03-18', title: '드림캐치 시스템 업데이트 안내', isNew: false },
+interface Mission {
+  icon: string;
+  title: string;
+  meta: string;
+  status: 'done' | 'active' | 'locked';
+  statusLabel: string;
+}
+
+const MISSIONS: Mission[] = [
+  { icon: 'fa-solid fa-check', title: '9CORE 진로취업진단 완료', meta: '2026-03-18 · 정확도 94%', status: 'done', statusLabel: 'CLEARED' },
+  { icon: 'fa-solid fa-brain', title: 'MBTI 성격심리진단', meta: '진행중 · 32/60', status: 'active', statusLabel: 'IN MISSION' },
+  { icon: 'fa-solid fa-file-lines', title: 'AI 자기소개서 첨삭', meta: '대기중', status: 'active', statusLabel: 'READY' },
+  { icon: 'fa-solid fa-lock', title: '현직자 멘토링 1:1', meta: '역량개발센터 5단계 이후 해금', status: 'locked', statusLabel: 'LOCKED' },
 ];
 
-export default function Home({ onNavigate, onToast }: HomeProps) {
+export default function Home() {
+  const navigate = useNavigate();
   return (
-    <div>
-      <HeroBanner />
+    <div className="page-wrap">
+      <PageHeader
+        kicker="MISSION CONTROL · HOME"
+        title="어서오세요, 김드림 님"
+        sub="현재 당신은 3단계 행성 — 자기이해(NEBULA OF SELF)에 있습니다. 다음 행성까지 2개의 미션이 남았어요."
+      />
 
-      {/* ── 진로취업 프로그램 목록 ── */}
-      <section className="home-section">
-        <div className="section-header">
-          <h2>
-            <i className="fa-solid fa-calendar-check" style={{ color: '#22C55E' }} />
-            진로·취업 프로그램
-          </h2>
-          <button className="btn btn-sm btn-outline" onClick={() => onNavigate('program-apply')}>
-            전체보기 <i className="fa-solid fa-chevron-right" style={{ fontSize: 10 }} />
-          </button>
-        </div>
-        <div className="program-grid">
-          {programs.map((p, i) => (
-            <div key={i} className="program-card">
-              <div className="program-card-top">
-                <div className="program-icon" style={{ background: `${p.color}15`, color: p.color }}>
-                  <i className={p.icon} />
-                </div>
-                <span className="badge badge-gray">{p.category}</span>
+      <div className="grid-4 mb-lg">
+        {STATS.map((s) => (
+          <div key={s.label} className="stat-card">
+            <div className="stat-card-icon">
+              <i className={s.icon} />
+            </div>
+            <div className="stat-card-label">{s.label}</div>
+            <div className="stat-card-value">{s.value}</div>
+            {s.trend && <div className="stat-card-trend">{s.trend}</div>}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid-2">
+        <div className="panel">
+          <div className="panel-head">
+            <div className="panel-title">ACTIVE MISSIONS</div>
+            <button className="btn-ghost" onClick={() => navigate('/program/apply')}>
+              ALL MISSIONS <i className="fa-solid fa-arrow-right" />
+            </button>
+          </div>
+          {MISSIONS.map((m, i) => (
+            <div key={i} className="mission-item">
+              <div className="mission-icon">
+                <i className={m.icon} />
               </div>
-              <div className="program-card-body">
-                <div className="program-title">{p.title}</div>
-                <div className="program-desc">{p.desc}</div>
-                <div className="program-meta">
-                  <span><i className="fa-regular fa-calendar" /> {p.date}</span>
-                  <span style={{ color: p.seats === 0 ? '#EF4444' : '#6B7280' }}>
-                    {p.seats === 0 ? '마감' : `잔여 ${p.seats}석`}
-                  </span>
-                </div>
+              <div className="mission-body">
+                <div className="mission-title">{m.title}</div>
+                <div className="mission-meta">{m.meta}</div>
               </div>
-              <button
-                className={`btn btn-sm ${p.seats === 0 ? 'btn-outline' : 'btn-primary'}`}
-                style={{ width: '100%', justifyContent: 'center' }}
-                disabled={p.seats === 0}
-                onClick={() => onToast(`"${p.title}" 신청이 완료되었습니다!`, 'success')}
-              >
-                {p.seats === 0 ? '마감' : '신청하기'}
-              </button>
+              <span className={`mission-status mission-status--${m.status}`}>{m.statusLabel}</span>
             </div>
           ))}
         </div>
-      </section>
 
-      {/* ── 공지사항 ── */}
-      <section className="home-section">
-        <div className="section-header">
-          <h2>
-            <i className="fa-solid fa-bullhorn" style={{ color: '#F59E0B' }} />
-            공지사항
-          </h2>
-          <button className="btn btn-sm btn-outline" onClick={() => onNavigate('notice')}>
-            전체보기 <i className="fa-solid fa-chevron-right" style={{ fontSize: 10 }} />
-          </button>
-        </div>
-        <div className="card">
-          {notices.map((n, i) => (
-            <div key={n.id}
-              className="notice-row"
-              style={{ borderBottom: i < notices.length - 1 ? '1px solid #F3F4F6' : 'none' }}
-              onClick={() => onToast('준비 중인 기능입니다')}
-            >
-              <div className="notice-title">
-                {n.title}
-                {n.isNew && <span className="badge badge-red" style={{ marginLeft: 8 }}>NEW</span>}
+        <div className="panel">
+          <div className="panel-head">
+            <div className="panel-title">ROADMAP PROGRESS</div>
+            <button className="btn-ghost" onClick={() => navigate('/roadmap')}>
+              OPEN ROADMAP <i className="fa-solid fa-arrow-right" />
+            </button>
+          </div>
+
+          <div style={{ padding: '20px 0' }}>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)', letterSpacing: 2, marginBottom: 8 }}>
+              CURRENT PLANET
+            </div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: 28, fontWeight: 700, color: 'var(--accent-cyan)' }}>
+              NEBULA OF SELF
+            </div>
+            <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginTop: 6 }}>
+              자기이해 단계 · 진로와 적성을 깊이 탐색합니다
+            </div>
+
+            <div style={{ marginTop: 24, fontSize: 11, color: 'var(--text-muted)', letterSpacing: 2 }}>
+              STAGE PROGRESS · 3 / 7
+            </div>
+            <div className="progress-track">
+              <div className="progress-fill" style={{ width: '42%' }} />
+            </div>
+
+            <div style={{ marginTop: 28, padding: 16, background: 'rgba(85, 230, 255, 0.06)', border: '1px solid var(--border-nebula)', borderRadius: 12 }}>
+              <div style={{ fontSize: 11, color: 'var(--accent-cyan)', letterSpacing: 2, marginBottom: 6 }}>
+                NEXT PLANET
               </div>
-              <span className="notice-date">{n.date}</span>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 18, fontWeight: 700 }}>
+                ASTEROID OF ACTION
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 4 }}>
+                경험축적 단계 · 실습과 프로젝트로 역량을 키웁니다
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="panel mt-lg">
+        <div className="panel-head">
+          <div className="panel-title">RECOMMENDED BY AI</div>
+          <span className="tag tag--ai">AI RECOMMEND</span>
+        </div>
+        <div className="grid-3">
+          {[
+            { title: 'AI 직무 역량 진단', desc: '당신의 전공과 관심사에 맞춘 직무 역량을 분석합니다', icon: 'fa-solid fa-microchip' },
+            { title: '포트폴리오 빌더', desc: 'AI가 당신의 활동을 포트폴리오로 자동 구성해드려요', icon: 'fa-solid fa-folder-open' },
+            { title: '모의 면접 시뮬레이터', desc: '실제 기업 질문으로 AI 면접을 체험하세요', icon: 'fa-solid fa-video' },
+          ].map((c) => (
+            <div key={c.title} style={{ padding: 20, background: 'rgba(10, 14, 35, 0.5)', borderRadius: 14, border: '1px solid var(--border-nebula)' }}>
+              <div style={{ width: 40, height: 40, borderRadius: 10, background: 'var(--grad-aurora)', display: 'grid', placeItems: 'center', marginBottom: 14 }}>
+                <i className={c.icon} style={{ color: '#fff' }} />
+              </div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: 15, fontWeight: 600, marginBottom: 6 }}>
+                {c.title}
+              </div>
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.6 }}>{c.desc}</div>
             </div>
           ))}
         </div>
-      </section>
+      </div>
     </div>
   );
 }
