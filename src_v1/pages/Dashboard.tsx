@@ -272,6 +272,7 @@ export default function Dashboard({ onToast, onNavigate }: DashboardProps) {
             </button>
           </div>
           <div className="d5-radar-sub">목표 vs 현재 비교</div>
+          <div className="d5-radar-stage">
           <div className="d5-radar-chart">
             <Radar
               data={{
@@ -317,6 +318,10 @@ export default function Dashboard({ onToast, onNavigate }: DashboardProps) {
                 },
               }}
             />
+          </div>
+          <div className="d5-radar-hologram" aria-hidden="true">
+            <img src="/hologram_under.svg" alt="" />
+          </div>
           </div>
         </div>
 

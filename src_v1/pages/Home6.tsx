@@ -115,7 +115,7 @@ const todoItems = [
 
 export default function Home6({ onNavigate, onToast }: Home6Props) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [colorTheme, setColorTheme] = useState<'cyber' | 'blue'>('cyber');
+  const [colorTheme, setColorTheme] = useState<'cyber' | 'blue'>('blue');
 
   return (
     <div className={`h6-layout h6-theme-${colorTheme}`}>
@@ -272,7 +272,7 @@ export default function Home6({ onNavigate, onToast }: Home6Props) {
             <div className="h6-hero-mission-body">
               <div className="h6-hero-mission-emoji">🎯</div>
               <strong>TOEIC 영단어 일일미션</strong>
-              <p>오늘의 영단어 20개를 학습하고 퀴즈��� 풀어보세요</p>
+              <p>오늘의 영단어 10개를 학습하고 퀴즈를 풀어보세요</p>
             </div>
             <button className="h6-hero-mission-btn" onClick={() => onNavigate('daily-mission' as PageId)}>
               미션 시작하기 <i className="fa-solid fa-arrow-right" />

@@ -5394,9 +5394,45 @@ tbody td {
 
 /* 역량 레이더 + 진로목표/검사결과 레이아웃 */
 .d5-radar-row { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 28px; align-items: stretch; }
-.d5-radar-card { display: flex; flex-direction: column; }
+.d5-radar-card { display: flex; flex-direction: column; position: relative; overflow: hidden; }
 .d5-radar-sub { font-size: 12px; color: #9CA3AF; margin: -8px 0 12px; }
-.d5-radar-chart { flex: 1; min-height: 0; }
+.d5-radar-stage {
+  position: relative;
+  flex: 1;
+  min-height: 360px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.d5-radar-chart {
+  position: relative;
+  z-index: 2;
+  width: 78%;
+  height: 78%;
+  transform: translateY(-22%);
+  filter:
+    drop-shadow(0 0 10px rgba(99, 130, 246, 0.55))
+    drop-shadow(0 0 22px rgba(99, 130, 246, 0.45))
+    drop-shadow(0 12px 28px rgba(56, 110, 235, 0.35));
+}
+.d5-radar-hologram {
+  position: absolute;
+  left: 50%;
+  bottom: -6%;
+  transform: translateX(-50%);
+  width: 115%;
+  max-width: none;
+  pointer-events: none;
+  z-index: 0;
+}
+.d5-radar-hologram img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.5;
+  filter: drop-shadow(0 6px 18px rgba(99, 130, 246, 0.35));
+}
 .d5-radar-right { display: flex; flex-direction: column; gap: 20px; }
 
 .d5-card {
