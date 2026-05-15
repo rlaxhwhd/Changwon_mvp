@@ -1,58 +1,51 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, type ReactNode } from 'react'
 
-interface ModalProps {
-  open: boolean;
-  onClose: () => void;
-  title: string;
-  size?: 'sm' | 'md' | 'lg';
-  children: React.ReactNode;
-  footer?: React.ReactNode;
+type Size = 'sm' | 'md' | 'lg'
+
+const WIDTH: Record<Size, string> = {
+  sm: '480px',
+  md: '640px',
+  lg: '900px',
 }
 
-export default function Modal({ open, onClose, title, size = 'md', children, footer }: ModalProps) {
-  const ref = useRef<HTMLDivElement>(null);
+interface Props {
+  open: boolean
+  onClose: () => void
+  title?: string
+  size?: Size
+  children: ReactNode
+}
 
+export default function Modal({ open, onClose, title, size = 'md', children }: Props) {
   useEffect(() => {
-    if (!open) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    document.addEventListener('keydown', handleKey);
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.removeEventListener('keydown', handleKey);
-      document.body.style.overflow = '';
-    };
-  }, [open, onClose]);
+    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    if (open) document.addEventListener('keydown', handleKey)
+    return () => document.removeEventListener('keydown', handleKey)
+  }, [open, onClose])
 
-  useEffect(() => {
-    if (open && ref.current) {
-      const focusable = ref.current.querySelector<HTMLElement>('button, [tabindex]');
-      focusable?.focus();
-    }
-  }, [open]);
-
-  if (!open) return null;
+  if (!open) return null
 
   return (
-    <div className="modal-overlay" onClick={onClose} role="presentation">
+    <div
+      style={{ position: 'fixed', inset: 0, background: 'rgba(28,36,66,.4)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+      onClick={onClose}
+    >
       <div
-        className={`modal-panel modal-${size}`}
+        style={{ background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', width: WIDTH[size], maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
-        ref={ref}
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
       >
-        <div className="modal-header">
-          <h3>{title}</h3>
-          <button className="modal-close" onClick={onClose} aria-label="닫기">
-            <i className="fa-solid fa-xmark" />
-          </button>
+        {title && (
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--color-border)' }}>
+            <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-text)' }}>{title}</span>
+            <button onClick={onClose} style={{ color: 'var(--color-text-muted)', fontSize: 18, cursor: 'pointer', background: 'none', border: 'none' }}>
+              <i className="fa-solid fa-xmark" />
+            </button>
+          </div>
+        )}
+        <div style={{ padding: 24, overflowY: 'auto', flex: 1 }}>
+          {children}
         </div>
-        <div className="modal-body">{children}</div>
-        {footer && <div className="modal-footer">{footer}</div>}
       </div>
     </div>
-  );
+  )
 }

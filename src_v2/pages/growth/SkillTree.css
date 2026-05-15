@@ -1,0 +1,532 @@
+/* ─── SkillTree Page (st- prefix) ────────────────────────────────────────── */
+
+.st-wrapper {
+  display: flex;
+  min-height: calc(100vh - var(--gnb-height));
+  background: transparent;
+}
+
+.st-content {
+  flex: 1;
+  padding: 28px 34px;
+  overflow-x: auto;
+  min-width: 0;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+
+.st-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+  background: #fff;
+  border: 1px solid #E2EAFB;
+  border-radius: 14px;
+  padding: 24px 26px;
+  box-shadow: 0 10px 28px rgba(46, 91, 255, 0.06);
+}
+
+.st-header-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.st-header-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #EEF4FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2E5BFF;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.st-header-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--color-navy);
+  line-height: 1.2;
+}
+
+.st-header-title-sub {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-sub);
+}
+
+.st-header-subtitle {
+  font-size: 13px;
+  color: var(--color-text-sub);
+  margin-top: 4px;
+}
+
+/* ─── 4-column Grid ──────────────────────────────────────────────────────── */
+
+.st-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  margin-bottom: 20px;
+  align-items: stretch;
+}
+
+/* ─── Column card ────────────────────────────────────────────────────────── */
+
+.st-col {
+  background: #fff;
+  border: 1px solid #E2EAFB;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(46, 91, 255, 0.055);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 418px;
+}
+
+.st-col-header {
+  padding: 22px 18px 16px;
+  border-bottom: 0;
+  text-align: center;
+}
+
+.st-col-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1E63FF;
+  margin-bottom: 8px;
+}
+
+.st-col-subtitle {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.st-col-fit {
+  margin-top: auto;
+  padding: 14px 18px 20px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 900;
+  color: #1E63FF;
+}
+
+.st-col-body {
+  padding: 10px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.st-col-body.st-skill-list {
+  gap: 12px;
+  padding: 10px 16px 18px;
+}
+
+/* ─── Foundation cards (col 1) ───────────────────────────────────────────── */
+
+.st-found-card {
+  border: 1px solid #DCE7FB;
+  border-radius: 12px;
+  padding: 13px 14px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  transition: box-shadow 0.15s, border-color 0.15s, transform 0.15s;
+  background: #FFFFFF;
+}
+
+.st-found-card:hover {
+  border-color: #BFD1FF;
+  box-shadow: 0 10px 24px rgba(46, 91, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.st-found-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.st-found-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.st-found-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.st-found-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1C2442;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-found-sub {
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-found-status {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #96A6C4;
+  flex-shrink: 0;
+}
+
+.st-found-status.complete {
+  color: #19B78D;
+}
+
+.st-prog-bar {
+  height: 5px;
+  background: #EDF3FF;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.st-prog-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #5C82FF 0%, #1E63FF 100%);
+  transition: width 0.4s ease;
+}
+
+.st-prog-fill.complete {
+  background: linear-gradient(90deg, #5C82FF 0%, #1E63FF 100%);
+}
+
+.st-found-prog-label {
+  font-size: 11px;
+  color: var(--color-text-sub);
+  text-align: right;
+}
+
+/* ─── Skill rows (col 2, 3) ──────────────────────────────────────────────── */
+
+.st-skill-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 14px;
+  border: 1px solid #DCE7FB;
+  border-radius: 12px;
+  background: #FFFFFF;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.st-skill-row:last-child {
+  border-bottom: 1px solid #DCE7FB;
+}
+
+.st-skill-row:hover {
+  background: #FBFDFF;
+  border-color: #BFD1FF;
+  box-shadow: 0 10px 24px rgba(46, 91, 255, 0.08);
+  transform: translateY(-1px);
+}
+
+.st-skill-icon {
+  width: 32px;
+  height: 32px;
+  color: #1E63FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 22px;
+}
+
+.st-skill-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.st-skill-check {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 8px;
+}
+
+.st-skill-check.done {
+  background: #19B78D;
+  color: #fff;
+}
+
+.st-skill-check.todo {
+  border: 2px solid #9CA9CC;
+  background: #fff;
+}
+
+.st-skill-name {
+  font-size: 13px;
+  color: #1C2442;
+  font-weight: 800;
+  min-width: 0;
+}
+
+.st-skill-name.done {
+  color: #1C2442;
+}
+
+.st-skill-sub {
+  font-size: 11px;
+  line-height: 1.35;
+  color: #6E7C9C;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ─── Direction radio (col 4) ────────────────────────────────────────────── */
+
+.st-dir-row {
+  cursor: pointer;
+}
+
+.st-dir-fit {
+  flex-shrink: 0;
+  min-width: 54px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  color: #1E63FF;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.st-dir-fit span {
+  font-size: 22px;
+  letter-spacing: -0.3px;
+}
+
+.st-dir-fit small {
+  font-size: 10px;
+  font-weight: 800;
+  color: #7B89AA;
+}
+
+.st-dir-fit.selected small {
+  color: #1E63FF;
+}
+
+/* ─── Analysis Bar ───────────────────────────────────────────────────────── */
+
+.st-analysis {
+  background: #fff;
+  border: 1px solid #E2EAFB;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(46, 91, 255, 0.055);
+  padding: 24px 28px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  min-height: 112px;
+  margin-bottom: 16px;
+}
+
+.st-analysis-title {
+  width: 164px;
+  flex-shrink: 0;
+  font-size: 20px;
+  font-weight: 900;
+  color: #121B3A;
+}
+
+.st-donut-svg {
+  flex-shrink: 0;
+}
+
+.st-analysis-stats {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.st-stat {
+  min-width: 132px;
+  padding: 0 34px;
+  border-left: 1px solid #DCE7FB;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.st-stat:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.st-stat-val {
+  font-size: 26px;
+  font-weight: 900;
+  color: #121B3A;
+  line-height: 1;
+}
+
+.st-stat-total {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.st-stat-strong {
+  color: #1C2442;
+}
+
+.st-stat-weak {
+  color: #1C2442;
+}
+
+.st-stat-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #62708F;
+}
+
+.st-analysis-score {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.st-analysis-score-label {
+  font-size: 14px;
+  font-weight: 900;
+  color: #121B3A;
+  white-space: nowrap;
+}
+
+.st-analysis-desc {
+  width: 210px;
+  flex: 0 0 210px;
+  font-size: 13px;
+  color: #53627F;
+  line-height: 1.55;
+  font-weight: 600;
+}
+
+.st-analysis-btn {
+  flex-shrink: 0;
+  height: 46px;
+  padding: 0 20px;
+  background: #fff;
+  color: #1E63FF;
+  border: 1px solid #BFD1FF;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: var(--font);
+  transition: background 0.15s, border-color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.st-analysis-btn:hover {
+  background: #EEF4FF;
+}
+
+/* ─── TIP Bar ────────────────────────────────────────────────────────────── */
+
+.st-tip {
+  background: #F2F7FF;
+  border: 1px solid #E2EAFB;
+  border-radius: 12px;
+  padding: 15px 20px;
+  font-size: 13px;
+  color: #3B5FD4;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 1280px) {
+  .st-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .st-content {
+    padding: 24px 20px;
+  }
+
+  .st-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .st-analysis {
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .st-analysis-desc {
+    width: 100%;
+    flex: unset;
+  }
+}
+
+@media (max-width: 768px) {
+  .st-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .st-content {
+    padding: 16px;
+  }
+
+  .st-analysis-stats {
+    gap: 20px;
+  }
+
+  .st-analysis-title,
+  .st-analysis-desc {
+    width: 100%;
+    flex-basis: 100%;
+  }
+
+  .st-stat {
+    padding: 0 18px;
+  }
+}

@@ -18,6 +18,8 @@ interface CounselRecord {
   topics: string[];
 }
 
+type CounselCategory = '진로/취업상담' | '심리상담' | '교수상담';
+
 const counsels: CounselRecord[] = [
   {
     id: 1,
@@ -88,9 +90,16 @@ const typeIcon: Record<CounselRecord['type'], { icon: string; color: string }> =
   '취업상담': { icon: 'fa-solid fa-briefcase', color: '#22C55E' },
 };
 
+const counselCategories: { label: CounselCategory; icon: string; types: CounselRecord['type'][] }[] = [
+  { label: '진로/취업상담', icon: 'fa-solid fa-briefcase', types: ['진로상담', '취업상담'] },
+  { label: '심리상담', icon: 'fa-solid fa-heart-pulse', types: ['심리상담'] },
+  { label: '교수상담', icon: 'fa-solid fa-graduation-cap', types: ['교수상담'] },
+];
+
 export default function MyCounselStatus({ onToast }: MyCounselStatusProps) {
   const [detail, setDetail] = useState<CounselRecord | null>(null);
   const [aiReport, setAiReport] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<CounselCategory>('진로/취업상담');
 
   const byType = counsels.reduce<Record<string, number>>((acc, c) => {
     acc[c.type] = (acc[c.type] || 0) + 1;
@@ -99,6 +108,8 @@ export default function MyCounselStatus({ onToast }: MyCounselStatusProps) {
 
   const completed = counsels.filter(c => c.status === '완료').length;
   const upcoming = counsels.filter(c => c.status === '예약확정').length;
+  const selectedCategory = counselCategories.find(c => c.label === activeCategory) ?? counselCategories[0];
+  const filteredCounsels = counsels.filter(c => selectedCategory.types.includes(c.type));
 
   return (
     <div>
@@ -160,8 +171,40 @@ export default function MyCounselStatus({ onToast }: MyCounselStatusProps) {
           <span><i className="fa-solid fa-list" style={{ color: '#6366F1' }} /> 상담 내역</span>
           <span style={{ fontSize: 12, color: '#6B7280', fontWeight: 400 }}>카드를 클릭하면 상세 코멘트를 볼 수 있습니다</span>
         </div>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 14 }}>
+          {counselCategories.map(category => {
+            const isActive = activeCategory === category.label;
+            const count = counsels.filter(c => category.types.includes(c.type)).length;
+
+            return (
+              <button
+                key={category.label}
+                type="button"
+                className={isActive ? 'btn btn-sm' : 'btn btn-sm btn-outline'}
+                onClick={() => setActiveCategory(category.label)}
+                style={{
+                  background: isActive ? '#6366F1' : '#FFFFFF',
+                  color: isActive ? '#FFFFFF' : '#374151',
+                  borderColor: isActive ? '#6366F1' : '#E5E7EB',
+                }}
+              >
+                <i className={category.icon} /> {category.label}
+                <span style={{
+                  marginLeft: 6,
+                  padding: '1px 7px',
+                  borderRadius: 999,
+                  background: isActive ? 'rgba(255,255,255,0.22)' : '#EEF2FF',
+                  color: isActive ? '#FFFFFF' : '#4F46E5',
+                  fontSize: 11,
+                }}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          {counsels.map(c => (
+          {filteredCounsels.map(c => (
             <div key={c.id} style={{
               padding: '14px 16px', border: '1px solid #E5E7EB', borderRadius: 10,
               cursor: 'pointer', background: '#FFFFFF',
@@ -201,6 +244,11 @@ export default function MyCounselStatus({ onToast }: MyCounselStatusProps) {
               </div>
             </div>
           ))}
+          {filteredCounsels.length === 0 && (
+            <div style={{ padding: 24, textAlign: 'center', color: '#6B7280', fontSize: 13 }}>
+              해당 카테고리의 상담 내역이 없습니다.
+            </div>
+          )}
         </div>
       </div>
 

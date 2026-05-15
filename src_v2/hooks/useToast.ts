@@ -1,18 +1,20 @@
-import { useState, useCallback } from 'react';
-import type { ToastMessage } from '../types';
-
-let nextId = 0;
+import { useState, useCallback } from 'react'
+import type { Toast, ToastType } from '../types'
 
 export function useToast() {
-  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [toasts, setToasts] = useState<Toast[]>([])
 
-  const showToast = useCallback((text: string, type: ToastMessage['type'] = 'info') => {
-    const id = nextId++;
-    setToasts(prev => [...prev, { id, text, type }]);
+  const addToast = useCallback((message: string, type: ToastType = 'info') => {
+    const id = crypto.randomUUID()
+    setToasts(prev => [...prev, { id, type, message }])
     setTimeout(() => {
-      setToasts(prev => prev.filter(t => t.id !== id));
-    }, 2500);
-  }, []);
+      setToasts(prev => prev.filter(t => t.id !== id))
+    }, 3500)
+  }, [])
 
-  return { toasts, showToast };
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }, [])
+
+  return { toasts, addToast, removeToast }
 }

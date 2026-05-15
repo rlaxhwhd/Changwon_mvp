@@ -293,19 +293,19 @@ export default function Home6({ onNavigate, onToast }: Home6Props) {
           </div>
           <div className="h6-guide-steps">
             {[
-              { step: 1, title: '진단센터', desc: '나를 먼저 알아야 해요', detail: '9CORE · 인적성 · CARES 검사로 내 역량과 성격을 파악합니다.', icon: 'fa-solid fa-clipboard-check', page: 'career-diagnosis' as PageId, color: '#0D8B7C' },
-              { step: 2, title: '목표 기업 설정', desc: '꿈을 구체화하세요', detail: 'AI가 희망 기업·직무 기반으로 합격률을 분석하고 부족한 역량을 알려줍니다.', icon: 'fa-solid fa-bullseye', page: 'ai-prediction' as PageId, color: '#0E7490' },
-              { step: 3, title: '전문 상담', desc: '전문가와 함께 설계해요', detail: '진로/취업 상담사, 심리 상담사와 1:1 상담으로 방향을 잡아보세요.', icon: 'fa-solid fa-comments', page: 'counsel-career' as PageId, color: '#047857' },
-              { step: 4, title: '로드맵 생성', desc: 'AI가 경로를 그려줘요', detail: '진단 + 상담 데이터를 종합해서 나만의 커리어 로드맵을 생성합니다.', icon: 'fa-solid fa-route', page: 'ai-roadmap' as PageId, color: '#7C3AED' },
-              { step: 5, title: '역량 개발', desc: '부족한 부분을 채워요', detail: '로드맵에 따라 비교과 프로그램, 자격증, 어학 등에 참여합니다.', icon: 'fa-solid fa-rocket', page: 'program-apply' as PageId, color: '#1D4ED8' },
-              { step: 6, title: '취업 지원', desc: '꿈에 도달하세요', detail: 'AI 이력서·면접 준비, 맞춤 채용공고로 최종 취업까지 지원합니다.', icon: 'fa-solid fa-briefcase', page: 'ai-jobs' as PageId, color: '#DC2626' },
+              { step: 1, title: '진단센터', desc: '나를 진단하고 이해해요', detail: '9CORE · 인적성 · CARES 검사로 내 역량과 성격을 파악합니다.', icon: 'fa-regular fa-circle-user', page: 'career-diagnosis' as PageId, color: '#334155' },
+              { step: 2, title: '목표 기업 설정', desc: '꿈을 구체화해요', detail: 'AI가 희망 기업·직무 기반으로 합격률을 분석하고 부족한 역량을 알려줍니다.', icon: 'fa-regular fa-building', page: 'ai-prediction' as PageId, color: '#334155' },
+              { step: 3, title: '전문 상담', desc: '전문가와 함께 설계해요', detail: '진로/취업 상담사, 심리 상담사와 1:1 상담으로 방향을 잡아보세요.', icon: 'fa-regular fa-comments', page: 'counsel-career' as PageId, color: '#334155' },
+              { step: 4, title: '로드맵 생성', desc: 'AI가 경로를 그려줘요', detail: '진단 + 상담 데이터를 종합해서 나만의 커리어 로드맵을 생성합니다.', icon: 'fa-solid fa-route', page: 'ai-roadmap' as PageId, color: '#334155' },
+              { step: 5, title: '역량 개발', desc: '부족한 부분을 채워요', detail: '로드맵에 따라 비교과 프로그램, 자격증, 어학 등에 참여합니다.', icon: 'fa-solid fa-chart-column', page: 'program-apply' as PageId, color: '#2563EB' },
+              { step: 6, title: '취업 지원', desc: '꿈에 도달하세요', detail: 'AI 이력서·면접 준비, 맞춤 채용공고로 최종 취업까지 지원합니다.', icon: 'fa-solid fa-briefcase', page: 'ai-jobs' as PageId, color: '#334155' },
             ].map((s, i, arr) => {
               const isCurrent = s.step === 5;
               return (
               <div key={i} className={`h6-guide-step${isCurrent ? ' h6-guide-current' : ''}`} onClick={() => onNavigate(s.page)}>
                 {isCurrent && <div className="h6-guide-current-label">현재 진행중</div>}
-                <div className="h6-guide-step-num" style={{ background: s.color }}>{s.step}</div>
-                <div className="h6-guide-step-icon" style={{ color: s.color, background: `${s.color}10` }}>
+                <div className="h6-guide-step-num">{String(s.step).padStart(2, '0')}</div>
+                <div className="h6-guide-step-icon" style={{ color: s.color }}>
                   <i className={s.icon} />
                 </div>
                 <div className="h6-guide-step-title">{s.title}</div>
