@@ -3,6 +3,7 @@ import type { PageId } from '../types';
 interface V5LayoutProps {
   children: React.ReactNode;
   onNavigate: (page: PageId) => void;
+  onBack: () => void;
   onToast: (msg: string, type?: 'info' | 'success') => void;
   activePage?: PageId;
 }
@@ -63,7 +64,7 @@ const sidebarSections = [
   },
 ];
 
-export default function V5Layout({ children, onNavigate, activePage }: V5LayoutProps) {
+export default function V5Layout({ children, onNavigate, onBack, activePage }: V5LayoutProps) {
   return (
     <div className="h6-layout h6-theme-blue">
       <aside className="h6-sidebar">
@@ -110,8 +111,8 @@ export default function V5Layout({ children, onNavigate, activePage }: V5LayoutP
 
       <div className="h6-main">
         <div className="v5-subpage-topbar">
-          <button className="v5-back-btn" onClick={() => onNavigate('home')}>
-            <i className="fa-solid fa-arrow-left" /> 홈으로
+          <button className="v5-back-btn" onClick={onBack}>
+            <i className="fa-solid fa-arrow-left" /> 뒤로가기
           </button>
         </div>
         <div className="v5-subpage-content">

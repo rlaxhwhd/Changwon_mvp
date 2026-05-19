@@ -8,6 +8,7 @@ import AiLounge from './pages/AiLounge'
 // 역량 강화
 import GrowthHome from './pages/growth/GrowthHome'
 import ProgramApply from './pages/growth/ProgramApply'
+import ProgramDetail from './pages/growth/ProgramDetail'
 import QuestBoard from './pages/growth/QuestBoard'
 import GrowthJournal from './pages/growth/GrowthJournal'
 import GrowthJournalForm from './pages/growth/GrowthJournalForm'
@@ -52,6 +53,7 @@ const router = createBrowserRouter(
         // 역량 강화
         { path: '/growth',              element: <GrowthHome /> },
         { path: '/growth/program',      element: <ProgramApply /> },
+        { path: '/growth/program/:id',  element: <ProgramDetail /> },
         { path: '/growth/quest',        element: <QuestBoard /> },
         { path: '/growth/journal',      element: <GrowthJournal /> },
         { path: '/growth/journal/new',  element: <GrowthJournalForm /> },

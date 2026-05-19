@@ -64,6 +64,11 @@ function App() {
     }
   }, []);
 
+  const goBack = useCallback(() => {
+    const prev = historyRef.current.pop();
+    if (prev) setPage(prev);
+  }, []);
+
   const renderPage = () => {
     switch (page) {
       case 'landing':
@@ -205,6 +210,7 @@ function App() {
     <>
       <V5Layout
         onNavigate={navigate}
+        onBack={goBack}
         onToast={showToast}
         activePage={page}
       >

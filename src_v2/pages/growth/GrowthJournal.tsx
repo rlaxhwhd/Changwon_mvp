@@ -223,7 +223,7 @@ export default function GrowthJournal() {
         <div className="gj-page-header">
           <div>
             <h1 className="gj-page-title">
-              <span>📖</span> 4. 성장경험일지
+              <i className="fa-solid fa-book-open" /> 4. 성장경험일지
             </h1>
             <p className="gj-page-desc">
               아르바이트, 팀프로젝트, 동아리 활동 등 일상 속에서 경험한 다양한 일을 기록해보세요.<br />
@@ -320,6 +320,7 @@ export default function GrowthJournal() {
                   <div
                     key={entry.id}
                     className={`gj-entry${expandedId === entry.id ? ' expanded' : ''}`}
+                    data-cat={entry.category}
                     onClick={() => toggleExpanded(entry.id)}
                   >
                     <div className="gj-entry-top">

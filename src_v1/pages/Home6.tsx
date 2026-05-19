@@ -102,7 +102,7 @@ const recommendedCompanies = [
 
 const aiTips = [
   { icon: 'fa-solid fa-lightbulb', text: '어학성적(TOEIC)이 부족합니다. CARES에서 영어기초 강의부터 시작해보세요.' },
-  { icon: 'fa-solid fa-route', text: '프로젝트경험이(1건)이 부족합니���. 캡스톤디자인이나 팀프로젝트에 참여하세요.' },
+  { icon: 'fa-solid fa-route', text: '프로젝트경험이(1건)이 부족합니다. 캡스톤디자인이나 팀프로젝트에 참여하세요.' },
 ];
 
 const todoItems = [

@@ -94,6 +94,8 @@ Key routing rules:
 - Weekly retro → invoke retro
 - Design system, brand → invoke design-consultation
 - Visual audit, design polish → invoke design-review
+- UI/UX 디자인 해줘, 디자인 개선해줘, 예쁘게 만들어줘, UI 만들어줘 → invoke ui-ux-pro-max
+- 사진/이미지를 코드로 변환해줘, 이 디자인 그대로 구현해줘 → invoke image-to-ui
 - Architecture review → invoke plan-eng-review
 - Save progress, checkpoint, resume → invoke checkpoint
 - Code quality, health check → invoke health
