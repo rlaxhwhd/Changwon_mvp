@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import GrowthSidebar from '../../components/GrowthSidebar'
 import './ProgramApply.css'
 
 type Category = '전체' | '진로' | '취업' | '어학' | '창업' | '자격증' | '기타'
@@ -96,8 +95,6 @@ export default function ProgramApply() {
 
   return (
     <div className="pa-shell">
-      <GrowthSidebar />
-
       <div className="pa-wrap">
         <div className="pa-header">
           <p className="pa-breadcrumb">역량개발 / 비교과 프로그램</p>

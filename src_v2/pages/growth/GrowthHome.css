@@ -1,9 +1,7 @@
 .gh-shell {
   display: flex;
   min-height: calc(100vh - var(--gnb-height));
-  background:
-    radial-gradient(circle at 18% 8%, rgba(46, 91, 255, 0.035), transparent 26%),
-    linear-gradient(180deg, #ffffff 0%, #fbfdff 100%);
+  background: #fff;
 }
 
 .gh-page {

@@ -1,6 +1,7 @@
 /* ── AiLounge Page ─────────────────────────────────────────────── */
 
 .al-page {
+  --al-sticky-sidebar-space: 336px;
   max-width: 1280px;
   margin: 0 auto;
   padding: 24px 40px 48px;
@@ -19,22 +20,26 @@
 /* ── Profile Card ───────────────────────────────────────────────── */
 .al-profile-card {
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
+  border: 0;
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  padding: 18px 24px;
-  display: flex;
-  align-items: center;
-  gap: 0;
+  box-shadow: none;
+  padding: 14px;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
   margin-bottom: 20px;
+  margin-right: var(--al-sticky-sidebar-space);
 }
 
 .al-profile-user {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding-right: 24px;
-  flex-shrink: 0;
+  min-height: 88px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
 }
 
 .al-avatar-box {
@@ -65,29 +70,22 @@
   width: fit-content;
 }
 
-.al-profile-sep {
-  width: 1px;
-  height: 56px;
-  background: var(--color-border);
-  flex-shrink: 0;
-}
-
 .al-stats-row {
-  display: flex;
-  flex: 1;
-  align-items: center;
+  display: contents;
 }
 
 .al-stat {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   gap: 3px;
-  flex: 1;
-  padding: 0 16px;
-  border-right: 1px solid var(--color-border);
+  min-height: 88px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
 }
-.al-stat:last-child { border-right: none; }
 
 .al-stat-icon { font-size: 18px; color: var(--color-primary); margin-bottom: 1px; }
 .al-stat-label { font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
@@ -98,7 +96,7 @@
 /* ── Main Grid ──────────────────────────────────────────────────── */
 .al-main-grid {
   display: grid;
-  grid-template-columns: 1fr 296px;
+  grid-template-columns: minmax(0, calc(100% - var(--al-sticky-sidebar-space))) 296px;
   gap: 20px;
   margin-bottom: 20px;
 }
@@ -172,7 +170,19 @@
 }
 
 /* ── Right Sidebar ──────────────────────────────────────────────── */
-.al-right-sidebar { display: flex; flex-direction: column; gap: 16px; }
+.al-right-sidebar {
+  width: 296px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: fixed;
+  top: calc(var(--gnb-height) + 190px);
+  right: 18px;
+  max-height: calc(100vh - var(--gnb-height) - 214px);
+  overflow-y: auto;
+  z-index: 20;
+  padding-bottom: 4px;
+}
 
 /* Priority */
 .al-priority-list { display: flex; flex-direction: column; gap: 10px; }
@@ -217,6 +227,7 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin-bottom: 20px;
+  margin-right: var(--al-sticky-sidebar-space);
 }
 
 .al-row-hd {
@@ -276,7 +287,7 @@
 .al-counsel-quote { font-size: 11px; color: var(--color-text-sub); line-height: 1.55; }
 
 /* ── Programs ───────────────────────────────────────────────────── */
-.al-programs-section {}
+.al-programs-section { margin-right: var(--al-sticky-sidebar-space); }
 .al-sec-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
 .al-sec-title { font-size: 16px; font-weight: 700; color: var(--color-text); }
 
@@ -301,11 +312,21 @@
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
   .al-programs-grid { grid-template-columns: repeat(3, 1fr); }
+  .al-profile-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
   .al-main-grid { grid-template-columns: 1fr; }
+  .al-right-sidebar {
+    width: auto;
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
   .al-bottom-grid { grid-template-columns: 1fr 1fr; }
+  .al-bottom-grid,
+  .al-programs-section,
+  .al-profile-card { margin-right: 0; }
 }
 
 @media (max-width: 768px) {
@@ -313,13 +334,10 @@
   .al-analysis-row { grid-template-columns: 1fr; }
   .al-bottom-grid { grid-template-columns: 1fr; }
   .al-programs-grid { grid-template-columns: repeat(2, 1fr); }
-  .al-profile-card { flex-wrap: wrap; }
-  .al-stats-row { flex-wrap: wrap; }
-  .al-stat { flex: 0 0 33%; border-right: none; border-bottom: 1px solid var(--color-border); padding: 10px 0; }
+  .al-profile-card { grid-template-columns: 1fr; }
   .al-report-3col { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 480px) {
   .al-programs-grid { grid-template-columns: 1fr; }
-  .al-stat { flex: 0 0 50%; }
 }

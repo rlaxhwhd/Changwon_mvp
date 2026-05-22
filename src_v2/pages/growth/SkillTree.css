@@ -315,6 +315,34 @@
 
 .st-dir-row {
   cursor: pointer;
+  position: relative;
+}
+
+.st-dir-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #EEF1F7;
+  color: #97A4C0;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s, color 0.15s;
+}
+
+.st-dir-row:hover .st-dir-remove {
+  opacity: 1;
+}
+
+.st-dir-remove:hover {
+  background: #FEE2E2;
+  color: #DC2626;
 }
 
 .st-dir-fit {
@@ -342,6 +370,142 @@
 
 .st-dir-fit.selected small {
   color: #1E63FF;
+}
+
+/* ─── 직무 추가 카드 (col 4) ─────────────────────────────────────────────── */
+
+.st-dir-add {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 12px 18px;
+  border: 1.5px dashed #BFD1FF;
+  border-radius: 12px;
+  background: #F8FAFF;
+  cursor: pointer;
+  align-self: center;
+  text-align: left;
+  font-family: var(--font);
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.st-dir-add:hover {
+  background: #EEF4FF;
+  border-color: #1E63FF;
+  transform: translateY(-1px);
+}
+
+.st-dir-add-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #1E63FF;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.st-dir-add-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.st-dir-add-name {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1E63FF;
+}
+
+.st-dir-add-sub {
+  font-size: 11px;
+  color: #6E7C9C;
+}
+
+/* ─── 직무 선택 모달 ─────────────────────────────────────────────────────── */
+
+.st-picker-desc {
+  font-size: 13px;
+  color: var(--color-text-sub);
+  margin-bottom: 14px;
+}
+
+.st-picker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.st-picker-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid #DCE7FB;
+  border-radius: 12px;
+  background: #fff;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font);
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.st-picker-item:hover {
+  background: #F8FAFF;
+  border-color: #1E63FF;
+  transform: translateY(-1px);
+}
+
+.st-picker-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #EEF4FF;
+  color: #1E63FF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.st-picker-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.st-picker-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #1C2442;
+}
+
+.st-picker-sub {
+  font-size: 11px;
+  color: #6E7C9C;
+}
+
+.st-picker-fit {
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 900;
+  color: #1E63FF;
+}
+
+.st-picker-empty {
+  text-align: center;
+  font-size: 13px;
+  color: var(--color-text-muted);
+  padding: 24px 0;
 }
 
 /* ─── Analysis Bar ───────────────────────────────────────────────────────── */

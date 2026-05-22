@@ -2,7 +2,7 @@
 .gj-wrapper {
   display: flex;
   min-height: calc(100vh - var(--gnb-height));
-  background: #F4F6FB;
+  background: #fff;
 }
 
 /* ── Content Area ─────────────────────────────────────────────────── */
@@ -110,44 +110,40 @@
   padding: 18px 16px 16px;
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 8px;
   box-shadow: var(--shadow-sm);
   position: relative;
   overflow: hidden;
   transition: box-shadow 0.2s, transform 0.2s;
 }
-.gj-stat::after {
-  content: '';
-  position: absolute;
-  bottom: 0; left: 0; right: 0;
-  height: 3px;
-  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-}
-.gj-stat:nth-child(1)::after { background: linear-gradient(90deg, #2E5BFF, #7B9FFF); }
-.gj-stat:nth-child(2)::after { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
-.gj-stat:nth-child(3)::after { background: linear-gradient(90deg, #2E5BFF, #7B9FFF); }
-.gj-stat:nth-child(4)::after { background: linear-gradient(90deg, #16A34A, #22C55E); }
-.gj-stat:nth-child(5)::after { background: linear-gradient(90deg, #C05621, #F59E0B); }
+.gj-stat:nth-child(1) { border-color: #C7D4FF; }
+.gj-stat:nth-child(2) { border-color: #BAE6FD; }
+.gj-stat:nth-child(3) { border-color: #C7D4FF; }
+.gj-stat:nth-child(4) { border-color: #BBF7D0; }
+.gj-stat:nth-child(5) { border-color: #FED7AA; }
 .gj-stat:hover { box-shadow: var(--shadow-md); transform: translateY(-2px); }
 .gj-stat-label {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-sub);
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 5px;
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
-.gj-stat-label i { font-size: 13px; }
+.gj-stat-label i { font-size: 16px; }
 .gj-stat-val {
-  font-size: 28px;
+  font-size: 31px;
   font-weight: 900;
   color: var(--color-navy);
   line-height: 1;
   letter-spacing: -0.02em;
 }
-.gj-stat-unit { font-size: 14px; font-weight: 400; color: var(--color-text-muted); }
+.gj-stat-unit { font-size: 17px; font-weight: 400; color: var(--color-text-muted); }
 
 /* ── Body (list + right) ──────────────────────────────────────────── */
 .gj-body {
@@ -256,11 +252,11 @@
 }
 
 /* Category-specific left borders & expanded states */
-.gj-entry[data-cat="아르바이트"] { border-left-color: #C05621; }
-.gj-entry[data-cat="아르바이트"].expanded { border-color: #FEE2C0; border-left-color: #C05621; }
-.gj-entry[data-cat="팀프로젝트"] { border-left-color: var(--color-primary); }
+.gj-entry[data-cat="아르바이트"] { border-color: #BAE6FD; border-left-color: #38BDF8; }
+.gj-entry[data-cat="아르바이트"].expanded { border-color: #BAE6FD; border-left-color: #38BDF8; }
+.gj-entry[data-cat="팀프로젝트"] { border-color: #C7D4FF; border-left-color: var(--color-primary); }
 .gj-entry[data-cat="팀프로젝트"].expanded { border-color: #C7D4FF; border-left-color: var(--color-primary); }
-.gj-entry[data-cat="기타 활동"] { border-left-color: #16A34A; }
+.gj-entry[data-cat="기타 활동"] { border-color: #BBF7D0; border-left-color: #16A34A; }
 .gj-entry[data-cat="기타 활동"].expanded { border-color: #BBF7D0; border-left-color: #16A34A; }
 
 .gj-entry-top {
@@ -321,7 +317,7 @@
   color: var(--color-primary);
   border: 1px solid #C7D4FF;
 }
-.gj-entry[data-cat="아르바이트"] .gj-tag { background: #FFF7ED; color: #C05621; border-color: #FDE8CA; }
+.gj-entry[data-cat="아르바이트"] .gj-tag { background: #F0F9FF; color: #0284C7; border-color: #BAE6FD; }
 .gj-entry[data-cat="기타 활동"] .gj-tag { background: #F0FDF4; color: #16A34A; border-color: #BBF7D0; }
 .gj-entry-date { font-size: 12px; color: var(--color-text-muted); font-weight: 500; }
 
@@ -343,7 +339,7 @@
   border-radius: var(--radius-md);
   padding: 14px 16px;
 }
-.gj-entry[data-cat="아르바이트"] .gj-detail-block { background: #FFFAF5; border-color: #FEE8C8; }
+.gj-entry[data-cat="아르바이트"] .gj-detail-block { background: #F0F9FF; border-color: #BAE6FD; }
 .gj-entry[data-cat="기타 활동"] .gj-detail-block { background: #F6FEF9; border-color: #D1FAE5; }
 .gj-detail-wide { grid-column: 1 / -1; }
 .gj-detail-label {
@@ -355,7 +351,7 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
 }
-.gj-entry[data-cat="아르바이트"] .gj-detail-label { color: #C05621; }
+.gj-entry[data-cat="아르바이트"] .gj-detail-label { color: #0284C7; }
 .gj-entry[data-cat="기타 활동"] .gj-detail-label { color: #16A34A; }
 .gj-detail-block p {
   font-size: 13px;
@@ -775,7 +771,7 @@
   .gj-page-title { font-size: 18px; }
   .gj-btn-primary { width: 100%; justify-content: center; }
   .gj-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .gj-stat-val { font-size: 22px; }
+  .gj-stat-val { font-size: 25px; }
   .gj-filter-bar { flex-wrap: wrap; gap: 8px; padding: 10px; }
   .gj-tabs { width: 100%; overflow-x: auto; }
   .gj-search-wrap { flex: 1; min-width: 0; }

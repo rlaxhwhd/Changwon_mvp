@@ -8,6 +8,8 @@ const userStats = [
   { icon: 'fa-solid fa-graduation-cap',   label: '학점 분석',  value: '3.68', unit: '/ 4.5' },
   { icon: 'fa-solid fa-id-card',          label: '자격증',     value: '2',    unit: '개' },
   { icon: 'fa-solid fa-comments',         label: '상담 내역',  value: '3',    unit: '회' },
+  { icon: 'fa-solid fa-book-open',         label: '성장경험일지', value: '12',   unit: '건' },
+  { icon: 'fa-solid fa-clipboard-list',    label: '비교과프로그램 신청', value: '5', unit: '건' },
 ]
 
 const radarAxes = [
@@ -166,8 +168,6 @@ export default function AiLounge() {
             <span className="al-lv-badge">Lv. 23</span>
           </div>
         </div>
-
-        <div className="al-profile-sep" />
 
         <div className="al-stats-row">
           {userStats.map((s, i) => (

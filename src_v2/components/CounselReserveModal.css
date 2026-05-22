@@ -1,0 +1,115 @@
+/* ─── 상담 예약 신청 모달 (crm- prefix) ──────────────────────────── */
+
+.crm-section {
+  margin-bottom: 20px;
+}
+
+.crm-section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin-bottom: 10px;
+}
+
+.crm-section-title i {
+  color: var(--color-primary);
+}
+
+.crm-req {
+  color: var(--color-danger);
+}
+
+.crm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.crm-table th,
+.crm-table td {
+  border: 1px solid var(--color-border);
+  padding: 9px 12px;
+  text-align: left;
+}
+
+.crm-table th {
+  background: #F5F8FE;
+  color: var(--color-text-sub);
+  font-weight: 700;
+  width: 92px;
+  white-space: nowrap;
+}
+
+.crm-table td {
+  color: var(--color-navy);
+  font-weight: 600;
+}
+
+.crm-textarea {
+  width: 100%;
+  min-height: 110px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--color-navy);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.crm-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+}
+
+.crm-textarea::placeholder {
+  color: var(--color-text-muted);
+}
+
+.crm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.crm-btn-ghost,
+.crm-btn-primary {
+  height: 40px;
+  padding: 0 22px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.crm-btn-ghost {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-sub);
+}
+
+.crm-btn-ghost:hover {
+  background: var(--color-surface);
+}
+
+.crm-btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.crm-btn-primary:hover {
+  opacity: 0.92;
+}
+
+.crm-btn-primary:disabled {
+  background: #C4CEE6;
+  cursor: not-allowed;
+}

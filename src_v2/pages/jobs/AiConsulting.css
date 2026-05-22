@@ -1,0 +1,419 @@
+/* ─── AI 컨설팅 (ac- prefix) ─────────────────────────────────────── */
+
+.ac-wrap {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 28px 40px 44px;
+}
+
+/* ── 헤더 ─────────────────────────────────────────────── */
+.ac-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+
+.ac-back-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: #fff;
+  color: var(--color-text-sub);
+  font-size: 16px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.ac-back-btn:hover {
+  background: var(--color-surface);
+}
+
+.ac-header h1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--color-navy);
+  margin-bottom: 3px;
+}
+
+.ac-header h1 i {
+  color: #6D5CE7;
+}
+
+.ac-header p {
+  font-size: 14px;
+  color: var(--color-text-sub);
+}
+
+/* ── 카드 ─────────────────────────────────────────────── */
+.ac-card {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: 24px 26px;
+}
+
+.ac-card-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.ac-card-title i {
+  color: var(--color-primary);
+}
+
+.ac-card-desc {
+  margin-top: 4px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  color: var(--color-text-sub);
+}
+
+/* ── 자소서 선택 ──────────────────────────────────────── */
+.ac-pick-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ac-pick-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.ac-pick-item:hover {
+  background: var(--color-surface);
+  border-color: #BFD1FF;
+}
+
+.ac-pick-item.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
+.ac-pick-radio {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid #C4CEE6;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 10px;
+}
+
+.ac-pick-radio.active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+}
+
+.ac-pick-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.ac-pick-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.ac-badge {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+}
+
+.ac-pick-date {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+.ac-pick-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin-bottom: 5px;
+}
+
+.ac-pick-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  font-size: 12px;
+  color: var(--color-text-sub);
+}
+
+.ac-pick-meta i {
+  margin-right: 4px;
+  color: var(--color-text-muted);
+}
+
+/* ── 액션 버튼 ────────────────────────────────────────── */
+.ac-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.ac-btn-ghost,
+.ac-btn-primary {
+  height: 42px;
+  padding: 0 22px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font);
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.ac-btn-ghost {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-sub);
+}
+
+.ac-btn-ghost:hover {
+  background: var(--color-surface);
+}
+
+.ac-btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.ac-btn-primary:hover {
+  opacity: 0.92;
+}
+
+.ac-btn-primary:disabled {
+  background: #C4CEE6;
+  cursor: not-allowed;
+}
+
+/* ── 평가 중 ──────────────────────────────────────────── */
+.ac-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 72px 0;
+  gap: 6px;
+}
+
+.ac-spinner {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 4px solid var(--color-primary-bg);
+  border-top-color: var(--color-primary);
+  animation: ac-spin 0.8s linear infinite;
+  margin-bottom: 14px;
+}
+
+@keyframes ac-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ac-loading p {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.ac-loading span {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ── 평가 결과 ────────────────────────────────────────── */
+.ac-summary {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  margin: 16px 0 20px;
+  padding: 16px 18px;
+  background: #F5F8FE;
+  border-radius: var(--radius-md);
+}
+
+.ac-summary-label {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-bottom: 3px;
+}
+
+.ac-summary-value {
+  display: block;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.ac-result {
+  display: flex;
+  gap: 20px;
+}
+
+.ac-score-box {
+  width: 176px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, #2E5BFF 0%, #7B9FFF 100%);
+  color: #fff;
+  padding: 30px 0;
+}
+
+.ac-score-num {
+  font-size: 52px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.ac-score-label {
+  margin-top: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.9;
+}
+
+.ac-grades {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ac-grade-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.ac-grade-label {
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.ac-grade-score {
+  font-weight: 900;
+}
+
+.ac-grade-bar {
+  height: 8px;
+  background: #EAEEF6;
+  border-radius: 5px;
+  overflow: hidden;
+  margin: 6px 0 5px;
+}
+
+.ac-grade-fill {
+  display: block;
+  height: 100%;
+  border-radius: 5px;
+}
+
+.ac-grade-comment {
+  font-size: 11.5px;
+  color: var(--color-text-sub);
+}
+
+/* ── 개선 제안 ────────────────────────────────────────── */
+.ac-suggest {
+  margin-top: 20px;
+  padding: 18px 20px;
+  background: #FFFBEB;
+  border: 1px solid #FDE9C8;
+  border-radius: var(--radius-md);
+}
+
+.ac-suggest h3 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin-bottom: 12px;
+}
+
+.ac-suggest h3 i {
+  color: var(--color-warning);
+}
+
+.ac-suggest ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.ac-suggest li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--color-text-sub);
+  line-height: 1.55;
+}
+
+.ac-suggest li i {
+  color: var(--color-primary);
+  font-size: 12px;
+  margin-top: 3px;
+  flex-shrink: 0;
+}
+
+/* ── 반응형 ───────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .ac-wrap {
+    padding: 22px 18px 32px;
+  }
+  .ac-result {
+    flex-direction: column;
+  }
+  .ac-score-box {
+    width: 100%;
+    padding: 22px 0;
+  }
+  .ac-summary {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+}

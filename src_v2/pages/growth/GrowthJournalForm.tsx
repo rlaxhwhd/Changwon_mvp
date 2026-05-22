@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import GrowthSidebar from '../../components/GrowthSidebar'
 import { loadJournalEntries, saveJournalEntries, type Category, type Entry } from './GrowthJournal'
 import './GrowthJournal.css'
 
@@ -75,7 +74,6 @@ export default function GrowthJournalForm() {
 
   return (
     <div className="gj-wrapper">
-      <GrowthSidebar />
       <div className="gj-content">
         <div className="gj-edit-shell">
           <div className="gj-edit-header">

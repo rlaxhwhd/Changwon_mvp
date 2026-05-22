@@ -62,10 +62,10 @@ const sidebarSections = [
 
 /* ── mock data ── */
 const statCards = [
-  { label: '로드맵 달성률', value: 25, icon: 'fa-solid fa-route', color: '#0D8B7C', bg: '#F0FDFA', unit: '%' },
-  { label: '역량점수', value: 55, icon: 'fa-solid fa-chart-line', color: '#0E7490', bg: '#ECFEFF', unit: '점' },
-  { label: 'AI추천 프로그램', value: 8, icon: 'fa-solid fa-wand-magic-sparkles', color: '#047857', bg: '#ECFDF5', unit: '건' },
-  { label: '한 달내 접속일수', value: 12, icon: 'fa-solid fa-calendar-check', color: '#1D4ED8', bg: '#EFF6FF', unit: '일' },
+  { label: '로드맵 달성률', value: 25, icon: 'fa-solid fa-route', unit: '%' },
+  { label: '역량점수', value: 55, icon: 'fa-solid fa-gauge-high', unit: '점' },
+  { label: 'AI추천 프로그램', value: 8, icon: 'fa-solid fa-wand-magic-sparkles', unit: '건' },
+  { label: '한 달내 접속일수', value: 12, icon: 'fa-regular fa-calendar-days', unit: '일' },
 ];
 
 const targetCompany = {
@@ -242,12 +242,14 @@ export default function Home6({ onNavigate, onToast }: Home6Props) {
             </div>
             <div className="h6-trophy-body">
               {[
-                { name: '미션왕', emoji: '📚', desc: '성장미션 7회 성공마다 +1', count: 2, current: 5, target: 7, color: '#F59E0B', bg: '#FFFBEB' },
-                { name: '역량개발왕', emoji: '🏆', desc: '비교과 프로그램 7개 이수마다 +1', count: 1, current: 3, target: 7, color: '#7C3AED', bg: '#F5F3FF' },
-                { name: '상담왕', emoji: '💬', desc: '상담 5회 완료마다 +1', count: 0, current: 2, target: 5, color: '#0D8B7C', bg: '#F0FDFA' },
+                { name: '미션왕', icon: 'fa-solid fa-book-open-reader', desc: '성장미션 7회 성공마다 +1', count: 2, current: 5, target: 7, color: '#D97706', bg: '#FFFBEB' },
+                { name: '역량개발왕', icon: 'fa-solid fa-medal', desc: '비교과 프로그램 7개 이수마다 +1', count: 1, current: 3, target: 7, color: '#7C3AED', bg: '#F5F3FF' },
+                { name: '상담왕', icon: 'fa-regular fa-comments', desc: '상담 5회 완료마다 +1', count: 0, current: 2, target: 5, color: '#0D8B7C', bg: '#F0FDFA' },
               ].map((trophy, i) => (
                 <div key={i} className="h6-trophy-item">
-                  <div className="h6-trophy-icon" style={{ background: trophy.bg }}>{trophy.emoji}</div>
+                  <div className="h6-trophy-icon" style={{ background: trophy.bg, color: trophy.color }}>
+                    <i className={trophy.icon} />
+                  </div>
                   <div className="h6-trophy-info">
                     <span className="h6-trophy-name">{trophy.name}</span>
                     <span className="h6-trophy-desc">{trophy.desc}</span>
@@ -270,7 +272,9 @@ export default function Home6({ onNavigate, onToast }: Home6Props) {
               <span>오늘의 성장미션</span>
             </div>
             <div className="h6-hero-mission-body">
-              <div className="h6-hero-mission-emoji">🎯</div>
+              <div className="h6-hero-mission-emoji">
+                <i className="fa-solid fa-bullseye" />
+              </div>
               <strong>TOEIC 영단어 일일미션</strong>
               <p>오늘의 영단어 10개를 학습하고 퀴즈를 풀어보세요</p>
             </div>
@@ -293,12 +297,12 @@ export default function Home6({ onNavigate, onToast }: Home6Props) {
           </div>
           <div className="h6-guide-steps">
             {[
-              { step: 1, title: '진단센터', desc: '나를 진단하고 이해해요', detail: '9CORE · 인적성 · CARES 검사로 내 역량과 성격을 파악합니다.', icon: 'fa-regular fa-circle-user', page: 'career-diagnosis' as PageId, color: '#334155' },
-              { step: 2, title: '목표 기업 설정', desc: '꿈을 구체화해요', detail: 'AI가 희망 기업·직무 기반으로 합격률을 분석하고 부족한 역량을 알려줍니다.', icon: 'fa-regular fa-building', page: 'ai-prediction' as PageId, color: '#334155' },
-              { step: 3, title: '전문 상담', desc: '전문가와 함께 설계해요', detail: '진로/취업 상담사, 심리 상담사와 1:1 상담으로 방향을 잡아보세요.', icon: 'fa-regular fa-comments', page: 'counsel-career' as PageId, color: '#334155' },
-              { step: 4, title: '로드맵 생성', desc: 'AI가 경로를 그려줘요', detail: '진단 + 상담 데이터를 종합해서 나만의 커리어 로드맵을 생성합니다.', icon: 'fa-solid fa-route', page: 'ai-roadmap' as PageId, color: '#334155' },
-              { step: 5, title: '역량 개발', desc: '부족한 부분을 채워요', detail: '로드맵에 따라 비교과 프로그램, 자격증, 어학 등에 참여합니다.', icon: 'fa-solid fa-chart-column', page: 'program-apply' as PageId, color: '#2563EB' },
-              { step: 6, title: '취업 지원', desc: '꿈에 도달하세요', detail: 'AI 이력서·면접 준비, 맞춤 채용공고로 최종 취업까지 지원합니다.', icon: 'fa-solid fa-briefcase', page: 'ai-jobs' as PageId, color: '#334155' },
+              { step: 1, title: '진단센터', desc: '나를 진단하고 이해해요', detail: '9CORE · 인적성 · CARES 검사로 내 역량과 성격을 파악합니다.', icon: 'fa-solid fa-clipboard-check', page: 'career-diagnosis' as PageId, color: '#475569' },
+              { step: 2, title: '목표 기업 설정', desc: '꿈을 구체화해요', detail: 'AI가 희망 기업·직무 기반으로 합격률을 분석하고 부족한 역량을 알려줍니다.', icon: 'fa-solid fa-bullseye', page: 'ai-prediction' as PageId, color: '#475569' },
+              { step: 3, title: '전문 상담', desc: '전문가와 함께 설계해요', detail: '진로/취업 상담사, 심리 상담사와 1:1 상담으로 방향을 잡아보세요.', icon: 'fa-regular fa-comments', page: 'counsel-career' as PageId, color: '#475569' },
+              { step: 4, title: '로드맵 생성', desc: 'AI가 경로를 그려줘요', detail: '진단 + 상담 데이터를 종합해서 나만의 커리어 로드맵을 생성합니다.', icon: 'fa-solid fa-route', page: 'ai-roadmap' as PageId, color: '#475569' },
+              { step: 5, title: '역량 개발', desc: '부족한 부분을 채워요', detail: '로드맵에 따라 비교과 프로그램, 자격증, 어학 등에 참여합니다.', icon: 'fa-solid fa-chart-line', page: 'program-apply' as PageId, color: '#2563EB' },
+              { step: 6, title: '취업 지원', desc: '꿈에 도달하세요', detail: 'AI 이력서·면접 준비, 맞춤 채용공고로 최종 취업까지 지원합니다.', icon: 'fa-solid fa-briefcase', page: 'ai-jobs' as PageId, color: '#475569' },
             ].map((s, i, arr) => {
               const isCurrent = s.step === 5;
               return (

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import GrowthSidebar from '../../components/GrowthSidebar'
+import Modal from '../../components/Modal'
 import './SkillTree.css'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -151,6 +151,26 @@ const MOCK_DATA: SkillTreeData = {
   },
 }
 
+// ─── Job options (직무 추가) ──────────────────────────────────────────────────
+
+interface JobOption {
+  id: string
+  icon: string
+  name: string
+  subtitle: string
+  fitPercent: number
+}
+
+const JOB_OPTIONS: JobOption[] = [
+  { id: 'web-dev', icon: 'fa-globe', name: '웹개발자', subtitle: '웹 서비스 프론트·백엔드 개발', fitPercent: 88 },
+  { id: 'uiux', icon: 'fa-pen-ruler', name: 'UI/UX 디자이너', subtitle: '사용자 경험·인터페이스 설계', fitPercent: 62 },
+  { id: 'app-dev', icon: 'fa-mobile-screen-button', name: '앱개발자', subtitle: 'iOS·Android 모바일 앱 개발', fitPercent: 79 },
+  { id: 'network', icon: 'fa-network-wired', name: '네트워크 엔지니어', subtitle: '네트워크 구축·운영 관리', fitPercent: 55 },
+  { id: 'gov', icon: 'fa-building-columns', name: '공무원', subtitle: '행정·기술직 공직 진출', fitPercent: 43 },
+  { id: 'infra', icon: 'fa-server', name: '인프라 설계', subtitle: '서버·클라우드 인프라 아키텍처', fitPercent: 67 },
+  { id: 'public-it', icon: 'fa-building-shield', name: '공기업 전산직', subtitle: '공기업 IT·전산 직무', fitPercent: 71 },
+]
+
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 function DonutChart({ percent }: { percent: number }) {
@@ -187,11 +207,24 @@ interface Props {
 
 export default function SkillTree({ data = MOCK_DATA }: Props) {
   const [selectedDirection, setSelectedDirection] = useState(data.defaultDirectionId)
+  const [pickerOpen, setPickerOpen] = useState(false)
+  const [addedJobs, setAddedJobs] = useState<JobOption[]>([])
+
+  const availableJobs = JOB_OPTIONS.filter(job => !addedJobs.some(a => a.id === job.id))
+
+  const addJob = (job: JobOption) => {
+    setAddedJobs(prev => [...prev, job])
+    setSelectedDirection(job.id)
+    setPickerOpen(false)
+  }
+
+  const removeJob = (id: string) => {
+    setAddedJobs(prev => prev.filter(job => job.id !== id))
+    setSelectedDirection(prev => (prev === id ? data.defaultDirectionId : prev))
+  }
 
   return (
     <div className="st-wrapper">
-      <GrowthSidebar />
-
       <div className="st-content">
         {/* ── Header ── */}
         <div className="st-header">
@@ -274,7 +307,7 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
                 </div>
               ))}
             </div>
-            <div className="st-col-fit">적합도 {data.core.fitPercent}%</div>
+            <div className="st-col-fit">진행도 {data.core.fitPercent}%</div>
           </div>
 
           {/* Col 3: 전문 역량 */}
@@ -301,7 +334,7 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
                 </div>
               ))}
             </div>
-            <div className="st-col-fit">적합도 {data.expert.fitPercent}%</div>
+            <div className="st-col-fit">진행도 {data.expert.fitPercent}%</div>
           </div>
 
           {/* Col 4: 직무 방향 */}
@@ -332,6 +365,45 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
                   </div>
                 </div>
               ))}
+
+              {addedJobs.map(job => (
+                <div
+                  key={job.id}
+                  className="st-skill-row st-dir-row"
+                  onClick={() => setSelectedDirection(job.id)}
+                >
+                  <div className="st-skill-icon">
+                    <i className={`fa-solid ${job.icon}`} />
+                  </div>
+                  <div className="st-skill-info">
+                    <span className={`st-skill-name${job.id === selectedDirection ? ' done' : ''}`}>
+                      {job.name}
+                    </span>
+                    <span className="st-skill-sub">{job.subtitle}</span>
+                  </div>
+                  <div className={`st-dir-fit${job.id === selectedDirection ? ' selected' : ''}`}>
+                    <span>{job.fitPercent}%</span>
+                    <small>적합도</small>
+                  </div>
+                  <button
+                    className="st-dir-remove"
+                    onClick={e => { e.stopPropagation(); removeJob(job.id) }}
+                    aria-label={`${job.name} 삭제`}
+                  >
+                    <i className="fa-solid fa-xmark" />
+                  </button>
+                </div>
+              ))}
+
+              <button className="st-dir-add" onClick={() => setPickerOpen(true)}>
+                <div className="st-dir-add-icon">
+                  <i className="fa-solid fa-plus" />
+                </div>
+                <div className="st-dir-add-text">
+                  <span className="st-dir-add-name">직무 추가</span>
+                  <span className="st-dir-add-sub">관심 직무를 선택해 적합도를 확인하세요</span>
+                </div>
+              </button>
             </div>
           </div>
 
@@ -370,6 +442,28 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
           💡 <strong>TIP</strong>&nbsp; 스킬을 클릭하면 관련 강의, 추천 학습, 실무 프로젝트를 확인할 수 있어요!
         </div>
       </div>
+
+      {/* ── 직무 선택 모달 ── */}
+      <Modal open={pickerOpen} onClose={() => setPickerOpen(false)} title="직무 추가" size="sm">
+        <p className="st-picker-desc">관심 직무를 선택하면 현재 역량 기준 적합도를 분석해 드려요.</p>
+        <div className="st-picker-list">
+          {availableJobs.map(job => (
+            <button key={job.id} className="st-picker-item" onClick={() => addJob(job)}>
+              <div className="st-picker-icon">
+                <i className={`fa-solid ${job.icon}`} />
+              </div>
+              <div className="st-picker-info">
+                <span className="st-picker-name">{job.name}</span>
+                <span className="st-picker-sub">{job.subtitle}</span>
+              </div>
+              <div className="st-picker-fit">적합도 {job.fitPercent}%</div>
+            </button>
+          ))}
+          {availableJobs.length === 0 && (
+            <p className="st-picker-empty">모든 직무를 추가했습니다.</p>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }

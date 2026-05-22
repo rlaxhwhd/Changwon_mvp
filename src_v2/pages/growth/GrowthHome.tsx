@@ -1,5 +1,4 @@
 import './GrowthHome.css'
-import GrowthSidebar from '../../components/GrowthSidebar'
 
 const MISSIONS = [
   { id: 1, label: 'AI 역량 분석 리포트 읽기', xp: 10, icon: 'fa-regular fa-file-lines' },
@@ -60,8 +59,6 @@ function GrowthGraph() {
 export default function GrowthHome() {
   return (
     <div className="gh-shell">
-      <GrowthSidebar />
-
       <div className="gh-page">
         <div className="gh-title-row">
           <span className="gh-title-icon"><i className="fa-solid fa-house" /></span>

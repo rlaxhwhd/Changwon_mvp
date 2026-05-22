@@ -1,0 +1,233 @@
+.pc-layout {
+  display: grid;
+  grid-template-columns: 220px 220px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+.pc-select-panel,
+.pc-professor-panel,
+.pc-mode-card {
+  background: #fff;
+  border: 1px solid #dce5f5;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.pc-select-panel {
+  padding: 20px 16px;
+  min-height: 520px;
+}
+
+.pc-option-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 450px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.pc-option-list button {
+  min-height: 36px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  color: var(--color-navy);
+  font-size: 13px;
+  font-weight: 800;
+  text-align: left;
+}
+
+.pc-option-list button:hover,
+.pc-option-list button.active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.pc-professor-panel {
+  padding: 20px;
+}
+
+.pc-professor-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.pc-professor-head .cc-panel-title {
+  margin-bottom: 0;
+}
+
+.pc-professor-head > span {
+  color: var(--color-text-sub);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pc-professor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.pc-professor-card {
+  min-height: 96px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid #e5ebf6;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--color-navy);
+  text-align: left;
+}
+
+.pc-professor-card.active {
+  border-color: var(--color-primary);
+  background: linear-gradient(135deg, #fff, #f3f7ff);
+  box-shadow: inset 0 0 0 1px rgba(46, 91, 255, 0.08);
+}
+
+.pc-avatar {
+  width: 42px;
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  font-weight: 900;
+}
+
+.pc-professor-card strong,
+.pc-professor-card small,
+.pc-professor-card em {
+  display: block;
+}
+
+.pc-professor-card strong {
+  font-size: 14px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.pc-professor-card small,
+.pc-professor-card em {
+  color: var(--color-text-sub);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.pc-mode-card {
+  padding: 16px;
+}
+
+.pc-mode-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.pc-mode-tabs button {
+  height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid #dce5f5;
+  border-radius: var(--radius-sm);
+  color: var(--color-navy);
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.pc-mode-tabs button.active {
+  color: #fff;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  box-shadow: 0 8px 18px rgba(46, 91, 255, 0.18);
+}
+
+.pc-online-form {
+  display: grid;
+  gap: 12px;
+}
+
+.pc-online-form label {
+  display: grid;
+  gap: 7px;
+  color: var(--color-navy);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.pc-online-form input,
+.pc-online-form textarea {
+  width: 100%;
+  border: 1px solid #dce5f5;
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  outline: none;
+}
+
+.pc-online-form input {
+  height: 42px;
+  padding: 0 12px;
+}
+
+.pc-online-form textarea {
+  min-height: 132px;
+  padding: 12px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+.pc-offline-calendar {
+  overflow-x: auto;
+}
+
+.pc-calendar-grid,
+.pc-selected-bar {
+  min-width: 760px;
+}
+
+.pc-selected-bar {
+  grid-template-columns: auto 1fr 220px;
+}
+
+@media (max-width: 1100px) {
+  .pc-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-select-panel {
+    min-height: auto;
+  }
+
+  .pc-option-list {
+    max-height: 240px;
+  }
+}
+
+@media (max-width: 768px) {
+  .pc-professor-head,
+  .pc-mode-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .pc-professor-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -6440,7 +6440,14 @@ tbody td {
   flex: 1; padding: 18px; display: flex; flex-direction: column;
   align-items: center; text-align: center; justify-content: center;
 }
-.h6-hero-mission-emoji { font-size: 32px; margin-bottom: 8px; }
+.h6-hero-mission-emoji {
+  width: 46px; height: 46px; border-radius: 12px; margin: 0 auto 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; color: var(--h6-primary);
+  background: linear-gradient(180deg, #fff, var(--h6-primary-light));
+  border: 1px solid var(--h6-card-border);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.07);
+}
 .h6-hero-mission-body strong { font-size: 14px; color: var(--h6-text); margin-bottom: 4px; }
 .h6-hero-mission-body p { font-size: 12px; color: var(--h6-text-sub); margin: 0; line-height: 1.4; }
 .h6-hero-mission-btn {
@@ -6471,7 +6478,9 @@ tbody td {
 .h6-trophy-icon {
   width: 36px; height: 36px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 18px; flex-shrink: 0;
+  font-size: 15px; flex-shrink: 0;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.72), 0 6px 14px rgba(15, 23, 42, 0.05);
 }
 .h6-trophy-info { flex: 1; min-width: 0; }
 .h6-trophy-name { font-size: 13px; font-weight: 700; color: var(--h6-text); display: block; }
@@ -6551,17 +6560,20 @@ tbody td {
   margin: 0 auto 10px;
 }
 .h6-guide-step-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 21px;
+  font-size: 19px;
   margin: 0 auto 11px;
-  background: #F8FAFC;
+  background: linear-gradient(180deg, #FFFFFF 0%, #F6F8FC 100%);
   border: 1px solid #DCE5F1;
-  box-shadow: inset 0 0 0 5px rgba(255,255,255,0.78), 0 7px 16px rgba(30, 41, 59, 0.05);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
+}
+.h6-guide-step-icon i {
+  line-height: 1;
 }
 .h6-guide-step-title {
   color: #1D2A3D;
@@ -6617,8 +6629,9 @@ tbody td {
   color: #2563EB !important;
 }
 .h6-guide-step.h6-guide-current .h6-guide-step-icon {
-  background: #F8FAFF;
-  border-color: #D6E4FF;
+  background: linear-gradient(180deg, #FFFFFF 0%, #EFF6FF 100%);
+  border-color: #BFD6FF;
+  box-shadow: 0 12px 24px rgba(37, 99, 235, 0.16);
 }
 
 /* ── Body ── */
@@ -6657,14 +6670,16 @@ tbody td {
   border: 1px solid var(--h6-card-border); text-align: center;
 }
 .h6-stat-icon {
-  width: 40px; height: 40px; border-radius: 10px;
+  width: 42px; height: 42px; border-radius: 12px;
   display: flex; align-items: center; justify-content: center;
   font-size: 16px; margin: 0 auto 10px;
+  border: 1px solid rgba(15, 23, 42, 0.06);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.72), 0 8px 18px rgba(15, 23, 42, 0.05);
 }
-.h6-stat-card:nth-child(1) .h6-stat-icon { background: var(--h6-stat-icon-1-bg); color: var(--h6-stat-icon-1-color); }
-.h6-stat-card:nth-child(2) .h6-stat-icon { background: var(--h6-stat-icon-2-bg); color: var(--h6-stat-icon-2-color); }
-.h6-stat-card:nth-child(3) .h6-stat-icon { background: var(--h6-stat-icon-3-bg); color: var(--h6-stat-icon-3-color); }
-.h6-stat-card:nth-child(4) .h6-stat-icon { background: var(--h6-stat-icon-4-bg); color: var(--h6-stat-icon-4-color); }
+.h6-stat-card:nth-child(1) .h6-stat-icon { background: linear-gradient(180deg, #fff, var(--h6-stat-icon-1-bg)); color: var(--h6-stat-icon-1-color); }
+.h6-stat-card:nth-child(2) .h6-stat-icon { background: linear-gradient(180deg, #fff, var(--h6-stat-icon-2-bg)); color: var(--h6-stat-icon-2-color); }
+.h6-stat-card:nth-child(3) .h6-stat-icon { background: linear-gradient(180deg, #fff, var(--h6-stat-icon-3-bg)); color: var(--h6-stat-icon-3-color); }
+.h6-stat-card:nth-child(4) .h6-stat-icon { background: linear-gradient(180deg, #fff, var(--h6-stat-icon-4-bg)); color: var(--h6-stat-icon-4-color); }
 .h6-stat-label { font-size: 11px; color: var(--h6-text-sub); font-weight: 600; margin-bottom: 4px; }
 .h6-stat-value { font-size: 28px; font-weight: 800; color: var(--h6-text); }
 .h6-stat-unit { font-size: 13px; font-weight: 500; color: var(--h6-text-muted); margin-left: 2px; }
@@ -6674,8 +6689,10 @@ tbody td {
 .h6-target-info { flex: 1; }
 .h6-target-company { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
 .h6-target-logo {
-  width: 44px; height: 44px; border-radius: 10px; background: var(--h6-input-bg);
-  display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--h6-text-sub);
+  width: 44px; height: 44px; border-radius: 12px; background: linear-gradient(180deg, #fff, var(--h6-input-bg));
+  display: flex; align-items: center; justify-content: center; font-size: 17px; color: var(--h6-primary);
+  border: 1px solid var(--h6-card-border);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
 }
 .h6-target-name { font-size: 15px; font-weight: 700; color: var(--h6-text); }
 .h6-target-meta { font-size: 12px; color: var(--h6-text-muted); }
@@ -6729,8 +6746,10 @@ tbody td {
 }
 .h6-rec-item:hover { background: var(--h6-primary-light); }
 .h6-rec-icon {
-  width: 32px; height: 32px; border-radius: 8px;
+  width: 34px; height: 34px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center; font-size: 14px;
+  border: 1px solid rgba(15, 23, 42, 0.05);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.7);
 }
 .h6-rec-name { flex: 1; font-size: 13px; font-weight: 600; color: var(--h6-text); }
 .h6-rec-match { font-size: 13px; font-weight: 700; color: var(--h6-primary); }

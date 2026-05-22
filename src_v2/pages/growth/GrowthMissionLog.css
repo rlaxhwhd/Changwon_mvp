@@ -1,0 +1,386 @@
+.gml-page {
+  min-height: calc(100vh - var(--gnb-height));
+  padding: 34px 40px 54px;
+  background: #ffffff;
+  color: #071638;
+}
+
+.gml-header,
+.gml-stats,
+.gml-card,
+.gml-records {
+  max-width: 1458px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.gml-header {
+  margin-bottom: 22px;
+}
+
+.gml-header span {
+  display: inline-flex;
+  margin-bottom: 10px;
+  color: #075cff;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.gml-header h1 {
+  margin-bottom: 10px;
+  color: #071638;
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.gml-header p {
+  color: #42567d;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.gml-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.gml-stats article,
+.gml-card {
+  border: 1px solid #dce5f5;
+  border-radius: 12px;
+  background: #ffffff;
+  box-shadow: 0 16px 38px rgba(15, 45, 95, 0.055);
+}
+
+.gml-stats article {
+  padding: 18px 20px;
+}
+
+.gml-stats article.correct {
+  border-color: #bbf7d0;
+  background: #f0fdf4;
+}
+
+.gml-stats article.correct strong {
+  color: #16a34a;
+}
+
+.gml-stats article.wrong {
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.gml-stats article.wrong strong {
+  color: #dc2626;
+}
+
+.gml-stats span {
+  display: block;
+  margin-bottom: 8px;
+  color: #647497;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gml-stats strong {
+  color: #075cff;
+  font-size: 30px;
+  font-weight: 900;
+}
+
+.gml-card {
+  padding: 20px 22px;
+  margin-bottom: 16px;
+}
+
+.gml-card h2 {
+  margin-bottom: 14px;
+  color: #071638;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.gml-wrong div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gml-wrong span {
+  padding: 7px 12px;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #dc2626;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gml-filters {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+
+.gml-filters div {
+  display: inline-flex;
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid #dce5f5;
+  border-radius: 10px;
+  background: #f6f8fd;
+}
+
+.gml-filters button {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  color: #42567d;
+  font-size: 14px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.gml-filters button.active {
+  background: #075cff;
+  color: #ffffff;
+}
+
+.gml-filters button.active.correct {
+  background: #16a34a;
+}
+
+.gml-filters button.active.wrong {
+  background: #dc2626;
+}
+
+.gml-filters > span {
+  margin-left: auto;
+  color: #647497;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gml-date-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid #e4eaf5;
+}
+
+.gml-date-head strong {
+  color: #071638;
+  font-size: 17px;
+  font-weight: 900;
+}
+
+.gml-date-head span {
+  color: #647497;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gml-record-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+}
+
+.gml-record {
+  min-height: 124px;
+  padding: 14px;
+  border: 1px solid #dce5f5;
+  border-radius: 10px;
+  background: #fbfcff;
+  text-align: left;
+}
+
+.gml-record.correct {
+  border-color: #bbf7d0;
+  background: #f7fef9;
+}
+
+.gml-record.wrong {
+  border-color: #fecaca;
+  background: #fffafa;
+}
+
+.gml-record div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.gml-record span {
+  color: #075cff;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.gml-record strong {
+  color: #071638;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gml-record p {
+  margin-bottom: 10px;
+  color: #071638;
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.4;
+}
+
+.gml-record small {
+  color: #647497;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.gml-pagination {
+  max-width: 1458px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 22px auto 0;
+}
+
+.gml-pagination button {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #dce5f5;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #42567d;
+  font-size: 14px;
+  font-weight: 900;
+}
+
+.gml-pagination button.active {
+  border-color: #075cff;
+  background: #075cff;
+  color: #ffffff;
+}
+
+.gml-pagination button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.gml-pagination span {
+  margin-left: 8px;
+  color: #647497;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.gml-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(7, 22, 56, 0.4);
+}
+
+.gml-modal {
+  position: relative;
+  width: min(560px, 100%);
+  padding: 28px;
+  border-radius: 14px;
+  background: #ffffff;
+  box-shadow: 0 24px 60px rgba(7, 22, 56, 0.2);
+}
+
+.gml-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: #647497;
+}
+
+.gml-detail-status {
+  display: inline-flex;
+  margin-bottom: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gml-detail-status.correct {
+  background: #dcfce7;
+  color: #16a34a;
+}
+
+.gml-detail-status.wrong {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+.gml-modal h2 {
+  margin-bottom: 18px;
+  color: #071638;
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.gml-modal dl {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.gml-modal div {
+  min-width: 0;
+}
+
+.gml-modal dt {
+  margin-bottom: 6px;
+  color: #647497;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.gml-modal dd {
+  padding: 12px;
+  border-radius: 8px;
+  background: #f6f8fd;
+  color: #24375f;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .gml-page {
+    padding: 26px 18px 42px;
+  }
+
+  .gml-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .gml-filters {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .gml-filters > span {
+    margin-left: 0;
+  }
+}

@@ -2,7 +2,7 @@
 .pa-shell {
   display: flex;
   min-height: calc(100vh - var(--gnb-height));
-  background: #F4F6FB;
+  background: #fff;
 }
 
 .pa-wrap {

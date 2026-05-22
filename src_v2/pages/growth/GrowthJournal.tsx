@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import GrowthSidebar from '../../components/GrowthSidebar'
 import './GrowthJournal.css'
 
 /* ── Types ───────────────────────────────────────────────────────── */
@@ -147,7 +146,7 @@ const CTA_STEPS = [
 ]
 
 const CAT_STYLE: Record<Category, { bg: string; color: string }> = {
-  '아르바이트': { bg: '#FFF7ED', color: '#C05621' },
+  '아르바이트': { bg: '#F0F9FF', color: '#0284C7' },
   '팀프로젝트': { bg: '#EEF2FF', color: '#2E5BFF' },
   '기타 활동':  { bg: '#F0FDF4', color: '#16A34A' },
 }
@@ -212,9 +211,6 @@ export default function GrowthJournal() {
 
   return (
     <div className="gj-wrapper">
-
-      {/* ── Left Sidebar ── */}
-      <GrowthSidebar />
 
       {/* ── Main Content ── */}
       <div className="gj-content">

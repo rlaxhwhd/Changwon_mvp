@@ -1,14 +1,288 @@
+import { useMemo, useState } from 'react'
+import CounselReserveModal from '../../components/CounselReserveModal'
+import './CareerCounsel.css'
+
+type CounselorId = 'all' | 'kim' | 'lee' | 'park' | 'choi' | 'jung' | 'kang' | 'lim' | 'hwang'
+type SlotStatus = 'available' | 'reserved' | 'selected'
+
+interface Counselor {
+  id: CounselorId
+  name: string
+  title: string
+  specialty: string
+}
+
+interface Day {
+  key: string
+  label: string
+  date: string
+}
+
+interface SelectedSlot {
+  day: Day
+  time: string
+}
+
+const counselors: Counselor[] = [
+  { id: 'kim', name: '김지연', title: '상담사', specialty: '진로설계 · 취업전략' },
+  { id: 'lee', name: '이준호', title: '상담사', specialty: '직무탐색 · 면접준비' },
+  { id: 'park', name: '박소연', title: '상담사', specialty: '자기소개서 · 포트폴리오' },
+  { id: 'choi', name: '최민수', title: '상담사', specialty: '공기업 · 대기업 지원' },
+  { id: 'jung', name: '정하은', title: '상담사', specialty: '진로고민 · 역량진단' },
+  { id: 'kang', name: '강민우', title: '상담사', specialty: 'IT 직무 · 개발 커리어' },
+  { id: 'lim', name: '이지혜', title: '상담사', specialty: '면접코칭 · 이미지메이킹' },
+  { id: 'hwang', name: '황서우', title: '상담사', specialty: '해외취업 · 어학전략' },
+]
+
+const days: Day[] = [
+  { key: 'mon', label: '05/18 (월)', date: '2026. 05. 18 (월)' },
+  { key: 'tue', label: '05/19 (화)', date: '2026. 05. 19 (화)' },
+  { key: 'wed', label: '05/20 (수)', date: '2026. 05. 20 (수)' },
+  { key: 'thu', label: '05/21 (목)', date: '2026. 05. 21 (목)' },
+  { key: 'fri', label: '05/22 (금)', date: '2026. 05. 22 (금)' },
+]
+
+const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
+
+const reservedSlots = new Set([
+  'kim-mon-09:00',
+  'kim-mon-12:00',
+  'kim-mon-15:00',
+  'kim-tue-10:00',
+  'kim-tue-16:00',
+  'kim-wed-11:00',
+  'kim-wed-14:00',
+  'kim-thu-12:00',
+  'kim-thu-17:00',
+  'kim-fri-13:00',
+])
+
+function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
+  const start = ((dayIndex * times.length + timeIndex) * 3) % counselors.length
+  return Array.from({ length: 3 }, (_, index) => counselors[(start + index) % counselors.length])
+}
+
 export default function CareerCounsel() {
+  const [selectedCounselor, setSelectedCounselor] = useState<CounselorId>('kim')
+  const [search, setSearch] = useState('')
+  const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>({
+    day: days[4],
+    time: '10:00',
+  })
+  const [notice, setNotice] = useState('')
+  const [reserveOpen, setReserveOpen] = useState(false)
+
+  const showNotice = (message: string) => {
+    setNotice(message)
+    window.setTimeout(() => setNotice(''), 1800)
+  }
+
+  const openReserve = () => {
+    if (isAllMode || !selectedSlot) {
+      showNotice('상담사와 날짜·시간을 먼저 선택해주세요')
+      return
+    }
+    setReserveOpen(true)
+  }
+
+  const activeCounselor = counselors.find(counselor => counselor.id === selectedCounselor) ?? counselors[0]
+  const isAllMode = selectedCounselor === 'all'
+  const filteredCounselors = counselors.filter(counselor =>
+    `${counselor.name} ${counselor.title} ${counselor.specialty}`.includes(search.trim()),
+  )
+  const slotCounselors = useMemo(
+    () => days.map((_, dayIndex) => times.map((__, timeIndex) => getCounselorsForSlot(dayIndex, timeIndex))),
+    [],
+  )
+
+  const getStatus = (dayKey: string, time: string): SlotStatus => {
+    if (selectedSlot?.day.key === dayKey && selectedSlot.time === time && !isAllMode) return 'selected'
+    if (reservedSlots.has(`${selectedCounselor}-${dayKey}-${time}`)) return 'reserved'
+    return 'available'
+  }
+
+  const selectSlot = (day: Day, time: string) => {
+    if (isAllMode) return
+    if (getStatus(day.key, time) === 'reserved') return
+    if (selectedSlot?.day.key === day.key && selectedSlot.time === time) {
+      setSelectedSlot(null)
+      return
+    }
+    setSelectedSlot({ day, time })
+  }
+
+  const selectCounselorFromCalendar = (counselor: Counselor, day: Day, time: string) => {
+    setSelectedCounselor(counselor.id)
+    setSelectedSlot({ day, time })
+    setNotice(`${counselor.name} 상담사 선택됨`)
+    window.setTimeout(() => setNotice(''), 1800)
+  }
+
   return (
-    <div className="v2-page">
-      <div className="page-stub">
-        <i className="fa-solid fa-person-chalkboard page-stub-icon" />
-        <h1 className="page-stub-title">진로취업상담</h1>
-        <p style={{ color: 'var(--color-text-sub)', fontSize: 14 }}>
-          진로·취업 전문 상담 신청 및 상담 내역 확인
-        </p>
-        <span className="page-stub-path">/counsel/career</span>
+    <div className="cc-wrap">
+      {notice && (
+        <div className="cc-toast" role="status">
+          <i className="fa-solid fa-circle-check" />
+          {notice}
+        </div>
+      )}
+
+      <section className="cc-hero">
+        <div className="cc-breadcrumb">
+          <span>상담센터</span>
+          <i className="fa-solid fa-chevron-right" />
+          <span>진로취업 상담</span>
+          <i className="fa-solid fa-chevron-right" />
+          <strong>상담 신청</strong>
+        </div>
+        <h1>상담 신청</h1>
+        <p>상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.</p>
+      </section>
+
+      <div className="cc-layout">
+        <aside className="cc-counselor-panel">
+          <div className="cc-panel-title">
+            <i className="fa-regular fa-user" />
+            <h2>상담사 선택</h2>
+          </div>
+
+          <label className="cc-search">
+            <input
+              value={search}
+              onChange={event => setSearch(event.target.value)}
+              placeholder="상담사 이름을 검색하세요"
+            />
+            <i className="fa-solid fa-magnifying-glass" />
+          </label>
+
+          <div className="cc-counselor-list">
+            <button
+              className={`cc-counselor-row ${isAllMode ? 'active' : ''}`}
+              onClick={() => setSelectedCounselor('all')}
+            >
+              <span>
+                <strong>전체보기</strong>
+                <small>모든 시간대 예약 가능 상담사 전체 표시</small>
+              </span>
+              <i className="fa-solid fa-chevron-right" />
+            </button>
+
+            {filteredCounselors.map(counselor => (
+              <button
+                key={counselor.id}
+                className={`cc-counselor-row ${selectedCounselor === counselor.id ? 'active' : ''}`}
+                onClick={() => setSelectedCounselor(counselor.id)}
+              >
+                <span>
+                  <strong>{counselor.name} {counselor.title}</strong>
+                  <small>{counselor.specialty}</small>
+                </span>
+                <i className="fa-solid fa-chevron-right" />
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <main className="cc-calendar-card">
+          <div className="cc-calendar-head">
+            <button aria-label="이전 주">
+              <i className="fa-solid fa-chevron-left" />
+            </button>
+            <div className="cc-week-title">
+              <i className="fa-regular fa-calendar-days" />
+              <strong>2026. 05. 18 (월)</strong>
+              <span>~</span>
+              <strong>2026. 05. 22 (금)</strong>
+            </div>
+            <div className="cc-head-actions">
+              <button aria-label="다음 주">
+                <i className="fa-solid fa-chevron-right" />
+              </button>
+              <button className="cc-this-week">이번 주</button>
+              <button aria-label="달력 열기">
+                <i className="fa-regular fa-calendar-days" />
+              </button>
+            </div>
+          </div>
+
+          <div className="cc-legend">
+            <span><i className="available" />예약 가능</span>
+            <span><i className="reserved" />예약 완료</span>
+            <span><i className="selected" />선택됨</span>
+          </div>
+
+          <div className="cc-calendar-grid">
+            <div className="cc-grid-head empty" />
+            {days.map(day => (
+              <div key={day.key} className="cc-grid-head">{day.label}</div>
+            ))}
+
+            {times.map(time => (
+              <div className="cc-time-row" key={time}>
+                <div className="cc-time-cell">{time}</div>
+                {days.map((day, dayIndex) => {
+                  if (isAllMode) {
+                    const timeIndex = times.indexOf(time)
+                    const group = slotCounselors[dayIndex]?.[timeIndex] ?? []
+                    return (
+                      <div key={`${day.key}-${time}`} className="cc-slot cc-slot-counselors">
+                        {group.length > 0 ? group.map(counselor => (
+                          <button
+                            key={counselor.id}
+                            onClick={() => selectCounselorFromCalendar(counselor, day, time)}
+                          >
+                            {counselor.name}
+                          </button>
+                        )) : <span>예약 가능</span>}
+                      </div>
+                    )
+                  }
+
+                  const status = getStatus(day.key, time)
+                  return (
+                    <button
+                      key={`${day.key}-${time}`}
+                      className={`cc-slot cc-slot-${status}`}
+                      onClick={() => selectSlot(day, time)}
+                    >
+                      {status === 'selected' && <i className="fa-solid fa-check" />}
+                      {status === 'selected' ? '선택됨' : status === 'reserved' ? '예약 완료' : '예약 가능'}
+                    </button>
+                  )
+                })}
+              </div>
+            ))}
+          </div>
+
+          <div className="cc-selected-bar">
+            <div className="cc-selected-title">
+              <i className="fa-regular fa-clock" />
+              <strong>선택한 일정</strong>
+            </div>
+            <div className="cc-selected-info">
+              <span><i className="fa-regular fa-user" />{isAllMode ? '전체 상담사 보기' : `${activeCounselor.name} ${activeCounselor.title}`}</span>
+              <span><i className="fa-regular fa-calendar-days" />{selectedSlot ? selectedSlot.day.date : '날짜 미선택'}</span>
+              <span><i className="fa-regular fa-clock" />{selectedSlot ? selectedSlot.time : '시간 미선택'}</span>
+            </div>
+            <button className="cc-reserve-btn" onClick={openReserve}>상담 예약하기</button>
+          </div>
+        </main>
       </div>
+
+      <CounselReserveModal
+        open={reserveOpen}
+        onClose={() => setReserveOpen(false)}
+        roleLabel="상담사"
+        counselorName={`${activeCounselor.name} ${activeCounselor.title}`}
+        date={selectedSlot?.day.date ?? ''}
+        time={selectedSlot?.time ?? ''}
+        room="학생회관 2층 진로취업상담실"
+        phone="055-213-3214"
+        onSubmit={() => {
+          setReserveOpen(false)
+          showNotice('상담 예약이 신청되었습니다')
+        }}
+      />
     </div>
   )
 }
