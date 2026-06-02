@@ -8,18 +8,18 @@
 
 /* ── 헤더 ─────────────────────────────────────────────── */
 .jh-header {
-  margin-bottom: 26px;
+  margin-bottom: 24px;
 }
 
 .jh-header h1 {
-  font-size: 26px;
+  font-size: 32px;
   font-weight: 900;
   color: var(--color-navy);
   margin-bottom: 6px;
 }
 
 .jh-header p {
-  font-size: 14px;
+  font-size: 17px;
   color: var(--color-text-sub);
 }
 
@@ -32,7 +32,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--color-navy);
 }
@@ -43,7 +43,7 @@
 
 .jh-section-head p {
   margin-top: 4px;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--color-text-muted);
 }
 
@@ -83,7 +83,7 @@
 .jh-resume-badge {
   background: var(--color-primary-bg);
   color: var(--color-primary);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 20px;
@@ -94,7 +94,7 @@
   height: 26px;
   border-radius: 7px;
   color: var(--color-text-muted);
-  font-size: 12px;
+  font-size: 15px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -107,7 +107,7 @@
 }
 
 .jh-resume-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
   color: var(--color-navy);
   margin-bottom: 10px;
@@ -122,7 +122,7 @@
 }
 
 .jh-resume-meta span {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-sub);
   font-weight: 500;
 }
@@ -133,7 +133,7 @@
 }
 
 .jh-resume-preview {
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1.6;
   color: var(--color-text-muted);
   display: -webkit-box;
@@ -150,7 +150,7 @@
   margin-top: auto;
   padding-top: 11px;
   border-top: 1px solid var(--color-border);
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-muted);
 }
 
@@ -172,19 +172,19 @@
 }
 
 .jh-empty i {
-  font-size: 40px;
+  font-size: 43px;
   color: var(--color-surface-alt);
   margin-bottom: 6px;
 }
 
 .jh-empty p {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-navy);
 }
 
 .jh-empty span {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--color-text-muted);
 }
 
@@ -232,7 +232,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
+  font-size: 23px;
   flex-shrink: 0;
 }
 
@@ -245,7 +245,7 @@
 }
 
 .jh-action-text strong {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 800;
 }
 
@@ -255,7 +255,7 @@
 }
 
 .jh-action-arrow {
-  font-size: 16px;
+  font-size: 19px;
   flex-shrink: 0;
   transition: transform 0.15s;
 }
@@ -273,7 +273,7 @@
 }
 
 .jh-view-date {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-muted);
 }
 
@@ -292,7 +292,7 @@
 }
 
 .jh-view-info span {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--color-text-sub);
   font-weight: 600;
 }
@@ -303,7 +303,7 @@
 }
 
 .jh-view-content {
-  font-size: 14px;
+  font-size: 17px;
   line-height: 1.85;
   color: var(--color-navy);
   white-space: pre-wrap;
@@ -314,7 +314,7 @@
   padding-top: 12px;
   border-top: 1px solid var(--color-border);
   text-align: right;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-muted);
 }
 

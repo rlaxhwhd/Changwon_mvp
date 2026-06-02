@@ -2,12 +2,12 @@ import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import './QuestBoard.css'
 
-type QuestTab = 'daily' | 'weekly' | 'monthly'
+type QuestTab = 'daily' | 'monthly' | 'semester'
 
 const questTabs: Array<{ id: QuestTab; label: string }> = [
   { id: 'daily', label: '일일 퀘스트' },
-  { id: 'weekly', label: '주간 퀘스트' },
   { id: 'monthly', label: '월간 퀘스트' },
+  { id: 'semester', label: '학기 퀘스트' },
 ]
 
 const questsByTab = {
@@ -15,55 +15,62 @@ const questsByTab = {
     {
       title: '토익 영단어 10문제 학습하기',
       description: '오늘의 영단어 문제를 풀고 학습 기록을 남겨보세요.',
-      xp: 10,
+      xp: 20,
       icon: 'fa-book-open',
       path: '/growth/mission',
     },
     {
       title: '성장일지 1개 기록하기',
       description: '오늘의 경험과 배운 점을 성장일지에 정리해보세요.',
-      xp: 20,
+      xp: 10,
       icon: 'fa-pen-to-square',
       path: '/growth/journal/new',
     },
     {
       title: '채용공고 리스트 확인하기',
       description: '새로 등록된 공고를 확인하고 관심 기업을 찾아보세요.',
-      xp: 30,
+      xp: 10,
       icon: 'fa-briefcase',
       path: '/jobs',
     },
   ],
-  weekly: [
+  monthly: [
     {
-      title: '상담 1회 신청하기',
-      description: '진로 또는 심리 상담을 신청하고 다음 계획을 세워보세요.',
-      xp: 80,
-      icon: 'fa-comments',
-      path: '/counsel/career',
+      title: '성장일지 2개 기록하기',
+      description: '이번 달 경험과 배운 점을 성장일지에 정리해 남겨보세요.',
+      xp: 300,
+      icon: 'fa-book',
+      path: '/growth/journal',
     },
     {
-      title: '비교과프로그램 신청 1회하기',
-      description: '관심 있는 비교과 프로그램을 찾아 신청해보세요.',
-      xp: 80,
+      title: '비교과 프로그램 2회 참여',
+      description: '관심 있는 비교과 프로그램을 신청하고 참여해보세요.',
+      xp: 300,
       icon: 'fa-clipboard-check',
       path: '/growth/program',
     },
-  ],
-  monthly: [
     {
-      title: 'AI자소서 생성하기 1회',
-      description: 'AI 자소서 도구로 지원 직무에 맞는 초안을 만들어보세요.',
-      xp: 150,
+      title: '상담 2회 신청하기',
+      description: '진로·심리·지도교수 상담을 신청해 계획을 구체화하세요.',
+      xp: 300,
+      icon: 'fa-comments',
+      path: '/counsel/career',
+    },
+  ],
+  semester: [
+    {
+      title: 'AI 자소서 생성 및 컨설팅',
+      description: 'AI 자소서 도구로 초안을 만들고 컨설팅으로 완성도를 높이세요.',
+      xp: 500,
       icon: 'fa-file-lines',
-      path: '/jobs/home',
+      path: '/jobs/home/resume',
     },
     {
-      title: '진단하기',
-      description: '취업역량 진단을 진행하고 현재 상태를 확인해보세요.',
-      xp: 150,
-      icon: 'fa-chart-simple',
-      path: '/diagnosis/employment',
+      title: '자격증 1개 취득',
+      description: '학과 관련 또는 공인 자격증을 1개 이상 취득해보세요.',
+      xp: 900,
+      icon: 'fa-certificate',
+      path: '/growth/skill-tree',
     },
   ],
 }
@@ -218,8 +225,8 @@ export default function QuestBoard() {
               </div>
               <div className="qb-complete-list">
                 <span>일일 32개</span>
-                <span>주간 10개</span>
-                <span>월간 6개</span>
+                <span>월간 10개</span>
+                <span>학기 6개</span>
               </div>
             </article>
           </div>

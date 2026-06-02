@@ -9,7 +9,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 22px;
+  margin-bottom: 24px;
 }
 
 .job-header p {
@@ -21,7 +21,7 @@
 
 .job-header h1 {
   color: #071638;
-  font-size: 30px;
+  font-size: 32px;
   font-weight: 900;
   letter-spacing: 0;
 }
@@ -52,7 +52,7 @@
 }
 
 .job-header-actions i {
-  color: #075cff;
+  color: var(--color-primary);
 }
 
 .job-toolbar {
@@ -92,7 +92,7 @@
 }
 
 .job-count strong {
-  color: #075cff;
+  color: var(--color-primary);
 }
 
 .job-list {
@@ -166,7 +166,7 @@
 }
 
 .job-status.open {
-  color: #075cff;
+  color: var(--color-primary);
 }
 
 .job-status.soon {

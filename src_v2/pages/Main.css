@@ -31,7 +31,7 @@
 }
 
 .mn-greeting-title {
-  font-size: 28px;
+  font-size: 31px;
   font-weight: 900;
   color: var(--color-navy);
   margin-bottom: 6px;
@@ -39,7 +39,7 @@
 }
 
 .mn-greeting-sub {
-  font-size: 15px;
+  font-size: 18px;
   color: var(--color-text-sub);
 }
 
@@ -120,7 +120,7 @@
   align-items: center;
   justify-content: center;
   color: rgba(28, 36, 66, 0.55);
-  font-size: 26px;
+  font-size: 29px;
   border: 2px solid rgba(255, 255, 255, 0.7);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.8);
 }
@@ -147,7 +147,7 @@
 .mn-level-badge {
   background: var(--color-primary);
   color: #fff;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   padding: 4px 14px;
   border-radius: 20px;
@@ -169,14 +169,14 @@
 }
 
 .mn-xp-label {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-muted);
   font-weight: 500;
 }
 
 /* Shared stat card parts */
 .mn-sc-label {
-  font-size: 12px;
+  font-size: 15px;
   color: rgba(28, 36, 66, 0.60);
   font-weight: 700;
   margin-bottom: 4px;
@@ -191,20 +191,20 @@
 }
 
 .mn-sc-big {
-  font-size: 36px;
+  font-size: 39px;
   font-weight: 900;
   color: var(--color-navy);
   line-height: 1;
 }
 
 .mn-sc-denom {
-  font-size: 14px;
+  font-size: 17px;
   color: var(--color-text-sub);
   font-weight: 600;
 }
 
 .mn-sc-badge {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--color-primary);
   background: var(--color-primary-bg);
@@ -228,7 +228,7 @@
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   color: #fff;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   border-radius: 10px;
   text-align: center;
@@ -265,19 +265,19 @@
   justify-content: center;
   align-self: center;
   color: var(--color-primary);
-  font-size: 16px;
+  font-size: 19px;
   margin-bottom: 4px;
 }
 
 .mn-daily-title {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 2px;
 }
 
 .mn-daily-desc {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-sub);
   line-height: 1.5;
   flex: 1;
@@ -337,7 +337,7 @@
 }
 
 .mn-body-card-title {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--color-navy);
 }
@@ -358,20 +358,20 @@
 }
 
 .mn-radar-num {
-  font-size: 36px;
+  font-size: 39px;
   font-weight: 900;
   color: var(--color-navy);
   line-height: 1;
 }
 
 .mn-radar-denom {
-  font-size: 16px;
+  font-size: 19px;
   color: var(--color-text-sub);
   font-weight: 600;
 }
 
 .mn-radar-sub {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-muted);
   margin-bottom: 8px;
 }
@@ -396,7 +396,7 @@
   gap: 10px;
   padding: 9px 8px;
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .mn-rank-item.me {
@@ -410,7 +410,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   background: var(--color-surface);
   color: var(--color-text-sub);
@@ -433,7 +433,7 @@
 }
 
 .mn-rank-xp {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-text-muted);
 }
@@ -448,7 +448,7 @@
   border-radius: var(--radius-sm);
   background: var(--color-primary-bg);
   border: 1px solid var(--color-surface-alt);
-  font-size: 13px;
+  font-size: 16px;
 }
 
 .mn-rank-pos.me {
@@ -462,13 +462,13 @@
 }
 
 .mn-rank-my .mn-rank-name small {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-text-muted);
 }
 
 .mn-rank-my-pos {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 800;
   color: var(--color-primary);
 }
@@ -491,25 +491,25 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 25px;
   color: var(--color-primary);
   margin-bottom: 4px;
 }
 
 .mn-counsel-label {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-muted);
 }
 
 .mn-counsel-num {
-  font-size: 36px;
+  font-size: 39px;
   font-weight: 900;
   color: var(--color-navy);
   line-height: 1.1;
 }
 
 .mn-counsel-num span {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 600;
   color: var(--color-text-sub);
 }
@@ -522,12 +522,12 @@
 }
 
 .mn-counsel-date-label {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-muted);
 }
 
 .mn-counsel-date {
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--color-navy);
 }
@@ -538,7 +538,7 @@
   padding: 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-sub);
   background: var(--color-surface);
@@ -564,7 +564,7 @@
 }
 
 .mn-prog-title {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
   color: #fff;
   margin-bottom: 4px;
@@ -573,7 +573,7 @@
 }
 
 .mn-prog-date {
-  font-size: 12px;
+  font-size: 15px;
   color: rgba(255,255,255,0.7);
   margin-bottom: 10px;
   position: relative;
@@ -584,7 +584,7 @@
   padding: 6px 16px;
   background: #fff;
   color: var(--color-primary);
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   border-radius: 6px;
   position: relative;
@@ -611,7 +611,7 @@
 }
 
 .mn-text-btn {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-muted);
   display: flex;
   align-items: center;
@@ -635,7 +635,7 @@
   gap: 6px;
   padding: 7px 0;
   border-bottom: 1px solid var(--color-border);
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-sub);
   line-height: 1.4;
 }
@@ -644,7 +644,7 @@
 
 .mn-notice-item i {
   color: var(--color-primary);
-  font-size: 10px;
+  font-size: 13px;
   margin-top: 3px;
   flex-shrink: 0;
 }
@@ -658,7 +658,7 @@
 }
 
 /* ════════════════════════════════════════════
-   목표 기업·합격분석
+   추천 비교과 + AI 추천 채용공고
 ════════════════════════════════════════════ */
 .mn-ai-section {
   padding: 28px 60px 40px;
@@ -666,225 +666,316 @@
   border-top: 1px solid var(--color-border);
 }
 
-/* 합격분석 카드 */
-.mn-target-card {
+.mn-recommend-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.mn-rec-card {
   background: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
-  padding: 22px 26px;
-  margin-bottom: 16px;
+  padding: 22px 24px 18px;
+  display: flex;
+  flex-direction: column;
 }
 
-.mn-target-head {
+.mn-rec-head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
-.mn-target-title {
+.mn-rec-title {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--color-navy);
-}
-
-.mn-target-title i { color: var(--color-primary); }
-
-.mn-target-body {
-  display: flex;
-  align-items: center;
-  gap: 32px;
-}
-
-.mn-target-main {
-  flex: 1;
-  min-width: 0;
-}
-
-.mn-target-company {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.mn-target-company-icon {
-  width: 42px;
-  height: 42px;
-  border-radius: 11px;
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   font-size: 18px;
-  flex-shrink: 0;
-}
-
-.mn-target-company-name {
-  font-size: 15px;
   font-weight: 800;
   color: var(--color-navy);
 }
 
-.mn-target-company-meta {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  margin-top: 3px;
-}
+.mn-rec-title i { color: var(--color-primary); }
 
-.mn-target-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 11px;
-}
-
-.mn-target-bar-row {
-  display: grid;
-  grid-template-columns: 138px 1fr 46px;
-  align-items: center;
-  gap: 14px;
-}
-
-.mn-target-bar-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--color-text-sub);
-}
-
-.mn-target-bar-track {
-  height: 9px;
-  background: #EAEEF6;
-  border-radius: 5px;
-  overflow: hidden;
-}
-
-.mn-target-bar-fill {
-  display: block;
-  height: 100%;
-  border-radius: 5px;
-  background: var(--color-primary);
-  transition: width 0.5s ease;
-}
-
-.mn-target-bar-fill.low { background: var(--color-danger); }
-
-.mn-target-bar-pct {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--color-text-sub);
-  text-align: right;
-}
-
-.mn-target-donut {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding-left: 8px;
-}
-
-/* 합격예측 도넛 */
-.mn-pass-donut {
-  position: relative;
-  width: 104px;
-  height: 104px;
-}
-
-.mn-pass-donut svg {
-  width: 100%;
-  height: 100%;
-  display: block;
-}
-
-.mn-pass-donut-text {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.mn-pass-donut-num {
-  font-size: 23px;
-  font-weight: 900;
-  color: var(--color-primary);
-  line-height: 1;
-}
-
-.mn-pass-donut-cap {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-  margin-top: 3px;
-}
-
-/* AI 커리어 팁 카드 */
-.mn-tip-card {
-  background: linear-gradient(135deg, #F4F7FF 0%, #EEF2FF 100%);
-  border: 1px solid var(--color-surface-alt);
-  border-radius: var(--radius-md);
-  padding: 20px 26px;
-}
-
-.mn-tip-head {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.mn-tip-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: linear-gradient(135deg, #2E5BFF, #7B9FFF);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  padding: 4px 10px;
-  border-radius: 20px;
-}
-
-.mn-tip-title {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--color-navy);
-}
-
-.mn-tip-list {
+/* ── 비교과 리스트 ───────────────────── */
+.mn-rec-prog-list {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
 
-.mn-tip-item {
+.mn-rec-prog-item {
   display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  background: #fff;
+  align-items: center;
+  gap: 14px;
+  padding: 10px;
   border-radius: var(--radius-sm);
-  padding: 13px 15px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
 }
 
-.mn-tip-item i {
-  color: var(--color-warning);
-  font-size: 14px;
-  margin-top: 1px;
+.mn-rec-prog-item:hover {
+  background: #FAFBFE;
+  border-color: var(--color-border);
+}
+
+.mn-rec-prog-thumb {
+  width: 72px;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  overflow: hidden;
   flex-shrink: 0;
 }
 
-.mn-tip-item p {
+.mn-rec-prog-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.mn-rec-prog-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mn-rec-prog-tags {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.mn-rec-prog-cat {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+}
+
+.mn-rec-prog-dday {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--color-surface);
+  color: var(--color-text-sub);
+}
+
+.mn-rec-prog-dday.urgent {
+  background: #FEF2F2;
+  color: var(--color-danger);
+}
+
+.mn-rec-prog-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-navy);
+  line-height: 1.35;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── 채용공고 리스트 ─────────────────── */
+.mn-rec-job-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.mn-rec-job-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.mn-rec-job-item:hover {
+  background: #FAFBFE;
+  border-color: var(--color-border);
+}
+
+.mn-rec-job-logo {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.mn-rec-job-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.mn-rec-job-company {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.mn-rec-job-role {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mn-rec-job-match {
+  display: flex;
+  align-items: baseline;
+  gap: 1px;
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.mn-rec-job-match.high {
+  background: #DCFCE7;
+  color: #16A34A;
+}
+
+.mn-rec-job-match strong {
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.mn-rec-job-match span {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════ */
+.mn-footer {
+  background: #EFF1F4;
+  border-top: 1px solid var(--color-border);
+  padding: 36px 60px 40px;
+  color: var(--color-text-sub);
+}
+
+.mn-footer-inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: 56px;
+}
+
+.mn-footer-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding-top: 4px;
+}
+
+.mn-footer-logo {
+  font-size: 26px;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  color: var(--color-navy);
+  line-height: 1;
+}
+
+.mn-footer-school {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-navy);
+  letter-spacing: -0.2px;
+}
+
+.mn-footer-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mn-footer-line {
+  font-size: 13px;
+  color: #4B5563;
+  line-height: 1.7;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.mn-footer-label {
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.mn-footer-line a {
+  color: #4B5563;
+  text-decoration: none;
+}
+
+.mn-footer-line a:hover {
+  text-decoration: underline;
+}
+
+.mn-footer-copy {
+  margin-top: 2px;
+  font-size: 13px;
+  color: #4B5563;
+  gap: 14px;
+}
+
+.mn-footer-links {
+  list-style: none;
+  display: flex;
+  gap: 36px;
+  margin-top: 18px;
+  padding: 0;
+}
+
+.mn-footer-links a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-sub);
-  line-height: 1.55;
+  color: #4B5563;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.mn-footer-links a:hover {
+  color: var(--color-primary);
+}
+
+.mn-footer-links i {
+  font-size: 10px;
+  color: #9CA3AF;
 }
 
 /* ════════════════════════════════════════════
@@ -904,6 +995,7 @@
   .mn-hero, .mn-body, .mn-ai-section { padding-left: 32px; padding-right: 32px; }
   .mn-greeting { margin-left: 16px; }
   .mn-stat-cards { margin-left: 16px; }
+  .mn-footer { padding-left: 32px; padding-right: 32px; }
 }
 
 @media (max-width: 768px) {
@@ -913,9 +1005,11 @@
   .mn-hero-img { position: static; width: 100%; height: 180px; margin-top: 16px; }
   .mn-hero-img img { object-position: center; }
   .mn-ai-section { padding: 20px 16px 28px; }
-  .mn-target-body { flex-direction: column; align-items: stretch; gap: 18px; }
-  .mn-target-donut { padding-left: 0; }
-  .mn-target-bar-row { grid-template-columns: 104px 1fr 40px; gap: 10px; }
+  .mn-recommend-grid { grid-template-columns: 1fr; gap: 14px; }
   .mn-greeting,
   .mn-stat-cards { margin-left: 0; }
+  .mn-footer { padding: 28px 16px 32px; }
+  .mn-footer-inner { flex-direction: column; gap: 20px; align-items: flex-start; }
+  .mn-footer-brand { flex-direction: row; align-items: center; gap: 10px; }
+  .mn-footer-links { gap: 20px; }
 }

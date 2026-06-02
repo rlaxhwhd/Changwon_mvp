@@ -1,31 +1,41 @@
 .qb-page {
   min-height: calc(100vh - var(--gnb-height));
-  padding: 42px 40px 54px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 28px 54px;
   background: #ffffff;
   color: #071638;
 }
 
 .qb-header {
-  max-width: 1458px;
-  margin: 0 auto 34px;
+  min-height: 178px;
+  margin: 24px 0 24px;
+  padding: 34px 44px 32px;
+  background:
+    radial-gradient(circle at 74% 36%, rgba(46, 91, 255, 0.16), transparent 30%),
+    linear-gradient(108deg, #ffffff 0%, #f8faff 42%, #eef4ff 100%);
+  border: 1px solid #dce5f5;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .qb-header h1 {
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   font-size: 32px;
+  line-height: 1.25;
   font-weight: 900;
+  color: var(--color-navy);
   letter-spacing: 0;
 }
 
 .qb-header p {
-  color: #42567d;
+  color: #32456d;
   font-size: 17px;
   font-weight: 600;
 }
 
 .qb-summary-grid,
 .qb-content-grid {
-  max-width: 1458px;
   margin: 0 auto;
 }
 
@@ -121,7 +131,7 @@
   min-width: 108px;
   height: 42px;
   border-radius: 8px;
-  background: linear-gradient(180deg, #1b67ff 0%, #075cff 100%);
+  background: linear-gradient(180deg, #1b67ff 0%, var(--color-primary) 100%);
   color: #ffffff;
   font-size: 16px;
   font-weight: 900;
@@ -279,7 +289,7 @@
 }
 
 .qb-card-tab.active {
-  color: #075cff;
+  color: var(--color-primary);
   background: #ffffff;
   box-shadow: 0 8px 18px rgba(15, 45, 95, 0.08);
 }
@@ -324,7 +334,7 @@
 }
 
 .qb-xp {
-  color: #075cff;
+  color: var(--color-primary);
   font-size: 18px;
   font-weight: 900;
   text-align: right;
@@ -336,14 +346,14 @@
   border: 1px solid #cfe0ff;
   border-radius: 8px;
   background: #eef4ff;
-  color: #075cff;
+  color: var(--color-primary);
   font-size: 15px;
   font-weight: 900;
 }
 
 .qb-start-btn:hover {
-  border-color: #075cff;
-  background: #075cff;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
   color: #ffffff;
 }
 
@@ -414,7 +424,7 @@
 }
 
 .qb-guide li i {
-  color: #075cff;
+  color: var(--color-primary);
   font-size: 18px;
   text-align: center;
 }
@@ -452,7 +462,7 @@
   gap: 10px;
   border: 1px solid #abc4ff;
   border-radius: 8px;
-  color: #075cff;
+  color: var(--color-primary);
   background: #ffffff;
   font-size: 16px;
   font-weight: 900;
@@ -575,7 +585,7 @@
   }
 
   .qb-header h1 {
-    font-size: 28px;
+    font-size: 32px;
   }
 
   .qb-summary-grid,

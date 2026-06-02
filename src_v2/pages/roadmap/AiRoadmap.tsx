@@ -283,8 +283,10 @@ export default function AiRoadmap() {
               </div>
 
               <div className="ar-phase-list">
-                {PHASES.map(phase => (
-                  <article key={phase.num} className={`ar-phase ar-phase-${phase.status}`}>
+                {PHASES.map(phase => {
+                  const isCollapsed = collapsedPhases.has(phase.num)
+                  return (
+                  <article key={phase.num} className={`ar-phase ar-phase-${phase.status} ${isCollapsed ? 'ar-phase-collapsed' : 'ar-phase-expanded'}`}>
                     <button className="ar-phase-head" onClick={() => togglePhase(phase.num)}>
                       <div className="ar-phase-left">
                         <span className="ar-phase-icon">
@@ -302,7 +304,7 @@ export default function AiRoadmap() {
                       </div>
                     </button>
 
-                    {!collapsedPhases.has(phase.num) && (
+                    {!isCollapsed && (
                       <div className="ar-phase-content">
                         <div className="ar-task-list">
                           {phase.tasks.map(task => (
@@ -323,7 +325,8 @@ export default function AiRoadmap() {
                       </div>
                     )}
                   </article>
-                ))}
+                  )
+                })}
               </div>
             </section>
 
@@ -433,15 +436,7 @@ export default function AiRoadmap() {
               <div className="ar-priority-row low"><span />낮음 <strong>1개</strong></div>
             </div>
 
-            <div className="ar-side-card">
-              <h3>추천 다음 행동</h3>
-              <ol className="ar-next-list">
-                <li>캡스톤디자인 팀 모집 공고 확인</li>
-                <li>넥슨코리아 하계 인턴 공고 확인</li>
-                <li>TOEIC 월 목표 700점 학습 시작</li>
-                <li>PMP 기초 과정 수강 신청</li>
-              </ol>
-            </div>
+            {/* 추천 다음 행동은 각 phase의 todos에 이미 노출되므로 사이드바에서 제거 (F12) */}
 
             {activePhase && (
               <div className="ar-side-cta">

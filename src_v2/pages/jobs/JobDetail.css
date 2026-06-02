@@ -10,7 +10,7 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 16px;
-  color: #075cff;
+  color: var(--color-primary);
   font-size: 14px;
   font-weight: 900;
 }
@@ -80,7 +80,7 @@
   font-weight: 900;
 }
 
-.jd-status.open { color: #075cff; }
+.jd-status.open { color: var(--color-primary); }
 .jd-status.soon { color: #e87700; }
 .jd-status.closed { color: #2f1608; }
 
@@ -182,7 +182,7 @@
 }
 
 .jd-process li::marker {
-  color: #075cff;
+  color: var(--color-primary);
   font-weight: 900;
 }
 

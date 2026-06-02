@@ -55,6 +55,8 @@ const TEST_NAMES: Record<string, string> = {
 
 const scoreLevel = (s: number) => (s >= 80 ? 'high' : s >= 60 ? 'mid' : 'low')
 const scoreColor = (s: number) => (s >= 80 ? '#22C55E' : s >= 60 ? '#F59E0B' : '#EF4444')
+// 막대그래프 색상: 0~40 빨강 / 41~70 초록 / 71~100 파랑
+const barColor = (s: number) => (s >= 71 ? '#2E5BFF' : s >= 41 ? '#22C55E' : '#EF4444')
 
 /* ── 홀로그램 레이더 차트 (Main 스타일 SVG) ──────────────────────── */
 function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
@@ -292,10 +294,10 @@ export default function DiagnosisResultDetail() {
                   <span className="dr-score-name">
                     {c.name} <i className="fa-solid fa-chevron-right" />
                   </span>
-                  <span className="dr-score-num" style={{ color: c.color }}>{c.score}점</span>
+                  <span className="dr-score-num" style={{ color: barColor(c.score) }}>{c.score}점</span>
                 </div>
                 <div className="dr-bar">
-                  <span className="dr-bar-fill" style={{ width: `${c.score}%`, background: c.color }} />
+                  <span className="dr-bar-fill" style={{ width: `${c.score}%`, background: barColor(c.score) }} />
                 </div>
               </button>
             ))}
@@ -313,7 +315,7 @@ export default function DiagnosisResultDetail() {
         {ability && (
           <div>
             <div className="dr-modal-score">
-              <div className="dr-modal-score-num" style={{ color: ability.color }}>{ability.score}점</div>
+              <div className="dr-modal-score-num" style={{ color: barColor(ability.score) }}>{ability.score}점</div>
               <span className={`dr-badge dr-badge--${scoreLevel(ability.score)}`}>
                 {ability.score >= 80 ? '우수' : ability.score >= 60 ? '보통' : '보완필요'}
               </span>
@@ -330,10 +332,10 @@ export default function DiagnosisResultDetail() {
                 <div key={s.name} className="dr-sub-item">
                   <div className="dr-score-row">
                     <span className="dr-sub-name">{s.name}</span>
-                    <span className="dr-score-num" style={{ color: scoreColor(s.score) }}>{s.score}점</span>
+                    <span className="dr-score-num" style={{ color: barColor(s.score) }}>{s.score}점</span>
                   </div>
                   <div className="dr-bar">
-                    <span className="dr-bar-fill" style={{ width: `${s.score}%`, background: scoreColor(s.score) }} />
+                    <span className="dr-bar-fill" style={{ width: `${s.score}%`, background: barColor(s.score) }} />
                   </div>
                 </div>
               ))}

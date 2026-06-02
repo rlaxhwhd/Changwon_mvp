@@ -70,9 +70,33 @@ const results: ResultCard[] = [
   },
 ]
 
+const GUIDE_ITEMS = [
+  {
+    icon: 'fa-comments',
+    title: '상담사 면담 자료로 활용',
+    desc: '진로·심리·교수 상담을 신청할 때 검사 결과를 함께 공유하면, 상담사가 학생의 강점과 보완점을 빠르게 파악해 더 깊이 있는 상담을 받을 수 있어요.',
+  },
+  {
+    icon: 'fa-route',
+    title: 'AI 진로 로드맵에 자동 반영',
+    desc: '검사 결과는 AI 진로 로드맵 생성 시 핵심 데이터로 사용되어, 학생의 적성과 역량에 맞춘 맞춤형 로드맵과 우선순위 추천을 만들어냅니다.',
+  },
+  {
+    icon: 'fa-file-pdf',
+    title: 'PDF 출력으로 외부 활용',
+    desc: '검사 리포트는 PDF로 내려받아 학교 밖 상담기관, 멘토링, 취업 컨설팅 등 어디서든 본인의 진단 자료로 제출하거나 참고용으로 사용할 수 있어요.',
+  },
+  {
+    icon: 'fa-shapes',
+    title: '자소서·포트폴리오 작성 보조',
+    desc: '객관적 진단 데이터로 본인의 강점과 직무 적합도를 정리해두면, 자기소개서·포트폴리오·면접 답변을 일관된 근거로 작성할 수 있습니다.',
+  },
+]
+
 export default function DiagnosisResult() {
   const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState<Category>('전체')
+  const [isGuideOpen, setIsGuideOpen] = useState(false)
   const visibleResults = activeCategory === '전체'
     ? results
     : results.filter(result => result.category === activeCategory)
@@ -163,11 +187,75 @@ export default function DiagnosisResult() {
           검사 결과는 자기 이해와 성장의 참고자료로 활용해주세요.<br />
           결과 리포트에서는 AI 분석 요약과 추천 로드맵을 함께 확인할 수 있습니다.
         </p>
-        <button>
+        <button onClick={() => setIsGuideOpen(true)}>
           결과 활용 가이드 자세히 보기
           <i className="fa-solid fa-arrow-up-right-from-square" />
         </button>
       </section>
+
+      {isGuideOpen && (
+        <div
+          className="de-modal-backdrop"
+          role="presentation"
+          onMouseDown={() => setIsGuideOpen(false)}
+        >
+          <div
+            className="de-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="guide-modal-title"
+            onMouseDown={e => e.stopPropagation()}
+          >
+            <div className="de-modal-head">
+              <div className="de-modal-head-copy">
+                <span className="de-modal-badge">
+                  <i className="fa-solid fa-lightbulb" />
+                  결과 활용 가이드
+                </span>
+                <h2 id="guide-modal-title">검사 결과, 이렇게 활용해보세요</h2>
+                <p>
+                  진단 결과는 단순히 점수 확인용이 아니에요. 상담·로드맵·외부 활용까지
+                  여러 방면에서 학생의 진로 설계를 돕는 핵심 자료입니다.
+                </p>
+              </div>
+              <button
+                className="de-modal-close"
+                aria-label="닫기"
+                onClick={() => setIsGuideOpen(false)}
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
+            </div>
+
+            <ul className="de-modal-list">
+              {GUIDE_ITEMS.map(item => (
+                <li key={item.title} className="de-modal-item">
+                  <span className="de-modal-item-icon">
+                    <i className={`fa-solid ${item.icon}`} />
+                  </span>
+                  <div>
+                    <h3>{item.title}</h3>
+                    <p>{item.desc}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+
+            <div className="de-modal-foot">
+              <p>
+                <i className="fa-solid fa-circle-info" />
+                검사 결과는 개인정보 보호 기준에 따라 본인 동의 하에만 외부 공유가 가능합니다.
+              </p>
+              <button
+                className="de-modal-primary"
+                onClick={() => setIsGuideOpen(false)}
+              >
+                확인했어요
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

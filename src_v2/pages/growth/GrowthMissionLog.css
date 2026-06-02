@@ -1,42 +1,44 @@
 .gml-page {
   min-height: calc(100vh - var(--gnb-height));
-  padding: 34px 40px 54px;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 28px 54px;
   background: #ffffff;
   color: #071638;
 }
 
-.gml-header,
-.gml-stats,
-.gml-card,
-.gml-records {
-  max-width: 1458px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
 .gml-header {
-  margin-bottom: 22px;
+  min-height: 178px;
+  margin: 24px 0 24px;
+  padding: 34px 44px 32px;
+  background:
+    radial-gradient(circle at 74% 36%, rgba(46, 91, 255, 0.16), transparent 30%),
+    linear-gradient(108deg, #ffffff 0%, #f8faff 42%, #eef4ff 100%);
+  border: 1px solid #dce5f5;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .gml-header span {
   display: inline-flex;
   margin-bottom: 10px;
-  color: #075cff;
+  color: var(--color-primary);
   font-size: 14px;
   font-weight: 900;
 }
 
 .gml-header h1 {
-  margin-bottom: 10px;
-  color: #071638;
+  margin-bottom: 12px;
+  color: var(--color-navy);
   font-size: 32px;
+  line-height: 1.25;
   font-weight: 900;
   letter-spacing: 0;
 }
 
 .gml-header p {
-  color: #42567d;
-  font-size: 16px;
+  color: #32456d;
+  font-size: 17px;
   font-weight: 600;
 }
 
@@ -86,7 +88,7 @@
 }
 
 .gml-stats strong {
-  color: #075cff;
+  color: var(--color-primary);
   font-size: 30px;
   font-weight: 900;
 }
@@ -144,7 +146,7 @@
 }
 
 .gml-filters button.active {
-  background: #075cff;
+  background: var(--color-primary);
   color: #ffffff;
 }
 
@@ -219,7 +221,7 @@
 }
 
 .gml-record span {
-  color: #075cff;
+  color: var(--color-primary);
   font-size: 12px;
   font-weight: 900;
 }
@@ -266,8 +268,8 @@
 }
 
 .gml-pagination button.active {
-  border-color: #075cff;
-  background: #075cff;
+  border-color: var(--color-primary);
+  background: var(--color-primary);
   color: #ffffff;
 }
 

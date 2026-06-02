@@ -21,12 +21,13 @@ interface ProgramData {
   howTo: string[]
   contents: string[]
   effects: string[]
+  image?: string
 }
 
 const MOCK_PROGRAMS: Record<string, ProgramData> = {
   '1': {
     id: 1,
-    title: '파이썬 기초 프로그래밍 교육',
+    title: '데이터 기초 프로그래밍 교육',
     category: '취업',
     tags: ['추천', '인기'],
     period: '2025-09-09 ~ 2025-09-04 매주 화요일',
@@ -35,6 +36,7 @@ const MOCK_PROGRAMS: Record<string, ProgramData> = {
     fee: '무료',
     contact: '남진우(CWNU)',
     email: 'program@cwnu.ac.kr',
+    image: '/비교과프로그램1.png',
     schedule: [
       { date: '2025-09-09', label: '1주차: Python 기초 문법' },
       { date: '2025-09-16', label: '2주차: 데이터 구조' },
@@ -58,6 +60,146 @@ const MOCK_PROGRAMS: Record<string, ProgramData> = {
       '취업 포트폴리오에 활용 가능한 Python 역량 습득',
       '데이터 분석 및 자동화 업무 처리 능력 향상',
       '코딩 테스트 대비 기초 알고리즘 이해',
+    ],
+  },
+  '2': {
+    id: 2,
+    title: '데이터 직무역량 개발 교육',
+    category: '취업',
+    tags: ['추천', '심화'],
+    period: '2025-10-07 ~ 2025-11-04 매주 화요일',
+    location: '창원대학교 정보과학관',
+    capacity: 25,
+    fee: '무료',
+    contact: '남진우(CWNU)',
+    email: 'program@cwnu.ac.kr',
+    image: '/비교과프로그램2.png',
+    schedule: [
+      { date: '2025-10-07', label: '1주차: 업무 자동화 기초' },
+      { date: '2025-10-14', label: '2주차: Pandas 데이터 분석' },
+      { date: '2025-10-21', label: '3주차: 시각화 실습' },
+      { date: '2025-10-28', label: '4주차: 미니 프로젝트' },
+    ],
+    intro: `기업 실무에서 활용되는 Python 데이터 분석 및 자동화 역량을 기르는 심화 교육 과정입니다.\n\n현장 데이터를 기반으로 분석, 리포트 자동화, 시각화까지 한 번에 학습합니다.`,
+    howTo: [
+      '온라인 신청 → 접수 확인 → 교육 참여 → 수료증 발급',
+      '신청 후 담당자 이메일로 참가 확인서 발송',
+      '출석률 80% 이상 유지 시 수료증 발급',
+    ],
+    contents: [
+      'Pandas · Numpy 활용',
+      '데이터 시각화 (Matplotlib · Seaborn)',
+      'API 호출 및 데이터 수집',
+      '엑셀 · 업무 자동화 스크립트',
+      '실전 데이터 분석 프로젝트',
+    ],
+    effects: [
+      '실무 데이터 처리 역량 강화',
+      '직무 지원 시 차별화된 포트폴리오 확보',
+      '데이터 직군 전환 기회 마련',
+    ],
+  },
+  '3': {
+    id: 3,
+    title: 'ChatGPT 서비스의 발전 방향',
+    category: '진로',
+    tags: ['특강', '신규'],
+    period: '2025-11-12 단일 특강',
+    location: '창원대학교 대강당',
+    capacity: 40,
+    fee: '무료',
+    contact: '진로지원센터',
+    email: 'career@cwnu.ac.kr',
+    image: '/비교과프로그램3.png',
+    schedule: [
+      { date: '2025-11-12', label: '특강: 생성형 AI의 현재와 미래' },
+    ],
+    intro: `ChatGPT를 비롯한 생성형 AI 서비스의 현황과 미래 진로 방향을 탐색하는 진로 특강입니다.\n\n현직 AI 엔지니어가 직접 산업 동향과 진로 인사이트를 공유합니다.`,
+    howTo: [
+      '온라인 신청 → 참가 확인 → 특강 참여',
+      '특강 종료 후 Q&A 진행',
+    ],
+    contents: [
+      '생성형 AI 기술 트렌드',
+      'ChatGPT 서비스 사례 분석',
+      'AI 직무로 진출하는 커리어 로드맵',
+      '현직자 Q&A',
+    ],
+    effects: [
+      '생성형 AI 산업 동향 이해',
+      'AI 관련 진로 방향 설정',
+      '현직자 네트워크 경험',
+    ],
+  },
+  '4': {
+    id: 4,
+    title: '자기탐색으로 개인 역량 찾기',
+    category: '진로',
+    tags: ['추천', '워크숍'],
+    period: '2025-09-23 ~ 2025-10-14 매주 화요일',
+    location: '창원대학교 학생회관 상담실',
+    capacity: 20,
+    fee: '무료',
+    contact: '학생상담센터',
+    email: 'counsel@cwnu.ac.kr',
+    image: '/비교과프로그램4.png',
+    schedule: [
+      { date: '2025-09-23', label: '1주차: 강점 탐색 워크숍' },
+      { date: '2025-09-30', label: '2주차: 가치관·흥미 진단' },
+      { date: '2025-10-07', label: '3주차: 진로 비전 수립' },
+      { date: '2025-10-14', label: '4주차: 실행 계획 작성' },
+    ],
+    intro: `자기 탐색과 강점 발견을 통해 진로를 설계하는 진로 역량 강화 프로그램입니다.\n\n전문 상담사와 함께 진행되는 워크숍 형식으로, 자기 이해를 깊이 있게 다질 수 있습니다.`,
+    howTo: [
+      '온라인 신청 → 사전 검사지 작성 → 워크숍 참여',
+      '회차별 출석 80% 이상 시 수료증 발급',
+    ],
+    contents: [
+      '강점 진단 및 셀프 코칭',
+      '가치관·흥미 분석',
+      '진로 비전 보드 작성',
+      '실행 계획 수립 워크숍',
+    ],
+    effects: [
+      '자기 이해와 진로 명확성 향상',
+      '취업 자기소개서 작성 기반 마련',
+      '진로 결정 자신감 향상',
+    ],
+  },
+  '5': {
+    id: 5,
+    title: '해외 단기 어학연수 프로그램',
+    category: '어학',
+    tags: ['글로벌', '인기'],
+    period: '2026-01-05 ~ 2026-01-30 (4주)',
+    location: '필리핀 세부 / 호주 시드니',
+    capacity: 15,
+    fee: '일부 지원',
+    contact: '국제교류처',
+    email: 'global@cwnu.ac.kr',
+    image: '/비교과프로그램5.png',
+    schedule: [
+      { date: '2026-01-05', label: '출국 및 오리엔테이션' },
+      { date: '2026-01-06', label: '주간 어학 수업 시작' },
+      { date: '2026-01-23', label: '문화 체험 프로그램' },
+      { date: '2026-01-30', label: '수료식 및 귀국' },
+    ],
+    intro: `해외 현지에서 진행하는 4주간의 단기 어학연수 프로그램입니다.\n\n현지 어학원 정규 수업과 다양한 문화 체험을 통해 글로벌 역량을 강화합니다.`,
+    howTo: [
+      '온라인 신청 → 서류 심사 → 면접 → 최종 선발',
+      '선발자 사전 OT 참석 필수',
+      '학교 지원금은 일부 자기 부담금 발생',
+    ],
+    contents: [
+      '주 20시간 영어 정규 수업',
+      '문화 체험 (현지 투어, 봉사활동)',
+      '글로벌 네트워킹 이벤트',
+      '귀국 후 영어 발표 활동',
+    ],
+    effects: [
+      '실용 영어 회화 능력 향상',
+      '해외 문화 이해 및 글로벌 마인드 확장',
+      '국제 인증 어학연수 이수증 획득',
     ],
   },
   default: {
@@ -118,8 +260,14 @@ export default function ProgramDetail() {
 
           {/* Thumbnail */}
           <div className="pd-thumb">
-            <i className="fa-solid fa-image" />
-            <span>프로그램 대표 이미지</span>
+            {prog.image ? (
+              <img src={prog.image} alt={prog.title} />
+            ) : (
+              <>
+                <i className="fa-solid fa-image" />
+                <span>프로그램 대표 이미지</span>
+              </>
+            )}
           </div>
 
           {/* Tab navigation */}

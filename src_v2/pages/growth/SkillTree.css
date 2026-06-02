@@ -8,8 +8,10 @@
 
 .st-content {
   flex: 1;
-  padding: 28px 34px;
-  overflow-x: auto;
+  width: 100%;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 28px 56px;
   min-width: 0;
 }
 
@@ -17,15 +19,18 @@
 
 .st-header {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
-  background: #fff;
-  border: 1px solid #E2EAFB;
-  border-radius: 14px;
-  padding: 24px 26px;
-  box-shadow: 0 10px 28px rgba(46, 91, 255, 0.06);
+  min-height: 178px;
+  margin: 24px 0 24px;
+  padding: 34px 44px 32px;
+  background:
+    radial-gradient(circle at 74% 36%, rgba(46, 91, 255, 0.16), transparent 30%),
+    linear-gradient(108deg, #ffffff 0%, #f8faff 42%, #eef4ff 100%);
+  border: 1px solid #dce5f5;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
 }
 
 .st-header-left {
@@ -43,26 +48,28 @@
   align-items: center;
   justify-content: center;
   color: #2E5BFF;
-  font-size: 18px;
+  font-size: 21px;
   flex-shrink: 0;
 }
 
 .st-header-title {
-  font-size: 24px;
-  font-weight: 800;
+  font-size: 32px;
+  font-weight: 900;
   color: var(--color-navy);
-  line-height: 1.2;
+  line-height: 1.25;
+  margin-bottom: 12px;
 }
 
 .st-header-title-sub {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
-  color: var(--color-text-sub);
+  color: #32456d;
 }
 
 .st-header-subtitle {
-  font-size: 13px;
-  color: var(--color-text-sub);
+  font-size: 17px;
+  font-weight: 600;
+  color: #32456d;
   margin-top: 4px;
 }
 
@@ -72,8 +79,366 @@
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 14px;
-  margin-bottom: 20px;
+  margin-bottom: 0;
   align-items: stretch;
+}
+
+/* ─── Connector lines: 4 cards → 직무 방향 ──────────────────────────────── */
+
+.st-connect {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+  height: 26px;
+}
+
+.st-connect-col {
+  display: flex;
+  justify-content: center;
+}
+
+.st-connect-line {
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(180deg, #BFD3FF 0%, #8BB0FF 100%);
+  border-radius: 2px;
+}
+
+.st-connect-hwrap {
+  padding: 0 calc((100% - 42px) / 8);
+  height: 2px;
+}
+
+.st-connect-hline {
+  height: 2px;
+  width: 100%;
+  background: #8BB0FF;
+  border-radius: 2px;
+}
+
+.st-connect-down {
+  display: flex;
+  justify-content: center;
+  height: 26px;
+}
+
+/* ─── Direction section ────────────────────────────────────────────────── */
+
+.st-dir-section {
+  background: #fff;
+  border: 1px solid #E2EAFB;
+  border-radius: 14px;
+  box-shadow: 0 10px 28px rgba(46, 91, 255, 0.055);
+  padding: 22px 24px 24px;
+  margin-bottom: 20px;
+}
+
+.st-dir-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.st-dir-section-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1E63FF;
+  margin-bottom: 4px;
+}
+
+.st-dir-section-sub {
+  font-size: 15px;
+  color: var(--color-text-muted);
+}
+
+.st-dir-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 10px;
+  border: 1.5px dashed #C0D2F8;
+  background: #F6F9FF;
+  color: #1E63FF;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.st-dir-add-btn:hover {
+  background: #EEF4FF;
+  border-color: #1E63FF;
+}
+
+.st-dir-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+.st-dir-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #fff;
+  border: 1.5px solid #E2EAFB;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.st-dir-card:hover {
+  border-color: #8BB0FF;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(46, 91, 255, 0.08);
+}
+
+.st-dir-card.selected {
+  border-color: #1E63FF;
+  background: #F6F9FF;
+}
+
+.st-dir-card.expanded {
+  border-color: #1E63FF;
+  background: #F6F9FF;
+  box-shadow: 0 8px 20px rgba(46, 91, 255, 0.12);
+}
+
+.st-dir-card-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #EEF4FF;
+  color: #1E63FF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+.st-dir-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.st-dir-card-name {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1C2442;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-dir-card-sub {
+  font-size: 14px;
+  color: #6E7C9C;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.st-dir-card-fit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+  line-height: 1.1;
+}
+
+.st-dir-card-fit span {
+  font-size: 21px;
+  font-weight: 900;
+  color: #1E63FF;
+  letter-spacing: -0.3px;
+}
+
+.st-dir-card-fit small {
+  font-size: 13px;
+  font-weight: 700;
+  color: #7B89AA;
+}
+
+.st-dir-card-chevron {
+  position: absolute;
+  bottom: 6px;
+  right: 10px;
+  font-size: 13px;
+  color: #8BB0FF;
+}
+
+.st-dir-card-remove {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.st-dir-card:hover .st-dir-card-remove {
+  opacity: 1;
+}
+
+.st-dir-card-remove:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+/* ── 직무 상세 (펼침) ─────────────────────────────────────────────────── */
+
+.st-dir-detail {
+  margin-top: 16px;
+  background: linear-gradient(135deg, #F6F9FF 0%, #EEF4FF 100%);
+  border: 1.5px solid #C0D2F8;
+  border-radius: 14px;
+  padding: 22px;
+  animation: stDirExpand 0.22s ease;
+}
+
+@keyframes stDirExpand {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.st-dir-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 16px;
+  margin-bottom: 18px;
+  border-bottom: 1px solid #D8E3F8;
+}
+
+.st-dir-detail-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #fff;
+  color: #1E63FF;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 23px;
+  box-shadow: 0 2px 8px rgba(46, 91, 255, 0.1);
+}
+
+.st-dir-detail-titles {
+  flex: 1;
+}
+
+.st-dir-detail-name {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1C2442;
+  margin-bottom: 3px;
+}
+
+.st-dir-detail-sub {
+  font-size: 15px;
+  color: #6E7C9C;
+}
+
+.st-dir-detail-fit {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  line-height: 1.1;
+}
+
+.st-dir-detail-fit span {
+  font-size: 29px;
+  font-weight: 900;
+  color: #1E63FF;
+  letter-spacing: -0.5px;
+}
+
+.st-dir-detail-fit small {
+  font-size: 13px;
+  font-weight: 700;
+  color: #7B89AA;
+}
+
+.st-dir-detail-body {
+  display: grid;
+  grid-template-columns: 1.4fr 1fr;
+  gap: 20px;
+}
+
+.st-dir-detail-block-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 800;
+  color: #1C2442;
+  margin-bottom: 12px;
+}
+
+.st-dir-detail-block-title i {
+  color: #1E63FF;
+}
+
+.st-dir-detail-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.st-dir-detail-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 16px;
+  color: #2A3450;
+  line-height: 1.55;
+  background: #fff;
+  border-radius: 8px;
+  padding: 9px 12px;
+}
+
+.st-dir-detail-list li i {
+  color: #22C55E;
+  font-size: 14px;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.st-dir-detail-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.st-dir-detail-tag {
+  display: inline-block;
+  padding: 6px 12px;
+  background: #fff;
+  border: 1px solid #C0D2F8;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1E63FF;
 }
 
 /* ─── Column card ────────────────────────────────────────────────────────── */
@@ -96,14 +461,14 @@
 }
 
 .st-col-title {
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 800;
   color: #1E63FF;
   margin-bottom: 8px;
 }
 
 .st-col-subtitle {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-muted);
 }
 
@@ -111,7 +476,7 @@
   margin-top: auto;
   padding: 14px 18px 20px;
   text-align: center;
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 900;
   color: #1E63FF;
 }
@@ -160,7 +525,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 18px;
+  font-size: 21px;
   flex-shrink: 0;
 }
 
@@ -170,7 +535,7 @@
 }
 
 .st-found-name {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   color: #1C2442;
   white-space: nowrap;
@@ -179,7 +544,7 @@
 }
 
 .st-found-sub {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-muted);
   margin-top: 1px;
   white-space: nowrap;
@@ -191,7 +556,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   color: #96A6C4;
   flex-shrink: 0;
@@ -220,7 +585,7 @@
 }
 
 .st-found-prog-label {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-sub);
   text-align: right;
 }
@@ -259,7 +624,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 22px;
+  font-size: 25px;
 }
 
 .st-skill-info {
@@ -278,7 +643,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  font-size: 8px;
+  font-size: 11px;
 }
 
 .st-skill-check.done {
@@ -291,8 +656,67 @@
   background: #fff;
 }
 
+/* ─── Added skill row (with remove button) ──────────────────────────────── */
+
+.st-skill-row-added {
+  position: relative;
+}
+
+.st-skill-row-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: #fff;
+  color: #94A3B8;
+  cursor: pointer;
+  font-size: 12px;
+  opacity: 0;
+  transition: all 0.15s;
+}
+
+.st-skill-row-added:hover .st-skill-row-remove {
+  opacity: 1;
+}
+
+.st-skill-row-remove:hover {
+  background: #FEE2E2;
+  color: #DC2626;
+}
+
+/* ─── 자격증 추가 버튼 ─────────────────────────────────────────────────── */
+
+.st-cert-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100%;
+  padding: 11px;
+  border: 1.5px dashed #C0D2F8;
+  border-radius: 12px;
+  background: #F6F9FF;
+  color: #1E63FF;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.st-cert-add:hover {
+  background: #EEF4FF;
+  border-color: #1E63FF;
+  transform: translateY(-1px);
+}
+
 .st-skill-name {
-  font-size: 13px;
+  font-size: 16px;
   color: #1C2442;
   font-weight: 800;
   min-width: 0;
@@ -303,7 +727,7 @@
 }
 
 .st-skill-sub {
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.35;
   color: #6E7C9C;
   white-space: nowrap;
@@ -327,7 +751,7 @@
   border-radius: 50%;
   background: #EEF1F7;
   color: #97A4C0;
-  font-size: 9px;
+  font-size: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -358,12 +782,12 @@
 }
 
 .st-dir-fit span {
-  font-size: 22px;
+  font-size: 25px;
   letter-spacing: -0.3px;
 }
 
 .st-dir-fit small {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   color: #7B89AA;
 }
@@ -405,7 +829,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 17px;
   flex-shrink: 0;
 }
 
@@ -417,20 +841,20 @@
 }
 
 .st-dir-add-name {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   color: #1E63FF;
 }
 
 .st-dir-add-sub {
-  font-size: 11px;
+  font-size: 14px;
   color: #6E7C9C;
 }
 
 /* ─── 직무 선택 모달 ─────────────────────────────────────────────────────── */
 
 .st-picker-desc {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--color-text-sub);
   margin-bottom: 14px;
 }
@@ -471,7 +895,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 19px;
   flex-shrink: 0;
 }
 
@@ -484,26 +908,26 @@
 }
 
 .st-picker-name {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 800;
   color: #1C2442;
 }
 
 .st-picker-sub {
-  font-size: 11px;
+  font-size: 14px;
   color: #6E7C9C;
 }
 
 .st-picker-fit {
   flex-shrink: 0;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 900;
   color: #1E63FF;
 }
 
 .st-picker-empty {
   text-align: center;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--color-text-muted);
   padding: 24px 0;
 }
@@ -526,7 +950,7 @@
 .st-analysis-title {
   width: 164px;
   flex-shrink: 0;
-  font-size: 20px;
+  font-size: 23px;
   font-weight: 900;
   color: #121B3A;
 }
@@ -557,14 +981,14 @@
 }
 
 .st-stat-val {
-  font-size: 26px;
+  font-size: 29px;
   font-weight: 900;
   color: #121B3A;
   line-height: 1;
 }
 
 .st-stat-total {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--color-text-muted);
 }
@@ -578,7 +1002,7 @@
 }
 
 .st-stat-label {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   color: #62708F;
 }
@@ -591,7 +1015,7 @@
 }
 
 .st-analysis-score-label {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 900;
   color: #121B3A;
   white-space: nowrap;
@@ -600,7 +1024,7 @@
 .st-analysis-desc {
   width: 210px;
   flex: 0 0 210px;
-  font-size: 13px;
+  font-size: 16px;
   color: #53627F;
   line-height: 1.55;
   font-weight: 600;
@@ -614,7 +1038,7 @@
   color: #1E63FF;
   border: 1px solid #BFD1FF;
   border-radius: 10px;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   cursor: pointer;
   white-space: nowrap;
@@ -636,7 +1060,7 @@
   border: 1px solid #E2EAFB;
   border-radius: 12px;
   padding: 15px 20px;
-  font-size: 13px;
+  font-size: 16px;
   color: #3B5FD4;
   font-weight: 500;
   line-height: 1.5;
@@ -645,8 +1069,21 @@
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 1280px) {
-  .st-grid {
+  .st-grid,
+  .st-connect {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .st-dir-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .st-connect-hwrap {
+    padding: 0 calc((100% - 14px) / 4);
+  }
+
+  .st-dir-detail-body {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -672,8 +1109,16 @@
 }
 
 @media (max-width: 768px) {
-  .st-grid {
+  .st-grid,
+  .st-connect,
+  .st-dir-grid {
     grid-template-columns: 1fr;
+  }
+
+  .st-connect,
+  .st-connect-down,
+  .st-connect-hwrap {
+    display: none;
   }
 
   .st-content {

@@ -1,21 +1,41 @@
 /* ── AiLounge Page ─────────────────────────────────────────────── */
 
 .al-page {
-  --al-sticky-sidebar-space: 336px;
   max-width: 1280px;
   margin: 0 auto;
   padding: 24px 40px 48px;
 }
 
-/* Breadcrumb / Page Title */
-.al-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 18px;
+/* ── Main Layout: 좌측 콘텐츠 스택 + 우측 sticky 사이드바 ─────────── */
+.al-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 296px;
+  gap: 20px;
+  align-items: start;
 }
-.al-breadcrumb i { font-size: 16px; color: var(--color-primary); }
-.al-breadcrumb span { font-size: 20px; font-weight: 700; color: var(--color-text); }
+
+.al-content {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Page Hero */
+.al-hero { margin-bottom: 24px; }
+.al-hero h1 {
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--color-navy);
+  letter-spacing: 0;
+  margin: 0 0 6px;
+}
+.al-hero p {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--color-text-sub);
+  margin: 0;
+}
 
 /* ── Profile Card ───────────────────────────────────────────────── */
 .al-profile-card {
@@ -28,7 +48,6 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 20px;
-  margin-right: var(--al-sticky-sidebar-space);
 }
 
 .al-profile-user {
@@ -51,20 +70,20 @@
   align-items: center;
   justify-content: center;
   color: #9CA3AF;
-  font-size: 28px;
+  font-size: 31px;
   flex-shrink: 0;
 }
 
 .al-profile-info { display: flex; flex-direction: column; gap: 3px; }
-.al-profile-name { font-size: 17px; font-weight: 700; color: var(--color-text); }
-.al-profile-dept { font-size: 12px; color: var(--color-text-sub); }
+.al-profile-name { font-size: 20px; font-weight: 700; color: var(--color-text); }
+.al-profile-dept { font-size: 15px; color: var(--color-text-sub); }
 .al-lv-badge {
   display: inline-block;
   padding: 2px 10px;
   background: var(--color-primary-bg);
   color: var(--color-primary);
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   margin-top: 2px;
   width: fit-content;
@@ -87,32 +106,46 @@
   background: #fff;
 }
 
-.al-stat-icon { font-size: 18px; color: var(--color-primary); margin-bottom: 1px; }
-.al-stat-label { font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
+.al-stat-icon { font-size: 21px; color: var(--color-primary); margin-bottom: 1px; }
+.al-stat-label { font-size: 14px; color: var(--color-text-muted); white-space: nowrap; }
 .al-stat-val { display: flex; align-items: baseline; gap: 2px; }
-.al-stat-val strong { font-size: 20px; font-weight: 700; color: var(--color-text); }
-.al-stat-val span { font-size: 12px; color: var(--color-text-sub); }
+.al-stat-val strong { font-size: 23px; font-weight: 700; color: var(--color-text); }
+.al-stat-val span { font-size: 15px; color: var(--color-text-sub); }
 
-/* ── Main Grid ──────────────────────────────────────────────────── */
-.al-main-grid {
-  display: grid;
-  grid-template-columns: minmax(0, calc(100% - var(--al-sticky-sidebar-space))) 296px;
-  gap: 20px;
-  margin-bottom: 20px;
-}
+/* (legacy .al-main-grid 제거 — .al-layout / .al-content 로 대체됨) */
 
 .al-analysis-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 20px;
+  gap: 16px;
 }
 
 /* Report Card */
-.al-report-card { display: flex; flex-direction: column; }
-.al-card-sub { font-size: 12px; color: var(--color-text-muted); margin-top: 2px; margin-bottom: 12px; }
+/* 종합 분석 리포트 — 페이지의 시각적 focal point (F2) */
+.al-report-card {
+  display: flex;
+  flex-direction: column;
+  background:
+    radial-gradient(circle at 78% 14%, rgba(46, 91, 255, 0.10), transparent 42%),
+    linear-gradient(135deg, #ffffff 0%, #f6f9ff 100%);
+  border: 1.5px solid #c7d4ff;
+  box-shadow: 0 18px 42px rgba(46, 91, 255, 0.10);
+}
+.al-report-card .card-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--color-primary);
+}
+.al-card-sub { font-size: 15px; color: var(--color-text-muted); margin-top: 2px; margin-bottom: 12px; }
 .al-score-row { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
-.al-score-num { font-size: 52px; font-weight: 800; color: var(--color-text); line-height: 1; }
-.al-score-denom { font-size: 18px; color: var(--color-text-muted); }
+.al-score-num {
+  font-size: 68px;
+  font-weight: 900;
+  color: var(--color-navy);
+  line-height: 1;
+  letter-spacing: -2px;
+}
+.al-score-denom { font-size: 21px; color: var(--color-text-muted); }
 
 .al-prog-track {
   height: 8px;
@@ -135,7 +168,7 @@
 }
 
 .al-rcol-title {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   color: var(--color-text);
   margin-bottom: 8px;
@@ -144,23 +177,23 @@
   gap: 4px;
   white-space: nowrap;
 }
-.al-rcol-title i { color: var(--color-warning); font-size: 10px; }
+.al-rcol-title i { color: var(--color-warning); font-size: 13px; }
 
 .al-bullet {
   display: flex;
   align-items: flex-start;
   gap: 5px;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-sub);
   margin-bottom: 5px;
   line-height: 1.5;
 }
-.al-bullet i { color: var(--color-primary); font-size: 9px; margin-top: 3px; flex-shrink: 0; }
+.al-bullet i { color: var(--color-primary); font-size: 12px; margin-top: 3px; flex-shrink: 0; }
 
 /* Radar Card */
 .al-radar-card { display: flex; flex-direction: column; }
 .al-radar-legend { display: flex; gap: 14px; margin: 4px 0 8px; }
-.al-leg-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--color-text-sub); }
+.al-leg-item { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--color-text-sub); }
 .al-leg-line { width: 22px; height: 2px; display: inline-block; border-radius: 1px; }
 .al-leg-solid { background: var(--color-primary); }
 .al-leg-dash {
@@ -175,21 +208,34 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  position: fixed;
-  top: calc(var(--gnb-height) + 190px);
-  right: 18px;
-  max-height: calc(100vh - var(--gnb-height) - 214px);
+  position: sticky;
+  top: calc(var(--gnb-height) + 20px);
+  max-height: calc(100vh - var(--gnb-height) - 40px);
   overflow-y: auto;
-  z-index: 20;
-  padding-bottom: 4px;
+  padding-right: 2px;
+  scrollbar-width: none;
 }
+.al-right-sidebar::-webkit-scrollbar { width: 0; display: none; }
 
 /* Priority */
+/* 우선순위 요약 카드 — 우측 사이드바 최우선 아이템 강조 */
+.al-priority-card {
+  background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
+  border-color: #ffd0d0;
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.1);
+}
+.al-priority-card .card-title { color: #c1252b; }
+.al-priority-card .card-title i { color: #ef4444; margin-right: 4px; }
+.al-priority-card .al-pri-item:first-child .al-pri-cnt {
+  font-size: 22px;
+  font-weight: 900;
+}
+
 .al-priority-list { display: flex; flex-direction: column; gap: 10px; }
 .al-pri-item { display: flex; align-items: center; gap: 10px; }
 .al-pri-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.al-pri-label { flex: 1; font-size: 13px; color: var(--color-text-sub); }
-.al-pri-cnt { font-size: 13px; font-weight: 600; color: var(--color-text); }
+.al-pri-label { flex: 1; font-size: 16px; color: var(--color-text-sub); }
+.al-pri-cnt { font-size: 16px; font-weight: 600; color: var(--color-text); }
 
 /* Actions */
 .al-action-list { display: flex; flex-direction: column; gap: 10px; }
@@ -198,10 +244,10 @@
   width: 20px; height: 20px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
-  color: #fff; font-size: 11px; font-weight: 700;
+  color: #fff; font-size: 14px; font-weight: 700;
   flex-shrink: 0; margin-top: 1px;
 }
-.al-action-txt { font-size: 12px; color: var(--color-text-sub); line-height: 1.55; }
+.al-action-txt { font-size: 15px; color: var(--color-text-sub); line-height: 1.55; }
 
 /* Quick Links */
 .al-quick-list { display: flex; flex-direction: column; gap: 4px; }
@@ -216,18 +262,24 @@
 .al-quick-ico {
   width: 30px; height: 30px; border-radius: 7px;
   display: flex; align-items: center; justify-content: center;
-  font-size: 13px; flex-shrink: 0;
+  font-size: 16px; flex-shrink: 0;
 }
-.al-quick-lbl { flex: 1; font-size: 13px; color: var(--color-text); font-weight: 500; }
-.al-quick-arr { font-size: 10px; color: var(--color-text-muted); }
+.al-quick-lbl { flex: 1; font-size: 16px; color: var(--color-text); font-weight: 500; }
+.al-quick-arr { font-size: 13px; color: var(--color-text-muted); }
 
-/* ── Bottom Grid ────────────────────────────────────────────────── */
+/* ── Bottom Grid (2 x 2) ────────────────────────────────────────── */
 .al-bottom-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin-bottom: 20px;
-  margin-right: var(--al-sticky-sidebar-space);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+  align-items: stretch;
+}
+
+/* 같은 행의 두 카드 높이가 콘텐츠 양에 따라 함께 늘어나도록 flex column 적용 */
+.al-bottom-grid > .card {
+  display: flex;
+  flex-direction: column;
 }
 
 .al-row-hd {
@@ -236,87 +288,651 @@
   justify-content: space-between;
   margin-bottom: 16px;
 }
-.al-more-link { font-size: 12px; color: var(--color-primary); font-weight: 500; white-space: nowrap; }
+.al-more-link { font-size: 15px; color: var(--color-primary); font-weight: 500; white-space: nowrap; }
 .al-more-link:hover { text-decoration: underline; }
 
-/* Bar Chart */
-.al-bar-list { display: flex; flex-direction: column; gap: 9px; margin-bottom: 14px; }
-.al-bar-row { display: flex; align-items: center; gap: 8px; }
-.al-bar-lbl { font-size: 12px; color: var(--color-text-sub); width: 60px; flex-shrink: 0; }
-.al-bar-track { flex: 1; height: 8px; background: var(--color-surface); border-radius: 4px; overflow: hidden; }
-.al-bar-fill { height: 100%; background: var(--color-primary); border-radius: 4px; }
-.al-bar-val { font-size: 12px; font-weight: 600; color: var(--color-primary); width: 28px; text-align: right; flex-shrink: 0; }
+/* Bar Chart — 라벨 / 막대 / 점수(아래) 세로 배치 */
+.al-bar-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.al-bar-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 6px;
+}
+
+.al-bar-lbl {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.al-bar-track {
+  width: 100%;
+  height: 10px;
+  background: var(--color-surface);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.al-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #2455ff 0%, #2f65ff 60%, #5b80ff 100%);
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.al-bar-val {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-primary);
+  justify-self: end;
+}
 
 .al-ai-box {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
-  padding: 10px 12px;
+  gap: 9px;
+  padding: 14px 16px;
   background: var(--color-primary-bg);
-  border-radius: var(--radius-sm);
-  font-size: 11.5px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 600;
+  color: #2a3858;
+  line-height: 1.7;
+}
+.al-ai-box i { color: var(--color-primary); font-size: 18px; flex-shrink: 0; margin-top: 2px; }
+.al-ai-box strong { color: var(--color-primary); font-weight: 900; }
+
+/* AI 역량별 카드 전용 AI 박스 */
+.al-comp-ai { font-size: 14px; line-height: 1.75; }
+.al-comp-ai em {
+  font-style: normal;
+  color: var(--color-navy);
+  font-weight: 800;
+}
+
+/* ── TOEIC 오답노트 카드 ─────────────────────────────────────────── */
+.al-toeic-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #f6f9ff 0%, #eef4ff 100%);
+  border: 1px solid #dce8ff;
+  border-radius: var(--radius-md);
+}
+
+.al-toeic-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.al-toeic-stat-num {
+  font-size: 34px;
+  font-weight: 900;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.al-toeic-stat-unit {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-top: -6px;
+}
+
+.al-toeic-stat-lbl {
+  font-size: 12px;
+  font-weight: 700;
   color: var(--color-text-sub);
-  line-height: 1.6;
 }
-.al-ai-box i { color: var(--color-primary); font-size: 13px; flex-shrink: 0; margin-top: 1px; }
 
-/* Insight */
-.al-insight-row { display: flex; gap: 14px; align-items: flex-start; }
-.al-ring-col { display: flex; flex-direction: column; align-items: center; gap: 3px; flex-shrink: 0; }
-.al-ring-sub { font-size: 11px; color: var(--color-text-muted); }
-.al-insight-info { flex: 1; display: flex; flex-direction: column; gap: 7px; }
-.al-ins-sub { font-size: 10px; font-weight: 600; color: var(--color-text-muted); letter-spacing: 0.03em; }
-.al-ins-txt { font-size: 12px; color: var(--color-text-sub); line-height: 1.6; }
-.al-chips { display: flex; flex-wrap: wrap; gap: 5px; }
-.al-chip { padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
-.al-chip-s { background: var(--color-primary-bg); color: var(--color-primary); }
-.al-chip-w { background: #FEF3C7; color: #D97706; }
-
-/* Counsel */
-.al-counsel-list { display: flex; flex-direction: column; gap: 12px; }
-.al-counsel-item { display: flex; gap: 10px; }
-.al-counsel-ico {
-  width: 32px; height: 32px; border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px; flex-shrink: 0;
+.al-toeic-stat-divider {
+  width: 1px;
+  align-self: stretch;
+  background: #c7d2fe;
+  margin: 4px 0;
 }
-.al-counsel-body { flex: 1; }
-.al-counsel-top { display: flex; align-items: center; gap: 6px; margin-bottom: 3px; flex-wrap: wrap; }
-.al-counsel-type { font-size: 12px; font-weight: 600; color: var(--color-text); }
-.al-counsel-date { font-size: 11px; color: var(--color-text-muted); }
-.al-counsel-quote { font-size: 11px; color: var(--color-text-sub); line-height: 1.55; }
 
-/* ── Programs ───────────────────────────────────────────────────── */
-.al-programs-section { margin-right: var(--al-sticky-sidebar-space); }
-.al-sec-hd { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-.al-sec-title { font-size: 16px; font-weight: 700; color: var(--color-text); }
-
-.al-programs-grid {
+.al-toeic-stat-grid {
+  flex: 1;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.al-toeic-stat-grid > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.al-toeic-stat-num-sm {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--color-navy);
+  line-height: 1;
+}
+
+.al-toeic-stat-lbl-sm {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-sub);
+}
+
+.al-toeic-cats {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.al-toeic-cats-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin-bottom: 2px;
+}
+
+.al-toeic-cat-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 4px;
+  padding: 8px 10px;
+  background: #fafcff;
+  border: 1px solid #eef2fa;
+  border-radius: var(--radius-sm);
+}
+
+.al-toeic-cat-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.al-toeic-cat-lbl {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.al-toeic-cat-val {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.al-toeic-cat-wrong {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+}
+
+.al-toeic-cat-bar {
+  width: 100%;
+  height: 7px;
+  background: #eef2f7;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.al-toeic-cat-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s;
+}
+
+.al-toeic-cat-hint {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.al-toeic-ai {
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.al-toeic-ai strong {
+  color: var(--color-primary);
+  font-weight: 900;
+}
+
+.al-toeic-ai em {
+  font-style: normal;
+  color: var(--color-navy);
+  font-weight: 800;
+  background: #f5f7ff;
+  padding: 0 4px;
+  border-radius: 4px;
+  margin: 0 1px;
+}
+
+/* Counsel — 질문 + AI 조언 페어 그룹 */
+.al-counsel-list { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+
+.al-counsel-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1.5px solid #dce5f5;
+  border-radius: var(--radius-md);
+  background: #ffffff;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.al-counsel-pair:hover {
+  border-color: #b9c9f5;
+  box-shadow: 0 6px 16px rgba(15, 45, 95, 0.05);
+}
+
+.al-counsel-pair-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #e6edf8;
+  flex-wrap: wrap;
+}
+
+.al-counsel-type {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.al-counsel-date {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+}
+
+.al-counsel-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+}
+
+.al-counsel-msg-q {
+  background: #f7f9fc;
+  border-left: 3px solid #c5cee0;
+}
+
+.al-counsel-msg-a {
+  background: #f3f7ff;
+  border-left: 3px solid var(--color-primary);
+}
+
+.al-counsel-msg-lbl {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  letter-spacing: 0.03em;
+}
+
+.al-counsel-msg-a .al-counsel-msg-lbl {
+  color: var(--color-primary);
+}
+
+.al-counsel-msg p {
+  font-size: 14px;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ── Test Summary Card ──────────────────────────────────────────── */
+.al-test-rings {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 8px 4px 4px;
+  flex: 1;
+  align-content: start;
+}
+
+.al-test-ring {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 8px;
+  background: #fff;
+  border: 1.5px solid #e8ecf4;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.al-test-ring:hover {
+  border-color: #b9c9f5;
+  background: #f7faff;
+  box-shadow: 0 8px 20px rgba(46, 91, 255, 0.08);
+  transform: translateY(-2px);
+}
+
+.al-test-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.al-test-hint {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px dashed #e6edf8;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* hint 위쪽에 살짝 여유 공간 */
+.al-test-hint::before {
+  content: '';
+  display: block;
+  height: 6px;
+}
+
+.al-test-hint i {
+  margin-right: 4px;
+  color: #b9c9d8;
+}
+
+/* ── Test Detail Modal ──────────────────────────────────────────── */
+.al-test-modal {
+  display: flex;
+  flex-direction: column;
   gap: 16px;
 }
 
-.al-prog-card { display: flex; flex-direction: column; gap: 10px; }
-.al-prog-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; }
-.al-prog-title { font-size: 13px; font-weight: 600; color: var(--color-text); line-height: 1.4; flex: 1; }
-.al-prog-badge {
-  padding: 2px 8px; border-radius: 20px;
-  font-size: 10px; font-weight: 600;
-  white-space: nowrap; flex-shrink: 0;
+.al-test-modal-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #f5f8ff 0%, #eef4ff 100%);
+  border: 1px solid #dce8ff;
+  border-radius: var(--radius-md);
 }
-.al-prog-meta { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--color-text-muted); }
-.al-prog-guide { color: var(--color-primary); font-weight: 500; }
-.al-prog-comment { margin-top: auto; font-size: 11.5px; }
+
+.al-test-modal-score {
+  font-size: 44px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -1px;
+}
+
+.al-test-modal-score span {
+  font-size: 18px;
+  font-weight: 800;
+  margin-left: 4px;
+}
+
+.al-test-modal-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.al-test-modal-name {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--color-navy);
+}
+
+.al-test-modal-sub {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text-sub);
+}
+
+.al-test-modal-chart {
+  display: flex;
+  justify-content: center;
+  padding: 12px 0 6px;
+}
+
+.al-test-modal-ai {
+  padding: 14px 18px;
+  background: #f7faff;
+  border: 1px solid #dce8ff;
+  border-radius: var(--radius-md);
+}
+
+.al-test-modal-ai-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: var(--color-primary);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.al-test-modal-ai p {
+  color: #2a3858;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.7;
+}
+
+.al-test-modal-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.al-test-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.al-test-tag-high {
+  background: #eaf6ee;
+  color: #137c3f;
+}
+
+.al-test-tag-mid {
+  background: #fff5e1;
+  color: #b46a00;
+}
+
+.al-test-tag-low {
+  background: #ffe7e7;
+  color: #c1252b;
+}
+
+/* ── AI 액션 로드맵 섹션 ────────────────────────────────────────── */
+.al-roadmap-section {
+  background: linear-gradient(135deg, #ffffff 0%, #f7faff 100%);
+  border: 1px solid #dce5f5;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 44px rgba(15, 45, 95, 0.06);
+  padding: 24px 28px;
+}
+
+.al-sec-hd {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.al-sec-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--color-navy);
+}
+
+.al-sec-title i {
+  color: var(--color-primary);
+  font-size: 18px;
+}
+
+.al-roadmap-intro {
+  margin-bottom: 20px;
+  color: var(--color-text-sub);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.65;
+}
+
+.al-roadmap-intro strong {
+  color: var(--color-navy);
+  font-weight: 800;
+}
+
+/* Vertical timeline — 3-col grid 슬롭 패턴 제거하고 위→아래 시간 흐름으로 표현 */
+.al-roadmap-list {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 18px;
+  padding-left: 16px;
+}
+
+/* 좌측 세로 가이드 라인 */
+.al-roadmap-list::before {
+  content: '';
+  position: absolute;
+  left: 31px;
+  top: 16px;
+  bottom: 16px;
+  width: 2px;
+  background: linear-gradient(180deg, #EF4444 0%, #F59E0B 50%, #2E5BFF 100%);
+  border-radius: 1px;
+}
+
+.al-roadmap-phase {
+  position: relative;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 24px;
+  padding: 18px 22px;
+  background: #fff;
+  border: 1px solid #e2eaf8;
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 18px rgba(15, 45, 95, 0.04);
+  margin-left: 36px;
+}
+
+.al-roadmap-phase-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0;
+  border-bottom: none;
+  position: relative;
+}
+
+/* 번호 동그라미를 카드 왼쪽 바깥, 타임라인 위에 배치 */
+.al-roadmap-num {
+  position: absolute;
+  left: -60px;
+  top: -2px;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 18px;
+  font-weight: 900;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12), 0 0 0 4px #fff;
+}
+
+.al-roadmap-phase-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.al-roadmap-period {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.al-roadmap-title {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--color-navy);
+  line-height: 1.45;
+}
+
+.al-roadmap-actions {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.al-roadmap-actions li {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #2a3858;
+  line-height: 1.55;
+}
+
+.al-roadmap-actions li i {
+  margin-top: 4px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.al-roadmap-summary {
+  margin: 0;
+}
+
+.al-roadmap-link {
+  color: var(--color-primary);
+  font-weight: 900;
+  text-decoration: underline;
+}
 
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
-  .al-programs-grid { grid-template-columns: repeat(3, 1fr); }
   .al-profile-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .al-roadmap-phase { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 900px) {
-  .al-main-grid { grid-template-columns: 1fr; }
+  .al-layout { grid-template-columns: 1fr; }
   .al-right-sidebar {
     width: auto;
     position: static;
@@ -324,20 +940,13 @@
     overflow: visible;
   }
   .al-bottom-grid { grid-template-columns: 1fr 1fr; }
-  .al-bottom-grid,
-  .al-programs-section,
-  .al-profile-card { margin-right: 0; }
 }
 
 @media (max-width: 768px) {
   .al-page { padding: 16px 16px 32px; }
   .al-analysis-row { grid-template-columns: 1fr; }
   .al-bottom-grid { grid-template-columns: 1fr; }
-  .al-programs-grid { grid-template-columns: repeat(2, 1fr); }
+  .al-roadmap-phase { grid-template-columns: 1fr; }
   .al-profile-card { grid-template-columns: 1fr; }
   .al-report-3col { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 480px) {
-  .al-programs-grid { grid-template-columns: 1fr; }
 }

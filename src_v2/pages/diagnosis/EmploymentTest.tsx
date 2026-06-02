@@ -148,10 +148,6 @@ export default function EmploymentTest() {
           검사 결과는 자기 이해와 성장의 참고자료로 활용해주세요.<br />
           모든 검사는 익명으로 진행되며, 결과는 본인만 확인할 수 있습니다.
         </p>
-        <button>
-          검사 유의사항 자세히 보기
-          <i className="fa-solid fa-arrow-up-right-from-square" />
-        </button>
       </section>
     </div>
   )

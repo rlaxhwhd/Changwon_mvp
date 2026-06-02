@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import Modal from '../../components/Modal'
 import './Prediction.css'
 
 const COMPANIES = [
@@ -36,7 +38,19 @@ function BarChart() {
   )
 }
 
+const GUIDE_FACTORS = [
+  { icon: 'fa-chart-line', label: '본인 역량 진단 결과' },
+  { icon: 'fa-language', label: '어학 점수 (TOEIC 등)' },
+  { icon: 'fa-graduation-cap', label: '학점 / 성적' },
+  { icon: 'fa-school', label: '소속 학과 및 전공' },
+  { icon: 'fa-clipboard-check', label: '취업지원 역량진단 데이터' },
+  { icon: 'fa-certificate', label: '보유 자격증' },
+  { icon: 'fa-folder-open', label: '포트폴리오 / 프로젝트' },
+]
+
 export default function Prediction() {
+  const [guideOpen, setGuideOpen] = useState(false)
+
   return (
     <div className="pred-page">
       <section className="pred-hero">
@@ -47,7 +61,7 @@ export default function Prediction() {
           <div>
             <h1>취업예측 분석</h1>
             <p>AI가 분석한 기업별 합격 예측 결과입니다.</p>
-            <button className="pred-guide-btn">
+            <button className="pred-guide-btn" onClick={() => setGuideOpen(true)}>
               <i className="fa-regular fa-lightbulb" />
               분석 가이드
             </button>
@@ -156,6 +170,30 @@ export default function Prediction() {
           실제 결과와 다를 수 있으며, 지속적인 자기계발과 경험이 중요합니다.
         </p>
       </aside>
+
+      <Modal open={guideOpen} onClose={() => setGuideOpen(false)} title="분석 가이드" size="sm">
+        <div className="pred-guide">
+          <p className="pred-guide-lead">
+            AI는 학생의 <strong>모든 데이터를 종합</strong>해 기업별 합격 예측률을 계산합니다.
+          </p>
+
+          <h4 className="pred-guide-subtitle">분석에 활용되는 데이터</h4>
+          <ul className="pred-guide-list">
+            {GUIDE_FACTORS.map(factor => (
+              <li key={factor.label}>
+                <span className="pred-guide-icon">
+                  <i className={`fa-solid ${factor.icon}`} />
+                </span>
+                {factor.label}
+              </li>
+            ))}
+          </ul>
+
+          <p className="pred-guide-foot">
+            이 데이터를 AI가 통합 분석해 기업별 합격 가능성과 보완이 필요한 역량을 제시합니다.
+          </p>
+        </div>
+      </Modal>
     </div>
   )
 }

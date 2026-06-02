@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
+import CounselConsentModal from '../../components/CounselConsentModal'
 import './CareerCounsel.css'
 import './ProfessorCounsel.css'
 
@@ -128,6 +129,8 @@ export default function ProfessorCounsel() {
   })
   const [notice, setNotice] = useState('')
   const [reserveOpen, setReserveOpen] = useState(false)
+  const [consentOpen, setConsentOpen] = useState(false)
+  const [consentMode, setConsentMode] = useState<CounselMode>('online')
 
   const activeProfessor = professors.find(professor => professor.id === selectedProfessorId) ?? professors[0]
   const onlineTopic = useMemo(() => `${selectedDivision} ${activeProfessor.name} 교수님께 온라인 상담을 신청합니다.`, [activeProfessor.name, selectedDivision])
@@ -163,8 +166,8 @@ export default function ProfessorCounsel() {
   }
 
   const submitOnline = () => {
-    setNotice(`${activeProfessor.name} 교수님께 온라인 상담 신청이 접수되었습니다`)
-    window.setTimeout(() => setNotice(''), 1800)
+    setConsentMode('online')
+    setConsentOpen(true)
   }
 
   const openReserve = () => {
@@ -173,7 +176,18 @@ export default function ProfessorCounsel() {
       window.setTimeout(() => setNotice(''), 1800)
       return
     }
-    setReserveOpen(true)
+    setConsentMode('offline')
+    setConsentOpen(true)
+  }
+
+  const handleConsentAgree = () => {
+    setConsentOpen(false)
+    if (consentMode === 'online') {
+      setNotice(`${activeProfessor.name} 교수님께 온라인 상담 신청이 접수되었습니다`)
+      window.setTimeout(() => setNotice(''), 1800)
+    } else {
+      setReserveOpen(true)
+    }
   }
 
   return (
@@ -198,66 +212,49 @@ export default function ProfessorCounsel() {
       </section>
 
       <div className="pc-layout">
-        <aside className="pc-select-panel">
-          <div className="cc-panel-title">
-            <i className="fa-solid fa-building-columns" />
-            <h2>대학/부서 선택</h2>
-          </div>
-          <div className="pc-option-list">
-            {departmentGroups.map(group => (
-              <button
-                key={group.name}
-                className={selectedGroupName === group.name ? 'active' : ''}
-                onClick={() => updateGroup(group.name)}
-              >
-                {group.name}
-              </button>
-            ))}
-          </div>
-        </aside>
-
-        <aside className="pc-select-panel">
-          <div className="cc-panel-title">
-            <i className="fa-solid fa-layer-group" />
-            <h2>학부/학과 선택</h2>
-          </div>
-          <div className="pc-option-list">
-            {divisionNames.map(division => (
-              <button
-                key={division}
-                className={selectedDivision === division ? 'active' : ''}
-                onClick={() => updateDivision(division)}
-              >
-                {division}
-              </button>
-            ))}
-          </div>
-        </aside>
+        <div className="pc-select-bar">
+          <label className="pc-select">
+            <span className="pc-select-label">대학/부서</span>
+            <select value={selectedGroupName} onChange={e => updateGroup(e.target.value)}>
+              {departmentGroups.map(group => (
+                <option key={group.name} value={group.name}>{group.name}</option>
+              ))}
+            </select>
+            <i className="fa-solid fa-chevron-down pc-select-caret" aria-hidden="true" />
+          </label>
+          <label className="pc-select">
+            <span className="pc-select-label">학부/학과</span>
+            <select value={selectedDivision} onChange={e => updateDivision(e.target.value)}>
+              {divisionNames.map(division => (
+                <option key={division} value={division}>{division}</option>
+              ))}
+            </select>
+            <i className="fa-solid fa-chevron-down pc-select-caret" aria-hidden="true" />
+          </label>
+          <label className="pc-select">
+            <span className="pc-select-label">교수</span>
+            <select value={selectedProfessorId} onChange={e => setSelectedProfessorId(e.target.value)}>
+              {professors.map(professor => (
+                <option key={professor.id} value={professor.id}>
+                  {professor.name} {professor.title}
+                </option>
+              ))}
+            </select>
+            <i className="fa-solid fa-chevron-down pc-select-caret" aria-hidden="true" />
+          </label>
+        </div>
 
         <section className="pc-professor-panel">
-          <div className="pc-professor-head">
-            <div className="cc-panel-title">
-              <i className="fa-solid fa-user-tie" />
-              <h2>교수 선택</h2>
+          <div className="pc-professor-detail">
+            <span className="pc-avatar pc-avatar-lg">{activeProfessor.name.slice(0, 1)}</span>
+            <div className="pc-professor-detail-info">
+              <strong>{activeProfessor.name} {activeProfessor.title}</strong>
+              <div className="pc-professor-detail-meta">
+                <span><i className="fa-solid fa-building-columns" />{selectedGroupName} · {selectedDivision}</span>
+                <span><i className="fa-solid fa-book" />{activeProfessor.major}</span>
+                <span><i className="fa-solid fa-location-dot" />{activeProfessor.room}</span>
+              </div>
             </div>
-            <span>{selectedGroupName} · {selectedDivision}</span>
-          </div>
-
-          <div className="pc-professor-grid">
-            {professors.map(professor => (
-              <button
-                key={professor.id}
-                className={`pc-professor-card ${selectedProfessorId === professor.id ? 'active' : ''}`}
-                onClick={() => setSelectedProfessorId(professor.id)}
-              >
-                <span className="pc-avatar">{professor.name.slice(0, 1)}</span>
-                <span>
-                  <strong>{professor.name} {professor.title}</strong>
-                  <small>{professor.major}</small>
-                  <em>{professor.room}</em>
-                </span>
-              </button>
-            ))}
           </div>
 
           <div className="pc-mode-card">
@@ -352,6 +349,12 @@ export default function ProfessorCounsel() {
           </div>
         </section>
       </div>
+
+      <CounselConsentModal
+        open={consentOpen}
+        onClose={() => setConsentOpen(false)}
+        onAgree={handleConsentAgree}
+      />
 
       <CounselReserveModal
         open={reserveOpen}

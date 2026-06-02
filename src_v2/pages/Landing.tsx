@@ -6,7 +6,7 @@ export default function Landing() {
 
   const handleLogin = (e: FormEvent) => {
     e.preventDefault()
-    navigate('/lounge')
+    navigate('/main')
   }
 
   return (

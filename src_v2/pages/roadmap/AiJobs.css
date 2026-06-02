@@ -9,23 +9,23 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-muted);
   margin-bottom: 8px;
 }
 
-.aj-breadcrumb i { font-size: 10px; }
+.aj-breadcrumb i { font-size: 13px; }
 .aj-breadcrumb .active { color: var(--color-navy); font-weight: 600; }
 
 .aj-page-title {
-  font-size: 22px;
-  font-weight: 800;
+  font-size: 32px;
+  font-weight: 900;
   color: var(--color-navy);
   margin-bottom: 6px;
 }
 
 .aj-page-desc {
-  font-size: 13px;
+  font-size: 17px;
   color: var(--color-text-sub);
   margin-bottom: 24px;
   line-height: 1.5;
@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 19px;
   flex-shrink: 0;
 }
 
@@ -67,7 +67,7 @@
 }
 
 .aj-stat-label {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-muted);
   font-weight: 600;
   text-transform: uppercase;
@@ -76,7 +76,7 @@
 }
 
 .aj-stat-big {
-  font-size: 32px;
+  font-size: 35px;
   font-weight: 900;
   color: var(--color-navy);
   line-height: 1;
@@ -84,25 +84,25 @@
 }
 
 .aj-stat-big span {
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 700;
   color: var(--color-text-sub);
 }
 
 .aj-stat-num {
-  font-size: 18px;
+  font-size: 21px;
   font-weight: 800;
   color: var(--color-navy);
   margin-bottom: 4px;
 }
 
 .aj-stat-num span {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-muted);
 }
 
 .aj-stat-sub {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-muted);
 }
 
@@ -113,7 +113,7 @@
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 20px;
-  font-size: 11px;
+  font-size: 14px;
   margin-top: 4px;
 }
 
@@ -121,7 +121,7 @@
 .aj-body {
   display: grid;
   grid-template-columns: 200px 1fr 240px;
-  gap: 20px;
+  gap: 16px;
   align-items: start;
 }
 
@@ -140,7 +140,7 @@
 }
 
 .aj-filter-title {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 16px;
@@ -166,7 +166,7 @@
 }
 
 .aj-filter-label {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 4px;
@@ -176,7 +176,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--color-text-sub);
   cursor: pointer;
 }
@@ -194,7 +194,7 @@
   padding: 10px;
   background: var(--color-primary);
   color: #fff;
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   border-radius: var(--radius-sm);
   transition: opacity 0.15s;
@@ -217,14 +217,14 @@
 }
 
 .aj-list-count {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--color-text-sub);
 }
 
 .aj-list-count strong { color: var(--color-navy); font-weight: 700; }
 
 .aj-sort-sel {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-sub);
   border: 1px solid var(--color-border);
   border-radius: 6px;
@@ -254,7 +254,7 @@
 }
 
 .aj-job-rank {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--color-text-muted);
   text-align: center;
@@ -267,7 +267,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 19px;
   font-weight: 900;
   flex-shrink: 0;
 }
@@ -287,13 +287,13 @@
 }
 
 .aj-job-company {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-navy);
 }
 
 .aj-job-tag {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 20px;
@@ -302,7 +302,7 @@
 }
 
 .aj-job-role {
-  font-size: 13px;
+  font-size: 16px;
   color: var(--color-text-sub);
   font-weight: 500;
 }
@@ -310,7 +310,7 @@
 .aj-job-meta {
   display: flex;
   gap: 12px;
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-muted);
   flex-wrap: wrap;
 }
@@ -347,20 +347,20 @@
 }
 
 .aj-job-score-num {
-  font-size: 28px;
+  font-size: 31px;
   font-weight: 900;
   line-height: 1;
 }
 
 .aj-job-score-pct {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--color-text-sub);
   margin-top: -2px;
 }
 
 .aj-job-score-label {
-  font-size: 11px;
+  font-size: 14px;
   color: var(--color-text-muted);
   margin-top: 2px;
 }
@@ -377,7 +377,7 @@
   padding: 8px 16px;
   background: var(--color-primary);
   color: #fff;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   border-radius: var(--radius-sm);
   white-space: nowrap;
@@ -394,7 +394,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 16px;
   color: var(--color-text-muted);
   background: #fff;
   align-self: center;
@@ -421,7 +421,7 @@
 }
 
 .aj-right-title {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 14px;
@@ -454,12 +454,12 @@
 }
 
 .aj-skill-label {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-sub);
 }
 
 .aj-skill-score {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -488,7 +488,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-sub);
   line-height: 1.5;
 }
@@ -502,7 +502,7 @@
 }
 
 .aj-cta-desc {
-  font-size: 12px;
+  font-size: 15px;
   color: var(--color-text-sub);
   margin-bottom: 12px;
   line-height: 1.5;
@@ -513,7 +513,7 @@
   padding: 10px;
   background: var(--color-primary);
   color: #fff;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   border-radius: var(--radius-sm);
   display: flex;

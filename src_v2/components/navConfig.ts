@@ -2,6 +2,7 @@ export interface NavChild {
   label: string
   path: string
   icon: string
+  children?: NavChild[]
 }
 
 export interface NavSection {
@@ -16,12 +17,12 @@ export interface NavSection {
 export const NAV_SECTIONS: NavSection[] = [
   {
     id: 'lounge',
-    label: 'AI커리어 라운지',
+    label: 'AI 커리어 라운지',
     basePaths: ['/lounge'],
     path: '/lounge',
     icon: 'fa-comments',
     children: [
-      { label: 'AI커리어 라운지', path: '/lounge', icon: 'fa-comments' },
+      { label: 'AI 커리어 라운지', path: '/lounge', icon: 'fa-comments' },
     ],
   },
   {
@@ -79,7 +80,15 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '채용공고', path: '/jobs', icon: 'fa-building-user' },
       { label: '취업예측분석', path: '/jobs/prediction', icon: 'fa-chart-line' },
       { label: 'AI 맞춤채용', path: '/jobs/joblist', icon: 'fa-briefcase' },
-      { label: 'AI 자소서/면접', path: '/jobs/home', icon: 'fa-file-lines' },
+      {
+        label: 'AI 자소서/면접',
+        path: '/jobs/home',
+        icon: 'fa-file-lines',
+        children: [
+          { label: 'AI 자소서 생성', path: '/jobs/home/resume', icon: 'fa-wand-magic-sparkles' },
+          { label: 'AI 컨설팅', path: '/jobs/home/consulting', icon: 'fa-magnifying-glass-chart' },
+        ],
+      },
     ],
   },
   {
@@ -106,13 +115,17 @@ export function getSectionForPath(pathname: string) {
   )
 }
 
+function flattenChildren(children: NavChild[]): NavChild[] {
+  return children.flatMap(child => [child, ...(child.children ? flattenChildren(child.children) : [])])
+}
+
 /**
- * 섹션의 children 중 현재 경로에 가장 구체적으로 매칭되는 항목의 path를 반환.
- * 여러 children이 prefix로 매칭될 때(예: '/growth'와 '/growth/quest') 가장 긴 path를 택해
+ * 섹션의 children(중첩 포함) 중 현재 경로에 가장 구체적으로 매칭되는 항목의 path를 반환.
+ * 여러 children이 prefix로 매칭될 때(예: '/jobs/home'과 '/jobs/home/resume') 가장 긴 path를 택해
  * 상위 경로 항목이 항상 활성화되는 문제를 방지한다.
  */
 export function getActiveChildPath(pathname: string, section: NavSection): string | undefined {
-  const matches = section.children.filter(child => matchesPath(pathname, child.path))
+  const matches = flattenChildren(section.children).filter(child => matchesPath(pathname, child.path))
   if (matches.length === 0) return undefined
   return matches.reduce((best, child) => (child.path.length > best.path.length ? child : best)).path
 }

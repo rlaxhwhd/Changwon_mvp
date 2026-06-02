@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
+import CounselConsentModal from '../../components/CounselConsentModal'
 import './CareerCounsel.css'
 
 type CounselorId = 'all' | 'oh' | 'seo' | 'han' | 'moon' | 'yoon' | 'bae' | 'shin' | 'nam'
@@ -71,6 +72,7 @@ export default function PsychCounsel() {
   })
   const [notice, setNotice] = useState('')
   const [reserveOpen, setReserveOpen] = useState(false)
+  const [consentOpen, setConsentOpen] = useState(false)
 
   const showNotice = (message: string) => {
     setNotice(message)
@@ -92,6 +94,11 @@ export default function PsychCounsel() {
       showNotice('상담사와 날짜·시간을 먼저 선택해주세요')
       return
     }
+    setConsentOpen(true)
+  }
+
+  const handleConsentAgree = () => {
+    setConsentOpen(false)
     setReserveOpen(true)
   }
 
@@ -268,6 +275,12 @@ export default function PsychCounsel() {
           </div>
         </main>
       </div>
+
+      <CounselConsentModal
+        open={consentOpen}
+        onClose={() => setConsentOpen(false)}
+        onAgree={handleConsentAgree}
+      />
 
       <CounselReserveModal
         open={reserveOpen}

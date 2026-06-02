@@ -26,7 +26,7 @@
   background: linear-gradient(180deg, var(--color-primary) 0%, #7B9FFF 100%);
 }
 .gsb-header-title {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--color-navy);
   letter-spacing: 0.2px;
@@ -48,7 +48,7 @@
   border-radius: var(--radius-md);
   text-decoration: none;
   color: var(--color-text-sub);
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 500;
   transition: all 0.14s;
   cursor: pointer;
@@ -75,7 +75,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 16px;
   background: #F4F6F9;
   color: var(--color-text-muted);
   flex-shrink: 0;
@@ -90,7 +90,7 @@
 .gsb-item-label { flex: 1; line-height: 1.3; }
 
 .gsb-item-arrow {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--color-primary);
   opacity: 0.55;
   flex-shrink: 0;
@@ -136,27 +136,27 @@
 .gsb-level-badge {
   background: var(--color-primary);
   color: #fff;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   padding: 2px 8px;
   border-radius: 20px;
   letter-spacing: 0.3px;
 }
 .gsb-level-name {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   flex: 1;
   color: rgba(255, 255, 255, 0.9);
 }
 .gsb-streak {
-  font-size: 11px;
+  font-size: 14px;
   color: rgba(255, 255, 255, 0.75);
 }
 
 .gsb-xp-meta {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.6);
   margin-bottom: 5px;
 }
@@ -188,14 +188,14 @@
 }
 .gsb-stat-box-val {
   display: block;
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 800;
   color: #fff;
   line-height: 1;
   margin-bottom: 3px;
 }
 .gsb-stat-box-label {
-  font-size: 10px;
+  font-size: 13px;
   color: rgba(255, 255, 255, 0.58);
   line-height: 1.2;
 }
@@ -210,7 +210,7 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: var(--radius-sm);
   padding: 8px;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 600;
   color: #fff;
   text-decoration: none;
@@ -245,7 +245,7 @@
     border-radius: 0;
     border-bottom: 3px solid transparent;
     white-space: nowrap;
-    font-size: 11px;
+    font-size: 14px;
   }
   .gsb-item.active {
     background: none;

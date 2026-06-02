@@ -12,17 +12,25 @@ const RANKING = [
 
 const MY_RANK = { rank: 12, total: 45, name: '김채원', xp: 1850 }
 
-const TARGET_METRICS = [
-  { label: '학점 (4.3/4.5)', value: 96, low: false },
-  { label: 'NCS 역량점수', value: 60, low: false },
-  { label: '외국어 (TOEIC 650)', value: 45, low: true },
-  { label: '자격증 (SQLD)', value: 80, low: false },
-  { label: '프로젝트 경험', value: 35, low: true },
+const RECOMMENDED_PROGRAMS = [
+  { id: 1, title: '데이터 기초 프로그래밍 교육', category: '취업', dDay: 5, image: '/비교과프로그램1.png' },
+  { id: 4, title: '자기탐색으로 개인 역량 찾기', category: '진로', dDay: 3, image: '/비교과프로그램4.png' },
+  { id: 2, title: '데이터 직무역량 개발 교육', category: '취업', dDay: 12, image: '/비교과프로그램2.png' },
+  { id: 3, title: 'ChatGPT 서비스의 발전 방향', category: '진로', dDay: 20, image: '/비교과프로그램3.png' },
 ]
 
-const AI_TIPS = [
-  '어학성적(TOEIC)이 부족합니다. CARES에서 영어기초 강의부터 시작해보세요.',
-  '프로젝트경험(1건)이 부족합니다. 캡스톤디자인이나 팀프로젝트에 참여하세요.',
+const CAT_COLORS: Record<string, string> = {
+  취업: '#2E5BFF',
+  진로: '#22C55E',
+  어학: '#F59E0B',
+  창업: '#EF4444',
+}
+
+const RECOMMENDED_JOBS = [
+  { id: 1, company: '네이버', initial: 'N', color: '#03C75A', role: '서비스기획/PM', match: 92, deadline: '상시채용' },
+  { id: 2, company: '카카오', initial: 'K', color: '#FEE500', textColor: '#1C2442', role: '데이터분석', match: 88, deadline: '05.30 마감' },
+  { id: 3, company: '넥슨', initial: 'NX', color: '#FF5C00', role: '백엔드개발', match: 80, deadline: '06.01 마감' },
+  { id: 4, company: '쿠팡', initial: 'C', color: '#EE2222', role: 'PM/기획', match: 75, deadline: '05.31 마감' },
 ]
 
 const NOTICES = [
@@ -250,27 +258,6 @@ function GrowthChart() {
 }
 
 /* ── Pass Donut (합격예측) ──────────────────────────────────────── */
-function PassDonut({ value }: { value: number }) {
-  const r = 32
-  const circ = 2 * Math.PI * r
-  const offset = circ * (1 - value / 100)
-  return (
-    <div className="mn-pass-donut">
-      <svg viewBox="0 0 80 80">
-        <g transform="rotate(-90 40 40)">
-          <circle cx="40" cy="40" r={r} fill="none" stroke="#E6EAF2" strokeWidth="8" />
-          <circle cx="40" cy="40" r={r} fill="none" stroke="#2E5BFF" strokeWidth="8"
-            strokeLinecap="round" strokeDasharray={circ} strokeDashoffset={offset} />
-        </g>
-      </svg>
-      <div className="mn-pass-donut-text">
-        <span className="mn-pass-donut-num">{value}%</span>
-        <span className="mn-pass-donut-cap">합격예측</span>
-      </div>
-    </div>
-  )
-}
-
 /* ── Main Page ─────────────────────────────────────────────────── */
 export default function Main() {
   const navigate = useNavigate()
@@ -285,12 +272,28 @@ export default function Main() {
       <section className="mn-hero">
         <div className="mn-hero-content">
           <div className="mn-greeting">
-            <h1 className="mn-greeting-title">안녕하세요, 김채원님! 👋</h1>
+            <h1 className="mn-greeting-title">안녕하세요, 김채원님</h1>
             <p className="mn-greeting-sub">오늘도 성장하는 당신을 응원해요!</p>
           </div>
 
           {/* Stat cards row */}
           <div className="mn-stat-cards">
+
+            {/* 역량 성장 그래프 — 우상향 차트 */}
+            <div className="mn-stat-card mn-quest-card">
+              <p className="mn-sc-label">역량 성장 그래프</p>
+              <div className="mb-1 flex items-baseline gap-1">
+                <span className="text-[30px] font-black leading-none text-[#1C2442]">72</span>
+                <span className="text-[11px] font-bold text-[#637381]">점</span>
+                <span className="ml-auto flex items-center gap-1 rounded-full bg-[#22C55E]/12 px-2 py-0.5 text-[11px] font-extrabold text-[#16A34A]">
+                  <i className="fa-solid fa-arrow-trend-up text-[10px]" />
+                  +8
+                </span>
+              </div>
+              <div className="flex flex-1 items-end">
+                <GrowthChart />
+              </div>
+            </div>
 
             {/* Profile card */}
             <div className="mn-stat-card mn-profile-card">
@@ -315,22 +318,6 @@ export default function Main() {
               <button className="mn-sc-btn" onClick={() => navigate('/growth/quest')}>
                 미션 확인하기
               </button>
-            </div>
-
-            {/* 역량 성장 그래프 — 우상향 차트 */}
-            <div className="mn-stat-card mn-quest-card">
-              <p className="mn-sc-label">역량 성장 그래프</p>
-              <div className="mb-1 flex items-baseline gap-1">
-                <span className="text-[30px] font-black leading-none text-[#1C2442]">72</span>
-                <span className="text-[11px] font-bold text-[#637381]">점</span>
-                <span className="ml-auto flex items-center gap-1 rounded-full bg-[#22C55E]/12 px-2 py-0.5 text-[11px] font-extrabold text-[#16A34A]">
-                  <i className="fa-solid fa-arrow-trend-up text-[10px]" />
-                  +8
-                </span>
-              </div>
-              <div className="flex flex-1 items-end">
-                <GrowthChart />
-              </div>
             </div>
 
             {/* 오늘의 성장미션 */}
@@ -447,73 +434,131 @@ export default function Main() {
 
       </section>
 
-      {/* ── 목표 기업·합격분석 ───────────────────────────────── */}
+      {/* ── 추천 비교과 + AI 추천 채용공고 ───────────────────────── */}
       <section className="mn-ai-section">
+        <div className="mn-recommend-grid">
 
-        <div className="mn-target-card">
-          <div className="mn-target-head">
-            <h2 className="mn-target-title">
-              <i className="fa-solid fa-bullseye" />
-              목표 기업·합격분석
-            </h2>
-            <button className="mn-text-btn" onClick={() => navigate('/jobs/prediction')}>
-              상세 분석 <i className="fa-solid fa-chevron-right" />
-            </button>
-          </div>
-
-          <div className="mn-target-body">
-            <div className="mn-target-main">
-              <div className="mn-target-company">
-                <div className="mn-target-company-icon">
-                  <i className="fa-solid fa-building" />
-                </div>
-                <div>
-                  <p className="mn-target-company-name">두산에너빌리티</p>
-                  <p className="mn-target-company-meta">IT · 하드웨어 솔루션 · 7,491명</p>
-                </div>
-              </div>
-
-              <div className="mn-target-bars">
-                {TARGET_METRICS.map(m => (
-                  <div key={m.label} className="mn-target-bar-row">
-                    <span className="mn-target-bar-label">{m.label}</span>
-                    <div className="mn-target-bar-track">
-                      <span
-                        className={`mn-target-bar-fill${m.low ? ' low' : ''}`}
-                        style={{ width: `${m.value}%` }}
-                      />
-                    </div>
-                    <span className="mn-target-bar-pct">{m.value}%</span>
+          {/* 추천 비교과 프로그램 */}
+          <div className="mn-rec-card">
+            <div className="mn-rec-head">
+              <h2 className="mn-rec-title">
+                <i className="fa-solid fa-clipboard-check" />
+                추천 비교과 프로그램
+              </h2>
+              <button className="mn-text-btn" onClick={() => navigate('/growth/program')}>
+                전체 보기 <i className="fa-solid fa-chevron-right" />
+              </button>
+            </div>
+            <ul className="mn-rec-prog-list">
+              {RECOMMENDED_PROGRAMS.map(p => (
+                <li
+                  key={p.id}
+                  className="mn-rec-prog-item"
+                  onClick={() => navigate(`/growth/program/${p.id}`)}
+                >
+                  <div className="mn-rec-prog-thumb">
+                    <img src={p.image} alt={p.title} />
                   </div>
-                ))}
-              </div>
-            </div>
-
-            <div className="mn-target-donut">
-              <PassDonut value={68} />
-            </div>
+                  <div className="mn-rec-prog-info">
+                    <div className="mn-rec-prog-tags">
+                      <span
+                        className="mn-rec-prog-cat"
+                        style={{
+                          background: (CAT_COLORS[p.category] ?? '#6B7280') + '18',
+                          color: CAT_COLORS[p.category] ?? '#6B7280',
+                        }}
+                      >
+                        {p.category}
+                      </span>
+                      <span className={`mn-rec-prog-dday${p.dDay <= 5 ? ' urgent' : ''}`}>
+                        D-{p.dDay}
+                      </span>
+                    </div>
+                    <p className="mn-rec-prog-name">{p.title}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
 
-        <div className="mn-tip-card">
-          <div className="mn-tip-head">
-            <span className="mn-tip-badge">
-              <i className="fa-solid fa-wand-magic-sparkles" />
-              AI 코멘트
-            </span>
-            <h3 className="mn-tip-title">AI 커리어 팁</h3>
+          {/* AI 추천 채용공고 */}
+          <div className="mn-rec-card">
+            <div className="mn-rec-head">
+              <h2 className="mn-rec-title">
+                <i className="fa-solid fa-briefcase" />
+                AI 추천 채용공고
+              </h2>
+              <button className="mn-text-btn" onClick={() => navigate('/jobs')}>
+                전체 보기 <i className="fa-solid fa-chevron-right" />
+              </button>
+            </div>
+            <ul className="mn-rec-job-list">
+              {RECOMMENDED_JOBS.map(j => (
+                <li
+                  key={j.id}
+                  className="mn-rec-job-item"
+                  onClick={() => navigate('/jobs')}
+                >
+                  <div
+                    className="mn-rec-job-logo"
+                    style={{ background: j.color, color: j.textColor ?? '#fff' }}
+                  >
+                    {j.initial}
+                  </div>
+                  <div className="mn-rec-job-info">
+                    <p className="mn-rec-job-company">{j.company}</p>
+                    <p className="mn-rec-job-role">{j.role} · {j.deadline}</p>
+                  </div>
+                  <div className={`mn-rec-job-match${j.match >= 85 ? ' high' : ''}`}>
+                    <strong>{j.match}</strong>
+                    <span>%</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
-          <ul className="mn-tip-list">
-            {AI_TIPS.map((tip, i) => (
-              <li key={i} className="mn-tip-item">
-                <i className="fa-solid fa-circle-exclamation" />
-                <p>{tip}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
 
+        </div>
       </section>
+
+      {/* ── Footer ─────────────────────────────────────────── */}
+      <footer className="mn-footer">
+        <div className="mn-footer-inner">
+          <div className="mn-footer-brand">
+            <div className="mn-footer-logo">CWNU</div>
+            <p className="mn-footer-school">국립창원대학교</p>
+          </div>
+
+          <div className="mn-footer-info">
+            <p className="mn-footer-line">
+              <span className="mn-footer-label">E-MAIL</span>
+              <span>:</span>
+              <a href="mailto:cwjob@changwon.ac.kr">cwjob@changwon.ac.kr</a>
+            </p>
+            <p className="mn-footer-line">
+              51140) 경상남도 창원시 의창구 창원대학로 20
+            </p>
+            <p className="mn-footer-line mn-footer-copy">
+              <span>COPYRIGHT</span>
+              <span>CHANGWON NATIONAL UNIVERSITY. ALL RIGHTS RESERVED.</span>
+            </p>
+            <ul className="mn-footer-links">
+              <li>
+                <a href="#privacy">
+                  개인정보처리방침
+                  <i className="fa-solid fa-arrow-up-right-from-square" />
+                </a>
+              </li>
+              <li>
+                <a href="#email-reject">
+                  이메일무단수집거부
+                  <i className="fa-solid fa-arrow-up-right-from-square" />
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </footer>
 
     </div>
   )

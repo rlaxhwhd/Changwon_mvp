@@ -15,6 +15,7 @@ interface Program {
   endDate: string
   capacity: number
   dDay: number
+  image?: string
 }
 
 const PROGRAMS: Program[] = [
@@ -27,6 +28,7 @@ const PROGRAMS: Program[] = [
     endDate: '2025.04.04',
     capacity: 30,
     dDay: 5,
+    image: '/비교과프로그램1.png',
   },
   {
     id: 2,
@@ -37,6 +39,7 @@ const PROGRAMS: Program[] = [
     endDate: '2025.04.04',
     capacity: 25,
     dDay: 12,
+    image: '/비교과프로그램2.png',
   },
   {
     id: 3,
@@ -47,6 +50,7 @@ const PROGRAMS: Program[] = [
     endDate: '2025.04.04',
     capacity: 40,
     dDay: 20,
+    image: '/비교과프로그램3.png',
   },
   {
     id: 4,
@@ -57,6 +61,7 @@ const PROGRAMS: Program[] = [
     endDate: '2025.04.04',
     capacity: 20,
     dDay: 3,
+    image: '/비교과프로그램4.png',
   },
   {
     id: 5,
@@ -67,6 +72,7 @@ const PROGRAMS: Program[] = [
     endDate: '2025.04.04',
     capacity: 15,
     dDay: 30,
+    image: '/비교과프로그램5.png',
   },
 ]
 
@@ -127,10 +133,21 @@ export default function ProgramApply() {
         </div>
 
         <div className="pa-list">
-          {filtered.map(program => (
-            <div key={program.id} className="pa-card" onClick={() => navigate(`/growth/program/${program.id}`)}>
+          {filtered.map((program, idx) => (
+            <div
+              key={program.id}
+              className={`pa-card${idx === 0 ? ' pa-card--featured' : ''}`}
+              onClick={() => navigate(`/growth/program/${program.id}`)}
+            >
+              {idx === 0 && (
+                <span className="pa-featured-badge">
+                  <i className="fa-solid fa-wand-magic-sparkles" /> AI 추천
+                </span>
+              )}
               <div className="pa-thumb">
-                <i className="fa-solid fa-image" />
+                {program.image
+                  ? <img src={program.image} alt={program.title} />
+                  : <i className="fa-solid fa-image" />}
               </div>
 
               <div className="pa-info">
