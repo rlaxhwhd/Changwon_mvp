@@ -7,6 +7,8 @@
 .gh-page {
   flex: 1;
   min-width: 0;
+  max-width: 1280px;
+  margin: 0 auto;
   min-height: calc(100vh - var(--gnb-height));
   padding: 0 28px 56px;
 }
@@ -15,8 +17,7 @@
   display: flex;
   align-items: center;
   gap: 22px;
-  max-width: 1280px;
-  margin: 24px auto 24px;
+  margin: 24px 0 24px;
   min-height: 178px;
   padding: 34px 44px 32px;
   background:
@@ -49,8 +50,6 @@
 }
 
 .gh-dashboard {
-  max-width: 1280px;
-  margin: 0 auto;
   display: grid;
   grid-template-columns: 380px minmax(420px, 1fr) 420px;
   gap: 16px;

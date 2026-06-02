@@ -1,9 +1,11 @@
+import { useNavigate } from 'react-router-dom'
 import './GrowthHome.css'
 
+// QuestBoard 일일 퀘스트와 동기화 (src_v2/pages/growth/QuestBoard.tsx daily)
 const MISSIONS = [
-  { id: 1, label: 'AI 역량 분석 리포트 읽기', xp: 10, icon: 'fa-regular fa-file-lines' },
-  { id: 2, label: '이력서 항목 1개 작성하기', xp: 20, icon: 'fa-regular fa-file-lines' },
-  { id: 3, label: '면접 질문 연습하기', xp: 30, icon: 'fa-regular fa-square-check' },
+  { id: 1, label: '토익 영단어 10문제 학습하기', xp: 20, icon: 'fa-solid fa-book-open' },
+  { id: 2, label: '성장일지 1개 기록하기',       xp: 10, icon: 'fa-solid fa-pen-to-square' },
+  { id: 3, label: '채용공고 리스트 확인하기',     xp: 10, icon: 'fa-solid fa-briefcase' },
 ]
 
 const ACTIVITIES = [
@@ -57,6 +59,7 @@ function GrowthGraph() {
 }
 
 export default function GrowthHome() {
+  const navigate = useNavigate()
   return (
     <div className="gh-shell">
       <div className="gh-page">
@@ -120,7 +123,7 @@ export default function GrowthHome() {
                   </li>
                 ))}
               </ul>
-              <button className="gh-soft-btn">더보기</button>
+              <button className="gh-soft-btn" onClick={() => navigate('/growth/quest')}>더보기</button>
             </article>
 
             <article className="gh-panel gh-quests">
