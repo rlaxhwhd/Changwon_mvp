@@ -453,7 +453,7 @@ export default function AiLounge() {
       <div className="al-profile-card">
         <div className="al-profile-user">
           <div className="al-avatar-box">
-            <i className="fa-solid fa-user" />
+            <img className="al-avatar-photo" src="/student-profile.png" alt="김채원 프로필" />
           </div>
           <div className="al-profile-info">
             <div className="al-profile-name">김채원</div>

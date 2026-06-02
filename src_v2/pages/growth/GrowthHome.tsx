@@ -69,8 +69,8 @@ export default function GrowthHome() {
           <div className="gh-column gh-left-column">
             <article className="gh-panel gh-profile">
               <div className="gh-profile-main">
-                <div className="gh-avatar" aria-hidden="true">
-                  <span className="gh-avatar-face">김</span>
+                <div className="gh-avatar">
+                  <img className="gh-avatar-photo" src="/student-profile.png" alt="김채원 프로필" />
                 </div>
                 <div>
                   <h2>김채원</h2>

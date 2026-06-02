@@ -429,7 +429,7 @@ function ProfileSection({ profile, onChange }: { profile: ProfileData; onChange:
     <section className="pf-section">
       <div className="pf-profile-card">
         <div className="pf-profile-avatar">
-          <i className="fa-solid fa-user" />
+          <img className="pf-profile-photo" src="/student-profile.png" alt="김채원 프로필" />
         </div>
         <div className="pf-profile-info">
           <h2>{profile.name} <small>· {profile.school}</small></h2>
