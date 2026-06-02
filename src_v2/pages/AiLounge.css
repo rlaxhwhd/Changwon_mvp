@@ -6,6 +6,55 @@
   padding: 24px 40px 48px;
 }
 
+/* ── AI 분석 섹션 (DB 정보 vs AI 분석 구분) ──────────────────────── */
+.al-ai-section {
+  margin-top: 36px;
+  padding: 40px 32px 44px;
+  background:
+    radial-gradient(circle at 0% 0%, rgba(123, 110, 255, 0.08), transparent 45%),
+    radial-gradient(circle at 100% 0%, rgba(46, 91, 255, 0.08), transparent 45%),
+    linear-gradient(180deg, #F6F8FF 0%, #FAFBFF 100%);
+  border: 1px solid #DCE5F5;
+  border-radius: 24px;
+  box-shadow: 0 18px 44px rgba(15, 45, 95, 0.04);
+}
+
+.al-ai-section-head {
+  text-align: center;
+  margin-bottom: 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.al-ai-badge {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.6px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #2E5BFF 0%, #7B6EFF 100%);
+  color: #fff;
+  box-shadow: 0 6px 16px rgba(46, 91, 255, 0.22);
+}
+
+.al-ai-section-head h2 {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--color-navy);
+  letter-spacing: -0.4px;
+  margin: 4px 0 0;
+}
+
+.al-ai-section-head p {
+  font-size: 14px;
+  color: var(--color-text-sub);
+  margin: 0;
+  line-height: 1.6;
+}
+
 /* ── Main Layout: 메인 콘텐츠 viewport 중앙 정렬 + 사이드바 viewport 우측 fixed ── */
 .al-layout {
   position: relative;
@@ -981,4 +1030,7 @@
   .al-toeic-stat-divider { display: none; }
   /* counsel pair: stack header */
   .al-counsel-pair-head { flex-direction: column; align-items: flex-start; gap: 2px; }
+  /* AI 분석 섹션 모바일 패딩 축소 */
+  .al-ai-section { padding: 26px 16px 28px; border-radius: 18px; margin-top: 22px; }
+  .al-ai-section-head h2 { font-size: 20px; }
 }
