@@ -252,7 +252,13 @@
 
 /* Daily mission card */
 .mn-daily-card {
-  gap: 4px;
+  gap: 0;
+}
+.mn-daily-card > * + *:not(.mn-sc-btn) {
+  margin-top: 4px;
+}
+.mn-daily-card .mn-sc-btn {
+  margin-top: auto;
 }
 
 .mn-daily-icon {
@@ -378,7 +384,7 @@
 
 .mn-radar-svg {
   width: 100%;
-  max-width: 200px;
+  max-width: 260px;
 }
 
 /* Ranking */
