@@ -139,7 +139,7 @@ const strengthWeakness = [
 const gapItems: GapItem[] = [
   {
     title: '프로젝트 포트폴리오',
-    badges: [{ label: '필수', type: 'required' }, { label: '가중치 0.4', type: 'weight' }],
+    badges: [{ label: '필수', type: 'required' }, { label: '중요도 0.4', type: 'weight' }],
     desc: 'IT PM 지원에는 프로젝트 관리 경험이 핵심입니다. 현재 관련 프로젝트 경험이 부족해 가장 먼저 보강해야 합니다.',
     pct: 0,
     current: '미보유',
@@ -148,7 +148,7 @@ const gapItems: GapItem[] = [
   },
   {
     title: '인턴/실무 경험',
-    badges: [{ label: '우대', type: 'preferred' }, { label: '가중치 0.2', type: 'weight' }],
+    badges: [{ label: '우대', type: 'preferred' }, { label: '중요도 0.2', type: 'weight' }],
     desc: '게임 또는 IT 서비스 인턴 경험이 있으면 서류 합격 가능성이 크게 올라갑니다.',
     pct: 25,
     current: '대외활동 2건',
@@ -157,7 +157,7 @@ const gapItems: GapItem[] = [
   },
   {
     title: 'TOEIC 점수',
-    badges: [{ label: '필수', type: 'required' }, { label: '가중치 0.3', type: 'weight' }],
+    badges: [{ label: '필수', type: 'required' }, { label: '중요도 0.3', type: 'weight' }],
     desc: '현재 550점으로 기준 점수인 700점에 미달합니다. 150점 향상이 필요합니다.',
     pct: 78,
     current: '550점',
@@ -166,7 +166,7 @@ const gapItems: GapItem[] = [
   },
   {
     title: 'IT 자격증',
-    badges: [{ label: '우대', type: 'preferred' }, { label: '가중치 0.1', type: 'weight' }],
+    badges: [{ label: '우대', type: 'preferred' }, { label: '중요도 0.1', type: 'weight' }],
     desc: 'SQLD를 보유하고 있으나 PM 직무에는 PMP 또는 CAPM 자격증이 있으면 강점이 됩니다.',
     pct: 30,
     current: 'SQLD 1개',
@@ -214,7 +214,6 @@ export default function AiRoadmap() {
   const [generating, setGenerating] = useState(false)
   const [form, setForm] = useState({ company: '넥슨코리아', role: 'IT PM', gpa: '4.3', cert: 'SQLD, TOEIC 550' })
 
-  const activePhase = PHASES.find(phase => phase.status === 'active')
   const progress = Math.round((PHASES.filter(phase => phase.status === 'done').length / PHASES.length) * 100)
 
   const togglePhase = (num: number) => {
@@ -436,18 +435,6 @@ export default function AiRoadmap() {
               <div className="ar-priority-row low"><span />낮음 <strong>1개</strong></div>
             </div>
 
-            {/* 추천 다음 행동은 각 phase의 todos에 이미 노출되므로 사이드바에서 제거 (F12) */}
-
-            {activePhase && (
-              <div className="ar-side-cta">
-                <span>현재 단계</span>
-                <strong>{activePhase.title}</strong>
-                <button onClick={() => navigate(activePhase.nextPath)}>
-                  실행하기
-                  <i className="fa-solid fa-arrow-right" />
-                </button>
-              </div>
-            )}
           </aside>
         </div>
       )}

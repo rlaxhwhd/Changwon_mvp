@@ -152,7 +152,7 @@ function RadarChart() {
   const targetPoly = toPolygon(radarAxes.map(a => a.target))
 
   return (
-    <svg viewBox="0 0 300 300" width="100%" height="220" style={{ overflow: 'visible' }}>
+    <svg viewBox="0 0 300 300" width="100%" height="280" style={{ overflow: 'visible' }}>
       {/* Grid hexagons */}
       {[25, 50, 75, 100].map(pct => (
         <polygon
@@ -192,7 +192,7 @@ function RadarChart() {
         return (
           <text key={i} x={p.x.toFixed(1)} y={p.y.toFixed(1)}
             textAnchor={anchor} dominantBaseline="middle"
-            fontSize="11" fill="#637381" fontFamily="Pretendard, sans-serif">
+            fontSize="14" fill="#1C2442" fontFamily="Pretendard, sans-serif" fontWeight="700">
             {a.label}
           </text>
         )
@@ -422,6 +422,14 @@ export default function AiLounge() {
           ))}
         </div>
       </div>
+
+      {/* ── AI 종합 분석 섹션 (DB 정보 vs AI 분석 구분) ──────────────── */}
+      <section className="al-ai-section">
+        <div className="al-ai-section-head">
+          <span className="al-ai-badge">AI 종합 분석</span>
+          <h2>김채원 학생을 위한 AI 맞춤 인사이트</h2>
+          <p>진단 결과 · 역량 · 학습 데이터를 종합해 AI가 실시간으로 분석한 결과입니다.</p>
+        </div>
 
       {/* ── Main Layout: content stack + sticky right sidebar ─────── */}
       <div className="al-layout">
@@ -744,6 +752,7 @@ export default function AiLounge() {
         </aside>
 
       </div>
+      </section>
 
       {/* ── Test Detail Modal ─────────────────────────────────────── */}
       <Modal

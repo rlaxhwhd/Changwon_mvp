@@ -68,7 +68,7 @@ function RadarChart() {
   const outerPath = outerPoints.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
 
   return (
-    <svg viewBox="0 0 200 200" className="mn-radar-svg">
+    <svg viewBox="-30 -10 260 220" className="mn-radar-svg">
       <defs>
         {/* 홀로그램 메인 그라데이션 */}
         <linearGradient id="holo-main" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -147,7 +147,7 @@ function RadarChart() {
         const { x, y } = pt(i, 1.28)
         const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
         return (
-          <text key={i} x={x} y={y} textAnchor={anchor} fontSize="9.5" fill="#4B5563" fontFamily="Pretendard, sans-serif" fontWeight="500">
+          <text key={i} x={x} y={y} textAnchor={anchor} fontSize="13" fill="#1C2442" fontFamily="Pretendard, sans-serif" fontWeight="700">
             {ax.label}
           </text>
         )

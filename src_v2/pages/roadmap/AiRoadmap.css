@@ -499,14 +499,10 @@
 }
 
 .ar-gap-card {
-  border: 1px solid var(--color-border);
+  border: 1.5px solid #94A3B8;
   border-radius: var(--radius-md);
   padding: 16px;
 }
-
-.ar-gap-card.critical { border-left: 4px solid var(--color-danger); }
-.ar-gap-card.warn { border-left: 4px solid var(--color-warning); }
-.ar-gap-card.info { border-left: 4px solid var(--color-primary); }
 
 .ar-gap-top {
   display: flex;
