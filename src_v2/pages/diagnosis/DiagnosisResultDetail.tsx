@@ -54,7 +54,6 @@ const TEST_NAMES: Record<string, string> = {
 }
 
 const scoreLevel = (s: number) => (s >= 80 ? 'high' : s >= 60 ? 'mid' : 'low')
-const scoreColor = (s: number) => (s >= 80 ? '#22C55E' : s >= 60 ? '#F59E0B' : '#EF4444')
 // 막대그래프 색상: 0~40 빨강 / 41~70 초록 / 71~100 파랑
 const barColor = (s: number) => (s >= 71 ? '#2E5BFF' : s >= 41 ? '#22C55E' : '#EF4444')
 
