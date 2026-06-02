@@ -1,8 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, type ReactNode } from 'react'
 import Modal from '../../components/Modal'
 import './Portfolio.css'
 
-type TabId = 'profile' | 'skills' | 'experience' | 'documents'
+type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'resume'
 
 interface TabDef {
   id: TabId
@@ -14,8 +14,22 @@ const TABS: TabDef[] = [
   { id: 'profile',    label: '기본 정보',  icon: 'fa-id-card' },
   { id: 'skills',     label: '스킬·자격증', icon: 'fa-screwdriver-wrench' },
   { id: 'experience', label: '경험·수상',  icon: 'fa-trophy' },
-  { id: 'documents',  label: '자소서·이력서', icon: 'fa-file-lines' },
+  { id: 'documents',  label: '자소서',     icon: 'fa-file-lines' },
+  { id: 'resume',     label: '이력서',     icon: 'fa-id-badge' },
 ]
+
+interface ProfileData {
+  name: string
+  studentId: string
+  school: string
+  dept: string
+  grade: string
+  email: string
+  phone: string
+  gpa: string
+  major: string
+  intro: string
+}
 
 /* ── Data Models ────────────────────────────────────────────────── */
 interface Skill {
@@ -72,7 +86,7 @@ interface Resume {
 }
 
 /* ── Mock Data ──────────────────────────────────────────────────── */
-const PROFILE = {
+const INITIAL_PROFILE: ProfileData = {
   name: '김채원',
   studentId: '20221234',
   school: '국립창원대학교',
@@ -198,6 +212,7 @@ const LEVEL_LABELS = ['', '초급', '초중급', '중급', '고급', '전문가'
 /* ── Page ───────────────────────────────────────────────────────── */
 export default function Portfolio() {
   const [tab, setTab] = useState<TabId>('profile')
+  const [profile, setProfile] = useState<ProfileData>(INITIAL_PROFILE)
   const [skills, setSkills] = useState<Skill[]>(INITIAL_SKILLS)
   const [certs] = useState<Cert[]>(INITIAL_CERTS)
   const [langs] = useState<Language[]>(INITIAL_LANGS)
@@ -215,7 +230,7 @@ export default function Portfolio() {
 
   const completeness = useMemo(() => {
     let score = 0
-    if (PROFILE.intro.length > 30) score += 15
+    if (profile.intro.length > 30) score += 15
     score += Math.min(skills.length, 8) * 3
     score += Math.min(certs.length, 4) * 4
     score += Math.min(langs.length, 2) * 5
@@ -223,7 +238,7 @@ export default function Portfolio() {
     score += Math.min(projects.length, 4) * 5
     score += Math.min(resumes.length, 4) * 4
     return Math.min(score, 100)
-  }, [skills.length, certs.length, langs.length, awards.length, projects.length, resumes.length])
+  }, [profile.intro.length, skills.length, certs.length, langs.length, awards.length, projects.length, resumes.length])
 
   const exportPdf = () => {
     setExportToast(true)
@@ -277,7 +292,7 @@ export default function Portfolio() {
       </nav>
 
       <div className="pf-body">
-        {tab === 'profile' && <ProfileSection />}
+        {tab === 'profile' && <ProfileSection profile={profile} onChange={setProfile} />}
         {tab === 'skills' && (
           <SkillsSection
             skills={skills}
@@ -290,9 +305,24 @@ export default function Portfolio() {
         {tab === 'experience' && <ExperienceSection awards={awards} projects={projects} />}
         {tab === 'documents' && (
           <DocumentsSection
+            profile={profile}
             resumes={resumes}
             onView={r => setViewResume(r)}
             onRemove={removeResume}
+          />
+        )}
+        {tab === 'resume' && (
+          <ResumeFullSection
+            profile={profile}
+            onProfileChange={setProfile}
+            skills={skills}
+            certs={certs}
+            langs={langs}
+            awards={awards}
+            projects={projects}
+            resumes={resumes}
+            onJumpTab={setTab}
+            onExportPdf={exportPdf}
           />
         )}
       </div>
@@ -387,7 +417,14 @@ export default function Portfolio() {
 
 /* ── Sections ───────────────────────────────────────────────────── */
 
-function ProfileSection() {
+function ProfileSection({ profile, onChange }: { profile: ProfileData; onChange: (p: ProfileData) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [form, setForm] = useState<ProfileData>(profile)
+
+  const startEdit = () => { setForm(profile); setEditing(true) }
+  const cancel = () => setEditing(false)
+  const save = () => { onChange(form); setEditing(false) }
+
   return (
     <section className="pf-section">
       <div className="pf-profile-card">
@@ -395,11 +432,11 @@ function ProfileSection() {
           <i className="fa-solid fa-user" />
         </div>
         <div className="pf-profile-info">
-          <h2>{PROFILE.name} <small>· {PROFILE.school}</small></h2>
+          <h2>{profile.name} <small>· {profile.school}</small></h2>
           <p className="pf-profile-sub">
-            {PROFILE.dept} · {PROFILE.grade} · 학번 {PROFILE.studentId}
+            {profile.dept} · {profile.grade} · 학번 {profile.studentId}
           </p>
-          <p className="pf-profile-intro">{PROFILE.intro}</p>
+          <p className="pf-profile-intro">{profile.intro}</p>
         </div>
       </div>
 
@@ -407,24 +444,61 @@ function ProfileSection() {
         <article className="pf-card">
           <h3><i className="fa-solid fa-graduation-cap" /> 학사 정보</h3>
           <dl className="pf-dl">
-            <div><dt>학교</dt><dd>{PROFILE.school}</dd></div>
-            <div><dt>학과</dt><dd>{PROFILE.dept}</dd></div>
-            <div><dt>학년</dt><dd>{PROFILE.grade}</dd></div>
-            <div><dt>학번</dt><dd>{PROFILE.studentId}</dd></div>
-            <div><dt>GPA</dt><dd><strong>{PROFILE.gpa}</strong></dd></div>
-            <div><dt>주전공</dt><dd>{PROFILE.major}</dd></div>
+            <div><dt>학교</dt><dd>{profile.school}</dd></div>
+            <div><dt>학과</dt><dd>{profile.dept}</dd></div>
+            <div><dt>학년</dt><dd>{profile.grade}</dd></div>
+            <div><dt>학번</dt><dd>{profile.studentId}</dd></div>
+            <div><dt>GPA</dt><dd><strong>{profile.gpa}</strong></dd></div>
+            <div><dt>주전공</dt><dd>{profile.major}</dd></div>
           </dl>
         </article>
 
         <article className="pf-card">
-          <h3><i className="fa-solid fa-address-book" /> 연락처</h3>
-          <dl className="pf-dl">
-            <div><dt>이메일</dt><dd>{PROFILE.email}</dd></div>
-            <div><dt>휴대폰</dt><dd>{PROFILE.phone}</dd></div>
-          </dl>
-          <button type="button" className="pf-edit-btn">
-            <i className="fa-solid fa-pen" /> 정보 수정
-          </button>
+          <header className="pf-card-head">
+            <h3><i className="fa-solid fa-address-book" /> 연락처</h3>
+          </header>
+          {editing ? (
+            <div className="pf-form">
+              <label>
+                <span>이메일</span>
+                <input
+                  type="text"
+                  value={form.email}
+                  onChange={e => setForm({ ...form, email: e.target.value })}
+                />
+              </label>
+              <label>
+                <span>휴대폰</span>
+                <input
+                  type="text"
+                  value={form.phone}
+                  onChange={e => setForm({ ...form, phone: e.target.value })}
+                />
+              </label>
+              <label>
+                <span>자기소개</span>
+                <textarea
+                  rows={4}
+                  value={form.intro}
+                  onChange={e => setForm({ ...form, intro: e.target.value })}
+                />
+              </label>
+              <div className="pf-form-actions">
+                <button type="button" className="pf-btn pf-btn--ghost" onClick={cancel}>취소</button>
+                <button type="button" className="pf-btn pf-btn--primary" onClick={save}>저장</button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <dl className="pf-dl">
+                <div><dt>이메일</dt><dd>{profile.email}</dd></div>
+                <div><dt>휴대폰</dt><dd>{profile.phone}</dd></div>
+              </dl>
+              <button type="button" className="pf-edit-btn" onClick={startEdit}>
+                <i className="fa-solid fa-pen" /> 정보 수정
+              </button>
+            </>
+          )}
         </article>
       </div>
     </section>
@@ -597,12 +671,13 @@ function ExperienceSection({ awards, projects }: ExperienceSectionProps) {
 }
 
 interface DocumentsSectionProps {
+  profile: ProfileData
   resumes: Resume[]
   onView: (r: Resume) => void
   onRemove: (id: string) => void
 }
 
-function DocumentsSection({ resumes, onView, onRemove }: DocumentsSectionProps) {
+function DocumentsSection({ profile, resumes, onView, onRemove }: DocumentsSectionProps) {
   const aiCount = resumes.filter(r => r.isAi).length
   const manualCount = resumes.filter(r => !r.isAi).length
 
@@ -675,11 +750,356 @@ function DocumentsSection({ resumes, onView, onRemove }: DocumentsSectionProps) 
           위 정보를 종합해서 만들어진 이력서를 미리 보고, PDF로 내보낼 수 있어요. 우측 상단의 "이력서 PDF" 버튼을 눌러주세요.
         </p>
         <div className="pf-resume-summary-grid">
-          <div><strong>기본 정보</strong><span>{PROFILE.name} · {PROFILE.dept}</span></div>
-          <div><strong>학점</strong><span>{PROFILE.gpa}</span></div>
+          <div><strong>기본 정보</strong><span>{profile.name} · {profile.dept}</span></div>
+          <div><strong>학점</strong><span>{profile.gpa}</span></div>
           <div><strong>강조 키워드</strong><span>AI · 데이터 · 백엔드 · 풀스택</span></div>
         </div>
       </article>
+    </section>
+  )
+}
+
+/* ── Full Resume View (전체 이력서 한 페이지 미리보기 + 인라인 편집) ── */
+
+interface ResumeFullSectionProps {
+  profile: ProfileData
+  onProfileChange: (p: ProfileData) => void
+  skills: Skill[]
+  certs: Cert[]
+  langs: Language[]
+  awards: Award[]
+  projects: Project[]
+  resumes: Resume[]
+  onJumpTab: (id: TabId) => void
+  onExportPdf: () => void
+}
+
+const SKILL_ORDER: Skill['category'][] = ['언어', '프레임워크', '도구', 'DB', '디자인']
+
+function ResumeFullSection({
+  profile,
+  onProfileChange,
+  skills,
+  certs,
+  langs,
+  awards,
+  projects,
+  resumes,
+  onJumpTab,
+  onExportPdf,
+}: ResumeFullSectionProps) {
+  const [editingField, setEditingField] = useState<null | 'intro' | 'contact' | 'name'>(null)
+  const [draftProfile, setDraftProfile] = useState<ProfileData>(profile)
+  const [pickedResumeId, setPickedResumeId] = useState<string>(resumes[0]?.id ?? '')
+
+  const pickedResume = useMemo(
+    () => resumes.find(r => r.id === pickedResumeId) ?? resumes[0] ?? null,
+    [resumes, pickedResumeId],
+  )
+
+  const startEdit = (field: NonNullable<typeof editingField>) => {
+    setDraftProfile(profile)
+    setEditingField(field)
+  }
+  const cancel = () => setEditingField(null)
+  const save = () => {
+    onProfileChange(draftProfile)
+    setEditingField(null)
+  }
+
+  const skillsByCat = useMemo(() => {
+    const out: Record<string, Skill[]> = {}
+    for (const s of skills) {
+      if (!out[s.category]) out[s.category] = []
+      out[s.category].push(s)
+    }
+    return out
+  }, [skills])
+
+  const handlePrint = () => window.print()
+
+  return (
+    <section className="pf-resume-full">
+      <div className="pf-resume-toolbar">
+        <div className="pf-resume-toolbar-info">
+          <i className="fa-solid fa-circle-info" />
+          전체 이력서를 한 페이지로 보고 인라인 편집할 수 있어요. 각 섹션의 연필 아이콘을 눌러 수정하세요.
+        </div>
+        <div className="pf-resume-toolbar-actions">
+          <button type="button" className="pf-btn pf-btn--ghost" onClick={handlePrint}>
+            <i className="fa-solid fa-print" /> 인쇄
+          </button>
+          <button type="button" className="pf-btn pf-btn--primary" onClick={onExportPdf}>
+            <i className="fa-solid fa-file-pdf" /> PDF 내보내기
+          </button>
+        </div>
+      </div>
+
+      <div className="pf-resume-paper" id="resume-paper">
+        {/* ── Header ────────────────────────────────────────────── */}
+        <header className="pf-resume-header">
+          <div className="pf-resume-name-block">
+            {editingField === 'name' ? (
+              <div className="pf-inline-edit">
+                <input
+                  type="text"
+                  value={draftProfile.name}
+                  onChange={e => setDraftProfile({ ...draftProfile, name: e.target.value })}
+                  autoFocus
+                />
+                <div className="pf-inline-actions">
+                  <button type="button" onClick={save} aria-label="저장"><i className="fa-solid fa-check" /></button>
+                  <button type="button" onClick={cancel} aria-label="취소"><i className="fa-solid fa-xmark" /></button>
+                </div>
+              </div>
+            ) : (
+              <h2 className="pf-resume-name">
+                {profile.name}
+                <button type="button" className="pf-inline-edit-btn" onClick={() => startEdit('name')} aria-label="이름 수정">
+                  <i className="fa-solid fa-pen" />
+                </button>
+              </h2>
+            )}
+            <p className="pf-resume-title-line">
+              {profile.dept} · {profile.grade} · {profile.school}
+            </p>
+          </div>
+
+          <div className="pf-resume-contact-block">
+            {editingField === 'contact' ? (
+              <div className="pf-inline-edit pf-inline-edit--block">
+                <label>
+                  <span>이메일</span>
+                  <input
+                    type="text"
+                    value={draftProfile.email}
+                    onChange={e => setDraftProfile({ ...draftProfile, email: e.target.value })}
+                  />
+                </label>
+                <label>
+                  <span>휴대폰</span>
+                  <input
+                    type="text"
+                    value={draftProfile.phone}
+                    onChange={e => setDraftProfile({ ...draftProfile, phone: e.target.value })}
+                  />
+                </label>
+                <div className="pf-inline-actions">
+                  <button type="button" onClick={save} aria-label="저장"><i className="fa-solid fa-check" /></button>
+                  <button type="button" onClick={cancel} aria-label="취소"><i className="fa-solid fa-xmark" /></button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="pf-resume-contact">
+                  <span><i className="fa-solid fa-envelope" /> {profile.email}</span>
+                  <span><i className="fa-solid fa-phone" /> {profile.phone}</span>
+                  <span><i className="fa-solid fa-id-card" /> 학번 {profile.studentId}</span>
+                  <span><i className="fa-solid fa-chart-line" /> GPA {profile.gpa}</span>
+                </div>
+                <button type="button" className="pf-inline-edit-btn pf-inline-edit-btn--block" onClick={() => startEdit('contact')}>
+                  <i className="fa-solid fa-pen" /> 수정
+                </button>
+              </>
+            )}
+          </div>
+        </header>
+
+        {/* ── 자기소개 ──────────────────────────────────────────── */}
+        <ResumeBlock title="자기소개" onEdit={() => startEdit('intro')} editing={editingField === 'intro'}>
+          {editingField === 'intro' ? (
+            <div className="pf-inline-edit pf-inline-edit--block">
+              <textarea
+                rows={4}
+                value={draftProfile.intro}
+                onChange={e => setDraftProfile({ ...draftProfile, intro: e.target.value })}
+                autoFocus
+              />
+              <div className="pf-inline-actions">
+                <button type="button" onClick={save} aria-label="저장"><i className="fa-solid fa-check" /> 저장</button>
+                <button type="button" onClick={cancel} aria-label="취소"><i className="fa-solid fa-xmark" /> 취소</button>
+              </div>
+            </div>
+          ) : (
+            <p className="pf-resume-text">{profile.intro}</p>
+          )}
+        </ResumeBlock>
+
+        {/* ── 학력 ──────────────────────────────────────────────── */}
+        <ResumeBlock title="학력">
+          <div className="pf-resume-edu">
+            <div className="pf-resume-edu-line">
+              <strong>{profile.school}</strong>
+              <span>{profile.dept} ({profile.major})</span>
+            </div>
+            <div className="pf-resume-edu-meta">
+              <span>{profile.grade} 재학</span>
+              <span>학점 <strong>{profile.gpa}</strong></span>
+              <span>학번 {profile.studentId}</span>
+            </div>
+          </div>
+        </ResumeBlock>
+
+        {/* ── 보유 스킬 ─────────────────────────────────────────── */}
+        <ResumeBlock title="보유 스킬" onJump={() => onJumpTab('skills')}>
+          <table className="pf-resume-skill-table">
+            <tbody>
+              {SKILL_ORDER.filter(cat => skillsByCat[cat]?.length).map(cat => (
+                <tr key={cat}>
+                  <th>{cat}</th>
+                  <td>
+                    {skillsByCat[cat].map(s => (
+                      <span key={s.id} className="pf-resume-skill">
+                        {s.name}
+                        <small>({s.level}/5)</small>
+                      </span>
+                    ))}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </ResumeBlock>
+
+        {/* ── 자격증 & 어학 ─────────────────────────────────────── */}
+        <ResumeBlock title="자격증 · 어학" onJump={() => onJumpTab('skills')}>
+          <div className="pf-resume-2col">
+            <div>
+              <h5>자격증</h5>
+              <ul>
+                {certs.map(c => (
+                  <li key={c.id}>
+                    <strong>{c.name}</strong>
+                    <span>{c.issuer} · {c.acquiredAt}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h5>어학</h5>
+              <ul>
+                {langs.map(l => (
+                  <li key={l.id}>
+                    <strong>{l.name} <em>{l.score}</em></strong>
+                    <span>{l.test} · {l.acquiredAt}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </ResumeBlock>
+
+        {/* ── 수상 ──────────────────────────────────────────────── */}
+        <ResumeBlock title="수상 · 공모전" onJump={() => onJumpTab('experience')}>
+          <ul className="pf-resume-award-list">
+            {awards.map(a => (
+              <li key={a.id}>
+                <div className="pf-resume-award-head">
+                  <strong>{a.title}</strong>
+                  <span className="pf-resume-award-rank">{a.rank}</span>
+                  <span className="pf-resume-award-date">{a.date}</span>
+                </div>
+                <span className="pf-resume-award-host">{a.host}</span>
+                <p>{a.description}</p>
+              </li>
+            ))}
+          </ul>
+        </ResumeBlock>
+
+        {/* ── 프로젝트 ──────────────────────────────────────────── */}
+        <ResumeBlock title="프로젝트" onJump={() => onJumpTab('experience')}>
+          <ul className="pf-resume-proj-list">
+            {projects.map(p => (
+              <li key={p.id}>
+                <div className="pf-resume-proj-head">
+                  <strong>{p.title}</strong>
+                  <span>{p.period}</span>
+                </div>
+                <span className="pf-resume-proj-role">{p.role}</span>
+                <p>{p.description}</p>
+                <div className="pf-resume-proj-stack">
+                  {p.stack.map(s => <span key={s}>{s}</span>)}
+                </div>
+                {p.link && (
+                  <a className="pf-resume-proj-link" href={p.link} target="_blank" rel="noopener noreferrer">
+                    <i className="fa-brands fa-github" /> {p.link.replace('https://', '')}
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </ResumeBlock>
+
+        {/* ── 첨부 자소서 (선택 1개) ────────────────────────────── */}
+        {resumes.length > 0 && (
+          <ResumeBlock title="첨부 자소서" onJump={() => onJumpTab('documents')}>
+            <div className="pf-resume-attach-pick">
+              <label>
+                <span>첨부할 자소서</span>
+                <select
+                  value={pickedResumeId}
+                  onChange={e => setPickedResumeId(e.target.value)}
+                >
+                  {resumes.map(r => (
+                    <option key={r.id} value={r.id}>
+                      {r.title}{r.isAi ? ' (AI 작성)' : ''}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            {pickedResume && (
+              <div className="pf-resume-attach-body">
+                <div className="pf-resume-attach-meta">
+                  <strong>{pickedResume.title}</strong>
+                  <span>{pickedResume.company} · {pickedResume.position}</span>
+                </div>
+                <p>{pickedResume.content}</p>
+              </div>
+            )}
+          </ResumeBlock>
+        )}
+
+        <footer className="pf-resume-footer">
+          <span>국립창원대학교 드림캐치 · 자동 생성된 이력서</span>
+          <span>{new Date().toLocaleDateString('ko-KR')}</span>
+        </footer>
+      </div>
+    </section>
+  )
+}
+
+function ResumeBlock({
+  title,
+  children,
+  onEdit,
+  onJump,
+  editing,
+}: {
+  title: string
+  children: ReactNode
+  onEdit?: () => void
+  onJump?: () => void
+  editing?: boolean
+}) {
+  return (
+    <section className="pf-resume-block">
+      <header className="pf-resume-block-head">
+        <h3>{title}</h3>
+        <div className="pf-resume-block-actions">
+          {onJump && !editing && (
+            <button type="button" className="pf-resume-block-jump" onClick={onJump}>
+              <i className="fa-solid fa-arrow-up-right-from-square" /> 탭에서 편집
+            </button>
+          )}
+          {onEdit && !editing && (
+            <button type="button" className="pf-inline-edit-btn" onClick={onEdit} aria-label="섹션 수정">
+              <i className="fa-solid fa-pen" />
+            </button>
+          )}
+        </div>
+      </header>
+      <div className="pf-resume-block-body">{children}</div>
     </section>
   )
 }
