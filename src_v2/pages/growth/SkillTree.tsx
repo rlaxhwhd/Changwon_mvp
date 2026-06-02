@@ -504,11 +504,12 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
                   </button>
                 </div>
               ))}
-
-              <button className="st-cert-add" onClick={() => setCertPickerOpen(true)}>
-                <i className="fa-solid fa-plus" /> 자격증 추가
-              </button>
             </div>
+
+            <button className="st-cert-add" onClick={() => setCertPickerOpen(true)}>
+              <i className="fa-solid fa-plus" /> 자격증 추가
+            </button>
+
             <div className="st-col-fit">보유 {ownedCertCount} / {allCerts.length}</div>
           </div>
 

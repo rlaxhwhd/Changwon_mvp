@@ -490,8 +490,21 @@
 
 .st-col-body.st-skill-list {
   gap: 12px;
-  padding: 10px 16px 18px;
+  padding: 10px 12px 14px 16px;
+  /* 5개 행(64px) + 4개 gap(12px) = 368px — 그 이상은 세로 스크롤 */
+  max-height: 368px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #c0d2f8 transparent;
 }
+
+.st-col-body.st-skill-list::-webkit-scrollbar { width: 6px; }
+.st-col-body.st-skill-list::-webkit-scrollbar-track { background: transparent; }
+.st-col-body.st-skill-list::-webkit-scrollbar-thumb {
+  background: #c0d2f8;
+  border-radius: 999px;
+}
+.st-col-body.st-skill-list::-webkit-scrollbar-thumb:hover { background: #8bb0ff; }
 
 /* ─── Foundation cards (col 1) ───────────────────────────────────────────── */
 
@@ -697,7 +710,8 @@
   align-items: center;
   justify-content: center;
   gap: 6px;
-  width: 100%;
+  width: calc(100% - 32px);
+  margin: 0 16px;
   padding: 11px;
   border: 1.5px dashed #C0D2F8;
   border-radius: 12px;
