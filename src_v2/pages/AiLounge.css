@@ -6,6 +6,15 @@
   padding: 24px 40px 48px;
 }
 
+/* 1500px 이상 와이드 뷰포트에서 page를 우측으로 시프트해 main을 viewport 중앙쪽으로 정렬
+   (section sidebar가 숨겨진 1-depth lounge에서 main이 좌측에 치우치는 현상 보정) */
+@media (min-width: 1600px) {
+  .al-page {
+    margin-left: calc((100vw - 1280px) / 2 + 118px);
+    margin-right: auto;
+  }
+}
+
 /* ── Main Layout: 좌측 콘텐츠 스택 + 우측 sticky 사이드바 ─────────── */
 .al-layout {
   display: grid;
@@ -603,14 +612,21 @@
 }
 
 /* ── Test Summary Card ──────────────────────────────────────────── */
+/* 역피라미드: 6컬럼 grid에서 1행 3개(각 2칸), 2행 2개(2-3, 4-5칸)에 배치 */
 .al-test-rings {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px 12px;
   padding: 8px 4px 4px;
   flex: 1;
   align-content: start;
 }
+
+.al-test-ring:nth-child(1) { grid-column: 1 / span 2; }
+.al-test-ring:nth-child(2) { grid-column: 3 / span 2; }
+.al-test-ring:nth-child(3) { grid-column: 5 / span 2; }
+.al-test-ring:nth-child(4) { grid-column: 2 / span 2; }
+.al-test-ring:nth-child(5) { grid-column: 4 / span 2; }
 
 .al-test-ring {
   display: flex;
