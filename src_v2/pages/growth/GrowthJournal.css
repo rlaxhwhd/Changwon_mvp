@@ -786,3 +786,15 @@
   .gj-cta-steps { grid-template-columns: 1fr; }
   .gj-page-title { font-size: 32px; }
 }
+
+/* RESPONSIVE-HERO-AUTO */
+@media (max-width: 768px) {
+  .gj-page-header {
+    min-height: auto;
+    margin: 14px 0 16px;
+    padding: 20px 18px 18px;
+    border-radius: var(--radius-md);
+  }
+  .gj-page-title { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .gj-page-desc { font-size: 14px; line-height: 1.55; }
+}

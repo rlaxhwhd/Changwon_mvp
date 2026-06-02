@@ -943,10 +943,24 @@
 }
 
 @media (max-width: 768px) {
-  .al-page { padding: 16px 16px 32px; }
+  .al-page { padding: 14px 14px 32px; }
   .al-analysis-row { grid-template-columns: 1fr; }
   .al-bottom-grid { grid-template-columns: 1fr; }
   .al-roadmap-phase { grid-template-columns: 1fr; }
-  .al-profile-card { grid-template-columns: 1fr; }
-  .al-report-3col { grid-template-columns: 1fr; }
+  .al-profile-card { grid-template-columns: 1fr; padding: 12px; }
+  .al-report-3col { grid-template-columns: 1fr; gap: 12px; }
+  .al-test-rings { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .al-score-num { font-size: 48px; }
+  .al-hero h1 { font-size: 24px; }
+  .al-hero p { font-size: 14px; }
+  /* roadmap timeline: 좌측 가이드 라인 들여쓰기 줄이기 */
+  .al-roadmap-list { padding-left: 8px; }
+  .al-roadmap-list::before { left: 23px; }
+  .al-roadmap-phase { margin-left: 28px; padding: 14px 16px; }
+  .al-roadmap-num { left: -46px; width: 36px; height: 36px; font-size: 15px; }
+  /* TOEIC card stat-grid stack */
+  .al-toeic-summary { flex-direction: column; align-items: stretch; gap: 10px; }
+  .al-toeic-stat-divider { display: none; }
+  /* counsel pair: stack header */
+  .al-counsel-pair-head { flex-direction: column; align-items: flex-start; gap: 2px; }
 }

@@ -567,3 +567,15 @@
     justify-content: flex-end;
   }
 }
+
+/* RESPONSIVE-HERO-AUTO */
+@media (max-width: 768px) {
+  .aj-page-title {
+    min-height: auto;
+    margin: 14px 0 16px;
+    padding: 20px 18px 18px;
+    border-radius: var(--radius-md);
+  }
+  .aj-page-title { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .aj-page-desc { font-size: 14px; line-height: 1.55; }
+}

@@ -404,3 +404,62 @@ input, textarea, select { font-family: var(--font); }
 .text-muted   { color: var(--color-text-muted); }
 .fw-700       { font-weight: 700; }
 .fw-600       { font-weight: 600; }
+
+/* ─── Responsive (Mobile / Tablet) ──────────────────────────────── */
+
+/* Tablet ≤ 1024px */
+@media (max-width: 1024px) {
+  body { min-width: 0; }
+  :root { --gnb-height: 68px; }
+
+  .v2-page { padding: 20px 18px; }
+
+  /* GNB compact */
+  .gnb { padding: 0 18px; }
+  .gnb-logo { margin-right: 16px; }
+  .gnb-nav { gap: 0; }
+  .gnb-nav-link { font-size: 14px; }
+}
+
+/* Mobile ≤ 768px */
+@media (max-width: 768px) {
+  :root {
+    --gnb-height: 60px;
+    --radius-lg: 14px;
+  }
+
+  /* GNB: hide nav (logo + actions only) */
+  .gnb {
+    padding: 0 14px;
+    gap: 10px;
+  }
+  .gnb-logo {
+    margin-right: 0;
+    gap: 8px;
+  }
+  .gnb-logo-icon { width: 30px; height: 30px; font-size: 14px; }
+  .gnb-logo-text { font-size: 17px; }
+  .gnb-nav { display: none; }
+  .gnb-actions {
+    margin-left: auto;
+    gap: 8px;
+  }
+  .gnb-icon-btn { width: 34px; height: 34px; font-size: 18px; }
+  .gnb-avatar { width: 32px; height: 32px; }
+  .gnb-avatar-caret { display: none; }
+
+  /* Layout */
+  .v2-main-shell { flex-direction: column; }
+  .v2-page { padding: 16px 14px; }
+
+  /* Card */
+  .card { padding: 16px; }
+
+  /* Landing */
+  .landing-card { width: calc(100% - 24px); padding: 32px 22px; }
+}
+
+/* Mobile small ≤ 480px */
+@media (max-width: 480px) {
+  .gnb-bell-wrap { display: none; }
+}

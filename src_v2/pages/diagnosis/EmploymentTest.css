@@ -615,3 +615,15 @@
   .de-modal-foot { flex-direction: column; align-items: stretch; }
   .de-modal-primary { width: 100%; }
 }
+
+/* RESPONSIVE-HERO-AUTO */
+@media (max-width: 768px) {
+  .de-hero {
+    min-height: auto;
+    margin: 14px 0 16px;
+    padding: 20px 18px 18px;
+    border-radius: var(--radius-md);
+  }
+  .de-hero-copy h1 { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .de-hero-copy p { font-size: 14px; line-height: 1.55; }
+}

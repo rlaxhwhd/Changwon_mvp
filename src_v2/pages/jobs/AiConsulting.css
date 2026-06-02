@@ -417,3 +417,15 @@
     gap: 10px;
   }
 }
+
+/* RESPONSIVE-HERO-AUTO */
+@media (max-width: 768px) {
+  .ac-header {
+    min-height: auto;
+    margin: 14px 0 16px;
+    padding: 20px 18px 18px;
+    border-radius: var(--radius-md);
+  }
+  .ac-header h1 { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .ac-header p { font-size: 14px; line-height: 1.55; }
+}
