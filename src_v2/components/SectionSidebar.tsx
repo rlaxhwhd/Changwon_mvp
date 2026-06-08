@@ -19,14 +19,14 @@ function SidebarItem({ item, depth, activeChildPath }: { item: NavChild; depth: 
 }
 
 export default function SectionSidebar() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   const section = getSectionForPath(pathname)
 
   if (!section) return null
   // 1-depth 섹션에 sub-page가 1개 이하면 사이드바를 숨겨 가로 공간 회수
   if (section.children.length <= 1) return null
 
-  const activeChildPath = getActiveChildPath(pathname, section)
+  const activeChildPath = getActiveChildPath(pathname, section, hash)
 
   return (
     <aside className="section-sidebar" aria-label={`${section.label} 하위 메뉴`}>

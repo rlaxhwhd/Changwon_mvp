@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import Modal from '../components/Modal'
 import './AiLounge.css'
 
@@ -386,6 +386,15 @@ const TEST_SUMMARIES: TestSummary[] = [
 export default function AiLounge() {
   const [openTestId, setOpenTestId] = useState<string | null>(null)
   const openTest = openTestId ? TEST_SUMMARIES.find(t => t.id === openTestId) ?? null : null
+  const location = useLocation()
+
+  // 사이드바 sub-tab 클릭 시 해당 섹션으로 부드럽게 스크롤
+  useEffect(() => {
+    if (!location.hash) return
+    const id = location.hash.slice(1)
+    const el = document.getElementById(id)
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, [location.hash])
 
   return (
     <div className="al-page">
@@ -439,7 +448,7 @@ export default function AiLounge() {
           <div className="al-analysis-row">
 
             {/* 종합 분석 리포트 */}
-            <div className="card al-report-card">
+            <div id="report" className="card al-report-card al-anchor">
               <div className="card-title">종합 분석 리포트</div>
               <div className="al-card-sub">AI가 분석한 당신의 종합 평가</div>
               <div className="al-score-row">
@@ -472,7 +481,7 @@ export default function AiLounge() {
             </div>
 
             {/* 역량 비교 분석 */}
-            <div className="card al-radar-card">
+            <div id="competency" className="card al-radar-card al-anchor">
               <div className="card-title">역량 비교 분석</div>
               <div className="al-card-sub">목표 기업 합격자 평균</div>
               <div className="al-radar-legend">
@@ -519,7 +528,7 @@ export default function AiLounge() {
         </div>
 
         {/* 진단검사 결과 요약 */}
-        <div className="card">
+        <div id="tests" className="card al-anchor">
           <div className="al-row-hd">
             <div className="card-title" style={{marginBottom:0}}>
               <i className="fa-solid fa-chart-pie"/> 진단검사 결과 요약
@@ -545,7 +554,7 @@ export default function AiLounge() {
         </div>
 
         {/* 최근 상담 내역 */}
-        <div className="card">
+        <div id="counsel" className="card al-anchor">
           <div className="al-row-hd">
             <div className="card-title" style={{marginBottom:0}}>최근 상담 내역</div>
             <Link to="/mypage/counsel" className="al-more-link">전체 보기 →</Link>
@@ -571,7 +580,7 @@ export default function AiLounge() {
         </div>
 
         {/* TOEIC 영단어 오답노트 AI 분석 */}
-        <div className="card">
+        <div id="toeic" className="card al-anchor">
           <div className="al-row-hd">
             <div className="card-title" style={{marginBottom:0}}>
               <i className="fa-solid fa-book"/> TOEIC 영단어 오답노트
@@ -646,7 +655,7 @@ export default function AiLounge() {
       </div>
 
       {/* ── AI 액션 로드맵 ─────────────────────────────────────────── */}
-      <div className="al-roadmap-section">
+      <div id="roadmap" className="al-roadmap-section al-anchor">
         <div className="al-sec-hd">
           <span className="al-sec-title">
             <i className="fa-solid fa-wand-magic-sparkles"/> 그래서 뭐부터? · AI 액션 로드맵

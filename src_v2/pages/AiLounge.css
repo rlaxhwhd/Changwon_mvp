@@ -49,23 +49,28 @@
   line-height: 1.6;
 }
 
-/* ── Main Layout: 메인 콘텐츠 viewport 중앙 정렬 + 사이드바 viewport 우측 fixed ── */
+/* ── Main Layout: 좌측 콘텐츠 + 우측 sticky 사이드바 2-column ── */
 .al-layout {
-  position: relative;
-  display: block;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  align-items: start;
 }
 
 .al-content {
-  max-width: 884px;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
   min-width: 0;
 }
 
+/* SectionSidebar sub-tab 클릭으로 페이지 내 스크롤 시 GNB(80px) 가림 방지 */
+.al-anchor {
+  scroll-margin-top: calc(var(--gnb-height) + 16px);
+}
+
 /* Page Hero */
-.al-hero { max-width: 884px; margin: 0 auto 24px; }
+.al-hero { margin: 0 0 24px; }
 .al-hero h1 {
   font-size: 32px;
   font-weight: 900;
@@ -82,9 +87,6 @@
 
 /* ── Profile Card ───────────────────────────────────────────────── */
 .al-profile-card {
-  max-width: 884px;
-  margin-left: auto;
-  margin-right: auto;
   background: var(--color-bg);
   border: 0;
   border-radius: var(--radius-md);
@@ -93,7 +95,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
-  margin-bottom: 20px;
+  margin: 0 0 20px;
 }
 
 .al-profile-user {
@@ -254,20 +256,18 @@
   );
 }
 
-/* ── Right Sidebar ──────────────────────────────────────────────── */
+/* ── Right Sidebar — 페이지 흐름 내 sticky (좌측 SectionSidebar와 공존) ── */
 .al-right-sidebar {
   width: 280px;
   display: flex;
   flex-direction: column;
   gap: 16px;
-  position: fixed;
+  position: sticky;
   top: calc(var(--gnb-height) + 20px);
-  right: 16px;
   max-height: calc(100vh - var(--gnb-height) - 40px);
   overflow-y: auto;
   padding-right: 2px;
   scrollbar-width: none;
-  z-index: 50;
 }
 .al-right-sidebar::-webkit-scrollbar { width: 0; display: none; }
 

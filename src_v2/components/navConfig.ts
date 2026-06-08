@@ -22,7 +22,12 @@ export const NAV_SECTIONS: NavSection[] = [
     path: '/lounge',
     icon: 'fa-comments',
     children: [
-      { label: 'AI 커리어 라운지', path: '/lounge', icon: 'fa-comments' },
+      { label: '종합 분석 리포트', path: '/lounge#report', icon: 'fa-clipboard-list' },
+      { label: '역량 비교 분석', path: '/lounge#competency', icon: 'fa-chart-bar' },
+      { label: '진단검사 결과', path: '/lounge#tests', icon: 'fa-chart-pie' },
+      { label: '상담 내역', path: '/lounge#counsel', icon: 'fa-comments' },
+      { label: 'TOEIC 학습 분석', path: '/lounge#toeic', icon: 'fa-book' },
+      { label: 'AI 액션 로드맵', path: '/lounge#roadmap', icon: 'fa-wand-magic-sparkles' },
     ],
   },
   {
@@ -106,7 +111,8 @@ export const NAV_SECTIONS: NavSection[] = [
 
 export function matchesPath(pathname: string, targetPath: string) {
   if (targetPath === '/') return pathname === '/'
-  return pathname === targetPath || pathname.startsWith(`${targetPath}/`)
+  const base = targetPath.split('#')[0]
+  return pathname === base || pathname.startsWith(`${base}/`)
 }
 
 export function getSectionForPath(pathname: string) {
@@ -123,9 +129,22 @@ function flattenChildren(children: NavChild[]): NavChild[] {
  * 섹션의 children(중첩 포함) 중 현재 경로에 가장 구체적으로 매칭되는 항목의 path를 반환.
  * 여러 children이 prefix로 매칭될 때(예: '/jobs/home'과 '/jobs/home/resume') 가장 긴 path를 택해
  * 상위 경로 항목이 항상 활성화되는 문제를 방지한다.
+ * hash 기반 sub-tab(예: '/lounge#report')도 지원: 현재 hash가 있으면 hash 일치 항목 우선.
  */
-export function getActiveChildPath(pathname: string, section: NavSection): string | undefined {
-  const matches = flattenChildren(section.children).filter(child => matchesPath(pathname, child.path))
+export function getActiveChildPath(pathname: string, section: NavSection, hash = ''): string | undefined {
+  const flat = flattenChildren(section.children)
+  const currentFull = pathname + hash
+
+  const exact = flat.find(child => child.path === currentFull)
+  if (exact) return exact.path
+
+  const matches = flat.filter(child => matchesPath(pathname, child.path))
   if (matches.length === 0) return undefined
+
+  if (!hash) {
+    const firstHashChild = matches.find(child => child.path.includes('#'))
+    if (firstHashChild) return firstHashChild.path
+  }
+
   return matches.reduce((best, child) => (child.path.length > best.path.length ? child : best)).path
 }
