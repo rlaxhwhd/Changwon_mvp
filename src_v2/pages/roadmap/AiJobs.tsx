@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import './AiJobs.css'
 
 /* ── Types ─────────────────────────────────────────────────────── */
@@ -13,7 +13,11 @@ interface Job {
   salary: string
   location: string
   deadline: string
+  jobType: '신입' | '경력'
+  applyUrl: string
 }
+
+type SortKey = '매칭률 높은순' | '최신 등록순' | '마감임박순'
 
 interface Skill {
   label: string
@@ -28,26 +32,36 @@ const JOBS: Job[] = [
     id: 1, company: '네이버', initial: 'N', color: '#03C75A',
     role: '서비스기획/PM', tags: ['대기업', '서울'],
     match: 92, salary: '4,500만원~', location: '서울', deadline: '상시채용',
+    jobType: '신입',
+    applyUrl: 'https://recruit.navercorp.com/rcrt/view.do?annoId=30004978&sw=&subJobCdArr=3010001%2C3020001%2C3030001%2C3040001%2C3050001%2C3060001%2C3070001&sysCompanyCdArr=&empTypeCdArr=&entTypeCdArr=&workAreaCdArr=',
   },
   {
     id: 2, company: '카카오', initial: 'K', color: '#FEE500',
     role: '데이터분석', tags: ['대기업', '판교'],
     match: 88, salary: '4,200만원~', location: '경기', deadline: '2025.05.30',
+    jobType: '신입',
+    applyUrl: 'https://careers.kakao.com/jobs/P-14324?skillSet=&part=TECHNOLOGY&company=KAKAO&keyword=&employeeType=&page=1',
   },
   {
     id: 3, company: '넥슨', initial: 'NX', color: '#FF5C00',
     role: '백엔드개발', tags: ['대기업', '판교'],
     match: 80, salary: '3,800만원~', location: '경기', deadline: '2025.06.01',
+    jobType: '신입',
+    applyUrl: 'https://careers.nexon.com/recruit/9730',
   },
   {
     id: 4, company: '쿠팡', initial: 'C', color: '#EE2222',
     role: 'PM/기획', tags: ['대기업', '서울'],
     match: 75, salary: '4,000만원~', location: '서울', deadline: '2025.05.31',
+    jobType: '신입',
+    applyUrl: 'https://www.jobkorea.co.kr/Recruit/GI_Read/49248006?Oem_Code=C1&logpath=1&stext=%EC%BF%A0%ED%8C%A1&listno=4&sc=630',
   },
   {
     id: 5, company: '우아한형제들', initial: 'B', color: '#2AC1BC',
     role: '백엔드', tags: ['중견기업', '서울'],
     match: 70, salary: '3,600만원~', location: '서울', deadline: '2025.06.15',
+    jobType: '경력',
+    applyUrl: 'https://www.jobkorea.co.kr/Recruit/GI_Read/47594333?Oem_Code=C1&PageGbn=ST',
   },
 ]
 
@@ -61,6 +75,7 @@ const SKILLS: Skill[] = [
 
 const JOB_FIELDS = ['서비스기획/PM', '데이터분석', '백엔드개발', '프론트엔드', '마케팅', '디자인']
 const COMPANY_SIZE = ['대기업', '중견기업', '중소기업', '스타트업']
+const JOB_TYPES = ['신입', '경력'] as const
 const REGIONS = ['서울', '경기', '부산', '대전', '광주', '기타']
 
 function MatchRing({ pct, size = 52, stroke = 5 }: { pct: number; size?: number; stroke?: number }) {
@@ -96,21 +111,83 @@ function MatchBar({ pct }: { pct: number }) {
   )
 }
 
+/* ── Filter helpers ────────────────────────────────────────────── */
+const tokenize = (s: string) => s.split(/[\/\s]+/).filter(Boolean)
+const roleMatches = (jobRole: string, checked: string[]) => {
+  if (checked.length === 0) return true
+  const jt = tokenize(jobRole)
+  return checked.some(f => {
+    const ft = tokenize(f)
+    return ft.some(a => jt.some(b => a.includes(b) || b.includes(a)))
+  })
+}
+const regionMatches = (jobLoc: string, checked: string[]) => {
+  if (checked.length === 0) return true
+  const known = ['서울', '경기', '부산', '대전', '광주']
+  if (checked.includes('기타') && !known.includes(jobLoc)) return true
+  return checked.includes(jobLoc)
+}
+
 export default function AiJobs() {
+  // checked = 현재 UI 상태, applied = 실제 리스트에 적용된 값
   const [checkedFields, setCheckedFields] = useState<string[]>(['서비스기획/PM'])
   const [checkedSizes, setCheckedSizes] = useState<string[]>(['대기업'])
-  const [jobType, setJobType] = useState<'신입' | '경력'>('신입')
+  const [checkedJobTypes, setCheckedJobTypes] = useState<string[]>(['신입'])
   const [checkedRegions, setCheckedRegions] = useState<string[]>(['서울', '경기'])
+
+  const [appliedFields, setAppliedFields] = useState<string[]>(['서비스기획/PM'])
+  const [appliedSizes, setAppliedSizes] = useState<string[]>(['대기업'])
+  const [appliedJobTypes, setAppliedJobTypes] = useState<string[]>(['신입'])
+  const [appliedRegions, setAppliedRegions] = useState<string[]>(['서울', '경기'])
+
+  const [sort, setSort] = useState<SortKey>('매칭률 높은순')
 
   const toggle = (arr: string[], setArr: (v: string[]) => void, val: string) => {
     setArr(arr.includes(val) ? arr.filter(x => x !== val) : [...arr, val])
+  }
+
+  const toggleAll = (
+    all: readonly string[],
+    current: string[],
+    setArr: (v: string[]) => void,
+  ) => {
+    const isAll = all.every(v => current.includes(v))
+    setArr(isAll ? [] : [...all])
+  }
+
+  const applyFilters = () => {
+    setAppliedFields(checkedFields)
+    setAppliedSizes(checkedSizes)
+    setAppliedJobTypes(checkedJobTypes)
+    setAppliedRegions(checkedRegions)
+  }
+
+  const visibleJobs = useMemo(() => {
+    const filtered = JOBS.filter(j => {
+      if (!roleMatches(j.role, appliedFields)) return false
+      if (appliedSizes.length > 0 && !appliedSizes.some(s => j.tags.includes(s))) return false
+      if (!regionMatches(j.location, appliedRegions)) return false
+      if (appliedJobTypes.length > 0 && !appliedJobTypes.includes(j.jobType)) return false
+      return true
+    })
+    const deadlineKey = (d: string) =>
+      d === '상시채용' ? Number.POSITIVE_INFINITY : new Date(d.replace(/\./g, '-')).getTime()
+    const sorted = [...filtered]
+    if (sort === '매칭률 높은순') sorted.sort((a, b) => b.match - a.match)
+    else if (sort === '마감임박순') sorted.sort((a, b) => deadlineKey(a.deadline) - deadlineKey(b.deadline))
+    else sorted.sort((a, b) => b.id - a.id) // 최신 등록순: id 역순
+    return sorted
+  }, [appliedFields, appliedSizes, appliedRegions, appliedJobTypes, sort])
+
+  const openApply = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   return (
     <div className="aj-wrap">
       {/* Breadcrumb */}
       <div className="aj-breadcrumb">
-        <span>경력개발 로드맵</span>
+        <span>진로취업 로드맵</span>
         <i className="fa-solid fa-chevron-right" />
         <span className="active">AI 맞춤 채용 추천</span>
       </div>
@@ -180,6 +257,15 @@ export default function AiJobs() {
 
           <div className="aj-filter-section">
             <p className="aj-filter-label">직무 분야</p>
+            <label className="aj-check-row aj-check-all">
+              <input
+                type="checkbox"
+                checked={JOB_FIELDS.every(f => checkedFields.includes(f))}
+                ref={el => { if (el) el.indeterminate = checkedFields.length > 0 && !JOB_FIELDS.every(f => checkedFields.includes(f)) }}
+                onChange={() => toggleAll(JOB_FIELDS, checkedFields, setCheckedFields)}
+              />
+              전체
+            </label>
             {JOB_FIELDS.map(f => (
               <label key={f} className="aj-check-row">
                 <input type="checkbox" checked={checkedFields.includes(f)}
@@ -191,6 +277,15 @@ export default function AiJobs() {
 
           <div className="aj-filter-section">
             <p className="aj-filter-label">기업 규모</p>
+            <label className="aj-check-row aj-check-all">
+              <input
+                type="checkbox"
+                checked={COMPANY_SIZE.every(s => checkedSizes.includes(s))}
+                ref={el => { if (el) el.indeterminate = checkedSizes.length > 0 && !COMPANY_SIZE.every(s => checkedSizes.includes(s)) }}
+                onChange={() => toggleAll(COMPANY_SIZE, checkedSizes, setCheckedSizes)}
+              />
+              전체
+            </label>
             {COMPANY_SIZE.map(s => (
               <label key={s} className="aj-check-row">
                 <input type="checkbox" checked={checkedSizes.includes(s)}
@@ -202,10 +297,19 @@ export default function AiJobs() {
 
           <div className="aj-filter-section">
             <p className="aj-filter-label">취업 유형</p>
-            {(['신입', '경력'] as const).map(t => (
+            <label className="aj-check-row aj-check-all">
+              <input
+                type="checkbox"
+                checked={JOB_TYPES.every(t => checkedJobTypes.includes(t))}
+                ref={el => { if (el) el.indeterminate = checkedJobTypes.length > 0 && !JOB_TYPES.every(t => checkedJobTypes.includes(t)) }}
+                onChange={() => toggleAll(JOB_TYPES, checkedJobTypes, setCheckedJobTypes)}
+              />
+              전체
+            </label>
+            {JOB_TYPES.map(t => (
               <label key={t} className="aj-check-row">
-                <input type="radio" name="jobType" checked={jobType === t}
-                  onChange={() => setJobType(t)} />
+                <input type="checkbox" checked={checkedJobTypes.includes(t)}
+                  onChange={() => toggle(checkedJobTypes, setCheckedJobTypes, t)} />
                 {t}
               </label>
             ))}
@@ -213,6 +317,15 @@ export default function AiJobs() {
 
           <div className="aj-filter-section">
             <p className="aj-filter-label">채용 지역</p>
+            <label className="aj-check-row aj-check-all">
+              <input
+                type="checkbox"
+                checked={REGIONS.every(r => checkedRegions.includes(r))}
+                ref={el => { if (el) el.indeterminate = checkedRegions.length > 0 && !REGIONS.every(r => checkedRegions.includes(r)) }}
+                onChange={() => toggleAll(REGIONS, checkedRegions, setCheckedRegions)}
+              />
+              전체
+            </label>
             {REGIONS.map(r => (
               <label key={r} className="aj-check-row">
                 <input type="checkbox" checked={checkedRegions.includes(r)}
@@ -222,21 +335,33 @@ export default function AiJobs() {
             ))}
           </div>
 
-          <button className="aj-filter-apply">필터 적용</button>
+          <button className="aj-filter-apply" onClick={applyFilters}>필터 적용</button>
         </aside>
 
         {/* Center Job List */}
         <div className="aj-job-list">
           <div className="aj-list-header">
-            <span className="aj-list-count">총 <strong>{JOBS.length}</strong>개 기업 추천</span>
-            <select className="aj-sort-sel">
+            <span className="aj-list-count">총 <strong>{visibleJobs.length}</strong>개 기업 추천</span>
+            <select
+              className="aj-sort-sel"
+              value={sort}
+              onChange={e => setSort(e.target.value as SortKey)}
+            >
               <option>매칭률 높은순</option>
               <option>최신 등록순</option>
               <option>마감임박순</option>
             </select>
           </div>
 
-          {JOBS.map((job, idx) => (
+          {visibleJobs.length === 0 && (
+            <div className="aj-empty">
+              <i className="fa-regular fa-folder-open" />
+              <p>조건에 맞는 채용 공고가 없어요.</p>
+              <span>필터를 조정한 뒤 다시 적용해보세요.</span>
+            </div>
+          )}
+
+          {visibleJobs.map((job, idx) => (
             <div key={job.id} className="aj-job-card">
               <div className="aj-job-rank">{idx + 1}</div>
 
@@ -275,7 +400,13 @@ export default function AiJobs() {
 
               {/* Action */}
               <div className="aj-job-actions">
-                <button className="aj-apply-btn">지원하기</button>
+                <button
+                  className="aj-apply-btn"
+                  onClick={() => openApply(job.applyUrl)}
+                  aria-label={`${job.company} 채용공고로 이동`}
+                >
+                  지원하기 <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 11, marginLeft: 4 }} />
+                </button>
                 <button className="aj-wish-btn"><i className="fa-regular fa-heart" /></button>
               </div>
             </div>

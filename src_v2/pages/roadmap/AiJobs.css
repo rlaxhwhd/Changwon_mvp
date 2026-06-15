@@ -189,6 +189,14 @@
   cursor: pointer;
 }
 
+.aj-check-all {
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed var(--color-border);
+  color: var(--color-navy);
+  font-weight: 700;
+}
+
 .aj-filter-apply {
   width: 100%;
   padding: 10px;
@@ -374,6 +382,9 @@
 }
 
 .aj-apply-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   padding: 8px 16px;
   background: var(--color-primary);
   color: #fff;
@@ -381,10 +392,26 @@
   font-weight: 700;
   border-radius: var(--radius-sm);
   white-space: nowrap;
-  transition: opacity 0.15s;
+  transition: opacity 0.15s, transform 0.15s;
 }
 
-.aj-apply-btn:hover { opacity: 0.85; }
+.aj-apply-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+.aj-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 56px 24px;
+  background: #fff;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+.aj-empty i { font-size: 36px; color: #C8CFDC; }
+.aj-empty p { font-size: 16px; font-weight: 700; color: #1C2442; margin: 6px 0 0; }
+.aj-empty span { font-size: 13px; color: var(--color-text-muted); }
 
 .aj-wish-btn {
   width: 32px;

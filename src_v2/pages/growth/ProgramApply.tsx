@@ -93,11 +93,24 @@ export default function ProgramApply() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<Category>('전체')
   const [page, setPage] = useState(1)
+  const [wishlist, setWishlist] = useState<Set<number>>(new Set())
+  const [showWishOnly, setShowWishOnly] = useState(false)
   const totalPages = 5
 
-  const filtered = activeTab === '전체'
-    ? PROGRAMS
-    : PROGRAMS.filter(program => program.category === activeTab)
+  const toggleWish = (id: number) => {
+    setWishlist(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const filtered = PROGRAMS.filter(p => {
+    if (showWishOnly && !wishlist.has(p.id)) return false
+    if (activeTab !== '전체' && p.category !== activeTab) return false
+    return true
+  })
 
   return (
     <div className="pa-shell">
@@ -125,21 +138,39 @@ export default function ProgramApply() {
               </button>
             ))}
           </div>
-          <select className="pa-sort-select" aria-label="정렬">
-            <option>기간순</option>
-            <option>최신순</option>
-            <option>인기순</option>
-          </select>
+          <div className="pa-filter-right">
+            <button
+              type="button"
+              className={`pa-wish-toggle${showWishOnly ? ' active' : ''}`}
+              onClick={() => {
+                setShowWishOnly(prev => !prev)
+                setPage(1)
+              }}
+              aria-pressed={showWishOnly}
+            >
+              <i className={showWishOnly ? 'fa-solid fa-heart' : 'fa-regular fa-heart'} />
+              찜 목록 보기
+              {wishlist.size > 0 && <span className="pa-wish-count">{wishlist.size}</span>}
+            </button>
+            <select className="pa-sort-select" aria-label="정렬">
+              <option>기간순</option>
+              <option>최신순</option>
+              <option>인기순</option>
+            </select>
+          </div>
         </div>
 
         <div className="pa-list">
-          {filtered.map((program, idx) => (
+          {filtered.map((program, idx) => {
+            const isFeatured = !showWishOnly && activeTab === '전체' && idx <= 1
+            const isWished = wishlist.has(program.id)
+            return (
             <div
               key={program.id}
-              className={`pa-card${idx === 0 ? ' pa-card--featured' : ''}`}
+              className={`pa-card${isFeatured ? ' pa-card--featured' : ''}`}
               onClick={() => navigate(`/growth/program/${program.id}`)}
             >
-              {idx === 0 && (
+              {isFeatured && (
                 <span className="pa-featured-badge">
                   <i className="fa-solid fa-wand-magic-sparkles" /> AI 추천
                 </span>
@@ -162,6 +193,9 @@ export default function ProgramApply() {
                     {program.category}
                   </span>
                   <DDay n={program.dDay} />
+                  {(program.id === 1 || program.id === 4) && (
+                    <span className="pa-multi-badge">다회차</span>
+                  )}
                 </div>
                 <h2 className="pa-card-title">{program.title}</h2>
                 <p className="pa-card-desc">{program.desc}</p>
@@ -175,17 +209,28 @@ export default function ProgramApply() {
                 <button className="pa-apply-btn" onClick={() => navigate(`/growth/program/${program.id}`)}>
                   신청하기
                 </button>
-                <button className="pa-wish-btn" title="찜하기" aria-label="찜하기">
-                  <i className="fa-regular fa-heart" />
+                <button
+                  className={`pa-wish-btn${isWished ? ' active' : ''}`}
+                  title={isWished ? '찜 해제' : '찜하기'}
+                  aria-label={isWished ? '찜 해제' : '찜하기'}
+                  aria-pressed={isWished}
+                  onClick={() => toggleWish(program.id)}
+                >
+                  <i className={isWished ? 'fa-solid fa-heart' : 'fa-regular fa-heart'} />
                 </button>
               </div>
             </div>
-          ))}
+            )
+          })}
 
           {filtered.length === 0 && (
             <div className="pa-empty">
               <i className="fa-solid fa-box-open" />
-              <p>해당 카테고리의 프로그램이 없습니다.</p>
+              <p>
+                {showWishOnly
+                  ? '찜한 공고가 없습니다. 하트 버튼으로 관심 공고를 저장해보세요.'
+                  : '해당 카테고리의 프로그램이 없습니다.'}
+              </p>
             </div>
           )}
         </div>

@@ -1,0 +1,209 @@
+/* ─── 비교과 프로그램 신청 모달 (pam- prefix) ──────────────────── */
+
+.pam-intro {
+  margin: 0 0 18px;
+  font-size: 14px;
+  color: var(--color-text-sub);
+}
+.pam-intro strong { color: var(--color-navy); font-weight: 800; }
+
+.pam-section {
+  margin-bottom: 22px;
+}
+
+.pam-section-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin-bottom: 10px;
+}
+
+.pam-section-title i { color: var(--color-primary); }
+
+.pam-req { color: var(--color-danger); }
+
+/* ─── 표 ─── */
+.pam-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.pam-table th,
+.pam-table td {
+  border: 1px solid var(--color-border);
+  padding: 9px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+
+.pam-table th {
+  background: #F5F8FE;
+  color: var(--color-text-sub);
+  font-weight: 700;
+  width: 92px;
+  white-space: nowrap;
+}
+
+.pam-table td {
+  color: var(--color-navy);
+  font-weight: 600;
+}
+
+.pam-table-doc th {
+  text-align: center;
+  width: auto;
+  background: #EEF2FA;
+}
+.pam-table-doc td {
+  font-weight: 500;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--color-text-sub);
+}
+
+.pam-note {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+/* ─── Textarea ─── */
+.pam-textarea {
+  width: 100%;
+  min-height: 90px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-family: var(--font);
+  font-size: 13px;
+  color: var(--color-navy);
+  line-height: 1.6;
+  resize: vertical;
+}
+
+.pam-textarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.1);
+}
+
+.pam-textarea::placeholder { color: var(--color-text-muted); }
+
+/* ─── 동의서 박스 ─── */
+.pam-doc {
+  padding: 14px 16px;
+  background: #FAFBFE;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--color-text-sub);
+}
+
+.pam-doc p { margin: 0 0 10px; }
+.pam-doc p:last-child { margin-bottom: 0; }
+.pam-doc-h { font-weight: 800; color: var(--color-navy); margin: 12px 0 6px; }
+
+.pam-doc .pam-table-doc { margin: 6px 0 12px; }
+
+.pam-q { font-weight: 700; color: var(--color-navy); margin-top: 8px; }
+
+/* ─── 예/아니오 라디오 ─── */
+.pam-yn {
+  display: flex;
+  gap: 18px;
+  margin-top: 6px;
+}
+
+.pam-yn label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-navy);
+  cursor: pointer;
+}
+
+.pam-yn input[type="radio"] {
+  accent-color: var(--color-primary);
+  width: 14px;
+  height: 14px;
+}
+
+/* ─── 안내사항 ─── */
+.pam-notice-list {
+  margin: 0;
+  padding: 14px 16px 14px 30px;
+  background: #FAFBFE;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--color-text-sub);
+}
+
+.pam-notice-list li { margin-bottom: 4px; }
+.pam-notice-list li:last-child { margin-bottom: 0; }
+
+.pam-confirm {
+  margin: 14px 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-navy);
+  line-height: 1.6;
+}
+
+.pam-sign {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+.pam-sign-mark { color: var(--color-text-muted); font-weight: 600; font-size: 12px; margin-left: 6px; }
+
+/* ─── 액션 버튼 ─── */
+.pam-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.pam-btn-ghost,
+.pam-btn-primary {
+  height: 40px;
+  padding: 0 26px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.pam-btn-ghost {
+  background: #fff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-sub);
+}
+
+.pam-btn-ghost:hover { background: var(--color-surface); }
+
+.pam-btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.pam-btn-primary:hover { opacity: 0.92; }
+
+.pam-btn-primary:disabled {
+  background: #C4CEE6;
+  cursor: not-allowed;
+}

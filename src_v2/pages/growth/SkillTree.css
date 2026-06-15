@@ -83,43 +83,37 @@
   align-items: stretch;
 }
 
-/* ─── Connector lines: 4 cards → 직무 방향 ──────────────────────────────── */
+/* ─── Neon Flow: 4 역량 카드 → 직무 방향 카드 ────────────────────────────── */
 
-.st-connect {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
-  height: 26px;
-}
-
-.st-connect-col {
-  display: flex;
-  justify-content: center;
-}
-
-.st-connect-line {
-  width: 2px;
-  height: 100%;
-  background: linear-gradient(180deg, #BFD3FF 0%, #8BB0FF 100%);
-  border-radius: 2px;
-}
-
-.st-connect-hwrap {
-  padding: 0 calc((100% - 42px) / 8);
-  height: 2px;
-}
-
-.st-connect-hline {
-  height: 2px;
+.st-flow {
+  display: block;
   width: 100%;
-  background: #8BB0FF;
-  border-radius: 2px;
+  height: 190px;
+  margin: 4px 0 2px;
+  overflow: visible;
 }
 
-.st-connect-down {
-  display: flex;
-  justify-content: center;
-  height: 26px;
+.st-flow-path {
+  fill: none;
+  stroke: url(#st-neon);
+  stroke-width: 2.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: url(#st-glow);
+  stroke-dasharray: 16 12;
+  animation: stFlowDash 2.2s linear infinite;
+  opacity: 0.92;
+}
+
+@keyframes stFlowDash {
+  to { stroke-dashoffset: -56; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-flow-path {
+    animation: none;
+    stroke-dasharray: none;
+  }
 }
 
 /* ─── Direction section ────────────────────────────────────────────────── */
@@ -130,6 +124,7 @@
   border-radius: 14px;
   box-shadow: 0 10px 28px rgba(46, 91, 255, 0.055);
   padding: 22px 24px 24px;
+  margin-top: -18px;
   margin-bottom: 20px;
 }
 
@@ -185,11 +180,12 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: #fff;
-  border: 1.5px solid #E2EAFB;
+  background: linear-gradient(135deg, #F5FCFF 0%, #EAF8FF 100%);
+  border: 1.5px solid #C8E9F8;
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.18s ease;
+  overflow: hidden;
 }
 
 .st-dir-card:hover {
@@ -305,12 +301,40 @@
 /* ── 직무 상세 (펼침) ─────────────────────────────────────────────────── */
 
 .st-dir-detail {
+  position: relative;
   margin-top: 16px;
-  background: linear-gradient(135deg, #F6F9FF 0%, #EEF4FF 100%);
-  border: 1.5px solid #C0D2F8;
-  border-radius: 14px;
-  padding: 22px;
+  padding: 28px;
+  border-radius: 24px;
+  overflow: hidden;
+  color: #FFFFFF;
+  background:
+    radial-gradient(circle at 8% 12%, rgba(34, 211, 238, 0.16), transparent 26%),
+    radial-gradient(circle at 92% 18%, rgba(124, 58, 237, 0.14), transparent 34%),
+    linear-gradient(135deg, #020817 0%, #071A46 48%, #0B1F5C 100%);
+  border: 1px solid rgba(34, 211, 238, 0.75);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 0 18px rgba(34, 211, 238, 0.38),
+    0 0 36px rgba(37, 99, 235, 0.30),
+    0 0 56px rgba(124, 58, 237, 0.18);
   animation: stDirExpand 0.22s ease;
+}
+
+/* 안쪽 얇은 테두리 한 겹 더 */
+.st-dir-detail::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border-radius: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.st-dir-detail-head,
+.st-dir-detail-body {
+  position: relative;
+  z-index: 1;
 }
 
 @keyframes stDirExpand {
@@ -319,25 +343,30 @@
 }
 
 .st-dir-detail-head {
+  position: relative;
   display: flex;
   align-items: center;
   gap: 14px;
   padding-bottom: 16px;
   margin-bottom: 18px;
-  border-bottom: 1px solid #D8E3F8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .st-dir-detail-icon {
   width: 48px;
   height: 48px;
   border-radius: 12px;
-  background: #fff;
-  color: #1E63FF;
+  /* 박스는 로열블루 계열, 글리프만 사이언 포인트 */
+  background: linear-gradient(180deg, rgba(37, 99, 235, 0.28) 0%, rgba(29, 78, 216, 0.36) 100%);
+  border: 1px solid rgba(96, 165, 250, 0.45);
+  color: #67E8F9;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 23px;
-  box-shadow: 0 2px 8px rgba(46, 91, 255, 0.1);
+  box-shadow:
+    0 4px 14px rgba(34, 211, 238, 0.25),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
 .st-dir-detail-titles {
@@ -347,13 +376,13 @@
 .st-dir-detail-name {
   font-size: 20px;
   font-weight: 800;
-  color: #1C2442;
+  color: #FFFFFF;
   margin-bottom: 3px;
 }
 
 .st-dir-detail-sub {
   font-size: 15px;
-  color: #6E7C9C;
+  color: #BFDBFE;
 }
 
 .st-dir-detail-fit {
@@ -366,20 +395,33 @@
 .st-dir-detail-fit span {
   font-size: 29px;
   font-weight: 900;
-  color: #1E63FF;
+  color: #67E8F9;
   letter-spacing: -0.5px;
+  text-shadow: 0 0 10px rgba(34, 211, 238, 0.35);
 }
 
 .st-dir-detail-fit small {
   font-size: 13px;
   font-weight: 700;
-  color: #7B89AA;
+  color: #BFDBFE;
 }
 
 .st-dir-detail-body {
+  position: relative;
   display: grid;
   grid-template-columns: 1.4fr 1fr;
-  gap: 20px;
+  gap: 18px;
+}
+
+/* 글래스 카드 — 내부 콘텐츠 블록 */
+.st-dir-detail-block {
+  padding: 18px 20px;
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  border-radius: 14px;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .st-dir-detail-block-title {
@@ -388,12 +430,14 @@
   gap: 8px;
   font-size: 16px;
   font-weight: 800;
-  color: #1C2442;
-  margin-bottom: 12px;
+  color: #FFFFFF;
+  margin-bottom: 14px;
+  letter-spacing: -0.2px;
 }
 
 .st-dir-detail-block-title i {
-  color: #1E63FF;
+  color: #67E8F9;
+  filter: drop-shadow(0 0 4px rgba(34, 211, 238, 0.35));
 }
 
 .st-dir-detail-list {
@@ -407,51 +451,84 @@
 
 .st-dir-detail-list li {
   display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  font-size: 16px;
-  color: #2A3450;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 15px;
+  color: #BFDBFE;
   line-height: 1.55;
-  background: #fff;
-  border-radius: 8px;
-  padding: 9px 12px;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(147, 197, 253, 0.18);
+  border-radius: 10px;
+  padding: 10px 14px;
+  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+.st-dir-detail-list li:hover {
+  background: rgba(96, 165, 250, 0.10);
+  border-color: rgba(147, 197, 253, 0.40);
+  transform: translateX(2px);
 }
 
 .st-dir-detail-list li i {
-  color: #22C55E;
+  color: #67E8F9;
   font-size: 14px;
-  margin-top: 4px;
   flex-shrink: 0;
 }
 
 .st-dir-detail-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
 }
 
 .st-dir-detail-tag {
   display: inline-block;
-  padding: 6px 12px;
-  background: #fff;
-  border: 1px solid #C0D2F8;
+  padding: 7px 14px;
+  /* 청록 칩 → 로열블루 칩으로 전환, 청록 면적 제거 */
+  background: rgba(96, 165, 250, 0.14);
+  border: 1px solid rgba(147, 197, 253, 0.40);
   border-radius: 999px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  color: #1E63FF;
+  color: #DBEAFE;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.st-dir-detail-tag:hover {
+  background: rgba(96, 165, 250, 0.24);
+  border-color: rgba(147, 197, 253, 0.65);
 }
 
 /* ─── Column card ────────────────────────────────────────────────────────── */
 
 .st-col {
-  background: #fff;
-  border: 1px solid #E2EAFB;
+  position: relative;
+  background: linear-gradient(180deg, #FAFCFF 0%, #FFFFFF 30%, #FFFFFF 100%);
+  border: 1px solid #D8E4FB;
   border-radius: 14px;
-  box-shadow: 0 10px 28px rgba(46, 91, 255, 0.055);
+  box-shadow:
+    0 10px 28px rgba(46, 91, 255, 0.06),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.6);
   overflow: hidden;
   display: flex;
   flex-direction: column;
   min-height: 418px;
+}
+
+.st-col::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(34, 211, 238, 0.55) 20%,
+    rgba(37, 99, 235, 0.7) 50%,
+    rgba(168, 85, 247, 0.55) 80%,
+    transparent 100%);
+  pointer-events: none;
 }
 
 .st-col-header {
@@ -1083,8 +1160,7 @@
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 
 @media (max-width: 1280px) {
-  .st-grid,
-  .st-connect {
+  .st-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 
@@ -1092,8 +1168,8 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .st-connect-hwrap {
-    padding: 0 calc((100% - 14px) / 4);
+  .st-flow {
+    display: none;
   }
 
   .st-dir-detail-body {
@@ -1124,14 +1200,11 @@
 
 @media (max-width: 768px) {
   .st-grid,
-  .st-connect,
   .st-dir-grid {
     grid-template-columns: 1fr;
   }
 
-  .st-connect,
-  .st-connect-down,
-  .st-connect-hwrap {
+  .st-flow {
     display: none;
   }
 
@@ -1164,4 +1237,263 @@
   }
   .st-header-title { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
   .st-header-title-sub { font-size: 14px; line-height: 1.55; }
+}
+
+/* Selected job detail panel */
+.st-dir-detail {
+  padding: 28px;
+  border: 1px solid rgba(34, 211, 238, 0.9);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 8% 12%, rgba(34, 211, 238, 0.22), transparent 28%),
+    radial-gradient(circle at 92% 18%, rgba(168, 85, 247, 0.22), transparent 34%),
+    linear-gradient(135deg, #03112E 0%, #06245C 52%, #020817 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+    0 0 24px rgba(34, 211, 238, 0.45),
+    0 0 48px rgba(37, 99, 235, 0.36),
+    0 0 72px rgba(168, 85, 247, 0.24);
+}
+
+.st-dir-detail::after {
+  content: '';
+  position: absolute;
+  top: -80px;
+  left: 40px;
+  z-index: 0;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(34, 211, 238, 0.28), transparent 65%);
+  filter: blur(8px);
+  pointer-events: none;
+}
+
+.st-dir-detail-head {
+  gap: 16px;
+  padding-bottom: 20px;
+  margin-bottom: 20px;
+}
+
+.st-dir-detail-icon {
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.95);
+  color: #2563EB;
+  font-size: 28px;
+  box-shadow:
+    0 0 24px rgba(34, 211, 238, 0.45),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
+.st-dir-detail-name {
+  margin-bottom: 5px;
+  font-size: 24px;
+  font-weight: 900;
+}
+
+.st-dir-detail-fit span {
+  color: #FFFFFF;
+  font-size: 36px;
+  letter-spacing: 0;
+  text-shadow: 0 0 14px rgba(34, 211, 238, 0.25);
+}
+
+.st-dir-detail-body {
+  grid-template-columns: 1.25fr 1fr;
+  gap: 20px;
+}
+
+.st-dir-detail-block {
+  padding: 18px;
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.07);
+  box-shadow:
+    0 8px 24px rgba(2, 8, 23, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+}
+
+.st-dir-detail-list {
+  gap: 10px;
+}
+
+.st-dir-detail-list li {
+  padding: 12px 14px;
+  border: 1px solid rgba(147, 197, 253, 0.16);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #EAF2FF;
+  font-size: 14px;
+}
+
+.st-dir-detail-list li i {
+  color: #38BDF8;
+}
+
+.st-dir-detail-tag {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid rgba(147, 197, 253, 0.32);
+  background: rgba(59, 130, 246, 0.16);
+  color: #DBEAFE;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.18);
+}
+
+@media (max-width: 1280px) {
+  .st-dir-detail-body {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Screenshot-matched neon treatment */
+.st-dir-card.selected,
+.st-dir-card.expanded {
+  border-color: #38BDF8;
+  background: linear-gradient(135deg, #DDF7FF 0%, #BCEBFF 55%, #D9F4FF 100%);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.72),
+    0 0 0 2px rgba(56, 189, 248, 0.18),
+    0 0 10px rgba(14, 165, 233, 0.32);
+}
+
+.st-dir-card.selected .st-dir-card-name,
+.st-dir-card.selected .st-dir-card-fit span,
+.st-dir-card.expanded .st-dir-card-name,
+.st-dir-card.expanded .st-dir-card-fit span {
+  color: #075985;
+}
+
+.st-dir-card.selected .st-dir-card-sub,
+.st-dir-card.selected .st-dir-card-fit small,
+.st-dir-card.expanded .st-dir-card-sub,
+.st-dir-card.expanded .st-dir-card-fit small {
+  color: #39738F;
+}
+
+.st-dir-card.selected .st-dir-card-icon,
+.st-dir-card.expanded .st-dir-card-icon {
+  background: #FFFFFF;
+  box-shadow:
+    0 0 12px rgba(255, 255, 255, 0.7),
+    0 0 22px rgba(56, 189, 248, 0.55);
+}
+
+.st-dir-detail {
+  isolation: isolate;
+  border: 2px solid #25C7FF;
+  background: linear-gradient(112deg, #001137 0%, #031D55 48%, #07184A 100%);
+  box-shadow:
+    inset 0 0 18px rgba(22, 158, 255, 0.20),
+    0 0 0 2px rgba(17, 85, 255, 0.55),
+    0 0 8px rgba(28, 197, 255, 0.82);
+}
+
+.st-dir-detail::before {
+  inset: 7px;
+  border: 1px solid rgba(86, 212, 255, 0.78);
+  border-radius: 17px;
+  box-shadow: inset 0 0 8px rgba(43, 184, 255, 0.12);
+}
+
+.st-dir-detail::after {
+  content: none;
+}
+
+.st-dir-detail-head {
+  padding: 2px 12px 16px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid rgba(89, 190, 255, 0.28);
+}
+
+.st-dir-detail-icon {
+  width: 62px;
+  height: 62px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  background: #FFFFFF;
+  box-shadow:
+    0 0 0 5px rgba(17, 101, 255, 0.15),
+    0 0 15px rgba(255, 255, 255, 0.85),
+    0 0 30px rgba(28, 197, 255, 0.75);
+}
+
+.st-dir-detail-name {
+  font-size: 21px;
+}
+
+.st-dir-detail-sub {
+  color: #AFCBFF;
+}
+
+.st-dir-detail-fit span {
+  font-size: 32px;
+}
+
+.st-dir-detail-body {
+  gap: 12px;
+}
+
+.st-dir-detail-block {
+  position: relative;
+  border: 1px solid rgba(84, 153, 255, 0.48);
+  border-radius: 9px;
+  background:
+    linear-gradient(180deg, rgba(24, 68, 137, 0.62) 0%, rgba(7, 35, 91, 0.74) 100%);
+  box-shadow:
+    inset 0 0 18px rgba(29, 116, 255, 0.10),
+    0 5px 18px rgba(0, 5, 26, 0.34);
+}
+
+.st-dir-detail-block::before {
+  content: none;
+}
+
+.st-dir-detail-block-title {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 10px;
+  color: #F4F8FF;
+}
+
+.st-dir-detail-list,
+.st-dir-detail-tags {
+  position: relative;
+  z-index: 1;
+}
+
+.st-dir-detail-list li {
+  min-height: 38px;
+  padding: 8px 12px;
+  border-color: rgba(73, 137, 226, 0.38);
+  border-radius: 7px;
+  background: linear-gradient(90deg, rgba(26, 75, 151, 0.62), rgba(13, 47, 111, 0.72));
+  color: #EAF3FF;
+  box-shadow: inset 0 0 10px rgba(44, 122, 255, 0.08);
+}
+
+.st-dir-detail-list li i {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #168EFF;
+  border-radius: 50%;
+  color: #2CB6FF;
+  font-size: 10px;
+  box-shadow: 0 0 8px rgba(31, 153, 255, 0.42);
+}
+
+.st-dir-detail-tag {
+  min-height: 32px;
+  border-color: rgba(101, 163, 255, 0.58);
+  background: linear-gradient(180deg, rgba(37, 91, 178, 0.64), rgba(18, 54, 126, 0.72));
+  color: #E5F0FF;
+  box-shadow:
+    inset 0 0 8px rgba(75, 145, 255, 0.16),
+    0 0 8px rgba(35, 104, 255, 0.22);
 }

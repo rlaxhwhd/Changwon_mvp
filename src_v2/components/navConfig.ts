@@ -53,12 +53,13 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'roadmap',
-    label: '경력개발 로드맵',
+    label: '진로취업 로드맵',
     basePaths: ['/roadmap'],
     icon: 'fa-route',
     children: [
       { label: 'AI 진로로드맵', path: '/roadmap/ai', icon: 'fa-route' },
-      { label: '직무 적합 스킬트리', path: '/roadmap/skill-tree', icon: 'fa-sitemap' },
+      { label: 'AI 직무 로드맵', path: '/roadmap/skill-tree', icon: 'fa-sitemap' },
+      { label: '최종 로드맵', path: '/roadmap/final', icon: 'fa-bullseye' },
     ],
   },
   {

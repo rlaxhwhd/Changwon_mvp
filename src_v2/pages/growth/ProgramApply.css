@@ -89,6 +89,57 @@
   font-weight: 700;
 }
 
+.pa-filter-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pa-wish-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: var(--color-text-sub);
+  font-size: 15px;
+  font-weight: 700;
+  font-family: var(--font);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.pa-wish-toggle:hover {
+  border-color: #EF4444;
+  color: #EF4444;
+}
+
+.pa-wish-toggle i { font-size: 14px; }
+
+.pa-wish-toggle.active {
+  background: #FFF1F2;
+  border-color: #EF4444;
+  color: #EF4444;
+}
+
+.pa-wish-toggle.active i { color: #EF4444; }
+
+.pa-wish-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  background: #EF4444;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800;
+  border-radius: 999px;
+}
+
 .pa-sort-select {
   padding: 7px 32px 7px 12px;
   border: 1.5px solid var(--color-border);
@@ -124,28 +175,15 @@
 }
 
 .pa-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-surface-alt);
+  border-color: var(--color-primary);
+  box-shadow: 0 22px 44px rgba(46, 91, 255, 0.18);
 }
 
 /* Featured card — 첫 카드를 AI 추천으로 강조해 리스트에 시각 리듬 부여 */
 .pa-card--featured {
   position: relative;
-  background: linear-gradient(135deg, #f5f9ff 0%, #eaf1ff 100%);
-  border: 1.5px solid #b9c9f5;
-  box-shadow: 0 18px 38px rgba(46, 91, 255, 0.12);
+  background: #fff;
   padding: 28px 24px 24px;
-}
-
-.pa-card--featured:hover {
-  border-color: var(--color-primary);
-  box-shadow: 0 22px 44px rgba(46, 91, 255, 0.18);
-}
-
-.pa-card--featured .pa-thumb {
-  width: 180px;
-  height: 124px;
-  border-radius: var(--radius-md);
 }
 
 .pa-card--featured .pa-card-title {
@@ -161,12 +199,12 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  background: var(--color-primary);
+  background: #22C55E;
   color: #fff;
   font-size: 13px;
   font-weight: 800;
   border-radius: var(--radius-pill);
-  box-shadow: 0 6px 14px rgba(46, 91, 255, 0.3);
+  box-shadow: 0 6px 14px rgba(34, 197, 94, 0.32);
 }
 .pa-featured-badge i { font-size: 11px; }
 
@@ -226,6 +264,21 @@
   background: #FEF2F2;
   color: var(--color-danger);
 }
+
+.pa-multi-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 20px;
+  background: #F3E8FF;
+  color: #7C3AED;
+  border: 1px solid #DDD6FE;
+}
+
+.pa-multi-badge i { font-size: 11px; }
 
 .pa-card-title {
   font-size: 19px;
@@ -297,6 +350,12 @@
 }
 
 .pa-wish-btn:hover {
+  border-color: #EF4444;
+  color: #EF4444;
+}
+
+.pa-wish-btn.active {
+  background: #FFF1F2;
   border-color: #EF4444;
   color: #EF4444;
 }

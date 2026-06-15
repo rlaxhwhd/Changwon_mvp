@@ -354,9 +354,9 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
             </div>
             <div>
               <h1 className="st-header-title">
-                내 성장 <span className="st-header-title-sub">(스킬트리)</span>
+                AI 직무 로드맵
               </h1>
-              <p className="st-header-subtitle">수강 과목을 기반으로 직무 방향의 적합도를 확인하세요</p>
+              <p className="st-header-subtitle">진단, 상담, 수강과목, 자격증을 기반으로 직무 방향의 적합도를 확인하세요</p>
             </div>
           </div>
         </div>
@@ -515,19 +515,58 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
 
         </div>
 
-        {/* ── Connector Lines: 4 cards → 직무 방향 ── */}
-        <div className="st-connect" aria-hidden="true">
-          <div className="st-connect-col"><div className="st-connect-line" /></div>
-          <div className="st-connect-col"><div className="st-connect-line" /></div>
-          <div className="st-connect-col"><div className="st-connect-line" /></div>
-          <div className="st-connect-col"><div className="st-connect-line" /></div>
-        </div>
-        <div className="st-connect-hwrap" aria-hidden="true">
-          <div className="st-connect-hline" />
-        </div>
-        <div className="st-connect-down" aria-hidden="true">
-          <div className="st-connect-line" />
-        </div>
+        {/* ── Neon Flow: 4 역량 카드 → 직무 방향 카드 ── */}
+        <svg
+          className="st-flow"
+          viewBox="0 0 1000 260"
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          <defs>
+            <linearGradient
+              id="st-neon"
+              gradientUnits="userSpaceOnUse"
+              x1="500" y1="0" x2="500" y2="260"
+            >
+              <stop offset="0%" stopColor="#22d3ee" />
+              <stop offset="50%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#a855f7" />
+            </linearGradient>
+            <filter
+              id="st-glow"
+              filterUnits="userSpaceOnUse"
+              x="-40"
+              y="-40"
+              width="1080"
+              height="340"
+            >
+              <feGaussianBlur stdDeviation="3.5" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+          </defs>
+
+          {/* Four competency paths converge directly above the job cards. */}
+          <path
+            className="st-flow-path"
+            d="M 125 0 C 125 82, 430 112, 500 210"
+          />
+          <path
+            className="st-flow-path"
+            d="M 375 0 C 375 82, 470 122, 500 210"
+          />
+          <path
+            className="st-flow-path"
+            d="M 625 0 C 625 82, 530 122, 500 210"
+          />
+          <path
+            className="st-flow-path"
+            d="M 875 0 C 875 82, 570 112, 500 210"
+          />
+
+        </svg>
 
         {/* ── 직무 방향 ── */}
         <div className="st-dir-section">
@@ -604,7 +643,10 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
                     </div>
                     <ul className="st-dir-detail-list">
                       {dir.whatToDo.map(item => (
-                        <li key={item}><i className="fa-solid fa-check" />{item}</li>
+                        <li key={item}>
+                          <span>{item}</span>
+                          <i className="fa-solid fa-check" />
+                        </li>
                       ))}
                     </ul>
                   </div>

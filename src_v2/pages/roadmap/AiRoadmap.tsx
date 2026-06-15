@@ -234,7 +234,7 @@ export default function AiRoadmap() {
   return (
     <div className="ar-wrap">
       <div className="ar-breadcrumb">
-        <span>경력개발 로드맵</span>
+        <span>진로취업 로드맵</span>
         <i className="fa-solid fa-chevron-right" />
         <span className="active">AI 진로로드맵</span>
       </div>

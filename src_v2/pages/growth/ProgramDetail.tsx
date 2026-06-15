@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
+import ProgramApplyModal from '../../components/ProgramApplyModal'
 import './ProgramDetail.css'
 
 type DetailTab = '프로그램 소개' | '공지 사항' | '수강 후기' | 'Q&A'
@@ -226,8 +227,16 @@ export default function ProgramDetail() {
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<DetailTab>('프로그램 소개')
   const [wished, setWished] = useState(false)
+  const [applyOpen, setApplyOpen] = useState(false)
+  const [applied, setApplied] = useState(false)
 
   const prog = (id && MOCK_PROGRAMS[id]) ? MOCK_PROGRAMS[id] : MOCK_PROGRAMS['default']
+
+  const handleApplySubmit = () => {
+    setApplyOpen(false)
+    setApplied(true)
+    window.setTimeout(() => setApplied(false), 3000)
+  }
 
   return (
     <div className="pd-wrap">
@@ -361,9 +370,14 @@ export default function ProgramDetail() {
           </div>
 
           {/* Buttons */}
-          <button className="pd-apply-btn">
+          <button className="pd-apply-btn" onClick={() => setApplyOpen(true)}>
             <i className="fa-solid fa-pen-to-square" /> 신청하기
           </button>
+          {applied && (
+            <div className="pd-applied-toast" role="status">
+              <i className="fa-solid fa-circle-check" /> 신청이 완료되었습니다.
+            </div>
+          )}
           <button
             className={`pd-wish-btn${wished ? ' wished' : ''}`}
             onClick={() => setWished(w => !w)}
@@ -395,6 +409,13 @@ export default function ProgramDetail() {
           </button>
         </aside>
       </div>
+
+      <ProgramApplyModal
+        open={applyOpen}
+        onClose={() => setApplyOpen(false)}
+        programTitle={prog.title}
+        onSubmit={handleApplySubmit}
+      />
     </div>
   )
 }

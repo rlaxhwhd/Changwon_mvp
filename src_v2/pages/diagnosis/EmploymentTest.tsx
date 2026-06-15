@@ -15,6 +15,9 @@ interface TestCard {
 
 const categories: Category[] = ['전체', '역량 · 직무', '심리 · 성향', '진로 · 적성']
 
+const TEST_REDIRECT_URL =
+  'https://cwnu.njob.net/poll_view.asp?cmd=view&sid=7&jmode=new&usess=20260611095410-20191238-9687'
+
 const tests: TestCard[] = [
   {
     title: '9CORE 검사',
@@ -65,9 +68,30 @@ const tests: TestCard[] = [
 
 export default function EmploymentTest() {
   const [activeCategory, setActiveCategory] = useState<Category>('전체')
+  const [consentOpen, setConsentOpen] = useState(false)
+  const [agreed, setAgreed] = useState(false)
+  const [selectedTest, setSelectedTest] = useState<string | null>(null)
+
   const visibleTests = activeCategory === '전체'
     ? tests
     : tests.filter(test => test.category === activeCategory)
+
+  const openConsent = (testTitle: string) => {
+    setSelectedTest(testTitle)
+    setAgreed(false)
+    setConsentOpen(true)
+  }
+
+  const closeConsent = () => {
+    setConsentOpen(false)
+    setSelectedTest(null)
+    setAgreed(false)
+  }
+
+  const handleAgree = () => {
+    if (!agreed) return
+    window.location.href = TEST_REDIRECT_URL
+  }
 
   return (
     <div className="de-wrap">
@@ -131,7 +155,7 @@ export default function EmploymentTest() {
               </div>
             </div>
 
-            <button className="de-start-btn">
+            <button className="de-start-btn" onClick={() => openConsent(test.title)}>
               검사하기
               <i className="fa-solid fa-arrow-right" />
             </button>
@@ -149,6 +173,82 @@ export default function EmploymentTest() {
           모든 검사는 익명으로 진행되며, 결과는 본인만 확인할 수 있습니다.
         </p>
       </section>
+
+      {consentOpen && (
+        <div className="de-modal-backdrop" onClick={closeConsent}>
+          <div className="de-consent-modal" onClick={e => e.stopPropagation()}>
+            <div className="de-consent-head">
+              <div className="de-consent-head-copy">
+                <span className="de-modal-badge">
+                  <i className="fa-solid fa-shield-halved" /> 필수 동의
+                </span>
+                <h2>개인정보 수집·이용 안내</h2>
+                <p>
+                  {selectedTest ? `‘${selectedTest}’ ` : ''}응시를 위해 아래 개인정보 수집·이용에 동의해주세요.
+                </p>
+              </div>
+              <button
+                className="de-modal-close"
+                aria-label="닫기"
+                onClick={closeConsent}
+              >
+                <i className="fa-solid fa-xmark" />
+              </button>
+            </div>
+
+            <div className="de-consent-body">
+              <table className="de-consent-table">
+                <tbody>
+                  <tr>
+                    <th>수집 항목</th>
+                    <td>성명, 학번, 학과, 이메일, 검사 응답 및 결과 데이터</td>
+                  </tr>
+                  <tr>
+                    <th>수집·이용 목적</th>
+                    <td>진단검사 응시 및 결과 분석, 개인 맞춤형 진로·역량 가이드 제공, 통계 자료 활용</td>
+                  </tr>
+                  <tr>
+                    <th>보유·이용 기간</th>
+                    <td>졸업 후 5년 또는 회원 탈퇴 시까지 (관계 법령에 따라 보존 의무가 있는 경우 해당 기간까지)</td>
+                  </tr>
+                  <tr>
+                    <th>제공받는 자</th>
+                    <td>국립창원대학교 진로취업지원센터</td>
+                  </tr>
+                </tbody>
+              </table>
+
+              <p className="de-consent-note">
+                귀하는 위 개인정보 수집·이용에 대한 동의를 거부할 권리가 있습니다.
+                단, 동의를 거부하실 경우 검사 응시 및 결과 분석 서비스 이용이 제한될 수 있습니다.
+              </p>
+            </div>
+
+            <label className="de-consent-check">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={e => setAgreed(e.target.checked)}
+              />
+              <span>위 개인정보 수집·이용 안내를 모두 확인하였으며 동의합니다. (필수)</span>
+            </label>
+
+            <div className="de-consent-foot">
+              <button className="de-consent-cancel" onClick={closeConsent}>
+                취소
+              </button>
+              <button
+                className="de-consent-submit"
+                disabled={!agreed}
+                onClick={handleAgree}
+              >
+                동의하고 검사 시작
+                <i className="fa-solid fa-arrow-right" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
