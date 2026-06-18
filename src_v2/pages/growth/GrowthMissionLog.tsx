@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import Modal from '../../components/Modal'
 import './GrowthMissionLog.css'
 
 type RecordTab = 'all' | 'word' | 'major' | 'ncs'
@@ -140,6 +141,12 @@ export default function GrowthMissionLog() {
       </section>
 
       <section className="gml-records">
+        {filtered.length === 0 && (
+          <div className="gml-empty">
+            <i className="fa-solid fa-inbox" />
+            <p>기록이 없습니다</p>
+          </div>
+        )}
         {dates.map(({ date, items }) => (
           <article className="gml-card gml-date-card" key={date}>
             <div className="gml-date-head">
@@ -199,12 +206,9 @@ export default function GrowthMissionLog() {
         </nav>
       )}
 
-      {detail && (
-        <div className="gml-modal-backdrop" role="presentation" onClick={() => setDetail(null)}>
-          <section className="gml-modal" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
-            <button className="gml-modal-close" type="button" onClick={() => setDetail(null)}>
-              <i className="fa-solid fa-xmark" />
-            </button>
+      <Modal open={detail !== null} onClose={() => setDetail(null)} size="sm">
+        {detail && (
+          <div className="gml-detail">
             <span className={`gml-detail-status ${detail.isCorrect ? 'correct' : 'wrong'}`}>
               {detail.isCorrect ? '정답' : '오답'}
             </span>
@@ -223,9 +227,9 @@ export default function GrowthMissionLog() {
                 <dd>{detail.explanation}</dd>
               </div>
             </dl>
-          </section>
-        </div>
-      )}
+          </div>
+        )}
+      </Modal>
     </main>
   )
 }

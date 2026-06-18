@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Modal from '../../components/Modal'
 import './EmploymentTest.css'
+
+type SortOrder = 'recent' | 'oldest'
 
 type Category = '전체' | '역량 · 직무' | '심리 · 성향' | '진로 · 적성'
 
@@ -96,10 +99,17 @@ const GUIDE_ITEMS = [
 export default function DiagnosisResult() {
   const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState<Category>('전체')
+  const [sortOrder, setSortOrder] = useState<SortOrder>('recent')
   const [isGuideOpen, setIsGuideOpen] = useState(false)
-  const visibleResults = activeCategory === '전체'
+  const visibleResults = (activeCategory === '전체'
     ? results
-    : results.filter(result => result.category === activeCategory)
+    : results.filter(result => result.category === activeCategory))
+    .slice()
+    .sort((a, b) =>
+      sortOrder === 'recent'
+        ? b.recentAt.localeCompare(a.recentAt)
+        : a.recentAt.localeCompare(b.recentAt),
+    )
 
   return (
     <div className="de-wrap">
@@ -129,9 +139,16 @@ export default function DiagnosisResult() {
             </button>
           ))}
         </div>
-        <button className="de-sort">
-          최신순
-          <i className="fa-solid fa-chevron-down" />
+        <button
+          className="de-sort"
+          onClick={() => setSortOrder(order => (order === 'recent' ? 'oldest' : 'recent'))}
+          aria-label={`정렬: ${sortOrder === 'recent' ? '최신순' : '오래된순'}`}
+        >
+          {sortOrder === 'recent' ? '최신순' : '오래된순'}
+          <i
+            className="fa-solid fa-chevron-down"
+            style={{ transform: sortOrder === 'recent' ? 'none' : 'rotate(180deg)' }}
+          />
         </button>
       </section>
 
@@ -193,69 +210,52 @@ export default function DiagnosisResult() {
         </button>
       </section>
 
-      {isGuideOpen && (
-        <div
-          className="de-modal-backdrop"
-          role="presentation"
-          onMouseDown={() => setIsGuideOpen(false)}
-        >
-          <div
-            className="de-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="guide-modal-title"
-            onMouseDown={e => e.stopPropagation()}
-          >
-            <div className="de-modal-head">
-              <div className="de-modal-head-copy">
-                <span className="de-modal-badge">
-                  <i className="fa-solid fa-lightbulb" />
-                  결과 활용 가이드
+      <Modal
+        open={isGuideOpen}
+        onClose={() => setIsGuideOpen(false)}
+        title="검사 결과, 이렇게 활용해보세요"
+        size="md"
+      >
+        <div className="de-modal-body">
+          <div className="de-modal-head-copy">
+            <span className="de-modal-badge">
+              <i className="fa-solid fa-lightbulb" />
+              결과 활용 가이드
+            </span>
+            <p>
+              진단 결과는 단순히 점수 확인용이 아니에요. 상담·로드맵·외부 활용까지
+              여러 방면에서 학생의 진로 설계를 돕는 핵심 자료입니다.
+            </p>
+          </div>
+
+          <ul className="de-modal-list">
+            {GUIDE_ITEMS.map(item => (
+              <li key={item.title} className="de-modal-item">
+                <span className="de-modal-item-icon">
+                  <i className={`fa-solid ${item.icon}`} />
                 </span>
-                <h2 id="guide-modal-title">검사 결과, 이렇게 활용해보세요</h2>
-                <p>
-                  진단 결과는 단순히 점수 확인용이 아니에요. 상담·로드맵·외부 활용까지
-                  여러 방면에서 학생의 진로 설계를 돕는 핵심 자료입니다.
-                </p>
-              </div>
-              <button
-                className="de-modal-close"
-                aria-label="닫기"
-                onClick={() => setIsGuideOpen(false)}
-              >
-                <i className="fa-solid fa-xmark" />
-              </button>
-            </div>
+                <div>
+                  <h3>{item.title}</h3>
+                  <p>{item.desc}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
 
-            <ul className="de-modal-list">
-              {GUIDE_ITEMS.map(item => (
-                <li key={item.title} className="de-modal-item">
-                  <span className="de-modal-item-icon">
-                    <i className={`fa-solid ${item.icon}`} />
-                  </span>
-                  <div>
-                    <h3>{item.title}</h3>
-                    <p>{item.desc}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            <div className="de-modal-foot">
-              <p>
-                <i className="fa-solid fa-circle-info" />
-                검사 결과는 개인정보 보호 기준에 따라 본인 동의 하에만 외부 공유가 가능합니다.
-              </p>
-              <button
-                className="de-modal-primary"
-                onClick={() => setIsGuideOpen(false)}
-              >
-                확인했어요
-              </button>
-            </div>
+          <div className="de-modal-foot">
+            <p>
+              <i className="fa-solid fa-circle-info" />
+              검사 결과는 개인정보 보호 기준에 따라 본인 동의 하에만 외부 공유가 가능합니다.
+            </p>
+            <button
+              className="de-modal-primary"
+              onClick={() => setIsGuideOpen(false)}
+            >
+              확인했어요
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   )
 }

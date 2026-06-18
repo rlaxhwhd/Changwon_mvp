@@ -6,18 +6,18 @@ interface CRAReportProps {
   examDate: string
 }
 
-const sectionTitle: React.CSSProperties = { fontSize: 18, fontWeight: 800, color: '#1C2442', marginBottom: 16, paddingBottom: 8, borderBottom: '3px solid #F59E0B' }
-const subTitle: React.CSSProperties = { fontSize: 14, fontWeight: 700, color: '#637381', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }
-const tbl: React.CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 13, marginBottom: 16 }
-const th: React.CSSProperties = { background: '#F2F5FF', padding: '8px 12px', border: '1px solid #E8ECF0', fontWeight: 700, textAlign: 'center', color: '#1C2442' }
-const thBlue: React.CSSProperties = { ...th, background: '#EEF2FF', color: '#2E5BFF' }
-const td: React.CSSProperties = { padding: '8px 12px', border: '1px solid #E8ECF0', textAlign: 'center', color: '#374151' }
+const sectionTitle: React.CSSProperties = { fontSize: 19, fontWeight: 800, color: 'var(--color-navy)', marginBottom: 16, paddingBottom: 8, borderBottom: '3px solid var(--color-warning)' }
+const subTitle: React.CSSProperties = { fontSize: 16, fontWeight: 700, color: 'var(--color-text-sub)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }
+const tbl: React.CSSProperties = { width: '100%', borderCollapse: 'collapse', fontSize: 15, marginBottom: 16 }
+const th: React.CSSProperties = { background: 'var(--color-surface)', padding: '8px 12px', border: '1px solid var(--color-border)', fontWeight: 700, textAlign: 'center', color: 'var(--color-navy)' }
+const thBlue: React.CSSProperties = { ...th, background: 'var(--color-primary-bg)', color: 'var(--color-primary)' }
+const td: React.CSSProperties = { padding: '8px 12px', border: '1px solid var(--color-border)', textAlign: 'center', color: 'var(--color-text-sub)' }
 const tdLeft: React.CSSProperties = { ...td, textAlign: 'left' }
 
 function ScoreBadge({ level }: { level: string }) {
   const bg = level === '높음' ? '#DCFCE7' : level === '낮음' ? '#FEE2E2' : '#FEF3C7'
-  const color = level === '높음' ? '#16A34A' : level === '낮음' ? '#DC2626' : '#92400E'
-  return <span style={{ background: bg, color, padding: '2px 8px', borderRadius: 4, fontSize: 11, fontWeight: 700 }}>{level}</span>
+  const color = level === '높음' ? 'var(--color-success)' : level === '낮음' ? 'var(--color-danger)' : '#92400E'
+  return <span style={{ background: bg, color, padding: '2px 8px', borderRadius: 'var(--radius-xs)', fontSize: 13, fontWeight: 700 }}>{level}</span>
 }
 
 export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
@@ -25,13 +25,13 @@ export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
     <Modal open={open} onClose={onClose} title="CRA 진로준비도 진단검사 결과표" size="lg">
       <div>
         {/* 상단 정보 */}
-        <div style={{ background: '#F5F8FE', borderRadius: 12, padding: 20, marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13 }}>
-          <div><span style={{ color: '#637381' }}>검사일시</span> <strong>{examDate}</strong></div>
-          <div><span style={{ color: '#637381' }}>소속대학</span> <strong>국립창원대학교</strong></div>
-          <div><span style={{ color: '#637381' }}>학과</span> <strong>컴퓨터공학과</strong></div>
-          <div><span style={{ color: '#637381' }}>학번</span> <strong>20250001</strong></div>
-          <div><span style={{ color: '#637381' }}>학년</span> <strong>2학년</strong></div>
-          <div><span style={{ color: '#637381' }}>성명</span> <strong>김채원</strong></div>
+        <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: 20, marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13 }}>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>검사일시</span> <strong>{examDate}</strong></div>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>소속대학</span> <strong>국립창원대학교</strong></div>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>학과</span> <strong>컴퓨터공학과</strong></div>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>학번</span> <strong>20250001</strong></div>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>학년</span> <strong>2학년</strong></div>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>성명</span> <strong>김채원</strong></div>
         </div>
 
         {/* ─── 1. 종합 결과 ─── */}
@@ -50,9 +50,9 @@ export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
 
         <div style={subTitle}><i className="fa-solid fa-chart-column" /> 점수 결과</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-          <div style={{ textAlign: 'center', padding: 16, background: '#F5F8FE', borderRadius: 8 }}>
-            <div style={{ fontSize: 13, color: '#637381', marginBottom: 8 }}>자신의 유형</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#2E5BFF' }}>역량성장형</div>
+          <div style={{ textAlign: 'center', padding: 16, background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ fontSize: 15, color: 'var(--color-text-sub)', marginBottom: 8 }}>자신의 유형</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-primary)' }}>역량성장형</div>
           </div>
           <table style={tbl}>
             <thead><tr><th style={thBlue}>유형</th><th style={thBlue}>수준</th><th style={thBlue}>T점수</th></tr></thead>
@@ -79,7 +79,7 @@ export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
               <div>· 목표 진로에 필요한 역량 목록 정리</div>
               <div>· 부족 역량에 대한 보완 과제 설정</div>
             </td></tr>
-            <tr style={{ background: '#EEF2FF' }}><td style={{ ...td, fontWeight: 800 }}>역량성장형</td><td style={td}>Action 집중형</td><td style={tdLeft}>진로목표도 어느 정도 있고 역량도 개발하고 있으나 취업준비가 부족함</td><td style={tdLeft}>
+            <tr style={{ background: 'var(--color-primary-bg)' }}><td style={{ ...td, fontWeight: 800 }}>역량성장형</td><td style={td}>Action 집중형</td><td style={tdLeft}>진로목표도 어느 정도 있고 역량도 개발하고 있으나 취업준비가 부족함</td><td style={tdLeft}>
               <div>· 보유 역량의 직무 활용 가능성 점검</div>
               <div>· 경험 활동을 역량 중심으로 재정리</div>
               <div>· 경험을 성과 중심으로 정리하는 연습</div>
@@ -109,25 +109,25 @@ export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
         <table style={tbl}>
           <thead><tr><th style={th}>유형명</th><th style={th}>진로명확성</th><th style={th}>진로동기</th><th style={th}>특징</th></tr></thead>
           <tbody>
-            <tr><td style={td}>비전실행형</td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: '#22C55E' }} /></td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: '#22C55E' }} /></td><td style={tdLeft}>원하는 직무·분야가 분명하고, 이를 성취하려는 열정이 높습니다.</td></tr>
-            <tr><td style={td}>망설임형</td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: '#22C55E' }} /></td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: '#EF4444' }} /></td><td style={tdLeft}>무엇을 목표로 할지는 명확하나, 의욕이나 열정이 낮아 적극성이 부족할 수 있습니다.</td></tr>
-            <tr><td style={td}>의욕 만렙형</td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: '#EF4444' }} /></td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: '#22C55E' }} /></td><td style={tdLeft}>에너지가 높고 다양한 활동에 도전하려는 의지는 강합니다. 구체적 진로가 정해지지 않았습니다.</td></tr>
-            <tr style={{ background: '#FEF3C7' }}><td style={{ ...td, fontWeight: 800 }}>미래 유보형</td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: '#EF4444' }} /></td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: '#EF4444' }} /></td><td style={tdLeft}>진로 목표도 불분명하고, 열정이나 의지도 낮은 상태입니다.</td></tr>
+            <tr><td style={td}>비전실행형</td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: 'var(--color-success)' }} /></td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: 'var(--color-success)' }} /></td><td style={tdLeft}>원하는 직무·분야가 분명하고, 이를 성취하려는 열정이 높습니다.</td></tr>
+            <tr><td style={td}>망설임형</td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: 'var(--color-success)' }} /></td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: 'var(--color-danger)' }} /></td><td style={tdLeft}>무엇을 목표로 할지는 명확하나, 의욕이나 열정이 낮아 적극성이 부족할 수 있습니다.</td></tr>
+            <tr><td style={td}>의욕 만렙형</td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: 'var(--color-danger)' }} /></td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: 'var(--color-success)' }} /></td><td style={tdLeft}>에너지가 높고 다양한 활동에 도전하려는 의지는 강합니다. 구체적 진로가 정해지지 않았습니다.</td></tr>
+            <tr style={{ background: '#FEF3C7' }}><td style={{ ...td, fontWeight: 800 }}>미래 유보형</td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: 'var(--color-danger)' }} /></td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: 'var(--color-danger)' }} /></td><td style={tdLeft}>진로 목표도 불분명하고, 열정이나 의지도 낮은 상태입니다.</td></tr>
           </tbody>
         </table>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-          <div style={{ background: '#F5F8FE', borderRadius: 8, padding: 16 }}>
-            <div style={{ fontSize: 13, color: '#637381', marginBottom: 8 }}>유형 판정</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#F59E0B', marginBottom: 12 }}>미래 유보형</div>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)', padding: 16 }}>
+            <div style={{ fontSize: 15, color: 'var(--color-text-sub)', marginBottom: 8 }}>유형 판정</div>
+            <div style={{ fontSize: 21, fontWeight: 800, color: 'var(--color-warning)', marginBottom: 12 }}>미래 유보형</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
               <div>진로명확성: <strong>보통</strong> (41.67)</div>
-              <div>진로동기: <strong style={{ color: '#EF4444' }}>낮음</strong> (37.17)</div>
+              <div>진로동기: <strong style={{ color: 'var(--color-danger)' }}>낮음</strong> (37.17)</div>
             </div>
           </div>
-          <div style={{ background: '#F5F8FE', borderRadius: 8, padding: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: '#1C2442' }}>미래 유보형 강화 방안</div>
-            <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.7 }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)', padding: 16 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: 'var(--color-navy)' }}>미래 유보형 강화 방안</div>
+            <div style={{ fontSize: 15, color: 'var(--color-text-sub)', lineHeight: 1.7 }}>
               <div>· 기초 진로 탐색: 학교 상담, 직무 박람회, 각종 체험 프로그램 참여하기</div>
               <div>· 작은 성공 경험: 동아리·봉사 등 흥미 있는 활동에서 의미 있는 경험해보기</div>
               <div>· 멘토링·네트워크: 다양한 분야 선배·현직자와 교류 확대하기</div>
@@ -151,25 +151,25 @@ export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
         <table style={tbl}>
           <thead><tr><th style={th}>유형명</th><th style={th}>직무적합성</th><th style={th}>조직적합성</th><th style={th}>특징</th></tr></thead>
           <tbody>
-            <tr><td style={td}>육각형 인재 유형</td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: '#22C55E' }} /></td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: '#22C55E' }} /></td><td style={tdLeft}>직무와 조직 모두에 잘 적응하며 성과를 잘 낼 가능성이 큽니다.</td></tr>
-            <tr style={{ background: '#EEF2FF' }}><td style={{ ...td, fontWeight: 800 }}>직무열정 유형</td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: '#22C55E' }} /></td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: '#EF4444' }} /></td><td style={tdLeft}>직무 수행에 필요한 전문지식과 기술이 뛰어나나, 팀 내 협업이나 갈등 해결에 어려움이 있을 수 있습니다.</td></tr>
-            <tr><td style={td}>조직융합 유형</td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: '#EF4444' }} /></td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: '#22C55E' }} /></td><td style={tdLeft}>조직의 문화에는 잘 적응하나, 직무 수행에 필요한 기술이나 지식이 부족할 수 있습니다.</td></tr>
-            <tr><td style={td}>미래 준비 유형</td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: '#EF4444' }} /></td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: '#EF4444' }} /></td><td style={tdLeft}>직무에 필요한 역량이나 경험이 부족해 자신감을 잃기도 합니다.</td></tr>
+            <tr><td style={td}>육각형 인재 유형</td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: 'var(--color-success)' }} /></td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: 'var(--color-success)' }} /></td><td style={tdLeft}>직무와 조직 모두에 잘 적응하며 성과를 잘 낼 가능성이 큽니다.</td></tr>
+            <tr style={{ background: 'var(--color-primary-bg)' }}><td style={{ ...td, fontWeight: 800 }}>직무열정 유형</td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: 'var(--color-success)' }} /></td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: 'var(--color-danger)' }} /></td><td style={tdLeft}>직무 수행에 필요한 전문지식과 기술이 뛰어나나, 팀 내 협업이나 갈등 해결에 어려움이 있을 수 있습니다.</td></tr>
+            <tr><td style={td}>조직융합 유형</td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: 'var(--color-danger)' }} /></td><td style={td}><i className="fa-solid fa-arrow-up" style={{ color: 'var(--color-success)' }} /></td><td style={tdLeft}>조직의 문화에는 잘 적응하나, 직무 수행에 필요한 기술이나 지식이 부족할 수 있습니다.</td></tr>
+            <tr><td style={td}>미래 준비 유형</td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: 'var(--color-danger)' }} /></td><td style={td}><i className="fa-solid fa-arrow-down" style={{ color: 'var(--color-danger)' }} /></td><td style={tdLeft}>직무에 필요한 역량이나 경험이 부족해 자신감을 잃기도 합니다.</td></tr>
           </tbody>
         </table>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-          <div style={{ background: '#F5F8FE', borderRadius: 8, padding: 16 }}>
-            <div style={{ fontSize: 13, color: '#637381', marginBottom: 8 }}>유형 판정</div>
-            <div style={{ fontSize: 20, fontWeight: 800, color: '#2E5BFF', marginBottom: 12 }}>직무열정 유형</div>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)', padding: 16 }}>
+            <div style={{ fontSize: 15, color: 'var(--color-text-sub)', marginBottom: 8 }}>유형 판정</div>
+            <div style={{ fontSize: 21, fontWeight: 800, color: 'var(--color-primary)', marginBottom: 12 }}>직무열정 유형</div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 13 }}>
-              <div>직무적합성: <strong style={{ color: '#22C55E' }}>높음</strong> (64.26)</div>
+              <div>직무적합성: <strong style={{ color: 'var(--color-success)' }}>높음</strong> (64.26)</div>
               <div>조직적합성: <strong>보통</strong> (47.32)</div>
             </div>
           </div>
-          <div style={{ background: '#F5F8FE', borderRadius: 8, padding: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: '#1C2442' }}>직무열정 유형 보완 방안</div>
-            <div style={{ fontSize: 13, color: '#374151', lineHeight: 1.7 }}>
+          <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)', padding: 16 }}>
+            <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 8, color: 'var(--color-navy)' }}>직무열정 유형 보완 방안</div>
+            <div style={{ fontSize: 15, color: 'var(--color-text-sub)', lineHeight: 1.7 }}>
               <div>· 조직 문화 이해: 다양한 산업군의 회사 탐방, 문화 체험 등을 통해 조직의 규범을 익히기</div>
               <div>· 프로그램 참여: 의사소통/대인관계 관련 프로그램에 참여하여 약점 개선하기</div>
             </div>
@@ -192,9 +192,9 @@ export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
 
         <div style={subTitle}><i className="fa-solid fa-chart-column" /> 점수 결과</div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 16 }}>
-          <div style={{ textAlign: 'center', padding: 16, background: '#F5F8FE', borderRadius: 8 }}>
-            <div style={{ fontSize: 13, color: '#637381', marginBottom: 8 }}>강점 요인</div>
-            <div style={{ fontSize: 22, fontWeight: 800, color: '#22C55E' }}>면접역량</div>
+          <div style={{ textAlign: 'center', padding: 16, background: 'var(--color-surface)', borderRadius: 'var(--radius-sm)' }}>
+            <div style={{ fontSize: 15, color: 'var(--color-text-sub)', marginBottom: 8 }}>강점 요인</div>
+            <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--color-success)' }}>면접역량</div>
           </div>
           <table style={tbl}>
             <thead><tr><th style={thBlue}>유형</th><th style={thBlue}>수준</th><th style={thBlue}>T점수</th></tr></thead>

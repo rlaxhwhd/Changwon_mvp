@@ -121,10 +121,7 @@ export default function EmploymentTest() {
             </button>
           ))}
         </div>
-        <button className="de-sort">
-          최신순
-          <i className="fa-solid fa-chevron-down" />
-        </button>
+        <span className="de-sort">최신순</span>
       </section>
 
       <section className="de-card-grid" aria-label="검사 목록">

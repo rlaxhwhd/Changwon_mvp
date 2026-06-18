@@ -25,7 +25,7 @@ const MOCK_EVALUATION: Evaluation = {
   ],
 }
 
-const scoreColor = (s: number) => (s >= 85 ? '#16A34A' : s >= 75 ? '#2E5BFF' : '#F59E0B')
+const scoreColor = (s: number) => (s >= 85 ? '#16A34A' : s >= 75 ? 'var(--color-primary)' : 'var(--color-warning)')
 
 export default function AiConsulting() {
   const navigate = useNavigate()

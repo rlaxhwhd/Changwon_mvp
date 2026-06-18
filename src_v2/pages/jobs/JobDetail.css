@@ -1,5 +1,5 @@
 .jd-page {
-  max-width: 1100px;
+  max-width: var(--page-max);
   margin: 0 auto;
   padding: 30px 36px 48px;
 }
@@ -11,7 +11,7 @@
   gap: 8px;
   margin-bottom: 16px;
   color: var(--color-primary);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 900;
 }
 
@@ -21,10 +21,10 @@
   gap: 20px;
   padding: 28px;
   margin-bottom: 18px;
-  border: 1px solid #dce5f5;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 16px 38px rgba(15, 45, 95, 0.055);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
 }
 
 .jd-meta-line {
@@ -32,8 +32,8 @@
   align-items: center;
   gap: 14px;
   margin-bottom: 14px;
-  color: #53627f;
-  font-size: 14px;
+  color: var(--color-text-sub);
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -43,32 +43,32 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: #dff5ea;
   color: #00984f;
-  font-size: 12px;
+  font-size: 14px;
   font-style: normal;
   font-weight: 900;
 }
 
 .jd-head h1 {
   margin-bottom: 14px;
-  color: #071638;
+  color: var(--color-navy);
   font-size: 28px;
   font-weight: 900;
   letter-spacing: 0;
 }
 
 .jd-head p {
-  color: #32456d;
-  font-size: 15px;
+  color: var(--color-text-sub);
+  font-size: 16px;
   font-weight: 600;
   line-height: 1.75;
 }
 
 .jd-status-card {
   padding: 18px;
-  border: 1px solid #dce5f5;
+  border: 1px solid var(--color-border);
   border-radius: 10px;
   background: #f8fbff;
 }
@@ -76,13 +76,13 @@
 .jd-status {
   display: inline-flex;
   margin-bottom: 18px;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 900;
 }
 
 .jd-status.open { color: var(--color-primary); }
-.jd-status.soon { color: #e87700; }
-.jd-status.closed { color: #2f1608; }
+.jd-status.soon { color: var(--color-warning); }
+.jd-status.closed { color: var(--color-navy); }
 
 .jd-status-card dl {
   display: flex;
@@ -97,14 +97,14 @@
 }
 
 .jd-status-card dt {
-  color: #7b89aa;
-  font-size: 13px;
+  color: var(--color-text-muted);
+  font-size: 15px;
   font-weight: 800;
 }
 
 .jd-status-card dd {
-  color: #071638;
-  font-size: 13px;
+  color: var(--color-navy);
+  font-size: 15px;
   font-weight: 900;
 }
 
@@ -116,10 +116,10 @@
 
 .jd-image-card,
 .jd-card {
-  border: 1px solid #dce5f5;
-  border-radius: 12px;
-  background: #fff;
-  box-shadow: 0 12px 30px rgba(15, 45, 95, 0.045);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  box-shadow: var(--shadow-lg);
 }
 
 .jd-image-card {
@@ -133,7 +133,7 @@
   max-width: 760px;
   margin: 0 auto;
   height: auto;
-  border: 1px solid #dce5f5;
+  border: 1px solid var(--color-border);
 }
 
 .jd-card {
@@ -142,8 +142,8 @@
 
 .jd-card h2 {
   margin-bottom: 16px;
-  color: #071638;
-  font-size: 18px;
+  color: var(--color-navy);
+  font-size: 19px;
   font-weight: 900;
 }
 
@@ -159,16 +159,16 @@
 }
 
 .jd-info-list dt {
-  color: #7b89aa;
-  font-size: 13px;
+  color: var(--color-text-muted);
+  font-size: 15px;
   font-weight: 800;
 }
 
 .jd-info-list dd,
 .jd-list li,
 .jd-process li {
-  color: #24375f;
-  font-size: 14px;
+  color: var(--color-text-sub);
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.65;
 }
@@ -186,7 +186,7 @@
   font-weight: 900;
 }
 
-@media (max-width: 820px) {
+@media (max-width: 1024px) {
   .jd-page {
     padding: 22px 16px 36px;
   }

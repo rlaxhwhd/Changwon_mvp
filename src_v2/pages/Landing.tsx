@@ -33,7 +33,7 @@ export default function Landing() {
           </button>
         </form>
 
-        <p style={{ marginTop: 24, fontSize: 12, color: 'var(--color-text-muted)' }}>
+        <p style={{ marginTop: 24, fontSize: 14, color: 'var(--color-text-muted)' }}>
           국립창원대학교 학생 전용 서비스입니다
         </p>
       </div>

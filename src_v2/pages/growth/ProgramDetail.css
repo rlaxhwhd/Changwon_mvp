@@ -1,6 +1,6 @@
 /* ── ProgramDetail (pd-) ───────────────────────────────────────── */
 .pd-wrap {
-  max-width: 1280px;
+  max-width: var(--page-max);
   margin: 0 auto;
   padding: 0 28px 40px;
 }
@@ -10,7 +10,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--color-text-sub);
   margin: 24px 0 16px;
@@ -25,7 +25,7 @@
 
 .pd-breadcrumb span { color: var(--color-navy); font-weight: 600; }
 
-.pd-breadcrumb i { font-size: 13px; }
+.pd-breadcrumb i { font-size: 15px; }
 
 /* Layout */
 .pd-layout {
@@ -56,13 +56,13 @@
 }
 
 .pd-tag {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   padding: 3px 10px;
   border-radius: 20px;
 }
 
-.pd-tag--추천 { background: #EEF2FF; color: var(--color-primary); }
+.pd-tag--추천 { background: var(--color-primary-bg); color: var(--color-primary); }
 .pd-tag--인기 { background: #FEF2F2; color: var(--color-danger); }
 .pd-tag--cat  { background: var(--color-surface); color: var(--color-text-sub); }
 
@@ -76,7 +76,7 @@
 .pd-title-meta {
   display: flex;
   gap: 16px;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-muted);
   flex-wrap: wrap;
 }
@@ -98,7 +98,7 @@
   justify-content: center;
   gap: 8px;
   color: var(--color-text-muted);
-  font-size: 15px;
+  font-size: 16px;
   overflow: hidden;
 }
 
@@ -120,7 +120,7 @@
 
 .pd-tab {
   padding: 10px 20px;
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--color-text-muted);
   border-bottom: 2px solid transparent;
@@ -150,7 +150,7 @@
 }
 
 .pd-section-title {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--color-navy);
   display: flex;
@@ -163,7 +163,7 @@
 .pd-section-title i { color: var(--color-primary); }
 
 .pd-para {
-  font-size: 17px;
+  font-size: 18px;
   color: var(--color-text-sub);
   line-height: 1.7;
 }
@@ -176,7 +176,7 @@
 }
 
 .pd-ol li {
-  font-size: 17px;
+  font-size: 18px;
   color: var(--color-text-sub);
   line-height: 1.6;
 }
@@ -189,7 +189,7 @@
 }
 
 .pd-ul li {
-  font-size: 17px;
+  font-size: 18px;
   color: var(--color-text-sub);
   line-height: 1.6;
   padding-left: 14px;
@@ -217,7 +217,7 @@
   display: block;
 }
 
-.pd-tab-empty p { font-size: 17px; }
+.pd-tab-empty p { font-size: 18px; }
 
 /* ── Right ─────────────────────────────────────────────────────── */
 .pd-right {
@@ -230,7 +230,7 @@
 
 .pd-info-card,
 .pd-schedule-card {
-  background: #fff;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 20px;
@@ -238,7 +238,7 @@
 }
 
 .pd-info-title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 14px;
@@ -250,7 +250,7 @@
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 10px 12px;
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .pd-info-list dt {
@@ -272,7 +272,7 @@
 
 .pd-email {
   color: var(--color-primary);
-  font-size: 15px;
+  font-size: 16px;
   text-decoration: underline;
 }
 
@@ -281,8 +281,8 @@
   width: 100%;
   padding: 12px;
   background: var(--color-primary);
-  color: #fff;
-  font-size: 17px;
+  color: var(--color-bg);
+  font-size: 18px;
   font-weight: 700;
   border-radius: var(--radius-sm);
   display: flex;
@@ -305,11 +305,11 @@
   border: 1px solid #BBF7D0;
   border-radius: var(--radius-sm);
   color: #15803D;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   animation: pdAppliedFade 0.22s ease;
 }
-.pd-applied-toast i { font-size: 15px; }
+.pd-applied-toast i { font-size: 16px; }
 
 @keyframes pdAppliedFade {
   from { opacity: 0; transform: translateY(-4px); }
@@ -322,9 +322,9 @@
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text-sub);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
-  background: #fff;
+  background: var(--color-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -333,14 +333,14 @@
 }
 
 .pd-wish-btn:hover {
-  border-color: #EF4444;
-  color: #EF4444;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
 }
 
 .pd-wish-btn.wished {
-  border-color: #EF4444;
+  border-color: var(--color-danger);
   background: #FEF2F2;
-  color: #EF4444;
+  color: var(--color-danger);
 }
 
 /* Schedule */
@@ -371,19 +371,19 @@
 }
 
 .pd-schedule-date {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text-muted);
   margin-bottom: 2px;
 }
 
 .pd-schedule-label {
-  font-size: 16px;
+  font-size: 17px;
   color: var(--color-navy);
   font-weight: 500;
 }
 
 .pd-back-btn {
-  font-size: 16px;
+  font-size: 17px;
   color: var(--color-text-muted);
   display: flex;
   align-items: center;

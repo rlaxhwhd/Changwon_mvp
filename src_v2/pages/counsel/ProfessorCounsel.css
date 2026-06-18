@@ -7,8 +7,8 @@
 
 .pc-professor-panel,
 .pc-mode-card {
-  background: #fff;
-  border: 1px solid #dce5f5;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
 }
@@ -29,7 +29,7 @@
   display: block;
   margin-bottom: 6px;
   color: var(--color-text-sub);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -37,11 +37,11 @@
   width: 100%;
   height: 46px;
   padding: 0 40px 0 16px;
-  border: 1.5px solid #d7e1f3;
+  border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--color-bg);
   color: var(--color-navy);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   font-family: inherit;
   appearance: none;
@@ -64,8 +64,8 @@
   position: absolute;
   right: 16px;
   bottom: 18px;
-  color: #99a1a9;
-  font-size: 12px;
+  color: var(--color-text-muted);
+  font-size: 14px;
   pointer-events: none;
 }
 
@@ -81,9 +81,9 @@
   gap: 18px;
   padding: 18px 20px;
   margin-bottom: 16px;
-  border: 1px solid #dce8ff;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #fff 0%, #f3f7ff 100%);
+  background: linear-gradient(135deg, var(--color-bg) 0%, #f3f7ff 100%);
 }
 
 .pc-avatar {
@@ -129,13 +129,13 @@
   align-items: center;
   gap: 6px;
   color: var(--color-text-sub);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .pc-professor-detail-meta i {
   color: var(--color-primary);
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .pc-mode-card {
@@ -155,10 +155,10 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid #dce5f5;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-navy);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 900;
 }
 
@@ -166,7 +166,7 @@
   color: #fff;
   border-color: var(--color-primary);
   background: var(--color-primary);
-  box-shadow: 0 8px 18px rgba(46, 91, 255, 0.18);
+  box-shadow: var(--shadow-md);
 }
 
 .pc-online-form {
@@ -178,17 +178,17 @@
   display: grid;
   gap: 7px;
   color: var(--color-navy);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 900;
 }
 
 .pc-online-form input,
 .pc-online-form textarea {
   width: 100%;
-  border: 1px solid #dce5f5;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-text);
-  font-size: 16px;
+  font-size: 17px;
   outline: none;
 }
 
@@ -220,6 +220,13 @@
 @media (max-width: 900px) {
   .pc-select-bar {
     grid-template-columns: 1fr;
+  }
+
+  .pc-selected-bar {
+    min-width: 0;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+    gap: 12px;
   }
 }
 

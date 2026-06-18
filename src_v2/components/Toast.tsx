@@ -30,7 +30,7 @@ export default function ToastContainer({ toasts, onRemove }: Props) {
             borderRadius: 'var(--radius-md)',
             padding: '12px 16px',
             boxShadow: 'var(--shadow-md)',
-            fontSize: 14,
+            fontSize: 16,
             cursor: 'pointer',
             minWidth: 260,
           }}

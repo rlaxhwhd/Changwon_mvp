@@ -1,6 +1,6 @@
 /* ── Main Page (mn-) ───────────────────────────────────────────── */
 .mn-page {
-  background: #fff;
+  background: var(--color-bg);
   min-height: calc(100vh - var(--gnb-height));
 }
 
@@ -9,7 +9,7 @@
 ════════════════════════════════════════════ */
 .mn-hero {
   position: relative;
-  background: #F5F8FE;
+  background: var(--color-surface);
   padding: 96px 60px 48px;
   overflow: hidden;
   display: flex;
@@ -146,8 +146,8 @@
 
 .mn-level-badge {
   background: var(--color-primary);
-  color: #fff;
-  font-size: 16px;
+  color: var(--color-bg);
+  font-size: 17px;
   font-weight: 800;
   padding: 4px 14px;
   border-radius: 20px;
@@ -163,20 +163,20 @@
 
 .mn-xp-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-primary), #7B9FFF);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
   border-radius: 3px;
   transition: width 0.6s;
 }
 
 .mn-xp-label {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text-muted);
   font-weight: 500;
 }
 
 /* Shared stat card parts */
 .mn-sc-label {
-  font-size: 15px;
+  font-size: 16px;
   color: rgba(28, 36, 66, 0.60);
   font-weight: 700;
   margin-bottom: 4px;
@@ -198,13 +198,13 @@
 }
 
 .mn-sc-denom {
-  font-size: 17px;
+  font-size: 18px;
   color: var(--color-text-sub);
   font-weight: 600;
 }
 
 .mn-sc-badge {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-primary);
   background: var(--color-primary-bg);
@@ -227,8 +227,8 @@
   background: rgba(46, 91, 255, 0.85);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
-  color: #fff;
-  font-size: 15px;
+  color: var(--color-bg);
+  font-size: 16px;
   font-weight: 700;
   border-radius: 10px;
   text-align: center;
@@ -271,7 +271,7 @@
   justify-content: center;
   align-self: center;
   color: var(--color-primary);
-  font-size: 19px;
+  font-size: 20px;
   margin-bottom: 4px;
 }
 
@@ -283,7 +283,7 @@
 }
 
 .mn-daily-desc {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text-sub);
   line-height: 1.5;
   flex: 1;
@@ -319,12 +319,12 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   padding: 28px 60px;
-  background: #F8FAFF;
-  border-top: 1px solid #E8ECF0;
+  background: var(--color-surface);
+  border-top: 1px solid var(--color-border);
 }
 
 .mn-body-card {
-  background: #fff;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 20px;
@@ -343,7 +343,7 @@
 }
 
 .mn-body-card-title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-navy);
 }
@@ -371,13 +371,13 @@
 }
 
 .mn-radar-denom {
-  font-size: 19px;
+  font-size: 20px;
   color: var(--color-text-sub);
   font-weight: 600;
 }
 
 .mn-radar-sub {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-muted);
   margin-bottom: 8px;
 }
@@ -402,7 +402,7 @@
   gap: 10px;
   padding: 9px 8px;
   border-radius: var(--radius-sm);
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .mn-rank-item.me {
@@ -416,7 +416,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   background: var(--color-surface);
   color: var(--color-text-sub);
@@ -425,7 +425,7 @@
 
 .mn-rank-pos.top {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-bg);
 }
 
 .mn-rank-name {
@@ -439,7 +439,7 @@
 }
 
 .mn-rank-xp {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-text-muted);
 }
@@ -454,12 +454,12 @@
   border-radius: var(--radius-sm);
   background: var(--color-primary-bg);
   border: 1px solid var(--color-surface-alt);
-  font-size: 16px;
+  font-size: 17px;
 }
 
 .mn-rank-pos.me {
   background: var(--color-primary);
-  color: #fff;
+  color: var(--color-bg);
 }
 
 .mn-rank-my .mn-rank-name {
@@ -468,13 +468,13 @@
 }
 
 .mn-rank-my .mn-rank-name small {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 600;
   color: var(--color-text-muted);
 }
 
 .mn-rank-my-pos {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--color-primary);
 }
@@ -503,7 +503,7 @@
 }
 
 .mn-counsel-label {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-muted);
 }
 
@@ -515,7 +515,7 @@
 }
 
 .mn-counsel-num span {
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--color-text-sub);
 }
@@ -528,12 +528,12 @@
 }
 
 .mn-counsel-date-label {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-muted);
 }
 
 .mn-counsel-date {
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 700;
   color: var(--color-navy);
 }
@@ -544,7 +544,7 @@
   padding: 8px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 600;
   color: var(--color-text-sub);
   background: var(--color-surface);
@@ -561,7 +561,7 @@
 
 /* Program card */
 .mn-prog-card {
-  background: linear-gradient(135deg, #1A3DB5 0%, #2E5BFF 100%);
+  background: linear-gradient(135deg, #1A3DB5 0%, var(--color-primary) 100%);
   border-radius: var(--radius-sm);
   padding: 16px;
   position: relative;
@@ -570,16 +570,16 @@
 }
 
 .mn-prog-title {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
-  color: #fff;
+  color: var(--color-bg);
   margin-bottom: 4px;
   position: relative;
   z-index: 2;
 }
 
 .mn-prog-date {
-  font-size: 15px;
+  font-size: 16px;
   color: rgba(255,255,255,0.7);
   margin-bottom: 10px;
   position: relative;
@@ -588,9 +588,9 @@
 
 .mn-prog-btn {
   padding: 6px 16px;
-  background: #fff;
+  background: var(--color-bg);
   color: var(--color-primary);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   border-radius: 6px;
   position: relative;
@@ -617,7 +617,7 @@
 }
 
 .mn-text-btn {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-muted);
   display: flex;
   align-items: center;
@@ -641,7 +641,7 @@
   gap: 6px;
   padding: 7px 0;
   border-bottom: 1px solid var(--color-border);
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-sub);
   line-height: 1.4;
 }
@@ -650,7 +650,7 @@
 
 .mn-notice-item i {
   color: var(--color-primary);
-  font-size: 13px;
+  font-size: 15px;
   margin-top: 3px;
   flex-shrink: 0;
 }
@@ -668,7 +668,7 @@
 ════════════════════════════════════════════ */
 .mn-ai-section {
   padding: 28px 60px 40px;
-  background: #fff;
+  background: var(--color-bg);
   border-top: 1px solid var(--color-border);
 }
 
@@ -679,7 +679,7 @@
 }
 
 .mn-rec-card {
-  background: #fff;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
@@ -699,7 +699,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 800;
   color: var(--color-navy);
 }
@@ -761,14 +761,14 @@
 }
 
 .mn-rec-prog-cat {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 20px;
 }
 
 .mn-rec-prog-dday {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 20px;
@@ -782,7 +782,7 @@
 }
 
 .mn-rec-prog-name {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-navy);
   line-height: 1.35;
@@ -818,11 +818,11 @@
 .mn-rec-job-logo {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   flex-shrink: 0;
 }
@@ -836,13 +836,13 @@
 }
 
 .mn-rec-job-company {
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--color-navy);
 }
 
 .mn-rec-job-role {
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-text-muted);
   white-space: nowrap;
   overflow: hidden;
@@ -862,17 +862,17 @@
 
 .mn-rec-job-match.high {
   background: #DCFCE7;
-  color: #16A34A;
+  color: var(--color-success);
 }
 
 .mn-rec-job-match strong {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 900;
   line-height: 1;
 }
 
 .mn-rec-job-match span {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
@@ -887,7 +887,7 @@
 }
 
 .mn-footer-inner {
-  max-width: 1280px;
+  max-width: var(--page-max);
   margin: 0 auto;
   display: flex;
   align-items: flex-start;
@@ -912,7 +912,7 @@
 }
 
 .mn-footer-school {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--color-navy);
   letter-spacing: -0.2px;
@@ -927,8 +927,8 @@
 }
 
 .mn-footer-line {
-  font-size: 13px;
-  color: #4B5563;
+  font-size: 15px;
+  color: var(--color-text-sub);
   line-height: 1.7;
   display: flex;
   gap: 6px;
@@ -941,7 +941,7 @@
 }
 
 .mn-footer-line a {
-  color: #4B5563;
+  color: var(--color-text-sub);
   text-decoration: none;
 }
 
@@ -951,8 +951,8 @@
 
 .mn-footer-copy {
   margin-top: 2px;
-  font-size: 13px;
-  color: #4B5563;
+  font-size: 15px;
+  color: var(--color-text-sub);
   gap: 14px;
 }
 
@@ -968,9 +968,9 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 500;
-  color: #4B5563;
+  color: var(--color-text-sub);
   text-decoration: none;
   transition: color 0.15s;
 }
@@ -980,8 +980,8 @@
 }
 
 .mn-footer-links i {
-  font-size: 10px;
-  color: #9CA3AF;
+  font-size: 12px;
+  color: var(--color-text-muted);
 }
 
 /* ════════════════════════════════════════════

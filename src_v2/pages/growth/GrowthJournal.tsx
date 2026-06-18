@@ -147,26 +147,28 @@ const CTA_STEPS = [
 
 const CAT_STYLE: Record<Category, { bg: string; color: string }> = {
   '아르바이트': { bg: '#F0F9FF', color: '#0284C7' },
-  '팀프로젝트': { bg: '#EEF2FF', color: '#2E5BFF' },
+  '팀프로젝트': { bg: 'var(--color-primary-bg)', color: 'var(--color-primary)' },
   '기타 활동':  { bg: '#F0FDF4', color: '#16A34A' },
 }
 
 const TABS = ['전체', '아르바이트', '팀프로젝트', '기타 활동'] as const
 
+const PAGE_SIZE = 5
+
 /* ── Donut Chart ─────────────────────────────────────────────────── */
 function DonutChart({ value, total }: { value: number; total: number }) {
   const r = 38, cx = 50, cy = 50
   const circ = 2 * Math.PI * r
-  const pct = value / total
+  const pct = total > 0 ? value / total : 0
   const filled = pct * circ
   return (
     <div className="gj-donut-wrap" style={{ width: 100, height: 100 }}>
       <svg width="100" height="100" viewBox="0 0 100 100">
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="#E8ECF0" strokeWidth="13" />
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--color-border)" strokeWidth="13" />
         <circle
           cx={cx} cy={cy} r={r}
           fill="none"
-          stroke="#2E5BFF"
+          stroke="var(--color-primary)"
           strokeWidth="13"
           strokeDasharray={`${filled} ${circ}`}
           strokeLinecap="round"
@@ -196,8 +198,14 @@ export default function GrowthJournal() {
     return true
   })
 
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+  const currentPage = Math.min(page, totalPages)
+  const pageStart = (currentPage - 1) * PAGE_SIZE
+  const pagedEntries = filtered.slice(pageStart, pageStart + PAGE_SIZE)
+
   const resumeUsed = entries.filter(e => e.resumeUsed).length
   const total = entries.length
+  const resumePct = total > 0 ? Math.round(resumeUsed / total * 100) : 0
 
   const toggleBookmark = (id: number) =>
     setEntries(prev => {
@@ -246,7 +254,7 @@ export default function GrowthJournal() {
           </div>
           <div className="gj-stat">
             <span className="gj-stat-label">
-              <i className="fa-solid fa-bag-shopping" style={{ color: '#F59E0B' }} />
+              <i className="fa-solid fa-bag-shopping" style={{ color: 'var(--color-warning)' }} />
               아르바이트
             </span>
             <span className="gj-stat-val">{entries.filter(e => e.category === '아르바이트').length} <span className="gj-stat-unit">건</span></span>
@@ -260,7 +268,7 @@ export default function GrowthJournal() {
           </div>
           <div className="gj-stat">
             <span className="gj-stat-label">
-              <i className="fa-solid fa-star" style={{ color: '#F59E0B' }} />
+              <i className="fa-solid fa-star" style={{ color: 'var(--color-warning)' }} />
               기타 활동
             </span>
             <span className="gj-stat-val">{entries.filter(e => e.category === '기타 활동').length} <span className="gj-stat-unit">건</span></span>
@@ -310,7 +318,13 @@ export default function GrowthJournal() {
 
             {/* Entries */}
             <div className="gj-list">
-              {filtered.map(entry => {
+              {filtered.length === 0 && (
+                <div className="gj-empty">
+                  <i className="fa-solid fa-inbox" />
+                  <p>기록이 없습니다</p>
+                </div>
+              )}
+              {pagedEntries.map(entry => {
                 const cs = CAT_STYLE[entry.category]
                 return (
                   <div
@@ -387,19 +401,21 @@ export default function GrowthJournal() {
             </div>
 
             {/* Pagination */}
-            <div className="gj-pager">
-              <button className="gj-page-btn" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
-                <i className="fa-solid fa-chevron-left" />
-              </button>
-              {[1, 2].map(n => (
-                <button key={n} className={`gj-page-btn${page === n ? ' on' : ''}`} onClick={() => setPage(n)}>
-                  {n}
+            {filtered.length > 0 && (
+              <div className="gj-pager">
+                <button className="gj-page-btn" disabled={currentPage === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
+                  <i className="fa-solid fa-chevron-left" />
                 </button>
-              ))}
-              <button className="gj-page-btn" onClick={() => setPage(p => Math.min(p + 1, 2))}>
-                <i className="fa-solid fa-chevron-right" />
-              </button>
-            </div>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                  <button key={n} className={`gj-page-btn${currentPage === n ? ' on' : ''}`} onClick={() => setPage(n)}>
+                    {n}
+                  </button>
+                ))}
+                <button className="gj-page-btn" disabled={currentPage === totalPages} onClick={() => setPage(p => Math.min(p + 1, totalPages))}>
+                  <i className="fa-solid fa-chevron-right" />
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Right Column */}
@@ -426,7 +442,7 @@ export default function GrowthJournal() {
               <p className="gj-widget-title" style={{ marginBottom: 14 }}>자소서 활용 현황</p>
               <DonutChart value={resumeUsed} total={total} />
               <p className="gj-usage-desc">
-                기록한 경험 중 {Math.round(resumeUsed / total * 100)}%를<br />
+                기록한 경험 중 {resumePct}%를<br />
                 자소서에 활용했어요!
               </p>
               <button className="gj-outline-btn">활용한 경험 보기</button>

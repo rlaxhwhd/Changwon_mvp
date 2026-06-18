@@ -55,7 +55,7 @@ const TEST_NAMES: Record<string, string> = {
 
 const scoreLevel = (s: number) => (s >= 80 ? 'high' : s >= 60 ? 'mid' : 'low')
 // 막대그래프 색상: 0~40 빨강 / 41~70 초록 / 71~100 파랑
-const barColor = (s: number) => (s >= 71 ? '#2E5BFF' : s >= 41 ? '#22C55E' : '#EF4444')
+const barColor = (s: number) => (s >= 71 ? 'var(--color-primary)' : s >= 41 ? 'var(--color-success)' : 'var(--color-danger)')
 
 /* ── 홀로그램 레이더 차트 (Main 스타일 SVG) ──────────────────────── */
 function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {

@@ -201,10 +201,10 @@ function MissionDonut({ value, total }: { value: number; total: number }) {
       <div className="absolute inset-0 rounded-full" style={ringStyle} />
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <div className="flex items-baseline">
-          <span className="text-[26px] font-black text-[#1C2442] leading-none">{value}</span>
-          <span className="text-xs font-bold text-[#99A1A9]">/{total}</span>
+          <span className="text-[26px] font-black text-[var(--color-navy)] leading-none">{value}</span>
+          <span className="text-xs font-bold text-[var(--color-text-muted)]">/{total}</span>
         </div>
-        <span className="mt-1 text-[10px] font-bold tracking-wide text-[#2E5BFF]">완료</span>
+        <span className="mt-1 text-[12px] font-bold tracking-wide text-[var(--color-primary)]">완료</span>
       </div>
     </div>
   )
@@ -283,10 +283,10 @@ export default function Main() {
             <div className="mn-stat-card mn-quest-card">
               <p className="mn-sc-label">역량 성장 그래프</p>
               <div className="mb-1 flex items-baseline gap-1">
-                <span className="text-[30px] font-black leading-none text-[#1C2442]">72</span>
-                <span className="text-[11px] font-bold text-[#637381]">점</span>
-                <span className="ml-auto flex items-center gap-1 rounded-full bg-[#22C55E]/12 px-2 py-0.5 text-[11px] font-extrabold text-[#16A34A]">
-                  <i className="fa-solid fa-arrow-trend-up text-[10px]" />
+                <span className="text-[30px] font-black leading-none text-[var(--color-navy)]">72</span>
+                <span className="text-[13px] font-bold text-[var(--color-text-sub)]">점</span>
+                <span className="ml-auto flex items-center gap-1 rounded-full bg-[#22C55E]/12 px-2 py-0.5 text-[13px] font-extrabold text-[var(--color-success)]">
+                  <i className="fa-solid fa-arrow-trend-up text-[12px]" />
                   +8
                 </span>
               </div>

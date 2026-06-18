@@ -7,10 +7,10 @@
 
 /* ── Section ─────────────────────────────────────────────────────── */
 .ccm-section {
-  border: 1px solid #dce5f5;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   overflow: hidden;
-  background: #fff;
+  background: var(--color-bg);
 }
 
 .ccm-section-head {
@@ -18,8 +18,8 @@
   align-items: center;
   gap: 10px;
   padding: 12px 16px;
-  background: #f5f8ff;
-  border-bottom: 1px solid #e2eaf8;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
 }
 
 .ccm-section-num {
@@ -31,12 +31,12 @@
   justify-content: center;
   background: var(--color-primary);
   color: #fff;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 900;
 }
 
 .ccm-section-head h3 {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 900;
   color: var(--color-navy);
 }
@@ -44,14 +44,14 @@
 .ccm-required {
   margin-left: 6px;
   color: var(--color-danger);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
 }
 
 .ccm-section-body {
   padding: 16px 18px;
-  color: #2a3858;
-  font-size: 15px;
+  color: var(--color-text-sub);
+  font-size: 16px;
   line-height: 1.7;
 }
 
@@ -63,7 +63,7 @@
   margin-top: 14px;
   margin-bottom: 8px;
   color: var(--color-navy);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -71,12 +71,12 @@
   width: 100%;
   border-collapse: collapse;
   margin-top: 4px;
-  font-size: 14px;
+  font-size: 16px;
 }
 
 .ccm-table th,
 .ccm-table td {
-  border: 1px solid #d7e1f3;
+  border: 1px solid var(--color-border);
   padding: 10px 12px;
   vertical-align: top;
   text-align: left;
@@ -84,7 +84,7 @@
 }
 
 .ccm-table th {
-  background: #f8fafc;
+  background: var(--color-surface);
   color: var(--color-navy);
   font-weight: 800;
 }
@@ -97,7 +97,7 @@
 .ccm-list li {
   margin-bottom: 4px;
   list-style: disc;
-  color: #2a3858;
+  color: var(--color-text-sub);
   line-height: 1.65;
 }
 
@@ -107,14 +107,14 @@
   align-items: center;
   gap: 12px;
   padding: 12px 18px;
-  border-top: 1px dashed #dce5f5;
-  background: #fcfdff;
+  border-top: 1px dashed var(--color-border);
+  background: var(--color-surface);
 }
 
 .ccm-answer-q {
   flex: 1;
   color: var(--color-navy);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -123,11 +123,11 @@
   align-items: center;
   gap: 6px;
   padding: 7px 16px;
-  border: 1.5px solid #d7e1f3;
+  border: 1.5px solid var(--color-border);
   border-radius: 999px;
-  background: #fff;
+  background: var(--color-bg);
   color: var(--color-text-sub);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   cursor: pointer;
   transition: all 0.15s;
@@ -140,7 +140,7 @@
 }
 
 .ccm-answer label:hover {
-  border-color: #b9c9f5;
+  border-color: var(--color-border);
 }
 
 .ccm-answer label.on {
@@ -161,15 +161,15 @@
 .ccm-info h4 {
   margin-bottom: 8px;
   color: #b46a00;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 900;
 }
 
 .ccm-info ol {
   margin: 0 0 0 22px;
   padding: 0;
-  color: #2a3858;
-  font-size: 14px;
+  color: var(--color-text-sub);
+  font-size: 16px;
   line-height: 1.7;
 }
 
@@ -181,15 +181,15 @@
 /* ── Pledge & 서명 ───────────────────────────────────────────────── */
 .ccm-pledge {
   padding: 16px 18px;
-  border: 1px solid #dce5f5;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: #f5f8ff;
+  background: var(--color-surface);
 }
 
 .ccm-pledge > p {
   margin-bottom: 14px;
   color: var(--color-navy);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.65;
 }
@@ -199,20 +199,20 @@
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  background: #fff;
-  border: 1px solid #dce5f5;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
 }
 
 .ccm-signature-label {
   color: var(--color-text-sub);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
 }
 
 .ccm-signature-name {
   color: var(--color-navy);
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 900;
 }
 
@@ -220,11 +220,11 @@
   flex: 1;
   height: 38px;
   padding: 0 12px;
-  border: 1.5px solid #d7e1f3;
+  border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: #fff;
+  background: var(--color-bg);
   color: var(--color-navy);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   font-family: inherit;
   outline: none;
@@ -241,7 +241,7 @@
   align-items: center;
   gap: 6px;
   color: var(--color-danger);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -262,7 +262,7 @@
   height: 44px;
   padding: 0 22px;
   border-radius: var(--radius-sm);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 900;
   font-family: inherit;
   cursor: pointer;
@@ -270,14 +270,14 @@
 }
 
 .ccm-btn-ghost {
-  background: #fff;
-  border: 1.5px solid #d7e1f3;
+  background: var(--color-bg);
+  border: 1.5px solid var(--color-border);
   color: var(--color-navy);
 }
 
 .ccm-btn-ghost:hover {
   border-color: var(--color-navy);
-  background: #f5f8ff;
+  background: var(--color-surface);
 }
 
 .ccm-btn-primary {

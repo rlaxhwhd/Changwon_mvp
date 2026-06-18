@@ -72,8 +72,8 @@ const MOCK_DATA: SkillTreeData = {
     {
       id: 'diagnosis',
       icon: 'fa-chart-simple',
-      iconColor: '#2E5BFF',
-      iconBg: '#EEF2FF',
+      iconColor: 'var(--color-primary)',
+      iconBg: 'var(--color-primary-bg)',
       name: '진단',
       subtitle: '취업지원검사 완료',
       complete: true,
@@ -83,8 +83,8 @@ const MOCK_DATA: SkillTreeData = {
     {
       id: 'program',
       icon: 'fa-layer-group',
-      iconColor: '#2E5BFF',
-      iconBg: '#EEF2FF',
+      iconColor: 'var(--color-primary)',
+      iconBg: 'var(--color-primary-bg)',
       name: '비교과 프로그램',
       subtitle: '참여 프로그램 기록',
       complete: true,
@@ -94,8 +94,8 @@ const MOCK_DATA: SkillTreeData = {
     {
       id: 'counsel',
       icon: 'fa-user',
-      iconColor: '#2E5BFF',
-      iconBg: '#EEF2FF',
+      iconColor: 'var(--color-primary)',
+      iconBg: 'var(--color-primary-bg)',
       name: '진로 상담',
       subtitle: '진로취업 상담 이력',
       complete: true,
@@ -105,8 +105,8 @@ const MOCK_DATA: SkillTreeData = {
     {
       id: 'liberal',
       icon: 'fa-book',
-      iconColor: '#2E5BFF',
-      iconBg: '#EEF2FF',
+      iconColor: 'var(--color-primary)',
+      iconBg: 'var(--color-primary-bg)',
       name: '필수 교양',
       subtitle: '필수 교양 이수 현황',
       complete: false,

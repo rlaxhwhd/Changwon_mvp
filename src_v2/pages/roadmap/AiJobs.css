@@ -1,6 +1,6 @@
 /* ── AiJobs (aj-) ──────────────────────────────────────────────── */
 .aj-wrap {
-  max-width: 1280px;
+  max-width: var(--page-max);
   margin: 0 auto;
   padding: 28px 40px;
 }
@@ -9,12 +9,12 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-muted);
   margin-bottom: 8px;
 }
 
-.aj-breadcrumb i { font-size: 13px; }
+.aj-breadcrumb i { font-size: 15px; }
 .aj-breadcrumb .active { color: var(--color-navy); font-weight: 600; }
 
 .aj-page-title {
@@ -25,7 +25,7 @@
 }
 
 .aj-page-desc {
-  font-size: 17px;
+  font-size: 18px;
   color: var(--color-text-sub);
   margin-bottom: 24px;
   line-height: 1.5;
@@ -40,7 +40,7 @@
 }
 
 .aj-stat-card {
-  background: #fff;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 18px;
@@ -57,7 +57,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
+  font-size: 20px;
   flex-shrink: 0;
 }
 
@@ -67,7 +67,7 @@
 }
 
 .aj-stat-label {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text-muted);
   font-weight: 600;
   text-transform: uppercase;
@@ -97,23 +97,23 @@
 }
 
 .aj-stat-num span {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-muted);
 }
 
 .aj-stat-sub {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text-muted);
 }
 
 .aj-stat-badge {
   display: inline-block;
   background: #F0FDF4;
-  color: #22C55E;
+  color: var(--color-success);
   font-weight: 700;
   padding: 2px 8px;
   border-radius: 20px;
-  font-size: 14px;
+  font-size: 16px;
   margin-top: 4px;
 }
 
@@ -127,7 +127,7 @@
 
 /* ── Filter ─────────────────────────────────────────────────────── */
 .aj-filter {
-  background: #fff;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 18px 16px;
@@ -140,7 +140,7 @@
 }
 
 .aj-filter-title {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 16px;
@@ -166,7 +166,7 @@
 }
 
 .aj-filter-label {
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 4px;
@@ -176,7 +176,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 16px;
+  font-size: 17px;
   color: var(--color-text-sub);
   cursor: pointer;
 }
@@ -201,8 +201,8 @@
   width: 100%;
   padding: 10px;
   background: var(--color-primary);
-  color: #fff;
-  font-size: 16px;
+  color: var(--color-bg);
+  font-size: 17px;
   font-weight: 700;
   border-radius: var(--radius-sm);
   transition: opacity 0.15s;
@@ -225,20 +225,20 @@
 }
 
 .aj-list-count {
-  font-size: 16px;
+  font-size: 17px;
   color: var(--color-text-sub);
 }
 
 .aj-list-count strong { color: var(--color-navy); font-weight: 700; }
 
 .aj-sort-sel {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-sub);
   border: 1px solid var(--color-border);
   border-radius: 6px;
   padding: 5px 10px;
   font-family: var(--font);
-  background: #fff;
+  background: var(--color-bg);
   cursor: pointer;
 }
 
@@ -248,7 +248,7 @@
   grid-template-columns: 24px 52px 1fr auto auto;
   gap: 14px;
   align-items: center;
-  background: #fff;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 18px 20px;
@@ -262,7 +262,7 @@
 }
 
 .aj-job-rank {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 800;
   color: var(--color-text-muted);
   text-align: center;
@@ -271,11 +271,11 @@
 .aj-job-logo {
   width: 52px;
   height: 52px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
+  font-size: 20px;
   font-weight: 900;
   flex-shrink: 0;
 }
@@ -295,13 +295,13 @@
 }
 
 .aj-job-company {
-  font-size: 18px;
+  font-size: 19px;
   font-weight: 700;
   color: var(--color-navy);
 }
 
 .aj-job-tag {
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 600;
   padding: 2px 7px;
   border-radius: 20px;
@@ -310,7 +310,7 @@
 }
 
 .aj-job-role {
-  font-size: 16px;
+  font-size: 17px;
   color: var(--color-text-sub);
   font-weight: 500;
 }
@@ -318,7 +318,7 @@
 .aj-job-meta {
   display: flex;
   gap: 12px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text-muted);
   flex-wrap: wrap;
 }
@@ -361,14 +361,14 @@
 }
 
 .aj-job-score-pct {
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-text-sub);
   margin-top: -2px;
 }
 
 .aj-job-score-label {
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text-muted);
   margin-top: 2px;
 }
@@ -387,8 +387,8 @@
   justify-content: center;
   padding: 8px 16px;
   background: var(--color-primary);
-  color: #fff;
-  font-size: 15px;
+  color: var(--color-bg);
+  font-size: 16px;
   font-weight: 700;
   border-radius: var(--radius-sm);
   white-space: nowrap;
@@ -403,15 +403,15 @@
   align-items: center;
   gap: 8px;
   padding: 56px 24px;
-  background: #fff;
+  background: var(--color-bg);
   border: 1px dashed var(--color-border);
   border-radius: var(--radius-md);
   color: var(--color-text-muted);
   text-align: center;
 }
 .aj-empty i { font-size: 36px; color: #C8CFDC; }
-.aj-empty p { font-size: 16px; font-weight: 700; color: #1C2442; margin: 6px 0 0; }
-.aj-empty span { font-size: 13px; color: var(--color-text-muted); }
+.aj-empty p { font-size: 17px; font-weight: 700; color: var(--color-navy); margin: 6px 0 0; }
+.aj-empty span { font-size: 15px; color: var(--color-text-muted); }
 
 .aj-wish-btn {
   width: 32px;
@@ -421,14 +421,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 17px;
   color: var(--color-text-muted);
-  background: #fff;
+  background: var(--color-bg);
   align-self: center;
   transition: all 0.15s;
 }
 
-.aj-wish-btn:hover { border-color: #EF4444; color: #EF4444; }
+.aj-wish-btn:hover { border-color: var(--color-danger); color: var(--color-danger); }
 
 /* ── Right Panel ────────────────────────────────────────────────── */
 .aj-right {
@@ -440,7 +440,7 @@
 }
 
 .aj-right-card {
-  background: #fff;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   padding: 18px;
@@ -448,7 +448,7 @@
 }
 
 .aj-right-title {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 14px;
@@ -481,12 +481,12 @@
 }
 
 .aj-skill-label {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-sub);
 }
 
 .aj-skill-score {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
 }
 
@@ -515,7 +515,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-sub);
   line-height: 1.5;
 }
@@ -529,7 +529,7 @@
 }
 
 .aj-cta-desc {
-  font-size: 15px;
+  font-size: 16px;
   color: var(--color-text-sub);
   margin-bottom: 12px;
   line-height: 1.5;
@@ -539,8 +539,8 @@
   width: 100%;
   padding: 10px;
   background: var(--color-primary);
-  color: #fff;
-  font-size: 15px;
+  color: var(--color-bg);
+  font-size: 16px;
   font-weight: 700;
   border-radius: var(--radius-sm);
   display: flex;
@@ -554,11 +554,33 @@
 
 /* ── Responsive ─────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
+  /* Two columns (filter + list) on the first row; right panel reflows
+     to a full-width block on the second row instead of being hidden. */
   .aj-body {
     grid-template-columns: 180px 1fr;
   }
 
-  .aj-right { display: none; }
+  .aj-filter {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .aj-job-list {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .aj-right {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    position: static;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .aj-right .aj-right-card {
+    flex: 1 1 280px;
+  }
 }
 
 @media (max-width: 768px) {
@@ -572,8 +594,20 @@
     grid-template-columns: 1fr;
   }
 
+  /* Reset the 1100px placements so all three stack in one column. */
+  .aj-filter,
+  .aj-job-list,
+  .aj-right {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
   .aj-filter {
     position: static;
+  }
+
+  .aj-right {
+    flex-direction: column;
   }
 
   .aj-job-card {
@@ -604,5 +638,5 @@
     border-radius: var(--radius-md);
   }
   .aj-page-title { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
-  .aj-page-desc { font-size: 14px; line-height: 1.55; }
+  .aj-page-desc { font-size: 16px; line-height: 1.55; }
 }

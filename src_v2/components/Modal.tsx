@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useRef, type ReactNode } from 'react'
 
 type Size = 'sm' | 'md' | 'lg'
 
@@ -16,11 +16,49 @@ interface Props {
   children: ReactNode
 }
 
+const FOCUSABLE =
+  'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+
 export default function Modal({ open, onClose, title, size = 'md', children }: Props) {
+  const dialogRef = useRef<HTMLDivElement>(null)
+
   useEffect(() => {
-    const handleKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    if (open) document.addEventListener('keydown', handleKey)
-    return () => document.removeEventListener('keydown', handleKey)
+    if (!open) return
+
+    const previouslyFocused = document.activeElement as HTMLElement | null
+
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onClose()
+        return
+      }
+      if (e.key === 'Tab' && dialogRef.current) {
+        const items = dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE)
+        if (items.length === 0) {
+          e.preventDefault()
+          return
+        }
+        const first = items[0]
+        const last = items[items.length - 1]
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+
+    document.addEventListener('keydown', handleKey)
+    // Move focus into the dialog on open.
+    const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE)
+    ;(firstFocusable ?? dialogRef.current)?.focus()
+
+    return () => {
+      document.removeEventListener('keydown', handleKey)
+      previouslyFocused?.focus?.()
+    }
   }, [open, onClose])
 
   if (!open) return null
@@ -31,13 +69,18 @@ export default function Modal({ open, onClose, title, size = 'md', children }: P
       onClick={onClose}
     >
       <div
-        style={{ background: '#fff', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', width: WIDTH[size], maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        tabIndex={-1}
+        style={{ background: 'var(--color-bg)', borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)', width: WIDTH[size], maxWidth: '100%', maxHeight: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
         onClick={e => e.stopPropagation()}
       >
         {title && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--color-border)' }}>
-            <span style={{ fontWeight: 700, fontSize: 16, color: 'var(--color-text)' }}>{title}</span>
-            <button onClick={onClose} style={{ color: 'var(--color-text-muted)', fontSize: 18, cursor: 'pointer', background: 'none', border: 'none' }}>
+            <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--color-text)' }}>{title}</span>
+            <button onClick={onClose} aria-label="닫기" style={{ color: 'var(--color-text-muted)', fontSize: 19, cursor: 'pointer', background: 'none', border: 'none' }}>
               <i className="fa-solid fa-xmark" />
             </button>
           </div>

@@ -84,16 +84,16 @@ function MatchRing({ pct, size = 52, stroke = 5 }: { pct: number; size?: number;
   const offset = circ * (1 - pct / 100)
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#E8ECF0" strokeWidth={stroke} />
+      <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="var(--color-border)" strokeWidth={stroke} />
       <circle
         cx={size / 2} cy={size / 2} r={r}
-        fill="none" stroke="#2E5BFF" strokeWidth={stroke}
+        fill="none" stroke="var(--color-primary)" strokeWidth={stroke}
         strokeDasharray={`${circ}`}
         strokeDashoffset={offset}
         strokeLinecap="round"
         transform={`rotate(-90 ${size / 2} ${size / 2})`}
       />
-      <text x={size / 2} y={size / 2 + 4} textAnchor="middle" fontSize="11" fontWeight="800" fill="#1C2442">
+      <text x={size / 2} y={size / 2 + 4} textAnchor="middle" fontSize="11" fontWeight="800" fill="var(--color-navy)">
         {pct}%
       </text>
     </svg>
@@ -101,7 +101,7 @@ function MatchRing({ pct, size = 52, stroke = 5 }: { pct: number; size?: number;
 }
 
 function MatchBar({ pct }: { pct: number }) {
-  const color = pct >= 90 ? '#2E5BFF' : pct >= 80 ? '#22C55E' : pct >= 70 ? '#F59E0B' : '#EF4444'
+  const color = pct >= 90 ? 'var(--color-primary)' : pct >= 80 ? 'var(--color-success)' : pct >= 70 ? 'var(--color-warning)' : 'var(--color-danger)'
   return (
     <div className="aj-match-bar-wrap">
       <div className="aj-match-bar-track">
@@ -199,7 +199,7 @@ export default function AiJobs() {
       {/* ── Summary Stats ────────────────────────────────────── */}
       <div className="aj-stats">
         <div className="aj-stat-card">
-          <div className="aj-stat-icon-wrap" style={{ background: '#EEF2FF', color: '#2E5BFF' }}>
+          <div className="aj-stat-icon-wrap" style={{ background: 'var(--color-primary-bg)', color: 'var(--color-primary)' }}>
             <i className="fa-solid fa-chart-pie" />
           </div>
           <div className="aj-stat-body">
@@ -215,7 +215,7 @@ export default function AiJobs() {
         </div>
 
         <div className="aj-stat-card">
-          <div className="aj-stat-icon-wrap" style={{ background: '#F0FDF4', color: '#22C55E' }}>
+          <div className="aj-stat-icon-wrap" style={{ background: '#F0FDF4', color: 'var(--color-success)' }}>
             <i className="fa-solid fa-bullseye" />
           </div>
           <div className="aj-stat-body">
@@ -226,7 +226,7 @@ export default function AiJobs() {
         </div>
 
         <div className="aj-stat-card">
-          <div className="aj-stat-icon-wrap" style={{ background: '#FFFBEB', color: '#F59E0B' }}>
+          <div className="aj-stat-icon-wrap" style={{ background: '#FFFBEB', color: 'var(--color-warning)' }}>
             <i className="fa-solid fa-trophy" />
           </div>
           <div className="aj-stat-body">
@@ -242,7 +242,7 @@ export default function AiJobs() {
           </div>
           <div className="aj-stat-body">
             <p className="aj-stat-label">추천 기업 지역</p>
-            <p className="aj-stat-num" style={{ fontSize: 20 }}>서울, 경기</p>
+            <p className="aj-stat-num" style={{ fontSize: 21 }}>서울, 경기</p>
             <p className="aj-stat-sub">추천 지역 기준</p>
           </div>
         </div>
@@ -390,7 +390,7 @@ export default function AiJobs() {
               {/* Match Score */}
               <div className="aj-job-score">
                 <span className="aj-job-score-num" style={{
-                  color: job.match >= 90 ? '#2E5BFF' : job.match >= 80 ? '#22C55E' : '#F59E0B'
+                  color: job.match >= 90 ? 'var(--color-primary)' : job.match >= 80 ? 'var(--color-success)' : 'var(--color-warning)'
                 }}>
                   {job.match}
                 </span>
@@ -405,7 +405,7 @@ export default function AiJobs() {
                   onClick={() => openApply(job.applyUrl)}
                   aria-label={`${job.company} 채용공고로 이동`}
                 >
-                  지원하기 <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 11, marginLeft: 4 }} />
+                  지원하기 <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 13, marginLeft: 4 }} />
                 </button>
                 <button className="aj-wish-btn"><i className="fa-regular fa-heart" /></button>
               </div>
@@ -441,19 +441,19 @@ export default function AiJobs() {
             </p>
             <ul className="aj-tip-list">
               <li className="aj-tip-item">
-                <i className="fa-solid fa-circle-check" style={{ color: '#22C55E' }} />
+                <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-success)' }} />
                 <span>서비스 기획 역량이 상위 25%</span>
               </li>
               <li className="aj-tip-item">
-                <i className="fa-solid fa-circle-check" style={{ color: '#22C55E' }} />
+                <i className="fa-solid fa-circle-check" style={{ color: 'var(--color-success)' }} />
                 <span>PM 관련 공모전 수상 이력 있음</span>
               </li>
               <li className="aj-tip-item">
-                <i className="fa-solid fa-circle-exclamation" style={{ color: '#F59E0B' }} />
+                <i className="fa-solid fa-circle-exclamation" style={{ color: 'var(--color-warning)' }} />
                 <span>데이터 분석 역량 보강 권장</span>
               </li>
               <li className="aj-tip-item">
-                <i className="fa-solid fa-circle-exclamation" style={{ color: '#F59E0B' }} />
+                <i className="fa-solid fa-circle-exclamation" style={{ color: 'var(--color-warning)' }} />
                 <span>어학 점수 업데이트 필요</span>
               </li>
             </ul>

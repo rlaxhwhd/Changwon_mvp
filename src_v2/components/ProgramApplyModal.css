@@ -2,7 +2,7 @@
 
 .pam-intro {
   margin: 0 0 18px;
-  font-size: 14px;
+  font-size: 16px;
   color: var(--color-text-sub);
 }
 .pam-intro strong { color: var(--color-navy); font-weight: 800; }
@@ -15,7 +15,7 @@
   display: flex;
   align-items: center;
   gap: 7px;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   color: var(--color-navy);
   margin-bottom: 10px;
@@ -29,7 +29,7 @@
 .pam-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 .pam-table th,
@@ -41,7 +41,7 @@
 }
 
 .pam-table th {
-  background: #F5F8FE;
+  background: var(--color-surface);
   color: var(--color-text-sub);
   font-weight: 700;
   width: 92px;
@@ -56,18 +56,18 @@
 .pam-table-doc th {
   text-align: center;
   width: auto;
-  background: #EEF2FA;
+  background: var(--color-primary-bg);
 }
 .pam-table-doc td {
   font-weight: 500;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.55;
   color: var(--color-text-sub);
 }
 
 .pam-note {
   margin: 8px 0 0;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--color-danger);
   font-weight: 600;
 }
@@ -80,7 +80,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-family: var(--font);
-  font-size: 13px;
+  font-size: 15px;
   color: var(--color-navy);
   line-height: 1.6;
   resize: vertical;
@@ -97,10 +97,10 @@
 /* ─── 동의서 박스 ─── */
 .pam-doc {
   padding: 14px 16px;
-  background: #FAFBFE;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 13px;
+  font-size: 15px;
   line-height: 1.65;
   color: var(--color-text-sub);
 }
@@ -124,7 +124,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-navy);
   cursor: pointer;
@@ -140,10 +140,10 @@
 .pam-notice-list {
   margin: 0;
   padding: 14px 16px 14px 30px;
-  background: #FAFBFE;
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.7;
   color: var(--color-text-sub);
 }
@@ -153,7 +153,7 @@
 
 .pam-confirm {
   margin: 14px 0 8px;
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--color-navy);
   line-height: 1.6;
@@ -161,11 +161,11 @@
 
 .pam-sign {
   margin: 0;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-navy);
 }
-.pam-sign-mark { color: var(--color-text-muted); font-weight: 600; font-size: 12px; margin-left: 6px; }
+.pam-sign-mark { color: var(--color-text-muted); font-weight: 600; font-size: 14px; margin-left: 6px; }
 
 /* ─── 액션 버튼 ─── */
 .pam-actions {
@@ -180,14 +180,14 @@
   height: 40px;
   padding: 0 26px;
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 800;
   cursor: pointer;
   font-family: var(--font);
 }
 
 .pam-btn-ghost {
-  background: #fff;
+  background: var(--color-bg);
   border: 1px solid var(--color-border);
   color: var(--color-text-sub);
 }

@@ -125,6 +125,12 @@ export default function AiResume() {
   const charLimit = 1000
   const attachedEntries = journalEntries.filter(entry => attachedIds.includes(entry.id))
 
+  const filteredDocs = savedDocs.filter(doc => {
+    if (filterTab === '전체') return true
+    if (filterTab === '즐겨찾기') return doc.starred
+    return doc.status === filterTab
+  })
+
   const attachJournal = (entry: Entry) => {
     if (attachedIds.includes(entry.id)) return
     const snippet = makeJournalSnippet(entry)
@@ -264,21 +270,40 @@ export default function AiResume() {
         </div>
 
         <div className="rs-doc-list">
-          {savedDocs.map(doc => (
-            <article key={doc.id} className="rs-doc-card">
-              <div className="rs-doc-top">
-                <span className={`rs-status ${statusClass[doc.status]}`}>{doc.status}</span>
-                <i className={`fa-${doc.starred ? 'solid' : 'regular'} fa-star`} />
-              </div>
-              <h3>{doc.title}</h3>
-              <p className="rs-doc-meta"><i className="fa-solid fa-building" /> {doc.company} · {doc.dept}</p>
-              <p className="rs-doc-preview">{doc.preview}</p>
-              <div className="rs-doc-bottom">
-                <span>{doc.date}</span>
-                <span>{doc.chars.toLocaleString()}자</span>
-              </div>
-            </article>
-          ))}
+          {filteredDocs.length === 0 ? (
+            <div
+              className="rs-doc-empty"
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 12,
+                padding: '48px 16px',
+                textAlign: 'center',
+                color: 'var(--color-text-muted)',
+              }}
+            >
+              <i className="fa-regular fa-folder-open" style={{ fontSize: 36 }} />
+              <p style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>해당하는 자소서가 없습니다.</p>
+            </div>
+          ) : (
+            filteredDocs.map(doc => (
+              <article key={doc.id} className="rs-doc-card">
+                <div className="rs-doc-top">
+                  <span className={`rs-status ${statusClass[doc.status]}`}>{doc.status}</span>
+                  <i className={`fa-${doc.starred ? 'solid' : 'regular'} fa-star`} />
+                </div>
+                <h3>{doc.title}</h3>
+                <p className="rs-doc-meta"><i className="fa-solid fa-building" /> {doc.company} · {doc.dept}</p>
+                <p className="rs-doc-preview">{doc.preview}</p>
+                <div className="rs-doc-bottom">
+                  <span>{doc.date}</span>
+                  <span>{doc.chars.toLocaleString()}자</span>
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </aside>
     </div>

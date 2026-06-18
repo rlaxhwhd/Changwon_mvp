@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import './Prediction.css'
 
@@ -49,13 +50,14 @@ const GUIDE_FACTORS = [
 ]
 
 export default function Prediction() {
+  const navigate = useNavigate()
   const [guideOpen, setGuideOpen] = useState(false)
 
   return (
     <div className="pred-page">
       <section className="pred-hero">
         <div className="pred-hero-copy">
-          <button className="pred-back-btn" aria-label="뒤로 가기">
+          <button className="pred-back-btn" aria-label="뒤로 가기" onClick={() => navigate(-1)}>
             <i className="fa-solid fa-arrow-left" />
           </button>
           <div>
