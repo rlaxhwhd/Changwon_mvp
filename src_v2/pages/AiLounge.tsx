@@ -1,88 +1,30 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import Modal from '../components/Modal'
+import IapSummaryBanner from '../components/IapSummaryBanner'
+import { getActiveStudent } from '../data/students'
+import { COUNSEL_DONE_RECORDS, COUNSEL_TOTAL, counselDateLabel } from '../data/counsel'
+import {
+  computeAll,
+  generateAiComment,
+  OVERALL_FORMULA_TEXT,
+  OVERALL_WEIGHTS,
+  type ScoreResult,
+} from '../lib/scoring'
 import './AiLounge.css'
 
-// ── Mock Data ──────────────────────────────────────────────────────
-const userStats = [
-  { icon: 'fa-solid fa-clipboard-check', label: '진단 결과',  value: '85',   unit: '점' },
-  { icon: 'fa-solid fa-chart-line',       label: '역량 분석',  value: '72',   unit: '점' },
-  { icon: 'fa-solid fa-graduation-cap',   label: '학점 분석',  value: '3.68', unit: '/ 4.5' },
-  { icon: 'fa-solid fa-id-card',          label: '자격증',     value: '2',    unit: '개' },
-  { icon: 'fa-solid fa-comments',         label: '상담 내역',  value: '3',    unit: '회' },
-  { icon: 'fa-solid fa-book-open',         label: '성장경험일지', value: '12',   unit: '건' },
-  { icon: 'fa-solid fa-clipboard-list',    label: '비교과프로그램 신청', value: '5', unit: '건' },
-]
-
-const radarAxes = [
-  { label: '전문 역량', user: 88, target: 90 },
-  { label: '실무 역량', user: 78, target: 90 },
-  { label: '실행 역량', user: 76, target: 90 },
-  { label: '성장 역량', user: 65, target: 90 },
-  { label: '인성 역량', user: 82, target: 90 },
-  { label: '취업 역량', user: 70, target: 90 },
-]
-
-const competencyBars = [
-  { label: '전문 역량', value: 88 },
-  { label: '실무 역량', value: 78 },
-  { label: '실행 역량', value: 76 },
-  { label: '인성 역량', value: 82 },
-  { label: '취업 역량', value: 70 },
-  { label: '성장 역량', value: 65 },
-]
-
-const nextActions = [
-  { num: 1, text: 'TOEIC 응시 ~ 목표 700+ (어학 미등록)',           color: '#EF4444' },
-  { num: 2, text: 'PMP 기초 자격증 취득 준비 (PM역량 +15점)',        color: '#F59E0B' },
-  { num: 3, text: '캡스톤 디자인 프로젝트 등록 (프로젝트 경험 보강)', color: '#2E5BFF' },
-  { num: 4, text: 'AI 로드맵 확인 및 다음 단계 계획',                 color: '#2E5BFF' },
-]
+// 5대 역량 표시 순서 (진로→직무→취업→자기관리→성장)
+const RADAR_ORDER: Array<'진로'|'직무'|'취업'|'자기관리'|'성장'> =
+  ['진로','직무','취업','자기관리','성장']
+const BAR_ORDER: Array<'진로'|'직무'|'자기관리'|'취업'|'성장'> =
+  ['진로','직무','자기관리','취업','성장']
+const TARGET_SCORE = 90  // 목표 기업 합격자 평균 (mock)
 
 const quickLinks = [
   { icon: 'fa-solid fa-route',    label: 'AI 로드맵',  path: '/roadmap/ai',        iconColor: '#6B7280', bg: '#F3F4F6' },
   { icon: 'fa-solid fa-folder',   label: '프로그램 신청', path: '/growth/program', iconColor: '#2E5BFF', bg: '#EEF2FF' },
   { icon: 'fa-solid fa-briefcase',label: '경력관리',   path: '/growth/journal',    iconColor: '#2E5BFF', bg: '#EEF2FF' },
   { icon: 'fa-solid fa-id-badge', label: '포트폴리오', path: '/mypage/portfolio',  iconColor: '#2E5BFF', bg: '#EEF2FF' },
-]
-
-interface CounselPair {
-  type: string
-  date: string
-  question: string
-  aiAdvice: string
-  typeColor: string
-}
-
-const counselPairs: CounselPair[] = [
-  {
-    type: '진로/취업 상담',
-    date: '2025.04.10 · 김미래 상담사',
-    question: '"학과와 맞는 것 같아서 진로에 대한 고민이 드는 중"',
-    aiAdvice: '진로 적합성에 대한 고민은 매우 자연스러운 탐색 과정입니다. 강점 영역(정보활용·문제해결)에 부합하는 데이터·기획 직무를 우선 탐색해 보시는 것을 권장드려요.',
-    typeColor: '#F59E0B',
-  },
-  {
-    type: '심리 상담',
-    date: '2025.04.12 · 박지은 상담사',
-    question: '"최근 이별로 인 상태로 학업과 진로에 집중을 하지 못하는 모습"',
-    aiAdvice: '힘든 시기를 보내고 계시군요. 감정이 흔들릴 때 학업에 집중하기 어려운 것은 당연해요. 하루 10분 마음챙김 명상과 가벼운 운동 루틴으로 정서 안정을 되찾는 것을 추천드립니다.',
-    typeColor: '#8B5CF6',
-  },
-  {
-    type: '교수 상담',
-    date: '2025.04.18 · 박지훈 교수',
-    question: '"전공 진로 방향과 대학원 진학 가능성에 대해 함께 논의"',
-    aiAdvice: '대학원 진학을 고려한다면 학점 관리와 더불어 GRE/TOEFL 일정 확보, 연구실 인턴 참여, 교수 추천서를 위한 관계 형성을 6개월 단위 로드맵으로 준비하시는 것이 좋습니다.',
-    typeColor: '#10B981',
-  },
-  {
-    type: '진로/취업 상담',
-    date: '2025.04.25 · 정유진 상담사',
-    question: '"AI 기업 채용 트렌드와 포트폴리오 구성 전략을 안내"',
-    aiAdvice: 'GitHub 정리와 캡스톤 프로젝트 회고록 작성, 그리고 1개 이상의 사이드 프로젝트 배포 경험으로 포트폴리오 완성도를 끌어올리세요. AI 기업은 "실제 배포 + 회고" 조합을 가장 높게 평가합니다.',
-    typeColor: '#F59E0B',
-  },
 ]
 
 interface RoadmapPhase {
@@ -100,7 +42,7 @@ const roadmapPhases: RoadmapPhase[] = [
     title: '가장 큰 격차부터 좁히기 — 글로벌 역량 + 영단어 고득점',
     color: '#EF4444',
     actions: [
-      '매일 미션에 고득점 단어 10개 + 난해 단어 5개 우선 배치 (TOEIC 800+ 목표)',
+      '매일 퀘스트에 고득점 단어 10개 + 난해 단어 5개 우선 배치 (TOEIC 800+ 목표)',
       '주 2회 LC/RC 실전 모의고사로 체득 여부 확인',
       '글로벌 PBL / 국제 교류 프로그램 1개 신청 (9CORE 글로벌 35점 → 50점)',
       '면접 기초 강의 1개 수강 (대인관계·리더십 65점대 보강)',
@@ -132,33 +74,35 @@ const roadmapPhases: RoadmapPhase[] = [
   },
 ]
 
-// ── Radar Chart (SVG) ──────────────────────────────────────────────
+// ── Radar Chart (SVG) — n축 가변 ───────────────────────────────────
 const CX = 150, CY = 150, R = 80
 
-function getRadarPoint(i: number, r: number) {
-  const angle = (i * 60 - 90) * (Math.PI / 180)
+function getRadarPoint(i: number, n: number, r: number) {
+  const angle = ((i * 360) / n - 90) * (Math.PI / 180)
   return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) }
 }
 
-function toPolygon(values: number[]) {
+function toPolygon(values: number[], n: number) {
   return values.map((v, i) => {
-    const p = getRadarPoint(i, (v / 100) * R)
+    const p = getRadarPoint(i, n, (v / 100) * R)
     return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
   }).join(' ')
 }
 
-function RadarChart() {
-  const userPoly   = toPolygon(radarAxes.map(a => a.user))
-  const targetPoly = toPolygon(radarAxes.map(a => a.target))
+interface RadarAxis { label: string; user: number; target: number }
+function RadarChart({ axes }: { axes: RadarAxis[] }) {
+  const n = axes.length
+  const userPoly   = toPolygon(axes.map(a => a.user), n)
+  const targetPoly = toPolygon(axes.map(a => a.target), n)
 
   return (
     <svg viewBox="0 0 300 300" width="100%" height="280" style={{ overflow: 'visible' }}>
-      {/* Grid hexagons */}
+      {/* Grid polygons */}
       {[25, 50, 75, 100].map(pct => (
         <polygon
           key={pct}
-          points={Array.from({ length: 6 }, (_, i) => {
-            const p = getRadarPoint(i, (pct / 100) * R)
+          points={Array.from({ length: n }, (_, i) => {
+            const p = getRadarPoint(i, n, (pct / 100) * R)
             return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
           }).join(' ')}
           fill="none"
@@ -168,8 +112,8 @@ function RadarChart() {
       ))}
 
       {/* Axis lines */}
-      {Array.from({ length: 6 }, (_, i) => {
-        const p = getRadarPoint(i, R)
+      {Array.from({ length: n }, (_, i) => {
+        const p = getRadarPoint(i, n, R)
         return <line key={i} x1={CX} y1={CY} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)} stroke="#E8ECF0" strokeWidth="1" />
       })}
 
@@ -180,15 +124,16 @@ function RadarChart() {
       <polygon points={userPoly} fill="rgba(46,91,255,0.18)" stroke="#2E5BFF" strokeWidth="2" />
 
       {/* User dots */}
-      {radarAxes.map((a, i) => {
-        const p = getRadarPoint(i, (a.user / 100) * R)
+      {axes.map((a, i) => {
+        const p = getRadarPoint(i, n, (a.user / 100) * R)
         return <circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="3.5" fill="#2E5BFF" />
       })}
 
       {/* Labels */}
-      {radarAxes.map((a, i) => {
-        const p = getRadarPoint(i, R + 22)
-        const anchor = i === 0 || i === 3 ? 'middle' : i === 1 || i === 2 ? 'start' : 'end'
+      {axes.map((a, i) => {
+        const p = getRadarPoint(i, n, R + 22)
+        const dx = p.x - CX
+        const anchor = Math.abs(dx) < 4 ? 'middle' : dx > 0 ? 'start' : 'end'
         return (
           <text key={i} x={p.x.toFixed(1)} y={p.y.toFixed(1)}
             textAnchor={anchor} dominantBaseline="middle"
@@ -229,6 +174,7 @@ function ModalRadar({ axes }: { axes: { label: string; value: number }[] }) {
   const cy = size / 2
   const r = 100
   const n = axes.length
+  const [hovered, setHovered] = useState<number | null>(null)
 
   const pt = (i: number, ratio: number) => {
     const angle = (Math.PI * 2 * i) / n - Math.PI / 2
@@ -237,6 +183,7 @@ function ModalRadar({ axes }: { axes: { label: string; value: number }[] }) {
   const grids = [0.25, 0.5, 0.75, 1.0]
   const pts = axes.map((a, i) => pt(i, a.value / 100))
   const dataPath = pts.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
+  const levelLabel = (v: number) => (v >= 80 ? '강점' : v >= 60 ? '양호' : '보완 필요')
 
   return (
     <svg viewBox={`0 0 ${size} ${size}`} width="100%" style={{ maxWidth: 340 }}>
@@ -260,7 +207,16 @@ function ModalRadar({ axes }: { axes: { label: string; value: number }[] }) {
       <path d={dataPath} fill="url(#al-modal-radar)" fillOpacity="0.45" />
       <path d={dataPath} fill="none" stroke="url(#al-modal-radar)" strokeWidth="2" />
       {pts.map(({ x, y }, i) => (
-        <circle key={i} cx={x} cy={y} r="3.5" fill="#5B5BFF" />
+        <g
+          key={i}
+          onMouseEnter={() => setHovered(i)}
+          onMouseLeave={() => setHovered(null)}
+          style={{ cursor: 'pointer' }}
+        >
+          {/* 넓은 투명 히트영역 */}
+          <circle cx={x} cy={y} r="13" fill="transparent" />
+          <circle cx={x} cy={y} r={hovered === i ? 5.5 : 3.5} fill="#5B5BFF" stroke="#fff" strokeWidth={hovered === i ? 2 : 0} />
+        </g>
       ))}
       {axes.map((a, i) => {
         const { x, y } = pt(i, 1.22)
@@ -272,6 +228,59 @@ function ModalRadar({ axes }: { axes: { label: string; value: number }[] }) {
           </text>
         )
       })}
+      {/* hover 툴팁 — 점수 + 수준 코멘트 */}
+      {hovered !== null && (() => {
+        const { x, y } = pts[hovered]
+        const a = axes[hovered]
+        const text = `${a.label} ${a.value}점 · ${levelLabel(a.value)}`
+        const w = text.length * 8.4 + 18
+        const tx = Math.min(Math.max(x - w / 2, 4), size - w - 4)
+        const ty = y - 36 < 4 ? y + 14 : y - 36
+        return (
+          <g pointerEvents="none">
+            <rect x={tx} y={ty} width={w} height={26} rx={7} fill="#1C2442" opacity="0.94" />
+            <text x={tx + w / 2} y={ty + 17} textAnchor="middle" fontSize="12.5" fontWeight="800" fill="#fff" fontFamily="Pretendard, sans-serif">
+              {text}
+            </text>
+          </g>
+        )
+      })()}
+    </svg>
+  )
+}
+
+// 검사별 결과 미리보기용 컴팩트 레이더 (hover 팝오버)
+function MiniRadarPreview({ axes, color }: { axes: { label: string; value: number }[]; color: string }) {
+  const size = 152
+  const cx = size / 2
+  const cy = size / 2
+  const r = 46
+  const n = axes.length
+  const pt = (i: number, ratio: number) => {
+    const a = (Math.PI * 2 * i) / n - Math.PI / 2
+    return { x: cx + r * ratio * Math.cos(a), y: cy + r * ratio * Math.sin(a) }
+  }
+  const pts = axes.map((a, i) => pt(i, a.value / 100))
+  const dataPath = pts.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
+  return (
+    <svg viewBox={`0 0 ${size} ${size}`} width={size} height={size}>
+      {[0.5, 1].map((lv, li) => (
+        <polygon
+          key={li}
+          points={axes.map((_, i) => { const p = pt(i, lv); return `${p.x},${p.y}` }).join(' ')}
+          fill="none"
+          stroke="#E2E8F5"
+          strokeWidth="1"
+        />
+      ))}
+      {axes.map((_, i) => {
+        const o = pt(i, 1)
+        return <line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke="#E2E8F5" strokeWidth="1" />
+      })}
+      <path d={dataPath} fill={color} fillOpacity="0.22" stroke={color} strokeWidth="2" />
+      {pts.map(({ x, y }, i) => (
+        <circle key={i} cx={x} cy={y} r="2.5" fill={color} />
+      ))}
     </svg>
   )
 }
@@ -385,8 +394,47 @@ const TEST_SUMMARIES: TestSummary[] = [
 // ── Page ───────────────────────────────────────────────────────────
 export default function AiLounge() {
   const [openTestId, setOpenTestId] = useState<string | null>(null)
+  const [previewTestId, setPreviewTestId] = useState<string | null>(null)
+  const [openCompetencyDetail, setOpenCompetencyDetail] = useState(false)
   const openTest = openTestId ? TEST_SUMMARIES.find(t => t.id === openTestId) ?? null : null
   const location = useLocation()
+  const student = getActiveStudent()
+  const reco = student.recommendations
+
+  // ── 점수 동적 계산 — JSON의 scoreInputs를 그대로 scoring.ts에 주입 ──
+  const scoreResult: ScoreResult = useMemo(
+    () => computeAll(student.scoreInputs),
+    [student.scoreInputs],
+  )
+  const aiComment = useMemo(() => generateAiComment(scoreResult), [scoreResult])
+  const compByKey = useMemo(
+    () => Object.fromEntries(scoreResult.competencies.map(c => [c.key, c])),
+    [scoreResult],
+  )
+  const radarAxes = RADAR_ORDER.map(k => ({
+    label: `${k} 역량`,
+    user: compByKey[k].scoreRounded,
+    target: TARGET_SCORE,
+  }))
+  const competencyBars = BAR_ORDER.map(k => ({
+    label: `${k} 역량`,
+    value: compByKey[k].scoreRounded,
+  }))
+  const userStats = [
+    { icon: 'fa-solid fa-clipboard-check', label: '진단 결과',  value: '85',   unit: '점' },
+    { icon: 'fa-solid fa-chart-line',       label: '역량 분석',  value: String(scoreResult.overall),   unit: '점' },
+    { icon: 'fa-solid fa-graduation-cap',   label: '학점 분석',  value: student.gpa, unit: '/ 4.5' },
+    { icon: 'fa-solid fa-id-card',          label: '자격증',     value: String(student.scoreInputs.certifications),    unit: '개' },
+    { icon: 'fa-solid fa-comments',         label: '상담 내역',  value: String(COUNSEL_TOTAL), unit: '회' },
+    { icon: 'fa-solid fa-book-open',         label: '성장경험일지', value: '12',   unit: '건' },
+    { icon: 'fa-solid fa-clipboard-list',    label: '비교과프로그램 신청', value: String(student.scoreInputs.programs), unit: '건' },
+  ]
+  const nextActions = [
+    { item: reco.certs[0],      color: '#EF4444' },
+    { item: reco.activities[0], color: '#F59E0B' },
+    { item: reco.programs[0],   color: '#2E5BFF' },
+    { item: reco.certs[1],      color: '#2E5BFF' },
+  ].map((r, i) => ({ num: i + 1, text: `${r.item.title} — ${r.item.reason}`, color: r.color }))
 
   // 사이드바 sub-tab 클릭 시 해당 섹션으로 부드럽게 스크롤
   useEffect(() => {
@@ -409,11 +457,11 @@ export default function AiLounge() {
       <div className="al-profile-card">
         <div className="al-profile-user">
           <div className="al-avatar-box">
-            <img className="al-avatar-photo" src="/student-profile.png" alt="김채원 프로필" />
+            <img className="al-avatar-photo" src="/student-profile.png" alt={`${student.name} 프로필`} />
           </div>
           <div className="al-profile-info">
-            <div className="al-profile-name">김채원</div>
-            <div className="al-profile-dept">컴퓨터공학과 3학년</div>
+            <div className="al-profile-name">{student.name}</div>
+            <div className="al-profile-dept">{student.major} {student.grade}학년</div>
             <span className="al-lv-badge">Lv. 23</span>
           </div>
         </div>
@@ -432,11 +480,13 @@ export default function AiLounge() {
         </div>
       </div>
 
+      <IapSummaryBanner note="내 진단 · IAP 요약 (진단센터·상담 결과 연동)" />
+
       {/* ── AI 종합 분석 섹션 (DB 정보 vs AI 분석 구분) ──────────────── */}
       <section className="al-ai-section">
         <div className="al-ai-section-head">
           <span className="al-ai-badge">AI 종합 분석</span>
-          <h2>김채원 학생을 위한 AI 맞춤 인사이트</h2>
+          <h2>{student.name} 학생을 위한 AI 맞춤 인사이트</h2>
           <p>진단 결과 · 역량 · 학습 데이터를 종합해 AI가 실시간으로 분석한 결과입니다.</p>
         </div>
 
@@ -452,29 +502,29 @@ export default function AiLounge() {
               <div className="card-title">종합 분석 리포트</div>
               <div className="al-card-sub">AI가 분석한 당신의 종합 평가</div>
               <div className="al-score-row">
-                <span className="al-score-num">72</span>
+                <span className="al-score-num">{scoreResult.overall}</span>
                 <span className="al-score-denom">/100</span>
               </div>
               <div className="al-prog-track">
-                <div className="al-prog-fill" style={{ width: '72%' }} />
+                <div className="al-prog-fill" style={{ width: `${scoreResult.overall}%` }} />
               </div>
               <div className="al-report-3col">
-                <div className="al-rcol">
-                  <div className="al-rcol-title"><i className="fa-solid fa-star" /> 강점</div>
-                  {['문제해결 능력이 우수해요','전공 역량이 탄탄해요','성장 가능성이 높아요'].map((t,i)=>(
+                <div className="al-rcol al-rcol--strength">
+                  <div className="al-rcol-title"><i className="fa-solid fa-circle-check" /> 강점</div>
+                  {aiComment.strengthBullets.map((t,i)=>(
                     <div key={i} className="al-bullet"><i className="fa-solid fa-check" />{t}</div>
                   ))}
                 </div>
-                <div className="al-rcol">
-                  <div className="al-rcol-title"><i className="fa-solid fa-star" /> 보완이 필요한 역량</div>
-                  {['실무 경험을 더 쌓아보세요','프로젝트 경험이 부족해요','커뮤니케이션 능력 향상 필요'].map((t,i)=>(
-                    <div key={i} className="al-bullet"><i className="fa-solid fa-check" />{t}</div>
+                <div className="al-rcol al-rcol--weakness">
+                  <div className="al-rcol-title"><i className="fa-solid fa-triangle-exclamation" /> 보완이 필요한 역량</div>
+                  {aiComment.weaknessBullets.map((t,i)=>(
+                    <div key={i} className="al-bullet"><i className="fa-solid fa-arrow-up-right-dots" />{t}</div>
                   ))}
                 </div>
-                <div className="al-rcol">
-                  <div className="al-rcol-title"><i className="fa-solid fa-check" /> 맞춤 추천</div>
-                  {['데이터 분석 프로젝트 경험 기획','기업 멘토링 프로그램','프레젠테이션 스킬 향상'].map((t,i)=>(
-                    <div key={i} className="al-bullet"><i className="fa-solid fa-check" />{t}</div>
+                <div className="al-rcol al-rcol--reco">
+                  <div className="al-rcol-title"><i className="fa-solid fa-wand-magic-sparkles" /> 맞춤 추천</div>
+                  {[reco.programs[0].title, reco.activities[0].title, reco.certs[1].title].map((t,i)=>(
+                    <div key={i} className="al-bullet"><i className="fa-solid fa-circle-arrow-right" />{t}</div>
                   ))}
                 </div>
               </div>
@@ -488,7 +538,7 @@ export default function AiLounge() {
                 <span className="al-leg-item"><span className="al-leg-line al-leg-solid"/>나의 역량</span>
                 <span className="al-leg-item"><span className="al-leg-line al-leg-dash"/>목표 기업 합격자 평균</span>
               </div>
-              <RadarChart />
+              <RadarChart axes={radarAxes} />
             </div>
 
           </div>
@@ -502,7 +552,13 @@ export default function AiLounge() {
             <div className="card-title" style={{marginBottom:0}}>
               <i className="fa-solid fa-chart-bar"/> AI 역량별 상세 분석
             </div>
-            <Link to="/roadmap/ai" className="al-more-link">상세 보기 →</Link>
+            <button
+              type="button"
+              className="al-more-link al-more-link--btn"
+              onClick={() => setOpenCompetencyDetail(true)}
+            >
+              상세 보기 →
+            </button>
           </div>
           <div className="al-bar-list">
             {competencyBars.map((b,i)=>(
@@ -518,11 +574,9 @@ export default function AiLounge() {
           <div className="al-ai-box al-comp-ai">
             <i className="fa-solid fa-wand-magic-sparkles"/>
             <span>
-              전문 역량과 인성 역량이 다른 영역 대비 두드러진 강점으로 분석되었습니다. 평균 80점 이상을 유지하고 있어
-              해당 영역과 연관된 직무(R&D, 윤리/컴플라이언스, 기술 컨설팅)에서 즉시 활용 가능한 수준입니다.
-              반면 <strong>실무 역량</strong>과 <strong>실행 역량</strong>은 70점 후반에 머물러 있어, 단기 캡스톤·인턴십·해커톤 같은
-              "실제 결과물을 만드는 활동"을 6주 단위로 사이클링하면 단기간 내 평균 5점 이상 향상이 기대됩니다.
-              지금 흐름을 유지하면서 실행 영역만 보강하면 종합 평균 80점대 진입이 충분히 가능합니다.
+              {aiComment.segments.map((s, i) =>
+                s.type === 'bold' ? <strong key={i}>{s.value}</strong> : <span key={i}>{s.value}</span>
+              )}
             </span>
           </div>
         </div>
@@ -533,7 +587,7 @@ export default function AiLounge() {
             <div className="card-title" style={{marginBottom:0}}>
               <i className="fa-solid fa-chart-pie"/> 진단검사 결과 요약
             </div>
-            <Link to="/diagnosis/result" className="al-more-link">전체 보기 →</Link>
+            <Link to="/diagnosis/employment" className="al-more-link">전체 보기 →</Link>
           </div>
           <div className="al-test-rings">
             {TEST_SUMMARIES.map(t => (
@@ -541,15 +595,29 @@ export default function AiLounge() {
                 key={t.id}
                 className="al-test-ring"
                 onClick={() => setOpenTestId(t.id)}
+                onMouseEnter={() => setPreviewTestId(t.id)}
+                onMouseLeave={() => setPreviewTestId(prev => (prev === t.id ? null : prev))}
+                onFocus={() => setPreviewTestId(t.id)}
+                onBlur={() => setPreviewTestId(prev => (prev === t.id ? null : prev))}
                 aria-label={`${t.label} 상세 보기`}
               >
                 <MiniRing value={t.score} color={scoreBandColor(t.score)} />
                 <span className="al-test-name">{t.label}</span>
+                {previewTestId === t.id && (
+                  <span className="al-test-preview" role="tooltip">
+                    <span className="al-test-preview-head">
+                      <span className="al-test-preview-name">{t.label}</span>
+                      <strong style={{ color: scoreBandColor(t.score) }}>{t.score}점</strong>
+                    </span>
+                    <MiniRadarPreview axes={t.axes} color={t.color} />
+                    <span className="al-test-preview-foot">{t.axes.length}개 영역 결과 미리보기</span>
+                  </span>
+                )}
               </button>
             ))}
           </div>
           <p className="al-test-hint">
-            <i className="fa-solid fa-hand-pointer"/> 클릭하면 세부 결과를 확인할 수 있습니다
+            <i className="fa-solid fa-hand-pointer"/> 마우스를 올리면 결과 미리보기, 클릭하면 세부 결과를 확인할 수 있습니다
           </p>
         </div>
 
@@ -560,11 +628,11 @@ export default function AiLounge() {
             <Link to="/mypage/counsel" className="al-more-link">전체 보기 →</Link>
           </div>
           <div className="al-counsel-list">
-            {counselPairs.slice(0, 3).map((p, i) => (
+            {COUNSEL_DONE_RECORDS.slice(0, 3).map((p, i) => (
               <div key={i} className="al-counsel-pair">
                 <div className="al-counsel-pair-head">
                   <span className="al-counsel-type" style={{ color: p.typeColor }}>{p.type}</span>
-                  <span className="al-counsel-date">{p.date}</span>
+                  <span className="al-counsel-date">{counselDateLabel(p)}</span>
                 </div>
                 <div className="al-counsel-msg al-counsel-msg-q">
                   <span className="al-counsel-msg-lbl">질문</span>
@@ -644,7 +712,7 @@ export default function AiLounge() {
               최근 14일 학습 데이터 분석 결과, <strong>필수단어(88%)</strong>와 <strong>핵심단어(70%)</strong>는
               비교적 안정적이지만, <strong>고득점 단어(42%)</strong>와 <strong>난해 단어(30%)</strong>에서
               오답률이 급격히 올라갑니다. 현재 추세라면 <strong>예상 점수 720~760점대</strong>에 머무를
-              가능성이 높습니다. <strong>TOEIC 800점 이상</strong>을 목표로 하신다면, 1) 매일 미션에
+              가능성이 높습니다. <strong>TOEIC 800점 이상</strong>을 목표로 하신다면, 1) 매일 퀘스트에
               <em>고득점 단어 10개 + 난해 단어 5개</em>를 우선 배치하고, 2) 동의어/반의어 짝(synonym pair)
               학습을 병행해 PART 5의 어휘 문제에서 시간을 단축하며, 3) 주 2회 LC/RC 실전 모의고사로
               체득 여부를 확인하시면 6주 내 800점대 진입이 충분히 가능할 것으로 예측됩니다.
@@ -663,7 +731,7 @@ export default function AiLounge() {
           <Link to="/roadmap/ai" className="al-more-link">전체 로드맵 →</Link>
         </div>
         <p className="al-roadmap-intro">
-          진단 점수 · 역량 분석 · TOEIC 학습 데이터 · 상담 기록을 모두 종합해서, 김채원님이 <strong>지금 무엇부터,
+          진단 점수 · 역량 분석 · TOEIC 학습 데이터 · 상담 기록을 모두 종합해서, {student.name}님이 <strong>지금 무엇부터,
           어떤 순서로 진행하면 가장 효율적인지</strong> 3단계 로드맵으로 정리했어요.
         </p>
 
@@ -807,6 +875,97 @@ export default function AiLounge() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* ── 6대 역량 상세 모달 (스코어 계산식 + 기여도 분해) ──────── */}
+      <Modal
+        open={openCompetencyDetail}
+        onClose={() => setOpenCompetencyDetail(false)}
+        title="AI 역량별 상세 분석"
+        size="lg"
+      >
+        <div className="al-cd-modal">
+          {/* 종합 점수 헤더 */}
+          <div className="al-cd-overall">
+            <div className="al-cd-overall-left">
+              <div className="al-cd-overall-label">종합 역량 점수</div>
+              <div className="al-cd-overall-score">
+                {scoreResult.overall}<span>/100</span>
+              </div>
+              <div className="al-cd-overall-sub">
+                "취업 가능성"을 6대 역량의 가중평균으로 환산한 값입니다.
+              </div>
+            </div>
+            <div className="al-cd-overall-right">
+              <div className="al-cd-formula-title">종합 공식</div>
+              <code className="al-cd-formula">{OVERALL_FORMULA_TEXT}</code>
+              <div className="al-cd-weight-grid">
+                {scoreResult.competencies.map(c => (
+                  <div key={c.key} className="al-cd-weight-cell">
+                    <span className="al-cd-weight-label">{c.key}</span>
+                    <span className="al-cd-weight-val">×{OVERALL_WEIGHTS[c.key]}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* 6대 역량별 상세 */}
+          <div className="al-cd-list">
+            {scoreResult.competencies.map(c => (
+              <details key={c.key} className="al-cd-row" open={c.key === '진로'}>
+                <summary className="al-cd-row-head">
+                  <span className="al-cd-row-name">{c.label}</span>
+                  <span className="al-cd-row-track">
+                    <span
+                      className="al-cd-row-fill"
+                      style={{ width: `${c.scoreRounded}%` }}
+                    />
+                  </span>
+                  <span className="al-cd-row-score">{c.scoreRounded}</span>
+                  <i className="fa-solid fa-chevron-down al-cd-row-chev" />
+                </summary>
+                <div className="al-cd-row-body">
+                  <div className="al-cd-row-formula">
+                    가중평균: ( 기여 점수 합계 ÷ {c.weightSum.toFixed(2)} )
+                  </div>
+                  <table className="al-cd-table">
+                    <thead>
+                      <tr>
+                        <th>입력 데이터</th>
+                        <th>내 값</th>
+                        <th>정규화</th>
+                        <th>가중치</th>
+                        <th>기여 점수</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {c.contributions.map(co => (
+                        <tr key={co.source}>
+                          <td>{co.sourceLabel}</td>
+                          <td>{co.rawDisplay}</td>
+                          <td>{co.normalizedValue.toFixed(1)}</td>
+                          <td>×{co.weight.toFixed(2)}</td>
+                          <td className="al-cd-table-num">{co.weightedScore.toFixed(2)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            ))}
+          </div>
+
+          {/* 안내 */}
+          <div className="al-cd-note">
+            <i className="fa-solid fa-circle-info" />
+            <span>
+              점수는 9개 데이터(학년·자격증·어학·비교과·상담·KVCT·프로젝트·공모전·XP)를
+              정규화한 뒤, 각 역량별로 정해진 가중치로 가중평균해 계산합니다. XP는
+              <strong> Lv.40 = 100점</strong>(4학년 + 모든 퀘스트 완료 시 만점)으로 환산됩니다.
+            </span>
+          </div>
+        </div>
       </Modal>
 
     </div>

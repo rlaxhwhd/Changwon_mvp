@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Modal from '../../components/Modal'
 import './SkillTree.css'
 
@@ -304,6 +304,34 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
   const [addedJobs, setAddedJobs] = useState<JobOption[]>([])
   const [certPickerOpen, setCertPickerOpen] = useState(false)
   const [addedCerts, setAddedCerts] = useState<SkillItem[]>([])
+  const [analyzing, setAnalyzing] = useState(false)
+  const [progress, setProgress] = useState(0)
+
+  useEffect(() => {
+    if (!analyzing) return
+    const start = performance.now()
+    const DURATION = 2800
+    let rafId = 0
+
+    const tick = (now: number) => {
+      const elapsed = now - start
+      const pct = Math.min(100, Math.round((elapsed / DURATION) * 100))
+      setProgress(pct)
+      if (elapsed < DURATION) {
+        rafId = requestAnimationFrame(tick)
+      } else {
+        window.setTimeout(() => setAnalyzing(false), 700)
+      }
+    }
+    rafId = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(rafId)
+  }, [analyzing])
+
+  const startAnalyze = () => {
+    if (analyzing) return
+    setProgress(0)
+    setAnalyzing(true)
+  }
 
   const availableJobs = JOB_OPTIONS.filter(job => !addedJobs.some(a => a.id === job.id))
   const availableCerts = CERT_OPTIONS.filter(
@@ -516,6 +544,7 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
         </div>
 
         {/* ── Neon Flow: 4 역량 카드 → 직무 방향 카드 ── */}
+        <div className="st-flow-wrap">
         <svg
           className="st-flow"
           viewBox="0 0 1000 260"
@@ -531,6 +560,15 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
               <stop offset="0%" stopColor="#22d3ee" />
               <stop offset="50%" stopColor="#2563eb" />
               <stop offset="100%" stopColor="#a855f7" />
+            </linearGradient>
+            <linearGradient
+              id="st-beam"
+              gradientUnits="userSpaceOnUse"
+              x1="500" y1="0" x2="500" y2="260"
+            >
+              <stop offset="0%" stopColor="#22d3ee" stopOpacity="0" />
+              <stop offset="50%" stopColor="#bae6fd" stopOpacity="1" />
+              <stop offset="100%" stopColor="#a855f7" stopOpacity="0" />
             </linearGradient>
             <filter
               id="st-glow"
@@ -548,7 +586,7 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
             </filter>
           </defs>
 
-          {/* Four competency paths converge directly above the job cards. */}
+          {/* 4 path trails (faint base lines) */}
           <path
             className="st-flow-path"
             d="M 125 0 C 125 82, 430 112, 500 210"
@@ -566,7 +604,42 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
             d="M 875 0 C 875 82, 570 112, 500 210"
           />
 
+          {/* Animated beams traveling along each path */}
+          <path
+            className="st-flow-beam st-flow-beam-1"
+            pathLength="100"
+            d="M 125 0 C 125 82, 430 112, 500 210"
+          />
+          <path
+            className="st-flow-beam st-flow-beam-2"
+            pathLength="100"
+            d="M 375 0 C 375 82, 470 122, 500 210"
+          />
+          <path
+            className="st-flow-beam st-flow-beam-3"
+            pathLength="100"
+            d="M 625 0 C 625 82, 530 122, 500 210"
+          />
+          <path
+            className="st-flow-beam st-flow-beam-4"
+            pathLength="100"
+            d="M 875 0 C 875 82, 570 112, 500 210"
+          />
+
         </svg>
+          <button
+            type="button"
+            className="st-analyze-btn"
+            onClick={startAnalyze}
+            disabled={analyzing}
+            aria-label="AI 직무적합도 분석하기"
+          >
+            <span className="st-analyze-btn-icon">
+              <i className="fa-solid fa-wand-magic-sparkles" />
+            </span>
+            <span className="st-analyze-btn-label">분석하기</span>
+          </button>
+        </div>
 
         {/* ── 직무 방향 ── */}
         <div className="st-dir-section">
@@ -743,6 +816,37 @@ export default function SkillTree({ data = MOCK_DATA }: Props) {
           )}
         </div>
       </Modal>
+
+      {/* ── AI 직무적합도 분석 로딩 오버레이 ── */}
+      {analyzing && (
+        <div className="st-analyze-overlay" role="dialog" aria-live="polite" aria-busy={progress < 100}>
+          <div className="st-analyze-card">
+            {progress < 100 ? (
+              <div className="st-analyze-spinner" />
+            ) : (
+              <div className="st-analyze-check">
+                <i className="fa-solid fa-check" />
+              </div>
+            )}
+            <h3 className="st-analyze-title">
+              {progress < 100 ? 'AI가 직무적합도를 분석중입니다' : '분석이 완료되었습니다'}
+            </h3>
+            <p className="st-analyze-sub">
+              {progress < 100
+                ? '진단 결과 · 수강 과목 · 자격증 데이터를 종합 분석합니다'
+                : '아래 직무 방향 카드에서 결과를 확인해보세요'}
+            </p>
+
+            <div className="st-analyze-bar">
+              <div
+                className="st-analyze-bar-fill"
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+            <div className="st-analyze-percent">{progress}%</div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

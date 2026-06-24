@@ -4,6 +4,55 @@
   min-height: calc(100vh - var(--gnb-height));
 }
 
+/* 채용공고 강조 배지 */
+.mn-job-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 900;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+.mn-job-badge--urgent { background: #FEE2E2; color: #DC2626; }
+.mn-job-badge--hot { background: #FFEDD5; color: #EA580C; }
+
+/* 학과 전체 순위 모달 */
+.mn-rank-modal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mn-rank-modal-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+.mn-rank-modal-item.me {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+.mn-rank-modal-item .mn-rank-name { font-weight: 800; color: var(--color-navy); }
+.mn-rank-modal-item .mn-rank-xp { font-weight: 800; color: var(--color-text-sub); font-size: 14px; }
+.mn-rank-pos.me { background: var(--color-primary); color: #fff; }
+.mn-rank-modal-foot {
+  margin-top: 14px;
+  text-align: center;
+  color: var(--color-text-sub);
+  font-size: 14px;
+  font-weight: 700;
+}
+.mn-rank-modal-foot strong { color: var(--color-primary); }
+
 /* ════════════════════════════════════════════
    HERO
 ════════════════════════════════════════════ */
@@ -46,7 +95,7 @@
 /* Stat cards row */
 .mn-stat-cards {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 14px;
   margin-left: 36px;
 }
@@ -291,24 +340,31 @@
 
 /* Hero image */
 .mn-hero-img {
+  /* 3:1 와이드 배너 → 히어로 높이에 맞춰 우측 정렬(잘림 없음) */
   position: absolute;
-  right: 0;
-  top: 120px;
-  bottom: 0;
-  width: 38%;
+  inset: 0;
+  width: 100%;
   display: flex;
-  align-items: center;
   justify-content: flex-end;
+  align-items: stretch;
   pointer-events: none;
   z-index: 1;
 }
 
 .mn-hero-img img {
-  width: 100%;
-  height: auto;
+  flex: 0 0 auto;
+  /* 세로를 기준으로 맞추고 가로는 3:1 비율 그대로 자동 → 위아래 잘리지 않음 */
+  height: 100%;
+  width: auto;
+  max-width: 100%;
   object-fit: contain;
-  mask-image: linear-gradient(to left, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
-  -webkit-mask-image: linear-gradient(to left, rgba(255,255,255,1) 50%, rgba(255,255,255,0) 100%);
+  object-position: right center;
+  /* 우측 기준으로 살짝 확대 + 좌측으로 약간 이동 */
+  transform: translateX(-36px) scale(1.1);
+  transform-origin: right center;
+  /* 왼쪽(텍스트·카드 영역)으로 갈수록 투명 → surface 배경이 비쳐 가독성 유지 */
+  mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 40%);
+  -webkit-mask-image: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 40%);
 }
 
 /* ════════════════════════════════════════════
@@ -319,7 +375,7 @@
   grid-template-columns: repeat(4, 1fr);
   gap: 20px;
   padding: 28px 60px;
-  background: var(--color-surface);
+  background: var(--color-bg);
   border-top: 1px solid var(--color-border);
 }
 
@@ -384,7 +440,7 @@
 
 .mn-radar-svg {
   width: 100%;
-  max-width: 260px;
+  max-width: 300px;
 }
 
 /* Ranking */
@@ -479,63 +535,101 @@
   color: var(--color-primary);
 }
 
-/* Counsel */
-.mn-counsel-wrap {
+/* Attendance — 이번 주 출석 체크 */
+.mn-att-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   flex: 1;
-  padding: 8px 0;
+  padding: 4px 0 12px;
 }
 
-.mn-counsel-icon {
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--color-surface);
+.mn-att-streak {
   display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.mn-att-streak-num {
+  font-size: 44px;
+  font-weight: 900;
+  color: var(--color-primary);
+  line-height: 1;
+  letter-spacing: -1.5px;
+}
+
+.mn-att-streak-unit {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.mn-att-best {
+  font-size: 14px;
+  color: var(--color-text-sub);
+  margin-bottom: 6px;
+}
+
+.mn-att-best strong {
+  color: var(--color-navy);
+  font-weight: 800;
+  margin-left: 2px;
+}
+
+.mn-att-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.mn-att-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 2px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.mn-att-day.checked {
+  background: var(--color-primary-bg);
+  border-color: #c7d4ff;
+}
+
+.mn-att-day-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+}
+
+.mn-att-day.checked .mn-att-day-label {
+  color: var(--color-primary);
+}
+
+.mn-att-day-mark {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 25px;
-  color: var(--color-primary);
-  margin-bottom: 4px;
-}
-
-.mn-counsel-label {
-  font-size: 16px;
+  font-size: 12px;
+  background: #fff;
   color: var(--color-text-muted);
+  border: 1px solid var(--color-border);
 }
 
-.mn-counsel-num {
-  font-size: 39px;
-  font-weight: 900;
-  color: var(--color-navy);
-  line-height: 1.1;
-}
-
-.mn-counsel-num span {
-  font-size: 20px;
-  font-weight: 600;
-  color: var(--color-text-sub);
-}
-
-.mn-counsel-divider {
-  width: 100%;
-  height: 1px;
-  background: var(--color-border);
-  margin: 8px 0;
-}
-
-.mn-counsel-date-label {
-  font-size: 16px;
-  color: var(--color-text-muted);
-}
-
-.mn-counsel-date {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-navy);
+.mn-att-day.checked .mn-att-day-mark {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: var(--color-primary);
+  box-shadow: 0 4px 10px rgba(46, 91, 255, 0.25);
 }
 
 /* Shared more button */
@@ -989,7 +1083,7 @@
 ════════════════════════════════════════════ */
 @media (max-width: 1200px) {
   .mn-stat-cards {
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
   }
 
   .mn-hero-img { width: 30%; }
@@ -1008,8 +1102,8 @@
   .mn-stat-cards { grid-template-columns: 1fr 1fr; }
   .mn-body { grid-template-columns: 1fr; padding: 20px 16px; }
   .mn-hero { padding: 28px 16px 32px; flex-direction: column; }
-  .mn-hero-img { position: static; width: 100%; height: 180px; margin-top: 16px; }
-  .mn-hero-img img { object-position: center; }
+  .mn-hero-img { position: static; width: 100%; height: 200px; margin-top: 16px; }
+  .mn-hero-img img { object-position: bottom center; }
   .mn-ai-section { padding: 20px 16px 28px; }
   .mn-recommend-grid { grid-template-columns: 1fr; gap: 14px; }
   .mn-greeting,

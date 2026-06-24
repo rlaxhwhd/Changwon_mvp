@@ -203,13 +203,22 @@
 }
 
 .gml-record.correct {
-  border-color: #bbf7d0;
-  background: #f7fef9;
+  border-color: #4ade80;
+  background: #e9fbf0;
 }
 
 .gml-record.wrong {
-  border-color: #fecaca;
-  background: #fffafa;
+  border-color: #f87171;
+  background: #fdeaea;
+}
+
+/* 정답/오답 라벨을 상태색으로 강조 */
+.gml-record.correct strong {
+  color: var(--color-success);
+}
+
+.gml-record.wrong strong {
+  color: var(--color-danger);
 }
 
 .gml-record div {

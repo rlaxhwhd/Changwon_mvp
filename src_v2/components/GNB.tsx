@@ -1,9 +1,11 @@
 import { Link, useLocation } from 'react-router-dom'
 import { NAV_SECTIONS, getSectionForPath, getActiveChildPath } from './navConfig'
+import { getActiveStudent } from '../data/students'
 
 export default function GNB() {
   const { pathname } = useLocation()
   const currentSection = getSectionForPath(pathname)
+  const studentName = getActiveStudent().name
 
   return (
     <header className="gnb">
@@ -50,7 +52,7 @@ export default function GNB() {
           <span className="gnb-badge">3</span>
         </button>
         <Link to="/mypage/portfolio" className="gnb-avatar" title="마이페이지" aria-label="마이페이지">
-          <img className="gnb-avatar-photo" src="/student-profile.png" alt="김채원 프로필" />
+          <img className="gnb-avatar-photo" src="/student-profile.png" alt={`${studentName} 프로필`} />
         </Link>
         <i className="fa-solid fa-chevron-down gnb-avatar-caret" aria-hidden="true" />
       </div>

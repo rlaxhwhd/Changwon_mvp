@@ -124,11 +124,6 @@
   margin-bottom: 6px;
 }
 
-.ar-hero-panel p {
-  color: var(--color-text-sub);
-  font-size: 16px;
-}
-
 .ar-ring {
   position: relative;
   width: 120px;
@@ -158,23 +153,34 @@
 .ar-ring-text {
   position: absolute;
   inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
 }
 
 .ar-ring-text strong {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: baseline;
   color: var(--color-navy);
   font-size: 31px;
   line-height: 1;
 }
 
+.ar-ring-text strong small {
+  font-size: 0.68em;
+  line-height: 1;
+}
+
 .ar-ring-text span {
+  position: absolute;
+  left: 50%;
+  top: calc(50% + 23px);
+  transform: translateX(-50%);
   color: var(--color-text-muted);
-  font-size: 16px;
+  font-size: 12px;
   font-weight: 700;
-  margin-top: 4px;
+  white-space: nowrap;
 }
 
 .ar-body {
@@ -368,6 +374,245 @@
 
 .ar-task.done i {
   color: var(--color-primary);
+}
+
+/* ─── PHASE 3 단·중·장기 카드 ────────────────────────────────────────── */
+
+.ar-term-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ar-term-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 18px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+.ar-term-card:focus-visible {
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.25);
+}
+
+.ar-term-head {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.ar-term-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  background: #F1F3F8;
+  color: var(--color-text-sub);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  white-space: nowrap;
+}
+
+.ar-term-period {
+  font-size: 14px;
+  color: var(--color-text-sub);
+  font-weight: 600;
+  line-height: 1.3;
+  min-width: 0;
+}
+
+.ar-term-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 13px;
+  color: var(--color-text-sub);
+  white-space: nowrap;
+}
+
+.ar-term-status.done {
+  color: var(--color-primary);
+}
+
+.ar-term-chev {
+  color: var(--color-text-sub);
+  font-size: 12px;
+}
+
+.ar-term-headline {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--color-text-sub);
+  line-height: 1.45;
+  padding-top: 2px;
+}
+
+.ar-term-summary {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  padding-left: 2px;
+}
+
+.ar-term-rationale {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 0 4px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary-bg);
+  color: var(--color-text-sub);
+  font-size: 17px;
+  line-height: 1.55;
+}
+
+.ar-term-rationale i {
+  color: var(--color-primary);
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.ar-term-items {
+  list-style: none;
+  padding: 4px 0 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.ar-term-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.ar-term-item-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ar-term-item-title {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--color-text-sub);
+  letter-spacing: -0.01em;
+}
+
+.ar-term-item-why {
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--color-text-sub);
+  margin: 0;
+}
+
+.ar-pri-chip,
+.ar-imp-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.ar-pri-P0 { background: #FEE2E2; color: #B91C1C; }
+.ar-pri-P1 { background: #FEF3C7; color: #B45309; }
+.ar-pri-P2 { background: #E0F2FE; color: #075985; }
+
+.ar-imp-필수 { background: #FEE2E2; color: #B91C1C; }
+.ar-imp-중요 { background: #FEF3C7; color: #B45309; }
+.ar-imp-권장 { background: #E0F2FE; color: #075985; }
+
+/* ─── PHASE 4 단기/중기/장기 그룹 ────────────────────────────────── */
+
+.ar-link-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ar-link-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+
+.ar-link-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ar-link-group-count {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.ar-link-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ar-link-item {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+.ar-link-item > i {
+  color: var(--color-text-muted);
+  margin-top: 6px;
+  font-size: 16px;
+}
+
+.ar-link-item.done > i {
+  color: var(--color-primary);
+}
+
+.ar-link-item strong {
+  display: block;
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--color-text-sub);
+  letter-spacing: -0.01em;
+  margin-bottom: 2px;
+}
+
+.ar-link-item p {
+  margin: 0;
+  font-size: 17px;
+  line-height: 1.55;
+  color: var(--color-text-sub);
 }
 
 .ar-recommend,

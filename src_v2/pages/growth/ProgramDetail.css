@@ -343,6 +343,22 @@
   color: var(--color-danger);
 }
 
+.pd-wish-saved {
+  margin-top: 8px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  background: #FEF2F2;
+  color: var(--color-danger);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.pd-wish-saved i { margin-top: 2px; }
+.pd-wish-saved strong { color: var(--color-danger); }
+
 /* Schedule */
 .pd-schedule-list {
   list-style: none;

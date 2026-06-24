@@ -346,40 +346,64 @@
 }
 
 .pf-skill-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 10px;
 }
 
 .pf-skill-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px 8px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  padding: 12px 14px;
   background: #f5f9ff;
   border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  font-size: 16px;
+  border-radius: var(--radius-md);
+}
+
+.pf-skill-chip-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .pf-skill-name {
+  flex: 1;
   font-weight: 900;
+  font-size: 16px;
   color: var(--color-navy);
 }
 
-.pf-skill-level {
-  display: inline-flex;
-  gap: 3px;
+/* 숙련도 라벨 배지 (단계별 색) */
+.pf-skill-badge {
+  padding: 2px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
 }
+.pf-skill-badge.lv1 { background: #FEE2E2; color: #DC2626; }
+.pf-skill-badge.lv2 { background: #FEF3C7; color: #D97706; }
+.pf-skill-badge.lv3 { background: #DBEAFE; color: #2563EB; }
+.pf-skill-badge.lv4 { background: #DCFCE7; color: #16A34A; }
+.pf-skill-badge.lv5 { background: #EDE9FE; color: #7C3AED; }
 
-.pf-skill-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: #d4def1;
+/* 5단계 세그먼트 바 */
+.pf-skill-bar {
+  display: flex;
+  gap: 4px;
 }
-
-.pf-skill-dot.on { background: var(--color-primary); }
+.pf-skill-seg {
+  flex: 1;
+  height: 7px;
+  border-radius: 4px;
+  background: #e1e8f5;
+}
+.pf-skill-seg.on.lv1 { background: #DC2626; }
+.pf-skill-seg.on.lv2 { background: #D97706; }
+.pf-skill-seg.on.lv3 { background: #2563EB; }
+.pf-skill-seg.on.lv4 { background: #16A34A; }
+.pf-skill-seg.on.lv5 { background: #7C3AED; }
 
 .pf-skill-remove {
   width: 20px;

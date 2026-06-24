@@ -1,4 +1,5 @@
 import Modal from './Modal'
+import { getActiveStudent } from '../data/students'
 
 interface CRAReportProps {
   open: boolean
@@ -21,6 +22,7 @@ function ScoreBadge({ level }: { level: string }) {
 }
 
 export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
+  const student = getActiveStudent()
   return (
     <Modal open={open} onClose={onClose} title="CRA 진로준비도 진단검사 결과표" size="lg">
       <div>
@@ -28,10 +30,10 @@ export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
         <div style={{ background: 'var(--color-surface)', borderRadius: 'var(--radius-md)', padding: 20, marginBottom: 24, display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, fontSize: 13 }}>
           <div><span style={{ color: 'var(--color-text-sub)' }}>검사일시</span> <strong>{examDate}</strong></div>
           <div><span style={{ color: 'var(--color-text-sub)' }}>소속대학</span> <strong>국립창원대학교</strong></div>
-          <div><span style={{ color: 'var(--color-text-sub)' }}>학과</span> <strong>컴퓨터공학과</strong></div>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>학과</span> <strong>{student.major}</strong></div>
           <div><span style={{ color: 'var(--color-text-sub)' }}>학번</span> <strong>20250001</strong></div>
-          <div><span style={{ color: 'var(--color-text-sub)' }}>학년</span> <strong>2학년</strong></div>
-          <div><span style={{ color: 'var(--color-text-sub)' }}>성명</span> <strong>김채원</strong></div>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>학년</span> <strong>{student.grade}학년</strong></div>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>성명</span> <strong>{student.name}</strong></div>
         </div>
 
         {/* ─── 1. 종합 결과 ─── */}

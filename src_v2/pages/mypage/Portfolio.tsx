@@ -1,5 +1,6 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import Modal from '../../components/Modal'
+import { getActiveStudent } from '../../data/students'
 import './Portfolio.css'
 
 type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'resume'
@@ -86,18 +87,22 @@ interface Resume {
 }
 
 /* ── Mock Data ──────────────────────────────────────────────────── */
-const INITIAL_PROFILE: ProfileData = {
-  name: '김채원',
-  studentId: '20221234',
-  school: '국립창원대학교',
-  dept: '컴퓨터공학과',
-  grade: '3학년',
-  email: 'chae.kim@cwnu.ac.kr',
-  phone: '010-1234-5678',
-  gpa: '3.68 / 4.5',
-  major: 'AI · 데이터',
-  intro:
-    '데이터와 사람이 만나는 지점에 관심이 많은 컴퓨터공학과 3학년입니다. 캡스톤과 비교과를 통해 실제 사용자가 쓰는 제품을 만들어 보는 경험을 쌓고 있어요.',
+// 헤더 신원 정보는 활성 학생 기준으로 채운다(이름/학과/학년/학점 일치).
+function buildInitialProfile(): ProfileData {
+  const s = getActiveStudent()
+  return {
+    name: s.name,
+    studentId: '20250001',
+    school: '국립창원대학교',
+    dept: s.major,
+    grade: `${s.grade}학년`,
+    email: 'student@cwnu.ac.kr',
+    phone: '010-1234-5678',
+    gpa: `${s.gpa} / 4.5`,
+    major: s.major,
+    intro:
+      `${s.major} ${s.grade}학년입니다. 비교과 활동과 프로젝트 경험을 쌓으며 목표 직무에 필요한 역량을 단계적으로 준비하고 있어요.`,
+  }
 }
 
 const INITIAL_SKILLS: Skill[] = [
@@ -212,7 +217,7 @@ const LEVEL_LABELS = ['', '초급', '초중급', '중급', '고급', '전문가'
 /* ── Page ───────────────────────────────────────────────────────── */
 export default function Portfolio() {
   const [tab, setTab] = useState<TabId>('profile')
-  const [profile, setProfile] = useState<ProfileData>(INITIAL_PROFILE)
+  const [profile, setProfile] = useState<ProfileData>(() => buildInitialProfile())
   const [skills, setSkills] = useState<Skill[]>(INITIAL_SKILLS)
   const [certs] = useState<Cert[]>(INITIAL_CERTS)
   const [langs] = useState<Language[]>(INITIAL_LANGS)
@@ -429,7 +434,7 @@ function ProfileSection({ profile, onChange }: { profile: ProfileData; onChange:
     <section className="pf-section">
       <div className="pf-profile-card">
         <div className="pf-profile-avatar">
-          <img className="pf-profile-photo" src="/student-profile.png" alt="김채원 프로필" />
+          <img className="pf-profile-photo" src="/student-profile.png" alt={`${profile.name} 프로필`} />
         </div>
         <div className="pf-profile-info">
           <h2>{profile.name} <small>· {profile.school}</small></h2>
@@ -539,20 +544,23 @@ function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: Skil
             <div className="pf-skill-list">
               {byCategory[cat].map(s => (
                 <div key={s.id} className="pf-skill-chip">
-                  <span className="pf-skill-name">{s.name}</span>
-                  <span className="pf-skill-level">
+                  <div className="pf-skill-chip-head">
+                    <span className="pf-skill-name">{s.name}</span>
+                    <span className={`pf-skill-badge lv${s.level}`}>{LEVEL_LABELS[s.level]}</span>
+                    <button
+                      type="button"
+                      className="pf-skill-remove"
+                      onClick={() => onRemoveSkill(s.id)}
+                      aria-label="삭제"
+                    >
+                      <i className="fa-solid fa-xmark" />
+                    </button>
+                  </div>
+                  <div className="pf-skill-bar" title={`숙련도 ${s.level}/5 · ${LEVEL_LABELS[s.level]}`}>
                     {[1, 2, 3, 4, 5].map(lv => (
-                      <span key={lv} className={`pf-skill-dot${lv <= s.level ? ' on' : ''}`} />
+                      <span key={lv} className={`pf-skill-seg${lv <= s.level ? ` on lv${s.level}` : ''}`} />
                     ))}
-                  </span>
-                  <button
-                    type="button"
-                    className="pf-skill-remove"
-                    onClick={() => onRemoveSkill(s.id)}
-                    aria-label="삭제"
-                  >
-                    <i className="fa-solid fa-xmark" />
-                  </button>
+                  </div>
                 </div>
               ))}
             </div>

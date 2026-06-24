@@ -67,11 +67,10 @@
 }
 
 .aj-stat-label {
-  font-size: 16px;
-  color: var(--color-text-muted);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
+  font-size: 17px;
+  color: var(--color-text-sub);
+  font-weight: 700;
+  letter-spacing: -0.1px;
   margin-bottom: 6px;
 }
 

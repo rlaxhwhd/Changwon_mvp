@@ -1,6 +1,6 @@
 .section-sidebar {
-  width: 236px;
-  flex: 0 0 236px;
+  width: 264px;
+  flex: 0 0 264px;
   min-height: calc(100vh - var(--gnb-height));
   position: sticky;
   top: var(--gnb-height);

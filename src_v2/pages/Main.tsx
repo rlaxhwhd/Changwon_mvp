@@ -1,5 +1,12 @@
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Modal from '../components/Modal'
+import { getActiveStudent } from '../data/students'
+import { computeAll, type Competency } from '../lib/scoring'
 import './Main.css'
+
+/** Main 종합 역량 레이더 — 5축 표시 순서 (디자인 유지, 텍스트/수치만 동적화) */
+const MAIN_RADAR_ORDER: Competency[] = ['취업', '직무', '자기관리', '성장', '진로']
 
 /* ── Mock Data ─────────────────────────────────────────────────── */
 const RANKING = [
@@ -10,7 +17,19 @@ const RANKING = [
   { rank: 5, name: '한도윤', xp: 1920 },
 ]
 
-const MY_RANK = { rank: 12, total: 45, name: '김채원', xp: 1850 }
+const MY_RANK = { rank: 12, total: 45, name: getActiveStudent().name, xp: 1850 }
+
+/* 학과 랭킹 전체 보기(모달)용 — TOP5 이후 순위까지 */
+const RANKING_FULL = [
+  ...RANKING,
+  { rank: 6, name: '오지호', xp: 1890 },
+  { rank: 7, name: '윤서아', xp: 1870 },
+  { rank: 8, name: '강민재', xp: 1840 },
+  { rank: 9, name: '임수빈', xp: 1810 },
+  { rank: 10, name: '서준오', xp: 1780 },
+  { rank: 11, name: '조은우', xp: 1760 },
+  { rank: MY_RANK.rank, name: MY_RANK.name, xp: MY_RANK.xp, me: true },
+]
 
 const RECOMMENDED_PROGRAMS = [
   { id: 1, title: '데이터 기초 프로그래밍 교육', category: '취업', dDay: 5, image: '/비교과프로그램1.png' },
@@ -26,12 +45,35 @@ const CAT_COLORS: Record<string, string> = {
   창업: '#EF4444',
 }
 
-const RECOMMENDED_JOBS = [
-  { id: 1, company: '네이버', initial: 'N', color: '#03C75A', role: '서비스기획/PM', match: 92, deadline: '상시채용' },
-  { id: 2, company: '카카오', initial: 'K', color: '#FEE500', textColor: '#1C2442', role: '데이터분석', match: 88, deadline: '05.30 마감' },
-  { id: 3, company: '넥슨', initial: 'NX', color: '#FF5C00', role: '백엔드개발', match: 80, deadline: '06.01 마감' },
-  { id: 4, company: '쿠팡', initial: 'C', color: '#EE2222', role: 'PM/기획', match: 75, deadline: '05.31 마감' },
-]
+/* 밝은 로고 배경이면 글자색을 네이비로 (가독성) */
+function logoTextColor(hex: string): string {
+  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex)
+  if (!m) return '#fff'
+  const n = parseInt(m[1], 16)
+  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+  return brightness > 180 ? '#1C2442' : '#fff'
+}
+
+/* 활성 학생의 추천 공고 4개 + 강조 배지(마감임박·HOT) */
+function buildRecommendedJobs() {
+  const jobs = getActiveStudent().jobs.slice(0, 4)
+  // 마감일이 가장 이른 공고 → 마감임박
+  const soonest = jobs.reduce((min, j) => (j.deadline < min ? j.deadline : min), jobs[0]?.deadline ?? '')
+  return jobs.map(j => ({
+    id: j.id,
+    company: j.company,
+    initial: j.initial,
+    color: j.color,
+    textColor: logoTextColor(j.color),
+    role: j.role,
+    match: j.match,
+    deadline: j.deadline,
+    hot: j.match >= 88,
+    urgent: j.deadline === soonest,
+  }))
+}
+const RECOMMENDED_JOBS = buildRecommendedJobs()
 
 const NOTICES = [
   { label: '2024 하계 현장실습 참여자 모집', date: '05.20' },
@@ -39,19 +81,12 @@ const NOTICES = [
   { label: 'AI 자소서 첨삭 이벤트 안내', date: '05.17' },
 ]
 
-const RADAR_AXES = [
-  { label: '취업 역량', value: 1.00 },
-  { label: '실무 역량', value: 0.30 },
-  { label: '실행 역량', value: 0.68 },
-  { label: '성장 역량', value: 0.75 },
-  { label: '인성 역량', value: 0.88 },
-  { label: '진로 역량', value: 0.65 },
-]
+interface RadarAxisData { label: string; value: number }
 
-/* ── Hexagon Radar Chart ───────────────────────────────────────── */
-function RadarChart() {
+/* ── Polygon Radar Chart (n축 가변, 디자인 유지) ────────────────── */
+function RadarChart({ axes }: { axes: RadarAxisData[] }) {
   const cx = 100, cy = 100, r = 72
-  const n = RADAR_AXES.length
+  const n = axes.length
 
   const pt = (i: number, ratio: number) => {
     const angle = (Math.PI * 2 * i) / n - Math.PI / 2
@@ -62,13 +97,13 @@ function RadarChart() {
   }
 
   const gridLevels = [0.25, 0.5, 0.75, 1.0]
-  const dataPoints = RADAR_AXES.map((ax, i) => pt(i, ax.value))
+  const dataPoints = axes.map((ax, i) => pt(i, ax.value))
   const dataPath = dataPoints.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
-  const outerPoints = RADAR_AXES.map((_, i) => pt(i, 1.0))
+  const outerPoints = axes.map((_, i) => pt(i, 1.0))
   const outerPath = outerPoints.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
 
   return (
-    <svg viewBox="-30 -10 260 220" className="mn-radar-svg">
+    <svg viewBox="-50 -10 300 220" className="mn-radar-svg">
       <defs>
         {/* 홀로그램 메인 그라데이션 */}
         <linearGradient id="holo-main" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -109,7 +144,7 @@ function RadarChart() {
       {/* Grid rings */}
       {gridLevels.map((lv, li) => (
         <polygon key={li}
-          points={RADAR_AXES.map((_, i) => { const p = pt(i, lv); return `${p.x},${p.y}` }).join(' ')}
+          points={axes.map((_, i) => { const p = pt(i, lv); return `${p.x},${p.y}` }).join(' ')}
           fill="none"
           stroke={lv === 1.0 ? '#A5B4FC' : '#C7D2FE'}
           strokeWidth={lv === 1.0 ? 1.2 : 0.8}
@@ -118,7 +153,7 @@ function RadarChart() {
       ))}
 
       {/* Axes */}
-      {RADAR_AXES.map((_, i) => {
+      {axes.map((_, i) => {
         const outer = pt(i, 1.0)
         return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#C7D2FE" strokeWidth="0.8" strokeOpacity="0.6" />
       })}
@@ -143,7 +178,7 @@ function RadarChart() {
       ))}
 
       {/* Labels */}
-      {RADAR_AXES.map((ax, i) => {
+      {axes.map((ax, i) => {
         const { x, y } = pt(i, 1.28)
         const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
         return (
@@ -179,7 +214,7 @@ function Sparkline({ points, color = '#2E5BFF' }: { points: number[]; color?: st
   )
 }
 
-/* ── Mission Donut (오늘의 미션) — 원호 따라 진해지는 그라데이션 ── */
+/* ── Mission Donut (오늘의 퀘스트) — 원호 따라 진해지는 그라데이션 ── */
 function MissionDonut({ value, total }: { value: number; total: number }) {
   const pct = Math.min(value / total, 1)
   const deg = pct * 360
@@ -211,8 +246,9 @@ function MissionDonut({ value, total }: { value: number; total: number }) {
 }
 
 /* ── Growth Chart (역량 성장 그래프) — 우상향 차트 ──────────────── */
-function GrowthChart() {
-  const data = [34, 41, 38, 49, 55, 62, 72]
+function GrowthChart({ currentScore }: { currentScore: number }) {
+  // 마지막 데이터 포인트는 종합 역량 점수 (AiLounge 계산값)와 동일
+  const data = [34, 41, 38, 49, 55, 62, currentScore]
   const w = 180, h = 78, pad = 6
   const min = Math.min(...data), max = Math.max(...data)
   const span = max - min || 1
@@ -261,9 +297,22 @@ function GrowthChart() {
 /* ── Main Page ─────────────────────────────────────────────────── */
 export default function Main() {
   const navigate = useNavigate()
+  const [rankOpen, setRankOpen] = useState(false)
+  const student = getActiveStudent()
 
   const xp = 1250, xpMax = 2000
   const xpPct = (xp / xpMax) * 100
+
+  // ── 5대 역량 점수 — 학생 JSON의 scoreInputs로 동적 계산 ─────
+  const scoreResult = useMemo(() => computeAll(student.scoreInputs), [student.scoreInputs])
+  const compByKey = useMemo(
+    () => Object.fromEntries(scoreResult.competencies.map(c => [c.key, c])),
+    [scoreResult],
+  )
+  const radarAxes: RadarAxisData[] = MAIN_RADAR_ORDER.map(k => ({
+    label: `${k} 역량`,
+    value: compByKey[k].scoreRounded / 100,  // 0~1 (RadarChart는 비율로 그림)
+  }))
 
   return (
     <div className="mn-page">
@@ -272,7 +321,7 @@ export default function Main() {
       <section className="mn-hero">
         <div className="mn-hero-content">
           <div className="mn-greeting">
-            <h1 className="mn-greeting-title">안녕하세요, 김채원님</h1>
+            <h1 className="mn-greeting-title">안녕하세요, {MY_RANK.name}님</h1>
             <p className="mn-greeting-sub">오늘도 성장하는 당신을 응원해요!</p>
           </div>
 
@@ -283,7 +332,7 @@ export default function Main() {
             <div className="mn-stat-card mn-quest-card">
               <p className="mn-sc-label">역량 성장 그래프</p>
               <div className="mb-1 flex items-baseline gap-1">
-                <span className="text-[30px] font-black leading-none text-[var(--color-navy)]">72</span>
+                <span className="text-[30px] font-black leading-none text-[var(--color-navy)]">{scoreResult.overall}</span>
                 <span className="text-[13px] font-bold text-[var(--color-text-sub)]">점</span>
                 <span className="ml-auto flex items-center gap-1 rounded-full bg-[#22C55E]/12 px-2 py-0.5 text-[13px] font-extrabold text-[var(--color-success)]">
                   <i className="fa-solid fa-arrow-trend-up text-[12px]" />
@@ -291,14 +340,14 @@ export default function Main() {
                 </span>
               </div>
               <div className="flex flex-1 items-end">
-                <GrowthChart />
+                <GrowthChart currentScore={scoreResult.overall} />
               </div>
             </div>
 
             {/* Profile card */}
             <div className="mn-stat-card mn-profile-card">
               <div className="mn-avatar-wrap">
-                <img className="mn-avatar-photo" src="/student-profile.png" alt="김채원 프로필" />
+                <img className="mn-avatar-photo" src="/student-profile.png" alt={`${MY_RANK.name} 프로필`} />
               </div>
               <div className="mn-profile-body">
                 <span className="mn-level-badge">Lv. 23</span>
@@ -309,27 +358,14 @@ export default function Main() {
               </div>
             </div>
 
-            {/* 오늘의 미션 — 홀로그램 원형 그래프 */}
+            {/* 오늘의 퀘스트 — 홀로그램 원형 그래프 */}
             <div className="mn-stat-card mn-mission-card">
-              <p className="mn-sc-label">오늘의 미션</p>
+              <p className="mn-sc-label">오늘의 퀘스트</p>
               <div className="flex flex-1 items-center justify-center">
                 <MissionDonut value={1} total={5} />
               </div>
               <button className="mn-sc-btn" onClick={() => navigate('/growth/quest')}>
-                미션 확인하기
-              </button>
-            </div>
-
-            {/* 오늘의 성장미션 */}
-            <div className="mn-stat-card mn-daily-card">
-              <div className="mn-daily-icon">
-                <i className="fa-solid fa-bullseye" />
-              </div>
-              <p className="mn-sc-label" style={{ marginTop: 8 }}>오늘의 성장미션</p>
-              <p className="mn-daily-title">TOEIC 영단어 일일미션</p>
-              <p className="mn-daily-desc">오늘의 영단어 10개를 학습하고 퀴즈를 풀어보세요.</p>
-              <button className="mn-sc-btn mn-sc-btn--arrow" onClick={() => navigate('/growth/mission')}>
-                미션 시작하기 <i className="fa-solid fa-arrow-right" />
+                퀘스트 확인하기
               </button>
             </div>
 
@@ -338,7 +374,7 @@ export default function Main() {
 
         {/* Hero image */}
         <div className="mn-hero-img">
-          <img src="/v2_main.png" alt="AI Career Platform" />
+          <img src="/changwon_mascort3.png" alt="창원대학교 마스코트" />
         </div>
       </section>
 
@@ -352,11 +388,11 @@ export default function Main() {
           </div>
           <div className="mn-radar-wrap">
             <div className="mn-radar-score">
-              <span className="mn-radar-num">72</span>
+              <span className="mn-radar-num">{scoreResult.overall}</span>
               <span className="mn-radar-denom">/100</span>
             </div>
             <p className="mn-radar-sub">상위 28%</p>
-            <RadarChart />
+            <RadarChart axes={radarAxes} />
           </div>
         </div>
 
@@ -379,25 +415,42 @@ export default function Main() {
             <span className="mn-rank-name">{MY_RANK.name} <small>(나)</small></span>
             <span className="mn-rank-my-pos">{MY_RANK.rank} / {MY_RANK.total}위</span>
           </div>
-          <button className="mn-more-btn" onClick={() => navigate('/growth/quest')}>더보기</button>
+          <button className="mn-more-btn" onClick={() => setRankOpen(true)}>학과 전체 순위 보기</button>
         </div>
 
-        {/* 상담 현황 */}
+        {/* 이번 주 출석 체크 */}
         <div className="mn-body-card">
           <div className="mn-body-card-head">
-            <h2 className="mn-body-card-title">상담 현황</h2>
+            <h2 className="mn-body-card-title">이번 주 출석 체크</h2>
           </div>
-          <div className="mn-counsel-wrap">
-            <div className="mn-counsel-icon">
-              <i className="fa-regular fa-user" />
+          <div className="mn-att-wrap">
+            <div className="mn-att-streak">
+              <span className="mn-att-streak-num">7</span>
+              <span className="mn-att-streak-unit">일 연속</span>
             </div>
-            <p className="mn-counsel-label">누적 상담 횟수</p>
-            <p className="mn-counsel-num">3 <span>회</span></p>
-            <div className="mn-counsel-divider" />
-            <p className="mn-counsel-date-label">최근 상담일</p>
-            <p className="mn-counsel-date">2024.05.18</p>
+            <p className="mn-att-best">최고 기록 <strong>12일</strong></p>
+            <div className="mn-att-week">
+              {[
+                { day: '월', checked: true },
+                { day: '화', checked: true },
+                { day: '수', checked: true },
+                { day: '목', checked: true },
+                { day: '금', checked: false },
+                { day: '토', checked: false },
+                { day: '일', checked: false },
+              ].map(d => (
+                <div key={d.day} className={`mn-att-day${d.checked ? ' checked' : ''}`}>
+                  <span className="mn-att-day-label">{d.day}</span>
+                  <span className="mn-att-day-mark">
+                    {d.checked
+                      ? <i className="fa-solid fa-check" />
+                      : <i className="fa-regular fa-circle" />}
+                  </span>
+                </div>
+              ))}
+            </div>
           </div>
-          <button className="mn-more-btn" onClick={() => navigate('/mypage/counsel')}>상담 내역 보기</button>
+          <button className="mn-more-btn" onClick={() => navigate('/growth/mission-log')}>출석 기록 보기</button>
         </div>
 
         {/* 추천 프로그램 + 공지사항 */}
@@ -506,7 +559,11 @@ export default function Main() {
                     {j.initial}
                   </div>
                   <div className="mn-rec-job-info">
-                    <p className="mn-rec-job-company">{j.company}</p>
+                    <p className="mn-rec-job-company">
+                      {j.company}
+                      {j.urgent && <span className="mn-job-badge mn-job-badge--urgent">마감임박</span>}
+                      {j.hot && <span className="mn-job-badge mn-job-badge--hot">HOT</span>}
+                    </p>
                     <p className="mn-rec-job-role">{j.role} · {j.deadline}</p>
                   </div>
                   <div className={`mn-rec-job-match${j.match >= 85 ? ' high' : ''}`}>
@@ -559,6 +616,27 @@ export default function Main() {
           </div>
         </div>
       </footer>
+
+      {/* 학과 전체 순위 모달 (TOP5 이후 순위까지) */}
+      <Modal open={rankOpen} onClose={() => setRankOpen(false)} title="학과 전체 순위" size="sm">
+        <ul className="mn-rank-modal-list">
+          {RANKING_FULL.map(r => (
+            <li
+              key={r.rank}
+              className={`mn-rank-modal-item${'me' in r && r.me ? ' me' : ''}`}
+            >
+              <span className={`mn-rank-pos${r.rank <= 3 ? ' top' : ''}${'me' in r && r.me ? ' me' : ''}`}>{r.rank}</span>
+              <span className="mn-rank-name">
+                {r.name}{'me' in r && r.me && <small> (나)</small>}
+              </span>
+              <span className="mn-rank-xp">{r.xp.toLocaleString()} XP</span>
+            </li>
+          ))}
+        </ul>
+        <p className="mn-rank-modal-foot">
+          전체 {MY_RANK.total}명 중 현재 <strong>{MY_RANK.rank}위</strong>입니다.
+        </p>
+      </Modal>
 
     </div>
   )

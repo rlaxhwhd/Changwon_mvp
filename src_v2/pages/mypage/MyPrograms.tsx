@@ -134,21 +134,11 @@ const PROGRAMS: AppliedProgram[] = [
   },
 ]
 
-const CAT_COLORS: Record<AppliedProgram['category'], string> = {
-  취업: '#0EA5E9',
-  AI: '#8B5CF6',
-  창업: '#F59E0B',
-  전공: '#0D8B7C',
-  멘토링: '#10B981',
-  어학: '#EC4899',
-  글로벌: '#2E5BFF',
-}
-
 const STATUS_COLORS: Record<Status, string> = {
   신청완료: '#2E5BFF',
   진행중: '#F59E0B',
-  수료: '#10B981',
-  취소: '#94A3B8',
+  수료: '#22C55E',
+  취소: '#99A1A9',
 }
 
 const FILTERS = ['전체', '진행중', '신청완료', '수료', '취소'] as const
@@ -238,7 +228,7 @@ export default function MyPrograms() {
           visible.map(p => (
             <article key={p.id} className="mp-card" onClick={() => setDetail(p)}>
               <div className="mp-card-top">
-                <span className="mp-cat-badge" style={{ background: CAT_COLORS[p.category] + '18', color: CAT_COLORS[p.category] }}>
+                <span className="mp-cat-badge">
                   {p.category}
                 </span>
                 <span className="mp-status" style={{ background: STATUS_COLORS[p.status] + '1a', color: STATUS_COLORS[p.status] }}>
@@ -278,7 +268,7 @@ export default function MyPrograms() {
         {detail && (
           <div className="mp-detail">
             <div className="mp-detail-tags">
-              <span className="mp-cat-badge" style={{ background: CAT_COLORS[detail.category] + '18', color: CAT_COLORS[detail.category] }}>
+              <span className="mp-cat-badge">
                 {detail.category}
               </span>
               <span className="mp-status" style={{ background: STATUS_COLORS[detail.status] + '1a', color: STATUS_COLORS[detail.status] }}>

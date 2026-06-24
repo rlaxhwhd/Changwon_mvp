@@ -221,28 +221,50 @@
   flex: 1;
 }
 
+/* 강점 / 보완 / 추천 — 색·아이콘으로 한눈에 구분 */
+.al-rcol {
+  padding: 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: #fff;
+}
+.al-rcol--strength { border-color: #BBF7D0; }
+.al-rcol--weakness { border-color: #FED7AA; }
+.al-rcol--reco     { border-color: #C7D2FE; }
+
 .al-rcol-title {
   font-size: 16px;
-  font-weight: 600;
-  color: var(--color-text);
-  margin-bottom: 8px;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
   white-space: nowrap;
 }
-.al-rcol-title i { color: var(--color-warning); font-size: 15px; }
+.al-rcol-title i { font-size: 15px; }
+.al-rcol--strength .al-rcol-title,
+.al-rcol--strength .al-rcol-title i { color: #16A34A; }
+.al-rcol--weakness .al-rcol-title,
+.al-rcol--weakness .al-rcol-title i { color: #EA580C; }
+.al-rcol--reco .al-rcol-title,
+.al-rcol--reco .al-rcol-title i { color: var(--color-primary); }
 
 .al-bullet {
   display: flex;
   align-items: flex-start;
-  gap: 5px;
+  gap: 6px;
   font-size: 16px;
   color: var(--color-text-sub);
-  margin-bottom: 5px;
+  margin-bottom: 6px;
   line-height: 1.5;
 }
-.al-bullet i { color: var(--color-primary); font-size: 14px; margin-top: 3px; flex-shrink: 0; }
+.al-bullet i { font-size: 14px; margin-top: 3px; flex-shrink: 0; }
+.al-rcol--strength .al-bullet i { color: #16A34A; }
+.al-rcol--weakness .al-bullet i { color: #EA580C; }
+.al-rcol--reco .al-bullet i { color: var(--color-primary); }
 
 /* Radar Card */
 .al-radar-card { display: flex; flex-direction: column; }
@@ -681,11 +703,72 @@
   font-family: inherit;
 }
 
+.al-test-ring {
+  position: relative;
+}
+
 .al-test-ring:hover {
   border-color: #b9c9f5;
   background: var(--color-surface);
   box-shadow: 0 8px 20px rgba(46, 91, 255, 0.08);
   transform: translateY(-2px);
+  z-index: 5;
+}
+
+/* 검사별 결과 미리보기 팝오버 (hover) */
+.al-test-preview {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  width: 184px;
+  padding: 10px 10px 8px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 14px 34px rgba(28, 36, 66, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+
+.al-test-preview::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 7px solid transparent;
+  border-top-color: #fff;
+  filter: drop-shadow(0 1px 0 var(--color-border));
+}
+
+.al-test-preview-head {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.al-test-preview-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.al-test-preview-head strong {
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.al-test-preview-foot {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
 }
 
 .al-test-name {
@@ -1027,4 +1110,254 @@
   /* AI 분석 섹션 모바일 패딩 축소 */
   .al-ai-section { padding-top: 22px; margin-top: 22px; }
   .al-ai-section-head h2 { font-size: 20px; }
+}
+
+/* ─── 6대 역량 상세 모달 (al-cd-) ─────────────────────────────── */
+
+.al-more-link--btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.al-cd-modal {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* 상단 종합 점수 + 공식 영역 */
+.al-cd-overall {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  gap: 18px;
+  padding: 18px 20px;
+  background: linear-gradient(135deg, #f5f8ff 0%, #eef4ff 100%);
+  border: 1px solid #dce8ff;
+  border-radius: var(--radius-md);
+}
+
+.al-cd-overall-label {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+}
+
+.al-cd-overall-score {
+  font-size: 56px;
+  font-weight: 900;
+  color: var(--color-navy);
+  line-height: 1;
+  letter-spacing: -2px;
+  margin: 4px 0 8px;
+}
+
+.al-cd-overall-score span {
+  font-size: 18px;
+  color: var(--color-text-muted);
+  font-weight: 800;
+  letter-spacing: 0;
+  margin-left: 2px;
+}
+
+.al-cd-overall-sub {
+  font-size: 13px;
+  color: var(--color-text-sub);
+  line-height: 1.5;
+}
+
+.al-cd-formula-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--color-primary);
+  margin-bottom: 6px;
+}
+
+.al-cd-formula {
+  display: block;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+  font-size: 12.5px;
+  color: var(--color-navy);
+  background: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid #e6edf8;
+  word-break: keep-all;
+}
+
+.al-cd-weight-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.al-cd-weight-cell {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: #fff;
+  border: 1px solid #e6edf8;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.al-cd-weight-label {
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.al-cd-weight-val {
+  font-weight: 800;
+  color: var(--color-primary);
+}
+
+/* 6대 역량 리스트 */
+.al-cd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.al-cd-row {
+  border: 1px solid #e6edf8;
+  border-radius: var(--radius-md);
+  background: #fff;
+  overflow: hidden;
+  transition: border-color 0.15s;
+}
+
+.al-cd-row[open] {
+  border-color: #b9c9f5;
+  box-shadow: 0 6px 16px rgba(15, 45, 95, 0.05);
+}
+
+.al-cd-row-head {
+  display: grid;
+  grid-template-columns: 110px 1fr 56px 18px;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 16px;
+  cursor: pointer;
+  list-style: none;
+  user-select: none;
+}
+
+.al-cd-row-head::-webkit-details-marker { display: none; }
+
+.al-cd-row-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.al-cd-row-track {
+  position: relative;
+  height: 8px;
+  background: var(--color-surface);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.al-cd-row-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  background: linear-gradient(90deg, #2455ff 0%, #2f65ff 60%, #5b80ff 100%);
+  border-radius: 999px;
+}
+
+.al-cd-row-score {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--color-primary);
+  text-align: right;
+}
+
+.al-cd-row-chev {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  transition: transform 0.15s;
+}
+
+.al-cd-row[open] .al-cd-row-chev {
+  transform: rotate(180deg);
+}
+
+.al-cd-row-body {
+  padding: 0 16px 14px;
+  border-top: 1px dashed #e6edf8;
+  padding-top: 12px;
+}
+
+.al-cd-row-formula {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--color-text-sub);
+  margin-bottom: 8px;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.al-cd-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.al-cd-table thead th {
+  text-align: left;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  padding: 6px 8px;
+  border-bottom: 1px solid #e6edf8;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+}
+
+.al-cd-table tbody td {
+  padding: 7px 8px;
+  color: var(--color-navy);
+  border-bottom: 1px dashed #f0f4fb;
+}
+
+.al-cd-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.al-cd-table-num {
+  font-weight: 800;
+  color: var(--color-primary);
+  text-align: right;
+  font-family: 'JetBrains Mono', Consolas, monospace;
+}
+
+.al-cd-note {
+  display: flex;
+  gap: 10px;
+  padding: 12px 14px;
+  background: var(--color-primary-bg);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  line-height: 1.6;
+  color: #2a3858;
+}
+
+.al-cd-note i {
+  color: var(--color-primary);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.al-cd-note strong {
+  color: var(--color-primary);
+  font-weight: 900;
+}
+
+@media (max-width: 768px) {
+  .al-cd-overall { grid-template-columns: 1fr; }
+  .al-cd-weight-grid { grid-template-columns: repeat(2, 1fr); }
+  .al-cd-row-head { grid-template-columns: 90px 1fr 44px 16px; gap: 10px; }
+  .al-cd-table { font-size: 12px; }
 }

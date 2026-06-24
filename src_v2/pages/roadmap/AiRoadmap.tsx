@@ -1,184 +1,51 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { getActiveStudent, getStudentIap, type TermLabel } from '../../data/students'
 import './AiRoadmap.css'
+import './AiRoadmapIap.css'
 
 type PhaseStatus = 'done' | 'active' | 'upcoming'
-
-interface Phase {
-  num: number
-  title: string
-  icon: string
-  status: PhaseStatus
-  period: string
-  tasks: { text: string; done: boolean }[]
-  recommendation: string
-  nextPath: string
-}
-
-interface TargetCompany {
-  name: string
-  industry: string
-  role: string
-  matchScore: number
-  requirements: { label: string; current: number; target: number; unit?: string }[]
-}
-
-interface GapItem {
-  title: string
-  badges: { label: string; type: 'required' | 'preferred' | 'weight' }[]
-  desc: string
-  pct: number
-  current: string
-  target: string
-  severity: 'critical' | 'warn' | 'info'
-}
-
-const PHASES: Phase[] = [
-  {
-    num: 1,
-    title: '나를 알기',
-    icon: 'fa-clipboard-check',
-    status: 'done',
-    period: '2025.03 ~ 2025.08',
-    tasks: [
-      { text: '9CORE 진로적성검사 완료, 종합 68점', done: true },
-      { text: 'CARES 직무역량검사 완료, 분석력 상위 25%', done: true },
-      { text: 'MBTI 성격유형검사 완료, INTJ-A', done: true },
-      { text: '인적성검사 종합 80점 달성', done: true },
-      { text: '진로심리상담 1회 완료, 목표 직무 설정', done: true },
-    ],
-    recommendation: '진단 결과를 바탕으로 목표 기업과 직무를 설정했습니다.',
-    nextPath: '/diagnosis/employment',
-  },
-  {
-    num: 2,
-    title: '전문 상담',
-    icon: 'fa-comments',
-    status: 'done',
-    period: '2025.05 ~ 2025.08',
-    tasks: [
-      { text: '진로취업상담 2회 완료, IT PM 직무 탐색', done: true },
-      { text: '심리상담 1회 완료, 취업 스트레스 관리', done: true },
-      { text: '선배 멘토링 참여, 현직자 피드백 확보', done: true },
-      { text: '직무 적합도 리포트 발급 완료', done: true },
-    ],
-    recommendation: '상담을 통해 IT PM 방향성이 구체화되었습니다. 로드맵 실행 단계로 넘어가세요.',
-    nextPath: '/counsel/career',
-  },
-  {
-    num: 3,
-    title: '로드맵 생성',
-    icon: 'fa-route',
-    status: 'active',
-    period: '2025.09 ~ 현재',
-    tasks: [
-      { text: 'AI 맞춤 로드맵 1차 생성 완료', done: true },
-      { text: '목표 기업 설정: 넥슨코리아 IT PM', done: true },
-      { text: '역량 GAP 분석 리포트 확인', done: true },
-      { text: '취업예측분석 리포트 확인, 합격률 68%', done: false },
-      { text: '로드맵 기반 학기별 세부 계획 수립', done: false },
-    ],
-    recommendation: 'GAP 분석을 참고해 프로젝트 경험과 어학 점수를 우선 보강하세요.',
-    nextPath: '/jobs/prediction',
-  },
-  {
-    num: 4,
-    title: '역량 강화',
-    icon: 'fa-chart-line',
-    status: 'upcoming',
-    period: '2026.03 ~ 2026.12',
-    tasks: [
-      { text: 'TOEIC 700점 이상 취득, 현재 550점', done: false },
-      { text: 'PMP 또는 CAPM 자격증 학습 및 취득', done: false },
-      { text: '캡스톤디자인 프로젝트 참여, PM 역할 수행', done: false },
-      { text: '게임/IT 관련 인턴 지원 및 참여', done: false },
-      { text: '비교과 프로그램 3건 이상 이수', done: false },
-      { text: '포트폴리오 프로젝트 2건 완성', done: false },
-    ],
-    recommendation: '프로젝트 경험과 어학 점수가 가장 시급합니다. 비교과 프로그램을 먼저 신청하세요.',
-    nextPath: '/growth/program',
-  },
-  {
-    num: 5,
-    title: '취업 지원',
-    icon: 'fa-briefcase',
-    status: 'upcoming',
-    period: '2027.03 ~ 2027.08',
-    tasks: [
-      { text: 'AI 자기소개서 작성 및 첨삭, 넥슨 IT PM 맞춤', done: false },
-      { text: 'AI 모의면접 3회 이상 연습', done: false },
-      { text: '넥슨코리아 IT PM 공채 지원', done: false },
-      { text: '이력서와 포트폴리오 최종 점검', done: false },
-      { text: '삼성 DS, LG전자 PM 직군 병행 지원', done: false },
-    ],
-    recommendation: 'AI 자소서와 모의면접으로 최종 완성도를 높이고 병행 지원 전략을 세우세요.',
-    nextPath: '/jobs/home',
-  },
-]
-
-const targetCompany: TargetCompany = {
-  name: '넥슨코리아',
-  industry: '게임 · IT 서비스',
-  role: 'IT Project Manager',
-  matchScore: 68,
-  requirements: [
-    { label: '어학', current: 550, target: 700, unit: '점' },
-    { label: 'IT 자격증', current: 1, target: 3, unit: '개' },
-    { label: '프로젝트 경험', current: 0, target: 2, unit: '건' },
-    { label: '인턴 경험', current: 0, target: 1, unit: '회' },
-  ],
-}
-
-const strengthWeakness = [
-  { label: '학점', value: 90, type: 'strength' as const },
-  { label: '인성/심리', value: 80, type: 'strength' as const },
-  { label: '어학', value: 20, type: 'weakness' as const },
-  { label: 'IT 자격증', value: 40, type: 'weakness' as const },
-]
-
-const gapItems: GapItem[] = [
-  {
-    title: '프로젝트 포트폴리오',
-    badges: [{ label: '필수', type: 'required' }, { label: '중요도 0.4', type: 'weight' }],
-    desc: 'IT PM 지원에는 프로젝트 관리 경험이 핵심입니다. 현재 관련 프로젝트 경험이 부족해 가장 먼저 보강해야 합니다.',
-    pct: 0,
-    current: '미보유',
-    target: '프로젝트 2건',
-    severity: 'critical',
-  },
-  {
-    title: '인턴/실무 경험',
-    badges: [{ label: '우대', type: 'preferred' }, { label: '중요도 0.2', type: 'weight' }],
-    desc: '게임 또는 IT 서비스 인턴 경험이 있으면 서류 합격 가능성이 크게 올라갑니다.',
-    pct: 25,
-    current: '대외활동 2건',
-    target: '관련 인턴 1회',
-    severity: 'critical',
-  },
-  {
-    title: 'TOEIC 점수',
-    badges: [{ label: '필수', type: 'required' }, { label: '중요도 0.3', type: 'weight' }],
-    desc: '현재 550점으로 기준 점수인 700점에 미달합니다. 150점 향상이 필요합니다.',
-    pct: 78,
-    current: '550점',
-    target: '700점 이상',
-    severity: 'warn',
-  },
-  {
-    title: 'IT 자격증',
-    badges: [{ label: '우대', type: 'preferred' }, { label: '중요도 0.1', type: 'weight' }],
-    desc: 'SQLD를 보유하고 있으나 PM 직무에는 PMP 또는 CAPM 자격증이 있으면 강점이 됩니다.',
-    pct: 30,
-    current: 'SQLD 1개',
-    target: 'PMP 또는 CAPM',
-    severity: 'info',
-  },
-]
 
 const statusLabel: Record<PhaseStatus, string> = {
   done: '완료',
   active: '진행 중',
   upcoming: '예정',
+}
+
+function parseLinkedTask(text: string): { term: TermLabel; title: string; why: string } | null {
+  const m = text.match(/^\[(단기|중기|장기)\s*연계\]\s*(.+?)\s*—\s*(.+)$/)
+  if (!m) return null
+  return { term: m[1] as TermLabel, title: m[2].trim(), why: m[3].trim() }
+}
+
+const termIcon: Record<TermLabel, string> = {
+  단기: 'fa-bolt',
+  중기: 'fa-chart-line',
+  장기: 'fa-flag-checkered',
+}
+
+const termOrder: TermLabel[] = ['단기', '중기', '장기']
+
+// 중요도 가중치(0~1)를 상/중/하 + 게이지로 직관 표시
+function ImportanceBadge({ label }: { label: string }) {
+  const m = label.match(/([0-9]*\.?[0-9]+)/)
+  const w = m ? parseFloat(m[1]) : 0
+  const level = w >= 0.35 ? '높음' : w >= 0.2 ? '보통' : '낮음'
+  const color = w >= 0.35 ? '#DC2626' : w >= 0.2 ? '#D97706' : '#6B7280'
+  const bg = w >= 0.35 ? '#FEE2E2' : w >= 0.2 ? '#FEF3C7' : '#F3F4F6'
+  const pct = Math.min(Math.round((w / 0.4) * 100), 100)
+  return (
+    <span
+      className="ar-imp-weight"
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '2px 9px', borderRadius: 999, background: bg, color, fontSize: 13, fontWeight: 800 }}
+      title={`보강 중요도 ${level} (가중치 ${w})`}
+    >
+      중요도 {level}
+      <span style={{ width: 34, height: 5, borderRadius: 999, background: 'rgba(0,0,0,0.10)', overflow: 'hidden', display: 'inline-block' }}>
+        <span style={{ display: 'block', height: '100%', width: `${pct}%`, background: color, borderRadius: 999 }} />
+      </span>
+    </span>
+  )
 }
 
 function ProgressRing({ pct }: { pct: number }) {
@@ -200,7 +67,7 @@ function ProgressRing({ pct }: { pct: number }) {
         />
       </svg>
       <div className="ar-ring-text">
-        <strong>{pct}%</strong>
+        <strong>{pct}<small>%</small></strong>
         <span>달성률</span>
       </div>
     </div>
@@ -209,12 +76,33 @@ function ProgressRing({ pct }: { pct: number }) {
 
 export default function AiRoadmap() {
   const navigate = useNavigate()
+  const student = getActiveStudent()
+  const profile = student
+  const iap = getStudentIap(student)
+  const phases = student.phases
+  const targetCompany = student.targetCompany
+  const strengthWeakness = student.strengthWeakness
+  const gapItems = student.gapItems
   const [collapsedPhases, setCollapsedPhases] = useState<Set<number>>(new Set())
+  const [expandedTerm, setExpandedTerm] = useState<TermLabel | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
-  const [form, setForm] = useState({ company: '넥슨코리아', role: 'IT PM', gpa: '4.3', cert: 'SQLD, TOEIC 550' })
+  const [roadmapGenerated, setRoadmapGenerated] = useState(false)
+  const [form, setForm] = useState({ company: student.targetCompany.name, role: student.targetRole, gpa: student.gpa, cert: student.language })
 
-  const progress = Math.round((PHASES.filter(phase => phase.status === 'done').length / PHASES.length) * 100)
+  // PHASE2(상담·IAP)가 완료되면 로드맵 생성 가능. 생성 전에는 PHASE3+ 숨김.
+  const phase2Done = phases.find(phase => phase.num === 2)?.status === 'done'
+  const visiblePhases = roadmapGenerated ? phases : phases.filter(phase => phase.num <= 2)
+  const progress = Math.round((phases.filter(phase => phase.status === 'done').length / phases.length) * 100)
+
+  const handleGenerateRoadmap = () => {
+    if (!phase2Done) return
+    setGenerating(true)
+    window.setTimeout(() => {
+      setGenerating(false)
+      setRoadmapGenerated(true)
+    }, 1600)
+  }
 
   const togglePhase = (num: number) => {
     setCollapsedPhases(prev => {
@@ -244,11 +132,29 @@ export default function AiRoadmap() {
           <p className="ar-eyebrow">AI CAREER ROADMAP</p>
           <h1>AI가 설계한 맞춤 진로 로드맵</h1>
           <p>진단 결과, 상담 이력, 학생 정보와 목표 기업 조건을 연결해 다음 행동을 우선순위로 보여줍니다.</p>
+          <div className="ar-iap-chips">
+            <span className="ar-chip ar-chip-type">
+              <i className="fa-solid fa-user-tag" />{profile.studentType}
+            </span>
+            <span className="ar-chip ar-chip-iap">
+              <i className="fa-solid fa-diagram-project" />IAP {iap.label}
+            </span>
+            <span className="ar-chip ar-chip-grade">
+              <i className="fa-solid fa-graduation-cap" />{profile.grade}학년 · {iap.track} 트랙
+            </span>
+          </div>
           <div className="ar-hero-actions">
-            <button className="ar-primary-btn" onClick={() => setIsModalOpen(true)}>
-              <i className="fa-solid fa-wand-magic-sparkles" />
-              로드맵 재생성
-            </button>
+            {roadmapGenerated ? (
+              <button className="ar-primary-btn" onClick={() => setIsModalOpen(true)}>
+                <i className="fa-solid fa-wand-magic-sparkles" />
+                로드맵 재생성
+              </button>
+            ) : (
+              <button className="ar-primary-btn" onClick={handleGenerateRoadmap} disabled={!phase2Done}>
+                <i className="fa-solid fa-wand-magic-sparkles" />
+                로드맵 생성하기
+              </button>
+            )}
             <button className="ar-ghost-btn" onClick={() => navigate('/main')}>
               대시보드
               <i className="fa-solid fa-arrow-right" />
@@ -260,7 +166,6 @@ export default function AiRoadmap() {
           <div>
             <span className="ar-panel-label">목표</span>
             <strong>{targetCompany.name} · {targetCompany.role}</strong>
-            <p>현재 매칭률 {targetCompany.matchScore}%</p>
           </div>
         </div>
       </section>
@@ -278,11 +183,11 @@ export default function AiRoadmap() {
             <section className="ar-section">
               <div className="ar-section-head">
                 <h2>커리어 로드맵</h2>
-                <span>5단계 성장 경로</span>
+                <span>6단계 성장 경로 · IAP {iap.label}</span>
               </div>
 
               <div className="ar-phase-list">
-                {PHASES.map(phase => {
+                {visiblePhases.map(phase => {
                   const isCollapsed = collapsedPhases.has(phase.num)
                   return (
                   <article key={phase.num} className={`ar-phase ar-phase-${phase.status} ${isCollapsed ? 'ar-phase-collapsed' : 'ar-phase-expanded'}`}>
@@ -305,20 +210,117 @@ export default function AiRoadmap() {
 
                     {!isCollapsed && (
                       <div className="ar-phase-content">
-                        <div className="ar-task-list">
-                          {phase.tasks.map(task => (
-                            <div key={task.text} className={`ar-task ${task.done ? 'done' : ''}`}>
-                              <i className={task.done ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'} />
-                              <span>{task.text}</span>
-                            </div>
-                          ))}
-                        </div>
+                        {phase.num === 3 && phase.termDetails ? (
+                          <div className="ar-term-grid">
+                            {termOrder.map(label => {
+                              const detail = phase.termDetails?.[label]
+                              if (!detail) return null
+                              const isOpen = expandedTerm === label
+                              const isDone = detail.done ?? false
+                              return (
+                                <div
+                                  key={label}
+                                  className={`ar-term-card${isDone ? ' done' : ''}${isOpen ? ' open' : ''}`}
+                                  role="button"
+                                  tabIndex={0}
+                                  onClick={() => setExpandedTerm(prev => (prev === label ? null : label))}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                      e.preventDefault()
+                                      setExpandedTerm(prev => (prev === label ? null : label))
+                                    }
+                                  }}
+                                  aria-expanded={isOpen}
+                                >
+                                  <div className="ar-term-head">
+                                    <span className="ar-term-badge">
+                                      <i className={`fa-solid ${termIcon[label]}`} />
+                                      {label}
+                                    </span>
+                                    <span className="ar-term-period">{detail.period}</span>
+                                    <span className={`ar-term-status${isDone ? ' done' : ''}`}>
+                                      {isDone
+                                        ? <><i className="fa-solid fa-circle-check" /> 완료</>
+                                        : <><i className="fa-regular fa-circle-dot" /> 진행 중</>}
+                                    </span>
+                                    <i className={`fa-solid fa-chevron-${isOpen ? 'up' : 'down'} ar-term-chev`} />
+                                  </div>
+                                  <div className="ar-term-headline">{detail.headline}</div>
+                                  {!isOpen && (
+                                    <div className="ar-term-summary">
+                                      {detail.items.length}개 목표 · 클릭해서 자세한 추천 근거 보기
+                                    </div>
+                                  )}
+                                  {isOpen && (
+                                    <>
+                                      <p className="ar-term-rationale">
+                                        <i className="fa-solid fa-lightbulb" /> {detail.rationale}
+                                      </p>
+                                      <ul className="ar-term-items">
+                                        {detail.items.map((item, i) => (
+                                          <li key={i} className="ar-term-item">
+                                            <div className="ar-term-item-head">
+                                              <span className={`ar-pri-chip ar-pri-${item.priority}`}>{item.priority}</span>
+                                              <span className={`ar-imp-chip ar-imp-${item.importance}`}>{item.importance}</span>
+                                              <strong className="ar-term-item-title">{item.title}</strong>
+                                            </div>
+                                            <p className="ar-term-item-why">{item.why}</p>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ) : phase.num === 4 && phase.tasks.some(t => parseLinkedTask(t.text)) ? (
+                          <div className="ar-link-groups">
+                            {termOrder.map(label => {
+                              const grouped = phase.tasks
+                                .map(task => ({ task, parsed: parseLinkedTask(task.text) }))
+                                .filter(x => x.parsed?.term === label)
+                              if (grouped.length === 0) return null
+                              return (
+                                <section key={label} className={`ar-link-group ar-link-group-${label}`}>
+                                  <header className="ar-link-group-head">
+                                    <span className="ar-term-badge">
+                                      <i className={`fa-solid ${termIcon[label]}`} />
+                                      {label} 연계
+                                    </span>
+                                    <span className="ar-link-group-count">{grouped.length}개 실행 항목</span>
+                                  </header>
+                                  <ul className="ar-link-list">
+                                    {grouped.map(({ task, parsed }, i) => (
+                                      <li key={i} className={`ar-link-item${task.done ? ' done' : ''}`}>
+                                        <i className={task.done ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'} />
+                                        <div>
+                                          <strong>{parsed!.title}</strong>
+                                          <p>{parsed!.why}</p>
+                                        </div>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </section>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <div className="ar-task-list">
+                            {phase.tasks.map(task => (
+                              <div key={task.text} className={`ar-task ${task.done ? 'done' : ''}`}>
+                                <i className={task.done ? 'fa-solid fa-circle-check' : 'fa-regular fa-circle'} />
+                                <span>{task.text}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                         <div className="ar-recommend">
                           <i className="fa-solid fa-lightbulb" />
                           <p>{phase.recommendation}</p>
                         </div>
                         <button className="ar-small-btn" onClick={() => navigate(phase.nextPath)}>
-                          다음 단계로
+                          자세히 보기
                           <i className="fa-solid fa-arrow-right" />
                         </button>
                       </div>
@@ -326,6 +328,57 @@ export default function AiRoadmap() {
                   </article>
                   )
                 })}
+              </div>
+
+              {!roadmapGenerated && (
+                <div className="ar-generate-cta">
+                  <div className="ar-generate-locked">
+                    <span className="ar-generate-lock-ico"><i className="fa-solid fa-lock" /></span>
+                    <div>
+                      <strong>PHASE 3 ~ 6 로드맵이 잠겨 있습니다</strong>
+                      <p>진단 · 상담 · IAP({iap.label}) 결과를 분석해 단·중·장기 계획과 실행 추천을 생성합니다.</p>
+                    </div>
+                  </div>
+                  <button className="ar-generate-btn" onClick={handleGenerateRoadmap} disabled={!phase2Done}>
+                    <i className="fa-solid fa-wand-magic-sparkles" />
+                    로드맵 생성하기
+                  </button>
+                  {!phase2Done && <p className="ar-generate-hint">PHASE 2 (상담 · IAP) 완료 후 활성화됩니다</p>}
+                </div>
+              )}
+            </section>
+
+            {roadmapGenerated && (
+              <>
+            <section className="ar-iap-card">
+              <div className="ar-iap-head">
+                <span className="ar-panel-label">INDIVIDUALIZED ACTION PLAN</span>
+                <h2>IAP {iap.label}</h2>
+                <p>{profile.studentType} · {iap.grade} · {iap.track} 트랙</p>
+              </div>
+              <div className="ar-iap-grid">
+                <div>
+                  <small>목표 직무 / 진로</small>
+                  <strong>{profile.targetRole}</strong>
+                </div>
+                <div>
+                  <small>핵심 목표</small>
+                  <strong>{iap.goal}</strong>
+                </div>
+                <div>
+                  <small>실행 방향</small>
+                  <strong>{iap.focus}</strong>
+                </div>
+                <div>
+                  <small>단계 구성</small>
+                  <strong>단기 · 중기 · 장기 (CARE+7)</strong>
+                </div>
+              </div>
+              <div className="ar-iap-counsel">
+                <i className="fa-solid fa-quote-left" />
+                <p>
+                  상담사 코멘트 · {profile.studentType} 학생 · {iap.goal}. {iap.focus} 중심으로 진행하세요.
+                </p>
               </div>
             </section>
 
@@ -359,7 +412,7 @@ export default function AiRoadmap() {
 
               <div className="ar-ai-tip">
                 <i className="fa-solid fa-robot" />
-                <p>넥슨코리아 IT PM 합격 가능성을 높이려면 TOEIC 150점 향상과 IT 자격증 2개 추가가 우선입니다.</p>
+                <p>{targetCompany.name} {targetCompany.role} 합격 가능성을 높이려면 아래 보강 항목을 우선순위대로 채우세요.</p>
               </div>
             </section>
 
@@ -401,7 +454,9 @@ export default function AiRoadmap() {
                       <i className="fa-solid fa-circle-exclamation" />
                       <strong>{item.title}</strong>
                       {item.badges.map(badge => (
-                        <span key={`${item.title}-${badge.label}`} className={badge.type}>{badge.label}</span>
+                        badge.type === 'weight'
+                          ? <ImportanceBadge key={`${item.title}-${badge.label}`} label={badge.label} />
+                          : <span key={`${item.title}-${badge.label}`} className={badge.type}>{badge.label}</span>
                       ))}
                     </div>
                     <p>{item.desc}</p>
@@ -417,25 +472,26 @@ export default function AiRoadmap() {
                 ))}
               </div>
             </section>
+              </>
+            )}
           </main>
 
+          {roadmapGenerated && (
           <aside className="ar-sidebar">
             <div className="ar-side-card">
               <h3>AI 종합 인사이트</h3>
-              <p>
-                김민지 학생은 학업 역량과 상담 참여도는 충분하지만 프로젝트 경험과 인턴 경험에서 핵심 GAP이 있습니다.
-                필수 보강 항목을 먼저 해소하면 합격 가능성을 90% 수준까지 끌어올릴 수 있습니다.
-              </p>
+              <p>{student.insight}</p>
             </div>
 
             <div className="ar-side-card">
               <h3>우선순위 요약</h3>
-              <div className="ar-priority-row high"><span />긴급 <strong>2개</strong></div>
-              <div className="ar-priority-row medium"><span />보통 <strong>1개</strong></div>
-              <div className="ar-priority-row low"><span />낮음 <strong>1개</strong></div>
+              <div className="ar-priority-row high"><span />긴급 <strong>{student.priority.high}개</strong></div>
+              <div className="ar-priority-row medium"><span />보통 <strong>{student.priority.medium}개</strong></div>
+              <div className="ar-priority-row low"><span />낮음 <strong>{student.priority.low}개</strong></div>
             </div>
 
           </aside>
+          )}
         </div>
       )}
 

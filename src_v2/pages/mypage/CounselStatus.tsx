@@ -1,80 +1,31 @@
 import { useNavigate } from 'react-router-dom'
+import { getActiveStudent } from '../../data/students'
+import {
+  COUNSEL_RECORDS,
+  COUNSEL_TOTAL,
+  COUNSEL_DONE,
+  COUNSEL_SCHEDULED,
+  COUNSEL_RECENT_DATE,
+  COUNSEL_TYPE_STATS,
+} from '../../data/counsel'
 import './CounselStatus.css'
 
+// 게이지바 = 전체 상담 건수 대비 비율(%)로 의미를 명확히 한다.
+const pctOf = (n: number) => Math.round((n / COUNSEL_TOTAL) * 100)
+
 const stats = [
-  { label: '총 상담 건수', value: '5건', color: 'blue', bar: 72 },
-  { label: '완료', value: '4건', color: 'green', bar: 70 },
-  { label: '예정', value: '1건', color: 'purple', bar: 38 },
-  { label: '최근 상담', value: '2026-04-10', color: 'blue', bar: 0 },
+  { label: '총 상담 건수', value: `${COUNSEL_TOTAL}건`, color: 'blue', bar: 100 },
+  { label: '완료', value: `${COUNSEL_DONE}건`, color: 'green', bar: pctOf(COUNSEL_DONE) },
+  { label: '예정', value: `${COUNSEL_SCHEDULED}건`, color: 'purple', bar: pctOf(COUNSEL_SCHEDULED) },
+  { label: '최근 상담', value: COUNSEL_RECENT_DATE, color: 'blue', bar: 0 },
 ]
 
-const typeStats = [
-  { label: '진로상담', count: '1건', color: 'blue' },
-  { label: '심리상담', count: '2건', color: 'pink' },
-  { label: '교수상담', count: '1건', color: 'orange' },
-  { label: '취업상담', count: '1건', color: 'green' },
-]
-
-const counselItems = [
-  {
-    type: '진로상담',
-    counselor: '김진로 상담사',
-    status: '예약확정',
-    statusTone: 'scheduled',
-    description: 'IT PM 직무 변화 점검 및 향후 6개월 로드맵 설정 예정.',
-    tags: ['진로 설정', 'IT PM', '6개월 로드맵'],
-    date: '2026-04-10',
-    time: '14:00',
-    color: 'blue',
-  },
-  {
-    type: '심리상담',
-    counselor: '박심리 상담사',
-    status: '완료',
-    statusTone: 'done',
-    description: '학업 스트레스 관리 및 시간 관리 전략 수립.',
-    tags: ['스트레스 관리', '시간 관리', '번아웃 예방'],
-    date: '2026-04-03',
-    time: '10:00',
-    color: 'pink',
-  },
-  {
-    type: '교수상담',
-    counselor: '이교수 (컴퓨터공학과)',
-    status: '완료',
-    statusTone: 'done',
-    description: '전공 심화 로드맵 및 대학원 진학 여부 논의.',
-    tags: ['전공 심화', '캡스톤 리더십', '진로 방향'],
-    date: '2026-03-25',
-    time: '15:00',
-    color: 'orange',
-  },
-  {
-    type: '취업상담',
-    counselor: '최취업 상담사',
-    status: '완료',
-    statusTone: 'done',
-    description: '넥슨코리아 등 목표 기업 분석 및 자소서 첨삭.',
-    tags: ['기업 분석', '자소서 첨삭', '모의면접'],
-    date: '2026-03-15',
-    time: '11:00',
-    color: 'green',
-  },
-  {
-    type: '심리상담',
-    counselor: '박심리 상담사',
-    status: '완료',
-    statusTone: 'done',
-    description: '대인관계 및 팀 프로젝트 갈등 상황 상담.',
-    tags: ['대인관계', '팀 협업', '리더십'],
-    date: '2026-03-05',
-    time: '10:00',
-    color: 'pink',
-  },
-]
+const typeStats = COUNSEL_TYPE_STATS
+const counselItems = COUNSEL_RECORDS
 
 export default function CounselStatus() {
   const navigate = useNavigate()
+  const student = getActiveStudent()
 
   return (
     <main className="cs-page">
@@ -95,7 +46,7 @@ export default function CounselStatus() {
               <p>{item.label}</p>
               <strong>{item.value}</strong>
               {item.bar > 0 && (
-                <span className="cs-stat-bar">
+                <span className="cs-stat-bar" title={`전체 ${COUNSEL_TOTAL}건 중 ${item.bar}%`}>
                   <span style={{ width: `${item.bar}%` }} />
                 </span>
               )}
@@ -103,6 +54,7 @@ export default function CounselStatus() {
           </article>
         ))}
       </section>
+      <p className="cs-stats-note">게이지바는 전체 상담 {COUNSEL_TOTAL}건 대비 비율입니다.</p>
 
       <section className="cs-panel">
         <h2>
@@ -168,7 +120,7 @@ export default function CounselStatus() {
               전문가 코멘트 종합 분석
             </h3>
             <p>
-              심리상담사, 교수, 취업상담사의 코멘트를 종합 분석한 결과, 김민준님은 목표 의식과 성실성이 매우 높은 학생이지만 완벽주의 성향으로 인한
+              심리상담사, 교수, 취업상담사의 코멘트를 종합 분석한 결과, {student.name}님은 목표 의식과 성실성이 매우 높은 학생이지만 완벽주의 성향으로 인한
               번아웃 리스크와 어학(TOEIC) 스펙 부재가 주요 보완점으로 공통 지적됩니다.
             </p>
             <p>

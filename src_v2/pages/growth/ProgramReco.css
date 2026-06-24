@@ -1,0 +1,314 @@
+.pr-reco {
+  margin-bottom: 22px;
+  padding: 22px 24px;
+  background:
+    radial-gradient(circle at 95% 6%, rgba(46, 91, 255, 0.12), transparent 36%),
+    linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%);
+  border: 1px solid var(--color-surface-alt);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.pr-reco-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  margin-bottom: 10px;
+}
+
+.pr-reco-head h2 {
+  color: var(--color-navy);
+  font-size: 21px;
+  font-weight: 900;
+  margin-bottom: 4px;
+}
+
+.pr-reco-head > p {
+  color: var(--color-text-sub);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.55;
+}
+
+.pr-reco-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.pr-reco-col {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px 18px;
+}
+
+.pr-reco-col h3 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-navy);
+  font-size: 16px;
+  font-weight: 900;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.pr-reco-col h3 i { color: var(--color-primary); font-size: 15px; }
+
+.pr-reco-col ul {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pr-reco-item-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.pr-reco-item-top strong {
+  color: var(--color-navy);
+  font-size: 15px;
+  font-weight: 800;
+}
+
+.pr-reco-col li p {
+  color: var(--color-text-sub);
+  font-size: 13px;
+  line-height: 1.5;
+  font-weight: 600;
+}
+
+.pr-reco-tag {
+  flex-shrink: 0;
+  padding: 3px 9px;
+  border-radius: var(--radius-pill);
+  font-size: 11.5px;
+  font-weight: 800;
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+}
+
+.pr-reco-tag-필수 { background: #FBEAEA; color: var(--color-danger); }
+.pr-reco-tag-우대 { background: var(--color-primary-bg); color: var(--color-primary); }
+.pr-reco-tag-권장 { background: #FFF4E2; color: #C2790B; }
+.pr-reco-tag-보유 { background: #EAF7EE; color: var(--color-success); }
+.pr-reco-tag-인턴,
+.pr-reco-tag-대외활동,
+.pr-reco-tag-포트폴리오 { background: #F1ECFF; color: #7C3AED; }
+.pr-reco-tag-직무,
+.pr-reco-tag-취업,
+.pr-reco-tag-어학 { background: var(--color-primary-bg); color: var(--color-primary); }
+
+@media (max-width: 980px) {
+  .pr-reco-cols { grid-template-columns: 1fr; }
+}
+
+/* ─── 잠금 / 로딩 / 잠금해제 단계 ──────────────────────────── */
+
+.pr-reco-stage {
+  position: relative;
+  min-height: 220px;
+}
+
+/* 잠금 상태: 카드 흐릿하게 + 오버레이 */
+.pr-reco-stage--locked .pr-reco-cols {
+  filter: blur(6px);
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+}
+
+.pr-reco-lock-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0.55) 100%);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  border-radius: var(--radius-md);
+}
+
+.pr-reco-lock-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  max-width: 460px;
+  padding: 28px 28px 24px;
+  background: #ffffff;
+  border: 1px solid #dce8ff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 44px rgba(15, 45, 95, 0.12);
+  text-align: center;
+}
+
+.pr-reco-lock-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #f3f7ff 0%, #e6efff 100%);
+  border: 1px solid #d3deff;
+  color: var(--color-primary);
+  font-size: 22px;
+  box-shadow: 0 8px 18px rgba(46, 91, 255, 0.12);
+}
+
+.pr-reco-lock-card h4 {
+  margin: 4px 0 2px;
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--color-navy);
+  letter-spacing: -0.2px;
+}
+
+.pr-reco-lock-card p {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-sub);
+  line-height: 1.6;
+}
+
+.pr-reco-cta {
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--color-primary) 0%, #7B6EFF 100%);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 12px 24px rgba(46, 91, 255, 0.28);
+  transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
+}
+
+.pr-reco-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(46, 91, 255, 0.34);
+  filter: brightness(1.04);
+}
+
+.pr-reco-cta:active {
+  transform: translateY(0);
+}
+
+.pr-reco-cta i {
+  font-size: 14px;
+}
+
+/* 로딩 상태: 스피너 + 메시지 + 진행 바 */
+.pr-reco-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 24px 44px;
+  background: linear-gradient(135deg, #f6f9ff 0%, #eef4ff 100%);
+  border: 1px solid #dce8ff;
+  border-radius: var(--radius-md);
+}
+
+.pr-reco-spinner {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+
+.pr-reco-spinner > i {
+  font-size: 22px;
+  color: var(--color-primary);
+  z-index: 1;
+  animation: prRecoSpinPulse 1.4s ease-in-out infinite;
+}
+
+.pr-reco-spinner-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 3px solid #dce8ff;
+  border-top-color: var(--color-primary);
+  border-right-color: var(--color-primary);
+  animation: prRecoSpin 1.1s linear infinite;
+}
+
+@keyframes prRecoSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes prRecoSpinPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%      { transform: scale(1.15); opacity: 0.7; }
+}
+
+.pr-reco-loading-title {
+  font-size: 17px;
+  font-weight: 900;
+  color: var(--color-navy);
+  margin: 0;
+}
+
+.pr-reco-loading-sub {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-text-sub);
+  margin: 0 0 8px;
+  line-height: 1.55;
+}
+
+.pr-reco-loading-bar {
+  width: 240px;
+  max-width: 80%;
+  height: 6px;
+  background: rgba(255,255,255,0.85);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.pr-reco-loading-fill {
+  height: 100%;
+  width: 35%;
+  background: linear-gradient(90deg, var(--color-primary) 0%, #7B6EFF 100%);
+  border-radius: 999px;
+  animation: prRecoLoadingBar 1.8s ease-in-out;
+}
+
+@keyframes prRecoLoadingBar {
+  0%   { width: 8%; }
+  50%  { width: 65%; }
+  100% { width: 96%; }
+}
+
+@media (max-width: 768px) {
+  .pr-reco-lock-card { padding: 20px 18px 20px; }
+  .pr-reco-lock-card h4 { font-size: 16px; }
+  .pr-reco-cta { font-size: 14px; padding: 11px 18px; }
+  .pr-reco-loading { padding: 32px 16px; }
+}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
+import IapSummaryBanner from '../../components/IapSummaryBanner'
 import './CareerCounsel.css'
 
 type CounselorId = 'all' | 'kim' | 'lee' | 'park' | 'choi' | 'jung' | 'kang' | 'lim' | 'hwang'
@@ -144,6 +145,7 @@ export default function CareerCounsel() {
         </div>
         <h1>상담 신청</h1>
         <p>상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.</p>
+        <IapSummaryBanner note="상담 시 참고할 내 진단 요약 (자동 공유)" />
       </section>
 
       <div className="cc-layout">

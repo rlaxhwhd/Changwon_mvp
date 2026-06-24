@@ -100,11 +100,8 @@
   letter-spacing: 0.02em;
 }
 
-.mp-stat--done    .mp-stat-num { color: var(--color-success); }
-.mp-stat--active  .mp-stat-num { color: var(--color-warning); }
-.mp-stat--upcoming .mp-stat-num { color: var(--color-primary); }
-.mp-stat--hours   .mp-stat-num { color: #6366f1; }
-.mp-stat--xp      .mp-stat-num { color: #ec4899; }
+/* 스탯 숫자는 navy 통일, 액센트는 XP 하나만 (단일 액센트 규칙) */
+.mp-stat--xp .mp-stat-num { color: var(--color-primary); }
 
 /* Filter bar */
 .mp-filter-bar {
@@ -197,6 +194,8 @@
   border-radius: var(--radius-pill);
   font-size: 14px;
   font-weight: 900;
+  background: var(--color-surface);
+  color: var(--color-text-sub);
 }
 
 .mp-status {

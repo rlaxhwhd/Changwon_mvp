@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Modal from './Modal'
+import { getActiveStudent } from '../data/students'
 import './CounselReserveModal.css'
 
 interface Props {
@@ -16,17 +17,6 @@ interface Props {
   onSubmit: (purpose: string) => void
 }
 
-/** 학생 기본정보 (mock) */
-const STUDENT = {
-  name: '김채원',
-  dept: '컴퓨터공학과',
-  gender: '여',
-  status: '재학',
-  studentId: '20250001',
-  grade: '2학년',
-  contact: '010-1234-5678',
-}
-
 export default function CounselReserveModal({
   open,
   onClose,
@@ -38,6 +28,17 @@ export default function CounselReserveModal({
   phone,
   onSubmit,
 }: Props) {
+  const active = getActiveStudent()
+  /** 학생 기본정보 (활성 학생 기준 + 일부 mock) */
+  const STUDENT = {
+    name: active.name,
+    dept: active.major,
+    gender: '-',
+    status: '재학',
+    studentId: '20250001',
+    grade: `${active.grade}학년`,
+    contact: '010-1234-5678',
+  }
   const [purpose, setPurpose] = useState('')
 
   const handleSubmit = () => {

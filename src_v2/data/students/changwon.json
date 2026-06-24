@@ -1,0 +1,827 @@
+{
+  "id": "changwon",
+  "name": "김창원",
+  "major": "경영학과",
+  "grade": 4,
+  "gpa": "3.7",
+  "language": "TOEIC 870 · OPIc IH",
+  "studentType": "취업준비형",
+  "typeScores": {
+    "진로명확도": "상",
+    "역량준비도": "상",
+    "취업준비도": "중"
+  },
+  "targetRole": "브랜드 마케터",
+  "targetCompany": {
+    "name": "아모레퍼시픽",
+    "industry": "FMCG · 뷰티",
+    "role": "브랜드 마케터",
+    "matchScore": 81,
+    "requirements": [
+      {
+        "label": "어학",
+        "current": 870,
+        "target": 800,
+        "unit": "점"
+      },
+      {
+        "label": "마케팅 공모전",
+        "current": 2,
+        "target": 2,
+        "unit": "회"
+      },
+      {
+        "label": "직무 인턴",
+        "current": 1,
+        "target": 1,
+        "unit": "회"
+      },
+      {
+        "label": "데이터분석 역량",
+        "current": 1,
+        "target": 2,
+        "unit": "개"
+      }
+    ]
+  },
+  "strengthWeakness": [
+    {
+      "label": "마케팅 기획",
+      "value": 88,
+      "type": "strength"
+    },
+    {
+      "label": "어학/글로벌",
+      "value": 85,
+      "type": "strength"
+    },
+    {
+      "label": "데이터분석",
+      "value": 55,
+      "type": "weakness"
+    },
+    {
+      "label": "직무 면접",
+      "value": 50,
+      "type": "weakness"
+    }
+  ],
+  "phases": [
+    {
+      "num": 1,
+      "title": "유형진단",
+      "icon": "fa-clipboard-check",
+      "status": "done",
+      "period": "2024.03 ~ 2024.04",
+      "tasks": [
+        {
+          "text": "유형분류 검사(39문항) 완료 → 취업준비형 판정",
+          "done": true
+        },
+        {
+          "text": "자기이해 검사 완료, 마케팅·기획 강점 확인",
+          "done": true
+        },
+        {
+          "text": "진로명확도 상 · 역량준비도 상 · 취업준비도 중",
+          "done": true
+        }
+      ],
+      "recommendation": "유형분류 결과 \"취업준비형\"으로, 취업 실전 준비가 핵심 과제입니다.",
+      "nextPath": "/diagnosis/employment"
+    },
+    {
+      "num": 2,
+      "title": "상담 · IAP 설정",
+      "icon": "fa-comments",
+      "status": "done",
+      "period": "2024.05 ~ 2024.06",
+      "tasks": [
+        {
+          "text": "1차 기초상담 완료, 진단 결과 해석",
+          "done": true
+        },
+        {
+          "text": "2차 심층상담 완료, 브랜드 마케터 방향 구체화",
+          "done": true
+        },
+        {
+          "text": "AI 분석 + 상담사 확정 → IAP 유형 취업실전형",
+          "done": true
+        },
+        {
+          "text": "상담기록지·상담요약보고서 발급",
+          "done": true
+        }
+      ],
+      "recommendation": "IAP 유형이 취업실전형으로 확정되었습니다. 취업 실전 로드맵으로 넘어가세요.",
+      "nextPath": "/counsel/career"
+    },
+    {
+      "num": 3,
+      "title": "경력개발 로드맵 (단·중·장기 계획)",
+      "icon": "fa-route",
+      "status": "done",
+      "period": "2024.09 ~ 2025.02",
+      "tasks": [
+        {
+          "text": "단기 (이번 학기 · ~2026.08): 상반기 공채 타겟 3사 선정 · 자소서 공통문항 작성 · OPIc IH 유지",
+          "done": true
+        },
+        {
+          "text": "중기 (하반기 · ~2026.12): 하반기 공채 본지원 · 마케팅 인턴 정규 전환 시도 · GA 데이터분석 보강",
+          "done": false
+        },
+        {
+          "text": "장기 (졸업 · ~2027.02): 브랜드 마케터 입사 · 입사 후 온보딩 준비",
+          "done": false
+        }
+      ],
+      "termDetails": {
+        "단기": {
+          "period": "이번 학기 · ~2026.08",
+          "headline": "상반기 공채 시즌 실전 진입",
+          "rationale": "취업실전형은 단기 6개월 안의 \"공채 자소서·면접\" 실행이 합격 여부를 좌우합니다. 이 시기를 놓치면 하반기까지 미루게 되며 졸업이 1학기 지연될 위험이 있습니다.",
+          "done": true,
+          "items": [
+            {
+              "title": "상반기 공채 타겟 3사 선정",
+              "priority": "P0",
+              "importance": "필수",
+              "why": "지원 대상이 명확해야 자소서·면접 준비가 분산되지 않습니다. 1순위·2순위·도전군으로 나눠 3사를 확정하면 준비 효율이 약 30% 상승합니다."
+            },
+            {
+              "title": "자소서 공통문항 작성",
+              "priority": "P0",
+              "importance": "필수",
+              "why": "공통문항(지원동기·강점·도전경험)은 기업별 80%가 유사합니다. 공통 베이스를 먼저 작성하면 기업별 커스터마이즈에 시간이 집중됩니다."
+            },
+            {
+              "title": "OPIc IH 유지반 학습",
+              "priority": "P1",
+              "importance": "중요",
+              "why": "OPIc IH는 마케팅 직무 어학 기준선입니다. 유효기간 관리를 위해 지속 학습이 필요하며, 재시험 시 등급 하락 리스크를 막아야 합니다."
+            }
+          ]
+        },
+        "중기": {
+          "period": "하반기 · ~2026.12",
+          "headline": "하반기 공채 본지원과 인턴 정규 전환",
+          "rationale": "상반기 결과에 따라 두 갈래로 진행됩니다. 상반기 합격 시 입사 준비, 미합격 시 하반기 공채 본지원과 인턴 정규 전환을 병행해 합격 확률을 끌어올립니다.",
+          "items": [
+            {
+              "title": "하반기 공채 본지원",
+              "priority": "P0",
+              "importance": "필수",
+              "why": "상반기 미합격 시 졸업 전 마지막 대규모 공채 시즌입니다. 상반기에 다듬은 자소서를 기업별로 최적화해 합격률을 최대화합니다."
+            },
+            {
+              "title": "마케팅 인턴 정규 전환 시도",
+              "priority": "P0",
+              "importance": "필수",
+              "why": "현재 인턴 중인 회사에서 정규 전환이 가능하면 공채 의존도를 낮출 수 있습니다. 전환 실패 시에도 인턴 경험으로 다른 공채 서류 통과율이 상승합니다."
+            },
+            {
+              "title": "GA 데이터분석 보강",
+              "priority": "P1",
+              "importance": "중요",
+              "why": "퍼포먼스 마케팅 직무는 데이터 역량이 필수입니다. GAIQ는 단기에 취득했고, 중기에는 SQL·루커 등 실무 도구로 확장합니다."
+            }
+          ]
+        },
+        "장기": {
+          "period": "졸업 · ~2027.02",
+          "headline": "입사와 온보딩 준비",
+          "rationale": "졸업 시점에 합격 상태로 진입한 뒤, 입사 전 학습으로 첫 3개월 적응도를 끌어올립니다. 브랜드 마케터 직무의 경우 도메인 학습이 온보딩 속도를 좌우합니다.",
+          "items": [
+            {
+              "title": "브랜드 마케터 입사",
+              "priority": "P0",
+              "importance": "필수",
+              "why": "단기·중기 활동의 최종 결과 지점입니다. 합격 후 입사일 확정과 졸업 일정 조율이 핵심입니다."
+            },
+            {
+              "title": "입사 후 온보딩 준비",
+              "priority": "P1",
+              "importance": "중요",
+              "why": "입사 전 1~2개월간 해당 브랜드의 캠페인·경쟁사 분석을 미리 학습하면 첫 3개월 적응 속도가 약 2배 빨라집니다. 첫 평가 시점에서 차이가 커집니다."
+            }
+          ]
+        }
+      },
+      "recommendation": "취업실전형은 단기 \"상반기 공채 자소서·면접\" 실행이 합격을 좌우합니다. 데이터분석은 병행 보강하세요.",
+      "nextPath": "/roadmap/final"
+    },
+    {
+      "num": 4,
+      "title": "역량강화 (완료)",
+      "icon": "fa-chart-line",
+      "status": "done",
+      "period": "2025.03 ~ 2025.12",
+      "tasks": [
+        {
+          "text": "[단기 연계] 상반기 공채 자소서 작성 부트캠프 수료 — Phase 3 단기 '자소서 공통문항 작성' 실행",
+          "done": true
+        },
+        {
+          "text": "[단기 연계] OPIc IH 유지반 학습 — Phase 3 단기 'OPIc IH 유지' 실행",
+          "done": true
+        },
+        {
+          "text": "[중기 연계] 마케팅 직무 부트캠프 수료 — Phase 3 중기 '하반기 공채 본지원' 직무 역량 확보",
+          "done": true
+        },
+        {
+          "text": "[중기 연계] GAIQ(구글애널리틱스) 취득 — Phase 3 중기 'GA 데이터분석 보강' 실행",
+          "done": true
+        },
+        {
+          "text": "[중기 연계] 브랜드 마케팅 인턴 1회 완료 — Phase 3 중기 '인턴 정규 전환 시도' 실행",
+          "done": true
+        },
+        {
+          "text": "[중기 연계] 대학생 마케팅 공모전 2회 수상 — Phase 3 중기 직무 결과물 확보",
+          "done": true
+        }
+      ],
+      "recommendation": "Phase 3 단·중기 목표 달성을 위해 완료한 역량 강화 활동입니다. 자소서·인턴·공모전이 단기 공채 목표 실행을 견인했습니다.",
+      "nextPath": "/growth/program"
+    },
+    {
+      "num": 5,
+      "title": "기업연계 · 취업지원",
+      "icon": "fa-briefcase",
+      "status": "active",
+      "period": "2026.03 ~ 2026.08",
+      "tasks": [
+        {
+          "text": "상반기 공채 자소서 5개사 작성·AI 첨삭 (아모레·CJ·배민·쿠팡·신세계)",
+          "done": false
+        },
+        {
+          "text": "AI 모의면접(직무·PT·토론) 5회 이상 연습",
+          "done": false
+        },
+        {
+          "text": "마케팅 직무 PT 과제 포트폴리오 정리",
+          "done": false
+        },
+        {
+          "text": "데이터분석(GA·SQL 기초) 단기 보강",
+          "done": false
+        },
+        {
+          "text": "매칭 프로토콜 기반 5개사 병행 지원",
+          "done": false
+        }
+      ],
+      "recommendation": "자소서·PT면접 완성도가 합격을 가릅니다. 데이터분석 역량을 한 줄 더하면 차별화됩니다.",
+      "nextPath": "/jobs/home"
+    },
+    {
+      "num": 6,
+      "title": "사후관리",
+      "icon": "fa-rotate",
+      "status": "upcoming",
+      "period": "2026.09 ~",
+      "tasks": [
+        {
+          "text": "입사 시 6개월·12개월 적응 점검",
+          "done": false
+        },
+        {
+          "text": "미합격 시 하반기 공채 재지원 전략 재수립",
+          "done": false
+        },
+        {
+          "text": "직무 전환 가능성 재진단 (마케팅 ↔ 영업·기획)",
+          "done": false
+        }
+      ],
+      "recommendation": "상반기 결과에 따라 하반기 전략을 재수립하고, 필요 시 재진단으로 직무를 재정렬합니다.",
+      "nextPath": "/mypage/counsel"
+    }
+  ],
+  "gapItems": [
+    {
+      "title": "자기소개서 완성도",
+      "badges": [
+        {
+          "label": "필수",
+          "type": "required"
+        },
+        {
+          "label": "중요도 0.4",
+          "type": "weight"
+        }
+      ],
+      "desc": "상반기 공채가 임박했습니다. 직무 역량·경험은 충분하나, 기업별 맞춤 자소서 5개사 완성이 가장 시급합니다.",
+      "pct": 40,
+      "current": "2개사 초안",
+      "target": "5개사 완성",
+      "severity": "critical"
+    },
+    {
+      "title": "직무 면접 경험",
+      "badges": [
+        {
+          "label": "필수",
+          "type": "required"
+        },
+        {
+          "label": "중요도 0.3",
+          "type": "weight"
+        }
+      ],
+      "desc": "마케팅 직무는 PT·토론 면접 비중이 큽니다. 실전 모의면접 경험이 부족해 집중 연습이 필요합니다.",
+      "pct": 35,
+      "current": "모의면접 1회",
+      "target": "PT·토론 5회",
+      "severity": "critical"
+    },
+    {
+      "title": "데이터분석 역량",
+      "badges": [
+        {
+          "label": "우대",
+          "type": "preferred"
+        },
+        {
+          "label": "중요도 0.2",
+          "type": "weight"
+        }
+      ],
+      "desc": "퍼포먼스 마케팅 트렌드상 GA·SQL 기반 데이터 해석 역량이 차별화 요소가 됩니다.",
+      "pct": 55,
+      "current": "GAIQ 보유",
+      "target": "SQL 기초 + 대시보드",
+      "severity": "warn"
+    },
+    {
+      "title": "마케팅 자격증",
+      "badges": [
+        {
+          "label": "우대",
+          "type": "preferred"
+        },
+        {
+          "label": "중요도 0.1",
+          "type": "weight"
+        }
+      ],
+      "desc": "사회조사분석사 등 시장조사·통계 자격이 있으면 데이터 기반 마케팅에서 강점이 됩니다.",
+      "pct": 50,
+      "current": "GAIQ 1개",
+      "target": "사회조사분석사 추가",
+      "severity": "info"
+    }
+  ],
+  "recommendations": {
+    "programs": [
+      {
+        "title": "자기소개서·직무면접 클리닉",
+        "reason": "상반기 공채 자소서 5개사 마무리",
+        "tag": "취업"
+      },
+      {
+        "title": "마케팅 PT·토론면접 캠프",
+        "reason": "직무 면접 경험 0→실전 대비",
+        "tag": "취업"
+      },
+      {
+        "title": "경영 데이터분석(GA·SQL) 특강",
+        "reason": "퍼포먼스 마케팅 데이터 역량",
+        "tag": "직무"
+      },
+      {
+        "title": "브랜드 전략 케이스 스터디",
+        "reason": "직무 이해도·면접 답변 강화",
+        "tag": "직무"
+      }
+    ],
+    "activities": [
+      {
+        "title": "대기업 마케팅 공모전 (추가)",
+        "reason": "직무 결과물·수상 이력 강화",
+        "tag": "대외활동"
+      },
+      {
+        "title": "브랜드 서포터즈 / 앰버서더",
+        "reason": "실무 감각·네트워크",
+        "tag": "대외활동"
+      },
+      {
+        "title": "마케팅 직무 인턴 (전환형)",
+        "reason": "정규직 전환 기회 + 경력",
+        "tag": "인턴"
+      }
+    ],
+    "certs": [
+      {
+        "title": "사회조사분석사 2급",
+        "reason": "시장조사·통계 (필수급 우대)",
+        "tag": "필수"
+      },
+      {
+        "title": "GAIQ 구글애널리틱스",
+        "reason": "보유 중 — 퍼포먼스 마케팅 기반",
+        "tag": "보유"
+      },
+      {
+        "title": "컴퓨터활용능력 1급",
+        "reason": "데이터 정리·실무 기본",
+        "tag": "권장"
+      },
+      {
+        "title": "OPIc IH / TOEIC Speaking",
+        "reason": "외국계·글로벌 브랜드 우대",
+        "tag": "우대"
+      }
+    ]
+  },
+  "insight": "김창원 학생은 마케팅 직무 역량·어학·공모전 경험을 충분히 갖췄습니다. 지금은 상반기 공채 자소서·면접 마무리가 최우선이며, 데이터분석 역량을 한 단계 보강하면 합격 가능성을 크게 끌어올릴 수 있습니다.",
+  "priority": {
+    "high": 2,
+    "medium": 1,
+    "low": 1
+  },
+  "jobField": "마케팅",
+  "jobSkills": [
+    {
+      "label": "브랜드 기획",
+      "score": 88,
+      "max": 100,
+      "color": "#2E5BFF"
+    },
+    {
+      "label": "퍼포먼스/데이터",
+      "score": 55,
+      "max": 100,
+      "color": "#22C55E"
+    },
+    {
+      "label": "커뮤니케이션",
+      "score": 85,
+      "max": 100,
+      "color": "#F59E0B"
+    },
+    {
+      "label": "콘텐츠 제작",
+      "score": 78,
+      "max": 100,
+      "color": "#8B5CF6"
+    },
+    {
+      "label": "시장조사/분석",
+      "score": 60,
+      "max": 100,
+      "color": "#EF4444"
+    }
+  ],
+  "jobs": [
+    {
+      "id": 1,
+      "company": "아모레퍼시픽",
+      "initial": "A",
+      "color": "#7E2B53",
+      "role": "브랜드마케팅",
+      "tags": [
+        "대기업",
+        "서울"
+      ],
+      "match": 89,
+      "salary": "4,000만원~",
+      "location": "서울",
+      "deadline": "2026.04.15",
+      "jobType": "신입",
+      "applyUrl": "https://www.apgroup.com/int/ko/careers/careers.html"
+    },
+    {
+      "id": 2,
+      "company": "CJ제일제당",
+      "initial": "CJ",
+      "color": "#E2231A",
+      "role": "브랜드마케팅",
+      "tags": [
+        "대기업",
+        "서울"
+      ],
+      "match": 84,
+      "salary": "4,200만원~",
+      "location": "서울",
+      "deadline": "2026.04.20",
+      "jobType": "신입",
+      "applyUrl": "https://recruit.cj.net/"
+    },
+    {
+      "id": 3,
+      "company": "우아한형제들",
+      "initial": "B",
+      "color": "#2AC1BC",
+      "role": "퍼포먼스마케팅",
+      "tags": [
+        "대기업",
+        "서울"
+      ],
+      "match": 80,
+      "salary": "4,000만원~",
+      "location": "서울",
+      "deadline": "2026.04.10",
+      "jobType": "신입",
+      "applyUrl": "https://career.woowahan.com/"
+    },
+    {
+      "id": 4,
+      "company": "쿠팡",
+      "initial": "C",
+      "color": "#EE2222",
+      "role": "커머스마케팅/MD",
+      "tags": [
+        "대기업",
+        "서울"
+      ],
+      "match": 74,
+      "salary": "4,300만원~",
+      "location": "서울",
+      "deadline": "2026.04.25",
+      "jobType": "신입",
+      "applyUrl": "https://www.coupang.jobs/kr/"
+    },
+    {
+      "id": 5,
+      "company": "신세계백화점",
+      "initial": "S",
+      "color": "#C00021",
+      "role": "리테일마케팅/기획",
+      "tags": [
+        "대기업",
+        "서울"
+      ],
+      "match": 71,
+      "salary": "3,900만원~",
+      "location": "서울",
+      "deadline": "2026.04.18",
+      "jobType": "신입",
+      "applyUrl": "https://job.shinsegae.com/"
+    }
+  ],
+  "finalRoadmap": {
+    "semester": "2026-1학기",
+    "graduation": "2027.02",
+    "matchNow": 81,
+    "matchGoal": 92,
+    "topFitJob": {
+      "name": "브랜드 마케터",
+      "fit": 86
+    },
+    "studentGoal": {
+      "company": "아모레퍼시픽",
+      "role": "브랜드 마케터"
+    },
+    "insights": [
+      {
+        "tag": "🎯 방향 정렬",
+        "title": "추천 직무와 목표 직무가 일치합니다 — 남은 건 실행",
+        "desc": "현재 역량 최적합 직무는 브랜드 마케터(적합도 86%)이고 목표(아모레퍼시픽 브랜드 마케터, 매칭률 81%)와 같은 방향입니다. 방향 고민 없이 남은 약 11개월을 '취업 실행'에 집중하면 됩니다."
+      },
+      {
+        "tag": "🔥 가장 시급한 보강",
+        "title": "자기소개서 5개사 완성 — 상반기 공채가 임박했습니다",
+        "desc": "직무 역량·공모전 2회·인턴 1회로 경험은 충분하나, 기업별 자소서가 2개사 초안에 머물러 있습니다. 상반기 공채 마감 전 5개사 맞춤 자소서 완성이 합격을 가장 크게 좌우합니다."
+      },
+      {
+        "tag": "⏳ 시간 가용성",
+        "title": "졸업까지 약 11개월 — 상반기 공채가 승부처",
+        "desc": "2026 상반기 공채(3~5월)가 핵심 분기입니다. 자소서·PT면접을 마무리하면서 데이터분석(GA·SQL)을 병행 보강하면 졸업 시점 매칭률 92% 도달이 가능합니다."
+      }
+    ],
+    "scenarios": [
+      {
+        "id": "A",
+        "badge": "A안 · 추천",
+        "title": "브랜드 마케터 (소비재·뷰티 대기업)",
+        "fit": 86,
+        "pros": [
+          "현재 역량(브랜드 기획·공모전)과 88% 일치",
+          "목표 기업 아모레퍼시픽과 직결",
+          "공모전·인턴 경험이 그대로 강점으로 연결"
+        ],
+        "cons": [
+          "데이터분석(GA·SQL) 한 단계 보강이 차별화 포인트"
+        ],
+        "targets": [
+          "아모레퍼시픽",
+          "CJ제일제당",
+          "LG생활건강",
+          "오리온",
+          "롯데웰푸드"
+        ]
+      },
+      {
+        "id": "B",
+        "badge": "B안 · 확장 경로",
+        "title": "퍼포먼스/그로스 마케터 (IT·커머스 플랫폼)",
+        "fit": 79,
+        "pros": [
+          "데이터 기반 성장 직무로 채용 수요가 빠르게 증가",
+          "GAIQ 보유 — 진입 기반 일부 확보"
+        ],
+        "cons": [
+          "SQL·대시보드(루커/태블로) 심화 학습 필요 (+3개월)",
+          "브랜드보다 정량 분석 비중이 높음"
+        ],
+        "targets": [
+          "쿠팡",
+          "우아한형제들",
+          "네이버",
+          "당근",
+          "토스"
+        ]
+      }
+    ],
+    "thisWeek": [
+      {
+        "id": "a1",
+        "priority": "P0",
+        "title": "상반기 공채 자소서 공통문항 3개사 초안 작성",
+        "why": "자소서 5개사 완성이 합격을 좌우 — 마감 전 분량 확보가 최우선입니다.",
+        "effort": "3~4시간",
+        "due": "이번 주말",
+        "impactLabel": "합격률 +8%",
+        "linkLabel": "AI 자소서 작성하기",
+        "linkPath": "/jobs/home"
+      },
+      {
+        "id": "a2",
+        "priority": "P0",
+        "title": "AI 모의면접(PT·토론) 2회 연습",
+        "why": "마케팅 직무는 PT·토론 면접 비중이 큽니다. 실전 감각을 지금부터 쌓아야 합니다.",
+        "effort": "회당 40분",
+        "due": "D-5",
+        "impactLabel": "면접 통과율 +10%",
+        "linkLabel": "AI 모의면접 시작",
+        "linkPath": "/jobs/home"
+      },
+      {
+        "id": "a3",
+        "priority": "P1",
+        "title": "GA(구글애널리틱스) 실습 강의 등록",
+        "why": "퍼포먼스 마케팅 데이터 역량 보강. 자소서·면접에서 차별화 한 줄이 됩니다.",
+        "effort": "등록 15분",
+        "due": "D-7",
+        "impactLabel": "매칭률 +3%",
+        "linkLabel": "비교과 신청하러 가기",
+        "linkPath": "/growth/program"
+      },
+      {
+        "id": "a4",
+        "priority": "P1",
+        "title": "A·B 시나리오 중 1차 의사결정",
+        "why": "브랜드 vs 퍼포먼스 방향을 정해야 지원 기업·자소서 톤이 정렬됩니다. 취업/지도교수 상담 1회 권장.",
+        "effort": "상담 신청 + 30분 면담",
+        "due": "이번 주 내",
+        "impactLabel": "전체 로드맵 정렬",
+        "linkLabel": "지도교수 상담 신청",
+        "linkPath": "/counsel/professor"
+      }
+    ],
+    "quarters": [
+      {
+        "q": "2026 Q1",
+        "period": "2026.03 ~ 05",
+        "semester": "2026-1학기",
+        "focus": "상반기 공채 실전 — 자소서·면접·지원",
+        "milestones": [
+          "자소서 5개사 맞춤 완성 (아모레·CJ·배민·쿠팡·신세계)",
+          "AI 모의면접 PT·토론 5회 이상",
+          "상반기 공채 5개사 병행 지원",
+          "GA 실습 강의 수료"
+        ],
+        "expectedMatch": 84
+      },
+      {
+        "q": "2026 Q2",
+        "period": "2026.06 ~ 08",
+        "semester": "여름방학",
+        "focus": "결과 관리 + 인턴 전환 / 하반기 준비",
+        "milestones": [
+          "상반기 결과 회고 및 자소서 보완",
+          "마케팅 인턴 정규 전환 협의",
+          "데이터분석(SQL 기초) 보강",
+          "하반기 타겟 기업 리스트 확정"
+        ],
+        "expectedMatch": 88
+      },
+      {
+        "q": "2026 Q3",
+        "period": "2026.09 ~ 11",
+        "semester": "2026-2학기",
+        "focus": "하반기 공채 본지원",
+        "milestones": [
+          "하반기 공채 5개사 이상 지원",
+          "직무 PT 포트폴리오 고도화",
+          "사회조사분석사 2급 취득",
+          "임원 면접 대비 모의면접 5회"
+        ],
+        "expectedMatch": 90
+      },
+      {
+        "q": "2026 Q4",
+        "period": "2026.12 ~ 2027.02",
+        "semester": "겨울방학 + 졸업",
+        "focus": "최종 합격 → 입사 준비 → 졸업",
+        "milestones": [
+          "복수 합격 후 최종 선택",
+          "입사 전 직무 온보딩 학습",
+          "졸업 (2월)"
+        ],
+        "expectedMatch": 92
+      }
+    ],
+    "matrix": [
+      {
+        "label": "높은 영향 · 긴급",
+        "items": [
+          {
+            "title": "자소서 5개사 완성",
+            "meta": "상반기 공채 · 이번 주"
+          },
+          {
+            "title": "PT·토론 면접 연습",
+            "meta": "주 2회"
+          },
+          {
+            "title": "상반기 공채 지원",
+            "meta": "3~5월"
+          }
+        ]
+      },
+      {
+        "label": "높은 영향 · 여유",
+        "items": [
+          {
+            "title": "데이터분석(GA·SQL)",
+            "meta": "여름방학"
+          },
+          {
+            "title": "하반기 공채 대비",
+            "meta": "2026-2 학기"
+          },
+          {
+            "title": "마케팅 인턴 전환",
+            "meta": "2026 여름"
+          }
+        ]
+      },
+      {
+        "label": "낮은 영향 · 긴급",
+        "items": [
+          {
+            "title": "사회조사분석사 일정",
+            "meta": "시험 접수 확인"
+          },
+          {
+            "title": "포트폴리오 정리",
+            "meta": "직무 PT 모음"
+          }
+        ]
+      },
+      {
+        "label": "낮은 영향 · 여유",
+        "items": [
+          {
+            "title": "추가 마케팅 공모전",
+            "meta": "여력이 남으면"
+          },
+          {
+            "title": "제2외국어",
+            "meta": "외국계 지원 시"
+          }
+        ]
+      }
+    ],
+    "coach": "마케팅 직무 역량과 공모전·인턴 경험은 이미 상위권입니다. 지금 가장 중요한 것은 상반기 공채 자소서 5개사 완성과 PT·토론 면접 연습이고, 데이터분석(GA) 한 줄을 더하면 차별화됩니다. 방향(브랜드 vs 퍼포먼스)을 이번 주 안에 확정한 뒤 지도교수·취업상담을 받고 지원을 시작하세요."
+  },
+  "scoreInputs": {
+    "grade": 4,
+    "certifications": 2,
+    "toeic": 870,
+    "programs": 6,
+    "counsel": 4,
+    "kvct": 82,
+    "projects": 2,
+    "contests": 3,
+    "xpLevel": 31,
+    "m2Score": 75,
+    "m1Score": 78,
+    "majorGpa": 3.8,
+    "totalGpa": 3.7,
+    "capstoneScore": 88,
+    "attendanceDays": 85,
+    "lectureAttendanceRate": 96,
+    "journalCount": 18,
+    "aiResumeInterviewCount": 6,
+    "sprint2Score": 82,
+    "psychCounselCount": 0
+  }
+}

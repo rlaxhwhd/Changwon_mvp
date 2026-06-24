@@ -23,8 +23,8 @@ export default function SectionSidebar() {
   const section = getSectionForPath(pathname)
 
   if (!section) return null
-  // 1-depth 섹션에 sub-page가 1개 이하면 사이드바를 숨겨 가로 공간 회수
-  if (section.children.length <= 1) return null
+  // children이 0일 때만 숨김 — 진단센터처럼 단일 화면이어도 좌측 네비는 유지
+  if (section.children.length === 0) return null
 
   const activeChildPath = getActiveChildPath(pathname, section, hash)
 

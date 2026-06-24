@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import ProgramApplyModal from '../../components/ProgramApplyModal'
+import { isWished as isWishedStore, toggleWish as toggleWishStore } from '../../data/wishlist'
 import './ProgramDetail.css'
 
 type DetailTab = '프로그램 소개' | '공지 사항' | '수강 후기' | 'Q&A'
@@ -225,12 +226,19 @@ const MOCK_PROGRAMS: Record<string, ProgramData> = {
 export default function ProgramDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const progId = Number(id)
   const [activeTab, setActiveTab] = useState<DetailTab>('프로그램 소개')
-  const [wished, setWished] = useState(false)
+  const [wished, setWished] = useState(() => (Number.isFinite(progId) ? isWishedStore(progId) : false))
   const [applyOpen, setApplyOpen] = useState(false)
   const [applied, setApplied] = useState(false)
 
   const prog = (id && MOCK_PROGRAMS[id]) ? MOCK_PROGRAMS[id] : MOCK_PROGRAMS['default']
+
+  const handleToggleWish = () => {
+    if (!Number.isFinite(progId)) { setWished(w => !w); return }
+    const next = toggleWishStore(progId)
+    setWished(next.includes(progId))
+  }
 
   const handleApplySubmit = () => {
     setApplyOpen(false)
@@ -380,11 +388,16 @@ export default function ProgramDetail() {
           )}
           <button
             className={`pd-wish-btn${wished ? ' wished' : ''}`}
-            onClick={() => setWished(w => !w)}
+            onClick={handleToggleWish}
           >
             <i className={`fa-${wished ? 'solid' : 'regular'} fa-heart`} />
             {wished ? '찜 완료' : '찜 프로그램저장'}
           </button>
+          {wished && (
+            <p className="pd-wish-saved" role="status">
+              <i className="fa-solid fa-circle-check" /> 관심 프로그램에 저장했어요. 목록의 <strong>찜 목록 보기</strong>에서 확인하세요.
+            </p>
+          )}
 
           {/* Schedule */}
           {prog.schedule.length > 0 && (

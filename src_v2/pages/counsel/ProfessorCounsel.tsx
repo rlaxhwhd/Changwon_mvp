@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
+import IapSummaryBanner from '../../components/IapSummaryBanner'
 import './CareerCounsel.css'
 import './ProfessorCounsel.css'
 
@@ -209,6 +210,7 @@ export default function ProfessorCounsel() {
         </div>
         <h1>교수상담 신청</h1>
         <p>대학/부서와 학부를 선택한 뒤, 원하는 교수님께 온라인 또는 오프라인 상담을 신청하세요.</p>
+        <IapSummaryBanner note="상담 시 참고할 내 진단 요약 (자동 공유)" />
       </section>
 
       <div className="pc-layout">

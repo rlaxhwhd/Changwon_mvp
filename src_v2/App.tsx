@@ -16,9 +16,10 @@ import GrowthJournalForm from './pages/growth/GrowthJournalForm'
 import SkillTree from './pages/growth/SkillTree'
 import TodayGrowthMission from './pages/growth/TodayGrowthMission'
 import GrowthMissionLog from './pages/growth/GrowthMissionLog'
+import RoadmapStatus from './pages/growth/RoadmapStatus'
 
 // 진단 센터
-import EmploymentTest from './pages/diagnosis/EmploymentTest'
+// 진단센터: /diagnosis/employment 한 화면만 — 콘텐츠는 기존 DiagnosisResult 사용
 import DiagnosisResult from './pages/diagnosis/DiagnosisResult'
 import DiagnosisResultDetail from './pages/diagnosis/DiagnosisResultDetail'
 
@@ -65,6 +66,7 @@ const router = createBrowserRouter(
         { path: '/growth/program',      element: <ProgramApply /> },
         { path: '/growth/program/:id',  element: <ProgramDetail /> },
         { path: '/growth/quest',        element: <QuestBoard /> },
+        { path: '/growth/roadmap-status', element: <RoadmapStatus /> },
         { path: '/growth/mission',      element: <TodayGrowthMission /> },
         { path: '/growth/mission-log',  element: <GrowthMissionLog /> },
         { path: '/growth/journal',      element: <GrowthJournal /> },
@@ -74,9 +76,11 @@ const router = createBrowserRouter(
 
         // 진단 센터
         { path: '/diagnosis',            element: <Navigate to="/diagnosis/employment" replace /> },
-        { path: '/diagnosis/employment',      element: <EmploymentTest /> },
-        { path: '/diagnosis/result',          element: <DiagnosisResult /> },
-        { path: '/diagnosis/result/:testId',  element: <DiagnosisResultDetail /> },
+        { path: '/diagnosis/employment',           element: <DiagnosisResult /> },
+        { path: '/diagnosis/employment/:testId',   element: <DiagnosisResultDetail /> },
+        // 옛 경로는 employment로 리다이렉트해 외부 링크·즐겨찾기 유지
+        { path: '/diagnosis/result',               element: <Navigate to="/diagnosis/employment" replace /> },
+        { path: '/diagnosis/result/:testId',       element: <Navigate to="/diagnosis/employment" replace /> },
 
         // 전문상담
         { path: '/counsel',           element: <Navigate to="/counsel/career" replace /> },

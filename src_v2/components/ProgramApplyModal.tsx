@@ -1,6 +1,12 @@
 import { useState } from 'react'
 import Modal from './Modal'
+import { getActiveStudent } from '../data/students'
 import './ProgramApplyModal.css'
+
+const COLLEGE_BY_MAJOR: Record<string, string> = {
+  컴퓨터공학과: '공과대학',
+  경영학과: '경영대학',
+}
 
 interface Props {
   open: boolean
@@ -16,19 +22,19 @@ interface Props {
   }) => void
 }
 
-const STUDENT = {
-  name: '이동욱',
-  studentId: '20140204',
-  grade: '4',
-  phone: '010-3132-3313',
-  email: 'dlehddnr220@naver.com',
-  college: '인문대학',
-  dept: '철학과',
-}
-
 type YN = 'yes' | 'no' | ''
 
 export default function ProgramApplyModal({ open, onClose, programTitle, onSubmit }: Props) {
+  const active = getActiveStudent()
+  const STUDENT = {
+    name: active.name,
+    studentId: '20250001',
+    grade: String(active.grade),
+    phone: '010-1234-5678',
+    email: 'student@cwnu.ac.kr',
+    college: COLLEGE_BY_MAJOR[active.major] ?? '국립창원대학교',
+    dept: active.major,
+  }
   const [path, setPath] = useState('')
   const [motive, setMotive] = useState('')
   const [agree3rd, setAgree3rd] = useState<YN>('')

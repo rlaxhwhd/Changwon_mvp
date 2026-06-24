@@ -14,6 +14,7 @@ import {
 import { Radar } from 'react-chartjs-2'
 import Modal from '../../components/Modal'
 import CRAReport from '../../components/CRAReport'
+import { getActiveStudent } from '../../data/students'
 import './DiagnosisResultDetail.css'
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
@@ -48,9 +49,16 @@ const historyData = [
 const TEST_NAMES: Record<string, string> = {
   '9core': '9CORE 검사',
   psychology: '심리검사',
-  cares: 'CARES 검사',
+  cares: 'CARES 진로인식검사',
   job: '직무역량검사',
   aptitude: '직업적성검사',
+  // 진단 7모듈(careerProcess.ts) testId 연동
+  type: '유형분류 검사',
+  self: '자기이해 검사',
+  kvct: 'KVCT 직무역량검사',
+  sprint1: 'SPRINT Ⅰ 취업인식검사',
+  sprint2: 'SPRINT Ⅱ 취업인식검사',
+  neo: 'NEO 성격검사',
 }
 
 const scoreLevel = (s: number) => (s >= 80 ? 'high' : s >= 60 ? 'mid' : 'low')
@@ -169,6 +177,7 @@ export default function DiagnosisResultDetail() {
   const navigate = useNavigate()
   const { testId = '9core' } = useParams()
   const testName = TEST_NAMES[testId] ?? '9CORE 검사'
+  const studentName = getActiveStudent().name
 
   const [abilityModal, setAbilityModal] = useState<number | null>(null)
   const [historyModal, setHistoryModal] = useState(false)
@@ -224,7 +233,7 @@ export default function DiagnosisResultDetail() {
     <div className="dr-wrap">
       {/* 헤더 */}
       <div className="dr-header">
-        <button className="dr-back-btn" onClick={() => navigate('/diagnosis/result')} aria-label="뒤로 가기">
+        <button className="dr-back-btn" onClick={() => navigate('/diagnosis/employment')} aria-label="뒤로 가기">
           <i className="fa-solid fa-arrow-left" />
         </button>
         <div>
@@ -260,7 +269,7 @@ export default function DiagnosisResultDetail() {
             <div className="dr-ai-box">
               <div className="dr-ai-label"><i className="fa-solid fa-robot" /> AI 역량 평가 분석</div>
               <p>
-                김채원님의 {testName} 역량 평균 점수는 <strong>{avg}점</strong>으로
+                {studentName}님의 {testName} 역량 평균 점수는 <strong>{avg}점</strong>으로
                 {avg >= 75 ? ' 양호한 수준입니다.' : avg >= 60 ? ' 보통 수준으로 일부 보완이 필요합니다.' : ' 전반적인 역량 강화가 필요합니다.'}
               </p>
               <p>

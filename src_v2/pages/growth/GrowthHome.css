@@ -582,3 +582,189 @@
   }
   .gh-title-row h1 { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
 }
+/* ─── 학과 랭킹 모달 ─────────────────────────────────────────── */
+
+.gh-rank-modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gh-rank-modal-item {
+  display: grid;
+  grid-template-columns: 44px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.gh-rank-modal-item.me {
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+}
+
+.gh-rank-modal-pos {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--color-text-muted);
+  background: #f1f4fa;
+}
+
+.gh-rank-modal-pos.top {
+  background: linear-gradient(135deg, #f6c33b 0%, #f08b1c 100%);
+  color: #fff;
+  box-shadow: 0 4px 10px rgba(240, 139, 28, 0.28);
+}
+
+.gh-rank-modal-pos.me {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.gh-rank-modal-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gh-rank-modal-info strong {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+.gh-rank-modal-info span {
+  font-size: 13px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.gh-rank-modal-me-chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.gh-rank-modal-xp {
+  font-size: 15px;
+  font-weight: 900;
+  color: var(--color-primary);
+  font-feature-settings: 'tnum';
+}
+
+.gh-rank-modal-note {
+  margin-top: 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ─── XP 활동 전체 모달 ────────────────────────────────────── */
+
+.gh-act-modal-summary {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  background: linear-gradient(135deg, #f6f9ff 0%, #eef4ff 100%);
+  border: 1px solid #dce8ff;
+  border-radius: var(--radius-md);
+}
+
+.gh-act-modal-summary > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gh-act-modal-summary small {
+  font-size: 12.5px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.gh-act-modal-summary strong {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.gh-act-modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.gh-act-modal-list li {
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff;
+}
+
+.gh-act-modal-list .gh-activity-icon {
+  width: 32px;
+  height: 32px;
+  font-size: 14px;
+}
+
+.gh-act-modal-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.gh-act-modal-text strong {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-navy);
+  line-height: 1.4;
+}
+
+.gh-act-modal-text time {
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+.gh-act-modal-xp {
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--color-primary);
+  font-feature-settings: 'tnum';
+}

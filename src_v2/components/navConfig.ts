@@ -36,8 +36,7 @@ export const NAV_SECTIONS: NavSection[] = [
     basePaths: ['/diagnosis'],
     icon: 'fa-clipboard-check',
     children: [
-      { label: '취업지원 역량진단', path: '/diagnosis/employment', icon: 'fa-clipboard-check' },
-      { label: '진단검사 결과', path: '/diagnosis/result', icon: 'fa-chart-simple' },
+      { label: '진단검사 결과', path: '/diagnosis/employment', icon: 'fa-chart-simple' },
     ],
   },
   {
@@ -69,10 +68,11 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: 'fa-seedling',
     children: [
       { label: '홈대시보드', path: '/growth', icon: 'fa-house' },
+      { label: '로드맵 진행 현황', path: '/growth/roadmap-status', icon: 'fa-route' },
       { label: '비교과프로그램신청', path: '/growth/program', icon: 'fa-clipboard-list' },
       { label: '퀘스트보드', path: '/growth/quest', icon: 'fa-list-check' },
-      { label: '오늘의 성장미션', path: '/growth/mission', icon: 'fa-bullseye' },
-      { label: '일일미션 기록노트', path: '/growth/mission-log', icon: 'fa-calendar-check' },
+      { label: '오늘의 성장퀘스트', path: '/growth/mission', icon: 'fa-bullseye' },
+      { label: '일일퀘스트 기록노트', path: '/growth/mission-log', icon: 'fa-calendar-check' },
       { label: '성장경험일지', path: '/growth/journal', icon: 'fa-book-open' },
     ],
   },

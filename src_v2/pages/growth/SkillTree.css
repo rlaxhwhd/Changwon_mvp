@@ -85,6 +85,10 @@
 
 /* ─── Neon Flow: 4 역량 카드 → 직무 방향 카드 ────────────────────────────── */
 
+.st-flow-wrap {
+  position: relative;
+}
+
 .st-flow {
   display: block;
   width: 100%;
@@ -93,26 +97,225 @@
   overflow: visible;
 }
 
-.st-flow-path {
-  fill: none;
-  stroke: url(#st-neon);
-  stroke-width: 2.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  filter: url(#st-glow);
-  stroke-dasharray: 16 12;
-  animation: stFlowDash 2.2s linear infinite;
-  opacity: 0.92;
+/* ─── 분석하기 버튼 (4 path 수렴 지점) ───────────────────────────────── */
+
+.st-analyze-btn {
+  position: absolute;
+  left: 50%;
+  top: calc(190px * 210 / 260);
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 18px 36px;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  background: linear-gradient(135deg, #22d3ee 0%, #2563eb 55%, #a855f7 100%);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.55),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.18),
+    0 14px 36px rgba(37, 99, 235, 0.45),
+    0 0 44px rgba(168, 85, 247, 0.4);
+  transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  z-index: 2;
 }
 
-@keyframes stFlowDash {
-  to { stroke-dashoffset: -56; }
+.st-analyze-btn:hover:not(:disabled) {
+  transform: translate(-50%, -50%) scale(1.04);
+  filter: brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.22),
+    0 16px 38px rgba(37, 99, 235, 0.55),
+    0 0 52px rgba(168, 85, 247, 0.55);
+}
+
+.st-analyze-btn:active:not(:disabled) {
+  transform: translate(-50%, -50%) scale(0.98);
+}
+
+.st-analyze-btn:disabled {
+  cursor: progress;
+  opacity: 0.7;
+}
+
+.st-analyze-btn-icon {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 15px;
+}
+
+.st-analyze-btn-label {
+  white-space: nowrap;
+}
+
+/* ─── 분석 로딩 오버레이 ──────────────────────────────────────────── */
+
+.st-analyze-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 15, 40, 0.55);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: stAnalyzeFade 0.2s ease;
+}
+
+@keyframes stAnalyzeFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.st-analyze-card {
+  width: min(460px, calc(100vw - 48px));
+  padding: 36px 36px 30px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 60px rgba(8, 15, 40, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: stAnalyzePop 0.25s ease;
+}
+
+@keyframes stAnalyzePop {
+  from { opacity: 0; transform: translateY(8px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.st-analyze-spinner {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  border: 5px solid var(--color-primary-bg);
+  border-top-color: var(--color-primary);
+  animation: stAnalyzeSpin 0.85s linear infinite;
+  margin-bottom: 18px;
+}
+
+@keyframes stAnalyzeSpin {
+  to { transform: rotate(360deg); }
+}
+
+.st-analyze-check {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  margin-bottom: 18px;
+  box-shadow: 0 8px 20px rgba(22, 163, 74, 0.35);
+}
+
+.st-analyze-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+
+.st-analyze-sub {
+  font-size: 14px;
+  color: var(--color-text-muted);
+  margin: 0 0 22px;
+  line-height: 1.5;
+}
+
+.st-analyze-bar {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: #E8ECF5;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.st-analyze-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #22d3ee 0%, #2563eb 50%, #a855f7 100%);
+  border-radius: 999px;
+  transition: width 80ms linear;
+  box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+}
+
+.st-analyze-percent {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .st-flow-path {
+  .st-analyze-overlay,
+  .st-analyze-card {
+    animation: none;
+  }
+  .st-analyze-spinner {
+    animation: none;
+    border-top-color: var(--color-primary);
+  }
+}
+
+.st-flow-path {
+  fill: none;
+  stroke: url(#st-neon);
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.22;
+}
+
+.st-flow-beam {
+  fill: none;
+  stroke: url(#st-beam);
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: url(#st-glow);
+  stroke-dasharray: 22 100;
+  stroke-dashoffset: 100;
+  animation: stFlowBeam 2.6s linear infinite;
+}
+
+.st-flow-beam-1 { animation-delay: 0s; }
+.st-flow-beam-2 { animation-delay: -0.65s; }
+.st-flow-beam-3 { animation-delay: -1.3s; }
+.st-flow-beam-4 { animation-delay: -1.95s; }
+
+@keyframes stFlowBeam {
+  0%   { stroke-dashoffset: 100; }
+  100% { stroke-dashoffset: -22; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-flow-beam {
     animation: none;
     stroke-dasharray: none;
+    stroke-dashoffset: 0;
+    opacity: 0.6;
+  }
+  .st-flow-path {
+    opacity: 0.5;
   }
 }
 

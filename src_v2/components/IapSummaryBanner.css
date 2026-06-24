@@ -1,0 +1,77 @@
+.iap-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 60%, var(--color-primary-bg) 100%);
+  border: 1px solid var(--color-surface-alt);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.iap-banner-ico {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 17px;
+}
+
+.iap-banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.iap-banner-note {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text-muted);
+  letter-spacing: 0.01em;
+}
+
+.iap-banner-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.iap-bchip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 800;
+  background: var(--color-bg);
+  color: var(--color-navy);
+  border: 1px solid var(--color-border);
+}
+
+.iap-bchip i { font-size: 13px; }
+
+.iap-bchip-main {
+  background: var(--color-primary);
+  color: #fff;
+  border-color: transparent;
+}
+
+.iap-bchip-iap {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  border-color: var(--color-surface-alt);
+}
+
+.iap-bchip-ghost {
+  background: transparent;
+  color: var(--color-text-sub);
+  font-weight: 700;
+}
