@@ -45,6 +45,7 @@ import AiConsulting from './pages/jobs/AiConsulting'
 import Portfolio from './pages/mypage/Portfolio'
 import MyPrograms from './pages/mypage/MyPrograms'
 import CounselStatus from './pages/mypage/CounselStatus'
+import Attendance from './pages/mypage/Attendance'
 
 const router = createBrowserRouter(
   [
@@ -110,10 +111,11 @@ const router = createBrowserRouter(
 
         // 마이페이지
         { path: '/mypage',           element: <Navigate to="/mypage/portfolio" replace /> },
-        { path: '/mypage/portfolio', element: <Portfolio /> },
-        { path: '/mypage/programs',  element: <MyPrograms /> },
-        { path: '/mypage/counsel',   element: <CounselStatus /> },
-        { path: '/mypage/mission',   element: <Navigate to="/growth/mission-log" replace /> },
+        { path: '/mypage/portfolio',  element: <Portfolio /> },
+        { path: '/mypage/programs',   element: <MyPrograms /> },
+        { path: '/mypage/counsel',    element: <CounselStatus /> },
+        { path: '/mypage/attendance', element: <Attendance /> },
+        { path: '/mypage/mission',    element: <Navigate to="/growth/mission-log" replace /> },
       ],
     },
     {

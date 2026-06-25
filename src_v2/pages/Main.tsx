@@ -450,7 +450,7 @@ export default function Main() {
               ))}
             </div>
           </div>
-          <button className="mn-more-btn" onClick={() => navigate('/growth/mission-log')}>출석 기록 보기</button>
+          <button className="mn-more-btn" onClick={() => navigate('/mypage/attendance')}>출석 기록 보기</button>
         </div>
 
         {/* 추천 프로그램 + 공지사항 */}

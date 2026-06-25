@@ -106,6 +106,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open' },
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
       { label: '상담 현황', path: '/mypage/counsel', icon: 'fa-headset' },
+      { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check' },
     ],
   },
 ]
