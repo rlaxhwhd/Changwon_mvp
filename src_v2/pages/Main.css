@@ -1080,36 +1080,77 @@
 
 /* ════════════════════════════════════════════
    RESPONSIVE
+   - ≤1200px : 와이드 태블릿 (히어로 이미지 축소, 절대 위치 유지)
+   - ≤1024px : 태블릿 (히어로 세로 스택, 이미지는 콘텐츠 아래로 이동)
+   - ≤768px  : 모바일 (히어로 이미지 제거, 모든 카드 1열)
 ════════════════════════════════════════════ */
 @media (max-width: 1200px) {
-  .mn-stat-cards {
-    grid-template-columns: repeat(3, 1fr);
+  .mn-hero {
+    padding: 64px 40px 40px;
+    min-height: 300px;
   }
-
-  .mn-hero-img { width: 30%; }
-  .mn-hero-content { max-width: 760px; }
+  .mn-hero-img { width: 36%; }
+  .mn-hero-img img { transform: translateX(-12px) scale(1.05); }
+  .mn-hero-content { max-width: 720px; }
+  .mn-greeting { margin-left: 20px; }
+  .mn-stat-cards { margin-left: 20px; gap: 12px; }
+  .mn-greeting-title { font-size: 27px; }
+  .mn-stat-card { padding: 18px 18px; }
+  .mn-body { padding: 24px 40px; gap: 16px; }
+  .mn-ai-section { padding: 24px 40px 32px; }
+  .mn-footer { padding: 32px 40px 36px; }
 }
 
 @media (max-width: 1024px) {
-  .mn-body { grid-template-columns: 1fr 1fr; }
-  .mn-hero, .mn-body, .mn-ai-section { padding-left: 32px; padding-right: 32px; }
-  .mn-greeting { margin-left: 16px; }
-  .mn-stat-cards { margin-left: 16px; }
-  .mn-footer { padding-left: 32px; padding-right: 32px; }
+  /* 히어로: 배경 이미지 제거 (태블릿) — 콘텐츠가 풀 너비 사용 */
+  .mn-hero {
+    padding: 36px 32px 32px;
+    min-height: 0;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .mn-hero-img { display: none; }
+  .mn-hero-content { max-width: 100%; }
+
+  .mn-greeting,
+  .mn-stat-cards { margin-left: 0; }
+  .mn-greeting-title { font-size: 25px; }
+
+  /* 스탯 카드 3열 유지하되 살짝 축소 */
+  .mn-stat-cards { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .mn-stat-card { height: 200px; padding: 16px 18px; }
+
+  /* 본문 카드 2열 */
+  .mn-body { grid-template-columns: 1fr 1fr; padding: 22px 32px; gap: 16px; }
+  .mn-ai-section { padding: 22px 32px 32px; }
+  .mn-recommend-grid { grid-template-columns: 1fr; gap: 14px; }
+  .mn-footer { padding: 30px 32px 34px; }
 }
 
 @media (max-width: 768px) {
-  .mn-stat-cards { grid-template-columns: 1fr 1fr; }
-  .mn-body { grid-template-columns: 1fr; padding: 20px 16px; }
-  .mn-hero { padding: 28px 16px 32px; flex-direction: column; }
-  .mn-hero-img { position: static; width: 100%; height: 200px; margin-top: 16px; }
-  .mn-hero-img img { object-position: bottom center; }
-  .mn-ai-section { padding: 20px 16px 28px; }
-  .mn-recommend-grid { grid-template-columns: 1fr; gap: 14px; }
-  .mn-greeting,
-  .mn-stat-cards { margin-left: 0; }
-  .mn-footer { padding: 28px 16px 32px; }
+  /* 히어로: 이미지 완전 제거 (사용자 요청) */
+  .mn-hero { padding: 24px 16px 24px; min-height: 0; }
+  .mn-hero-img { display: none; }
+
+  .mn-greeting-title { font-size: 22px; }
+  .mn-greeting-sub { font-size: 15px; }
+  .mn-greeting { margin-bottom: 18px; }
+
+  /* 스탯 카드 1열로 스택 */
+  .mn-stat-cards { grid-template-columns: 1fr; gap: 12px; }
+  .mn-stat-card { height: auto; min-height: 160px; padding: 16px 18px; }
+
+  .mn-body { grid-template-columns: 1fr; padding: 18px 14px; gap: 12px; }
+  .mn-body-card { padding: 16px; }
+  .mn-ai-section { padding: 18px 14px 28px; }
+  .mn-rec-card { padding: 18px 16px 14px; }
+  .mn-recommend-grid { grid-template-columns: 1fr; gap: 12px; }
+
+  .mn-rec-prog-thumb { width: 60px; height: 50px; }
+  .mn-rec-prog-name { font-size: 15px; }
+
+  .mn-footer { padding: 24px 14px 30px; }
   .mn-footer-inner { flex-direction: column; gap: 20px; align-items: flex-start; }
   .mn-footer-brand { flex-direction: row; align-items: center; gap: 10px; }
-  .mn-footer-links { gap: 20px; }
+  .mn-footer-links { gap: 16px; flex-wrap: wrap; margin-top: 12px; }
 }
