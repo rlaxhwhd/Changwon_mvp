@@ -21,6 +21,13 @@ const FOCUSABLE =
 
 export default function Modal({ open, onClose, title, size = 'md', children }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
+  /**
+   * onClose는 부모에서 매 렌더마다 새 함수 reference로 들어올 수 있어
+   * deps에 넣으면 textarea/input 입력 도중에도 effect가 재실행되어
+   * 첫 번째 focusable(닫기 버튼)로 포커스가 튄다. ref로 안정화.
+   */
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose }, [onClose])
 
   useEffect(() => {
     if (!open) return
@@ -29,7 +36,7 @@ export default function Modal({ open, onClose, title, size = 'md', children }: P
 
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       if (e.key === 'Tab' && dialogRef.current) {
@@ -51,7 +58,7 @@ export default function Modal({ open, onClose, title, size = 'md', children }: P
     }
 
     document.addEventListener('keydown', handleKey)
-    // Move focus into the dialog on open.
+    // Move focus into the dialog on open (open이 true가 되는 순간 1회만).
     const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE)
     ;(firstFocusable ?? dialogRef.current)?.focus()
 
@@ -59,7 +66,7 @@ export default function Modal({ open, onClose, title, size = 'md', children }: P
       document.removeEventListener('keydown', handleKey)
       previouslyFocused?.focus?.()
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 
