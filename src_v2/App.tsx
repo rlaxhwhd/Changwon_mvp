@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
+import NeonTrail from './components/NeonTrail'
 import Landing from './pages/Landing'
 import Main from './pages/Main'
 
@@ -127,5 +128,10 @@ const router = createBrowserRouter(
 )
 
 export default function App() {
-  return <RouterProvider router={router} />
+  return (
+    <>
+      <NeonTrail />
+      <RouterProvider router={router} />
+    </>
+  )
 }
