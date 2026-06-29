@@ -107,18 +107,18 @@ export default function QuestBoard() {
       <section className="qb-summary-grid" aria-label="퀘스트 요약">
         <article className="qb-card qb-progress-card">
           <div>
-            <h2>오늘의 진행률</h2>
+            <h2>다음 레벨까지</h2>
             <div className="qb-progress-value">
-              <strong>3</strong>
-              <span>/ 3</span>
+              <strong>Lv. 23</strong>
+              <span>→ Lv. 24</span>
             </div>
             <div className="qb-progress-track" aria-hidden="true">
-              <span style={{ width: '100%' }} />
+              <span style={{ width: '62.5%' }} />
             </div>
-            <p>모든 일일 퀘스트를 완료했어요.</p>
+            <p>1,250 / 2,000 XP · 750 XP 남았어요</p>
           </div>
           <div className="qb-reward-wrap">
-            <button className="qb-primary-btn" type="button">보상 받기</button>
+            <button className="qb-primary-btn" type="button">보상 미리보기</button>
           </div>
         </article>
 
