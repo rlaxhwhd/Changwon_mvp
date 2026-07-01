@@ -175,14 +175,14 @@ export default function GrowthHome() {
                   <strong>3 <span>/ 3</span></strong>
                 </div>
                 <div className="gh-quest">
-                  <span className="gh-quest-icon blue"><i className="fa-regular fa-calendar-check" /></span>
-                  <p>주간 퀘스트</p>
-                  <strong>3 <span>/ 5</span></strong>
-                </div>
-                <div className="gh-quest">
                   <span className="gh-quest-icon teal"><i className="fa-regular fa-calendar-check" /></span>
                   <p>월간 퀘스트</p>
                   <strong>7 <span>/ 12</span></strong>
+                </div>
+                <div className="gh-quest">
+                  <span className="gh-quest-icon blue"><i className="fa-regular fa-calendar-check" /></span>
+                  <p>주간 퀘스트</p>
+                  <strong>3 <span>/ 5</span></strong>
                 </div>
               </div>
             </article>
