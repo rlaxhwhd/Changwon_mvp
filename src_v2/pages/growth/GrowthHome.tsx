@@ -181,7 +181,7 @@ export default function GrowthHome() {
                 </div>
                 <div className="gh-quest">
                   <span className="gh-quest-icon blue"><i className="fa-regular fa-calendar-check" /></span>
-                  <p>주간 퀘스트</p>
+                  <p>학기 퀘스트</p>
                   <strong>3 <span>/ 5</span></strong>
                 </div>
               </div>
