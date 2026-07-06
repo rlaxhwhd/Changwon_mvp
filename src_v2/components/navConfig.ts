@@ -48,6 +48,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '진로취업상담', path: '/counsel/career', icon: 'fa-briefcase' },
       { label: '심리상담', path: '/counsel/psych', icon: 'fa-heart' },
       { label: '지도교수상담', path: '/counsel/professor', icon: 'fa-user-tie' },
+      { label: '상담 현황', path: '/counsel/record', icon: 'fa-clipboard-list' },
     ],
   },
   {
@@ -105,7 +106,6 @@ export const NAV_SECTIONS: NavSection[] = [
     children: [
       { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open' },
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
-      { label: '상담 현황', path: '/mypage/counsel', icon: 'fa-headset' },
       { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check' },
     ],
   },

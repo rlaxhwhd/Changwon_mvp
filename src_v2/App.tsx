@@ -1,6 +1,7 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import NeonTrail from './components/NeonTrail'
+import CustomCursor from './components/CustomCursor'
 import Landing from './pages/Landing'
 import Main from './pages/Main'
 
@@ -114,7 +115,9 @@ const router = createBrowserRouter(
         { path: '/mypage',           element: <Navigate to="/mypage/portfolio" replace /> },
         { path: '/mypage/portfolio',  element: <Portfolio /> },
         { path: '/mypage/programs',   element: <MyPrograms /> },
-        { path: '/mypage/counsel',    element: <CounselStatus /> },
+        // 상담 현황: 라우팅을 /counsel/record로 이동 (기존 /mypage/counsel은 하위 호환용 리다이렉트)
+        { path: '/counsel/record',    element: <CounselStatus /> },
+        { path: '/mypage/counsel',    element: <Navigate to="/counsel/record" replace /> },
         { path: '/mypage/attendance', element: <Attendance /> },
         { path: '/mypage/mission',    element: <Navigate to="/growth/mission-log" replace /> },
       ],
@@ -131,6 +134,7 @@ export default function App() {
   return (
     <>
       <NeonTrail />
+      <CustomCursor />
       <RouterProvider router={router} />
     </>
   )

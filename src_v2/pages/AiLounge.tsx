@@ -625,7 +625,7 @@ export default function AiLounge() {
         <div id="counsel" className="card al-anchor">
           <div className="al-row-hd">
             <div className="card-title" style={{marginBottom:0}}>최근 상담 내역</div>
-            <Link to="/mypage/counsel" className="al-more-link">전체 보기 →</Link>
+            <Link to="/counsel/record" className="al-more-link">전체 보기 →</Link>
           </div>
           <div className="al-counsel-list">
             {COUNSEL_DONE_RECORDS.slice(0, 3).map((p, i) => (

@@ -182,7 +182,25 @@ export default function DiagnosisResultDetail() {
   const [abilityModal, setAbilityModal] = useState<number | null>(null)
   const [historyModal, setHistoryModal] = useState(false)
   const [craDate, setCraDate] = useState<string | null>(null)
-  const [showAi, setShowAi] = useState(true)
+  const [showAi, setShowAi] = useState(false)          // 기본 접힘
+  const [analyzing, setAnalyzing] = useState(false)    // AI 분석 로딩 중
+  const [hasAnalyzed, setHasAnalyzed] = useState(false) // 한 번이라도 분석 완료했는지
+
+  const handleAiToggle = () => {
+    if (analyzing) return
+    if (hasAnalyzed) {
+      // 이미 분석 완료 → 즉시 펼침/접힘 토글 (로딩 없음)
+      setShowAi(v => !v)
+      return
+    }
+    // 첫 클릭 → 로딩 후 펼침
+    setAnalyzing(true)
+    window.setTimeout(() => {
+      setAnalyzing(false)
+      setHasAnalyzed(true)
+      setShowAi(true)
+    }, 1800)
+  }
 
   const avg = Math.round(cores.reduce((a, c) => a + c.score, 0) / cores.length)
   const ability = abilityModal !== null ? cores[abilityModal] : null
@@ -259,13 +277,31 @@ export default function DiagnosisResultDetail() {
           <div className="dr-ai-toggle">
             <button
               className={showAi ? 'dr-ai-btn dr-ai-btn--ghost' : 'dr-ai-btn'}
-              onClick={() => setShowAi(v => !v)}
+              onClick={handleAiToggle}
+              disabled={analyzing}
             >
-              <i className="fa-solid fa-robot" /> AI 평가분석 {showAi ? '접기' : '보기'}
+              <i className={`fa-solid ${analyzing ? 'fa-spinner fa-spin' : 'fa-robot'}`} />
+              {analyzing
+                ? 'AI가 분석 중…'
+                : `AI 평가분석 ${showAi ? '접기' : '보기'}`}
             </button>
           </div>
 
-          {showAi && (
+          {analyzing && (
+            <div className="dr-ai-loading" role="status" aria-live="polite">
+              <div className="dr-ai-loading-spinner">
+                <i className="fa-solid fa-robot" />
+                <span className="dr-ai-loading-ring" />
+              </div>
+              <p className="dr-ai-loading-title">AI가 {studentName}님의 결과를 분석하고 있어요</p>
+              <p className="dr-ai-loading-sub">
+                9개 역량 점수 · 강점 · 보완 포인트를 종합해 개인화된 코멘트를 준비 중입니다…
+              </p>
+              <div className="dr-ai-loading-bar"><div className="dr-ai-loading-fill" /></div>
+            </div>
+          )}
+
+          {showAi && !analyzing && (
             <div className="dr-ai-box">
               <div className="dr-ai-label"><i className="fa-solid fa-robot" /> AI 역량 평가 분석</div>
               <p>

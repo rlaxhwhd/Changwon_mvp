@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SAVED_RESUMES } from './resumeMock'
+import { getAllResumes } from './resumeMock'
 import './AiConsulting.css'
 
 interface Evaluation {
@@ -33,7 +33,8 @@ export default function AiConsulting() {
   const [evaluating, setEvaluating] = useState(false)
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null)
 
-  const selected = SAVED_RESUMES.find(resume => resume.id === selectedId)
+  const resumes = useMemo(() => getAllResumes(), [])
+  const selected = resumes.find(resume => resume.id === selectedId)
 
   const startEval = () => {
     if (!selectedId) return
@@ -69,7 +70,7 @@ export default function AiConsulting() {
           <p className="ac-card-desc">평가를 진행할 자소서를 하나 선택해 주세요.</p>
 
           <div className="ac-pick-list">
-            {SAVED_RESUMES.map(resume => {
+            {resumes.map(resume => {
               const active = selectedId === resume.id
               return (
                 <button

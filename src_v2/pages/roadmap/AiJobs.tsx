@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import { getActiveStudent } from '../../data/students'
+import { computeAll } from '../../lib/scoring'
 import './AiJobs.css'
 
 /* ── Types ─────────────────────────────────────────────────────── */
@@ -64,6 +65,8 @@ export default function AiJobs() {
   const student = getActiveStudent()
   const JOBS = student.jobs
   const SKILLS = student.jobSkills
+  // 학생 종합 역량 점수 (5대 역량 가중평균) — "나의 준비율" 카드 표시용
+  const overallScore = useMemo(() => computeAll(student.scoreInputs).overall, [student.scoreInputs])
 
   // checked = 현재 UI 상태, applied = 실제 리스트에 적용된 값
   const [checkedFields, setCheckedFields] = useState<string[]>([student.jobField])
@@ -138,10 +141,10 @@ export default function AiJobs() {
           <div className="aj-stat-body">
             <p className="aj-stat-label">나의 준비율</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <MatchRing pct={42} />
+              <MatchRing pct={overallScore} />
               <div>
-                <p className="aj-stat-num">1,231 <span>점</span></p>
-                <p className="aj-stat-sub">1,289-2,000 점</p>
+                <p className="aj-stat-num">{overallScore} <span>/ 100</span></p>
+                <p className="aj-stat-sub">5대 역량 종합</p>
               </div>
             </div>
           </div>
@@ -155,13 +158,6 @@ export default function AiJobs() {
           </div>
         </div>
 
-        <div className="aj-stat-card">
-          <div className="aj-stat-body">
-            <p className="aj-stat-label">합격 가능성</p>
-            <p className="aj-stat-big">30<span>%</span></p>
-            <p className="aj-stat-sub aj-stat-badge">달성 가능</p>
-          </div>
-        </div>
 
         <div className="aj-stat-card">
           <div className="aj-stat-body">

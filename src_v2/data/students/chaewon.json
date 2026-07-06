@@ -310,7 +310,7 @@
         }
       ],
       "recommendation": "미취업 시 재진단으로 유형을 갱신하고 프로그램을 재배치합니다.",
-      "nextPath": "/mypage/counsel"
+      "nextPath": "/counsel/record"
     }
   ],
   "gapItems": [

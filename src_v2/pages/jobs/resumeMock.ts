@@ -43,3 +43,48 @@ export const SAVED_RESUMES: SavedResume[] = [
     createdAt: '2026-02-28',
   },
 ]
+
+/**
+ * 사용자가 AI 초안 생성으로 만든 자소서를 localStorage에 저장 · 로드하는 헬퍼.
+ * AiResume에서 저장 → AiConsulting에서 목록 노출.
+ */
+const STORAGE_KEY = 'dc_user_resumes_v1'
+
+function readUserResumes(): SavedResume[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function writeUserResumes(resumes: SavedResume[]) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(resumes))
+  } catch {
+    /* ignore quota / private mode */
+  }
+}
+
+/** 초기 mock + 사용자 저장 자소서 병합. 사용자 자소서가 최신순으로 상단. */
+export function getAllResumes(): SavedResume[] {
+  return [...readUserResumes(), ...SAVED_RESUMES]
+}
+
+/** 자소서 저장/업데이트 (같은 id면 교체) */
+export function upsertUserResume(resume: SavedResume) {
+  const list = readUserResumes()
+  const idx = list.findIndex(r => r.id === resume.id)
+  if (idx >= 0) list[idx] = resume
+  else list.unshift(resume)
+  writeUserResumes(list)
+}
+
+/** 자소서 삭제 (사용자 자소서만 실제로 지워짐; mock id면 무시) */
+export function deleteUserResume(id: string) {
+  const list = readUserResumes().filter(r => r.id !== id)
+  writeUserResumes(list)
+}
