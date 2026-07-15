@@ -7,6 +7,7 @@ import { STUDENT_TYPE_MAP, type StudentType, type IapMapping } from './careerPro
 import type { StudentInputs } from '../lib/scoring'
 import chaewon from './students/chaewon.json'
 import changwon from './students/changwon.json'
+import counselSeed from './students/counselSeedStudents.json'
 
 export interface PhaseTask { text: string; done: boolean }
 export type TermLabel = '단기' | '중기' | '장기'
@@ -100,11 +101,41 @@ export interface Job {
   applyUrl: string
 }
 
+// ── 상담신청 스키마 (단일소스) ────────────────────────────────────────────
+// 학생 레코드에 내장되는 상담신청. 상담사 포털은 이 데이터를 투영해 읽는다.
+// (src_admin/data/schema/counselRequest 의 투영 타입과 구조 정합 — '교수'는 접수함 밖)
+export type CounselRequestType = '진로취업' | '심리' | '교수'
+export type CounselRequestStatus = '대기' | '확정' | '완료' | '취소'
+export type CounselMethod = '대면' | '비대면'
+export interface CounselSlot { date: string; start: string; end: string; place?: string }
+
+export interface StudentCounselRequest {
+  id: string
+  type: CounselRequestType
+  status: CounselRequestStatus
+  method: CounselMethod
+  topic: string
+  /** 신청 일시 (ISO 8601) */
+  requestedAt: string
+  /** 미지정이면 투영단계에서 유형별 기본배정 파생(counselors 단일소스). 재배정 시 명시값 저장. */
+  assignedCounselorId?: string
+  /** 확정된 상담 슬롯 (확정/완료 시). */
+  slot?: CounselSlot
+  counselorComment?: string
+  completedAt?: string
+}
+
+/** 학적 상태 — 단일 원천 타입. 상담사측 studentRoster.EnrollStatus는 이 타입의 alias로 전환. */
+export type EnrollmentStatus = '재학' | '휴학' | '졸업' | '수료'
+
 export interface StudentData {
   id: string
+  studentNo: string
   name: string
   major: string
   grade: number
+  phone: string                       // "010-0XXX-XXXX" (실번호 충돌 없는 가짜번호 규칙)
+  enrollmentStatus: EnrollmentStatus
   gpa: string
   language: string
   studentType: StudentType
@@ -123,6 +154,10 @@ export interface StudentData {
   finalRoadmap: FinalRoadmap
   /** 점수 계산식(lib/scoring.ts)이 사용하는 9개 raw 입력값. JSON에서 직접 주입. */
   scoreInputs: StudentInputs
+  /** 상담사 상세 화면 — AI가 학생 정보·고민을 토대로 상담사에게 추천하는 질문. */
+  counselorQuestions?: string[]
+  /** 이 학생이 낸 상담신청. JSON seed 초기값. 런타임 변경은 override 스토어로. */
+  counselRequests: StudentCounselRequest[]
 }
 
 export const STUDENTS: StudentData[] = [
@@ -157,4 +192,143 @@ export function setActiveStudent(id: string): void {
 // 학생 유형 → IAP 매핑 (careerProcess의 단일 소스 재사용)
 export function getStudentIap(student: StudentData): IapMapping {
   return STUDENT_TYPE_MAP[student.studentType]
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// 상담신청 스토어 (단일 DB 스왑 seam)
+// 상담신청의 소유 주체를 CounselOwner로 통일한다. 상세 학생(STUDENTS, counselRequests 내장)과
+// 데모 학생(counselSeedStudents.json)이 한 배열로 평탄화된다.
+// seed(원본 JSON)는 불변, 런타임 변경은 override 스토어 'dc_counsel_owners' 한 곳에만 쌓인다.
+// 이 스토어(getCounselOwners/add/patch)만 API 호출로 교체하면 DB 연동이 된다.
+//  · 학생 이벤트(신청) → addCounselRequest → override 갱신
+//  · 상담사 이벤트(전이) → patchCounselRequest → 소유 owner 역참조 후 override 갱신
+//  · 상담사 포털은 getCounselOwners를 투영해 읽는다 (cross-SPA 데이터 공유, 로직 import 없음)
+// ─────────────────────────────────────────────────────────────────────────
+
+/** 상담신청 소유 주체 — StudentData(상세)와 데모 학생(경량)이 공통으로 만족하는 코어 프로필 구조.
+ *  상세학생은 StudentData에서 파생, 데모학생은 counselSeed JSON에서 passthrough. */
+export interface CounselOwner {
+  id: string
+  studentNo: string
+  name: string
+  major: string
+  grade: number
+  phone: string
+  enrollmentStatus: EnrollmentStatus
+  studentType: StudentType            // careerProcess 6유형 — IAP는 STUDENT_TYPE_MAP에서 파생(단일소스)
+  gpa: string
+  language: string
+  targetCompanySummary: string        // 예: "넥슨코리아 · IT Project Manager"
+  roadmapSummary: string              // 한 줄 진행 요약
+  counselorQuestions: string[]        // AI 추천 상담 질문 (상세 화면)
+  counselRequests: StudentCounselRequest[]
+}
+
+/** 상세학생 phases에서 로드맵 진행 한 줄 요약을 파생한다(화면 리터럴 금지 — 스토어 층에서 파생). */
+function deriveRoadmapSummary(phases: RoadmapPhase[]): string {
+  const doneCount = phases.filter(p => p.status === 'done').length
+  const active = phases.find(p => p.status === 'active')
+  if (active) {
+    return `${active.num}단계 ${active.title} 진행 중 · 완료 ${doneCount}/${phases.length}단계`
+  }
+  const lastDone = [...phases].reverse().find(p => p.status === 'done')
+  if (lastDone) {
+    return `${lastDone.num}단계 ${lastDone.title} 완료 · 완료 ${doneCount}/${phases.length}단계`
+  }
+  return `진행 전 · 완료 ${doneCount}/${phases.length}단계`
+}
+
+const COUNSEL_OWNER_OVERRIDE_KEY = 'dc_counsel_owners'
+
+/** owner별 상담신청 override(런타임 변경분)를 읽는다. 파싱 실패·부재 시 {} 폴백. */
+function readOwnerOverrides(): Record<string, StudentCounselRequest[]> {
+  try {
+    const raw = localStorage.getItem(COUNSEL_OWNER_OVERRIDE_KEY)
+    if (raw) {
+      const parsed = JSON.parse(raw)
+      if (parsed && typeof parsed === 'object') return parsed as Record<string, StudentCounselRequest[]>
+    }
+  } catch {
+    /* 폴백: override 없음 */
+  }
+  return {}
+}
+
+/** owner 1명의 상담신청 목록을 override에 저장한다(seed는 불변). */
+function saveOwnerRequests(ownerId: string, list: StudentCounselRequest[]): void {
+  try {
+    const overrides = readOwnerOverrides()
+    overrides[ownerId] = list
+    localStorage.setItem(COUNSEL_OWNER_OVERRIDE_KEY, JSON.stringify(overrides))
+  } catch {
+    /* 데모 범위 — 저장 실패 무시 */
+  }
+}
+
+/** 상담신청 소유자 병합 목록(seed 불변 + override). 투영·읽기·쓰기의 유일 소스. */
+export function getCounselOwners(): CounselOwner[] {
+  const ov = readOwnerOverrides()
+  // 상세학생: 코어 프로필을 StudentData에서 파생(요약 문자열은 스토어 층에서 생성).
+  const detailed: CounselOwner[] = STUDENTS.map(s => ({
+    id: s.id,
+    studentNo: s.studentNo,
+    name: s.name,
+    major: s.major,
+    grade: s.grade,
+    phone: s.phone,
+    enrollmentStatus: s.enrollmentStatus,
+    studentType: s.studentType,
+    gpa: s.gpa,
+    language: s.language,
+    targetCompanySummary: `${s.targetCompany.name} · ${s.targetCompany.role}`,
+    roadmapSummary: deriveRoadmapSummary(s.phases),
+    counselorQuestions: s.counselorQuestions ?? [],
+    counselRequests: ov[s.id] ?? s.counselRequests ?? [],
+  }))
+  // 데모학생: 코어 프로필을 counselSeed JSON에서 passthrough(무거운 로드맵 없음).
+  const demo: CounselOwner[] = (counselSeed as Omit<CounselOwner, 'studentNo'>[]).map(o => ({
+    id: o.id,
+    studentNo: o.id,
+    name: o.name,
+    major: o.major,
+    grade: o.grade,
+    phone: o.phone,
+    enrollmentStatus: o.enrollmentStatus,
+    studentType: o.studentType,
+    gpa: o.gpa,
+    language: o.language,
+    targetCompanySummary: o.targetCompanySummary,
+    roadmapSummary: o.roadmapSummary,
+    counselorQuestions: o.counselorQuestions ?? [],
+    counselRequests: ov[o.id] ?? o.counselRequests,
+  }))
+  return [...detailed, ...demo]
+}
+
+export function getCounselOwnerById(id: string): CounselOwner | undefined {
+  return getCounselOwners().find(o => o.id === id)
+}
+
+export function getStudentCounselRequests(id: string): StudentCounselRequest[] {
+  return getCounselOwnerById(id)?.counselRequests ?? []
+}
+
+/** 상담신청 id로 소속 owner를 역참조한다(상담사 전이 시 소유자 자동 판별). */
+export function findOwnerByRequestId(reqId: string): CounselOwner | undefined {
+  return getCounselOwners().find(o => o.counselRequests.some(r => r.id === reqId))
+}
+
+/** 학생 이벤트: 신청 append. 배정 로직은 모름 — assignedCounselorId 미지정(투영에서 파생). */
+export function addCounselRequest(ownerId: string, req: StudentCounselRequest): void {
+  const cur = getStudentCounselRequests(ownerId)
+  let id = req.id
+  for (let n = 1; cur.some(r => r.id === id); n++) id = `${req.id}-${n}`
+  saveOwnerRequests(ownerId, [...cur, id === req.id ? req : { ...req, id }])
+}
+
+/** 상담사 이벤트: 신청 1건 patch. 소유 owner를 역참조해 그 override 배열만 갱신한다. */
+export function patchCounselRequest(reqId: string, patch: Partial<StudentCounselRequest>): void {
+  const owner = findOwnerByRequestId(reqId)
+  if (!owner) return
+  saveOwnerRequests(owner.id, owner.counselRequests.map(r => (r.id === reqId ? { ...r, ...patch } : r)))
 }

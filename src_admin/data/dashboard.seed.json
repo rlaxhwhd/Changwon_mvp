@@ -1,0 +1,106 @@
+{
+  "period": "2024.06.01 ~ 2024.06.30",
+  "stats": [
+    {
+      "id": "students",
+      "label": "전체 학생",
+      "value": 12345,
+      "unit": "명",
+      "deltaValue": 5.2,
+      "deltaUnit": "percent",
+      "deltaDir": "up",
+      "deltaLabel": "전일 대비",
+      "icon": "fa-solid fa-user-group",
+      "tone": "primary"
+    },
+    {
+      "id": "diagnosis",
+      "label": "진단 참여자",
+      "value": 8234,
+      "unit": "명",
+      "deltaValue": 7.1,
+      "deltaUnit": "percent",
+      "deltaDir": "up",
+      "deltaLabel": "전월 대비",
+      "icon": "fa-solid fa-clipboard-check",
+      "tone": "info"
+    },
+    {
+      "id": "counsel",
+      "label": "상담 신청 건수",
+      "value": 1245,
+      "unit": "건",
+      "deltaValue": 3.4,
+      "deltaUnit": "percent",
+      "deltaDir": "up",
+      "deltaLabel": "전월 대비",
+      "icon": "fa-solid fa-comments",
+      "tone": "success"
+    },
+    {
+      "id": "programs",
+      "label": "비교과 프로그램",
+      "value": 56,
+      "unit": "개",
+      "deltaValue": 4,
+      "deltaUnit": "count",
+      "deltaDir": "up",
+      "deltaLabel": "전월 대비",
+      "icon": "fa-solid fa-calendar",
+      "tone": "accent"
+    },
+    {
+      "id": "jobs",
+      "label": "채용공고",
+      "value": 123,
+      "unit": "건",
+      "deltaValue": 8,
+      "deltaUnit": "count",
+      "deltaDir": "up",
+      "deltaLabel": "전월 대비",
+      "icon": "fa-solid fa-briefcase",
+      "tone": "info"
+    },
+    {
+      "id": "notices",
+      "label": "공지사항",
+      "value": 23,
+      "unit": "건",
+      "deltaValue": 3,
+      "deltaUnit": "count",
+      "deltaDir": "up",
+      "deltaLabel": "전월 대비",
+      "icon": "fa-solid fa-bullhorn",
+      "tone": "primary"
+    }
+  ],
+  "traffic": {
+    "daily": {
+      "labels": ["6/24", "6/25", "6/26", "6/27", "6/28"],
+      "counsels": [18, 24, 21, 32, 27]
+    },
+    "weekly": {
+      "labels": ["1주", "2주", "3주", "4주", "5주"],
+      "counsels": [86, 112, 138, 154, 141]
+    },
+    "monthly": {
+      "labels": ["2월", "3월", "4월", "5월", "6월"],
+      "counsels": [210, 340, 420, 480, 455]
+    }
+  },
+  "diagnosis": {
+    "total": 8234,
+    "segments": [
+      { "label": "9CORE 진단", "value": 2450 },
+      { "label": "직무역량 진단", "value": 2120 },
+      { "label": "심리성향 진단", "value": 1890 },
+      { "label": "진로 인식 진단", "value": 1774 }
+    ]
+  },
+  "notices": [
+    { "id": "n1", "tag": "전체", "title": "2024 하계 현장실습 참여자 모집 안내", "date": "2024.06.20" },
+    { "id": "n2", "tag": "채용", "title": "삼성전자 하반기 신입사원 채용 공고", "date": "2024.06.18" },
+    { "id": "n3", "tag": "프로그램", "title": "AI 자소서 첨삭 이벤트 안내", "date": "2024.06.17" },
+    { "id": "n4", "tag": "시스템", "title": "포털 시스템 점검 안내 (6/22)", "date": "2024.06.15" }
+  ]
+}

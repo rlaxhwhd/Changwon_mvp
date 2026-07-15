@@ -24,3 +24,10 @@ dist-ssr
 *.sw?
 .claude
 .gstack/
+
+# 브라우저 프로필 덤프·중간 산출물 (vite watch/Tailwind 스캔 hang 유발) — git 추적·스캔 제외
+_workspace/
+
+# macOS 아카이브 부산물 (폰트 zip 해제 잔여물)
+__MACOSX/
+._*

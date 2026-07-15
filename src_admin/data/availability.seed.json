@@ -1,0 +1,17 @@
+[
+  {
+    "counselorId": "career_kim",
+    "slots": [
+      { "id": "av_ck_1", "weekday": 1, "start": "14:00", "end": "17:00" },
+      { "id": "av_ck_2", "weekday": 3, "start": "14:00", "end": "17:00" },
+      { "id": "av_ck_3", "weekday": 5, "start": "14:00", "end": "17:00" }
+    ]
+  },
+  {
+    "counselorId": "psych_lee",
+    "slots": [
+      { "id": "av_pl_1", "weekday": 2, "start": "10:00", "end": "16:00" },
+      { "id": "av_pl_2", "weekday": 4, "start": "10:00", "end": "16:00" }
+    ]
+  }
+]

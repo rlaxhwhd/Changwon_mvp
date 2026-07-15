@@ -1,0 +1,51 @@
+[
+  {
+    "id": "prog_001",
+    "title": "데이터 직무 부트캠프",
+    "desc": "Python 데이터 분석·자동화 실습 중심 교육으로 IT 직무 실무 역량을 기릅니다.",
+    "category": "취업",
+    "startDate": "2026-07-14",
+    "endDate": "2026-07-18",
+    "capacity": 30,
+    "location": "공학관 502 실습실",
+    "status": "모집중",
+    "createdAt": "2026-07-01T09:00:00+09:00",
+    "applicants": [
+      {
+        "studentId": "chaewon",
+        "studentName": "김채원",
+        "studentMajor": "컴퓨터공학과",
+        "appliedAt": "2026-07-03T10:20:00+09:00",
+        "attendance": "미확인"
+      },
+      {
+        "studentId": "changwon",
+        "studentName": "김창원",
+        "studentMajor": "경영학과",
+        "appliedAt": "2026-07-04T14:05:00+09:00",
+        "attendance": "미확인"
+      }
+    ]
+  },
+  {
+    "id": "prog_002",
+    "title": "자기탐색 진로설계 워크숍",
+    "desc": "강점 진단과 자기 탐색을 통해 진로 방향을 설계하는 진로 역량 강화 프로그램입니다.",
+    "category": "진로",
+    "startDate": "2026-07-21",
+    "endDate": "2026-07-22",
+    "capacity": 20,
+    "location": "학생회관 세미나실 B",
+    "status": "모집중",
+    "createdAt": "2026-07-02T11:30:00+09:00",
+    "applicants": [
+      {
+        "studentId": "changwon",
+        "studentName": "김창원",
+        "studentMajor": "경영학과",
+        "appliedAt": "2026-07-05T09:40:00+09:00",
+        "attendance": "미확인"
+      }
+    ]
+  }
+]

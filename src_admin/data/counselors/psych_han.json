@@ -1,0 +1,11 @@
+{
+  "id": "psych_han",
+  "name": "한지민",
+  "role": "psych",
+  "roleLabel": "심리상담사",
+  "dept": "학생상담센터",
+  "scope": "전 학과 심리·정서 상담 및 위기 개입",
+  "departments": [],
+  "email": "psych.han@changwon.ac.kr",
+  "officeHours": "월·수 10:00~15:00"
+}

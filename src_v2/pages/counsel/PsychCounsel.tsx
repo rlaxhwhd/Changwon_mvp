@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
+import { submitCounselRequest } from '../../data/counselRequestsWrite'
 import './CareerCounsel.css'
 
 type CounselorId = 'all' | 'oh' | 'seo' | 'han' | 'moon' | 'yoon' | 'bae' | 'shin' | 'nam'
@@ -293,7 +294,14 @@ export default function PsychCounsel() {
         time={selectedSlot?.time ?? ''}
         room="학생생활관 1층 심리상담센터"
         phone="055-213-2025"
-        onSubmit={() => {
+        onSubmit={purpose => {
+          submitCounselRequest({
+            type: '심리',
+            purpose,
+            counselorName: `${activeCounselor.name} ${activeCounselor.title}`,
+            date: selectedSlot?.day.date ?? '',
+            time: selectedSlot?.time ?? '',
+          })
           setReserveOpen(false)
           showNotice('상담 예약이 신청되었습니다')
         }}

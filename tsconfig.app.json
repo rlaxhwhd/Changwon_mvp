@@ -25,5 +25,5 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src_v1", "src_v2"]
+  "include": ["src_v1", "src_v2", "src_admin"]
 }
