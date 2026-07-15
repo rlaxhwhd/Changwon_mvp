@@ -3,7 +3,6 @@ import Layout from './components/Layout'
 import Login from './pages/Login'
 import Home from './pages/Home'
 import CounselRequests from './pages/CounselRequests'
-import CounselStudentDetail from './pages/CounselStudentDetail'
 import CounselSchedule from './pages/CounselSchedule'
 import CounselSession from './pages/CounselSession'
 import CounselRecords from './pages/CounselRecords'
@@ -48,7 +47,6 @@ const router = createBrowserRouter(
 
             // ── 상담 관리 /counsel (G1 구현) ──
             { path: '/counsel/requests', element: <CounselRequests /> },
-            { path: '/counsel/requests/:requestId', element: <CounselStudentDetail /> },
             { path: '/counsel/schedule', element: <CounselSchedule /> },
             { path: '/counsel/session/:studentId', element: <CounselSession /> },
             { path: '/counsel/records', element: <CounselRecords /> },

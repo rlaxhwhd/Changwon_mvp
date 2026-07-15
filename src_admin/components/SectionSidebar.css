@@ -138,3 +138,30 @@
   font-size: 18px;
   font-weight: 900;
 }
+
+/* 상담 진행 화면 — AI 추천 질문 (사이드바) */
+.section-sidebar-questions {
+  margin-top: 16px;
+  padding: 14px 12px;
+  border: 1px solid var(--color-primary-light);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-bg);
+}
+.section-sidebar-questions h3 {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 800; color: var(--color-primary); margin-bottom: 10px;
+}
+.section-sidebar-questions ol {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 8px; counter-reset: sq;
+}
+.section-sidebar-questions li {
+  position: relative; padding: 8px 10px 8px 30px;
+  background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  font-size: 12px; line-height: 1.5; color: var(--color-text); counter-increment: sq;
+}
+.section-sidebar-questions li::before {
+  content: counter(sq); position: absolute; left: 9px; top: 8px;
+  width: 17px; height: 17px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: var(--color-primary); color: #fff; font-size: 10px; font-weight: 800;
+}

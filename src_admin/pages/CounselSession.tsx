@@ -12,6 +12,7 @@ import type { CounselRecord } from '../data/counselRecords'
 import { STUDENTS, getStudentIap } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
 import EmptyState from '../components/EmptyState'
+import StudentDiagnosticDetail from '../components/StudentDiagnosticDetail'
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -20,7 +21,6 @@ function todayISO(): string {
 /** 좌측 — 학생 진단결과·프로필 (src_v2 학생 데이터 공유 읽기) */
 function StudentPanel({ student }: { student: StudentData }) {
   const iap = getStudentIap(student)
-  const scores = student.typeScores
   return (
     <div className="admin-session-student">
       <div className="admin-session-student-head">
@@ -57,18 +57,6 @@ function StudentPanel({ student }: { student: StudentData }) {
           </dd>
         </div>
       </dl>
-
-      <div className="admin-session-block">
-        <h4>유형 진단 점수</h4>
-        <div className="admin-score-chips">
-          {(Object.entries(scores) as [string, string][]).map(([k, v]) => (
-            <span key={k} className="admin-score-chip">
-              <span className="admin-score-chip-label">{k}</span>
-              <strong>{v}</strong>
-            </span>
-          ))}
-        </div>
-      </div>
 
       <div className="admin-session-block">
         <h4>IAP 방향</h4>
@@ -309,6 +297,7 @@ export default function CounselSession() {
             </Link>
           </div>
           <StudentPanel student={student} />
+          <StudentDiagnosticDetail student={student} />
           <HistoryPanel studentId={student.id} />
         </aside>
 

@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import GNB from './GNB'
 import SectionSidebar from './SectionSidebar'
+import Chatbot from './Chatbot'
 
 export default function Layout() {
   const currentYear = new Date().getFullYear()
@@ -17,6 +18,7 @@ export default function Layout() {
           </div>
         </div>
       </main>
+      <Chatbot />
     </div>
   )
 }
