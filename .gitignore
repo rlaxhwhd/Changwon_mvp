@@ -35,3 +35,7 @@ _workspace/
 # macOS 아카이브 부산물 (폰트 zip 해제 잔여물)
 __MACOSX/
 ._*
+
+# Python 바이트코드 캐시 (스킬 스크립트)
+__pycache__/
+*.pyc
