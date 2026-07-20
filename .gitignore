@@ -22,7 +22,11 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.claude
+
+# Claude Code: 하네스(에이전트·스킬)는 git 추적, 로컬 설정·세션·분석 산출물은 제외
+.claude/*
+!.claude/agents/
+!.claude/skills/
 .gstack/
 
 # 브라우저 프로필 덤프·중간 산출물 (vite watch/Tailwind 스캔 hang 유발) — git 추적·스캔 제외
