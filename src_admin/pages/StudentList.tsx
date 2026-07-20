@@ -1,3 +1,5 @@
+import type { IconType } from 'react-icons'
+import { LuFrown, LuRocket, LuRoute, LuSearch, LuTriangleAlert } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getActiveCounselor } from '../data/counselors'
@@ -36,10 +38,10 @@ function detailToRoster(s: StudentData): RosterStudent {
 
 const ALL = '전체'
 
-const TRACK_ICON: Record<RosterTrack, string> = {
-  표준: 'fa-route',
-  집중관리: 'fa-triangle-exclamation',
-  가속: 'fa-rocket',
+const TRACK_ICON: Record<RosterTrack, IconType> = {
+  표준: LuRoute,
+  집중관리: LuTriangleAlert,
+  가속: LuRocket,
 }
 
 export default function StudentList() {
@@ -104,7 +106,7 @@ export default function StudentList() {
             {focusCount > 0 && (
               <>
                 {' '}
-                · <span className="admin-focus-inline"><i className="fa-solid fa-triangle-exclamation" /> 집중관리 {focusCount}명</span>
+                · <span className="admin-focus-inline"><LuTriangleAlert /> 집중관리 {focusCount}명</span>
               </>
             )}
           </p>
@@ -114,7 +116,7 @@ export default function StudentList() {
       {/* 필터/검색 툴바 — 옵션은 담당 학생 집합에서 파생 */}
       <div className="admin-filterbar">
         <div className="admin-search">
-          <i className="fa-solid fa-magnifying-glass" />
+          <LuSearch />
           <input
             type="text"
             value={query}
@@ -177,7 +179,7 @@ export default function StudentList() {
         {managed.length === 0 ? (
           <EmptyState message="담당 학생이 없습니다." />
         ) : list.length === 0 ? (
-          <EmptyState icon="fa-regular fa-face-frown" message="조건에 맞는 학생이 없습니다." />
+          <EmptyState icon={LuFrown} message="조건에 맞는 학생이 없습니다." />
         ) : (
           <div className="admin-roster">
             <div className="admin-roster-head">
@@ -196,7 +198,6 @@ export default function StudentList() {
                 onClick={() => navigate(`/students/${s.id}`)}
               >
                 <span className="admin-roster-student">
-                  <span className="admin-student-avatar sm"></span>
                   <strong>{s.name}</strong>
                   {detailedIds.has(s.id) && (
                     <span className="admin-tag admin-tag-soft">상세</span>
@@ -212,7 +213,7 @@ export default function StudentList() {
                 </span>
                 <span className="admin-roster-cell">
                   <span className={`admin-track ${rosterTrackClass(s.track)}`}>
-                    <i className={`fa-solid ${TRACK_ICON[s.track]}`} /> {s.track}
+                    {(() => { const Icon = TRACK_ICON[s.track]; return <Icon /> })()} {s.track}
                   </span>
                 </span>
                 <span className="admin-roster-cell">

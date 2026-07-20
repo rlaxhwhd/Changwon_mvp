@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 // 학적 상태는 학생 JSON(students.ts)이 단일 원천 — 타입만 데이터 seam 채널로 재사용.
-import type { EnrollmentStatus } from '../../../src_v2/data/students'
+import type { EnrollmentStatus, StudentTrack } from '../../../src_v2/data/students'
 
 /** 상담 유형 — 진로취업상담사는 '진로취업', 심리상담사는 '심리' 접수 */
 export type CounselRequestType = '진로취업' | '심리'
@@ -27,6 +27,8 @@ export interface CounselRequest {
   studentMajor: string
   /** 신청 시점 학적 상태 스냅샷 (목록 배지용) — owner에서 투영 */
   studentEnrollmentStatus: EnrollmentStatus
+  /** 역량 점수 기반 위험 단계 트랙 (학년 보정) — owner에서 투영 */
+  studentTrack: StudentTrack
   type: CounselRequestType
   status: CounselRequestStatus
   method: CounselMethod

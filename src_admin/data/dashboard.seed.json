@@ -10,7 +10,7 @@
       "deltaUnit": "percent",
       "deltaDir": "up",
       "deltaLabel": "전일 대비",
-      "icon": "fa-solid fa-user-group",
+      "icon": "user-group",
       "tone": "primary"
     },
     {
@@ -22,7 +22,7 @@
       "deltaUnit": "percent",
       "deltaDir": "up",
       "deltaLabel": "전월 대비",
-      "icon": "fa-solid fa-clipboard-check",
+      "icon": "clipboard-check",
       "tone": "info"
     },
     {
@@ -34,7 +34,7 @@
       "deltaUnit": "percent",
       "deltaDir": "up",
       "deltaLabel": "전월 대비",
-      "icon": "fa-solid fa-comments",
+      "icon": "comments",
       "tone": "success"
     },
     {
@@ -46,7 +46,7 @@
       "deltaUnit": "count",
       "deltaDir": "up",
       "deltaLabel": "전월 대비",
-      "icon": "fa-solid fa-calendar",
+      "icon": "calendar",
       "tone": "accent"
     },
     {
@@ -58,7 +58,7 @@
       "deltaUnit": "count",
       "deltaDir": "up",
       "deltaLabel": "전월 대비",
-      "icon": "fa-solid fa-briefcase",
+      "icon": "briefcase",
       "tone": "info"
     },
     {
@@ -70,7 +70,7 @@
       "deltaUnit": "count",
       "deltaDir": "up",
       "deltaLabel": "전월 대비",
-      "icon": "fa-solid fa-bullhorn",
+      "icon": "bullhorn",
       "tone": "primary"
     }
   ],

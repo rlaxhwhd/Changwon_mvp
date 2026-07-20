@@ -470,7 +470,7 @@ input, textarea, select { font-family: var(--font); }
   display: flex; align-items: center; gap: 8px;
   font-size: 17px; font-weight: 800; color: var(--color-text);
 }
-.admin-card-head h2 i { color: var(--color-primary); }
+.admin-card-head h2 svg { color: var(--color-primary); }
 .admin-card-more {
   display: inline-flex; align-items: center; gap: 4px;
   font-size: 13px; font-weight: 700; color: var(--color-primary);
@@ -569,7 +569,7 @@ input, textarea, select { font-family: var(--font); }
   padding: 44px 20px;
   text-align: center;
 }
-.admin-empty i { font-size: 34px; color: var(--color-primary-light); }
+.admin-empty svg { font-size: 34px; color: var(--color-primary-light); }
 .admin-empty strong { font-size: 16px; font-weight: 800; color: var(--color-text); }
 .admin-empty p { font-size: 14px; font-weight: 600; color: var(--color-text-secondary); }
 
@@ -695,7 +695,7 @@ input, textarea, select { font-family: var(--font); }
   border-bottom: 3px solid transparent;
   transition: color 0.15s, border-color 0.15s;
 }
-.admin-tab i { font-size: 13px; }
+.admin-tab svg { font-size: 13px; }
 .admin-tab:hover { color: var(--color-primary); }
 .admin-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 800; }
 .admin-tab-count {
@@ -718,7 +718,7 @@ input, textarea, select { font-family: var(--font); }
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 }
-.admin-search i { color: var(--color-text-secondary); font-size: 14px; }
+.admin-search svg { color: var(--color-text-secondary); font-size: 14px; }
 .admin-search input { flex: 1; border: none; outline: none; font-size: 14px; color: var(--color-text); background: transparent; }
 .admin-toolbar-count { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
 
@@ -760,7 +760,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-form-hint { font-size: 13px; font-weight: 600; color: var(--color-text-secondary); text-align: right; margin-top: 6px; }
 .admin-form-hint-warn { color: var(--color-danger); text-align: left; }
 .admin-save-hint { font-size: 13px; font-weight: 700; color: var(--color-success); margin-right: auto; }
-.admin-save-hint i { margin-right: 4px; }
+.admin-save-hint svg { margin-right: 4px; }
 
 /* ─── Avatar sizes ───────────────────────────────────────────────────── */
 .admin-student-avatar.sm { width: 36px; height: 36px; font-size: 14px; }
@@ -778,7 +778,7 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-request-top { display: flex; align-items: center; gap: 12px; }
 .admin-request-method { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
-.admin-request-method i { color: var(--color-primary); margin-right: 4px; }
+.admin-request-method svg { color: var(--color-primary); margin-right: 4px; }
 .admin-request-at { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
 
 .admin-request-body { display: flex; align-items: flex-start; gap: 18px; }
@@ -795,7 +795,7 @@ input, textarea, select { font-family: var(--font); }
   border-radius: var(--radius-sm);
   font-size: 13px; font-weight: 700; color: var(--color-text);
 }
-.admin-request-slot i { color: var(--color-primary); }
+.admin-request-slot svg { color: var(--color-primary); }
 
 .admin-request-actions { display: flex; gap: 8px; }
 
@@ -858,7 +858,7 @@ input, textarea, select { font-family: var(--font); }
   font-size: 13px; font-weight: 800; color: var(--color-text);
   display: flex; align-items: center; gap: 6px;
 }
-.admin-session-block h4 i { color: var(--color-primary); }
+.admin-session-block h4 svg { color: var(--color-primary); }
 .admin-session-note { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
 .admin-session-note strong { color: var(--color-text); }
 .admin-session-empty { font-size: 13px; font-weight: 600; color: var(--color-text-secondary); padding: 8px 0; }
@@ -890,7 +890,7 @@ input, textarea, select { font-family: var(--font); }
   background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-xs);
   font-size: 13px; color: var(--color-text); line-height: 1.5;
 }
-.admin-history-comment i { color: var(--color-primary); margin-right: 4px; }
+.admin-history-comment svg { color: var(--color-primary); margin-right: 4px; }
 
 .admin-record-form { display: flex; flex-direction: column; gap: 16px; }
 .admin-record-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
@@ -900,7 +900,7 @@ input, textarea, select { font-family: var(--font); }
   border-radius: var(--radius-sm);
   font-size: 14px; font-weight: 700; color: var(--color-text);
 }
-.admin-record-topic i { color: var(--color-primary); margin-right: 6px; }
+.admin-record-topic svg { color: var(--color-primary); margin-right: 6px; }
 
 /* ─── Records (완료 내역) ────────────────────────────────────────────── */
 .admin-record-item-list { display: flex; flex-direction: column; gap: 16px; }
@@ -921,9 +921,9 @@ input, textarea, select { font-family: var(--font); }
   border-radius: var(--radius-sm);
   font-size: 14px; font-weight: 700; color: var(--color-text);
 }
-.admin-record-item-topic i { color: var(--color-primary); margin-right: 6px; }
+.admin-record-item-topic svg { color: var(--color-primary); margin-right: 6px; }
 .admin-record-label { display: block; font-size: 12px; font-weight: 800; color: var(--color-text-secondary); margin-bottom: 4px; }
-.admin-record-label i { color: var(--color-primary); margin-right: 4px; }
+.admin-record-label svg { color: var(--color-primary); margin-right: 4px; }
 .admin-record-item-summary p,
 .admin-record-item-comment p,
 .admin-record-item-followup p { font-size: 14px; color: var(--color-text); line-height: 1.6; }
@@ -996,7 +996,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-select select:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-bg); }
 
 .admin-focus-inline { color: var(--color-accent); font-weight: 800; }
-.admin-focus-inline i { margin-right: 3px; }
+.admin-focus-inline svg { margin-right: 3px; }
 
 /* ── 학생 로스터(표) ─────────────────────────────────────────────────── */
 .admin-roster { display: flex; flex-direction: column; }
@@ -1047,7 +1047,7 @@ input, textarea, select { font-family: var(--font); }
   background: #FFF3E0; border: 1px solid #FCE0B8; border-radius: var(--radius-md);
   font-size: 13px; font-weight: 700; color: #9A6A12;
 }
-.admin-perm-banner i { color: var(--color-warning); }
+.admin-perm-banner svg { color: var(--color-warning); }
 
 .admin-detail-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
@@ -1058,7 +1058,7 @@ input, textarea, select { font-family: var(--font); }
   background: var(--color-section-bg); border-radius: var(--radius-sm);
   font-size: 13px; color: var(--color-text-secondary); line-height: 1.6;
 }
-.admin-detail-note i { color: var(--color-primary); margin-right: 6px; }
+.admin-detail-note svg { color: var(--color-primary); margin-right: 6px; }
 
 .admin-score-row { display: flex; gap: 20px; flex-wrap: wrap; }
 .admin-score-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
@@ -1134,7 +1134,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-gap-desc { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; margin-bottom: 10px; }
 .admin-gap-bar { display: flex; align-items: center; gap: 12px; }
 .admin-gap-figs { font-size: 12px; font-weight: 800; color: var(--color-text); white-space: nowrap; }
-.admin-gap-figs i { color: var(--color-primary); margin: 0 2px; }
+.admin-gap-figs svg { color: var(--color-primary); margin: 0 2px; }
 .admin-badge-required { background: var(--color-primary); color: #fff; }
 .admin-badge-preferred { background: var(--color-primary-bg); color: var(--color-primary); }
 .admin-badge-weight { background: var(--color-section-bg); color: var(--color-text-secondary); }
@@ -1289,7 +1289,7 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-penalty-entry.is-waive { background: #F3FBF7; border-color: #C9EEDD; }
 .admin-penalty-entry-kind { font-size: 12px; font-weight: 800; color: var(--color-text); white-space: nowrap; }
-.admin-penalty-entry-kind i { color: var(--color-primary); margin-right: 4px; }
+.admin-penalty-entry-kind svg { color: var(--color-primary); margin-right: 4px; }
 .admin-penalty-entry-reason { font-size: 13px; font-weight: 600; color: var(--color-text); }
 .admin-penalty-entry-points { font-size: 15px; font-weight: 900; color: var(--color-danger); text-align: center; }
 .admin-penalty-entry-points.minus { color: var(--color-success); }
@@ -1314,7 +1314,7 @@ input, textarea, select { font-family: var(--font); }
   font-size: 14px; font-weight: 700; color: var(--color-text);
   white-space: nowrap;
 }
-.admin-date-pill i { color: var(--color-primary); font-size: 13px; }
+.admin-date-pill svg { color: var(--color-primary); font-size: 13px; }
 
 /* ── KPI 카드 6개 ────────────────────────────────────────────────────────── */
 .admin-kpi-grid {
@@ -1347,7 +1347,7 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-kpi-delta.is-up { color: var(--color-success); }
 .admin-kpi-delta.is-down { color: var(--color-danger); }
-.admin-kpi-delta i { font-size: 10px; }
+.admin-kpi-delta svg { font-size: 10px; }
 .admin-kpi-delta small { font-weight: 600; color: var(--color-text-secondary); margin-left: 2px; }
 .admin-kpi-icon {
   width: 40px; height: 40px; flex-shrink: 0;
@@ -1446,7 +1446,7 @@ input, textarea, select { font-family: var(--font); }
   box-shadow: var(--shadow-sm);
 }
 .counsel-filter-search { position: relative; flex: 1 1 280px; }
-.counsel-filter-search > i {
+.counsel-filter-search > svg {
   position: absolute;
   top: 50%;
   left: 14px;
@@ -1609,18 +1609,15 @@ input, textarea, select { font-family: var(--font); }
   font-weight: 800;
 }
 .counsel-calendar-grid button.is-selected {
-  width: 54px;
-  height: 54px;
-  align-self: center;
-  justify-self: center;
-  border: 0;
-  border-radius: 50%;
-  background: var(--color-primary);
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(6, 83, 182, .2);
+  position: relative;
+  z-index: 1;
+  background: #fff;
+  color: var(--color-primary);
+  font-weight: 800;
+  box-shadow: inset 0 0 0 2px var(--color-primary);
 }
-.counsel-calendar-grid button.is-selected:hover { background: var(--color-primary-hover); }
-.counsel-calendar-grid button.is-selected em { background: rgba(255,255,255,.18); color: #fff; }
+.counsel-calendar-grid button.is-selected:hover { background: var(--color-section-bg); }
+.counsel-calendar-grid button.is-selected em { background: var(--color-primary-bg); color: var(--color-primary); }
 .counsel-calendar-legend {
   display: flex;
   align-items: center;
@@ -1675,11 +1672,11 @@ input, textarea, select { font-family: var(--font); }
 .counsel-primary-btn:disabled { opacity: .45; cursor: not-allowed; }
 .counsel-outline-btn.is-danger { color: var(--color-danger); }
 
-.counsel-request-table-scroll { flex: 1; }
+.counsel-request-table-scroll { flex: 1; overflow-x: auto; }
 .counsel-request-columns,
 .counsel-request-row {
   display: grid;
-  grid-template-columns: 78px minmax(150px, 1fr) 78px 104px 220px 62px 156px;
+  grid-template-columns: 70px 122px 70px 66px 84px minmax(110px, 1fr) 56px 154px;
   align-items: center;
 }
 .counsel-request-columns {
@@ -1708,6 +1705,11 @@ input, textarea, select { font-family: var(--font); }
 .counsel-request-person small,
 .counsel-request-person em { overflow: hidden; color: var(--color-text-secondary); font-size: 11px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
 .counsel-request-studentid { overflow: hidden; color: var(--color-text); font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.counsel-track-badge { display: inline-flex; align-items: center; justify-content: center; padding: 5px 9px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.counsel-track-badge.track-집중관리 { background: #FDECEC; color: var(--color-danger); }
+.counsel-track-badge.track-위험 { background: #FFF6E5; color: var(--color-warning); }
+.counsel-track-badge.track-표준 { background: var(--color-primary-bg); color: var(--color-primary); }
+.counsel-track-badge.track-우수 { background: #E7F7EF; color: var(--color-success); }
 .counsel-type-badge,
 .counsel-status-badge {
   display: inline-flex;
@@ -1737,7 +1739,7 @@ input, textarea, select { font-family: var(--font); }
   -webkit-line-clamp: 2;
 }
 .counsel-request-topic-cell.is-expandable { width: 100%; padding-right: 18px; text-align: left; cursor: pointer; }
-.counsel-request-topic-cell.is-expandable i { margin-left: 6px; color: var(--color-caption); font-size: 11px; }
+.counsel-request-topic-cell.is-expandable svg { margin-left: 6px; color: var(--color-caption); font-size: 11px; }
 .counsel-topic-full { margin: 0 18px 12px; padding: 10px 12px; border-left: 3px solid var(--color-primary); background: var(--color-section-bg); color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; }
 .counsel-request-status-cell { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px; }
 .counsel-assignee-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--color-text-secondary); }
@@ -1791,8 +1793,8 @@ input, textarea, select { font-family: var(--font); }
 .counsel-bar-track span { display: block; height: 100%; border-radius: var(--radius-pill); }
 
 .counsel-ai-comment { display: flex; gap: 12px; margin-top: 16px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--color-section-bg); border: 1px solid var(--color-border); }
-.counsel-ai-comment i { color: var(--color-primary); font-size: 16px; margin-top: 2px; }
-.counsel-ai-comment.is-coach i { color: var(--color-success); }
+.counsel-ai-comment svg { color: var(--color-primary); font-size: 16px; margin-top: 2px; }
+.counsel-ai-comment.is-coach svg { color: var(--color-success); }
 .counsel-ai-comment p { font-size: 14px; line-height: 1.65; color: var(--color-text); margin: 0; }
 .counsel-insight-list { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
 .counsel-insight-item { padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
@@ -1836,7 +1838,7 @@ input, textarea, select { font-family: var(--font); }
 }
 .counsel-chatbot-fab:hover { transform: translateY(-2px) scale(1.04); box-shadow: 0 14px 34px rgba(6, 83, 182, 0.42); }
 .counsel-chatbot-fab img { width: 100%; height: 100%; object-fit: cover; transform: scale(1.18); }
-.counsel-chatbot-fab.is-open i { color: #fff; font-size: 24px; }
+.counsel-chatbot-fab.is-open svg { color: #fff; font-size: 24px; }
 
 .counsel-chatbot-panel {
   position: fixed; right: 24px; bottom: 98px; z-index: 1300;
@@ -1904,7 +1906,7 @@ input, textarea, select { font-family: var(--font); }
   gap: 8px;
   color: var(--color-text-secondary);
 }
-.counsel-request-empty i { margin-bottom: 4px; color: var(--color-caption); font-size: 30px; }
+.counsel-request-empty svg { margin-bottom: 4px; color: var(--color-caption); font-size: 30px; }
 .counsel-request-empty strong { color: var(--color-text); font-size: 14px; }
 .counsel-request-empty span { font-size: 12px; }
 

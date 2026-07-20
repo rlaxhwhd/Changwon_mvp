@@ -1,3 +1,4 @@
+import { LuWrench } from 'react-icons/lu'
 import EmptyState from '../components/EmptyState'
 
 /** 이번 슬라이스에서 미구현인 nav 항목용 플레이스홀더. */
@@ -12,7 +13,7 @@ export default function NotReady({ title }: { title: string }) {
       </header>
       <section className="admin-card">
         <EmptyState
-          icon="fa-solid fa-screwdriver-wrench"
+          icon={LuWrench}
           title="준비 중"
           message="이 화면은 다음 업데이트에서 제공됩니다."
         />

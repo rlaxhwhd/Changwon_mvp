@@ -1,3 +1,4 @@
+import { LuArrowLeft, LuCheck, LuChevronRight, LuClipboardCheck, LuFileText, LuHistory, LuIdCard, LuMessageSquareMore, LuQuote, LuSquarePen, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getActiveCounselor, getActiveCounselorId } from '../data/counselors'
@@ -24,7 +25,6 @@ function StudentPanel({ student }: { student: StudentData }) {
   return (
     <div className="admin-session-student">
       <div className="admin-session-student-head">
-        <span className="admin-student-avatar lg"></span>
         <div>
           <strong>{student.name}</strong>
           <small>
@@ -76,7 +76,7 @@ function HistoryPanel({ studentId }: { studentId: string }) {
   return (
     <div className="admin-session-block">
       <h4>
-        <i className="fa-solid fa-clock-rotate-left" /> 이전 상담 이력
+        <LuHistory /> 이전 상담 이력
       </h4>
       {records.length === 0 ? (
         <p className="admin-session-empty">이전 상담 기록이 없습니다.</p>
@@ -92,7 +92,7 @@ function HistoryPanel({ studentId }: { studentId: string }) {
               <p className="admin-history-summary">{r.summary}</p>
               {r.comment && (
                 <p className="admin-history-comment">
-                  <i className="fa-solid fa-comment-dots" /> {r.comment}
+                  <LuMessageSquareMore /> {r.comment}
                 </p>
               )}
             </li>
@@ -173,7 +173,7 @@ function RecordForm({
       </div>
 
       <div className="admin-record-topic">
-        <i className="fa-solid fa-quote-left" /> {request.topic}
+        <LuQuote /> {request.topic}
       </div>
 
       <label className="admin-field">
@@ -212,7 +212,7 @@ function RecordForm({
       </label>
 
       <div className="admin-form-actions">
-        {saved && <span className="admin-save-hint"><i className="fa-solid fa-check" /> 임시 저장됨</span>}
+        {saved && <span className="admin-save-hint"><LuCheck /> 임시 저장됨</span>}
         <button type="button" className="admin-btn admin-btn-ghost" onClick={handleSaveDraft}>
           임시 저장
         </button>
@@ -222,7 +222,7 @@ function RecordForm({
           disabled={!canComplete}
           onClick={handleComplete}
         >
-          <i className="fa-solid fa-clipboard-check" /> 저장 후 완료 처리
+          <LuClipboardCheck /> 저장 후 완료 처리
         </button>
       </div>
       {!canComplete && (
@@ -261,7 +261,7 @@ export default function CounselSession() {
         </header>
         <section className="admin-card">
           <EmptyState
-            icon="fa-solid fa-user-slash"
+            icon={LuUserX}
             title="학생을 찾을 수 없음"
             message="해당 학생 데이터가 존재하지 않습니다. 접수함에서 다시 진입해주세요."
             action={{ label: '접수함으로', onClick: () => { window.location.href = '/admin/counsel/requests' } }}
@@ -281,7 +281,7 @@ export default function CounselSession() {
           </p>
         </div>
         <Link to="/counsel/requests" className="admin-btn admin-btn-ghost">
-          <i className="fa-solid fa-arrow-left" /> 접수함
+          <LuArrowLeft /> 접수함
         </Link>
       </header>
 
@@ -290,10 +290,10 @@ export default function CounselSession() {
         <aside className="admin-card admin-session-left">
           <div className="admin-card-head">
             <h2>
-              <i className="fa-solid fa-id-card" /> 학생 진단결과
+              <LuIdCard /> 학생 진단결과
             </h2>
             <Link to={`/students`} className="admin-card-more">
-              학생 상세 <i className="fa-solid fa-chevron-right" />
+              학생 상세 <LuChevronRight />
             </Link>
           </div>
           <StudentPanel student={student} />
@@ -305,14 +305,14 @@ export default function CounselSession() {
         <section className="admin-card admin-session-right">
           <div className="admin-card-head">
             <h2>
-              <i className="fa-solid fa-pen-to-square" /> 상담 기록지
+              <LuSquarePen /> 상담 기록지
             </h2>
           </div>
           {targetRequest ? (
             <RecordForm request={targetRequest} student={student} />
           ) : (
             <EmptyState
-              icon="fa-regular fa-file-lines"
+              icon={LuFileText}
               title="연결된 상담 신청 없음"
               message="이 학생의 진행 가능한 상담 신청이 없습니다. 접수함에서 확정 후 진행해주세요."
             />

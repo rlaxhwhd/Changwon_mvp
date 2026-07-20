@@ -1,3 +1,4 @@
+import { LuChevronRight } from 'react-icons/lu'
 import { Link, useLocation } from 'react-router-dom'
 import { getNavSections, getSectionForPath, getActiveChildPath, type NavChild } from './navConfig'
 import { getActiveCounselor } from '../data/counselors'
@@ -12,10 +13,10 @@ function SidebarItem({ item, activeChildPath }: { item: NavChild; activeChildPat
       className={`section-sidebar-item${active ? ' active' : ''}`}
     >
       <span className="section-sidebar-icon">
-        <i className={`fa-solid ${item.icon}`} />
+        {(() => { const Icon = item.icon; return <Icon /> })()}
       </span>
       <span>{item.label}</span>
-      {active && <i className="fa-solid fa-chevron-right section-sidebar-arrow" />}
+      {active && <LuChevronRight className="section-sidebar-arrow" />}
     </Link>
   )
 }
@@ -35,7 +36,7 @@ export default function SectionSidebar() {
     <aside className="section-sidebar" aria-label={`${section.label} 하위 메뉴`}>
       <div className="section-sidebar-head">
         <span className="section-sidebar-mark">
-          <i className={`fa-solid ${section.icon}`} />
+          {(() => { const Icon = section.icon; return <Icon /> })()}
         </span>
         <div>
           <h2>{section.label}</h2>

@@ -1,3 +1,4 @@
+import { LuCalendar, LuCalendarCheck, LuChevronRight, LuClock, LuInbox } from 'react-icons/lu'
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { getActiveCounselorId } from '../data/counselors'
@@ -57,7 +58,7 @@ export default function CounselSchedule() {
           <p className="admin-page-desc">확정된 상담 일정을 날짜별로 관리합니다.</p>
         </div>
         <Link to="/counsel/requests" className="admin-btn admin-btn-primary">
-          <i className="fa-solid fa-inbox" /> 신청 접수함
+          <LuInbox /> 신청 접수함
         </Link>
       </header>
 
@@ -66,13 +67,13 @@ export default function CounselSchedule() {
         <section className="admin-card">
           <div className="admin-card-head">
             <h2>
-              <i className="fa-regular fa-calendar-check" /> 확정 상담 일정
+              <LuCalendarCheck /> 확정 상담 일정
             </h2>
             <span className="admin-tag admin-tag-soft">{confirmed.length}건</span>
           </div>
 
           {grouped.length === 0 ? (
-            <EmptyState icon="fa-regular fa-calendar" message="확정된 상담 일정이 없습니다." />
+            <EmptyState icon={LuCalendar} message="확정된 상담 일정이 없습니다." />
           ) : (
             <div className="admin-schedule-days">
               {grouped.map(([date, items]) => (
@@ -116,16 +117,16 @@ export default function CounselSchedule() {
         <section className="admin-card">
           <div className="admin-card-head">
             <h2>
-              <i className="fa-regular fa-clock" /> 내 가능 시간대
+              <LuClock /> 내 가능 시간대
             </h2>
             <Link to="/settings/availability" className="admin-card-more">
-              설정 <i className="fa-solid fa-chevron-right" />
+              설정 <LuChevronRight />
             </Link>
           </div>
 
           {availability.length === 0 ? (
             <EmptyState
-              icon="fa-regular fa-clock"
+              icon={LuClock}
               message="설정된 가능 시간대가 없습니다."
               action={{
                 label: '가능 시간대 설정',

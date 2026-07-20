@@ -1,3 +1,4 @@
+import { LuGraduationCap, LuList, LuSave } from 'react-icons/lu'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { addProgram } from '../data/programs'
@@ -28,13 +29,13 @@ export default function ProgramForm() {
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">
-            <i className="fa-solid fa-graduation-cap" /> 프로그램 등록
+            <LuGraduationCap /> 프로그램 등록
           </h1>
           <p className="admin-page-desc">학생 비교과 신청 화면에 노출될 비교과 프로그램을 등록합니다.</p>
         </div>
         <div className="admin-head-actions">
           <Link to="/programs" className="admin-btn admin-btn-ghost">
-            <i className="fa-solid fa-list" /> 프로그램 목록
+            <LuList /> 프로그램 목록
           </Link>
         </div>
       </header>
@@ -116,7 +117,7 @@ export default function ProgramForm() {
 
         <div className="admin-form-actions">
           <button className="admin-btn admin-btn-primary" disabled={!canSave} onClick={handleSave}>
-            <i className="fa-solid fa-floppy-disk" /> {saved ? '등록됨' : '등록'}
+            <LuSave /> {saved ? '등록됨' : '등록'}
           </button>
         </div>
       </section>

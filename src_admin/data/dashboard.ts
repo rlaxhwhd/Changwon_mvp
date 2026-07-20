@@ -1,3 +1,4 @@
+import { LuBriefcase, LuCalendar, LuClipboardCheck, LuMegaphone, LuMessagesSquare, LuUsers } from 'react-icons/lu'
 // ─────────────────────────────────────────────────────────────────────────
 // 운영 대시보드(홈) 로더
 // counselRequests.ts 패턴 미러: seed JSON import → 배열/객체 노출.
@@ -12,7 +13,8 @@ import type {
 } from './schema/dashboard'
 import seed from './dashboard.seed.json'
 
-const SEED = seed as DashboardData
+const STAT_ICONS = { 'user-group': LuUsers, 'clipboard-check': LuClipboardCheck, comments: LuMessagesSquare, calendar: LuCalendar, briefcase: LuBriefcase, bullhorn: LuMegaphone }
+const SEED = { ...seed, stats: seed.stats.map(stat => ({ ...stat, icon: STAT_ICONS[stat.icon as keyof typeof STAT_ICONS] })) } as DashboardData
 
 /** 대시보드 전체 데이터를 반환 (seed). 추후 API 교체 지점. */
 export function getDashboardData(): DashboardData {

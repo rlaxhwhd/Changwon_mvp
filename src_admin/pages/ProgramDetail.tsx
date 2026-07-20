@@ -1,3 +1,5 @@
+import type { IconType } from 'react-icons'
+import { LuCheck, LuCircleCheck, LuCircleHelp, LuClipboardCheck, LuFrown, LuGraduationCap, LuInfo, LuList, LuTrash2, LuUser, LuUserCheck, LuUsers, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
@@ -12,10 +14,10 @@ import { NOSHOW_PENALTY_POINTS } from '../data/schema/penalty'
 import { getPenaltyTotal } from '../data/penalties'
 import EmptyState from '../components/EmptyState'
 
-const ATTENDANCE_OPTIONS: { value: AttendanceStatus; label: string; icon: string; cls: string }[] = [
-  { value: '미확인', label: '미확인', icon: 'fa-circle-question', cls: '' },
-  { value: '출석', label: '출석', icon: 'fa-circle-check', cls: 'is-present' },
-  { value: '노쇼', label: '노쇼', icon: 'fa-user-slash', cls: 'is-noshow' },
+const ATTENDANCE_OPTIONS: { value: AttendanceStatus; label: string; icon: IconType; cls: string }[] = [
+  { value: '미확인', label: '미확인', icon: LuCircleHelp, cls: '' },
+  { value: '출석', label: '출석', icon: LuCircleCheck, cls: 'is-present' },
+  { value: '노쇼', label: '노쇼', icon: LuUserX, cls: 'is-noshow' },
 ]
 
 function fmtDateTime(iso: string): string {
@@ -41,7 +43,7 @@ export default function ProgramDetail() {
         </header>
         <section className="admin-card">
           <EmptyState
-            icon="fa-regular fa-face-frown"
+            icon={LuFrown}
             message="해당 프로그램을 찾을 수 없습니다."
             action={{ label: '프로그램 목록으로', onClick: () => navigate('/programs') }}
           />
@@ -76,7 +78,7 @@ export default function ProgramDetail() {
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">
-            <i className="fa-solid fa-graduation-cap" /> {program.title}
+            <LuGraduationCap /> {program.title}
           </h1>
           <p className="admin-page-desc">
             <span className="admin-tag admin-tag-soft">{program.category}</span>{' '}
@@ -85,10 +87,10 @@ export default function ProgramDetail() {
         </div>
         <div className="admin-head-actions">
           <Link to="/programs" className="admin-btn admin-btn-ghost">
-            <i className="fa-solid fa-list" /> 목록
+            <LuList /> 목록
           </Link>
           <Link to="/programs/blacklist" className="admin-btn admin-btn-ghost">
-            <i className="fa-solid fa-user-slash" /> 블랙리스트
+            <LuUserX /> 블랙리스트
           </Link>
         </div>
       </header>
@@ -98,32 +100,32 @@ export default function ProgramDetail() {
       {/* 출석 요약 + 상태 변경 */}
       <section className="admin-card">
         <div className="admin-card-head">
-          <h2><i className="fa-solid fa-clipboard-check" /> 출석 현황</h2>
+          <h2><LuClipboardCheck /> 출석 현황</h2>
         </div>
         <div className="admin-stat-grid">
           <div className="admin-stat-card">
-            <span className="admin-stat-icon"><i className="fa-solid fa-users" /></span>
+            <span className="admin-stat-icon"><LuUsers /></span>
             <div className="admin-stat-body">
               <span className="admin-stat-label">신청자</span>
               <span className="admin-stat-value">{program.applicants.length}<em>명</em></span>
             </div>
           </div>
           <div className="admin-stat-card">
-            <span className="admin-stat-icon success"><i className="fa-solid fa-circle-check" /></span>
+            <span className="admin-stat-icon success"><LuCircleCheck /></span>
             <div className="admin-stat-body">
               <span className="admin-stat-label">출석</span>
               <span className="admin-stat-value">{present}<em>명</em></span>
             </div>
           </div>
           <div className="admin-stat-card">
-            <span className="admin-stat-icon accent"><i className="fa-solid fa-user-slash" /></span>
+            <span className="admin-stat-icon accent"><LuUserX /></span>
             <div className="admin-stat-body">
               <span className="admin-stat-label">노쇼</span>
               <span className="admin-stat-value">{noshow}<em>명</em></span>
             </div>
           </div>
           <div className="admin-stat-card">
-            <span className="admin-stat-icon info"><i className="fa-solid fa-circle-question" /></span>
+            <span className="admin-stat-icon info"><LuCircleHelp /></span>
             <div className="admin-stat-body">
               <span className="admin-stat-label">미확인</span>
               <span className="admin-stat-value">{unchecked}<em>명</em></span>
@@ -145,10 +147,10 @@ export default function ProgramDetail() {
             disabled={!status || status === program.status}
             onClick={handleStatusSave}
           >
-            <i className="fa-solid fa-check" /> 상태 저장
+            <LuCheck /> 상태 저장
           </button>
           <button className="admin-btn admin-btn-danger-ghost sm admin-program-delete" onClick={handleDelete}>
-            <i className="fa-solid fa-trash" /> 프로그램 삭제
+            <LuTrash2 /> 프로그램 삭제
           </button>
         </div>
       </section>
@@ -156,15 +158,15 @@ export default function ProgramDetail() {
       {/* 신청자 · 출석 체크 */}
       <section className="admin-card">
         <div className="admin-card-head">
-          <h2><i className="fa-solid fa-user-check" /> 신청자 · 출석 관리</h2>
+          <h2><LuUserCheck /> 신청자 · 출석 관리</h2>
         </div>
         <div className="admin-editor-hint">
-          <i className="fa-solid fa-circle-info" />
+          <LuInfo />
           출석을 <strong>노쇼</strong>로 표시하면 해당 학생에게 자동으로 벌점 {NOSHOW_PENALTY_POINTS}점이 부여되어 <Link to="/programs/blacklist" className="admin-inline-link">블랙리스트</Link>에 반영됩니다. 노쇼를 해제하면 벌점이 회수됩니다.
         </div>
 
         {program.applicants.length === 0 ? (
-          <EmptyState icon="fa-regular fa-user" message="아직 신청자가 없습니다." />
+          <EmptyState icon={LuUser} message="아직 신청자가 없습니다." />
         ) : (
           <div className="admin-roster admin-applicant-roster">
             <div className="admin-roster-head">
@@ -179,7 +181,6 @@ export default function ProgramDetail() {
               return (
                 <div key={a.studentId} className="admin-roster-row admin-applicant-row">
                   <span className="admin-roster-student">
-                    <span className="admin-student-avatar sm"></span>
                     <strong>{a.studentName}</strong>
                   </span>
                   <span className="admin-roster-cell">{a.studentMajor}</span>
@@ -198,7 +199,7 @@ export default function ProgramDetail() {
                         aria-pressed={a.attendance === opt.value}
                         onClick={() => handleAttendance(a.studentId, opt.value)}
                       >
-                        <i className={`fa-solid ${opt.icon}`} /> {opt.label}
+                        {(() => { const Icon = opt.icon; return <Icon /> })()} {opt.label}
                       </button>
                     ))}
                   </span>

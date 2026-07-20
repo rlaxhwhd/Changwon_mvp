@@ -1,3 +1,5 @@
+import type { IconType } from 'react-icons'
+import { LuArrowLeft, LuBook, LuBoxes, LuBriefcase, LuCalendarCheck, LuChartColumn, LuChartLine, LuCircleCheck, LuCircleDot, LuClipboardCheck, LuFolderOpen, LuFrown, LuInfo, LuListChecks, LuLock, LuMessagesSquare, LuMoveRight, LuPencilRuler, LuQuote, LuRoute, LuRotateCw, LuScale, LuSprout, LuStar, LuTarget, LuTrophy, LuUserCheck, LuWorkflow } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getActiveCounselor, canEditRoadmap } from '../data/counselors'
@@ -7,22 +9,33 @@ import { STUDENT_ROSTER, rosterTrackClass, enrollStatusClass } from '../data/stu
 import { getMergedRoadmap, TERM_ORDER } from '../data/roadmapOverrides'
 import EmptyState from '../components/EmptyState'
 
+// 로드맵 phase 아이콘: src_v2 학생 JSON은 fa- 문자열을 담으므로(스코프 밖),
+// admin 레이어에서 Lucide 컴포넌트로 매핑한다 (dashboard STAT_ICONS 패턴 동일).
+const PHASE_ICONS: Record<string, IconType> = {
+  'fa-clipboard-check': LuClipboardCheck,
+  'fa-comments': LuMessagesSquare,
+  'fa-route': LuRoute,
+  'fa-chart-line': LuChartLine,
+  'fa-briefcase': LuBriefcase,
+  'fa-rotate': LuRotateCw,
+}
+
 type TabKey = 'diagnosis' | 'roadmap' | 'gap' | 'growth' | 'portfolio'
 
 interface TabDef {
   key: TabKey
   label: string
-  icon: string
+  icon: IconType
   /** 심리상담사(psych)에게도 노출되는 탭인지 (README §2 제한 열람) */
   psychAllowed: boolean
 }
 
 const TABS: TabDef[] = [
-  { key: 'diagnosis', label: '진단·IAP', icon: 'fa-clipboard-check', psychAllowed: true },
-  { key: 'roadmap', label: '로드맵 진행', icon: 'fa-route', psychAllowed: false },
-  { key: 'gap', label: '역량 GAP', icon: 'fa-chart-simple', psychAllowed: false },
-  { key: 'growth', label: '성장·퀘스트', icon: 'fa-seedling', psychAllowed: true },
-  { key: 'portfolio', label: '포트폴리오·목표', icon: 'fa-folder-open', psychAllowed: false },
+  { key: 'diagnosis', label: '진단·IAP', icon: LuClipboardCheck, psychAllowed: true },
+  { key: 'roadmap', label: '로드맵 진행', icon: LuRoute, psychAllowed: false },
+  { key: 'gap', label: '역량 GAP', icon: LuChartColumn, psychAllowed: false },
+  { key: 'growth', label: '성장·퀘스트', icon: LuSprout, psychAllowed: true },
+  { key: 'portfolio', label: '포트폴리오·목표', icon: LuFolderOpen, psychAllowed: false },
 ]
 
 const SCORE_CLASS: Record<string, string> = { 상: 'high', 중: 'mid', 하: 'low' }
@@ -40,7 +53,7 @@ function DiagnosisTab({ student }: { student: StudentData }) {
   return (
     <div className="admin-detail-grid">
       <section className="admin-card">
-        <div className="admin-card-head"><h2><i className="fa-solid fa-clipboard-check" /> 유형진단 결과</h2></div>
+        <div className="admin-card-head"><h2><LuClipboardCheck /> 유형진단 결과</h2></div>
         <div className="admin-score-row">
           {(Object.entries(student.typeScores) as [string, string][]).map(([k, v]) => (
             <div key={k} className="admin-score-item">
@@ -55,7 +68,7 @@ function DiagnosisTab({ student }: { student: StudentData }) {
       </section>
 
       <section className="admin-card">
-        <div className="admin-card-head"><h2><i className="fa-solid fa-user-check" /> IAP 유형 · 트랙</h2></div>
+        <div className="admin-card-head"><h2><LuUserCheck /> IAP 유형 · 트랙</h2></div>
         <dl className="admin-deflist">
           <div><dt>IAP 유형</dt><dd>{iap.iapType}</dd></div>
           <div><dt>주 학년대</dt><dd>{iap.grade}</dd></div>
@@ -66,7 +79,7 @@ function DiagnosisTab({ student }: { student: StudentData }) {
       </section>
 
       <section className="admin-card admin-detail-wide">
-        <div className="admin-card-head"><h2><i className="fa-solid fa-scale-balanced" /> 강점 · 약점</h2></div>
+        <div className="admin-card-head"><h2><LuScale /> 강점 · 약점</h2></div>
         <div className="admin-sw-grid">
           {student.strengthWeakness.map(sw => (
             <div key={sw.label} className={`admin-sw-item ${sw.type}`}>
@@ -94,10 +107,10 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
     <>
       <section className="admin-card">
         <div className="admin-card-head">
-          <h2><i className="fa-solid fa-route" /> 로드맵 진행 현황</h2>
+          <h2><LuRoute /> 로드맵 진행 현황</h2>
           {canEdit && (
             <Link to={`/roadmap/${student.id}`} className="admin-btn admin-btn-primary sm">
-              <i className="fa-solid fa-pen-ruler" /> 로드맵 편집
+              <LuPencilRuler /> 로드맵 편집
             </Link>
           )}
         </div>
@@ -109,13 +122,13 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
         </div>
         {merged?.meta?.confirmed && (
           <p className="admin-detail-note">
-            <i className="fa-solid fa-circle-check" /> 상담사 수정 로드맵 v{merged.meta.version} 확정 반영됨
+            <LuCircleCheck /> 상담사 수정 로드맵 v{merged.meta.version} 확정 반영됨
           </p>
         )}
         <ol className="admin-phase-list">
           {student.phases.map(p => (
             <li key={p.num} className={`admin-phase-item ${p.status}`}>
-              <span className="admin-phase-icon"><i className={`fa-solid ${p.icon}`} /></span>
+              <span className="admin-phase-icon">{(() => { const Icon = PHASE_ICONS[p.icon] ?? LuCircleDot; return <Icon /> })()}</span>
               <div className="admin-phase-body">
                 <div className="admin-phase-top">
                   <strong>{p.num}. {p.title}</strong>
@@ -132,7 +145,7 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
 
       {merged && (
         <section className="admin-card">
-          <div className="admin-card-head"><h2><i className="fa-solid fa-list-check" /> 단·중·장기 계획 {merged.meta?.confirmed && <span className="admin-tag admin-tag-soft">수정본</span>}</h2></div>
+          <div className="admin-card-head"><h2><LuListChecks /> 단·중·장기 계획 {merged.meta?.confirmed && <span className="admin-tag admin-tag-soft">수정본</span>}</h2></div>
           <div className="admin-term-cols">
             {TERM_ORDER.map(label => {
               const detail = merged.phase.termDetails?.[label]
@@ -168,11 +181,11 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
 
 function GapTab({ student }: { student: StudentData }) {
   if (student.gapItems.length === 0) {
-    return <EmptyState icon="fa-regular fa-circle-check" message="분석된 역량 GAP이 없습니다." />
+    return <EmptyState icon={LuCircleCheck} message="분석된 역량 GAP이 없습니다." />
   }
   return (
     <section className="admin-card">
-      <div className="admin-card-head"><h2><i className="fa-solid fa-chart-simple" /> 역량 GAP 분석</h2></div>
+      <div className="admin-card-head"><h2><LuChartColumn /> 역량 GAP 분석</h2></div>
       <ul className="admin-gap-list">
         {student.gapItems.map((g, i) => (
           <li key={i} className={`admin-gap-item sev-${g.severity}`}>
@@ -189,7 +202,7 @@ function GapTab({ student }: { student: StudentData }) {
               <span className="admin-progress-track">
                 <span className="admin-progress-fill" style={{ width: `${g.pct}%` }} />
               </span>
-              <span className="admin-gap-figs">{g.current} <i className="fa-solid fa-arrow-right-long" /> {g.target}</span>
+              <span className="admin-gap-figs">{g.current} <LuMoveRight /> {g.target}</span>
             </div>
           </li>
         ))}
@@ -200,23 +213,23 @@ function GapTab({ student }: { student: StudentData }) {
 
 function GrowthTab({ student }: { student: StudentData }) {
   const s = student.scoreInputs
-  const stats: { label: string; value: number | string; icon: string }[] = [
-    { label: '레벨(XP)', value: `Lv.${s.xpLevel}`, icon: 'fa-star' },
-    { label: '비교과 이수', value: `${s.programs}건`, icon: 'fa-cubes' },
-    { label: '상담 누적', value: `${s.counsel}회`, icon: 'fa-comments' },
-    { label: '출석일', value: `${s.attendanceDays}일`, icon: 'fa-calendar-check' },
-    { label: '성장일지', value: `${s.journalCount}편`, icon: 'fa-book' },
-    { label: '일일미션 출석률', value: `${s.lectureAttendanceRate}%`, icon: 'fa-list-check' },
-    { label: '프로젝트', value: `${s.projects}건`, icon: 'fa-diagram-project' },
-    { label: '공모전', value: `${s.contests}회`, icon: 'fa-trophy' },
+  const stats: { label: string; value: number | string; icon: IconType }[] = [
+    { label: '레벨(XP)', value: `Lv.${s.xpLevel}`, icon: LuStar },
+    { label: '비교과 이수', value: `${s.programs}건`, icon: LuBoxes },
+    { label: '상담 누적', value: `${s.counsel}회`, icon: LuMessagesSquare },
+    { label: '출석일', value: `${s.attendanceDays}일`, icon: LuCalendarCheck },
+    { label: '성장일지', value: `${s.journalCount}편`, icon: LuBook },
+    { label: '일일미션 출석률', value: `${s.lectureAttendanceRate}%`, icon: LuListChecks },
+    { label: '프로젝트', value: `${s.projects}건`, icon: LuWorkflow },
+    { label: '공모전', value: `${s.contests}회`, icon: LuTrophy },
   ]
   return (
     <section className="admin-card">
-      <div className="admin-card-head"><h2><i className="fa-solid fa-seedling" /> 성장 · 퀘스트 수행</h2></div>
+      <div className="admin-card-head"><h2><LuSprout /> 성장 · 퀘스트 수행</h2></div>
       <div className="admin-metric-grid">
         {stats.map(st => (
           <div key={st.label} className="admin-metric-card">
-            <span className="admin-metric-icon"><i className={`fa-solid ${st.icon}`} /></span>
+            <span className="admin-metric-icon">{(() => { const Icon = st.icon; return <Icon /> })()}</span>
             <div>
               <span className="admin-metric-value">{st.value}</span>
               <span className="admin-metric-label">{st.label}</span>
@@ -224,7 +237,7 @@ function GrowthTab({ student }: { student: StudentData }) {
           </div>
         ))}
       </div>
-      <p className="admin-detail-note"><i className="fa-solid fa-quote-left" /> {student.insight}</p>
+      <p className="admin-detail-note"><LuQuote /> {student.insight}</p>
     </section>
   )
 }
@@ -234,7 +247,7 @@ function PortfolioTab({ student }: { student: StudentData }) {
   return (
     <div className="admin-detail-grid">
       <section className="admin-card admin-detail-wide">
-        <div className="admin-card-head"><h2><i className="fa-solid fa-bullseye" /> 목표 기업</h2></div>
+        <div className="admin-card-head"><h2><LuTarget /> 목표 기업</h2></div>
         <div className="admin-target-head">
           <div>
             <strong>{tc.name}</strong>
@@ -259,7 +272,7 @@ function PortfolioTab({ student }: { student: StudentData }) {
       </section>
 
       <section className="admin-card admin-detail-wide">
-        <div className="admin-card-head"><h2><i className="fa-solid fa-diagram-project" /> 직무 역량 ({student.jobField})</h2></div>
+        <div className="admin-card-head"><h2><LuWorkflow /> 직무 역량 ({student.jobField})</h2></div>
         <div className="admin-skill-list">
           {student.jobSkills.map(sk => (
             <div key={sk.label} className="admin-skill-row">
@@ -298,8 +311,7 @@ export default function StudentDetail() {
         <div className="admin-page">
           <header className="admin-page-head">
             <div className="admin-detail-id">
-              <span className="admin-student-avatar lg"></span>
-              <div>
+                  <div>
                 <h1 className="admin-page-title">{roster.name}</h1>
                 <p className="admin-page-desc">{roster.major} · {roster.grade}학년</p>
                 <div className="admin-detail-tags">
@@ -311,12 +323,12 @@ export default function StudentDetail() {
               </div>
             </div>
             <Link to="/students" className="admin-btn admin-btn-ghost">
-              <i className="fa-solid fa-arrow-left" /> 목록
+              <LuArrowLeft /> 목록
             </Link>
           </header>
 
           <section className="admin-card">
-            <div className="admin-card-head"><h2><i className="fa-solid fa-route" /> 로드맵 진행 현황</h2></div>
+            <div className="admin-card-head"><h2><LuRoute /> 로드맵 진행 현황</h2></div>
             <div className="admin-progress-big">
               <span className="admin-progress-track lg">
                 <span className="admin-progress-fill" style={{ width: `${roster.progress}%` }} />
@@ -324,7 +336,7 @@ export default function StudentDetail() {
               <strong>{roster.progress}%</strong>
             </div>
             <p className="admin-detail-note">
-              <i className="fa-solid fa-circle-info" /> 진단·GAP·포트폴리오 등 상세 분석 데이터는 아직 수집되지 않았습니다. 진단 완료 후 표시됩니다.
+              <LuInfo /> 진단·GAP·포트폴리오 등 상세 분석 데이터는 아직 수집되지 않았습니다. 진단 완료 후 표시됩니다.
             </p>
           </section>
         </div>
@@ -337,7 +349,7 @@ export default function StudentDetail() {
         </header>
         <section className="admin-card">
           <EmptyState
-            icon="fa-regular fa-face-frown"
+            icon={LuFrown}
             message="해당 학생을 찾을 수 없습니다."
             action={{ label: '학생 목록으로', onClick: () => { window.location.href = '/admin/students' } }}
           />
@@ -353,7 +365,6 @@ export default function StudentDetail() {
     <div className="admin-page">
       <header className="admin-page-head">
         <div className="admin-detail-id">
-          <span className="admin-student-avatar lg"></span>
           <div>
             <h1 className="admin-page-title">{student.name}</h1>
             <p className="admin-page-desc">
@@ -367,13 +378,13 @@ export default function StudentDetail() {
           </div>
         </div>
         <Link to="/students" className="admin-btn admin-btn-ghost">
-          <i className="fa-solid fa-arrow-left" /> 목록
+          <LuArrowLeft /> 목록
         </Link>
       </header>
 
       {isPsych && (
         <div className="admin-perm-banner">
-          <i className="fa-solid fa-lock" />
+          <LuLock />
           심리상담사 제한 열람 — 진단·성향·성장 중심으로 표시됩니다. 로드맵·GAP·포트폴리오는 진로상담사 전용입니다.
         </div>
       )}
@@ -387,7 +398,7 @@ export default function StudentDetail() {
             className={`admin-tab${activeTab === t.key ? ' active' : ''}`}
             onClick={() => setTab(t.key)}
           >
-            <i className={`fa-solid ${t.icon}`} /> {t.label}
+            {(() => { const Icon = t.icon; return <Icon /> })()} {t.label}
           </button>
         ))}
       </div>

@@ -156,6 +156,8 @@ export interface StudentData {
   scoreInputs: StudentInputs
   /** 상담사 상세 화면 — AI가 학생 정보·고민을 토대로 상담사에게 추천하는 질문. */
   counselorQuestions?: string[]
+  /** 역량 점수(0~100) — 상담 접수함 위험 단계 트랙 분류 기준. */
+  competencyScore: number
   /** 이 학생이 낸 상담신청. JSON seed 초기값. 런타임 변경은 override 스토어로. */
   counselRequests: StudentCounselRequest[]
 }
@@ -221,7 +223,20 @@ export interface CounselOwner {
   targetCompanySummary: string        // 예: "넥슨코리아 · IT Project Manager"
   roadmapSummary: string              // 한 줄 진행 요약
   counselorQuestions: string[]        // AI 추천 상담 질문 (상세 화면)
+  competencyScore: number             // 역량 점수(0~100) — 위험 단계 트랙 분류 기준
   counselRequests: StudentCounselRequest[]
+}
+
+/** 역량 점수 4단계 트랙. 저학년일수록 기준이 관대하다(1학년은 점수가 낮은 게 정상). */
+export type StudentTrack = '집중관리' | '위험' | '표준' | '우수'
+
+/** 역량점수(0~100)를 학년 보정 기준으로 트랙 분류. 학년이 낮을수록 집중관리·위험 기준이 여유롭다. */
+export function getStudentTrack(competencyScore: number, grade: number): StudentTrack {
+  const offset = (4 - Math.min(4, Math.max(1, grade))) * 8
+  if (competencyScore < 55 - offset) return '집중관리'
+  if (competencyScore < 70 - offset) return '위험'
+  if (competencyScore < 85 - offset) return '표준'
+  return '우수'
 }
 
 /** 상세학생 phases에서 로드맵 진행 한 줄 요약을 파생한다(화면 리터럴 금지 — 스토어 층에서 파생). */
@@ -283,6 +298,7 @@ export function getCounselOwners(): CounselOwner[] {
     targetCompanySummary: `${s.targetCompany.name} · ${s.targetCompany.role}`,
     roadmapSummary: deriveRoadmapSummary(s.phases),
     counselorQuestions: s.counselorQuestions ?? [],
+    competencyScore: s.competencyScore,
     counselRequests: ov[s.id] ?? s.counselRequests ?? [],
   }))
   // 데모학생: 코어 프로필을 counselSeed JSON에서 passthrough(무거운 로드맵 없음).
@@ -300,6 +316,7 @@ export function getCounselOwners(): CounselOwner[] {
     targetCompanySummary: o.targetCompanySummary,
     roadmapSummary: o.roadmapSummary,
     counselorQuestions: o.counselorQuestions ?? [],
+    competencyScore: o.competencyScore,
     counselRequests: ov[o.id] ?? o.counselRequests,
   }))
   return [...detailed, ...demo]

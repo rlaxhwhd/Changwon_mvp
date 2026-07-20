@@ -1,3 +1,4 @@
+import { LuSend, LuX } from 'react-icons/lu'
 import { useEffect, useRef, useState } from 'react'
 import { useLocation } from 'react-router-dom'
 import { askCounselBot, botGreeting, type ChatMessage } from '../data/counselChatbot'
@@ -42,7 +43,7 @@ export default function Chatbot() {
         onClick={() => setOpen(o => !o)}
         aria-label={open ? '챗봇 닫기' : '상담 질문 챗봇 열기'}
       >
-        {open ? <i className="fa-solid fa-xmark" /> : <img src="/chatbot.png" alt="" />}
+        {open ? <LuX /> : <img src="/chatbot.png" alt="" />}
       </button>
 
       {open && (
@@ -71,7 +72,7 @@ export default function Chatbot() {
           </div>
           <form className="counsel-chatbot-input" onSubmit={e => { e.preventDefault(); if (input.trim()) send(input) }}>
             <input value={input} onChange={e => setInput(e.target.value)} placeholder="학생에 대해 물어보세요…" />
-            <button type="submit" disabled={loading || !input.trim()} aria-label="보내기"><i className="fa-solid fa-paper-plane" /></button>
+            <button type="submit" disabled={loading || !input.trim()} aria-label="보내기"><LuSend /></button>
           </form>
         </div>
       )}

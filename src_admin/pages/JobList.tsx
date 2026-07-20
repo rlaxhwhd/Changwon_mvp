@@ -1,3 +1,4 @@
+import { LuBuilding2, LuFrown, LuInfo, LuPlus, LuSearch } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getJobs, countJobs } from '../data/jobsSource'
@@ -58,20 +59,20 @@ export default function JobList() {
         </div>
         <div className="admin-head-actions">
           <Link to="/jobs/new" className="admin-btn admin-btn-primary">
-            <i className="fa-solid fa-plus" /> 공고 등록
+            <LuPlus /> 공고 등록
           </Link>
         </div>
       </header>
 
       {/* 데이터 추후 주입 안내 */}
       <div className="admin-editor-hint">
-        <i className="fa-solid fa-circle-info" />
+        <LuInfo />
         외부 채용 API(잡코리아 등) 연동 공고는 추후 주입됩니다. 지금은 상담사가 직접 등록한 공고만 표시되며, 등록한 공고는 학생 <strong>취업지원</strong> 화면과 동일한 형식으로 노출됩니다.
       </div>
 
       <div className="admin-filterbar">
         <div className="admin-search">
-          <i className="fa-solid fa-magnifying-glass" />
+          <LuSearch />
           <input
             type="text"
             value={query}
@@ -104,13 +105,13 @@ export default function JobList() {
       <section className="admin-card">
         {all.length === 0 ? (
           <EmptyState
-            icon="fa-solid fa-building-user"
+            icon={LuBuilding2}
             title="등록된 채용공고가 없습니다"
             message="실제 공고 데이터는 추후 주입됩니다. 지금 바로 공고를 직접 등록해 화면을 확인할 수 있습니다."
             action={{ label: '공고 등록하기', onClick: () => navigate('/jobs/new') }}
           />
         ) : list.length === 0 ? (
-          <EmptyState icon="fa-regular fa-face-frown" message="조건에 맞는 공고가 없습니다." />
+          <EmptyState icon={LuFrown} message="조건에 맞는 공고가 없습니다." />
         ) : (
           <div className="admin-roster admin-job-roster">
             <div className="admin-roster-head">

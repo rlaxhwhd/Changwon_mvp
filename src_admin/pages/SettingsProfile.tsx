@@ -1,3 +1,4 @@
+import { LuSave } from 'react-icons/lu'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getActiveCounselor, updateCounselorProfile } from '../data/counselors'
@@ -104,7 +105,7 @@ export default function SettingsProfile() {
 
         <div className="admin-form-actions">
           <button className="admin-btn admin-btn-primary" disabled={!canSave} onClick={handleSave}>
-            <i className="fa-solid fa-floppy-disk" /> 저장
+            <LuSave /> 저장
           </button>
         </div>
       </section>

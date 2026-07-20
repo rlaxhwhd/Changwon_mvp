@@ -1,3 +1,5 @@
+import type { IconType } from 'react-icons'
+import { LuBuilding2, LuCalendarDays, LuClipboardCheck, LuClock, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSettings, LuUsers, LuUserX } from 'react-icons/lu'
 // ─────────────────────────────────────────────────────────────────────────
 // 상담사 포털 네비 단일 소스 (v2 navConfig 미러)
 // Counsel_README §4 순서: 홈 → 상담 관리 → 학생 관리 → 로드맵 관리[진로]
@@ -9,7 +11,7 @@ import type { CounselorRole } from '../data/schema/counselor'
 export interface NavChild {
   label: string
   path: string
-  icon: string
+  icon: IconType
   children?: NavChild[]
 }
 
@@ -19,7 +21,7 @@ export interface NavSection {
   basePaths: string[]
   /** 섹션 대표 경로 (없으면 첫 child) */
   path?: string
-  icon: string
+  icon: IconType
   /** 이 섹션이 요구하는 역할. 없으면 모든 역할에 노출. */
   requiresRole?: CounselorRole
   children: NavChild[]
@@ -31,18 +33,18 @@ const ALL_SECTIONS: NavSection[] = [
     label: '홈',
     basePaths: ['/'],
     path: '/',
-    icon: 'fa-house',
+    icon: LuHouse,
     children: [],
   },
   {
     id: 'counsel',
     label: '상담 관리',
     basePaths: ['/counsel'],
-    icon: 'fa-headset',
+    icon: LuHeadset,
     children: [
-      { label: '신청 접수함', path: '/counsel/requests', icon: 'fa-inbox' },
-      { label: '일정·예약', path: '/counsel/schedule', icon: 'fa-calendar-days' },
-      { label: '완료 상담 내역', path: '/counsel/records', icon: 'fa-clipboard-check' },
+      { label: '신청 접수함', path: '/counsel/requests', icon: LuInbox },
+      { label: '일정·예약', path: '/counsel/schedule', icon: LuCalendarDays },
+      { label: '완료 상담 내역', path: '/counsel/records', icon: LuClipboardCheck },
     ],
   },
   {
@@ -50,19 +52,19 @@ const ALL_SECTIONS: NavSection[] = [
     label: '학생 관리',
     basePaths: ['/students'],
     path: '/students',
-    icon: 'fa-user-group',
+    icon: LuUsers,
     children: [
-      { label: '담당 학생 목록', path: '/students', icon: 'fa-users' },
+      { label: '담당 학생 목록', path: '/students', icon: LuUsers },
     ],
   },
   {
     id: 'roadmap',
     label: '로드맵 관리',
     basePaths: ['/roadmap'],
-    icon: 'fa-route',
+    icon: LuRoute,
     requiresRole: 'career',
     children: [
-      { label: '변경 요청함', path: '/roadmap/requests', icon: 'fa-inbox' },
+      { label: '변경 요청함', path: '/roadmap/requests', icon: LuInbox },
     ],
   },
   {
@@ -70,23 +72,23 @@ const ALL_SECTIONS: NavSection[] = [
     label: '채용공고',
     basePaths: ['/jobs'],
     path: '/jobs',
-    icon: 'fa-building-user',
+    icon: LuBuilding2,
     requiresRole: 'career',
     children: [
-      { label: '공고 목록', path: '/jobs', icon: 'fa-list' },
-      { label: '공고 등록', path: '/jobs/new', icon: 'fa-plus' },
+      { label: '공고 목록', path: '/jobs', icon: LuList },
+      { label: '공고 등록', path: '/jobs/new', icon: LuPlus },
     ],
   },
   {
     id: 'programs',
     label: '비교과 운영',
     basePaths: ['/programs'],
-    icon: 'fa-graduation-cap',
+    icon: LuGraduationCap,
     requiresRole: 'career',
     children: [
-      { label: '프로그램 목록', path: '/programs', icon: 'fa-list' },
-      { label: '프로그램 등록', path: '/programs/new', icon: 'fa-plus' },
-      { label: '블랙리스트', path: '/programs/blacklist', icon: 'fa-user-slash' },
+      { label: '프로그램 목록', path: '/programs', icon: LuList },
+      { label: '프로그램 등록', path: '/programs/new', icon: LuPlus },
+      { label: '블랙리스트', path: '/programs/blacklist', icon: LuUserX },
     ],
   },
   {
@@ -94,10 +96,10 @@ const ALL_SECTIONS: NavSection[] = [
     label: '설정',
     basePaths: ['/settings'],
     path: '/settings',
-    icon: 'fa-gear',
+    icon: LuSettings,
     children: [
-      { label: '내 프로필', path: '/settings', icon: 'fa-id-card' },
-      { label: '가능 시간대', path: '/settings/availability', icon: 'fa-clock' },
+      { label: '내 프로필', path: '/settings', icon: LuIdCard },
+      { label: '가능 시간대', path: '/settings/availability', icon: LuClock },
     ],
   },
 ]

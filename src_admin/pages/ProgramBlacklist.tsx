@@ -1,3 +1,5 @@
+import type { IconType } from 'react-icons'
+import { LuHand, LuInfo, LuList, LuRotateCcw, LuTrash2, LuUserCheck, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -9,10 +11,10 @@ import type { StudentPenalty, PenaltyEntry } from '../data/penalties'
 import { penaltyLevel } from '../data/schema/penalty'
 import EmptyState from '../components/EmptyState'
 
-const KIND_LABEL: Record<PenaltyEntry['kind'], { label: string; icon: string }> = {
-  noshow: { label: '노쇼 벌점', icon: 'fa-user-slash' },
-  manual: { label: '수동 부여', icon: 'fa-hand' },
-  waive: { label: '차감·해제', icon: 'fa-rotate-left' },
+const KIND_LABEL: Record<PenaltyEntry['kind'], { label: string; icon: IconType }> = {
+  noshow: { label: '노쇼 벌점', icon: LuUserX },
+  manual: { label: '수동 부여', icon: LuHand },
+  waive: { label: '차감·해제', icon: LuRotateCcw },
 }
 
 function toneChip(tone: 'ok' | 'warn' | 'danger'): string {
@@ -55,7 +57,6 @@ function BlacklistCard({ record }: { record: StudentPenalty }) {
     <li className="admin-request-card">
       <div className="admin-request-top">
         <span className="admin-request-student">
-          <span className="admin-student-avatar sm"></span>
           <div>
             <strong>{record.studentName}</strong>
             <small>{record.studentMajor}</small>
@@ -72,7 +73,7 @@ function BlacklistCard({ record }: { record: StudentPenalty }) {
         {[...record.entries].reverse().map(e => (
           <li key={e.id} className={`admin-penalty-entry${e.points < 0 ? ' is-waive' : ''}`}>
             <span className="admin-penalty-entry-kind">
-              <i className={`fa-solid ${KIND_LABEL[e.kind].icon}`} /> {KIND_LABEL[e.kind].label}
+              {(() => { const Icon = KIND_LABEL[e.kind].icon; return <Icon /> })()} {KIND_LABEL[e.kind].label}
             </span>
             <span className="admin-penalty-entry-reason">{e.reason}</span>
             <span className={`admin-penalty-entry-points${e.points < 0 ? ' minus' : ''}`}>
@@ -105,10 +106,10 @@ function BlacklistCard({ record }: { record: StudentPenalty }) {
           />
         </label>
         <button className="admin-btn admin-btn-ghost sm" disabled={!canWaive} onClick={handleWaive}>
-          <i className="fa-solid fa-rotate-left" /> 차감
+          <LuRotateCcw /> 차감
         </button>
         <button className="admin-btn admin-btn-danger-ghost sm" onClick={handleClear}>
-          <i className="fa-solid fa-trash" /> 전체 해제
+          <LuTrash2 /> 전체 해제
         </button>
       </div>
     </li>
@@ -130,20 +131,20 @@ export default function ProgramBlacklist() {
         </div>
         <div className="admin-head-actions">
           <Link to="/programs" className="admin-btn admin-btn-ghost">
-            <i className="fa-solid fa-list" /> 프로그램 목록
+            <LuList /> 프로그램 목록
           </Link>
         </div>
       </header>
 
       <div className="admin-editor-hint">
-        <i className="fa-solid fa-circle-info" />
+        <LuInfo />
         벌점은 프로그램 상세의 <strong>출석 체크(노쇼)</strong>에서 자동 부여됩니다. 여기서는 부여된 벌점을 차감·해제하고 사유를 기록합니다. 누적 벌점·사유는 학생 화면에도 반영됩니다.
       </div>
 
       <section className="admin-card">
         {list.length === 0 ? (
           <EmptyState
-            icon="fa-solid fa-user-check"
+            icon={LuUserCheck}
             title="블랙리스트가 비어 있습니다"
             message="노쇼로 처리된 학생이 아직 없습니다. 프로그램 상세에서 출석을 '노쇼'로 체크하면 여기 자동으로 추가됩니다."
           />

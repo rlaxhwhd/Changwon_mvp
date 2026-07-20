@@ -1,3 +1,4 @@
+import { LuCheck, LuEye, LuFrown, LuHistory, LuInbox, LuInfo, LuPencilRuler, LuPlus, LuRotateCcw, LuTrash2, LuUser } from 'react-icons/lu'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getActiveCounselor } from '../data/counselors'
@@ -82,7 +83,7 @@ export default function RoadmapEditor() {
         </header>
         <section className="admin-card">
           <EmptyState
-            icon="fa-regular fa-face-frown"
+            icon={LuFrown}
             message="해당 학생의 로드맵을 찾을 수 없습니다."
             action={{ label: '학생 목록으로', onClick: () => { window.location.href = '/admin/students' } }}
           />
@@ -156,7 +157,7 @@ export default function RoadmapEditor() {
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">
-            <i className="fa-solid fa-pen-ruler" /> 로드맵 편집 — {student.name}
+            <LuPencilRuler /> 로드맵 편집 — {student.name}
           </h1>
           <p className="admin-page-desc">
             {student.major} · {student.grade}학년 · 목표 {student.targetCompany.name} {student.targetRole}
@@ -167,16 +168,16 @@ export default function RoadmapEditor() {
         </div>
         <div className="admin-head-actions">
           <Link to={`/students/${student.id}`} className="admin-btn admin-btn-ghost">
-            <i className="fa-solid fa-user" /> 학생 상세
+            <LuUser /> 학생 상세
           </Link>
           <Link to="/roadmap/requests" className="admin-btn admin-btn-ghost">
-            <i className="fa-solid fa-inbox" /> 변경 요청함
+            <LuInbox /> 변경 요청함
           </Link>
         </div>
       </header>
 
       <div className="admin-editor-hint">
-        <i className="fa-solid fa-circle-info" />
+        <LuInfo />
         학생 원본 로드맵(JSON)은 변경되지 않습니다. 확정하면 수정분만 override 로 저장되어 학생 화면에 병합·반영됩니다.
       </div>
 
@@ -198,7 +199,7 @@ export default function RoadmapEditor() {
                 <div className="admin-editor-empty">
                   <p>이 구간에는 계획이 없습니다.</p>
                   <button className="admin-btn admin-btn-ghost sm" onClick={() => addTerm(label)}>
-                    <i className="fa-solid fa-plus" /> {label} 계획 추가
+                    <LuPlus /> {label} 계획 추가
                   </button>
                 </div>
               ) : (
@@ -251,7 +252,7 @@ export default function RoadmapEditor() {
                             title="삭제"
                             onClick={() => removeItem(label, idx)}
                           >
-                            <i className="fa-solid fa-trash" />
+                            <LuTrash2 />
                           </button>
                         </div>
                         <div className="admin-item-editor-selects">
@@ -288,7 +289,7 @@ export default function RoadmapEditor() {
                       </div>
                     ))}
                     <button className="admin-btn admin-btn-ghost sm" onClick={() => addItem(label)}>
-                      <i className="fa-solid fa-plus" /> 항목 추가
+                      <LuPlus /> 항목 추가
                     </button>
                   </div>
                 </>
@@ -301,7 +302,7 @@ export default function RoadmapEditor() {
       {/* 병합 미리보기 + 확정 */}
       <section className="admin-card admin-editor-confirm">
         <div className="admin-card-head">
-          <h2><i className="fa-solid fa-eye" /> 병합 미리보기 · 확정</h2>
+          <h2><LuEye /> 병합 미리보기 · 확정</h2>
         </div>
         {!dirty ? (
           <p className="admin-detail-note">변경 사항이 없습니다. 항목을 편집하면 여기에 미리보기가 표시됩니다.</p>
@@ -351,7 +352,7 @@ export default function RoadmapEditor() {
         <div className="admin-form-actions">
           {merged.meta && (
             <button className="admin-btn admin-btn-danger-ghost" onClick={handleReset}>
-              <i className="fa-solid fa-rotate-left" /> 원본으로 초기화
+              <LuRotateCcw /> 원본으로 초기화
             </button>
           )}
           <button
@@ -359,7 +360,7 @@ export default function RoadmapEditor() {
             disabled={!dirty || invalidItems || saved}
             onClick={handleConfirm}
           >
-            <i className="fa-solid fa-check" /> {saved ? '확정 저장됨' : `확정 (v${(merged.meta?.version ?? 0) + 1})`}
+            <LuCheck /> {saved ? '확정 저장됨' : `확정 (v${(merged.meta?.version ?? 0) + 1})`}
           </button>
         </div>
       </section>
@@ -367,7 +368,7 @@ export default function RoadmapEditor() {
       {/* 변경 이력 */}
       {merged.meta && merged.meta.history.length > 0 && (
         <section className="admin-card">
-          <div className="admin-card-head"><h2><i className="fa-solid fa-clock-rotate-left" /> 변경 이력</h2></div>
+          <div className="admin-card-head"><h2><LuHistory /> 변경 이력</h2></div>
           <ul className="admin-rm-history-list">
             {[...merged.meta.history].reverse().map(h => (
               <li key={h.version} className="admin-rm-history-item">

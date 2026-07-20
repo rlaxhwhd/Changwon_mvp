@@ -1,3 +1,5 @@
+import { LuArrowDown, LuArrowUp } from 'react-icons/lu'
+import { LuBell, LuCalendar, LuChartLine, LuChartPie, LuChevronRight, LuMegaphone, LuPlus } from 'react-icons/lu'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -189,11 +191,11 @@ export default function Home() {
         </div>
         <div className="admin-dash-head-actions">
           <span className="admin-date-pill">
-            <i className="fa-regular fa-calendar" />
+            <LuCalendar />
             {data.period}
           </span>
           <Link to="/counsel/requests" className="admin-btn admin-btn-primary">
-            <i className="fa-solid fa-plus" /> 빠른 등록
+            <LuPlus /> 빠른 등록
           </Link>
         </div>
       </header>
@@ -213,17 +215,13 @@ export default function Home() {
                   stat.deltaDir === 'up' ? 'is-up' : 'is-down'
                 }`}
               >
-                <i
-                  className={`fa-solid ${
-                    stat.deltaDir === 'up' ? 'fa-arrow-up' : 'fa-arrow-down'
-                  }`}
-                />
+                {stat.deltaDir === 'up' ? <LuArrowUp /> : <LuArrowDown />}
                 {formatDelta(stat.deltaValue, stat.deltaUnit)}
                 <small>{stat.deltaLabel}</small>
               </span>
             </div>
             <span className={`admin-kpi-icon tone-${stat.tone}`}>
-              <i className={stat.icon} />
+              {(() => { const Icon = stat.icon; return <Icon /> })()}
             </span>
           </div>
         ))}
@@ -235,7 +233,7 @@ export default function Home() {
         <section className="admin-card admin-dash-traffic">
           <div className="admin-card-head">
             <h2>
-              <i className="fa-solid fa-chart-line" /> 학생 상담 현황
+              <LuChartLine /> 학생 상담 현황
             </h2>
             <div className="admin-range-toggle">
               {RANGE_TABS.map(t => (
@@ -255,7 +253,7 @@ export default function Home() {
               <Line data={lineData} options={lineOptions} />
             </div>
           ) : (
-            <EmptyState icon="fa-solid fa-chart-line" message="표시할 학생 상담 데이터가 없습니다." />
+            <EmptyState icon={LuChartLine} message="표시할 학생 상담 데이터가 없습니다." />
           )}
         </section>
 
@@ -263,7 +261,7 @@ export default function Home() {
         <section className="admin-card admin-dash-diagnosis">
           <div className="admin-card-head">
             <h2>
-              <i className="fa-solid fa-chart-pie" /> 진단 참여 현황
+              <LuChartPie /> 진단 참여 현황
             </h2>
           </div>
           {hasDiagnosis ? (
@@ -294,7 +292,7 @@ export default function Home() {
               </ul>
             </>
           ) : (
-            <EmptyState icon="fa-solid fa-chart-pie" message="진단 참여 데이터가 없습니다." />
+            <EmptyState icon={LuChartPie} message="진단 참여 데이터가 없습니다." />
           )}
         </section>
 
@@ -302,14 +300,14 @@ export default function Home() {
         <section className="admin-card admin-dash-notice">
           <div className="admin-card-head">
             <h2>
-              <i className="fa-solid fa-bullhorn" /> 공지사항
+              <LuMegaphone /> 공지사항
             </h2>
             <Link to="/settings" className="admin-card-more">
-              더보기 <i className="fa-solid fa-chevron-right" />
+              더보기 <LuChevronRight />
             </Link>
           </div>
           {data.notices.length === 0 ? (
-            <EmptyState icon="fa-regular fa-bell" message="등록된 공지가 없습니다." />
+            <EmptyState icon={LuBell} message="등록된 공지가 없습니다." />
           ) : (
             <ul className="admin-notice-list">
               {data.notices.map(n => (

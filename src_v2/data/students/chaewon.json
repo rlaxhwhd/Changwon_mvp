@@ -9,6 +9,7 @@
   "gpa": "4.3",
   "language": "TOEIC 550",
   "studentType": "역량성장형",
+  "competencyScore": 79,
   "typeScores": {
     "진로명확도": "상",
     "역량준비도": "중",

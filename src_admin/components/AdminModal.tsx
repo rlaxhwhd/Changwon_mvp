@@ -1,3 +1,4 @@
+import { LuX } from 'react-icons/lu'
 import { useEffect } from 'react'
 import type { ReactNode } from 'react'
 
@@ -29,7 +30,7 @@ export default function AdminModal({ children, title, onClose, size = 'lg' }: Ad
         <header className="admin-modal-head">
           <h2>{title}</h2>
           <button type="button" className="admin-modal-close" aria-label="닫기" onClick={onClose}>
-            <i className="fa-solid fa-xmark" aria-hidden="true" />
+            <LuX aria-hidden="true" />
           </button>
         </header>
         <div className="admin-modal-body">{children}</div>

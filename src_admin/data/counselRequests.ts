@@ -19,6 +19,7 @@ import {
   getCounselOwners,
   getCounselOwnerById,
   patchCounselRequest,
+  getStudentTrack,
   STUDENTS,
 } from '../../src_v2/data/students'
 import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
@@ -51,6 +52,7 @@ export function getCounselRequests(): CounselRequest[] {
           studentName: owner.name,
           studentMajor: owner.major,
           studentEnrollmentStatus: owner.enrollmentStatus,
+          studentTrack: getStudentTrack(owner.competencyScore, owner.grade),
           type,
           status: r.status,
           method: r.method,

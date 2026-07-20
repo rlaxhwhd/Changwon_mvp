@@ -1,3 +1,4 @@
+import { LuClock, LuPlus, LuX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { getActiveCounselor, getActiveCounselorId } from '../data/counselors'
 import { getAvailability, addSlot, removeSlot } from '../data/availability'
@@ -45,7 +46,7 @@ export default function SettingsAvailability() {
       <section className="admin-card">
         <div className="admin-card-head">
           <h2>
-            <i className="fa-solid fa-plus" /> 시간대 추가
+            <LuPlus /> 시간대 추가
           </h2>
         </div>
         <div className="admin-avail-add">
@@ -68,7 +69,7 @@ export default function SettingsAvailability() {
             <input type="time" value={end} onChange={e => setEnd(e.target.value)} />
           </label>
           <button className="admin-btn admin-btn-primary" disabled={!valid} onClick={handleAdd}>
-            <i className="fa-solid fa-plus" /> 추가
+            <LuPlus /> 추가
           </button>
         </div>
         {!valid && start !== '' && end !== '' && (
@@ -79,13 +80,13 @@ export default function SettingsAvailability() {
       <section className="admin-card">
         <div className="admin-card-head">
           <h2>
-            <i className="fa-regular fa-clock" /> 설정된 시간대
+            <LuClock /> 설정된 시간대
           </h2>
           <span className="admin-tag admin-tag-soft">{slots.length}개</span>
         </div>
 
         {slots.length === 0 ? (
-          <EmptyState icon="fa-regular fa-clock" message="설정된 가능 시간대가 없습니다. 위에서 추가하세요." />
+          <EmptyState icon={LuClock} message="설정된 가능 시간대가 없습니다. 위에서 추가하세요." />
         ) : (
           <ul className="admin-avail-list">
             {WEEKDAY_ORDER.map(wd => {
@@ -104,7 +105,7 @@ export default function SettingsAvailability() {
                           aria-label="삭제"
                           onClick={() => handleRemove(s.id)}
                         >
-                          <i className="fa-solid fa-xmark" />
+                          <LuX />
                         </button>
                       </span>
                     ))}

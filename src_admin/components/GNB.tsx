@@ -1,3 +1,4 @@
+import { LuCheck, LuChevronDown, LuChevronRight, LuContact, LuUsers } from 'react-icons/lu'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { getNavSections, getSectionForPath, getActiveChildPath } from './navConfig'
@@ -7,7 +8,6 @@ import {
   getActiveCounselorId,
   setActiveCounselor,
 } from '../data/counselors'
-import { countPendingByAssignee } from '../data/counselRequests'
 
 export default function GNB() {
   const { pathname } = useLocation()
@@ -15,7 +15,6 @@ export default function GNB() {
   const activeId = getActiveCounselorId()
   const sections = getNavSections(counselor.role)
   const currentSection = getSectionForPath(pathname, sections)
-  const pendingCount = countPendingByAssignee(counselor.id)
 
   const [profileOpen, setProfileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement | null>(null)
@@ -71,10 +70,6 @@ export default function GNB() {
       </nav>
 
       <div className="gnb-actions">
-        <button className="gnb-icon-btn gnb-bell-wrap" title="알림" aria-label="알림">
-          <i className="fa-regular fa-bell" />
-          {pendingCount > 0 && <span className="gnb-bell-badge">{pendingCount}</span>}
-        </button>
         <div className={`gnb-profile ${profileOpen ? 'is-open' : ''}`} ref={profileRef}>
           <button
             type="button"
@@ -84,17 +79,15 @@ export default function GNB() {
             onClick={() => setProfileOpen(v => !v)}
             title={`${counselor.name} 메뉴`}
           >
-            <span className="gnb-avatar" aria-hidden="true"></span>
             <span className="gnb-profile-name">
               <strong>{counselor.name}</strong>
               <small>{counselor.roleLabel}</small>
             </span>
-            <i className="fa-solid fa-chevron-down gnb-avatar-caret" aria-hidden="true" />
+            <LuChevronDown className="gnb-avatar-caret" aria-hidden="true" />
           </button>
           {profileOpen && (
             <div className="gnb-profile-menu" role="menu">
               <div className="gnb-profile-head">
-                <span className="gnb-profile-photo" aria-hidden="true"></span>
                 <div className="gnb-profile-meta">
                   <strong>{counselor.name}</strong>
                   <small>{counselor.roleLabel} · {counselor.dept}</small>
@@ -107,14 +100,14 @@ export default function GNB() {
                 role="menuitem"
                 onClick={() => setProfileOpen(false)}
               >
-                <i className="fa-regular fa-id-badge" />
+                <LuContact />
                 <span>내 프로필·설정</span>
-                <i className="fa-solid fa-chevron-right gnb-profile-link-arrow" />
+                <LuChevronRight className="gnb-profile-link-arrow" />
               </Link>
 
               <div className="gnb-profile-section">
                 <span className="gnb-profile-section-title">
-                  <i className="fa-solid fa-user-group" /> 데모 상담사 전환
+                  <LuUsers /> 데모 상담사 전환
                 </span>
                 <div className="gnb-profile-switch">
                   {COUNSELORS.map(c => (
@@ -128,7 +121,7 @@ export default function GNB() {
                     >
                       <strong>{c.name}</strong>
                       <small>{c.roleLabel}</small>
-                      {c.id === activeId && <i className="fa-solid fa-check gnb-profile-switch-check" />}
+                      {c.id === activeId && <LuCheck className="gnb-profile-switch-check" />}
                     </button>
                   ))}
                 </div>

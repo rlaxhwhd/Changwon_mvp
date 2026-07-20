@@ -1,3 +1,4 @@
+import { LuBuilding2, LuFrown, LuList, LuSave, LuTrash2 } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getJobById, addJob, updateJob, removeJob } from '../data/jobsSource'
@@ -52,7 +53,7 @@ export default function JobForm() {
         </header>
         <section className="admin-card">
           <EmptyState
-            icon="fa-regular fa-face-frown"
+            icon={LuFrown}
             message="해당 채용공고를 찾을 수 없습니다."
             action={{ label: '공고 목록으로', onClick: () => navigate('/jobs') }}
           />
@@ -95,7 +96,7 @@ export default function JobForm() {
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">
-            <i className="fa-solid fa-building-user" /> {isEdit ? '공고 수정' : '공고 등록'}
+            <LuBuilding2 /> {isEdit ? '공고 수정' : '공고 등록'}
           </h1>
           <p className="admin-page-desc">
             {isEdit
@@ -105,7 +106,7 @@ export default function JobForm() {
         </div>
         <div className="admin-head-actions">
           <Link to="/jobs" className="admin-btn admin-btn-ghost">
-            <i className="fa-solid fa-list" /> 공고 목록
+            <LuList /> 공고 목록
           </Link>
         </div>
       </header>
@@ -233,11 +234,11 @@ export default function JobForm() {
         <div className="admin-form-actions">
           {isEdit && (
             <button className="admin-btn admin-btn-danger-ghost" onClick={handleDelete}>
-              <i className="fa-solid fa-trash" /> 삭제
+              <LuTrash2 /> 삭제
             </button>
           )}
           <button className="admin-btn admin-btn-primary" disabled={!canSave} onClick={handleSave}>
-            <i className="fa-solid fa-floppy-disk" /> {saved ? '저장됨' : isEdit ? '수정 저장' : '등록'}
+            <LuSave /> {saved ? '저장됨' : isEdit ? '수정 저장' : '등록'}
           </button>
         </div>
       </section>

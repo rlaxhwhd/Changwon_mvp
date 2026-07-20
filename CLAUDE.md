@@ -11,14 +11,71 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 React 19 + TypeScript 5.9 + Vite 8 기반 SPA. 프론트엔드 전용, 백엔드 없음, 모든 데이터는 하드코딩 mock.
 데스크톱 전용 (min-width 1280px).
 
-## Commands
+### 개발 준수사항
+# Karpathy Guidelines
 
-- `npm run dev` — 개발 서버 (Vite, 0.0.0.0)
-- `npm run build` — TypeScript 체크 + Vite 프로덕션 빌드
-- `npx tsc --noEmit` — 타입 체크만 (빌드 없이)
-- `npm run lint` — ESLint
+Behavioral guidelines to reduce common LLM coding mistakes, derived from [Andrej Karpathy's observations](https://x.com/karpathy/status/2015883857489522876) on LLM coding pitfalls.
 
-## Architecture
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+## 5. 재생성 금지
+기존 코드를 재사용 할 수 있으면 재사용해라 똑같은 기능을 굳이 재생성 하지말라
 
 ### Routing
 React Router 미사용. `App.tsx`에서 `useState<PageId>` + `switch` 문으로 라우팅.
@@ -42,44 +99,6 @@ React Router 미사용. `App.tsx`에서 `useState<PageId>` + `switch` 문으로 
 - Font Awesome 6 아이콘, Noto Sans KR 폰트
 - 스타일: `src/index.css` (단일 CSS 파일, CSS 변수 기반)
 
-## gstack
-
-For all web browsing tasks, use gstack's `/browse` skill.
-NEVER use `mcp__claude-in-chrome__*` tools.
-
-### Available gstack skills
-
-- `/office-hours` - Office hours
-- `/plan-ceo-review` - Plan CEO review
-- `/plan-eng-review` - Plan engineering review
-- `/plan-design-review` - Plan design review
-- `/design-consultation` - Design consultation
-- `/design-shotgun` - Design shotgun
-- `/design-html` - Design HTML
-- `/review` - Code review
-- `/ship` - Ship
-- `/land-and-deploy` - Land and deploy
-- `/canary` - Canary monitoring
-- `/benchmark` - Benchmark
-- `/browse` - Browse the web (use this for all web browsing)
-- `/connect-chrome` - Connect Chrome
-- `/qa` - QA testing
-- `/qa-only` - QA only
-- `/design-review` - Design review
-- `/setup-browser-cookies` - Setup browser cookies
-- `/setup-deploy` - Setup deploy
-- `/retro` - Retrospective
-- `/investigate` - Investigate
-- `/document-release` - Document release
-- `/codex` - Codex
-- `/cso` - CSO mode
-- `/autoplan` - Auto-plan
-- `/plan-devex-review` - Plan DevEx review
-- `/devex-review` - DevEx review
-- `/careful` - Careful mode
-- `/freeze` - Freeze
-- `/guard` - Guard
-- `/unfreeze` - Unfreeze
 
 ## Skill routing
 

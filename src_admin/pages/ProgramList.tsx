@@ -1,3 +1,4 @@
+import { LuFrown, LuGraduationCap, LuPlus, LuSearch, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getPrograms, countPrograms } from '../data/programs'
@@ -51,17 +52,17 @@ export default function ProgramList() {
         </div>
         <div className="admin-head-actions">
           <Link to="/programs/blacklist" className="admin-btn admin-btn-ghost">
-            <i className="fa-solid fa-user-slash" /> 블랙리스트
+            <LuUserX /> 블랙리스트
           </Link>
           <Link to="/programs/new" className="admin-btn admin-btn-primary">
-            <i className="fa-solid fa-plus" /> 프로그램 등록
+            <LuPlus /> 프로그램 등록
           </Link>
         </div>
       </header>
 
       <div className="admin-filterbar">
         <div className="admin-search">
-          <i className="fa-solid fa-magnifying-glass" />
+          <LuSearch />
           <input
             type="text"
             value={query}
@@ -96,13 +97,13 @@ export default function ProgramList() {
       <section className="admin-card">
         {all.length === 0 ? (
           <EmptyState
-            icon="fa-solid fa-graduation-cap"
+            icon={LuGraduationCap}
             title="등록된 비교과 프로그램이 없습니다"
             message="프로그램을 등록하면 학생 비교과 신청 화면의 공급 목록에 노출됩니다."
             action={{ label: '프로그램 등록하기', onClick: () => navigate('/programs/new') }}
           />
         ) : list.length === 0 ? (
-          <EmptyState icon="fa-regular fa-face-frown" message="조건에 맞는 프로그램이 없습니다." />
+          <EmptyState icon={LuFrown} message="조건에 맞는 프로그램이 없습니다." />
         ) : (
           <div className="admin-roster admin-program-roster">
             <div className="admin-roster-head">
@@ -136,7 +137,7 @@ export default function ProgramList() {
                   <span className="admin-roster-cell">{p.location || '—'}</span>
                   <span className="admin-roster-cell">
                     <strong>{p.applicants.length} / {p.capacity}</strong>
-                    {noshow > 0 && <small className="admin-focus-inline"><i className="fa-solid fa-user-slash" /> 노쇼 {noshow}</small>}
+                    {noshow > 0 && <small className="admin-focus-inline"><LuUserX /> 노쇼 {noshow}</small>}
                   </span>
                   <span className="admin-roster-cell">
                     <span className={`admin-chip ${statusChip(p.status)}`}>{p.status}</span>

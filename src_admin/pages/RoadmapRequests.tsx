@@ -1,3 +1,5 @@
+import type { IconType } from 'react-icons'
+import { LuBan, LuCircleCheck, LuHourglass, LuInbox, LuPencilRuler, LuRoute, LuX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -8,10 +10,10 @@ import {
 import type { RoadmapChangeRequest, RoadmapRequestStatus } from '../data/roadmapRequests'
 import EmptyState from '../components/EmptyState'
 
-const TABS: { key: RoadmapRequestStatus; label: string; icon: string }[] = [
-  { key: '대기', label: '대기', icon: 'fa-hourglass-half' },
-  { key: '반영완료', label: '반영완료', icon: 'fa-circle-check' },
-  { key: '반려', label: '반려', icon: 'fa-ban' },
+const TABS: { key: RoadmapRequestStatus; label: string; icon: IconType }[] = [
+  { key: '대기', label: '대기', icon: LuHourglass },
+  { key: '반영완료', label: '반영완료', icon: LuCircleCheck },
+  { key: '반려', label: '반려', icon: LuBan },
 ]
 
 function statusChip(status: RoadmapRequestStatus): string {
@@ -42,7 +44,6 @@ function RequestCard({ req }: { req: RoadmapChangeRequest }) {
 
       <div className="admin-request-body">
         <div className="admin-request-student">
-          <span className="admin-student-avatar sm"></span>
           <div>
             <strong>{req.studentName}</strong>
             <small>{req.studentMajor}</small>
@@ -56,7 +57,7 @@ function RequestCard({ req }: { req: RoadmapChangeRequest }) {
         {req.status === '대기' ? (
           <>
             <Link to={`/roadmap/${req.studentId}`} className="admin-btn admin-btn-primary sm">
-              <i className="fa-solid fa-pen-ruler" /> 편집기에서 반영
+              <LuPencilRuler /> 편집기에서 반영
             </Link>
             <button
               className="admin-btn admin-btn-danger-ghost sm"
@@ -65,12 +66,12 @@ function RequestCard({ req }: { req: RoadmapChangeRequest }) {
                 window.location.reload()
               }}
             >
-              <i className="fa-solid fa-xmark" /> 반려
+              <LuX /> 반려
             </button>
           </>
         ) : (
           <Link to={`/roadmap/${req.studentId}`} className="admin-btn admin-btn-ghost sm">
-            <i className="fa-solid fa-route" /> 로드맵 보기
+            <LuRoute /> 로드맵 보기
           </Link>
         )}
       </div>
@@ -108,7 +109,7 @@ export default function RoadmapRequests() {
             className={`admin-tab${tab === t.key ? ' active' : ''}`}
             onClick={() => setTab(t.key)}
           >
-            <i className={`fa-solid ${t.icon}`} /> {t.label}
+            {(() => { const Icon = t.icon; return <Icon /> })()} {t.label}
             <span className="admin-tab-count">{counts[t.key]}</span>
           </button>
         ))}
@@ -116,7 +117,7 @@ export default function RoadmapRequests() {
 
       <section className="admin-card">
         {list.length === 0 ? (
-          <EmptyState icon="fa-regular fa-inbox" message={`${tab} 상태의 변경 요청이 없습니다.`} />
+          <EmptyState icon={LuInbox} message={`${tab} 상태의 변경 요청이 없습니다.`} />
         ) : (
           <ul className="admin-request-list">
             {list.map(req => (

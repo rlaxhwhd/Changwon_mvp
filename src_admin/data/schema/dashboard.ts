@@ -1,3 +1,4 @@
+import type { IconType } from 'react-icons'
 // ─────────────────────────────────────────────────────────────────────────
 // 운영 대시보드(홈) 스키마 (단일 소스)
 // 학생포털 운영 현황(학생·진단·상담·비교과·채용·공지)을 한눈에 집계한 화면 모델.
@@ -27,8 +28,8 @@ export interface DashboardStat {
   deltaDir: StatDelta
   /** 증감 기준 문구 (예: 전월 대비 / 전일 대비) */
   deltaLabel: string
-  /** Font Awesome 아이콘 클래스 (예: fa-solid fa-user-group) */
-  icon: string
+  /** Font Awesome 아이콘 클래스 (예: Lucide component) */
+  icon: IconType
   /** 아이콘 배경 톤 — 카드별 소프트 배경 구분 */
   tone: 'primary' | 'info' | 'success' | 'accent'
 }

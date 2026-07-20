@@ -1,3 +1,4 @@
+import { LuBot, LuChartColumn, LuCheck, LuGraduationCap, LuInfo, LuLightbulb, LuPlus, LuRotateCcw, LuRoute, LuTrash2, LuWorkflow } from 'react-icons/lu'
 import { useState } from 'react'
 import { getActiveCounselor } from '../data/counselors'
 import { getMergedRoadmap, saveRoadmapOverride, resetRoadmapOverride, TERM_ORDER } from '../data/roadmapOverrides'
@@ -39,7 +40,7 @@ function RoadmapEditable({ studentId }: { studentId: string }) {
 
   return (
     <>
-      <p className="admin-editor-hint"><i className="fa-solid fa-circle-info" /> 학생 원본 JSON은 불변입니다. 확정하면 수정분만 override로 저장되어 학생 화면에 병합됩니다.</p>
+      <p className="admin-editor-hint"><LuInfo /> 학생 원본 JSON은 불변입니다. 확정하면 수정분만 override로 저장되어 학생 화면에 병합됩니다.</p>
       <div className="counsel-roadmap-cols">
         {TERM_ORDER.map(label => {
           const d = draft[label]
@@ -52,7 +53,7 @@ function RoadmapEditable({ studentId }: { studentId: string }) {
                 <div key={i} className="counsel-roadmap-item">
                   <div className="counsel-roadmap-item-top">
                     <input value={it.title} onChange={e => updateItem(label, i, { title: e.target.value })} placeholder="항목 제목" />
-                    <button type="button" className="admin-icon-btn danger" title="삭제" onClick={() => removeItem(label, i)}><i className="fa-solid fa-trash" /></button>
+                    <button type="button" className="admin-icon-btn danger" title="삭제" onClick={() => removeItem(label, i)}><LuTrash2 /></button>
                   </div>
                   <div className="counsel-roadmap-item-selects">
                     <select value={it.priority} onChange={e => updateItem(label, i, { priority: e.target.value as TermItem['priority'] })}>{PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}</select>
@@ -61,14 +62,14 @@ function RoadmapEditable({ studentId }: { studentId: string }) {
                   <textarea rows={2} value={it.why} onChange={e => updateItem(label, i, { why: e.target.value })} placeholder="이 항목이 필요한 이유" />
                 </div>
               ))}
-              <button type="button" className="counsel-outline-btn sm" onClick={() => addItem(label)}><i className="fa-solid fa-plus" /> 항목 추가</button>
+              <button type="button" className="counsel-outline-btn sm" onClick={() => addItem(label)}><LuPlus /> 항목 추가</button>
             </section>
           )
         })}
       </div>
       <div className="counsel-roadmap-actions">
-        {merged.meta && <button type="button" className="counsel-outline-btn is-danger" onClick={reset}><i className="fa-solid fa-rotate-left" /> 원본으로 초기화</button>}
-        <button type="button" className="counsel-primary-btn" disabled={saved} onClick={save}><i className="fa-solid fa-check" /> {saved ? '저장됨' : '로드맵 수정 저장'}</button>
+        {merged.meta && <button type="button" className="counsel-outline-btn is-danger" onClick={reset}><LuRotateCcw /> 원본으로 초기화</button>}
+        <button type="button" className="counsel-primary-btn" disabled={saved} onClick={save}><LuCheck /> {saved ? '저장됨' : '로드맵 수정 저장'}</button>
       </div>
     </>
   )
@@ -79,7 +80,7 @@ export default function StudentDiagnosticDetail({ student }: { student: StudentD
   const fr = student.finalRoadmap
   return (
     <>
-      <div className="counsel-detail-subhead"><i className="fa-solid fa-chart-simple" /> 진단 결과 · AI 코멘트</div>
+      <div className="counsel-detail-subhead"><LuChartColumn /> 진단 결과 · AI 코멘트</div>
       <div className="counsel-diag-cols">
         <div>
           <h3 className="counsel-detail-h3">유형 진단</h3>
@@ -94,12 +95,12 @@ export default function StudentDiagnosticDetail({ student }: { student: StudentD
           ))}
         </div>
       </div>
-      <div className="counsel-ai-comment"><i className="fa-solid fa-robot" /><p>{student.insight}</p></div>
+      <div className="counsel-ai-comment"><LuBot /><p>{student.insight}</p></div>
 
-      <div className="counsel-detail-subhead"><i className="fa-solid fa-route" /> AI 진로 로드맵 <span className="counsel-detail-tag">편집 가능</span></div>
+      <div className="counsel-detail-subhead"><LuRoute /> AI 진로 로드맵 <span className="counsel-detail-tag">편집 가능</span></div>
       <RoadmapEditable studentId={student.id} />
 
-      <div className="counsel-detail-subhead"><i className="fa-solid fa-diagram-project" /> 직무 로드맵 — {student.jobField}</div>
+      <div className="counsel-detail-subhead"><LuWorkflow /> 직무 로드맵 — {student.jobField}</div>
       <div className="counsel-diag-cols">
         <div>
           <h3 className="counsel-detail-h3">직무 역량</h3>
@@ -113,8 +114,8 @@ export default function StudentDiagnosticDetail({ student }: { student: StudentD
         </div>
       </div>
 
-      <div className="counsel-detail-subhead"><i className="fa-solid fa-lightbulb" /> 종합 AI 코멘트</div>
-      <div className="counsel-ai-comment is-coach"><i className="fa-solid fa-user-graduate" /><p>{fr.coach}</p></div>
+      <div className="counsel-detail-subhead"><LuLightbulb /> 종합 AI 코멘트</div>
+      <div className="counsel-ai-comment is-coach"><LuGraduationCap /><p>{fr.coach}</p></div>
       <div className="counsel-insight-list">
         {fr.insights.map((ins, i) => (
           <div key={i} className="counsel-insight-item"><span className="counsel-insight-tag">{ins.tag}</span><strong>{ins.title}</strong><p>{ins.desc}</p></div>

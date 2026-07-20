@@ -1,3 +1,4 @@
+import { LuCalendarCheck, LuFolderOpen, LuMessageSquareMore, LuPen, LuQuote, LuSearch } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getActiveCounselor } from '../data/counselors'
@@ -27,7 +28,6 @@ function RecordItem({ record }: { record: CounselRecord }) {
     <li className="admin-record-item">
       <div className="admin-record-item-head">
         <div className="admin-record-item-student">
-          <span className="admin-student-avatar sm"></span>
           <div>
             <strong>{record.studentName}</strong>
             <small>
@@ -43,7 +43,7 @@ function RecordItem({ record }: { record: CounselRecord }) {
       </div>
 
       <div className="admin-record-item-topic">
-        <i className="fa-solid fa-quote-left" /> {record.topic}
+        <LuQuote /> {record.topic}
       </div>
 
       <div className="admin-record-item-summary">
@@ -55,7 +55,7 @@ function RecordItem({ record }: { record: CounselRecord }) {
         <>
           <div className="admin-record-item-comment">
             <span className="admin-record-label">
-              <i className="fa-solid fa-comment-dots" /> 학생 공개 코멘트
+              <LuMessageSquareMore /> 학생 공개 코멘트
             </span>
             <p>{record.comment}</p>
           </div>
@@ -67,7 +67,7 @@ function RecordItem({ record }: { record: CounselRecord }) {
           )}
           <div className="admin-form-actions">
             <button className="admin-btn admin-btn-ghost sm" onClick={() => setEditing(true)}>
-              <i className="fa-solid fa-pen" /> 코멘트 편집
+              <LuPen /> 코멘트 편집
             </button>
           </div>
         </>
@@ -141,13 +141,13 @@ export default function CounselRecords() {
           </p>
         </div>
         <Link to="/counsel/schedule" className="admin-btn admin-btn-ghost">
-          <i className="fa-regular fa-calendar-check" /> 일정 보기
+          <LuCalendarCheck /> 일정 보기
         </Link>
       </header>
 
       <div className="admin-toolbar">
         <div className="admin-search">
-          <i className="fa-solid fa-magnifying-glass" />
+          <LuSearch />
           <input
             type="text"
             value={query}
@@ -161,7 +161,7 @@ export default function CounselRecords() {
       <section className="admin-card">
         {list.length === 0 ? (
           <EmptyState
-            icon="fa-regular fa-folder-open"
+            icon={LuFolderOpen}
             message={
               completed.length === 0
                 ? '완료된 상담 기록이 없습니다.'

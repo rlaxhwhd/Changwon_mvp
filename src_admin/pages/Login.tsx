@@ -1,16 +1,18 @@
+import type { IconType } from 'react-icons'
+import { LuArrowRight, LuBriefcase, LuHeart } from 'react-icons/lu'
 import { Navigate } from 'react-router-dom'
 import type { CounselorRole } from '../data/counselors'
 import { getCounselorByRole, setActiveCounselor, hasActiveSession } from '../data/counselors'
 
-const ROLE_CARDS: { role: CounselorRole; icon: string; desc: string }[] = [
+const ROLE_CARDS: { role: CounselorRole; icon: IconType; desc: string }[] = [
   {
     role: 'career',
-    icon: 'fa-briefcase',
+    icon: LuBriefcase,
     desc: '진로·취업 상담, IAP 유형 확정, 로드맵 편집, 채용공고를 관리합니다.',
   },
   {
     role: 'psych',
-    icon: 'fa-heart',
+    icon: LuHeart,
     desc: '심리·정서 상담을 접수·진행하고 학생 성향 검사 결과를 열람합니다.',
   },
 ]
@@ -52,7 +54,7 @@ export default function Login() {
                 disabled={!counselor}
               >
                 <span className="admin-role-icon">
-                  <i className={`fa-solid ${card.icon}`} />
+                  {(() => { const Icon = card.icon; return <Icon /> })()}
                 </span>
                 <span className="admin-role-name">
                   {counselor ? counselor.roleLabel : card.role}
@@ -64,7 +66,7 @@ export default function Login() {
                 )}
                 <span className="admin-role-desc">{card.desc}</span>
                 <span className="admin-role-cta">
-                  로그인 <i className="fa-solid fa-arrow-right" />
+                  로그인 <LuArrowRight />
                 </span>
               </button>
             )
