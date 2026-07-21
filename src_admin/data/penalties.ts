@@ -9,10 +9,14 @@ import type { ProgramApplicant, Program } from './schema/program'
 import type { StudentPenalty, PenaltyEntry } from './schema/penalty'
 import { NOSHOW_PENALTY_POINTS } from './schema/penalty'
 import { getActiveCounselorId } from './counselors'
+import seed from './penalties.seed.json'
 
 const STORAGE_KEY = 'dc_penalty'
 
-/** localStorage 의 벌점 맵 전체 읽기. 실패 시 빈 맵. */
+/** 데모 시드 (localStorage 비었을 때 폴백). 실 노쇼 발생 시 localStorage 로 승격. */
+const SEED = seed as Record<string, StudentPenalty>
+
+/** localStorage 의 벌점 맵 전체 읽기. 비었으면 seed 폴백(programs.ts 패턴). */
 function readMap(): Record<string, StudentPenalty> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
@@ -21,9 +25,9 @@ function readMap(): Record<string, StudentPenalty> {
       if (parsed && typeof parsed === 'object') return parsed as Record<string, StudentPenalty>
     }
   } catch {
-    /* 폴백: 벌점 없음 */
+    /* 폴백: seed */
   }
-  return {}
+  return { ...SEED }
 }
 
 function writeMap(map: Record<string, StudentPenalty>): void {

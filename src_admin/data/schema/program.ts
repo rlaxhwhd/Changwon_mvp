@@ -43,8 +43,14 @@ export interface Program {
   startDate: string
   /** 신청 마감일 (YYYY-MM-DD) */
   endDate: string
+  /** 진행(운영) 기간 시작 (YYYY-MM-DD) */
+  runStartDate?: string
+  /** 진행(운영) 기간 종료 (YYYY-MM-DD) */
+  runEndDate?: string
   /** 정원 */
   capacity: number
+  /** 프로그램 썸네일 경로 */
+  image?: string
   /** 진행 장소 */
   location: string
   status: ProgramStatus

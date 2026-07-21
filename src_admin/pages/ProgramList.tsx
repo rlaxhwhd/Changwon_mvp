@@ -6,19 +6,9 @@ import type { ProgramStatus } from '../data/programs'
 import { PROGRAM_CATEGORIES } from '../data/schema/program'
 import type { ProgramCategory } from '../data/schema/program'
 import EmptyState from '../components/EmptyState'
+import ProgramCardGrid from '../../src_v2/pages/growth/ProgramCardGrid'
 
 const ALL = '전체'
-
-function statusChip(status: ProgramStatus): string {
-  switch (status) {
-    case '모집중':
-      return 'admin-chip-done'
-    case '모집마감':
-      return 'admin-chip-wait'
-    case '종료':
-      return 'admin-chip-cancel'
-  }
-}
 
 export default function ProgramList() {
   const navigate = useNavigate()
@@ -105,47 +95,21 @@ export default function ProgramList() {
         ) : list.length === 0 ? (
           <EmptyState icon={LuFrown} message="조건에 맞는 프로그램이 없습니다." />
         ) : (
-          <div className="admin-roster admin-program-roster">
-            <div className="admin-roster-head">
-              <span>프로그램</span>
-              <span>분류</span>
-              <span>신청기간</span>
-              <span>장소</span>
-              <span>신청 / 정원</span>
-              <span>상태</span>
-            </div>
-            {list.map(p => {
-              const noshow = p.applicants.filter(a => a.attendance === '노쇼').length
-              return (
-                <button
-                  key={p.id}
-                  type="button"
-                  className="admin-roster-row"
-                  onClick={() => navigate(`/programs/${p.id}`)}
-                >
-                  <span className="admin-roster-cell">
-                    <strong>{p.title}</strong>
-                    <small>{p.desc}</small>
-                  </span>
-                  <span className="admin-roster-cell">
-                    <span className="admin-tag admin-tag-soft">{p.category}</span>
-                  </span>
-                  <span className="admin-roster-cell">
-                    {p.startDate}
-                    <small>~ {p.endDate}</small>
-                  </span>
-                  <span className="admin-roster-cell">{p.location || '—'}</span>
-                  <span className="admin-roster-cell">
-                    <strong>{p.applicants.length} / {p.capacity}</strong>
-                    {noshow > 0 && <small className="admin-focus-inline"><LuUserX /> 노쇼 {noshow}</small>}
-                  </span>
-                  <span className="admin-roster-cell">
-                    <span className={`admin-chip ${statusChip(p.status)}`}>{p.status}</span>
-                  </span>
-                </button>
-              )
-            })}
-          </div>
+          <ProgramCardGrid
+            programs={list.map(program => ({
+              id: program.id,
+              title: program.title,
+              desc: program.desc,
+              category: program.category,
+              startDate: program.startDate,
+              endDate: program.endDate,
+              runStartDate: program.runStartDate,
+              runEndDate: program.runEndDate,
+              capacity: program.capacity,
+              image: program.image,
+            }))}
+            onSelect={id => navigate(`/programs/${id}`)}
+          />
         )}
       </section>
     </div>

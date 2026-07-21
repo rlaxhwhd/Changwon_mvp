@@ -228,7 +228,7 @@ export default function ProgramDetail() {
   const navigate = useNavigate()
   const progId = Number(id)
   const [activeTab, setActiveTab] = useState<DetailTab>('프로그램 소개')
-  const [wished, setWished] = useState(() => (Number.isFinite(progId) ? isWishedStore(progId) : false))
+  const [wished, setWished] = useState(() => (Number.isFinite(progId) ? isWishedStore(String(progId)) : false))
   const [applyOpen, setApplyOpen] = useState(false)
   const [applied, setApplied] = useState(false)
 
@@ -236,8 +236,8 @@ export default function ProgramDetail() {
 
   const handleToggleWish = () => {
     if (!Number.isFinite(progId)) { setWished(w => !w); return }
-    const next = toggleWishStore(progId)
-    setWished(next.includes(progId))
+    const next = toggleWishStore(String(progId))
+    setWished(next.includes(String(progId)))
   }
 
   const handleApplySubmit = () => {

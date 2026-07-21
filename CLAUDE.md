@@ -4,11 +4,44 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **진입점: [AGENTS.md](AGENTS.md)** — 역할별 라우팅(학생 작업 → `STU_README.md` / 상담사 작업 → `Counsel_README.md`), 하네스, 빠른 참조. 작업 착수 전 참고.
 
-**DB가 없이 진행중이므로 필요한 데이터는 학생json에 추가하여 작업한다.**
+## 🔑 데이터 원칙 — DB 없음: 모든 상태는 JSON (★가장 중요)
+
+**백엔드·DB가 없다. 따라서 모든 데이터와 "상태 변화(이벤트)"는 DB 대신 JSON으로 표현한다.**
+어떤 이벤트가 일어나면 그 결과를 **해당 단일소스(JSON)에 항목을 추가/수정**하는 방식으로 구현한다. 하드코딩 리터럴로 화면에 박지 말 것 (skill `json-dynamic-screen`, `students.ts` 패턴 미러).
+
+### 단일소스 3+1 (여기 말고 다른 데 데이터 두지 말 것)
+| 단일소스 | 위치 | 담는 것 |
+|---|---|---|
+| **학생 JSON** | `src_v2/data/students/*.json` | 학생 프로필·진단·IAP·로드맵·성장·포트폴리오·벌점 |
+| **상담사 JSON** | `src_admin/data/counselors/*.json` *(신설 예정)* | 상담사 프로필·역할·담당범위 |
+| **비교과프로그램 리스트** | 프로그램 단일소스 JSON | 프로그램 목록·정원·신청자·출석 |
+| **채용공고 리스트** | 채용공고 단일소스 JSON *(데이터 추후 제공)* | 상담사가 CRUD하는 공고 |
+
+### 이벤트 → JSON 반영 매핑 (이게 이 프로젝트의 심장)
+"무슨 일이 일어나면 → 어디에 무엇을 추가/수정하나"를 항상 이 표대로 설계한다.
+
+| 이벤트 | 추가/수정 대상 (단일소스) | 런타임 키(localStorage) |
+|---|---|---|
+| 학생이 비교과 신청 | 학생 JSON 신청목록 + 프로그램 신청자 | `dc_program_apply` |
+| 상담 신청 | 상담 요청 스토어 | `dc_counsel_requests` |
+| 상담 완료·코멘트 | 상담 기록(→ 학생에 반영) | `dc_counsel_records` |
+| IAP 유형 확정 | 학생 JSON IAP | `dc_iap_result` |
+| 상담사가 로드맵 수정 | 학생 로드맵 override | `dc_roadmap_overrides` |
+| 로드맵 변경 요청 | 로드맵 요청 스토어 | `dc_roadmap_requests` |
+| 비교과 미참여 벌점 | 학생 JSON 벌점 | `dc_penalty` |
+| 상담사가 채용공고 등록/수정/삭제 | 채용공고 리스트 | `dc_jobs` |
+| 상담사가 새 프로그램 등록 | 비교과프로그램 리스트 | `dc_programs` |
+
+### 런타임 반영 방식 (파일은 못 쓰니까)
+브라우저에서 JSON 파일을 직접 못 쓰므로, **base JSON(seed) + `localStorage` 오버레이 = 병합 렌더**로 처리한다.
+원본 JSON은 그대로 두고 이벤트 결과(override)만 localStorage에 쌓아, 읽을 때 병합해서 보여준다. → 이래야 "상담사가 고치면 학생 화면에 반영", "학생이 신청하면 상담사 접수함에 뜸"이 DB 없이 성립. 상세 흐름은 `Counsel_README.md` §7.
+
+---
+
 ## Project
 
 국립창원대학교 역량개발관리시스템 "드림캐치(DREAMCATCH)" 학생 포털 UI 프로토타입.
-React 19 + TypeScript 5.9 + Vite 8 기반 SPA. 프론트엔드 전용, 백엔드 없음, 모든 데이터는 하드코딩 mock.
+React 19 + TypeScript 5.9 + Vite 8 기반 SPA. 프론트엔드 전용, 백엔드 없음, 모든 데이터는 **JSON 동적 mock**(하드코딩 금지 — 위 "데이터 원칙" 참조).
 데스크톱 전용 (min-width 1280px).
 
 ### 개발 준수사항

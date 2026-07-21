@@ -1,96 +1,18 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getActiveStudent } from '../../data/students'
 import { getWishlist, toggleWish as toggleWishStore } from '../../data/wishlist'
+import { getPrograms } from '../../../src_admin/data/programs'
+import { PROGRAM_CATEGORIES } from '../../../src_admin/data/schema/program'
+import type { ProgramCategory } from '../../../src_admin/data/schema/program'
+import ProgramCardGrid from './ProgramCardGrid'
+import type { ProgramCardVM } from './ProgramCardGrid'
 import './ProgramApply.css'
 import './ProgramReco.css'
 
-type Category = '전체' | '진로' | '취업' | '어학' | '창업' | '자격증' | '기타'
+type Category = '전체' | ProgramCategory
 
-const CATEGORIES: Category[] = ['전체', '진로', '취업', '어학', '창업', '자격증', '기타']
-
-interface Program {
-  id: number
-  title: string
-  desc: string
-  category: Exclude<Category, '전체'>
-  startDate: string
-  endDate: string
-  capacity: number
-  dDay: number
-  image?: string
-}
-
-const PROGRAMS: Program[] = [
-  {
-    id: 1,
-    title: '데이터 기초 프로그래밍 교육',
-    desc: 'Python 언어 기반의 실습 중심 프로그래밍 강의로 취업 실무 역량을 키울 수 있는 교육입니다.',
-    category: '취업',
-    startDate: '2025.04.01',
-    endDate: '2025.04.04',
-    capacity: 30,
-    dDay: 5,
-    image: '/비교과프로그램1.png',
-  },
-  {
-    id: 2,
-    title: '데이터 직무역량 개발 교육',
-    desc: '기업에서 필요한 Python 데이터 분석 및 자동화 역량을 기르는 심화 교육 과정입니다.',
-    category: '취업',
-    startDate: '2025.04.01',
-    endDate: '2025.04.04',
-    capacity: 25,
-    dDay: 12,
-    image: '/비교과프로그램2.png',
-  },
-  {
-    id: 3,
-    title: 'ChatGPT 서비스의 발전 방향',
-    desc: 'ChatGPT를 비롯한 생성형 AI 서비스의 현황과 미래 진로 방향을 탐색하는 진로 특강입니다.',
-    category: '진로',
-    startDate: '2025.04.01',
-    endDate: '2025.04.04',
-    capacity: 40,
-    dDay: 20,
-    image: '/비교과프로그램3.png',
-  },
-  {
-    id: 4,
-    title: '자기탐색으로 개인 역량 찾기',
-    desc: '자기 탐색과 강점 발견을 통해 진로를 설계하는 진로 역량 강화 프로그램입니다.',
-    category: '진로',
-    startDate: '2025.04.01',
-    endDate: '2025.04.04',
-    capacity: 20,
-    dDay: 3,
-    image: '/비교과프로그램4.png',
-  },
-  {
-    id: 5,
-    title: '해외 단기 어학연수 프로그램',
-    desc: '해외 현지에서 진행하는 단기 어학연수 프로그램으로 글로벌 역량을 강화합니다.',
-    category: '어학',
-    startDate: '2025.04.01',
-    endDate: '2025.04.04',
-    capacity: 15,
-    dDay: 30,
-    image: '/비교과프로그램5.png',
-  },
-]
-
-const CAT_COLORS: Record<Exclude<Category, '전체'>, string> = {
-  취업: '#2E5BFF',
-  진로: '#22C55E',
-  어학: '#F59E0B',
-  창업: '#EF4444',
-  자격증: '#8B5CF6',
-  기타: '#6B7280',
-}
-
-function DDay({ n }: { n: number }) {
-  return <span className={`pa-dday${n <= 5 ? ' urgent' : ''}`}>D-{n}</span>
-}
+const CATEGORIES: Category[] = ['전체', ...PROGRAM_CATEGORIES]
 
 export default function ProgramApply() {
   const navigate = useNavigate()
@@ -102,9 +24,21 @@ export default function ProgramApply() {
   ]
   const [activeTab, setActiveTab] = useState<Category>('전체')
   const [page, setPage] = useState(1)
-  const [wishlist, setWishlist] = useState<Set<number>>(() => new Set(getWishlist()))
+  const programs = useMemo<ProgramCardVM[]>(() => getPrograms().map(program => ({
+    id: program.id,
+    title: program.title,
+    desc: program.desc,
+    category: program.category,
+    startDate: program.startDate,
+    endDate: program.endDate,
+    runStartDate: program.runStartDate,
+    runEndDate: program.runEndDate,
+    capacity: program.capacity,
+    image: program.image,
+  })), [])
+  const [wishlist, setWishlist] = useState<Set<string>>(() => new Set(getWishlist()))
   const [showWishOnly, setShowWishOnly] = useState(false)
-  const PAGE_SIZE = 3
+  const PAGE_SIZE = 8
 
   // ── AI 맞춤 추천 잠금 상태 (locked → loading → unlocked) ───────
   const [recoState, setRecoState] = useState<'locked' | 'loading' | 'unlocked'>('locked')
@@ -113,11 +47,11 @@ export default function ProgramApply() {
     window.setTimeout(() => setRecoState('unlocked'), 1800)
   }
 
-  const toggleWish = (id: number) => {
+  const toggleWish = (id: string) => {
     setWishlist(new Set(toggleWishStore(id)))
   }
 
-  const filtered = PROGRAMS.filter(p => {
+  const filtered = programs.filter(p => {
     if (showWishOnly && !wishlist.has(p.id)) return false
     if (activeTab !== '전체' && p.category !== activeTab) return false
     return true
@@ -243,70 +177,14 @@ export default function ProgramApply() {
           </div>
         </div>
 
-        <div className="pa-list">
-          {paged.map((program, idx) => {
-            const isFeatured = !showWishOnly && activeTab === '전체' && currentPage === 1 && idx <= 1
-            const isWished = wishlist.has(program.id)
-            return (
-            <div
-              key={program.id}
-              className={`pa-card${isFeatured ? ' pa-card--featured' : ''}`}
-              onClick={() => navigate(`/growth/program/${program.id}`)}
-            >
-              {isFeatured && (
-                <span className="pa-featured-badge">
-                  <i className="fa-solid fa-wand-magic-sparkles" /> 추천
-                </span>
-              )}
-              <div className="pa-thumb">
-                {program.image
-                  ? <img src={program.image} alt={program.title} />
-                  : <i className="fa-solid fa-image" />}
-              </div>
-
-              <div className="pa-info">
-                <div className="pa-info-top">
-                  <span
-                    className="pa-cat-badge"
-                    style={{
-                      background: CAT_COLORS[program.category] + '18',
-                      color: CAT_COLORS[program.category],
-                    }}
-                  >
-                    {program.category}
-                  </span>
-                  <DDay n={program.dDay} />
-                  {(program.id === 1 || program.id === 4) && (
-                    <span className="pa-multi-badge">다회차</span>
-                  )}
-                </div>
-                <h2 className="pa-card-title">{program.title}</h2>
-                <p className="pa-card-desc">{program.desc}</p>
-                <div className="pa-meta">
-                  <span><i className="fa-regular fa-calendar" /> 신청기간: {program.startDate} ~ {program.endDate}</span>
-                  <span><i className="fa-solid fa-users" /> 정원 {program.capacity}명</span>
-                </div>
-              </div>
-
-              <div className="pa-actions" onClick={event => event.stopPropagation()}>
-                <button className="pa-apply-btn" onClick={() => navigate(`/growth/program/${program.id}`)}>
-                  신청하기
-                </button>
-                <button
-                  className={`pa-wish-btn${isWished ? ' active' : ''}`}
-                  title={isWished ? '찜 해제' : '찜하기'}
-                  aria-label={isWished ? '찜 해제' : '찜하기'}
-                  aria-pressed={isWished}
-                  onClick={() => toggleWish(program.id)}
-                >
-                  <i className={isWished ? 'fa-solid fa-heart' : 'fa-regular fa-heart'} />
-                </button>
-              </div>
-            </div>
-            )
-          })}
-
-          {filtered.length === 0 && (
+        {filtered.length > 0 ? (
+          <ProgramCardGrid
+            programs={paged}
+            onSelect={id => navigate(`/growth/program/${id}`)}
+            wished={wishlist}
+            onToggleWish={toggleWish}
+          />
+        ) : (
             <div className="pa-empty">
               <i className="fa-solid fa-box-open" />
               <p>
@@ -315,8 +193,7 @@ export default function ProgramApply() {
                   : '해당 카테고리의 프로그램이 없습니다.'}
               </p>
             </div>
-          )}
-        </div>
+        )}
 
         {filtered.length > 0 && (
           <div className="pa-pagination">

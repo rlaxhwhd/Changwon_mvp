@@ -1,0 +1,1444 @@
+{
+  "20201137": {
+    "studentId": "20201137",
+    "studentName": "김서준",
+    "studentMajor": "사학과",
+    "total": 15,
+    "entries": [
+      {
+        "id": "pen_seed_20201137_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "AI 역량 부트캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_0",
+        "programTitle": "AI 역량 부트캠프",
+        "at": "2025-09-03T00:00:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20201137_1",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2025-10-17T04:52:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20201999": {
+    "studentId": "20201999",
+    "studentName": "박지민",
+    "studentMajor": "기계공학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20201999_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2026-04-01T02:54:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20202403": {
+    "studentId": "20202403",
+    "studentName": "조도윤",
+    "studentMajor": "미디어커뮤니케이션학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20202403_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2025-10-03T06:42:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20203669": {
+    "studentId": "20203669",
+    "studentName": "서주원",
+    "studentMajor": "생명과학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20203669_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2025-11-02T04:24:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20204935": {
+    "studentId": "20204935",
+    "studentName": "류지훈",
+    "studentMajor": "전자공학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20204935_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "직무역량 세미나 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_8",
+        "programTitle": "직무역량 세미나",
+        "at": "2025-12-02T02:06:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20206201": {
+    "studentId": "20206201",
+    "studentName": "정수아",
+    "studentMajor": "음악학과",
+    "total": 0,
+    "entries": [
+      {
+        "id": "pen_seed_20206201_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2026-01-01T00:48:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20206201_1",
+        "kind": "waive",
+        "points": -10,
+        "reason": "소명 인정 — 병결 확인서 제출",
+        "at": "2026-03-08T06:06:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20207467": {
+    "studentId": "20207467",
+    "studentName": "한서연",
+    "studentMajor": "법학과",
+    "total": 15,
+    "entries": [
+      {
+        "id": "pen_seed_20207467_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "AI 역량 부트캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_0",
+        "programTitle": "AI 역량 부트캠프",
+        "at": "2026-01-31T06:30:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20207467_1",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2026-03-16T02:22:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20208733": {
+    "studentId": "20208733",
+    "studentName": "안민준",
+    "studentMajor": "경제학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20208733_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2026-03-02T04:12:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20211348": {
+    "studentId": "20211348",
+    "studentName": "이예준",
+    "studentMajor": "영어영문학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20211348_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "진로탐색 워크숍 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_1",
+        "programTitle": "진로탐색 워크숍",
+        "at": "2025-09-08T01:07:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20211348_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2025-09-19T02:20:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20212210": {
+    "studentId": "20212210",
+    "studentName": "최지아",
+    "studentMajor": "컴퓨터공학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20212210_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2026-04-06T03:01:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20212210_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2026-04-17T04:14:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20212614": {
+    "studentId": "20212614",
+    "studentName": "윤지우",
+    "studentMajor": "경영학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20212614_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "현장실습 사전교육 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_7",
+        "programTitle": "현장실습 사전교육",
+        "at": "2025-10-08T07:49:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20212614_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "직무역량 세미나 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_8",
+        "programTitle": "직무역량 세미나",
+        "at": "2025-10-19T00:02:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20213880": {
+    "studentId": "20213880",
+    "studentName": "신하은",
+    "studentMajor": "식품영양학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20213880_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2025-11-07T05:31:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20213880_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2025-11-18T06:44:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20215146": {
+    "studentId": "20215146",
+    "studentName": "전서현",
+    "studentMajor": "건축학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20215146_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "글로벌 리더십 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_9",
+        "programTitle": "글로벌 리더십 캠프",
+        "at": "2025-12-07T03:13:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20215146_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "AI 역량 부트캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_0",
+        "programTitle": "AI 역량 부트캠프",
+        "at": "2025-12-18T04:26:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20216412": {
+    "studentId": "20216412",
+    "studentName": "강예은",
+    "studentMajor": "간호학과",
+    "total": 25,
+    "entries": [
+      {
+        "id": "pen_seed_20216412_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2026-01-06T01:55:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20216412_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2026-01-17T02:08:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20216412_2",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2026-02-19T05:47:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20217678": {
+    "studentId": "20217678",
+    "studentName": "오은우",
+    "studentMajor": "행정학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20217678_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "진로탐색 워크숍 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_1",
+        "programTitle": "진로탐색 워크숍",
+        "at": "2026-02-05T07:37:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20217678_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2026-02-16T00:50:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20217678_2",
+        "kind": "waive",
+        "points": -10,
+        "reason": "소명 인정 — 병결 확인서 제출",
+        "at": "2026-04-12T05:55:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20218944": {
+    "studentId": "20218944",
+    "studentName": "송채원",
+    "studentMajor": "수학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20218944_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "현장실습 사전교육 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_7",
+        "programTitle": "현장실습 사전교육",
+        "at": "2026-03-07T05:19:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20218944_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "직무역량 세미나 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_8",
+        "programTitle": "직무역량 세미나",
+        "at": "2026-03-18T06:32:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20221155": {
+    "studentId": "20221155",
+    "studentName": "류유주",
+    "studentMajor": "생명과학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20221155_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "직무역량 세미나 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_8",
+        "programTitle": "직무역량 세미나",
+        "at": "2026-03-12T06:26:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20221155_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "글로벌 리더십 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_9",
+        "programTitle": "글로벌 리더십 캠프",
+        "at": "2026-03-23T07:39:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20221155_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "AI 역량 부트캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_0",
+        "programTitle": "AI 역량 부트캠프",
+        "at": "2026-04-03T00:52:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20221155_3",
+        "kind": "waive",
+        "points": -10,
+        "reason": "소명 인정 — 병결 확인서 제출",
+        "at": "2026-05-17T04:44:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20221559": {
+    "studentId": "20221559",
+    "studentName": "박지민",
+    "studentMajor": "국어국문학과",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20221559_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2025-09-13T02:14:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20221559_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2025-09-24T03:27:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20221559_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2025-10-05T04:40:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20222421": {
+    "studentId": "20222421",
+    "studentName": "정나윤",
+    "studentMajor": "전자공학과",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20222421_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2026-04-11T04:08:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20222421_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2026-04-22T05:21:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20222421_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2026-05-03T06:34:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20222825": {
+    "studentId": "20222825",
+    "studentName": "장수빈",
+    "studentMajor": "세무학과",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20222825_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "직무역량 세미나 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_8",
+        "programTitle": "직무역량 세미나",
+        "at": "2025-10-13T00:56:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20222825_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "글로벌 리더십 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_9",
+        "programTitle": "글로벌 리더십 캠프",
+        "at": "2025-10-24T01:09:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20222825_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "AI 역량 부트캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_0",
+        "programTitle": "AI 역량 부트캠프",
+        "at": "2025-11-04T02:22:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20224091": {
+    "studentId": "20224091",
+    "studentName": "권유진",
+    "studentMajor": "생명보건학부",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20224091_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2025-11-12T06:38:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20224091_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2025-11-23T07:51:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20224091_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2025-12-04T00:04:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20225357": {
+    "studentId": "20225357",
+    "studentName": "김다은",
+    "studentMajor": "산업경영공학과",
+    "total": 35,
+    "entries": [
+      {
+        "id": "pen_seed_20225357_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "AI 역량 부트캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_0",
+        "programTitle": "AI 역량 부트캠프",
+        "at": "2025-12-12T04:20:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20225357_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "진로탐색 워크숍 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_1",
+        "programTitle": "진로탐색 워크숍",
+        "at": "2025-12-23T05:33:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20225357_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2026-01-03T06:46:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20225357_3",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2026-01-25T00:12:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20226623": {
+    "studentId": "20226623",
+    "studentName": "조소율",
+    "studentMajor": "사학과",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20226623_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2026-01-11T02:02:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20226623_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "현장실습 사전교육 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_7",
+        "programTitle": "현장실습 사전교육",
+        "at": "2026-01-22T03:15:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20226623_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "직무역량 세미나 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_8",
+        "programTitle": "직무역량 세미나",
+        "at": "2026-02-02T04:28:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20227889": {
+    "studentId": "20227889",
+    "studentName": "서시윤",
+    "studentMajor": "미디어커뮤니케이션학과",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20227889_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2026-02-10T00:44:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20227889_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2026-02-21T01:57:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20227889_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2026-03-04T02:10:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20231366": {
+    "studentId": "20231366",
+    "studentName": "전승현",
+    "studentMajor": "식품영양학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20231366_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "글로벌 리더십 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_9",
+        "programTitle": "글로벌 리더십 캠프",
+        "at": "2026-03-17T07:33:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20231770": {
+    "studentId": "20231770",
+    "studentName": "최지아",
+    "studentMajor": "사회복지학과",
+    "total": 0,
+    "entries": [
+      {
+        "id": "pen_seed_20231770_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2025-09-18T03:21:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20231770_1",
+        "kind": "waive",
+        "points": -10,
+        "reason": "소명 인정 — 병결 확인서 제출",
+        "at": "2025-11-23T01:39:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20232632": {
+    "studentId": "20232632",
+    "studentName": "강하린",
+    "studentMajor": "건축학과",
+    "total": 5,
+    "entries": [
+      {
+        "id": "pen_seed_20232632_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2026-04-16T05:15:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20232632_1",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2026-05-30T01:07:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20232632_2",
+        "kind": "waive",
+        "points": -10,
+        "reason": "소명 인정 — 병결 확인서 제출",
+        "at": "2026-06-21T03:33:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20233036": {
+    "studentId": "20233036",
+    "studentName": "임현우",
+    "studentMajor": "회계학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20233036_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "글로벌 리더십 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_9",
+        "programTitle": "글로벌 리더십 캠프",
+        "at": "2025-10-18T01:03:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20234302": {
+    "studentId": "20234302",
+    "studentName": "황준서",
+    "studentMajor": "토목공학과",
+    "total": 15,
+    "entries": [
+      {
+        "id": "pen_seed_20234302_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2025-11-17T07:45:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20234302_1",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2025-12-31T03:37:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20235568": {
+    "studentId": "20235568",
+    "studentName": "이하람",
+    "studentMajor": "지능로봇융합공학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20235568_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "진로탐색 워크숍 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_1",
+        "programTitle": "진로탐색 워크숍",
+        "at": "2025-12-17T05:27:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20236834": {
+    "studentId": "20236834",
+    "studentName": "윤서율",
+    "studentMajor": "영어영문학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20236834_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "현장실습 사전교육 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_7",
+        "programTitle": "현장실습 사전교육",
+        "at": "2026-01-16T03:09:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20238100": {
+    "studentId": "20238100",
+    "studentName": "신도현",
+    "studentMajor": "경영학과",
+    "total": 10,
+    "entries": [
+      {
+        "id": "pen_seed_20238100_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2026-02-15T01:51:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20241577": {
+    "studentId": "20241577",
+    "studentName": "김서준",
+    "studentMajor": "생명보건학부",
+    "total": 25,
+    "entries": [
+      {
+        "id": "pen_seed_20241577_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "AI 역량 부트캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_0",
+        "programTitle": "AI 역량 부트캠프",
+        "at": "2026-03-22T00:40:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20241577_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "진로탐색 워크숍 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_1",
+        "programTitle": "진로탐색 워크숍",
+        "at": "2026-04-02T01:53:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20241577_2",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2026-05-05T04:32:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20241981": {
+    "studentId": "20241981",
+    "studentName": "정나윤",
+    "studentMajor": "법학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20241981_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2025-09-23T04:28:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20241981_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2025-10-04T05:41:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20242843": {
+    "studentId": "20242843",
+    "studentName": "조도윤",
+    "studentMajor": "산업경영공학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20242843_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2026-04-21T06:22:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20242843_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "현장실습 사전교육 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_7",
+        "programTitle": "현장실습 사전교육",
+        "at": "2026-05-02T07:35:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20243247": {
+    "studentId": "20243247",
+    "studentName": "한지안",
+    "studentMajor": "경제학과",
+    "total": 15,
+    "entries": [
+      {
+        "id": "pen_seed_20243247_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "AI 역량 부트캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_0",
+        "programTitle": "AI 역량 부트캠프",
+        "at": "2025-10-23T02:10:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20243247_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "진로탐색 워크숍 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_1",
+        "programTitle": "진로탐색 워크숍",
+        "at": "2025-11-03T03:23:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20243247_2",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2025-12-06T06:02:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20243247_3",
+        "kind": "waive",
+        "points": -10,
+        "reason": "소명 인정 — 병결 확인서 제출",
+        "at": "2025-12-28T00:28:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20244513": {
+    "studentId": "20244513",
+    "studentName": "안건우",
+    "studentMajor": "기계공학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20244513_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2025-11-22T00:52:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20244513_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "현장실습 사전교육 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_7",
+        "programTitle": "현장실습 사전교육",
+        "at": "2025-12-03T01:05:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20245779": {
+    "studentId": "20245779",
+    "studentName": "박예린",
+    "studentMajor": "아학융합학부",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20245779_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2025-12-22T06:34:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20245779_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2026-01-02T07:47:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20247045": {
+    "studentId": "20247045",
+    "studentName": "장시은",
+    "studentMajor": "국어국문학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20247045_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "직무역량 세미나 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_8",
+        "programTitle": "직무역량 세미나",
+        "at": "2026-01-21T04:16:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20247045_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "글로벌 리더십 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_9",
+        "programTitle": "글로벌 리더십 캠프",
+        "at": "2026-02-01T05:29:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20248311": {
+    "studentId": "20248311",
+    "studentName": "권우진",
+    "studentMajor": "세무학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20248311_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2026-02-20T02:58:00.000Z",
+        "by": "career_park"
+      },
+      {
+        "id": "pen_seed_20248311_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2026-03-03T03:11:00.000Z",
+        "by": "career_park"
+      }
+    ]
+  },
+  "20251788": {
+    "studentId": "20251788",
+    "studentName": "이예준",
+    "studentMajor": "토목공학과",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20251788_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "진로탐색 워크숍 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_1",
+        "programTitle": "진로탐색 워크숍",
+        "at": "2026-03-27T01:47:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20251788_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2026-04-07T02:00:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20251788_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2026-04-18T03:13:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20252192": {
+    "studentId": "20252192",
+    "studentName": "강하린",
+    "studentMajor": "행정학과",
+    "total": 35,
+    "entries": [
+      {
+        "id": "pen_seed_20252192_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2025-09-28T05:35:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20252192_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2025-10-09T06:48:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20252192_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "현장실습 사전교육 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_7",
+        "programTitle": "현장실습 사전교육",
+        "at": "2025-10-20T07:01:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20252192_3",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2025-11-11T01:27:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20253458": {
+    "studentId": "20253458",
+    "studentName": "오아윤",
+    "studentMajor": "수학과",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20253458_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "진로탐색 워크숍 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_1",
+        "programTitle": "진로탐색 워크숍",
+        "at": "2025-10-28T03:17:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20253458_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "모의면접 클리닉 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_2",
+        "programTitle": "모의면접 클리닉",
+        "at": "2025-11-08T04:30:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20253458_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2025-11-19T05:43:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20254724": {
+    "studentId": "20254724",
+    "studentName": "송은서",
+    "studentMajor": "컴퓨터공학과",
+    "total": 20,
+    "entries": [
+      {
+        "id": "pen_seed_20254724_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "현장실습 사전교육 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_7",
+        "programTitle": "현장실습 사전교육",
+        "at": "2025-11-27T01:59:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20254724_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "직무역량 세미나 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_8",
+        "programTitle": "직무역량 세미나",
+        "at": "2025-12-08T02:12:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20254724_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "글로벌 리더십 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_9",
+        "programTitle": "글로벌 리더십 캠프",
+        "at": "2025-12-19T03:25:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20254724_3",
+        "kind": "waive",
+        "points": -10,
+        "reason": "소명 인정 — 병결 확인서 제출",
+        "at": "2026-02-01T07:17:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20255990": {
+    "studentId": "20255990",
+    "studentName": "최하윤",
+    "studentMajor": "디자인학과",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20255990_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "자기소개서 특강 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_3",
+        "programTitle": "자기소개서 특강",
+        "at": "2025-12-27T07:41:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20255990_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "토익 집중반 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_4",
+        "programTitle": "토익 집중반",
+        "at": "2026-01-07T00:54:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20255990_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2026-01-18T01:07:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20257256": {
+    "studentId": "20257256",
+    "studentName": "임시우",
+    "studentMajor": "사회복지학과",
+    "total": 30,
+    "entries": [
+      {
+        "id": "pen_seed_20257256_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "글로벌 리더십 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_9",
+        "programTitle": "글로벌 리더십 캠프",
+        "at": "2026-01-26T05:23:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20257256_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "AI 역량 부트캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_0",
+        "programTitle": "AI 역량 부트캠프",
+        "at": "2026-02-06T06:36:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20257256_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "진로탐색 워크숍 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_1",
+        "programTitle": "진로탐색 워크숍",
+        "at": "2026-02-17T07:49:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  },
+  "20258522": {
+    "studentId": "20258522",
+    "studentName": "황지호",
+    "studentMajor": "회계학과",
+    "total": 35,
+    "entries": [
+      {
+        "id": "pen_seed_20258522_0",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "IT 자격증 캠프 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_5",
+        "programTitle": "IT 자격증 캠프",
+        "at": "2026-02-25T03:05:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20258522_1",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "창업 아이디어 경진 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_6",
+        "programTitle": "창업 아이디어 경진",
+        "at": "2026-03-08T04:18:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20258522_2",
+        "kind": "noshow",
+        "points": 10,
+        "reason": "현장실습 사전교육 노쇼 (신청 후 미참여)",
+        "programId": "prog_seed_7",
+        "programTitle": "현장실습 사전교육",
+        "at": "2026-03-19T05:31:00.000Z",
+        "by": "career_kim"
+      },
+      {
+        "id": "pen_seed_20258522_3",
+        "kind": "manual",
+        "points": 5,
+        "reason": "경고 누적 — 상담 미이행 수동 부여",
+        "at": "2026-04-10T07:57:00.000Z",
+        "by": "career_kim"
+      }
+    ]
+  }
+}

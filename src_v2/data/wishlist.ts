@@ -6,23 +6,23 @@
 
 const STORAGE_KEY = 'dc_program_wishlist'
 
-export function getWishlist(): number[] {
+export function getWishlist(): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return []
     const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? parsed.filter((v): v is number => typeof v === 'number') : []
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []
   } catch {
     return []
   }
 }
 
-export function isWished(id: number): boolean {
+export function isWished(id: string): boolean {
   return getWishlist().includes(id)
 }
 
 /** 찜 토글 후 새 목록을 반환 */
-export function toggleWish(id: number): number[] {
+export function toggleWish(id: string): string[] {
   const current = getWishlist()
   const next = current.includes(id) ? current.filter(v => v !== id) : [...current, id]
   try {
