@@ -106,6 +106,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   background: var(--color-section-bg);
+  font-family: 'GmarketSans', var(--font);
 }
 
 .section-sidebar-summary h3 {
@@ -114,30 +115,41 @@
   font-weight: 800;
 }
 
-.section-sidebar-summary dl {
+.section-sidebar-summary-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-top: 14px;
+  grid-auto-rows: 1fr;
+  gap: 8px;
+  margin-top: 12px;
 }
 
-.section-sidebar-summary dl div {
+.summary-stat {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
 }
 
-.section-sidebar-summary dt {
+.summary-stat dt {
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
+  line-height: 1.25;
+  word-break: keep-all;
 }
 
-.section-sidebar-summary dd {
+.summary-stat dd {
   color: var(--color-title);
-  font-size: 18px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
 }
+
+.summary-stat.is-accent dd { color: var(--color-primary); }
 
 /* 상담 진행 화면 — AI 추천 질문 (사이드바) */
 .section-sidebar-questions {

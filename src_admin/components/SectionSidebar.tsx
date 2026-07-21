@@ -53,11 +53,11 @@ export default function SectionSidebar() {
       {todaySummary && (
         <section className="section-sidebar-summary" aria-labelledby="counsel-today-summary-title">
           <h3 id="counsel-today-summary-title">오늘의 상담 현황</h3>
-          <dl>
-            <div><dt>신청 접수</dt><dd>{todaySummary.total}</dd></div>
-            <div><dt>오늘 상담</dt><dd>{todaySummary.todaySessions}</dd></div>
-            <div><dt>상담 완료</dt><dd>{todaySummary.completed}</dd></div>
-            <div><dt>취소</dt><dd>{todaySummary.cancelled}</dd></div>
+          <dl className="section-sidebar-summary-grid">
+            <div className="summary-stat"><dt>신청 접수</dt><dd>{todaySummary.total}</dd></div>
+            <div className="summary-stat"><dt>오늘 상담</dt><dd>{todaySummary.todaySessions}</dd></div>
+            <div className="summary-stat is-accent"><dt>상담 완료</dt><dd>{todaySummary.completed}</dd></div>
+            <div className="summary-stat"><dt>취소</dt><dd>{todaySummary.cancelled}</dd></div>
           </dl>
         </section>
       )}

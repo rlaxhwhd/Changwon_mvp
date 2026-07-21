@@ -34,7 +34,7 @@
   --color-primary-bg:      #EAF1FF;
   --color-section-bg:      #F6F9FF;
   --color-bg:              #FFFFFF;
-  --color-page-bg:         #FCFDFF;
+  --color-page-bg:         #FFFFFF;
   --color-border:          #E6ECF5;
   --color-divider:         #EEF2F8;
   --color-title:           #1C2442;
@@ -47,15 +47,22 @@
   --color-warning:         #FFB648;
   --color-danger:          #F15B5B;
 
+  /* 상태 tint 배지 (배경 tint + AA ≥4.5:1 통과 ink 텍스트) — 배지에 raw hex 금지, 이 토큰만 사용 */
+  --tint-danger-bg:   #FDECEC;  --tint-danger-ink:   #C0271F;  /* 5.18:1 */
+  --tint-warning-bg:  #FFF6E5;  --tint-warning-ink:  #8A5A00;  /* 5.52:1 */
+  --tint-success-bg:  #EAF9EF;  --tint-success-ink:  #0B6B3A;  /* 6.07:1 */
+  --tint-neutral-bg:  #F1F4F9;  --tint-neutral-ink:  #4D5B74;  /* 6.1:1 */
+
   --radius-xs:  4px;
   --radius-sm:  8px;
   --radius-md:  12px;
   --radius-lg:  18px;
   --radius-pill: 999px;
 
-  --shadow-sm: 0 10px 30px rgba(26, 61, 119, .06);
-  --shadow-md: 0 10px 30px rgba(26, 61, 119, .06);
-  --shadow-lg: 0 18px 40px rgba(6, 83, 182, .10);
+  /* 플랫 디자인 — 카드 그림자 제거(테두리만). 순백 배경 위 회색 헤일로 방지 */
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
 
   --gnb-height: 80px;
   --font: 'Pretendard', 'Noto Sans KR', sans-serif;
@@ -134,7 +141,7 @@ input, textarea, select { font-family: var(--font); }
   position: fixed;
   top: 0; left: 0; right: 0;
   height: var(--gnb-height);
-  background: rgba(255, 255, 255, 0.98);
+  background: var(--color-bg);
   border-bottom: 1px solid var(--color-border);
   z-index: 1000;
   display: flex;
@@ -1509,8 +1516,11 @@ input, textarea, select { font-family: var(--font); }
   font-size: 12px;
   font-weight: 800;
 }
-.counsel-status-tabs button.active { color: var(--color-primary); }
-.counsel-status-tabs button.active strong { background: var(--color-primary); color: #fff; }
+.counsel-status-tabs button.active {
+  color: #fff;
+  background: var(--color-primary);
+}
+.counsel-status-tabs button.active strong { background: #fff; color: var(--color-primary); }
 
 .counsel-requests-layout {
   display: grid;
@@ -1695,7 +1705,7 @@ input, textarea, select { font-family: var(--font); }
   padding: 10px 18px;
   color: var(--color-text);
 }
-.counsel-request-row-wrap:hover { background: #F6FAFF; }
+.counsel-request-row-wrap:hover { background: var(--color-section-bg); }
 .counsel-request-time { display: flex; flex-direction: column; align-items: center; gap: 5px; }
 .counsel-request-time strong { font-size: 14px; font-weight: 800; }
 .counsel-request-time small { color: var(--color-text-secondary); font-size: 11px; }
@@ -1707,10 +1717,10 @@ input, textarea, select { font-family: var(--font); }
 .counsel-request-person em { overflow: hidden; color: var(--color-text-secondary); font-size: 11px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
 .counsel-request-studentid { overflow: hidden; color: var(--color-text); font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; transform: translateX(-6px); }
 .counsel-track-badge { display: inline-flex; align-items: center; justify-content: center; padding: 5px 9px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 800; white-space: nowrap; }
-.counsel-track-badge.track-집중관리 { background: #FDECEC; color: var(--color-danger); }
-.counsel-track-badge.track-위험 { background: #FFF6E5; color: var(--color-warning); }
+.counsel-track-badge.track-집중관리 { background: var(--tint-danger-bg); color: var(--tint-danger-ink); }
+.counsel-track-badge.track-위험 { background: var(--tint-warning-bg); color: var(--tint-warning-ink); }
 .counsel-track-badge.track-표준 { background: var(--color-primary-bg); color: var(--color-primary); }
-.counsel-track-badge.track-우수 { background: #E7F7EF; color: var(--color-success); }
+.counsel-track-badge.track-우수 { background: var(--tint-success-bg); color: var(--tint-success-ink); }
 .counsel-type-badge,
 .counsel-status-badge {
   display: inline-flex;
@@ -1722,13 +1732,13 @@ input, textarea, select { font-family: var(--font); }
   white-space: nowrap;
 }
 .counsel-type-badge { padding: 7px 10px; background: var(--color-primary-bg); color: var(--color-primary); }
-.counsel-type-badge.is-psych { background: var(--color-primary-bg); color: var(--color-primary-light); }
+.counsel-type-badge.is-psych { background: var(--color-primary-bg); color: var(--color-primary); }
 .counsel-request-type-cell { transform: translateX(6px); }
 .counsel-status-badge { min-width: 48px; padding: 7px 10px; }
-.counsel-status-badge.is-waiting { background: #FFF6E5; color: var(--color-warning); }
+.counsel-status-badge.is-waiting { background: var(--tint-warning-bg); color: var(--tint-warning-ink); }
 .counsel-status-badge.is-confirmed,
-.counsel-status-badge.is-complete { background: #EAF9EF; color: var(--color-success); }
-.counsel-status-badge.is-cancelled { background: #F1F4F9; color: var(--color-text-secondary); }
+.counsel-status-badge.is-complete { background: var(--tint-success-bg); color: var(--tint-success-ink); }
+.counsel-status-badge.is-cancelled { background: var(--tint-neutral-bg); color: var(--tint-neutral-ink); }
 .counsel-request-topic-cell {
   padding-right: 18px;
   transform: translateX(6px);
