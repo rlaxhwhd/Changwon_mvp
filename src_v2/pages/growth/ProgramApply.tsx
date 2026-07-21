@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getActiveStudent } from '../../data/students'
 import { getWishlist, toggleWish as toggleWishStore } from '../../data/wishlist'
-import { getPrograms } from '../../../src_admin/data/programs'
+import { getPrograms, sortByPriority } from '../../../src_admin/data/programs'
 import { PROGRAM_CATEGORIES } from '../../../src_admin/data/schema/program'
 import type { ProgramCategory } from '../../../src_admin/data/schema/program'
 import ProgramCardGrid from './ProgramCardGrid'
@@ -24,7 +24,7 @@ export default function ProgramApply() {
   ]
   const [activeTab, setActiveTab] = useState<Category>('전체')
   const [page, setPage] = useState(1)
-  const programs = useMemo<ProgramCardVM[]>(() => getPrograms().map(program => ({
+  const programs = useMemo<ProgramCardVM[]>(() => sortByPriority(getPrograms()).map(program => ({
     id: program.id,
     title: program.title,
     desc: program.desc,

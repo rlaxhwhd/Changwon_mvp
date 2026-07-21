@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, useParams } from 'react-router-dom'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -13,8 +13,10 @@ import RoadmapEditor from './pages/RoadmapEditor'
 import JobList from './pages/JobList'
 import JobForm from './pages/JobForm'
 import ProgramList from './pages/ProgramList'
+import ProgramManage from './pages/ProgramManage'
 import ProgramForm from './pages/ProgramForm'
 import ProgramDetail from './pages/ProgramDetail'
+import ProgramNoticeView from './pages/ProgramNoticeView'
 import ProgramBlacklist from './pages/ProgramBlacklist'
 import SettingsProfile from './pages/SettingsProfile'
 import SettingsAvailability from './pages/SettingsAvailability'
@@ -31,6 +33,12 @@ function RequireLogin() {
 function RequireCareer() {
   if (getActiveCounselor().role !== 'career') return <Navigate to="/" replace />
   return <Outlet />
+}
+
+/** 구 링크(`/programs/:id`) → 신청자 관리 페이지로 리다이렉트. */
+function ApplicantsRedirect() {
+  const { id } = useParams<{ id: string }>()
+  return <Navigate to={`/programs/${id}/applicants`} replace />
 }
 
 const router = createBrowserRouter(
@@ -70,9 +78,14 @@ const router = createBrowserRouter(
 
                 // 비교과 운영 /programs (G3)
                 { path: '/programs', element: <ProgramList /> },
+                { path: '/programs/manage', element: <ProgramManage /> },
                 { path: '/programs/new', element: <ProgramForm /> },
                 { path: '/programs/blacklist', element: <ProgramBlacklist /> },
-                { path: '/programs/:id', element: <ProgramDetail /> },
+                { path: '/programs/:id/notice', element: <ProgramNoticeView /> },
+                { path: '/programs/:id/edit', element: <ProgramForm /> },
+                { path: '/programs/:id/applicants', element: <ProgramDetail mode="applicants" /> },
+                { path: '/programs/:id/selected', element: <ProgramDetail mode="selected" /> },
+                { path: '/programs/:id', element: <ApplicantsRedirect /> },
               ],
             },
 

@@ -1,7 +1,7 @@
 import { LuFrown, LuGraduationCap, LuPlus, LuSearch, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getPrograms, countPrograms } from '../data/programs'
+import { getPrograms, countPrograms, sortByPriority } from '../data/programs'
 import type { ProgramStatus } from '../data/programs'
 import { PROGRAM_CATEGORIES } from '../data/schema/program'
 import type { ProgramCategory } from '../data/schema/program'
@@ -21,14 +21,13 @@ export default function ProgramList() {
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return all
-      .filter(p => {
-        if (category !== ALL && p.category !== category) return false
-        if (status !== ALL && p.status !== status) return false
-        if (q && !`${p.title} ${p.desc} ${p.location}`.toLowerCase().includes(q)) return false
-        return true
-      })
-      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    const filtered = all.filter(p => {
+      if (category !== ALL && p.category !== category) return false
+      if (status !== ALL && p.status !== status) return false
+      if (q && !`${p.title} ${p.desc} ${p.location}`.toLowerCase().includes(q)) return false
+      return true
+    })
+    return sortByPriority(filtered)
   }, [all, query, category, status])
 
   return (
@@ -108,7 +107,7 @@ export default function ProgramList() {
               capacity: program.capacity,
               image: program.image,
             }))}
-            onSelect={id => navigate(`/programs/${id}`)}
+            onSelect={id => navigate(`/programs/${id}/notice`)}
           />
         )}
       </section>

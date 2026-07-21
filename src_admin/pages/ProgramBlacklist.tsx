@@ -19,6 +19,7 @@ import { getPenaltyList, waivePenalty, clearPenalty } from '../data/penalties'
 import type { StudentPenalty, PenaltyEntry } from '../data/penalties'
 import { penaltyLevel } from '../data/schema/penalty'
 import { collegeOf } from '../data/colleges'
+import { studentNoOf } from '../data/studentRoster'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
 import './ProgramBlacklist.css'
@@ -74,7 +75,7 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
       <div className="blk-detail-head">
         <div className="blk-detail-who">
           <strong>{record.studentName}</strong>
-          <small>{collegeOf(record.studentMajor)} · {record.studentMajor} · {record.studentId}</small>
+          <small>{collegeOf(record.studentMajor)} · {record.studentMajor} · {studentNoOf(record.studentId)}</small>
         </div>
         <span className="admin-blacklist-total"><em>{record.total}</em>점</span>
         <span className={`admin-chip ${toneChip(level.tone)}`}>{level.label}</span>
@@ -134,7 +135,7 @@ export default function ProgramBlacklist() {
     () =>
       getPenaltyList().map(record => ({
         record,
-        studentNo: record.studentId,
+        studentNo: studentNoOf(record.studentId),
         college: collegeOf(record.studentMajor),
       })),
     [refreshKey],

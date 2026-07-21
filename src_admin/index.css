@@ -1244,6 +1244,27 @@ input, textarea, select { font-family: var(--font); }
 .admin-program-roster .admin-roster-row {
   grid-template-columns: 2fr 0.8fr 1.2fr 1.2fr 1fr 0.9fr;
 }
+.admin-program-manage-roster { overflow-x: auto; }
+.admin-program-manage-roster .admin-roster-head,
+.admin-program-manage-roster .admin-roster-row {
+  min-width: 1180px;
+  grid-template-columns: 0.5fr 0.45fr 0.8fr 2fr 0.7fr 1.55fr 0.8fr 0.8fr 0.9fr 0.85fr;
+}
+.admin-program-manage-roster .admin-roster-row { cursor: pointer; border: 0; font: inherit; }
+.admin-program-manage-roster .admin-roster-row.is-pinned { background: rgba(6, 83, 182, 0.045); }
+.admin-program-manage-roster .admin-roster-row.is-pinned:hover { background: rgba(6, 83, 182, 0.08); }
+.admin-pin-cell { flex-direction: row; align-items: center; }
+.admin-pin-toggle { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.admin-pin-toggle input { cursor: pointer; }
+.admin-pin-toggle svg { width: 15px; height: 15px; color: var(--color-text-secondary); }
+.admin-program-manage-roster .admin-roster-row.is-pinned .admin-pin-toggle svg { color: var(--color-primary); }
+.admin-program-manage-roster .admin-roster-row strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-program-manage-roster .admin-roster-cell small { white-space: nowrap; }
+.admin-program-info { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.admin-program-info > div { min-width: 0; padding: 12px 14px; border: 1px solid var(--color-divider); border-radius: var(--radius-sm); background: var(--color-section-bg); }
+.admin-program-info dt { display: flex; align-items: center; gap: 5px; margin-bottom: 6px; color: var(--color-text-secondary); font-size: 12px; font-weight: 800; }
+.admin-program-info dt svg { color: var(--color-primary); }
+.admin-program-info dd { overflow: hidden; color: var(--color-text); font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .admin-program-status-row {
   display: flex; align-items: flex-end; gap: 12px; margin-top: 18px; flex-wrap: wrap;
 }
@@ -1256,6 +1277,50 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-applicant-row { cursor: default; }
 .admin-applicant-row:hover { background: transparent; }
+
+/* ── 신청자 / 선발자 관리 탭 테이블 ──────────────────────────────────── */
+.admin-participant-tabs { margin-bottom: 4px; }
+.admin-bulkbar {
+  display: flex; align-items: center; gap: 14px;
+  margin: 14px 0 4px;
+  padding: 10px 16px;
+  background: var(--color-primary-bg); border-radius: var(--radius-sm);
+}
+.admin-bulkbar-count { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+.admin-bulkbar-count strong { color: var(--color-primary); font-weight: 800; }
+.admin-bulk-select {
+  height: 34px; padding: 0 12px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  background: var(--color-bg); color: var(--color-text);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+}
+
+.admin-participant-roster { overflow-x: auto; margin-top: 14px; }
+.admin-participant-roster .admin-roster-row { cursor: default; }
+.admin-participant-roster .admin-roster-row:hover { background: var(--color-section-bg); }
+.admin-participant-roster .admin-roster-cell { white-space: nowrap; }
+.admin-participant-roster .admin-roster-cell strong { font-size: 14px; font-weight: 800; color: var(--color-text); }
+.admin-applicant-mgmt-roster .admin-roster-head,
+.admin-applicant-mgmt-roster .admin-roster-row {
+  min-width: 1180px;
+  grid-template-columns: 36px 44px 48px 76px 96px 88px 1.4fr 56px 78px 74px 132px 60px 52px;
+}
+.admin-selected-mgmt-roster .admin-roster-head,
+.admin-selected-mgmt-roster .admin-roster-row {
+  min-width: 1420px;
+  grid-template-columns: 36px 44px 48px 76px 96px 88px 1.4fr 56px 78px 74px 132px 60px 52px 210px;
+}
+.admin-check-cell { align-items: center; }
+.admin-check-cell input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary); }
+.admin-attach-cell { align-items: center; color: var(--color-text-tertiary, var(--color-text-secondary)); }
+.admin-del-cell { align-items: center; }
+.admin-icon-del {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: var(--radius-sm);
+  color: var(--color-text-secondary); transition: background 0.12s, color 0.12s;
+}
+.admin-icon-del:hover { background: var(--tint-danger-bg); color: var(--tint-danger-ink); }
+.admin-participant-roster .admin-attendance-toggle { justify-self: start; }
 
 /* ── 출석 체크 토글 ──────────────────────────────────────────────────── */
 .admin-attendance-toggle { display: inline-flex; gap: 6px; }

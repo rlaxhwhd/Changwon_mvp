@@ -10,6 +10,7 @@ import type {
   ProgramStatus,
   ProgramApplicant,
   AttendanceStatus,
+  SelectionStatus,
 } from './schema/program'
 import seed from './programs.seed.json'
 import { applyNoShowPenalty, revertNoShowPenalty } from './penalties'
@@ -35,6 +36,14 @@ export function getPrograms(): Program[] {
 /** id 로 1건 조회 */
 export function getProgramById(id: string): Program | undefined {
   return getPrograms().find(p => p.id === id)
+}
+
+/** 상단고정(pinned) 우선 → 최신순 정렬. 목록 노출 시 이 순서를 사용한다. */
+export function sortByPriority(list: Program[]): Program[] {
+  return [...list].sort((a, b) => {
+    if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
+    return b.createdAt.localeCompare(a.createdAt)
+  })
 }
 
 /** 상태별 카운트 (필터 배지용) */
@@ -82,6 +91,41 @@ export function updateProgram(
 /** 프로그램 삭제 */
 export function removeProgram(id: string): void {
   persist(getPrograms().filter(p => p.id !== id))
+}
+
+/** 신청자 다중 선발 상태변경 — '신청자 관리' 체크박스 다중선택의 일괄 상태변경. */
+export function setApplicantsStatus(
+  programId: string,
+  studentIds: string[],
+  selectionStatus: SelectionStatus,
+): void {
+  const ids = new Set(studentIds)
+  const next = getPrograms().map(p =>
+    p.id !== programId
+      ? p
+      : {
+          ...p,
+          applicants: p.applicants.map(a =>
+            ids.has(a.studentId) ? { ...a, selectionStatus } : a,
+          ),
+        },
+  )
+  persist(next)
+}
+
+/** 신청자 1명 삭제 (신청 취소). 노쇼 벌점이 있었다면 함께 회수한다. */
+export function removeApplicant(programId: string, studentId: string): void {
+  const program = getPrograms().find(p => p.id === programId)
+  const applicant = program?.applicants.find(a => a.studentId === studentId)
+  if (applicant?.attendance === '노쇼') {
+    revertNoShowPenalty(studentId, programId)
+  }
+  const next = getPrograms().map(p =>
+    p.id !== programId
+      ? p
+      : { ...p, applicants: p.applicants.filter(a => a.studentId !== studentId) },
+  )
+  persist(next)
 }
 
 /**

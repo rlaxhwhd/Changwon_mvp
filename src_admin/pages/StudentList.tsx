@@ -25,6 +25,7 @@ function detailToRoster(s: StudentData): RosterStudent {
   const iap = getStudentIap(s)
   return {
     id: s.id,
+    studentNo: s.studentNo,
     name: s.name,
     major: s.major,
     grade: s.grade,

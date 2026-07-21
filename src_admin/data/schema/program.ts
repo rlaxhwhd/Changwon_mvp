@@ -18,6 +18,12 @@ export type ProgramStatus = '모집중' | '모집마감' | '종료'
 
 export const PROGRAM_STATUSES: ProgramStatus[] = ['모집중', '모집마감', '종료']
 
+/** 신청자 선발 상태 — 신청자 관리에서 상태변경으로 전이한다. '선발'만 선발자 관리에 노출. */
+export type SelectionStatus = '대기' | '선발' | '탈락' | '취소'
+
+/** 상태변경 select box 순서 */
+export const SELECTION_STATUSES: SelectionStatus[] = ['선발', '대기', '탈락', '취소']
+
 /** 신청자별 출석 상태 — '노쇼'가 블랙리스트 벌점 대상 */
 export type AttendanceStatus = '미확인' | '출석' | '노쇼'
 
@@ -31,6 +37,10 @@ export interface ProgramApplicant {
   appliedAt: string
   /** 출석 상태 — 출석 체크 결과 */
   attendance: AttendanceStatus
+  /** 차수 — 몇 차 모집/운영인지 (미지정이면 1차) */
+  round?: number
+  /** 선발 상태 — 미지정이면 '대기'. '선발'만 선발자 관리 페이지에 노출된다. */
+  selectionStatus?: SelectionStatus
 }
 
 /** 비교과 프로그램 1건 */
@@ -47,6 +57,12 @@ export interface Program {
   runStartDate?: string
   /** 진행(운영) 기간 종료 (YYYY-MM-DD) */
   runEndDate?: string
+  /** 총 운영 회차 */
+  sessions: number
+  /** 담당자명 */
+  manager: string
+  /** 회계년도 */
+  fiscalYear: string
   /** 정원 */
   capacity: number
   /** 프로그램 썸네일 경로 */
@@ -54,6 +70,8 @@ export interface Program {
   /** 진행 장소 */
   location: string
   status: ProgramStatus
+  /** 상단 고정 — true면 등록일과 무관하게 목록 최상단에 우선 노출 */
+  pinned?: boolean
   /** 신청자 목록 (출석 포함) */
   applicants: ProgramApplicant[]
   /** 등록 일시 (ISO 8601) */
@@ -68,8 +86,14 @@ export function blankProgram(): Omit<Program, 'id' | 'applicants' | 'createdAt'>
     category: '진로',
     startDate: '',
     endDate: '',
+    runStartDate: '',
+    runEndDate: '',
+    sessions: 1,
+    manager: '',
+    fiscalYear: String(new Date().getFullYear()),
     capacity: 20,
     location: '',
     status: '모집중',
+    pinned: false,
   }
 }

@@ -1,5 +1,5 @@
 import type { IconType } from 'react-icons'
-import { LuBuilding2, LuCalendarDays, LuClipboardCheck, LuClock, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSettings, LuUsers, LuUserX } from 'react-icons/lu'
+import { LuBuilding2, LuCalendarDays, LuClipboardCheck, LuClock, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSettings, LuTable, LuUsers, LuUserX } from 'react-icons/lu'
 // ─────────────────────────────────────────────────────────────────────────
 // 상담사 포털 네비 단일 소스 (v2 navConfig 미러)
 // Counsel_README §4 순서: 홈 → 상담 관리 → 학생 관리 → 로드맵 관리[진로]
@@ -87,6 +87,7 @@ const ALL_SECTIONS: NavSection[] = [
     requiresRole: 'career',
     children: [
       { label: '프로그램 목록', path: '/programs', icon: LuList },
+      { label: '프로그램 관리', path: '/programs/manage', icon: LuTable },
       { label: '프로그램 등록', path: '/programs/new', icon: LuPlus },
       { label: '블랙리스트', path: '/programs/blacklist', icon: LuUserX },
     ],

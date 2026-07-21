@@ -4,10 +4,11 @@ import {
   LuItalic, LuLink, LuList, LuListOrdered, LuMapPin, LuPlus, LuSmile, LuTrash2, LuUnderline,
   LuUpload, LuUserRound, LuUsers, LuX,
 } from 'react-icons/lu'
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useMemo, useState } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import AdminModal from '../components/AdminModal'
-import { addProgram } from '../data/programs'
+import { COUNSELORS } from '../data/counselors'
+import { addProgram, getProgramById, updateProgram } from '../data/programs'
 import type { ProgramCategory } from '../data/schema/program'
 import './ProgramForm.css'
 
@@ -51,27 +52,37 @@ function fmtDate(date: string, time: string) {
 
 export default function ProgramForm() {
   const navigate = useNavigate()
+  const { id } = useParams<{ id: string }>()
+  const editing = Boolean(id)
+  const existing = useMemo(() => (id ? getProgramById(id) : undefined), [id])
 
-  const [majorCat, setMajorCat] = useState(MAJOR_CATS[0])
+  const [majorCat, setMajorCat] = useState<string>(existing && MAJOR_CATS.includes(existing.category) ? existing.category : MAJOR_CATS[0])
   const [minorCat, setMinorCat] = useState(MINOR_CATS[0])
-  const [title, setTitle] = useState('')
-  const [fiscalYear, setFiscalYear] = useState(FISCAL_YEARS[0])
-  const [purpose, setPurpose] = useState('')
+  const [title, setTitle] = useState(existing?.title ?? '')
+  const [fiscalYear, setFiscalYear] = useState(existing?.fiscalYear ?? FISCAL_YEARS[0])
+  const [purpose, setPurpose] = useState(existing?.desc ?? '')
   const [noticeDate, setNoticeDate] = useState('2024-06-01')
   const [noticeTime, setNoticeTime] = useState('10:00')
-  const [applyStartDate, setApplyStartDate] = useState('2024-06-01')
+  const [applyStartDate, setApplyStartDate] = useState(existing?.startDate ?? '2024-06-01')
   const [applyStartTime, setApplyStartTime] = useState('10:00')
-  const [applyEndDate, setApplyEndDate] = useState('2024-06-15')
+  const [applyEndDate, setApplyEndDate] = useState(existing?.endDate ?? '2024-06-15')
   const [applyEndTime, setApplyEndTime] = useState('17:00')
-  const [runStartDate, setRunStartDate] = useState('2024-06-20')
+  const [runStartDate, setRunStartDate] = useState(existing?.runStartDate ?? '2024-06-20')
   const [runStartTime, setRunStartTime] = useState('10:00')
-  const [runEndDate, setRunEndDate] = useState('2024-06-30')
+  const [runEndDate, setRunEndDate] = useState(existing?.runEndDate ?? '2024-06-30')
   const [runEndTime, setRunEndTime] = useState('17:00')
-  const [place, setPlace] = useState('')
+  const [place, setPlace] = useState(existing?.location ?? '')
+  const [sessions, setSessions] = useState(existing ? String(existing.sessions) : '1')
+  const [managerName, setManagerName] = useState(existing?.manager ?? (COUNSELORS[0]?.name ?? ''))
   const [targets, setTargets] = useState<Record<TargetKey, boolean>>({ 학부생: true, 대학원생: false, 교직원: false })
   const [grades, setGrades] = useState<Record<string, boolean>>({ '1학년': true, '2학년': true, '3학년': true, '4학년': true })
-  const [manager, setManager] = useState<{ name: string; role: string } | null>({ name: '홍길동', role: '취업지원팀 주임' })
-  const [limitCount, setLimitCount] = useState('100')
+  const [manager, setManager] = useState<{ name: string; role: string } | null>(() => {
+    const counselor = existing
+      ? COUNSELORS.find(c => c.name === existing.manager) ?? COUNSELORS[0]
+      : COUNSELORS[0]
+    return counselor ? { name: counselor.name, role: counselor.roleLabel } : null
+  })
+  const [limitCount, setLimitCount] = useState(existing ? String(existing.capacity) : '100')
   const [selectCount, setSelectCount] = useState('30')
   const [selectMethod, setSelectMethod] = useState<'선착순' | '심사'>('선착순')
   const [certificate, setCertificate] = useState<'발급' | '미발급'>('발급')
@@ -79,6 +90,7 @@ export default function ProgramForm() {
   const [detail, setDetail] = useState('')
   const [extraOpen, setExtraOpen] = useState(false)
   const [extras, setExtras] = useState<ExtraItem[]>(DEFAULT_EXTRAS)
+  const [pinned, setPinned] = useState(existing?.pinned ?? false)
   const [saved, setSaved] = useState(false)
 
   const onlyGradeDisabled = targets.대학원생 || targets.교직원
@@ -97,22 +109,33 @@ export default function ProgramForm() {
   })()
   const capacityLabel = `${selectCount || '-'}명 / ${limitCount || '-'}명 (${selectMethod === '선착순' ? '선착순 선발' : '심사 후 선발'})`
 
-  const canSave = title.trim() !== '' && applyStartDate !== '' && applyEndDate !== '' && !saved
+  const canSave = title.trim() !== '' && applyStartDate !== '' && applyEndDate !== '' && managerName !== '' && !saved
 
   const handleSave = () => {
     if (!canSave) return
-    addProgram({
+    const payload = {
       title: title.trim(),
       desc: (detail || purpose).trim(),
       category: CATEGORY_MAP[majorCat] ?? '기타',
       startDate: applyStartDate,
       endDate: applyEndDate,
+      runStartDate,
+      runEndDate,
+      fiscalYear,
+      sessions: Math.max(1, Number(sessions) || 1),
+      manager: managerName,
       capacity: Number(limitCount) || Number(selectCount) || 20,
       location: place.trim(),
-      status: '모집중',
-    })
+      status: existing?.status ?? '모집중',
+      pinned,
+    }
+    if (editing && id) {
+      updateProgram(id, payload)
+    } else {
+      addProgram(payload)
+    }
     setSaved(true)
-    window.setTimeout(() => navigate('/programs'), 400)
+    window.setTimeout(() => navigate(editing ? '/programs/manage' : '/programs'), 400)
   }
 
   const addExtra = () => setExtras(prev => [...prev, { id: nextId(), type: EXTRA_TYPES[0], question: '' }])
@@ -125,17 +148,20 @@ export default function ProgramForm() {
         {/* Top bar */}
         <div className="pf-topbar">
           <div>
-            <h1 className="pf-title">프로그램 개설 관리</h1>
+            <h1 className="pf-title">{editing ? '프로그램 수정' : '프로그램 개설 관리'}</h1>
             <nav className="pf-crumbs" aria-label="breadcrumb">
               <Link to="/"><LuHouse /></Link>
               <LuChevronRight className="pf-crumb-sep" />
-              <Link to="/programs">프로그램 관리</Link>
+              <Link to="/programs/manage">프로그램 관리</Link>
               <LuChevronRight className="pf-crumb-sep" />
-              <span className="is-current">프로그램 개설 관리</span>
+              <span className="is-current">{editing ? '프로그램 수정' : '프로그램 개설 관리'}</span>
             </nav>
           </div>
           <div className="pf-topbar-actions">
-            <button type="button" className="pf-btn pf-btn-ghost" onClick={() => navigate('/programs')}>취소</button>
+            {editing && id && (
+              <button type="button" className="pf-btn pf-btn-ghost" onClick={() => navigate(`/programs/${id}/applicants`)}>신청자 관리</button>
+            )}
+            <button type="button" className="pf-btn pf-btn-ghost" onClick={() => navigate(editing ? '/programs/manage' : '/programs')}>취소</button>
             <button type="button" className="pf-btn pf-btn-primary" disabled={!canSave} onClick={handleSave}>{saved ? '저장됨' : '저장'}</button>
           </div>
         </div>
@@ -149,6 +175,16 @@ export default function ProgramForm() {
             </div>
 
             <div className="pf-fields">
+              {/* 상단 고정 — 목록 최상단 우선 노출 */}
+              <div className="pf-field">
+                <span className="pf-label">상단 고정</span>
+                <label className="pf-check">
+                  <input type="checkbox" checked={pinned} onChange={e => setPinned(e.target.checked)} />
+                  프로그램 목록 상단에 고정 노출
+                </label>
+                <span className="pf-help">체크 시 등록일과 무관하게 목록 최상단에 우선 노출됩니다.</span>
+              </div>
+
               {/* 프로그램 분류 */}
               <div className="pf-field">
                 <span className="pf-label">프로그램 분류 <span className="pf-req">*</span></span>
@@ -278,7 +314,10 @@ export default function ProgramForm() {
               <div className="pf-field">
                 <span className="pf-label">담당자 <span className="pf-req">*</span></span>
                 <div>
-                  <button type="button" className="pf-btn-outline" onClick={() => setManager({ name: '홍길동', role: '취업지원팀 주임' })}>교직원 검색</button>
+                  <button type="button" className="pf-btn-outline" onClick={() => {
+                    const counselor = COUNSELORS[0]
+                    setManager(counselor ? { name: counselor.name, role: counselor.roleLabel } : null)
+                  }}>교직원 검색</button>
                 </div>
                 {manager && (
                   <div className="pf-chip">
@@ -286,6 +325,16 @@ export default function ProgramForm() {
                     <button type="button" aria-label="담당자 삭제" onClick={() => setManager(null)}><LuX /></button>
                   </div>
                 )}
+              </div>
+
+              <div className="pf-field">
+                <span className="pf-label">관리 담당자<span className="pf-req">*</span></span>
+                <select className="pf-select" value={managerName} onChange={e => setManagerName(e.target.value)}>
+                  <option value="">담당자를 선택해주세요.</option>
+                  {COUNSELORS.map(counselor => (
+                    <option key={counselor.id} value={counselor.name}>{counselor.name} ({counselor.roleLabel})</option>
+                  ))}
+                </select>
               </div>
 
               {/* 인원·선발방식·수료·인증서 — 열 정렬 그리드 (참여 인증서를 선발 인원과 같은 열에) */}
@@ -306,6 +355,14 @@ export default function ProgramForm() {
                   <div className="pf-suffix-wrap">
                     <input className="pf-input" type="number" min={0} value={selectCount} onChange={e => setSelectCount(e.target.value)} />
                     <span className="pf-suffix">명</span>
+                  </div>
+                </div>
+
+                <div className="pf-field">
+                  <span className="pf-label">총회차 <span className="pf-req">*</span></span>
+                  <div className="pf-suffix-wrap">
+                    <input className="pf-input" type="number" min={1} value={sessions} onChange={e => setSessions(e.target.value)} />
+                    <span className="pf-suffix">회</span>
                   </div>
                 </div>
 
@@ -392,7 +449,7 @@ export default function ProgramForm() {
             </div>
 
             <div className="pf-form-actions">
-              <button type="button" className="pf-btn pf-btn-ghost" onClick={() => navigate('/programs')}>취소</button>
+              <button type="button" className="pf-btn pf-btn-ghost" onClick={() => navigate(editing ? '/programs/manage' : '/programs')}>취소</button>
               <button type="button" className="pf-btn pf-btn-primary" disabled={!canSave} onClick={handleSave}>{saved ? '저장됨' : '저장'}</button>
             </div>
           </section>

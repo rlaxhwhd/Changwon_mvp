@@ -1,23 +1,42 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 블랙리스트 벌점 로더 (localStorage 'dc_penalty') — Counsel_README §5-E · §7
+// 블랙리스트 벌점 로더 — 단일 소스 = A 로스터(studentsRoster.json)의 벌점 key.
 //
-// 형태: dc_penalty = { [studentId]: StudentPenalty }.  학생 화면(마이페이지·
-// 성장)이 누적 벌점·사유를 읽는다(§7). 출석 '노쇼' → 자동 부여, 소명 → 해제.
-// students.ts 패턴 미러: 맵 읽기/쓰기 + 파생 셀렉터 + 변동 헬퍼.
+// 정체(이름·학과·학번)는 언제나 json 에서 온다. localStorage('dc_penalty_v2')는
+// 런타임 노쇼/차감의 "수치 override" 만 담는다(base ⊕ override). 그래서 화면엔
+// 항상 json 값이 뜨고, 옛 localStorage 로 이름이 어긋나는 일이 없다.
+// students.ts 패턴 미러: base(json) + override(localStorage) 병합 셀렉터 + 변동 헬퍼.
 // ─────────────────────────────────────────────────────────────────────────
 import type { ProgramApplicant, Program } from './schema/program'
 import type { StudentPenalty, PenaltyEntry } from './schema/penalty'
 import { NOSHOW_PENALTY_POINTS } from './schema/penalty'
 import { getActiveCounselorId } from './counselors'
-import seed from './penalties.seed.json'
+import { STUDENT_ROSTER } from './studentRoster'
 
-const STORAGE_KEY = 'dc_penalty'
+// v2: 정체는 json, localStorage 는 override 만. 구 'dc_penalty'(정체까지 저장하던 방식)는 폐기.
+const STORAGE_KEY = 'dc_penalty_v2'
 
-/** 데모 시드 (localStorage 비었을 때 폴백). 실 노쇼 발생 시 localStorage 로 승격. */
-const SEED = seed as Record<string, StudentPenalty>
+/**
+ * 벌점 base = A 로스터(studentsRoster.json)의 penaltyTotal/penaltyEntries key.
+ * 학생 레코드에 박힌 벌점을 블랙리스트 맵으로 환원한다. (정체 단일 소스)
+ */
+function seedFromRoster(): Record<string, StudentPenalty> {
+  const map: Record<string, StudentPenalty> = {}
+  for (const s of STUDENT_ROSTER) {
+    if (s.penaltyEntries && s.penaltyEntries.length > 0) {
+      map[s.id] = {
+        studentId: s.id,
+        studentName: s.name,
+        studentMajor: s.major,
+        total: s.penaltyTotal ?? 0,
+        entries: s.penaltyEntries,
+      }
+    }
+  }
+  return map
+}
 
-/** localStorage 의 벌점 맵 전체 읽기. 비었으면 seed 폴백(programs.ts 패턴). */
-function readMap(): Record<string, StudentPenalty> {
+/** localStorage 의 override 맵(런타임 노쇼/차감). 없으면 빈 맵. */
+function readOverrides(): Record<string, StudentPenalty> {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
@@ -25,17 +44,37 @@ function readMap(): Record<string, StudentPenalty> {
       if (parsed && typeof parsed === 'object') return parsed as Record<string, StudentPenalty>
     }
   } catch {
-    /* 폴백: seed */
+    /* 무시 — override 없음 */
   }
-  return { ...SEED }
+  return {}
 }
 
-function writeMap(map: Record<string, StudentPenalty>): void {
+function writeOverrides(map: Record<string, StudentPenalty>): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
   } catch {
     /* 데모 범위 — 저장 실패 무시 */
   }
+}
+
+/**
+ * 표시용 벌점 맵 = json base ⊕ localStorage override.
+ * 정체(이름·학과)는 json base 에서, 벌점 수치(total·entries)는 override 가 있으면 우선.
+ * json 로스터에 없는 학생(런타임 노쇼)만 override 그대로 포함한다.
+ */
+function resolved(): Record<string, StudentPenalty> {
+  const base = seedFromRoster()
+  const ov = readOverrides()
+  const out: Record<string, StudentPenalty> = {}
+  for (const id of Object.keys(base)) {
+    const b = base[id]
+    const o = ov[id]
+    out[id] = o ? { ...b, total: o.total, entries: o.entries } : b
+  }
+  for (const id of Object.keys(ov)) {
+    if (!out[id]) out[id] = ov[id]
+  }
+  return out
 }
 
 /** total 을 entries 합산으로 재계산 (0 이상 보정) */
@@ -48,52 +87,43 @@ function recalc(record: StudentPenalty): StudentPenalty {
 
 /** 벌점이 부여된 학생 레코드 전체 (블랙리스트 목록). total 내림차순. */
 export function getPenaltyList(): StudentPenalty[] {
-  return Object.values(readMap())
+  return Object.values(resolved())
     .filter(r => r.entries.length > 0)
     .sort((a, b) => b.total - a.total)
 }
 
 /** 특정 학생의 벌점 레코드 (없으면 null) */
 export function getStudentPenalty(studentId: string): StudentPenalty | null {
-  return readMap()[studentId] ?? null
+  return resolved()[studentId] ?? null
 }
 
 /** 특정 학생의 누적 벌점 총점 (없으면 0) */
 export function getPenaltyTotal(studentId: string): number {
-  return readMap()[studentId]?.total ?? 0
+  return resolved()[studentId]?.total ?? 0
 }
 
-// ── 변동 헬퍼 ──────────────────────────────────────────────────────────────
+// ── 변동 헬퍼 (override 레이어에만 기록) ─────────────────────────────────────
 
-function ensureRecord(
-  map: Record<string, StudentPenalty>,
+function pushEntry(
   applicant: Pick<ProgramApplicant, 'studentId' | 'studentName' | 'studentMajor'>,
-): StudentPenalty {
-  const existing = map[applicant.studentId]
-  if (existing) return existing
-  return {
+  entry: Omit<PenaltyEntry, 'id' | 'at' | 'by'>,
+): void {
+  const ov = readOverrides()
+  const record: StudentPenalty = resolved()[applicant.studentId] ?? {
     studentId: applicant.studentId,
     studentName: applicant.studentName,
     studentMajor: applicant.studentMajor,
     total: 0,
     entries: [],
   }
-}
-
-function pushEntry(
-  applicant: Pick<ProgramApplicant, 'studentId' | 'studentName' | 'studentMajor'>,
-  entry: Omit<PenaltyEntry, 'id' | 'at' | 'by'>,
-): void {
-  const map = readMap()
-  const record = ensureRecord(map, applicant)
   const full: PenaltyEntry = {
     ...entry,
     id: `pen_${Date.now()}`,
     at: new Date().toISOString(),
     by: getActiveCounselorId(),
   }
-  map[applicant.studentId] = recalc({ ...record, entries: [...record.entries, full] })
-  writeMap(map)
+  ov[applicant.studentId] = recalc({ ...record, entries: [...record.entries, full] })
+  writeOverrides(ov)
 }
 
 /** 출석 '노쇼' → 자동 벌점 부여 (programs.setAttendance 에서 호출) */
@@ -112,10 +142,8 @@ export function applyNoShowPenalty(applicant: ProgramApplicant, program: Program
  * 이력은 남기고 total 만 되돌린다(감사 추적).
  */
 export function revertNoShowPenalty(studentId: string, programId: string): void {
-  const map = readMap()
-  const record = map[studentId]
+  const record = resolved()[studentId]
   if (!record) return
-  // 아직 상쇄되지 않은 해당 프로그램 노쇼 벌점 합계
   const noshowPoints = record.entries
     .filter(e => e.kind === 'noshow' && e.programId === programId)
     .reduce((sum, e) => sum + e.points, 0)
@@ -136,8 +164,9 @@ export function revertNoShowPenalty(studentId: string, programId: string): void 
     at: new Date().toISOString(),
     by: getActiveCounselorId(),
   }
-  map[studentId] = recalc({ ...record, entries: [...record.entries, entry] })
-  writeMap(map)
+  const ov = readOverrides()
+  ov[studentId] = recalc({ ...record, entries: [...record.entries, entry] })
+  writeOverrides(ov)
 }
 
 /** 수동 벌점 부여 (블랙리스트 화면) */
@@ -151,8 +180,7 @@ export function addManualPenalty(
 
 /** 벌점 차감/해제 (음수 이력 추가). points 는 차감할 양수값. */
 export function waivePenalty(studentId: string, points: number, reason: string): void {
-  const map = readMap()
-  const record = map[studentId]
+  const record = resolved()[studentId]
   if (!record) return
   const entry: PenaltyEntry = {
     id: `pen_${Date.now()}`,
@@ -162,17 +190,18 @@ export function waivePenalty(studentId: string, points: number, reason: string):
     at: new Date().toISOString(),
     by: getActiveCounselorId(),
   }
-  map[studentId] = recalc({ ...record, entries: [...record.entries, entry] })
-  writeMap(map)
+  const ov = readOverrides()
+  ov[studentId] = recalc({ ...record, entries: [...record.entries, entry] })
+  writeOverrides(ov)
 }
 
-/** 학생 벌점 전체 초기화(해제) — 이력까지 제거 */
+/** 학생 벌점 전체 초기화(해제) — override 로 비워 목록에서 제외 (json base 는 보존) */
 export function clearPenalty(studentId: string): void {
-  const map = readMap()
-  if (map[studentId]) {
-    delete map[studentId]
-    writeMap(map)
-  }
+  const record = resolved()[studentId]
+  if (!record) return
+  const ov = readOverrides()
+  ov[studentId] = { ...record, total: 0, entries: [] }
+  writeOverrides(ov)
 }
 
 export type { StudentPenalty, PenaltyEntry }

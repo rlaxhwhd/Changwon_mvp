@@ -313,7 +313,10 @@ export default function StudentDetail() {
             <div className="admin-detail-id">
                   <div>
                 <h1 className="admin-page-title">{roster.name}</h1>
-                <p className="admin-page-desc">{roster.major} · {roster.grade}학년</p>
+                <p className="admin-page-desc">
+                  {roster.major} · {roster.grade}학년 · 학번 {roster.studentNo}
+                  {roster.gpa && ` · GPA ${roster.gpa} · ${roster.language}`}
+                </p>
                 <div className="admin-detail-tags">
                   <span className="admin-tag admin-tag-soft">{roster.studentType}</span>
                   <span className="admin-tag">{roster.iap}</span>
@@ -326,6 +329,23 @@ export default function StudentDetail() {
               <LuArrowLeft /> 목록
             </Link>
           </header>
+
+          {roster.competencyScore != null && (
+            <section className="admin-card">
+              <div className="admin-card-head"><h2><LuInfo /> 기본 프로필</h2></div>
+              <p className="admin-page-desc">
+                연락처 {roster.phone} · 역량점수 {roster.competencyScore} · 목표 {roster.targetCompanySummary}
+              </p>
+              {roster.typeScores && (
+                <div className="admin-detail-tags">
+                  <span className="admin-tag">진로명확도 {roster.typeScores.진로명확도}</span>
+                  <span className="admin-tag">역량준비도 {roster.typeScores.역량준비도}</span>
+                  <span className="admin-tag">취업준비도 {roster.typeScores.취업준비도}</span>
+                </div>
+              )}
+              {roster.roadmapSummary && <p className="admin-detail-note">{roster.roadmapSummary}</p>}
+            </section>
+          )}
 
           <section className="admin-card">
             <div className="admin-card-head"><h2><LuRoute /> 로드맵 진행 현황</h2></div>
