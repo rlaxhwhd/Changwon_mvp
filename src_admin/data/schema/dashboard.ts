@@ -8,8 +8,8 @@ import type { IconType } from 'react-icons'
 /** 통계 카드 델타 방향 — 증가(초록) / 감소(빨강). 데모는 전부 up. */
 export type StatDelta = 'up' | 'down'
 
-/** 델타 단위 표기 — 퍼센트(전월/전일 대비) 또는 절대 증감(개·건) */
-export type StatDeltaUnit = 'percent' | 'count'
+/** 델타 단위 표기 — 퍼센트(전주 대비) · 절대 증감(개·건) · 퍼센트포인트(%p) */
+export type StatDeltaUnit = 'percent' | 'count' | 'point'
 
 /** 상단 통계 카드 1개 */
 export interface DashboardStat {
@@ -30,18 +30,22 @@ export interface DashboardStat {
   deltaLabel: string
   /** Font Awesome 아이콘 클래스 (예: Lucide component) */
   icon: IconType
-  /** 아이콘 배경 톤 — 카드별 소프트 배경 구분 */
+  /** 아이콘 배경 톤 — 카드별 소프트 배경 구분 + 스파크라인 색 */
   tone: 'primary' | 'info' | 'success' | 'accent'
+  /** 카드 우측 스파크라인 추이 (최근 N주) */
+  spark: number[]
 }
 
-/** 학생 상담 현황 라인 차트 — 기간 토글별 단일 시리즈 */
+/** 학생 상담 현황 콤보 차트 — 기간 토글별 (막대: 신청·완료 / 라인: 완료율) */
 export type TrafficRange = 'daily' | 'weekly' | 'monthly'
 
 export interface TrafficSeries {
-  /** X축 라벨 (예: 6/1주 …) */
+  /** X축 라벨 (예: 04.14~04.20 …) */
   labels: string[]
-  /** 학생 상담 건수 추이 (단일 실선, royal-blue) */
-  counsels: number[]
+  /** 상담 신청 건수 (연청 막대) */
+  requested: number[]
+  /** 상담 완료 건수 (진청 막대) */
+  completed: number[]
 }
 
 /** 기간 토글 3종 각각의 시리즈 */

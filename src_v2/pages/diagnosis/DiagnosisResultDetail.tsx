@@ -52,13 +52,11 @@ const TEST_NAMES: Record<string, string> = {
   cares: 'CARES 진로인식검사',
   job: '직무역량검사',
   aptitude: '직업적성검사',
-  // 진단 7모듈(careerProcess.ts) testId 연동
-  type: '유형분류 검사',
-  self: '자기이해 검사',
-  kvct: 'KVCT 직무역량검사',
-  sprint1: 'SPRINT Ⅰ 취업인식검사',
-  sprint2: 'SPRINT Ⅱ 취업인식검사',
-  neo: 'NEO 성격검사',
+  // 진단 4모듈(careerProcess.ts) testId 연동
+  c2: 'C-2 진로설정 진단검사',
+  c3: 'C-3 역량수준 진단검사',
+  c4: 'C-4 구직역량 진단검사',
+  ccore: 'C-CORE 핵심진단검사',
 }
 
 const scoreLevel = (s: number) => (s >= 80 ? 'high' : s >= 60 ? 'mid' : 'low')
@@ -176,7 +174,7 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
 export default function DiagnosisResultDetail() {
   const navigate = useNavigate()
   const { testId = '9core' } = useParams()
-  const testName = TEST_NAMES[testId] ?? '9CORE 검사'
+  const testName = TEST_NAMES[testId] ?? '진단 검사'
   const studentName = getActiveStudent().name
 
   const [abilityModal, setAbilityModal] = useState<number | null>(null)
@@ -264,7 +262,7 @@ export default function DiagnosisResultDetail() {
         {/* 레이더 차트 카드 */}
         <div className="dr-card">
           <div className="dr-card-head">
-            <h2><i className="fa-solid fa-chart-area" /> 9CORE 레이더 차트</h2>
+            <h2><i className="fa-solid fa-chart-area" /> 역량 레이더 차트</h2>
             <button className="dr-history-btn" onClick={() => setHistoryModal(true)}>
               <i className="fa-solid fa-clock-rotate-left" /> 검사 이력
             </button>

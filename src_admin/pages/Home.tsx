@@ -1,6 +1,5 @@
-import { LuArrowDown, LuArrowUp } from 'react-icons/lu'
-import { LuBell, LuCalendar, LuChartLine, LuChartPie, LuChevronRight, LuMegaphone, LuPlus } from 'react-icons/lu'
-import { useState } from 'react'
+import { LuArrowUp, LuArrowDown, LuCalendar, LuChevronRight, LuInfo } from 'react-icons/lu'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   Chart as ChartJS,
@@ -8,46 +7,54 @@ import {
   LinearScale,
   PointElement,
   LineElement,
-  ArcElement,
+  BarElement,
   Filler,
   Tooltip,
   Legend,
 } from 'chart.js'
-import { Line, Doughnut } from 'react-chartjs-2'
-import {
-  getDashboardData,
-  getTrafficSeries,
-  diagnosisPercent,
-} from '../data/dashboard'
+import type { Plugin, ChartData } from 'chart.js'
+import { Line, Bar } from 'react-chartjs-2'
+import { getDashboardData, getTrafficSeries } from '../data/dashboard'
 import type { TrafficRange } from '../data/dashboard'
-import { getRosterTotal } from '../data/studentRoster'
-import EmptyState from '../components/EmptyState'
+import { getCounselRequests } from '../data/counselRequests'
+import { getActiveCounselor } from '../data/counselors'
+import './Home.css'
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   PointElement,
   LineElement,
-  ArcElement,
+  BarElement,
   Filler,
   Tooltip,
   Legend,
 )
 
-/* index.css 토큰 → 차트 리터럴 매핑 (Chart.js는 CSS 변수를 못 읽어 값으로 전달).
-   새 색 발명 없이 design.md 팔레트/그래디언트 값만 사용한다. */
+/* index.css 토큰 → 차트 리터럴 (Chart.js는 CSS 변수를 못 읽어 값으로 전달) */
 const C = {
-  primary: '#0653B6', // --color-primary
-  primaryLight: '#4A90FF', // --color-primary-light
-  primaryBg: '#EAF1FF', // --color-primary-bg
-  textSecondary: '#4D5B74', // --color-text-secondary
-  border: '#E6ECF5', // --color-border
-  grid: 'rgba(230, 236, 245, .8)', // --color-border 파생
+  primary: '#0653B6',
+  blue: '#4A90FF',
+  blueSoft: '#BBD6FF',
+  green: '#21C67A',
+  violet: '#7C6FF0',
+  text: '#4D5B74',
+  grid: 'rgba(230, 236, 245, .9)',
 }
 
-/* 도넛 4세그먼트 — design.md Charts gradient(royal-blue) 명도 단계(진→연)
-   #0653B6 → #3D8BFF → #78BFFF → 파생 연청 */
-const DONUT_COLORS = ['#0653B6', '#3D8BFF', '#78BFFF', '#A8CBFF']
+/** tone → 스파크라인·강조 색 */
+const TONE_COLOR: Record<string, string> = {
+  primary: C.primary,
+  info: C.blue,
+  success: C.green,
+  accent: C.violet,
+}
+
+/** 진단 참여 4분류 막대 색 (categorical, 레퍼런스 방향) */
+const DIAGNOSIS_COLORS = [C.primary, C.blue, C.green, C.violet]
+
+const KRW = new Intl.NumberFormat('ko-KR')
+const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
 
 const RANGE_TABS: { key: TrafficRange; label: string }[] = [
   { key: 'daily', label: '일간' },
@@ -55,75 +62,154 @@ const RANGE_TABS: { key: TrafficRange; label: string }[] = [
   { key: 'monthly', label: '월간' },
 ]
 
-const KRW = new Intl.NumberFormat('ko-KR')
-
-/** 증감 표기 — percent면 "5.2%", count면 "4개" 형태 */
-function formatDelta(value: number, unit: 'percent' | 'count'): string {
-  return unit === 'percent' ? `${value}%` : `${KRW.format(value)}개`
+function todayLabel(): string {
+  const d = new Date()
+  const p = (n: number) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())} (${WEEKDAY[d.getDay()]})`
 }
 
-/** 공지 태그별 색칩 클래스 */
-function noticeTagClass(tag: string): string {
-  switch (tag) {
-    case '채용':
-      return 'admin-notice-tag tag-job'
-    case '프로그램':
-      return 'admin-notice-tag tag-program'
-    case '시스템':
-      return 'admin-notice-tag tag-system'
+function deltaText(value: number, unit: 'percent' | 'count' | 'point'): string {
+  if (unit === 'percent') return `${value}%`
+  if (unit === 'point') return `${value}%p`
+  return `${KRW.format(value)}개`
+}
+
+function statusChipClass(status: string): string {
+  switch (status) {
+    case '완료':
+      return 'admin-chip-done'
+    case '확정':
+      return 'admin-chip-ok'
+    case '취소':
+      return 'admin-chip-cancel'
     default:
-      return 'admin-notice-tag tag-all'
+      return 'admin-chip-wait'
   }
 }
 
-export default function Home() {
-  // ── 데이터는 전부 로더에서 구독 (컴포넌트 하드코딩 금지) ──────────────────
-  const data = getDashboardData()
-  // '전체 학생' 카드 값은 학생 로스터(단일 소스) 실제 건수로 대체
-  const rosterTotal = getRosterTotal()
-  const stats = data.stats.map(s =>
-    s.id === 'students' ? { ...s, value: rosterTotal, deltaLabel: '로스터 기준' } : s,
-  )
+/** 콤보 차트 값 라벨 (막대 위 건수 · 라인 위 완료율%) — 외부 플러그인 없이 인라인 */
+const comboLabels: Plugin<'bar'> = {
+  id: 'comboLabels',
+  afterDatasetsDraw(chart) {
+    const { ctx } = chart
+    chart.data.datasets.forEach((ds, di) => {
+      const meta = chart.getDatasetMeta(di)
+      if (meta.hidden) return
+      const isLine = (ds as { type?: string }).type === 'line'
+      ctx.save()
+      ctx.font = `700 ${isLine ? 12 : 12}px Pretendard, sans-serif`
+      ctx.textAlign = 'center'
+      meta.data.forEach((el, i) => {
+        const raw = ds.data[i] as number
+        if (raw == null) return
+        ctx.fillStyle = isLine ? C.primary : C.text
+        const text = isLine ? `${raw}%` : String(raw)
+        ctx.fillText(text, el.x, el.y - (isLine ? 12 : 6))
+      })
+      ctx.restore()
+    })
+  },
+}
 
-  const [range, setRange] = useState<TrafficRange>('monthly')
+/** 작은 스파크라인 (KPI 카드 우측) */
+function Sparkline({ series, color }: { series: number[]; color: string }) {
+  const data = {
+    labels: series.map((_, i) => i),
+    datasets: [
+      {
+        data: series,
+        borderColor: color,
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointRadius: 0,
+        backgroundColor: (ctx: { chart: { ctx: CanvasRenderingContext2D; chartArea?: { top: number; bottom: number } } }) => {
+          const { chartArea } = ctx.chart
+          if (!chartArea) return 'transparent'
+          const g = ctx.chart.ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
+          g.addColorStop(0, `${color}33`)
+          g.addColorStop(1, `${color}00`)
+          return g
+        },
+      },
+    ],
+  }
+  const options = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: { legend: { display: false }, tooltip: { enabled: false } },
+    scales: { x: { display: false }, y: { display: false } },
+  }
+  return <Line data={data} options={options} />
+}
+
+export default function Home() {
+  const data = getDashboardData()
+  const counselor = getActiveCounselor()
+  const [range, setRange] = useState<TrafficRange>('weekly')
   const series = getTrafficSeries(range)
 
-  const hasTraffic = series.labels.length > 0
-  const hasDiagnosis = data.diagnosis.segments.length > 0
+  const rate = useMemo(
+    () => series.requested.map((r, i) => (r > 0 ? Math.round((series.completed[i] / r) * 1000) / 10 : 0)),
+    [series],
+  )
 
-  const lineData = {
+  const recentRequests = useMemo(
+    () =>
+      [...getCounselRequests()]
+        .sort((a, b) => (a.requestedAt < b.requestedAt ? 1 : -1))
+        .slice(0, 5),
+    [],
+  )
+
+  const diagMax = Math.max(...data.diagnosis.segments.map(s => s.value), 1)
+
+  const comboData = {
     labels: series.labels,
     datasets: [
       {
-        label: '학생 상담 건수',
-        data: series.counsels,
+        type: 'bar' as const,
+        label: '상담 신청 건수',
+        data: series.requested,
+        backgroundColor: C.blueSoft,
+        borderRadius: 4,
+        yAxisID: 'y',
+      },
+      {
+        type: 'bar' as const,
+        label: '상담 완료 건수',
+        data: series.completed,
+        backgroundColor: C.primary,
+        borderRadius: 4,
+        yAxisID: 'y',
+      },
+      {
+        type: 'line' as const,
+        label: '상담 완료율',
+        data: rate,
         borderColor: C.primary,
-        // design.md Charts gradient(royal-blue)로 영역 채움 — 위(진)→아래(투명)
-        backgroundColor: (ctx: { chart: { ctx: CanvasRenderingContext2D; chartArea?: { top: number; bottom: number } } }) => {
-          const { chartArea } = ctx.chart
-          if (!chartArea) return C.primaryBg
-          const g = ctx.chart.ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom)
-          g.addColorStop(0, 'rgba(61, 139, 255, .28)') // #3D8BFF
-          g.addColorStop(1, 'rgba(120, 191, 255, .02)') // #78BFFF
-          return g
-        },
         borderWidth: 2.5,
-        fill: true,
         tension: 0.35,
         pointRadius: 4,
         pointBackgroundColor: '#fff',
         pointBorderColor: C.primary,
         pointBorderWidth: 2,
+        yAxisID: 'y1',
       },
     ],
   }
 
-  const lineOptions = {
+  const comboOptions = {
     responsive: true,
     maintainAspectRatio: false,
+    layout: { padding: { top: 24 } },
     interaction: { mode: 'index' as const, intersect: false },
     plugins: {
-      legend: { display: false },
+      legend: {
+        position: 'top' as const,
+        align: 'start' as const,
+        labels: { usePointStyle: true, boxWidth: 8, font: { family: 'Pretendard, sans-serif', size: 12 }, color: C.text },
+      },
       tooltip: {
         backgroundColor: C.primary,
         padding: 10,
@@ -133,114 +219,83 @@ export default function Home() {
       },
     },
     scales: {
-      x: {
-        grid: { display: false },
-        ticks: {
-          font: { family: 'Pretendard, sans-serif', size: 12 },
-          color: C.textSecondary,
-        },
-      },
+      x: { grid: { display: false }, ticks: { font: { family: 'Pretendard, sans-serif', size: 11 }, color: C.text } },
       y: {
         beginAtZero: true,
-        ticks: {
-          font: { family: 'Pretendard, sans-serif', size: 11 },
-          color: C.textSecondary,
-        },
         grid: { color: C.grid },
         border: { display: false },
+        ticks: { font: { family: 'Pretendard, sans-serif', size: 11 }, color: C.text },
       },
-    },
-  }
-
-  const donutData = {
-    labels: data.diagnosis.segments.map(s => s.label),
-    datasets: [
-      {
-        data: data.diagnosis.segments.map(s => s.value),
-        backgroundColor: DONUT_COLORS,
-        borderColor: '#fff',
-        borderWidth: 3,
-        hoverOffset: 4,
-      },
-    ],
-  }
-
-  const donutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '68%',
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: C.primary,
-        padding: 10,
-        cornerRadius: 8,
-        titleFont: { family: 'Pretendard, sans-serif', size: 12 },
-        bodyFont: { family: 'Pretendard, sans-serif', size: 12 },
+      y1: {
+        beginAtZero: true,
+        max: 100,
+        position: 'right' as const,
+        grid: { display: false },
+        border: { display: false },
+        ticks: {
+          font: { family: 'Pretendard, sans-serif', size: 11 },
+          color: C.text,
+          callback: (v: string | number) => `${v}%`,
+        },
       },
     },
   }
 
   return (
-    <div className="admin-page">
-      {/* ── 페이지 헤더 ─────────────────────────────────────── */}
+    <div className="admin-page dash">
+      {/* ── 헤더 ─────────────────────────────────────── */}
       <header className="admin-page-head">
         <div>
-          <h1 className="admin-page-title">대시보드</h1>
-          <p className="admin-page-desc">학생포털 운영 현황을 한눈에 확인하세요.</p>
+          <h1 className="admin-page-title">메인 대시보드</h1>
+          <p className="admin-page-desc">
+            국립창원대학교 {counselor.dept} {counselor.name} 관리자님, 환영합니다.
+          </p>
         </div>
         <div className="admin-dash-head-actions">
-          <span className="admin-date-pill">
-            <LuCalendar />
-            {data.period}
+          <span className="dash-date-pill">
+            <LuCalendar /> {todayLabel()}
           </span>
-          <Link to="/counsel/requests" className="admin-btn admin-btn-primary">
-            <LuPlus /> 빠른 등록
-          </Link>
         </div>
       </header>
 
-      {/* ── 통계 카드 6개 ───────────────────────────────────── */}
-      <section className="admin-kpi-grid">
-        {stats.map(stat => (
-          <div key={stat.id} className="admin-kpi-card">
-            <div className="admin-kpi-body">
-              <span className="admin-kpi-label">{stat.label}</span>
-              <span className="admin-kpi-value">
+      {/* ── KPI 5장 (스파크라인) ─────────────────────── */}
+      <section className="dash-kpi-grid">
+        {data.stats.map(stat => {
+          const color = TONE_COLOR[stat.tone] ?? C.primary
+          return (
+            <div key={stat.id} className="dash-kpi-card">
+              <span className="dash-kpi-label">{stat.label}</span>
+              <span className="dash-kpi-value">
                 {KRW.format(stat.value)}
                 <em>{stat.unit}</em>
               </span>
-              <span
-                className={`admin-kpi-delta ${
-                  stat.deltaDir === 'up' ? 'is-up' : 'is-down'
-                }`}
-              >
-                {stat.deltaDir === 'up' ? <LuArrowUp /> : <LuArrowDown />}
-                {formatDelta(stat.deltaValue, stat.deltaUnit)}
-                <small>{stat.deltaLabel}</small>
-              </span>
+              <div className="dash-kpi-foot">
+                <span className={`dash-kpi-delta ${stat.deltaDir === 'up' ? 'is-up' : 'is-down'}`}>
+                  {stat.deltaDir === 'up' ? <LuArrowUp /> : <LuArrowDown />}
+                  {deltaText(stat.deltaValue, stat.deltaUnit)}
+                  <small>({stat.deltaLabel})</small>
+                </span>
+                <div className="dash-kpi-spark">
+                  <Sparkline series={stat.spark} color={color} />
+                </div>
+              </div>
             </div>
-            <span className={`admin-kpi-icon tone-${stat.tone}`}>
-              {(() => { const Icon = stat.icon; return <Icon /> })()}
-            </span>
-          </div>
-        ))}
+          )
+        })}
       </section>
 
-      {/* ── 하단 3영역 ──────────────────────────────────────── */}
-      <div className="admin-dash-grid">
-        {/* 좌 (wide) — 학생 상담 현황 (단일 시리즈) */}
-        <section className="admin-card admin-dash-traffic">
-          <div className="admin-card-head">
-            <h2>
-              <LuChartLine /> 학생 상담 현황
-            </h2>
-            <div className="admin-range-toggle">
+      {/* ── 차트 2분할 ───────────────────────────────── */}
+      <div className="dash-chart-grid">
+        {/* 학생상담현황 콤보 */}
+        <section className="admin-card dash-chart-card">
+          <div className="dash-card-head">
+            <h2>학생상담현황 그래프</h2>
+            <div className="dash-range-toggle">
               {RANGE_TABS.map(t => (
                 <button
                   key={t.key}
                   type="button"
-                  className={`admin-range-btn ${range === t.key ? 'active' : ''}`}
+                  className={`dash-range-btn ${range === t.key ? 'active' : ''}`}
                   onClick={() => setRange(t.key)}
                 >
                   {t.label}
@@ -248,79 +303,75 @@ export default function Home() {
               ))}
             </div>
           </div>
-          {hasTraffic ? (
-            <div className="admin-chart-box">
-              <Line data={lineData} options={lineOptions} />
-            </div>
-          ) : (
-            <EmptyState icon={LuChartLine} message="표시할 학생 상담 데이터가 없습니다." />
-          )}
-        </section>
-
-        {/* 중 — 진단 참여 현황 (도넛) */}
-        <section className="admin-card admin-dash-diagnosis">
-          <div className="admin-card-head">
-            <h2>
-              <LuChartPie /> 진단 참여 현황
-            </h2>
+          <div className="dash-combo-box">
+            <Bar data={comboData as unknown as ChartData<'bar'>} options={comboOptions} plugins={[comboLabels]} />
           </div>
-          {hasDiagnosis ? (
-            <>
-              <div className="admin-donut-wrap">
-                <div className="admin-donut-box">
-                  <Doughnut data={donutData} options={donutOptions} />
-                  <div className="admin-donut-center">
-                    <small>전체</small>
-                    <strong>{KRW.format(data.diagnosis.total)}명</strong>
-                  </div>
-                </div>
-              </div>
-              <ul className="admin-donut-legend">
-                {data.diagnosis.segments.map((seg, i) => (
-                  <li key={seg.label}>
-                    <span
-                      className="admin-legend-dot"
-                      style={{ background: DONUT_COLORS[i % DONUT_COLORS.length] }}
-                    />
-                    <span className="admin-legend-name">{seg.label}</span>
-                    <span className="admin-legend-figs">
-                      {KRW.format(seg.value)}명
-                      <em>({diagnosisPercent(seg, data.diagnosis.total)}%)</em>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : (
-            <EmptyState icon={LuChartPie} message="진단 참여 데이터가 없습니다." />
-          )}
         </section>
 
-        {/* 우 — 공지사항 */}
-        <section className="admin-card admin-dash-notice">
-          <div className="admin-card-head">
+        {/* 진단 참여 현황 (CSS 막대) */}
+        <section className="admin-card dash-chart-card">
+          <div className="dash-card-head">
             <h2>
-              <LuMegaphone /> 공지사항
+              진단 참여 현황 그래프
+              <span className="dash-head-info" title="유형진단(1단계) 6유형 중 상위 4분류 참여자 집계">
+                <LuInfo />
+              </span>
             </h2>
-            <Link to="/settings" className="admin-card-more">
+            <span className="dash-head-note">전체 학년</span>
+          </div>
+          <div className="dash-bars">
+            {data.diagnosis.segments.map((seg, i) => {
+              const pct = Math.round((seg.value / data.diagnosis.total) * 1000) / 10
+              return (
+                <div key={seg.label} className="dash-bar-col">
+                  <span className="dash-bar-value">
+                    {KRW.format(seg.value)}명
+                    <small>({pct}%)</small>
+                  </span>
+                  <div className="dash-bar-track">
+                    <div
+                      className="dash-bar-fill"
+                      style={{ height: `${(seg.value / diagMax) * 100}%`, background: DIAGNOSIS_COLORS[i % DIAGNOSIS_COLORS.length] }}
+                    />
+                  </div>
+                  <span className="dash-bar-label">{seg.label}</span>
+                </div>
+              )
+            })}
+          </div>
+          <p className="dash-bars-foot">총 참여자 {KRW.format(data.diagnosis.total)}명</p>
+        </section>
+      </div>
+
+      {/* ── 상담 신청 현황 (실데이터) ─────────────────── */}
+      <div className="dash-bottom">
+        <section className="admin-card dash-table-card">
+          <div className="dash-card-head">
+            <h2>상담 신청 현황</h2>
+            <Link to="/counsel/requests" className="dash-more">
               더보기 <LuChevronRight />
             </Link>
           </div>
-          {data.notices.length === 0 ? (
-            <EmptyState icon={LuBell} message="등록된 공지가 없습니다." />
-          ) : (
-            <ul className="admin-notice-list">
-              {data.notices.map(n => (
-                <li key={n.id} className="admin-notice-item">
-                  <div className="admin-notice-main">
-                    <span className={noticeTagClass(n.tag)}>{n.tag}</span>
-                    <p className="admin-notice-title">{n.title}</p>
-                  </div>
-                  <span className="admin-notice-date">{n.date}</span>
-                </li>
-              ))}
-            </ul>
-          )}
+          <div className="dash-table">
+            <div className="dash-table-head" role="row">
+              <span>상태</span>
+              <span>신청자</span>
+              <span>학과</span>
+              <span>상담구분</span>
+              <span>신청일</span>
+            </div>
+            {recentRequests.map(req => (
+              <div key={req.id} className="dash-table-row" role="row">
+                <span>
+                  <span className={`admin-chip ${statusChipClass(req.status)}`}>{req.status}</span>
+                </span>
+                <span className="dash-t-name">{req.studentName}</span>
+                <span>{req.studentMajor}</span>
+                <span>{req.type === '심리' ? '심리상담' : '진로취업 상담'}</span>
+                <span className="dash-t-date">{req.requestedAt.slice(5, 10).replace('-', '.')}</span>
+              </div>
+            ))}
+          </div>
         </section>
       </div>
     </div>

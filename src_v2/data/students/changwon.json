@@ -79,11 +79,11 @@
       "period": "2024.03 ~ 2024.04",
       "tasks": [
         {
-          "text": "유형분류 검사(39문항) 완료 → 취업준비형 판정",
+          "text": "C-CORE 검사(39문항) 완료 → 취업준비형 판정",
           "done": true
         },
         {
-          "text": "자기이해 검사 완료, 마케팅·기획 강점 확인",
+          "text": "C-2 검사 완료, 마케팅·기획 강점 확인",
           "done": true
         },
         {
@@ -91,7 +91,7 @@
           "done": true
         }
       ],
-      "recommendation": "유형분류 결과 \"취업준비형\"으로, 취업 실전 준비가 핵심 과제입니다.",
+      "recommendation": "C-CORE 검사 결과 \"취업준비형\"으로, 취업 실전 준비가 핵심 과제입니다.",
       "nextPath": "/diagnosis/employment"
     },
     {

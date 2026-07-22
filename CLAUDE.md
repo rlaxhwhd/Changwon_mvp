@@ -44,6 +44,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 React 19 + TypeScript 5.9 + Vite 8 기반 SPA. 프론트엔드 전용, 백엔드 없음, 모든 데이터는 **JSON 동적 mock**(하드코딩 금지 — 위 "데이터 원칙" 참조).
 데스크톱 전용 (min-width 1280px).
 
+## 🧪 진단검사 명칭·학년 매핑 (확정)
+
+학생 진단센터·AI라운지의 진단검사는 **4종**이다. 옛 명칭(유형분류·자기이해·CARES·KVCT·SPRINT·NEO 등)은 **전부 폐기**하고 아래 C-체계로 통일한다. **C-1은 존재하지 않는다(번호는 C-2부터).**
+
+| 명칭 | 진단 영역 | 상태 |
+|---|---|---|
+| **C-2 진로설정 진단검사** | 진로 목표·설계 수준 | 검사시작 |
+| **C-3 역량수준 진단검사** | 핵심역량 보유 수준 | 검사시작 |
+| **C-4 구직역량 진단검사** | 취업 준비·구직 전략 | 검사시작 |
+| **C-CORE 핵심진단검사** | 6유형 분류(핵심·공통) | 결과보기(완료) |
+
+**학년별 응시 — 선택(1개 필수) + 공통(1개 필수):**
+
+| 학년 | 선택 | 공통 |
+|---|---|---|
+| 1 | C-2 | C-CORE |
+| 2 | C-2 · C-3 | C-CORE |
+| 3 | C-2 · C-3 | C-CORE |
+| 4 | C-3 · C-4 | C-CORE |
+
+- 상태 규칙: **C-CORE만 결과보기(done)**, 나머지는 검사시작(available).
+- 단일소스: `src_v2/data/careerProcess.ts`(`DIAGNOSIS_MODULES`). 라운지 결과요약은 `AiLounge.tsx`(`TEST_SUMMARIES`), 상세 이름맵은 `DiagnosisResultDetail.tsx`(`TEST_NAMES`).
+- 학년별 선택/공통은 **정책(문서)** 이며 현재 진단센터 UI는 4종을 모두 노출한다(학년 필터링 미구현).
+
 ### 개발 준수사항
 # Karpathy Guidelines
 
