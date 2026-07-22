@@ -138,6 +138,21 @@ export function applyNoShowPenalty(applicant: ProgramApplicant, program: Program
 }
 
 /**
+ * 선발자 '불참' 결과 → 벌점 부여(1점/3점 tier). tier 재변경 시 중복 방지를 위해
+ * 이 프로그램의 기존 불참 벌점을 먼저 회수한 뒤 새 tier로 재부여한다.
+ */
+export function applyAbsencePenalty(applicant: ProgramApplicant, program: Program, points: number): void {
+  revertNoShowPenalty(applicant.studentId, program.id)
+  pushEntry(applicant, {
+    kind: 'noshow',
+    points,
+    reason: `${program.title} 불참 (벌점 ${points}점)`,
+    programId: program.id,
+    programTitle: program.title,
+  })
+}
+
+/**
  * '노쇼' 해제 → 해당 프로그램 노쇼 벌점을 상쇄(음수 이력 추가).
  * 이력은 남기고 total 만 되돌린다(감사 추적).
  */

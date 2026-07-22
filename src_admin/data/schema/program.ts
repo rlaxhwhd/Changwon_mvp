@@ -21,8 +21,23 @@ export const PROGRAM_STATUSES: ProgramStatus[] = ['모집중', '모집마감', '
 /** 신청자 선발 상태 — 신청자 관리에서 상태변경으로 전이한다. '선발'만 선발자 관리에 노출. */
 export type SelectionStatus = '대기' | '선발' | '탈락' | '취소'
 
-/** 상태변경 select box 순서 */
+/** 신청자 관리 상태변경 select box 순서 */
 export const SELECTION_STATUSES: SelectionStatus[] = ['선발', '대기', '탈락', '취소']
+
+/** 선발 후 결과 상태 — 선발자 관리에서 상태변경으로 설정(수료/미수료/참석/불참). '불참'은 벌점 tier 포함. */
+export type OutcomeStatus = '수료' | '미수료' | '참석' | '불참(벌점1점)' | '불참(벌점3점)'
+
+/** 선발자 관리 상태변경 select box 값. '선발'=결과 해제, '삭제'=신청 삭제(행 제거). */
+export const SELECTED_ACTIONS = [
+  '선발', '수료', '미수료', '참석', '불참(벌점1점)', '불참(벌점3점)', '삭제',
+] as const
+export type SelectedAction = (typeof SELECTED_ACTIONS)[number]
+
+/** 불참 tier → 부과 벌점 */
+export const ABSENCE_PENALTY: Record<string, number> = {
+  '불참(벌점1점)': 1,
+  '불참(벌점3점)': 3,
+}
 
 /** 신청자별 출석 상태 — '노쇼'가 블랙리스트 벌점 대상 */
 export type AttendanceStatus = '미확인' | '출석' | '노쇼'
@@ -41,6 +56,8 @@ export interface ProgramApplicant {
   round?: number
   /** 선발 상태 — 미지정이면 '대기'. '선발'만 선발자 관리 페이지에 노출된다. */
   selectionStatus?: SelectionStatus
+  /** 선발 후 결과 상태 — 선발자 관리에서 설정(수료/미수료/참석/불참). */
+  outcomeStatus?: OutcomeStatus
 }
 
 /** 비교과 프로그램 1건 */

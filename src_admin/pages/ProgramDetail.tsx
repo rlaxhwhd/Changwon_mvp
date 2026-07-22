@@ -1,6 +1,5 @@
-import type { IconType } from 'react-icons'
 import {
-  LuCheck, LuCircleCheck, LuCircleHelp, LuClipboardCheck,
+  LuCheck, LuCircleHelp, LuClipboardCheck,
   LuFrown, LuInfo, LuPaperclip, LuTrash2,
   LuUser, LuUserCheck, LuUsers, LuUserX, LuX,
 } from 'react-icons/lu'
@@ -8,30 +7,23 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
   getProgramById,
-  setAttendance,
   updateProgram,
   removeProgram,
   setApplicantsStatus,
+  setApplicantsOutcome,
   removeApplicant,
 } from '../data/programs'
-import { PROGRAM_STATUSES, SELECTION_STATUSES } from '../data/schema/program'
+import { PROGRAM_STATUSES, SELECTION_STATUSES, SELECTED_ACTIONS } from '../data/schema/program'
 import type {
-  AttendanceStatus,
   ProgramApplicant,
   ProgramStatus,
   SelectionStatus,
+  SelectedAction,
 } from '../data/schema/program'
-import { NOSHOW_PENALTY_POINTS } from '../data/schema/penalty'
 import { studentLiteOf, collegeOf, enrollStatusClass } from '../data/studentRoster'
 import EmptyState from '../components/EmptyState'
 
 type Mode = 'applicants' | 'selected'
-
-const ATTENDANCE_OPTIONS: { value: AttendanceStatus; label: string; icon: IconType; cls: string }[] = [
-  { value: '미확인', label: '미확인', icon: LuCircleHelp, cls: '' },
-  { value: '출석', label: '출석', icon: LuCircleCheck, cls: 'is-present' },
-  { value: '노쇼', label: '노쇼', icon: LuUserX, cls: 'is-noshow' },
-]
 
 function fmtDateTime(iso: string): string {
   const d = new Date(iso)
@@ -50,6 +42,13 @@ function selectionChipClass(status: SelectionStatus): string {
   }
 }
 
+function outcomeChipClass(status: string): string {
+  if (status === '수료' || status === '참석' || status === '선발') return 'admin-chip-ok'
+  if (status === '미수료') return 'admin-chip-done'
+  if (status.startsWith('불참')) return 'admin-chip-cancel'
+  return 'admin-chip-wait'
+}
+
 export default function ProgramDetail({ mode }: { mode: Mode }) {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
@@ -60,25 +59,20 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
 
   const [status, setStatus] = useState<ProgramStatus | ''>(program?.status ?? '')
   const [checked, setChecked] = useState<Set<string>>(new Set())
-  const [bulkStatus, setBulkStatus] = useState<SelectionStatus>('선발')
+  const [bulkValue, setBulkValue] = useState<string>('선발')
 
   // 신청자/선발자 페이지 전환 시 선택 초기화
   useEffect(() => { setChecked(new Set()) }, [mode])
 
   if (!program) {
     return (
-      <div className="admin-page">
-        <header className="admin-page-head">
-          <div><h1 className="admin-page-title">프로그램 상세</h1></div>
-        </header>
-        <section className="admin-card">
-          <EmptyState
-            icon={LuFrown}
-            message="해당 프로그램을 찾을 수 없습니다."
-            action={{ label: '프로그램 목록으로', onClick: () => navigate('/programs/manage') }}
-          />
-        </section>
-      </div>
+      <section className="admin-card">
+        <EmptyState
+          icon={LuFrown}
+          message="해당 프로그램을 찾을 수 없습니다."
+          action={{ label: '프로그램 목록으로', onClick: () => navigate('/programs/manage') }}
+        />
+      </section>
     )
   }
 
@@ -90,6 +84,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   const rejectedCount = applicants.filter(a => statusOf(a) === '탈락').length
 
   const allChecked = currentList.length > 0 && currentList.every(a => checked.has(a.studentId))
+  const bulkOptions: readonly string[] = mode === 'applicants' ? SELECTION_STATUSES : SELECTED_ACTIONS
 
   const toggleCheck = (studentId: string) => {
     setChecked(prev => {
@@ -104,15 +99,14 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
     setChecked(allChecked ? new Set() : new Set(currentList.map(a => a.studentId)))
   }
 
-  const applyBulkStatus = () => {
+  const applyBulk = () => {
     if (checked.size === 0) return
-    setApplicantsStatus(program.id, [...checked], bulkStatus)
+    if (mode === 'applicants') {
+      setApplicantsStatus(program.id, [...checked], bulkValue as SelectionStatus)
+    } else {
+      setApplicantsOutcome(program.id, [...checked], bulkValue as SelectedAction)
+    }
     setChecked(new Set())
-    refresh()
-  }
-
-  const handleAttendance = (studentId: string, value: AttendanceStatus) => {
-    setAttendance(program.id, studentId, value)
     refresh()
   }
 
@@ -138,8 +132,6 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
     removeProgram(program.id)
     navigate('/programs/manage')
   }
-
-  const rosterClass = mode === 'applicants' ? 'admin-applicant-mgmt-roster' : 'admin-selected-mgmt-roster'
 
   return (
     <>
@@ -201,22 +193,22 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
         </div>
       </section>
 
-      {/* 신청자 관리 / 선발자 관리 — 별도 페이지(라우트) 서브내비 */}
+      {/* 신청자 관리 / 선발자 관리 표 */}
       <section className="admin-card">
         {checked.size > 0 && (
           <div className="admin-bulkbar">
             <span className="admin-bulkbar-count"><strong>{checked.size}</strong>명 선택됨</span>
             <select
               className="admin-bulk-select"
-              value={bulkStatus}
-              onChange={e => setBulkStatus(e.target.value as SelectionStatus)}
+              value={bulkValue}
+              onChange={e => setBulkValue(e.target.value)}
               aria-label="변경할 상태"
             >
-              {SELECTION_STATUSES.map(s => (
+              {bulkOptions.map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
-            <button type="button" className="admin-btn admin-btn-primary sm" onClick={applyBulkStatus}>
+            <button type="button" className="admin-btn admin-btn-primary sm" onClick={applyBulk}>
               <LuCheck /> 상태변경
             </button>
           </div>
@@ -232,7 +224,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
             }
           />
         ) : (
-          <div className={`admin-roster admin-participant-roster ${rosterClass}`}>
+          <div className="admin-roster admin-participant-roster admin-applicant-mgmt-roster">
             <div className="admin-roster-head">
               <span className="admin-check-cell">
                 <input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="전체 선택" />
@@ -249,7 +241,6 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
               <span>신청일</span>
               <span>첨부파일</span>
               <span>삭제</span>
-              {mode === 'selected' && <span>출석</span>}
             </div>
             {currentList.map((a, index) => {
               const lite = studentLiteOf(a.studentId)
@@ -258,7 +249,8 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
               const major = lite?.major ?? a.studentMajor
               const grade = lite?.grade
               const enroll = lite?.status
-              const sel = statusOf(a)
+              const label = mode === 'applicants' ? statusOf(a) : (a.outcomeStatus ?? '선발')
+              const chipCls = mode === 'applicants' ? selectionChipClass(statusOf(a)) : outcomeChipClass(label)
               return (
                 <div key={a.studentId} className="admin-roster-row admin-participant-row">
                   <span className="admin-roster-cell admin-check-cell">
@@ -280,7 +272,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                     {enroll ? <span className={enrollStatusClass(enroll)}>{enroll}</span> : <small>—</small>}
                   </span>
                   <span className="admin-roster-cell">
-                    <span className={`admin-chip ${selectionChipClass(sel)}`}>{sel}</span>
+                    <span className={`admin-chip ${chipCls}`}>{label}</span>
                   </span>
                   <span className="admin-roster-cell"><small>{fmtDateTime(a.appliedAt)}</small></span>
                   <span className="admin-roster-cell admin-attach-cell" title="첨부파일 없음"><LuPaperclip /></span>
@@ -294,21 +286,6 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                       <LuX />
                     </button>
                   </span>
-                  {mode === 'selected' && (
-                    <span className="admin-attendance-toggle" role="group" aria-label={`${name} 출석 상태`}>
-                      {ATTENDANCE_OPTIONS.map(opt => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          className={`admin-att-btn ${opt.cls}${a.attendance === opt.value ? ' active' : ''}`}
-                          aria-pressed={a.attendance === opt.value}
-                          onClick={() => handleAttendance(a.studentId, opt.value)}
-                        >
-                          {(() => { const Icon = opt.icon; return <Icon /> })()} {opt.label}
-                        </button>
-                      ))}
-                    </span>
-                  )}
                 </div>
               )
             })}
@@ -318,7 +295,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
         {mode === 'selected' && selectedList.length > 0 && (
           <div className="admin-editor-hint">
             <LuInfo />
-            출석을 <strong>노쇼</strong>로 표시하면 해당 학생에게 자동으로 벌점 {NOSHOW_PENALTY_POINTS}점이 부여되어 <Link to="/programs/blacklist" className="admin-inline-link">블랙리스트</Link>에 반영됩니다. 노쇼를 해제하면 벌점이 회수됩니다.
+            상태를 <strong>불참(벌점1점/3점)</strong>으로 변경하면 해당 학생에게 벌점이 부여되어 <Link to="/programs/blacklist" className="admin-inline-link">블랙리스트</Link>에 반영됩니다. 참석·수료 등으로 되돌리면 벌점이 회수됩니다.
           </div>
         )}
       </section>

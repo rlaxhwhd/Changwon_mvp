@@ -11,9 +11,12 @@ import type {
   ProgramApplicant,
   AttendanceStatus,
   SelectionStatus,
+  OutcomeStatus,
+  SelectedAction,
 } from './schema/program'
+import { ABSENCE_PENALTY } from './schema/program'
 import seed from './programs.seed.json'
-import { applyNoShowPenalty, revertNoShowPenalty } from './penalties'
+import { applyNoShowPenalty, applyAbsencePenalty, revertNoShowPenalty } from './penalties'
 
 const STORAGE_KEY = 'dc_programs'
 
@@ -107,6 +110,47 @@ export function setApplicantsStatus(
           ...p,
           applicants: p.applicants.map(a =>
             ids.has(a.studentId) ? { ...a, selectionStatus } : a,
+          ),
+        },
+  )
+  persist(next)
+}
+
+/**
+ * 선발자 결과 일괄 변경 — '선발자 관리' 상태변경 select.
+ * 삭제=행 제거, 불참(벌점N점)=벌점 부여, 그 외=결과 라벨 설정(+기존 불참 벌점 회수).
+ */
+export function setApplicantsOutcome(
+  programId: string,
+  studentIds: string[],
+  action: SelectedAction,
+): void {
+  if (action === '삭제') {
+    studentIds.forEach(sid => removeApplicant(programId, sid))
+    return
+  }
+  const program = getPrograms().find(p => p.id === programId)
+  if (!program) return
+
+  // 벌점 연동: 불참 tier → 부과, 그 외(참석/수료/미수료/선발) → 이 프로그램 불참 벌점 회수
+  studentIds.forEach(sid => {
+    const applicant = program.applicants.find(a => a.studentId === sid)
+    if (!applicant) return
+    const points = ABSENCE_PENALTY[action]
+    if (points) applyAbsencePenalty(applicant, program, points)
+    else revertNoShowPenalty(sid, programId)
+  })
+
+  // 결과 라벨 저장 ('선발'은 결과 해제 → undefined)
+  const outcome: OutcomeStatus | undefined = action === '선발' ? undefined : (action as OutcomeStatus)
+  const ids = new Set(studentIds)
+  const next = getPrograms().map(p =>
+    p.id !== programId
+      ? p
+      : {
+          ...p,
+          applicants: p.applicants.map(a =>
+            ids.has(a.studentId) ? { ...a, outcomeStatus: outcome } : a,
           ),
         },
   )
