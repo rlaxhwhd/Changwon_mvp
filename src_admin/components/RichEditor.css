@@ -1,0 +1,5 @@
+/* Summernote(WYSIWYG) 컨테이너 — 폼 너비에 맞춤 */
+.rich-editor { width: 100%; }
+.rich-editor .note-editor { margin: 0; }
+.rich-editor .note-editor.note-frame { border-radius: 6px; }
+.rich-editor .note-editable { font-size: 14px; line-height: 1.6; }

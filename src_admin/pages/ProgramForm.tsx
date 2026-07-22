@@ -1,12 +1,13 @@
 import {
-  LuAlignLeft, LuBold, LuCalendar, LuCalendarClock, LuCalendarRange, LuChevronRight,
-  LuCircleHelp, LuClipboardList, LuClock, LuGripVertical, LuHouse, LuImage, LuImagePlus,
-  LuItalic, LuLink, LuList, LuListOrdered, LuMapPin, LuPlus, LuSmile, LuTrash2, LuUnderline,
+  LuCalendar, LuCalendarClock, LuCalendarRange, LuChevronRight,
+  LuCircleHelp, LuClipboardList, LuClock, LuGripVertical, LuHouse, LuImage,
+  LuMapPin, LuPlus, LuSmile, LuTrash2,
   LuUpload, LuUserRound, LuUsers, LuX,
 } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AdminModal from '../components/AdminModal'
+import RichEditor from '../components/RichEditor'
 import { COUNSELORS } from '../data/counselors'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
 import type { ProgramCategory } from '../data/schema/program'
@@ -426,24 +427,7 @@ export default function ProgramForm() {
               {/* 상세 내용 */}
               <div className="pf-field">
                 <span className="pf-label">상세 내용 <span className="pf-req">*</span></span>
-                <div className="pf-editor">
-                  <div className="pf-editor-toolbar">
-                    <select className="pf-tool-select" defaultValue="본문"><option>본문</option><option>제목1</option><option>제목2</option></select>
-                    <select className="pf-tool-select" defaultValue="15px"><option>13px</option><option>15px</option><option>18px</option></select>
-                    <span className="pf-tool-sep" />
-                    <button type="button" className="pf-tool" aria-label="굵게"><LuBold /></button>
-                    <button type="button" className="pf-tool" aria-label="기울임"><LuItalic /></button>
-                    <button type="button" className="pf-tool" aria-label="밑줄"><LuUnderline /></button>
-                    <span className="pf-tool-sep" />
-                    <button type="button" className="pf-tool" aria-label="정렬"><LuAlignLeft /></button>
-                    <button type="button" className="pf-tool" aria-label="순서 없는 목록"><LuList /></button>
-                    <button type="button" className="pf-tool" aria-label="순서 있는 목록"><LuListOrdered /></button>
-                    <span className="pf-tool-sep" />
-                    <button type="button" className="pf-tool" aria-label="링크"><LuLink /></button>
-                    <button type="button" className="pf-tool" aria-label="이미지"><LuImagePlus /></button>
-                  </div>
-                  <textarea value={detail} onChange={e => setDetail(e.target.value)} placeholder="프로그램의 상세 내용을 입력해주세요." />
-                </div>
+                <RichEditor value={detail} onChange={setDetail} height={320} placeholder="프로그램의 상세 내용을 입력해주세요." />
               </div>
             </div>
 
