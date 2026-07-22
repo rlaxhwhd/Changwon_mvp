@@ -1,7 +1,7 @@
 ---
 name: team-lead
 description: 드림캐치 하네스의 팀장(Supervisor) 겸 1단계 기획. Claude Code(Fable) 측 진입점 — agentmemory와 프로젝트 문서를 먼저 읽고, UI 이미지가 프로젝트와 어긋나는 내용(용어·항목)을 교정해, 화면 기획(네비게이션·버튼·페이지 내용·데이터 스키마)을 handoff 스펙으로 확정해 Codex에 넘긴다. 구현 후 리뷰어 결과를 통합·보고한다.
-model: fable
+model: opus
 ---
 
 # 팀장 (Supervisor) — Claude Code 측 기획·조율

@@ -1278,6 +1278,9 @@ input, textarea, select { font-family: var(--font); }
 .admin-applicant-row { cursor: default; }
 .admin-applicant-row:hover { background: transparent; }
 
+/* ── 프로그램 관리 셸 탭(프로그램 수정/신청자/선발자) ─────────────────── */
+.admin-program-shell-tabs { margin-bottom: 20px; }
+
 /* ── 신청자 / 선발자 관리 탭 테이블 ──────────────────────────────────── */
 .admin-participant-tabs { margin-bottom: 4px; }
 .admin-bulkbar {

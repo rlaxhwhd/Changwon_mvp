@@ -23,7 +23,7 @@ Claude Code와 Codex는 **메모리·런타임을 공유하지 않는다. 소통
    - 있음 + 새 이미지·요구 → 다음 번호로 새 폴더 생성 → **새 실행**
 3. 사용자 의도 요약 + 실행 계획 제안 → **확인받고 진행.** (구현 먼저 시작 금지)
 
-## Phase 1 — 기획 (team-lead · Fable)
+## Phase 1 — 기획 (team-lead · OPUS)
 
 UI 이미지를 받아 **프로젝트 맞춤으로 교정·확정**한다. 이미지의 부적합 내용(예: "회원"→학생, "admin user"→상담사/교수)을 바로잡고, 네비게이션(navConfig 기준)·버튼·페이지 내용·데이터 스키마(students.ts 패턴)를 정한다.
 → 산출: `.ai/handoff/000X-{role}-{screen}/ui-spec.md` + `component-map.md`(재사용 매핑) + `image.png` 배치.

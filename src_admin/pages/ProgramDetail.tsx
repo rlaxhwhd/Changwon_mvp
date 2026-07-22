@@ -1,7 +1,7 @@
 import type { IconType } from 'react-icons'
 import {
   LuCheck, LuCircleCheck, LuCircleHelp, LuClipboardCheck,
-  LuFrown, LuGraduationCap, LuInfo, LuList, LuPaperclip, LuPencil, LuTrash2,
+  LuFrown, LuInfo, LuPaperclip, LuTrash2,
   LuUser, LuUserCheck, LuUsers, LuUserX, LuX,
 } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
@@ -142,30 +142,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   const rosterClass = mode === 'applicants' ? 'admin-applicant-mgmt-roster' : 'admin-selected-mgmt-roster'
 
   return (
-    <div className="admin-page">
-      <header className="admin-page-head">
-        <div>
-          <h1 className="admin-page-title">
-            <LuGraduationCap /> {program.title}
-          </h1>
-          <p className="admin-page-desc">
-            <span className="admin-tag admin-tag-soft">{program.category}</span>{' '}
-            {program.startDate} ~ {program.endDate} · {program.location || '장소 미정'} · 정원 {program.capacity}명
-          </p>
-        </div>
-        <div className="admin-head-actions">
-          <Link to={`/programs/${program.id}/edit`} className="admin-btn admin-btn-ghost">
-            <LuPencil /> 공고 수정
-          </Link>
-          <Link to="/programs/manage" className="admin-btn admin-btn-ghost">
-            <LuList /> 목록
-          </Link>
-          <Link to="/programs/blacklist" className="admin-btn admin-btn-ghost">
-            <LuUserX /> 블랙리스트
-          </Link>
-        </div>
-      </header>
-
+    <>
       {/* 신청/선발 요약 + 모집상태 변경 */}
       <section className="admin-card">
         <div className="admin-card-head">
@@ -226,21 +203,6 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
 
       {/* 신청자 관리 / 선발자 관리 — 별도 페이지(라우트) 서브내비 */}
       <section className="admin-card">
-        <div className="admin-tabs admin-participant-tabs">
-          <Link
-            to={`/programs/${program.id}/applicants`}
-            className={`admin-tab${mode === 'applicants' ? ' active' : ''}`}
-          >
-            <LuUsers /> 신청자 관리 <span className="admin-tab-count">{applicants.length}</span>
-          </Link>
-          <Link
-            to={`/programs/${program.id}/selected`}
-            className={`admin-tab${mode === 'selected' ? ' active' : ''}`}
-          >
-            <LuUserCheck /> 선발자 관리 <span className="admin-tab-count">{selectedList.length}</span>
-          </Link>
-        </div>
-
         {checked.size > 0 && (
           <div className="admin-bulkbar">
             <span className="admin-bulkbar-count"><strong>{checked.size}</strong>명 선택됨</span>
@@ -360,6 +322,6 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
           </div>
         )}
       </section>
-    </div>
+    </>
   )
 }

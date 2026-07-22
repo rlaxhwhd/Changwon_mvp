@@ -143,28 +143,27 @@ export default function ProgramForm() {
   const patchExtra = (id: string, patch: Partial<ExtraItem>) => setExtras(prev => prev.map(x => (x.id === id ? { ...x, ...patch } : x)))
 
   return (
-    <div className="pf">
+    <div className={`pf${editing ? ' pf-embedded' : ''}`}>
       <div className="pf-inner">
-        {/* Top bar */}
-        <div className="pf-topbar">
-          <div>
-            <h1 className="pf-title">{editing ? '프로그램 수정' : '프로그램 개설 관리'}</h1>
-            <nav className="pf-crumbs" aria-label="breadcrumb">
-              <Link to="/"><LuHouse /></Link>
-              <LuChevronRight className="pf-crumb-sep" />
-              <Link to="/programs/manage">프로그램 관리</Link>
-              <LuChevronRight className="pf-crumb-sep" />
-              <span className="is-current">{editing ? '프로그램 수정' : '프로그램 개설 관리'}</span>
-            </nav>
+        {/* Top bar — 신규 등록(standalone)에서만. 수정 탭은 부모 셸이 헤더·탭을 제공. */}
+        {!editing && (
+          <div className="pf-topbar">
+            <div>
+              <h1 className="pf-title">프로그램 개설 관리</h1>
+              <nav className="pf-crumbs" aria-label="breadcrumb">
+                <Link to="/"><LuHouse /></Link>
+                <LuChevronRight className="pf-crumb-sep" />
+                <Link to="/programs/manage">프로그램 관리</Link>
+                <LuChevronRight className="pf-crumb-sep" />
+                <span className="is-current">프로그램 개설 관리</span>
+              </nav>
+            </div>
+            <div className="pf-topbar-actions">
+              <button type="button" className="pf-btn pf-btn-ghost" onClick={() => navigate('/programs')}>취소</button>
+              <button type="button" className="pf-btn pf-btn-primary" disabled={!canSave} onClick={handleSave}>{saved ? '저장됨' : '저장'}</button>
+            </div>
           </div>
-          <div className="pf-topbar-actions">
-            {editing && id && (
-              <button type="button" className="pf-btn pf-btn-ghost" onClick={() => navigate(`/programs/${id}/applicants`)}>신청자 관리</button>
-            )}
-            <button type="button" className="pf-btn pf-btn-ghost" onClick={() => navigate(editing ? '/programs/manage' : '/programs')}>취소</button>
-            <button type="button" className="pf-btn pf-btn-primary" disabled={!canSave} onClick={handleSave}>{saved ? '저장됨' : '저장'}</button>
-          </div>
-        </div>
+        )}
 
         <div className="pf-grid">
           {/* ── 기본 정보 ── */}

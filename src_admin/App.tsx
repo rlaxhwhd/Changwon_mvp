@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate, Outlet, useParams } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import Home from './pages/Home'
@@ -15,6 +15,7 @@ import JobForm from './pages/JobForm'
 import ProgramList from './pages/ProgramList'
 import ProgramManage from './pages/ProgramManage'
 import ProgramForm from './pages/ProgramForm'
+import ProgramShell from './pages/ProgramShell'
 import ProgramDetail from './pages/ProgramDetail'
 import ProgramNoticeView from './pages/ProgramNoticeView'
 import ProgramBlacklist from './pages/ProgramBlacklist'
@@ -35,11 +36,6 @@ function RequireCareer() {
   return <Outlet />
 }
 
-/** 구 링크(`/programs/:id`) → 신청자 관리 페이지로 리다이렉트. */
-function ApplicantsRedirect() {
-  const { id } = useParams<{ id: string }>()
-  return <Navigate to={`/programs/${id}/applicants`} replace />
-}
 
 const router = createBrowserRouter(
   [
@@ -82,10 +78,16 @@ const router = createBrowserRouter(
                 { path: '/programs/new', element: <ProgramForm /> },
                 { path: '/programs/blacklist', element: <ProgramBlacklist /> },
                 { path: '/programs/:id/notice', element: <ProgramNoticeView /> },
-                { path: '/programs/:id/edit', element: <ProgramForm /> },
-                { path: '/programs/:id/applicants', element: <ProgramDetail mode="applicants" /> },
-                { path: '/programs/:id/selected', element: <ProgramDetail mode="selected" /> },
-                { path: '/programs/:id', element: <ApplicantsRedirect /> },
+                {
+                  path: '/programs/:id',
+                  element: <ProgramShell />,
+                  children: [
+                    { index: true, element: <Navigate to="edit" replace /> },
+                    { path: 'edit', element: <ProgramForm /> },
+                    { path: 'applicants', element: <ProgramDetail mode="applicants" /> },
+                    { path: 'selected', element: <ProgramDetail mode="selected" /> },
+                  ],
+                },
               ],
             },
 

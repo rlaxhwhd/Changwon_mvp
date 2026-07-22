@@ -38,6 +38,10 @@
 .pf * { box-sizing: border-box; }
 .pf-inner { max-width: 1320px; margin: 0 auto; }
 
+/* 수정 탭으로 부모 셸(admin-page) 안에 임베드될 때 — 자체 풀페이지 배경/여백 제거 */
+.pf.pf-embedded { background: transparent; min-height: 0; padding: 0; }
+.pf.pf-embedded .pf-inner { max-width: none; }
+
 /* ─── Top bar ─────────────────────────────────────────────────────── */
 .pf-topbar {
   display: flex;
