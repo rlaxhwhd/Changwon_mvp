@@ -4,6 +4,21 @@
   padding: 30px 36px 48px;
 }
 
+/* ── JobPosting(단일소스) 상세 — 지원 버튼·모집요강 HTML ─────────────────── */
+.jd-card-wide { grid-column: 1 / -1; }
+.jd-apply-btn {
+  margin-top: 14px; width: 100%; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  border-radius: 10px; background: var(--color-primary); color: #fff; font-weight: 800; font-size: 15px;
+}
+.jd-apply-btn:hover { filter: brightness(0.96); }
+.jd-content { font-size: 15px; line-height: 1.7; color: var(--color-navy); }
+.jd-content img { max-width: 100%; height: auto; border-radius: 8px; }
+.jd-content ul, .jd-content ol { padding-left: 20px; margin: 8px 0; }
+.jd-content-empty { color: var(--color-text-sub); font-size: 15px; }
+.jd-status.open { color: var(--color-primary); }
+.jd-status.closed { color: var(--color-text-sub); }
+
 .jd-back {
   height: 38px;
   display: inline-flex;

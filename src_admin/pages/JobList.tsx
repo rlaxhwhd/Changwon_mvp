@@ -144,7 +144,7 @@ export default function JobList() {
                   {j.location || '—'}
                   <small>{j.jobType} · {j.salary || '처우 협의'}</small>
                 </span>
-                <span className="admin-roster-cell">{j.deadline || '상시'}</span>
+                <span className="admin-roster-cell">{j.deadlineOnHire ? '채용시 마감' : j.deadline || '상시'}</span>
                 <span className="admin-roster-cell">
                   <span className={`admin-tag${j.source === 'external' ? ' admin-tag-soft' : ''}`}>
                     {SOURCE_LABEL[j.source]}

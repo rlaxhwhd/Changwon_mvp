@@ -75,11 +75,18 @@ export default function JobForm() {
   const handleSave = (goList: boolean) => {
     if (draft.company.trim() === '' || draft.role.trim() === '') return
     const careers = arr('careerTypes')
+    // 채용시 체크 → 마감일을 등록일 +1개월로 자동 설정(폼 힌트 "1개월로 선택됩니다").
+    // 실제 날짜를 저장해야 학생 카드에서 D-day 카운트다운이 나온다.
+    const onHireDeadline = () => {
+      const d = new Date()
+      d.setMonth(d.getMonth() + 1)
+      return d.toISOString().slice(0, 10)
+    }
     const payload: Draft = {
       ...draft,
       location: regions.filter(r => r !== '전체').join(', ') || draft.location,
       jobType: (careers.length === 1 ? careers[0] : '신입') as JobEmploymentType,
-      deadline: draft.deadlineOnHire ? '채용시' : draft.deadline,
+      deadline: draft.deadlineOnHire ? onHireDeadline() : draft.deadline,
       tags: [...arr('employmentTypes'), ...careers, ...arr('jobCategories')].slice(0, 6),
       source: 'manual',
     }

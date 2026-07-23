@@ -32,6 +32,24 @@ export function getJobById(id: string): JobPosting | undefined {
   return getJobs().find(j => j.id === id)
 }
 
+/**
+ * 마감 라벨 — 마감까지 남은 일수를 'D-N'으로 표현.
+ * 채용시 마감이어도 마감일(+1개월 자동)이 있으면 D-N을 우선 표시한다.
+ * 날짜가 없을 때만 「채용시 마감」/「상시」로 폴백. 지났거나 마감상태=「마감」.
+ */
+export function jobDdayLabel(job: JobPosting): string {
+  if (job.status === '마감') return '마감'
+  if (!job.deadline || job.deadline === '채용시') return job.deadlineOnHire ? '채용시 마감' : '상시'
+  const end = new Date(job.deadline)
+  if (Number.isNaN(end.getTime())) return job.deadline
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const diff = Math.ceil((end.getTime() - start.getTime()) / 86400000)
+  if (diff < 0) return '마감'
+  if (diff === 0) return 'D-day'
+  return `D-${diff}`
+}
+
 /** 상태별 카운트 집계 (필터 배지용) */
 export function countJobs(): { total: number; 게시: number; 마감: number } {
   const jobs = getJobs()
