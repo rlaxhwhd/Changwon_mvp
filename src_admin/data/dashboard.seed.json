@@ -87,10 +87,10 @@
   "diagnosis": {
     "total": 3865,
     "segments": [
-      { "label": "C1 (진로탐색형)", "value": 1234 },
-      { "label": "C2 (역량강화형)", "value": 1102 },
-      { "label": "C3 (취업준비형)", "value": 984 },
-      { "label": "C4 (창업준비형)", "value": 545 }
+      { "label": "C-2 (진로설정)", "value": 1234 },
+      { "label": "C-3 (역량수준)", "value": 1102 },
+      { "label": "C-4 (구직역량)", "value": 984 },
+      { "label": "C-CORE (핵심진단)", "value": 545 }
     ]
   },
   "notices": [

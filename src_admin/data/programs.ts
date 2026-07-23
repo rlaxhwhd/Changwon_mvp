@@ -17,6 +17,8 @@ import type {
 import { ABSENCE_PENALTY } from './schema/program'
 import seed from './programs.seed.json'
 import { applyNoShowPenalty, applyAbsencePenalty, revertNoShowPenalty } from './penalties'
+import { paginate, mockLatency } from './query'
+import type { ListParams, Paginated } from './query'
 
 const STORAGE_KEY = 'dc_programs'
 
@@ -39,6 +41,28 @@ export function getPrograms(): Program[] {
 /** id 로 1건 조회 */
 export function getProgramById(id: string): Program | undefined {
   return getPrograms().find(p => p.id === id)
+}
+
+/**
+ * [DB-ready 레퍼런스] 프로그램 목록 조회 — 실제 API 계약(async + 페이징 봉투)을 모사한다.
+ * 화면은 getPrograms()(전체 sync 배열) 대신 이 시그니처를 따르면 6천건이 와도 안전하다.
+ *
+ * DB 전환 시: 함수 본문을 아래로만 교체(컴포넌트 무수정).
+ *   const res = await api.get('/programs', { params })   // page/pageSize/q/filters
+ *   return res.data   // { items, totalCount, page, pageSize }
+ */
+export async function queryPrograms(params: ListParams = {}): Promise<Paginated<Program>> {
+  await mockLatency()
+  const q = (params.q ?? '').trim().toLowerCase()
+  const category = params.filters?.category
+  const status = params.filters?.status
+  const filtered = sortByPriority(getPrograms()).filter(p => {
+    if (category && p.category !== category) return false
+    if (status && p.status !== status) return false
+    if (q && !`${p.title} ${p.desc} ${p.location}`.toLowerCase().includes(q)) return false
+    return true
+  })
+  return paginate(filtered, params)
 }
 
 /** 상단고정(pinned) 우선 → 최신순 정렬. 목록 노출 시 이 순서를 사용한다. */

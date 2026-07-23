@@ -6,9 +6,11 @@
 // ⚠ 화면 컴포넌트에 로스터 리터럴을 박지 않는다 — 반드시 이 로더에서 구독.
 // ─────────────────────────────────────────────────────────────────────────
 import roster from '../../src_v2/data/studentsRoster.json'
-import type { EnrollmentStatus } from '../../src_v2/data/students'
-import { STUDENTS } from '../../src_v2/data/students'
+import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
+import { STUDENTS, getStudentIap } from '../../src_v2/data/students'
 import type { PenaltyEntry } from './schema/penalty'
+import { paginate, mockLatency } from './query'
+import type { ListParams, Paginated } from './query'
 
 /** 학적 상태 — 학생 JSON(students.ts) 단일 원천의 alias. 로스터 JSON은 3값만 쓰는 부분집합. */
 export type EnrollStatus = EnrollmentStatus
@@ -138,4 +140,80 @@ export function mergeDetailedIntoRoster(detailed: RosterStudent[]): RosterStuden
   const detailedIds = new Set(detailed.map(d => d.id))
   const dummies = STUDENT_ROSTER.filter(s => !detailedIds.has(s.id))
   return [...detailed, ...dummies]
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// [DB-ready] 학생 로스터 조회 — 목록 화면(StudentList)의 6천건 대비 서버 페이징 계약.
+// 화면은 전체 배열을 받지 않고 queryStudentRoster(params)로 "현재 페이지"만 받는다.
+// DB 전환 시: getFullRoster 슬라이스 대신 서버가 WHERE/LIMIT/OFFSET로 같은 봉투 반환.
+// ─────────────────────────────────────────────────────────────────────────
+
+/** 상세 학생(src_v2 STUDENTS) 로드맵 완료율(%) 근사 */
+function roadmapProgress(student: StudentData): number {
+  const tasks = student.phases.flatMap(p => p.tasks)
+  if (tasks.length === 0) return 0
+  return Math.round((tasks.filter(t => t.done).length / tasks.length) * 100)
+}
+
+/** 상세 학생 → 로스터 뷰 모델 (목록 단일 소스에 병합) */
+function detailToRoster(s: StudentData): RosterStudent {
+  const iap = getStudentIap(s)
+  return {
+    id: s.id,
+    studentNo: s.studentNo,
+    name: s.name,
+    major: s.major,
+    grade: s.grade,
+    studentType: s.studentType,
+    iap: iap.iapType,
+    track: iap.track as RosterTrack,
+    progress: roadmapProgress(s),
+    status: '재학',
+  }
+}
+
+/** 전체 로스터(상세 병합, 담당 학과 필터) — 조회·필터·집계의 단일 소스. DB 전환 시 서버 보유. */
+export function getFullRoster(departments: string[] = []): RosterStudent[] {
+  const merged = mergeDetailedIntoRoster(STUDENTS.map(detailToRoster))
+  return departments.length === 0 ? merged : merged.filter(s => departments.includes(s.major))
+}
+
+/** [DB-ready] 로스터 목록 조회 — async + 페이징. 6천건이 와도 화면은 현재 페이지만 받는다. */
+export async function queryStudentRoster(
+  params: ListParams & { departments?: string[] } = {},
+): Promise<Paginated<RosterStudent>> {
+  await mockLatency()
+  const q = (params.q ?? '').trim().toLowerCase()
+  const f = params.filters ?? {}
+  const filtered = getFullRoster(params.departments ?? []).filter(s => {
+    if (f.major && s.major !== f.major) return false
+    if (f.grade && String(s.grade) !== f.grade) return false
+    if (f.studentType && s.studentType !== f.studentType) return false
+    if (f.track && s.track !== f.track) return false
+    if (f.status && s.status !== f.status) return false
+    if (q && !`${s.name} ${s.major} ${s.studentType} ${s.iap}`.toLowerCase().includes(q)) return false
+    return true
+  })
+  return paginate(filtered, params)
+}
+
+/** 필터 드롭다운 옵션 — 전체 집합에서 파생. DB 전환 시 별도 집계 엔드포인트. */
+export function getRosterFilterOptions(departments: string[] = []) {
+  const base = getFullRoster(departments)
+  return {
+    majors: [...new Set(base.map(s => s.major))].sort(),
+    grades: [...new Set(base.map(s => s.grade))].sort((a, b) => a - b),
+    types: [...new Set(base.map(s => s.studentType))],
+    tracks: [...new Set(base.map(s => s.track))],
+    statuses: [...new Set(base.map(s => s.status))],
+  }
+}
+
+/** 헤더 집계(총원·집중관리) — 전체 집합에서. DB 전환 시 COUNT 쿼리. */
+export function getRosterSummary(departments: string[] = []) {
+  const base = getFullRoster(departments)
+  return {
+    total: base.length,
+    focusCount: base.filter(s => s.track === '집중관리').length,
+  }
 }

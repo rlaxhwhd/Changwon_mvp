@@ -7,19 +7,29 @@ import {
   LuHand,
   LuInfo,
   LuList,
+  LuLoaderCircle,
   LuRotateCcw,
   LuSearch,
   LuTrash2,
   LuUserCheck,
   LuUserX,
 } from 'react-icons/lu'
-import { useEffect, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { getPenaltyList, waivePenalty, clearPenalty } from '../data/penalties'
+import {
+  waivePenalty,
+  clearPenalty,
+  queryPenaltyList,
+  getPenaltyRowsForExport,
+  getPenaltyFilterOptions,
+  getPenaltySummary,
+} from '../data/penalties'
 import type { StudentPenalty, PenaltyEntry } from '../data/penalties'
 import { penaltyLevel } from '../data/schema/penalty'
 import { collegeOf } from '../data/colleges'
 import { studentNoOf } from '../data/studentRoster'
+import { totalPages } from '../data/query'
+import { useListData } from '../hooks/useListData'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
 import './ProgramBlacklist.css'
@@ -50,7 +60,7 @@ function fmtDateTime(iso: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-/** 행 클릭 시 모달에 뜨는 벌점 이력 + 차감·해제 (기존 카드 내용 재사용) */
+/** 행 클릭 시 모달에 뜨는 벌점 이력 + 차감·해제 */
 function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () => void }) {
   const level = penaltyLevel(record.total)
   const [waivePts, setWaivePts] = useState('')
@@ -99,22 +109,11 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
       <div className="admin-blacklist-actions">
         <label className="admin-field admin-blacklist-pts">
           <span>차감 점수</span>
-          <input
-            type="number"
-            min={1}
-            value={waivePts}
-            onChange={e => setWaivePts(e.target.value)}
-            placeholder="예: 10"
-          />
+          <input type="number" min={1} value={waivePts} onChange={e => setWaivePts(e.target.value)} placeholder="예: 10" />
         </label>
         <label className="admin-field admin-blacklist-reason">
           <span>차감·해제 사유</span>
-          <input
-            type="text"
-            value={waiveReason}
-            onChange={e => setWaiveReason(e.target.value)}
-            placeholder="예: 소명 인정 — 병결 확인"
-          />
+          <input type="text" value={waiveReason} onChange={e => setWaiveReason(e.target.value)} placeholder="예: 소명 인정 — 병결 확인" />
         </label>
         <button className="admin-btn admin-btn-ghost sm" disabled={!canWaive} onClick={handleWaive}>
           <LuRotateCcw /> 차감
@@ -129,24 +128,6 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
 
 export default function ProgramBlacklist() {
   const [refreshKey, setRefreshKey] = useState(0)
-
-  // 벌점 레코드 → 표 행 뷰모델 (학번=studentId, 대학=학과 매핑 파생)
-  const all = useMemo(
-    () =>
-      getPenaltyList().map(record => ({
-        record,
-        studentNo: studentNoOf(record.studentId),
-        college: collegeOf(record.studentMajor),
-      })),
-    [refreshKey],
-  )
-
-  const totalPoints = all.reduce((sum, r) => sum + r.record.total, 0)
-
-  // 필터 옵션은 목록에서 파생 (하드코딩 금지)
-  const colleges = useMemo(() => [...new Set(all.map(r => r.college))].sort(), [all])
-  const majors = useMemo(() => [...new Set(all.map(r => r.record.studentMajor))].sort(), [all])
-
   const [college, setCollege] = useState(ALL)
   const [major, setMajor] = useState(ALL)
   const [ptsMin, setPtsMin] = useState(ALL)
@@ -155,56 +136,54 @@ export default function ProgramBlacklist() {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<StudentPenalty | null>(null)
 
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    const minPts = ptsMin === ALL ? 0 : Number(ptsMin)
-    return all.filter(r => {
-      if (college !== ALL && r.college !== college) return false
-      if (major !== ALL && r.record.studentMajor !== major) return false
-      if (r.record.total < minPts) return false
-      if (q) {
-        const name = r.record.studentName.toLowerCase()
-        const no = r.studentNo.toLowerCase()
-        const maj = r.record.studentMajor.toLowerCase()
-        const hay =
-          scope === '이름' ? name
-          : scope === '학번' ? no
-          : scope === '학과' ? maj
-          : `${name} ${no} ${maj}`
-        if (!hay.includes(q)) return false
-      }
-      return true
-    })
-  }, [all, college, major, ptsMin, scope, query])
+  // 옵션·집계는 전체 집합에서(현재 페이지 아님). 뮤테이션(refreshKey) 후 재계산.
+  const options = useMemo(() => getPenaltyFilterOptions(), [refreshKey])
+  const summary = useMemo(() => getPenaltySummary(), [refreshKey])
 
-  // 필터 변경 시 1페이지로
-  useEffect(() => { setPage(1) }, [college, major, ptsMin, scope, query])
+  const params = {
+    page,
+    pageSize: PER_PAGE,
+    q: query,
+    filters: {
+      college: college === ALL ? undefined : college,
+      major: major === ALL ? undefined : major,
+      ptsMin: ptsMin === ALL ? undefined : ptsMin,
+      scope: scope === ALL ? undefined : scope,
+    },
+  }
+  // 서버(목업) 조회 — useListData가 useEffect+레이스 cleanup 담당. DB 전환 시 훅 내부만 교체.
+  const { data: result, isLoading, refetch } = useListData(queryPenaltyList, params)
 
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
-  const pageClamped = Math.min(page, totalPages)
-  const pageRows = filtered.slice((pageClamped - 1) * PER_PAGE, pageClamped * PER_PAGE)
+  const items = result.items
+  const pages = totalPages(result)
 
-  // 페이지 번호 윈도우 (최대 10개)
+  // 필터 변경 시 항상 1페이지부터
+  const onFilter = (setter: (v: string) => void) => (v: string) => { setter(v); setPage(1) }
+
+  // 벌점 차감·해제 후 재조회 + 집계 갱신
+  const refresh = () => { refetch(); setRefreshKey(k => k + 1); setSelected(null) }
+
   const pageWindow = useMemo(() => {
     const size = 10
-    const start = Math.max(1, Math.min(pageClamped - 4, totalPages - size + 1))
-    const end = Math.min(totalPages, start + size - 1)
+    const start = Math.max(1, Math.min(page - 4, pages - size + 1))
+    const end = Math.min(pages, start + size - 1)
     const out: number[] = []
     for (let p = start; p <= end; p++) out.push(p)
     return out
-  }, [pageClamped, totalPages])
+  }, [page, pages])
 
   const downloadCsv = () => {
+    const rows = getPenaltyRowsForExport(params)
     const header = ['번호', '이름', '학번', '대학', '학과', '벌점점수']
-    const rows = filtered.map((r, idx) => [
-      String(filtered.length - idx),
+    const body = rows.map((r, idx) => [
+      String(rows.length - idx),
       r.record.studentName,
       r.studentNo,
       r.college,
       r.record.studentMajor,
       String(r.record.total),
     ])
-    const csv = [header, ...rows]
+    const csv = [header, ...body]
       .map(row => row.map(v => `"${String(v).replaceAll('"', '""')}"`).join(','))
       .join('\n')
     const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }))
@@ -215,18 +194,13 @@ export default function ProgramBlacklist() {
     URL.revokeObjectURL(url)
   }
 
-  const refresh = () => {
-    setRefreshKey(k => k + 1)
-    setSelected(null)
-  }
-
   return (
     <div className="admin-page blk">
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">블랙리스트 관리</h1>
           <p className="admin-page-desc">
-            비교과 프로그램 신청 후 미참여(노쇼)한 학생의 누적 벌점을 관리합니다. 대상 {all.length}명 · 누적 {totalPoints}점
+            비교과 프로그램 신청 후 미참여(노쇼)한 학생의 누적 벌점을 관리합니다. 대상 {summary.total}명 · 누적 {summary.totalPoints}점
           </p>
         </div>
         <div className="admin-head-actions">
@@ -244,15 +218,15 @@ export default function ProgramBlacklist() {
       {/* 검색·필터 카드 */}
       <form className="blk-filter" onSubmit={e => e.preventDefault()}>
         <div className="blk-filter-row">
-          <select className="blk-field" value={college} onChange={e => setCollege(e.target.value)} aria-label="대학">
+          <select className="blk-field" value={college} onChange={e => onFilter(setCollege)(e.target.value)} aria-label="대학">
             <option value={ALL}>대학</option>
-            {colleges.map(c => <option key={c} value={c}>{c}</option>)}
+            {options.colleges.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
-          <select className="blk-field" value={major} onChange={e => setMajor(e.target.value)} aria-label="학과">
+          <select className="blk-field" value={major} onChange={e => onFilter(setMajor)(e.target.value)} aria-label="학과">
             <option value={ALL}>학과</option>
-            {majors.map(m => <option key={m} value={m}>{m}</option>)}
+            {options.majors.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
-          <select className="blk-field" value={ptsMin} onChange={e => setPtsMin(e.target.value)} aria-label="벌점점수">
+          <select className="blk-field" value={ptsMin} onChange={e => onFilter(setPtsMin)(e.target.value)} aria-label="벌점점수">
             <option value={ALL}>벌점점수</option>
             <option value="10">10점 이상</option>
             <option value="20">20점 이상</option>
@@ -262,20 +236,14 @@ export default function ProgramBlacklist() {
         </div>
         <div className="blk-filter-row">
           <span className="blk-label">검색조건</span>
-          <select className="blk-field blk-field-sm" value={scope} onChange={e => setScope(e.target.value)} aria-label="검색조건">
+          <select className="blk-field blk-field-sm" value={scope} onChange={e => onFilter(setScope)(e.target.value)} aria-label="검색조건">
             <option value={ALL}>전체</option>
             <option value="이름">이름</option>
             <option value="학번">학번</option>
             <option value="학과">학과</option>
           </select>
           <div className="blk-search">
-            <input
-              type="text"
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-              placeholder="검색어를 입력하세요"
-              aria-label="검색어"
-            />
+            <input type="text" value={query} onChange={e => { setQuery(e.target.value); setPage(1) }} placeholder="검색어를 입력하세요" aria-label="검색어" />
             <LuSearch aria-hidden="true" />
           </div>
         </div>
@@ -283,20 +251,25 @@ export default function ProgramBlacklist() {
 
       {/* 카운트 + 엑셀 다운로드 */}
       <div className="blk-toolbar">
-        <span className="blk-count">총 <em>{filtered.length}</em> 개</span>
+        <span className="blk-count">
+          총 <em>{result.totalCount}</em> 개
+          {isLoading && <LuLoaderCircle className="admin-spin" />}
+        </span>
         <button type="button" className="blk-excel-btn" onClick={downloadCsv}>
           <LuDownload /> 엑셀 다운로드
         </button>
       </div>
 
       <section className="admin-card blk-card">
-        {all.length === 0 ? (
+        {isLoading && items.length === 0 ? (
+          <div className="admin-loading"><LuLoaderCircle className="admin-spin" /> 불러오는 중…</div>
+        ) : summary.total === 0 ? (
           <EmptyState
             icon={LuUserCheck}
             title="블랙리스트가 비어 있습니다"
             message="노쇼로 처리된 학생이 아직 없습니다. 프로그램 상세에서 출석을 '노쇼'로 체크하면 여기 자동으로 추가됩니다."
           />
-        ) : filtered.length === 0 ? (
+        ) : items.length === 0 ? (
           <EmptyState icon={LuUserCheck} message="조건에 맞는 학생이 없습니다." />
         ) : (
           <>
@@ -309,8 +282,8 @@ export default function ProgramBlacklist() {
                 <span>학과</span>
                 <span>벌점점수</span>
               </div>
-              {pageRows.map((r, i) => {
-                const no = filtered.length - ((pageClamped - 1) * PER_PAGE + i)
+              {items.map((r, i) => {
+                const no = result.totalCount - ((page - 1) * PER_PAGE + i)
                 return (
                   <button
                     type="button"
@@ -331,23 +304,18 @@ export default function ProgramBlacklist() {
             </div>
 
             <nav className="blk-pager" aria-label="블랙리스트 페이지">
-              <button type="button" disabled={pageClamped === 1} onClick={() => setPage(pageClamped - 1)} aria-label="이전">
+              <button type="button" disabled={page === 1} onClick={() => setPage(page - 1)} aria-label="이전">
                 <LuChevronLeft />
               </button>
               {pageWindow.map(p => (
-                <button
-                  type="button"
-                  key={p}
-                  className={p === pageClamped ? 'active' : ''}
-                  onClick={() => setPage(p)}
-                >
+                <button type="button" key={p} className={p === page ? 'active' : ''} onClick={() => setPage(p)}>
                   {p}
                 </button>
               ))}
-              <button type="button" disabled={pageClamped === totalPages} onClick={() => setPage(pageClamped + 1)} aria-label="다음">
+              <button type="button" disabled={page >= pages} onClick={() => setPage(page + 1)} aria-label="다음">
                 <LuChevronRight />
               </button>
-              <button type="button" disabled={pageClamped === totalPages} onClick={() => setPage(totalPages)} aria-label="마지막">
+              <button type="button" disabled={page >= pages} onClick={() => setPage(pages)} aria-label="마지막">
                 <LuChevronsRight />
               </button>
             </nav>

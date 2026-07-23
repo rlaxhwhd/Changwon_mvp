@@ -8,10 +8,12 @@ import { LuBriefcase, LuCalendar, LuClipboardCheck, LuMegaphone, LuMessagesSquar
 import type {
   DashboardData,
   DiagnosisSegment,
+  DiagnosisSummary,
   TrafficRange,
   TrafficSeries,
 } from './schema/dashboard'
 import seed from './dashboard.seed.json'
+import { STUDENT_ROSTER } from './studentRoster'
 
 const STAT_ICONS = { 'user-group': LuUsers, 'clipboard-check': LuClipboardCheck, comments: LuMessagesSquare, calendar: LuCalendar, briefcase: LuBriefcase, bullhorn: LuMegaphone }
 const SEED = { ...seed, stats: seed.stats.map(stat => ({ ...stat, icon: STAT_ICONS[stat.icon as keyof typeof STAT_ICONS] })) } as DashboardData
@@ -30,6 +32,26 @@ export function getTrafficSeries(range: TrafficRange): TrafficSeries {
 export function diagnosisPercent(seg: DiagnosisSegment, total: number): number {
   if (total <= 0) return 0
   return Math.round((seg.value / total) * 1000) / 10
+}
+
+/**
+ * 진단 참여 현황 = 실제 로스터(학생 단일소스)의 IAP 단계 분포.
+ * 각 학생을 진단 모듈 1개로 분류(합계 = 전체 학생 수). C-1 은 없음.
+ *   핵심진단(C-CORE)←R1 유형진단 · 진로설정(C-2)←R2 · 역량수준(C-3)←R3·R5 · 구직역량(C-4)←R4·R6
+ */
+const DIAGNOSIS_BUCKETS: { label: string; iaps: string[] }[] = [
+  { label: 'C-2 (진로설정)', iaps: ['R2'] },
+  { label: 'C-3 (역량수준)', iaps: ['R3', 'R5'] },
+  { label: 'C-4 (구직역량)', iaps: ['R4', 'R6'] },
+  { label: 'C-CORE (핵심진단)', iaps: ['R1'] },
+]
+
+export function getDiagnosisSummary(): DiagnosisSummary {
+  const segments = DIAGNOSIS_BUCKETS.map(b => ({
+    label: b.label,
+    value: STUDENT_ROSTER.filter(s => b.iaps.includes(s.iap)).length,
+  }))
+  return { total: STUDENT_ROSTER.length, segments }
 }
 
 export type { DashboardData, TrafficRange }

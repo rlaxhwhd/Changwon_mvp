@@ -14,10 +14,13 @@ import {
 } from 'chart.js'
 import type { Plugin, ChartData } from 'chart.js'
 import { Line, Bar } from 'react-chartjs-2'
-import { getDashboardData, getTrafficSeries } from '../data/dashboard'
+import { getDashboardData, getTrafficSeries, getDiagnosisSummary } from '../data/dashboard'
 import type { TrafficRange } from '../data/dashboard'
 import { getCounselRequests } from '../data/counselRequests'
 import { getActiveCounselor } from '../data/counselors'
+import { STUDENT_ROSTER } from '../data/studentRoster'
+import { getPrograms } from '../data/programs'
+import { countJobs } from '../data/jobsSource'
 import './Home.css'
 
 ChartJS.register(
@@ -146,6 +149,8 @@ function Sparkline({ series, color }: { series: number[]; color: string }) {
 export default function Home() {
   const data = getDashboardData()
   const counselor = getActiveCounselor()
+  // 진단 참여 현황 = 실제 로스터 IAP 분포 (총계 = 전체 학생 수)
+  const diagnosis = getDiagnosisSummary()
   const [range, setRange] = useState<TrafficRange>('weekly')
   const series = getTrafficSeries(range)
 
@@ -162,7 +167,25 @@ export default function Home() {
     [],
   )
 
-  const diagMax = Math.max(...data.diagnosis.segments.map(s => s.value), 1)
+  // KPI 값 = 실제 json 로더 집계 (id별 override). 없는 id 는 seed 값 사용.
+  const realKpi = useMemo<Record<string, number>>(() => {
+    const roadmapPct = STUDENT_ROSTER.length
+      ? Math.round(STUDENT_ROSTER.reduce((sum, s) => sum + (s.progress || 0), 0) / STUDENT_ROSTER.length)
+      : 0
+    return {
+      diagnosis: diagnosis.total,
+      counsel: getCounselRequests().length,
+      programs: getPrograms().length,
+      jobs: countJobs().total,
+      roadmap: roadmapPct,
+    }
+  }, [diagnosis.total])
+
+  const diagMax = Math.max(...diagnosis.segments.map(s => s.value), 1)
+
+  // 완료율 라인이 막대 위로 뜨도록 건수(y축) 상단 여백 확보
+  const maxBar = Math.max(...series.requested, ...series.completed, 1)
+  const yMax = Math.ceil((maxBar * 1.7) / 10) * 10
 
   const comboData = {
     labels: series.labels,
@@ -222,6 +245,7 @@ export default function Home() {
       x: { grid: { display: false }, ticks: { font: { family: 'Pretendard, sans-serif', size: 11 }, color: C.text } },
       y: {
         beginAtZero: true,
+        max: yMax,
         grid: { color: C.grid },
         border: { display: false },
         ticks: { font: { family: 'Pretendard, sans-serif', size: 11 }, color: C.text },
@@ -266,7 +290,7 @@ export default function Home() {
             <div key={stat.id} className="dash-kpi-card">
               <span className="dash-kpi-label">{stat.label}</span>
               <span className="dash-kpi-value">
-                {KRW.format(stat.value)}
+                {KRW.format(realKpi[stat.id] ?? stat.value)}
                 <em>{stat.unit}</em>
               </span>
               <div className="dash-kpi-foot">
@@ -320,8 +344,8 @@ export default function Home() {
             <span className="dash-head-note">전체 학년</span>
           </div>
           <div className="dash-bars">
-            {data.diagnosis.segments.map((seg, i) => {
-              const pct = Math.round((seg.value / data.diagnosis.total) * 1000) / 10
+            {diagnosis.segments.map((seg, i) => {
+              const pct = Math.round((seg.value / diagnosis.total) * 1000) / 10
               return (
                 <div key={seg.label} className="dash-bar-col">
                   <span className="dash-bar-value">
@@ -339,7 +363,7 @@ export default function Home() {
               )
             })}
           </div>
-          <p className="dash-bars-foot">총 참여자 {KRW.format(data.diagnosis.total)}명</p>
+          <p className="dash-bars-foot">총 참여자 {KRW.format(diagnosis.total)}명</p>
         </section>
       </div>
 

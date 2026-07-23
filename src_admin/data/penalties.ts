@@ -10,7 +10,10 @@ import type { ProgramApplicant, Program } from './schema/program'
 import type { StudentPenalty, PenaltyEntry } from './schema/penalty'
 import { NOSHOW_PENALTY_POINTS } from './schema/penalty'
 import { getActiveCounselorId } from './counselors'
-import { STUDENT_ROSTER } from './studentRoster'
+import { STUDENT_ROSTER, studentNoOf } from './studentRoster'
+import { collegeOf } from './colleges'
+import { paginate, mockLatency } from './query'
+import type { ListParams, Paginated } from './query'
 
 // v2: 정체는 json, localStorage 는 override 만. 구 'dc_penalty'(정체까지 저장하던 방식)는 폐기.
 const STORAGE_KEY = 'dc_penalty_v2'
@@ -217,6 +220,75 @@ export function clearPenalty(studentId: string): void {
   const ov = readOverrides()
   ov[studentId] = { ...record, total: 0, entries: [] }
   writeOverrides(ov)
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// [DB-ready] 블랙리스트 목록 조회 — 서버 페이징 계약(DATA_CONTRACT.md).
+// 화면(ProgramBlacklist)은 전체가 아니라 현재 페이지만 받는다. 필터/검색은 파라미터로.
+// ─────────────────────────────────────────────────────────────────────────
+
+/** 블랙리스트 표 행 뷰모델 (학번·대학 파생 포함) */
+export interface BlacklistRow {
+  record: StudentPenalty
+  studentNo: string
+  college: string
+}
+
+function blacklistRows(): BlacklistRow[] {
+  return getPenaltyList().map(record => ({
+    record,
+    studentNo: studentNoOf(record.studentId),
+    college: collegeOf(record.studentMajor),
+  }))
+}
+
+function filterBlacklist(params: ListParams): BlacklistRow[] {
+  const q = (params.q ?? '').trim().toLowerCase()
+  const f = params.filters ?? {}
+  const minPts = f.ptsMin ? Number(f.ptsMin) : 0
+  const scope = f.scope
+  return blacklistRows().filter(r => {
+    if (f.college && r.college !== f.college) return false
+    if (f.major && r.record.studentMajor !== f.major) return false
+    if (r.record.total < minPts) return false
+    if (q) {
+      const name = r.record.studentName.toLowerCase()
+      const no = r.studentNo.toLowerCase()
+      const maj = r.record.studentMajor.toLowerCase()
+      const hay = scope === '이름' ? name : scope === '학번' ? no : scope === '학과' ? maj : `${name} ${no} ${maj}`
+      if (!hay.includes(q)) return false
+    }
+    return true
+  })
+}
+
+/** 블랙리스트 목록(페이징). DB 전환 시 본문만 fetch로 교체. */
+export async function queryPenaltyList(params: ListParams = {}): Promise<Paginated<BlacklistRow>> {
+  await mockLatency()
+  return paginate(filterBlacklist(params), params)
+}
+
+/** CSV 내보내기용 — 현재 필터 전체 행(페이지 무시). DB에선 export 엔드포인트. */
+export function getPenaltyRowsForExport(params: ListParams = {}): BlacklistRow[] {
+  return filterBlacklist(params)
+}
+
+/** 필터 옵션(대학·학과) — 전체 집합에서. DB에선 집계 엔드포인트. */
+export function getPenaltyFilterOptions() {
+  const rows = blacklistRows()
+  return {
+    colleges: [...new Set(rows.map(r => r.college))].sort(),
+    majors: [...new Set(rows.map(r => r.record.studentMajor))].sort(),
+  }
+}
+
+/** 헤더 집계(대상 인원·누적 점수). DB에선 COUNT/SUM. */
+export function getPenaltySummary() {
+  const rows = blacklistRows()
+  return {
+    total: rows.length,
+    totalPoints: rows.reduce((sum, r) => sum + r.record.total, 0),
+  }
 }
 
 export type { StudentPenalty, PenaltyEntry }

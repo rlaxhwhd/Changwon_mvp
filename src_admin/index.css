@@ -1034,6 +1034,17 @@ input, textarea, select { font-family: var(--font); }
 .admin-roster-progress { display: flex; align-items: center; gap: 8px; }
 .admin-roster-progress em { font-size: 13px; font-weight: 800; color: var(--color-primary); font-style: normal; min-width: 34px; text-align: right; }
 
+/* ── 로딩 스피너 · 페이지네이션 (DB-ready 서버 페이징 목록) ───────────────── */
+@keyframes admin-spin { to { transform: rotate(360deg); } }
+.admin-spin { display: inline-block; animation: admin-spin 0.7s linear infinite; color: var(--color-text-secondary); vertical-align: -2px; margin-left: 6px; width: 14px; height: 14px; }
+.admin-loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 48px; color: var(--color-text-secondary); font-size: 14px; }
+.admin-loading .admin-spin { margin: 0; width: 18px; height: 18px; }
+.admin-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 18px 0 4px; }
+.admin-page-btn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); background: var(--color-bg); }
+.admin-page-btn:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+.admin-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.admin-page-info { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+
 /* ── 트랙 배지 ───────────────────────────────────────────────────────── */
 .admin-track {
   display: inline-flex; align-items: center; gap: 5px;
