@@ -1,15 +1,16 @@
 import { FaArrowRight, FaBookOpen, FaBriefcase, FaBuilding, FaChartLine, FaComments, FaGraduationCap, FaUsers } from 'react-icons/fa'
 import type { IconType } from 'react-icons'
+import { useNavigate } from 'react-router-dom'
 import landingData from './landing.json'
 import './Landing.css'
 
-// 루트 랜딩 = Codex 디자인. 루트에는 라우터가 없으므로 useNavigate 대신
-// window.location.href 로 이동(카드 클릭 → /v2). 데이터는 landing.json 단일소스.
+// 루트 랜딩 = Codex 디자인. 카드 클릭 → 로그인 페이지(/login). 데이터는 landing.json 단일소스.
 const roleIcons: Record<string, IconType> = { graduation: FaGraduationCap, building: FaBuilding, users: FaUsers }
 const featureIcons: Record<string, IconType> = { chart: FaChartLine, comments: FaComments, book: FaBookOpen, briefcase: FaBriefcase }
 
 export default function Landing() {
-  const handleLogin = (path: string) => { window.location.href = path }
+  const navigate = useNavigate()
+  const handleLogin = (path: string) => { navigate(path) }
 
   return (
     <div className="landing">

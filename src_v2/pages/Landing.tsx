@@ -1,5 +1,7 @@
-// /v2 진입(로그인) 화면은 재설계 예정 — 현재는 의도적으로 빈 화면.
-// (기존 랜딩 디자인은 루트 index.html → src_landing 으로 이관됨)
+// /v2 진입은 학생 포털 홈으로 리다이렉트한다.
+// (로그인 유형 선택 화면은 루트 localhost:5173 으로 이관됨. 백업: _backup/v2-landing/)
+import { Navigate } from 'react-router-dom'
+
 export default function Landing() {
-  return <div style={{ minHeight: '100vh' }} />
+  return <Navigate to="/main" replace />
 }
