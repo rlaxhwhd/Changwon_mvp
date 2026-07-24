@@ -1,0 +1,116 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   CWNU 루트 랜딩(로그인 유형 선택) — Codex 디자인을 루트(index.html)로 이식.
+   /v2 는 전역 리셋·폰트(index.css)가 있지만 루트에는 없으므로, 동일 렌더를
+   위해 아래 스코프 리셋·폰트를 .landing 에 직접 부여한다.
+   카드/기능바를 확대(요청)하되, 세로 예산이 큰 히어로·여백을 조여 한 화면에
+   담는다. base(>1024px) = 크게, compact(≤1024px) = 카드 크게 유지+여백 최소.
+   ───────────────────────────────────────────────────────────────────────── */
+html, body { margin: 0; padding: 0; }
+.landing, .landing *, .landing *::before, .landing *::after { box-sizing: border-box; }
+.landing button { border: none; background: none; cursor: pointer; font-family: inherit; }
+.landing a { color: inherit; text-decoration: none; }
+
+.landing {
+  --landing-navy: #073f8e;
+  --landing-blue: #0b4ba8;
+  --landing-glass: rgba(248, 252, 255, .86);
+  position: relative;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--landing-navy);
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+  background: #a8d9fb url('/landing-bg.png') center / cover no-repeat;
+}
+
+.landing::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(180deg, rgba(175, 223, 255, .08), rgba(231, 247, 255, .18));
+  content: '';
+  pointer-events: none;
+}
+
+.landing-main, .landing-footer { position: relative; z-index: 1; }
+
+.landing-main {
+  width: min(1320px, calc(100% - 80px));
+  margin: 0 auto;
+  padding: 24px 0 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 신축 여백: 자유공간이 있을 때만 늘어나(짧은 화면=0, 스크롤 없음) 카드 묶음을
+   아래로 내린다. 위쪽에 더 많이 배분, 아래(푸터쪽) 간격은 상한을 둬 "살짝"만. */
+.landing-spacer { flex: 1 1 0; min-height: 0; }
+.landing-spacer--top { flex-grow: 2.4; }
+.landing-spacer--bottom { max-height: 26px; }
+
+.landing-topbar { display: flex; align-items: flex-start; justify-content: space-between; }
+.landing-brand { width: 172px; height: auto; }
+.landing-platform { margin: 16px 11px 0 0; color: #fff; font-size: 14px; font-weight: 700; text-align: right; }
+.landing-platform::after { display: block; width: 62px; height: 2px; margin: 10px 0 0 auto; background: #fff; content: ''; }
+
+.landing-hero { margin-top: 16px; text-align: center; }
+.landing-eyebrow { font-size: clamp(22px, 1.7vw, 27px); font-weight: 500; letter-spacing: -.06em; }
+.landing-title { margin-top: 3px; font-size: clamp(38px, 2.6vw, 44px); font-weight: 800; letter-spacing: -.075em; line-height: 1.12; }
+.landing-description { margin-top: 8px; color: #123d78; font-size: 16px; font-weight: 500; line-height: 1.45; letter-spacing: -.05em; }
+.landing-description span { display: block; }
+
+.landing-role-heading { display: flex; align-items: center; gap: 22px; justify-content: center; margin-top: 26px; font-size: 17px; font-weight: 800; letter-spacing: -.05em; }
+.landing-role-heading::before, .landing-role-heading::after { width: 120px; height: 1px; background: rgba(13, 77, 160, .6); content: ''; }
+
+/* 카드 = 확대(폭·높이·아이콘·글자). 화살표는 폭에 무관하게 우측 고정. */
+.landing-roles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; width: 100%; max-width: 1320px; margin: 14px auto 18px; }
+.landing-role {
+  display: flex; flex-direction: column; align-items: center; min-height: 420px; padding: 32px 32px 28px;
+  border: 1px solid rgba(255, 255, 255, .95); border-radius: 32px;
+  background: linear-gradient(135deg, rgba(255,255,255,.91), rgba(244,250,255,.74));
+  box-shadow: 0 15px 28px rgba(22, 92, 172, .2), inset 0 1px 1px rgba(255, 255, 255, .98);
+}
+.landing-role-icon { display: grid; width: 168px; height: 168px; place-items: center; border: 10px solid rgba(232, 240, 255, .9); border-radius: 50%; color: #fff; box-shadow: 0 7px 13px rgba(37, 93, 198, .26); }
+.landing-role-icon svg { width: 82px; height: 82px; stroke-width: 1.45; }
+.landing-role--blue .landing-role-icon, .landing-role--blue .landing-login { background: linear-gradient(135deg, #3675f8, #1249b6); }
+.landing-role--teal .landing-role-icon, .landing-role--teal .landing-login { background: linear-gradient(135deg, #30c2e0, #00789c); }
+.landing-role--violet .landing-role-icon, .landing-role--violet .landing-login { background: linear-gradient(135deg, #9675ff, #5030b6); }
+.landing-role-title { margin-top: 16px; font-size: 44px; font-weight: 800; letter-spacing: -.075em; }
+.landing-role-description { margin-top: 8px; color: #244575; font-size: 17px; letter-spacing: -.055em; }
+.landing-login { position: relative; display: flex; width: 100%; height: 58px; align-items: center; justify-content: center; margin-top: auto; border-radius: 999px; color: #fff; font-size: 21px; font-weight: 700; transition: transform .2s ease, filter .2s ease; }
+.landing-login:hover { filter: brightness(1.08); transform: translateY(-2px); }
+.landing-login svg { position: absolute; right: 24px; width: 26px; height: 26px; stroke-width: 2; }
+
+/* 하단 기능 바 = 1.2배(패딩·아이콘·글자) */
+.landing-features { display: grid; grid-template-columns: repeat(4, 1fr); padding: 22px 36px; border: 1px solid rgba(255,255,255,.94); border-radius: 24px; background: var(--landing-glass); box-shadow: 0 14px 26px rgba(20, 90, 171, .16), inset 0 1px rgba(255,255,255,.8); }
+.landing-feature { display: grid; grid-template-columns: 58px 1fr; gap: 15px; min-width: 0; padding: 0 24px; }
+.landing-feature + .landing-feature { border-left: 1px solid rgba(64, 127, 210, .2); }
+.landing-feature-icon { display: grid; width: 58px; height: 58px; place-items: center; color: #1546ac; }
+.landing-feature-icon svg { width: 52px; height: 52px; stroke-width: 1.5; }
+.landing-feature-title { font-size: 17px; font-weight: 800; letter-spacing: -.06em; }
+.landing-feature-description { margin-top: 6px; color: #29436f; font-size: 14.5px; line-height: 1.5; white-space: pre-line; letter-spacing: -.05em; }
+
+.landing-footer { display: flex; min-height: 76px; align-items: center; justify-content: space-between; padding: 0 max(calc((100% - 1226px) / 2), 48px); background: linear-gradient(90deg, #06469f, #003a8e); color: #fff; font-size: 13px; font-weight: 500; letter-spacing: -.045em; }
+.landing-footer-links { display: flex; align-items: center; gap: 18px; }
+.landing-footer-links a + a { padding-left: 18px; border-left: 1px solid rgba(255,255,255,.6); }
+
+/* 짧은 화면(대부분의 데스크톱): 카드는 크게 유지, 로고·히어로·여백을 더
+   조여 한 화면에 담는다. base(>1120px, 초고해상도)만 카드를 한 단계 더 키움. */
+@media (max-height: 1120px) {
+  .landing-main { padding: 10px 0 10px; }
+  .landing-brand { width: 134px; }
+  .landing-hero { margin-top: 10px; }
+  .landing-eyebrow { font-size: 20px; }
+  .landing-title { font-size: 36px; }
+  .landing-description { margin-top: 8px; font-size: 14px; line-height: 1.4; }
+  .landing-role-heading { margin-top: 10px; }
+  .landing-roles { margin: 4px auto 6px; }
+  .landing-role { min-height: 270px; padding: 18px 30px 14px; }
+  .landing-role-icon { width: 132px; height: 132px; }
+  .landing-role-icon svg { width: 64px; height: 64px; }
+  .landing-role-title { margin-top: 12px; font-size: 36px; }
+  .landing-role-description { font-size: 14.5px; }
+  .landing-login { height: 52px; font-size: 18px; }
+  .landing-features { padding: 10px 34px; }
+}
