@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
-import { loadJournalEntries, type Entry } from '../growth/GrowthJournal'
+import { loadJournalEntries, type Entry } from '../../data/growthJournal'
+import { getActiveStudentId } from '../../data/students'
 import { deleteUserResume, getAllResumes, upsertUserResume, type SavedResume } from '../jobs/resumeMock'
 import './AiResume.css'
 
@@ -86,7 +87,7 @@ export default function AiResume() {
   const [draftState, setDraftState] = useState<DraftState>('idle')
   const [savedList, setSavedList] = useState<SavedResume[]>(() => getAllResumes())
   const [openResume, setOpenResume] = useState<SavedResume | null>(null)
-  const journalEntries = useMemo(() => loadJournalEntries(), [])
+  const journalEntries = useMemo(() => loadJournalEntries(getActiveStudentId()), [])
   // 세션 내에서 자소서 id 유지 → 재생성 시 컨설팅 목록의 같은 항목을 덮어씀
   const resumeIdRef = useRef<string>(`user-${Date.now()}`)
 

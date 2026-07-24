@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom'
 import { getActiveCounselor, canEditRoadmap } from '../data/counselors'
 import { STUDENTS, getStudentIap } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
+import { loadJournalEntries } from '../../src_v2/data/growthJournal'
 import { STUDENT_ROSTER, rosterTrackClass, enrollStatusClass } from '../data/studentRoster'
 import { getMergedRoadmap, TERM_ORDER } from '../data/roadmapOverrides'
 import EmptyState from '../components/EmptyState'
@@ -223,22 +224,61 @@ function GrowthTab({ student }: { student: StudentData }) {
     { label: '프로젝트', value: `${s.projects}건`, icon: LuWorkflow },
     { label: '공모전', value: `${s.contests}회`, icon: LuTrophy },
   ]
+  const journal = loadJournalEntries(student.id)
   return (
-    <section className="admin-card">
-      <div className="admin-card-head"><h2><LuSprout /> 성장 · 퀘스트 수행</h2></div>
-      <div className="admin-metric-grid">
-        {stats.map(st => (
-          <div key={st.label} className="admin-metric-card">
-            <span className="admin-metric-icon">{(() => { const Icon = st.icon; return <Icon /> })()}</span>
-            <div>
-              <span className="admin-metric-value">{st.value}</span>
-              <span className="admin-metric-label">{st.label}</span>
+    <div className="admin-detail-grid">
+      <section className="admin-card admin-detail-wide">
+        <div className="admin-card-head"><h2><LuSprout /> 성장 · 퀘스트 수행</h2></div>
+        <div className="admin-metric-grid">
+          {stats.map(st => (
+            <div key={st.label} className="admin-metric-card">
+              <span className="admin-metric-icon">{(() => { const Icon = st.icon; return <Icon /> })()}</span>
+              <div>
+                <span className="admin-metric-value">{st.value}</span>
+                <span className="admin-metric-label">{st.label}</span>
+              </div>
             </div>
+          ))}
+        </div>
+        <p className="admin-detail-note"><LuQuote /> {student.insight}</p>
+      </section>
+
+      <section className="admin-card admin-detail-wide">
+        <div className="admin-card-head">
+          <h2><LuBook /> 성장경험일지</h2>
+          <span className="admin-card-count">{journal.length}편</span>
+        </div>
+        {journal.length === 0 ? (
+          <EmptyState icon={LuBook} title="작성된 성장경험일지가 없습니다" message="학생이 성장경험일지를 작성하면 이곳에 표시됩니다." />
+        ) : (
+          <div className="admin-journal-list">
+            {journal.map(e => (
+              <article key={e.id} className="admin-journal-item">
+                <div className="admin-journal-top">
+                  <span className="admin-tag">{e.category}</span>
+                  {e.resumeUsed && <span className="admin-tag admin-tag-soft">자소서 활용</span>}
+                  <time>{e.date}</time>
+                </div>
+                <h3 className="admin-journal-title">{e.title}</h3>
+                {e.tags.length > 0 && (
+                  <div className="admin-journal-tags">
+                    {e.tags.map(t => <span key={t}>#{t}</span>)}
+                  </div>
+                )}
+                <dl className="admin-journal-detail">
+                  <div><dt>상황</dt><dd>{e.situation}</dd></div>
+                  <div><dt>나의 역할</dt><dd>{e.role}</dd></div>
+                  <div><dt>행동</dt><dd>{e.action}</dd></div>
+                  <div><dt>결과</dt><dd>{e.result}</dd></div>
+                  <div><dt>배운 점</dt><dd>{e.learning}</dd></div>
+                  <div><dt>자소서 메모</dt><dd>{e.resumeMemo}</dd></div>
+                </dl>
+              </article>
+            ))}
           </div>
-        ))}
-      </div>
-      <p className="admin-detail-note"><LuQuote /> {student.insight}</p>
-    </section>
+        )}
+      </section>
+    </div>
   )
 }
 

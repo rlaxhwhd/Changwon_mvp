@@ -1078,6 +1078,26 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-detail-note svg { color: var(--color-primary); margin-right: 6px; }
 
+/* ─── 성장경험일지 (읽기전용, StudentDetail growth 탭) ────────────────── */
+.admin-card-count { font-size: 13px; font-weight: 800; color: var(--color-primary); }
+.admin-journal-list { display: flex; flex-direction: column; gap: 12px; }
+.admin-journal-item {
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-section-bg);
+}
+.admin-journal-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.admin-journal-top time { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
+.admin-journal-title { font-size: 15px; font-weight: 800; color: var(--color-text); margin-bottom: 8px; }
+.admin-journal-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.admin-journal-tags span { font-size: 12px; font-weight: 700; color: var(--color-primary); }
+.admin-journal-detail { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+.admin-journal-detail > div { display: grid; grid-template-columns: 68px 1fr; gap: 10px; }
+.admin-journal-detail dt { font-size: 12px; font-weight: 800; color: var(--color-text-secondary); }
+.admin-journal-detail dd { font-size: 13px; color: var(--color-text); line-height: 1.6; }
+@media (max-width: 900px) { .admin-journal-detail { grid-template-columns: 1fr; } }
+
 .admin-score-row { display: flex; gap: 20px; flex-wrap: wrap; }
 .admin-score-item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
 .admin-score-label { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }

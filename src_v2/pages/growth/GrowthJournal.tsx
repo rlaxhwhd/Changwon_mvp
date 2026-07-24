@@ -1,128 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { loadJournalEntries, saveJournalEntries, type Category, type Entry } from '../../data/growthJournal'
+import { getActiveStudentId } from '../../data/students'
 import './GrowthJournal.css'
-
-/* ── Types ───────────────────────────────────────────────────────── */
-export type Category = '아르바이트' | '팀프로젝트' | '기타 활동'
-
-export interface Entry {
-  id: number
-  category: Category
-  title: string
-  desc: string
-  situation: string
-  role: string
-  action: string
-  result: string
-  learning: string
-  resumeMemo: string
-  tags: string[]
-  date: string
-  bookmarked: boolean
-  resumeUsed: boolean
-}
-
-/* ── Mock Data ───────────────────────────────────────────────────── */
-export const INITIAL_ENTRIES: Entry[] = [
-  {
-    id: 1, category: '아르바이트',
-    title: '카페 매장 아르바이트 – 고객 응대 개선 경험',
-    desc: '주말에 고객이 몰려 주문 대기 시간이 길어지는 문제가 자주 발생했습니다. 저는 주문 프로세스를 분석하고, 메뉴판 가독성 개선과 키오스크 안내 문구를 추가하는 방안을 제안했습니다.',
-    situation: '주말 피크 시간대에 주문 대기 시간이 길어져 고객 불만이 반복적으로 발생했습니다.',
-    role: '매장 운영 흐름을 관찰하고 개선 아이디어를 정리해 점장님께 제안하는 역할을 맡았습니다.',
-    action: '혼잡 시간대 주문 동선을 기록하고, 자주 묻는 메뉴 정보를 메뉴판 상단에 배치했으며 키오스크 안내 문구를 추가했습니다.',
-    result: '주말 평균 대기 시간이 줄고 신규 아르바이트생도 주문 안내를 더 빠르게 익힐 수 있었습니다.',
-    learning: '작은 안내 문구와 동선 개선도 고객 경험을 크게 바꿀 수 있다는 점을 배웠습니다.',
-    resumeMemo: '문제 발견, 고객 관찰, 프로세스 개선 경험으로 서비스 운영 직무 자소서에 활용 가능',
-    tags: ['고객응대', '문제해결', '커뮤니케이션'],
-    date: '2025-05-20', bookmarked: false, resumeUsed: true,
-  },
-  {
-    id: 2, category: '팀프로젝트',
-    title: '앱 서비스 기획 프로젝트 – 일정 관리 앱',
-    desc: '대학생의 효율적인 시간 관리를 돕는 앱을 기획하고 개발하는 프로젝트입니다. 팀의 기획 파트를 담당하여 시장 조사, 사용자 인터뷰, 기능 정의서를 작성하였고...',
-    situation: '팀 프로젝트에서 대학생의 일정 관리 문제를 해결하는 앱 서비스를 기획했습니다.',
-    role: '기획 담당자로서 사용자 조사, 요구사항 정리, 기능 우선순위 설정을 맡았습니다.',
-    action: '사용자 인터뷰 8건을 진행하고 경쟁 서비스의 기능을 비교해 MVP 기능 정의서를 작성했습니다.',
-    result: '팀원들이 개발 범위를 명확히 이해했고, 발표에서 사용자 문제 정의가 구체적이라는 평가를 받았습니다.',
-    learning: '좋은 기획은 아이디어보다 문제를 정확히 정의하는 데서 시작한다는 것을 배웠습니다.',
-    resumeMemo: '서비스 기획, 사용자 조사, 협업 경험으로 IT 서비스 기획 직무에 활용',
-    tags: ['기획력', '협업', '분석력'],
-    date: '2025-04-18', bookmarked: true, resumeUsed: true,
-  },
-  {
-    id: 3, category: '기타 활동',
-    title: '교내 마케팅 동아리 활동 – SNS 콘텐츠 제작',
-    desc: '학교 축제 홍보를 위한 SNS 콘텐츠 제작을 맡았습니다. 인스타그램과 페이스북 타겟 분석을 통해 콘텐츠 컨셉을 기획하고, 카드뉴스 및 숏폼 영상을 제작하여...',
-    situation: '학교 축제 홍보를 위해 동아리에서 SNS 콘텐츠 제작을 맡았습니다.',
-    role: '채널별 타겟 분석과 콘텐츠 콘셉트 기획을 담당했습니다.',
-    action: '인스타그램 카드뉴스와 숏폼 영상 시안을 제작하고 업로드 시간대별 반응을 비교했습니다.',
-    result: '축제 게시물의 저장 수와 공유 수가 이전 행사 대비 증가했습니다.',
-    learning: '콘텐츠 성과는 감각뿐 아니라 타겟과 채널 분석이 함께 필요하다는 점을 배웠습니다.',
-    resumeMemo: '마케팅, 콘텐츠 기획, 데이터 기반 개선 경험으로 활용',
-    tags: ['콘텐츠제작', '마케팅', '창의성'],
-    date: '2025-03-30', bookmarked: false, resumeUsed: false,
-  },
-  {
-    id: 4, category: '아르바이트',
-    title: '편의점 아르바이트 – 재고 관리 효율화',
-    desc: '재고 파악이 정확하지 않아 발주 오류가 자주 발생했습니다. 엑셀을 활용해 재고 관리표를 개선하고, 발주 주기와 수량을 조정하여 폐기율을 20% 감소시켰습니다.',
-    situation: '재고 파악이 부정확해 발주 오류와 폐기가 반복적으로 발생했습니다.',
-    role: '근무 중 확인 가능한 재고 데이터를 정리하고 관리 방식을 개선했습니다.',
-    action: '엑셀 재고 관리표를 만들고 품목별 발주 주기와 폐기 수량을 기록했습니다.',
-    result: '폐기율을 약 20% 줄이고 교대 근무자 간 재고 인수인계가 쉬워졌습니다.',
-    learning: '반복 업무도 데이터를 기록하면 개선할 지점이 분명해진다는 것을 배웠습니다.',
-    resumeMemo: '데이터 관리, 책임감, 운영 개선 경험으로 활용',
-    tags: ['데이터관리', '개선', '책임감'],
-    date: '2025-03-10', bookmarked: false, resumeUsed: true,
-  },
-  {
-    id: 5, category: '팀프로젝트',
-    title: 'UX/UI 디자인 프로젝트 – 사용자 경험 개선',
-    desc: '기존 서비스의 UX 문제점을 분석하여 개선 방안을 도출하는 프로젝트입니다. 사용자 리서치, 퍼소나 설정, 와이어프레임 제작을 담당하여 사용자 중심으로...',
-    situation: '기존 서비스의 낮은 사용성을 개선하는 UX/UI 프로젝트를 진행했습니다.',
-    role: '사용자 리서치와 퍼소나 설정, 와이어프레임 설계를 담당했습니다.',
-    action: '사용자 불편 지점을 정리하고 핵심 화면의 흐름을 단순화한 와이어프레임을 제작했습니다.',
-    result: '프로토타입 테스트에서 주요 과업 완료 시간이 단축되었습니다.',
-    learning: '디자인은 보기 좋은 화면보다 사용자의 행동을 덜 막는 구조가 중요하다는 점을 배웠습니다.',
-    resumeMemo: 'UX 리서치, 화면 설계, 사용자 중심 개선 경험으로 활용',
-    tags: ['디자인', '사용자경험', '리서치'],
-    date: '2025-02-18', bookmarked: false, resumeUsed: true,
-  },
-  {
-    id: 6, category: '기타 활동',
-    title: '봉사활동 – 지역 아동 학습 멘토링',
-    desc: '지역 아동센터에서 초등학생 학습 멘토링 봉사활동을 진행했습니다. 아이들의 눈높이에 맞춰 학습 내용을 설명하고, 학습 계획을 함께 세워 스스로 공부할 수 있도록 도왔습니다.',
-    situation: '지역 아동센터에서 학습 습관이 부족한 초등학생을 멘토링했습니다.',
-    role: '학생의 수준을 파악하고 주간 학습 계획을 함께 세우는 멘토 역할을 맡았습니다.',
-    action: '어려워하는 과목을 작은 단위로 나누어 설명하고 성취 체크표를 만들었습니다.',
-    result: '학생이 숙제를 미루는 횟수가 줄고 스스로 공부 계획을 말할 수 있게 되었습니다.',
-    learning: '상대의 눈높이에 맞춘 설명과 꾸준한 격려가 변화를 만든다는 것을 배웠습니다.',
-    resumeMemo: '공감, 소통, 교육 봉사 경험으로 인성 문항에 활용',
-    tags: ['공감', '소통', '나눔'],
-    date: '2025-01-22', bookmarked: false, resumeUsed: false,
-  },
-]
-
-export const JOURNAL_STORAGE_KEY = 'cwnu-growth-journal-entries'
-
-export function loadJournalEntries(): Entry[] {
-  if (typeof window === 'undefined') return INITIAL_ENTRIES
-  const stored = window.localStorage.getItem(JOURNAL_STORAGE_KEY)
-  if (!stored) return INITIAL_ENTRIES
-
-  try {
-    const parsed = JSON.parse(stored) as Entry[]
-    return Array.isArray(parsed) ? parsed : INITIAL_ENTRIES
-  } catch {
-    return INITIAL_ENTRIES
-  }
-}
-
-export function saveJournalEntries(entries: Entry[]) {
-  if (typeof window === 'undefined') return
-  window.localStorage.setItem(JOURNAL_STORAGE_KEY, JSON.stringify(entries))
-}
 
 const KEYWORDS = [
   { tag: '고객응대', cnt: 3 }, { tag: '문제해결', cnt: 3 },
@@ -186,7 +66,8 @@ function DonutChart({ value, total }: { value: number; total: number }) {
 /* ── Page ────────────────────────────────────────────────────────── */
 export default function GrowthJournal() {
   const navigate = useNavigate()
-  const [entries, setEntries] = useState<Entry[]>(() => loadJournalEntries())
+  const studentId = getActiveStudentId()
+  const [entries, setEntries] = useState<Entry[]>(() => loadJournalEntries(studentId))
   const [activeTab, setActiveTab] = useState<string>('전체')
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
@@ -210,7 +91,7 @@ export default function GrowthJournal() {
   const toggleBookmark = (id: number) =>
     setEntries(prev => {
       const next = prev.map(e => e.id === id ? { ...e, bookmarked: !e.bookmarked } : e)
-      saveJournalEntries(next)
+      saveJournalEntries(studentId, next)
       return next
     })
 

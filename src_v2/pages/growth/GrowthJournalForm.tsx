@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { loadJournalEntries, saveJournalEntries, type Category, type Entry } from './GrowthJournal'
+import { loadJournalEntries, saveJournalEntries, type Category, type Entry } from '../../data/growthJournal'
+import { getActiveStudentId } from '../../data/students'
 import './GrowthJournal.css'
 
 const EMPTY_ENTRY = {
@@ -22,7 +23,8 @@ export default function GrowthJournalForm() {
   const navigate = useNavigate()
   const { entryId } = useParams()
   const isEdit = Boolean(entryId)
-  const entries = useMemo(() => loadJournalEntries(), [])
+  const studentId = getActiveStudentId()
+  const entries = useMemo(() => loadJournalEntries(studentId), [studentId])
   const entry = useMemo(
     () => entries.find(item => String(item.id) === entryId),
     [entries, entryId],
@@ -68,7 +70,7 @@ export default function GrowthJournalForm() {
     const nextEntries = entry
       ? entries.map(item => item.id === entry.id ? nextEntry : item)
       : [nextEntry, ...entries]
-    saveJournalEntries(nextEntries)
+    saveJournalEntries(studentId, nextEntries)
     navigate('/growth/journal')
   }
 
