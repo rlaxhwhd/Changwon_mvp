@@ -24,3 +24,9 @@ export function getCounselorCards(role: CounselorRole): CounselorCard[] {
     specialty: c.specialty ?? c.scope,
   }))
 }
+
+/** 상담사 id → 표시명 (예: '김진로 상담사'). 학생 상담현황 등에서 배정 상담사 표기용. */
+export function getCounselorLabel(id: string | undefined): string {
+  const c = id ? COUNSELORS.find(x => x.id === id) : undefined
+  return c ? `${c.name} 상담사` : '상담사 배정 중'
+}

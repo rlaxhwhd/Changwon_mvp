@@ -1,33 +1,62 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
-import { getActiveStudent } from '../../data/students'
-import {
-  COUNSEL_RECORDS,
-  COUNSEL_TOTAL,
-  COUNSEL_DONE,
-  COUNSEL_SCHEDULED,
-  COUNSEL_RECENT_DATE,
-  COUNSEL_TYPE_STATS,
-} from '../../data/counsel'
+import { getActiveStudent, getActiveStudentId, getStudentCounselRequests } from '../../data/students'
+import { getCounselorLabel } from '../../data/counselorsRead'
+import { COUNSEL_RECORDS, COUNSEL_TYPE_STATS } from '../../data/counsel'
 import './CounselStatus.css'
 
-// 게이지바 = 전체 상담 건수 대비 비율(%)로 의미를 명확히 한다.
-const pctOf = (n: number) => Math.round((n / COUNSEL_TOTAL) * 100)
+// 상담 내역 행 — 데모 기록(COUNSEL_RECORDS)과 학생 실제 예약(스토어)을 공통 형태로 렌더.
+interface CsRow {
+  id?: string
+  type: string
+  status: string
+  statusTone: 'scheduled' | 'done' | 'cancel'
+  counselor: string
+  description: string
+  tags: string[]
+  date: string
+  time: string
+}
 
-const stats = [
-  { label: '총 상담 건수', value: `${COUNSEL_TOTAL}건`, color: 'blue', bar: 100 },
-  { label: '완료', value: `${COUNSEL_DONE}건`, color: 'green', bar: pctOf(COUNSEL_DONE) },
-  { label: '예정', value: `${COUNSEL_SCHEDULED}건`, color: 'purple', bar: pctOf(COUNSEL_SCHEDULED) },
-  { label: '최근 상담', value: COUNSEL_RECENT_DATE, color: 'blue', bar: 0 },
-]
+const TYPE_LABEL: Record<string, string> = { 진로취업: '진로취업상담', 심리: '심리상담', 교수: '교수상담' }
+const STATUS_TONE: Record<string, CsRow['statusTone']> = { 대기: 'scheduled', 확정: 'scheduled', 완료: 'done', 취소: 'cancel' }
 
 const typeStats = COUNSEL_TYPE_STATS
-const counselItems = COUNSEL_RECORDS
 
 export default function CounselStatus() {
   const navigate = useNavigate()
   const student = getActiveStudent()
+
+  // 학생 실제 예약(대기/확정/완료)을 스토어에서 읽어 데모 기록 위에 합친다.
+  // 상담사가 확정하면 status='확정'으로 바뀌어 이 목록에 그대로 반영된다(같은 스토어 구독).
+  const liveRows: CsRow[] = getStudentCounselRequests(getActiveStudentId())
+    .slice()
+    .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
+    .map(r => ({
+      id: r.id,
+      type: TYPE_LABEL[r.type] ?? r.type,
+      status: r.status,
+      statusTone: STATUS_TONE[r.status] ?? 'scheduled',
+      counselor: getCounselorLabel(r.assignedCounselorId),
+      description: r.topic,
+      tags: r.slot?.place ? [r.slot.place] : [],
+      date: r.slot?.date ?? r.requestedAt.slice(0, 10),
+      time: r.slot?.start ?? r.requestedAt.slice(11, 16),
+    }))
+  const counselItems: CsRow[] = [...liveRows, ...COUNSEL_RECORDS]
+
+  const total = counselItems.length
+  const doneCount = counselItems.filter(i => i.statusTone === 'done').length
+  const scheduledCount = counselItems.filter(i => i.statusTone === 'scheduled').length
+  const recentDate = counselItems.find(i => i.statusTone === 'done')?.date ?? counselItems[0]?.date ?? '-'
+  const pctOf = (n: number) => (total ? Math.round((n / total) * 100) : 0)
+  const stats = [
+    { label: '총 상담 건수', value: `${total}건`, color: 'blue', bar: 100 },
+    { label: '완료', value: `${doneCount}건`, color: 'green', bar: pctOf(doneCount) },
+    { label: '예정', value: `${scheduledCount}건`, color: 'purple', bar: pctOf(scheduledCount) },
+    { label: '최근 상담', value: recentDate, color: 'blue', bar: 0 },
+  ]
 
   // ── 전문가 코멘트 종합 분석: 기본 접힘 → 분석하기 클릭 → 로딩 → 결과 ──
   const [aiState, setAiState] = useState<'idle' | 'loading' | 'done'>('idle')
@@ -60,7 +89,7 @@ export default function CounselStatus() {
               <p>{item.label}</p>
               <strong>{item.value}</strong>
               {item.bar > 0 && (
-                <span className="cs-stat-bar" title={`전체 ${COUNSEL_TOTAL}건 중 ${item.bar}%`}>
+                <span className="cs-stat-bar" title={`전체 ${total}건 중 ${item.bar}%`}>
                   <span style={{ width: `${item.bar}%` }} />
                 </span>
               )}
@@ -68,7 +97,7 @@ export default function CounselStatus() {
           </article>
         ))}
       </section>
-      <p className="cs-stats-note">게이지바는 전체 상담 {COUNSEL_TOTAL}건 대비 비율입니다.</p>
+      <p className="cs-stats-note">게이지바는 전체 상담 {total}건 대비 비율입니다.</p>
 
       <section className="cs-panel">
         <h2>
@@ -96,7 +125,7 @@ export default function CounselStatus() {
 
         <div className="cs-list">
           {counselItems.map((item) => (
-            <button className="cs-row" type="button" key={`${item.type}-${item.date}`}>
+            <button className="cs-row" type="button" key={item.id ?? `${item.type}-${item.date}`}>
               <div className="cs-row-main">
                 <div className="cs-row-title">
                   <strong>{item.type}</strong>
@@ -150,7 +179,7 @@ export default function CounselStatus() {
             </div>
             <p className="cs-ai-loading-title">AI가 {student.name}님의 상담 기록을 분석하고 있어요</p>
             <p className="cs-ai-loading-sub">
-              {COUNSEL_TOTAL}회 상담 · 진단 결과 · 전문가 코멘트를 종합 중입니다…
+              {total}회 상담 · 진단 결과 · 전문가 코멘트를 종합 중입니다…
             </p>
             <div className="cs-ai-loading-bar"><div className="cs-ai-loading-fill" /></div>
           </div>
@@ -164,7 +193,7 @@ export default function CounselStatus() {
                 <i className="fa-solid fa-chart-line" /> 상담 패턴 분석
               </h3>
               <ul className="cs-ai-bullets">
-                <li><strong>참여도:</strong> 총 {COUNSEL_TOTAL}회 (월 평균 1.7회)</li>
+                <li><strong>참여도:</strong> 총 {total}회 (월 평균 1.7회)</li>
                 <li><strong>주요 흐름:</strong> 탐색 → 준비 → 실행 진행 중</li>
                 <li><strong>핵심 변화:</strong> 진로 목표가 <em>{targetRole}</em>로 구체화</li>
               </ul>
@@ -187,7 +216,7 @@ export default function CounselStatus() {
                 <i className="fa-solid fa-robot" /> AI 상담 종합 평가
               </h3>
               <p className="cs-ai-tile-body">
-                3개월간 {COUNSEL_TOTAL}회 상담을 통해 초기 진로 탐색에서 현재는 <em>{targetRole}</em>로
+                3개월간 {total}회 상담을 통해 초기 진로 탐색에서 현재는 <em>{targetRole}</em>로
                 목표가 구체화되는 긍정적 변화를 보이고 있습니다. 상담 주제가 탐색(60%) → 직무분석(30%) → 취업준비(10%)로
                 점차 실행 단계로 이동하고 있습니다.
               </p>
@@ -212,7 +241,7 @@ export default function CounselStatus() {
           <div className="cs-report-summary">
             <div>
               <small>총 상담 횟수</small>
-              <strong>{COUNSEL_TOTAL}회</strong>
+              <strong>{total}회</strong>
             </div>
             <div>
               <small>목표 직무</small>
@@ -231,7 +260,7 @@ export default function CounselStatus() {
           <section className="cs-report-section">
             <h4><i className="fa-solid fa-chart-line" /> 상담 패턴 분석</h4>
             <ul>
-              <li><strong>참여도:</strong> 총 {COUNSEL_TOTAL}회 (월 평균 1.7회)</li>
+              <li><strong>참여도:</strong> 총 {total}회 (월 평균 1.7회)</li>
               <li><strong>주요 흐름:</strong> 탐색 → 준비 → 실행 진행 중</li>
               <li><strong>핵심 변화:</strong> 진로 목표가 {targetRole}로 구체화</li>
               <li><strong>상담 주제 분포:</strong> 탐색 60% · 직무분석 30% · 취업준비 10%</li>
@@ -249,7 +278,7 @@ export default function CounselStatus() {
           <section className="cs-report-section">
             <h4><i className="fa-solid fa-robot" /> AI 상담 종합 평가</h4>
             <p>
-              3개월간 {COUNSEL_TOTAL}회 상담을 통해 초기 진로 탐색에서 현재는 <strong>{targetRole}</strong>로
+              3개월간 {total}회 상담을 통해 초기 진로 탐색에서 현재는 <strong>{targetRole}</strong>로
               목표가 구체화되는 긍정적 변화를 보이고 있습니다.
               상담 주제가 탐색(60%) → 직무분석(30%) → 취업준비(10%)로 점차 실행 단계로 이동하고 있습니다.
             </p>

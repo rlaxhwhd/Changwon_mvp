@@ -260,6 +260,11 @@
   background: #dcfce7;
 }
 
+.cs-status--cancel {
+  color: #6b7280;
+  background: #f1f5f9;
+}
+
 .cs-counselor {
   margin-bottom: 8px;
   font-size: 16px;
