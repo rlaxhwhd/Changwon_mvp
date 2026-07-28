@@ -1777,6 +1777,18 @@ input, textarea, select { font-family: var(--font); }
 }
 .counsel-outline-btn:hover,
 .counsel-detail-btn:hover { border-color: var(--color-primary-light); color: var(--color-primary); }
+.counsel-reassign-select {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--color-primary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.counsel-reassign-select:hover { border-color: var(--color-primary-light); }
 .counsel-primary-btn { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
 .counsel-primary-btn:disabled { opacity: .45; cursor: not-allowed; }
 .counsel-outline-btn.is-danger { color: var(--color-danger); }
