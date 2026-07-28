@@ -374,7 +374,7 @@ export default function Main() {
 
         {/* Hero image */}
         <div className="mn-hero-img">
-          <img src="/changwon_mascort3.png" alt="창원대학교 마스코트" />
+          <img src="/changwon_mascort3.webp" alt="창원대학교 마스코트" />
         </div>
       </section>
 

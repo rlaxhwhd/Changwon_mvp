@@ -21,7 +21,7 @@ html, body { margin: 0; padding: 0; }
   overflow: hidden;
   color: var(--landing-navy);
   font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
-  background: #a8d9fb url('/landing-bg.png') center / cover no-repeat;
+  background: #a8d9fb url('/landing-bg.webp') center / cover no-repeat;
 }
 
 .landing::before {

@@ -81,7 +81,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     questions: '94문항',
     category: '역량·직무',
     art: '9core',
-    image: '/sprint1.png',
+    image: '/sprint1.webp',
     requires: [],
   },
   {
@@ -96,7 +96,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     questions: '98문항',
     category: '취업·실전',
     art: 'job',
-    image: '/sprint2.png',
+    image: '/sprint2.webp',
     requires: [],
   },
   {

@@ -43,13 +43,13 @@ export default function Chatbot() {
         onClick={() => setOpen(o => !o)}
         aria-label={open ? '챗봇 닫기' : '상담 질문 챗봇 열기'}
       >
-        {open ? <LuX /> : <img src="/chatbot.png" alt="" />}
+        {open ? <LuX /> : <img src="/chatbot.webp" alt="" loading="lazy" />}
       </button>
 
       {open && (
         <div className="counsel-chatbot-panel" role="dialog" aria-label="상담 질문 챗봇">
           <div className="counsel-chatbot-head">
-            <img src="/chatbot.png" alt="" />
+            <img src="/chatbot.webp" alt="" loading="lazy" />
             <div>
               <strong>상담 질문 도우미</strong>
               <small>AI 실시간 추천 · gem5 연동 예정</small>
