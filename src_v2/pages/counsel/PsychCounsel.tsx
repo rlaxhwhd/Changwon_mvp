@@ -284,9 +284,10 @@ export default function PsychCounsel() {
           submitCounselRequest({
             type: '심리',
             purpose,
-            counselorName: `${activeCounselor.name} ${activeCounselor.title}`,
-            date: selectedSlot?.day.date ?? '',
+            counselorId: activeCounselor.id,
+            slotDate: selectedSlot?.day.iso ?? '',
             time: selectedSlot?.time ?? '',
+            place: '학생생활관 1층 심리상담센터',
           })
           setReserveOpen(false)
           showNotice('상담 예약이 신청되었습니다')

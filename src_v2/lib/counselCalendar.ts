@@ -11,6 +11,8 @@ export interface Day {
   label: string
   /** 상세 표기용 (예: 2026. 07. 27 (월)) */
   date: string
+  /** 슬롯 저장용 ISO 날짜 (예: 2026-07-27) — 상담사 캘린더 연동에 사용 */
+  iso: string
 }
 
 const WEEKDAY = ['일', '월', '화', '수', '목', '금', '토']
@@ -38,6 +40,7 @@ export function getCounselWeek(base: Date = new Date()): Day[] {
       key,
       label: `${mm}/${dd} (${wd})`,
       date: `${d.getFullYear()}. ${mm}. ${dd} (${wd})`,
+      iso: `${d.getFullYear()}-${mm}-${dd}`,
     }
   })
 }

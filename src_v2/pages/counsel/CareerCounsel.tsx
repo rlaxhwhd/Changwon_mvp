@@ -284,9 +284,10 @@ export default function CareerCounsel() {
           submitCounselRequest({
             type: '진로취업',
             purpose,
-            counselorName: `${activeCounselor.name} ${activeCounselor.title}`,
-            date: selectedSlot?.day.date ?? '',
+            counselorId: activeCounselor.id,
+            slotDate: selectedSlot?.day.iso ?? '',
             time: selectedSlot?.time ?? '',
+            place: '학생회관 2층 진로취업상담실',
           })
           setReserveOpen(false)
           showNotice('상담 예약이 신청되었습니다')

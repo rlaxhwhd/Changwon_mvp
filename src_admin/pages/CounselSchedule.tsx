@@ -25,11 +25,12 @@ export default function CounselSchedule() {
 
   const availability = useMemo(() => getAvailability(counselorId), [counselorId])
 
-  // 확정 상담만 날짜별 그룹 (오늘 이후 우선, 과거는 아래)
-  const confirmed = useMemo(
+  // 예약신청(대기)·확정 상담을 날짜별 그룹 (슬롯 있는 건만).
+  // 학생이 예약하면 status='대기' + slot 으로 여기에 '예약신청'으로 바로 뜬다.
+  const scheduled = useMemo(
     () =>
       getRequestsByAssignee(counselorId)
-        .filter(r => r.status === '확정' && r.slot)
+        .filter(r => r.slot && (r.status === '확정' || r.status === '대기'))
         .sort((a, b) => {
           const ad = `${a.slot!.date} ${a.slot!.start}`
           const bd = `${b.slot!.date} ${b.slot!.start}`
@@ -40,13 +41,13 @@ export default function CounselSchedule() {
 
   const grouped = useMemo(() => {
     const map = new Map<string, CounselRequest[]>()
-    for (const r of confirmed) {
+    for (const r of scheduled) {
       const key = r.slot!.date
       if (!map.has(key)) map.set(key, [])
       map.get(key)!.push(r)
     }
     return [...map.entries()]
-  }, [confirmed])
+  }, [scheduled])
 
   const today = todayISO()
 
@@ -55,7 +56,7 @@ export default function CounselSchedule() {
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">일정·예약</h1>
-          <p className="admin-page-desc">확정된 상담 일정을 날짜별로 관리합니다.</p>
+          <p className="admin-page-desc">예약신청·확정된 상담 일정을 날짜별로 관리합니다.</p>
         </div>
         <Link to="/counsel/requests" className="admin-btn admin-btn-primary">
           <LuInbox /> 신청 접수함
@@ -67,13 +68,13 @@ export default function CounselSchedule() {
         <section className="admin-card">
           <div className="admin-card-head">
             <h2>
-              <LuCalendarCheck /> 확정 상담 일정
+              <LuCalendarCheck /> 예약·확정 일정
             </h2>
-            <span className="admin-tag admin-tag-soft">{confirmed.length}건</span>
+            <span className="admin-tag admin-tag-soft">{scheduled.length}건</span>
           </div>
 
           {grouped.length === 0 ? (
-            <EmptyState icon={LuCalendar} message="확정된 상담 일정이 없습니다." />
+            <EmptyState icon={LuCalendar} message="예약·확정된 상담 일정이 없습니다." />
           ) : (
             <div className="admin-schedule-days">
               {grouped.map(([date, items]) => (
@@ -96,12 +97,14 @@ export default function CounselSchedule() {
                           <p>{r.topic}</p>
                         </div>
                         <div className="admin-schedule-actions">
-                          <span className="admin-tag">{r.slot!.place ?? '장소 미정'}</span>
+                          {r.status === '대기'
+                            ? <span className="admin-chip admin-chip-wait">예약신청</span>
+                            : <span className="admin-tag">{r.slot!.place ?? '장소 미정'}</span>}
                           <Link
-                            to={`/counsel/session/${r.studentId}`}
+                            to={r.status === '대기' ? '/counsel/requests' : `/counsel/session/${r.studentId}`}
                             className="admin-btn admin-btn-ghost sm"
                           >
-                            상담 진행
+                            {r.status === '대기' ? '확정하기' : '상담 진행'}
                           </Link>
                         </div>
                       </li>
