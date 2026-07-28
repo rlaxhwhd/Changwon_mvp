@@ -1,6 +1,7 @@
 import { LuCalendarX, LuChevronUp, LuFilter } from 'react-icons/lu'
 import { LuChevronDown, LuChevronLeft, LuChevronRight, LuDownload, LuRotateCcw, LuSearch, LuUserRound } from 'react-icons/lu'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import { Link } from 'react-router-dom'
 import AdminModal from '../components/AdminModal'
 import { getActiveCounselor, getCounselorById, getReassignableCounselors } from '../data/counselors'
@@ -37,21 +38,55 @@ function ReassignAction({ request, onClose }: { request: CounselRequest; onClose
   return <div className="counsel-modal-action"><div className="counsel-request-detail-grid"><label className="is-wide"><span>재배정할 상담사</span><select value={selectedId} onChange={e => setSelectedId(e.target.value)}>{candidates.map(c => <option key={c.id} value={c.id}>{c.name} · {c.roleLabel}</option>)}</select></label></div><div className="counsel-request-detail-actions"><button type="button" className="counsel-outline-btn" onClick={onClose}>닫기</button><button type="button" className="counsel-primary-btn" disabled={!selectedId} onClick={() => { reassignRequest(request.id, selectedId); window.location.reload() }}>재배정</button></div></div>
 }
 
-// 접수함 목록의 인라인 재배정 드롭다운 — 같은 역할 다른 상담사 목록을 native select로 노출,
-// 선택 즉시 그 상담사로 재배정(대기·확정 모두). reassignRequest/getReassignableCounselors 재사용.
+// 접수함 목록의 재배정 드롭다운 — '재배정' 버튼(폭 고정) 클릭 시 같은 역할 다른 상담사
+// 메뉴를 body 포털+fixed로 띄운다(테이블 overflow에 안 잘림). 각 항목은 이름/역할(2줄).
+// 선택 즉시 reassignRequest로 이관(대기·확정 모두). getReassignableCounselors 재사용.
+const ROLE_SHORT: Record<string, string> = { career: '진로취업', psych: '심리' }
+
 function ReassignSelect({ request }: { request: CounselRequest }) {
   const candidates = getReassignableCounselors(request.assignedCounselorId ?? '')
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null)
+
+  useEffect(() => {
+    if (!menuPos) return
+    const close = () => setMenuPos(null)
+    document.addEventListener('mousedown', close)
+    window.addEventListener('scroll', close, true)
+    window.addEventListener('resize', close)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      window.removeEventListener('scroll', close, true)
+      window.removeEventListener('resize', close)
+    }
+  }, [menuPos])
+
   if (candidates.length === 0) return null
+
+  const toggle = () => {
+    if (menuPos) { setMenuPos(null); return }
+    const r = btnRef.current!.getBoundingClientRect()
+    setMenuPos({ top: r.bottom + 4, left: r.right })
+  }
+  const pick = (id: string) => { reassignRequest(request.id, id); window.location.reload() }
+
   return (
-    <select
-      className="counsel-reassign-select"
-      value=""
-      aria-label="다른 상담사에게 재배정"
-      onChange={e => { const id = e.target.value; if (id) { reassignRequest(request.id, id); window.location.reload() } }}
-    >
-      <option value="" disabled>재배정</option>
-      {candidates.map(c => <option key={c.id} value={c.id}>{c.name} · {c.roleLabel}</option>)}
-    </select>
+    <>
+      <button ref={btnRef} type="button" className="counsel-detail-btn" aria-haspopup="menu" aria-expanded={menuPos != null} onClick={toggle}>
+        재배정 <LuChevronDown aria-hidden="true" />
+      </button>
+      {menuPos && createPortal(
+        <div className="counsel-reassign-menu" role="menu" style={{ top: menuPos.top, left: menuPos.left }} onMouseDown={e => e.stopPropagation()}>
+          {candidates.map(c => (
+            <button key={c.id} type="button" role="menuitem" className="counsel-reassign-item" onClick={() => pick(c.id)}>
+              <strong>{c.name}</strong>
+              <small>{ROLE_SHORT[c.role] ?? c.roleLabel}</small>
+            </button>
+          ))}
+        </div>,
+        document.body,
+      )}
+    </>
   )
 }
 
