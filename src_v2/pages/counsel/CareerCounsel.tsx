@@ -4,16 +4,11 @@ import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
 import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
+import { getCounselWeek, type Day } from '../../lib/counselCalendar'
 import './CareerCounsel.css'
 
 type CounselorId = string
 type SlotStatus = 'available' | 'reserved' | 'selected'
-
-interface Day {
-  key: string
-  label: string
-  date: string
-}
 
 interface SelectedSlot {
   day: Day
@@ -23,13 +18,8 @@ interface SelectedSlot {
 // 상담사 = 단일소스(src_admin) 투영. 화면에 하드코딩하지 않는다.
 const counselors: CounselorCard[] = getCounselorCards('career')
 
-const days: Day[] = [
-  { key: 'mon', label: '05/18 (월)', date: '2026. 05. 18 (월)' },
-  { key: 'tue', label: '05/19 (화)', date: '2026. 05. 19 (화)' },
-  { key: 'wed', label: '05/20 (수)', date: '2026. 05. 20 (수)' },
-  { key: 'thu', label: '05/21 (목)', date: '2026. 05. 21 (목)' },
-  { key: 'fri', label: '05/22 (금)', date: '2026. 05. 22 (금)' },
-]
+// 이번 주 월~금 (공용 유틸 — 화면에 날짜 하드코딩 금지)
+const days: Day[] = getCounselWeek()
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
@@ -196,9 +186,9 @@ export default function CareerCounsel() {
             </button>
             <div className="cc-week-title">
               <i className="fa-regular fa-calendar-days" />
-              <strong>2026. 05. 18 (월)</strong>
+              <strong>{days[0].date}</strong>
               <span>~</span>
-              <strong>2026. 05. 22 (금)</strong>
+              <strong>{days[4].date}</strong>
             </div>
             <div className="cc-head-actions">
               <button aria-label="다음 주">

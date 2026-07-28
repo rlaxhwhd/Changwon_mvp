@@ -4,17 +4,12 @@ import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import { PROFESSOR_GROUPS, findDefaultSelection } from '../../data/professors'
 import { getActiveStudent } from '../../data/students'
+import { getCounselWeek, type Day } from '../../lib/counselCalendar'
 import './CareerCounsel.css'
 import './ProfessorCounsel.css'
 
 type CounselMode = 'online' | 'offline'
 type SlotStatus = 'available' | 'reserved' | 'selected'
-
-interface Day {
-  key: string
-  label: string
-  date: string
-}
 
 interface SelectedSlot {
   day: Day
@@ -25,13 +20,8 @@ interface SelectedSlot {
 // 기본 선택은 활성 학생의 학과(major)로 파생한다(본인 학과가 먼저 열림).
 const defaultSelection = findDefaultSelection(getActiveStudent().major)
 
-const days: Day[] = [
-  { key: 'mon', label: '05/18 (월)', date: '2026. 05. 18 (월)' },
-  { key: 'tue', label: '05/19 (화)', date: '2026. 05. 19 (화)' },
-  { key: 'wed', label: '05/20 (수)', date: '2026. 05. 20 (수)' },
-  { key: 'thu', label: '05/21 (목)', date: '2026. 05. 21 (목)' },
-  { key: 'fri', label: '05/22 (금)', date: '2026. 05. 22 (금)' },
-]
+// 이번 주 월~금 (공용 유틸 — 화면에 날짜 하드코딩 금지)
+const days: Day[] = getCounselWeek()
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
@@ -218,9 +208,9 @@ export default function ProfessorCounsel() {
                   </button>
                   <div className="cc-week-title">
                     <i className="fa-regular fa-calendar-days" />
-                    <strong>2026. 05. 18 (월)</strong>
+                    <strong>{days[0].date}</strong>
                     <span>~</span>
-                    <strong>2026. 05. 22 (금)</strong>
+                    <strong>{days[4].date}</strong>
                   </div>
                   <div className="cc-head-actions">
                     <button aria-label="다음 주">
