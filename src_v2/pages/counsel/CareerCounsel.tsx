@@ -3,17 +3,11 @@ import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
+import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
 import './CareerCounsel.css'
 
-type CounselorId = 'all' | 'kim' | 'lee' | 'park' | 'choi' | 'jung' | 'kang' | 'lim' | 'hwang'
+type CounselorId = string
 type SlotStatus = 'available' | 'reserved' | 'selected'
-
-interface Counselor {
-  id: CounselorId
-  name: string
-  title: string
-  specialty: string
-}
 
 interface Day {
   key: string
@@ -26,16 +20,8 @@ interface SelectedSlot {
   time: string
 }
 
-const counselors: Counselor[] = [
-  { id: 'kim', name: '김지연', title: '상담사', specialty: '진로설계 · 취업전략' },
-  { id: 'lee', name: '이준호', title: '상담사', specialty: '직무탐색 · 면접준비' },
-  { id: 'park', name: '박소연', title: '상담사', specialty: '자기소개서 · 포트폴리오' },
-  { id: 'choi', name: '최민수', title: '상담사', specialty: '공기업 · 대기업 지원' },
-  { id: 'jung', name: '정하은', title: '상담사', specialty: '진로고민 · 역량진단' },
-  { id: 'kang', name: '강민우', title: '상담사', specialty: 'IT 직무 · 개발 커리어' },
-  { id: 'lim', name: '이지혜', title: '상담사', specialty: '면접코칭 · 이미지메이킹' },
-  { id: 'hwang', name: '황서우', title: '상담사', specialty: '해외취업 · 어학전략' },
-]
+// 상담사 = 단일소스(src_admin) 투영. 화면에 하드코딩하지 않는다.
+const counselors: CounselorCard[] = getCounselorCards('career')
 
 const days: Day[] = [
   { key: 'mon', label: '05/18 (월)', date: '2026. 05. 18 (월)' },
@@ -47,17 +33,19 @@ const days: Day[] = [
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
+// 데모 예약 완료 슬롯 — 기본(첫) 상담사에 대해서만 표시(상담사 id는 단일소스에서 파생).
+const defaultCounselorId = counselors[0]?.id ?? ''
 const reservedSlots = new Set([
-  'kim-mon-09:00',
-  'kim-mon-12:00',
-  'kim-mon-15:00',
-  'kim-tue-10:00',
-  'kim-tue-16:00',
-  'kim-wed-11:00',
-  'kim-wed-14:00',
-  'kim-thu-12:00',
-  'kim-thu-17:00',
-  'kim-fri-13:00',
+  `${defaultCounselorId}-mon-09:00`,
+  `${defaultCounselorId}-mon-12:00`,
+  `${defaultCounselorId}-mon-15:00`,
+  `${defaultCounselorId}-tue-10:00`,
+  `${defaultCounselorId}-tue-16:00`,
+  `${defaultCounselorId}-wed-11:00`,
+  `${defaultCounselorId}-wed-14:00`,
+  `${defaultCounselorId}-thu-12:00`,
+  `${defaultCounselorId}-thu-17:00`,
+  `${defaultCounselorId}-fri-13:00`,
 ])
 
 function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
@@ -66,7 +54,7 @@ function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
 }
 
 export default function CareerCounsel() {
-  const [selectedCounselor, setSelectedCounselor] = useState<CounselorId>('kim')
+  const [selectedCounselor, setSelectedCounselor] = useState<CounselorId>(defaultCounselorId || 'all')
   const [search, setSearch] = useState('')
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>({
     day: days[4],
@@ -120,11 +108,19 @@ export default function CareerCounsel() {
     setSelectedSlot({ day, time })
   }
 
-  const selectCounselorFromCalendar = (counselor: Counselor, day: Day, time: string) => {
+  const selectCounselorFromCalendar = (counselor: CounselorCard, day: Day, time: string) => {
     setSelectedCounselor(counselor.id)
     setSelectedSlot({ day, time })
     setNotice(`${counselor.name} 상담사 선택됨`)
     window.setTimeout(() => setNotice(''), 1800)
+  }
+
+  if (counselors.length === 0) {
+    return (
+      <div className="cc-wrap">
+        <p style={{ padding: '48px 0', textAlign: 'center', color: '#6b7280' }}>등록된 진로취업 상담사가 없습니다.</p>
+      </div>
+    )
   }
 
   return (

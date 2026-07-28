@@ -7,14 +7,23 @@ import type { Counselor, CounselorRole } from './schema/counselor'
 import { canEditRoadmap, canManageJobs, canConfirmIap, handledRequestTypes } from './schema/counselor'
 import careerKim from './counselors/career_kim.json'
 import careerPark from './counselors/career_park.json'
+import careerChoi from './counselors/career_choi.json'
+import careerKang from './counselors/career_kang.json'
 import psychLee from './counselors/psych_lee.json'
 import psychHan from './counselors/psych_han.json'
+import psychMoon from './counselors/psych_moon.json'
+import psychYoon from './counselors/psych_yoon.json'
 
+// 로그인(역할별 첫 상담사)·기본 배정 안정성을 위해 신규 상담사는 각 역할 뒤에 append 한다.
 const BASE_COUNSELORS: Counselor[] = [
   careerKim as Counselor,
   careerPark as Counselor,
+  careerChoi as Counselor,
+  careerKang as Counselor,
   psychLee as Counselor,
   psychHan as Counselor,
+  psychMoon as Counselor,
+  psychYoon as Counselor,
 ]
 
 const STORAGE_KEY = 'dc_active_counselor'

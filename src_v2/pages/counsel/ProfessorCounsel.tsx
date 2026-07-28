@@ -2,24 +2,13 @@ import { useMemo, useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
+import { PROFESSOR_GROUPS, findDefaultSelection } from '../../data/professors'
+import { getActiveStudent } from '../../data/students'
 import './CareerCounsel.css'
 import './ProfessorCounsel.css'
 
 type CounselMode = 'online' | 'offline'
 type SlotStatus = 'available' | 'reserved' | 'selected'
-
-interface Professor {
-  id: string
-  name: string
-  title: string
-  major: string
-  room: string
-}
-
-interface DepartmentGroup {
-  name: string
-  divisions: Record<string, Professor[]>
-}
 
 interface Day {
   key: string
@@ -32,71 +21,9 @@ interface SelectedSlot {
   time: string
 }
 
-const departmentGroups: DepartmentGroup[] = [
-  {
-    name: '인문대학',
-    divisions: {
-      국어국문학과: [
-        { id: 'kor-1', name: '김도윤', title: '교수', major: '현대문학', room: '인문관 312호' },
-        { id: 'kor-2', name: '서예린', title: '교수', major: '한국어교육', room: '인문관 318호' },
-        { id: 'kor-3', name: '장우석', title: '교수', major: '고전문학', room: '인문관 321호' },
-      ],
-      영어영문학과: [
-        { id: 'eng-1', name: '박현주', title: '교수', major: '영미문화', room: '인문관 401호' },
-        { id: 'eng-2', name: '이정훈', title: '교수', major: '영어학', room: '인문관 407호' },
-      ],
-      철학과: [
-        { id: 'phi-1', name: '최민석', title: '교수', major: '윤리학', room: '인문관 502호' },
-        { id: 'phi-2', name: '한지우', title: '교수', major: '서양철학', room: '인문관 505호' },
-        { id: 'phi-3', name: '문정아', title: '교수', major: '동양철학', room: '인문관 510호' },
-      ],
-    },
-  },
-  {
-    name: '사회과학대학',
-    divisions: {
-      사회학과: [
-        { id: 'soc-1', name: '정하늘', title: '교수', major: '사회조사방법론', room: '사회관 204호' },
-        { id: 'soc-2', name: '윤태경', title: '교수', major: '지역사회', room: '사회관 210호' },
-      ],
-      행정학과: [
-        { id: 'adm-1', name: '남기범', title: '교수', major: '정책분석', room: '사회관 318호' },
-        { id: 'adm-2', name: '오세은', title: '교수', major: '공공관리', room: '사회관 323호' },
-      ],
-    },
-  },
-  {
-    name: '공과대학',
-    divisions: {
-      컴퓨터공학과: [
-        { id: 'cse-1', name: '박지훈', title: '교수', major: '소프트웨어공학', room: '공학관 706호' },
-        { id: 'cse-2', name: '강민재', title: '교수', major: '인공지능', room: '공학관 712호' },
-        { id: 'cse-3', name: '신유라', title: '교수', major: '데이터베이스', room: '공학관 718호' },
-      ],
-      전자공학과: [
-        { id: 'ele-1', name: '배성호', title: '교수', major: '반도체시스템', room: '공학관 530호' },
-        { id: 'ele-2', name: '송나래', title: '교수', major: '신호처리', room: '공학관 536호' },
-      ],
-      기계공학부: [
-        { id: 'me-1', name: '조현우', title: '교수', major: '로봇공학', room: '공학관 402호' },
-        { id: 'me-2', name: '임다인', title: '교수', major: '열유체', room: '공학관 409호' },
-      ],
-    },
-  },
-  {
-    name: '자연과학대학',
-    divisions: {
-      수학과: [
-        { id: 'math-1', name: '권서준', title: '교수', major: '응용수학', room: '자연관 211호' },
-        { id: 'math-2', name: '류하린', title: '교수', major: '통계학', room: '자연관 215호' },
-      ],
-      생명보건학부: [
-        { id: 'bio-1', name: '백지수', title: '교수', major: '분자생물학', room: '자연관 418호' },
-        { id: 'bio-2', name: '홍태윤', title: '교수', major: '보건과학', room: '자연관 423호' },
-      ],
-    },
-  },
-]
+// 학과별 교수 = 단일소스(professors.ts) 투영. 화면에 하드코딩하지 않는다.
+// 기본 선택은 활성 학생의 학과(major)로 파생한다(본인 학과가 먼저 열림).
+const defaultSelection = findDefaultSelection(getActiveStudent().major)
 
 const days: Day[] = [
   { key: 'mon', label: '05/18 (월)', date: '2026. 05. 18 (월)' },
@@ -117,10 +44,10 @@ const reservedSlots = new Set([
 ])
 
 export default function ProfessorCounsel() {
-  const [selectedGroupName, setSelectedGroupName] = useState(departmentGroups[0].name)
-  const selectedGroup = departmentGroups.find(group => group.name === selectedGroupName) ?? departmentGroups[0]
+  const [selectedGroupName, setSelectedGroupName] = useState(defaultSelection.groupName)
+  const selectedGroup = PROFESSOR_GROUPS.find(group => group.name === selectedGroupName) ?? PROFESSOR_GROUPS[0]
   const divisionNames = Object.keys(selectedGroup.divisions)
-  const [selectedDivision, setSelectedDivision] = useState(divisionNames[0])
+  const [selectedDivision, setSelectedDivision] = useState(defaultSelection.division)
   const professors = selectedGroup.divisions[selectedDivision] ?? selectedGroup.divisions[divisionNames[0]]
   const [selectedProfessorId, setSelectedProfessorId] = useState(professors[0].id)
   const [mode, setMode] = useState<CounselMode>('online')
@@ -137,7 +64,7 @@ export default function ProfessorCounsel() {
   const onlineTopic = useMemo(() => `${selectedDivision} ${activeProfessor.name} 교수님께 온라인 상담을 신청합니다.`, [activeProfessor.name, selectedDivision])
 
   const updateGroup = (groupName: string) => {
-    const nextGroup = departmentGroups.find(group => group.name === groupName) ?? departmentGroups[0]
+    const nextGroup = PROFESSOR_GROUPS.find(group => group.name === groupName) ?? PROFESSOR_GROUPS[0]
     const nextDivision = Object.keys(nextGroup.divisions)[0]
     const nextProfessor = nextGroup.divisions[nextDivision][0]
     setSelectedGroupName(nextGroup.name)
@@ -218,7 +145,7 @@ export default function ProfessorCounsel() {
           <label className="pc-select">
             <span className="pc-select-label">대학/부서</span>
             <select value={selectedGroupName} onChange={e => updateGroup(e.target.value)}>
-              {departmentGroups.map(group => (
+              {PROFESSOR_GROUPS.map(group => (
                 <option key={group.name} value={group.name}>{group.name}</option>
               ))}
             </select>

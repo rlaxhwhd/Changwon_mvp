@@ -20,6 +20,8 @@ export interface Counselor {
   scope: string
   /** 담당 학과 목록. 빈 배열이면 전 학과. */
   departments: string[]
+  /** 전문 분야 짧은 태그 (학생 상담신청 화면 표시용, 예: 진로설계 · 취업전략). 미지정 시 화면은 scope로 폴백. */
+  specialty?: string
   /** 프로필 이미지 경로 (선택) */
   avatar?: string
   /** 이메일 (선택) */

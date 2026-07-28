@@ -3,17 +3,11 @@ import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
+import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
 import './CareerCounsel.css'
 
-type CounselorId = 'all' | 'oh' | 'seo' | 'han' | 'moon' | 'yoon' | 'bae' | 'shin' | 'nam'
+type CounselorId = string
 type SlotStatus = 'available' | 'reserved' | 'selected'
-
-interface Counselor {
-  id: CounselorId
-  name: string
-  title: string
-  specialty: string
-}
 
 interface Day {
   key: string
@@ -26,16 +20,8 @@ interface SelectedSlot {
   time: string
 }
 
-const counselors: Counselor[] = [
-  { id: 'oh', name: '오유진', title: '상담사', specialty: '스트레스 · 불안 관리' },
-  { id: 'seo', name: '서민재', title: '상담사', specialty: '대인관계 · 의사소통' },
-  { id: 'han', name: '한소라', title: '상담사', specialty: '자존감 · 자기이해' },
-  { id: 'moon', name: '문지훈', title: '상담사', specialty: '학업동기 · 번아웃' },
-  { id: 'yoon', name: '윤하늘', title: '상담사', specialty: '정서조절 · 마음챙김' },
-  { id: 'bae', name: '배수현', title: '상담사', specialty: '가족관계 · 적응상담' },
-  { id: 'shin', name: '신다은', title: '상담사', specialty: '진로불안 · 심리검사' },
-  { id: 'nam', name: '남기범', title: '상담사', specialty: '위기상담 · 회복지원' },
-]
+// 상담사 = 단일소스(src_admin) 투영. 화면에 하드코딩하지 않는다.
+const counselors: CounselorCard[] = getCounselorCards('psych')
 
 const days: Day[] = [
   { key: 'mon', label: '05/18 (월)', date: '2026. 05. 18 (월)' },
@@ -47,17 +33,19 @@ const days: Day[] = [
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
+// 데모 예약 완료 슬롯 — 기본(첫) 상담사에 대해서만 표시(상담사 id는 단일소스에서 파생).
+const defaultCounselorId = counselors[0]?.id ?? ''
 const reservedSlots = new Set([
-  'oh-mon-10:00',
-  'oh-mon-13:00',
-  'oh-tue-09:00',
-  'oh-tue-15:00',
-  'oh-wed-12:00',
-  'oh-wed-16:00',
-  'oh-thu-11:00',
-  'oh-thu-14:00',
-  'oh-fri-12:00',
-  'oh-fri-17:00',
+  `${defaultCounselorId}-mon-10:00`,
+  `${defaultCounselorId}-mon-13:00`,
+  `${defaultCounselorId}-tue-09:00`,
+  `${defaultCounselorId}-tue-15:00`,
+  `${defaultCounselorId}-wed-12:00`,
+  `${defaultCounselorId}-wed-16:00`,
+  `${defaultCounselorId}-thu-11:00`,
+  `${defaultCounselorId}-thu-14:00`,
+  `${defaultCounselorId}-fri-12:00`,
+  `${defaultCounselorId}-fri-17:00`,
 ])
 
 function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
@@ -66,7 +54,7 @@ function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
 }
 
 export default function PsychCounsel() {
-  const [selectedCounselor, setSelectedCounselor] = useState<CounselorId>('oh')
+  const [selectedCounselor, setSelectedCounselor] = useState<CounselorId>(defaultCounselorId || 'all')
   const [search, setSearch] = useState('')
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>({
     day: days[2],
@@ -120,11 +108,19 @@ export default function PsychCounsel() {
     setSelectedSlot({ day, time })
   }
 
-  const selectCounselorFromCalendar = (counselor: Counselor, day: Day, time: string) => {
+  const selectCounselorFromCalendar = (counselor: CounselorCard, day: Day, time: string) => {
     setSelectedCounselor(counselor.id)
     setSelectedSlot({ day, time })
     setNotice(`${counselor.name} 상담사 선택됨`)
     window.setTimeout(() => setNotice(''), 1800)
+  }
+
+  if (counselors.length === 0) {
+    return (
+      <div className="cc-wrap">
+        <p style={{ padding: '48px 0', textAlign: 'center', color: '#6b7280' }}>등록된 심리 상담사가 없습니다.</p>
+      </div>
+    )
   }
 
   return (
