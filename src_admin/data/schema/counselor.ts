@@ -3,19 +3,15 @@
 // 진로취업상담사(career) / 심리상담사(psych) 2종. 역할별 권한 헬퍼 포함.
 // ─────────────────────────────────────────────────────────────────────────
 import type { CounselRequestType } from './counselRequest'
+import type { StaffUser } from './staff'
 
-/** 상담사 역할 — 진로취업상담사 / 심리상담사 */
+/** 상담사 역할 — 진로취업상담사 / 심리상담사. StaffRole의 부분집합. */
 export type CounselorRole = 'career' | 'psych'
 
-export interface Counselor {
-  id: string
-  /** 상담사 이름 (예: 김진로) */
-  name: string
+/** 상담사 = 교직원 공통 신원(StaffUser) + 상담 도메인 필드.
+ *  id·name·roleLabel·dept는 StaffUser에서 상속하고 role만 career/psych로 좁힌다. */
+export interface Counselor extends StaffUser {
   role: CounselorRole
-  /** 역할 한글 라벨 (예: 진로취업상담사) */
-  roleLabel: string
-  /** 소속 부서/센터 (예: 진로취업지원센터) */
-  dept: string
   /** 담당 범위 설명 (예: 전 학과 진로취업, 공과대학 등) */
   scope: string
   /** 담당 학과 목록. 빈 배열이면 전 학과. */

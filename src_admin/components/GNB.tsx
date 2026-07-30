@@ -3,17 +3,17 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { getNavSections, getSectionForPath, getActiveChildPath } from './navConfig'
 import {
-  COUNSELORS,
-  getActiveCounselor,
-  getActiveCounselorId,
-  setActiveCounselor,
-} from '../data/counselors'
+  STAFF_USERS,
+  getActiveUser,
+  getActiveUserId,
+  setActiveUser,
+} from '../data/staff'
 
 export default function GNB() {
   const { pathname } = useLocation()
-  const counselor = getActiveCounselor()
-  const activeId = getActiveCounselorId()
-  const sections = getNavSections(counselor.role)
+  const user = getActiveUser()
+  const activeId = getActiveUserId()
+  const sections = getNavSections(user.role)
   const currentSection = getSectionForPath(pathname, sections)
 
   const [profileOpen, setProfileOpen] = useState(false)
@@ -35,7 +35,7 @@ export default function GNB() {
 
   return (
     <header className="gnb">
-      <Link to="/" className="gnb-logo" aria-label="국립창원대학교 상담사 포털 홈">
+      <Link to="/" className="gnb-logo" aria-label="국립창원대학교 교직원 포털 홈">
         <img src="/symbol.png" alt="" className="gnb-logo-symbol" />
         <img src="/initiallogo_vertical_kor.png" alt="CWNU 국립창원대학교" className="gnb-logo-wordmark" />
       </Link>
@@ -77,11 +77,11 @@ export default function GNB() {
             aria-haspopup="menu"
             aria-expanded={profileOpen}
             onClick={() => setProfileOpen(v => !v)}
-            title={`${counselor.name} 메뉴`}
+            title={`${user.name} 메뉴`}
           >
             <span className="gnb-profile-name">
-              <strong>{counselor.name}</strong>
-              <small>{counselor.roleLabel}</small>
+              <strong>{user.name}</strong>
+              <small>{user.roleLabel}</small>
             </span>
             <LuChevronDown className="gnb-avatar-caret" aria-hidden="true" />
           </button>
@@ -89,8 +89,8 @@ export default function GNB() {
             <div className="gnb-profile-menu" role="menu">
               <div className="gnb-profile-head">
                 <div className="gnb-profile-meta">
-                  <strong>{counselor.name}</strong>
-                  <small>{counselor.roleLabel} · {counselor.dept}</small>
+                  <strong>{user.name}</strong>
+                  <small>{user.roleLabel} · {user.dept}</small>
                 </div>
               </div>
 
@@ -107,15 +107,15 @@ export default function GNB() {
 
               <div className="gnb-profile-section">
                 <span className="gnb-profile-section-title">
-                  <LuUsers /> 데모 상담사 전환
+                  <LuUsers /> 데모 계정 전환
                 </span>
                 <div className="gnb-profile-switch">
-                  {COUNSELORS.map(c => (
+                  {STAFF_USERS.map(c => (
                     <button
                       key={c.id}
                       type="button"
                       className={`gnb-profile-switch-btn${c.id === activeId ? ' active' : ''}`}
-                      onClick={() => c.id !== activeId && setActiveCounselor(c.id)}
+                      onClick={() => c.id !== activeId && setActiveUser(c.id)}
                       role="menuitemradio"
                       aria-checked={c.id === activeId}
                     >

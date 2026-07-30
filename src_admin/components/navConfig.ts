@@ -1,18 +1,21 @@
 import type { IconType } from 'react-icons'
-import { LuBuilding2, LuCalendarDays, LuClipboardCheck, LuClock, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSettings, LuTable, LuUsers, LuUserX } from 'react-icons/lu'
+import { LuBuilding2, LuCalendarDays, LuClipboardCheck, LuClock, LuContact, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSettings, LuTable, LuUsers, LuUserX } from 'react-icons/lu'
 // ─────────────────────────────────────────────────────────────────────────
-// 상담사 포털 네비 단일 소스 (v2 navConfig 미러)
-// Counsel_README §4 순서: 홈 → 상담 관리 → 학생 관리 → 로드맵 관리[진로]
-//   → 채용공고[진로] → 설정
-// [진로] 표시 섹션은 진로상담사(career) 전용 — 심리상담사면 숨긴다.
+// 교직원(백오피스) 포털 네비 단일 소스 — 상담사·교수·조교 공용.
+// 역할(StaffRole)로 섹션과 하위 항목을 필터한다 = 현행 SY_MENU_AUTH(역할↔메뉴) 계승.
+//   상담사(career/psych): 홈 → 상담 관리 → 학생 관리 → 로드맵/채용/비교과[career] → 설정
+//   교수(professor): SPEC §3-5   조교(assistant): SPEC §3-2
+// [career] 표시 섹션은 진로상담사 전용. 설정의 "가능 시간대"는 상담사 전용(child roles).
 // ─────────────────────────────────────────────────────────────────────────
-import type { CounselorRole } from '../data/schema/counselor'
+import type { StaffRole } from '../data/schema/staff'
 
 export interface NavChild {
   label: string
   path: string
   icon: IconType
   children?: NavChild[]
+  /** 이 항목을 볼 수 있는 역할. 없으면 상위 섹션이 노출되는 모든 역할에 노출. */
+  roles?: StaffRole[]
 }
 
 export interface NavSection {
@@ -22,15 +25,20 @@ export interface NavSection {
   /** 섹션 대표 경로 (없으면 첫 child) */
   path?: string
   icon: IconType
-  /** 이 섹션이 요구하는 역할. 없으면 모든 역할에 노출. */
-  requiresRole?: CounselorRole
+  /** 이 섹션을 볼 수 있는 역할. 없으면 모든 역할에 노출. */
+  roles?: StaffRole[]
   children: NavChild[]
 }
 
+/** 상담사 2종(진로+심리) 공통 노출 */
+const COUNSELOR: StaffRole[] = ['career', 'psych']
+
 const ALL_SECTIONS: NavSection[] = [
+  // ── 상담사 (진로 + 심리) ────────────────────────────────────────────
   {
     id: 'home',
     label: '홈',
+    roles: COUNSELOR,
     basePaths: ['/'],
     path: '/',
     icon: LuHouse,
@@ -39,6 +47,7 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'counsel',
     label: '상담 관리',
+    roles: COUNSELOR,
     basePaths: ['/counsel'],
     icon: LuHeadset,
     children: [
@@ -50,6 +59,7 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'students',
     label: '학생 관리',
+    roles: COUNSELOR,
     basePaths: ['/students'],
     path: '/students',
     icon: LuUsers,
@@ -62,7 +72,7 @@ const ALL_SECTIONS: NavSection[] = [
     label: '로드맵 관리',
     basePaths: ['/roadmap'],
     icon: LuRoute,
-    requiresRole: 'career',
+    roles: ['career'],
     children: [
       { label: '변경 요청함', path: '/roadmap/requests', icon: LuInbox },
     ],
@@ -73,7 +83,7 @@ const ALL_SECTIONS: NavSection[] = [
     basePaths: ['/jobs'],
     path: '/jobs',
     icon: LuBuilding2,
-    requiresRole: 'career',
+    roles: ['career'],
     children: [
       { label: '공고 목록', path: '/jobs', icon: LuList },
       { label: '공고 등록', path: '/jobs/new', icon: LuPlus },
@@ -84,7 +94,7 @@ const ALL_SECTIONS: NavSection[] = [
     label: '비교과 운영',
     basePaths: ['/programs'],
     icon: LuGraduationCap,
-    requiresRole: 'career',
+    roles: ['career'],
     children: [
       { label: '프로그램 목록', path: '/programs', icon: LuList },
       { label: '프로그램 관리', path: '/programs/manage', icon: LuTable },
@@ -92,6 +102,72 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '블랙리스트', path: '/programs/blacklist', icon: LuUserX },
     ],
   },
+
+  // ── 교수 (SPEC §3-5) ────────────────────────────────────────────────
+  {
+    id: 'prof-advisees',
+    label: '지도학생',
+    roles: ['professor'],
+    basePaths: ['/professor/advisees'],
+    path: '/professor/advisees',
+    icon: LuUsers,
+    children: [],
+  },
+  {
+    id: 'prof-counsel',
+    label: '상담 관리',
+    roles: ['professor'],
+    basePaths: ['/professor/counsel'],
+    icon: LuHeadset,
+    children: [
+      { label: '신청 접수', path: '/professor/counsel/requests', icon: LuInbox },
+      { label: '상담 기록', path: '/professor/counsel/records', icon: LuClipboardCheck },
+    ],
+  },
+  {
+    id: 'prof-setup',
+    label: '상담 설정',
+    roles: ['professor'],
+    basePaths: ['/professor/schedule', '/professor/profile'],
+    icon: LuSettings,
+    children: [
+      { label: '상담 제한일정', path: '/professor/schedule', icon: LuClock },
+      { label: '상담 노출 설정', path: '/professor/profile', icon: LuIdCard },
+    ],
+  },
+
+  // ── 조교 (SPEC §3-2) ────────────────────────────────────────────────
+  {
+    id: 'asst-students',
+    label: '학생 현황',
+    roles: ['assistant'],
+    basePaths: ['/assistant/students'],
+    path: '/assistant/students',
+    icon: LuUsers,
+    children: [],
+  },
+  {
+    id: 'asst-advisor',
+    label: '전담교수',
+    roles: ['assistant'],
+    basePaths: ['/assistant/advisor'],
+    icon: LuContact,
+    children: [
+      { label: '배정 현황', path: '/assistant/advisor', icon: LuTable },
+      { label: '상담 실적', path: '/assistant/advisor/records', icon: LuClipboardCheck },
+    ],
+  },
+  {
+    id: 'asst-portfolio',
+    label: '포트폴리오',
+    roles: ['assistant'],
+    basePaths: ['/assistant/portfolio'],
+    path: '/assistant/portfolio',
+    icon: LuClipboardCheck,
+    children: [],
+  },
+
+  // ── 설정 (전 역할 공통) ─────────────────────────────────────────────
   {
     id: 'settings',
     label: '설정',
@@ -100,14 +176,16 @@ const ALL_SECTIONS: NavSection[] = [
     icon: LuSettings,
     children: [
       { label: '내 프로필', path: '/settings', icon: LuIdCard },
-      { label: '가능 시간대', path: '/settings/availability', icon: LuClock },
+      { label: '가능 시간대', path: '/settings/availability', icon: LuClock, roles: COUNSELOR },
     ],
   },
 ]
 
-/** 역할에 노출되는 섹션만 반환 (requiresRole 필터) */
-export function getNavSections(role: CounselorRole): NavSection[] {
-  return ALL_SECTIONS.filter(s => !s.requiresRole || s.requiresRole === role)
+/** 역할에 노출되는 섹션 + 그 하위 항목만 반환 (섹션·child 모두 roles 필터) */
+export function getNavSections(role: StaffRole): NavSection[] {
+  return ALL_SECTIONS
+    .filter(s => !s.roles || s.roles.includes(role))
+    .map(s => ({ ...s, children: s.children.filter(c => !c.roles || c.roles.includes(role)) }))
 }
 
 export function matchesPath(pathname: string, targetPath: string) {

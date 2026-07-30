@@ -1,0 +1,10 @@
+{
+  "id": "prof_lee",
+  "name": "이정민",
+  "role": "professor",
+  "roleLabel": "교수",
+  "dept": "컴퓨터공학과",
+  "collegeName": "공과대학",
+  "email": "lee.jm@changwon.ac.kr",
+  "officeHours": "화·목 15:00~17:00"
+}

@@ -1025,6 +1025,8 @@ input, textarea, select { font-family: var(--font); }
   background: transparent; transition: background 0.12s;
 }
 .admin-roster-row:hover { background: var(--color-section-bg); }
+.admin-roster-row.is-readonly { cursor: default; }
+.admin-roster-row.is-readonly:hover { background: transparent; }
 .admin-roster-student { display: flex; align-items: center; gap: 10px; }
 .admin-roster-student strong { font-size: 15px; font-weight: 800; color: var(--color-text); }
 .admin-roster-cell { display: flex; flex-direction: column; gap: 3px; font-size: 14px; font-weight: 700; color: var(--color-text); }

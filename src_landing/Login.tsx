@@ -10,16 +10,16 @@ const ACCOUNTS: Record<string, { pw: string; go: () => void }> = {
   '20250001': {
     pw: '!',
     go: () => {
-      // 학생 로그인 — 관리자 세션 해제 후 학생 포털(/v2)로
-      try { localStorage.removeItem('dc_active_counselor') } catch { /* noop */ }
+      // 학생 로그인 — 교직원 세션 해제 후 학생 포털(/v2)로
+      try { localStorage.removeItem('dc_active_staff') } catch { /* noop */ }
       window.location.href = '/v2'
     },
   },
   '63044': {
     pw: '!',
     go: () => {
-      // 교직원/관리자 로그인 — 상담사 세션 설정 후 관리자 포털(/admin)로
-      try { localStorage.setItem('dc_active_counselor', 'career_park') } catch { /* noop */ }
+      // 교직원/관리자 로그인 — 교직원 세션 설정 후 관리자 포털(/admin)로
+      try { localStorage.setItem('dc_active_staff', 'career_park') } catch { /* noop */ }
       window.location.href = '/admin'
     },
   },

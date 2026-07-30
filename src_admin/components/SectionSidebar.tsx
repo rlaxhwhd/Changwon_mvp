@@ -1,7 +1,7 @@
 import { LuChevronRight } from 'react-icons/lu'
 import { Link, useLocation } from 'react-router-dom'
 import { getNavSections, getSectionForPath, getActiveChildPath, type NavChild } from './navConfig'
-import { getActiveCounselor } from '../data/counselors'
+import { getActiveUser } from '../data/staff'
 import { getTodaySummary } from '../data/counselRequests'
 import './SectionSidebar.css'
 
@@ -23,14 +23,14 @@ function SidebarItem({ item, activeChildPath }: { item: NavChild; activeChildPat
 
 export default function SectionSidebar() {
   const { pathname } = useLocation()
-  const counselor = getActiveCounselor()
-  const sections = getNavSections(counselor.role)
+  const user = getActiveUser()
+  const sections = getNavSections(user.role)
   const section = getSectionForPath(pathname, sections)
 
   if (!section || section.children.length === 0) return null
 
   const activeChildPath = getActiveChildPath(pathname, section)
-  const todaySummary = section.id === 'counsel' ? getTodaySummary(counselor.id) : null
+  const todaySummary = section.id === 'counsel' ? getTodaySummary(user.id) : null
 
   return (
     <aside className="section-sidebar" aria-label={`${section.label} 하위 메뉴`}>

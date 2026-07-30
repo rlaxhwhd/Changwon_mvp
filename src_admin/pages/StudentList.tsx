@@ -27,10 +27,21 @@ const TRACK_ICON: Record<RosterTrack, IconType> = {
   가속: LuRocket,
 }
 
-export default function StudentList() {
+interface StudentListProps {
+  /** 조회 스코프(담당 학과). 없으면 활성 상담사 담당 학과. 조교/교수 재사용 시 주입. */
+  departments?: string[]
+  /** 페이지 제목 (없으면 '담당 학생 목록') */
+  title?: string
+  /** 제목 아래 설명 접두 (없으면 상담사 소속·범위) */
+  subtitle?: string
+  /** 읽기 전용 — 행 클릭(상세 이동) 비활성 (조교: SPEC §3-2 읽기 전용) */
+  readonly?: boolean
+}
+
+export default function StudentList({ departments: deptProp, title, subtitle, readonly }: StudentListProps = {}) {
   const counselor = getActiveCounselor()
   const navigate = useNavigate()
-  const depts = counselor.departments
+  const depts = deptProp ?? counselor.departments
   const deptKey = depts.join(',')
 
   const [query, setQuery] = useState('')
@@ -75,9 +86,9 @@ export default function StudentList() {
     <div className="admin-page">
       <header className="admin-page-head">
         <div>
-          <h1 className="admin-page-title">담당 학생 목록</h1>
+          <h1 className="admin-page-title">{title ?? '담당 학생 목록'}</h1>
           <p className="admin-page-desc">
-            {counselor.dept} · {counselor.scope} · 총 {summary.total}명
+            {subtitle ?? `${counselor.dept} · ${counselor.scope}`} · 총 {summary.total}명
             {summary.focusCount > 0 && (
               <>
                 {' '}· <span className="admin-focus-inline"><LuTriangleAlert /> 집중관리 {summary.focusCount}명</span>
@@ -162,8 +173,9 @@ export default function StudentList() {
                 <button
                   key={s.id}
                   type="button"
-                  className="admin-roster-row"
-                  onClick={() => navigate(`/students/${s.id}`)}
+                  className={`admin-roster-row${readonly ? ' is-readonly' : ''}`}
+                  onClick={readonly ? undefined : () => navigate(`/students/${s.id}`)}
+                  aria-disabled={readonly}
                 >
                   <span className="admin-roster-student">
                     <strong>{s.name}</strong>

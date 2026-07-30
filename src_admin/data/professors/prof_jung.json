@@ -1,0 +1,10 @@
+{
+  "id": "prof_jung",
+  "name": "정수현",
+  "role": "professor",
+  "roleLabel": "교수",
+  "dept": "경영학과",
+  "collegeName": "경영대학",
+  "email": "jung.sh@changwon.ac.kr",
+  "officeHours": "월·수 10:00~12:00"
+}

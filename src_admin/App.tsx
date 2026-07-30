@@ -21,21 +21,38 @@ import ProgramNoticeView from './pages/ProgramNoticeView'
 import ProgramBlacklist from './pages/ProgramBlacklist'
 import SettingsProfile from './pages/SettingsProfile'
 import SettingsAvailability from './pages/SettingsAvailability'
-import { hasActiveSession, getActiveCounselor } from './data/counselors'
+import AssistantStudents from './pages/AssistantStudents'
+import NotReady from './pages/NotReady'
+import { hasActiveSession, getActiveUser } from './data/staff'
+import type { StaffRole } from './data/schema/staff'
 
-/** 로그인 게이트 — 활성 상담사 세션이 없으면 /login 으로 보낸다. */
+/** 로그인 게이트 — 활성 교직원 세션이 없으면 /login 으로 보낸다. */
 function RequireLogin() {
   if (!hasActiveSession()) return <Navigate to="/login" replace />
   return <Outlet />
 }
 
-/** 진로 전용 가드 — 진로상담사(career)만 접근. 심리상담사면 홈으로 리다이렉트.
- *  로드맵·채용공고·비교과 운영이 공유한다(navConfig requiresRole:'career'와 짝). */
-function RequireCareer() {
-  if (getActiveCounselor().role !== 'career') return <Navigate to="/" replace />
+/** 역할 가드 — 허용 역할이 아니면 홈으로. navConfig의 섹션 roles와 짝을 이룬다.
+ *  (상담사 그룹 ['career','psych'] · 진로 전용 ['career'] · 교수 · 조교) */
+function RequireRole({ roles }: { roles: StaffRole[] }) {
+  if (!roles.includes(getActiveUser().role)) return <Navigate to="/" replace />
   return <Outlet />
 }
 
+/** '/' 진입 — 역할별 랜딩. 상담사는 대시보드, 교수·조교는 각자 첫 화면으로. */
+function RoleHome() {
+  const role = getActiveUser().role
+  if (role === 'professor') return <Navigate to="/professor/advisees" replace />
+  if (role === 'assistant') return <Navigate to="/assistant/students" replace />
+  return <Home />
+}
+
+/** 설정 > 내 프로필 — 상담사는 프로필 편집기, 교수·조교는 준비 중. */
+function RoleSettings() {
+  const role = getActiveUser().role
+  if (role === 'career' || role === 'psych') return <SettingsProfile />
+  return <NotReady title="내 프로필" />
+}
 
 const router = createBrowserRouter(
   [
@@ -46,33 +63,32 @@ const router = createBrowserRouter(
         {
           element: <Layout />,
           children: [
-            // 홈 대시보드
-            { path: '/', element: <Home /> },
+            // 역할별 홈 진입
+            { path: '/', element: <RoleHome /> },
 
-            // ── 상담 관리 /counsel (G1 구현) ──
-            { path: '/counsel/requests', element: <CounselRequests /> },
-            { path: '/counsel/schedule', element: <CounselSchedule /> },
-            { path: '/counsel/session/:studentId', element: <CounselSession /> },
-            { path: '/counsel/records', element: <CounselRecords /> },
-
-            // ── 학생 관리 /students (G2 구현) ──
-            { path: '/students', element: <StudentList /> },
-            { path: '/students/:id', element: <StudentDetail /> },
-
-            // ── 진로 전용 [career] — 로드맵·채용공고·비교과 운영 (G2·G3) ──
+            // ── 상담사 (career + psych) ──
             {
-              element: <RequireCareer />,
+              element: <RequireRole roles={['career', 'psych']} />,
               children: [
-                // 로드맵 관리 /roadmap (G2)
+                { path: '/counsel/requests', element: <CounselRequests /> },
+                { path: '/counsel/schedule', element: <CounselSchedule /> },
+                { path: '/counsel/session/:studentId', element: <CounselSession /> },
+                { path: '/counsel/records', element: <CounselRecords /> },
+                { path: '/students', element: <StudentList /> },
+                { path: '/students/:id', element: <StudentDetail /> },
+                { path: '/settings/availability', element: <SettingsAvailability /> },
+              ],
+            },
+
+            // ── 진로 전용 [career] — 로드맵·채용공고·비교과 운영 ──
+            {
+              element: <RequireRole roles={['career']} />,
+              children: [
                 { path: '/roadmap/requests', element: <RoadmapRequests /> },
                 { path: '/roadmap/:studentId', element: <RoadmapEditor /> },
-
-                // 채용공고 /jobs (G3)
                 { path: '/jobs', element: <JobList /> },
                 { path: '/jobs/new', element: <JobForm /> },
                 { path: '/jobs/:id/edit', element: <JobForm /> },
-
-                // 비교과 운영 /programs (G3)
                 { path: '/programs', element: <ProgramList /> },
                 { path: '/programs/manage', element: <ProgramManage /> },
                 { path: '/programs/new', element: <ProgramForm /> },
@@ -91,9 +107,31 @@ const router = createBrowserRouter(
               ],
             },
 
-            // ── 설정 /settings (G1 구현) ──
-            { path: '/settings', element: <SettingsProfile /> },
-            { path: '/settings/availability', element: <SettingsAvailability /> },
+            // ── 교수 (professor) — SPEC §3-5 (기능 화면은 후속 슬라이스) ──
+            {
+              element: <RequireRole roles={['professor']} />,
+              children: [
+                { path: '/professor/advisees', element: <NotReady title="지도학생 목록" /> },
+                { path: '/professor/counsel/requests', element: <NotReady title="교수상담 신청 접수" /> },
+                { path: '/professor/counsel/records', element: <NotReady title="교수상담 기록 작성" /> },
+                { path: '/professor/schedule', element: <NotReady title="상담 제한일정" /> },
+                { path: '/professor/profile', element: <NotReady title="상담 노출 설정" /> },
+              ],
+            },
+
+            // ── 조교 (assistant) — SPEC §3-2 ──
+            {
+              element: <RequireRole roles={['assistant']} />,
+              children: [
+                { path: '/assistant/students', element: <AssistantStudents /> },
+                { path: '/assistant/advisor', element: <NotReady title="전담교수 배정 현황" /> },
+                { path: '/assistant/advisor/records', element: <NotReady title="전담교수 상담 실적" /> },
+                { path: '/assistant/portfolio', element: <NotReady title="학생 포트폴리오" /> },
+              ],
+            },
+
+            // ── 설정 (전 역할 공통) ──
+            { path: '/settings', element: <RoleSettings /> },
 
             { path: '*', element: <Navigate to="/" replace /> },
           ],

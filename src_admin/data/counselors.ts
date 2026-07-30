@@ -5,6 +5,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { Counselor, CounselorRole } from './schema/counselor'
 import { canEditRoadmap, canManageJobs, canConfirmIap, handledRequestTypes } from './schema/counselor'
+import { getActiveIdRaw, setActiveId, hasActiveSession as hasSession, clearSession } from './session'
 import careerKim from './counselors/career_kim.json'
 import careerPark from './counselors/career_park.json'
 import careerChoi from './counselors/career_choi.json'
@@ -26,7 +27,6 @@ const BASE_COUNSELORS: Counselor[] = [
   psychYoon as Counselor,
 ]
 
-const STORAGE_KEY = 'dc_active_counselor'
 const OVERRIDE_KEY = 'dc_counselor_overrides'
 
 /** 프로필 수정분(override)을 읽어 base JSON에 병합. 원본 JSON은 건드리지 않는다. */
@@ -50,30 +50,17 @@ export const COUNSELORS: Counselor[] = (() => {
 })()
 
 export function getActiveCounselorId(): string {
-  try {
-    return localStorage.getItem(STORAGE_KEY) || COUNSELORS[0].id
-  } catch {
-    return COUNSELORS[0].id
-  }
+  return getActiveIdRaw() ?? COUNSELORS[0].id
 }
 
-/** 로그인 여부 — 활성 상담사가 명시적으로 선택(저장)된 적이 있는지 */
+/** 로그인 여부 — 세션 단일 소스(session.ts)로 위임 */
 export function hasActiveSession(): boolean {
-  try {
-    return localStorage.getItem(STORAGE_KEY) != null
-  } catch {
-    return false
-  }
+  return hasSession()
 }
 
-/** 로그아웃 — 활성 상담사 해제 후 리로드 */
+/** 로그아웃 — 활성 사용자 해제 후 리로드 */
 export function clearActiveCounselor(): void {
-  try {
-    localStorage.removeItem(STORAGE_KEY)
-  } catch {
-    /* ignore */
-  }
-  window.location.reload()
+  clearSession()
 }
 
 export function getActiveCounselor(): Counselor {
@@ -82,12 +69,7 @@ export function getActiveCounselor(): Counselor {
 }
 
 export function setActiveCounselor(id: string): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, id)
-  } catch {
-    /* ignore */
-  }
-  window.location.reload()
+  setActiveId(id)
 }
 
 /** 역할로 첫 상담사 찾기 (로그인 역할 선택에 사용) */
