@@ -13,6 +13,8 @@ export type StaffRole = 'career' | 'psych' | 'professor' | 'assistant'
 export interface StaffUser {
   /** = INTG_UID (교직원=사번). 세션·조인키 */
   id: string
+  /** 사번 — 정문 로그인 아이디(비번 '!'). 데모에서 id(slug)와 분리해 둔다. */
+  empNo?: string
   name: string
   role: StaffRole
   /** 역할 한글 라벨 (예: 진로취업상담사 / 교수 / 조교) */

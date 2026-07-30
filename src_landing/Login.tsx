@@ -1,28 +1,34 @@
 import { useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { LuUser, LuLock, LuEye, LuEyeOff } from 'react-icons/lu'
+import { STAFF_USERS } from '../src_admin/data/staff'
 import './Login.css'
 
 type UserTab = 'internal' | 'external'
 
-// 데모 계정 — 아이디로 목적지 분기 (비번은 '!')
-const ACCOUNTS: Record<string, { pw: string; go: () => void }> = {
-  '20250001': {
-    pw: '!',
-    go: () => {
-      // 학생 로그인 — 교직원 세션 해제 후 학생 포털(/v2)로
-      try { localStorage.removeItem('dc_active_staff') } catch { /* noop */ }
-      window.location.href = '/v2'
-    },
-  },
-  '63044': {
-    pw: '!',
-    go: () => {
-      // 교직원/관리자 로그인 — 교직원 세션 설정 후 관리자 포털(/admin)로
-      try { localStorage.setItem('dc_active_staff', 'career_park') } catch { /* noop */ }
-      window.location.href = '/admin'
-    },
-  },
+// 데모 로그인 — 비밀번호는 '!'. 아이디는 학생=학번, 교직원=사번.
+// 교직원 사번은 하드코딩하지 않고 통합 레지스트리(STAFF_USERS)에서 조회한다.
+const DEMO_PW = '!'
+const STUDENT_IDS = new Set(['20250001'])
+
+/** 로그인 시도 → 성공 시 목적지로 이동하고 true, 실패면 false. */
+function tryLogin(rawId: string, pw: string): boolean {
+  if (pw !== DEMO_PW) return false
+  const id = rawId.trim()
+  if (STUDENT_IDS.has(id)) {
+    // 학생 로그인 — 교직원 세션 해제 후 학생 포털(/v2)로
+    try { localStorage.removeItem('dc_active_staff') } catch { /* noop */ }
+    window.location.href = '/v2'
+    return true
+  }
+  // 교직원 로그인 — 사번(empNo)으로 상담사·교수·조교 조회 후 교직원 포털(/admin)로
+  const staff = STAFF_USERS.find(u => u.empNo === id)
+  if (staff) {
+    try { localStorage.setItem('dc_active_staff', staff.id) } catch { /* noop */ }
+    window.location.href = '/admin'
+    return true
+  }
+  return false
 }
 
 export default function Login() {
@@ -39,11 +45,7 @@ export default function Login() {
       setError('아이디와 비밀번호를 입력하세요.')
       return
     }
-    const account = ACCOUNTS[id.trim()]
-    if (account && account.pw === pw) {
-      account.go()
-      return
-    }
+    if (tryLogin(id, pw)) return
     setError('아이디 또는 비밀번호가 올바르지 않습니다.')
   }
 
