@@ -1025,8 +1025,13 @@ input, textarea, select { font-family: var(--font); }
   background: transparent; transition: background 0.12s;
 }
 .admin-roster-row:hover { background: var(--color-section-bg); }
-.admin-roster-row.is-readonly { cursor: default; }
-.admin-roster-row.is-readonly:hover { background: transparent; }
+/* 조교 학생현황 표 — 번호·이름·학번·학년·대학·학과·상태·학생정보(보기) */
+.admin-asst-roster .admin-roster-head,
+.admin-asst-roster .admin-roster-row {
+  grid-template-columns: 0.5fr 1fr 1.2fr 0.6fr 1fr 1.5fr 0.8fr 0.9fr;
+}
+.admin-asst-roster .admin-roster-row { cursor: default; }
+.admin-asst-roster .admin-roster-row:hover { background: transparent; }
 .admin-roster-student { display: flex; align-items: center; gap: 10px; }
 .admin-roster-student strong { font-size: 15px; font-weight: 800; color: var(--color-text); }
 .admin-roster-cell { display: flex; flex-direction: column; gap: 3px; font-size: 14px; font-weight: 700; color: var(--color-text); }

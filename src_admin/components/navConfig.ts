@@ -158,12 +158,12 @@ const ALL_SECTIONS: NavSection[] = [
     ],
   },
   {
-    id: 'asst-portfolio',
-    label: '포트폴리오',
+    id: 'asst-companies',
+    label: '학과추천기업관리',
     roles: ['assistant'],
-    basePaths: ['/assistant/portfolio'],
-    path: '/assistant/portfolio',
-    icon: LuClipboardCheck,
+    basePaths: ['/assistant/companies'],
+    path: '/assistant/companies',
+    icon: LuBuilding2,
     children: [],
   },
 
@@ -171,6 +171,7 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'settings',
     label: '설정',
+    roles: ['career', 'psych', 'professor'],
     basePaths: ['/settings'],
     path: '/settings',
     icon: LuSettings,

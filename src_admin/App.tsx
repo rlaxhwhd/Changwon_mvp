@@ -126,7 +126,7 @@ const router = createBrowserRouter(
                 { path: '/assistant/students', element: <AssistantStudents /> },
                 { path: '/assistant/advisor', element: <NotReady title="전담교수 배정 현황" /> },
                 { path: '/assistant/advisor/records', element: <NotReady title="전담교수 상담 실적" /> },
-                { path: '/assistant/portfolio', element: <NotReady title="학생 포트폴리오" /> },
+                { path: '/assistant/companies', element: <NotReady title="학과 추천기업 관리" /> },
               ],
             },
 
