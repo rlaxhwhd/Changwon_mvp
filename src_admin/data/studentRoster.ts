@@ -169,6 +169,7 @@ function detailToRoster(s: StudentData): RosterStudent {
     track: iap.track as RosterTrack,
     progress: roadmapProgress(s),
     status: '재학',
+    phone: s.phone,
   }
 }
 

@@ -22,6 +22,8 @@ import ProgramBlacklist from './pages/ProgramBlacklist'
 import SettingsProfile from './pages/SettingsProfile'
 import SettingsAvailability from './pages/SettingsAvailability'
 import AssistantStudents from './pages/AssistantStudents'
+import AssistantAdvisor from './pages/AssistantAdvisor'
+import AssistantAdvisorRecords from './pages/AssistantAdvisorRecords'
 import ProfessorAdvisees from './pages/ProfessorAdvisees'
 import NotReady from './pages/NotReady'
 import { hasActiveSession, getActiveUser } from './data/staff'
@@ -125,8 +127,8 @@ const router = createBrowserRouter(
               element: <RequireRole roles={['assistant']} />,
               children: [
                 { path: '/assistant/students', element: <AssistantStudents /> },
-                { path: '/assistant/advisor', element: <NotReady title="전담교수 배정 현황" /> },
-                { path: '/assistant/advisor/records', element: <NotReady title="전담교수 상담 실적" /> },
+                { path: '/assistant/advisor', element: <AssistantAdvisor /> },
+                { path: '/assistant/advisor/records', element: <AssistantAdvisorRecords /> },
                 { path: '/assistant/companies', element: <NotReady title="학과 추천기업 관리" /> },
               ],
             },

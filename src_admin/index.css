@@ -1035,6 +1035,13 @@ input, textarea, select { font-family: var(--font); }
 .admin-student-roster .admin-roster-cell .admin-enroll { align-self: center; }
 .admin-student-roster .admin-roster-row { cursor: default; }
 .admin-student-roster .admin-roster-row:hover { background: transparent; }
+.admin-advisor-roster .admin-roster-head, .admin-advisor-roster .admin-roster-row { grid-template-columns: 0.5fr 1fr 0.9fr 1.6fr 0.6fr 0.8fr 1.2fr 1.1fr 1fr; }
+.admin-advisor-roster .admin-roster-head, .admin-advisor-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-profstat-roster .admin-roster-head, .admin-profstat-roster .admin-roster-row { grid-template-columns: 1.4fr 1.2fr 1fr 1fr 1.1fr; }
+.admin-profstat-roster .admin-roster-head, .admin-profstat-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-advisee-roster .admin-roster-head, .admin-advisee-roster .admin-roster-row { grid-template-columns: 0.5fr 1fr 0.9fr 0.6fr 1.1fr 0.8fr 1fr 1.3fr 1fr; }
+.admin-advisee-roster .admin-roster-head, .admin-advisee-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-advisor-name { color: var(--color-primary); font-weight: 800; }
 .admin-roster-student { display: flex; align-items: center; gap: 10px; }
 .admin-roster-student strong { font-size: 15px; font-weight: 800; color: var(--color-text); }
 .admin-roster-cell { display: flex; flex-direction: column; gap: 3px; font-size: 14px; font-weight: 700; color: var(--color-text); }
