@@ -21,7 +21,7 @@ import AdminModal from '../components/AdminModal'
 // 학생 상세는 읽기 전용 모달로만 열람(조교는 로드맵·IAP 수정 불가).
 // ─────────────────────────────────────────────────────────────────────────
 const ALL = '전체'
-const PAGE_SIZE = 20
+const PAGE_SIZE = 10
 
 export default function AssistantStudents() {
   const user = getActiveUser()
