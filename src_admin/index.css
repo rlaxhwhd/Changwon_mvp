@@ -1025,16 +1025,16 @@ input, textarea, select { font-family: var(--font); }
   background: transparent; transition: background 0.12s;
 }
 .admin-roster-row:hover { background: var(--color-section-bg); }
-/* 조교 학생현황 표 — 번호·이름·학번·학년·대학·학과·상태·학생정보(보기). 중앙 정렬로 열 간격 균일 */
-.admin-asst-roster .admin-roster-head,
-.admin-asst-roster .admin-roster-row {
+/* 학생현황 표(조교·교수 공유) — 번호·이름·학번·학년·대학·학과·상태·학생정보(보기). 중앙 정렬로 열 간격 균일 */
+.admin-student-roster .admin-roster-head,
+.admin-student-roster .admin-roster-row {
   grid-template-columns: 0.6fr 1.1fr 1.3fr 0.7fr 1.1fr 1.6fr 0.9fr 1fr;
 }
-.admin-asst-roster .admin-roster-head { text-align: center; }
-.admin-asst-roster .admin-roster-cell { align-items: center; text-align: center; }
-.admin-asst-roster .admin-roster-cell .admin-enroll { align-self: center; }
-.admin-asst-roster .admin-roster-row { cursor: default; }
-.admin-asst-roster .admin-roster-row:hover { background: transparent; }
+.admin-student-roster .admin-roster-head { text-align: center; }
+.admin-student-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-student-roster .admin-roster-cell .admin-enroll { align-self: center; }
+.admin-student-roster .admin-roster-row { cursor: default; }
+.admin-student-roster .admin-roster-row:hover { background: transparent; }
 .admin-roster-student { display: flex; align-items: center; gap: 10px; }
 .admin-roster-student strong { font-size: 15px; font-weight: 800; color: var(--color-text); }
 .admin-roster-cell { display: flex; flex-direction: column; gap: 3px; font-size: 14px; font-weight: 700; color: var(--color-text); }
@@ -1912,6 +1912,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-modal { width: min(100%, 680px); max-height: calc(100vh - 64px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-bg); box-shadow: var(--shadow-lg); }
 .admin-modal-md { max-width: 520px; }
 .admin-modal-lg { max-width: 680px; }
+.admin-modal-xl { width: min(100%, 1040px); max-width: 1040px; }
 
 /* ── 학생 상세 정보 서브페이지 ────────────────────────────────────────── */
 .counsel-breadcrumb { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); margin-bottom: 8px; }

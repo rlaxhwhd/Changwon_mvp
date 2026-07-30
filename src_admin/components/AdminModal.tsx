@@ -6,7 +6,7 @@ type AdminModalProps = {
   children: ReactNode
   title: string
   onClose: () => void
-  size?: 'md' | 'lg'
+  size?: 'md' | 'lg' | 'xl'
 }
 
 export default function AdminModal({ children, title, onClose, size = 'lg' }: AdminModalProps) {

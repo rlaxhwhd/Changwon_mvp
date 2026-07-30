@@ -22,6 +22,7 @@ import ProgramBlacklist from './pages/ProgramBlacklist'
 import SettingsProfile from './pages/SettingsProfile'
 import SettingsAvailability from './pages/SettingsAvailability'
 import AssistantStudents from './pages/AssistantStudents'
+import ProfessorAdvisees from './pages/ProfessorAdvisees'
 import NotReady from './pages/NotReady'
 import { hasActiveSession, getActiveUser } from './data/staff'
 import type { StaffRole } from './data/schema/staff'
@@ -111,7 +112,7 @@ const router = createBrowserRouter(
             {
               element: <RequireRole roles={['professor']} />,
               children: [
-                { path: '/professor/advisees', element: <NotReady title="지도학생 목록" /> },
+                { path: '/professor/advisees', element: <ProfessorAdvisees /> },
                 { path: '/professor/counsel/requests', element: <NotReady title="교수상담 신청 접수" /> },
                 { path: '/professor/counsel/records', element: <NotReady title="교수상담 기록 작성" /> },
                 { path: '/professor/schedule', element: <NotReady title="상담 제한일정" /> },
