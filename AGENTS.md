@@ -78,5 +78,5 @@
 - **단일 소스:** 네비 `navConfig.ts` · 진단 `careerProcess.ts` · 학생 데이터 `students.ts` · 디자인 `DESIGN.md`.
 - **JSON 동적 · 하드코딩 금지** (실서비스 투입 기준). 학생↔상담사 연계는 원본 JSON 불변 + **override 레이어**(localStorage) 패턴.
 - **디자인 생성 금지** — DESIGN.md 토큰만 적용. drift = 결함.
-- 빌드 검증: `npx tsc --noEmit` 통과. 시각 검증: gstack `/browse` (이 프로젝트는 테스트 러너 없음).
+- 빌드 검증: `npm run build`(= `tsc -b`) 통과. 시각 검증: gstack `/browse` (이 프로젝트는 테스트 러너 없음).
 - `/v2`(학생)와 `/admin`(상담사)는 **분리된 SPA**. 공유는 데이터 계층(localStorage)·디자인 토큰뿐.

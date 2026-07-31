@@ -1002,6 +1002,11 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-select select:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-bg); }
 
+/* 체크박스형 필터 — .admin-select와 같은 줄에 정렬된다 */
+.admin-check { display: flex; align-items: center; gap: 7px; padding: 9px 0; cursor: pointer; }
+.admin-check input { width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer; }
+.admin-check > span { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+
 .admin-focus-inline { color: var(--color-accent); font-weight: 800; }
 .admin-focus-inline svg { margin-right: 3px; }
 
@@ -1041,6 +1046,74 @@ input, textarea, select { font-family: var(--font); }
 .admin-profstat-roster .admin-roster-head, .admin-profstat-roster .admin-roster-cell { align-items: center; text-align: center; }
 .admin-advisee-roster .admin-roster-head, .admin-advisee-roster .admin-roster-row { grid-template-columns: 0.5fr 1fr 0.9fr 0.6fr 1.1fr 0.8fr 1fr 1.3fr 1fr; }
 .admin-advisee-roster .admin-roster-head, .admin-advisee-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-diag-roster .admin-roster-head, .admin-diag-roster .admin-roster-row { grid-template-columns: 1fr 0.9fr 1.1fr 0.5fr 1.4fr 0.7fr 0.9fr 1.8fr 1.1fr; }
+.admin-diag-roster .admin-roster-head, .admin-diag-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-diag-roster .admin-roster-cell .admin-chip,
+.admin-diag-roster .admin-roster-cell .admin-enroll,
+.admin-diag-roster .admin-roster-cell .admin-tag-soft { align-self: center; }
+.admin-diag-result { text-align: left !important; align-items: flex-start !important; }
+.admin-diag-result small { display: flex; align-items: center; gap: 4px; color: var(--color-primary); }
+
+/* ── 검사별 응시율 카드 (검사 현황 상단) — 클릭 시 해당 검사로 필터 ── */
+.admin-diag-summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.admin-diag-card {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 16px; text-align: left; cursor: pointer;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color .15s, box-shadow .15s;
+}
+.admin-diag-card:hover { border-color: var(--color-primary-light); }
+.admin-diag-card.active { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-bg); }
+.admin-diag-card > strong { font-size: 14px; font-weight: 800; color: var(--color-text); }
+.admin-diag-rate { display: flex; align-items: baseline; gap: 8px; }
+.admin-diag-rate span { font-size: 26px; font-weight: 800; color: var(--color-primary); }
+.admin-diag-rate small { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
+.admin-diag-bar { height: 6px; border-radius: var(--radius-pill); background: var(--color-divider); overflow: hidden; }
+.admin-diag-bar span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--color-primary); }
+.admin-diag-legend { display: flex; gap: 12px; }
+.admin-diag-legend em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--color-caption); }
+
+/* ── 상담 통계 (SPEC §3-1-⑥) ─────────────────────────────────────────── */
+.admin-statsum { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.admin-statsum-card {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 16px 18px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.admin-statsum-card > span { font-size: 12px; font-weight: 800; color: var(--color-text-secondary); }
+.admin-statsum-card > strong { font-size: 24px; font-weight: 900; color: var(--color-text); line-height: 1.1; }
+.admin-statsum-card > small { font-size: 12px; font-weight: 600; color: var(--color-caption); }
+
+.admin-statsec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+.admin-statsec-grid .admin-card-head { margin-top: 0; }
+.admin-statsec-grid .admin-card-head h2 small { font-size: 12px; font-weight: 700; color: var(--color-caption); margin-left: 6px; }
+
+/* 월별 세로 막대 — 신청/완료 2계열 */
+.admin-stat-months { display: flex; align-items: flex-end; gap: 10px; overflow-x: auto; padding-bottom: 4px; }
+.admin-stat-month { display: flex; flex-direction: column; align-items: center; gap: 5px; min-width: 46px; flex: 1; }
+.admin-stat-month-bars { display: flex; align-items: flex-end; gap: 3px; height: 120px; }
+.admin-stat-month-bars span { width: 12px; min-height: 2px; border-radius: var(--radius-xs) var(--radius-xs) 0 0; }
+.admin-stat-month-bars .is-requested { background: var(--color-primary-light); }
+.admin-stat-month-bars .is-completed { background: var(--color-primary); }
+.admin-stat-month > strong { font-size: 13px; font-weight: 800; color: var(--color-text); }
+.admin-stat-month > small { font-size: 11px; font-weight: 700; color: var(--color-caption); }
+.admin-stat-legend { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
+.admin-stat-legend em { width: 10px; height: 10px; border-radius: 3px; margin-left: 10px; }
+.admin-stat-legend em:first-child { margin-left: 0; }
+.admin-stat-legend .is-requested { background: var(--color-primary-light); }
+.admin-stat-legend .is-completed { background: var(--color-primary); }
+
+/* 가로 막대 목록 — 유형·방식·학년·학과 공용 */
+.admin-stat-bars { display: flex; flex-direction: column; gap: 10px; }
+.admin-stat-bars li { display: grid; grid-template-columns: 110px 1fr 42px; align-items: center; gap: 10px; }
+.admin-stat-bar-label { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-stat-bar-track { height: 10px; border-radius: var(--radius-pill); background: var(--color-divider); overflow: hidden; }
+.admin-stat-bar-track span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--color-primary); }
+.admin-stat-bar-value { font-size: 13px; font-weight: 800; color: var(--color-text); text-align: right; }
 .admin-advisor-name { color: var(--color-primary); font-weight: 800; }
 .admin-roster-student { display: flex; align-items: center; gap: 10px; }
 .admin-roster-student strong { font-size: 15px; font-weight: 800; color: var(--color-text); }
@@ -1912,7 +1985,22 @@ input, textarea, select { font-family: var(--font); }
 .counsel-request-detail-grid span { font-size: 11px; font-weight: 800; color: var(--color-text-secondary); }
 .counsel-request-detail-grid input,
 .counsel-request-detail-grid select { height: 38px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: 7px; background: #fff; color: var(--color-text); }
+.counsel-request-detail-grid textarea { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 7px; background: #fff; color: var(--color-text); font: inherit; resize: vertical; }
 .counsel-request-detail-empty { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+.counsel-required { font-style: normal; color: var(--color-danger); margin-left: 4px; }
+.counsel-optional { font-style: normal; color: var(--color-caption); margin-left: 4px; }
+
+/* 처리 이력 — 확정·일정변경·재배정·취소·완료 append-only 로그 */
+.counsel-event-trail { display: flex; flex-direction: column; gap: 10px; }
+.counsel-event-trail li { display: grid; grid-template-columns: 66px 1fr; gap: 10px; align-items: start; }
+.counsel-event-trail strong { display: block; font-size: 13px; font-weight: 700; color: var(--color-text); }
+.counsel-event-trail p { margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
+.counsel-event-trail small { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--color-caption); }
+.counsel-event-kind { display: inline-flex; justify-content: center; padding: 3px 0; border-radius: var(--radius-pill); font-size: 11px; font-weight: 800; background: var(--tint-neutral-bg); color: var(--tint-neutral-ink); }
+.counsel-event-kind.is-확정 { background: var(--color-primary-bg); color: var(--color-primary); }
+.counsel-event-kind.is-완료 { background: var(--tint-success-bg); color: var(--tint-success-ink); }
+.counsel-event-kind.is-취소 { background: var(--tint-danger-bg); color: var(--tint-danger-ink); }
+.counsel-event-kind.is-재배정 { background: var(--tint-warning-bg); color: var(--tint-warning-ink); }
 .counsel-request-detail-actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
 
 .admin-modal-overlay { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; padding: 32px; background: color-mix(in srgb, var(--color-title) 36%, transparent); }
@@ -2102,9 +2190,75 @@ input, textarea, select { font-family: var(--font); }
   .counsel-request-table-head > div { flex-wrap: wrap; justify-content: flex-end; }
 }
 
+.admin-profreq-roster .admin-roster-head,
+.admin-profreq-roster .admin-roster-row { grid-template-columns: 46px 1.4fr .7fr .65fr 1.5fr 1.1fr .7fr 1fr; }
+.admin-profrec-roster .admin-roster-head,
+.admin-profrec-roster .admin-roster-row { grid-template-columns: 46px .8fr 1.1fr 1.2fr 1fr 1.6fr .7fr; }
+.admin-td-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ─── 상담일지 인쇄 (C10) ─────────────────────────────────────────────
+   레이아웃 밖 라우트(/counsel/records/:id/print)에서 쓰는 A4 인쇄면.
+   화면에서는 회색 배경 위에 흰 시트, 인쇄 시에는 툴바를 감추고 시트만 남긴다. */
+.print-page { min-height: 100vh; padding: 24px; background: var(--color-section-bg); }
+.print-toolbar { display: flex; justify-content: space-between; gap: 8px; max-width: 820px; margin: 0 auto 16px; }
+.print-missing { max-width: 820px; margin: 0 auto 16px; font-size: 14px; font-weight: 700; color: var(--color-text-secondary); }
+.print-sheet { max-width: 820px; margin: 0 auto; padding: 40px 44px; background: #fff; border: 1px solid var(--color-border); }
+.print-head { text-align: center; padding-bottom: 18px; border-bottom: 2px solid var(--color-title); }
+.print-head h1 { font-size: 26px; font-weight: 900; letter-spacing: 6px; color: var(--color-title); }
+.print-head p { margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
+.print-table { width: 100%; margin-top: 18px; border-collapse: collapse; }
+.print-table th, .print-table td { border: 1px solid var(--color-border); padding: 8px 10px; font-size: 13px; text-align: left; vertical-align: top; }
+.print-table th { width: 96px; background: var(--color-section-bg); font-weight: 800; color: var(--color-text-secondary); white-space: nowrap; }
+.print-table td { font-weight: 600; color: var(--color-text); }
+.print-table.is-log th { width: auto; text-align: center; }
+.print-table.is-log td { font-size: 12px; }
+.print-block { margin-top: 18px; }
+.print-block h2 { margin-bottom: 6px; font-size: 13px; font-weight: 800; color: var(--color-title); }
+.print-block p { min-height: 64px; padding: 10px 12px; border: 1px solid var(--color-border); font-size: 13px; font-weight: 600; line-height: 1.7; color: var(--color-text); white-space: pre-wrap; }
+.print-sign { display: flex; justify-content: flex-end; gap: 28px; margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--color-divider); }
+.print-sign div { display: flex; align-items: baseline; gap: 8px; font-size: 13px; }
+.print-sign span { font-weight: 800; color: var(--color-text-secondary); }
+.print-sign strong { font-weight: 700; color: var(--color-text); }
+.print-sign em { font-style: normal; color: var(--color-caption); }
+
+@media print {
+  .print-page { padding: 0; background: #fff; }
+  .print-toolbar { display: none; }
+  .print-sheet { max-width: none; margin: 0; padding: 0; border: 0; }
+  .print-block p { min-height: 0; }
+  @page { size: A4; margin: 16mm; }
+}
+
+/* ─── 심리검사 결과 (C7) ──────────────────────────────────────────────── */
+.admin-psych-roster .admin-roster-head, .admin-psych-roster .admin-roster-row { grid-template-columns: 1fr 0.8fr 1.1fr 0.9fr 1.4fr 0.9fr 0.8fr 0.5fr 1fr; }
+.admin-psych-roster .admin-roster-head, .admin-psych-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-psych-roster .admin-roster-cell .admin-chip { align-self: center; }
+.admin-scale-section { margin: 16px 0; padding: 14px 16px; background: var(--color-section-bg); border-radius: var(--radius-md); }
+.admin-scale-head { display: flex; align-items: center; justify-content: space-between; }
+.admin-scale-head h3 { font-size: 13px; font-weight: 800; color: var(--color-title); }
+.admin-scale-row { display: grid; grid-template-columns: 1.2fr 0.6fr 2fr 36px; gap: 8px; margin-top: 8px; }
+.admin-scale-row input { height: 36px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: 7px; background: #fff; font-size: 13px; color: var(--color-text); }
+
+/* ─── 집단상담 (C6) + 학생 피커 (C9) ─────────────────────────────────── */
+.admin-group-roster .admin-roster-head, .admin-group-roster .admin-roster-row { grid-template-columns: 0.9fr 1fr 2.2fr 1.4fr 0.7fr 0.7fr 1fr; }
+.admin-group-roster .admin-roster-head, .admin-group-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-group-roster .admin-roster-cell .admin-chip { align-self: center; }
+.admin-group-title { text-align: left !important; align-items: flex-start !important; }
+.admin-group-title small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+
+.admin-member-list { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.admin-member-list li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.admin-member-list strong { font-size: 14px; font-weight: 800; color: var(--color-text); }
+.admin-member-list small { flex: 1; font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
+.admin-member-check { width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer; }
+
+.admin-picker-roster .admin-roster-head, .admin-picker-roster .admin-roster-row { grid-template-columns: 1fr 0.8fr 1.2fr 0.5fr 0.7fr 0.7fr; }
+.admin-picker-roster .admin-roster-head, .admin-picker-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-picker-roster .admin-roster-cell .admin-enroll { align-self: center; }

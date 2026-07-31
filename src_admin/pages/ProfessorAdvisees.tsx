@@ -1,16 +1,16 @@
 import StudentRosterTable from '../components/StudentRosterTable'
+import { getAdviseeStudentIds } from '../data/advisorAssigns'
 import { getActiveUser } from '../data/staff'
 
-// 교수 지도학생 목록 (SPEC §3-5) — 공유 StudentRosterTable 사용(읽기 전용).
-// 데모: 지도학생을 소속 학과 학생으로 대체(현행 advisee 매핑 데이터 도입 전).
+/** 교수 범위는 학과 로스터가 아니라 활성 지도교수 배정의 단일 원천을 따른다. */
 export default function ProfessorAdvisees() {
   const user = getActiveUser()
-  const departments = [user.dept]
   return (
     <StudentRosterTable
-      departments={departments}
+      departments={[]}
+      studentIds={getAdviseeStudentIds(user.id)}
       title="지도학생 목록"
-      subtitle={`${user.dept} · 지도학생`}
+      subtitle={`${user.name}의 지도학생`}
       viewerRole="professor"
     />
   )

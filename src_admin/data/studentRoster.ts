@@ -181,12 +181,14 @@ export function getFullRoster(departments: string[] = []): RosterStudent[] {
 
 /** [DB-ready] 로스터 목록 조회 — async + 페이징. 6천건이 와도 화면은 현재 페이지만 받는다. */
 export async function queryStudentRoster(
-  params: ListParams & { departments?: string[] } = {},
+  params: ListParams & { departments?: string[]; studentIds?: string[] } = {},
 ): Promise<Paginated<RosterStudent>> {
   await mockLatency()
   const q = (params.q ?? '').trim().toLowerCase()
   const f = params.filters ?? {}
+  const ids = params.studentIds === undefined ? undefined : new Set(params.studentIds)
   const filtered = getFullRoster(params.departments ?? []).filter(s => {
+    if (ids && !ids.has(s.id)) return false
     if (f.major && s.major !== f.major) return false
     if (f.grade && String(s.grade) !== f.grade) return false
     if (f.studentType && s.studentType !== f.studentType) return false
@@ -199,8 +201,9 @@ export async function queryStudentRoster(
 }
 
 /** 필터 드롭다운 옵션 — 전체 집합에서 파생. DB 전환 시 별도 집계 엔드포인트. */
-export function getRosterFilterOptions(departments: string[] = []) {
-  const base = getFullRoster(departments)
+export function getRosterFilterOptions(departments: string[] = [], studentIds?: string[]) {
+  const ids = studentIds === undefined ? undefined : new Set(studentIds)
+  const base = getFullRoster(departments).filter(student => !ids || ids.has(student.id))
   return {
     majors: [...new Set(base.map(s => s.major))].sort(),
     grades: [...new Set(base.map(s => s.grade))].sort((a, b) => a - b),
@@ -211,8 +214,9 @@ export function getRosterFilterOptions(departments: string[] = []) {
 }
 
 /** 헤더 집계(총원·집중관리) — 전체 집합에서. DB 전환 시 COUNT 쿼리. */
-export function getRosterSummary(departments: string[] = []) {
-  const base = getFullRoster(departments)
+export function getRosterSummary(departments: string[] = [], studentIds?: string[]) {
+  const ids = studentIds === undefined ? undefined : new Set(studentIds)
+  const base = getFullRoster(departments).filter(student => !ids || ids.has(student.id))
   return {
     total: base.length,
     focusCount: base.filter(s => s.track === '집중관리').length,

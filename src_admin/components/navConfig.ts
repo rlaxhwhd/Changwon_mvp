@@ -1,5 +1,5 @@
 import type { IconType } from 'react-icons'
-import { LuBuilding2, LuCalendarDays, LuClipboardCheck, LuClock, LuContact, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSettings, LuTable, LuUsers, LuUserX } from 'react-icons/lu'
+import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardCheck, LuClock, LuContact, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSettings, LuTable, LuUsers, LuUsersRound, LuUserX } from 'react-icons/lu'
 // ─────────────────────────────────────────────────────────────────────────
 // 교직원(백오피스) 포털 네비 단일 소스 — 상담사·교수·조교 공용.
 // 역할(StaffRole)로 섹션과 하위 항목을 필터한다 = 현행 SY_MENU_AUTH(역할↔메뉴) 계승.
@@ -54,6 +54,9 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '신청 접수함', path: '/counsel/requests', icon: LuInbox },
       { label: '일정·예약', path: '/counsel/schedule', icon: LuCalendarDays },
       { label: '완료 상담 내역', path: '/counsel/records', icon: LuClipboardCheck },
+      { label: '집단상담', path: '/counsel/groups', icon: LuUsersRound },
+      { label: '심리검사 결과', path: '/counsel/psych-tests', icon: LuBrain, roles: ['psych'] },
+      { label: '상담 통계', path: '/counsel/stats', icon: LuChartNoAxesColumn },
     ],
   },
   {
@@ -65,6 +68,7 @@ const ALL_SECTIONS: NavSection[] = [
     icon: LuUsers,
     children: [
       { label: '담당 학생 목록', path: '/students', icon: LuUsers },
+      { label: '검사 현황', path: '/students/diagnostics', icon: LuClipboardCheck },
     ],
   },
   {

@@ -26,13 +26,13 @@ const PAGE_SIZE = 10
 
 interface StudentRosterTableProps {
   departments: string[]
+  studentIds?: string[]
   title: string
   subtitle: string
   viewerRole: StaffRole
 }
 
-export default function StudentRosterTable({ departments, title, subtitle, viewerRole }: StudentRosterTableProps) {
-  const deptKey = departments.join(',')
+export default function StudentRosterTable({ departments, studentIds, title, subtitle, viewerRole }: StudentRosterTableProps) {
 
   const [query, setQuery] = useState('')
   const [major, setMajor] = useState(ALL)
@@ -42,8 +42,8 @@ export default function StudentRosterTable({ departments, title, subtitle, viewe
   const [selected, setSelected] = useState<RosterStudent | null>(null)
 
   // 필터 옵션·집계는 전체 담당 집합에서 파생(현재 페이지가 아니라)
-  const options = useMemo(() => getRosterFilterOptions(departments), [deptKey]) // eslint-disable-line react-hooks/exhaustive-deps
-  const summary = useMemo(() => getRosterSummary(departments), [deptKey]) // eslint-disable-line react-hooks/exhaustive-deps
+  const options = useMemo(() => getRosterFilterOptions(departments, studentIds), [departments, studentIds])
+  const summary = useMemo(() => getRosterSummary(departments, studentIds), [departments, studentIds])
 
   // 서버(목업) 조회 — useListData가 useEffect+레이스 cleanup 담당. DB 전환 시 훅 내부만 교체.
   const { data: result, isLoading: loading } = useListData(queryStudentRoster, {
@@ -51,6 +51,7 @@ export default function StudentRosterTable({ departments, title, subtitle, viewe
     pageSize: PAGE_SIZE,
     q: query,
     departments,
+    studentIds,
     filters: {
       major: major === ALL ? undefined : major,
       grade: grade === ALL ? undefined : grade,

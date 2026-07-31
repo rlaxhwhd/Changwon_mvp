@@ -25,10 +25,13 @@ export const PROFESSOR_GROUPS: DepartmentGroup[] = seed as unknown as Department
  * 학생 학과(major)로 기본 선택(단과대·학과)을 파생한다.
  * 해당 학과가 트리에 없으면 첫 단과대·첫 학과로 폴백한다.
  */
-export function findDefaultSelection(major: string): { groupName: string; division: string } {
-  for (const group of PROFESSOR_GROUPS) {
+export function findDefaultSelection(
+  major: string,
+  groups: DepartmentGroup[] = PROFESSOR_GROUPS,
+): { groupName: string; division: string } {
+  for (const group of groups) {
     if (major in group.divisions) return { groupName: group.name, division: major }
   }
-  const first = PROFESSOR_GROUPS[0]
+  const first = groups[0] ?? PROFESSOR_GROUPS[0]
   return { groupName: first.name, division: Object.keys(first.divisions)[0] }
 }

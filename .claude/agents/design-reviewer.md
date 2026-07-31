@@ -24,7 +24,7 @@ Codex 구현 산출물을 감사한다. **새 디자인을 만들지 않고 시�
 2. **JSON 동적·하드코딩.** 화면에 데이터 리터럴이 박혀 있지 않은가. 스키마→JSON→로더→구독 구조인가. (`json-dynamic-screen` 기준)
 3. **단일 소스.** navConfig.ts·careerProcess.ts·students.ts 패턴을 우회하지 않는가.
 4. **컴포넌트 재사용.** `component-map.md`의 재사용 매핑을 지켰는가. 이미 있는 컴포넌트를 중복 생성하지 않았는가.
-5. **코드 품질.** `npx tsc --noEmit` 통과, 명백한 결함.
+5. **코드 품질.** `npm run build`(= `tsc -b`) 통과, 명백한 결함.
 6. **impeccable 안티패턴·비평 감사 (Skill).** 이번에 변경된 화면/파일을 대상으로 `/impeccable audit <target>`(안티패턴 감지: 대비·타이포·간격·모션·AI슬롭 — 예: 한쪽만 굵은 컬러 보더 `border-left`)를 실행하고, craft 관점이 필요하면 `/impeccable critique <target>`도 실행한다. 발견을 review.md에 정리하되 판정 기준:
    - **접근성/명백한 결함**(예: 본문 대비 <4.5:1)이거나 **DESIGN.md·역할 레이어 위반과 겹치는** 안티패턴 → **REJECT**.
    - 순수 취향·craft 권고(예: "카드 남용", 모션 제안) → **권장(advisory)** 로만 기록, REJECT 아님.

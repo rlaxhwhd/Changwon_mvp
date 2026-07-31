@@ -1,4 +1,4 @@
-import { LuCalendarCheck, LuFolderOpen, LuMessageSquareMore, LuPen, LuQuote, LuSearch } from 'react-icons/lu'
+import { LuCalendarCheck, LuFolderOpen, LuMessageSquareMore, LuPen, LuPrinter, LuQuote, LuSearch } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getActiveCounselor } from '../data/counselors'
@@ -66,6 +66,9 @@ function RecordItem({ record }: { record: CounselRecord }) {
             </div>
           )}
           <div className="admin-form-actions">
+            <Link to={`/counsel/records/${record.id}/print`} className="admin-btn admin-btn-ghost sm" target="_blank" rel="noreferrer">
+              <LuPrinter /> 상담일지 인쇄
+            </Link>
             <button className="admin-btn admin-btn-ghost sm" onClick={() => setEditing(true)}>
               <LuPen /> 코멘트 편집
             </button>

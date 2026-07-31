@@ -1,0 +1,110 @@
+// ─────────────────────────────────────────────────────────────────────────────
+// 교수상담 신청 투영 로더 — 단일소스는 학생 JSON(src_v2 students 의 상담신청 배열)이다.
+// 현행 DB 대응: CON_PROF_INFO(신청+결과 한 행, 18.4만건).
+// DB 전환 시 이 투영 로더만 CON_PROF_INFO 조회로 교체한다.
+// 관리자 쪽에 별도 신청 스토어를 만들지 말 것 — 학생이 쓰고 교수가 읽는 한 방향이다.
+// ─────────────────────────────────────────────────────────────────────────────
+import { getCounselOwners, patchCounselRequest } from '../../src_v2/data/students'
+import type {
+  CounselMethod,
+  CounselRequestStatus,
+  CounselSlot,
+  EnrollmentStatus,
+} from '../../src_v2/data/students'
+import { getActiveAssignByStudent } from './advisorAssigns'
+import { mockLatency, paginate } from './query'
+import type { ListParams, Paginated } from './query'
+
+export interface ProfCounselRequestRow {
+  /** 학생 상담 신청의 단일 식별자. */
+  id: string
+  /** 신청 학생 식별자. */
+  studentId: string
+  /** 학생 학번 스냅샷. */
+  studentNo: string
+  /** 학생 이름 스냅샷. */
+  studentName: string
+  /** 학생 학과 스냅샷. */
+  studentMajor: string
+  /** 학생 학년 스냅샷. */
+  studentGrade: number
+  /** 학생 학적 상태 스냅샷. */
+  enrollmentStatus: EnrollmentStatus
+  /** 확정 또는 신청한 상담 방식. */
+  method: CounselMethod
+  /** 학생이 작성한 상담 주제. */
+  topic: string
+  /** 학생이 신청한 시각. */
+  requestedAt: string
+  /** 신청의 현재 전이 상태. */
+  status: CounselRequestStatus
+  /** 학생 희망 또는 교수가 확정한 상담 슬롯. */
+  slot?: CounselSlot
+  /** 현재 교수의 활성 지도학생인지 여부. */
+  isAdvisee: boolean
+}
+export type ProfReqTab = '전체' | CounselRequestStatus
+function allRows(professorId: string): ProfCounselRequestRow[] {
+  const assigns = getActiveAssignByStudent()
+  return getCounselOwners().flatMap(owner => owner.counselRequests
+    .filter(request => request.type === '교수' && request.professorId === professorId)
+    .map(request => ({
+      id: request.id,
+      studentId: owner.id,
+      // 데모 owner는 studentNo가 없고 id 자체가 학번이므로 폴백한다.
+      studentNo: owner.studentNo ?? owner.id,
+      studentName: owner.name,
+      studentMajor: owner.major,
+      studentGrade: owner.grade,
+      enrollmentStatus: owner.enrollmentStatus,
+      method: request.method,
+      topic: request.topic,
+      requestedAt: request.requestedAt,
+      status: request.status,
+      slot: request.slot,
+      isAdvisee: assigns.get(owner.id)?.professorId === professorId,
+    })))
+}
+/** [DB-ready] 교수 소유 type=교수 신청 투영이며 페이징 전에 범위를 좁힌다. */
+export async function queryProfCounselRequests(
+  params: ListParams & { professorId: string; tab?: ProfReqTab },
+): Promise<Paginated<ProfCounselRequestRow>> {
+  await mockLatency()
+  const q = (params.q ?? '').trim().toLowerCase()
+  const method = params.filters?.method
+  const rows = allRows(params.professorId)
+    .filter(row => !params.tab || params.tab === '전체' || row.status === params.tab)
+    .filter(row => !method || row.method === method)
+    .filter(row => !q || `${row.studentName} ${row.studentNo}`.toLowerCase().includes(q))
+    .sort((a, b) => Number(b.status === '대기') - Number(a.status === '대기')
+      || b.requestedAt.localeCompare(a.requestedAt))
+  return paginate(rows, params)
+}
+export function getProfReqTabCounts(professorId: string): Record<ProfReqTab, number> {
+  const rows = allRows(professorId)
+  const counts: Record<ProfReqTab, number> = { 전체: rows.length, 대기: 0, 확정: 0, 완료: 0, 취소: 0 }
+  rows.forEach(row => { counts[row.status] += 1 })
+  return counts
+}
+/** [DB-ready] 교수 범위 안에서 신청 ID의 상담 투영 행을 조회한다. */
+export function getProfRequestById(
+  professorId: string,
+  id: string,
+): ProfCounselRequestRow | undefined {
+  return allRows(professorId).find(row => row.id === id)
+}
+
+/** [DB-ready] 대기 신청을 확정 상태와 교수 확정 슬롯으로 전이한다. */
+export function confirmProfRequest(id: string, slot: CounselSlot): void {
+  patchCounselRequest(id, { status: '확정', slot })
+}
+
+/** [DB-ready] 대기 신청을 취소 상태로 전이한다. */
+export function cancelProfRequest(id: string): void {
+  patchCounselRequest(id, { status: '취소' })
+}
+
+/** [DB-ready] 기록이 저장된 신청을 완료 상태로 전이한다. */
+export function completeProfRequest(id: string): void {
+  patchCounselRequest(id, { status: '완료', completedAt: new Date().toISOString() })
+}

@@ -119,6 +119,8 @@ export interface StudentCounselRequest {
   requestedAt: string
   /** 미지정이면 투영단계에서 유형별 기본배정 파생(counselors 단일소스). 재배정 시 명시값 저장. */
   assignedCounselorId?: string
+  /** 교수 상담 유형의 교수 풀 id이며 상담사 id 공간과 분리한다. */
+  professorId?: string
   /** 확정된 상담 슬롯 (확정/완료 시). */
   slot?: CounselSlot
   counselorComment?: string

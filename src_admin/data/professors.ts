@@ -5,8 +5,8 @@
 //   이쪽은 "교수로 로그인하는 백오피스 사용자"다.
 // ─────────────────────────────────────────────────────────────────────────
 import type { StaffUser } from './schema/staff'
-import profLee from './professors/prof_lee.json'
-import profJung from './professors/prof_jung.json'
+import profLee from './professors/cse-1.json'
+import profJung from './professors/biz-1.json'
 
 /** 교수 = 교직원 공통 신원 + 교수 도메인 필드 */
 export interface Professor extends StaffUser {

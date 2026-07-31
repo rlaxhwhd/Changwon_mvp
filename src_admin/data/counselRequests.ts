@@ -14,7 +14,8 @@ import type {
   CounselSlot,
 } from './schema/counselRequest'
 import { handledRequestTypes } from './schema/counselor'
-import { getCounselorByRole } from './counselors'
+import { getActiveCounselor, getCounselorByRole } from './counselors'
+import { appendCounselEvent } from './counselEvents'
 import {
   getCounselOwners,
   getCounselOwnerById,
@@ -101,14 +102,22 @@ function requestDateOf(request: CounselRequest): string {
   return request.slot?.date ?? request.requestedAt.slice(0, 10)
 }
 
-/** 현황 기준일 — 신청이 가장 많은 날(리스트 기본 표시일과 동일 규칙). 없으면 오늘. */
+/**
+ * 기준일 선택 규칙 — **오늘 → 가장 가까운 예정일 → 가장 최근 지난 날** 순.
+ * 접수함(날짜별 목록)과 홈 대시보드가 공유한다. 날짜 추출은 호출부가 하고 규칙만 여기 둔다.
+ *
+ * ⚠ 이전 규칙은 "신청이 가장 많은 날"이었다. seed가 특정 날짜에 몰려 있으면 화면이 항상 그날을
+ *   열어서 **새로 들어온 신청이 보이지 않았다**(학생이 신청 → 접수함에 안 뜸). 그래서 바꿨다.
+ */
+export function pickReferenceDate(dates: string[], today: string = currentDateKey()): string {
+  const sorted = [...new Set(dates)].sort()
+  if (sorted.includes(today)) return today
+  return sorted.find(date => date > today) ?? sorted.at(-1) ?? today
+}
+
+/** 현황 기준일 — 접수함 기본 표시일과 동일 규칙. */
 function referenceDate(requests: CounselRequest[]): string {
-  const frequency = new Map<string, number>()
-  requests.forEach(request => {
-    const key = requestDateOf(request)
-    frequency.set(key, (frequency.get(key) ?? 0) + 1)
-  })
-  return [...frequency.entries()].sort((a, b) => b[1] - a[1] || b[0].localeCompare(a[0]))[0]?.[0] ?? currentDateKey()
+  return pickReferenceDate(requests.map(requestDateOf))
 }
 
 /** 담당 상담사의 오늘 상담 현황을 반환한다(기준일 = 최다 신청일 = 리스트 기본 표시일). */
@@ -211,30 +220,59 @@ export function getCounselStudentProfile(studentId: string): CounselStudentProfi
 // ── 쓰기 (상태 전이) ───────────────────────────────────────────────────────
 // 소속 학생 owner의 override를 patchCounselRequest로 갱신한다(dc_counsel_owners).
 // 화면은 전이 후 reload로 반영한다(현행 동작 유지).
+//
+// ★ 모든 전이는 처리 이력(dc_counsel_events)을 함께 남긴다.
+//   현행은 최종값만 들고 있어 "누가 언제 왜 바꿨는지"가 사라진다(schema/counselEvent.ts 참조).
+
+/** 이력 기록자 — 화면에서 활성 상담사를 매번 넘기지 않도록 여기서 해석한다. */
+function actor(): { by: string; byName: string } {
+  const me = getActiveCounselor()
+  return { by: me.id, byName: me.name }
+}
+
+/** 전이 대상 신청의 학생 id (이력 조회 축). 없으면 빈 문자열. */
+function studentIdOf(id: string): string {
+  return getRequestById(id)?.studentId ?? ''
+}
 
 /** 대기 → 확정: 슬롯을 배정하고 상태를 확정으로 전이 */
 export function confirmRequest(id: string, slot: CounselSlot): void {
   patchCounselRequest(id, { status: '확정', slot })
+  appendCounselEvent({ requestId: id, studentId: studentIdOf(id), kind: '확정', toSlot: slot, ...actor() })
 }
 
-/** 대기 → 취소: 거절 처리 */
-export function rejectRequest(id: string): void {
+/** 대기·확정 → 취소. **사유 필수** (SPEC §3-1-②) */
+export function rejectRequest(id: string, reason: string): void {
   patchCounselRequest(id, { status: '취소' })
+  appendCounselEvent({ requestId: id, studentId: studentIdOf(id), kind: '취소', reason, ...actor() })
 }
 
 /** 확정 건의 일정(슬롯) 변경 */
 export function rescheduleRequest(id: string, slot: CounselSlot): void {
+  const before = getRequestById(id)?.slot
   patchCounselRequest(id, { status: '확정', slot })
+  appendCounselEvent({ requestId: id, studentId: studentIdOf(id), kind: '일정변경', fromSlot: before, toSlot: slot, ...actor() })
 }
 
 /** 확정 → 완료: 상담 진행 완료 처리 */
 export function completeRequest(id: string): void {
   patchCounselRequest(id, { status: '완료', completedAt: new Date().toISOString() })
+  appendCounselEvent({ requestId: id, studentId: studentIdOf(id), kind: '완료', ...actor() })
 }
 
-/** 담당 상담사 재배정 — 상태·슬롯은 유지하고 담당자만 변경 */
-export function reassignRequest(id: string, counselorId: string): void {
+/** 담당 상담사 재배정 — 상태·슬롯은 유지하고 담당자만 변경. 사유는 선택. */
+export function reassignRequest(id: string, counselorId: string, reason?: string): void {
+  const before = getRequestById(id)?.assignedCounselorId
   patchCounselRequest(id, { assignedCounselorId: counselorId })
+  appendCounselEvent({
+    requestId: id,
+    studentId: studentIdOf(id),
+    kind: '재배정',
+    fromCounselorId: before,
+    toCounselorId: counselorId,
+    reason: reason?.trim() || undefined,
+    ...actor(),
+  })
 }
 
 export type {

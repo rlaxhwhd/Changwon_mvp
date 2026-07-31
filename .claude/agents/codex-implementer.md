@@ -27,7 +27,7 @@ description: Codex(OpenAI) 측 2·3단계 구현 담당. Claude Code 팀장이 �
 - `frontend-design` 스킬로 완성도 있게 구현하되 **craft(간격·위계·모션·디테일)만** 취한다. 팔레트·폰트·토큰은 반드시 `DESIGN.md`(base) + 역할 레이어에서만 가져온다. **새 색·폰트 생성 금지.** (사용자 확정 규칙)
 - **모든 데이터는 JSON 동적**: 스키마→JSON→로더→구독. `students.ts` 패턴 미러. 화면에 데이터 리터럴 하드코딩 금지. (`json-dynamic-screen` 규약)
 - 출력 경로: 학생 = `src_v2/`, 상담사 = `src_admin/`.
-- 타입 안전: `npx tsc --noEmit` 통과.
+- 타입 안전: `npm run build`(= `tsc -b`) 통과.
 
 ## 읽기 범위 격리
 

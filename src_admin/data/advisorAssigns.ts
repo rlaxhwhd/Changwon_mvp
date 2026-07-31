@@ -35,6 +35,19 @@ export function getActiveAssignByStudent(): Map<string, AdvisorAssign> {
   return new Map(getAdvisorAssigns().filter(a => a.status === 'active').map(a => [a.studentId, a]))
 }
 
+/** 한 교수에게 active 배정된 지도학생 id 목록이며 교수 화면의 스코프 단일 원천이다. */
+export function getAdviseeStudentIds(professorId: string): string[] {
+  return getAdvisorAssigns()
+    .filter(item => item.status === 'active' && item.professorId === professorId)
+    .map(item => item.studentId)
+}
+
+/** 교수에게 배정된 지도학생 로스터를 데이터층에서 조회한다. */
+export function getAdviseeRoster(professorId: string): RosterStudent[] {
+  const studentIds = new Set(getAdviseeStudentIds(professorId))
+  return getFullRoster().filter(student => studentIds.has(student.id))
+}
+
 function professorById(id: string): Professor | undefined {
   return PROFESSOR_GROUPS.flatMap(group => Object.values(group.divisions).flat()).find(professor => professor.id === id)
 }
@@ -118,6 +131,8 @@ export function getProfessorAdvisorCounts(major: string): Map<string, number> {
   return counts
 }
 
-export function getAdvisorRosterForExport(params: { departments?: string[]; tab?: AdvisorTab; q?: string; filters?: Record<string, string | undefined> }): AdvisorRosterRow[] {
+// 내보내기는 페이징 없이 전체를 반환한다. 호출부가 조회 파라미터를 그대로 넘길 수 있도록
+// queryAdvisorRoster와 같은 타입을 받되 page/pageSize는 무시한다.
+export function getAdvisorRosterForExport(params: ListParams & { departments?: string[]; tab?: AdvisorTab }): AdvisorRosterRow[] {
   return filterRoster(params)
 }

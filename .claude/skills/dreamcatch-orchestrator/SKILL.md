@@ -23,7 +23,7 @@ Claude Code와 Codex는 **메모리·런타임을 공유하지 않는다. 소통
    - 있음 + 새 이미지·요구 → 다음 번호로 새 폴더 생성 → **새 실행**
 3. 사용자 의도 요약 + 실행 계획 제안 → **확인받고 진행.** (구현 먼저 시작 금지)
 
-## Phase 1 — 기획 (team-lead · OPUS)
+## Phase 1 — 기획 (team-lead · fable)
 
 UI 이미지를 받아 **프로젝트 맞춤으로 교정·확정**한다. 이미지의 부적합 내용(예: "회원"→학생, "admin user"→상담사/교수)을 바로잡고, 네비게이션(navConfig 기준)·버튼·페이지 내용·데이터 스키마(students.ts 패턴)를 정한다.
 → 산출: `.ai/handoff/000X-{role}-{screen}/ui-spec.md` + `component-map.md`(재사용 매핑) + `image.png` 배치.
@@ -35,7 +35,7 @@ Codex가 handoff 폴더를 읽고 MengTo `image-to-code` 방법론으로 이미�
 
 ## Phase 3 — 구현 (Codex)
 
-Codex가 `frontend-design`(토큰 내 craft만)로 구현한다. **팔레트·폰트·토큰은 DESIGN.md+역할 레이어에서만, 새 디자인 생성 금지.** 모든 데이터는 JSON 동적(스키마→JSON→로더→구독, students.ts 미러). 출력: 학생=`src_v2/`, 상담사=`src_admin/`. `npx tsc --noEmit` 통과.
+Codex가 `frontend-design`(토큰 내 craft만)로 구현한다. **팔레트·폰트·토큰은 DESIGN.md+역할 레이어에서만, 새 디자인 생성 금지.** 모든 데이터는 JSON 동적(스키마→JSON→로더→구독, students.ts 미러). 출력: 학생=`src_v2/`, 상담사=`src_admin/`. `npm run build`(= `tsc -b`) 통과.
 
 > **Codex 바톤(현재):** Codex 확장/CLI 미설치 상태에선 팀장이 handoff 스펙까지 확정 → 사용자가 Codex로 2·3단계 실행. 설치 후엔 gstack `/codex`로 Claude가 직접 호출 가능(자세히는 `.ai/interop.md`). 어느 경우든 **계약은 파일**이라 동일하게 동작한다.
 
@@ -64,7 +64,7 @@ Codex 산출 코드를 감사: **디자인 토큰 drift · 하드코딩 리터�
 - **B0. 컨텍스트 확인** — team-lead 착수 루틴(메모리→문서). `_workspace/` 존재로 초기/재실행 판별.
 - **B1. 기획 (team-lead · Fable)** — 현행 mock/하드코딩 지점 조사 → 데이터-흐름 요구 스펙을 `_workspace/01_lead_{topic}.md`로 확정(쓰는 쪽·읽는 쪽·공유 키·파생값·override 패턴).
 - **B2. 데이터 아키텍처 설계 (`architecture-planner` · Opus)** — 스펙을 입력으로 단일소스 설계(스키마·스토어·override 레이어·마이그레이션·롤백). **설계만, 코드 없음.** 산출 `_workspace/02_architect_{topic}.md`.
-- **B3. 구현 (`developer` · Opus)** — 설계대로 스키마→JSON→로더/스토어→화면 구독 배선. 원본 seed 불변 + `dc_*` override. 하드코딩 리터럴 0. `npx tsc --noEmit` 통과. 산출 코드 + `_workspace/03_developer_{topic}.md`.
+- **B3. 구현 (`developer` · Opus)** — 설계대로 스키마→JSON→로더/스토어→화면 구독 배선. 원본 seed 불변 + `dc_*` override. 하드코딩 리터럴 0. `npm run build`(= `tsc -b`) 통과. 산출 코드 + `_workspace/03_developer_{topic}.md`.
 - **B4. 통합·검증 (team-lead)** — 하드코딩 grep 0 확인, 실제 흐름(쓰는 쪽→읽는 쪽 반영) 점검, 보고. `memory_save`.
 
 > 모드 B는 `design-reviewer`·`content-reviewer`·Codex를 쓰지 않는다(디자인 미개입). 시각 확인이 필요하면 사후 모드 A 또는 gstack `/browse`.

@@ -6,6 +6,11 @@ import CounselRequests from './pages/CounselRequests'
 import CounselSchedule from './pages/CounselSchedule'
 import CounselSession from './pages/CounselSession'
 import CounselRecords from './pages/CounselRecords'
+import CounselRecordPrint from './pages/CounselRecordPrint'
+import CounselStats from './pages/CounselStats'
+import DiagnosisStatus from './pages/DiagnosisStatus'
+import GroupCounsels from './pages/GroupCounsels'
+import PsychTests from './pages/PsychTests'
 import StudentList from './pages/StudentList'
 import StudentDetail from './pages/StudentDetail'
 import RoadmapRequests from './pages/RoadmapRequests'
@@ -25,6 +30,10 @@ import AssistantStudents from './pages/AssistantStudents'
 import AssistantAdvisor from './pages/AssistantAdvisor'
 import AssistantAdvisorRecords from './pages/AssistantAdvisorRecords'
 import ProfessorAdvisees from './pages/ProfessorAdvisees'
+import ProfessorCounselRequests from './pages/ProfessorCounselRequests'
+import ProfessorCounselRecords from './pages/ProfessorCounselRecords'
+import ProfessorSchedule from './pages/ProfessorSchedule'
+import ProfessorProfile from './pages/ProfessorProfile'
 import NotReady from './pages/NotReady'
 import { hasActiveSession, getActiveUser } from './data/staff'
 import type { StaffRole } from './data/schema/staff'
@@ -63,6 +72,8 @@ const router = createBrowserRouter(
     {
       element: <RequireLogin />,
       children: [
+        // 인쇄면 — 레이아웃(GNB·사이드바) 밖에 두어 화면 그대로가 인쇄물이 된다.
+        { path: '/counsel/records/:recordId/print', element: <CounselRecordPrint /> },
         {
           element: <Layout />,
           children: [
@@ -77,9 +88,20 @@ const router = createBrowserRouter(
                 { path: '/counsel/schedule', element: <CounselSchedule /> },
                 { path: '/counsel/session/:studentId', element: <CounselSession /> },
                 { path: '/counsel/records', element: <CounselRecords /> },
+                { path: '/counsel/groups', element: <GroupCounsels /> },
+                { path: '/counsel/stats', element: <CounselStats /> },
                 { path: '/students', element: <StudentList /> },
+                { path: '/students/diagnostics', element: <DiagnosisStatus /> },
                 { path: '/students/:id', element: <StudentDetail /> },
                 { path: '/settings/availability', element: <SettingsAvailability /> },
+              ],
+            },
+
+            // ── 심리 전용 [psych] — 심리검사 결과 작성 ──
+            {
+              element: <RequireRole roles={['psych']} />,
+              children: [
+                { path: '/counsel/psych-tests', element: <PsychTests /> },
               ],
             },
 
@@ -115,10 +137,10 @@ const router = createBrowserRouter(
               element: <RequireRole roles={['professor']} />,
               children: [
                 { path: '/professor/advisees', element: <ProfessorAdvisees /> },
-                { path: '/professor/counsel/requests', element: <NotReady title="교수상담 신청 접수" /> },
-                { path: '/professor/counsel/records', element: <NotReady title="교수상담 기록 작성" /> },
-                { path: '/professor/schedule', element: <NotReady title="상담 제한일정" /> },
-                { path: '/professor/profile', element: <NotReady title="상담 노출 설정" /> },
+                { path: '/professor/counsel/requests', element: <ProfessorCounselRequests /> },
+                { path: '/professor/counsel/records', element: <ProfessorCounselRecords /> },
+                { path: '/professor/schedule', element: <ProfessorSchedule /> },
+                { path: '/professor/profile', element: <ProfessorProfile /> },
               ],
             },
 

@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>드림캐치 DB 설계 · ERD (학사DB VIEW ↔ 서비스DB)</title>
+<style>
+  :root{
+    --ink:#262626; --meta:#757575; --silver:#bbbbbb; --line:#e5e7eb;
+    --blue:#1c69d4; --focus:#0653b6;
+    --aca-bg:#fef6ec; --aca-line:#d9a05b; --aca-hdr:#f6e3c9; --aca-ink:#7c4a0f;
+    --mir-bg:#f4f7fb; --mir-line:#9fb3c8; --mir-hdr:#e4ecf5; --mir-ink:#3a566e;
+    --core-bg:#ffffff; --core-line:#9dbeeb; --core-hdr:#eaf1fc; --core-ink:#0653b6;
+    --ops-bg:#f7f7f8; --ops-line:#c9cdd3; --ops-hdr:#eceded; --ops-ink:#4b5563;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:var(--ink);
+    font-family:"Noto Sans KR","Malgun Gothic",system-ui,sans-serif;
+    font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1280px;margin:0 auto;padding:48px 28px 120px}
+  header.doc{border-bottom:1px solid var(--ink);padding-bottom:22px;margin-bottom:34px}
+  header.doc .eyebrow{font-size:12px;letter-spacing:.14em;color:var(--meta);text-transform:uppercase}
+  header.doc h1{font-size:32px;font-weight:400;line-height:1.3;margin:10px 0 8px}
+  header.doc p{margin:0;color:var(--meta);font-size:14px}
+  h2{font-size:22px;font-weight:500;line-height:1.35;margin:56px 0 6px;padding-top:14px;border-top:1px solid var(--line)}
+  h2 .num{color:var(--silver);font-size:15px;margin-right:10px}
+  h3{font-size:16px;font-weight:600;margin:30px 0 8px}
+  p{margin:10px 0}
+  ul{margin:10px 0 10px 4px;padding-left:20px}
+  li{margin:5px 0}
+  code{font-family:"Cascadia Mono",Consolas,monospace;font-size:.9em;background:#f4f5f7;
+    border:1px solid var(--line);border-radius:3px;padding:1px 5px}
+  b,strong{font-weight:600}
+  .note{border-left:3px solid var(--blue);background:#f7faff;padding:12px 16px;margin:16px 0;font-size:14px}
+  .note.warn{border-left-color:#d9a05b;background:#fffaf2}
+  .note .tag{display:block;font-size:11.5px;letter-spacing:.08em;color:var(--meta);margin-bottom:4px}
+  .scroll{overflow-x:auto;border:1px solid var(--line);border-radius:6px;background:#fff;margin:18px 0}
+  .scroll svg{display:block}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid var(--line);padding:7px 10px;text-align:left;vertical-align:top}
+  th{background:#f7f8fa;font-weight:600;font-size:12.5px;white-space:nowrap}
+  td code{font-size:12px;background:transparent;border:0;padding:0;color:var(--focus)}
+  tbody tr:nth-child(even){background:#fcfcfd}
+  .tbl-scroll{overflow-x:auto;margin:16px 0}
+  .tbl-scroll table{min-width:860px}
+  .legend{display:flex;flex-wrap:wrap;gap:18px;align-items:center;margin:14px 0 0;font-size:12.5px;color:var(--meta)}
+  .legend .k{display:inline-flex;align-items:center;gap:7px}
+  .legend .sw{width:18px;height:12px;border-radius:2px;display:inline-block}
+  .dcap{font-size:12.5px;color:var(--meta);margin:4px 0 0}
+  .kv{font-size:13px;color:var(--meta)}
+  .zA{background:var(--aca-hdr);border:1px solid var(--aca-line)}
+  .zM{background:var(--mir-hdr);border:1px dashed var(--mir-line)}
+  .zC{background:var(--core-hdr);border:1px solid var(--core-line)}
+  .zO{background:var(--ops-hdr);border:1px solid var(--ops-line)}
+  .pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:10px;border:1px solid var(--line);color:var(--meta);margin-left:6px;vertical-align:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="doc">
+    <div class="eyebrow">국립창원대학교 · 드림캐치 (DREAMCATCH)</div>
+    <h1>DB 설계 &amp; ERD — 학사DB VIEW ↔ 서비스DB 2존 구조</h1>
+    <p>읽기전용으로 제공받는 학사정보시스템 view와, 우리가 소유·설계하는 서비스 테이블을 분리한 설계. 현재 프로토타입의 JSON 단일소스·localStorage 오버레이를 그대로 DB로 승격하는 것을 목표로 한다.</p>
+    <p style="margin-top:10px"><b>2026-07-31 개정</b> — 현행 운영DB(<code>DREAMCATCH</code> 428테이블) 실사 + 운영 소스(MyBatis 2,033 statement) 분석 결과를 반영해 <b>가정으로 그렸던 부분을 실측값으로 교체</b>했다. 이 프로젝트는 신규 구축이 아니라 <b>현행 드림캐치의 고도화</b>이므로, 기존 자산은 계승하고 없는 것만 신설한다. 근거: <code>DB.md</code> · <code>docs/DB_CURRENT.html</code>, 화면 구현 기준: <code>SPEC.md</code>.</p>
+  </header>
+  <div id="app"></div>
+</div>
+
+<script>
+/* ─────────────────────────────────────────────────────────────
+   ERD 렌더러 — 노드는 (col,row) 그리드에 배치, 엣지는 직교 라우팅.
+   ───────────────────────────────────────────────────────────── */
+var GEO={pad:70,padTop:46,boxW:212,colPitch:300,rowPitch:152,hdr:27,fieldH:15,botPad:10};
+var ZONE={
+  A:{bg:'var(--aca-bg)',ln:'var(--aca-line)',hdr:'var(--aca-hdr)',ink:'var(--aca-ink)',dash:''},
+  M:{bg:'var(--mir-bg)',ln:'var(--mir-line)',hdr:'var(--mir-hdr)',ink:'var(--mir-ink)',dash:'4 3'},
+  C:{bg:'var(--core-bg)',ln:'var(--core-line)',hdr:'var(--core-hdr)',ink:'var(--core-ink)',dash:''},
+  O:{bg:'var(--ops-bg)',ln:'var(--ops-line)',hdr:'var(--ops-hdr)',ink:'var(--ops-ink)',dash:''}
+};
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function boxOf(n){
+  var f=n.fields?n.fields.length:0;
+  return {x:GEO.pad+n.col*GEO.colPitch, y:GEO.padTop+n.row*GEO.rowPitch,
+          w:n.w||GEO.boxW, h:GEO.hdr+f*GEO.fieldH+GEO.botPad};
+}
+function route(a,b,e){
+  var A=a.box,B=b.box;
+  var acy=A.y+A.h/2, bcy=B.y+B.h/2, acx=A.x+A.w/2, bcx=B.x+B.w/2;
+  if(e.lane!=null){
+    var L=e.lane;
+    var sx=(L>acx)?A.x+A.w:A.x, ex=(L>bcx)?B.x+B.w:B.x;
+    return {d:'M '+sx+' '+acy+' H '+L+' V '+bcy+' H '+ex, sx:sx,sy:acy,ex:ex,ey:bcy,
+            sdir:(L>acx?1:-1), edir:(L>bcx?1:-1), lx:L, ly:(acy+bcy)/2};
+  }
+  if(a.col===b.col){
+    var down=a.row<b.row;
+    var sy=down?A.y+A.h:A.y, ey=down?B.y:B.y+B.h;
+    return {d:'M '+acx+' '+sy+' V '+ey, sx:acx,sy:sy,ex:bcx,ey:ey, vert:1,
+            sdir:0, edir:0, lx:acx, ly:(sy+ey)/2};
+  }
+  var right=b.col>a.col;
+  var sx2=right?A.x+A.w:A.x, ex2=right?B.x:B.x+B.w;
+  if(Math.abs(acy-bcy)<7)
+    return {d:'M '+sx2+' '+acy+' H '+ex2, sx:sx2,sy:acy,ex:ex2,ey:bcy,
+            sdir:right?1:-1, edir:right?-1:1, lx:(sx2+ex2)/2, ly:acy};
+  var mid=(sx2+ex2)/2;
+  return {d:'M '+sx2+' '+acy+' H '+mid+' V '+bcy+' H '+ex2, sx:sx2,sy:acy,ex:ex2,ey:bcy,
+          sdir:right?1:-1, edir:right?-1:1, lx:mid, ly:(acy+bcy)/2};
+}
+function diagram(d){
+  var map={},maxC=0,maxR=0,i,n;
+  for(i=0;i<d.nodes.length;i++){n=d.nodes[i];n.box=boxOf(n);map[n.id]=n;
+    if(n.col>maxC)maxC=n.col; if(n.row>maxR)maxR=n.row;}
+  var W=GEO.pad*2+maxC*GEO.colPitch+GEO.boxW, H=GEO.padTop+maxR*GEO.rowPitch+120;
+  var s='<svg width="'+W+'" height="'+H+'" viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg">';
+  s+='<defs>'
+   +'<marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">'
+   +'<path d="M0,0 L9,4.5 L0,9 z" fill="#8a93a0"/></marker>'
+   +'<marker id="arL" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto">'
+   +'<path d="M0,0 L9,4.5 L0,9 z" fill="#c0872f"/></marker>'
+   +'</defs>';
+  /* edges first (아래 레이어) */
+  for(i=0;i<d.edges.length;i++){
+    var e=d.edges[i],a=map[e.from],b=map[e.to];
+    if(!a||!b){continue;}
+    var r=route(a,b,e), lg=(e.kind==='logical');
+    s+='<path d="'+r.d+'" fill="none" stroke="'+(lg?'#c0872f':'#8a93a0')+'" stroke-width="1.4"'
+      +(lg?' stroke-dasharray="5 4"':'')+' marker-end="url(#'+(lg?'arL':'ar')+')"/>';
+    var card=(e.card||'1:N').split(':');
+    var t1x=r.sx+(r.sdir?r.sdir*11:9), t2x=r.ex+(r.edir?r.edir*13:9);
+    s+='<text class="cd" x="'+t1x+'" y="'+(r.sy-6)+'">'+card[0]+'</text>';
+    s+='<text class="cd" x="'+t2x+'" y="'+(r.ey-6)+'">'+card[1]+'</text>';
+    if(e.label)
+      s+='<text class="el'+(lg?' elg':'')+'" x="'+r.lx+'" y="'+(r.ly-4)+'">'+esc(e.label)+'</text>';
+  }
+  /* nodes */
+  for(i=0;i<d.nodes.length;i++){
+    n=d.nodes[i]; var z=ZONE[n.zone||'C'], B=n.box;
+    s+='<g><rect x="'+B.x+'" y="'+B.y+'" width="'+B.w+'" height="'+B.h+'" rx="4" fill="'+z.bg+'" stroke="'+z.ln+'"'
+      +(z.dash?' stroke-dasharray="'+z.dash+'"':'')+' stroke-width="1.2"/>';
+    s+='<path d="M '+B.x+' '+(B.y+GEO.hdr)+' H '+(B.x+B.w)+'" stroke="'+z.ln+'" stroke-width="1"'
+      +(z.dash?' stroke-dasharray="'+z.dash+'"':'')+'/>';
+    s+='<rect x="'+(B.x+0.6)+'" y="'+(B.y+0.6)+'" width="'+(B.w-1.2)+'" height="'+(GEO.hdr-1)+'" rx="3" fill="'+z.hdr+'"/>';
+    s+='<text class="tn" x="'+(B.x+9)+'" y="'+(B.y+18)+'" fill="'+z.ink+'">'+esc(n.label)+'</text>';
+    if(n.tag) s+='<text class="tg" x="'+(B.x+B.w-8)+'" y="'+(B.y+18)+'">'+esc(n.tag)+'</text>';
+    for(var j=0;n.fields&&j<n.fields.length;j++){
+      var f=n.fields[j], key=/PK|FK|UQ/.test(f);
+      s+='<text class="fd'+(key?' fk':'')+'" x="'+(B.x+9)+'" y="'+(B.y+GEO.hdr+12+j*GEO.fieldH)+'">'+esc(f)+'</text>';
+    }
+    s+='</g>';
+  }
+  s+='<style>'
+   +'.tn{font:600 12.5px "Noto Sans KR",sans-serif}'
+   +'.tg{font:10px "Noto Sans KR",sans-serif;fill:#9aa3ad;text-anchor:end}'
+   +'.fd{font:11px Consolas,monospace;fill:#5b6472}'
+   +'.fd.fk{fill:#262626}'
+   +'.cd{font:600 10.5px Consolas,monospace;fill:#8a93a0}'
+   +'.el{font:11px "Noto Sans KR",sans-serif;fill:#4b5563;text-anchor:middle;stroke:#fff;stroke-width:3.5;paint-order:stroke}'
+   +'.el.elg{fill:#8a5a1e}'
+   +'</style></svg>';
+  var out='<div class="scroll">'+s+'</div>';
+  if(d.caption) out+='<p class="dcap">'+d.caption+'</p>';
+  return out;
+}
+function render(list){
+  var h='',i,j,c;
+  for(i=0;i<list.length;i++){
+    c=list[i];
+    if(c.t==='h2') h+='<h2><span class="num">'+(c.no||'')+'</span>'+c.text+'</h2>';
+    else if(c.t==='h3') h+='<h3>'+c.text+'</h3>';
+    else if(c.t==='p') h+='<p>'+c.html+'</p>';
+    else if(c.t==='ul'){h+='<ul>';for(j=0;j<c.items.length;j++)h+='<li>'+c.items[j]+'</li>';h+='</ul>';}
+    else if(c.t==='note') h+='<div class="note'+(c.warn?' warn':'')+'">'+(c.tag?'<span class="tag">'+c.tag+'</span>':'')+c.html+'</div>';
+    else if(c.t==='diagram') h+=diagram(c);
+    else if(c.t==='table'){
+      h+='<div class="tbl-scroll"><table><thead><tr>';
+      for(j=0;j<c.head.length;j++)h+='<th>'+c.head[j]+'</th>';
+      h+='</tr></thead><tbody>';
+      for(j=0;j<c.rows.length;j++){h+='<tr>';for(var k=0;k<c.rows[j].length;k++)h+='<td>'+c.rows[j][k]+'</td>';h+='</tr>';}
+      h+='</tbody></table></div>';
+      if(c.caption) h+='<p class="dcap">'+c.caption+'</p>';
+    }
+    else if(c.t==='legend') h+='<div class="legend">'+c.html+'</div>';
+  }
+  document.getElementById('app').innerHTML=h;
+}
+
+var CONTENT=[
+
+/* ══════════════ 0. 요약 ══════════════ */
+{t:'h2',no:'0',text:'한 장 요약 — 무엇을 나누는가'},
+{t:'p',html:'DB를 <b>두 개의 존</b>으로 나눈다. 경계는 “우리가 쓸 수 있는가”다. <b>이 경계는 현행 운영DB에 이미 존재한다</b> — 새로 만드는 규칙이 아니라 실측해서 확인한 구조다.'},
+{t:'table',head:['구분','존 A — 학사DB (BRDB)','존 B — 드림캐치 서비스DB (<code>DREAMCATCH</code>)'],rows:[
+ ['소유','대학 학사정보시스템','우리 (드림캐치)'],
+ ['경로','<b>DB 링크 <code>V_BRDB</code></b> — 야간 배치로 매일 적재','로컬 (같은 인스턴스 <code>dream</code>)'],
+ ['접근','<b>읽기 전용</b> — 절대 쓰지 않는다','전체 CRUD'],
+ ['담는 것','<b>사람과 조직만</b> — 통합UID·신분·학과·학적·지도교수·조직계층','<b>그 외 전부</b> — 상담·비교과·역량·진로설계·채용·권한·진단·IAP·로드맵·벌점'],
+ ['실제 테이블','<code>V_USR_INF</code> · <code>V_DEP_INF(_ALL)</code> · <code>V_ADD_JOB_PART</code> <span class="pill">4개</span><br><code>V_SUGANG</code> · <code>V_LECT_INF</code> <span class="pill">스키마만, 0행</span>','나머지 <b>424개</b> (현행) + 신설 <code>DC_*</code>'],
+ ['정합성 수단','없음(원천). 오류는 학사시스템에서 수정','<b>현행은 FK가 사실상 없다</b>(제약 157건 중 FK 3건) → 애플리케이션이 전담'],
+ ['핵심 규칙','우리 테이블에 학사 사실을 <b>정정 저장하지 않는다</b>','학사 코드는 <b>문자열로 참조</b>(논리 FK) + 발생 시점 스냅샷 보존']
+]},
+{t:'note',tag:'경계선이 만드는 유일한 어려움',html:'<b>물리적으로 다른 DB이므로 FK 제약을 걸 수 없다.</b> <code>DC_STUDENT.MAJOR_CD → V_DEP_INF_ALL.DEPT_CD</code>는 DB가 지켜주지 않는다. 그래서 ① 학사 코드 테이블을 야간에 <code>DC_DEPT_MIRROR</code>/<code>DC_COURSE_MIRROR</code>로 미러링해 조인·목록·검증은 우리 DB 안에서 하고, ② 상담·신청·벌점 레코드에는 <b>발생 시점의 학과·학년·학적을 스냅샷 컬럼</b>으로 남긴다. <b>②는 현행이 이미 하고 있다</b> — <code>EP_PRM_APP</code>(비교과 신청)이 신청 시점 <code>HOFC_STA_CD</code>·<code>STU_SCHGR</code>·<code>EMAIL</code>·<code>HP</code>를 복사해 둔다. 새로 도입하는 패턴이 아니라 <b>계승</b>하는 것이다.'},
+{t:'note',warn:true,tag:'실사로 드러난 경계의 예외 — 알고 있어야 한다',html:'현행 앱은 <b>학사 적재본에 직접 쓴다</b>. 외부 위촉 상담사를 <code>INSERT INTO V_USR_INF</code>로 넣고(<code>Co.setOutConInfo_Insert2</code>), <code>USER_TY_CD</code>+<code>HOFC_STA_CD</code>로 지우고(<code>Co.setCnCt_Delte3</code>), <code>ORGID</code>를 <code>V_USR_INF@V_BRDB</code>에서 직접 끌어와 갱신한다(<code>Common.UPDATE_ORGID_U01</code>). 즉 <code>V_USR_INF</code>는 순수 적재본이 아니라 <b>학사 적재 + 자체 등록이 섞인 테이블</b>이다. 신규 설계에서는 이걸 따라 하지 않고 <b>외부 인원은 <code>DC_USER</code>에 <code>external</code> 출처로 분리</b>한다 — 야간 배치가 덮어쓸 위험을 없애기 위해서다.'},
+
+/* ══════════════ 1. 설계 원칙 ══════════════ */
+{t:'h2',no:'1',text:'설계 원칙 10 — 왜 이렇게 나누는가'},
+{t:'table',head:['#','원칙','이유 / 이 프로젝트에서의 근거'],rows:[
+ ['1','학사DB는 <b>SELECT만</b>. 우리 테이블은 학사 사실의 <b>사본</b>일 뿐 원천이 아니다.','학적 정정을 우리가 하면 두 DB가 영구히 갈라진다. 사본에는 <code>synced_at</code>을 붙여 “언제 기준 값인지”를 항상 노출한다.'],
+ ['2','<b>키는 <code>INTG_UID</code>를 그대로 쓴다.</b> 내부 surrogate를 만들지 않는다. <span class="pill">2026-07 개정</span>','<b>초판에서 뒤집은 원칙.</b> 원래는 <code>user_id BIGINT</code> surrogate + 학번 UNIQUE를 설계했으나, 현행 상담 이력 18만 건·비교과 신청 6.8만 건이 전부 <code>INTG_UID</code>로 조인돼 있다. surrogate를 끼우면 고도화가 아니라 전면 이관이 된다. <code>INTG_UID</code>는 학사DB가 발급하며 학생=학번, 교직원=사번이다.'],
+ ['3','<b>학생과 교직원은 한 테이블</b>(<code>V_USR_INF</code>)이고 <code>USER_TY_CD</code>로 구분한다. <span class="pill">2026-07 개정</span>','초판은 <code>V_STUDENT</code>/<code>V_FACULTY</code>를 별도로 요청하는 설계였다. 실사 결과 학사DB는 <b>통합사용자 1개 테이블</b>(43컬럼·113,733행)로 준다. 학생/교수/조교/직원 별도 테이블은 존재하지 않는다. 조회 화면은 반드시 <code>HOFC_STA_CD</code>(학적상태) 필터를 건다 — 113,733행은 졸업생·퇴직자 누적이다.'],
+ ['4','학사 코드는 <b>논리 FK</b>(문자열) + <b>미러 테이블</b>.','FK 제약 불가(원칙 0). 미러에 <code>valid_from/valid_to</code>를 둬서 폐과·통합된 학과코드의 과거 이력도 조회된다. 현행 폐과 <code>USE_YN=\'N\'</code> 639건이 이미 존재한다.'],
+ ['5','이벤트 레코드는 <b>as-of 스냅샷</b>을 함께 저장.','3학년 때 받은 상담 기록이 학생이 4학년이 되거나 전과하면 표시가 바뀌면 안 된다. 상담·신청·벌점은 “그때의 학과·학년·학적·트랙”을 함께 적는다.'],
+ ['6','파생값은 <b>원본 테이블에 넣지 않는다</b>.','현재 <code>JobPosting.match</code>(매칭도)가 공고 테이블에 있다 — 매칭도는 <b>학생×공고</b> 관계값이라 공고에 두면 학생이 늘 때 값이 하나뿐이라 깨진다. → <code>DC_JOB_MATCH</code>로 분리.'],
+ ['7','override는 <b>버전 테이블</b>로 승격.','프로토타입의 base JSON + localStorage override(<code>dc_roadmap_overrides</code>)는 DB에서 <code>DC_ROADMAP_VERSION</code>(스냅샷+<code>confirmed_yn</code>)이 된다. 학생 화면은 “최신 확정 버전”만 읽는다.'],
+ ['8','민감정보는 <b>컬럼 분리 + 동의 + 감사</b>.','심리상담 소견(<code>summary</code>)은 학생 공개 코멘트(<code>comment</code>)와 이미 분리돼 있다. DB에서는 여기에 <code>DC_CONSENT</code>(민감정보 동의)와 <code>DC_AUDIT_LOG</code>(누가 언제 열람·수정)를 반드시 붙인다.'],
+ ['9','상태값은 <b>코드 테이블</b>로.','지금은 <code>\'대기\'|\'확정\'|\'완료\'|\'취소\'</code> 한글 리터럴이 곧 값이다. DB에서는 <code>code + label</code>로 분리해 정렬·변경·다국어에 대응한다. <b>현행에 이미 <code>SY_CODE</code>(3,874행)가 있으므로 신설이 아니라 계승</b>이다.'],
+ ['10','<b>역할·권한은 현행 <code>SY_AUTH</code> 체계를 계승한다.</b> 새 role 열거형을 만들지 않는다. <span class="pill">2026-07 신설</span>','현행에 <code>SY_AUTH</code>(역할 13) → <code>SY_AUTH_USER</code>(사람↔역할 52) → <code>SY_MENU_AUTH</code>(역할↔메뉴 972) → <code>SY_MENU</code>(343)가 <b>이미 갖춰져 있다</b>. 학생은 권한 테이블에 없고 <code>USER_TY_CD</code>로 판정한다(<code>BASEGRUP_YN</code>=기본그룹). 우리가 추가할 것은 <b>행 수준 접근 제어의 통일</b>뿐 — 현행은 “어떤 학생을 볼 수 있나”가 도메인마다 흩어져 있다(상담사=<code>COM_CON_TAR</code>, 교수=<code>TB_CARR_PROF_ASSI_DEPT</code>, 조교=<code>COM_ASS_DEPT</code>/<code>FU_ASS_DEPT</code>).']
+]},
+
+/* ══════════════ 2. 전체 조망 ══════════════ */
+{t:'h2',no:'2',text:'전체 조망 — 데이터가 흐르는 방향'},
+{t:'legend',html:'<span class="k"><span class="sw zA"></span>학사DB VIEW (읽기전용)</span>'
+ +'<span class="k"><span class="sw zM"></span>미러 / 캐시 (야간 동기화)</span>'
+ +'<span class="k"><span class="sw zC"></span>드림캐치 핵심</span>'
+ +'<span class="k"><span class="sw zO"></span>운영 · 감사</span>'
+ +'<span class="k"><svg width="34" height="8"><path d="M0 4 H30" stroke="#8a93a0" stroke-width="1.4"/></svg> 물리 FK</span>'
+ +'<span class="k"><svg width="34" height="8"><path d="M0 4 H30" stroke="#c0872f" stroke-width="1.4" stroke-dasharray="5 4"/></svg> 논리 FK (DB 경계 넘음)</span>'},
+{t:'diagram',caption:'학사DB는 오른쪽으로만 흐른다. 되돌아가는 화살표가 없다는 것이 이 설계의 전제다. (주황 박스의 이름은 현행 운영DB에 실재하는 테이블명이다.)',
+ nodes:[
+ {id:'ACA',zone:'A',col:0,row:0,label:'학사DB (BRDB)',tag:'DB링크 V_BRDB',fields:['V_USR_INF  통합사용자','V_DEP_INF_ALL  조직계층','V_ADD_JOB_PART  겸직','V_SUGANG   수강 (0행)','V_LECT_INF 강의 (0행)']},
+ {id:'SYNC',zone:'O',col:1,row:0,label:'동기화 계층 (야간 ETL)',fields:['변경분 감지 · 적재','DC_*_MIRROR 갱신','DC_ACADEMIC_SYNC_LOG']},
+ {id:'USER',zone:'C',col:2,row:0,label:'DC_USER',fields:['SSO 착지점 · 역할','INTG_UID = 전 도메인 조인키']},
+ {id:'PROF',zone:'C',col:2,row:1,label:'DC_STUDENT / DC_COUNSELOR',fields:['서비스 프로필','학사 스냅샷 캐시','우리가 만든 판단값']},
+ {id:'D1',zone:'C',col:3,row:0,label:'진단 · IAP · 로드맵',fields:['DC_DIAG_*','DC_IAP','DC_ROADMAP_*']},
+ {id:'D2',zone:'C',col:3,row:1,label:'상담 · 비교과 · 벌점',fields:['DC_COUNSEL_*','DC_PROGRAM_*','DC_PENALTY_ENTRY']},
+ {id:'D3',zone:'C',col:3,row:2,label:'채용 · 포트폴리오 · 게임화',fields:['DC_JOB_*','DC_PORTFOLIO_*','DC_QUEST_* · DC_AI_*']}
+ ],edges:[
+ {from:'ACA',to:'SYNC',card:'1:N',kind:'logical',label:'SELECT only'},
+ {from:'SYNC',to:'USER',card:'1:N',label:'계정 프로비저닝'},
+ {from:'USER',to:'PROF',card:'1:1'},
+ {from:'PROF',to:'D1',card:'1:N',label:'student_id'},
+ {from:'PROF',to:'D2',card:'1:N',label:'student_id'},
+ {from:'PROF',to:'D3',card:'1:N',label:'student_id'}
+ ]},
+
+/* ══════════════ 3. 학사DB에 요청할 VIEW ══════════════ */
+{t:'h2',no:'3',text:'학사DB에서 받는 것 — 실측 <span class="pill">2026-07 전면 개정</span>'},
+{t:'p',html:'초판은 “이런 view를 요청하자”는 <b>제안</b>이었다. 실사 결과 <b>상당수가 이미 존재</b>했고, 우리가 상상한 이름과 구조는 실제와 달랐다. 아래는 실제로 연결돼 있는 것을 <b>세 등급</b>으로 나눈 것이다.'},
+
+{t:'h3',text:'① 지금 받고 있는 것 — 매일 적재 중 (가동)'},
+{t:'table',head:['테이블','행수','담는 것','핵심 컬럼'],rows:[
+ ['<code>V_USR_INF</code>','113,733','<b>통합사용자 — 학생·교수·조교·직원이 전부 한 테이블</b>','<code>INTG_UID</code>(PK) · <code>LOGIN_ID</code> · <code>USER_TY_CD</code>(신분) · <code>USR_NM</code> · <code>SEX</code>/<code>AGE</code>/<code>PHOTO</code> · <code>DAEHAK_CD</code>(대학) · <code>HAKBU_CD</code>(학부) · <code>MAJOR_CD</code>/<code>MAJOR_CD2</code>(전공/복수) · <code>STU_SCHGR</code>/<code>GRADE</code>(학년) · <code>HOFC_STA_CD</code>(학적) · <code>ENTER_DT</code>/<code>OUT_DT</code>/<code>OUT_STAT</code> · <code>ISU_CNT</code>(이수학기) · <b><code>PROF_ID</code>(지도교수)</b> · <code>DEAN_FLAG</code> · <code>TEL</code>/<code>HP</code>/<code>EMAIL</code>/<code>ADDR1</code> — 총 43컬럼'],
+ ['<code>V_DEP_INF_ALL</code>','1,921','<b>조직 계층 — 자기참조 트리</b>. 대학/학부/학과 별도 테이블 없음','<code>DEPT_CD</code>(PK) · <code>DEPT_NM</code> · <code>DEPT_UP_CD</code>(상위) · <code>LVL</code>(깊이) · <code>GRP_CD</code>(<code>0001</code>단대/<code>0002</code>학과/<code>0003</code>전공/<code>0004</code>기관) · <b><code>UNIV_CODE</code></b>(<code>00</code>학부/<code>01</code>석사/<code>02</code>박사/<code>03~12</code>전문대학원) · <code>USE_YN</code>'],
+ ['<code>V_DEP_INF</code>','1,679','같은 트리의 <b>축소본</b> — <code>_ALL</code>보다 <b>242개 적다</b>','<span style="color:#b45309"><b>대학원 학과 누락의 원인.</b> 우리는 쓰지 않는다 — §3-③ 참조</span>'],
+ ['<code>V_ADD_JOB_PART</code>','17','겸직·부서 배정','<code>INTG_UID</code> · <code>EMP_NO</code> · <code>ORGID</code> · <code>PARTID</code>']
+]},
+{t:'note',warn:true,tag:'조회 화면의 필수 조건',html:'<code>V_USR_INF</code> 113,733행은 <b>졸업생·퇴직자 누적</b>이다. 재학생은 이 중 일부다. 학생 목록·검색·집계 화면은 <b>예외 없이 <code>HOFC_STA_CD</code>(학적상태) 필터를 건다.</b> 필터를 빠뜨리면 졸업생이 상담 접수함에 섞인다.'},
+
+{t:'h3',text:'② 테이블은 있는데 비어 있는 것 <span class="pill">0행 · 최대 기회</span>'},
+{t:'p',html:'<b>스킬트리·직무로드맵·추천과목(D5)의 전제 데이터가 전부 여기다.</b> 초판에서 “<code>V_COURSE</code>·<code>V_ENROLLMENT</code>를 새로 요청하자”고 썼던 것이 <b>이미 만들어져 있었다</b> — 컬럼 완비, DB링크 생존, 그런데 <b>2020년 이후 적재가 꺼져 있다.</b> 새 협의가 아니라 <b>적재를 켜는 문제</b>일 가능성이 높다.'},
+{t:'table',head:['테이블','학사 원본 뷰','컬럼 (실측)','우리 화면에서의 용도'],rows:[
+ ['<code>V_SUGANG</code> <span class="pill">15컬럼 · 0행</span>','<code>수강전체</code><br>(<code>VIEW_SUGANG_ALL</code>)','<code>YEAR</code>·<code>SMT</code>·<code>STUDENT_CD</code>·<b><code>CURI_NUM</code>(과목코드)</b>·<code>COURSE_CLS</code>(이수구분)·<b><code>GRAD_DIV</code>(과정구분)</b>·<code>STUDENT_YEAR</code>·<b><code>GRADE</code>(등급)</b>·<b><code>GPA</code></b>·<code>FINISH_YN</code>·<code>CHK_RECURI</code>(재수강)·<code>CANCEL_YN</code>','이수내역 → 스킬 점수 → 직무적합도'],
+ ['<code>V_LECT_INF</code> <span class="pill">20컬럼 · 0행</span>','<code>수업개설</code><br>(<code>VIEW_SUUP_GAESUL</code>)','<code>CURI_NUM</code>·<b><code>CURI_NM</code>(과목명)</b>·<b><code>CDT_NUM</code>(학점)</b>·<code>DEPT_CD</code>·<code>PROF_ID</code>·<code>PROF_NM</code>·<code>CAP_PER1~6</code>(정원)·<code>COURSE_CLS</code>·<code>GRAD_DIV</code>','과목 마스터 · 다음학기 개설 확인']
+]},
+{t:'note',tag:'조인 SQL이 이미 작성돼 있다',html:'현행 소스에 <code>Ca.getGoalCour_List</code>(<code>ca.xml:334</code>)와 <code>Ca.getLecList</code>(<code>ca.xml:2345</code>)가 <code>V_SUGANG ⨝ V_LECT_INF</code>를 <b>이미 조인하고 있다</b>. 조인키는 <code>(YEAR, SMT, GRAD_DIV, CURI_NUM)</code>. 데이터만 들어오면 <b>코드는 그날 바로 돈다</b>. → 전산원 요청 1순위.'},
+
+{t:'h3',text:'③ 추가로 요청해야 하는 것'},
+{t:'table',head:['요청 항목','왜 필요한가','없으면 어떻게 되나'],rows:[
+ ['<b><code>V_SUGANG</code>·<code>V_LECT_INF</code> 적재 재개</b> <span class="pill">최우선</span>','스킬트리·직무적합도·추천과목의 원본','D5 전체가 하드코딩으로 남는다 (현재 <code>SkillTree.tsx</code> 상태)'],
+ ['<b>대학원 데이터 확인</b>','<code>V_DEP_INF_ALL</code>에 <code>UNIV_CODE</code> <code>01</code>(석사)·<code>02</code>(박사)·<code>03~12</code>(전문대학원)가 존재. 대학원생이 <code>V_USR_INF</code>에 어떤 <code>USER_TY_CD</code>로 오는지 확정 필요','대학원 화면의 학적·학년 표기가 학부 기준으로 잘못 렌더'],
+ ['학기 마스터 (<code>V_TERM</code> 상당)','퀘스트 주기·로드맵 단·중·장기 경계','<code>V_SUGANG.YEAR+SMT</code>에서 파생 (가능하지만 학사일정은 못 얻음)'],
+ ['자격증·어학','로드맵·직무적합도 입력값','학생 자기입력 + 상담사 검증(<code>verify_status</code>)으로 자체 관리 — <b>현행이 이미 이 방식</b>(<code>TB_CARR_CAPA_STTS</code>)이라 사실상 확정'],
+ ['졸업요건 <span class="pill">선택</span>','로드맵 장기구간 검증','충족률 표시를 포기 (다른 기능에는 영향 없음)']
+]},
+{t:'note',warn:true,tag:'신분·조교·상담사에 대한 결론 — 초판에서 바뀐 부분',html:'<b>조교는 별도 테이블이 없다.</b> 초판은 <code>V_FACULTY.position_cd=\'TA\'</code>를 가정했는데, 실제로는 <code>V_USR_INF.USER_TY_CD</code>로 구분된다. 배정 학과는 현행 <code>COM_ASS_DEPT</code>/<code>FU_ASS_DEPT</code>(190행)가 담당한다.<br><b>상담사는 학사DB에 없는 인원이 섞여 있다.</b> <code>COM_CON_INF</code>(26명)에 <code>INOUT_GB</code>(내외부구분)와 <b><code>CONPWD</code>(자체 비밀번호)</b>가 있다 — <b>외부 위촉 상담사는 SSO 밖 자체 인증</b>을 쓴다는 뜻이다. 같은 패턴이 <code>TB_CARR_USER</code>+<code>TB_CARR_USER_LOGIN</code>(기업 담당자·멘토)에도 있다. <b>초판 열린질문 #6의 답이 나온 것</b>이며, 신규 설계도 SSO 밖 예외 인증 경로를 전제해야 한다.<br><b>교수는 학사DB가 원천</b>이고 우리는 “상담 노출 여부”만 갖는다(<code>DC_PROFESSOR_PROFILE</code>) — 이 판단은 유지. 지도교수 관계는 <code>V_USR_INF.PROF_ID</code>로 이미 온다.'},
+
+{t:'h3',text:'④ 학과 트리를 다룰 때의 절대 규칙 <span class="pill">현행 버그의 원인</span>'},
+{t:'note',warn:true,tag:'대학원 학과가 관리자 화면에서 사라지는 진짜 이유 — 소스 확인 완료',html:'현행 “조교학과 배정”(<code>Fu.assDeptList2</code>)이 대학원 학과를 누락하는 원인은 <b>두 가지가 겹친 것</b>이다.<br><b>①</b> <code>V_DEP_INF</code>(1,679)를 쓴다 — <code>V_DEP_INF_ALL</code>(1,921)보다 <b>242개 적다.</b><br><b>②</b> <code>LEFT OUTER JOIN V_DEP_INF C</code> 인데 <code>WHERE C.USE_YN=\'Y\'</code> 조건이 있다 → <b>outer join이 inner join으로 붕괴</b> → <b>전공(LVL3)이 없는 학과가 전부 탈락한다.</b> 대학원 학과가 여기서 대량으로 사라진다.<br><br><b>우리 규칙:</b> ⓐ <code>V_DEP_INF_ALL</code>만 쓴다. ⓑ <code>USE_YN</code> 조건은 <code>ON</code> 절로 옮기거나 <code>OR C.DEPT_CD IS NULL</code>을 붙인다. ⓒ <code>UNIV_CODE</code>를 <b>필터·표시 축에 반드시 포함</b>한다. ⓓ 폐과(<code>USE_YN=\'N\'</code> 639건)는 목록에서 숨기되 <b>과거 배정·신청 데이터는 보존</b>한다. ⓔ <b>학과명 매칭 금지</b> — 동명 학과가 과정별로 여러 개다(<code>신소재공학부</code>가 505 공과대 · 501 메카트로닉스대 · 1528 석사 · 2528 박사로 4개). 반드시 <b>(단대코드, 학과코드) 쌍</b>으로 식별한다.'},
+
+/* ══════════════ 4. 코드 체계 ══════════════ */
+{t:'h2',no:'4',text:'식별자 · 코드 체계 <span class="pill">2026-07 개정</span>'},
+{t:'note',tag:'초판에서 바뀐 것',html:'초판은 내부 surrogate <code>user_id BIGINT</code>를 “전 도메인 FK의 유일한 주체”로 뒀다. <b>이 프로젝트에 한해 그 원칙을 뒤집는다</b> — 현행 이력이 전부 <code>INTG_UID</code>로 조인돼 있어 surrogate를 끼우는 순간 고도화가 아니라 전면 이관이 된다. <code>user_id</code>는 설계에서 <b>삭제</b>한다.'},
+{t:'table',head:['식별자','형식 / 예','발급 주체','비고'],rows:[
+ ['<code>INTG_UID</code> <span class="pill">★ 유일 주체</span>','학사DB 정의 (학생=학번, 교직원=사번)','학사DB','<b>전 시스템의 조인키.</b> 상담 18만·비교과 6.8만 건이 이미 이 키로 물려 있다. 내부 surrogate를 만들지 않는다'],
+ ['<code>USER_TY_CD</code>','코드값','학사DB','학생/교수/조교/직원 <b>신분 구분</b>. 별도 테이블이 없으므로 이 컬럼이 곧 신분이다'],
+ ['<code>HOFC_STA_CD</code>','코드값','학사DB','학적상태. <b>모든 조회 화면의 필수 필터</b>'],
+ ['<code>DEPT_CD</code>','학교 정의','학사DB','<b>(단대코드, 학과코드) 쌍으로 식별</b> — 학과명 매칭 금지. 문자열 그대로 보관 + 미러'],
+ ['<code>UNIV_CODE</code>','<code>00</code>학부 · <code>01</code>석사 · <code>02</code>박사 · <code>03~12</code>전문대학원','학사DB','<b>대학원 지원의 축.</b> 필터·표시에 반드시 포함'],
+ ['<code>PROF_ID</code>','사번','학사DB','지도교수. <code>V_USR_INF</code>에 이미 들어 있다 — 별도 배정 테이블 불필요'],
+ ['<code>CURI_NUM</code>','학교 정의','학사DB','과목코드. 스킬 매핑의 조인키 (<code>V_SUGANG</code>/<code>V_LECT_INF</code>)'],
+ ['<code>counselor_cd</code>','<code>CNS-CAR-001</code> / <code>CNS-PSY-001</code>','우리','역할(CAR=진로취업, PSY=심리) + 일련. 화면·인쇄물 식별용. 신원은 <code>INTG_UID</code>로 연결'],
+ ['<code>program_id</code>','<code>PRG-2026-0031</code>','우리','회계년도 포함 → 연도별 정산·감사 편의'],
+ ['<code>posting_id</code>','<code>JOB-2026-00812</code>','우리','외부 API 연동분은 <code>source=external</code> + <code>external_id</code> 보관'],
+ ['<code>test_cd</code>','<code>C2</code> · <code>C3</code> · <code>C4</code> · <code>CCORE</code>','우리','현행 <code>careerProcess.ts DIAGNOSIS_MODULES</code> 그대로. <b>C-1은 없음</b>'],
+ ['<code>student_type</code> / <code>iap_type</code>','6유형 / <code>R1</code>~<code>R6</code>','우리','매핑은 <code>DC_STUDENT_TYPE_MAP</code> 마스터 (현행 <code>STUDENT_TYPE_MAP</code>)'],
+ ['<code>skill_cd</code> / <code>job_role_cd</code>','<code>SK-PY-001</code> / <code>JR-IT-PM</code>','우리','스킬트리·직무적합도의 축']
+]},
+
+/* ══════════════ D1 ══════════════ */
+{t:'h2',no:'5',text:'D1 · 계정 · 조직 · 권한 <span class="pill">2026-07 전면 개정</span>'},
+{t:'p',html:'초판은 <code>V_SSO_PRINCIPAL → V_STUDENT/V_FACULTY</code>를 전제로 그렸다. 실제로는 <b><code>V_USR_INF</code> 한 테이블</b>이고 <code>USER_TY_CD</code>로 신분이 갈린다. 그리고 <b>권한 체계(<code>SY_AUTH</code> 4단)가 현행에 이미 있다</b> — 새로 설계하지 않고 계승한다. 우리가 신설하는 것은 <b><code>DC_ACCESS_SCOPE</code> 하나뿐</b>이다.'},
+{t:'diagram',caption:'점선(논리 FK)이 DB 경계다. 회색(운영존)은 현행에 이미 있는 권한 테이블 — 그대로 쓴다. ★는 신설.',
+ nodes:[
+ {id:'USR',zone:'A',col:0,row:0,label:'V_USR_INF',tag:'학사 · 매일',fields:['INTG_UID  PK','LOGIN_ID, USER_TY_CD','USR_NM, HOFC_STA_CD','DAEHAK/HAKBU/MAJOR_CD','STU_SCHGR (학년)','PROF_ID (지도교수)']},
+ {id:'ADD',zone:'A',col:0,row:1,label:'V_ADD_JOB_PART',tag:'17행',fields:['INTG_UID, EMP_NO','ORGID, PARTID']},
+ {id:'VDEP',zone:'A',col:0,row:2,label:'V_DEP_INF_ALL',tag:'1,921행',fields:['DEPT_CD  PK','DEPT_UP_CD  (자기참조)','LVL, GRP_CD','UNIV_CODE  (과정구분)','USE_YN']},
+ {id:'USER',col:1,row:0,label:'DC_USER',fields:['INTG_UID  PK','user_source (aca/ext)','status, last_login_at','local_pwd (외부인원만)']},
+ {id:'STU',col:1,row:1,label:'DC_STUDENT',fields:['INTG_UID  PK,FK','학사캐시 (학과/학년/','   학적/GPA)','student_type, iap_type','level, exp, penalty_total','synced_at']},
+ {id:'CNS',col:1,row:2,label:'DC_COUNSELOR',fields:['counselor_id  PK','INTG_UID  FK','counselor_cd  UQ','role (career/psych)','inout_gb (내부/외부)','active_yn']},
+ {id:'PROF',col:1,row:3,label:'DC_PROFESSOR_PROFILE',fields:['INTG_UID  PK','counsel_open_yn','office_hours, intro']},
+ {id:'MDEP',zone:'M',col:1,row:4,label:'DC_DEPT_MIRROR',fields:['DEPT_CD  PK','DEPT_NM, 상위경로','UNIV_CODE','valid_from / valid_to','synced_at']},
+ {id:'AUTH',zone:'O',col:2,row:0,label:'SY_AUTH',tag:'현행 13건',fields:['AUTH_CODE  PK','AUTHNM, AUTH_EXPL','BASEGRUP_YN','USE_YN']},
+ {id:'AUSR',zone:'O',col:2,row:1,label:'SY_AUTH_USER',tag:'현행 52명',fields:['AUTH_CODE  PK,FK','INTG_UID  PK','(백오피스 전용)']},
+ {id:'SCOPE',col:2,row:2,label:'DC_ACCESS_SCOPE',tag:'★ 신설',fields:['INTG_UID  PK','scope_kind  PK','   (self/dept/college/','    advisee/all)','scope_cd  PK','granted_by, granted_at']},
+ {id:'MAUT',zone:'O',col:2,row:3,label:'SY_MENU_AUTH',tag:'현행 972건',fields:['AUTH_CODE  PK,FK','MENU_CODE  PK,FK']},
+ {id:'MENU',zone:'O',col:2,row:4,label:'SY_MENU',tag:'현행 343건',fields:['MENU_CODE  PK','PRTCODE (상위)','MENU_URL, MENU_LEVL','USER_DVID']}
+ ],edges:[
+ {from:'USR',to:'ADD',card:'1:N',label:'겸직'},
+ {from:'USR',to:'USER',card:'1:1',kind:'logical',label:'INTG_UID 그대로',lane:300},
+ {from:'USR',to:'PROF',card:'0..1:1',kind:'logical',label:'PROF_ID · 교수만',lane:336},
+ {from:'VDEP',to:'MDEP',card:'1:1',kind:'logical',label:'야간 미러',lane:318},
+ {from:'USER',to:'STU',card:'1:1',label:'USER_TY_CD=학생'},
+ {from:'USER',to:'CNS',card:'1:1',lane:600},
+ {from:'USER',to:'AUSR',card:'1:N',label:'역할 배정'},
+ {from:'AUTH',to:'AUSR',card:'1:N'},
+ {from:'AUTH',to:'MAUT',card:'1:N',lane:920},
+ {from:'MAUT',to:'MENU',card:'N:1'},
+ {from:'CNS',to:'SCOPE',card:'1:N',label:'담당 범위'},
+ {from:'MDEP',to:'SCOPE',card:'1:N',lane:645}
+ ]},
+{t:'note',tag:'이 다이어그램의 요점',html:'<b>메뉴 접근(누가 어떤 화면을 보는가)은 현행 <code>SY_AUTH</code> 4단이 이미 해결했다.</b> 남은 구멍은 <b>행 수준(어떤 학생 데이터를 보는가)</b>이다 — 현행은 상담사=<code>COM_CON_TAR</code>(담당 단과대), 교수=<code>TB_CARR_PROF_ASSI_DEPT</code>, 조교=<code>COM_ASS_DEPT</code>/<code>FU_ASS_DEPT</code>로 <b>도메인마다 흩어져 있고 통합 규칙이 없다</b>. <code>DC_ACCESS_SCOPE</code>가 이 셋을 하나로 흡수한다. 코드에서는 <code>SPEC.md §2</code>의 <code>getAccessScope(user) → queryStudents(scope, params)</code> 계약으로 노출한다 — <b>컴포넌트 안에서 범위를 거르지 않는다.</b>'},
+{t:'table',head:['테이블','존','PK','주요 컬럼','관계 · 비고'],rows:[
+ ['<code>DC_USER</code>','B','<code>INTG_UID</code>','<code>user_source</code>(academic/external), <code>display_name</code>, <code>status</code>, <code>local_pwd</code>(외부 인원만), <code>first_login_at</code>, <code>last_login_at</code>','<b>surrogate 없음.</b> 학사 유래 인원은 <code>V_USR_INF</code>에서 JIT 프로비저닝, 외부 위촉 인원은 <code>user_source=external</code>로 우리가 직접 등록한다. <b>현행처럼 <code>V_USR_INF</code>에 INSERT하지 않는다</b> — 야간 배치가 덮어쓸 위험 제거'],
+ ['<code>DC_STUDENT</code>','B','<code>INTG_UID</code>','캐시(<code>MAJOR_CD</code>,<code>STU_SCHGR</code>,<code>HOFC_STA_CD</code>,<code>cum_gpa</code>,<code>synced_at</code>), 서비스값(<code>student_type</code>,<code>iap_type</code>,<code>track</code>,<code>competency_score</code>,<code>target_company</code>,<code>target_role</code>,<code>level</code>,<code>exp_point</code>,<code>penalty_total</code>)','캐시 컬럼과 서비스 컬럼을 <b>네이밍으로 구분</b>. 캐시는 동기화가 덮어쓰고, 서비스값은 절대 안 덮는다'],
+ ['<code>DC_COUNSELOR</code>','B','<code>counselor_id</code>','<code>INTG_UID</code> FK, <code>counselor_cd</code> UQ, <code>role</code>(career/psych), <code>role_label</code>, <code>center_nm</code>, <code>specialty</code>, <code>email</code>, <code>office_hours</code>, <code>inout_gb</code>, <code>active_yn</code>','현행 <code>COM_CON_INF</code>(26명·51컬럼) 계승. <code>INOUT_GB</code>·<code>CONPWD</code> 패턴을 <code>inout_gb</code> + <code>DC_USER.local_pwd</code>로 이관. 권한 헬퍼(<code>canEditRoadmap</code> 등)는 <code>role</code>에서 파생 — 컬럼으로 두지 않는다'],
+ ['<code>DC_ACCESS_SCOPE</code> <span class="pill">★ 신설</span>','B','<code>INTG_UID</code>+<code>scope_kind</code>+<code>scope_cd</code>','<code>scope_kind</code>(self/dept/college/advisee/all), <code>scope_cd</code>(<code>DEPT_CD</code> 또는 단대코드), <code>granted_by</code>, <code>granted_at</code>, <code>revoked_at</code>','<b>현행에 없는 유일한 통합 지점.</b> 상담사 담당단대(<code>COM_CON_TAR</code>)·교수 배정(<code>TB_CARR_PROF_ASSI_DEPT</code>)·조교 배정(<code>COM_ASS_DEPT</code>/<code>FU_ASS_DEPT</code>)을 한 테이블로. 행이 없으면 <code>self</code>'],
+ ['<code>DC_PROFESSOR_PROFILE</code>','B','<code>INTG_UID</code>','<code>counsel_open_yn</code>, <code>office_hours</code>, <code>intro</code>, <code>updated_at</code>','교수 신원은 <code>V_USR_INF</code>가 원천. 우리는 <b>상담 노출 여부만</b> 소유. 현행 <code>CO_PROF</code>·<code>PC_CON_PROF_*</code>가 전부 0행 → <b>사실상 신설</b>'],
+ ['<code>DC_DEPT_MIRROR</code>','B(미러)','<code>DEPT_CD</code>','<code>DEPT_NM</code>, <code>DEPT_UP_CD</code>, <code>LVL</code>, <code>GRP_CD</code>, <b><code>UNIV_CODE</code></b>, 상위경로(<code>college_cd</code>/<code>college_nm</code> 전개), <code>valid_from</code>, <code>valid_to</code>, <code>synced_at</code>','<b><code>V_DEP_INF_ALL</code>만 원천으로 쓴다</b>(<code>V_DEP_INF</code> 금지). 자기참조 트리를 조회 편의를 위해 상위경로까지 펼쳐 저장. 현행 <code>colleges.ts MAJOR_TO_COLLEGE</code> 하드코딩 맵을 대체'],
+ ['<code>SY_AUTH</code> 계열 4테이블','B(현행)','—','<code>SY_AUTH</code>(13) → <code>SY_AUTH_USER</code>(52) → <code>SY_MENU_AUTH</code>(972) → <code>SY_MENU</code>(343)','<b>신설하지 않는다.</b> 역할이 필요하면 <code>AUTH_CODE</code>를 추가한다. 2025-03-01 개편 시 스냅샷 백업(<code>SY_AUTH_20250301</code>)을 뜬 관행이 있으므로 <b>권한 구조 변경 시 백업</b>']
+]}
+
+,
+/* ══════════════ D2 진단 → 유형 → IAP ══════════════ */
+{t:'h2',no:'6',text:'D2 · 진단검사 → 6유형 → IAP'},
+{t:'p',html:'검사가 1차 자동 분류하고 상담사가 확정하는 하이브리드다. 그래서 <b>결과(<code>DC_DIAG_RESULT</code>)와 확정(<code>DC_IAP</code>)을 분리</b>한다 — 검사 결과는 불변 기록, IAP는 상담사가 바꿀 수 있는 판단이다.'},
+{t:'diagram',caption:'C-2 · C-3 · C-4 · C-CORE 4종 (C-1 없음). 학년별 선택/공통 정책도 코드가 아니라 테이블(DC_DIAG_TEST_GRADE_RULE)로 둔다.',
+ nodes:[
+ {id:'TEST',col:0,row:0,label:'DC_DIAG_TEST',fields:['test_cd  PK','test_nm, area','category, decides','question_cnt, minutes','active_yn']},
+ {id:'RULE',col:0,row:1,label:'DC_DIAG_TEST_GRADE_RULE',fields:['test_cd  PK,FK','grade  PK (1~4)','requirement (선택/공통)']},
+ {id:'Q',col:0,row:2,label:'DC_DIAG_QUESTION',fields:['question_id  PK','test_cd  FK','question_no, text','factor_cd, reverse_yn']},
+ {id:'ATT',col:1,row:0,label:'DC_DIAG_ATTEMPT',fields:['attempt_id  PK','student_id  FK','test_cd  FK','term_cd','status, started_at','completed_at']},
+ {id:'RES',col:1,row:1,label:'DC_DIAG_RESULT',fields:['attempt_id  PK,FK','student_type (파생)','report_json','ai_summary']},
+ {id:'ANS',col:1,row:2,label:'DC_DIAG_ANSWER',fields:['attempt_id  PK,FK','question_id  PK,FK','answer_value']},
+ {id:'MAP',col:2,row:0,label:'DC_STUDENT_TYPE_MAP',fields:['student_type  PK','iap_type (R1~R6)','label, grade_band','track, goal, focus']},
+ {id:'FS',col:2,row:1,label:'DC_DIAG_FACTOR_SCORE',fields:['attempt_id  PK,FK','factor_cd  PK','score, level(상/중/하)','percentile']},
+ {id:'STU',col:2,row:2,label:'DC_STUDENT',fields:['student_id  PK']},
+ {id:'IAP',col:3,row:1,label:'DC_IAP',fields:['iap_id  PK','student_id  FK','student_type, iap_type','track, version','source (auto/counselor)','confirmed_by  FK','confirmed_at, memo']}
+ ],edges:[
+ {from:'TEST',to:'RULE',card:'1:N',label:'학년별 응시정책'},
+ {from:'TEST',to:'Q',card:'1:N',lane:35},
+ {from:'TEST',to:'ATT',card:'1:N',label:'응시'},
+ {from:'ATT',to:'RES',card:'1:1'},
+ {from:'ATT',to:'ANS',card:'1:N',lane:302},
+ {from:'Q',to:'ANS',card:'1:N'},
+ {from:'RES',to:'FS',card:'1:N',label:'요인점수'},
+ {from:'RES',to:'MAP',card:'N:1',label:'6유형 → IAP 파생'},
+ {from:'MAP',to:'IAP',card:'1:N'},
+ {from:'STU',to:'IAP',card:'1:N',label:'확정 이력'}
+ ]},
+{t:'table',head:['테이블','PK','주요 컬럼','비고'],rows:[
+ ['<code>DC_DIAG_TEST</code>','<code>test_cd</code>','<code>test_nm</code>, <code>area</code>, <code>category</code>, <code>decides</code>, <code>question_cnt</code>, <code>est_minutes</code>, <code>image_path</code>, <code>requires_json</code>, <code>sort_no</code>, <code>active_yn</code>','현행 <code>DIAGNOSIS_MODULES</code> 그대로. <code>C2/C3/C4/CCORE</code> 4행'],
+ ['<code>DC_DIAG_TEST_GRADE_RULE</code>','<code>test_cd</code>+<code>grade</code>','<code>requirement</code>(선택/공통)','현재 “정책(문서)”으로만 있고 UI는 4종 전부 노출 중 — DB화하면 학년 필터링이 데이터로 켜진다'],
+ ['<code>DC_DIAG_QUESTION</code>','<code>question_id</code>','<code>test_cd</code> FK, <code>question_no</code>, <code>question_text</code>, <code>factor_cd</code>, <code>scale_type</code>, <code>reverse_yn</code>','C-CORE 39 · C-2 153 · C-3 94 · C-4 98 문항'],
+ ['<code>DC_DIAG_ATTEMPT</code>','<code>attempt_id</code>','<code>student_id</code> FK, <code>test_cd</code> FK, <code>term_cd</code>, <code>status</code>(진행/완료/중단), <code>started_at</code>, <code>completed_at</code>','<b>재검사 대응</b> — 학생×검사 다건 허용. 화면의 “결과보기”는 최신 완료 attempt'],
+ ['<code>DC_DIAG_ANSWER</code>','<code>attempt_id</code>+<code>question_id</code>','<code>answer_value</code>, <code>answered_at</code>','원답안 보존(재채점·검증용)'],
+ ['<code>DC_DIAG_RESULT</code>','<code>attempt_id</code>','<code>student_type</code>(C-CORE만), <code>report_json</code>, <code>ai_summary</code>, <code>scored_at</code>','채점 산출물. <b>불변</b> — 수정 대신 재응시'],
+ ['<code>DC_DIAG_FACTOR_SCORE</code>','<code>attempt_id</code>+<code>factor_cd</code>','<code>score</code>, <code>level</code>(상/중/하), <code>percentile</code>','현행 <code>typeScores{진로명확도·역량준비도·취업준비도}</code>의 정규화. 레이더 차트가 이 테이블을 읽는다'],
+ ['<code>DC_STUDENT_TYPE_MAP</code>','<code>student_type</code>','<code>iap_type</code>, <code>label</code>, <code>grade_band</code>, <code>track</code>(표준/집중관리/가속), <code>goal</code>, <code>focus</code>','현행 <code>STUDENT_TYPE_MAP</code> 6행 그대로. <b>코드 상수 → 마스터 테이블</b>'],
+ ['<code>DC_IAP</code>','<code>iap_id</code>','<code>student_id</code> FK, <code>student_type</code>, <code>iap_type</code>, <code>track</code>, <code>version</code>, <code>source</code>(auto/counselor), <code>confirmed_by</code> FK, <code>confirmed_at</code>, <code>memo</code>','<code>dc_iap_result</code> 대체. 버전 누적 — “상담사가 유형을 바꿨다”는 이력이 남아야 한다']
+]},
+
+/* ══════════════ D3 상담 ══════════════ */
+{t:'h2',no:'7',text:'D3 · 상담 (진로취업 · 심리 · 교수)'},
+{t:'p',html:'상담 신청의 담당자는 <b>상담사이거나 교수</b>다. 두 신원이 서로 다른 DB에 살기 때문에 <code>assignee_kind</code>로 분기하고 <code>counselor_id</code>/<code>PROF_ID</code> 중 하나만 채운다(배타적 선택, CHECK 제약).'},
+{t:'note',warn:true,tag:'현행과의 가장 큰 구조 차이 — 신청과 결과의 분리',html:'현행은 <b><code>COUNSEL_MASTER</code>(46컬럼) 한 행에 신청과 결과가 같이 들어 있다</b>(5.4만 건). 우리는 <code>DC_COUNSEL_REQUEST</code>(신청) / <code>DC_COUNSEL_RECORD</code>(결과)로 나눈다 — 재배정 이력·학생 공개 범위·수정 시점을 분리해야 하기 때문이다. <b>이관 시 <code>COUNSEL_MASTER</code> 1행 → 2행으로 분해</b>된다.<br><br><b>동시에, 현행에만 있고 우리 화면에 없는 항목을 흡수해야 한다</b>(<code>SPEC.md §3-1-②</code>): 취소 사유·취소자 · 학생 공개 여부(<code>STUD_OTP_YN</code>) · 재배정 이력 · 진로↔심리 연계 이송(<code>LINK_*</code>) · <b>상담 전 진단 4문항</b>(전공만족·진로목표·취업역량·취업동기) · 학생 제출물 플래그(첨부·이력서·희망사항) · 가족관계(<code>COUNSEL_FAM</code>) · 문제유형 다중선택(<code>COUNSEL_PROBLEM</code>).'},
+{t:'diagram',caption:'재배정은 컬럼 덮어쓰기가 아니라 DC_COUNSEL_ASSIGN_LOG에 이력으로 쌓인다 — 현재 접수함의 인라인 드롭다운 재배정이 그대로 감사 대상이 된다.',
+ nodes:[
+ {id:'STU',col:0,row:1,label:'DC_STUDENT',fields:['student_id  PK']},
+ {id:'CNS',col:0,row:2,label:'DC_COUNSELOR',fields:['counselor_id  PK','role (career/psych)']},
+ {id:'PROF',col:0,row:3,label:'DC_PROFESSOR_PROFILE',fields:['faculty_no  PK','counsel_open_yn']},
+ {id:'CONS',col:1,row:0,label:'DC_CONSENT',fields:['consent_id  PK','student_id  FK','consent_type','agreed_yn, agreed_at']},
+ {id:'REQ',col:1,row:1,label:'DC_COUNSEL_REQUEST',fields:['request_id  PK','student_id  FK','counsel_type, status','method, topic','assignee_kind','counselor_id  FK?','faculty_no  ?','slot_date/start/end','snap_dept/grade/track']},
+ {id:'AVL',col:1,row:3,label:'DC_COUNSELOR_AVAILABILITY',fields:['slot_id  PK','counselor_id  FK','weekday (0~6)','start_time, end_time','valid_from / valid_to']},
+ {id:'LOG',col:2,row:0,label:'DC_COUNSEL_ASSIGN_LOG',fields:['log_id  PK','request_id  FK','from/to_counselor_id','assigned_at, by, reason']},
+ {id:'REC',col:2,row:1,label:'DC_COUNSEL_RECORD',fields:['record_id  PK','request_id  FK,UQ','counselor_id  FK','counsel_date','summary  (내부·민감)','comment  (학생공개)','follow_up, status','created_at/updated_at']}
+ ],edges:[
+ {from:'STU',to:'CONS',card:'1:N',label:'민감정보 동의'},
+ {from:'STU',to:'REQ',card:'1:N',label:'신청'},
+ {from:'CNS',to:'REQ',card:'0..1:N',label:'담당배정'},
+ {from:'PROF',to:'REQ',card:'0..1:N',label:'교수상담'},
+ {from:'CNS',to:'AVL',card:'1:N',label:'가능시간'},
+ {from:'REQ',to:'LOG',card:'1:N',label:'재배정 이력'},
+ {from:'REQ',to:'REC',card:'1:1',label:'완료 시 기록지'}
+ ]},
+{t:'table',head:['테이블','PK','주요 컬럼','비고'],rows:[
+ ['<code>DC_COUNSEL_REQUEST</code>','<code>request_id</code>','<code>student_id</code> FK, <code>counsel_type</code>(진로취업/심리/교수), <code>status</code>(대기/확정/완료/취소), <code>method</code>(대면/비대면), <code>topic</code>, <code>requested_at</code>, <code>assignee_kind</code>(counselor/professor), <code>counselor_id</code> FK?, <code>faculty_no</code>?, <code>slot_date</code>, <code>slot_start</code>, <code>slot_end</code>, <code>slot_place</code>, <b>스냅샷</b>(<code>snap_std_no</code>,<code>snap_name</code>,<code>snap_dept_nm</code>,<code>snap_grade</code>,<code>snap_enroll_status</code>,<code>snap_track</code>)','현행 <code>CounselRequest</code> + <code>StudentCounselRequest</code> 통합. slot을 별도 테이블로 빼지 않는 이유: 요청당 확정 슬롯은 1개뿐 → 정규화 이득 없음'],
+ ['<code>DC_COUNSEL_ASSIGN_LOG</code>','<code>log_id</code>','<code>request_id</code> FK, <code>from_counselor_id</code>, <code>to_counselor_id</code>, <code>assigned_at</code>, <code>assigned_by</code>, <code>reason</code>','접수함 재배정(이관)의 이력. “왜 다른 상담사에게 갔나”가 남는다'],
+ ['<code>DC_COUNSEL_RECORD</code>','<code>record_id</code>','<code>request_id</code> FK UQ, <code>student_id</code> FK, <code>counselor_id</code> FK, <code>counsel_type</code>, <code>method</code>, <code>topic</code>, <code>counsel_date</code>, <code>summary</code>, <code>comment</code>, <code>follow_up</code>, <code>status</code>(작성중/완료), <code>created_at</code>, <code>updated_at</code>','<code>summary</code>=상담사 전용 소견, <code>comment</code>=학생 공개. <b>심리상담 행은 별도 암호화 + 열람 감사 필수</b>'],
+ ['<code>DC_COUNSELOR_AVAILABILITY</code>','<code>slot_id</code>','<code>counselor_id</code> FK, <code>weekday</code>(0=일~6=토), <code>start_time</code>, <code>end_time</code>, <code>valid_from</code>, <code>valid_to</code>','프로토타입 <code>dc_availability</code>. <b>⚠ 설계 판단 미결 — 아래 노트 참조</b>'],
+ ['<code>DC_CONSENT</code>','<code>consent_id</code>','<code>student_id</code> FK, <code>consent_type</code>(개인정보/민감정보/제3자제공), <code>terms_version</code>, <code>agreed_yn</code>, <code>agreed_at</code>, <code>revoked_at</code>','<b>심리상담은 민감정보</b>(개인정보보호법 §23) — 동의 없이 저장하면 안 된다. <b>현행에 <code>SY_AGREE</code>가 이미 있다</b> → 신설이 아니라 확장']
+]},
+{t:'note',warn:true,tag:'상담 가능시간 — 방식을 뒤집을 것을 권한다 <span class="pill">미결</span>',html:'우리는 <b>“가능 시간”을 등록</b>하는 모델이고(<code>DC_COUNSELOR_AVAILABILITY</code>), 현행은 <b>“제한 일정”을 등록</b>한다(<code>TB_CARR_CNSL_EXCL_HR</code> — 기본 전부 가능 + 예외만 제외).<br><b>현행 <code>BASICSETTING</code>이 573,897행까지 부푼 것</b>이 슬롯 전개 방식(일자×시×분)의 결과다. 제한 방식이면 수백 행이면 되고 상담사 입력량도 훨씬 적다.<br>→ <b>제한 방식(<code>DC_COUNSELOR_BLOCK</code>) 전환을 검토할 것.</b> 확정 전까지 이 테이블 스키마를 고정하지 말 것 (<code>SPEC.md §9-2</code>).'}
+,
+/* ══════════════ D4 로드맵 ══════════════ */
+{t:'h2',no:'8',text:'D4 · 경력개발 로드맵 (base + 버전)'},
+{t:'p',html:'프로토타입은 “학생 base JSON은 불변, 상담사 수정분만 localStorage에 override” 구조다. DB에서는 <b>override를 버전 테이블로 승격</b>한다 — 학생 화면은 <code>confirmed_yn=Y</code>인 최신 버전을 읽고, 상담사 편집기는 작업 중 버전을 읽는다. 병합 로직이 사라지고 “확정 시점”이 데이터로 남는다.'},
+{t:'diagram',caption:'로드맵 항목(TASK)이 비교과 프로그램·수강과목을 직접 참조한다 — 그래서 “이 할 일을 클릭하면 신청 화면으로” 가 하드코딩 없이 성립한다.',
+ nodes:[
+ {id:'STU',col:0,row:1,label:'DC_STUDENT',fields:['student_id  PK']},
+ {id:'IAP',col:0,row:2,label:'DC_IAP',fields:['iap_id  PK','iap_type, track']},
+ {id:'RM',col:1,row:1,label:'DC_ROADMAP',fields:['roadmap_id  PK','student_id  FK,UQ','current_version','target_company','target_role','insight, job_field']},
+ {id:'CRQ',col:1,row:3,label:'DC_ROADMAP_CHANGE_REQUEST',fields:['request_id  PK','student_id  FK','term_label ?','title, reason','status','requested_at','handled_at / by']},
+ {id:'PH',col:2,row:0,label:'DC_ROADMAP_PHASE',fields:['phase_id  PK','roadmap_id  FK','phase_no (1~6)','title, status','desc']},
+ {id:'TM',col:2,row:1,label:'DC_ROADMAP_TERM',fields:['term_id  PK','roadmap_id  FK','term_label (단/중/장기)','period, goal']},
+ {id:'VER',col:2,row:2,label:'DC_ROADMAP_VERSION',fields:['version_id  PK','roadmap_id  FK','version_no','edited_by  FK','confirmed_yn','snapshot_json','note, created_at']},
+ {id:'TASK',col:3,row:1,label:'DC_ROADMAP_TASK',fields:['task_id  PK','term_id  FK','phase_id  FK?','task_text, done_yn','priority (H/M/L)','due_date','program_id  FK?','course_cd  ?']}
+ ],edges:[
+ {from:'STU',to:'RM',card:'1:1'},
+ {from:'IAP',to:'RM',card:'N:1',label:'유형이 템플릿 결정'},
+ {from:'STU',to:'CRQ',card:'1:N',label:'변경요청'},
+ {from:'RM',to:'PH',card:'1:N',label:'6단계'},
+ {from:'RM',to:'TM',card:'1:N',label:'단·중·장기'},
+ {from:'RM',to:'VER',card:'1:N',label:'확정 이력'},
+ {from:'CRQ',to:'VER',card:'N:1',label:'반영 → 새 버전'},
+ {from:'TM',to:'TASK',card:'1:N'},
+ {from:'PH',to:'TASK',card:'1:N'}
+ ]},
+{t:'table',head:['테이블','PK','주요 컬럼','비고'],rows:[
+ ['<code>DC_ROADMAP</code>','<code>roadmap_id</code>','<code>student_id</code> FK UQ, <code>current_version</code>, <code>target_company</code>, <code>target_role</code>, <code>job_field</code>, <code>insight</code>, <code>created_at</code>','학생 1명당 1건'],
+ ['<code>DC_ROADMAP_PHASE</code>','<code>phase_id</code>','<code>roadmap_id</code> FK, <code>phase_no</code>(1~6), <code>title</code>, <code>status</code>(done/active/todo), <code>desc</code>','현행 <code>RoadmapPhase</code>. 6단계 프로세스(유형진단→상담/IAP→로드맵→역량강화→기업연계/취업지원→사후관리)'],
+ ['<code>DC_ROADMAP_TERM</code>','<code>term_id</code>','<code>roadmap_id</code> FK, <code>term_label</code>(단기/중기/장기), <code>period</code>, <code>goal</code>','현행 <code>TermDetail</code>. 3단계 phase의 편집 대상 단위'],
+ ['<code>DC_ROADMAP_TASK</code>','<code>task_id</code>','<code>term_id</code> FK, <code>phase_id</code> FK?, <code>task_text</code>, <code>done_yn</code>, <code>priority</code>, <code>due_date</code>, <code>program_id</code> FK?, <code>course_cd</code>(논리FK)?, <code>sort_no</code>','현행 <code>PhaseTask{text,done}</code>의 확장. <b>program_id·course_cd 연결이 핵심</b> — 로드맵이 실제 신청·수강으로 이어진다'],
+ ['<code>DC_ROADMAP_VERSION</code>','<code>version_id</code>','<code>roadmap_id</code> FK, <code>version_no</code>, <code>edited_by</code> FK(상담사), <code>confirmed_yn</code>, <code>snapshot_json</code>, <code>note</code>, <code>created_at</code>','<code>dc_roadmap_overrides</code>의 <code>version</code>+<code>history[]</code> 대체. 학생 화면 = 최신 <code>confirmed_yn=Y</code>'],
+ ['<code>DC_ROADMAP_CHANGE_REQUEST</code>','<code>request_id</code>','<code>student_id</code> FK, <code>roadmap_id</code> FK, <code>term_label</code>?, <code>title</code>, <code>reason</code>, <code>status</code>(대기/반영완료/반려), <code>requested_at</code>, <code>handled_at</code>, <code>handled_by</code>, <code>applied_version_id</code> FK?','<code>dc_roadmap_requests</code> 이관. 처리 시 어느 버전으로 반영됐는지 연결']
+]},
+
+/* ══════════════ D5 수강과목 → 스킬 → 직무 ══════════════ */
+{t:'h2',no:'9',text:'D5 · 수강과목 체계 → 스킬트리 → 직무적합도 <span class="pill">학사DB 접점의 핵심</span>'},
+{t:'p',html:'“수강과목 기반 직무 적합도”가 이 프로젝트에서 학사DB를 가장 깊게 쓰는 지점이다. 학교는 <b>과목코드와 이수내역만</b> 준다. 과목이 어떤 역량을 길러주는지는 학교 데이터에 없다 — 그 <b>매핑을 우리가 소유</b>해야 한다. 그 테이블이 <code>DC_COURSE_SKILL_MAP</code>이고, 스킬트리·다음학기 추천과목·직무적합도가 모두 여기서 나온다.'},
+{t:'note',warn:true,tag:'2026-07 실사 — 이 도메인의 전제가 바뀌었다',html:'초판은 <code>V_COURSE</code>·<code>V_COURSE_OPENING</code>·<code>V_ENROLLMENT</code>·<code>V_TERM</code>을 <b>새로 요청할 view</b>로 그렸다. 실제로는 <b><code>V_SUGANG</code>(15컬럼)·<code>V_LECT_INF</code>(20컬럼)가 이미 존재</b>하고 <b>DB링크도 살아 있는데 적재만 꺼져 있다</b>(0행, 통계 2020-05-04). 조인 SQL(<code>Ca.getGoalCour_List</code>·<code>Ca.getLecList</code>)까지 작성돼 있다.<br>아래 다이어그램의 <code>V_COURSE</code>/<code>V_ENROLLMENT</code>는 <b>읽기 쉬운 논리명</b>이며 실제 매핑은 이렇다:<br><code>V_COURSE</code>·<code>V_COURSE_OPENING</code> → <b><code>V_LECT_INF</code></b>(<code>CURI_NUM</code>·<code>CURI_NM</code>·<code>CDT_NUM</code>·<code>PROF_ID</code>·<code>CAP_PER1~6</code>) / <code>V_ENROLLMENT</code> → <b><code>V_SUGANG</code></b>(<code>YEAR</code>·<code>SMT</code>·<code>STUDENT_CD</code>·<code>CURI_NUM</code>·<code>GRADE</code>·<code>GPA</code>·<code>COURSE_CLS</code>·<code>FINISH_YN</code>·<code>CHK_RECURI</code>) / <code>V_TERM</code> → <b>별도 테이블 없음</b>, <code>YEAR+SMT</code>에서 파생.<br><b>조인키는 <code>(YEAR, SMT, GRAD_DIV, CURI_NUM)</code></b>이고 <code>GRAD_DIV</code>(과정구분)가 들어 있어 <b>대학원 수강도 같은 구조로 처리된다</b>.'},
+{t:'note',tag:'가장 중요한 설계 판단',html:'<code>DC_COURSE_SKILL_MAP</code>(과목 ↔ 스킬, 기여도)은 <b>사람이 채워야 하는 지식자산</b>이다. 학과 교육과정 담당·상담사가 초기 1회 구축하고 교과과정 개편 때 갱신한다. 이 테이블 없이는 “수강과목 기반 적합도”가 영원히 하드코딩으로 남는다(현재 <code>SkillTree.tsx</code>가 그 상태). <b>구축 우선순위 1순위로 잡을 것을 권한다</b> — 없으면 D5 전체가 못 돌아간다.'},
+{t:'diagram',caption:'왼쪽 4개(주황)는 학교가 주는 것, 나머지는 전부 우리가 만든다. 점선을 넘는 순간 조인이 아니라 동기화다.',
+ nodes:[
+ {id:'VT',zone:'A',col:0,row:0,label:'V_TERM',tag:'VIEW',fields:['term_cd  PK','year, semester','is_current']},
+ {id:'VC',zone:'A',col:0,row:1,label:'V_COURSE',tag:'VIEW',fields:['course_cd  PK','course_nm, dept_cd','credit, course_type','grade_level','curriculum_year']},
+ {id:'VO',zone:'A',col:0,row:2,label:'V_COURSE_OPENING',tag:'VIEW',fields:['open_id  PK','term_cd  FK','course_cd  FK','class_no, faculty_no']},
+ {id:'VE',zone:'A',col:0,row:3,label:'V_ENROLLMENT',tag:'VIEW',fields:['std_no + open_id  PK','course_cd, term_cd','grade_letter/point','credit_earned, status']},
+ {id:'MC',zone:'M',col:1,row:1,label:'DC_COURSE_MIRROR',fields:['course_cd  PK','course_nm, dept_cd','credit, course_type','synced_at']},
+ {id:'STU',col:1,row:2,label:'DC_STUDENT',fields:['student_id  PK','std_no  UQ']},
+ {id:'SC',zone:'M',col:1,row:3,label:'DC_STUDENT_COURSE',fields:['student_id  PK,FK','course_cd  PK','term_cd  PK','grade_point, credit','synced_at']},
+ {id:'CSM',col:2,row:1,label:'DC_COURSE_SKILL_MAP',tag:'★ 우리 자산',fields:['course_cd  PK (논리FK)','skill_cd  PK,FK','contribution (0~1)','mapped_by, mapped_at']},
+ {id:'SK',col:2,row:2,label:'DC_SKILL',fields:['skill_cd  PK','skill_nm, category','max_score']},
+ {id:'SSS',col:2,row:3,label:'DC_STUDENT_SKILL_SCORE',fields:['student_id  PK,FK','skill_cd  PK,FK','source  PK (과목/비교과','   /자격증/진단)','score, computed_at']},
+ {id:'JR',col:3,row:0,label:'DC_JOB_ROLE',fields:['job_role_cd  PK','job_role_nm','job_field, desc']},
+ {id:'JRS',col:3,row:1,label:'DC_JOB_ROLE_SKILL',fields:['job_role_cd  PK,FK','skill_cd  PK,FK','weight','required_level','req_type (필수/우대)']},
+ {id:'FIT',col:3,row:2,label:'DC_STUDENT_JOB_FIT',fields:['student_id  PK,FK','job_role_cd  PK,FK','fit_score (0~100)','gap_json','computed_at']},
+ {id:'RECO',col:3,row:3,label:'DC_COURSE_RECO',fields:['student_id  PK,FK','term_cd  PK','course_cd  PK','rank, reason']}
+ ],edges:[
+ {from:'VT',to:'VO',card:'1:N',lane:35},
+ {from:'VC',to:'VO',card:'1:N',label:'학기 개설'},
+ {from:'VO',to:'VE',card:'1:N',label:'수강'},
+ {from:'VC',to:'MC',card:'1:1',kind:'logical',label:'야간 미러'},
+ {from:'VE',to:'SC',card:'1:1',kind:'logical',label:'이수내역 적재'},
+ {from:'STU',to:'SC',card:'1:N'},
+ {from:'MC',to:'CSM',card:'1:N',label:'과목 → 역량 매핑'},
+ {from:'SK',to:'CSM',card:'1:N'},
+ {from:'SC',to:'SSS',card:'1:N',label:'배치 산출'},
+ {from:'SK',to:'SSS',card:'1:N'},
+ {from:'JR',to:'JRS',card:'1:N',label:'요구역량'},
+ {from:'SK',to:'JRS',card:'1:N'},
+ {from:'JRS',to:'FIT',card:'N:1',label:'gap 산출'},
+ {from:'SSS',to:'FIT',card:'N:1'},
+ {from:'FIT',to:'RECO',card:'1:N',label:'부족 스킬 → 추천과목'}
+ ]},
+{t:'table',head:['테이블','PK','주요 컬럼','비고'],rows:[
+ ['<code>DC_COURSE_MIRROR</code>','<code>course_cd</code>','<code>course_nm</code>, <code>dept_cd</code>, <code>credit</code>, <code>course_type</code>, <code>curriculum_year</code>, <code>synced_at</code>','<code>V_COURSE</code> 미러. 매핑 화면의 과목 검색·자동완성이 이걸 읽는다(외부 DB 실시간 조회 없이)'],
+ ['<code>DC_STUDENT_COURSE</code>','<code>student_id</code>+<code>course_cd</code>+<code>term_cd</code>','<code>grade_point</code>, <code>credit_earned</code>, <code>status</code>, <code>retake_yn</code>, <code>synced_at</code>','<code>V_ENROLLMENT</code>를 학번→<code>student_id</code>로 치환해 적재. 성적 확정 후 갱신'],
+ ['<code>DC_SKILL</code>','<code>skill_cd</code>','<code>skill_nm</code>, <code>category</code>, <code>max_score</code>, <code>desc</code>','스킬트리의 노드. 현행 <code>JobSkill{label,score,max,color}</code>의 마스터화'],
+ ['<code>DC_COURSE_SKILL_MAP</code>','<code>course_cd</code>+<code>skill_cd</code>','<code>contribution</code>(0~1 가중), <code>mapped_by</code>, <code>mapped_at</code>, <code>curriculum_year</code>','<b>★ 우리가 소유하는 지식자산.</b> 학사DB에 없는 정보 — 사람이 채운다'],
+ ['<code>DC_STUDENT_SKILL_SCORE</code>','<code>student_id</code>+<code>skill_cd</code>+<code>source</code>','<code>score</code>, <code>computed_at</code>','<code>source</code>를 PK에 넣어 “과목으로 얻은 점수 / 비교과로 얻은 점수 / 자격증 / 진단”을 분리 집계 → 스킬트리에서 출처별 색 구분이 가능'],
+ ['<code>DC_JOB_ROLE</code>','<code>job_role_cd</code>','<code>job_role_nm</code>, <code>job_field</code>, <code>desc</code>','목표 직무 마스터(예 <code>JR-IT-PM</code> = IT Project Manager)'],
+ ['<code>DC_JOB_ROLE_SKILL</code>','<code>job_role_cd</code>+<code>skill_cd</code>','<code>weight</code>, <code>required_level</code>, <code>req_type</code>(필수/우대)','현행 <code>GapItem</code>·<code>GapBadge</code>(required/preferred/weight)의 정규화'],
+ ['<code>DC_STUDENT_JOB_FIT</code>','<code>student_id</code>+<code>job_role_cd</code>','<code>fit_score</code>, <code>gap_json</code>, <code>computed_at</code>','배치 산출. <b>화면은 계산하지 않고 읽기만</b> — 6천명 실시간 계산 회피'],
+ ['<code>DC_COURSE_RECO</code>','<code>student_id</code>+<code>term_cd</code>+<code>course_cd</code>','<code>rank</code>, <code>reason</code>, <code>computed_at</code>','“다음 학기 추천 과목”. <code>V_COURSE_OPENING</code>과 대조해 실제 개설되는 과목만 노출']
+]}
+,
+/* ══════════════ D6 비교과 · 벌점 ══════════════ */
+{t:'h2',no:'10',text:'D6 · 비교과 프로그램 · 출석 · 벌점'},
+{t:'p',html:'현재는 신청자 1명당 출석 필드가 <b>하나</b>다(<code>ProgramApplicant.attendance</code>). 그런데 프로그램은 <code>sessions</code>(총 운영 회차)를 갖는다 — 5회차 프로그램에서 3회차만 빠진 학생을 표현할 수 없다. DB에서는 <b>회차(SESSION) × 신청자(APPLICANT) = 출석(ATTENDANCE)</b>으로 쪼갠다.'},
+{t:'diagram',caption:'노쇼 → 벌점은 트리거가 아니라 명시적 이력(DC_PENALTY_ENTRY)으로 남긴다. 소명 인정 해제도 음수 행으로 쌓여 원장이 진실이 된다.',
+ nodes:[
+ {id:'STU',col:0,row:1,label:'DC_STUDENT',fields:['student_id  PK','penalty_total (캐시)']},
+ {id:'PRG',col:1,row:0,label:'DC_PROGRAM',fields:['program_id  PK','title, category','apply_start / apply_end','run_start / run_end','sessions, capacity','status, pinned','fiscal_year, created_by']},
+ {id:'APL',col:1,row:1,label:'DC_PROGRAM_APPLICANT',fields:['apply_id  PK','program_id  FK','student_id  FK','round, applied_at','selection_status','outcome_status','snap_dept/grade']},
+ {id:'WSH',col:1,row:2,label:'DC_PROGRAM_WISHLIST',fields:['student_id  PK,FK','program_id  PK,FK','added_at']},
+ {id:'CNS',col:1,row:3,label:'DC_COUNSELOR',fields:['counselor_id  PK']},
+ {id:'SES',col:2,row:0,label:'DC_PROGRAM_SESSION',fields:['session_id  PK','program_id  FK','session_no','session_date, place']},
+ {id:'ATT',col:2,row:1,label:'DC_PROGRAM_ATTENDANCE',fields:['apply_id  PK,FK','session_id  PK,FK','attendance (미확인/','   출석/노쇼)','checked_by, checked_at']},
+ {id:'PEN',col:2,row:2,label:'DC_PENALTY_ENTRY',fields:['entry_id  PK','student_id  FK','kind (noshow/manual','   /waive)','points  (±)','reason','program_id  FK?','apply_id  FK?','occurred_at, created_by']}
+ ],edges:[
+ {from:'PRG',to:'APL',card:'1:N',label:'신청'},
+ {from:'STU',to:'APL',card:'1:N'},
+ {from:'STU',to:'WSH',card:'1:N',label:'관심목록'},
+ {from:'PRG',to:'SES',card:'1:N',label:'회차'},
+ {from:'APL',to:'ATT',card:'1:N'},
+ {from:'SES',to:'ATT',card:'1:N',label:'회차별 출석'},
+ {from:'ATT',to:'PEN',card:'0..1:1',label:'노쇼 → 벌점'},
+ {from:'CNS',to:'ATT',card:'1:N',label:'출석체크'},
+ {from:'CNS',to:'PEN',card:'1:N',label:'부여·해제'}
+ ]},
+{t:'table',head:['테이블','PK','주요 컬럼','비고'],rows:[
+ ['<code>DC_PROGRAM</code>','<code>program_id</code>','<code>title</code>, <code>desc</code>, <code>category</code>(진로/취업/어학/창업/자격증/기타), <code>apply_start_dt</code>, <code>apply_end_dt</code>, <code>run_start_dt</code>, <code>run_end_dt</code>, <code>sessions</code>, <code>manager_nm</code>, <code>fiscal_year</code>, <code>capacity</code>, <code>location</code>, <code>status</code>, <code>pinned</code>, <code>image_path</code>, <code>created_by</code> FK, <code>created_at</code>','현행 <code>Program</code> 1:1 이관 (<code>applicants[]</code>만 분리)'],
+ ['<code>DC_PROGRAM_APPLICANT</code>','<code>apply_id</code>','<code>program_id</code> FK, <code>student_id</code> FK, <code>round</code>, <code>applied_at</code>, <code>selection_status</code>(대기/선발/탈락/취소), <code>outcome_status</code>(수료/미수료/참석/불참), 스냅샷(<code>snap_name</code>,<code>snap_dept_nm</code>,<code>snap_grade</code>)','UNIQUE(<code>program_id</code>,<code>student_id</code>,<code>round</code>) — 차수별 재신청 허용, 같은 차수 중복 신청 차단'],
+ ['<code>DC_PROGRAM_SESSION</code>','<code>session_id</code>','<code>program_id</code> FK, <code>session_no</code>, <code>session_date</code>, <code>start_time</code>, <code>place</code>','<b>신규</b> — <code>Program.sessions</code>(숫자)를 실제 행으로. 회차별 출석의 전제'],
+ ['<code>DC_PROGRAM_ATTENDANCE</code>','<code>apply_id</code>+<code>session_id</code>','<code>attendance</code>(미확인/출석/노쇼), <code>checked_by</code> FK, <code>checked_at</code>','현행 단일 <code>attendance</code> 필드의 확장. 수료 판정(출석률)이 계산 가능해진다'],
+ ['<code>DC_PROGRAM_WISHLIST</code>','<code>student_id</code>+<code>program_id</code>','<code>added_at</code>','<code>dc_program_wishlist</code> 이관'],
+ ['<code>DC_PENALTY_ENTRY</code>','<code>entry_id</code>','<code>student_id</code> FK, <code>kind</code>(noshow/manual/waive), <code>points</code>(부여 +, 해제 −), <code>reason</code>, <code>program_id</code> FK?, <code>apply_id</code> FK?, <code>occurred_at</code>, <code>created_by</code> FK','<code>dc_penalty</code>의 <code>entries[]</code>가 곧 이 테이블. <code>total</code>은 <b>저장하지 않고</b> SUM으로 파생 — 단, 목록 성능을 위해 <code>DC_STUDENT.penalty_total</code>에 캐시(원장이 진실)']
+]},
+
+/* ══════════════ D7 채용 · 포트폴리오 ══════════════ */
+{t:'h2',no:'11',text:'D7 · 채용공고 · 포트폴리오 · 자격증/어학'},
+{t:'p',html:'공고는 <b>외부 API 연동분과 상담사 직접 등록분이 한 테이블</b>에 섞인다(<code>source</code>로 구분, <code>external_id</code>로 중복 방지). 등록 폼의 다중선택(근무형태·직종·경력·성별·지역)은 배열이 아니라 <code>DC_JOB_POSTING_OPTION</code> 한 테이블로 받는다 — 옵션 종류가 늘어도 스키마가 안 바뀐다.'},
+{t:'diagram',caption:'match(매칭도)를 공고에서 떼어낸 것이 이 도메인의 핵심 교정이다. 학생 6천명 × 공고 N건은 배치 산출 후 저장.',
+ nodes:[
+ {id:'STU',col:0,row:1,label:'DC_STUDENT',fields:['student_id  PK']},
+ {id:'JP',col:1,row:0,label:'DC_JOB_POSTING',fields:['posting_id  PK','company, role_title','salary, location, deadline','employment_type, recruit_type','apply_url, email, content','source (external/manual)','external_id  UQ?, status']},
+ {id:'JM',col:1,row:1,label:'DC_JOB_MATCH',tag:'파생 분리',fields:['student_id  PK,FK','posting_id  PK,FK','match_score (0~100)','reason_json','computed_at']},
+ {id:'JB',col:1,row:2,label:'DC_JOB_BOOKMARK',fields:['student_id  PK,FK','posting_id  PK,FK','added_at']},
+ {id:'PF',col:1,row:3,label:'DC_PORTFOLIO',fields:['portfolio_id  PK','student_id  FK,UQ','title, updated_at']},
+ {id:'JT',col:2,row:0,label:'DC_JOB_POSTING_TAG',fields:['posting_id  PK,FK','tag  PK']},
+ {id:'JO',col:2,row:1,label:'DC_JOB_POSTING_OPTION',fields:['posting_id  PK,FK','option_kind  PK','option_value  PK','(근무형태/직종/경력','  /성별/지역)']},
+ {id:'JA',col:2,row:2,label:'DC_JOB_ATTACHMENT',fields:['file_id  PK','posting_id  FK','file_nm, file_url','size, uploaded_at']},
+ {id:'PI',col:2,row:3,label:'DC_PORTFOLIO_ITEM',fields:['item_id  PK','portfolio_id  FK','item_type (스킬/자격증','  /어학/자소서/이력서','  /프로젝트/링크)','title, meta_json','file_url, sort_no']},
+ {id:'LG',col:3,row:2,label:'DC_LANGUAGE_SCORE',fields:['score_id  PK','student_id  FK','test_type, score','taken_ym','verify_status']},
+ {id:'CT',col:3,row:3,label:'DC_CERTIFICATE',fields:['cert_id  PK','student_id  FK','cert_nm, issuer','acquired_ym, cert_no','verify_status']}
+ ],edges:[
+ {from:'JP',to:'JT',card:'1:N'},
+ {from:'JP',to:'JO',card:'1:N',label:'다중선택 옵션'},
+ {from:'JP',to:'JA',card:'1:N',label:'첨부'},
+ {from:'JP',to:'JM',card:'1:N'},
+ {from:'STU',to:'JM',card:'1:N',label:'AI 맞춤채용'},
+ {from:'STU',to:'JB',card:'1:N',label:'스크랩'},
+ {from:'JP',to:'JB',card:'1:N',lane:302},
+ {from:'STU',to:'PF',card:'1:1'},
+ {from:'PF',to:'PI',card:'1:N'},
+ {from:'PI',to:'LG',card:'N:1',label:'원본 참조'},
+ {from:'PI',to:'CT',card:'N:1',label:'원본 참조'}
+ ]},
+{t:'table',head:['테이블','PK','주요 컬럼','비고'],rows:[
+ ['<code>DC_JOB_POSTING</code>','<code>posting_id</code>','<code>company</code>, <code>role_title</code>, <code>salary</code>, <code>salary_negotiable</code>, <code>location</code>, <code>deadline</code>, <code>deadline_on_hire</code>, <code>employment_type</code>(신입/경력), <code>recruit_type</code>(일반공고/추천채용), <code>company_type</code>, <code>apply_url</code>, <code>url_title_link</code>, <code>email</code>, <code>email_apply</code>, <code>content</code>, <code>status</code>(게시/마감), <code>source</code>, <code>external_id</code>, <code>posted_at</code>, <code>created_by</code> FK','현행 <code>JobPosting</code>에서 <code>match</code>·<code>tags[]</code>·다중선택 배열·<code>attachments[]</code>를 분리한 형태'],
+ ['<code>DC_JOB_MATCH</code>','<code>student_id</code>+<code>posting_id</code>','<code>match_score</code>, <code>reason_json</code>, <code>computed_at</code>','<b>현행 <code>JobPosting.match</code>의 교정.</b> 매칭도는 학생별 값 — 공고 테이블에 두면 학생이 2명 이상일 때 성립하지 않는다'],
+ ['<code>DC_JOB_POSTING_TAG</code>','<code>posting_id</code>+<code>tag</code>','—','<code>tags: string[]</code> 정규화. 태그 검색 인덱스'],
+ ['<code>DC_JOB_POSTING_OPTION</code>','<code>posting_id</code>+<code>option_kind</code>+<code>option_value</code>','—','<code>employmentTypes</code>/<code>jobCategories</code>/<code>careerTypes</code>/<code>genders</code>/<code>regions</code> 5개 배열을 하나로 흡수'],
+ ['<code>DC_JOB_ATTACHMENT</code>','<code>file_id</code>','<code>posting_id</code> FK, <code>file_nm</code>, <code>file_url</code>, <code>file_size</code>, <code>uploaded_at</code>','파일 실체는 오브젝트 스토리지, DB는 경로만'],
+ ['<code>DC_JOB_BOOKMARK</code>','<code>student_id</code>+<code>posting_id</code>','<code>added_at</code>','학생 스크랩'],
+ ['<code>DC_PORTFOLIO</code> / <code>DC_PORTFOLIO_ITEM</code>','<code>portfolio_id</code> / <code>item_id</code>','<code>item_type</code>(스킬/자격증/어학/자소서/이력서/프로젝트/링크), <code>title</code>, <code>meta_json</code>, <code>file_url</code>, <code>sort_no</code>','항목 종류가 계속 늘어나므로 <code>item_type</code>+<code>meta_json</code> 혼합형. 정형이 필요한 자격증·어학만 별도 테이블로 뺀다'],
+ ['<code>DC_CERTIFICATE</code> / <code>DC_LANGUAGE_SCORE</code>','<code>cert_id</code> / <code>score_id</code>','<code>student_id</code> FK, <code>cert_nm</code>/<code>test_type</code>, <code>score</code>, <code>acquired_ym</code>, <code>cert_no</code>, <code>verify_status</code>(미검증/검증/반증)','<b>학사DB에 <code>V_CERTIFICATE</code>가 있으면 미러로 전환</b>, 없으면 학생 자기입력 + 상담사 검증(<code>verify_status</code>). 로드맵·직무적합도 입력값이라 검증 상태가 중요']
+]}
+,
+/* ══════════════ D8 게임화 · 일지 · AI ══════════════ */
+{t:'h2',no:'12',text:'D8 · 퀘스트 · 랭킹 · 성장일지 · AI 산출물'},
+{t:'p',html:'게임화의 함정은 “레벨·EXP를 학생 테이블에 숫자로만 두는 것”이다. 그러면 왜 그 레벨인지 설명할 수 없고 오지급 정정도 불가능하다. <b>원장(<code>DC_POINT_LEDGER</code>)이 진실이고 <code>DC_STUDENT.level/exp_point</code>는 캐시</b>다.'},
+{t:'diagram',caption:'AI 산출물을 별도 테이블로 보관하는 이유: 재현성(어느 모델·어느 입력이었나)과 “학생이 그 제안을 수락했는가”를 남겨야 한다.',
+ nodes:[
+ {id:'STU',col:0,row:1,label:'DC_STUDENT',fields:['student_id  PK','level, exp_point (캐시)']},
+ {id:'QST',col:1,row:0,label:'DC_QUEST',fields:['quest_id  PK','cycle (daily/weekly','   /monthly)','title, desc','target_type, target_count','exp_reward, point_reward','active_from / active_to']},
+ {id:'QP',col:1,row:1,label:'DC_QUEST_PROGRESS',fields:['student_id  PK,FK','quest_id  PK,FK','period_key  PK','progress, completed_at','rewarded_yn']},
+ {id:'LED',col:1,row:2,label:'DC_POINT_LEDGER',fields:['ledger_id  PK','student_id  FK','delta_exp, delta_point','source_type, source_id','occurred_at, memo']},
+ {id:'GJ',col:1,row:3,label:'DC_GROWTH_JOURNAL',fields:['entry_id  PK','student_id  FK','category, title','situation / role','action / result','learning, resume_memo','entry_date, bookmarked','resume_used']},
+ {id:'RNK',col:2,row:0,label:'DC_RANKING_SNAPSHOT',fields:['snap_id  PK','scope (univ/college/dept)','scope_cd, period_key','student_id  FK','rank, score']},
+ {id:'DML',col:2,row:1,label:'DC_DAILY_MISSION_LOG',fields:['log_id  PK','student_id  FK','mission_date','item_key (단어)','is_correct, answered_at']},
+ {id:'RSM',col:2,row:2,label:'DC_RESUME',fields:['resume_id  PK','student_id  FK','title, body','version, updated_at']},
+ {id:'GJT',col:2,row:3,label:'DC_GROWTH_JOURNAL_TAG',fields:['entry_id  PK,FK','tag  PK']},
+ {id:'AIJ',col:3,row:1,label:'DC_AI_JOB',fields:['ai_job_id  PK','student_id  FK','kind (roadmap/report','  /resume/interview)','model, prompt_ref','status, token_cost','created_at']},
+ {id:'AIO',col:3,row:2,label:'DC_AI_OUTPUT',fields:['output_id  PK','ai_job_id  FK','output_json','accepted_by, accepted_at']}
+ ],edges:[
+ {from:'QST',to:'QP',card:'1:N',label:'주기별 진행'},
+ {from:'STU',to:'QP',card:'1:N'},
+ {from:'STU',to:'LED',card:'1:N',label:'EXP 원장'},
+ {from:'STU',to:'GJ',card:'1:N',label:'성장경험일지'},
+ {from:'QP',to:'LED',card:'1:N',label:'완료 → 적립'},
+ {from:'LED',to:'RNK',card:'N:1',label:'기간별 집계'},
+ {from:'DML',to:'LED',card:'N:1',label:'일일미션 적립'},
+ {from:'GJ',to:'GJT',card:'1:N'},
+ {from:'GJ',to:'RSM',card:'N:1',label:'일지 → 자소서 소재'},
+ {from:'RSM',to:'AIJ',card:'1:N',label:'AI 첨삭 요청'},
+ {from:'AIJ',to:'AIO',card:'1:N'}
+ ]},
+{t:'table',head:['테이블','PK','주요 컬럼','비고'],rows:[
+ ['<code>DC_QUEST</code>','<code>quest_id</code>','<code>cycle</code>(daily/weekly/monthly), <code>title</code>, <code>desc</code>, <code>target_type</code>(진단응시/프로그램신청/일지작성/미션…), <code>target_count</code>, <code>exp_reward</code>, <code>point_reward</code>, <code>active_from</code>, <code>active_to</code>','<code>target_type</code>이 다른 도메인 이벤트를 가리킨다 → 퀘스트 추가가 코드 배포 없이 가능'],
+ ['<code>DC_QUEST_PROGRESS</code>','<code>student_id</code>+<code>quest_id</code>+<code>period_key</code>','<code>progress</code>, <code>completed_at</code>, <code>rewarded_yn</code>','<code>period_key</code>=<code>2026-07-28</code>(일)·<code>2026-W31</code>(주)·<code>2026-07</code>(월). 이 컬럼이 PK에 있어야 “매일 초기화”가 데이터로 성립'],
+ ['<code>DC_POINT_LEDGER</code>','<code>ledger_id</code>','<code>student_id</code> FK, <code>delta_exp</code>, <code>delta_point</code>, <code>source_type</code>, <code>source_id</code>, <code>occurred_at</code>, <code>memo</code>','append-only 원장. 레벨은 누적 EXP에서 파생'],
+ ['<code>DC_RANKING_SNAPSHOT</code>','<code>snap_id</code>','<code>scope</code>(univ/college/dept), <code>scope_cd</code>, <code>period_key</code>, <code>student_id</code> FK, <code>rank</code>, <code>score</code>','랭킹은 실시간 계산 금지(6천명 × 매 요청). 배치 스냅샷을 읽는다. <code>scope_cd</code>는 <code>dept_cd</code>/<code>college_cd</code>'],
+ ['<code>DC_DAILY_MISSION_LOG</code>','<code>log_id</code>','<code>student_id</code> FK, <code>mission_date</code>, <code>item_key</code>, <code>is_correct</code>, <code>answered_at</code>','마이페이지 “일일미션 오답/정답 날짜별 기록”'],
+ ['<code>DC_GROWTH_JOURNAL</code>','<code>entry_id</code>','<code>student_id</code> FK, <code>category</code>(아르바이트/팀프로젝트/기타), <code>title</code>, <code>desc</code>, <code>situation</code>, <code>role</code>, <code>action</code>, <code>result</code>, <code>learning</code>, <code>resume_memo</code>, <code>entry_date</code>, <code>bookmarked</code>, <code>resume_used</code>','현행 <code>growthJournal.Entry</code> 1:1. STAR 구조가 이미 컬럼으로 분리돼 있어 그대로 이관'],
+ ['<code>DC_RESUME</code>','<code>resume_id</code>','<code>student_id</code> FK, <code>title</code>, <code>body</code>, <code>version</code>, <code>updated_at</code>','AI 자소서. 첨삭 이력은 <code>DC_AI_JOB</code>/<code>DC_AI_OUTPUT</code>으로'],
+ ['<code>DC_AI_JOB</code> / <code>DC_AI_OUTPUT</code>','<code>ai_job_id</code> / <code>output_id</code>','<code>kind</code>, <code>model</code>, <code>prompt_ref</code>, <code>status</code>, <code>token_cost</code>, <code>output_json</code>, <code>accepted_by</code>, <code>accepted_at</code>','AI가 만든 로드맵·리포트·질문(<code>counselorQuestions</code>)의 출처 추적. 비용 집계·품질 개선의 근거']
+]},
+
+/* ══════════════ D9 운영 ══════════════ */
+{t:'h2',no:'13',text:'D9 · 동기화 · 감사 · 공통코드'},
+{t:'diagram',caption:'이 4개는 “나중에 붙이자”가 가장 위험한 테이블이다. 감사·동의는 소급 생성이 불가능하다.',
+ nodes:[
+ {id:'ACA',zone:'A',col:0,row:0,label:'학사DB VIEW',tag:'읽기전용',fields:['V_* 12종']},
+ {id:'SYNC',zone:'O',col:1,row:0,label:'DC_ACADEMIC_SYNC_LOG',fields:['sync_id  PK','view_nm, started_at','finished_at, row_cnt','result, err_msg']},
+ {id:'MIR',zone:'M',col:2,row:0,label:'DC_*_MIRROR',fields:['DC_DEPT_MIRROR','DC_COURSE_MIRROR','DC_STUDENT_COURSE','synced_at']},
+ {id:'USER',col:0,row:1,label:'DC_USER',fields:['user_id  PK','role']},
+ {id:'AUD',zone:'O',col:1,row:1,label:'DC_AUDIT_LOG',fields:['audit_id  PK','actor_user_id  FK','actor_role, action','target_table, target_id','before_json / after_json','occurred_at, ip']},
+ {id:'CONS',zone:'O',col:1,row:2,label:'DC_CONSENT',fields:['consent_id  PK','student_id  FK','consent_type','terms_version','agreed_yn, agreed_at','revoked_at']},
+ {id:'NOTI',zone:'O',col:1,row:3,label:'DC_NOTIFICATION',fields:['noti_id  PK','user_id  FK','kind, title, link','read_at, created_at']},
+ {id:'CG',zone:'O',col:2,row:2,label:'DC_CODE_GROUP',fields:['code_group  PK','group_nm, desc']},
+ {id:'CI',zone:'O',col:2,row:3,label:'DC_CODE_ITEM',fields:['code_group  PK,FK','code_value  PK','label, sort_no, use_yn']}
+ ],edges:[
+ {from:'ACA',to:'SYNC',card:'1:N',kind:'logical',label:'SELECT'},
+ {from:'SYNC',to:'MIR',card:'1:N',label:'적재'},
+ {from:'USER',to:'AUD',card:'1:N',label:'행위자'},
+ {from:'USER',to:'CONS',card:'1:N'},
+ {from:'USER',to:'NOTI',card:'1:N'},
+ {from:'CG',to:'CI',card:'1:N'}
+ ]},
+{t:'table',head:['테이블','목적','현행 상태','반드시 필요한 이유'],rows:[
+ ['<code>DC_ACADEMIC_SYNC_LOG</code>','view별 동기화 결과 기록','<b>없음</b>','“학생 학과가 왜 옛 값이냐”는 문의의 유일한 답변 근거. <code>synced_at</code>과 짝'],
+ ['<code>DC_AUDIT_LOG</code>','누가·언제·무엇을 <b>열람</b>/수정','<b>없음</b> — <code>SY_AUTH_LOG</code>(278건)는 <b>권한 변경만</b> 기록한다. 데이터 열람 감사는 존재하지 않는다','상담기록·벌점·로드맵 확정은 <b>학생 불이익과 직결</b>. 사후 분쟁 시 로그가 없으면 방어 불가. <b>소급 생성이 불가능하므로 1단계에 넣는다</b>'],
+ ['<code>DC_CONSENT</code>','개인정보·민감정보 동의 이력','<code>SY_AGREE</code> 존재 → <b>확장</b>','심리상담 = 민감정보. 동의 버전까지 남겨야 약관 개정 시 재동의 대상을 뽑을 수 있다'],
+ ['<code>SY_CODE</code> <span class="pill">계승</span>','상태값·분류값 마스터','<b><code>SY_CODE</code>(<code>GRP_CODE</code>+<code>CODE</code>, 3,874행) 존재</b> → <code>DC_CODE_*</code>를 새로 만들지 않는다','현재 프로토타입은 한글 리터럴이 값 자체(<code>\'대기\'</code>). 코드/라벨 분리 없이는 정렬·변경·통계 축이 전부 문자열 비교에 묶인다'],
+ ['<code>SY_FILE</code> <span class="pill">계승</span>','첨부 파일 메타','<b><code>SY_FILE</code>(4.2만행) 존재</b>','공고 첨부·포트폴리오·이력서가 모두 이걸 쓴다. 도메인마다 첨부 테이블을 새로 만들지 않는다']
+]},
+{t:'note',warn:true,tag:'현행에 없어서 반드시 신설해야 하는 것 — 이 4개가 리스크다',html:'<b>① 열람 감사</b>(<code>DC_AUDIT_LOG</code>) — 현행 전무. 심리상담 기록을 누가 열어봤는지 추적할 방법이 지금은 없다.<br><b>② 행 수준 접근 제어 통일</b>(<code>DC_ACCESS_SCOPE</code>) — 현행은 도메인마다 흩어짐.<br><b>③ 상태 변경 이력</b> — 이력이 남는 것은 <code>SY_AUTH_LOG</code>(권한 변경) 하나뿐이고 상담·비교과·채용은 <b>UPDATE 덮어쓰기</b>다. 재배정도 <code>CONSULTID</code>만 바뀌고 흔적이 없다.<br><b>④ 교수 상담 노출 제어</b> — <code>CO_PROF</code>·<code>PC_CON_PROF_*</code>가 전부 0행이라 사실상 미구현.'},
+{t:'note',tag:'정정 — 진단은 “신설 불가피”가 아니었다 (2026-07-31 소스 전수 분석)',html:'<code>CHECK_*</code> 8종은 <b>소스에서 단 한 번도 참조되지 않는 죽은 스키마</b>였다(sqlmap 34파일 전수 스캔). 실제로 쓰이는 것은 <code>CA_SURVEY</code>·<code>CA_SURVEY_QUS</code>·<code>CA_SURVEY_TAR</code> 계통이고, 이쪽은 <b>학생 단독 응시를 이미 지원</b>한다 — 관리자 회차 개설 → 대상자 지정 → 학생 응시(<code>STATUS</code> <code>I</code>진행중/<code>Y</code>완료) → 방사형 결과 + 로그인 시 미실시 배지.<br>→ <b>가져오는 것은 이 4단 뼈대와 “진단은 상담에 종속되지 않는다”는 원칙뿐이다.</b> 문항·역량축·판정 로직은 신설한다. <b>대상자 지정 규칙은 계승하지 않는다</b> — 현행 “전체”가 <code>USER_TY_CD=\'1101\'</code>(학부 재학생)이라 대학원생이 빠진다.'},
+
+/* ══════════════ 현행 자산 판정 ══════════════ */
+{t:'h2',no:'14',text:'현행 운영DB 자산 판정 — 무엇을 계승하고 무엇을 신설하나 <span class="pill">2026-07 신설</span>'},
+{t:'p',html:'428개 테이블 중 <b>실제로 참조되는 것은 270개</b>다(소스 2,033 statement 전수 분석). 이 프로젝트는 고도화이므로 <b>기본값은 “계승”</b>이고, 신설은 근거가 있을 때만 한다. 아래가 그 판정표다.'},
+{t:'table',head:['판정','대상','근거'],rows:[
+ ['<b>그대로 계승</b><br><span class="kv">건드리지 않는다</span>','사용자·조직(<code>V_USR_INF</code>/<code>V_DEP_INF_ALL</code>) · 상담사(<code>COM_CON_INF</code>) · 비교과 3단(<code>EP_PRM</code>→<code>_STEP</code>→<code>_APP</code>→<code>_RESULT</code>) · 채용(<code>JOBSMASTER</code> 계열) · 이력서·자소서(<code>SS_JOB_RES</code>) · 공통코드(<code>SY_CODE</code>) · 권한(<code>SY_AUTH</code> 4단) · 첨부(<code>SY_FILE</code>) · 동의(<code>SY_AGREE</code>) · 직무분류(<code>FU_JOB_MSTR</code>)','데이터가 쌓여 있고 구조가 멀쩡하다. 갈아엎을 이유가 없다'],
+ ['<b>구조 변경 후 계승</b><br><span class="kv">이관 스크립트 필요</span>','<code>COUNSEL_MASTER</code>(46컬럼 5.4만) → <code>DC_COUNSEL_REQUEST</code> + <code>DC_COUNSEL_RECORD</code> <b>1행→2행 분해</b><br><code>BASICSETTING</code>(57만) → 슬롯 전개를 규칙 기반으로 축소. <b>“가능” 등록 방식은 유지</b>(§17 확정)<br><code>FU_ASS_DEPT</code>/<code>COM_CON_TAR</code>/<code>TB_CARR_PROF_ASSI_DEPT</code> → <code>DC_ACCESS_SCOPE</code> <b>3→1 통합</b>(<code>COM_ASS_DEPT</code>는 폐기)<br><b>진단</b> <code>CA_SURVEY</code>·<code>_QUS</code>·<code>_TAR</code> → 4단 뼈대만 계승, 문항·역량축·대상자 규칙은 신설','신청/결과 미분리·슬롯 전개 폭증·접근제어 분산 — 셋 다 지금 구조로는 고도화가 막힌다'],
+ ['<b>신설 불가피</b><br><span class="kv">현행 구조로는 못 함</span>','<b>IAP 6유형</b>(R1~R6) · <b>경력개발 로드맵</b>(단·중·장기 + 버전) · <b>스킬트리/직무적합도</b> · <b>성장경험일지</b> · <b>퀘스트·레벨·랭킹</b> · <b>학생×공고 매칭도</b><br><b>열람 감사</b>(<code>DC_AUDIT_LOG</code>) — 현행 전무<br><b>상태 변경 이력</b> — 현행은 권한 변경만 남는다','현행에 대응 테이블이 없거나, 있어도 구조가 목적을 못 담는다'],
+ ['<b>판정이 바뀐 것</b><br><span class="kv">2026-07-31 정정</span>','<b>진단 4종</b> 신설 → <b>구조 계승</b> (<code>CHECK_*</code>는 죽은 스키마, <code>CA_SURVEY</code>가 학생 단독 응시를 이미 지원)<br><b>비교과 노쇼 벌점</b> 신설 → <b>그대로 계승</b> (<code>EP_PRM_APP.STATUS</code> <code>9</code>=불참 벌점1점 · <code>10</code>=불참 벌점3점 + 블랙리스트 화면 운영 중)<br><b><code>COM_ASS_DEPT</code></b> 병기 → <b>폐기</b> (읽는 statement 0건인 쓰기 전용 고아. <code>/Sa/Co/sys_assDept.do</code>는 읽기·쓰기 테이블이 달라 <b>저장해도 아무 일이 안 일어난다</b>)','소스 2,033 statement 전수 스캔으로 확인'],
+ ['<b>확인 후 판단</b><br><span class="kv">담당자 확인 필요</span>','<b>역량 <code>인문</code>(6번째)을 되살릴지</b> — <code>EP_PRM</code>계로 확정됐고 화면 표시는 5종(지역형리더·창의적사고·실용적융복합·의사소통·글로벌), <code>인문</code>만 전 화면 주석 처리. <b>스키마는 6, 화면은 5</b><br><b>관리자 제한일정</b>(<code>TB_CARR_CNSL_EXCL_HR</code>)을 학생 예약 화면에 반영할지 — 현행은 반영 안 함','<b>임의로 확정하지 말 것</b>'],
+ ['<b>손대지 않음</b><br><span class="kv">미사용</span>','0행 미사용 테이블 100여 개 · 참조되지 않는 158개','이 시스템은 <b>다대학 납품 패키지를 이식</b>한 것이다(<code>SY_CODE</code>에 전국 대학 1,900여 개, <code>EP_PRM</code> 코멘트에 타 대학 캠퍼스명 잔존). 안 쓰는 테이블이 많은 것은 정상']
+]},
+
+/* ══════════════ 매핑 ══════════════ */
+{t:'h2',no:'15',text:'현행 프로토타입 → DB 전환 대조표'},
+{t:'p',html:'DB 연동은 “화면 재작성”이 아니라 <b>로더/스토어 한 층의 교체</b>다. 아래 왼쪽이 지금의 스왑 seam이고, 오른쪽이 그 자리에 들어갈 테이블이다.'},
+{t:'table',head:['localStorage 키 (현행)','정의 위치','전환 대상 테이블','비고'],rows:[
+ ['<code>dc_counsel_owners</code>','<code>src_v2/data/students.ts</code>','<code>DC_COUNSEL_REQUEST</code>','owner 평탄화(상세+데모 학생)는 DB에선 불필요 — 학생은 한 테이블'],
+ ['<code>dc_counsel_requests</code>','<code>Counsel_README §7</code>','<code>DC_COUNSEL_REQUEST</code>','위와 동일 대상'],
+ ['<code>dc_counsel_records</code>','<code>src_admin/data/counselRecords.ts</code>','<code>DC_COUNSEL_RECORD</code>',''],
+ ['<code>dc_availability</code>','<code>src_admin/data/availability.ts</code>','<code>DC_COUNSELOR_AVAILABILITY</code>',''],
+ ['<code>dc_counselor_overrides</code>','<code>src_admin/data/counselors.ts</code>','<code>DC_COUNSELOR</code> (+<code>DC_COUNSELOR_DEPT</code>)','counselors/*.json 8개 → 테이블 행'],
+ ['<code>dc_active_counselor</code> · <code>dc_active_student</code>','같은 파일','<b>테이블 아님</b> — 세션/JWT','SSO 도입 시 “활성 사용자 전환”은 개발용 기능으로만 남긴다'],
+ ['<code>dc_iap_result</code>','<code>CLAUDE.md</code> 매핑표','<code>DC_IAP</code>',''],
+ ['<code>dc_roadmap_overrides</code>','<code>src_admin/data/roadmapOverrides.ts</code>','<code>DC_ROADMAP_VERSION</code> (+PHASE/TERM/TASK)','base⊕override 병합이 “최신 확정 버전 SELECT”로 단순화'],
+ ['<code>dc_roadmap_requests</code>','<code>src_admin/data/roadmapRequests.ts</code>','<code>DC_ROADMAP_CHANGE_REQUEST</code>',''],
+ ['<code>dc_programs</code>','<code>src_admin/data/programs.ts</code>','<code>DC_PROGRAM</code> + <code>_APPLICANT</code> + <code>_SESSION</code> + <code>_ATTENDANCE</code>','<code>applicants[]</code> 중첩 배열이 3테이블로 분해'],
+ ['<code>dc_program_apply</code>','<code>CLAUDE.md</code> 매핑표','<code>DC_PROGRAM_APPLICANT</code>',''],
+ ['<code>dc_program_wishlist</code>','<code>src_v2/data/wishlist.ts</code>','<code>DC_PROGRAM_WISHLIST</code>',''],
+ ['<code>dc_penalty</code>','<code>src_admin/data/penalties.ts</code>','<code>DC_PENALTY_ENTRY</code>','<code>total</code>은 SUM 파생 + <code>DC_STUDENT.penalty_total</code> 캐시'],
+ ['<code>dc_jobs</code>','<code>src_admin/data/jobsSource.ts</code>','<code>DC_JOB_POSTING</code> + <code>_TAG</code> + <code>_OPTION</code> + <code>_ATTACHMENT</code>','<code>match</code>는 <code>DC_JOB_MATCH</code>로 이동'],
+ ['<code>cwnu-growth-journal-{studentId}</code>','<code>src_v2/data/growthJournal.ts</code>','<code>DC_GROWTH_JOURNAL</code> (+<code>_TAG</code>)','키에 박힌 studentId가 FK 컬럼이 된다']
+]},
+{t:'table',head:['JSON 단일소스 (현행)','전환 대상','비고'],rows:[
+ ['<code>src_v2/data/students/*.json</code> (상세 2명)','<code>DC_STUDENT</code> + 각 도메인 테이블','한 파일에 담긴 프로필·로드맵·갭·추천·채용이 도메인별로 흩어진다 — 정상'],
+ ['<code>src_v2/data/studentsRoster.json</code> (100명)','<code>DC_STUDENT</code> ← <code>V_STUDENT</code> 동기화','더미 로스터는 실제 학사 view로 대체'],
+ ['<code>src_v2/data/counselSeedStudents.json</code>','<code>DC_STUDENT</code>','데모 학생/상세 학생 구분 소멸'],
+ ['<code>src_admin/data/counselors/*.json</code> (8명)','<code>DC_COUNSELOR</code>',''],
+ ['<code>src_v2/data/professors.seed.json</code>','<code>V_FACULTY</code> + <code>DC_PROFESSOR_PROFILE</code>','단과대→학과→교수 트리는 <code>V_COLLEGE</code>/<code>V_DEPT</code> 조인으로 파생'],
+ ['<code>src_v2/data/careerProcess.ts</code> <code>DIAGNOSIS_MODULES</code>','<code>DC_DIAG_TEST</code> (+<code>_GRADE_RULE</code>)','C-2·C-3·C-4·C-CORE 4행'],
+ ['<code>careerProcess.ts</code> <code>STUDENT_TYPE_MAP</code>','<code>DC_STUDENT_TYPE_MAP</code>','6행 마스터'],
+ ['<code>src_admin/data/colleges.ts</code> <code>MAJOR_TO_COLLEGE</code>','<code>DC_DEPT_MIRROR</code>','하드코딩 맵 → 미러 조인'],
+ ['<code>src_v2/pages/growth/SkillTree.tsx</code> 내부 상수','<code>DC_SKILL</code> + <code>DC_COURSE_SKILL_MAP</code> + <code>DC_STUDENT_SKILL_SCORE</code>','<b>현재 유일하게 데이터 소스가 아예 없는 영역</b> — D5 구축이 선행 필요']
+]},
+
+/* ══════════════ 적용 순서 ══════════════ */
+{t:'h2',no:'16',text:'적용 순서 — 무엇부터 만드는가'},
+{t:'p',html:'학사 적재(존 A)를 기다리는 동안 존 B는 먼저 만들 수 있다. 순서를 이렇게 잡으면 전산원 협의가 지연돼도 개발이 멈추지 않는다.'},
+{t:'table',head:['단계','작업','선행 조건','검증'],rows:[
+ ['1','<code>DC_USER</code>·<code>DC_STUDENT</code>·<code>DC_COUNSELOR</code>·<b><code>DC_ACCESS_SCOPE</code></b>·<b><code>DC_AUDIT_LOG</code></b> 생성. 학사 컬럼은 <b>수동 시드</b>로 채운다','없음','현재 8명 상담사 + 로스터 100명이 그대로 조회됨. 열람 로그가 처음부터 남는다'],
+ ['2','D3 상담 · D6 비교과/벌점 이관 — 현행 localStorage 스토어를 API로 교체','1','학생 신청 → 상담사 접수함 노출이 DB 왕복으로 성립'],
+ ['3','D2 진단 · D4 로드맵 이관','1','상담사 로드맵 확정 → 학생 화면 반영이 버전 SELECT로 성립'],
+ ['4','<b>SSO 연동</b> — 인증 착지 후 <code>INTG_UID</code>로 <code>DC_USER</code> JIT 프로비저닝. <b>외부 위촉 인원의 자체 인증 경로를 함께 만든다</b>(현행 <code>COM_CON_INF.CONPWD</code> 패턴)','학교 인증 협의','학번/사번 로그인 → 역할별 화면 진입. 외부 상담사도 로그인 가능'],
+ ['5','학사 동기화 배치 — <code>V_USR_INF</code>/<code>V_DEP_INF_ALL</code> → 캐시·미러. <b><code>UNIV_CODE</code> 포함</b>','—(이미 적재 중)','수동 시드 폐기, <code>synced_at</code> 노출, <b>대학원 학과가 목록에 보인다</b>'],
+ ['6','<b>D5 스킬 매핑 구축</b> — <code>DC_SKILL</code>·<code>DC_JOB_ROLE(_SKILL)</code> 정의 후 <code>DC_COURSE_SKILL_MAP</code> 채우기','<b><code>V_SUGANG</code>·<code>V_LECT_INF</code> 적재 재개</b> + 교육과정 담당 협업','스킬트리·직무적합도·추천과목이 하드코딩 없이 렌더'],
+ ['7','D7 채용 · D8 게임화 · D9 동기화로그','1','—']
+]},
+{t:'note',warn:true,tag:'6단계를 마지막에 두지 말 것',html:'<code>DC_COURSE_SKILL_MAP</code>은 개발이 아니라 <b>사람의 지식 입력</b>이라 리드타임이 가장 길다. 1단계와 병행해 “학과별 대표 과목 30개 × 스킬 10종”만 먼저 채워도 스킬트리가 실데이터로 돌기 시작한다.'},
+
+/* ══════════════ 열린 질문 ══════════════ */
+{t:'h2',no:'17',text:'열린 질문 — 2026-07 실사 · 2026-07-31 소스 분석 후 갱신'},
+{t:'h3',text:'소스 전수 분석으로 답이 나온 것 <span class="pill">2026-07-31</span>'},
+{t:'table',head:['질문','확인된 답'],rows:[
+ ['<b>역량 체계 3개 중 현재 운영 중인 것은?</b>','<b><code>EP_PRM</code>계다.</b> 화면 표시는 <b>5종</b> — 지역형리더·창의적사고·실용적융복합·의사소통·글로벌. <b>6번째 <code>인문</code>은 전 화면에서 주석 처리</b>되어 있고 스키마·SQL은 6개를 다 계산한다.<br>단 “역량”이라는 축이 <b>3개 공존</b>한다 — 진단설문(<code>CA_SURVEY</code>) / 누적점수(<code>CA_GOAL</code>+<code>CA_GOAL_DATA</code>, 교과 <code>SUB_PA_n</code> + 비교과 <code>EXT_PA_n</code>) / 마일리지 배분(<code>EX_ITEM</code> — <b>컬럼명은 아직 옛 체계</b>인데 화면 라벨만 바꿔 달았다). <b>화면을 만들 때 어느 축인지 명시할 것.</b><br>역량명이 <b>코드테이블이 아니라 SQL <code>CASE</code>와 JSP에 하드코딩</b>돼 있다 → 반드시 코드화'],
+ ['<b>상담 가능시간을 “가능”으로 갈 것인가 “제한”으로 갈 것인가</b>','<b>현행은 “가능”을 등록한다.</b> 두 테이블은 경쟁 관계가 아니라 역할이 분리돼 있다 — <code>BASICSETTING</code>은 <b>상담사 본인</b>이 등록하는 가능 슬롯, <code>TB_CARR_CNSL_EXCL_HR</code>는 <b>관리자</b>가 등록하는 제한 구간.<br><b>학생 예약 슬롯 화면(<code>Co.getConsultSch_List</code>)은 <code>BASICSETTING</code>만 조회한다.</b> 제한 테이블은 “새 제한 등록 시 중복검사”에만 쓰인다 → <b>관리자가 제한을 걸어도 학생 화면 슬롯은 그대로 노출된다.</b> 의도인지 미구현인지는 현업 확인 필요'],
+ ['<b>진로설계 계열(<code>STU_COURSE_*</code>)이 현재도 쓰이는가</b>','<b>쓰인다.</b> R12·U3. 학생 “나의 진로설계서”(<code>STEP1~4</code> 플래그) · 관리자/교수 집계 · 인재검색 상세 탭 · 상담 학생검색 팝업이 모두 참조한다. <b>단 INSERT가 0건</b> — 행 최초 생성 경로(배치·트리거·외부)가 미확인'],
+ ['<b>대학원생이 <code>V_USR_INF</code>에 어떤 <code>USER_TY_CD</code>로 오는가</b>','<b><code>1201</code> 재학생-대학원 · <code>1202</code> 졸업생-대학원</b> (<code>common.xml:280-288</code> 주석에서 직접 확인). 학부는 <code>1101</code>/<code>1102</code>, 교원 <code>1301</code>, 직원 <code>1401</code>, 조교 <code>1501</code>. 학적상태는 학생 <code>0001</code>=재학, 교직원 <code>89</code>=재직/<code>90</code>=퇴직'],
+ ['<b>교수 상담이 실제로 동작하는가</b>','<b>동작한다.</b> <code>CON_PROF_INFO</code> 계통(18.4만 건)이고 2025-04에도 신규 화면이 추가됐다. <code>PC_CON_PROF_*</code>·<code>CO_PROF</code>는 미사용. 상태 <code>0001</code>신청/<code>0002</code>완료/<code>0003</code>학생취소, 방식 <code>CON_KIND</code> <code>ON</code>/<code>OF</code>.<br><b>오프라인 교수상담 슬롯은 상담사와 같은 <code>BASICSETTING</code> 테이블을 쓴다</b>(<code>CONSULTANTID</code>에 교수 <code>INTG_UID</code>) — 슬롯 모델을 상담사 전용으로 설계하면 안 된다']
+]},
+{t:'note',warn:true,tag:'★ 대학원생을 막는 관문은 두 겹이다 — 학과 트리만 고치면 절반만 열린다',html:'<b>① 신분코드 하드코딩 (더 근본적)</b> — <code>USER_TY_CD</code> 리터럴 <code>\'1101\'</code>(재학생-<b>학부</b>)이 sqlmap <b>229곳</b>에 박혀 있고, <code>\'1201\'</code>(재학생-<b>대학원</b>)이 조건에 들어간 곳은 <b>단 3곳</b>이다. 이 때문에 <b>전담교수 배정 대상 · 조교 담당 학생 목록 · 상담 학생검색 팝업 6곳 · 역량진단 대상자 “전체” · 비교과 선발자 SMS</b>에서 대학원생이 통째로 빠진다.<br><b>② 학과 트리</b> — <code>V_DEP_INF</code>(대학원 미포함) 사용 + <code>WHERE C.USE_YN=\'Y\'</code>로 outer join 붕괴(전공 없는 학과 탈락) + 상위조직을 <code>LVL=1 AND GRP_CD=\'0001\'</code>로 한정(대학원 조직은 <code>GRP_CD=\'0004\'</code> 기관).<br>→ <b>신규 설계는 신분코드를 리터럴로 쓰지 않는다.</b> 재학생 조회는 집합 상수(<code>1101</code>+<code>1201</code>)로 하고, 학부 한정이 정책인 곳은 그 이유를 명시한다.<br>※ 반대로 현행도 대학원을 인지하는 곳이 있다 — 상담 슬롯의 재학/졸업 판정은 <code>1101 OR 1201</code>/<code>1102 OR 1202</code>로 4종을 모두 본다. <b>스키마는 이미 대학원을 담고 있고 일관성만 없다.</b>'},
+{t:'note',tag:'요구사항 확정 — 대학원생이 반드시 할 수 있어야 하는 것',html:'<b>① 비교과 프로그램 신청</b> — <b>이미 열려 있다.</b> <code>ep.xml</code>에 학부 한정 필터가 없고 참가대상 플래그도 <code>TRGT_STU21~24</code>(대학원)/<code>TRGT_STU31~35</code>(학부)로 분리 존재한다. 다만 최종 자격 판정이 PL/SQL <code>FN_GET_PRM_TRGT_YN()</code> 안에 있어 <b>함수 본문 확인 필요</b>.<br><b>② 교수 상담 신청</b> — 신청 기록(<code>CON_PROF_INFO</code>)에는 제약이 없다. 막히는 곳은 <b>교수 목록 조회</b>(<code>Co.getProfList</code>): 학생 <code>HAKBU_CD</code>와 교수 <code>ORGID</code> 매칭 + <code>RANKID IN (\'1001\',\'1002\',\'1003\')</code> 직급 3종 한정. → 소속 매칭을 <code>V_DEP_INF_ALL</code> 기준으로 바꾸고 직급 화이트리스트를 코드 테이블로 뺀다.'},
+{t:'h3',text:'실사로 답이 나온 것 <span class="pill">초판 질문 9건 중 5건</span>'},
+{t:'table',head:['#','초판 질문','확인된 답'],rows:[
+ ['2','view 제공 방식은?','<b>DB 링크 <code>V_BRDB</code> + 야간 배치 적재.</b> 2020-05-07 생성, 지금도 가동 중. 실시간 조회가 아니라 <b>매일 1회</b>이므로 모든 화면은 미러 기준으로 동작한다'],
+ ['4','학과 개편 시 <code>dept_cd</code>가 바뀌는가','<b>코드는 유지되고 <code>USE_YN=\'N\'</code>으로 폐과 처리</b>된다(639건). 이력 view는 없으므로 <code>DC_DEPT_MIRROR.valid_from/to</code>는 우리가 관리. <b>동명 학과가 과정별로 중복 존재</b>하므로 (단대코드, 학과코드) 쌍으로 식별'],
+ ['5','조교 코드값과 열람 범위','<b>조교는 <code>V_USR_INF.USER_TY_CD</code>로 구분</b>된다(별도 테이블 없음). 열람 범위는 현행 <code>COM_ASS_DEPT</code>/<code>FU_ASS_DEPT</code>(190행)로 학과 단위 배정 → <code>DC_ACCESS_SCOPE(kind=dept)</code>로 흡수'],
+ ['6','상담사는 교직원DB 등재인가 외부 위촉인가','<b>둘 다다.</b> <code>COM_CON_INF.INOUT_GB</code>(내외부구분) + <b><code>CONPWD</code>(자체 비밀번호)</b> → <b>외부 위촉 상담사는 SSO 밖 자체 인증</b>을 쓴다. 같은 패턴이 <code>TB_CARR_USER_LOGIN</code>(기업 담당자·멘토)에도 존재'],
+ ['9','학사DB DBMS와 문자셋','<b>Oracle</b>. 서비스DB(<code>DREAMCATCH</code>)와 같은 계열이며 DB 링크로 직결']
+]},
+{t:'h3',text:'여전히 미결 — 답에 따라 설계가 바뀐다'},
+{t:'table',head:['#','질문','묻는 곳','설계에 미치는 영향'],rows:[
+ ['1','<b><code>V_SUGANG</code>·<code>V_LECT_INF</code> 적재를 켤 수 있는가</b> <span class="pill">최우선</span>','전산원','D5(스킬트리·직무적합도·추천과목) 전체의 전제. 테이블·링크·조인SQL이 모두 준비돼 있어 <b>데이터만 들어오면 즉시 동작</b>'],
+ ['2','<b>역량 <code>인문</code>(6번째)을 되살릴 것인가</b>','드림캐치 담당자','체계는 <code>EP_PRM</code>계로 확정됐다. 남은 것은 <b>스키마 6 vs 화면 5</b>의 정리. 되살리면 전 역량 화면의 축이 6개가 된다'],
+ ['3','<b>관리자 제한일정을 학생 예약 화면에 반영할 것인가</b>','드림캐치 담당자','현행은 반영하지 않는다(상담사가 <code>BASICSETTING</code> 슬롯을 지워야 함). 의도된 운영인지 미구현인지에 따라 <code>DC_COUNSELOR_AVAILABILITY</code>에 제한 레이어를 둘지가 갈린다'],
+ ['4','<b>대학원생 진단 정책</b> · <b>대학원 수료생 포함 여부</b>','우리 결정 + 담당자','C-2/C-3/C-4 학년 매핑이 학부 기준(1~4)이고 대학원은 1~3. 학적 <code>수료</code> 상태를 상담·비교과 대상에 넣을지도 함께'],
+ ['5','<b>비교과 참가자격 판정 함수 <code>FN_GET_PRM_TRGT_YN()</code>의 본문</b>','운영 DB','PL/SQL 안에 있어 소스로 확인 불가. <b>대학원생 비교과 신청의 최종 관문</b>'],
+ ['6','<b>이관 시 현행 데이터를 정제할 것인가</b>','우리 결정 + 담당자','고아 테이블 <code>COM_ASS_DEPT</code>에 남은 배정(화면에서 저장은 됐으므로 유효 데이터일 수 있음), 상담사 구분 <code>CON_GB</code> 1/3 라벨 중복'],
+ ['7','개인정보 보존기간·마스킹 규칙, 심리상담 기록의 별도 보관 요건','학교 정보보호 담당','<code>DC_COUNSEL_RECORD</code> 암호화 범위, 파기 배치, <code>DC_CONSENT</code> 유형 확정'],
+ ['8','통합로그인 프로토콜과 <b>외부 인원 인증 경로의 공식 허용 여부</b>','전산원 · 정보보호','현행이 이미 자체 비밀번호(<code>CONPWD</code>)를 쓰고 있으나 <b>정식 승인된 구조인지 확인 필요</b>'],
+ ['9','<code>SY_CODE</code> 그룹 <code>0012</code>·<code>0037</code>의 정체','드림캐치 담당자','현행 코드관리 화면이 하드코딩으로 숨긴다. <b>코드 이관 범위</b>에 영향']
+]},
+{t:'note',tag:'미결 항목을 다룰 때의 규칙',html:'<b>답을 모른 채 스키마를 확정하지 말 것.</b> 특히 #3(제한일정 반영)과 #5(참가자격 함수)는 <b>테이블 구조가 달라진다</b>. 확인 전까지는 해당 화면의 데이터 계약(타입 정의)만 잡고 저장 구조는 열어 둔다. 나머지 도메인은 답을 몰라도 진행 가능하다.'},
+
+/* ══════════════ 이관 전제 ══════════════ */
+{t:'h2',no:'18',text:'★ 이것은 이관 프로젝트다 <span class="pill">2026-07-31 확정</span>'},
+{t:'p',html:'<b>마일리지를 제외한 사실상 전 도메인이 현행 운영 데이터를 이관받는다.</b> 빈 DB로 출발하지 않는다. 이 전제가 설계 자유도를 실질적으로 제한한다 — 아래 표의 “이관 O”는 <b>모든 <code>DC_*</code> 테이블이 대응하는 현행 테이블로부터 데이터를 받아야 한다</b>는 뜻이다.'},
+{t:'table',head:['도메인','현행 테이블','규모','이관'],rows:[
+ ['상담','<code>COUNSEL_MASTER</code> · <code>COUNSEL_PROBLEM</code> · <code>COUNSEL_FAM</code>','5.4만','<b>O</b>'],
+ ['교수상담·지도','<code>CON_PROF_INFO</code> · <code>CO_ADVISER</code>','18.4만','<b>O</b>'],
+ ['비교과','<code>EP_PRM</code> → <code>_STEP</code> → <code>_APP</code> → <code>_RESULT</code>','6.8만','<b>O</b>'],
+ ['상담사·배정','<code>COM_CON_INF</code> · <code>COM_CON_TAR</code> · <code>FU_ASS_DEPT</code> · <code>TB_CARR_PROF_ASSI_DEPT</code>','—','<b>O</b>'],
+ ['채용·이력서','<code>JOBSMASTER</code> 계열 · <code>SS_JOB_RES</code>','1.7만','<b>O</b>'],
+ ['역량','<code>CA_SURVEY*</code> · <code>CA_GOAL*</code> · <code>TB_CARR_CAPA_STTS</code>','8.4만','<b>O</b>'],
+ ['진로설계','<code>STU_COURSE_INFO</code> 계열','1.4만','<b>O</b>'],
+ ['공통코드·첨부·권한','<code>SY_CODE</code> · <code>SY_FILE</code> · <code>SY_AUTH</code> 4단','3,874 외','<b>O</b>'],
+ ['<b>마일리지</b>','<code>EX_ITEM</code> · <code>_APP</code> · <code>_SCORE</code>','1.1만','<b>X — 제외</b>'],
+ ['진단(C-2~C-CORE)·IAP·로드맵·성장일지·퀘스트','—','—','대상 없음(신설)']
+]},
+{t:'note',warn:true,tag:'이관 전제에서 나오는 강제 사항 5가지',html:'<b>①</b> <b><code>INTG_UID</code>를 키로 쓴다는 결정은 되돌릴 수 없다.</b> surrogate로 바꾸면 24만 건 상담 이력의 재매핑이 필요해진다.<br><b>②</b> <b>모든 코드값에 현행 값(<code>legacy</code>)을 반드시 남긴다.</b> 이것이 곧 이관 매핑표다. <code>legacy</code>가 비면 그 코드는 <b>이관 스크립트를 쓸 수 없다</b>.<br><b>③</b> <b>신설 컬럼은 NULL 허용 + 화면 폴백</b>을 전제로 설계한다. 현행에 없는 값(확정 상태·배정 이력·학생 공개 코멘트 등)은 이관 시 NULL이 된다. NOT NULL로 잡으면 이관이 막힌다.<br><b>④</b> <b>구조 변경은 “이관 매핑을 쓸 수 있는가”를 통과해야 한다.</b> 1:1이 아닌 변환(<code>COUNSEL_MASTER</code> 1행→2행 분해, 접근제어 3→1 통합)은 변환 규칙을 함께 문서화한다.<br><b>⑤</b> <b>현행 데이터의 오염을 이관 시점에 정제할지 미리 정한다</b>(§17 미결 #6).'}
+/* @@CONTENT_END@@ */
+];
+render(CONTENT);
+</script>
+</body>
+</html>

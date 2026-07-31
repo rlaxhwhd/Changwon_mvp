@@ -1,0 +1,4 @@
+[
+  { "ownerId": "cse-1", "slots": [{ "id": "ex_cse1_01", "weekday": 1, "start": "09:00", "end": "12:00" }, { "id": "ex_cse1_02", "weekday": 4, "start": "14:00", "end": "16:00" }] },
+  { "ownerId": "biz-1", "slots": [{ "id": "ex_biz1_01", "weekday": 3, "start": "10:00", "end": "12:00" }] }
+]

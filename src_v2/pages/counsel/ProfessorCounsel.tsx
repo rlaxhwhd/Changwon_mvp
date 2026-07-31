@@ -1,8 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
-import { PROFESSOR_GROUPS, findDefaultSelection } from '../../data/professors'
+import { findDefaultSelection } from '../../data/professors'
+import { getCounselableProfessorGroups } from '../../data/professorProfilesRead'
+import { submitProfessorCounselRequest } from '../../data/counselRequestsWrite'
 import { getActiveStudent } from '../../data/students'
 import { getCounselWeek, type Day } from '../../lib/counselCalendar'
 import './CareerCounsel.css'
@@ -18,7 +20,8 @@ interface SelectedSlot {
 
 // 학과별 교수 = 단일소스(professors.ts) 투영. 화면에 하드코딩하지 않는다.
 // 기본 선택은 활성 학생의 학과(major)로 파생한다(본인 학과가 먼저 열림).
-const defaultSelection = findDefaultSelection(getActiveStudent().major)
+const professorGroups = getCounselableProfessorGroups()
+const defaultSelection = findDefaultSelection(getActiveStudent().major, professorGroups)
 
 // 이번 주 월~금 (공용 유틸 — 화면에 날짜 하드코딩 금지)
 const days: Day[] = getCounselWeek()
@@ -35,7 +38,7 @@ const reservedSlots = new Set([
 
 export default function ProfessorCounsel() {
   const [selectedGroupName, setSelectedGroupName] = useState(defaultSelection.groupName)
-  const selectedGroup = PROFESSOR_GROUPS.find(group => group.name === selectedGroupName) ?? PROFESSOR_GROUPS[0]
+  const selectedGroup = professorGroups.find(group => group.name === selectedGroupName) ?? professorGroups[0]
   const divisionNames = Object.keys(selectedGroup.divisions)
   const [selectedDivision, setSelectedDivision] = useState(defaultSelection.division)
   const professors = selectedGroup.divisions[selectedDivision] ?? selectedGroup.divisions[divisionNames[0]]
@@ -49,12 +52,13 @@ export default function ProfessorCounsel() {
   const [reserveOpen, setReserveOpen] = useState(false)
   const [consentOpen, setConsentOpen] = useState(false)
   const [consentMode, setConsentMode] = useState<CounselMode>('online')
-
+  const [onlineSubject, setOnlineSubject] = useState('학업 및 진로 상담')
   const activeProfessor = professors.find(professor => professor.id === selectedProfessorId) ?? professors[0]
-  const onlineTopic = useMemo(() => `${selectedDivision} ${activeProfessor.name} 교수님께 온라인 상담을 신청합니다.`, [activeProfessor.name, selectedDivision])
+  const onlineTopic = `${selectedDivision} ${activeProfessor.name} 교수님께 온라인 상담을 신청합니다.`
+  const [onlineContent, setOnlineContent] = useState('')
 
   const updateGroup = (groupName: string) => {
-    const nextGroup = PROFESSOR_GROUPS.find(group => group.name === groupName) ?? PROFESSOR_GROUPS[0]
+    const nextGroup = professorGroups.find(group => group.name === groupName) ?? professorGroups[0]
     const nextDivision = Object.keys(nextGroup.divisions)[0]
     const nextProfessor = nextGroup.divisions[nextDivision][0]
     setSelectedGroupName(nextGroup.name)
@@ -101,6 +105,11 @@ export default function ProfessorCounsel() {
   const handleConsentAgree = () => {
     setConsentOpen(false)
     if (consentMode === 'online') {
+      submitProfessorCounselRequest({
+        professorId: activeProfessor.id,
+        topic: `${onlineSubject}: ${onlineContent || onlineTopic}`,
+        method: '비대면',
+      })
       setNotice(`${activeProfessor.name} 교수님께 온라인 상담 신청이 접수되었습니다`)
       window.setTimeout(() => setNotice(''), 1800)
     } else {
@@ -135,7 +144,7 @@ export default function ProfessorCounsel() {
           <label className="pc-select">
             <span className="pc-select-label">대학/부서</span>
             <select value={selectedGroupName} onChange={e => updateGroup(e.target.value)}>
-              {PROFESSOR_GROUPS.map(group => (
+              {professorGroups.map(group => (
                 <option key={group.name} value={group.name}>{group.name}</option>
               ))}
             </select>
@@ -192,11 +201,11 @@ export default function ProfessorCounsel() {
               <div className="pc-online-form">
                 <label>
                   상담 주제
-                  <input defaultValue="학업 및 진로 상담" />
+                  <input value={onlineSubject} onChange={event => setOnlineSubject(event.target.value)} />
                 </label>
                 <label>
                   상담 내용
-                  <textarea defaultValue={onlineTopic} />
+                  <textarea value={onlineContent} onChange={event => setOnlineContent(event.target.value)} />
                 </label>
                 <button className="cc-reserve-btn" onClick={submitOnline}>온라인 상담 신청하기</button>
               </div>
@@ -284,7 +293,17 @@ export default function ProfessorCounsel() {
         time={selectedSlot?.time ?? ''}
         room={activeProfessor.room}
         phone="055-213-3500"
-        onSubmit={() => {
+        onSubmit={purpose => {
+          if (selectedSlot) {
+            submitProfessorCounselRequest({
+              professorId: activeProfessor.id,
+              topic: purpose,
+              method: '대면',
+              slotDate: selectedSlot.day.iso,
+              time: selectedSlot.time,
+              place: activeProfessor.room,
+            })
+          }
           setReserveOpen(false)
           setNotice('오프라인 상담 예약이 신청되었습니다')
           window.setTimeout(() => setNotice(''), 1800)

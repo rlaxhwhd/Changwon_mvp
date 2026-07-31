@@ -40,3 +40,9 @@ __MACOSX/
 # Python 바이트코드 캐시 (스킬 스크립트)
 __pycache__/
 *.pyc
+
+# 운영(현행) 시스템 원본 자산 — 저장소에 커밋/외부 공개 금지
+# 현행 드림캐치 운영 소스(Java 컨트롤러·MyBatis SQL 매퍼)
+/origin/
+# 운영 취약점 21건 — 파일 머리말 "외부 유출 금지"
+docs/_analysis/06_findings.md

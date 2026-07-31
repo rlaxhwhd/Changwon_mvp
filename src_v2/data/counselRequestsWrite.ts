@@ -8,7 +8,7 @@
 // 화면(CareerCounsel/PsychCounsel)은 submitCounselRequest 만 호출한다. localStorage 직접 접근 금지.
 // ─────────────────────────────────────────────────────────────────────────
 import { addCounselRequest, getActiveStudent } from './students'
-import type { CounselRequestType } from './students'
+import type { CounselMethod, CounselRequestType } from './students'
 
 export interface SubmitCounselInput {
   /** 상담 유형 — 호출 페이지가 지정 (CareerCounsel → 진로취업 / PsychCounsel → 심리) */
@@ -22,6 +22,21 @@ export interface SubmitCounselInput {
   /** 학생이 고른 희망시각 (HH:mm) — slot.start */
   time: string
   /** 대면 장소 (slot.place) */
+  place?: string
+}
+
+export interface SubmitProfCounselInput {
+  /** 학생이 선택한 교수 id. */
+  professorId: string
+  /** 온라인 상담 내용 또는 오프라인 예약 목적. */
+  topic: string
+  /** 온라인은 비대면, 오프라인은 대면으로 기록한다. */
+  method: CounselMethod
+  /** 오프라인 희망일(YYYY-MM-DD)이다. */
+  slotDate?: string
+  /** 오프라인 희망 시각(HH:mm)이다. */
+  time?: string
+  /** 오프라인 연구실 또는 비대면 안내 장소다. */
   place?: string
 }
 
@@ -49,6 +64,23 @@ export function submitCounselRequest(input: SubmitCounselInput): void {
     requestedAt: new Date().toISOString(),
     assignedCounselorId: input.counselorId,
     slot: input.slotDate
+      ? { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place }
+      : undefined,
+  })
+}
+
+/** 활성 학생 owner 스토어에 교수상담 신청을 append한다. */
+export function submitProfessorCounselRequest(input: SubmitProfCounselInput): void {
+  const student = getActiveStudent()
+  addCounselRequest(student.id, {
+    id: `preq_${Date.now()}`,
+    type: '교수',
+    professorId: input.professorId,
+    status: '대기',
+    method: input.method,
+    topic: input.topic,
+    requestedAt: new Date().toISOString(),
+    slot: input.slotDate && input.time
       ? { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place }
       : undefined,
   })

@@ -117,6 +117,24 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
   },
 ]
 
+// 학년별 응시 대상 검사 — 선택(1개 필수) + 공통 C-CORE(1개 필수).
+// 근거: CLAUDE.md §진단검사 명칭·학년 매핑(확정). 진단센터 UI는 아직 4종을 모두 노출하지만
+// "누가 무엇을 응시해야 하는가"(응시율·미응시 판정)는 이 표가 단일 소스다.
+// ⚠ 학부 기준(1~4학년). 대학원(1~3학년) 정책은 미확정 — CLAUDE.md 미결 3.
+export const DIAGNOSIS_BY_GRADE: Record<number, string[]> = {
+  1: ['c2', 'ccore'],
+  2: ['c2', 'c3', 'ccore'],
+  3: ['c2', 'c3', 'ccore'],
+  4: ['c3', 'c4', 'ccore'],
+}
+
+/** 해당 학년이 응시해야 하는 검사 모듈. 미매핑 학년(대학원 등)은 전 검사를 대상으로 둔다. */
+export function getGradeTests(grade: number): DiagnosisModule[] {
+  const ids = DIAGNOSIS_BY_GRADE[grade]
+  if (!ids) return DIAGNOSIS_MODULES
+  return DIAGNOSIS_MODULES.filter(m => ids.includes(m.testId))
+}
+
 // 학생 6유형 → IAP 유형 매핑 (학년·트랙 포함)
 export interface IapMapping {
   iapType: IapType

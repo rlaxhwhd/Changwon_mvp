@@ -31,7 +31,7 @@ model: opus
 
 ## 검증
 
-- 구현 후 `npx tsc --noEmit` 통과.
+- 구현 후 `npm run build`(= `tsc -b`) 통과.
 - 디자인 토큰만 사용(새 색/폰트 금지). 하드코딩 리터럴 grep 0.
 
 ## 출력

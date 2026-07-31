@@ -30,6 +30,10 @@ export interface ProfCounselRecord {
   date: string
   /** 상담 요지 — 조교 화면은 집계만 하고 표시하지 않는다(교수 화면 SPEC §3-5 예비) */
   summary?: string
+  /** 연계된 학생 신청 id. 직접 작성 기록에는 없다.
+   * 이관 매핑: 현행 CON_PROF_INFO는 신청+결과 한 행이며 requestId join으로 한 행을 복원한다.
+   * requestId가 없으면 결과 단독 행으로 이관한다. */
+  requestId?: string
   createdAt: string
   /** 발생 시점 학생 스냅샷 (EP_PRM_APP 패턴) */
   snapshot: { studentNo: string; name: string; major: string; grade: number }
