@@ -6,7 +6,8 @@ import EmptyState from '../components/EmptyState'
 import { getAdviseeRoster } from '../data/advisorAssigns'
 import { addProfCounselRecord, queryProfRecords } from '../data/profCounselRecords'
 import { completeProfRequest, getProfRequestById } from '../data/profCounselRequests'
-import { PROF_COUNSEL_CATEGORIES } from '../data/schema/profCounselRecord'
+import { PROF_COUNSEL_CATEGORIES, PROF_COUNSEL_CHANNEL_LABEL } from '../data/schema/profCounselRecord'
+import type { CounselMethod } from '../data/schema/counselRequest'
 import { getActiveUser } from '../data/staff'
 import { totalPages } from '../data/query'
 import { useListData } from '../hooks/useListData'
@@ -21,6 +22,8 @@ export default function ProfessorCounselRecords() {
   const advisees = getAdviseeRoster(user.id)
   const [studentId, setStudentId] = useState(request?.studentId ?? advisees[0]?.id ?? '')
   const [categoryCode, setCategoryCode] = useState(PROF_COUNSEL_CATEGORIES[0].code)
+  // 연계 건은 학생이 신청한 방식을 그대로 계승한다(온라인=비대면 · 오프라인=대면).
+  const [method, setMethod] = useState<CounselMethod>(request?.method ?? '대면')
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10))
   const [summary, setSummary] = useState('')
   const [error, setError] = useState('')
@@ -44,6 +47,7 @@ export default function ProfessorCounselRecords() {
         studentId,
         professorId: user.id,
         categoryCode,
+        method,
         date,
         summary: summary.trim(),
         requestId: request?.id,
@@ -103,6 +107,17 @@ export default function ProfessorCounselRecords() {
               >
                 {PROF_COUNSEL_CATEGORIES.map(item => (
                   <option key={item.code} value={item.code}>{item.label}</option>
+                ))}
+              </select>
+            </label>
+            <label className="admin-field">
+              <span>상담 방식</span>
+              <select
+                value={method}
+                onChange={event => setMethod(event.target.value as CounselMethod)}
+              >
+                {(Object.keys(PROF_COUNSEL_CHANNEL_LABEL) as CounselMethod[]).map(key => (
+                  <option key={key} value={key}>{PROF_COUNSEL_CHANNEL_LABEL[key]}</option>
                 ))}
               </select>
             </label>

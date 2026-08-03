@@ -251,3 +251,89 @@ WCAG 3.3.1(Error Identification) + product 레지스터("모든 폼 컨트롤은
 7. P3는 여유 시 반영.
 
 **소스는 리뷰어가 수정하지 않았다.**
+
+---
+---
+
+# 4단계 재검증 (Codex 재작업 후) — **PASS**
+
+> reviewer: design-reviewer (Opus) · 2026-07-31 2차 · 검증 방식: `tsc -b` + 정적 대조 + **렌더 실증**(headless Chrome + CDP, scratchpad 격리 프로필 `chrome-profile2`, `_workspace` 미사용, 종료 확인)
+> 스토리지를 매 시나리오 `localStorage.clear()` 후 seed 상태에서 재현했다. Codex가 브라우저 검증을 못 했으므로 **아래가 이번 라운드의 유일한 실증**이다.
+> 병렬 상담사 작업물(`counselEvents`·`psychTests`·`counselStats`·`diagnosisAttempts*`·`counselRequests.ts`·`pages/Counsel*.tsx`·`DiagnosisStatus.tsx`·`navConfig.ts`·`careerProcess.ts`·`index.css`의 `print-*`/`counsel-*`/`admin-psych-*`/`admin-diag-*`)은 판정에서 제외했다.
+
+## 판정: **PASS** — P0 3건 전부 닫힘, P1 6건 전부 닫힘, P2 14건 중 11건 닫힘
+
+남은 3건(P2-8·P2-11·P2-12)과 P3는 **전부 비차단 nit**이라 REJECT 사유로 올리지 않는다. 별도 백로그로 남긴다.
+
+### P0 — 전부 CLOSED (렌더 실증)
+
+| ID | 항목 | 결과 | 실증 |
+|---|---|---|---|
+| P0-1 | 타입체크 | **CLOSED** | `npx tsc -b` → **exit 0, 출력 없음**. `-p tsconfig.app.json --noEmit`도 exit 0. 9건 전부 소거 |
+| P0-2 | 학생 교수상담 화면 | **CLOSED** | `/v2/counsel/professor` 정상 렌더, 에러 바운더리 **false**, 콘솔 에러 **0**. TDZ 해소(`onlineTopic`을 `activeProfessor` 뒤 일반 const로, `onlineContent` useState는 그 뒤) · `PROFESSOR_GROUPS` 잔존 참조 0 |
+| P0-3 | 연계 기록 저장 | **CLOSED** | 로스터 밖 학생(김지연 `20229876`) 확정건 → [기록 작성] → 저장 **성공**. `dc_prof_counsel_records`에 `snapshot:{studentNo:20229876,name:김지연,…}` + `requestId:preq_med_01` append, 신청 **'완료' 전이**, 관리 열 "기록 완료" 표시 |
+
+**결정 3(학생 신청 배선) 최초 실증** — 이전 라운드에서는 화면이 죽어 검증 자체가 불가능했다.
+학생 온라인 신청(동의서 → 서명 → 제출) → `dc_counsel_owners`에 `preq_1785485491121 / 대기 / 비대면 / cse-1` append → 교수 접수함에 **"0분 전 신청"** 대기 행으로 즉시 등장(탭 전체 3→4, 대기 2→3).
+
+**결정 6(노출 설정 반영) 최초 실증** — cse-1 `accept=false` 저장 → 학생 교수상담 화면에서 **박지훈 사라짐**(`본문에 박지훈 존재? false`), 같은 학과 **강민재는 유지**(`true`), 화면 크래시 없음.
+
+**핵심 가치 연결 재확인** — 지도학생(남시은) 직접 기록 저장 → 조교 `/assistant/advisor/records` 박지훈 행 `5명 | 4건 | 2026.03.12` → **`5명 | 5건 | 2026.07.31`**.
+※ 로스터 밖 타과생(김지연) 기록은 조교 집계에 잡히지 않는다. 이는 조교 화면이 "**배정 학생 11명 기준**"으로 스코프를 명시한 집계라 **정상 동작**이다(결함 아님).
+
+### P1 — 전부 CLOSED
+
+| ID | 결과 | 실증 |
+|---|---|---|
+| P1-1 페이징 | **CLOSED** | 기록 12건 주입 → `1 / 2 페이지 · 총 12건`, 1p 10행 / 2p 2행, **2p 첫 행 번호 11**(startIndex 정확). 접수함 14건 → `1 / 2 페이지`, 2p 첫 행 11. 양쪽 도달성 확인 |
+| P1-2 화면단 filter | **CLOSED** | `getAdviseeRoster(professorId)`를 `advisorAssigns.ts`에 신설, 화면은 호출만. 학생 select = 지도학생 5명만(cse-1) / 2명(biz-1) |
+| P1-3 창작 seed | **CLOSED** | `stu-101` owner 제거 확인(`owners: 5`, `stu-101 존재? false`). 교수상담 신청 정확히 4건(cse-1 대기2·확정1 / biz-1 대기1). 학번 칸 **20211304·20196543·20229876 정상 표시**, `stu-101` 소멸 |
+| P1-4 침묵 실패 | **CLOSED** | 빈 내용 저장 → `학생과 상담 내용을 입력하세요.`(role=alert) / 시작≥종료 확정 → `종료 시각은 시작 시각보다 늦어야 합니다.` 인라인 표시. 장소는 optional로 완화 |
+| P1-5 영문 주석 | **CLOSED** | 교수 소유 파일 전수 스캔 → 산문 영문 주석 **0건**(잔존은 pre-existing `/* fallback */` 마커뿐) |
+| P1-6 이관 주석 | **CLOSED** | `schema/profCounselRecord.ts` requestId에 CON_PROF_INFO join 복원 규칙 · `schema/excludedHours.ts`에 "(운영 그리드 − 제한 전개) → BASICSETTING, 1:1 매핑 아님" 명시 |
+
+### P2 — 11 CLOSED / 3 미해결(비차단)
+
+**CLOSED**: P2-1 확정 모달 전면 정렬(학생 요약 `admin-kv` 5필드 · **종료 시각 입력**(13:00–14:30 1.5h 확정 성공) · 날짜 기본=오늘 · **method select 제거**(입력 필드 date/time/time/text만) · 비대면 placeholder · 인라인 오류) · P2-2 관리 열([일정 변경]·"기록 완료"·취소 `—` 렌더 확인) · P2-3 `formatRelativeTime`("21시간 전 신청") · P2-4 초기화(검색어 리셋 확인) · P2-5 기록 필터바(상담구분·검색·빈 상태 동작) · P2-6 연계 모드 `admin-kv` + "저장 시 해당 상담 신청이 완료 처리됩니다." · P2-7 빈 요일 숨김(7행 → **월·목 2행**) · P2-9 저장 후 갱신(저장 후 버튼 `disabled=true`) · P2-10 `PROF_COUNSEL_CATEGORIES[0].code` · P2-13 `role="tablist"/tab`+`aria-selected`+`aria-label` · P2-14 `title` 속성
+
+**미해결(백로그)**
+- **P2-8** 제한일정 유효성 힌트 문구 미반영 — `ProfessorSchedule.tsx:55`는 `disabled={!valid}`만. 미러 원본 `SettingsAvailability.tsx:74`의 `admin-form-hint admin-form-hint-warn` "종료 시각은 시작 시각보다 늦어야 합니다."가 없다(렌더 확인: 시작 17:00·종료 15:00에도 힌트 없음).
+- **P2-11** 공유 컴포넌트 메모 키 회귀 — `StudentRosterTable.tsx:45-46`이 여전히 `[departments, studentIds]`(매 렌더 새 배열). `getFullRoster()`가 렌더마다 2회 재계산된다. 조교·교수 화면 **동작은 무회귀 확인**(에러 0, 건수 정확)이라 비차단. `const idsKey = studentIds?.join(',') ?? ''` → `[deptKey, idsKey]` 권장.
+- **P2-12** 허용 범위 밖 수정 잔존 — `advisorAssigns.ts:131` `getAdvisorRosterForExport` 시그니처 `ListParams &` 변경 + 주석 2줄. 동작 동일(위젠 타입). 팀장이 병렬 작업 귀속만 확인하면 종결.
+
+### 재작업이 새로 만든 결함 — 없음(회귀 0), nit 5건
+
+리포맷 규모가 컸으므로 별도 검사했다. `profCounselRecords.ts`는 +161/-19로 대부분 줄바꿈이며, **export 함수 목록 비교 결과 제거 0 / 추가 2**(`addProfCounselRecord`·`queryProfRecords`)로 스펙과 일치한다. 기존 함수는 중괄호 추가 수준의 정형화뿐이고, 이를 소비하는 **조교 3화면이 렌더에서 무회귀**임을 확인했다.
+
+| 검사 | 결과 |
+|---|---|
+| 조교 학생현황 | 총 15명 · `1 / 2 페이지` · 콘솔 에러 0 |
+| 조교 전담교수 배정현황 | 15/미배정 4/배정 11 · `1 / 2 페이지 · 총 13명` · 에러 0 |
+| 조교 전담교수 상담실적 | 배정 학생 11명 기준 · 13행 · 에러 0 |
+| biz-1 교수 5화면 | 지도학생 2명 · 접수함 1건 · 기록 학생 2명 · 제한일정 · 노출설정 — 전부 에러 0 |
+| cse-1 지도학생 | 5명 · 에러 0 |
+| 신규 CSS·색상 | `index.css` diff 여전히 +154/-0, 교수 귀속은 `2193-2197` **5줄 그대로**. 교수 코드 내 hex/rgb/oklch/hsl 리터럴 **0건** |
+| impeccable 재실행 | hit 2건 = pre-existing side-tab(`index.css:1255`·`:1975`)뿐. **신규 안티패턴 0** |
+| 줄 길이 | 교수 소유 파일 최대 **132자**(전부 200 이하). 이전 210자 1건 해소 |
+
+**신규 nit (비차단)**
+1. `ProfessorCounsel.tsx:201` 상담 내용 textarea가 **빈 채로 시작**한다(이전엔 `defaultValue={onlineTopic}` 프리필). writer가 `onlineContent || onlineTopic`로 폴백해 제출은 안전하지만 학생이 보던 예시 문구가 사라졌다 → `placeholder={onlineTopic}` 권장.
+2. `profCounselRequests.ts:55` 주석 "데모 owner는 studentNo가 없고 id 자체가 학번이므로 폴백한다"가 사실과 다르다. `getCounselOwners()`(`students.ts:307-309`)가 데모 owner에 `studentNo: o.id`를 **항상 채운다**. 폴백 자체는 무해(FK 없는 DB 방어 규약)하나 주석은 정정 필요.
+3. 연계 모드 학과·학년이 "미디어커뮤니케이션학과 **3학년** · **3학년**"으로 중복 표기된다(데모 owner의 `major` 문자열에 학년이 포함된 데이터 형태). 표시단에서 학년 접미사 제거 권장.
+4. `admin-toolbar`는 `space-between`이 아니라 `gap:14px` flex라 [초기화]가 건수 바로 옆에 붙는다. spec은 "좌: 건수 · 우: [초기화]".
+5. `addProfCounselRecord`의 두 throw 메시지가 동일('학생 또는 교수 정보를 찾을 수 없습니다')이라 교수 미해석/학생 미해석을 구분할 수 없다.
+
+### P3 잔여 (기존 지적 중 미반영)
+- `biz-1.json` `officeHours: "수 10:00~12:00"` — spec §7-1/결정 1은 `"월·수 10:00~12:00"`(기존 값 계승).
+- seed topic 2건이 spec 문자열과 다름("하반기 취업 지원 전략 상담", "복수전공(컴퓨터공학)**과** 진로 상담").
+- 전 교수 `accept=false` 시 `getCounselableProfessorGroups()`가 `[]` → `professorGroups[0]` undefined 크래시 가능(방어 없음).
+
+**해소된 P3**: 200자 초과 · `SubmitProfCounselInput` 필드 JSDoc · EmptyState 문구 · `ProfessorAdvisees` 주석.
+
+---
+
+## 최종 결론
+
+**PASS.** P0 3건·P1 6건이 모두 닫혔고 렌더로 실증됐다. 이번 라운드에서 **결정 3(학생 신청 배선)과 결정 6(노출 설정 반영)이 처음으로 end-to-end 실증**됐으며, 학생 신청 → 교수 확정 → 기록 저장 → 신청 완료 → 조교 실적 집계까지의 사슬이 전부 동작한다. 디자인 토큰·단일소스·스코프 격리·append-only는 1차와 동일하게 유지되고, 대규모 리포맷에도 조교·상담사 화면 회귀는 없다.
+
+남은 P2 3건과 P3·nit 5건은 **차단 사유가 아니며 후속 슬라이스 백로그**로 넘긴다. 소스는 리뷰어가 수정하지 않았다.

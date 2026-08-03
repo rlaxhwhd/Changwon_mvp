@@ -89,16 +89,9 @@ export function studentLiteOf(id: string): StudentLite | undefined {
   return STUDENT_LITE_BY_ID[id]
 }
 
-/** 학과 → 단과대학 파생 맵. 학생 단일소스에 대학 필드가 없어 학과에서 유도한다. */
-const COLLEGE_BY_MAJOR: Record<string, string> = {
-  컴퓨터공학과: '공과대학',
-  경영학과: '경영대학',
-}
-
-/** 학과명으로 단과대학을 파생한다. 미매핑 학과는 '—'. */
-export function collegeOf(major: string): string {
-  return COLLEGE_BY_MAJOR[major] ?? '—'
-}
+// 학과 → 단과대학 파생은 학과 트리 단일소스(departments.ts = V_DEP_INF_ALL 미러)가 담당한다.
+// 로스터에 대학 필드가 없어 여기서 재노출만 한다 — 매핑을 이 파일에 다시 만들지 말 것.
+export { collegeOf } from './departments'
 
 /** 전체 학생 수 — 대시보드 '전체 학생' 카드/목록 카운트 단일 소스 */
 export function getRosterTotal(): number {

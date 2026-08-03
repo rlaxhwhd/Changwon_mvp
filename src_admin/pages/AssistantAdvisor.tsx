@@ -141,7 +141,7 @@ export default function AssistantAdvisor() {
         <div>
           <h1 className="admin-page-title">전담교수 배정 현황</h1>
           <p className="admin-page-desc">
-            {user.dept} · 담당 학과 학생 {counts.all}명
+            {departments.join(' · ')} · 담당 학과 학생 {counts.all}명
           </p>
         </div>
         <div className="admin-head-actions">

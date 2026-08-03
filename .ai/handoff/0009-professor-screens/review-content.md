@@ -233,3 +233,121 @@ const advisees = getFullRoster().filter(student => getAdviseeStudentIds(user.id)
 10. nit n1~n9.
 
 **재검수 기준**: 위 1~4가 실증(빌드 로그 + 브라우저 3-플로우)으로 닫히면 5단계 PASS 가능. 5~10은 PASS 조건이되 개별 항목의 스펙 개정 요청은 팀장 판단.
+
+---
+
+# 5단계 재검증 (2차 · 2026-07-31)
+
+> 대상 = Codex 재작업본. 검증 시점 워킹트리 = 커밋 `c72be11`(내용 동일함을 `git show`로 대조 확인).
+> 방법: `npx tsc -b` · dev 5173 + gstack browse 실사용 플로우 · 브라우저 내 모듈 직접 호출. 소스 무수정, 검증용 localStorage는 종료 시 `clear()`.
+
+## 판정 — **PASS**
+
+차단 4건 전부 해소, Major 5군 전부 반영, **이번 handoff의 존재 이유인 3대 플로우가 실측으로 성립**했다.
+남은 것은 문구 nit과 Minor 2건(N1·N2)이며 기능·데이터 흐름을 막지 않는다. **N1은 저장 데이터에 굳는 성질이라 다음 슬라이스 착수 전 처리 권고.**
+
+## A. 차단 4건 — 전부 해소 (실측)
+
+| # | 확인 방법 | 결과 |
+|---|---|---|
+| **B1** 빌드 | `npx tsc -b` | **exit 0, 에러 0** |
+| **B2** 학생 화면 크래시 | `/v2/counsel/professor` 렌더 | 정상 렌더, **콘솔 에러 0**. `onlineTopic`이 `useState` 위 일반 const로 이동(`ProfessorCounsel.tsx:57`), `144행` 잔존 `PROFESSOR_GROUPS`도 `professorGroups`로 교체됨 |
+| **B3** 연계 저장 throw | `?requestId=preq_med_01` 저장 | `addProfCounselRecord`가 `studentLiteOf` 실패 시 `input.snapshot` 폴백(§7-3 시그니처 복원). **저장 성공** — 아래 C절 참조 |
+| **B4** 화면단 전체 filter | `ProfessorCounselRecords.tsx:21` | `getAdviseeRoster(user.id)`(신설, `advisorAssigns.ts`)로 **데이터층 이동** ✓ §11-4 준수 |
+
+## B. Major 5군 — 전부 반영 (실측)
+
+- **M1 접수함**: `formatRelativeTime` "0분 전 / 21시간 전 / 1일 전 / 3일 전 신청" 표시 ✓ · `[초기화]` ✓ · `admin-pagination`(pages>1 조건, `PAGE_SIZE=10`) ✓ · 대기 `[접수·일정][거절]` ✓ · 확정 `[일정 변경][기록 작성]` ✓ · 완료 "기록 완료" ✓ · 취소 `—` ✓ · desc **"박지훈 · 나에게 신청된 교수상담"**(스펙 문구 일치) ✓
+- **M2 확정 모달**: 학생 요약 `admin-kv`(이름·학번·학과·방식·주제) 렌더 확인 ✓ · 날짜/시작/**종료** 3필드 + 신청 slot 프리필(`2026-07-29 / 14:00 / 15:00 / 공학관 706호`) ✓ · 비대면 placeholder "화상 링크" ✓ · place 필수 해제 ✓ · **스펙 밖이던 방식 select·제한일정 충돌 경고 제거** ✓ · `confirmProfRequest(id, slot)` 2인자 복원(§7-4 일치) ✓ · 유효성 실측: 종료<시작 → **"종료 시각은 시작 시각보다 늦어야 합니다."** 인라인 표시, 수정 후 확정 시 탭이 `대기4→3 / 확정0→1`로 전이 ✓
+- **M3 기록 화면**: 섹션2 `admin-filterbar`(검색+상담구분 전체+6종) ✓ · `admin-pagination` ✓ · 연계 모드 읽기 전용 `admin-kv` + **"저장 시 해당 상담 신청이 완료 처리됩니다."** ✓ · 저장 실패 인라인 표시 ✓ · `categoryCode` 기본값이 `PROF_COUNSEL_CATEGORIES[0].code`로 교체(리터럴 제거, §11-1) ✓
+- **M4 seed**: 창작 owner `stu-101`과 `preq_cse_advisee_01` 제거 → **§7-10 4건 정확**. 실측 분포 cse-1 대기2·확정1 / biz-1 대기1 = 스펙 일치 ✓. **접수함 학번 칸 slug 노출 사라짐**(20211304 / 20196543 / 20229876) ✓
+- **M5 노출 설정**: `updateProfessorCounselProfile` 끝에 `window.location.reload()` 추가 → 저장 후 버튼 `disabled=true`로 dirty 해제 확인 ✓
+
+nit 해소: n6(빈 요일 행 → `return null`, 월·목만 렌더) · n7(카테고리 리터럴).
+
+## C. ★ 핵심 가치 3단 — 실측 결과
+
+`dc_counsel_owners`·`dc_prof_counsel_records` 초기화 후 재현.
+
+| 단계 | 지도학생 경로 | 신청 연계 경로(비지도·타과) |
+|---|---|---|
+| ① `dc_prof_counsel_records` append | ✓ 8→**9** | ✓ 7→**8** (`requestId:"preq_med_01"`, `snapshot` 보존) |
+| ② 신청 '완료' patch | 해당 없음(직접 작성) | ✓ `preq_med_01 → 완료`, `completedAt` 기록. 접수함 탭 **확정0 / 완료1** |
+| ③ 조교 `/assistant/advisor/records` 집계 | ✓ 박지훈 4건→**5건**, 최근 상담일 **2026.07.31** | **미반영(설계상 정상 — N3 참조)** |
+
+**②가 이제 끝까지 간다.** 1차의 `Uncaught Error: 학생 또는 교수 정보를 찾을 수 없습니다.`는 재현되지 않는다.
+
+## D. 결정 3·6 — 드디어 실사용 경로에서 검증됨
+
+| 시나리오 | 실측 |
+|---|---|
+| 학생 **온라인** 신청 → owner 스토어 | `preq_1785485226695` append: `type:'교수' / professorId:'cse-1' / 대기 / 비대면 / topic:"학업 및 진로 상담: 졸업 후 대학원 진학 상담을 신청합니다."` ✓ |
+| 학생 **오프라인** 예약 → owner 스토어 | `preq_1785485471834`: `대면 / slot{2026-07-29 14:00–15:00, 공학관 706호}`, topic = 예약 모달 purpose ✓ |
+| → 교수 접수함 반영 | 접수함 최상단에 **"0분 전 신청"**으로 즉시 표시(대기 우선 → requestedAt desc) ✓ |
+| → 상담사 접수함 무오염 | 교수 신청 6건 상태에서 `getCounselRequests()` = **13건, `preq_*` 0건, types [진로취업, 심리]** ✓ |
+| accept=false → 학생 목록 제외 | 노출 설정에서 "받지 않음" 저장 → 학생 화면 컴퓨터공학과 = **[강민재, 신유라]**(박지훈 제외) ✓ |
+| 공대 전원 off → 학과·단대 드랍 | 대학 목록 5→**4**(공과대학 사라짐), 인문대학/국어국문학과로 폴백, **콘솔 에러 0** ✓ |
+
+무회귀: `AssistantStudents` 15명 ✓ · `/assistant/advisor/records` ✓ · `SettingsAvailability`(가능 시간대, 제한일정과 문구 방향 정반대로 유지) ✓ · 지도학생 목록 5명 ✓
+
+## E. 코디네이터 질의 2건에 대한 판정
+
+### N2. `owner.studentNo ?? owner.id` 폴백 (`profCounselRequests.ts:55`) — **표시값은 정확하나 폴백 자체는 제거 대상**
+
+1. **표시값 일치: 예.** 데모 owner 2명(`20229876` 김지연 · `20196543` 정유진)은 로스터에 없는 데모 전용 학생이라 다른 학번 소스가 존재하지 않고, id가 곧 학번 형식이다. 접수함 실측 표시 = `20229876` / `20196543`로 모순 없음.
+2. **그러나 이 폴백은 실행되지 않는 죽은 코드다.** `CounselOwner.studentNo`는 **optional이 아니고**(students.ts:216), `getCounselOwners()`가 데모 owner에 이미 `studentNo: o.id`를 채운다(students.ts:309). 즉 `owner.studentNo`가 `undefined`가 되는 경로가 없다. 코드 옆 주석 **"데모 owner는 studentNo가 없고"** 는 사실과 다르다.
+3. **단일소스 원칙 판정: 부적합(경미).** "id를 학번으로 간주한다"는 판단이 owner 투영층과 admin 투영층 **두 곳에 중복**됐다. 이 판단은 owner 투영 한 곳에서만 내려야 사고 지점이 하나로 유지된다 — 직전 `stu-101` 사고가 정확히 "id를 학번으로 표시"에서 나왔다.
+- **지시**: `profCounselRequests.ts:54-55`의 폴백과 잘못된 주석을 제거하고 `owner.studentNo`를 그대로 쓴다. 근본 해결(권고, 팀장 결정): `counselSeedStudents.json`에 `studentNo` 필드를 명시해 owner 투영의 `studentNo: o.id` 자체를 없앤다.
+
+### N1. `major`에 학년이 포함되어 **학년이 두 번 표시된다** — Minor, 처리 권고
+
+원인: 데모 owner의 `major` = `"미디어커뮤니케이션학과 3학년"`(seed 형태)인데 화면이 `{major} · {grade}학년`으로 조합한다.
+
+| 위치 | 실측 표시 |
+|---|---|
+| 접수함 학생 셀 | `20229876 · 미디어커뮤니케이션학과 3학년` — 학년 열이 없어 **중복은 아니나** 학과 필드에 학년이 섞임 |
+| 기록 화면 연계 `admin-kv` (`ProfessorCounselRecords.tsx:85`) | **`미디어커뮤니케이션학과 3학년 · 3학년`** ← 중복 |
+| 기록 목록 학과·학년 열 (`:158`) | **`미디어커뮤니케이션학과 3학년 · 3학년`** ← 중복 |
+
+**더 나쁜 점**: 이 값이 저장 스냅샷에 그대로 굳는다 — 실측 `snapshot:{"major":"미디어커뮤니케이션학과 3학년","grade":3}`. 스냅샷은 이관 대상 데이터라 지금 정리하지 않으면 오염된 문자열이 남는다.
+
+- **지시(택1)**: ⓐ 근본 — `counselSeedStudents.json`의 `major`에서 후행 "N학년"을 제거(상담사 화면도 함께 정상화, seed 변경이므로 팀장 승인). ⓑ 최소 — 투영 로더 `allRows()`에서 `studentMajor`를 정규화(후행 `\s*\d+학년` 제거). **화면이 아니라 데이터층에서 처리할 것.**
+
+### N3. ③ 집계 범위 — 코드 결함 아님, ui-spec 문장 정정 권고
+
+`getProfessorStats`는 `adviseeIds.has(record.studentId)`로 **배정 학생 기록만** 집계한다(`git show HEAD~1`로 확인 — 0008 기존 규칙, 이번 변경 아님). 그래서 비지도·타과 학생(김지연) 연계 기록은 조교 실적에 잡히지 않는다. 조교 화면이 "전담교수 배정 기준" 집계라 도메인상 타당하다.
+→ ui-spec §4의 "저장된 기록은 … 조교가 **그대로** 집계한다"를 **"지도학생 기록은 조교 실적에 즉시 집계된다"** 로 정정 권고.
+
+## F. 라벨·문구·열 구성·용어 재대조 (리포맷 후 변질 없음)
+
+- 열 구성 불변: 접수함 8열(#·학생·학적·방식·주제·신청/일정·상태·관리), 기록 7열(#·상담일·학생·학과·학년·상담구분·내용·연계) — 스펙과 일치.
+- 상담구분 6종 라벨(전공 및 학업 / 진로 / 취업 / 봉사 및 실습 / 사제동행프로그램 / 기타) 불변 ✓
+- 상태 배지·학적 배지·`admin-*` 클래스 어휘 불변, 신규 CSS는 여전히 modifier 3개뿐 ✓
+- 용어 오염 0(회원·고객·사용자님 등 없음), 이미지/현행 실조직명 유출 없음 ✓
+- 권한 경계 불변: 학사 유래 필드 편집 UI 없음 · 기록 수정/삭제 UI 없음 · `assignedCounselorId` 무오염 ✓
+- 주석 영문 → 한국어화 확인 ✓ (단 N2의 주석 1줄은 내용이 사실과 다름)
+
+## G. 남은 nit (기능 영향 없음 — 다음 커밋에 묶어 처리 권고)
+
+| # | 내용 | 위치 |
+|---|---|---|
+| N1 | 학년 중복 표기 + 스냅샷 오염 (**우선 처리 권고**) | seed 또는 `profCounselRequests.allRows` |
+| N2 | 죽은 `?? owner.id` 폴백 + 사실과 다른 주석 | `profCounselRequests.ts:54-55` |
+| N4 | 학생 화면 상담 내용 textarea **기본 문구 유실** — 기존 `defaultValue={onlineTopic}`이 `useState('')`가 되어 초기 화면이 빈칸. 제출 시엔 `onlineContent \|\| onlineTopic` 폴백이라 데이터는 유지되나 학생이 보는 초기 상태가 달라졌다(§3-2ⓐ "값 캡처용" 범위 초과). `useState(onlineTopic)`이면 원래 동작과 동일 | `ProfessorCounsel.tsx:58` |
+| n1 | 변수명 `profLee`/`profJung` 잔존(실제 박지훈·김세환) + §8이 요구한 id 규약 주석 없음 | `professors.ts:8-9,21-22` |
+| n2 | `biz-1` officeHours `"수 10:00~12:00"` (스펙 `"월·수 10:00~12:00"`) | `professors/biz-1.json` |
+| n3 | 제한일정·노출설정 desc가 아직 `"박지훈 교수님…"`(접수함·기록은 스펙 문구로 교정됨) | `ProfessorSchedule.tsx:34` · `ProfessorProfile.tsx:25` |
+| n4 | advisees subtitle `"박지훈의 지도학생"` (스펙 `"박지훈 · 내 지도학생"`) | `ProfessorAdvisees.tsx:11` |
+| n5 | 노출설정 라벨 `"상담 신청 허락"`(스펙 "수락") · hint에서 **"이미 접수된 신청은 유지됩니다."** 누락 · 오피스아워 placeholder 없음 · `"상담 소개"`(스펙 "소개") | `ProfessorProfile.tsx:41-54` |
+| n10 | 확정 버튼 라벨 `"일정 확정"` (스펙 `[확정]`) | `ProfessorCounselRequests.tsx:104` |
+| n11 | 저장 후 폼 리셋이 `summary`만 (학생·구분·상담일 잔존) | `ProfessorCounselRecords.tsx:60` |
+| n12 | 제한일정 삭제 버튼 `aria-label="삭제"` 없음(미러 원본에는 있음) | `ProfessorSchedule.tsx:78` |
+| n8 | `StudentRosterTable` useMemo 의존키가 배열 참조 → 매 렌더 재계산(이전 `deptKey` 문자열) | `StudentRosterTable.tsx:42-43` |
+| n9 | `getProfRequestById(professorId, id)` — 데이터층 스코프 추가는 **개선으로 수용**, ui-spec §7-4 시그니처 갱신 필요 | ui-spec 문서 |
+
+## H. 팀장 확인 사항
+
+1. **N1 처리 방식 결정** — seed 정정(ⓐ, 상담사 화면도 개선) vs 로더 정규화(ⓑ, 범위 최소). 스냅샷에 굳는 값이라 다음 슬라이스 전 권고.
+2. **ui-spec 문서 갱신 2건** — §4 조교 집계 문장(N3) · §7-4 `getProfRequestById` 시그니처(n9).
+3. nit n1~n12는 별도 커밋으로 묶어도 무방(기능·데이터 영향 없음).
+

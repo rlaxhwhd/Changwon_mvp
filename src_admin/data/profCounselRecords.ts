@@ -8,6 +8,7 @@ import seed from './profCounselRecords.seed.json'
 import { getActiveAssignByStudent } from './advisorAssigns'
 import { getFullRoster } from './studentRoster'
 import type { EnrollStatus } from './studentRoster'
+import { collegeOf } from './departments'
 import { PROFESSOR_GROUPS } from '../../src_v2/data/professors'
 import { mockLatency, paginate } from './query'
 import type { ListParams, Paginated } from './query'
@@ -16,6 +17,7 @@ import type {
   ProfCounselCategoryCode,
   ProfCounselRecord,
 } from './schema/profCounselRecord'
+import type { CounselMethod } from './schema/counselRequest'
 import { getProfessorById } from './professors'
 import { studentLiteOf } from './studentRoster'
 
@@ -45,6 +47,8 @@ export function addProfCounselRecord(input: {
   studentId: string
   professorId: string
   categoryCode: ProfCounselCategoryCode
+  /** 상담 채널 — 비대면=온라인 · 대면=오프라인. 연계 건은 신청 방식을 그대로 계승한다. */
+  method: CounselMethod
   date: string
   summary: string
   requestId?: string
@@ -52,7 +56,7 @@ export function addProfCounselRecord(input: {
 }): ProfCounselRecord {
   const student = studentLiteOf(input.studentId)
   const professor = getProfessorById(input.professorId)
-  if (!professor) throw new Error('학생 또는 교수 정보를 찾을 수 없습니다.')
+  if (!professor) throw new Error('교수 정보를 찾을 수 없습니다.')
   const snapshot = student
     ? {
         studentNo: student.studentNo,
@@ -61,7 +65,8 @@ export function addProfCounselRecord(input: {
         grade: student.grade,
       }
     : input.snapshot
-  if (!snapshot) throw new Error('학생 또는 교수 정보를 찾을 수 없습니다.')
+  // 로스터 밖 학생(신청 owner)은 호출부가 신청 행 스냅샷을 넘겨야 한다.
+  if (!snapshot) throw new Error('학생 정보를 찾을 수 없습니다.')
   const record: ProfCounselRecord = {
     id: `pcr_${Date.now()}`,
     ...input,
@@ -109,35 +114,72 @@ export interface ProfessorStatRow {
   professorId: string
   professorName: string
   professorMajor: string
+  /** 소속 단과대학 — 학과 트리 단일소스(V_DEP_INF_ALL 미러)에서 파생. 화면 계산 금지 */
+  college: string
   dept: string
   adviseeCount: number
+  /** 온라인(비대면) 상담 건수 */
+  onlineCount: number
+  /** 오프라인(대면) 상담 건수 */
+  offlineCount: number
+  /** 계 = 온라인 + 오프라인 */
   recordCount: number
+  /** 미참여 = 배정 지도학생 중 상담 기록이 0건인 학생 수 (건수가 아니라 인원) */
+  noneCount: number
   lastDate?: string
 }
-export function getProfessorStats(departments: string[]): ProfessorStatRow[] {
+
+/**
+ * [DB-ready] 교수상담 통계 — 조교 담당 학과에 배정된 지도학생의 기록만 집계한다(0008 스코프 규칙).
+ * professorId를 주면 그 교수 한 명으로 좁힌다. 범위 판정은 화면이 아니라 여기서 끝낸다.
+ */
+export function getProfessorStats(
+  departments: string[],
+  professorId?: string,
+): ProfessorStatRow[] {
   const records = getProfCounselRecords()
   const grouped = new Map<string, ReturnType<typeof scopeAssignments>>()
   for (const item of scopeAssignments(departments)) {
+    if (professorId && item.assign.professorId !== professorId) continue
     grouped.set(item.assign.professorId, [
       ...(grouped.get(item.assign.professorId) ?? []),
       item,
     ])
   }
-  return [...grouped.entries()].map(([professorId, items]) => {
+  return [...grouped.entries()].map(([id, items]) => {
     const adviseeIds = new Set(items.map(item => item.student.id))
     const professorRecords = records.filter(record =>
-      record.professorId === professorId && adviseeIds.has(record.studentId),
+      record.professorId === id && adviseeIds.has(record.studentId),
     )
+    const counseled = new Set(professorRecords.map(record => record.studentId))
+    const onlineCount = professorRecords.filter(record => record.method === '비대면').length
     return {
-      professorId,
+      professorId: id,
       professorName: items[0].assign.professorName,
-      professorMajor: professorMajor(professorId),
+      professorMajor: professorMajor(id),
+      college: collegeOf(items[0].student.major),
       dept: items[0].student.major,
       adviseeCount: items.length,
+      onlineCount,
+      offlineCount: professorRecords.length - onlineCount,
       recordCount: professorRecords.length,
+      noneCount: items.filter(item => !counseled.has(item.student.id)).length,
       lastDate: professorRecords.map(record => record.date).sort().at(-1),
     }
   })
+}
+
+/** 교수 필터 옵션 — 담당 범위에서 배정을 보유한 교수만. 하드코딩 목록 금지. */
+export function getProfessorFilterOptions(
+  departments: string[],
+): { id: string; name: string }[] {
+  const seen = new Map<string, string>()
+  for (const { assign } of scopeAssignments(departments)) {
+    seen.set(assign.professorId, assign.professorName)
+  }
+  return [...seen.entries()]
+    .map(([id, name]) => ({ id, name }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 }
 
 /** [DB-ready] 교수 범위 기록이며 필터·정렬은 이 데이터층에서 처리한다. */
@@ -206,6 +248,7 @@ export async function queryAdviseeCounselStatus(
   const filters = params.filters ?? {}
   const rows = adviseeRows(params.departments ?? [])
     .filter(row => params.tab !== 'none' || row.recordCount === 0)
+    .filter(row => !filters.professorId || row.professorId === filters.professorId)
     .filter(row => !filters.status || row.status === filters.status)
     .filter(row => !q || `${row.name} ${row.studentNo}`.toLowerCase().includes(q))
     .sort((a, b) => (
@@ -215,9 +258,15 @@ export async function queryAdviseeCounselStatus(
     ))
   return paginate(rows, params)
 }
+/**
+ * 탭 카운트 — 검색·학적 같은 "필터"는 무시하고 담당 범위 전체를 센다(0008 규약).
+ * 다만 교수 선택은 필터가 아니라 "누구의 실적을 보는가"라는 스코프라 카운트에도 반영한다.
+ */
 export function getAdviseeTabCounts(
   departments: string[],
+  professorId?: string,
 ): { all: number; none: number } {
   const all = adviseeRows(departments)
+    .filter(row => !professorId || row.professorId === professorId)
   return { all: all.length, none: all.filter(row => row.recordCount === 0).length }
 }

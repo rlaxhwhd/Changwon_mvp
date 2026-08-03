@@ -205,7 +205,11 @@ export default function ProfessorCounsel() {
                 </label>
                 <label>
                   상담 내용
-                  <textarea value={onlineContent} onChange={event => setOnlineContent(event.target.value)} />
+                  <textarea
+                    value={onlineContent}
+                    placeholder={onlineTopic}
+                    onChange={event => setOnlineContent(event.target.value)}
+                  />
                 </label>
                 <button className="cc-reserve-btn" onClick={submitOnline}>온라인 상담 신청하기</button>
               </div>

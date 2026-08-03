@@ -4,6 +4,7 @@
 // DB 전환 시 실코드가 확인되면 01~06 잠정값과 DTO 매핑을 이 경계에서 치환한다.
 // 상담기록·독려 이력을 수정·삭제하지 말 것.
 // ─────────────────────────────────────────────────────────────────────────────
+import type { CounselMethod } from './counselRequest'
 /** 상담구분 — 현행 SY_CODE GRP '0131' 미러 (코드+라벨 분리: 한글 리터럴을 값으로 쓰지 않는다).
  *  실코드 미확인으로 잠정 '01'~'06' 부여 — DB 전환 시 SY_CODE 실값으로 치환한다. */
 export const PROF_COUNSEL_CATEGORIES = [
@@ -17,6 +18,13 @@ export const PROF_COUNSEL_CATEGORIES = [
 
 export type ProfCounselCategoryCode = (typeof PROF_COUNSEL_CATEGORIES)[number]['code']
 
+/** 상담 채널 라벨 — 현행 교수상담은 온라인(게시판형)·오프라인 2트랙이다(Progress.md P5·P6).
+ *  값은 공용 CounselMethod를 그대로 쓰고(재생성 금지), 교수상담 도메인 표기만 여기서 준다. */
+export const PROF_COUNSEL_CHANNEL_LABEL: Record<CounselMethod, string> = {
+  비대면: '온라인',
+  대면: '오프라인',
+}
+
 export interface ProfCounselRecord {
   /** 기록 id (pcr_ prefix) */
   id: string
@@ -26,6 +34,8 @@ export interface ProfCounselRecord {
   /** 교수 이름 스냅샷 */
   professorName: string
   categoryCode: ProfCounselCategoryCode
+  /** 상담 채널 — 비대면=온라인 · 대면=오프라인 (PROF_COUNSEL_CHANNEL_LABEL로 표기) */
+  method: CounselMethod
   /** 상담일 YYYY-MM-DD */
   date: string
   /** 상담 요지 — 조교 화면은 집계만 하고 표시하지 않는다(교수 화면 SPEC §3-5 예비) */

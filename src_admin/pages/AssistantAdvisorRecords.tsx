@@ -11,6 +11,7 @@ import type { Assistant } from '../data/assistants'
 import { getAdvisorTabCounts } from '../data/advisorAssigns'
 import {
   getAdviseeTabCounts,
+  getProfessorFilterOptions,
   getProfessorStats,
   queryAdviseeCounselStatus,
   sendNudge,
@@ -37,22 +38,37 @@ export default function AssistantAdvisorRecords() {
   const [tab, setTab] = useState<AdviseeTab>('all')
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState('재학')
+  const [dept, setDept] = useState(ALL)
+  const [professorId, setProfessorId] = useState('')
   const [page, setPage] = useState(1)
-  const options = getRosterFilterOptions(departments)
-  const stats = getProfessorStats(departments)
-  const tabs = getAdviseeTabCounts(departments)
-  const unassigned = getAdvisorTabCounts(departments).unassigned
+  // 조교는 여러 학과를 겸할 수 있다(현행 FU_ASS_DEPT는 학과별 다건 배정).
+  // 학과·교수 선택은 필터가 아니라 조회 범위이므로 로더에 스코프로 넘긴다.
+  const scope = dept === ALL ? departments : [dept]
+  const options = getRosterFilterOptions(scope)
+  const professorOptions = getProfessorFilterOptions(scope)
+  const stats = getProfessorStats(scope, professorId || undefined)
+  const tabs = getAdviseeTabCounts(scope, professorId || undefined)
+  const unassigned = getAdvisorTabCounts(scope).unassigned
   const { data: result, isLoading, refetch } = useListData(
     queryAdviseeCounselStatus,
     {
       page,
       pageSize: PAGE_SIZE,
       q: query,
-      departments,
+      departments: scope,
       tab,
-      filters: { status: status === ALL ? undefined : status },
+      filters: {
+        status: status === ALL ? undefined : status,
+        professorId: professorId || undefined,
+      },
     },
   )
+  // 학과를 바꾸면 이전 학과의 교수 선택이 남지 않게 초기화한다.
+  const changeDept = (value: string) => {
+    setDept(value)
+    setProfessorId('')
+    setPage(1)
+  }
   const pages = totalPages(result)
   const start = (result.page - 1) * PAGE_SIZE
 
@@ -62,7 +78,7 @@ export default function AssistantAdvisorRecords() {
         <div>
           <h1 className="admin-page-title">전담교수 상담 실적</h1>
           <p className="admin-page-desc">
-            {user.dept} · 배정 학생 {tabs.all}명 기준
+            {scope.join(' · ')} · 배정 학생 {tabs.all}명 기준
           </p>
           <p className="admin-field-hint">
             미배정 {unassigned}명은 배정 현황에서 관리합니다.
@@ -70,7 +86,28 @@ export default function AssistantAdvisorRecords() {
         </div>
       </header>
 
-      <div className="admin-card-head"><h2>교수별 실적</h2></div>
+      <div className="admin-card-head"><h2>교수상담 통계</h2></div>
+      <div className="admin-filterbar">
+        <label className="admin-select">
+          <span>학과</span>
+          <select value={dept} onChange={event => changeDept(event.target.value)}>
+            <option value={ALL}>{ALL}</option>
+            {departments.map(item => <option key={item} value={item}>{item}</option>)}
+          </select>
+        </label>
+        <label className="admin-select">
+          <span>교수</span>
+          <select
+            value={professorId}
+            onChange={event => { setProfessorId(event.target.value); setPage(1) }}
+          >
+            <option value="">{ALL}</option>
+            {professorOptions.map(item => (
+              <option key={item.id} value={item.id}>{item.name}</option>
+            ))}
+          </select>
+        </label>
+      </div>
       <section className="admin-card">
         {stats.length === 0 ? (
           <EmptyState
@@ -80,8 +117,9 @@ export default function AssistantAdvisorRecords() {
         ) : (
           <div className="admin-roster admin-profstat-roster">
             <div className="admin-roster-head">
-              <span>교수</span><span>학과</span><span>배정 학생 수</span>
-              <span>상담 건수</span><span>최근 상담일</span>
+              <span>교수</span><span>단과대학</span><span>학과</span><span>배정 학생 수</span>
+              <span>온라인</span><span>오프라인</span><span>계</span>
+              <span>미참여</span><span>최근 상담일</span>
             </div>
             {stats.map(row => (
               <div className="admin-roster-row" key={row.professorId}>
@@ -89,9 +127,13 @@ export default function AssistantAdvisorRecords() {
                   <strong className="admin-advisor-name">{row.professorName}</strong>
                   <small>{row.professorMajor}</small>
                 </span>
+                <span className="admin-roster-cell">{row.college}</span>
                 <span className="admin-roster-cell">{row.dept}</span>
                 <span className="admin-roster-cell">{row.adviseeCount}명</span>
-                <span className="admin-roster-cell">{row.recordCount}건</span>
+                <span className="admin-roster-cell">{row.onlineCount}건</span>
+                <span className="admin-roster-cell">{row.offlineCount}건</span>
+                <span className="admin-roster-cell"><strong>{row.recordCount}건</strong></span>
+                <span className="admin-roster-cell">{row.noneCount}명</span>
                 <span className="admin-roster-cell">
                   {formatDate(row.lastDate)}
                   {!row.lastDate && <small>기록 없음</small>}

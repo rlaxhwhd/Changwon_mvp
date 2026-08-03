@@ -44,6 +44,16 @@ export interface ProfCounselRequestRow {
   isAdvisee: boolean
 }
 export type ProfReqTab = '전체' | CounselRequestStatus
+
+/**
+ * 학과명 정규화 — 일부 데모 owner의 major가 "컴퓨터공학과 4학년"처럼 학년을 포함한다.
+ * 학년은 별도 필드(studentGrade)로 이미 들고 있어 화면에서 "…4학년 · 4학년" 중복이 되고,
+ * 그 값이 상담기록 snapshot.major로 굳으면 이관 데이터까지 오염된다 → 투영 단계에서 떼어낸다.
+ */
+function majorOnly(major: string): string {
+  return major.replace(/\s*\d+학년$/, '')
+}
+
 function allRows(professorId: string): ProfCounselRequestRow[] {
   const assigns = getActiveAssignByStudent()
   return getCounselOwners().flatMap(owner => owner.counselRequests
@@ -51,10 +61,9 @@ function allRows(professorId: string): ProfCounselRequestRow[] {
     .map(request => ({
       id: request.id,
       studentId: owner.id,
-      // 데모 owner는 studentNo가 없고 id 자체가 학번이므로 폴백한다.
-      studentNo: owner.studentNo ?? owner.id,
+      studentNo: owner.studentNo,
       studentName: owner.name,
-      studentMajor: owner.major,
+      studentMajor: majorOnly(owner.major),
       studentGrade: owner.grade,
       enrollmentStatus: owner.enrollmentStatus,
       method: request.method,

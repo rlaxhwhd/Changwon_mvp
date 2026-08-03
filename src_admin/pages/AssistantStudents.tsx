@@ -10,7 +10,7 @@ export default function AssistantStudents() {
     <StudentRosterTable
       departments={departments}
       title="담당 학과 학생 현황"
-      subtitle={`${user.dept} · 담당 학과`}
+      subtitle={`${departments.join(' · ')} · 담당 학과`}
       viewerRole="assistant"
     />
   )

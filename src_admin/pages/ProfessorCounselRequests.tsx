@@ -141,6 +141,9 @@ export default function ProfessorCounselRequests() {
           <h1 className="admin-page-title">상담 신청 접수</h1>
           <p className="admin-page-desc">{user.name} · 나에게 신청된 교수상담</p>
         </div>
+        <div className="admin-head-actions">
+          <button type="button" className="admin-btn admin-btn-ghost" onClick={reset}>초기화</button>
+        </div>
       </header>
       <div className="admin-tabs" role="tablist" aria-label="상담 신청 상태">
         {tabs.map(item => (
@@ -179,7 +182,6 @@ export default function ProfessorCounselRequests() {
         <span className="admin-toolbar-count">
           검색 결과 {data.totalCount}건 {isLoading && <LuLoaderCircle className="admin-spin" />}
         </span>
-        <button type="button" className="admin-btn admin-btn-ghost" onClick={reset}>초기화</button>
       </div>
       <section className="admin-card">
         {data.items.length === 0 ? <EmptyState message="접수된 교수상담 신청이 없습니다." /> : (

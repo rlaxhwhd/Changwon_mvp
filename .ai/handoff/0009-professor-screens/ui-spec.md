@@ -167,6 +167,8 @@ admin-page
 ### 목적
 상담 결과를 입력(append)하고 내 기록을 조회한다. **저장된 기록은 반드시 `dc_prof_counsel_records`로 들어간다** — 조교 `/assistant/advisor/records`(`getProfessorStats`·`queryAdviseeCounselStatus`)가 그대로 집계한다. 이 연결이 이번 handoff의 핵심 가치.
 
+> ⚠️ 정정(2026-07-31 리뷰 실측) — 조교 실적 집계는 **조교 담당 학과에 배정된 지도학생의 기록만** 잡는다(0008에서 확정한 스코프 규칙). 교수가 타과생(신청 owner)에게 쓴 기록은 `dc_prof_counsel_records`에는 남지만 조교 화면 집계에는 나타나지 않는다 — 결함이 아니라 접근범위 설계다.
+
 ### 레이아웃
 
 ```
