@@ -1,0 +1,338 @@
+[
+  {
+    "curiNum": "CSE1001",
+    "skillId": "sk_prog",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE1002",
+    "skillId": "sk_prog",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE1003",
+    "skillId": "sk_math",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE1004",
+    "skillId": "sk_arch",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE1004",
+    "skillId": "sk_prog",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE2001",
+    "skillId": "sk_ds",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE2002",
+    "skillId": "sk_algo",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE2003",
+    "skillId": "sk_oop",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE2004",
+    "skillId": "sk_arch",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE2005",
+    "skillId": "sk_db",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE2006",
+    "skillId": "sk_web",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE2007",
+    "skillId": "sk_stat",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE2007",
+    "skillId": "sk_data",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE3001",
+    "skillId": "sk_os",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE3002",
+    "skillId": "sk_net",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE3003",
+    "skillId": "sk_se",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE3004",
+    "skillId": "sk_oss",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE3005",
+    "skillId": "sk_mobile",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE3006",
+    "skillId": "sk_data",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE3007",
+    "skillId": "sk_backend",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE4001",
+    "skillId": "sk_capstone",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE4002",
+    "skillId": "sk_capstone",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE4003",
+    "skillId": "sk_bigdata",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE4004",
+    "skillId": "sk_sec",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE4005",
+    "skillId": "sk_cloud",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "CSE4006",
+    "skillId": "sk_ai",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS1001",
+    "skillId": "sk_mgmt",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS1002",
+    "skillId": "sk_acct",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS1003",
+    "skillId": "sk_mgmt",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS2001",
+    "skillId": "sk_mkt",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS2002",
+    "skillId": "sk_org",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS2003",
+    "skillId": "sk_acct",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS2004",
+    "skillId": "sk_stat",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS2005",
+    "skillId": "sk_data",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS2005",
+    "skillId": "sk_db",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS3001",
+    "skillId": "sk_mkt",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS3002",
+    "skillId": "sk_consumer",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS3003",
+    "skillId": "sk_brand",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS3004",
+    "skillId": "sk_ad",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS3005",
+    "skillId": "sk_digital",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS4001",
+    "skillId": "sk_strategy",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS4001",
+    "skillId": "sk_mkt",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS4002",
+    "skillId": "sk_strategy",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS4003",
+    "skillId": "sk_startup",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS4004",
+    "skillId": "sk_data",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "BUS4004",
+    "skillId": "sk_mkt",
+    "weight": 0.5,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "IDS2001",
+    "skillId": "sk_design",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "GEN1001",
+    "skillId": "sk_write",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "GEN1002",
+    "skillId": "sk_english",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "GEN1003",
+    "skillId": "sk_english",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "GEN1004",
+    "skillId": "sk_prog",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "GEN2001",
+    "skillId": "sk_career",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "GEN2002",
+    "skillId": "sk_comm",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "GEN2003",
+    "skillId": "sk_career",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "GEN3001",
+    "skillId": "sk_ai",
+    "weight": 1,
+    "source": "syllabus"
+  },
+  {
+    "curiNum": "GEN3002",
+    "skillId": "sk_design",
+    "weight": 1,
+    "source": "syllabus"
+  }
+]

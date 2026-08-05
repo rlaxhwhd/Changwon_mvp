@@ -1,0 +1,602 @@
+[
+  {
+    "id": "cur_001",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE1001",
+    "courseCls": "전공필수",
+    "recGrade": 1,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_002",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE1002",
+    "courseCls": "전공필수",
+    "recGrade": 1,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_003",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE1003",
+    "courseCls": "전공필수",
+    "recGrade": 1,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_004",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE1004",
+    "courseCls": "전공선택",
+    "recGrade": 1,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_005",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE2001",
+    "courseCls": "전공필수",
+    "recGrade": 2,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_006",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE2002",
+    "courseCls": "전공필수",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_007",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE2003",
+    "courseCls": "전공필수",
+    "recGrade": 2,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_008",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE2004",
+    "courseCls": "전공필수",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_009",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE2005",
+    "courseCls": "전공필수",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_010",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE2006",
+    "courseCls": "전공선택",
+    "recGrade": 2,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_011",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE2007",
+    "courseCls": "전공선택",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": false
+  },
+  {
+    "id": "cur_012",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE3001",
+    "courseCls": "전공필수",
+    "recGrade": 3,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_013",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE3002",
+    "courseCls": "전공필수",
+    "recGrade": 3,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_014",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE3003",
+    "courseCls": "전공필수",
+    "recGrade": 3,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_015",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE3004",
+    "courseCls": "전공선택",
+    "recGrade": 3,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_016",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE3005",
+    "courseCls": "전공선택",
+    "recGrade": 3,
+    "recSmt": "2",
+    "required": false
+  },
+  {
+    "id": "cur_017",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE3006",
+    "courseCls": "전공선택",
+    "recGrade": 3,
+    "recSmt": "2",
+    "required": false
+  },
+  {
+    "id": "cur_018",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE3007",
+    "courseCls": "전공선택",
+    "recGrade": 3,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_019",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE4001",
+    "courseCls": "전공필수",
+    "recGrade": 4,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_020",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE4002",
+    "courseCls": "전공필수",
+    "recGrade": 4,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_021",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE4003",
+    "courseCls": "전공선택",
+    "recGrade": 4,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_022",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE4004",
+    "courseCls": "전공선택",
+    "recGrade": 4,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_023",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE4005",
+    "courseCls": "전공선택",
+    "recGrade": 4,
+    "recSmt": "2",
+    "required": false
+  },
+  {
+    "id": "cur_024",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "CSE4006",
+    "courseCls": "전공선택",
+    "recGrade": 4,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_025",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "GEN1001",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_026",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "GEN1002",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_027",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "GEN1003",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_028",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "GEN1004",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_029",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "GEN2001",
+    "courseCls": "교양필수",
+    "recGrade": 2,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_030",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "GEN2002",
+    "courseCls": "교양필수",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_031",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "GEN2003",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_032",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "GEN3001",
+    "courseCls": "교양선택",
+    "recGrade": 3,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_033",
+    "deptCode": "C05-05",
+    "curriYear": "2021",
+    "curiNum": "GEN3002",
+    "courseCls": "교양선택",
+    "recGrade": 2,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_034",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS1001",
+    "courseCls": "전공필수",
+    "recGrade": 1,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_035",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS1002",
+    "courseCls": "전공필수",
+    "recGrade": 1,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_036",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS1003",
+    "courseCls": "전공선택",
+    "recGrade": 1,
+    "recSmt": "2",
+    "required": false
+  },
+  {
+    "id": "cur_037",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS2001",
+    "courseCls": "전공필수",
+    "recGrade": 2,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_038",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS2002",
+    "courseCls": "전공필수",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_039",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS2003",
+    "courseCls": "전공필수",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_040",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS2004",
+    "courseCls": "전공필수",
+    "recGrade": 2,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_041",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS2005",
+    "courseCls": "전공선택",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": false
+  },
+  {
+    "id": "cur_042",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS3001",
+    "courseCls": "전공필수",
+    "recGrade": 3,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_043",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS3002",
+    "courseCls": "전공선택",
+    "recGrade": 3,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_044",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS3003",
+    "courseCls": "전공선택",
+    "recGrade": 3,
+    "recSmt": "2",
+    "required": false
+  },
+  {
+    "id": "cur_045",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS3004",
+    "courseCls": "전공선택",
+    "recGrade": 3,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_046",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS3005",
+    "courseCls": "전공선택",
+    "recGrade": 3,
+    "recSmt": "2",
+    "required": false
+  },
+  {
+    "id": "cur_047",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS4001",
+    "courseCls": "전공필수",
+    "recGrade": 4,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_048",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS4002",
+    "courseCls": "전공필수",
+    "recGrade": 4,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_049",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS4003",
+    "courseCls": "전공선택",
+    "recGrade": 4,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_050",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "BUS4004",
+    "courseCls": "전공선택",
+    "recGrade": 4,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_051",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "GEN1001",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_052",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "GEN1002",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_053",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "GEN1003",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_054",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "GEN1004",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_055",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "GEN2001",
+    "courseCls": "교양필수",
+    "recGrade": 2,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_056",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "GEN2002",
+    "courseCls": "교양필수",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": true
+  },
+  {
+    "id": "cur_057",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "GEN2003",
+    "courseCls": "교양필수",
+    "recGrade": 1,
+    "recSmt": "1",
+    "required": true
+  },
+  {
+    "id": "cur_058",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "GEN3001",
+    "courseCls": "교양선택",
+    "recGrade": 3,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_059",
+    "deptCode": "C03-01",
+    "curriYear": "2019",
+    "curiNum": "GEN3002",
+    "courseCls": "교양선택",
+    "recGrade": 2,
+    "recSmt": "1",
+    "required": false
+  },
+  {
+    "id": "cur_060",
+    "deptCode": "C08-01",
+    "curriYear": "2021",
+    "curiNum": "IDS2001",
+    "courseCls": "전공선택",
+    "recGrade": 2,
+    "recSmt": "2",
+    "required": false
+  }
+]

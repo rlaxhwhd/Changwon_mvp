@@ -1,0 +1,218 @@
+[
+  {
+    "skillId": "sk_prog",
+    "label": "프로그래밍 기초",
+    "category": "개발",
+    "icon": "fa-code"
+  },
+  {
+    "skillId": "sk_ds",
+    "label": "자료구조",
+    "category": "개발",
+    "icon": "fa-sitemap"
+  },
+  {
+    "skillId": "sk_algo",
+    "label": "알고리즘",
+    "category": "개발",
+    "icon": "fa-diagram-project"
+  },
+  {
+    "skillId": "sk_oop",
+    "label": "객체지향 설계",
+    "category": "개발",
+    "icon": "fa-cubes"
+  },
+  {
+    "skillId": "sk_db",
+    "label": "데이터베이스",
+    "category": "데이터",
+    "icon": "fa-database"
+  },
+  {
+    "skillId": "sk_arch",
+    "label": "컴퓨터구조",
+    "category": "개발",
+    "icon": "fa-microchip"
+  },
+  {
+    "skillId": "sk_math",
+    "label": "이산수학·수리",
+    "category": "기초",
+    "icon": "fa-square-root-variable"
+  },
+  {
+    "skillId": "sk_web",
+    "label": "웹 개발",
+    "category": "개발",
+    "icon": "fa-globe"
+  },
+  {
+    "skillId": "sk_backend",
+    "label": "백엔드 개발",
+    "category": "개발",
+    "icon": "fa-server"
+  },
+  {
+    "skillId": "sk_os",
+    "label": "운영체제",
+    "category": "인프라",
+    "icon": "fa-desktop"
+  },
+  {
+    "skillId": "sk_net",
+    "label": "네트워크",
+    "category": "인프라",
+    "icon": "fa-network-wired"
+  },
+  {
+    "skillId": "sk_se",
+    "label": "소프트웨어공학",
+    "category": "개발",
+    "icon": "fa-diagram-next"
+  },
+  {
+    "skillId": "sk_mobile",
+    "label": "모바일 개발",
+    "category": "개발",
+    "icon": "fa-mobile-screen-button"
+  },
+  {
+    "skillId": "sk_data",
+    "label": "데이터 분석",
+    "category": "데이터",
+    "icon": "fa-chart-line"
+  },
+  {
+    "skillId": "sk_bigdata",
+    "label": "빅데이터",
+    "category": "데이터",
+    "icon": "fa-layer-group"
+  },
+  {
+    "skillId": "sk_cloud",
+    "label": "클라우드",
+    "category": "인프라",
+    "icon": "fa-cloud"
+  },
+  {
+    "skillId": "sk_sec",
+    "label": "정보보호",
+    "category": "보안",
+    "icon": "fa-shield-halved"
+  },
+  {
+    "skillId": "sk_oss",
+    "label": "오픈소스",
+    "category": "개발",
+    "icon": "fa-code-branch"
+  },
+  {
+    "skillId": "sk_ai",
+    "label": "인공지능",
+    "category": "데이터",
+    "icon": "fa-robot"
+  },
+  {
+    "skillId": "sk_capstone",
+    "label": "프로젝트 수행",
+    "category": "실무",
+    "icon": "fa-people-group"
+  },
+  {
+    "skillId": "sk_stat",
+    "label": "통계",
+    "category": "데이터",
+    "icon": "fa-chart-column"
+  },
+  {
+    "skillId": "sk_mgmt",
+    "label": "경영 일반",
+    "category": "경영",
+    "icon": "fa-briefcase"
+  },
+  {
+    "skillId": "sk_acct",
+    "label": "회계·재무",
+    "category": "경영",
+    "icon": "fa-coins"
+  },
+  {
+    "skillId": "sk_org",
+    "label": "조직·인사",
+    "category": "경영",
+    "icon": "fa-users"
+  },
+  {
+    "skillId": "sk_mkt",
+    "label": "마케팅 원리",
+    "category": "마케팅",
+    "icon": "fa-bullhorn"
+  },
+  {
+    "skillId": "sk_consumer",
+    "label": "소비자 행동",
+    "category": "마케팅",
+    "icon": "fa-user-check"
+  },
+  {
+    "skillId": "sk_brand",
+    "label": "브랜드 관리",
+    "category": "마케팅",
+    "icon": "fa-star"
+  },
+  {
+    "skillId": "sk_ad",
+    "label": "광고·프로모션",
+    "category": "마케팅",
+    "icon": "fa-rectangle-ad"
+  },
+  {
+    "skillId": "sk_digital",
+    "label": "디지털 마케팅",
+    "category": "마케팅",
+    "icon": "fa-hashtag"
+  },
+  {
+    "skillId": "sk_strategy",
+    "label": "경영전략",
+    "category": "경영",
+    "icon": "fa-chess"
+  },
+  {
+    "skillId": "sk_startup",
+    "label": "창업",
+    "category": "경영",
+    "icon": "fa-rocket"
+  },
+  {
+    "skillId": "sk_design",
+    "label": "서비스 기획",
+    "category": "실무",
+    "icon": "fa-pen-ruler"
+  },
+  {
+    "skillId": "sk_write",
+    "label": "문서 작성",
+    "category": "기초",
+    "icon": "fa-file-pen"
+  },
+  {
+    "skillId": "sk_english",
+    "label": "영어",
+    "category": "기초",
+    "icon": "fa-language"
+  },
+  {
+    "skillId": "sk_career",
+    "label": "진로 설계",
+    "category": "기초",
+    "icon": "fa-compass"
+  },
+  {
+    "skillId": "sk_comm",
+    "label": "커뮤니케이션",
+    "category": "기초",
+    "icon": "fa-comments"
+  }
+]
