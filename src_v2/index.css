@@ -131,27 +131,11 @@ input, textarea, select { font-family: var(--font); }
   text-decoration: none;
 }
 
-.gnb-logo img { height: 28px; }
-
-.gnb-logo-icon {
-  width: 34px;
-  height: 34px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #7b55ff 48%, #28d1ff 100%);
-  border-radius: 9px 4px 9px 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 17px;
-  font-weight: 900;
+.gnb-logo-img {
+  height: 36px;
+  width: auto;
+  display: block;
   flex-shrink: 0;
-}
-
-.gnb-logo-text {
-  font-size: 21px;
-  font-weight: 800;
-  color: #071638;
-  letter-spacing: 0;
 }
 
 .gnb-bell-wrap { position: relative; }
@@ -831,8 +815,7 @@ input, textarea, select { font-family: var(--font); }
     margin-right: 0;
     gap: 8px;
   }
-  .gnb-logo-icon { width: 30px; height: 30px; font-size: 16px; }
-  .gnb-logo-text { font-size: 18px; }
+  .gnb-logo-img { height: 28px; }
   .gnb-nav { display: none; }
   .gnb-actions {
     margin-left: auto;

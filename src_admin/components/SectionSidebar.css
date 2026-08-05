@@ -9,6 +9,19 @@
   border-right: 1px solid var(--color-border);
   padding: 20px 12px;
   overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 사이드바 하단 고정 브랜드 로고 — margin-top:auto 로 맨 아래로 밀어낸다 */
+.section-sidebar-logo {
+  margin-top: auto;
+  align-self: center;
+  width: 86%;
+  max-width: 158px;
+  height: auto;
+  padding-top: 22px;
+  opacity: 0.92;
 }
 
 .section-sidebar-head {

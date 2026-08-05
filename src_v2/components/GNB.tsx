@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { NAV_SECTIONS, getSectionForPath, getActiveChildPath } from './navConfig'
+import BrandLogo from './BrandLogo'
 import { STUDENTS, getActiveStudent, getActiveStudentId, setActiveStudent } from '../data/students'
 
 export default function GNB() {
@@ -57,9 +58,8 @@ export default function GNB() {
   return (
     <>
       <header className="gnb">
-        <Link to="/main" className="gnb-logo" aria-label="CWNU 홈">
-          <span className="gnb-logo-icon">C</span>
-          <span className="gnb-logo-text">CWNU</span>
+        <Link to="/main" className="gnb-logo" aria-label="드림캐치 홈">
+          <BrandLogo className="gnb-logo-img" />
         </Link>
 
         <nav className="gnb-nav" aria-label="주요 메뉴">

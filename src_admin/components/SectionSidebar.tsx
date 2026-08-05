@@ -1,6 +1,7 @@
 import { LuChevronRight } from 'react-icons/lu'
 import { Link, useLocation } from 'react-router-dom'
 import { getNavSections, getSectionForPath, getActiveChildPath, type NavChild } from './navConfig'
+import BrandLogo from './BrandLogo'
 import { getActiveUser } from '../data/staff'
 import { getTodaySummary } from '../data/counselRequests'
 import './SectionSidebar.css'
@@ -61,6 +62,7 @@ export default function SectionSidebar() {
           </dl>
         </section>
       )}
+      <BrandLogo className="section-sidebar-logo" alt="" />
     </aside>
   )
 }

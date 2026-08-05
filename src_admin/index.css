@@ -120,11 +120,26 @@ input, textarea, select { font-family: var(--font); }
 }
 
 .admin-layout-footer {
+  position: relative;
+  min-height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   padding: 18px 40px 28px;
   color: var(--color-caption);
   font-size: 12px;
   font-weight: 600;
   text-align: center;
+}
+
+/* 사이드바가 없는 화면 전용 — 좌측 하단 브랜드 로고(카피라이트는 중앙 유지) */
+.admin-footer-logo {
+  position: absolute;
+  left: 40px;
+  bottom: 22px;
+  width: 132px;
+  height: auto;
+  opacity: 0.9;
 }
 
 .admin-page {
@@ -159,13 +174,8 @@ input, textarea, select { font-family: var(--font); }
   white-space: nowrap;
 }
 
-.gnb-logo-symbol {
-  height: 42px;
-  width: auto;
-  display: block;
-}
-.gnb-logo-wordmark {
-  height: 34px;
+.gnb-logo-img {
+  height: 44px;
   width: auto;
   display: block;
 }

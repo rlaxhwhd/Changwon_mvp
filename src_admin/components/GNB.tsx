@@ -2,6 +2,7 @@ import { LuCheck, LuChevronDown, LuChevronRight, LuContact, LuUsers } from 'reac
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { getNavSections, getSectionForPath, getActiveChildPath } from './navConfig'
+import BrandLogo from './BrandLogo'
 import {
   STAFF_USERS,
   getActiveUser,
@@ -35,9 +36,8 @@ export default function GNB() {
 
   return (
     <header className="gnb">
-      <Link to="/" className="gnb-logo" aria-label="국립창원대학교 교직원 포털 홈">
-        <img src="/symbol.png" alt="" className="gnb-logo-symbol" />
-        <img src="/initiallogo_vertical_kor.png" alt="CWNU 국립창원대학교" className="gnb-logo-wordmark" />
+      <Link to="/" className="gnb-logo" aria-label="드림캐치 교직원 포털 홈">
+        <BrandLogo className="gnb-logo-img" />
       </Link>
 
       <nav className="gnb-nav" aria-label="주요 메뉴">
