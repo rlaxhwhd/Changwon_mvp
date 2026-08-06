@@ -9,6 +9,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
+import StudentDetailView from '../components/StudentDetailView'
 import { formatRelativeTime } from '../data/counselRequests'
 import {
   cancelProfRequest,
@@ -117,6 +118,9 @@ export default function ProfessorCounselRequests() {
   const [method, setMethod] = useState('')
   const [page, setPage] = useState(1)
   const [confirming, setConfirming] = useState<ProfCounselRequestRow | null>(null)
+  // 학생 정보 열람 — 이 목록은 이미 "나에게 온 신청"만 담고 있어 타학과 학생도 여기서는 볼 수 있다.
+  // (학생 검색 /professor/students 은 소속 학과로 제한된다 — 범위가 다른 화면이다.)
+  const [viewing, setViewing] = useState<ProfCounselRequestRow | null>(null)
   const counts = getProfReqTabCounts(user.id)
   const { data, isLoading, refetch } = useListData(queryProfCounselRequests, {
     professorId: user.id,
@@ -198,6 +202,13 @@ export default function ProfessorCounselRequests() {
                     <strong>{row.studentName}</strong>
                     <small>{row.studentNo} · {row.studentMajor}</small>
                     {row.isAdvisee && <span className="admin-tag admin-tag-soft">지도</span>}
+                    <button
+                      type="button"
+                      className="admin-btn admin-btn-ghost sm"
+                      onClick={() => setViewing(row)}
+                    >
+                      정보보기
+                    </button>
                   </span>
                   <span className="admin-roster-cell">
                     <span className={enrollStatusClass(row.enrollmentStatus)}>{row.enrollmentStatus}</span>
@@ -284,6 +295,12 @@ export default function ProfessorCounselRequests() {
           onClose={() => setConfirming(null)}
           onConfirmed={() => { setConfirming(null); refetch() }}
         />
+      )}
+      {viewing && (
+        // 상담사 학생상세와 같은 컴포넌트 — 수정은 StudentDetailView 한 곳에서만.
+        <AdminModal title="학생 상세 정보" size="xl" onClose={() => setViewing(null)}>
+          <StudentDetailView studentId={viewing.studentId} role="professor" />
+        </AdminModal>
       )}
     </div>
   )

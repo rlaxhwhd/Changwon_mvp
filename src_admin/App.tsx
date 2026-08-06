@@ -30,6 +30,7 @@ import AssistantStudents from './pages/AssistantStudents'
 import AssistantAdvisor from './pages/AssistantAdvisor'
 import AssistantAdvisorRecords from './pages/AssistantAdvisorRecords'
 import ProfessorAdvisees from './pages/ProfessorAdvisees'
+import ProfessorStudents from './pages/ProfessorStudents'
 import ProfessorCounselRequests from './pages/ProfessorCounselRequests'
 import ProfessorCounselRecords from './pages/ProfessorCounselRecords'
 import ProfessorSchedule from './pages/ProfessorSchedule'
@@ -137,6 +138,7 @@ const router = createBrowserRouter(
               element: <RequireRole roles={['professor']} />,
               children: [
                 { path: '/professor/advisees', element: <ProfessorAdvisees /> },
+                { path: '/professor/students', element: <ProfessorStudents /> },
                 { path: '/professor/counsel/requests', element: <ProfessorCounselRequests /> },
                 { path: '/professor/counsel/records', element: <ProfessorCounselRecords /> },
                 { path: '/professor/schedule', element: <ProfessorSchedule /> },

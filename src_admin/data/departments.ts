@@ -31,6 +31,11 @@ export function collegeOfDept(deptCode: string): string {
   return BY_DEPT_CODE.get(deptCode)?.collegeName ?? UNKNOWN_COLLEGE
 }
 
+/** 학과 코드 → 학과명. 코드로 보관한 배정(dc_dept_assign)을 화면 표기로 풀 때 쓴다. */
+export function deptNameOf(deptCode: string): string | undefined {
+  return BY_DEPT_CODE.get(deptCode)?.deptName
+}
+
 /** 학과명 → 트리 노드(코드 포함). 코드가 필요한 호출부용. */
 export function departmentOf(major: string): DepartmentNode | undefined {
   return BY_DEPT_NAME.get(major)
