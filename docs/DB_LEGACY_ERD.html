@@ -330,6 +330,29 @@ button,input,select,textarea{font:inherit; color:inherit}
   gap:8px; align-items:center}
 #modal .foot .sp{flex:1}
 #modal .foot .msg{font-size:11.5px; color:var(--meta)}
+/* ── 역할 필터 ── */
+#roles{padding:12px 12px 10px; border-bottom:1px solid var(--line)}
+#roles .rhd{display:flex; align-items:baseline; gap:6px; margin-bottom:8px}
+#roles .rhd b{font-size:10.5px; font-weight:640; color:var(--meta); letter-spacing:.07em; text-transform:uppercase}
+#roles .rhd .src{margin-left:auto; font-family:var(--mono); font-size:9.5px; color:var(--meta); opacity:.7}
+.rchips{display:flex; flex-wrap:wrap; gap:4px}
+.rchip{--rc:var(--meta); display:inline-flex; align-items:center; gap:4px; padding:3px 7px; border:1px solid var(--line); border-radius:20px; background:var(--paper); font-size:11px; color:var(--ink-2); cursor:pointer; line-height:1.5; transition:border-color .12s, background .12s}
+.rchip:hover{border-color:var(--rc)}
+.rchip .dot{width:7px; height:7px; border-radius:50%; background:var(--rc); flex:none}
+.rchip b{font-variant-numeric:tabular-nums; font-size:10px; color:var(--meta); font-weight:600}
+.rchip[aria-pressed="true"]{background:color-mix(in srgb, var(--rc) 12%, var(--paper)); border-color:var(--rc); color:var(--rc); font-weight:600}
+.rchip[aria-pressed="true"] b{color:var(--rc); opacity:.75}
+#rdesc{margin-top:8px; font-size:10.5px; color:var(--meta); line-height:1.6; word-break:keep-all}
+#rdesc .src2{opacity:.7}
+#rdesc .wr{display:inline-flex; gap:7px; margin-top:5px; font-variant-numeric:tabular-nums}
+#rdesc .wr span{padding:1px 5px; border-radius:4px; background:var(--surface)}
+#rwonly{margin-top:7px}
+.node.out{opacity:.12; filter:saturate(.15)}
+.node.hasrb .hd{padding-right:38px}
+.node .rb{position:absolute; top:6px; right:7px; padding:1px 5px; border-radius:3px; font-family:var(--mono); font-size:8.5px; font-weight:700; letter-spacing:.03em; line-height:1.45}
+.node .rb.w{background:#fff; color:var(--nc)}
+.node .rb.r{background:rgba(255,255,255,.18); color:#fff; box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
+.node .rb .sc{opacity:.75; font-weight:600}
 </style>
 </head>
 <body>
@@ -369,6 +392,11 @@ button,input,select,textarea{font:inherit; color:inherit}
   <div id="body">
 
     <nav id="rail">
+      <div id="roles">
+        <div class="rhd"><b>역할별 사용 테이블</b><span class="src">도메인·03</span></div>
+        <div class="rchips" id="rchips"></div>
+        <div id="rdesc"></div>
+      </div>
       <input id="search" type="search" placeholder="테이블 · 컬럼 검색" autocomplete="off">
       <div id="tree"></div>
       <div class="railfoot">
@@ -440,6 +468,8 @@ let sel = null;                     // 선택 테이블명
 let opts = { cols:true, edges:true, lanes:true };
 let hiddenG = new Set();
 let query = "";
+let roleSel = null;                 // 선택 역할 id — null=전체
+let roleWOnly = false;              // 쓰기 권한만 보기
 let openCol = -1;
 let saveTimer = null;
 
@@ -452,7 +482,227 @@ const gcol = i => GC[((i%GC.length)+GC.length)%GC.length];
 
 /* ══ 역할 ═══════════════════════════════════════════════════
    "student:w:본인 | counselor:r:담당" 을 {student:{lv:'w',sc:'본인'}, …} 로 푼다. */
-function inRole(){ return true; }
+const ROLE = {
+  "_": "역할별 사용 테이블(도메인 기준). 근거 docs/_analysis/03_access_scope.md. 표기 \"역할:권한[:범위]\" | 로 이음. w=생성·수정 r=조회",
+  "roles": [
+   {
+    "id": "student",
+    "name": "학생",
+    "short": "학",
+    "hex": "#1D4ED8",
+    "dark": "#60A5FA",
+    "desc": "학생 (S/AUTH0001) — 본인 데이터: 신청·이력서·진단 응시"
+   },
+   {
+    "id": "counselor",
+    "name": "상담사",
+    "short": "상",
+    "hex": "#0F766E",
+    "dark": "#2DD4BF",
+    "desc": "진로·심리 상담사 (T/AUTH0005) — 담당 학생·상담건"
+   },
+   {
+    "id": "professor",
+    "name": "교수",
+    "short": "교",
+    "hex": "#B45309",
+    "dark": "#FBBF24",
+    "desc": "전담교수 (P/AUTH0003) — 전담 학생 + 소속 학과"
+   },
+   {
+    "id": "assistant",
+    "name": "조교",
+    "short": "조",
+    "hex": "#7C3AED",
+    "dark": "#A78BFA",
+    "desc": "학과 조교 (A/AUTH0002) — 배정 학과(FU_ASS_DEPT) 범위"
+   },
+   {
+    "id": "admin",
+    "name": "관리자",
+    "short": "관",
+    "hex": "#BE123C",
+    "dark": "#FB7185",
+    "desc": "관리자·비교과/취업 담당 직원 — 전체(단과대 범위 개념 없음)"
+   },
+   {
+    "id": "company",
+    "name": "기업",
+    "short": "기",
+    "hex": "#0891B2",
+    "dark": "#22D3EE",
+    "desc": "외부 기업회원 (C/AUTH0008) — 본인 등록 공고만"
+   },
+   {
+    "id": "mentor",
+    "name": "멘토",
+    "short": "멘",
+    "hex": "#DB2777",
+    "dark": "#F472B6",
+    "desc": "멘토 (MT/AUTH0010) — 본인 멘티(TB_MENTEE_INFO)"
+   },
+   {
+    "id": "batch",
+    "name": "학사연계",
+    "short": "배",
+    "hex": "#64748B",
+    "dark": "#94A3B8",
+    "desc": "학사DB(V_BRDB) 미러 배치(DairyBatch) — 학사연계 쓰기"
+   }
+  ],
+  "domainAccess": [
+   "batch:w | student:r | counselor:r | professor:r | assistant:r | admin:r | company:r",
+   "admin:w",
+   "admin:w | company:w:본인 | student:r | counselor:r | professor:r | assistant:r",
+   "counselor:w:담당 | student:r:본인 | professor:r:전담 | assistant:r:학과 | admin:r",
+   "counselor:w:담당 | student:r:본인 | admin:r",
+   "admin:w | counselor:w:담당 | student:r:본인 | professor:r:전담 | assistant:r:학과",
+   "admin:w",
+   "student:w:본인 | counselor:w:담당 | professor:r:전담 | assistant:r:학과 | admin:r",
+   "admin:w | company:w:본인 | student:w:본인",
+   "admin:w | student:r:본인",
+   "admin:w | mentor:w:본인 | student:r:본인",
+   "admin:w | student:w:본인 | counselor:r | professor:r | assistant:r | company:r"
+  ],
+  "overrides": {
+   "ALBAFILE": "company:w:본인 | admin:w | student:r",
+   "ALBAMASTER": "company:w:본인 | admin:w | student:r",
+   "APPLICATIONMASTER": "student:w:본인 | admin:r",
+   "COM_ASS_DEPT": "admin:w",
+   "COM_COMP_INF": "company:w:본인 | admin:w | student:r",
+   "COM_COMP_RECO": "company:w:본인 | admin:w | student:r",
+   "COM_CON_INF": "admin:w | counselor:w:본인 | student:r",
+   "COM_CON_TAR": "admin:w | counselor:w:본인 | student:r",
+   "COM_CPRT_MEBR": "company:w:본인 | admin:w | student:r",
+   "CON_PROF_INFO": "professor:w:본인 | student:r:본인 | assistant:r:학과 | admin:r",
+   "COUNSEL_MASTER": "counselor:w:담당 | student:r:본인 | admin:r",
+   "CO_ADVISER": "admin:w | assistant:w:학과 | professor:r:본인 | student:r:본인",
+   "CO_ADV_APP": "professor:w:본인 | student:r:본인 | assistant:r:학과",
+   "CO_PROF": "professor:w:본인 | admin:r",
+   "EP_PRM": "admin:w | student:r",
+   "EP_PRM_APP": "student:w:본인 | admin:w | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "FU_AREA_CODE": "admin:w | student:r | company:r",
+   "FU_ASS_DEPT": "admin:w | assistant:r:본인 | professor:r:학과",
+   "FU_CODE": "admin:w | student:r | company:r",
+   "FU_JOB_LIST": "admin:w | student:r | company:r",
+   "FU_JOB_MSTR": "admin:w | student:r | company:r",
+   "FU_JOB_PECT": "admin:w | student:r | company:r",
+   "FU_PURPOSE_ADD_JOB": "admin:w | student:r | company:r",
+   "JOBFILE": "company:w:본인 | admin:w | student:r",
+   "JOBSAREA": "company:w:본인 | admin:w | student:r",
+   "JOBSMASTER": "company:w:본인 | admin:w | student:r",
+   "JOBSOCCUPATION": "company:w:본인 | admin:w | student:r",
+   "JOB_RES": "student:w:본인 | counselor:r:담당 | admin:r",
+   "JOB_RES_DET": "student:w:본인 | counselor:r:담당 | admin:r",
+   "JOB_RES_EDU": "student:w:본인 | counselor:r:담당 | admin:r",
+   "JOB_RES_LANG": "student:w:본인 | counselor:r:담당 | admin:r",
+   "JOB_SELF_INT": "student:w:본인 | counselor:r:담당 | admin:r",
+   "JOB_SELF_INT_MULTI": "student:w:본인 | counselor:r:담당 | admin:r",
+   "PC_CON_PROF_ADV": "professor:w:본인 | student:r:본인 | assistant:r:학과",
+   "PC_CON_PROF_USR": "professor:w:본인 | student:r:본인 | assistant:r:학과",
+   "PC_CON_STU": "professor:w:전담 | student:r:본인",
+   "REC_INFO": "company:w:본인 | admin:w | student:r",
+   "RE_REC_INFO": "company:w:본인 | admin:w | student:r",
+   "RE_REC_MULTI": "company:w:본인 | admin:w | student:r",
+   "RE_REC_REC_APP": "student:w:본인 | admin:r",
+   "RE_REC_SCR": "student:w:본인 | admin:r",
+   "SCRAPMASTER": "student:w:본인 | admin:r",
+   "SS_JOB_RES": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SS_JOB_RES_DET": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SS_JOB_RES_DET_HISTORY": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SS_JOB_RES_EDU": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SS_JOB_RES_EDU_HISTORY": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SS_JOB_RES_HISTORY": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SS_JOB_RES_LANG": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SS_JOB_RES_LANG_HISTORY": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SS_JOB_RES_MULTI": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SS_JOB_RES_MULTI_HISTORY": "student:w:본인 | counselor:r:담당 | admin:r",
+   "SY_FILE": "admin:w | student:r | counselor:r | professor:r | assistant:r | company:r",
+   "TB_CARR_CNSL_EXCL_HR": "counselor:w:본인 | admin:r",
+   "TB_CARR_PROF_ASSI_DEPT": "admin:w | assistant:w:학과 | professor:r:본인",
+   "TB_MENTEE_INFO": "mentor:w:본인 | student:r:본인 | admin:r",
+   "TB_MENTOR_INFO": "mentor:w:본인 | admin:w | student:r",
+   "V_USR_INF": "batch:w | student:r:본인 | counselor:r:담당 | professor:r:학과 | assistant:r:학과 | admin:r | company:r",
+   "EP_ACT_FUND_BUY": "admin:w",
+   "EP_ACT_FUND_BUY_DET": "admin:w",
+   "EP_ACT_FUND_CALCU": "admin:w",
+   "EP_ACT_FUND_CALCU_DET": "admin:w",
+   "EP_ACT_FUND_CHANGE": "admin:w",
+   "EP_ACT_FUND_CHANGE_DET": "admin:w",
+   "EP_ACT_FUND_PLAN": "admin:w",
+   "EP_ACT_FUND_PLAN_DET": "admin:w",
+   "EP_ACT_FUND_TALLY": "admin:w",
+   "EP_ACT_FUND_TALLY_DET": "admin:w",
+   "EP_ACT_MEET": "admin:w",
+   "EP_ACT_MEET_DET": "admin:w",
+   "EP_ACT_MEET_EXPENSE": "admin:w",
+   "EP_ACT_REPORT": "admin:w",
+   "EP_ACT_TRIP_APP": "admin:w",
+   "EP_ACT_TRIP_APP_DET": "admin:w",
+   "EP_ACT_TRIP_APP_MEM": "admin:w",
+   "EP_ACT_TRIP_REPORT": "admin:w",
+   "EP_ACT_TRIP_REPORT_DET": "admin:w",
+   "EP_ACT_TRIP_REPORT_MEM": "admin:w",
+   "EP_CUR_GUBUN": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_EXTTYPE_SCORE": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_ACT_PNT_INF": "admin:w",
+   "EP_PRM_ADD_AGREE": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_ADD_REQ": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_ADD_REQ_ART": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_APP_ADD_REQ_RST": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_APP_ADD_REQ_RST_OUT": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_BD_DATA": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_BD_INFO": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_CFM_HIST": "admin:w",
+   "EP_PRM_CHARGE": "admin:w",
+   "EP_PRM_CHG_REQ": "admin:w",
+   "EP_PRM_COP_HIST": "admin:w",
+   "EP_PRM_GROUP": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_GROUP_ACTIVE": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_MAPPING": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_RESULT": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_RST_RPT": "admin:w",
+   "EP_PRM_SCRAP": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_STEP": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_SURVEY": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_SURVEY_IMPROV": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_SURVEY_OFFLINE": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_TRGT_DEPT": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_TRGT_NAT": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_TRGT_OUTSIDER": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_TRGT_USER": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_SEAL": "admin:w",
+   "EP_SURVEY": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_SURVEY_ART": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_SURVEY_QUS": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_SURVEY_RST": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_SURVEY_TAR": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "IC2_EXT_CUR_GUBUN": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "IC2_JOB_PRM": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "IC2_JOB_PRM_APP": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_STEP_ALL": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_STEP_ALL_20250301": "admin:w",
+   "EP_PRM_STEP_MAX": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "EP_PRM_STEP_MAX_20250301": "admin:w",
+   "V_EP_PRM": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "V_EP_PRM_ADD_INFO": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "V_EP_PRM_STEP_ALL": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과",
+   "V_EP_PRM_STEP_MAX": "admin:w | student:r | counselor:r:담당 | professor:r:전담 | assistant:r:학과"
+  }
+};
+const accStr = t => ROLE.overrides[t.name] || ROLE.domainAccess[t.g] || "";
+const parseAcc = s => Object.fromEntries((s||"").split("|").filter(Boolean).map(p=>{
+  const [id,lv,sc] = p.trim().split(":"); return [id,{lv,sc:(sc||"").trim()}];
+}));
+const roleById = id => ROLE.roles.find(r=>r.id===id);
+const rhex = r => document.documentElement.dataset.theme==="dark" ? r.dark : r.hex;
+const acc = (t,id) => parseAcc(accStr(t))[id] || null;
+/* 역할 필터에 걸리는가 — 역할 미선택이면 전부 통과 */
+function inRole(t){
+  if (!roleSel) return true;
+  const a = acc(t, roleSel);
+  return !!a && (!roleWOnly || a.lv==="w");
+}
 
 /* ══ 로드 · 저장 ═══════════════════════════════════════════ */
 function load(){
@@ -555,15 +805,33 @@ function matches(t){
 function shownCols(t){ return opts.cols ? t.cols.filter(c=>c.pk||c.fk) : t.cols; }
 
 function render(){
-  renderCounts(); renderLanes(); renderNodes(); renderEdges();
+  renderCounts(); renderRoles(); renderLanes(); renderNodes(); renderEdges();
   renderTree(); renderLegend(); renderInsp(); applyView();
 }
 
 function renderCounts(){
-  $("#c-t").textContent = M.tables.length;
-  $("#c-c").textContent = M.tables.reduce((a,t)=>a+t.cols.length,0);
+  const nIn = M.tables.filter(inRole).length;
+  $("#c-t").textContent = roleSel ? `${nIn} / ${M.tables.length}` : M.tables.length;
+  $("#c-c").textContent = M.tables.filter(inRole).reduce((a,t)=>a+t.cols.length,0);
   $("#c-r").textContent = M.refs.length;
   $("#c-g").textContent = M.groups.length;
+}
+
+function renderRoles(){
+  const cnt = id => M.tables.filter(t=>{ const a=acc(t,id); return a && (!roleWOnly||a.lv==="w"); }).length;
+  $("#rchips").innerHTML =
+    `<button class="rchip" data-r="" aria-pressed="${!roleSel}">전체 <b>${M.tables.length}</b></button>`
+    + ROLE.roles.map(r=>
+      `<button class="rchip" data-r="${r.id}" aria-pressed="${roleSel===r.id}" style="--rc:${rhex(r)}" title="${esc(r.desc)}"><span class="dot"></span>${esc(r.name)} <b>${cnt(r.id)}</b></button>`).join("");
+  const d = $("#rdesc");
+  if (!roleSel){
+    d.innerHTML = `역할을 고르면 그 역할이 쓰거나 읽는 테이블만 남고 나머지는 흐려집니다. <span class="src2">도메인 기준 · 03_access_scope</span>`;
+    return;
+  }
+  const r = roleById(roleSel);
+  let w=0, rd=0;
+  M.tables.forEach(t=>{ const a=acc(t,roleSel); if(!a) return; a.lv==="w"?w++:rd++; });
+  d.innerHTML = `${esc(r.desc)}<div class="wr"><span>쓰기 <b>${w}</b></span><span>읽기 <b>${rd}</b></span><span>미사용 <b>${M.tables.length-w-rd}</b></span></div><button class="btn ghost mini" id="rwonly" aria-pressed="${roleWOnly}">쓰기만 보기</button>`;
 }
 
 function renderLanes(){
@@ -592,12 +860,16 @@ function renderNodes(){
     else if (linked && linked.has(t.name)) el.classList.add("linked");
     if (query && !matches(t)) el.classList.add("dim");
     if (!t.cols.length) el.classList.add("nocol");
+    const ra = roleSel ? acc(t, roleSel) : null;
+    if (roleSel && !inRole(t)) el.classList.add("out");
+    if (ra) el.classList.add("hasrb");
     el.style.cssText = `left:${t.pos.x}px; top:${t.pos.y}px; --nc:${gcol(t.g)}`;
     el.dataset.t = t.name;
 
     const cs = shownCols(t);
     el.innerHTML = `
       <div class="hd" data-drag>
+        ${ra ? `<span class="rb ${ra.lv}">${ra.lv==="w"?"W":"R"}${ra.sc?`<span class="sc"> ${esc(ra.sc)}</span>`:""}</span>` : ""}
         <span class="en">${esc(t.name)}</span>
         <span class="ko">${esc(t.ko||t.note.slice(0,30)||"—")}</span>
       </div>
@@ -643,7 +915,7 @@ function renderEdges(){
     const A = tbl(r.ft), B = tbl(r.tt);
     if (!A || !B || !visible(A) || !visible(B)) return;
     const on = sel && (r.ft===sel || r.tt===sel);
-    const off = false;
+    const off = roleSel && !(inRole(A) && inRole(B));
 
     const ay = anchorY(A, r.fc), by = anchorY(B, r.tc);
     const aRight = (A.pos.x + BOXW/2) <= (B.pos.x + BOXW/2);
@@ -995,6 +1267,10 @@ function bind(){
   };
 
   /* -- 검색 -- */
+  $("#rchips").onclick = e=>{ const c=e.target.closest(".rchip"); if(!c) return;
+    const id=c.dataset.r||null; roleSel=(roleSel===id)?null:id;
+    if(!roleSel) roleWOnly=false; render(); };
+  $("#rdesc").onclick = e=>{ if(!e.target.closest("#rwonly")) return; roleWOnly=!roleWOnly; render(); };
   $("#search").oninput = e=>{ query = e.target.value.trim(); renderNodes(); renderTree(); };
 
   /* -- 좌측 트리 -- */
