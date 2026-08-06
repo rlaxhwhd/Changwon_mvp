@@ -1,5 +1,5 @@
 import type { IconType } from 'react-icons'
-import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardCheck, LuClock, LuContact, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSearch, LuSettings, LuTable, LuUsers, LuUsersRound, LuUserX } from 'react-icons/lu'
+import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardCheck, LuClock, LuContact, LuGlobe, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSearch, LuSettings, LuTable, LuUsers, LuUsersRound, LuUserX } from 'react-icons/lu'
 // ─────────────────────────────────────────────────────────────────────────
 // 교직원(백오피스) 포털 네비 단일 소스 — 상담사·교수·조교 공용.
 // 역할(StaffRole)로 섹션과 하위 항목을 필터한다 = 현행 SY_MENU_AUTH(역할↔메뉴) 계승.
@@ -89,8 +89,9 @@ const ALL_SECTIONS: NavSection[] = [
     icon: LuBuilding2,
     roles: ['career'],
     children: [
-      { label: '공고 목록', path: '/jobs', icon: LuList },
+      { label: '교내 공고 목록', path: '/jobs', icon: LuList },
       { label: '공고 등록', path: '/jobs/new', icon: LuPlus },
+      { label: '외부 공고 목록', path: '/jobs/external', icon: LuGlobe },
     ],
   },
   {

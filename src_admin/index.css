@@ -1367,6 +1367,9 @@ input, textarea, select { font-family: var(--font); }
 .admin-job-roster .admin-roster-row {
   grid-template-columns: 1.4fr 1.6fr 1.3fr 0.9fr 1fr 0.8fr;
 }
+/* 외부 공고 행 — 수정 불가라 클릭 대상이 아니다(hover 강조 제거) */
+.admin-job-row-static { cursor: default; }
+.admin-job-row-static:hover { background: transparent; }
 .admin-job-tags { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 5px; }
 .admin-job-tag-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 

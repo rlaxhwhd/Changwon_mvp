@@ -1,30 +1,52 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 채용공고 소스 로더 (localStorage 'dc_jobs') — Counsel_README §6 jobsSource
-// roadmapRequests.ts 패턴 미러: localStorage 우선, 없으면 seed 폴백.
+// 채용공고 소스 로더 — Counsel_README §6 jobsSource
 //
-// ⚠️ 실제 공고 데이터는 사용자 추후 제공(§8). seed 는 빈 배열로 시작하며,
-// 상담사가 직접 등록(add)한 공고는 dc_jobs 에 누적된다. 학생 /jobs 가 나중에
-// 이 소스를 그대로 소비할 수 있도록 shape 은 학생 Job 과 호환된다.
+// 공고는 출처(source)로 두 갈래이고, 갈래마다 저장소가 다르다.
+//   external : 외부 채용 API(잡코리아 등) 수집분. jobs.seed.json = 불변 원본.
+//              교직원도 수정·삭제할 수 없다(읽기 전용).
+//   manual   : 상담사·관리자가 직접 등록한 교내 공고. localStorage 'dc_jobs' 오버레이.
+//
+// 학생(/jobs)과 교직원(/admin/jobs)은 같은 소스를 구독하고, 보는 목록만 scope 로 갈린다.
 // ─────────────────────────────────────────────────────────────────────────
 import type { JobPosting, JobStatus, JobSource } from './schema/job'
 import seed from './jobs.seed.json'
 
 const STORAGE_KEY = 'dc_jobs'
 
-const SEED = seed as JobPosting[]
+/** 외부 API 수집 공고(불변 원본) */
+const EXTERNAL = seed as JobPosting[]
 
-/** 전체 공고. localStorage 우선, 없으면 seed(빈 배열) 폴백. */
-export function getJobs(): JobPosting[] {
+/** 목록 화면이 보는 갈래 */
+export type JobScope = 'internal' | 'external'
+
+/** 교내 공고 — 상담사가 직접 등록한 것만. 등록 전에는 빈 목록. */
+export function getInternalJobs(): JobPosting[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
       const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed as JobPosting[]
+      // 오버레이에 외부 공고가 섞여 있던 구버전 데이터를 위해 manual 만 추린다.
+      if (Array.isArray(parsed)) return (parsed as JobPosting[]).filter(j => j.source === 'manual')
     }
   } catch {
-    /* localStorage 접근 실패 시 seed 폴백 */
+    /* localStorage 접근 실패 시 빈 목록 */
   }
-  return SEED
+  return []
+}
+
+/** 외부 공고 — 읽기 전용. */
+export function getExternalJobs(): JobPosting[] {
+  return EXTERNAL
+}
+
+/** scope 별 목록 */
+export function getJobsByScope(scope: JobScope): JobPosting[] {
+  return scope === 'internal' ? getInternalJobs() : getExternalJobs()
+}
+
+/** 전체 공고(교내 + 외부) — 상세 조회·전체 집계용. */
+export function getJobs(): JobPosting[] {
+  return [...getInternalJobs(), ...EXTERNAL]
 }
 
 /** id 로 1건 조회 */
@@ -50,9 +72,9 @@ export function jobDdayLabel(job: JobPosting): string {
   return `D-${diff}`
 }
 
-/** 상태별 카운트 집계 (필터 배지용) */
-export function countJobs(): { total: number; 게시: number; 마감: number } {
-  const jobs = getJobs()
+/** 상태별 카운트 집계 (필터 배지용). scope 생략 시 전체. */
+export function countJobs(scope?: JobScope): { total: number; 게시: number; 마감: number } {
+  const jobs = scope ? getJobsByScope(scope) : getJobs()
   return {
     total: jobs.length,
     게시: jobs.filter(j => j.status === '게시').length,
@@ -68,26 +90,28 @@ function persist(list: JobPosting[]): void {
   }
 }
 
-/** 새 공고 등록 — id·postedAt 자동 부여 후 목록 맨 앞에 추가. */
+/** 새 공고 등록 — id·postedAt 자동 부여 후 교내 목록 맨 앞에 추가. */
 export function addJob(input: Omit<JobPosting, 'id' | 'postedAt'>): JobPosting {
   const job: JobPosting = {
     ...input,
+    source: 'manual',
     id: `job_${Date.now()}`,
     postedAt: new Date().toISOString(),
   }
-  persist([job, ...getJobs()])
+  persist([job, ...getInternalJobs()])
   return job
 }
 
-/** 공고 수정 — id 매칭 항목을 patch 병합. */
+/** 공고 수정 — 교내 공고만. 외부 공고는 원본이 API라 수정하지 않는다. */
 export function updateJob(id: string, patch: Partial<Omit<JobPosting, 'id'>>): void {
-  const next = getJobs().map(j => (j.id === id ? { ...j, ...patch } : j))
-  persist(next)
+  const internal = getInternalJobs()
+  if (!internal.some(j => j.id === id)) return
+  persist(internal.map(j => (j.id === id ? { ...j, ...patch, source: 'manual' } : j)))
 }
 
-/** 공고 삭제 */
+/** 공고 삭제 — 교내 공고만. */
 export function removeJob(id: string): void {
-  persist(getJobs().filter(j => j.id !== id))
+  persist(getInternalJobs().filter(j => j.id !== id))
 }
 
 export type { JobPosting, JobStatus, JobSource }

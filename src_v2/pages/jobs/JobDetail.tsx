@@ -16,12 +16,15 @@ export default function JobDetail() {
   const salary = job.salaryNegotiable ? '회사내규 및 협의' : job.salary ? `${job.salary}만원` : '회사내규'
   const dday = jobDdayLabel(job)
   const deadline = job.deadlineOnHire ? '채용시 마감' : job.deadline || '상시'
+  // 출처에 따라 왔던 목록으로 되돌린다.
+  const external = job.source === 'external'
+  const listPath = external ? '/jobs/external' : '/jobs'
 
   return (
     <div className="jd-page">
-      <Link to="/jobs" className="jd-back">
+      <Link to={listPath} className="jd-back">
         <i className="fa-solid fa-arrow-left" />
-        채용공고 목록
+        {external ? '외부 채용공고 목록' : '교내 채용공고 목록'}
       </Link>
 
       <article className="jd-head">

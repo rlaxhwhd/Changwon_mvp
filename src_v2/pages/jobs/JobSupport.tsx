@@ -1,8 +1,24 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getJobs, jobDdayLabel } from '../../../src_admin/data/jobsSource'
-import type { JobPosting } from '../../../src_admin/data/jobsSource'
+import { getJobsByScope, jobDdayLabel } from '../../../src_admin/data/jobsSource'
+import type { JobPosting, JobScope } from '../../../src_admin/data/jobsSource'
 import './JobSupport.css'
+
+/** scope 별 화면 문구 — 같은 목록 컴포넌트를 교내/외부 두 화면이 공유한다. */
+const SCOPE_COPY: Record<JobScope, { eyebrow: string; title: string; emptyMain: string; emptyHint: string }> = {
+  internal: {
+    eyebrow: '학교가 직접 등록·검증한 실제 채용공고',
+    title: '교내 채용공고',
+    emptyMain: '등록된 교내 채용공고가 없습니다.',
+    emptyHint: '상담사가 채용공고를 등록하면 이곳에 노출됩니다.',
+  },
+  external: {
+    eyebrow: '외부 채용 API로 수집한 채용공고',
+    title: '외부 채용공고',
+    emptyMain: '수집된 외부 채용공고가 없습니다.',
+    emptyHint: '외부 채용 API 연동 공고가 들어오면 이곳에 노출됩니다.',
+  },
+}
 
 function regionLabel(job: JobPosting): string {
   const regions = (job.regions ?? []).filter(r => r !== '전체')
@@ -22,13 +38,14 @@ function salaryLabel(job: JobPosting): string {
   return /^[\d,]+$/.test(s) ? `${s}만원` : s
 }
 
-export default function JobSupport() {
+export default function JobSupport({ scope }: { scope: JobScope }) {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
   const [wished, setWished] = useState<Set<string>>(() => new Set())
 
-  // 단일소스: 상담사가 등록한 공고(dc_jobs) + seed. 학생 화면은 이 소스를 구독한다.
-  const all = useMemo(() => getJobs(), [])
+  // 단일소스: 교내=상담사 등록분(dc_jobs) · 외부=수집분(seed). 학생 화면은 이 소스를 구독한다.
+  const copy = SCOPE_COPY[scope]
+  const all = useMemo(() => getJobsByScope(scope), [scope])
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -49,8 +66,8 @@ export default function JobSupport() {
     <div className="job-page">
       <header className="job-header">
         <div>
-          <p>학교가 직접 등록·검증한 실제 채용공고</p>
-          <h1>채용공고</h1>
+          <p>{copy.eyebrow}</p>
+          <h1>{copy.title}</h1>
         </div>
       </header>
 
@@ -70,8 +87,8 @@ export default function JobSupport() {
       {list.length === 0 ? (
         <div className="job-empty">
           <i className="fa-regular fa-folder-open" />
-          <p>{all.length === 0 ? '등록된 채용공고가 없습니다.' : '검색 결과가 없어요.'}</p>
-          <span>{all.length === 0 ? '상담사가 채용공고를 등록하면 이곳에 노출됩니다.' : '다른 기업명이나 공고명으로 검색해보세요.'}</span>
+          <p>{all.length === 0 ? copy.emptyMain : '검색 결과가 없어요.'}</p>
+          <span>{all.length === 0 ? copy.emptyHint : '다른 기업명이나 공고명으로 검색해보세요.'}</span>
         </div>
       ) : (
         <section className="jc-grid" aria-label="채용공고 목록">

@@ -37,19 +37,25 @@ export default function JobForm() {
   const existing = useMemo(() => (id ? getJobById(id) : undefined), [id])
   const isEdit = Boolean(id)
   const notFound = isEdit && !existing
+  // 외부 API 수집 공고는 원본이 외부에 있어 교직원이 수정할 수 없다.
+  const readOnly = existing?.source === 'external'
 
   const [draft, setDraft] = useState<Draft>(() => (existing ? toDraft(existing) : blankJob()))
   const [regionScope, setRegionScope] = useState('대한민국 전지역')
   const [saved, setSaved] = useState(false)
 
-  if (notFound) {
+  if (notFound || readOnly) {
     return (
       <div className="jf">
         <div className="jf-inner">
           <EmptyState
             icon={LuFrown}
-            message="해당 채용공고를 찾을 수 없습니다."
-            action={{ label: '공고 목록으로', onClick: () => navigate('/jobs') }}
+            message={readOnly
+              ? '외부 채용 API로 수집된 공고는 수정할 수 없습니다.'
+              : '해당 채용공고를 찾을 수 없습니다.'}
+            action={readOnly
+              ? { label: '외부 공고 목록으로', onClick: () => navigate('/jobs/external') }
+              : { label: '공고 목록으로', onClick: () => navigate('/jobs') }}
           />
         </div>
       </div>

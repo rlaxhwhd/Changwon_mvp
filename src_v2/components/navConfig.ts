@@ -84,7 +84,8 @@ export const NAV_SECTIONS: NavSection[] = [
     path: '/jobs',
     icon: 'fa-building-user',
     children: [
-      { label: '채용공고', path: '/jobs', icon: 'fa-building-user' },
+      { label: '교내 채용공고', path: '/jobs', icon: 'fa-building-user' },
+      { label: '외부 채용공고', path: '/jobs/external', icon: 'fa-globe' },
       { label: '취업예측분석', path: '/jobs/prediction', icon: 'fa-chart-line' },
       { label: 'AI 맞춤채용', path: '/jobs/joblist', icon: 'fa-briefcase' },
       {

@@ -102,7 +102,8 @@ const router = createBrowserRouter(
         { path: '/roadmap/resume',      element: <Navigate to="/jobs/home" replace /> },
 
         // 취업지원
-        { path: '/jobs',                 element: <JobSupport /> },
+        { path: '/jobs',                 element: <JobSupport scope="internal" /> },
+        { path: '/jobs/external',        element: <JobSupport scope="external" /> },
         { path: '/jobs/prediction',      element: <Prediction /> },
         { path: '/jobs/joblist',         element: <AiJobs /> },
         { path: '/jobs/home',            element: <JobsHome /> },

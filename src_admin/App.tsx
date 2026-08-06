@@ -112,7 +112,8 @@ const router = createBrowserRouter(
               children: [
                 { path: '/roadmap/requests', element: <RoadmapRequests /> },
                 { path: '/roadmap/:studentId', element: <RoadmapEditor /> },
-                { path: '/jobs', element: <JobList /> },
+                { path: '/jobs', element: <JobList scope="internal" /> },
+                { path: '/jobs/external', element: <JobList scope="external" /> },
                 { path: '/jobs/new', element: <JobForm /> },
                 { path: '/jobs/:id/edit', element: <JobForm /> },
                 { path: '/programs', element: <ProgramList /> },
