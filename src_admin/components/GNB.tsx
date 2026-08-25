@@ -1,14 +1,22 @@
-import { LuCheck, LuChevronDown, LuChevronRight, LuContact, LuUsers } from 'react-icons/lu'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { LuBell, LuCheck, LuChevronDown, LuLogOut, LuMenu, LuSearch, LuUser, LuUsers, LuX } from 'react-icons/lu'
 import { getNavSections, getSectionForPath, getActiveChildPath } from './navConfig'
-import BrandLogo from './BrandLogo'
 import {
   STAFF_USERS,
   getActiveUser,
   getActiveUserId,
   setActiveUser,
+  clearActiveUser,
 } from '../data/staff'
+import './GNB.css'
+
+// ─────────────────────────────────────────────────────────────────────────
+// 상단 네비게이션 — 시안(test_admin_react) 상단바 마크업 그대로.
+// 클래스명·구조는 시안을 따르고, 항목은 navConfig(역할 필터) 단일소스에서 온다.
+// 시안의 브랜드 로고 블록은 제외했다(요구사항).
+// 우측 프로필 팝오버에는 데모 계정 전환을 유지한다 — 더미 데이터 전환 수단.
+// ─────────────────────────────────────────────────────────────────────────
 
 export default function GNB() {
   const { pathname } = useLocation()
@@ -18,117 +26,141 @@ export default function GNB() {
   const currentSection = getSectionForPath(pathname, sections)
 
   const [profileOpen, setProfileOpen] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const profileRef = useRef<HTMLDivElement | null>(null)
 
+  // 경로가 바뀌면 열려 있던 것들을 닫는다
   useEffect(() => {
-    if (!profileOpen) return
+    setProfileOpen(false)
+    setMobileOpen(false)
+  }, [pathname])
+
+  useEffect(() => {
+    if (!profileOpen && !mobileOpen) return
     const onDocClick = (e: MouseEvent) => {
       if (!profileRef.current?.contains(e.target as Node)) setProfileOpen(false)
     }
-    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setProfileOpen(false) }
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return
+      setProfileOpen(false)
+      setMobileOpen(false)
+    }
     document.addEventListener('mousedown', onDocClick)
     document.addEventListener('keydown', onEsc)
     return () => {
       document.removeEventListener('mousedown', onDocClick)
       document.removeEventListener('keydown', onEsc)
     }
-  }, [profileOpen])
+  }, [profileOpen, mobileOpen])
 
   return (
-    <header className="gnb">
-      <Link to="/" className="gnb-logo" aria-label="드림캐치 교직원 포털 홈">
-        <BrandLogo className="gnb-logo-img" />
-      </Link>
+    <header className={`gnb tadmin-gnb${mobileOpen ? ' mobile-nav-open' : ''}`}>
+      <div className="gnb-in">
 
-      <nav className="gnb-nav" aria-label="주요 메뉴">
-        {sections.map(section => {
-          const active = currentSection?.id === section.id
-          const firstPath = section.path ?? section.children[0]?.path ?? '/'
-          const activeChildPath = getActiveChildPath(pathname, section)
+        <nav className="gnb-nav" id="adminTopNavigation" aria-label="주 메뉴">
+          {sections.map(section => {
+            const active = currentSection?.id === section.id
+            const firstPath = section.path ?? section.children[0]?.path ?? '/'
+            const activeChildPath = getActiveChildPath(pathname, section)
+            const hasSub = section.children.length > 0
+            const Icon = section.icon
 
-          return (
-            <div className="gnb-nav-item" key={section.id}>
-              <Link to={firstPath} className={`gnb-nav-link ${active ? 'active' : ''}`}>
-                {section.label}
+            return (
+              <div
+                key={section.id}
+                className={`gnb-item${active ? ' is-active' : ''}${hasSub ? ' has-sub' : ''}`}
+              >
+                <Link
+                  to={firstPath}
+                  className="gnb-btn"
+                  aria-current={active ? 'page' : undefined}
+                >
+                  <Icon />
+                  {section.label}
+                  {hasSub && <LuChevronDown className="caret" />}
+                </Link>
+
+                {hasSub && (
+                  <div className="submenu">
+                    {section.children.map(child => (
+                      <Link
+                        key={child.path}
+                        to={child.path}
+                        className={`sub-i${child.path === activeChildPath ? ' is-active' : ''}`}
+                      >
+                        {child.label}
+                      </Link>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </nav>
+
+        <div className="gnb-user">
+          <button type="button" className="icon-btn" aria-label="통합검색"><LuSearch /></button>
+          <button type="button" className="icon-btn has-dot" aria-label="알림"><LuBell /></button>
+
+          <div className={`header-profile${profileOpen ? ' open' : ''}`} ref={profileRef}>
+            <div className="profile-popover" role="menu" aria-label="사용자 메뉴" aria-hidden={!profileOpen}>
+              <div className="profile-popover-head">
+                <span className="profile-avatar-icon"><LuUser /></span>
+                <span><b>{user.name}</b><small>{user.roleLabel} · {user.dept}</small></span>
+              </div>
+
+              <Link to="/settings" className="profile-action" role="menuitem">
+                <LuUser />내 프로필
               </Link>
-              {section.children.length > 1 && (
-                <div className="gnb-dropdown">
-                  {section.children.map(child => (
-                    <Link
-                      key={child.path}
-                      to={child.path}
-                      className={`gnb-dropdown-link ${child.path === activeChildPath ? 'active' : ''}`}
-                    >
-                      {child.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </nav>
 
-      <div className="gnb-actions">
-        <div className={`gnb-profile ${profileOpen ? 'is-open' : ''}`} ref={profileRef}>
+              {/* 더미 데이터 전환 — 역할별 화면을 확인하는 수단이라 유지한다 */}
+              <div className="profile-switch">
+                <span className="profile-switch-title"><LuUsers />데모 계정 전환</span>
+                {STAFF_USERS.map(c => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    className={`profile-action profile-switch-btn${c.id === activeId ? ' is-on' : ''}`}
+                    role="menuitemradio"
+                    aria-checked={c.id === activeId}
+                    onClick={() => c.id !== activeId && setActiveUser(c.id)}
+                  >
+                    <b>{c.name}</b><small>{c.roleLabel}</small>
+                    {c.id === activeId && <LuCheck className="profile-switch-check" />}
+                  </button>
+                ))}
+              </div>
+
+              <button type="button" className="profile-action logout" role="menuitem" onClick={clearActiveUser}>
+                <LuLogOut />로그아웃
+              </button>
+            </div>
+
+            <button
+              type="button"
+              className="profile-trigger"
+              aria-haspopup="menu"
+              aria-expanded={profileOpen}
+              aria-label={`${user.name} 사용자 메뉴`}
+              onClick={() => setProfileOpen(v => !v)}
+            >
+              <span className="profile-avatar-icon"><LuUser /></span>
+            </button>
+          </div>
+
           <button
             type="button"
-            className="gnb-profile-trigger"
-            aria-haspopup="menu"
-            aria-expanded={profileOpen}
-            onClick={() => setProfileOpen(v => !v)}
-            title={`${user.name} 메뉴`}
+            className="icon-btn gnb-menu"
+            aria-label={mobileOpen ? '주 메뉴 닫기' : '주 메뉴 열기'}
+            aria-expanded={mobileOpen}
+            aria-controls="adminTopNavigation"
+            onClick={() => { setProfileOpen(false); setMobileOpen(v => !v) }}
           >
-            <span className="gnb-profile-name">
-              <strong>{user.name}</strong>
-              <small>{user.roleLabel}</small>
-            </span>
-            <LuChevronDown className="gnb-avatar-caret" aria-hidden="true" />
+            <LuMenu className="menu-open-icon" />
+            <LuX className="menu-close-icon" />
           </button>
-          {profileOpen && (
-            <div className="gnb-profile-menu" role="menu">
-              <div className="gnb-profile-head">
-                <div className="gnb-profile-meta">
-                  <strong>{user.name}</strong>
-                  <small>{user.roleLabel} · {user.dept}</small>
-                </div>
-              </div>
-
-              <Link
-                to="/settings"
-                className="gnb-profile-link"
-                role="menuitem"
-                onClick={() => setProfileOpen(false)}
-              >
-                <LuContact />
-                <span>내 프로필·설정</span>
-                <LuChevronRight className="gnb-profile-link-arrow" />
-              </Link>
-
-              <div className="gnb-profile-section">
-                <span className="gnb-profile-section-title">
-                  <LuUsers /> 데모 계정 전환
-                </span>
-                <div className="gnb-profile-switch">
-                  {STAFF_USERS.map(c => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      className={`gnb-profile-switch-btn${c.id === activeId ? ' active' : ''}`}
-                      onClick={() => c.id !== activeId && setActiveUser(c.id)}
-                      role="menuitemradio"
-                      aria-checked={c.id === activeId}
-                    >
-                      <strong>{c.name}</strong>
-                      <small>{c.roleLabel}</small>
-                      {c.id === activeId && <LuCheck className="gnb-profile-switch-check" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          )}
         </div>
+
       </div>
     </header>
   )

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getActiveStudent, getStudentIap, type TermLabel } from '../../data/students'
+import { getActiveStudent, getStudentTypeMeta, type TermLabel } from '../../data/students'
 import './AiRoadmap.css'
 import './AiRoadmapIap.css'
 
@@ -78,7 +78,7 @@ export default function AiRoadmap() {
   const navigate = useNavigate()
   const student = getActiveStudent()
   const profile = student
-  const iap = getStudentIap(student)
+  const type = getStudentTypeMeta(student)
   const phases = student.phases
   const targetCompany = student.targetCompany
   const strengthWeakness = student.strengthWeakness
@@ -90,7 +90,7 @@ export default function AiRoadmap() {
   const [roadmapGenerated, setRoadmapGenerated] = useState(false)
   const [form, setForm] = useState({ company: student.targetCompany.name, role: student.targetRole, gpa: student.gpa, cert: student.language })
 
-  // PHASE2(상담·IAP)가 완료되면 로드맵 생성 가능. 생성 전에는 PHASE3+ 숨김.
+  // PHASE2(상담)가 완료되면 로드맵 생성 가능. 생성 전에는 PHASE3+ 숨김.
   const phase2Done = phases.find(phase => phase.num === 2)?.status === 'done'
   const visiblePhases = roadmapGenerated ? phases : phases.filter(phase => phase.num <= 2)
   const progress = Math.round((phases.filter(phase => phase.status === 'done').length / phases.length) * 100)
@@ -134,13 +134,13 @@ export default function AiRoadmap() {
           <p>진단 결과, 상담 이력, 학생 정보와 목표 기업 조건을 연결해 다음 행동을 우선순위로 보여줍니다.</p>
           <div className="ar-iap-chips">
             <span className="ar-chip ar-chip-type">
-              <i className="fa-solid fa-user-tag" />{profile.studentType}
+              <i className="fa-solid fa-user-tag" />{type.label}
             </span>
             <span className="ar-chip ar-chip-iap">
-              <i className="fa-solid fa-diagram-project" />IAP {iap.label}
+              <i className="fa-solid fa-layer-group" />{type.tierLabel} 계층
             </span>
             <span className="ar-chip ar-chip-grade">
-              <i className="fa-solid fa-graduation-cap" />{profile.grade}학년 · {iap.track} 트랙
+              <i className="fa-solid fa-graduation-cap" />{profile.grade}학년 · 후속진단 {type.followUpTest}
             </span>
           </div>
           <div className="ar-hero-actions">
@@ -183,7 +183,7 @@ export default function AiRoadmap() {
             <section className="ar-section">
               <div className="ar-section-head">
                 <h2>커리어 로드맵</h2>
-                <span>6단계 성장 경로 · IAP {iap.label}</span>
+                <span>6단계 성장 경로 · {type.label}</span>
               </div>
 
               <div className="ar-phase-list">
@@ -336,14 +336,14 @@ export default function AiRoadmap() {
                     <span className="ar-generate-lock-ico"><i className="fa-solid fa-lock" /></span>
                     <div>
                       <strong>PHASE 3 ~ 6 로드맵이 잠겨 있습니다</strong>
-                      <p>진단 · 상담 · IAP({iap.label}) 결과를 분석해 단·중·장기 계획과 실행 추천을 생성합니다.</p>
+                      <p>진단 · 상담 결과와 수강 이력 · 외부활동 스펙 3축을 분석해 단·중·장기 계획을 생성합니다.</p>
                     </div>
                   </div>
                   <button className="ar-generate-btn" onClick={handleGenerateRoadmap} disabled={!phase2Done}>
                     <i className="fa-solid fa-wand-magic-sparkles" />
                     로드맵 생성하기
                   </button>
-                  {!phase2Done && <p className="ar-generate-hint">PHASE 2 (상담 · IAP) 완료 후 활성화됩니다</p>}
+                  {!phase2Done && <p className="ar-generate-hint">PHASE 2 (상담) 완료 후 활성화됩니다</p>}
                 </div>
               )}
             </section>
@@ -352,9 +352,9 @@ export default function AiRoadmap() {
               <>
             <section className="ar-iap-card">
               <div className="ar-iap-head">
-                <span className="ar-panel-label">INDIVIDUALIZED ACTION PLAN</span>
-                <h2>IAP {iap.label}</h2>
-                <p>{profile.studentType} · {iap.grade} · {iap.track} 트랙</p>
+                <span className="ar-panel-label">CAREER DEVELOPMENT ROADMAP</span>
+                <h2>{type.label}</h2>
+                <p>{type.tierLabel} 계층 · 후속진단 {type.followUpTest} · 상담주제 {type.topicCodes[0]}~{type.topicCodes[3]}</p>
               </div>
               <div className="ar-iap-grid">
                 <div>
@@ -363,21 +363,21 @@ export default function AiRoadmap() {
                 </div>
                 <div>
                   <small>핵심 목표</small>
-                  <strong>{iap.goal}</strong>
+                  <strong>{type.goal}</strong>
                 </div>
                 <div>
                   <small>실행 방향</small>
-                  <strong>{iap.focus}</strong>
+                  <strong>{type.focus}</strong>
                 </div>
                 <div>
                   <small>단계 구성</small>
-                  <strong>단기 · 중기 · 장기 (CARE+7)</strong>
+                  <strong>단기 · 중기 · 장기</strong>
                 </div>
               </div>
               <div className="ar-iap-counsel">
                 <i className="fa-solid fa-quote-left" />
                 <p>
-                  상담사 코멘트 · {profile.studentType} 학생 · {iap.goal}. {iap.focus} 중심으로 진행하세요.
+                  상담사 코멘트 · {type.label} 학생 · {type.goal}. {type.focus} 중심으로 진행하세요.
                 </p>
               </div>
             </section>

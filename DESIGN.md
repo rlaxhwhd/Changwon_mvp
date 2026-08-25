@@ -1,180 +1,221 @@
-# Design System Inspired by BMW
+# DESIGN.md — 드림캐치 디자인 정본 <span>(토큰이 잠겨 있다)</span>
 
-## 1. Visual Theme & Atmosphere
+> **정본은 `test_admin.html`이다.** 이 문서는 그 시안의 **최종 캐스케이드**를 토큰으로 고정한 것이다.
+> 시안은 `:root`를 두 번 선언해 뒤가 앞을 덮는다 — 여기 적힌 값이 **실제 적용값**이다.
+>
+> | 문서 | 역할 |
+> |---|---|
+> | **`DESIGN.md`** (이 문서) | **토큰·컴포넌트 규칙 정본.** 값은 여기서만 바꾼다 |
+> | `test_admin.html` | 렌더된 시안 — 눈으로 대조하는 기준 |
+> | `dreamcatch_design_guideline.md` | 51절 상세 가이드 — **시안이 다루지 않은 영역**(폼·표·토스트·차트·반응형·다크모드)만 참조 |
+>
+> ⚠️ **새 팔레트·폰트를 만들지 않는다.** 디자인 스킬은 적용·리뷰만 한다.
 
-BMW's website is automotive engineering made visual — a design system that communicates precision, performance, and German industrial confidence. The page alternates between deep dark hero sections (featuring full-bleed automotive photography) and clean white content areas, creating a cinematic rhythm reminiscent of a luxury car showroom where vehicles are lit against darkness. The BMW CI2020 design language (their corporate identity refresh) defines every element.
+---
 
-The typography is built on BMWTypeNextLatin — a proprietary typeface in two variants: BMWTypeNextLatin Light (weight 300) for massive uppercase display headings, and BMWTypeNextLatin Regular for body and UI text. The 60px uppercase headline at weight 300 is the defining typographic gesture — light-weight type that whispers authority rather than shouting it. The fallback stack includes Helvetica and Japanese fonts (Hiragino, Meiryo), reflecting BMW's global presence.
+## 0. 시안 ↔ 가이드라인 충돌 — 확정 결과 <span>(다시 논쟁하지 말 것)</span>
 
-What makes BMW distinctive is its CSS variable-driven theming system. Context-aware variables (`--site-context-highlight-color: #1c69d4`, `--site-context-focus-color: #0653b6`, `--site-context-metainfo-color: #757575`) suggest a design system built for multi-brand, multi-context deployment where colors can be swapped globally. The blue highlight color (`#1c69d4`) is BMW's signature blue — used sparingly for interactive elements and focus states, never decoratively. Zero border-radius was detected — BMW's design is angular, sharp-cornered, and uncompromisingly geometric.
+| 항목 | `test_admin.html` | `dreamcatch_design_guideline.md` | **확정** |
+|---|---|---|---|
+| radius | 전부 12 | sm8 / md10 / lg12 / modal20 | **12 통일** (시안) |
+| shadow | `none` | `0 2px 8px rgba(22,28,45,.04)` | **none** (시안) |
+| 텍스트 | `#1D2433` / `#5F6B7A` / `#6E7787` | `#181C25` / `#565E6D` | **시안** (3단, 대비 검증됨) |
+| 팔레트 이름 | green·orange·red·purple·blue·teal·yellow | violet·blue·mint·coral·amber·sky·pink | **시안** |
+| **Primary** | `.btn.primary` = 녹색 `#157A52` | Violet `#7C5CFC` | **녹색 `#157A52`** (시안) |
+| **Violet 범위** | GNB·푸터 링크 12곳뿐 | Primary/Brand 전역 | **GNB 전용** (시안) |
 
-**Key Characteristics:**
-- BMWTypeNextLatin Light (weight 300) uppercase for display — whispered authority
-- BMW Blue (`#1c69d4`) as singular accent — used only for interactive elements
-- Zero border-radius detected — angular, sharp-cornered, industrial geometry
-- Dark hero photography + white content sections — showroom lighting rhythm
-- CSS variable-driven theming: `--site-context-*` tokens for brand flexibility
-- Weight 900 for navigation emphasis — extreme contrast with 300 display
-- Tight line-heights (1.15–1.30) throughout — compressed, efficient, German engineering
-- Full-bleed automotive photography as primary visual content
+> ⚠️ **한때 "Primary = Violet 통일"로 갔다가 되돌렸다.** `--color-primary`가 119곳에서 쓰이는데
+> 이걸 violet에 물리자 버튼·막대·아이콘·링크·차트가 **전부 보라로 덮였다.**
+> 시안은 그렇지 않다 — violet은 GNB 활성/호버 **12곳뿐**이고 나머지는 7색이 역할별로 쓰인다.
+> **violet을 GNB 밖으로 내보내지 말 것.**
 
-## 2. Color Palette & Roles
+---
 
-### Primary Brand
-- **Pure White** (`#ffffff`): `--site-context-theme-color`, primary surface, card backgrounds
-- **BMW Blue** (`#1c69d4`): `--site-context-highlight-color`, primary interactive accent
-- **BMW Focus Blue** (`#0653b6`): `--site-context-focus-color`, keyboard focus and active states
+## 1. 토큰 <span>★ 값 수정은 여기서만</span>
 
-### Neutral Scale
-- **Near Black** (`#262626`): Primary text on light surfaces, dark link text
-- **Meta Gray** (`#757575`): `--site-context-metainfo-color`, secondary text, metadata
-- **Silver** (`#bbbbbb`): Tertiary text, muted links, footer elements
+### 1-1. 중립 · 표면
 
-### Interactive States
-- All links hover to white (`#ffffff`) — suggesting primarily dark-surface navigation
-- Text links use underline: none on hover — clean interaction
+| 토큰 | 값 | 용도 |
+|---|---|---|
+| `--bg-page` | `#F7F8FB` | **전체 페이지 배경** (흰색 아님) |
+| `--bg-card` | `#FFFFFF` | 카드 · GNB · 모달 |
+| `--muted` | `#F1F3F6` | 카드 **안쪽** 서브 패널 · 행 hover |
+| `--sel` / `--sel-line` | `#F3FBF7` / `#CDE9DC` | 선택 상태 배경 / 테두리 |
+| `--border` | `#E2E6EC` | 기본 테두리 |
+| `--divider` | `#F1F3F6` | 구분선 (테두리보다 옅다) |
 
-### Shadows
-- Minimal shadow system — depth through photography and dark/light section contrast
+> ⚠️ 시안의 `--panel:#FAFAF8`은 **채택하지 않았다.** 첫 `:root`(따뜻한 회색 계열)의 잔재이고
+> 두 번째 `:root`가 테두리·구분선을 차가운 계열로 덮으면서 혼자 남은 값이다. 시안에서도
+> 실제 사용처가 1곳뿐이며 그마저 후속 레이어가 덮는다. 서브 패널은 `--muted`를 쓴다.
 
-## 3. Typography Rules
+### 1-2. 텍스트 <span>(3단 — 대비 검증 완료)</span>
 
-### Font Families
-- **Display Light**: `BMWTypeNextLatin Light`, fallbacks: `Helvetica, Arial, Hiragino Kaku Gothic ProN, Hiragino Sans, Meiryo`
-- **Body / UI**: `BMWTypeNextLatin`, same fallback stack
+| 토큰 | 값 | 대비 | 용도 |
+|---|---|---|---|
+| `--text` | `#1D2433` | — | 제목 · 본문 강조 |
+| `--text-sub` | `#5F6B7A` | 5.4:1 | 본문 · 보조 |
+| `--text-cap` | `#6E7787` | 4.5:1 | 캡션 |
 
-### Hierarchy
+> ⚠️ 원안의 `#8A93A1`은 **3.1:1로 AA 미달**이라 `#6E7787`로 올렸다. 되돌리지 말 것.
 
-| Role | Font | Size | Weight | Line Height | Notes |
-|------|------|------|--------|-------------|-------|
-| Display Hero | BMWTypeNextLatin Light | 60px (3.75rem) | 300 | 1.30 (tight) | `text-transform: uppercase` |
-| Section Heading | BMWTypeNextLatin | 32px (2.00rem) | 400 | 1.30 (tight) | Major section titles |
-| Nav Emphasis | BMWTypeNextLatin | 18px (1.13rem) | 900 | 1.30 (tight) | Navigation bold items |
-| Body | BMWTypeNextLatin | 16px (1.00rem) | 400 | 1.15 (tight) | Standard body text |
-| Button Bold | BMWTypeNextLatin | 16px (1.00rem) | 700 | 1.20–2.88 | CTA buttons |
-| Button | BMWTypeNextLatin | 16px (1.00rem) | 400 | 1.15 (tight) | Standard buttons |
+### 1-3. 내비 accent <span>(Violet)</span> — GNB 전용
 
-### Principles
-- **Light display, heavy navigation**: Weight 300 for hero headlines creates whispered elegance; weight 900 for navigation creates stark authority. This extreme weight contrast (300 vs 900) is the signature typographic tension.
-- **Universal uppercase display**: The 60px hero is always uppercase — creating a monumental, architectural quality.
-- **Tight everything**: Line-heights from 1.15 to 1.30 across the entire system. Nothing breathes — every line is compressed, efficient, German-engineered.
-- **Single font family**: BMWTypeNextLatin handles everything from 60px display to 16px body — unity through one typeface at different weights.
+```
+--nav-accent       #7C5CFC   GNB 활성/호버 · 드롭다운 hover · 푸터 링크 hover
+--nav-accent-soft  #F0EDFF   드롭다운 hover 배경
+```
 
-## 4. Component Stylings
+> ⚠️ **버튼·막대·아이콘·배지·차트에 쓰지 않는다.** 시안에서 violet은 내비게이션 12곳뿐이다.
 
-### Buttons
-- Text: 16px BMWTypeNextLatin, weight 700 for primary, 400 for secondary
-- Line-height: 1.15–2.88 (large variation suggests padding-driven sizing)
-- Border: white bottom-border on dark surfaces (`1px solid #ffffff`)
-- No border-radius — sharp rectangular buttons
+### 1-3b. Primary 액션 <span>(Green)</span>
 
-### Cards & Containers
-- No border-radius — all containers are sharp-cornered rectangles
-- White backgrounds on light sections
-- Dark backgrounds for hero/feature sections
-- No visible borders on most elements
+```
+--primary        #157A52   CTA 버튼 · 강조 텍스트 · 탭 활성 · 포커스 링  (= --on-green)
+--primary-soft   #DFF5EA   Primary 텍스트의 배경 틴트                  (= --green-bg)
+--primary-light  #24B37A   보조 강조                                  (= --green)
+--primary-hover  #106242   시안 .btn.primary:hover
+```
 
-### Navigation
-- BMWTypeNextLatin 18px weight 900 for primary nav links
-- White text on dark header
-- BMW logo 54x54px
-- Hover: remains white, text-decoration none
-- "Home" text link in header
+### 1-4. 의미색 7종 — **solid / tint / 잉크 3짝**
 
-### Image Treatment
-- Full-bleed automotive photography
-- Dark cinematic lighting
-- Edge-to-edge hero images
-- Car photography as primary visual content
+| 색 | solid (막대·점) | tint (`--*-bg`) | 잉크 (`--on-*`) |
+|---|---|---|---|
+| green | `#24B37A` | `#DFF5EA` | `#157A52` |
+| orange | `#F59A23` | `#FFF0DD` | `#92580A` |
+| red | `#F05D57` | `#FDE7E6` | `#C2332C` |
+| purple | `#8B63D9` | `#EFE6FB` | `#6739B8` |
+| blue | `#3B82F6` | `#E8F1FF` | `#1A5FCC` |
+| teal | `#1FA7A5` | `#DDF6F5` | `#0E7573` |
+| yellow | `#F2B544` | `#FFF5DE` | `#8A5D0A` |
 
-## 5. Layout Principles
+> **`--purple`(#8B63D9)과 `--nav-accent`(#7C5CFC)는 다른 색이다.** 전자는 의미색(배지·막대), 후자는 GNB 전용.
 
-### Spacing System
-- Base unit: 8px
-- Scale: 1px, 5px, 8px, 10px, 12px, 15px, 16px, 20px, 24px, 30px, 32px, 40px, 45px, 56px, 60px
+### 1-5. Radius · 그림자 · 간격
 
-### Grid & Container
-- Full-width hero photography
-- Centered content sections
-- Footer: multi-column link grid
+```
+--r-lg / --r-md / --r-sm   12px   ← 전부 같다 (카드)
+--r-ctl                    14px   컨트롤(셀렉트·드롭다운)
+--r-btn                    12px   버튼
+--r-pill                   999px  배지·칩
 
-### Whitespace Philosophy
-- **Showroom pacing**: Dark hero sections with generous padding create the feeling of walking through a showroom where each vehicle is spotlit in its own space.
-- **Compressed content**: Body text areas use tight line-heights and compact spacing — information-dense, no waste.
+--shadow                   none   ← 그림자를 쓰지 않는다
 
-### Border Radius Scale
-- **None detected.** BMW uses sharp corners exclusively — every element is a precise rectangle. This is the most angular design system analyzed.
+--sp-1..7   4 / 8 / 12 / 16 / 20 / 24 / 32
+--gap       16px   카드 사이
+--gap-set   12px   한 세트로 묶이는 카드 사이
+--pad       20px   카드 안쪽 — 전 카드 동일
+--pad-sm    16px   .card.sm
+```
 
-## 6. Depth & Elevation
+### 1-6. 레이아웃 · 타이포
 
-| Level | Treatment | Use |
-|-------|-----------|-----|
-| Photography (Level 0) | Full-bleed dark imagery | Hero backgrounds |
-| Flat (Level 1) | White surface, no shadow | Content sections |
-| Focus (Accessibility) | BMW Focus Blue (`#0653b6`) | Focus states |
+```
+페이지    max-width 1440px · padding 32px
+GNB       높이 80px · 배경 흰색 · 하단 1px 테두리 · sticky
+폰트      'Pretendard Variable' → Pretendard → Apple SD Gothic Neo → Noto Sans KR
+본문      14px / weight 500 / line-height 1.55 / tabular-nums
+```
 
-**Shadow Philosophy**: BMW uses virtually no shadows. Depth is created entirely through the contrast between dark photographic sections and white content sections — the automotive lighting does the elevation work.
+| 용도 | 크기 | 굵기 | 비고 |
+|---|---|---|---|
+| 카드 제목 `h2` | 16px | 700 | `letter-spacing:-.02em` |
+| 본문 | 14px | 500 | |
+| 버튼 | 13px | 600 | `.sm` 12.5px |
+| 배지 · 캡션 | 12~13px | 600 | |
+| 네비 | 15px | 600 → 활성 700 | |
 
-## 7. Do's and Don'ts
+---
 
-### Do
-- Use BMWTypeNextLatin Light (300) uppercase for all display headings
-- Keep ALL corners sharp (0px radius) — angular geometry is non-negotiable
-- Use BMW Blue (`#1c69d4`) only for interactive elements — never decoratively
-- Apply weight 900 for navigation emphasis — the extreme weight contrast is intentional
-- Use full-bleed automotive photography for hero sections
-- Keep line-heights tight (1.15–1.30) throughout
-- Use `--site-context-*` CSS variables for theming
+## 2. 절대 규칙 <span>★ 어기면 접근성·일관성이 깨진다</span>
 
-### Don't
-- Don't round corners — zero radius is the BMW identity
-- Don't use BMW Blue for backgrounds or large surfaces — it's an accent only
-- Don't use medium font weights (500–600) — the system uses 300, 400, 700, 900 extremes
-- Don't add decorative elements — the photography and typography carry everything
-- Don't use relaxed line-heights — BMW text is always compressed
-- Don't lighten the dark hero sections — the contrast with white IS the design
+1. **컬러 텍스트·아이콘은 `--on-*` 잉크만 쓴다.** `--green` 같은 solid는 **막대·점·도넛 전용**이며 텍스트로 쓰면 대비가 미달한다.
+2. **새 색을 만들지 않는다.** 7색 + `--primary`의 tint/잉크 짝에서만 고른다.
+3. **막대 길이는 CSS가 아니라 데이터다.** 인라인 `style={{ '--v': '75%' }}` 하나만 바꾸고 CSS는 건드리지 않는다.
+4. **Primary를 넓은 배경으로 칠하지 않는다.** `color:var(--primary)` + `background:var(--primary-soft)` 조합을 우선한다.
+   **violet(`--nav-accent`)은 GNB 밖으로 나가지 않는다.**
+5. **`word-break:keep-all`** — 없으면 한글이 어절 중간에서 끊긴다("이수진" → "이수/진").
+6. **그림자를 되살리지 않는다.** 면 분리는 배경색 차이(`#F7F8FB` 페이지 ↔ `#FFFFFF` 카드)와 1px 테두리로 한다.
+7. **이모지를 아이콘으로 쓰지 않는다.** 아이콘은 `react-icons/lu`(admin) · Font Awesome 6(v2).
+8. **2계열 이상 차트에 같은 색조의 명암 차이를 쓰지 않는다.** `--primary`와 `--primary-light`처럼 한 색의 농도만 다른 조합은 작은 막대에서 구분되지 않는다. **의미가 다른 7색 중 둘**을 쓴다(예: 신청 `--blue` / 완료 `--green`).
+9. **동작하지 않는 UI를 넣지 않는다.** 데이터가 없으면 그 카드·버튼을 만들지 않는다. 빈 상태는 `EmptyState`로 명시한다.
 
-## 8. Responsive Behavior
+---
 
-### Breakpoints
-| Name | Width | Key Changes |
-|------|-------|-------------|
-| Mobile Small | <375px | Minimum supported |
-| Mobile | 375–480px | Single column |
-| Mobile Large | 480–640px | Slight adjustments |
-| Tablet Small | 640–768px | 2-column begins |
-| Tablet | 768–920px | Standard tablet |
-| Desktop Small | 920–1024px | Desktop layout begins |
-| Desktop | 1024–1280px | Standard desktop |
-| Large Desktop | 1280–1440px | Expanded |
-| Ultra-wide | 1440–1600px | Maximum layout |
+## 3. 컴포넌트 규칙
 
-### Collapsing Strategy
-- Hero: 60px → scales down, maintains uppercase
-- Navigation: horizontal → hamburger
-- Photography: full-bleed maintained at all sizes
-- Content sections: stack vertically
-- Footer: multi-column → stacked
+### 카드
+```
+배경 --bg-card · 테두리 1px --border · radius 12 · padding 20 (sm 16) · 그림자 없음
+헤더 .card-hd — 제목 16/700/-.02em, 우측 액션은 margin-left:auto
+```
 
-## 9. Agent Prompt Guide
+### 버튼
+| 종류 | 배경 | 글자 | 테두리 |
+|---|---|---|---|
+| 기본 | `--bg-card` | `--text-sub` → hover `--text` | `--border` → hover `--text-cap` |
+| **primary** | `--primary` **(녹색)** | `#fff` | `--primary` |
 
-### Quick Color Reference
-- Background: Pure White (`#ffffff`)
-- Text: Near Black (`#262626`)
-- Secondary text: Meta Gray (`#757575`)
-- Accent: BMW Blue (`#1c69d4`)
-- Focus: BMW Focus Blue (`#0653b6`)
-- Muted: Silver (`#bbbbbb`)
+`padding:10px 16px` · `font-size:13px/600` · `radius:12` · 전이 `.15s ease-out`
 
-### Example Component Prompts
-- "Create a hero: full-width dark automotive photography background. Heading at 60px BMWTypeNextLatin Light weight 300, uppercase, line-height 1.30, white text. No border-radius anywhere."
-- "Design navigation: dark background. BMWTypeNextLatin 18px weight 900 for links, white text. BMW logo 54x54. Sharp rectangular layout."
-- "Build a button: 16px BMWTypeNextLatin weight 700, line-height 1.20. Sharp corners (0px radius). White bottom border on dark surface."
-- "Create content section: white background. Heading at 32px weight 400, line-height 1.30, #262626. Body at 16px weight 400, line-height 1.15."
+### 배지 · 칩
+```
+.pill   12px/700 · padding 3px 10px · radius pill
+.badge  12px/600 · padding 3px 9px  · radius pill · white-space:nowrap
+.s-*    tint 배경 + on-* 잉크 (7종)
+.f-*    on-* 잉크 텍스트 (7종)
+```
 
-### Iteration Guide
-1. Zero border-radius — every corner is sharp, no exceptions
-2. Weight extremes: 300 (display), 400 (body), 700 (buttons), 900 (nav)
-3. BMW Blue for interactive only — never as background or decoration
-4. Photography carries emotion — the UI is pure precision
-5. Tight line-heights everywhere — 1.15 to 1.30 is the range
+### 막대
+```css
+.bar   { height:6px; border-radius:pill; background:var(--divider); overflow:hidden }
+.bar i { width:var(--v,0%) }   /* 길이는 인라인 --v 로만 */
+```
+
+### GNB <span>(유일하게 violet을 쓰는 곳)</span>
+```
+높이 80px · 배경 흰색 · 하단 1px --border · sticky top:0
+항목 15px/600, 색 #344054
+호버 색 --nav-accent
+활성 색 --nav-accent + font-weight 700 + border-bottom 3px --nav-accent
+드롭다운 hover 배경 --nav-accent-soft, 글자 --nav-accent
+```
+
+### 포커스
+```css
+:focus-visible { outline:2px solid var(--primary); outline-offset:2px; border-radius:10px }
+```
+
+---
+
+## 4. 구현 매핑 <span>(`src_admin/index.css`)</span>
+
+`--color-*` 레거시 토큰이 900여 곳에서 쓰인다. **이름을 바꾸지 않고 정본 토큰의 별칭으로 잇는다.**
+
+| 레거시 | → 정본 |
+|---|---|
+| `--color-page-bg` | `--bg-page` |
+| `--color-bg` | `--bg-card` |
+| `--color-primary` | `--primary` **(녹색)** — violet 아님 |
+| `--color-text` | `--text` |
+| `--color-text-secondary` | `--text-sub` |
+| `--color-caption` | `--text-cap` |
+| `--color-border` | `--border` |
+| `--color-divider` | `--divider` |
+| `--radius-lg` | 12px (18 → 12) |
+
+> **신규 코드는 정본 이름을 쓴다.** 레거시 별칭은 기존 셀렉터를 살리기 위한 것이고 점진적으로 걷어낸다.
+
+---
+
+## 5. 예외 <span>(의도된 divergence — 되돌리지 말 것)</span>
+
+| 대상 | 예외 | 근거 |
+|---|---|---|
+| `programs/new` (`.pf` 스코프) | `#2563EB` 팔레트 | CLAUDE.md 명시 |
+| **Chart.js** | 색을 **값으로** 전달 | 라이브러리가 CSS 변수를 읽지 못한다. 전달값은 이 문서의 토큰 값과 **반드시 일치**시킨다 |
+
+---
+
+## 6. 학생 포털 <span>(`src_v2`)</span>
+
+이 문서는 현재 **`src_admin`에 적용돼 있다.** 학생 포털 시안(`test_admin2.html`·`test_admin3.html`)은 같은 GNB accent(`#7C5CFC`)를 쓰지만 팔레트 이름이 다르다(`mint`·`coral`·`amber`·`sky`·`pink`). **통일은 별도 작업이다** — 그때까지 `src_v2/DESIGN.md`가 학생 포털 정본이다.

@@ -8,7 +8,7 @@ const ROLE_CARDS: { role: StaffRole; icon: IconType; desc: string }[] = [
   {
     role: 'career',
     icon: LuBriefcase,
-    desc: '진로·취업 상담, IAP 유형 확정, 로드맵 편집, 채용공고를 관리합니다.',
+    desc: '진로·취업 상담, 진단 6유형 확정, 로드맵 편집, 채용공고를 관리합니다.',
   },
   {
     role: 'psych',

@@ -1,4 +1,4 @@
-import { getActiveStudent, getStudentIap } from '../data/students'
+import { getActiveStudent, getStudentTypeMeta } from '../data/students'
 import './IapSummaryBanner.css'
 
 interface IapSummaryBannerProps {
@@ -7,13 +7,13 @@ interface IapSummaryBannerProps {
 }
 
 /**
- * 학생유형 · IAP유형 요약 배너.
- * careerProcess.ts(STUDENT_PROFILE)를 단일 소스로 읽어
+ * 진단유형 · 계층 요약 배너.
+ * careerProcess.ts(STUDENT_TYPE_MAP)를 단일 소스로 읽어
  * 상담센터·라운지 등 진단 맥락이 필요한 화면에 일관되게 노출한다.
  */
 export default function IapSummaryBanner({ note = '내 진단 요약' }: IapSummaryBannerProps) {
   const profile = getActiveStudent()
-  const iap = getStudentIap(profile)
+  const type = getStudentTypeMeta(profile)
 
   return (
     <div className="iap-banner">
@@ -22,13 +22,13 @@ export default function IapSummaryBanner({ note = '내 진단 요약' }: IapSumm
         <span className="iap-banner-note">{note}</span>
         <div className="iap-banner-chips">
           <span className="iap-bchip iap-bchip-main">
-            <i className="fa-solid fa-user-tag" />{profile.studentType}
+            <i className="fa-solid fa-user-tag" />{type.label}
           </span>
           <span className="iap-bchip iap-bchip-iap">
-            <i className="fa-solid fa-diagram-project" />IAP {iap.label}
+            <i className="fa-solid fa-layer-group" />{type.tierLabel} 계층
           </span>
           <span className="iap-bchip">
-            <i className="fa-solid fa-graduation-cap" />{profile.grade}학년 · {iap.track} 트랙
+            <i className="fa-solid fa-clipboard-check" />후속진단 {type.followUpTest}
           </span>
           <span className="iap-bchip iap-bchip-ghost">
             진로명확도 {profile.typeScores.진로명확도} · 역량 {profile.typeScores.역량준비도} · 취업 {profile.typeScores.취업준비도}

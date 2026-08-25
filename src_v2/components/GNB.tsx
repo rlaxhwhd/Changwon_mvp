@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { NAV_SECTIONS, getSectionForPath, getActiveChildPath } from './navConfig'
+import { NAV_SECTIONS, getSectionForPath, getActiveChildPath, getVisibleNavChildren } from './navConfig'
 import BrandLogo from './BrandLogo'
 import { STUDENTS, getActiveStudent, getActiveStudentId, setActiveStudent } from '../data/students'
 
@@ -65,17 +65,19 @@ export default function GNB() {
         <nav className="gnb-nav" aria-label="주요 메뉴">
           {NAV_SECTIONS.map(section => {
             const active = currentSection?.id === section.id
-            const firstPath = section.path ?? section.children[0]?.path ?? '/'
-            const activeChildPath = getActiveChildPath(pathname, section)
+            const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade)
+            const firstPath = section.path ?? visibleChildren[0]?.path ?? '/'
+            const visibleSection = { ...section, children: visibleChildren }
+            const activeChildPath = getActiveChildPath(pathname, visibleSection)
 
             return (
               <div className="gnb-nav-item" key={section.id}>
                 <Link to={firstPath} className={`gnb-nav-link ${active ? 'active' : ''}`}>
                   {section.label}
                 </Link>
-                {section.children.length > 1 && (
+                {visibleChildren.length > 1 && (
                   <div className="gnb-dropdown">
-                    {section.children.map(child => (
+                    {visibleChildren.map(child => (
                       <Link
                         key={child.path}
                         to={child.path}
@@ -124,7 +126,7 @@ export default function GNB() {
                 </div>
 
                 <Link
-                  to="/mypage/portfolio"
+                  to={activeStudent.grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'}
                   className="gnb-profile-link"
                   role="menuitem"
                   onClick={() => setProfileOpen(false)}
@@ -193,7 +195,7 @@ export default function GNB() {
                 <strong>{activeStudent.name}</strong>
                 <small>{activeStudent.grade}학년 · {activeStudent.major}</small>
               </div>
-              <Link to="/mypage/portfolio" className="gnb-mobile-profile-link">
+              <Link to={activeStudent.grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'} className="gnb-mobile-profile-link">
                 마이페이지 <i className="fa-solid fa-chevron-right" />
               </Link>
             </div>
@@ -201,8 +203,10 @@ export default function GNB() {
             <nav className="gnb-mobile-nav" aria-label="모바일 주요 메뉴">
               {NAV_SECTIONS.map(section => {
                 const active = currentSection?.id === section.id
-                const firstPath = section.path ?? section.children[0]?.path ?? '/'
-                const activeChildPath = getActiveChildPath(pathname, section)
+                const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade)
+                const firstPath = section.path ?? visibleChildren[0]?.path ?? '/'
+                const visibleSection = { ...section, children: visibleChildren }
+                const activeChildPath = getActiveChildPath(pathname, visibleSection)
 
                 return (
                   <div className="gnb-mobile-section" key={section.id}>
@@ -213,9 +217,9 @@ export default function GNB() {
                       {section.label}
                       <i className="fa-solid fa-chevron-right" aria-hidden="true" />
                     </Link>
-                    {section.children.length > 1 && (
+                    {visibleChildren.length > 1 && (
                       <div className="gnb-mobile-sublinks">
-                        {section.children.map(child => (
+                        {visibleChildren.map(child => (
                           <Link
                             key={child.path}
                             to={child.path}

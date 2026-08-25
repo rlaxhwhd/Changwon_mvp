@@ -5,9 +5,7 @@
     "name": "김서준",
     "major": "디자인학과",
     "grade": 3,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 31,
     "status": "재학",
     "phone": "010-0100-1000",
@@ -42,7 +40,8 @@
         "at": "2025-10-17T04:52:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "하위"
   },
   {
     "id": "stu-002",
@@ -50,9 +49,7 @@
     "name": "이아윤",
     "major": "토목공학과",
     "grade": 4,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 83,
     "status": "재학",
     "phone": "010-0101-1037",
@@ -89,7 +86,8 @@
         "at": "2025-09-19T02:20:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-003",
@@ -97,9 +95,7 @@
     "name": "박주원",
     "major": "음악학과",
     "grade": 2,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 5,
     "status": "재학",
     "phone": "010-0102-1074",
@@ -146,7 +142,8 @@
         "at": "2025-10-05T04:40:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "하위"
   },
   {
     "id": "stu-004",
@@ -154,9 +151,7 @@
     "name": "최예원",
     "major": "생명과학과",
     "grade": 3,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 59,
     "status": "휴학",
     "phone": "010-0103-1111",
@@ -183,7 +178,8 @@
         "at": "2025-09-18T03:21:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-005",
@@ -191,9 +187,7 @@
     "name": "정수아",
     "major": "화학공학과",
     "grade": 4,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 53,
     "status": "재학",
     "phone": "010-0104-1148",
@@ -230,7 +224,8 @@
         "at": "2025-10-04T05:41:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "하위"
   },
   {
     "id": "stu-006",
@@ -238,12 +233,11 @@
     "name": "강지율",
     "major": "법학과",
     "grade": 4,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 76,
     "status": "재학",
-    "phone": "010-0006-0006"
+    "phone": "010-0006-0006",
+    "tier": "중간"
   },
   {
     "id": "stu-007",
@@ -251,12 +245,11 @@
     "name": "조민준",
     "major": "건축학과",
     "grade": 4,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 45,
     "status": "재학",
-    "phone": "010-0007-0007"
+    "phone": "010-0007-0007",
+    "tier": "상위"
   },
   {
     "id": "stu-008",
@@ -264,12 +257,11 @@
     "name": "윤채은",
     "major": "회계학과",
     "grade": 3,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 86,
     "status": "재학",
-    "phone": "010-0008-0008"
+    "phone": "010-0008-0008",
+    "tier": "상위"
   },
   {
     "id": "stu-009",
@@ -277,12 +269,11 @@
     "name": "장수빈",
     "major": "회계학과",
     "grade": 4,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 82,
     "status": "재학",
-    "phone": "010-0009-0009"
+    "phone": "010-0009-0009",
+    "tier": "상위"
   },
   {
     "id": "stu-010",
@@ -290,12 +281,11 @@
     "name": "임주하",
     "major": "경영학과",
     "grade": 2,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 29,
     "status": "재학",
-    "phone": "010-0010-0010"
+    "phone": "010-0010-0010",
+    "tier": "중간"
   },
   {
     "id": "stu-011",
@@ -303,12 +293,11 @@
     "name": "한다은",
     "major": "화학공학과",
     "grade": 4,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 43,
     "status": "재학",
-    "phone": "010-0011-0011"
+    "phone": "010-0011-0011",
+    "tier": "하위"
   },
   {
     "id": "stu-012",
@@ -316,12 +305,11 @@
     "name": "오민재",
     "major": "경영학과",
     "grade": 3,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 88,
     "status": "재학",
-    "phone": "010-0012-0012"
+    "phone": "010-0012-0012",
+    "tier": "중간"
   },
   {
     "id": "stu-013",
@@ -329,12 +317,11 @@
     "name": "서시윤",
     "major": "기계공학과",
     "grade": 1,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 68,
     "status": "재학",
-    "phone": "010-0013-0013"
+    "phone": "010-0013-0013",
+    "tier": "상위"
   },
   {
     "id": "stu-014",
@@ -342,12 +329,11 @@
     "name": "신지환",
     "major": "토목공학과",
     "grade": 2,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 100,
     "status": "졸업",
-    "phone": "010-0014-0014"
+    "phone": "010-0014-0014",
+    "tier": "중간"
   },
   {
     "id": "stu-015",
@@ -355,12 +341,11 @@
     "name": "권나윤",
     "major": "신소재공학과",
     "grade": 3,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 21,
     "status": "재학",
-    "phone": "010-0015-0015"
+    "phone": "010-0015-0015",
+    "tier": "중간"
   },
   {
     "id": "stu-016",
@@ -368,9 +353,7 @@
     "name": "황수인",
     "major": "건축학과",
     "grade": 4,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 73,
     "status": "재학",
     "phone": "010-0105-1185",
@@ -425,7 +408,8 @@
         "at": "2025-11-11T01:27:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-017",
@@ -433,9 +417,7 @@
     "name": "안건우",
     "major": "영어영문학과",
     "grade": 4,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 20,
     "status": "재학",
     "phone": "010-0106-1222",
@@ -462,7 +444,8 @@
         "at": "2025-10-03T06:42:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-018",
@@ -470,9 +453,7 @@
     "name": "송윤아",
     "major": "미디어커뮤니케이션학과",
     "grade": 4,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 45,
     "status": "재학",
     "phone": "010-0107-1259",
@@ -509,7 +490,8 @@
         "at": "2025-10-19T00:02:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-019",
@@ -517,9 +499,7 @@
     "name": "류시은",
     "major": "경영학과",
     "grade": 4,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 57,
     "status": "휴학",
     "phone": "010-0108-1296",
@@ -566,7 +546,8 @@
         "at": "2025-11-04T02:22:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "하위"
   },
   {
     "id": "stu-020",
@@ -574,12 +555,11 @@
     "name": "전시우",
     "major": "회계학과",
     "grade": 4,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 65,
     "status": "재학",
-    "phone": "010-0020-0020"
+    "phone": "010-0020-0020",
+    "tier": "중간"
   },
   {
     "id": "stu-021",
@@ -587,12 +567,11 @@
     "name": "홍지원",
     "major": "전자공학과",
     "grade": 1,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 83,
     "status": "휴학",
-    "phone": "010-0021-0021"
+    "phone": "010-0021-0021",
+    "tier": "상위"
   },
   {
     "id": "stu-022",
@@ -600,12 +579,11 @@
     "name": "고예준",
     "major": "산업경영공학과",
     "grade": 2,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 53,
     "status": "휴학",
-    "phone": "010-0022-0022"
+    "phone": "010-0022-0022",
+    "tier": "상위"
   },
   {
     "id": "stu-023",
@@ -613,12 +591,11 @@
     "name": "문하준",
     "major": "물리학과",
     "grade": 3,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 32,
     "status": "휴학",
-    "phone": "010-0023-0023"
+    "phone": "010-0023-0023",
+    "tier": "하위"
   },
   {
     "id": "stu-024",
@@ -626,12 +603,11 @@
     "name": "양하은",
     "major": "기계공학과",
     "grade": 3,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 68,
     "status": "재학",
-    "phone": "010-0024-0024"
+    "phone": "010-0024-0024",
+    "tier": "상위"
   },
   {
     "id": "stu-025",
@@ -639,12 +615,11 @@
     "name": "손유나",
     "major": "화학공학과",
     "grade": 1,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 78,
     "status": "재학",
-    "phone": "010-0025-0025"
+    "phone": "010-0025-0025",
+    "tier": "상위"
   },
   {
     "id": "stu-026",
@@ -652,12 +627,11 @@
     "name": "배예은",
     "major": "회계학과",
     "grade": 2,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 69,
     "status": "재학",
-    "phone": "010-0026-0026"
+    "phone": "010-0026-0026",
+    "tier": "중간"
   },
   {
     "id": "stu-027",
@@ -665,12 +639,11 @@
     "name": "백시현",
     "major": "경영학과",
     "grade": 3,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 85,
     "status": "휴학",
-    "phone": "010-0027-0027"
+    "phone": "010-0027-0027",
+    "tier": "상위"
   },
   {
     "id": "stu-028",
@@ -678,12 +651,11 @@
     "name": "허채원",
     "major": "수학과",
     "grade": 1,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 27,
     "status": "휴학",
-    "phone": "010-0028-0028"
+    "phone": "010-0028-0028",
+    "tier": "상위"
   },
   {
     "id": "stu-029",
@@ -691,12 +663,11 @@
     "name": "남태윤",
     "major": "신소재공학과",
     "grade": 2,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 28,
     "status": "휴학",
-    "phone": "010-0029-0029"
+    "phone": "010-0029-0029",
+    "tier": "상위"
   },
   {
     "id": "stu-030",
@@ -704,9 +675,7 @@
     "name": "심현우",
     "major": "물리학과",
     "grade": 1,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 72,
     "status": "재학",
     "phone": "010-0109-1333",
@@ -733,7 +702,8 @@
         "at": "2025-10-18T01:03:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-031",
@@ -741,9 +711,7 @@
     "name": "김시후",
     "major": "디자인학과",
     "grade": 1,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 36,
     "status": "휴학",
     "phone": "010-0110-1370",
@@ -796,7 +764,8 @@
         "at": "2025-12-28T00:28:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-032",
@@ -804,9 +773,7 @@
     "name": "이하람",
     "major": "물리학과",
     "grade": 2,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 40,
     "status": "휴학",
     "phone": "010-0111-1407",
@@ -853,7 +820,8 @@
         "at": "2025-11-19T05:43:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-033",
@@ -861,9 +829,7 @@
     "name": "박하연",
     "major": "기계공학과",
     "grade": 4,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 74,
     "status": "휴학",
     "phone": "010-0112-1444",
@@ -890,7 +856,8 @@
         "at": "2025-11-02T04:24:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-034",
@@ -898,12 +865,11 @@
     "name": "최도현",
     "major": "디자인학과",
     "grade": 4,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 100,
     "status": "졸업",
-    "phone": "010-0034-0034"
+    "phone": "010-0034-0034",
+    "tier": "중간"
   },
   {
     "id": "stu-035",
@@ -911,12 +877,11 @@
     "name": "정서하",
     "major": "미디어커뮤니케이션학과",
     "grade": 2,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 73,
     "status": "재학",
-    "phone": "010-0035-0035"
+    "phone": "010-0035-0035",
+    "tier": "중간"
   },
   {
     "id": "stu-036",
@@ -924,12 +889,11 @@
     "name": "강하린",
     "major": "화학공학과",
     "grade": 4,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 41,
     "status": "휴학",
-    "phone": "010-0036-0036"
+    "phone": "010-0036-0036",
+    "tier": "하위"
   },
   {
     "id": "stu-037",
@@ -937,12 +901,11 @@
     "name": "조도윤",
     "major": "전자공학과",
     "grade": 4,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 41,
     "status": "휴학",
-    "phone": "010-0037-0037"
+    "phone": "010-0037-0037",
+    "tier": "상위"
   },
   {
     "id": "stu-038",
@@ -950,12 +913,11 @@
     "name": "윤은서",
     "major": "기계공학과",
     "grade": 4,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 61,
     "status": "휴학",
-    "phone": "010-0038-0038"
+    "phone": "010-0038-0038",
+    "tier": "상위"
   },
   {
     "id": "stu-039",
@@ -963,12 +925,11 @@
     "name": "장지훈",
     "major": "식품영양학과",
     "grade": 2,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 80,
     "status": "재학",
-    "phone": "010-0039-0039"
+    "phone": "010-0039-0039",
+    "tier": "중간"
   },
   {
     "id": "stu-040",
@@ -976,12 +937,11 @@
     "name": "임민서",
     "major": "경제학과",
     "grade": 3,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 34,
     "status": "재학",
-    "phone": "010-0040-0040"
+    "phone": "010-0040-0040",
+    "tier": "중간"
   },
   {
     "id": "stu-041",
@@ -989,12 +949,11 @@
     "name": "한서연",
     "major": "화학공학과",
     "grade": 1,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 62,
     "status": "재학",
-    "phone": "010-0041-0041"
+    "phone": "010-0041-0041",
+    "tier": "중간"
   },
   {
     "id": "stu-042",
@@ -1002,12 +961,11 @@
     "name": "오예서",
     "major": "전자공학과",
     "grade": 3,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 36,
     "status": "재학",
-    "phone": "010-0042-0042"
+    "phone": "010-0042-0042",
+    "tier": "상위"
   },
   {
     "id": "stu-043",
@@ -1015,12 +973,11 @@
     "name": "서지민",
     "major": "식품영양학과",
     "grade": 1,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 72,
     "status": "재학",
-    "phone": "010-0043-0043"
+    "phone": "010-0043-0043",
+    "tier": "상위"
   },
   {
     "id": "stu-044",
@@ -1028,9 +985,7 @@
     "name": "신지후",
     "major": "건축학과",
     "grade": 2,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 53,
     "status": "재학",
     "phone": "010-0113-1481",
@@ -1067,7 +1022,8 @@
         "at": "2025-11-18T06:44:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-045",
@@ -1075,9 +1031,7 @@
     "name": "권유진",
     "major": "물리학과",
     "grade": 4,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 58,
     "status": "재학",
     "phone": "010-0114-1518",
@@ -1124,7 +1078,8 @@
         "at": "2025-12-04T00:04:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-046",
@@ -1132,9 +1087,7 @@
     "name": "황소민",
     "major": "음악학과",
     "grade": 4,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 56,
     "status": "재학",
     "phone": "010-0115-1555",
@@ -1169,7 +1122,8 @@
         "at": "2025-12-31T03:37:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-047",
@@ -1177,9 +1131,7 @@
     "name": "안소율",
     "major": "수학과",
     "grade": 1,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 64,
     "status": "휴학",
     "phone": "010-0116-1592",
@@ -1216,7 +1168,8 @@
         "at": "2025-12-03T01:05:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "하위"
   },
   {
     "id": "stu-048",
@@ -1224,9 +1177,7 @@
     "name": "송승우",
     "major": "영어영문학과",
     "grade": 2,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 55,
     "status": "재학",
     "phone": "010-0117-1629",
@@ -1281,7 +1232,8 @@
         "at": "2026-02-01T07:17:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-049",
@@ -1289,12 +1241,11 @@
     "name": "류유주",
     "major": "간호학과",
     "grade": 3,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 100,
     "status": "졸업",
-    "phone": "010-0049-0049"
+    "phone": "010-0049-0049",
+    "tier": "하위"
   },
   {
     "id": "stu-050",
@@ -1302,12 +1253,11 @@
     "name": "전재윤",
     "major": "음악학과",
     "grade": 4,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 50,
     "status": "휴학",
-    "phone": "010-0050-0050"
+    "phone": "010-0050-0050",
+    "tier": "하위"
   },
   {
     "id": "stu-051",
@@ -1315,12 +1265,11 @@
     "name": "홍지안",
     "major": "디자인학과",
     "grade": 4,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 24,
     "status": "재학",
-    "phone": "010-0051-0051"
+    "phone": "010-0051-0051",
+    "tier": "중간"
   },
   {
     "id": "stu-052",
@@ -1328,12 +1277,11 @@
     "name": "고다연",
     "major": "산업경영공학과",
     "grade": 2,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 100,
     "status": "졸업",
-    "phone": "010-0052-0052"
+    "phone": "010-0052-0052",
+    "tier": "상위"
   },
   {
     "id": "stu-053",
@@ -1341,12 +1289,11 @@
     "name": "문예린",
     "major": "미디어커뮤니케이션학과",
     "grade": 3,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 44,
     "status": "재학",
-    "phone": "010-0053-0053"
+    "phone": "010-0053-0053",
+    "tier": "중간"
   },
   {
     "id": "stu-054",
@@ -1354,12 +1301,11 @@
     "name": "양하윤",
     "major": "회계학과",
     "grade": 1,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 55,
     "status": "휴학",
-    "phone": "010-0054-0054"
+    "phone": "010-0054-0054",
+    "tier": "상위"
   },
   {
     "id": "stu-055",
@@ -1367,12 +1313,11 @@
     "name": "손우진",
     "major": "신소재공학과",
     "grade": 2,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 30,
     "status": "재학",
-    "phone": "010-0055-0055"
+    "phone": "010-0055-0055",
+    "tier": "중간"
   },
   {
     "id": "stu-056",
@@ -1380,12 +1325,11 @@
     "name": "배지호",
     "major": "회계학과",
     "grade": 1,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 78,
     "status": "재학",
-    "phone": "010-0056-0056"
+    "phone": "010-0056-0056",
+    "tier": "상위"
   },
   {
     "id": "stu-057",
@@ -1393,12 +1337,11 @@
     "name": "백서우",
     "major": "미디어커뮤니케이션학과",
     "grade": 2,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 29,
     "status": "재학",
-    "phone": "010-0057-0057"
+    "phone": "010-0057-0057",
+    "tier": "상위"
   },
   {
     "id": "stu-058",
@@ -1406,12 +1349,11 @@
     "name": "허지우",
     "major": "식품영양학과",
     "grade": 1,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 49,
     "status": "재학",
-    "phone": "010-0058-0058"
+    "phone": "010-0058-0058",
+    "tier": "상위"
   },
   {
     "id": "stu-059",
@@ -1419,9 +1361,7 @@
     "name": "남수현",
     "major": "신소재공학과",
     "grade": 3,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 100,
     "status": "졸업",
     "phone": "010-0118-1666",
@@ -1448,7 +1388,8 @@
         "at": "2025-12-02T02:06:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-060",
@@ -1456,9 +1397,7 @@
     "name": "심서현",
     "major": "건축학과",
     "grade": 1,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 72,
     "status": "휴학",
     "phone": "010-0119-1703",
@@ -1495,7 +1434,8 @@
         "at": "2025-12-18T04:26:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-061",
@@ -1503,9 +1443,7 @@
     "name": "김서진",
     "major": "디자인학과",
     "grade": 3,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 100,
     "status": "졸업",
     "phone": "010-0120-1740",
@@ -1560,7 +1498,8 @@
         "at": "2026-01-25T00:12:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-062",
@@ -1568,9 +1507,7 @@
     "name": "이은우",
     "major": "경영학과",
     "grade": 3,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 80,
     "status": "재학",
     "phone": "010-0121-1777",
@@ -1597,7 +1534,8 @@
         "at": "2025-12-17T05:27:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-063",
@@ -1605,12 +1543,11 @@
     "name": "박하율",
     "major": "건축학과",
     "grade": 3,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 53,
     "status": "재학",
-    "phone": "010-0063-0063"
+    "phone": "010-0063-0063",
+    "tier": "중간"
   },
   {
     "id": "stu-064",
@@ -1618,12 +1555,11 @@
     "name": "최지아",
     "major": "회계학과",
     "grade": 1,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 62,
     "status": "재학",
-    "phone": "010-0064-0064"
+    "phone": "010-0064-0064",
+    "tier": "중간"
   },
   {
     "id": "stu-065",
@@ -1631,12 +1567,11 @@
     "name": "정정우",
     "major": "영어영문학과",
     "grade": 4,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 26,
     "status": "재학",
-    "phone": "010-0065-0065"
+    "phone": "010-0065-0065",
+    "tier": "하위"
   },
   {
     "id": "stu-066",
@@ -1644,12 +1579,11 @@
     "name": "강준서",
     "major": "음악학과",
     "grade": 1,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 79,
     "status": "재학",
-    "phone": "010-0066-0066"
+    "phone": "010-0066-0066",
+    "tier": "상위"
   },
   {
     "id": "stu-067",
@@ -1657,12 +1591,11 @@
     "name": "조도영",
     "major": "수학과",
     "grade": 4,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 7,
     "status": "재학",
-    "phone": "010-0067-0067"
+    "phone": "010-0067-0067",
+    "tier": "하위"
   },
   {
     "id": "stu-068",
@@ -1670,12 +1603,11 @@
     "name": "윤서율",
     "major": "경영학과",
     "grade": 3,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 17,
     "status": "재학",
-    "phone": "010-0068-0068"
+    "phone": "010-0068-0068",
+    "tier": "하위"
   },
   {
     "id": "stu-069",
@@ -1683,12 +1615,11 @@
     "name": "장예강",
     "major": "경영학과",
     "grade": 4,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 27,
     "status": "재학",
-    "phone": "010-0069-0069"
+    "phone": "010-0069-0069",
+    "tier": "하위"
   },
   {
     "id": "stu-070",
@@ -1696,12 +1627,11 @@
     "name": "임승현",
     "major": "토목공학과",
     "grade": 1,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 22,
     "status": "재학",
-    "phone": "010-0070-0070"
+    "phone": "010-0070-0070",
+    "tier": "상위"
   },
   {
     "id": "stu-071",
@@ -1709,12 +1639,11 @@
     "name": "한서준",
     "major": "회계학과",
     "grade": 1,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 71,
     "status": "휴학",
-    "phone": "010-0071-0071"
+    "phone": "010-0071-0071",
+    "tier": "상위"
   },
   {
     "id": "stu-072",
@@ -1722,12 +1651,11 @@
     "name": "오아윤",
     "major": "회계학과",
     "grade": 4,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 72,
     "status": "재학",
-    "phone": "010-0072-0072"
+    "phone": "010-0072-0072",
+    "tier": "상위"
   },
   {
     "id": "stu-073",
@@ -1735,9 +1663,7 @@
     "name": "서주원",
     "major": "수학과",
     "grade": 1,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 78,
     "status": "휴학",
     "phone": "010-0122-1814",
@@ -1774,7 +1700,8 @@
         "at": "2026-01-02T07:47:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-074",
@@ -1782,9 +1709,7 @@
     "name": "신예원",
     "major": "기계공학과",
     "grade": 4,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 58,
     "status": "재학",
     "phone": "010-0123-1851",
@@ -1831,7 +1756,8 @@
         "at": "2026-01-18T01:07:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-075",
@@ -1839,9 +1765,7 @@
     "name": "권수아",
     "major": "산업경영공학과",
     "grade": 3,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 65,
     "status": "휴학",
     "phone": "010-0124-1888",
@@ -1868,7 +1792,8 @@
         "at": "2026-01-01T00:48:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-076",
@@ -1876,9 +1801,7 @@
     "name": "황지율",
     "major": "화학공학과",
     "grade": 4,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 58,
     "status": "휴학",
     "phone": "010-0125-1925",
@@ -1923,7 +1846,8 @@
         "at": "2026-02-19T05:47:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-077",
@@ -1931,12 +1855,11 @@
     "name": "안민준",
     "major": "식품영양학과",
     "grade": 3,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 87,
     "status": "재학",
-    "phone": "010-0077-0077"
+    "phone": "010-0077-0077",
+    "tier": "중간"
   },
   {
     "id": "stu-078",
@@ -1944,12 +1867,11 @@
     "name": "송채은",
     "major": "행정학과",
     "grade": 4,
-    "studentType": "진로미탐색형",
-    "iap": "R1",
-    "track": "표준",
+    "studentType": "T1",
     "progress": 72,
     "status": "재학",
-    "phone": "010-0078-0078"
+    "phone": "010-0078-0078",
+    "tier": "중간"
   },
   {
     "id": "stu-079",
@@ -1957,12 +1879,11 @@
     "name": "류수빈",
     "major": "생명과학과",
     "grade": 2,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 100,
     "status": "졸업",
-    "phone": "010-0079-0079"
+    "phone": "010-0079-0079",
+    "tier": "상위"
   },
   {
     "id": "stu-080",
@@ -1970,12 +1891,11 @@
     "name": "전주하",
     "major": "물리학과",
     "grade": 1,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 24,
     "status": "휴학",
-    "phone": "010-0080-0080"
+    "phone": "010-0080-0080",
+    "tier": "하위"
   },
   {
     "id": "stu-081",
@@ -1983,12 +1903,11 @@
     "name": "홍다은",
     "major": "식품영양학과",
     "grade": 3,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 12,
     "status": "휴학",
-    "phone": "010-0081-0081"
+    "phone": "010-0081-0081",
+    "tier": "하위"
   },
   {
     "id": "stu-082",
@@ -1996,12 +1915,11 @@
     "name": "고민재",
     "major": "법학과",
     "grade": 4,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 39,
     "status": "휴학",
-    "phone": "010-0082-0082"
+    "phone": "010-0082-0082",
+    "tier": "상위"
   },
   {
     "id": "stu-083",
@@ -2009,12 +1927,11 @@
     "name": "문시윤",
     "major": "영어영문학과",
     "grade": 4,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 60,
     "status": "휴학",
-    "phone": "010-0083-0083"
+    "phone": "010-0083-0083",
+    "tier": "하위"
   },
   {
     "id": "stu-084",
@@ -2022,12 +1939,11 @@
     "name": "양지환",
     "major": "회계학과",
     "grade": 2,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 76,
     "status": "재학",
-    "phone": "010-0084-0084"
+    "phone": "010-0084-0084",
+    "tier": "중간"
   },
   {
     "id": "stu-085",
@@ -2035,12 +1951,11 @@
     "name": "손나윤",
     "major": "사회복지학과",
     "grade": 2,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 64,
     "status": "재학",
-    "phone": "010-0085-0085"
+    "phone": "010-0085-0085",
+    "tier": "상위"
   },
   {
     "id": "stu-086",
@@ -2048,12 +1963,11 @@
     "name": "배수인",
     "major": "영어영문학과",
     "grade": 4,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 47,
     "status": "재학",
-    "phone": "010-0086-0086"
+    "phone": "010-0086-0086",
+    "tier": "상위"
   },
   {
     "id": "stu-087",
@@ -2061,9 +1975,7 @@
     "name": "백건우",
     "major": "생명과학과",
     "grade": 3,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 34,
     "status": "휴학",
     "phone": "010-0126-1962",
@@ -2110,7 +2022,8 @@
         "at": "2026-02-02T04:28:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "하위"
   },
   {
     "id": "stu-088",
@@ -2118,9 +2031,7 @@
     "name": "허윤아",
     "major": "산업경영공학과",
     "grade": 2,
-    "studentType": "우수인재형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T6",
     "progress": 68,
     "status": "재학",
     "phone": "010-0127-1999",
@@ -2147,7 +2058,8 @@
         "at": "2026-01-16T03:09:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-089",
@@ -2155,9 +2067,7 @@
     "name": "남시은",
     "major": "컴퓨터공학과",
     "grade": 4,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 64,
     "status": "재학",
     "phone": "010-0128-2036",
@@ -2194,7 +2104,8 @@
         "at": "2026-02-01T05:29:00.000Z",
         "by": "career_park"
       }
-    ]
+    ],
+    "tier": "상위"
   },
   {
     "id": "stu-090",
@@ -2202,9 +2113,7 @@
     "name": "심시우",
     "major": "사회복지학과",
     "grade": 1,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 100,
     "status": "졸업",
     "phone": "010-0129-2073",
@@ -2251,7 +2160,8 @@
         "at": "2026-02-17T07:49:00.000Z",
         "by": "career_kim"
       }
-    ]
+    ],
+    "tier": "중간"
   },
   {
     "id": "stu-091",
@@ -2259,12 +2169,11 @@
     "name": "김지원",
     "major": "컴퓨터공학과",
     "grade": 2,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 20,
     "status": "재학",
-    "phone": "010-0091-0091"
+    "phone": "010-0091-0091",
+    "tier": "상위"
   },
   {
     "id": "stu-092",
@@ -2272,12 +2181,11 @@
     "name": "이예준",
     "major": "생명과학과",
     "grade": 1,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 15,
     "status": "휴학",
-    "phone": "010-0092-0092"
+    "phone": "010-0092-0092",
+    "tier": "하위"
   },
   {
     "id": "stu-093",
@@ -2285,12 +2193,11 @@
     "name": "박하준",
     "major": "산업경영공학과",
     "grade": 4,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 29,
     "status": "재학",
-    "phone": "010-0093-0093"
+    "phone": "010-0093-0093",
+    "tier": "중간"
   },
   {
     "id": "stu-094",
@@ -2298,12 +2205,11 @@
     "name": "최하은",
     "major": "행정학과",
     "grade": 2,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 55,
     "status": "재학",
-    "phone": "010-0094-0094"
+    "phone": "010-0094-0094",
+    "tier": "중간"
   },
   {
     "id": "stu-095",
@@ -2311,12 +2217,11 @@
     "name": "정유나",
     "major": "법학과",
     "grade": 1,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 80,
     "status": "재학",
-    "phone": "010-0095-0095"
+    "phone": "010-0095-0095",
+    "tier": "중간"
   },
   {
     "id": "stu-096",
@@ -2324,12 +2229,11 @@
     "name": "강예은",
     "major": "디자인학과",
     "grade": 2,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 27,
     "status": "재학",
-    "phone": "010-0096-0096"
+    "phone": "010-0096-0096",
+    "tier": "하위"
   },
   {
     "id": "stu-097",
@@ -2337,12 +2241,11 @@
     "name": "조시현",
     "major": "전자공학과",
     "grade": 1,
-    "studentType": "진로설정형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T2",
     "progress": 75,
     "status": "재학",
-    "phone": "010-0097-0097"
+    "phone": "010-0097-0097",
+    "tier": "중간"
   },
   {
     "id": "stu-098",
@@ -2350,12 +2253,11 @@
     "name": "윤채원",
     "major": "건축학과",
     "grade": 2,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 37,
     "status": "재학",
-    "phone": "010-0098-0098"
+    "phone": "010-0098-0098",
+    "tier": "하위"
   },
   {
     "id": "stu-099",
@@ -2363,12 +2265,11 @@
     "name": "장태윤",
     "major": "간호학과",
     "grade": 3,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 71,
     "status": "재학",
-    "phone": "010-0099-0099"
+    "phone": "010-0099-0099",
+    "tier": "상위"
   },
   {
     "id": "stu-100",
@@ -2376,12 +2277,11 @@
     "name": "임현우",
     "major": "토목공학과",
     "grade": 3,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 43,
     "status": "재학",
-    "phone": "010-0100-0100"
+    "phone": "010-0100-0100",
+    "tier": "상위"
   },
   {
     "id": "stu-101",
@@ -2389,12 +2289,11 @@
     "name": "이도윤",
     "major": "컴퓨터공학과",
     "grade": 1,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 12,
     "status": "재학",
-    "phone": "010-0101-0101"
+    "phone": "010-0101-0101",
+    "tier": "하위"
   },
   {
     "id": "stu-102",
@@ -2402,12 +2301,11 @@
     "name": "박지호",
     "major": "컴퓨터공학과",
     "grade": 1,
-    "studentType": "역량성장형",
-    "iap": "R2",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 9,
     "status": "재학",
-    "phone": "010-0102-0102"
+    "phone": "010-0102-0102",
+    "tier": "상위"
   },
   {
     "id": "stu-103",
@@ -2415,12 +2313,11 @@
     "name": "최유나",
     "major": "컴퓨터공학과",
     "grade": 2,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 34,
     "status": "재학",
-    "phone": "010-0103-0103"
+    "phone": "010-0103-0103",
+    "tier": "상위"
   },
   {
     "id": "stu-104",
@@ -2428,12 +2325,11 @@
     "name": "정민석",
     "major": "컴퓨터공학과",
     "grade": 2,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "가속",
+    "studentType": "T3",
     "progress": 58,
     "status": "재학",
-    "phone": "010-0104-0104"
+    "phone": "010-0104-0104",
+    "tier": "상위"
   },
   {
     "id": "stu-105",
@@ -2441,12 +2337,11 @@
     "name": "강하은",
     "major": "컴퓨터공학과",
     "grade": 3,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 47,
     "status": "재학",
-    "phone": "010-0105-0105"
+    "phone": "010-0105-0105",
+    "tier": "상위"
   },
   {
     "id": "stu-106",
@@ -2454,12 +2349,11 @@
     "name": "윤서진",
     "major": "컴퓨터공학과",
     "grade": 3,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "가속",
+    "studentType": "T3",
     "progress": 72,
     "status": "재학",
-    "phone": "010-0106-0106"
+    "phone": "010-0106-0106",
+    "tier": "상위"
   },
   {
     "id": "stu-107",
@@ -2467,12 +2361,11 @@
     "name": "임재현",
     "major": "컴퓨터공학과",
     "grade": 4,
-    "studentType": "취업준비형",
-    "iap": "R6",
-    "track": "집중관리",
+    "studentType": "T4",
     "progress": 41,
     "status": "재학",
-    "phone": "010-0107-0107"
+    "phone": "010-0107-0107",
+    "tier": "상위"
   },
   {
     "id": "stu-108",
@@ -2480,12 +2373,11 @@
     "name": "한소희",
     "major": "컴퓨터공학과",
     "grade": 4,
-    "studentType": "역량성장형",
-    "iap": "R3",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 66,
     "status": "휴학",
-    "phone": "010-0108-0108"
+    "phone": "010-0108-0108",
+    "tier": "상위"
   },
   {
     "id": "stu-109",
@@ -2493,12 +2385,11 @@
     "name": "오세훈",
     "major": "컴퓨터공학과",
     "grade": 4,
-    "studentType": "취업준비형",
-    "iap": "R6",
-    "track": "가속",
+    "studentType": "T4",
     "progress": 88,
     "status": "재학",
-    "phone": "010-0109-0109"
+    "phone": "010-0109-0109",
+    "tier": "상위"
   },
   {
     "id": "stu-110",
@@ -2506,12 +2397,11 @@
     "name": "신예은",
     "major": "컴퓨터공학과",
     "grade": 4,
-    "studentType": "역량성장형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T3",
     "progress": 95,
     "status": "졸업",
-    "phone": "010-0110-0110"
+    "phone": "010-0110-0110",
+    "tier": "상위"
   },
   {
     "id": "stu-111",
@@ -2519,12 +2409,11 @@
     "name": "배준영",
     "major": "컴퓨터공학과",
     "grade": 1,
-    "studentType": "취약관리형",
-    "iap": "R5",
-    "track": "집중관리",
+    "studentType": "T5",
     "progress": 15,
     "status": "재학",
-    "phone": "010-0111-0111"
+    "phone": "010-0111-0111",
+    "tier": "하위"
   },
   {
     "id": "stu-112",
@@ -2532,11 +2421,10 @@
     "name": "문가영",
     "major": "컴퓨터공학과",
     "grade": 2,
-    "studentType": "취업준비형",
-    "iap": "R4",
-    "track": "표준",
+    "studentType": "T4",
     "progress": 29,
     "status": "재학",
-    "phone": "010-0112-0112"
+    "phone": "010-0112-0112",
+    "tier": "상위"
   }
 ]

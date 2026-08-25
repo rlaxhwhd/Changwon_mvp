@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { getActiveStudent, getStudentIap } from '../../data/students'
+import { getActiveStudent, getStudentTypeMeta } from '../../data/students'
 import './RoadmapStatus.css'
 
 const STATUS_LABEL: Record<'done' | 'active' | 'upcoming', string> = {
@@ -19,7 +19,7 @@ const STATUS_LABEL: Record<'done' | 'active' | 'upcoming', string> = {
  */
 export default function RoadmapStatus() {
   const student = getActiveStudent()
-  const iap = getStudentIap(student)
+  const type = getStudentTypeMeta(student)
   const phases = student.phases
 
   const total = phases.length
@@ -72,12 +72,12 @@ export default function RoadmapStatus() {
           <span className="rs-meta-val">{student.targetCompany.name}</span>
         </div>
         <div className="rs-meta-item">
-          <span className="rs-meta-key">학생 유형</span>
-          <span className="rs-meta-val">{student.studentType}</span>
+          <span className="rs-meta-key">진단 유형</span>
+          <span className="rs-meta-val">{type.label}</span>
         </div>
         <div className="rs-meta-item">
-          <span className="rs-meta-key">IAP 유형</span>
-          <span className="rs-meta-val">{iap.iapType}</span>
+          <span className="rs-meta-key">계층</span>
+          <span className="rs-meta-val">{type.tierLabel}</span>
         </div>
         <div className="rs-meta-item">
           <span className="rs-meta-key">목표 회사 매칭</span>

@@ -10,7 +10,8 @@ import {
 import type { CounselRequest } from '../data/counselRequests'
 import { getRecordsByStudent, getRecordByRequest, upsertRecord } from '../data/counselRecords'
 import type { CounselRecord } from '../data/counselRecords'
-import { STUDENTS, getStudentIap } from '../../src_v2/data/students'
+import { studentTypeClass } from '../data/studentRoster'
+import { STUDENTS, getStudentTypeMeta } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
 import EmptyState from '../components/EmptyState'
 import StudentDiagnosticDetail from '../components/StudentDiagnosticDetail'
@@ -21,7 +22,7 @@ function todayISO(): string {
 
 /** 좌측 — 학생 진단결과·프로필 (src_v2 학생 데이터 공유 읽기) */
 function StudentPanel({ student }: { student: StudentData }) {
-  const iap = getStudentIap(student)
+  const type = getStudentTypeMeta(student)
   return (
     <div className="admin-session-student">
       <div className="admin-session-student-head">
@@ -31,8 +32,8 @@ function StudentPanel({ student }: { student: StudentData }) {
             {student.grade}학년 · {student.major}
           </small>
           <div className="admin-session-tags">
-            <span className="admin-tag admin-tag-soft">{student.studentType}</span>
-            <span className="admin-tag">{iap.iapType}</span>
+            <span className={studentTypeClass(student.studentType)}>{student.studentType}</span>
+            <span className="admin-tag">{type.label}</span>
           </div>
         </div>
       </div>
@@ -59,11 +60,11 @@ function StudentPanel({ student }: { student: StudentData }) {
       </dl>
 
       <div className="admin-session-block">
-        <h4>IAP 방향</h4>
+        <h4>상담 방향</h4>
         <p className="admin-session-note">
-          <strong>{iap.goal}</strong>
+          <strong>{type.goal}</strong>
           <br />
-          {iap.focus}
+          {type.focus}
         </p>
       </div>
     </div>

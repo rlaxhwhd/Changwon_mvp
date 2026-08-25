@@ -71,7 +71,7 @@ export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
         <table style={tbl}>
           <thead><tr><th style={th}>유형</th><th style={th}>SMART 지원체계</th><th style={th}>유형특징</th><th style={th}>진로개발 방안</th></tr></thead>
           <tbody>
-            <tr><td style={td}>진로미탐색형</td><td style={td}>Start 집중형</td><td style={tdLeft}>진로탐색의 필요성을 느끼고 있으나 진로에 대한 인식과 이해가 부족함</td><td style={tdLeft}>
+            <tr><td style={td}>진로탐색형</td><td style={td}>Start 집중형</td><td style={tdLeft}>진로탐색의 필요성을 느끼고 있으나 진로에 대한 인식과 이해가 부족함</td><td style={tdLeft}>
               <div>· 흥미·관심 분야에 대한 자가 점검 수행</div>
               <div>· 전공 및 직무 정보 탐색 활동 시도</div>
               <div>· 진로 관련 기록(메모·일지) 작성 시작</div>

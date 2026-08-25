@@ -8,7 +8,7 @@
   "enrollmentStatus": "재학",
   "gpa": "3.7",
   "language": "TOEIC 870 · OPIc IH",
-  "studentType": "취업준비형",
+  "studentType": "T4",
   "competencyScore": 78,
   "typeScores": {
     "진로명확도": "상",
@@ -96,7 +96,7 @@
     },
     {
       "num": 2,
-      "title": "상담 · IAP 설정",
+      "title": "상담 · 유형 확정",
       "icon": "fa-comments",
       "status": "done",
       "period": "2024.05 ~ 2024.06",
@@ -110,7 +110,7 @@
           "done": true
         },
         {
-          "text": "AI 분석 + 상담사 확정 → IAP 유형 취업실전형",
+          "text": "AI 분석 + 상담사 확정 → 진단유형 취업준비형",
           "done": true
         },
         {
@@ -118,7 +118,7 @@
           "done": true
         }
       ],
-      "recommendation": "IAP 유형이 취업실전형으로 확정되었습니다. 취업 실전 로드맵으로 넘어가세요.",
+      "recommendation": "진단유형이 취업준비형으로 확정되었습니다. 취업 실전 로드맵으로 넘어가세요.",
       "nextPath": "/counsel/career"
     },
     {

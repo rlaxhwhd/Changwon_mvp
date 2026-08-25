@@ -65,8 +65,9 @@
 | 구분 | 문서 / 위치 |
 |---|---|
 | **화면·기능 명세 + 구현 상태** | **[SPEC.md](SPEC.md) §3** ← 화면 작업 전 필독 |
-| **DB 구조·이관 전제·미결 대장** | **[DB.md](DB.md)** |
-| 구현 이력 · 설계 결정 · 버그 수정 | [Progress.md](Progress.md) |
+| **프로세스·게이팅·6유형·로드맵 3축** | **[PROCESS.md](PROCESS.md)** ← 진단·상담·로드맵 작업 전 필독 |
+| **현행 시스템 사실** (사이트맵·기능·권한·DB) | **[CURRENT.md](CURRENT.md)** |
+| **우리 DB 설계·이관 전제·미결 대장** | **[DB.md](DB.md)** |
 | 포털 컨셉·사이트맵 원안 | [STU_README.md](STU_README.md)(학생) · [Counsel_README.md](Counsel_README.md)(교직원) |
 | 디자인 시스템 (단일 소스) | [DESIGN.md](DESIGN.md) · [src_v2/DESIGN.md](src_v2/DESIGN.md) |
 | 하네스 / 팀 오케스트레이션 | [CLAUDE.md](CLAUDE.md) "하네스" 섹션 · `.claude/agents/` · `.claude/skills/dreamcatch-orchestrator/` |

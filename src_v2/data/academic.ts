@@ -8,6 +8,7 @@
 // 집계·파생은 전부 여기서 한다 (CLAUDE.md 원칙 10). 화면은 계산하지 않는다.
 // ─────────────────────────────────────────────────────────────────────────
 import type { StudentData } from './students'
+import { typeLabel } from './careerProcess'
 import type {
   AcademicSnapshot, Cert, CourseClass, JobRole,
 } from './academic/repository'
@@ -227,7 +228,7 @@ export function deriveSkillTree(snap: AcademicSnapshot, student: StudentData): S
     {
       id: 'diagnosis', icon: 'fa-chart-simple', name: '진단', subtitle: '취업지원검사',
       complete: diagDone, progress: diagDone ? 100 : 0,
-      progressLabel: diagDone ? `${student.studentType} 판정` : '미응시',
+      progressLabel: diagDone ? `${typeLabel(student.studentType)} 판정` : '미응시',
     },
     {
       id: 'program', icon: 'fa-layer-group', name: '비교과 프로그램', subtitle: '참여 프로그램 이수',

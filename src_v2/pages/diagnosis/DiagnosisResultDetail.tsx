@@ -15,6 +15,7 @@ import { Radar } from 'react-chartjs-2'
 import Modal from '../../components/Modal'
 import CRAReport from '../../components/CRAReport'
 import { getActiveStudent } from '../../data/students'
+import { DIAGNOSIS_MODULES } from '../../data/careerProcess'
 import './DiagnosisResultDetail.css'
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
@@ -52,11 +53,8 @@ const TEST_NAMES: Record<string, string> = {
   cares: 'CARES 진로인식검사',
   job: '직무역량검사',
   aptitude: '직업적성검사',
-  // 진단 4모듈(careerProcess.ts) testId 연동
-  c2: 'C-2 진로설정 진단검사',
-  c3: 'C-3 역량수준 진단검사',
-  c4: 'C-4 구직역량 진단검사',
-  ccore: 'C-CORE 핵심진단검사',
+  // 진단 모듈(careerProcess.DIAGNOSIS_MODULES) testId 연동 — 이름은 단일소스에서 파생
+  ...Object.fromEntries(DIAGNOSIS_MODULES.map(m => [m.testId, m.name])),
 }
 
 const scoreLevel = (s: number) => (s >= 80 ? 'high' : s >= 60 ? 'mid' : 'low')

@@ -2,21 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import {
-  DIAGNOSIS_MODULES,
+  getRequiredTests,
   getModuleStatus,
-  type DiagnosisCategory,
+  typeLabel,
   type TestStatus,
 } from '../../data/careerProcess'
-import { getActiveStudent, getStudentIap } from '../../data/students'
+import { getActiveStudent } from '../../data/students'
 import './EmploymentTest.css'
 import './DiagnosisProcess.css'
-
-type CategoryTab = '전체' | DiagnosisCategory
-
-const categories: CategoryTab[] = [
-  '전체',
-  ...Array.from(new Set(DIAGNOSIS_MODULES.map(m => m.category))),
-]
 
 const STATUS_LABEL: Record<TestStatus, string> = {
   done: '완료',
@@ -49,20 +42,16 @@ const GUIDE_ITEMS = [
 
 export default function DiagnosisResult() {
   const navigate = useNavigate()
-  const [activeCategory, setActiveCategory] = useState<CategoryTab>('전체')
   const [isGuideOpen, setIsGuideOpen] = useState(false)
+  const [hasRequestedTypeChange, setHasRequestedTypeChange] = useState(false)
 
   const student = getActiveStudent()
-  const iap = getStudentIap(student)
-  const modulesWithStatus = DIAGNOSIS_MODULES.map(m => ({ ...m, status: getModuleStatus(m) }))
+  // 응시 대상 = 필수진단 CCORE + 내 유형의 후속진단 1종 (PROCESS.md §3)
+  // 학년으로 배정하지 않는다. 전 모듈을 나열하지도 않는다.
+  const modulesWithStatus = getRequiredTests(student.studentType).map(m => ({ ...m, status: getModuleStatus(m) }))
   const doneCount = modulesWithStatus.filter(m => m.status === 'done').length
   const availableCount = modulesWithStatus.filter(m => m.status === 'available').length
   const lockedCount = modulesWithStatus.filter(m => m.status === 'locked').length
-
-  const visibleResults =
-    activeCategory === '전체'
-      ? modulesWithStatus
-      : modulesWithStatus.filter(m => m.category === activeCategory)
 
   const handleCardAction = (testId: string, status: TestStatus) => {
     if (status === 'locked') return
@@ -77,8 +66,8 @@ export default function DiagnosisResult() {
           <span>진단센터</span>
           <h1>다양한 검사로 나를 더 깊이 이해해보세요</h1>
           <p>
-            진단은 <strong>단계별로 분할 실시</strong>됩니다. 검사가 1차로 유형을 산출하고,<br />
-            상담사·AI가 이를 확정해 로드맵으로 연결합니다.
+            <strong>1회차 진단은 학생이 자유롭게 실시</strong>할 수 있습니다.<br />
+            재진단과 진단유형 변경은 상담사와 상담 후 진행됩니다.
           </p>
         </div>
         <div className="de-hero-visual" aria-label="AI 홀로그램 진단 이미지">
@@ -86,43 +75,66 @@ export default function DiagnosisResult() {
         </div>
       </section>
 
-      {/* 진단 프로세스 배너 — 학생유형 / IAP유형 / 진행률 */}
-      <section className="de-proc-banner" aria-label="진단 프로세스 현황">
-        <div className="de-proc-item">
-          <small>학생 유형</small>
-          <strong>{student.studentType}</strong>
-          <span className="de-proc-sub">
-            진로명확도 {student.typeScores.진로명확도} · 역량 {student.typeScores.역량준비도} · 취업 {student.typeScores.취업준비도}
-          </span>
-        </div>
-        <i className="fa-solid fa-arrow-right de-proc-arrow" />
-        <div className="de-proc-item">
-          <small>IAP 유형</small>
-          <strong>{iap.label}</strong>
-          <span className="de-proc-sub">{iap.goal}</span>
-        </div>
-        <i className="fa-solid fa-arrow-right de-proc-arrow" />
-        <div className="de-proc-item de-proc-progress">
-          <small>진단 진행</small>
-          <strong>{doneCount}/{DIAGNOSIS_MODULES.length} 모듈</strong>
-          <div className="de-proc-bar">
-            <span style={{ width: `${Math.round((doneCount / DIAGNOSIS_MODULES.length) * 100)}%` }} />
+      <section className="de-access-panel" aria-labelledby="diagnosis-access-title">
+        <div className="de-access-heading">
+          <div>
+            <span className="de-access-eyebrow">진단 권한 현황</span>
+            <h2 id="diagnosis-access-title">내 진단 결과와 응시 권한</h2>
           </div>
+          <button
+            className={`de-type-request-btn${hasRequestedTypeChange ? ' is-requested' : ''}`}
+            type="button"
+            onClick={() => setHasRequestedTypeChange(true)}
+            disabled={hasRequestedTypeChange}
+          >
+            <i className={`fa-solid ${hasRequestedTypeChange ? 'fa-circle-check' : 'fa-paper-plane'}`} />
+            {hasRequestedTypeChange ? '수정 신청 완료' : '진단유형 수정 신청'}
+          </button>
         </div>
+
+        <div className="de-access-grid">
+          <article className="de-access-item is-complete">
+            <span className="de-access-icon"><i className="fa-solid fa-check" /></span>
+            <div>
+              <small>1회차 진단</small>
+              <strong>완료</strong>
+              <p>학생 본인이 자유롭게 실시할 수 있습니다.</p>
+            </div>
+          </article>
+
+          <article className="de-access-item is-locked">
+            <span className="de-access-icon"><i className="fa-solid fa-lock" /></span>
+            <div>
+              <small>2회차 이상 재진단</small>
+              <strong>상담사 승인 전 잠금</strong>
+              <p>상담 진행 후 상담사가 응시 권한을 열 수 있습니다.</p>
+            </div>
+          </article>
+
+          <article className="de-access-item is-type">
+            <span className="de-access-icon"><i className="fa-solid fa-user-tag" /></span>
+            <div>
+              <small>현재 진단유형</small>
+              <strong>{typeLabel(student.studentType)}</strong>
+              <p>진단 결과와 지정 유형은 학생이 직접 수정할 수 없습니다.</p>
+            </div>
+          </article>
+        </div>
+
+        <div className="de-access-notice" role="note">
+          <i className="fa-solid fa-circle-info" />
+          <span>재진단 및 진단유형 변경은 상담사와 상담 및 논의 후 진행 가능합니다.</span>
+        </div>
+
+        {hasRequestedTypeChange && (
+          <p className="de-request-feedback" role="status" aria-live="polite">
+            <i className="fa-solid fa-circle-check" />
+            진단유형 수정 요청을 상담사에게 전달했습니다.
+          </p>
+        )}
       </section>
 
-      <section className="de-toolbar" aria-label="결과 필터">
-        <div className="de-tabs">
-          {categories.map(category => (
-            <button
-              key={category}
-              className={activeCategory === category ? 'active' : ''}
-              onClick={() => setActiveCategory(category)}
-            >
-              {category}
-            </button>
-          ))}
-        </div>
+      <section className="de-toolbar de-toolbar--status-only" aria-label="진단 상태 요약">
         <div className="de-status-summary">
           <span className="de-status-chip done">완료 {doneCount}</span>
           <span className="de-status-chip available">응시 가능 {availableCount}</span>
@@ -131,7 +143,7 @@ export default function DiagnosisResult() {
       </section>
 
       <section className="de-card-grid" aria-label="진단 모듈 목록">
-        {visibleResults.map(result => (
+        {modulesWithStatus.map(result => (
           <article key={result.id} className={`de-test-card de-card--${result.status}`}>
             <div className={`de-card-art de-card-art-${result.art}`}>
               {result.status === 'locked' && (

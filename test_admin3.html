@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>DREAMCATCH — 대시보드</title>
+<link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css" />
+<style>
+/* ============================================================
+   Design Foundations — 가이드라인 기반 값
+   ============================================================ */
+:root{
+  --blue:#356dff;    --blue-soft:#eaf0ff;
+  --violet:#7c5cfc;  --violet-soft:#f0edff;
+  --mint:#20b486;    --mint-soft:#e5f8f2;
+  --coral:#ff6b6b;   --coral-soft:#fff0f0;
+  --amber:#f5a524;   --amber-soft:#fff6df;
+  --sky:#17a9e6;     --sky-soft:#e7f7fd;
+  --pink:#e85aad;    --pink-soft:#fdebf6;
+
+  /* 중립 — 하늘빛 배경 위에 놓이므로 차갑게 보정 */
+  --ink:#0e1729;
+  --ink-2:#38455c;
+  --ink-3:#6a7891;
+  --ink-4:#96a3ba;
+  --line:rgba(14,23,41,.08);
+  --line-2:rgba(14,23,41,.05);
+
+  /* 리퀴드 글래스 */
+  --glass:linear-gradient(158deg,rgba(255,255,255,.80),rgba(255,255,255,.54));
+  --glass-2:linear-gradient(158deg,rgba(255,255,255,.62),rgba(255,255,255,.38));
+  --glass-brd:rgba(255,255,255,.78);
+  --glass-lift:0 1px 0 rgba(255,255,255,.92) inset, 0 10px 30px rgba(16,54,110,.07);
+  --glass-lift-2:0 1px 0 rgba(255,255,255,.95) inset, 0 18px 48px rgba(16,54,110,.12);
+
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:26px; --r-full:999px;
+  --ease:cubic-bezier(.22,.61,.36,1);
+}
+
+/* Typography scale — 표 정의값 그대로 */
+.t-d2{font-size:40px;line-height:52px;letter-spacing:-.0282em}
+.t-t1{font-size:32px;line-height:44px;letter-spacing:-.0253em}
+.t-t3{font-size:24px;line-height:32px;letter-spacing:-.023em}
+.t-h1{font-size:22px;line-height:30px;letter-spacing:-.0194em}
+.t-h2{font-size:20px;line-height:28px;letter-spacing:-.012em}
+.t-hl1{font-size:18px;line-height:26px;letter-spacing:-.002em}
+.t-b1{font-size:16px;line-height:24px;letter-spacing:.0057em}
+.t-b2{font-size:15px;line-height:22px;letter-spacing:.0096em}
+.t-l1{font-size:14px;line-height:20px;letter-spacing:.0145em}
+.t-l2{font-size:13px;line-height:18px;letter-spacing:.0194em}
+.t-c1{font-size:12px;line-height:16px;letter-spacing:.0252em}
+.t-c2{font-size:11px;line-height:14px;letter-spacing:.0311em}
+
+*,*::before,*::after{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:"Pretendard Variable",Pretendard,"Noto Sans KR",sans-serif;
+  color:var(--ink);background:#eaf1fa;
+  font-size:16px;line-height:24px;letter-spacing:.0057em;
+  -webkit-font-smoothing:antialiased;min-height:100vh;
+}
+button{font-family:inherit;border:0;background:none;cursor:pointer;color:inherit}
+ul,ol{margin:0;padding:0;list-style:none}
+a{color:inherit;text-decoration:none}
+svg{display:block}
+
+/* ---- 앰비언트 하늘빛 배경 : 글래스가 읽히려면 아래에 색이 있어야 한다 ---- */
+.sky{position:fixed;inset:0;z-index:-1;overflow:hidden;background:
+  linear-gradient(180deg,#f2f8ff 0%,#e8f1fb 42%,#eef4fc 100%)}
+.sky i{position:absolute;border-radius:50%;filter:blur(72px);opacity:.55}
+.sky .b1{width:620px;height:620px;left:-140px;top:-180px;background:radial-gradient(circle,var(--sky) 0%,transparent 68%)}
+.sky .b2{width:540px;height:540px;right:-120px;top:-90px;background:radial-gradient(circle,var(--blue) 0%,transparent 68%);opacity:.34}
+.sky .b3{width:680px;height:680px;left:34%;bottom:-320px;background:radial-gradient(circle,var(--violet) 0%,transparent 66%);opacity:.26}
+.sky .b4{width:420px;height:420px;right:6%;bottom:-160px;background:radial-gradient(circle,var(--mint) 0%,transparent 68%);opacity:.24}
+
+/* ---- 유리 표면 ---- */
+.glass{
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(22px) saturate(180%);
+  backdrop-filter:blur(22px) saturate(180%);
+  border:1px solid var(--glass-brd);
+  box-shadow:var(--glass-lift);
+  border-radius:var(--r-lg);
+}
+
+/* ---- 반짝임 : 표면을 훑고 지나가는 반사광 ---- */
+@keyframes sheen{
+  0%{transform:translateX(-130%) skewX(-16deg)}
+  56%,100%{transform:translateX(340%) skewX(-16deg)}
+}
+.shine{position:relative;overflow:hidden}
+.shine::after{
+  content:"";position:absolute;top:-40%;left:0;width:34%;height:180%;pointer-events:none;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.55),transparent);
+  animation:sheen 7s var(--ease) infinite;
+}
+@keyframes twinkle{
+  0%,100%{opacity:.15;transform:scale(.6)}
+  50%{opacity:1;transform:scale(1)}
+}
+.spark{position:absolute;border-radius:50%;background:#fff;pointer-events:none;
+  box-shadow:0 0 6px rgba(255,255,255,.9);animation:twinkle 2.6s ease-in-out infinite}
+
+/* ============================================================
+   Shell — 사이드바 + 본문
+   ============================================================ */
+.shell{display:flex;min-height:100vh}
+
+.side{
+  width:248px;flex-shrink:0;position:sticky;top:0;height:100vh;
+  display:flex;flex-direction:column;gap:24px;padding:24px 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.62),rgba(255,255,255,.34));
+  -webkit-backdrop-filter:blur(24px) saturate(180%);
+  backdrop-filter:blur(24px) saturate(180%);
+  border-right:1px solid rgba(255,255,255,.6);
+}
+.brand{display:flex;align-items:center;gap:10px;padding:4px 8px}
+.brand__mark{
+  width:32px;height:32px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(140deg,var(--sky),var(--blue));
+  box-shadow:0 4px 12px rgba(23,169,230,.34);
+}
+.brand__n{font-weight:800;letter-spacing:-.03em;font-size:17px;line-height:22px}
+.brand__s{color:var(--ink-4);font-weight:600;font-size:11px;line-height:14px;letter-spacing:.0311em}
+
+.side__lb{
+  padding:0 10px;color:var(--ink-4);font-weight:700;margin-bottom:8px;
+  font-size:11px;line-height:14px;letter-spacing:.0311em;
+}
+.snav{display:flex;flex-direction:column;gap:2px}
+.snav__i{
+  display:flex;align-items:center;gap:10px;padding:10px;border-radius:var(--r-md);
+  color:var(--ink-2);font-weight:600;font-size:14px;line-height:20px;letter-spacing:.0145em;
+  transition:background .18s var(--ease),color .18s var(--ease);
+}
+.snav__i:hover{background:rgba(255,255,255,.62)}
+.snav__i[data-on="1"]{
+  background:linear-gradient(140deg,rgba(255,255,255,.95),rgba(255,255,255,.7));
+  color:var(--ink);box-shadow:0 2px 10px rgba(16,54,110,.08);
+}
+.snav__i[data-lock="1"]{color:var(--ink-4);cursor:not-allowed}
+.snav__i[data-lock="1"]:hover{background:transparent}
+.snav__n{
+  width:22px;height:22px;border-radius:8px;flex-shrink:0;display:grid;place-items:center;
+  background:rgba(14,23,41,.06);color:var(--ink-3);
+  font-size:11px;line-height:1;font-weight:800;font-feature-settings:"tnum";
+}
+.snav__i[data-on="1"] .snav__n{background:var(--c,var(--sky));color:#fff}
+.snav__i[data-done="1"] .snav__n{background:var(--mint);color:#fff}
+.snav__t{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+.typecard{
+  margin-top:auto;padding:16px;border-radius:var(--r-md);position:relative;overflow:hidden;
+  background:linear-gradient(150deg,var(--sky),var(--blue));color:#fff;
+  box-shadow:0 8px 24px rgba(23,169,230,.28);
+}
+.typecard__l{opacity:.78;font-weight:700;font-size:11px;line-height:14px;letter-spacing:.0311em}
+.typecard__c{font-weight:800;margin-top:6px;font-size:22px;line-height:30px;letter-spacing:-.0194em}
+.typecard__d{opacity:.86;margin-top:2px;font-size:12px;line-height:16px;letter-spacing:.0252em}
+.typecard--off{background:rgba(255,255,255,.55);color:var(--ink-3);box-shadow:none;border:1px dashed var(--line)}
+.typecard--off .typecard__c{color:var(--ink-2);font-size:15px;line-height:22px;letter-spacing:.0096em}
+
+.demo{display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--r-md);background:rgba(255,255,255,.5)}
+.demo__l{color:var(--ink-4);font-weight:700;font-size:11px;line-height:14px;letter-spacing:.0311em}
+.seg{display:flex;gap:2px;padding:3px;background:rgba(14,23,41,.05);border-radius:var(--r-full)}
+.seg button{
+  flex:1;padding:6px 4px;border-radius:var(--r-full);color:var(--ink-3);font-weight:600;
+  font-size:12px;line-height:16px;letter-spacing:.0252em;transition:all .18s var(--ease);
+}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink);box-shadow:0 2px 8px rgba(16,54,110,.1)}
+
+/* ---- 본문 ---- */
+.main{flex:1;min-width:0;padding:24px 28px 48px}
+.main__in{max-width:1100px;margin:0 auto}
+@media (min-width:1600px){ .main__in{max-width:1440px} }
+
+.top{display:flex;align-items:center;gap:20px;margin-bottom:24px;flex-wrap:wrap}
+.top__d{color:var(--ink-4);font-weight:700;font-size:12px;line-height:16px;letter-spacing:.0252em}
+.top__h{font-weight:800;margin-top:2px;font-size:28px;line-height:38px;letter-spacing:-.0236em}
+.top__r{margin-left:auto;display:flex;align-items:center;gap:10px}
+.iconbtn{
+  position:relative;width:40px;height:40px;border-radius:var(--r-full);display:grid;place-items:center;
+  color:var(--ink-2);background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.7);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.iconbtn:hover{background:rgba(255,255,255,.9)}
+.iconbtn .dot{position:absolute;top:9px;right:10px;width:7px;height:7px;border-radius:var(--r-full);
+  background:var(--coral);box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.who{
+  display:flex;align-items:center;gap:10px;padding:5px 14px 5px 5px;border-radius:var(--r-full);
+  background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.7);
+  -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);
+}
+.who__a{
+  width:30px;height:30px;border-radius:var(--r-full);display:grid;place-items:center;color:#fff;
+  background:linear-gradient(140deg,var(--sky),var(--violet));font-size:12px;font-weight:800;
+}
+.who__n{font-weight:700;font-size:13px;line-height:18px;letter-spacing:.0194em}
+.who__m{color:var(--ink-4);font-size:11px;line-height:14px;letter-spacing:.0311em}
+.btn-login{
+  padding:11px 22px;border-radius:var(--r-full);color:#fff;font-weight:700;
+  font-size:14px;line-height:20px;letter-spacing:.0145em;
+  background:linear-gradient(140deg,var(--sky),var(--blue));
+  box-shadow:0 6px 18px rgba(23,169,230,.32);
+  transition:transform .18s var(--ease),box-shadow .18s var(--ease);
+}
+.btn-login:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(23,169,230,.4)}
+
+/* ---- 그리드 ---- */
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:20px;margin-bottom:20px}
+@media (max-width:992px){ .grid{grid-template-columns:repeat(3,1fr)} }
+@media (max-width:768px){ .grid{grid-template-columns:repeat(2,1fr)} }
+.c3{grid-column:span 3}
+.c4{grid-column:span 4}
+.c5{grid-column:span 5}
+.c7{grid-column:span 7}
+.c8{grid-column:span 8}
+@media (max-width:1200px){ .c3{grid-column:span 6} .c4,.c5,.c7,.c8{grid-column:1/-1} }
+@media (max-width:768px){ .c3{grid-column:1/-1} }
+
+/* ---- 카드 ---- */
+.card{padding:22px;height:100%;position:relative;display:flex;flex-direction:column}
+.card--flush{padding:0;overflow:hidden;height:100%}
+.card--flush > .rl{display:flex;flex-direction:column;height:100%}
+/* 자연 높이로 두는 행 — 늘려서 빈 공간을 만드는 것보다 낫다 */
+.grid--top{align-items:start}
+.hd{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px}
+.hd__t{font-weight:700;margin:0;font-size:17px;line-height:26px;letter-spacing:-.002em}
+.hd__d{color:var(--ink-3);margin-top:2px;font-size:12px;line-height:16px;letter-spacing:.0252em}
+.hd__r{margin-left:auto;display:flex;align-items:center;gap:8px;flex-shrink:0}
+
+.pill{
+  display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:var(--r-full);
+  font-size:11px;line-height:14px;letter-spacing:.0311em;font-weight:800;
+  background:rgba(14,23,41,.05);color:var(--ink-3);
+}
+.pill--blue{background:var(--blue-soft);color:var(--blue)}
+.pill--violet{background:var(--violet-soft);color:var(--violet)}
+.pill--mint{background:var(--mint-soft);color:var(--mint)}
+.pill--amber{background:var(--amber-soft);color:#b97708}
+.pill--coral{background:var(--coral-soft);color:var(--coral)}
+.pill--sky{background:var(--sky-soft);color:var(--sky)}
+.pill--pink{background:var(--pink-soft);color:var(--pink)}
+.tlink{display:inline-flex;align-items:center;gap:4px;color:var(--ink-3);font-weight:600;
+  font-size:12px;line-height:16px;letter-spacing:.0252em;padding:4px 8px;border-radius:var(--r-sm)}
+.tlink:hover{background:rgba(255,255,255,.7);color:var(--ink)}
+
+/* ---- 순차 게이팅 잠금 ---- */
+.gate{position:relative;overflow:hidden}
+.gate__v{
+  position:absolute;inset:0;z-index:2;border-radius:var(--r-lg);
+  background:linear-gradient(160deg,rgba(255,255,255,.76),rgba(255,255,255,.6));
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;padding:20px;text-align:center;
+}
+.gate__l{
+  width:40px;height:40px;border-radius:var(--r-full);display:grid;place-items:center;margin-bottom:2px;
+  background:rgba(255,255,255,.9);color:var(--ink-3);box-shadow:0 4px 14px rgba(16,54,110,.12);
+}
+.gate__t{font-weight:700;font-size:14px;line-height:20px;letter-spacing:.0145em}
+.gate__d{color:var(--ink-3);max-width:270px;font-size:12px;line-height:16px;letter-spacing:.0252em}
+.gate__b{
+  margin-top:8px;padding:8px 16px;border-radius:var(--r-full);color:#fff;font-weight:700;
+  font-size:12px;line-height:16px;letter-spacing:.0252em;
+  background:linear-gradient(140deg,var(--sky),var(--blue));box-shadow:0 4px 14px rgba(23,169,230,.3);
+}
+.gate__b:hover{filter:brightness(1.06)}
+.gate.is-locked > *:not(.gate__v){filter:grayscale(.85);opacity:.42;pointer-events:none;user-select:none}
+
+/* ============================================================
+   스탯 타일
+   ============================================================ */
+.stat{padding:20px;display:flex;flex-direction:column;gap:12px;height:100%}
+.stat__top{display:flex;align-items:center;gap:10px}
+.stat__i{
+  width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex-shrink:0;
+  background:var(--s-s);color:var(--s-c);
+}
+.stat__l{color:var(--ink-3);font-weight:700;font-size:12px;line-height:16px;letter-spacing:.0252em}
+.stat__v{
+  font-weight:800;font-feature-settings:"tnum";
+  font-size:32px;line-height:44px;letter-spacing:-.0253em;
+}
+.stat__v small{font-size:15px;font-weight:700;color:var(--ink-4);margin-left:2px;letter-spacing:0}
+.stat__f{display:flex;align-items:center;gap:6px;margin-top:auto}
+.stat__bar{flex:1;height:5px;border-radius:3px;background:rgba(14,23,41,.07);overflow:hidden}
+.stat__bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--s-c),var(--sky));transition:width .8s var(--ease)}
+.stat__sub{color:var(--ink-4);font-weight:600;font-size:11px;line-height:14px;letter-spacing:.0311em;white-space:nowrap}
+.stat[data-off="1"] .stat__v{color:var(--ink-4)}
+
+/* ============================================================
+   로드맵 레일
+   ============================================================ */
+.rm{padding:22px;position:relative;height:100%}
+.rm__top{display:flex;align-items:flex-start;gap:16px;margin-bottom:26px;flex-wrap:wrap}
+.rm__h{font-weight:800;margin:0;font-size:22px;line-height:30px;letter-spacing:-.0194em}
+.rm__h em{font-style:normal;background:linear-gradient(100deg,var(--sky),var(--blue));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.rm__d{color:var(--ink-3);margin-top:4px;font-size:13px;line-height:18px;letter-spacing:.0194em}
+.rm__pct{margin-left:auto;text-align:right;flex-shrink:0}
+.rm__pn{font-weight:800;font-feature-settings:"tnum";font-size:32px;line-height:44px;letter-spacing:-.0253em}
+.rm__pn small{font-size:16px;color:var(--ink-4);margin-left:1px}
+.rm__pl{color:var(--ink-4);font-weight:600;font-size:11px;line-height:14px;letter-spacing:.0311em}
+
+.rail{position:relative;display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+@media (max-width:768px){ .rail{grid-template-columns:1fr;gap:14px} }
+.rail__t{position:absolute;left:22px;right:22px;top:23px;height:3px;border-radius:2px;background:rgba(14,23,41,.07)}
+.rail__f{position:absolute;left:22px;top:23px;height:3px;border-radius:2px;
+  background:linear-gradient(90deg,var(--sky),var(--blue),var(--mint));transition:width .8s var(--ease)}
+@media (max-width:768px){ .rail__t,.rail__f{display:none} }
+
+.st{position:relative;z-index:1;text-align:center}
+.st__d{
+  width:46px;height:46px;border-radius:var(--r-full);margin:0 auto 12px;position:relative;
+  display:grid;place-items:center;color:var(--ink-4);
+  background:rgba(255,255,255,.92);border:1px solid rgba(255,255,255,.9);
+  box-shadow:0 4px 14px rgba(16,54,110,.08);transition:all .3s var(--ease);
+}
+.st__n{
+  position:absolute;top:-3px;right:-3px;width:18px;height:18px;border-radius:var(--r-full);
+  display:grid;place-items:center;background:rgba(14,23,41,.12);color:#fff;
+  font-size:10px;line-height:1;font-weight:800;font-feature-settings:"tnum";
+  border:2px solid rgba(255,255,255,.95);
+}
+.st__t{font-weight:700;font-size:14px;line-height:20px;letter-spacing:.0145em}
+.st__s{color:var(--ink-4);font-weight:600;margin-top:3px;font-size:11px;line-height:14px;letter-spacing:.0311em}
+.st__b{height:4px;border-radius:2px;background:rgba(14,23,41,.07);margin:8px auto 0;max-width:80px;overflow:hidden}
+.st__b i{display:block;height:100%;border-radius:2px}
+
+.st[data-s="done"] .st__d{color:var(--mint);background:linear-gradient(150deg,#fff,var(--mint-soft));border-color:rgba(32,180,134,.28)}
+.st[data-s="done"] .st__n{background:var(--mint)}
+.st[data-s="done"] .st__s{color:var(--mint)}
+.st[data-s="current"] .st__d{
+  color:#fff;background:linear-gradient(150deg,var(--c),color-mix(in srgb,var(--c) 62%,#fff));
+  border-color:rgba(255,255,255,.95);
+  box-shadow:0 0 0 5px color-mix(in srgb,var(--c) 14%,transparent),0 8px 22px color-mix(in srgb,var(--c) 34%,transparent);
+}
+.st[data-s="current"] .st__n{background:var(--c)}
+.st[data-s="current"] .st__s{color:var(--c)}
+.st[data-s="locked"] .st__d{border-style:dashed;border-color:rgba(14,23,41,.14);background:rgba(255,255,255,.55);box-shadow:none}
+.st[data-s="locked"] .st__t{color:var(--ink-4)}
+
+.act{
+  margin-top:24px;padding:16px 18px;border-radius:var(--r-md);display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  background:linear-gradient(140deg,color-mix(in srgb,var(--c) 12%,rgba(255,255,255,.7)),rgba(255,255,255,.55));
+  border:1px solid color-mix(in srgb,var(--c) 20%,transparent);
+}
+.act__i{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;color:#fff;
+  background:linear-gradient(140deg,var(--c),color-mix(in srgb,var(--c) 60%,#fff));
+  box-shadow:0 4px 14px color-mix(in srgb,var(--c) 34%,transparent)}
+.act__t{font-weight:700;font-size:15px;line-height:22px;letter-spacing:.0096em}
+.act__d{color:var(--ink-2);margin-top:2px;font-size:13px;line-height:18px;letter-spacing:.0194em}
+.act__b{
+  margin-left:auto;padding:11px 20px;border-radius:var(--r-full);color:#fff;font-weight:700;flex-shrink:0;
+  font-size:14px;line-height:20px;letter-spacing:.0145em;
+  background:linear-gradient(140deg,var(--c),color-mix(in srgb,var(--c) 66%,#fff));
+  box-shadow:0 6px 18px color-mix(in srgb,var(--c) 34%,transparent);
+  transition:transform .18s var(--ease);
+}
+.act__b:hover{transform:translateY(-1px)}
+
+/* ============================================================
+   출석
+   ============================================================ */
+.att__s{display:flex;align-items:baseline;gap:8px;padding:14px 16px;border-radius:var(--r-md);margin-bottom:14px;
+  background:linear-gradient(140deg,var(--sky-soft),rgba(255,255,255,.5))}
+.att__n{font-weight:800;color:var(--sky);font-feature-settings:"tnum";font-size:28px;line-height:38px;letter-spacing:-.0236em}
+.att__l{color:var(--ink-2);font-weight:600;font-size:13px;line-height:18px;letter-spacing:.0194em}
+.att__w{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:auto;padding-bottom:14px}
+.att__c{text-align:center}
+.att__dw{color:var(--ink-4);font-weight:700;margin-bottom:5px;font-size:11px;line-height:14px;letter-spacing:.0311em}
+.att__x{
+  aspect-ratio:1;border-radius:11px;display:grid;place-items:center;color:var(--ink-4);
+  background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.75);
+  font-weight:700;font-feature-settings:"tnum";font-size:12px;line-height:16px;transition:all .2s var(--ease);
+}
+.att__c[data-s="on"] .att__x{background:linear-gradient(150deg,var(--sky),#4cc3f0);color:#fff;border-color:transparent;
+  box-shadow:0 4px 12px rgba(23,169,230,.28)}
+.att__c[data-s="today"] .att__x{border:1px dashed var(--sky);color:var(--sky);background:rgba(255,255,255,.75)}
+.att__c[data-s="miss"] .att__x{background:rgba(14,23,41,.04);border-color:transparent;color:var(--ink-4)}
+.att__btn{
+  width:100%;padding:13px;border-radius:var(--r-md);color:#fff;font-weight:700;
+  font-size:14px;line-height:20px;letter-spacing:.0145em;
+  background:linear-gradient(140deg,var(--sky),var(--blue));box-shadow:0 6px 18px rgba(23,169,230,.3);
+  transition:transform .18s var(--ease);
+}
+.att__btn:hover{transform:translateY(-1px)}
+.att__btn[disabled]{background:rgba(14,23,41,.05);color:var(--ink-4);box-shadow:none;cursor:default;transform:none}
+.att__note{color:var(--ink-4);text-align:center;margin-top:8px;font-size:11px;line-height:14px;letter-spacing:.0311em}
+
+/* ============================================================
+   역량 레이더
+   ============================================================ */
+.rad{display:flex;flex-direction:column;align-items:center;gap:14px}
+.rad__lg{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.rad__k{display:flex;align-items:center;gap:5px;color:var(--ink-3);font-weight:600;
+  font-size:11px;line-height:14px;letter-spacing:.0311em}
+.rad__kd{width:9px;height:9px;border-radius:3px}
+.rad__st{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.rad__c{padding:12px;border-radius:var(--r-md);background:rgba(255,255,255,.55);text-align:center}
+.rad__c b{display:block;font-weight:800;font-feature-settings:"tnum";font-size:20px;line-height:28px;letter-spacing:-.012em}
+.rad__c span{color:var(--ink-3);font-weight:600;font-size:11px;line-height:14px;letter-spacing:.0311em}
+
+/* ============================================================
+   할 일 / 퀘스트
+   ============================================================ */
+.td{display:flex;flex-direction:column;gap:2px}
+.td__i{display:flex;align-items:flex-start;gap:10px;padding:10px;border-radius:var(--r-md);transition:background .16s var(--ease)}
+.td__i:hover{background:rgba(255,255,255,.66)}
+.td__b{
+  width:19px;height:19px;border-radius:7px;flex-shrink:0;margin-top:2px;display:grid;place-items:center;
+  color:transparent;background:rgba(255,255,255,.7);border:1.5px solid rgba(14,23,41,.14);transition:all .18s var(--ease);
+}
+.td__i[data-done="1"] .td__b{background:linear-gradient(150deg,var(--mint),#4fd0a5);border-color:transparent;color:#fff}
+.td__i[data-done="1"] .td__t{color:var(--ink-4);text-decoration:line-through}
+.td__t{font-weight:600;font-size:14px;line-height:20px;letter-spacing:.0145em}
+.td__m{display:flex;align-items:center;gap:7px;margin-top:5px}
+.td__due{color:var(--ink-4);font-weight:700;font-size:11px;line-height:14px;letter-spacing:.0311em}
+.td__due[data-u="1"]{color:var(--coral)}
+
+.qs{display:flex;flex-direction:column;gap:10px}
+.qs__i{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-md);
+  background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.6);transition:transform .2s var(--ease)}
+.qs__i:hover{transform:translateY(-1px)}
+.qs__ic{width:34px;height:34px;border-radius:11px;flex-shrink:0;display:grid;place-items:center;
+  background:var(--q-s);color:var(--q-c)}
+.qs__b{flex:1;min-width:0}
+.qs__t{font-weight:700;font-size:13px;line-height:18px;letter-spacing:.0194em}
+.qs__bar{height:5px;border-radius:3px;background:rgba(14,23,41,.07);margin-top:7px;overflow:hidden}
+.qs__bar i{display:block;height:100%;border-radius:3px;background:linear-gradient(90deg,var(--q-c),color-mix(in srgb,var(--q-c) 55%,#fff));transition:width .7s var(--ease)}
+.qs__n{color:var(--ink-4);font-weight:600;margin-top:5px;font-feature-settings:"tnum";
+  font-size:11px;line-height:14px;letter-spacing:.0311em}
+.qs__p{flex-shrink:0;color:var(--amber);font-weight:800;font-feature-settings:"tnum";
+  font-size:13px;line-height:18px;letter-spacing:.0194em}
+
+/* ============================================================
+   비교과 롤링
+   ============================================================ */
+.rl{padding:22px}
+.rl__vp{overflow:hidden;margin:0 -4px;padding:4px}
+.rl__tr{display:flex;gap:16px;transition:transform .6s var(--ease)}
+.rl__c{
+  flex:0 0 calc((100% - 16px)/2);border-radius:var(--r-md);overflow:hidden;
+  background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.72);
+  transition:transform .22s var(--ease),box-shadow .22s var(--ease);
+}
+@media (max-width:768px){ .rl__c{flex-basis:100%} }
+.rl__c:hover{transform:translateY(-3px);box-shadow:var(--glass-lift-2)}
+.rl__th{height:76px;display:flex;align-items:flex-end;justify-content:space-between;padding:10px;
+  background:linear-gradient(140deg,var(--p-c),color-mix(in srgb,var(--p-c) 45%,#fff))}
+.rl__bg{padding:4px 9px;border-radius:var(--r-full);background:rgba(255,255,255,.94);color:var(--p-c);
+  font-weight:800;font-size:10px;line-height:14px;letter-spacing:.0311em}
+.rl__cap{padding:4px 8px;border-radius:var(--r-full);background:rgba(14,23,41,.2);color:#fff;
+  font-weight:700;font-feature-settings:"tnum";font-size:10px;line-height:14px;letter-spacing:.0311em}
+.rl__bd{padding:14px}
+.rl__t{font-weight:700;margin-bottom:5px;font-size:14px;line-height:20px;letter-spacing:.0145em;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:40px}
+.rl__m{color:var(--ink-3);font-size:12px;line-height:16px;letter-spacing:.0252em}
+.rl__f{display:flex;align-items:center;gap:8px;margin-top:12px}
+.rl__ap{margin-left:auto;padding:7px 14px;border-radius:var(--r-full);font-weight:700;
+  font-size:12px;line-height:16px;letter-spacing:.0252em;
+  background:rgba(14,23,41,.06);color:var(--ink-2);transition:all .18s var(--ease)}
+.rl__ap:hover{background:var(--p-c);color:#fff}
+.rl__ap[data-a="1"]{background:var(--mint-soft);color:var(--mint);cursor:default}
+.rl__nav{display:flex;gap:5px}
+.rl__ar{width:30px;height:30px;border-radius:var(--r-full);display:grid;place-items:center;color:var(--ink-2);
+  background:rgba(255,255,255,.7);border:1px solid rgba(255,255,255,.8)}
+.rl__ar:hover{background:var(--ink);color:#fff;border-color:transparent}
+.rl__dt{display:flex;gap:5px;justify-content:center;margin-top:14px}
+.rl__d{width:5px;height:5px;border-radius:var(--r-full);background:rgba(14,23,41,.14);transition:all .3s var(--ease)}
+.rl__d[data-on="1"]{width:18px;background:var(--sky)}
+
+/* ============================================================
+   채용공고 (리스트형)
+   ============================================================ */
+.jb{display:flex;flex-direction:column;gap:8px}
+.jb__i{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--r-md);
+  background:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.6);transition:all .2s var(--ease)}
+.jb__i:hover{transform:translateX(2px);box-shadow:var(--glass-lift)}
+.jb__lg{width:38px;height:38px;border-radius:12px;flex-shrink:0;display:grid;place-items:center;
+  background:var(--j-s);color:var(--j-c);font-weight:800;font-size:14px}
+.jb__b{flex:1;min-width:0}
+.jb__t{font-weight:700;font-size:14px;line-height:20px;letter-spacing:.0145em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jb__m{color:var(--ink-4);margin-top:2px;font-size:11px;line-height:14px;letter-spacing:.0311em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jb__r{flex-shrink:0;text-align:right}
+.jb__mt{color:var(--j-c);font-weight:800;font-feature-settings:"tnum";font-size:14px;line-height:20px;letter-spacing:.0145em}
+.jb__dd{color:var(--coral);font-weight:700;font-size:11px;line-height:14px;letter-spacing:.0311em}
+
+/* ============================================================
+   비로그인
+   ============================================================ */
+.gst{padding:52px 44px;position:relative;overflow:hidden;margin-bottom:20px;border-radius:var(--r-xl)}
+.gst__in{position:relative;z-index:1;max-width:560px}
+.gst__e{display:inline-flex;align-items:center;gap:6px;padding:6px 14px;border-radius:var(--r-full);
+  background:rgba(255,255,255,.72);color:var(--sky);font-weight:800;margin-bottom:18px;
+  font-size:11px;line-height:14px;letter-spacing:.0311em;border:1px solid rgba(255,255,255,.8)}
+.gst__h{font-weight:800;margin:0 0 14px;font-size:40px;line-height:52px;letter-spacing:-.0282em}
+.gst__h em{font-style:normal;background:linear-gradient(100deg,var(--sky),var(--blue),var(--violet));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+.gst__p{color:var(--ink-2);margin:0 0 28px;font-size:16px;line-height:26px;letter-spacing:.0057em}
+.gst__c{display:flex;gap:10px;flex-wrap:wrap}
+.gst__b2{padding:14px 26px;border-radius:var(--r-full);color:var(--ink-2);font-weight:700;
+  font-size:15px;line-height:22px;letter-spacing:.0096em;
+  background:rgba(255,255,255,.6);border:1px solid rgba(255,255,255,.8)}
+.gst__b2:hover{background:rgba(255,255,255,.9)}
+
+.stps{display:grid;grid-template-columns:repeat(5,1fr);gap:16px}
+@media (max-width:1200px){ .stps{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:768px){ .stps{grid-template-columns:1fr} }
+.stp{padding:20px;transition:transform .22s var(--ease),box-shadow .22s var(--ease)}
+.stp:hover{transform:translateY(-3px);box-shadow:var(--glass-lift-2)}
+.stp__n{color:var(--c);font-weight:800;margin-bottom:10px;font-feature-settings:"tnum";
+  font-size:11px;line-height:14px;letter-spacing:.0311em}
+.stp__i{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;margin-bottom:12px;
+  background:linear-gradient(150deg,var(--c),color-mix(in srgb,var(--c) 58%,#fff));color:#fff;
+  box-shadow:0 6px 16px color-mix(in srgb,var(--c) 30%,transparent)}
+.stp__t{font-weight:700;margin-bottom:5px;font-size:15px;line-height:22px;letter-spacing:.0096em}
+.stp__d{color:var(--ink-3);font-size:13px;line-height:20px;letter-spacing:.0194em}
+.stp__s{margin-top:10px;padding-top:10px;border-top:1px dashed var(--line);color:var(--ink-4);font-weight:600;
+  display:flex;align-items:center;gap:5px;font-size:11px;line-height:14px;letter-spacing:.0311em}
+
+/* ---- 토스트 ---- */
+.toast{
+  position:fixed;left:50%;bottom:28px;transform:translate(-50%,14px);z-index:80;
+  padding:12px 22px;border-radius:var(--r-full);color:#fff;font-weight:600;
+  font-size:13px;line-height:18px;letter-spacing:.0194em;
+  background:rgba(14,23,41,.88);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
+  box-shadow:0 12px 32px rgba(14,23,41,.28);opacity:0;pointer-events:none;transition:all .3s var(--ease);
+}
+.toast[data-on="1"]{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:992px){
+  .shell{flex-direction:column}
+  .side{width:100%;height:auto;position:static;flex-direction:row;align-items:center;gap:16px;
+    border-right:0;border-bottom:1px solid rgba(255,255,255,.6);overflow-x:auto}
+  .side__sec{flex:1;min-width:0}
+  .snav{flex-direction:row}
+  .typecard,.demo{margin-top:0;flex-shrink:0}
+  .main{padding:20px}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition-duration:.01ms !important;animation:none !important}
+}
+</style>
+</head>
+<body>
+<div class="sky"><i class="b1"></i><i class="b2"></i><i class="b3"></i><i class="b4"></i></div>
+
+<div class="shell">
+  <aside class="side">
+    <a class="brand" href="#">
+      <span class="brand__mark">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 7v10l8 5 8-5V7z"/><path d="m9 12 2 2 4-4"/></svg>
+      </span>
+      <span><span class="brand__n">DREAMCATCH</span><br/><span class="brand__s">국립창원대학교</span></span>
+    </a>
+    <div class="side__sec">
+      <p class="side__lb">진로 프로세스</p>
+      <ul class="snav" id="snav"></ul>
+    </div>
+    <div id="typeCard"></div>
+    <div class="demo">
+      <span class="demo__l">데모 상태</span>
+      <div class="seg" id="demoSeg" role="group" aria-label="데모 상태 전환"></div>
+    </div>
+  </aside>
+
+  <div class="main"><div class="main__in">
+    <header class="top" id="top"></header>
+    <div id="app"></div>
+  </div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================================
+   1. DATA — 화면에 리터럴을 박지 않는다
+   ============================================================================ */
+const ICONS = {
+  diagnosis:'<path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v18m0 0H5a2 2 0 0 1-2-2v-4m6 6h10a2 2 0 0 0 2-2v-4M3 9h18M3 15h18"/>',
+  counsel:'<path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>',
+  roadmap:'<circle cx="6" cy="19" r="3"/><circle cx="18" cy="5" r="3"/><path d="M9 19h6a3 3 0 0 0 3-3V8"/>',
+  growth:'<path d="M3 3v18h18"/><path d="m7 15 4-4 3 3 5-6"/>',
+  career:'<rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>',
+  lock:'<rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+  check:'<path d="m5 12 5 5L20 7"/>',
+  bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a2 2 0 0 0 3.4 0"/>',
+  arrow:'<path d="M5 12h14M13 6l6 6-6 6"/>',
+  left:'<path d="m15 18-6-6 6-6"/>',
+  right:'<path d="m9 6 6 6-6 6"/>',
+  spark:'<path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.8 2.8M15.6 15.6l2.8 2.8M18.4 5.6l-2.8 2.8M8.4 15.6l-2.8 2.8"/>',
+  book:'<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5"/>',
+  flame:'<path d="M12 22c4 0 7-2.7 7-6.5 0-4.5-4-6-4-9.5 0 0-3 1.5-3 5 0-1.5-1-3-2.5-3.5C10 9 5 11 5 15.5 5 19.3 8 22 12 22z"/>',
+  coin:'<circle cx="12" cy="12" r="9"/><path d="M12 7v10M9.5 9.5h4a1.8 1.8 0 0 1 0 3.6h-3a1.8 1.8 0 0 0 0 3.6h4"/>'
+};
+const ico = (n, s=20, w=2) =>
+  `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]||''}</svg>`;
+
+/* 5단계 파이프라인 — 순서가 곧 선행조건 */
+const STAGES = [
+  { id:'diagnosis', no:1, name:'진단',      icon:'diagnosis', color:'sky',    need:null,
+    desc:'6개 영역 진단으로 나의 유형을 판정합니다.', gateMsg:'모든 활동의 출발점입니다.' },
+  { id:'counsel',   no:2, name:'상담',      icon:'counsel',   color:'violet', need:'diagnosis',
+    desc:'진단 결과를 바탕으로 진로 방향을 함께 정합니다.', gateMsg:'진단을 완료해야 상담을 신청할 수 있습니다.' },
+  { id:'roadmap',   no:3, name:'로드맵 생성', icon:'roadmap',  color:'mint',   need:'counsel',
+    desc:'진단 유형에 맞는 학기별 로드맵이 생성됩니다.', gateMsg:'상담을 완료해야 로드맵이 생성됩니다.' },
+  { id:'growth',    no:4, name:'역량강화',   icon:'growth',    color:'amber',  need:'roadmap',
+    desc:'로드맵에 배치된 프로그램을 이수합니다.', gateMsg:'로드맵이 생성되어야 프로그램을 신청할 수 있습니다.' },
+  { id:'career',    no:5, name:'취업지원',   icon:'career',    color:'coral',  need:'growth',
+    desc:'쌓은 역량으로 맞춤 채용을 추천받습니다.', gateMsg:'역량강화 과정을 모두 이수해야 열립니다.' }
+];
+
+const SCENARIOS = {
+  guest:  { label:'비로그인', auth:false, progress:{} },
+  pre:    { label:'진단 전',  auth:true,
+            user:{ name:'김민수', dept:'컴퓨터공학과', grade:3, initial:'김' },
+            type:null,
+            progress:{ diagnosis:0, counsel:0, roadmap:0, growth:0, career:0 } },
+  active: { label:'진행중',   auth:true,
+            user:{ name:'김민수', dept:'컴퓨터공학과', grade:3, initial:'김' },
+            type:{ code:'T2', name:'진로설정형', desc:'방향은 정했고 실행 계획이 필요한 단계' },
+            progress:{ diagnosis:100, counsel:100, roadmap:100, growth:45, career:0 } }
+};
+
+const DATA = {
+  today:'2026년 8월 20일 목요일',
+  growth:{ done:3, total:7 },
+  todos:[
+    { id:'t1', title:'8월 진로상담 사전질문지 제출', tag:'상담', color:'violet', due:'오늘 18:00', urgent:true,  done:false },
+    { id:'t2', title:'AI 서비스 기획 부트캠프 3주차 과제', tag:'역량강화', color:'amber', due:'D-2', urgent:false, done:false },
+    { id:'t3', title:'로드맵 2학기 목표 확인하기', tag:'로드맵', color:'mint', due:'D-4', urgent:false, done:true  },
+    { id:'t4', title:'포트폴리오 프로젝트 1건 등록', tag:'역량강화', color:'amber', due:'D-6', urgent:false, done:false }
+  ],
+  quests:[
+    { id:'q1', title:'이번 주 비교과 1개 신청하기', icon:'spark',  color:'amber', now:0, goal:1, point:100 },
+    { id:'q2', title:'포트폴리오 3건 채우기',       icon:'book',   color:'sky',   now:2, goal:3, point:150 },
+    { id:'q3', title:'역량 그래프 전 영역 60점 이상', icon:'target', color:'pink',  now:4, goal:6, point:300 }
+  ],
+  attendance:{ streak:12, point:2400, week:[
+    { dow:'월', day:11, s:'on' }, { dow:'화', day:12, s:'on' }, { dow:'수', day:13, s:'on' },
+    { dow:'목', day:14, s:'miss' }, { dow:'금', day:15, s:'on' }, { dow:'토', day:16, s:'on' },
+    { dow:'일', day:17, s:'today' }
+  ]},
+  competency:{
+    axes:[
+      { key:'자기이해', me:82, avg:70 }, { key:'진로설계', me:74, avg:66 },
+      { key:'직무역량', me:58, avg:64 }, { key:'실무경험', me:46, avg:58 },
+      { key:'대인관계', me:71, avg:68 }, { key:'글로벌',   me:52, avg:55 }
+    ],
+    total:64, rank:'상위 28%', gained:8
+  },
+  programs:[
+    { id:'p1', cat:'직무역량', color:'blue',   title:'AI 서비스 기획 실무 부트캠프', org:'LINC3.0사업단', period:'9/2 – 9/27', cap:30, applied:24, match:true,  isApplied:true  },
+    { id:'p2', cat:'실무경험', color:'mint',   title:'현장실습 사전교육 & 기업 매칭데이',  org:'현장실습지원센터', period:'9/5 – 9/6',  cap:80, applied:61, match:true,  isApplied:false },
+    { id:'p3', cat:'진로설계', color:'violet', title:'IT 직무 선배와의 커리어 토크',      org:'진로취업지원팀', period:'9/9',        cap:50, applied:18, match:true,  isApplied:false },
+    { id:'p4', cat:'글로벌',   color:'sky',    title:'해외인턴십 지원 전략 워크숍',        org:'국제교류원',     period:'9/12 – 9/13', cap:40, applied:12, match:false, isApplied:false },
+    { id:'p5', cat:'자기이해', color:'pink',   title:'강점기반 자기소개서 클리닉',         org:'진로취업지원팀', period:'9/16 – 9/17', cap:24, applied:23, match:true,  isApplied:false },
+    { id:'p6', cat:'대인관계', color:'amber',  title:'팀 프로젝트 협업 리더십 캠프',       org:'학생상담센터',   period:'9/20 – 9/21', cap:36, applied:9,  match:false, isApplied:false }
+  ],
+  jobs:[
+    { id:'j1', co:'㈜카카오엔터프라이즈', mark:'K', color:'sky',    loc:'경남 창원', title:'백엔드 개발 신입 채용',     match:92, dday:'D-5'  },
+    { id:'j2', co:'두산에너빌리티',       mark:'D', color:'blue',   loc:'경남 창원', title:'SW 엔지니어 (사내 시스템)', match:87, dday:'D-9'  },
+    { id:'j3', co:'㈜넥스트랩',           mark:'N', color:'violet', loc:'부산 해운대', title:'서비스 기획 인턴 (전환형)', match:81, dday:'D-12' },
+    { id:'j4', co:'경남테크노파크',       mark:'G', color:'mint',   loc:'경남 창원', title:'AI 사업화 지원 담당',       match:76, dday:'D-16' }
+  ]
+};
+
+/* ============================================================================
+   2. GATE — 순차 게이팅 판정은 여기서만
+   ============================================================================ */
+let scenario = 'active';
+const S = () => SCENARIOS[scenario];
+
+function stageState(id){
+  const s = S();
+  if(!s.auth) return 'locked';
+  const st = STAGES.find(x => x.id === id);
+  const p  = s.progress[id] ?? 0;
+  if(st.need && (s.progress[st.need] ?? 0) < 100) return 'locked';
+  return p >= 100 ? 'done' : 'current';
+}
+/* needId 단계가 "완료"돼야 열린다. 잠겼다면 지금 해야 할 단계를 blocker로 돌려준다 */
+function gateOf(needId){
+  const s = S();
+  if(!s.auth) return { open:false, blocker:null, msg:'로그인 후 이용할 수 있습니다.', cta:'로그인' };
+  const chain = [];
+  let cur = STAGES.find(x => x.id === needId);
+  while(cur){ chain.unshift(cur); cur = cur.need ? STAGES.find(x => x.id === cur.need) : null; }
+  for(const c of chain){
+    if((s.progress[c.id] ?? 0) < 100)
+      return { open:false, blocker:c, msg:c.gateMsg, cta:`${c.name} 하러 가기` };
+  }
+  return { open:true };
+}
+const overallPct = () => S().auth
+  ? Math.round(STAGES.reduce((a, st) => a + (S().progress[st.id] ?? 0), 0) / STAGES.length) : 0;
+const currentStage = () => STAGES.find(st => stageState(st.id) === 'current') || STAGES[STAGES.length - 1];
+
+/* ============================================================================
+   3. RENDER
+   ============================================================================ */
+const $ = (s, r=document) => r.querySelector(s);
+
+function toast(m){
+  const t = $('#toast');
+  t.textContent = m; t.dataset.on = '1';
+  clearTimeout(t._h); t._h = setTimeout(() => t.dataset.on = '0', 2200);
+}
+
+/* ---------- 사이드바 ---------- */
+function renderSide(){
+  const s = S();
+  $('#snav').innerHTML = STAGES.map(st => {
+    const state = stageState(st.id);
+    const on = s.auth && currentStage().id === st.id;
+    return `<li><a class="snav__i" href="#" style="--c:var(--${st.color})"
+      data-on="${on ? 1 : 0}" data-done="${state === 'done' ? 1 : 0}"
+      data-lock="${state === 'locked' && s.auth ? 1 : 0}" data-nav="${st.id}">
+      <span class="snav__n">${state === 'done' ? ico('check', 11, 3.4) : st.no}</span>
+      <span class="snav__t">${st.name}</span>
+      ${state === 'locked' && s.auth ? ico('lock', 13, 2.2) : ''}
+    </a></li>`;
+  }).join('');
+
+  $('#typeCard').innerHTML = s.type
+    ? `<div class="typecard shine">
+         <p class="typecard__l">진단 유형</p>
+         <p class="typecard__c">${s.type.code} ${s.type.name}</p>
+         <p class="typecard__d">${s.type.desc}</p>
+       </div>`
+    : `<div class="typecard typecard--off">
+         <p class="typecard__l">진단 유형</p>
+         <p class="typecard__c">${s.auth ? '진단 후 판정됩니다' : '로그인이 필요합니다'}</p>
+       </div>`;
+
+  $('#demoSeg').innerHTML = Object.entries(SCENARIOS).map(([k, v]) =>
+    `<button data-scn="${k}" aria-pressed="${k === scenario}">${v.label}</button>`).join('');
+}
+
+/* ---------- 상단바 ---------- */
+function renderTop(){
+  const s = S();
+  $('#top').innerHTML = `
+    <div>
+      <p class="top__d">${DATA.today}</p>
+      <h1 class="top__h">${s.auth ? `${s.user.name}님, 안녕하세요` : '진로취업 역량개발 대시보드'}</h1>
+    </div>
+    <div class="top__r">${s.auth ? `
+      <button class="iconbtn" aria-label="알림">${ico('bell', 18)}<span class="dot"></span></button>
+      <div class="who">
+        <span class="who__a">${s.user.initial}</span>
+        <span><span class="who__n">${s.user.name}</span><br/><span class="who__m">${s.user.dept} ${s.user.grade}학년</span></span>
+      </div>`
+      : `<button class="btn-login" data-scn="pre">학생 로그인</button>`}
+    </div>`;
+}
+
+/* ---------- 잠금 ---------- */
+function veil(g, msg){
+  const cta = g.blocker
+    ? `<button class="gate__b" data-go="${g.blocker.id}">${g.cta}</button>`
+    : `<button class="gate__b" data-scn="pre">로그인</button>`;
+  return `<div class="gate__v">
+    <span class="gate__l">${ico('lock', 18, 2)}</span>
+    <p class="gate__t">${g.blocker ? `${g.blocker.no}단계 ${g.blocker.name} 완료 후 열립니다` : '로그인이 필요합니다'}</p>
+    <p class="gate__d">${msg || g.msg}</p>${cta}</div>`;
+}
+const gated = (needId, inner, msg, cls='card') => {
+  const g = gateOf(needId);
+  return `<div class="glass gate ${cls} ${g.open ? '' : 'is-locked'}">${inner}${g.open ? '' : veil(g, msg)}</div>`;
+};
+
+/* ---------- 스탯 타일 ---------- */
+function renderStats(){
+  const s = S(), c = DATA.competency, a = DATA.attendance, gr = DATA.growth;
+  const diagOpen = gateOf('diagnosis').open;
+  const tiles = [
+    { icon:'target', color:'sky',   label:'전체 진행률', open:true,
+      value:`${overallPct()}<small>%</small>`,
+      bar:overallPct(), sub:`${STAGES.filter(x => stageState(x.id) === 'done').length}/5단계 완료` },
+    { icon:'growth', color:'blue',  label:'종합 역량점수', open:diagOpen,
+      value:`${c.total}<small>점</small>`, bar:c.total, sub:`${c.rank} · ▲${c.gained}` },
+    { icon:'flame',  color:'coral', label:'연속 출석', open:true,
+      value:`${a.streak}<small>일</small>`, bar:Math.min(100, a.streak / 30 * 100), sub:`누적 ${a.point.toLocaleString()}P` },
+    { icon:'coin',   color:'mint',  label:'로드맵 이수', open:gateOf('roadmap').open,
+      value:`${gr.done}<small>/${gr.total}</small>`, bar:gr.done / gr.total * 100, sub:'배치된 활동 기준' }
+  ];
+  return tiles.map(t => `<div class="c3"><div class="glass stat shine" data-off="${t.open ? 0 : 1}"
+      style="--s-c:var(--${t.color});--s-s:var(--${t.color}-soft)">
+      <div class="stat__top">
+        <span class="stat__i">${ico(t.icon, 17)}</span>
+        <span class="stat__l">${t.label}</span>
+      </div>
+      <p class="stat__v">${t.open ? t.value : '—'}</p>
+      <div class="stat__f">
+        <span class="stat__bar"><i style="width:${t.open ? t.bar : 0}%"></i></span>
+        <span class="stat__sub">${t.open ? t.sub : '진단 필요'}</span>
+      </div>
+    </div></div>`).join('');
+}
+
+/* ---------- 로드맵 위젯 ---------- */
+function renderRoadmap(){
+  const s = S(), cur = currentStage();
+  const done = STAGES.filter(st => stageState(st.id) === 'done').length;
+  const fill = (done / (STAGES.length - 1)) * 100;
+
+  const copy = {
+    diagnosis:{ t:'역량진단부터 시작하세요', d:'진단을 마쳐야 상담·로드맵·비교과 신청이 순서대로 열립니다.', b:'진단 시작' },
+    counsel:  { t:'상담을 신청할 차례입니다', d:`진단 유형 ${s.type ? s.type.code : ''} 결과로 전담교수와 방향을 정합니다.`, b:'상담 신청' },
+    roadmap:  { t:'로드맵을 생성할 수 있습니다', d:'상담 내용과 진단 유형을 반영한 학기별 로드맵이 만들어집니다.', b:'로드맵 생성' },
+    growth:   { t:'로드맵의 다음 활동을 이수하세요', d:`${s.type ? s.type.name : '내'} 유형에 맞는 비교과가 아래에 추천됩니다.`, b:'프로그램 보기' },
+    career:   { t:'취업지원 단계에 진입했습니다', d:'쌓아온 역량으로 맞춤 채용공고를 추천받고 지원하세요.', b:'공고 보기' }
+  }[cur.id];
+
+  return `<div class="glass rm">
+    <span class="spark" style="width:4px;height:4px;top:26px;right:14%;animation-delay:.2s"></span>
+    <span class="spark" style="width:3px;height:3px;top:52px;right:8%;animation-delay:1.1s"></span>
+    <span class="spark" style="width:5px;height:5px;top:14px;right:24%;animation-delay:1.9s"></span>
+    <div class="rm__top">
+      <div>
+        <h2 class="rm__h">지금 <em>${cur.no}단계 · ${cur.name}</em></h2>
+        <p class="rm__d">${s.type
+          ? `${s.type.code} ${s.type.name} · ${s.type.desc}`
+          : '진단을 완료하면 유형이 판정되고 이후 단계가 순서대로 열립니다.'}</p>
+      </div>
+      <div class="rm__pct">
+        <p class="rm__pn">${overallPct()}<small>%</small></p>
+        <p class="rm__pl">진로취업 로드맵 진행현황</p>
+      </div>
+    </div>
+    <div class="rail">
+      <span class="rail__t"></span>
+      <span class="rail__f shine" style="width:calc((100% - 44px) * ${fill / 100})"></span>
+      ${STAGES.map(st => {
+        const state = stageState(st.id), p = s.progress[st.id] ?? 0;
+        const label = state === 'done' ? '완료' : state === 'locked' ? '잠김' : p > 0 ? `진행중 ${p}%` : '시작 전';
+        return `<div class="st" data-s="${state}" style="--c:var(--${st.color})">
+          <div class="st__d">${state === 'locked' ? ico('lock', 18, 2) : ico(st.icon, 19, 2)}
+            <span class="st__n">${st.no}</span></div>
+          <p class="st__t">${st.name}</p>
+          <p class="st__s">${label}</p>
+          ${state === 'current' && p > 0
+            ? `<div class="st__b"><i style="width:${p}%;background:var(--${st.color})"></i></div>` : ''}
+        </div>`;
+      }).join('')}
+    </div>
+    <div class="act" style="--c:var(--${cur.color})">
+      <span class="act__i">${ico(cur.icon, 19)}</span>
+      <div><p class="act__t">${copy.t}</p><p class="act__d">${copy.d}</p></div>
+      <button class="act__b" data-go="${cur.id}">${copy.b}</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- 출석 ---------- */
+function renderAtt(){
+  const a = DATA.attendance;
+  const today = a.week.find(d => d.s === 'today');
+  return `<div class="glass card">
+    <header class="hd"><div>
+      <h2 class="hd__t">출석체크</h2>
+      <p class="hd__d">단계와 무관하게 매일 참여할 수 있습니다</p>
+    </div></header>
+    <div class="att__s"><span class="att__n">${a.streak}</span>
+      <span class="att__l">일 연속 · 누적 ${a.point.toLocaleString()}P</span></div>
+    <div class="att__w">${a.week.map(d => `
+      <div class="att__c" data-s="${d.s === 'checked' ? 'on' : d.s}">
+        <p class="att__dw">${d.dow}</p>
+        <div class="att__x">${d.s === 'on' || d.s === 'checked' ? ico('check', 13, 3.2) : d.day}</div>
+      </div>`).join('')}</div>
+    <button class="att__btn ${today ? 'shine' : ''}" id="attBtn" ${today ? '' : 'disabled'}>
+      ${today ? '오늘 출석체크 +50P' : '오늘 출석 완료'}
+    </button>
+    <p class="att__note">7일 연속 달성 시 보너스 200P</p>
+  </div>`;
+}
+
+/* ---------- 역량 레이더 ---------- */
+function renderRadar(){
+  const c = DATA.competency, n = c.axes.length, cx = 140, cy = 134, R = 90;
+  const pt = (i, v) => {
+    const ang = -Math.PI / 2 + (Math.PI * 2 * i) / n, r = (v / 100) * R;
+    return [cx + r * Math.cos(ang), cy + r * Math.sin(ang)];
+  };
+  const poly = k => c.axes.map((a, i) => pt(i, a[k]).map(v => v.toFixed(1)).join(',')).join(' ');
+  const rings = [25, 50, 75, 100].map(p =>
+    `<polygon points="${c.axes.map((_, i) => pt(i, p).map(v => v.toFixed(1)).join(',')).join(' ')}"
+      fill="none" stroke="rgba(14,23,41,.08)" stroke-width="1"/>`).join('');
+  const spokes = c.axes.map((_, i) => {
+    const [x, y] = pt(i, 100);
+    return `<line x1="${cx}" y1="${cy}" x2="${x.toFixed(1)}" y2="${y.toFixed(1)}" stroke="rgba(14,23,41,.08)"/>`;
+  }).join('');
+  const labels = c.axes.map((a, i) => {
+    const [x, y] = pt(i, 118);
+    const anc = Math.abs(x - cx) < 12 ? 'middle' : (x > cx ? 'start' : 'end');
+    return `<text x="${x.toFixed(1)}" y="${(y + 3).toFixed(1)}" text-anchor="${anc}" font-size="11"
+      letter-spacing=".03em" font-weight="700" fill="var(--ink-3)">${a.key}</text>
+      <text x="${x.toFixed(1)}" y="${(y + 16).toFixed(1)}" text-anchor="${anc}" font-size="10"
+      font-weight="800" fill="var(--sky)">${a.me}</text>`;
+  }).join('');
+  const dots = c.axes.map((a, i) => {
+    const [x, y] = pt(i, a.me);
+    return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3" fill="var(--sky)" stroke="#fff" stroke-width="2"/>`;
+  }).join('');
+
+  const body = `
+    <header class="hd">
+      <div><h2 class="hd__t">역량 그래프</h2><p class="hd__d">6개 영역 · 유형 평균 대비</p></div>
+      <div class="hd__r"><span class="pill pill--mint">▲ ${c.gained}</span></div>
+    </header>
+    <div class="rad">
+      <svg viewBox="0 0 280 272" width="100%" style="max-width:280px" role="img" aria-label="역량 레이더 차트">
+        <defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="var(--sky)" stop-opacity=".34"/>
+          <stop offset="100%" stop-color="var(--blue)" stop-opacity=".14"/>
+        </linearGradient></defs>
+        ${rings}${spokes}
+        <polygon points="${poly('avg')}" fill="none" stroke="var(--ink-4)" stroke-width="1.4" stroke-dasharray="4 4"/>
+        <polygon points="${poly('me')}" fill="url(#rg)" stroke="var(--sky)" stroke-width="2.4" stroke-linejoin="round"/>
+        ${dots}${labels}
+      </svg>
+      <div class="rad__lg">
+        <span class="rad__k"><i class="rad__kd" style="background:var(--sky)"></i>내 점수</span>
+        <span class="rad__k"><i class="rad__kd" style="background:var(--ink-4)"></i>유형 평균</span>
+      </div>
+      <div class="rad__st">
+        <div class="rad__c"><b>${c.total}점</b><span>종합 역량점수</span></div>
+        <div class="rad__c"><b>${c.rank}</b><span>동일 유형 내</span></div>
+      </div>
+    </div>`;
+  return gated('diagnosis', body, '역량 점수는 진단 결과에서 산출됩니다.');
+}
+
+/* ---------- 할 일 ---------- */
+function renderTodos(){
+  const left = DATA.todos.filter(t => !t.done).length;
+  const body = `
+    <header class="hd">
+      <div><h2 class="hd__t">오늘 할 일</h2><p class="hd__d">로드맵과 상담에서 내려온 항목</p></div>
+      <div class="hd__r"><span class="pill pill--sky">${left}건</span></div>
+    </header>
+    <ul class="td">${DATA.todos.map(t => `
+      <li class="td__i" data-done="${t.done ? 1 : 0}" data-todo="${t.id}">
+        <span class="td__b">${ico('check', 11, 3.4)}</span>
+        <div><p class="td__t">${t.title}</p>
+          <div class="td__m"><span class="pill pill--${t.color}">${t.tag}</span>
+            <span class="td__due" data-u="${t.urgent && !t.done ? 1 : 0}">${t.due}</span></div>
+        </div>
+      </li>`).join('')}</ul>`;
+  return gated('diagnosis', body, '진단을 마치면 유형에 맞는 실행 항목이 내려옵니다.');
+}
+
+/* ---------- 퀘스트 ---------- */
+function renderQuests(){
+  const body = `
+    <header class="hd">
+      <div><h2 class="hd__t">오늘의 퀘스트</h2><p class="hd__d">달성하면 마일리지가 적립됩니다</p></div>
+      <div class="hd__r"><span class="pill pill--amber">550P</span></div>
+    </header>
+    <ul class="qs">${DATA.quests.map(q => `
+      <li class="qs__i" style="--q-c:var(--${q.color});--q-s:var(--${q.color}-soft)">
+        <span class="qs__ic">${ico(q.icon, 17)}</span>
+        <div class="qs__b">
+          <p class="qs__t">${q.title}</p>
+          <div class="qs__bar"><i style="width:${Math.min(100, q.now / q.goal * 100)}%"></i></div>
+          <p class="qs__n">${q.now} / ${q.goal} 완료</p>
+        </div>
+        <span class="qs__p">+${q.point}P</span>
+      </li>`).join('')}</ul>`;
+  return gated('diagnosis', body, '진단 유형이 판정되면 유형별 퀘스트가 발급됩니다.');
+}
+
+/* ---------- 비교과 롤링 ---------- */
+let rollIdx = 0, rollTimer = null;
+const rollPer  = () => window.innerWidth <= 768 ? 1 : 2;
+const rollPages = () => Math.max(1, DATA.programs.length - rollPer() + 1);
+
+function renderPrograms(){
+  const s = S();
+  const list = s.type ? [...DATA.programs].sort((a, b) => (b.match ? 1 : 0) - (a.match ? 1 : 0)) : DATA.programs;
+  const body = `<div class="rl">
+    <header class="hd">
+      <div><h2 class="hd__t">비교과 프로그램</h2>
+        <p class="hd__d">${s.type ? `${s.type.code} ${s.type.name} 유형에 맞춰 로드맵이 추천` : '진단 유형이 정해지면 맞춤 추천됩니다'}</p></div>
+      <div class="hd__r">
+        <a class="tlink" href="#">전체 ${ico('arrow', 12, 2.2)}</a>
+        <div class="rl__nav">
+          <button class="rl__ar" data-roll="-1" aria-label="이전">${ico('left', 14, 2.4)}</button>
+          <button class="rl__ar" data-roll="1" aria-label="다음">${ico('right', 14, 2.4)}</button>
+        </div>
+      </div>
+    </header>
+    <div class="rl__vp"><div class="rl__tr" id="rollTrack">
+      ${list.map(p => `<article class="rl__c" style="--p-c:var(--${p.color})">
+        <div class="rl__th"><span class="rl__bg">${p.cat}</span><span class="rl__cap">${p.applied}/${p.cap}명</span></div>
+        <div class="rl__bd">
+          <h3 class="rl__t">${p.title}</h3>
+          <p class="rl__m">${p.org} · ${p.period}</p>
+          <div class="rl__f">
+            ${p.match && s.type ? `<span class="pill pill--${p.color}">${s.type.code} 맞춤</span>` : `<span class="pill">자유참여</span>`}
+            <button class="rl__ap" data-apply="${p.id}" data-a="${p.isApplied ? 1 : 0}">${p.isApplied ? '신청완료' : '신청하기'}</button>
+          </div>
+        </div>
+      </article>`).join('')}
+    </div></div>
+    <div class="rl__dt" id="rollDots"></div>
+  </div>`;
+  return gated('roadmap', body, '로드맵이 생성되어야 유형에 맞는 프로그램을 신청할 수 있습니다.', 'card--flush');
+}
+
+function syncRoll(){
+  const tr = $('#rollTrack'); if(!tr) return;
+  const pages = rollPages();
+  rollIdx = ((rollIdx % pages) + pages) % pages;
+  const c = tr.querySelector('.rl__c'); if(!c) return;
+  tr.style.transform = `translateX(${-rollIdx * (c.getBoundingClientRect().width + 16)}px)`;
+  const d = $('#rollDots');
+  if(d) d.innerHTML = Array.from({ length: pages },
+    (_, i) => `<span class="rl__d" data-on="${i === rollIdx ? 1 : 0}"></span>`).join('');
+}
+function startRoll(){
+  clearInterval(rollTimer);
+  if(!gateOf('roadmap').open) return;
+  rollTimer = setInterval(() => { rollIdx++; syncRoll(); }, 4500);
+}
+
+/* ---------- 채용공고 ---------- */
+function renderJobs(){
+  const body = `
+    <header class="hd">
+      <div><h2 class="hd__t">추천 채용공고</h2><p class="hd__d">역량 그래프 기반 매칭</p></div>
+      <div class="hd__r"><a class="tlink" href="#">전체 ${ico('arrow', 12, 2.2)}</a></div>
+    </header>
+    <ul class="jb">${DATA.jobs.map(j => `
+      <li class="jb__i" style="--j-c:var(--${j.color});--j-s:var(--${j.color}-soft)">
+        <span class="jb__lg">${j.mark}</span>
+        <div class="jb__b"><p class="jb__t">${j.title}</p><p class="jb__m">${j.co} · ${j.loc}</p></div>
+        <div class="jb__r"><p class="jb__mt">${j.match}%</p><p class="jb__dd">${j.dday}</p></div>
+      </li>`).join('')}</ul>`;
+  return gated('growth', body,
+    `역량강화 활동을 모두 이수하면 매칭 결과가 공개됩니다. (현재 ${S().progress.growth ?? 0}%)`);
+}
+
+/* ---------- 비로그인 ---------- */
+function renderGuest(){
+  return `
+  <section class="glass gst shine">
+    <span class="spark" style="width:5px;height:5px;top:18%;right:12%;animation-delay:.3s"></span>
+    <span class="spark" style="width:3px;height:3px;top:42%;right:20%;animation-delay:1.4s"></span>
+    <span class="spark" style="width:4px;height:4px;top:66%;right:9%;animation-delay:2.2s"></span>
+    <div class="gst__in">
+      <span class="gst__e">${ico('spark', 12, 2.6)} 국립창원대학교 역량개발관리시스템</span>
+      <h1 class="gst__h">진단부터 취업까지,<br/><em>순서대로 따라오세요</em></h1>
+      <p class="gst__p">진단으로 내 유형을 찾고, 상담으로 방향을 정하고,
+        그 결과로 만들어진 로드맵을 따라 역량을 쌓아 취업까지 이어집니다.</p>
+      <div class="gst__c">
+        <button class="btn-login" data-scn="pre">학생 로그인</button>
+        <button class="gst__b2" data-scn="active">진행중 화면 미리보기</button>
+      </div>
+    </div>
+  </section>
+  <section>
+    <header class="hd" style="margin-bottom:14px">
+      <div><h2 class="hd__t">5단계 진행 과정</h2><p class="hd__d">앞 단계를 마쳐야 다음 단계가 열립니다</p></div>
+    </header>
+    <div class="stps">${STAGES.map(st => `
+      <article class="glass stp" style="--c:var(--${st.color})">
+        <p class="stp__n">STEP ${String(st.no).padStart(2, '0')}</p>
+        <span class="stp__i">${ico(st.icon, 19)}</span>
+        <h3 class="stp__t">${st.name}</h3>
+        <p class="stp__d">${st.desc}</p>
+        <p class="stp__s">${st.need
+          ? `${ico('lock', 11, 2.2)} ${STAGES.find(x => x.id === st.need).name} 완료 후`
+          : `${ico('check', 11, 2.6)} 여기서 시작`}</p>
+      </article>`).join('')}</div>
+  </section>`;
+}
+
+/* ---------- 전체 ---------- */
+function render(){
+  renderSide(); renderTop();
+  $('#app').innerHTML = S().auth ? `
+    <div class="grid">${renderStats()}</div>
+    <div class="grid">
+      <div class="c8">${renderRoadmap()}</div>
+      <div class="c4">${renderAtt()}</div>
+    </div>
+    <div class="grid">
+      <div class="c4">${renderRadar()}</div>
+      <div class="c4">${renderTodos()}</div>
+      <div class="c4">${renderQuests()}</div>
+    </div>
+    <div class="grid grid--top">
+      <div class="c7">${renderPrograms()}</div>
+      <div class="c5">${renderJobs()}</div>
+    </div>
+  ` : renderGuest();
+  syncRoll(); startRoll();
+}
+
+/* ============================================================================
+   4. EVENTS — 상태 변화는 DATA를 고치고 다시 렌더한다
+   ============================================================================ */
+document.addEventListener('click', e => {
+  const scn = e.target.closest('[data-scn]');
+  if(scn){ scenario = scn.dataset.scn; rollIdx = 0; render(); return; }
+
+  const go = e.target.closest('[data-go]');
+  if(go){ const st = STAGES.find(x => x.id === go.dataset.go); toast(`${st.no}단계 · ${st.name} 화면으로 이동합니다`); return; }
+
+  const nav = e.target.closest('[data-nav]');
+  if(nav){
+    e.preventDefault();
+    const st = STAGES.find(x => x.id === nav.dataset.nav);
+    toast(nav.dataset.lock === '1' ? st.gateMsg : `${st.no}단계 · ${st.name} 화면으로 이동합니다`);
+    return;
+  }
+
+  const td = e.target.closest('[data-todo]');
+  if(td){
+    const t = DATA.todos.find(x => x.id === td.dataset.todo);
+    t.done = !t.done; render();
+    if(t.done) toast('할 일을 완료했습니다 +20P');
+    return;
+  }
+
+  if(e.target.closest('#attBtn')){
+    const d = DATA.attendance.week.find(x => x.s === 'today');
+    if(d){ d.s = 'checked'; DATA.attendance.streak += 1; DATA.attendance.point += 50; render(); toast('출석체크 완료 +50P'); }
+    return;
+  }
+
+  const ap = e.target.closest('[data-apply]');
+  if(ap){
+    const p = DATA.programs.find(x => x.id === ap.dataset.apply);
+    if(p.isApplied) return;
+    p.isApplied = true; p.applied += 1;
+    const q = DATA.quests.find(x => x.id === 'q1'); if(q && q.now < q.goal) q.now += 1;
+    render(); toast(`'${p.title}' 신청이 접수되었습니다`);
+    return;
+  }
+
+  const r = e.target.closest('[data-roll]');
+  if(r){ rollIdx += Number(r.dataset.roll); syncRoll(); startRoll(); }
+});
+
+document.addEventListener('mouseover', e => { if(e.target.closest('.rl')) clearInterval(rollTimer); });
+document.addEventListener('mouseout',  e => { if(e.target.closest('.rl')) startRoll(); });
+window.addEventListener('resize', syncRoll);
+
+render();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 // 학생 전환은 localStorage에 저장 후 페이지를 리로드해 모든 화면에 반영한다.
 // (프로토타입용 — 백엔드 대신 학생 JSON을 단일 소스로 사용)
 // ─────────────────────────────────────────────────────────────────────────
-import { STUDENT_TYPE_MAP, type StudentType, type IapMapping } from './careerProcess'
+import { STUDENT_TYPE_MAP, type StudentType, type StudentTypeMeta } from './careerProcess'
 import type { StudentInputs } from '../lib/scoring'
 import chaewon from './students/chaewon.json'
 import changwon from './students/changwon.json'
@@ -193,8 +193,8 @@ export function setActiveStudent(id: string): void {
   window.location.reload()
 }
 
-// 학생 유형 → IAP 매핑 (careerProcess의 단일 소스 재사용)
-export function getStudentIap(student: StudentData): IapMapping {
+// 학생 유형 코드 → 유형 메타(라벨·계층·후속진단·상담주제) — careerProcess 단일 소스 재사용
+export function getStudentTypeMeta(student: StudentData): StudentTypeMeta {
   return STUDENT_TYPE_MAP[student.studentType]
 }
 
@@ -219,7 +219,7 @@ export interface CounselOwner {
   grade: number
   phone: string
   enrollmentStatus: EnrollmentStatus
-  studentType: StudentType            // careerProcess 6유형 — IAP는 STUDENT_TYPE_MAP에서 파생(단일소스)
+  studentType: StudentType            // careerProcess 6유형 코드 — 라벨·계층은 STUDENT_TYPE_MAP에서 파생(단일소스)
   gpa: string
   language: string
   targetCompanySummary: string        // 예: "넥슨코리아 · IT Project Manager"

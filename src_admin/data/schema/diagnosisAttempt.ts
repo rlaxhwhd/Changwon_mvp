@@ -11,7 +11,7 @@
 //   학적 변동 후에도 "응시 당시" 소속으로 집계가 재현되어야 한다.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** 응시 상태. '미응시'는 레코드로 저장하지 않고 로더가 파생한다(로스터 × 학년별 대상검사). */
+/** 응시 상태. '미응시'는 레코드로 저장하지 않고 로더가 파생한다(로스터 × 유형별 대상검사). */
 export type AttemptStatus = '미응시' | '진행중' | '완료'
 
 export interface DiagnosisAttempt {
@@ -24,7 +24,7 @@ export interface DiagnosisAttempt {
   studentName: string
   studentMajor: string
   studentGrade: number
-  /** 검사 키 — DIAGNOSIS_MODULES.testId ('c2' | 'c3' | 'c4' | 'ccore') */
+  /** 검사 키 — DIAGNOSIS_MODULES.testId ('ccore' | 'c1'~'c6') */
   testId: string
   status: Exclude<AttemptStatus, '미응시'>
   /** 회차. 1 = 최초, 2 이상 = 재검사 */

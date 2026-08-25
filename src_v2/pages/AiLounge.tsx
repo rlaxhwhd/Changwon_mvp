@@ -463,7 +463,7 @@ export default function AiLounge() {
         </div>
       </div>
 
-      <IapSummaryBanner note="내 진단 · IAP 요약 (진단센터·상담 결과 연동)" />
+      <IapSummaryBanner note="내 진단 유형 요약 (진단센터·상담 결과 연동)" />
 
       {/* ── AI 종합 분석 섹션 (DB 정보 vs AI 분석 구분) ──────────────── */}
       <section className="al-ai-section">
@@ -797,7 +797,7 @@ export default function AiLounge() {
           <div className="card">
             <div className="card-title">빠른 이동</div>
             <div className="al-quick-list">
-              {quickLinks.map((q,i)=>(
+              {quickLinks.filter(q => student.grade >= 4 || q.path !== '/mypage/portfolio').map((q,i)=>(
                 <Link key={i} to={q.path} className="al-quick-item">
                   <span className="al-quick-ico" style={{ background:q.bg, color:q.iconColor }}>
                     <i className={q.icon}/>

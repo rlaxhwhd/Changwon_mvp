@@ -7,15 +7,16 @@
 // ─────────────────────────────────────────────────────────────────────────
 import roster from '../../src_v2/data/studentsRoster.json'
 import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
-import { STUDENTS, getStudentIap } from '../../src_v2/data/students'
+import { STUDENTS, getStudentTypeMeta } from '../../src_v2/data/students'
+import { typeLabel, type StudentType } from '../../src_v2/data/careerProcess'
 import type { PenaltyEntry } from './schema/penalty'
 import { paginate, mockLatency } from './query'
 import type { ListParams, Paginated } from './query'
 
 /** 학적 상태 — 학생 JSON(students.ts) 단일 원천의 alias. 로스터 JSON은 3값만 쓰는 부분집합. */
 export type EnrollStatus = EnrollmentStatus
-/** 운영 트랙 — src_v2 careerProcess와 동일 3분류 */
-export type RosterTrack = '집중관리' | '가속' | '표준'
+/** 3계층 — studentType에서 파생된다(careerProcess.TIER_LABEL). 별도 저장하지 않는다. */
+export type RosterTier = '하위' | '중간' | '상위'
 
 /** 로스터 학생 1명 (경량) — 상세 데이터는 STUDENTS(src_v2) 상세 학생만 보유 */
 export interface RosterStudent {
@@ -28,11 +29,10 @@ export interface RosterStudent {
   major: string
   /** 학년 1~4 */
   grade: number
-  /** 6유형 진단 분류 */
-  studentType: string
-  /** IAP 유형 R1~R6 */
-  iap: string
-  track: RosterTrack
+  /** 6유형 진단 코드 T1~T6 (표시명은 STUDENT_TYPE_MAP에서 파생) */
+  studentType: StudentType
+  /** 계층 표시명 — 비교과 신청 범위를 가른다 */
+  tier: RosterTier
   /** 로드맵 진행률 0~100 */
   progress: number
   status: EnrollStatus
@@ -112,12 +112,30 @@ export function enrollStatusClass(status: EnrollStatus): string {
   }
 }
 
-/** 트랙 배지 CSS 클래스 (index.css 토큰) — StudentList와 동일 규약 */
-export function rosterTrackClass(track: RosterTrack): string {
-  switch (track) {
-    case '집중관리':
+/**
+ * 6유형 → 틴트 유틸 클래스 (DESIGN.md 7색 중 6색). 새 색을 만들지 않는다.
+ * 유형 배지를 그리는 모든 화면의 단일 소스 — 여기 말고 다른 데서 유형 색을 정하지 않는다.
+ */
+export const TYPE_TINT: Record<StudentType, string> = {
+  T1: 's-green',
+  T2: 's-teal',
+  T3: 's-blue',
+  T4: 's-yellow',
+  T5: 's-red',
+  T6: 's-purple',
+}
+
+/** 유형 배지 CSS 클래스 (모양 + 유형별 틴트) — enrollStatusClass와 동일 규약 */
+export function studentTypeClass(code: StudentType): string {
+  return `admin-type-tag ${TYPE_TINT[code]}`
+}
+
+/** 계층 배지 CSS 클래스 (index.css 토큰) — StudentList와 동일 규약 */
+export function rosterTierClass(tier: RosterTier): string {
+  switch (tier) {
+    case '하위':
       return 'admin-track-focus'
-    case '가속':
+    case '상위':
       return 'admin-track-fast'
     default:
       return 'admin-track-std'
@@ -150,7 +168,7 @@ function roadmapProgress(student: StudentData): number {
 
 /** 상세 학생 → 로스터 뷰 모델 (목록 단일 소스에 병합) */
 function detailToRoster(s: StudentData): RosterStudent {
-  const iap = getStudentIap(s)
+  const type = getStudentTypeMeta(s)
   return {
     id: s.id,
     studentNo: s.studentNo,
@@ -158,8 +176,7 @@ function detailToRoster(s: StudentData): RosterStudent {
     major: s.major,
     grade: s.grade,
     studentType: s.studentType,
-    iap: iap.iapType,
-    track: iap.track as RosterTrack,
+    tier: type.tierLabel as RosterTier,
     progress: roadmapProgress(s),
     status: '재학',
     phone: s.phone,
@@ -185,9 +202,9 @@ export async function queryStudentRoster(
     if (f.major && s.major !== f.major) return false
     if (f.grade && String(s.grade) !== f.grade) return false
     if (f.studentType && s.studentType !== f.studentType) return false
-    if (f.track && s.track !== f.track) return false
+    if (f.tier && s.tier !== f.tier) return false
     if (f.status && s.status !== f.status) return false
-    if (q && !`${s.name} ${s.major} ${s.studentType} ${s.iap}`.toLowerCase().includes(q)) return false
+    if (q && !`${s.name} ${s.major} ${typeLabel(s.studentType)}`.toLowerCase().includes(q)) return false
     return true
   })
   return paginate(filtered, params)
@@ -201,7 +218,7 @@ export function getRosterFilterOptions(departments: string[] = [], studentIds?: 
     majors: [...new Set(base.map(s => s.major))].sort(),
     grades: [...new Set(base.map(s => s.grade))].sort((a, b) => a - b),
     types: [...new Set(base.map(s => s.studentType))],
-    tracks: [...new Set(base.map(s => s.track))],
+    tiers: [...new Set(base.map(s => s.tier))],
     statuses: [...new Set(base.map(s => s.status))],
   }
 }
@@ -212,6 +229,6 @@ export function getRosterSummary(departments: string[] = [], studentIds?: string
   const base = getFullRoster(departments).filter(student => !ids || ids.has(student.id))
   return {
     total: base.length,
-    focusCount: base.filter(s => s.track === '집중관리').length,
+    focusCount: base.filter(s => s.tier === '하위').length,
   }
 }

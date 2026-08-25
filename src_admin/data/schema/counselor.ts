@@ -43,7 +43,7 @@ export function canManageJobs(role: CounselorRole): boolean {
   return role === 'career'
 }
 
-/** IAP 유형 확정 권한 (진로상담사 전용) */
+/** 진단 6유형 확정 권한 (진로상담사 전용) */
 export function canConfirmIap(role: CounselorRole): boolean {
   return role === 'career'
 }

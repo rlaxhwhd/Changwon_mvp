@@ -4,10 +4,11 @@ import type { ReactNode } from 'react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { StaffRole } from '../data/schema/staff'
-import { STUDENTS, getStudentIap } from '../../src_v2/data/students'
+import { STUDENTS, getStudentTypeMeta } from '../../src_v2/data/students'
+import { typeLabel } from '../../src_v2/data/careerProcess'
 import type { StudentData } from '../../src_v2/data/students'
 import { loadJournalEntries } from '../../src_v2/data/growthJournal'
-import { STUDENT_ROSTER, rosterTrackClass, enrollStatusClass } from '../data/studentRoster'
+import { STUDENT_ROSTER, rosterTierClass, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 import { getMergedRoadmap, TERM_ORDER } from '../data/roadmapOverrides'
 import EmptyState from './EmptyState'
 
@@ -40,7 +41,7 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  { key: 'diagnosis', label: '진단·IAP', icon: LuClipboardCheck, psychAllowed: true },
+  { key: 'diagnosis', label: '진단·유형', icon: LuClipboardCheck, psychAllowed: true },
   { key: 'roadmap', label: '로드맵 진행', icon: LuRoute, psychAllowed: false },
   { key: 'gap', label: '역량 GAP', icon: LuChartColumn, psychAllowed: false },
   { key: 'growth', label: '성장·퀘스트', icon: LuSprout, psychAllowed: true },
@@ -58,7 +59,7 @@ function phaseProgress(student: StudentData): number {
 // ── 탭 본문 ────────────────────────────────────────────────────────────────
 
 function DiagnosisTab({ student }: { student: StudentData }) {
-  const iap = getStudentIap(student)
+  const type = getStudentTypeMeta(student)
   return (
     <div className="admin-detail-grid">
       <section className="admin-card">
@@ -72,18 +73,18 @@ function DiagnosisTab({ student }: { student: StudentData }) {
           ))}
         </div>
         <div className="admin-type-line">
-          <span className="admin-tag admin-tag-soft">{student.studentType}</span>
+          <span className={studentTypeClass(student.studentType)}>{typeLabel(student.studentType)}</span>
         </div>
       </section>
 
       <section className="admin-card">
-        <div className="admin-card-head"><h2><LuUserCheck /> IAP 유형 · 트랙</h2></div>
+        <div className="admin-card-head"><h2><LuUserCheck /> 진단 유형 · 계층</h2></div>
         <dl className="admin-deflist">
-          <div><dt>IAP 유형</dt><dd>{iap.iapType}</dd></div>
-          <div><dt>주 학년대</dt><dd>{iap.grade}</dd></div>
-          <div><dt>운영 트랙</dt><dd>{iap.track}</dd></div>
-          <div><dt>목표</dt><dd>{iap.goal}</dd></div>
-          <div><dt>초점</dt><dd>{iap.focus}</dd></div>
+          <div><dt>진단 유형</dt><dd>{type.label}</dd></div>
+          <div><dt>계층</dt><dd>{type.tierLabel}</dd></div>
+          <div><dt>후속진단</dt><dd>{type.followUpTest}</dd></div>
+          <div><dt>목표</dt><dd>{type.goal}</dd></div>
+          <div><dt>초점</dt><dd>{type.focus}</dd></div>
         </dl>
       </section>
 
@@ -371,9 +372,8 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
                   {roster.gpa && ` · GPA ${roster.gpa} · ${roster.language}`}
                 </p>
                 <div className="admin-detail-tags">
-                  <span className="admin-tag admin-tag-soft">{roster.studentType}</span>
-                  <span className="admin-tag">{roster.iap}</span>
-                  <span className={`admin-track ${rosterTrackClass(roster.track)}`}>{roster.track} 트랙</span>
+                  <span className={studentTypeClass(roster.studentType)}>{typeLabel(roster.studentType)}</span>
+                  <span className={`admin-track ${rosterTierClass(roster.tier)}`}>{roster.tier} 계층</span>
                   <span className={enrollStatusClass(roster.status)}>{roster.status}</span>
                 </div>
               </div>
@@ -420,7 +420,7 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
     )
   }
 
-  const iap = getStudentIap(student)
+  const type = getStudentTypeMeta(student)
   const activeTab = visibleTabs.some(t => t.key === tab) ? tab : visibleTabs[0].key
 
   return (
@@ -433,9 +433,8 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
               {student.major} · {student.grade}학년 · GPA {student.gpa} · {student.language}
             </p>
             <div className="admin-detail-tags">
-              <span className="admin-tag admin-tag-soft">{student.studentType}</span>
-              <span className="admin-tag">{iap.iapType}</span>
-              <span className="admin-tag">{iap.track} 트랙</span>
+              <span className={studentTypeClass(student.studentType)}>{typeLabel(student.studentType)}</span>
+              <span className="admin-tag">{type.tierLabel} 계층</span>
             </div>
           </div>
         </div>

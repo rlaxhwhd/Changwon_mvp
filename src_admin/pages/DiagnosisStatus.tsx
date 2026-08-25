@@ -138,7 +138,7 @@ export default function DiagnosisStatus() {
             담당 학생의 진단검사 응시 현황과 결과를 상담 준비용으로 확인합니다.
           </p>
           <p className="admin-field-hint">
-            대상 검사는 학년별 응시 정책(1학년 C-2 · 2·3학년 C-2/C-3 · 4학년 C-3/C-4 · 공통 C-CORE)으로 산정됩니다.
+            대상 검사는 필수진단 C-CORE(전원)와 진단 결과 유형별 후속진단 C1~C6 1종으로 산정됩니다.
           </p>
         </div>
       </header>

@@ -10,10 +10,12 @@ import {
   queryStudentRoster,
   getRosterFilterOptions,
   getRosterSummary,
-  rosterTrackClass,
+  rosterTierClass,
   enrollStatusClass,
+  studentTypeClass,
 } from '../data/studentRoster'
-import type { RosterTrack } from '../data/studentRoster'
+import type { RosterTier } from '../data/studentRoster'
+import { typeLabel } from '../../src_v2/data/careerProcess'
 import { totalPages } from '../data/query'
 import { useListData } from '../hooks/useListData'
 import EmptyState from '../components/EmptyState'
@@ -21,10 +23,10 @@ import EmptyState from '../components/EmptyState'
 const ALL = '전체'
 const PAGE_SIZE = 20
 
-const TRACK_ICON: Record<RosterTrack, IconType> = {
-  표준: LuRoute,
-  집중관리: LuTriangleAlert,
-  가속: LuRocket,
+const TIER_ICON: Record<RosterTier, IconType> = {
+  중간: LuRoute,
+  하위: LuTriangleAlert,
+  상위: LuRocket,
 }
 
 export default function StudentList() {
@@ -37,7 +39,7 @@ export default function StudentList() {
   const [major, setMajor] = useState(ALL)
   const [grade, setGrade] = useState(ALL)
   const [type, setType] = useState(ALL)
-  const [track, setTrack] = useState(ALL)
+  const [tier, setTier] = useState(ALL)
   const [status, setStatus] = useState(ALL)
   const [page, setPage] = useState(1)
 
@@ -56,7 +58,7 @@ export default function StudentList() {
       major: major === ALL ? undefined : major,
       grade: grade === ALL ? undefined : grade,
       studentType: type === ALL ? undefined : type,
-      track: track === ALL ? undefined : track,
+      tier: tier === ALL ? undefined : tier,
       status: status === ALL ? undefined : status,
     },
   })
@@ -116,14 +118,14 @@ export default function StudentList() {
           <span>유형</span>
           <select value={type} onChange={e => onFilter(setType)(e.target.value)}>
             <option value={ALL}>{ALL}</option>
-            {options.types.map(t => <option key={t} value={t}>{t}</option>)}
+            {options.types.map(t => <option key={t} value={t}>{typeLabel(t)}</option>)}
           </select>
         </label>
         <label className="admin-select">
-          <span>트랙</span>
-          <select value={track} onChange={e => onFilter(setTrack)(e.target.value)}>
+          <span>계층</span>
+          <select value={tier} onChange={e => onFilter(setTier)(e.target.value)}>
             <option value={ALL}>{ALL}</option>
-            {options.tracks.map(t => <option key={t} value={t}>{t}</option>)}
+            {options.tiers.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
         </label>
         <label className="admin-select">
@@ -153,8 +155,8 @@ export default function StudentList() {
               <div className="admin-roster-head">
                 <span>학생</span>
                 <span>학과 · 학년</span>
-                <span>유형 / IAP</span>
-                <span>트랙</span>
+                <span>진단 유형</span>
+                <span>계층</span>
                 <span>학적</span>
                 <span>진행률</span>
               </div>
@@ -174,12 +176,12 @@ export default function StudentList() {
                     <small>{s.grade}학년</small>
                   </span>
                   <span className="admin-roster-cell">
-                    <span className="admin-tag admin-tag-soft">{s.studentType}</span>
-                    <small>{s.iap}</small>
+                    <span className={studentTypeClass(s.studentType)}>{typeLabel(s.studentType)}</span>
+                    <small>{s.studentType}</small>
                   </span>
                   <span className="admin-roster-cell">
-                    <span className={`admin-track ${rosterTrackClass(s.track)}`}>
-                      {(() => { const Icon = TRACK_ICON[s.track]; return <Icon /> })()} {s.track}
+                    <span className={`admin-track ${rosterTierClass(s.tier)}`}>
+                      {(() => { const Icon = TIER_ICON[s.tier]; return <Icon /> })()} {s.tier}
                     </span>
                   </span>
                   <span className="admin-roster-cell">

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import { getActiveStudent, getActiveStudentId, getStudentCounselRequests } from '../../data/students'
+import { typeLabel } from '../../data/careerProcess'
 import { getCounselorLabel } from '../../data/counselorsRead'
 import { COUNSEL_RECORDS, COUNSEL_TYPE_STATS } from '../../data/counsel'
 import './CounselStatus.css'
@@ -253,7 +254,7 @@ export default function CounselStatus() {
             </div>
             <div>
               <small>학생 유형</small>
-              <strong>{student.studentType}</strong>
+              <strong>{typeLabel(student.studentType)}</strong>
             </div>
           </div>
 

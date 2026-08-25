@@ -2,6 +2,7 @@ export interface NavChild {
   label: string
   path: string
   icon: string
+  minGrade?: number
   children?: NavChild[]
 }
 
@@ -63,6 +64,16 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
   {
+    id: 'program-apply',
+    label: '비교과 프로그램 신청',
+    basePaths: ['/growth/program'],
+    path: '/growth/program',
+    icon: 'fa-clipboard-list',
+    children: [
+      { label: '비교과 프로그램 신청', path: '/growth/program', icon: 'fa-clipboard-list' },
+    ],
+  },
+  {
     id: 'growth',
     label: '내 성장',
     basePaths: ['/growth'],
@@ -70,7 +81,6 @@ export const NAV_SECTIONS: NavSection[] = [
     children: [
       { label: '홈대시보드', path: '/growth', icon: 'fa-house' },
       { label: '로드맵 진행 현황', path: '/growth/roadmap-status', icon: 'fa-route' },
-      { label: '비교과프로그램신청', path: '/growth/program', icon: 'fa-clipboard-list' },
       { label: '퀘스트보드', path: '/growth/quest', icon: 'fa-list-check' },
       { label: '오늘의 성장퀘스트', path: '/growth/mission', icon: 'fa-bullseye' },
       { label: '일일퀘스트 기록노트', path: '/growth/mission-log', icon: 'fa-calendar-check' },
@@ -105,12 +115,21 @@ export const NAV_SECTIONS: NavSection[] = [
     basePaths: ['/mypage'],
     icon: 'fa-user',
     children: [
-      { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open' },
+      { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open', minGrade: 4 },
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
       { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check' },
     ],
   },
 ]
+
+export function getVisibleNavChildren(children: NavChild[], grade: number): NavChild[] {
+  return children
+    .filter(child => child.minGrade === undefined || grade >= child.minGrade)
+    .map(child => ({
+      ...child,
+      children: child.children ? getVisibleNavChildren(child.children, grade) : undefined,
+    }))
+}
 
 export function matchesPath(pathname: string, targetPath: string) {
   if (targetPath === '/') return pathname === '/'

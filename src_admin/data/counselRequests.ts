@@ -25,7 +25,7 @@ import {
 } from '../../src_v2/data/students'
 import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
 import { STUDENT_TYPE_MAP } from '../../src_v2/data/careerProcess'
-import type { StudentType, IapMapping } from '../../src_v2/data/careerProcess'
+import type { StudentType, StudentTypeMeta } from '../../src_v2/data/careerProcess'
 
 /** 접수함에 표시하는 상담 유형 — '교수'(예약)는 제외 */
 const ADMIN_TYPES: CounselRequestType[] = ['진로취업', '심리']
@@ -54,6 +54,7 @@ export function getCounselRequests(): CounselRequest[] {
           studentMajor: owner.major,
           studentEnrollmentStatus: owner.enrollmentStatus,
           studentTrack: getStudentTrack(owner.competencyScore, owner.grade),
+          studentType: owner.studentType,
           type,
           status: r.status,
           method: r.method,
@@ -167,7 +168,7 @@ export function getRequestById(id: string): CounselRequest | undefined {
 }
 
 // ── 학생 상세 프로필 (상세 보기 모달 단일 구독 소스) ──────────────────────────
-// 코어 프로필은 owner 스토어(seed+override seam)에서, IAP는 careerProcess 단일소스에서 파생.
+// 코어 프로필은 owner 스토어(seed+override seam)에서, 유형 메타는 careerProcess 단일소스에서 파생.
 // 상세학생(STUDENTS)이면 로드맵 phases 렌더용으로 detailed(StudentData)를 병합한다.
 // 화면은 이 셀렉터 하나만 구독하고 seed JSON·localStorage를 직접 접근하지 않는다.
 
@@ -181,8 +182,8 @@ export interface CounselStudentProfile {
   phone: string
   enrollmentStatus: EnrollmentStatus
   studentType: StudentType
-  /** STUDENT_TYPE_MAP[studentType] 파생 (careerProcess 단일소스) */
-  iap: IapMapping
+  /** STUDENT_TYPE_MAP[studentType] 파생 — 라벨·계층·후속진단·상담주제 (careerProcess 단일소스) */
+  typeMeta: StudentTypeMeta
   gpa: string
   language: string
   targetCompanySummary: string
@@ -207,7 +208,7 @@ export function getCounselStudentProfile(studentId: string): CounselStudentProfi
     phone: owner.phone,
     enrollmentStatus: owner.enrollmentStatus,
     studentType: owner.studentType,
-    iap: STUDENT_TYPE_MAP[owner.studentType],
+    typeMeta: STUDENT_TYPE_MAP[owner.studentType],
     gpa: owner.gpa,
     language: owner.language,
     targetCompanySummary: owner.targetCompanySummary,

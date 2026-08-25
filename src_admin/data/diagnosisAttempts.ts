@@ -2,17 +2,17 @@
 // 진단 응시 현황 로더 (SPEC §3-1-④ 검사 현황)
 //
 // 단일 소스
-//   · 검사 목록      = src_v2/data/careerProcess.ts (DIAGNOSIS_MODULES, 학년별 대상 getGradeTests)
+//   · 검사 목록      = src_v2/data/careerProcess.ts (DIAGNOSIS_MODULES, 유형별 대상 getRequiredTests)
 //   · 학생 로스터    = studentRoster.getFullRoster(departments)
 //   · 응시 이벤트    = diagnosisAttempts.seed.json ⊕ localStorage 'dc_diag_attempts'
 //   · 결과 코멘트    = localStorage 'dc_diag_comments'  (append-only)
 //   · 검사 권유      = localStorage 'dc_diag_nudges'    (append-only)
 //
-// '미응시'는 저장하지 않는다 — (담당 학생 × 학년별 대상검사) 곱집합에서 응시 레코드를 뺀
+// '미응시'는 저장하지 않는다 — (담당 학생 × 유형별 대상검사) 곱집합에서 응시 레코드를 뺀
 // 나머지를 파생한다. 그래야 로스터가 늘어도 seed 를 다시 만들 필요가 없다.
 // DB 전환 시 이 모듈만 API 로 교체하면 화면은 그대로 나간다.
 // ─────────────────────────────────────────────────────────────────────────────
-import { DIAGNOSIS_MODULES, getGradeTests } from '../../src_v2/data/careerProcess'
+import { DIAGNOSIS_MODULES, getRequiredTests } from '../../src_v2/data/careerProcess'
 import seed from './diagnosisAttempts.seed.json'
 import { mockLatency, paginate } from './query'
 import type { ListParams, Paginated } from './query'
@@ -126,7 +126,7 @@ export interface DiagnosisStatusRow {
 
 const STATUS_ORDER: Record<AttemptStatus, number> = { 미응시: 0, 진행중: 1, 완료: 2 }
 
-/** 담당 범위의 (학생 × 학년별 대상검사) 전체 행. 미응시 포함. */
+/** 담당 범위의 (학생 × 유형별 대상검사) 전체 행. 미응시 포함. */
 function statusRows(departments: string[]): DiagnosisStatusRow[] {
   const attempts = getDiagnosisAttempts()
   const comments = getLatestComments()
@@ -142,7 +142,7 @@ function statusRows(departments: string[]): DiagnosisStatusRow[] {
 
   const rows: DiagnosisStatusRow[] = []
   for (const student of getFullRoster(departments)) {
-    for (const module of getGradeTests(student.grade)) {
+    for (const module of getRequiredTests(student.studentType)) {
       const key = `${student.id}::${module.testId}`
       const attempt = latestAttempt.get(key)
       const base = {

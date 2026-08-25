@@ -14,6 +14,7 @@ import type {
 } from './schema/dashboard'
 import seed from './dashboard.seed.json'
 import { STUDENT_ROSTER } from './studentRoster'
+import { STUDENT_TYPES } from '../../src_v2/data/careerProcess'
 
 const STAT_ICONS = { 'user-group': LuUsers, 'clipboard-check': LuClipboardCheck, comments: LuMessagesSquare, calendar: LuCalendar, briefcase: LuBriefcase, bullhorn: LuMegaphone }
 const SEED = { ...seed, stats: seed.stats.map(stat => ({ ...stat, icon: STAT_ICONS[stat.icon as keyof typeof STAT_ICONS] })) } as DashboardData
@@ -35,21 +36,15 @@ export function diagnosisPercent(seg: DiagnosisSegment, total: number): number {
 }
 
 /**
- * 진단 참여 현황 = 실제 로스터(학생 단일소스)의 IAP 단계 분포.
- * 각 학생을 진단 모듈 1개로 분류(합계 = 전체 학생 수). C-1 은 없음.
- *   핵심진단(C-CORE)←R1 유형진단 · 진로설정(C-2)←R2 · 역량수준(C-3)←R3·R5 · 구직역량(C-4)←R4·R6
+ * 진단 참여 현황 = 실제 로스터(학생 단일소스)의 6유형 분포.
+ * 각 학생을 후속진단 1종으로 분류한다(합계 = 전체 학생 수).
+ *   필수진단 CCORE는 전원 대상, 후속진단 Cn은 학생 유형이 정한다(PROCESS.md §3).
  */
-const DIAGNOSIS_BUCKETS: { label: string; iaps: string[] }[] = [
-  { label: 'C-2 (진로설정)', iaps: ['R2'] },
-  { label: 'C-3 (역량수준)', iaps: ['R3', 'R5'] },
-  { label: 'C-4 (구직역량)', iaps: ['R4', 'R6'] },
-  { label: 'C-CORE (핵심진단)', iaps: ['R1'] },
-]
-
 export function getDiagnosisSummary(): DiagnosisSummary {
-  const segments = DIAGNOSIS_BUCKETS.map(b => ({
-    label: b.label,
-    value: STUDENT_ROSTER.filter(s => b.iaps.includes(s.iap)).length,
+  // 유형별 후속진단 대상 인원. 필수진단(CCORE)은 전원이므로 세그먼트로 세지 않는다.
+  const segments = STUDENT_TYPES.map(t => ({
+    label: `${t.followUpTest} (${t.label})`,
+    value: STUDENT_ROSTER.filter(s => s.studentType === t.code).length,
   }))
   return { total: STUDENT_ROSTER.length, segments }
 }
