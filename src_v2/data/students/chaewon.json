@@ -125,20 +125,20 @@
       "num": 3,
       "title": "경력개발 로드맵 (단·중·장기 계획)",
       "icon": "fa-route",
-      "status": "active",
-      "period": "2025.09 ~ 현재",
+      "status": "done",
+      "period": "2025.09 ~ 2026.02",
       "tasks": [
         {
           "text": "단기 (1학기 · ~2026.08): 정보처리기사 필기 취득 · 데이터 직무 기초 교육 수료 · TOEIC 550→650",
-          "done": false
+          "done": true
         },
         {
           "text": "중기 (1년 · ~2027.02): 캡스톤 PM 프로젝트 1건 완수 · 기획/PM 공모전 1회 참가 · TOEIC 700 · PMP 학습 시작",
-          "done": false
+          "done": true
         },
         {
           "text": "장기 (졸업 전 · ~2028.02): IT 서비스 기획 인턴 1회 · 포트폴리오 2건 · 넥슨 IT PM 지원",
-          "done": false
+          "done": true
         }
       ],
       "termDetails": {
@@ -231,28 +231,28 @@
       "num": 4,
       "title": "역량강화 (실행 추천)",
       "icon": "fa-chart-line",
-      "status": "upcoming",
-      "period": "2026.03 ~ 2026.12",
+      "status": "active",
+      "period": "2026.03 ~ 현재",
       "tasks": [
         {
           "text": "[단기 연계] 정보처리기사 필기 응시반 등록 — Phase 3 단기 'IT 자격증' 실행",
-          "done": false
+          "done": true
         },
         {
           "text": "[단기 연계] TOEIC 650 목표반 학습 시작 — Phase 3 단기 '어학 550→650' 실행",
-          "done": false
+          "done": true
         },
         {
           "text": "[단기 연계] 데이터 직무역량 기초 교육 수강 — Phase 3 단기 '데이터 직무 기초' 실행",
-          "done": false
+          "done": true
         },
         {
           "text": "[중기 연계] 캡스톤디자인 PM 프로젝트 등록 — Phase 3 중기 '프로젝트 1건' 실행",
-          "done": false
+          "done": true
         },
         {
           "text": "[중기 연계] 기획·PM 공모전 참가 — Phase 3 중기 '공모전 1회' 실행",
-          "done": false
+          "done": true
         },
         {
           "text": "[중기 연계] PMP/CAPM 입문 학습반 등록 — Phase 3 중기 'PMP 학습 시작' 실행",

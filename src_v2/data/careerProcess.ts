@@ -173,14 +173,24 @@ export function topicLabel(code: string): string {
 
 // ── 진단 모듈 (CCORE + C1~C6) ────────────────────────────────────────────
 
+/**
+ * 진단 요인 1개 — 결과표(수준·T점수)의 한 행이 된다.
+ * 이름·설명 표기는 검사 결과표(CRA 결과표)를 정본으로 한다.
+ */
+export interface DiagnosisFactorDef {
+  name: string
+  /** 요인 설명 — 결과표 '요인 설명' 표에 쓰인다. 확인된 검사만 보유. */
+  desc?: string
+}
+
 export interface DiagnosisModule {
   /** 진단 코드 */
   id: DiagnosisTestId
   /** 라우트 파라미터 / 결과 상세 키 (소문자) */
   testId: string
   name: string
-  /** 진단영역 */
-  area: string
+  /** 진단영역 요인 — 이 검사가 재는 것. 결과표의 행이 여기서 나온다(단일 소스). */
+  factors: DiagnosisFactorDef[]
   stageLabel: string
   /** 이 검사가 "결정"하는 것 */
   decides: string
@@ -205,7 +215,13 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'CCORE',
     testId: 'ccore',
     name: 'C-CORE 핵심진단검사',
-    area: '진로명확도 · 역량준비도 · 취업준비도 · 진로동기',
+    // 요인명·설명은 CRA 진로준비도 결과표 정본 표기를 따른다.
+    factors: [
+      { name: '진로명확성', desc: '자신의 진로 목표와 경로를 얼마나 구체적이고 명확하게 설정했는지의 정도' },
+      { name: '역량준비도', desc: '희망 직무 및 조직의 문화나 환경에서 자신의 역량을 수행하기 위해 준비된 정도' },
+      { name: '취업준비도', desc: '취업에 요구되는 주요 정보 취득, 구직기술 및 구직전략이 수행된 정도' },
+      { name: '진로동기', desc: '자신의 진로 선택과 경력 발전을 위해 내적으로 느끼는 동기와 열정의 정도' },
+    ],
     stageLabel: '진단 · 핵심진단(필수)',
     decides: '학생 6유형 분류 — 이후 모든 단계의 관문',
     desc: '4개 영역을 통합 측정해 학생을 6가지 표준 유형으로 분류하는 필수 진단입니다.',
@@ -221,7 +237,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C1',
     testId: 'c1',
     name: 'C-1 진로탐색 진단검사',
-    area: '자기이해 · 흥미 · 가치관 · 탐색행동',
+    factors: [{ name: '자기이해' }, { name: '흥미' }, { name: '가치관' }, { name: '탐색행동' }],
     stageLabel: '후속진단 · 진로탐색형',
     decides: '탐색 상담 4주제(A01~A04) 준비 자료',
     desc: '흥미·가치관과 탐색 행동 수준을 진단해 진로 방향 인식 상담의 근거를 만듭니다.',
@@ -237,7 +253,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C2',
     testId: 'c2',
     name: 'C-2 진로설정 진단검사',
-    area: '진로학습 · 목표 · 의사결정 · 탐색행동 · 설계수준',
+    factors: [{ name: '진로학습' }, { name: '목표' }, { name: '의사결정' }, { name: '탐색행동' }, { name: '설계수준' }],
     stageLabel: '후속진단 · 진로설정형',
     decides: '진로 목표 구체성 · 설계 수준 파악',
     desc: '진로 목표의 구체성과 명확성을 진단해 진로 설계의 기준을 만듭니다.',
@@ -253,7 +269,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C3',
     testId: 'c3',
     name: 'C-3 역량수준 진단검사',
-    area: '진로몰입 · 문제해결 · 대인적합성 · 네트워킹',
+    factors: [{ name: '진로몰입' }, { name: '문제해결' }, { name: '대인적합성' }, { name: '네트워킹' }],
     stageLabel: '후속진단 · 역량성장형',
     decides: '역량강화 프로그램 추천',
     desc: '핵심역량 보유 수준을 진단해 역량강화 프로그램과 개인 리포트를 설계합니다.',
@@ -269,7 +285,13 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C4',
     testId: 'c4',
     name: 'C-4 구직역량 진단검사',
-    area: '개인브랜딩 · 정보탐색 · 면접역량 · 구직전략',
+    // PRIT 4요인 — 요인 설명은 CRA 결과표 '취업역량 준비도' 정본 표기.
+    factors: [
+      { name: '개인 브랜딩', desc: '목표 직무에 맞는 나만의 정체성을 자기소개서로 표현하는 역량' },
+      { name: '정보탐색 및 분석', desc: '채용정보, 산업·직무·기업 정보를 탐색하여 취업의사결정을 내리는 역량' },
+      { name: '면접역량', desc: '언어 및 비언어를 활용하여 자신의 역량을 설득력 있게 표현하는 역량' },
+      { name: '구직전략', desc: '개인의 진로단계와 목표에 맞게 취업준비과정을 전략적으로 준비하는 실행역량' },
+    ],
     stageLabel: '후속진단 · 취업준비형',
     decides: '취업지원 프로그램 선발 · 단계 파악',
     desc: '취업 준비 행동 수준을 진단해 취업지원 단계와 프로그램을 결정합니다.',
@@ -285,7 +307,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C5',
     testId: 'c5',
     name: 'C-5 취약요인 진단검사',
-    area: '참여동기 · 학업병행 · 지원요구 · 이탈위험',
+    factors: [{ name: '참여동기' }, { name: '학업병행' }, { name: '지원요구' }, { name: '이탈위험' }],
     stageLabel: '후속진단 · 취약관리형',
     decides: '집중관리 상담 4주제(A17~A20) 설계',
     desc: '참여 동기와 이탈 위험 요인을 진단해 집중관리 상담의 우선순위를 정합니다.',
@@ -301,7 +323,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C6',
     testId: 'c6',
     name: 'C-6 우수인재 진단검사',
-    area: '성과관리 · 리더십 · 기업적합도 · 브랜딩',
+    factors: [{ name: '성과관리' }, { name: '리더십' }, { name: '기업적합도' }, { name: '브랜딩' }],
     stageLabel: '후속진단 · 우수인재형',
     decides: '기업연계·인턴십 매칭 자료',
     desc: '성과 관리와 리더십 수준을 진단해 기업연계·인턴십 매칭 근거를 만듭니다.',
@@ -314,6 +336,11 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     forType: 'T6',
   },
 ]
+
+/** 진단영역 한 줄 표기 — factors 에서 파생한다. 같은 사실을 두 곳에 두지 않는다. */
+export function areaOf(m: DiagnosisModule): string {
+  return m.factors.map(f => f.name).join(' · ')
+}
 
 const MODULE_BY_ID = new Map(DIAGNOSIS_MODULES.map(m => [m.id, m]))
 const MODULE_BY_TEST_ID = new Map(DIAGNOSIS_MODULES.map(m => [m.testId, m]))

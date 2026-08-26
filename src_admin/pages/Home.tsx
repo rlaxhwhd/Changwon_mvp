@@ -137,13 +137,13 @@ export default function Home() {
               <span className="go"><Ico id="chev" /></span>
             </Link>
 
-            {/* 집중관리 현황 — 전체 담당 학생 대비 비율 */}
+            {/* 집중관리 현황 — 1학년을 뺀 담당 학생 대비 비율(분류 기준은 counselorDashboard.RISK_RULE) */}
             <div className="card sm risk">
               <div className="risk-hd">
                 <span className="rounded s-red"><Ico id="alert" /></span>
                 <div>
                   <div className="k">집중관리 현황</div>
-                  <div className="s">전체 담당 학생 {risk.total}명 대비</div>
+                  <div className="s">1학년 제외 {risk.total}명 대비</div>
                 </div>
               </div>
               {risk.rows.map(row => (

@@ -21,7 +21,7 @@
   --jf-r-input: 6px;
 
   min-height: calc(100vh - var(--gnb-height));
-  padding: 28px 40px 56px;
+  padding: 24px 24px 64px;
   background: #fff;
   color: var(--jf-text);
   font-size: 14px;
@@ -30,7 +30,7 @@
 .jf-inner { max-width: 1180px; margin: 0 auto; }
 
 /* ── 헤더 ── */
-.jf-page-title { font-size: 24px; font-weight: 800; letter-spacing: -0.4px; color: var(--jf-text); }
+.jf-page-title { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--jf-text); }
 .jf-crumbs { display: flex; align-items: center; gap: 7px; margin: 8px 0 22px; font-size: 13px; color: var(--jf-muted); }
 .jf-crumbs a { color: var(--jf-muted); }
 .jf-crumbs a:hover { color: var(--jf-primary); }

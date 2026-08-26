@@ -221,31 +221,36 @@ input, textarea, select { font-family: var(--font); }
 
 .admin-layout-footer {
   position: relative;
+  max-width: var(--page-max);
+  margin: 0 auto;
   min-height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px 40px 28px;
+  padding: 18px 24px 28px;
   color: var(--color-caption);
   font-size: 12px;
   font-weight: 600;
   text-align: center;
 }
 
-/* 사이드바가 없는 화면 전용 — 좌측 하단 브랜드 로고(카피라이트는 중앙 유지) */
+/* 좌측 하단 브랜드 로고 — 본문과 같은 축(좌측 여백 24px)에 붙는다. */
 .admin-footer-logo {
   position: absolute;
-  left: 40px;
+  left: 24px;
   bottom: 22px;
   width: 132px;
   height: auto;
   opacity: 0.9;
 }
 
+/* 본문 폭·여백 — 홈(/admin)의 .page 와 같은 값이어야 상단바와 같은 축에 선다.
+   GNB(.gnb-in)도 max-width 1440 + 좌우 24 → 콘텐츠 시작 x 가 정확히 일치한다.
+   ⚠ 사이드바를 없앤 뒤로 이 값이 모든 교직원 화면의 유일한 기준이다. 화면별로 바꾸지 말 것. */
 .admin-page {
   max-width: var(--page-max);
   margin: 0 auto;
-  padding: 32px 40px;
+  padding: 24px 24px 64px;
   display: flex;
   flex-direction: column;
   gap: 22px;
@@ -511,8 +516,10 @@ input, textarea, select { font-family: var(--font); }
   justify-content: space-between;
   gap: 16px;
 }
-.admin-page-title { font-size: 26px; font-weight: 900; color: var(--color-text); letter-spacing: -0.5px; }
-.admin-page-desc { margin-top: 6px; font-size: 14px; font-weight: 600; color: var(--color-text-secondary); }
+/* 페이지 제목·설명 — 홈(/admin) 시안의 헤딩과 같은 값이어야 화면 간 위계가 하나로 읽힌다.
+   시안 .hello h1 = 28px/700/-0.03em, 보조문 = 13px/500. 여기서만 정하고 화면별로 덮지 말 것. */
+.admin-page-title { font-size: 28px; font-weight: 700; color: var(--color-text); letter-spacing: -0.03em; }
+.admin-page-desc { margin-top: 6px; font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
 
 /* ─── Buttons ────────────────────────────────────────────────────── */
 .admin-btn {
@@ -562,7 +569,7 @@ input, textarea, select { font-family: var(--font); }
 
 .admin-stat-body { display: flex; flex-direction: column; gap: 3px; }
 .admin-stat-label { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
-.admin-stat-value { font-size: 26px; font-weight: 900; color: var(--color-text); line-height: 1; }
+.admin-stat-value { font-size: 26px; font-weight: 800; color: var(--color-text); line-height: 1; }
 .admin-stat-value em { font-size: 14px; font-weight: 700; color: var(--color-text-secondary); font-style: normal; margin-left: 3px; }
 
 /* ─── Cards ──────────────────────────────────────────────────────── */
@@ -584,9 +591,10 @@ input, textarea, select { font-family: var(--font); }
   justify-content: space-between;
   margin-bottom: 16px;
 }
+/* 카드 제목 — 시안 .card-hd h2 (18px/700/-0.01em)와 동일 */
 .admin-card-head h2 {
   display: flex; align-items: center; gap: 8px;
-  font-size: 16px; font-weight: 700; letter-spacing: -0.02em; color: var(--text);
+  font-size: 18px; font-weight: 700; letter-spacing: -0.01em; color: var(--text);
 }
 .admin-card-head h2 svg { color: var(--color-primary); }
 .admin-card-more {
@@ -721,10 +729,10 @@ input, textarea, select { font-family: var(--font); }
   width: 52px; height: 52px;
   border-radius: 12px 5px 12px 5px;
   background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-  color: #fff; font-size: 20px; font-weight: 900;
+  color: #fff; font-size: 20px; font-weight: 800;
   display: flex; align-items: center; justify-content: center;
 }
-.admin-login-title { font-size: 24px; font-weight: 900; color: var(--color-text); letter-spacing: -0.5px; }
+.admin-login-title { font-size: 24px; font-weight: 800; color: var(--color-text); letter-spacing: -0.5px; }
 .admin-login-sub { font-size: 14px; font-weight: 700; color: var(--color-primary); }
 .admin-login-lead { margin: 24px 0 18px; font-size: 15px; font-weight: 700; color: var(--color-text-secondary); }
 
@@ -760,7 +768,7 @@ input, textarea, select { font-family: var(--font); }
   font-size: 22px;
   display: flex; align-items: center; justify-content: center;
 }
-.admin-role-name { font-size: 18px; font-weight: 900; color: var(--color-text); }
+.admin-role-name { font-size: 18px; font-weight: 800; color: var(--color-text); }
 .admin-role-person { font-size: 13px; font-weight: 700; color: var(--color-primary); }
 .admin-role-desc { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); line-height: 1.5; }
 .admin-role-cta {
@@ -805,27 +813,45 @@ input, textarea, select { font-family: var(--font); }
 .admin-chip-cancel { background: #F1F4F9; color: var(--color-text-secondary); }
 
 /* ─── Tabs ───────────────────────────────────────────────────────────── */
+/* 탭 = 세그먼티드 컨트롤 (DESIGN.md §20).
+   밑줄만 있으면 페이지 배경에 묻힌다 — 옅은 트랙 위에서 활성 탭만 흰 카드로 떠오르게 한다. */
 .admin-tabs {
-  display: flex;
-  gap: 6px;
-  border-bottom: 1px solid var(--color-border);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
 }
+.admin-tabs::-webkit-scrollbar { display: none; }
 .admin-tab {
-  display: inline-flex; align-items: center; gap: 8px;
-  padding: 11px 18px;
-  font-size: 14px; font-weight: 700;
+  display: inline-flex; align-items: center; gap: 7px;
+  flex: none;
+  height: 34px; padding: 0 14px;
+  border: 0; border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: 13.5px; font-weight: 700;
   color: var(--color-text-secondary);
-  border-bottom: 3px solid transparent;
-  transition: color 0.15s, border-color 0.15s;
+  white-space: nowrap;
+  transition: background 0.16s, color 0.16s;
 }
-.admin-tab svg { font-size: 13px; }
-.admin-tab:hover { color: var(--color-primary); }
-.admin-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 800; }
+.admin-tab svg { font-size: 14px; }
+.admin-tab:hover { color: var(--color-primary); background: rgba(255, 255, 255, 0.55); }
+.admin-tab.active {
+  background: var(--bg-card);
+  color: var(--color-primary);
+  font-weight: 800;
+  box-shadow: 0 1px 4px rgba(16, 24, 40, 0.08);
+}
 .admin-tab-count {
   min-width: 20px; height: 20px; padding: 0 6px;
   display: inline-flex; align-items: center; justify-content: center;
   font-size: 11px; font-weight: 800;
-  background: var(--color-section-bg);
+  background: var(--bg-card);
   color: var(--color-text-secondary);
   border-radius: var(--radius-pill);
 }
@@ -961,7 +987,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-session-right { position: sticky; top: calc(var(--gnb-height) + 24px); }
 .admin-session-student { display: flex; flex-direction: column; gap: 16px; }
 .admin-session-student-head { display: flex; align-items: center; gap: 14px; }
-.admin-session-student-head strong { display: block; font-size: 17px; font-weight: 900; color: var(--color-text); }
+.admin-session-student-head strong { display: block; font-size: 17px; font-weight: 800; color: var(--color-text); }
 .admin-session-student-head small { font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
 .admin-session-tags { display: flex; gap: 6px; margin-top: 6px; }
 
@@ -995,7 +1021,7 @@ input, textarea, select { font-family: var(--font); }
   background: #fff;
 }
 .admin-score-chip-label { font-size: 11px; font-weight: 700; color: var(--color-text-secondary); }
-.admin-score-chip strong { font-size: 15px; font-weight: 900; color: var(--color-primary); }
+.admin-score-chip strong { font-size: 15px; font-weight: 800; color: var(--color-primary); }
 
 .admin-history-list { display: flex; flex-direction: column; gap: 10px; }
 .admin-history-item {
@@ -1060,7 +1086,7 @@ input, textarea, select { font-family: var(--font); }
 /* ─── Profile / Availability settings ────────────────────────────────── */
 .admin-profile-card { display: flex; flex-direction: column; gap: 20px; }
 .admin-profile-hero { display: flex; align-items: center; gap: 16px; padding-bottom: 18px; border-bottom: 1px solid var(--color-border); }
-.admin-profile-hero strong { display: block; font-size: 20px; font-weight: 900; color: var(--color-text); }
+.admin-profile-hero strong { display: block; font-size: 20px; font-weight: 800; color: var(--color-text); }
 .admin-profile-hero-tags { display: flex; gap: 6px; margin-top: 6px; }
 
 .admin-avail-add { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
@@ -1123,16 +1149,27 @@ input, textarea, select { font-family: var(--font); }
 .admin-check input { width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer; }
 .admin-check > span { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
 
-.admin-focus-inline { color: var(--color-accent); font-weight: 800; }
-.admin-focus-inline svg { margin-right: 3px; }
+/* 아이콘과 문구가 갈라져 줄바꿈되지 않게 한 덩어리로 묶는다. */
+.admin-focus-inline {
+  display: inline-flex; align-items: center; gap: 3px;
+  color: var(--color-accent); font-weight: 800; white-space: nowrap;
+}
 
 /* ── 학생 로스터(표) ─────────────────────────────────────────────────── */
 .admin-roster { display: flex; flex-direction: column; }
+/* 번호 · 학생 · 학과학년 · 진단유형 · 학적 · 진행률 */
 .admin-roster-head,
 .admin-roster-row {
   display: grid;
-  grid-template-columns: 1.1fr 1.3fr 1.2fr 0.9fr 1.3fr 1fr;
+  grid-template-columns: 52px 1.1fr 1.3fr 1.2fr 1.3fr 1fr;
   gap: 14px; align-items: center;
+}
+/* 행 번호 — 페이지를 넘겨도 이어지는 통 번호 */
+.admin-roster-no {
+  font-size: 13px; font-weight: 700;
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
 .admin-roster-head {
   padding: 4px 14px 12px;
@@ -1201,7 +1238,7 @@ input, textarea, select { font-family: var(--font); }
   border-radius: var(--radius-md);
 }
 .admin-statsum-card > span { font-size: 12px; font-weight: 800; color: var(--color-text-secondary); }
-.admin-statsum-card > strong { font-size: 24px; font-weight: 900; color: var(--color-text); line-height: 1.1; }
+.admin-statsum-card > strong { font-size: 24px; font-weight: 800; color: var(--color-text); line-height: 1.1; }
 .admin-statsum-card > small { font-size: 12px; font-weight: 600; color: var(--color-caption); }
 
 .admin-statsec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
@@ -1235,8 +1272,11 @@ input, textarea, select { font-family: var(--font); }
 .admin-roster-student strong { font-size: 15px; font-weight: 800; color: var(--color-text); }
 .admin-roster-cell { display: flex; flex-direction: column; gap: 3px; font-size: 14px; font-weight: 700; color: var(--color-text); }
 .admin-roster-cell small { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
+/* 셀은 flex column 이라 배지가 열 너비만큼 늘어난다 — 내용만큼만 차지하게 한다.
+   새 배지를 셀에 넣을 때 이 목록에 추가할 것. */
 .admin-roster-cell .admin-tag-soft,
 .admin-roster-cell .admin-type-tag,
+.admin-roster-cell .admin-track,
 .admin-roster-cell .admin-enroll { align-self: flex-start; }
 .admin-roster-progress { display: flex; align-items: center; gap: 8px; }
 .admin-roster-progress em { font-size: 13px; font-weight: 800; color: var(--color-primary); font-style: normal; min-width: 34px; text-align: right; }
@@ -1310,7 +1350,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-score-label { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
 .admin-score-badge {
   width: 44px; height: 44px; display: flex; align-items: center; justify-content: center;
-  border-radius: 50%; font-size: 18px; font-weight: 900;
+  border-radius: 50%; font-size: 18px; font-weight: 800;
 }
 .admin-score-badge.high { background: #E2F7EF; color: var(--color-success); }
 .admin-score-badge.mid  { background: var(--color-primary-bg); color: var(--color-primary); }
@@ -1329,7 +1369,7 @@ input, textarea, select { font-family: var(--font); }
 
 /* 로드맵 진행 (상세 탭) */
 .admin-progress-big { display: flex; align-items: center; gap: 14px; margin-bottom: 6px; }
-.admin-progress-big strong { font-size: 20px; font-weight: 900; color: var(--color-primary); min-width: 52px; }
+.admin-progress-big strong { font-size: 20px; font-weight: 800; color: var(--color-primary); min-width: 52px; }
 .admin-phase-list { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
 .admin-phase-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
 .admin-phase-item.active { border-color: var(--color-primary); background: var(--color-primary-bg); }
@@ -1347,7 +1387,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-term-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
 .admin-term-col { display: flex; flex-direction: column; gap: 8px; padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-section-bg); }
 .admin-term-col-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.admin-term-col-head strong { font-size: 15px; font-weight: 900; color: var(--color-primary); }
+.admin-term-col-head strong { font-size: 15px; font-weight: 800; color: var(--color-primary); }
 .admin-term-period { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
 .admin-term-headline { font-size: 13px; font-weight: 700; color: var(--color-text); line-height: 1.5; }
 .admin-term-items { display: flex; flex-direction: column; gap: 8px; }
@@ -1389,14 +1429,14 @@ input, textarea, select { font-family: var(--font); }
 .admin-metric-card { display: flex; align-items: center; gap: 12px; padding: 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-section-bg); }
 .admin-metric-icon { width: 40px; height: 40px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); background: #fff; color: var(--color-primary); font-size: 16px; }
 .admin-metric-card > div { display: flex; flex-direction: column; gap: 2px; }
-.admin-metric-value { font-size: 18px; font-weight: 900; color: var(--color-text); }
+.admin-metric-value { font-size: 18px; font-weight: 800; color: var(--color-text); }
 .admin-metric-label { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
 
 /* 포트폴리오 · 목표 탭 */
 .admin-target-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.admin-target-head strong { font-size: 18px; font-weight: 900; color: var(--color-text); }
+.admin-target-head strong { font-size: 18px; font-weight: 800; color: var(--color-text); }
 .admin-target-head small { display: block; font-size: 13px; font-weight: 600; color: var(--color-text-secondary); margin-top: 2px; }
-.admin-match-badge { padding: 8px 16px; border-radius: var(--radius-pill); background: var(--color-primary-bg); color: var(--color-primary); font-size: 15px; font-weight: 900; }
+.admin-match-badge { padding: 8px 16px; border-radius: var(--radius-pill); background: var(--color-primary-bg); color: var(--color-primary); font-size: 15px; font-weight: 800; }
 .admin-req-grid, .admin-skill-list { display: flex; flex-direction: column; gap: 12px; }
 .admin-req-item, .admin-skill-row { display: grid; grid-template-columns: 130px 1fr auto; gap: 12px; align-items: center; }
 .admin-req-label, .admin-skill-label { font-size: 13px; font-weight: 700; color: var(--color-text); }
@@ -1415,7 +1455,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-editor-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; align-items: start; }
 .admin-editor-col { display: flex; flex-direction: column; gap: 12px; }
 .admin-editor-col-head h2 { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: var(--color-text); }
-.admin-term-badge { display: inline-flex; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 900; }
+.admin-term-badge { display: inline-flex; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 800; }
 .term-단기 { background: #FFF3E0; color: var(--color-warning); }
 .term-중기 { background: var(--color-primary-bg); color: var(--color-primary); }
 .term-장기 { background: #E2F7EF; color: var(--color-success); }
@@ -1462,7 +1502,7 @@ input, textarea, select { font-family: var(--font); }
 
 .admin-rm-history-list { display: flex; flex-direction: column; gap: 10px; }
 .admin-rm-history-item { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-section-bg); }
-.admin-rm-history-ver { flex: none; padding: 4px 12px; border-radius: var(--radius-pill); background: var(--color-primary); color: #fff; font-size: 13px; font-weight: 900; }
+.admin-rm-history-ver { flex: none; padding: 4px 12px; border-radius: var(--radius-pill); background: var(--color-primary); color: #fff; font-size: 13px; font-weight: 800; }
 .admin-rm-history-body { display: flex; flex-direction: column; gap: 2px; }
 .admin-rm-history-body strong { font-size: 14px; font-weight: 800; color: var(--color-text); }
 .admin-rm-history-body small { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
@@ -1591,7 +1631,7 @@ input, textarea, select { font-family: var(--font); }
 
 /* ── 블랙리스트 카드 ─────────────────────────────────────────────────── */
 .admin-blacklist-total { margin-left: auto; font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
-.admin-blacklist-total em { font-size: 22px; font-weight: 900; color: var(--color-danger); font-style: normal; margin-right: 2px; }
+.admin-blacklist-total em { font-size: 22px; font-weight: 800; color: var(--color-danger); font-style: normal; margin-right: 2px; }
 
 .admin-penalty-history { display: flex; flex-direction: column; gap: 8px; }
 .admin-penalty-entry {
@@ -1607,7 +1647,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-penalty-entry-kind { font-size: 12px; font-weight: 800; color: var(--color-text); white-space: nowrap; }
 .admin-penalty-entry-kind svg { color: var(--color-primary); margin-right: 4px; }
 .admin-penalty-entry-reason { font-size: 13px; font-weight: 600; color: var(--color-text); }
-.admin-penalty-entry-points { font-size: 15px; font-weight: 900; color: var(--color-danger); text-align: center; }
+.admin-penalty-entry-points { font-size: 15px; font-weight: 800; color: var(--color-danger); text-align: center; }
 .admin-penalty-entry-points.minus { color: var(--color-success); }
 .admin-penalty-entry-at { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); text-align: right; }
 
@@ -1652,7 +1692,7 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-kpi-body { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
 .admin-kpi-label { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
-.admin-kpi-value { font-size: 24px; font-weight: 900; color: var(--color-text); line-height: 1; }
+.admin-kpi-value { font-size: 24px; font-weight: 800; color: var(--color-text); line-height: 1; }
 .admin-kpi-value em {
   font-size: 13px; font-weight: 700; color: var(--color-text-secondary);
   font-style: normal; margin-left: 2px;
@@ -1716,7 +1756,7 @@ input, textarea, select { font-family: var(--font); }
   gap: 2px; pointer-events: none;
 }
 .admin-donut-center small { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
-.admin-donut-center strong { font-size: 20px; font-weight: 900; color: var(--color-text); letter-spacing: -0.5px; }
+.admin-donut-center strong { font-size: 20px; font-weight: 800; color: var(--color-text); letter-spacing: -0.5px; }
 
 .admin-donut-legend { display: flex; flex-direction: column; gap: 10px; margin-top: 18px; }
 .admin-donut-legend li { display: flex; align-items: center; gap: 10px; }
@@ -2332,7 +2372,7 @@ input, textarea, select { font-family: var(--font); }
 .print-missing { max-width: 820px; margin: 0 auto 16px; font-size: 14px; font-weight: 700; color: var(--color-text-secondary); }
 .print-sheet { max-width: 820px; margin: 0 auto; padding: 40px 44px; background: #fff; border: 1px solid var(--color-border); }
 .print-head { text-align: center; padding-bottom: 18px; border-bottom: 2px solid var(--color-title); }
-.print-head h1 { font-size: 26px; font-weight: 900; letter-spacing: 6px; color: var(--color-title); }
+.print-head h1 { font-size: 26px; font-weight: 800; letter-spacing: 6px; color: var(--color-title); }
 .print-head p { margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
 .print-table { width: 100%; margin-top: 18px; border-collapse: collapse; }
 .print-table th, .print-table td { border: 1px solid var(--color-border); padding: 8px 10px; font-size: 13px; text-align: left; vertical-align: top; }

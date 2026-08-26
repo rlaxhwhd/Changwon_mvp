@@ -1,20 +1,14 @@
-import { Outlet, useLocation } from 'react-router-dom'
+import { Outlet } from 'react-router-dom'
 import GNB from './GNB'
-import SectionSidebar from './SectionSidebar'
 import BrandLogo from './BrandLogo'
 import Chatbot from './Chatbot'
 import ScrollToTop from './ScrollToTop'
-import { getNavSections, getSectionForPath } from './navConfig'
-import { getActiveUser } from '../data/staff'
 
+// 교직원 포털 공통 셸 — 상단바 + 가운데 정렬 본문 + 푸터.
+// 좌측 섹션 사이드바는 제거됐다(홈 /admin 과 같은 1단 레이아웃). 하위 메뉴는 GNB 드롭다운이 갖는다.
+// 본문 폭·여백은 .admin-page 가 GNB(.gnb-in)와 같은 축에 맞춘다 → index.css 참조.
 export default function Layout() {
   const currentYear = new Date().getFullYear()
-  const { pathname } = useLocation()
-
-  // 좌측 하단 브랜드 로고: 섹션 사이드바가 있으면 그 하단에(SectionSidebar), 없으면 여기 푸터 좌측에.
-  // → 어떤 화면이든 좌측 하단에 로고가 정확히 하나만 노출된다. (SectionSidebar 노출 조건과 동일)
-  const section = getSectionForPath(pathname, getNavSections(getActiveUser().role))
-  const sidebarShown = !!(section && section.children.length > 0)
 
   return (
     <div className="admin-layout">
@@ -22,11 +16,10 @@ export default function Layout() {
       <GNB />
       <main className="admin-main">
         <div className="admin-main-shell">
-          <SectionSidebar />
           <div className="admin-content">
             <Outlet />
             <footer className="admin-layout-footer">
-              {!sidebarShown && <BrandLogo className="admin-footer-logo" alt="" />}
+              <BrandLogo className="admin-footer-logo" alt="" />
               <span>© {currentYear} Changwon National University</span>
             </footer>
           </div>

@@ -1,6 +1,5 @@
-import type { IconType } from 'react-icons'
 import {
-  LuChevronLeft, LuChevronRight, LuFrown, LuLoaderCircle, LuRocket, LuRoute, LuSearch, LuTriangleAlert,
+  LuChevronLeft, LuChevronRight, LuFrown, LuLoaderCircle, LuSearch, LuTriangleAlert,
 } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -10,11 +9,9 @@ import {
   queryStudentRoster,
   getRosterFilterOptions,
   getRosterSummary,
-  rosterTierClass,
   enrollStatusClass,
   studentTypeClass,
 } from '../data/studentRoster'
-import type { RosterTier } from '../data/studentRoster'
 import { typeLabel } from '../../src_v2/data/careerProcess'
 import { totalPages } from '../data/query'
 import { useListData } from '../hooks/useListData'
@@ -22,12 +19,6 @@ import EmptyState from '../components/EmptyState'
 
 const ALL = '전체'
 const PAGE_SIZE = 20
-
-const TIER_ICON: Record<RosterTier, IconType> = {
-  중간: LuRoute,
-  하위: LuTriangleAlert,
-  상위: LuRocket,
-}
 
 export default function StudentList() {
   const counselor = getActiveCounselor()
@@ -39,7 +30,6 @@ export default function StudentList() {
   const [major, setMajor] = useState(ALL)
   const [grade, setGrade] = useState(ALL)
   const [type, setType] = useState(ALL)
-  const [tier, setTier] = useState(ALL)
   const [status, setStatus] = useState(ALL)
   const [page, setPage] = useState(1)
 
@@ -58,7 +48,6 @@ export default function StudentList() {
       major: major === ALL ? undefined : major,
       grade: grade === ALL ? undefined : grade,
       studentType: type === ALL ? undefined : type,
-      tier: tier === ALL ? undefined : tier,
       status: status === ALL ? undefined : status,
     },
   })
@@ -122,13 +111,6 @@ export default function StudentList() {
           </select>
         </label>
         <label className="admin-select">
-          <span>계층</span>
-          <select value={tier} onChange={e => onFilter(setTier)(e.target.value)}>
-            <option value={ALL}>{ALL}</option>
-            {options.tiers.map(t => <option key={t} value={t}>{t}</option>)}
-          </select>
-        </label>
-        <label className="admin-select">
           <span>학적</span>
           <select value={status} onChange={e => onFilter(setStatus)(e.target.value)}>
             <option value={ALL}>{ALL}</option>
@@ -153,20 +135,22 @@ export default function StudentList() {
           <>
             <div className="admin-roster">
               <div className="admin-roster-head">
+                <span>번호</span>
                 <span>학생</span>
                 <span>학과 · 학년</span>
                 <span>진단 유형</span>
-                <span>계층</span>
                 <span>학적</span>
-                <span>진행률</span>
+                <span>IAP 진행률</span>
               </div>
-              {items.map(s => (
+              {items.map((s, i) => (
                 <button
                   key={s.id}
                   type="button"
                   className="admin-roster-row"
                   onClick={() => navigate(`/students/${s.id}`)}
                 >
+                  {/* 페이지가 넘어가도 이어지는 통 번호 (1페이지 20명이면 2페이지는 21부터) */}
+                  <span className="admin-roster-no">{(page - 1) * PAGE_SIZE + i + 1}</span>
                   <span className="admin-roster-student">
                     <strong>{s.name}</strong>
                     {detailedIds.has(s.id) && <span className="admin-tag admin-tag-soft">상세</span>}
@@ -178,11 +162,6 @@ export default function StudentList() {
                   <span className="admin-roster-cell">
                     <span className={studentTypeClass(s.studentType)}>{typeLabel(s.studentType)}</span>
                     <small>{s.studentType}</small>
-                  </span>
-                  <span className="admin-roster-cell">
-                    <span className={`admin-track ${rosterTierClass(s.tier)}`}>
-                      {(() => { const Icon = TIER_ICON[s.tier]; return <Icon /> })()} {s.tier}
-                    </span>
                   </span>
                   <span className="admin-roster-cell">
                     <span className={enrollStatusClass(s.status)}>{s.status}</span>

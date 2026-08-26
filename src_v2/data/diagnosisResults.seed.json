@@ -1,0 +1,4563 @@
+[
+  {
+    "studentId": "chaewon",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-03-13",
+    "headline": "진로몰입",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 59.68
+      },
+      {
+        "name": "문제해결",
+        "tScore": 46.06
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 48.2
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 41.3
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 네트워킹부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "chaewon",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-22",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 41.67
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 56.87
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 52.97
+      },
+      {
+        "name": "진로동기",
+        "tScore": 37.17
+      }
+    ],
+    "comment": "진로명확성·역량준비도·취업준비도는 평균 수준을 유지하고 있지만, 진로동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 동기를 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "changwon",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-01",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 63.24
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 65.07
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 52.77
+      },
+      {
+        "name": "진로동기",
+        "tScore": 54.83
+      }
+    ],
+    "comment": "역량준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 취업준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-001",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-04-12",
+    "headline": "학업병행",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 33.85
+      },
+      {
+        "name": "학업병행",
+        "tScore": 50.2
+      },
+      {
+        "name": "지원요구",
+        "tScore": 41.76
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 37.1
+      }
+    ],
+    "comment": "학업병행·지원요구·이탈위험는 평균 수준을 유지하고 있지만, 참여동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 참여동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-002",
+    "testId": "c4",
+    "attemptNo": 1,
+    "testedAt": "2026-05-01",
+    "headline": "면접역량",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 47.6
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 59.68
+      },
+      {
+        "name": "면접역량",
+        "tScore": 60.15
+      },
+      {
+        "name": "구직전략",
+        "tScore": 50.05
+      }
+    ],
+    "comment": "면접역량이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 개인 브랜딩을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-003",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-06",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 30.49
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 40.17
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 45.85
+      },
+      {
+        "name": "진로동기",
+        "tScore": 45.11
+      }
+    ],
+    "comment": "역량준비도·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 진로명확성 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로명확성을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-004",
+    "testId": "c4",
+    "attemptNo": 1,
+    "testedAt": "2026-04-02",
+    "headline": "구직전략",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 58.76
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 61.98
+      },
+      {
+        "name": "면접역량",
+        "tScore": 55.2
+      },
+      {
+        "name": "구직전략",
+        "tScore": 64.01
+      }
+    ],
+    "comment": "구직전략이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 면접역량을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-004",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-10",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 57.17
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 63.1
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 65.04
+      },
+      {
+        "name": "진로동기",
+        "tScore": 53.88
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로동기을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-005",
+    "testId": "c5",
+    "attemptNo": 2,
+    "testedAt": "2026-05-31",
+    "headline": "이탈위험",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 35.09
+      },
+      {
+        "name": "학업병행",
+        "tScore": 34.45
+      },
+      {
+        "name": "지원요구",
+        "tScore": 41.8
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 52.78
+      }
+    ],
+    "comment": "참여동기·지원요구·이탈위험는 평균 수준을 유지하고 있지만, 학업병행 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 학업병행을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-005",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-18",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 45.07
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 48.82
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 49.75
+      },
+      {
+        "name": "진로동기",
+        "tScore": 32.8
+      }
+    ],
+    "comment": "진로명확성·역량준비도·취업준비도는 평균 수준을 유지하고 있지만, 진로동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-006",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-03-06",
+    "headline": "진로학습",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 47.39
+      },
+      {
+        "name": "목표",
+        "tScore": 39.26
+      },
+      {
+        "name": "의사결정",
+        "tScore": 44.13
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 42.25
+      },
+      {
+        "name": "설계수준",
+        "tScore": 45.54
+      }
+    ],
+    "comment": "진로학습·의사결정·탐색행동·설계수준는 평균 수준을 유지하고 있지만, 목표 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 목표을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-006",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-30",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 46.14
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 41.54
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 37.93
+      },
+      {
+        "name": "진로동기",
+        "tScore": 40.87
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-007",
+    "testId": "c4",
+    "attemptNo": 2,
+    "testedAt": "2026-04-04",
+    "headline": "정보탐색 및 분석",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 55.56
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 59.82
+      },
+      {
+        "name": "면접역량",
+        "tScore": 48.33
+      },
+      {
+        "name": "구직전략",
+        "tScore": 57.32
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 면접역량부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-007",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-04",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 59.57
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 55.08
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 47.02
+      },
+      {
+        "name": "진로동기",
+        "tScore": 44.27
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로동기부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-008",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-04-28",
+    "headline": "네트워킹",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 61.16
+      },
+      {
+        "name": "문제해결",
+        "tScore": 41.09
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 57.98
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 62.5
+      }
+    ],
+    "comment": "네트워킹이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 문제해결을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-008",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-04",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 44.21
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 51.16
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 57.8
+      },
+      {
+        "name": "진로동기",
+        "tScore": 44.82
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로명확성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-009",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-04-19",
+    "headline": "네트워킹",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 42.17
+      },
+      {
+        "name": "문제해결",
+        "tScore": 49.11
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 55.14
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 62.66
+      }
+    ],
+    "comment": "네트워킹이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로몰입을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-009",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-27",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 52.59
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 56.61
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 52.31
+      },
+      {
+        "name": "진로동기",
+        "tScore": 57.88
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 취업준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-010",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-03-31",
+    "headline": "가치관",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 35.09
+      },
+      {
+        "name": "흥미",
+        "tScore": 38.53
+      },
+      {
+        "name": "가치관",
+        "tScore": 47.41
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 44.7
+      }
+    ],
+    "comment": "흥미·가치관·탐색행동는 평균 수준을 유지하고 있지만, 자기이해 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 자기이해을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-010",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-26",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 43.82
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 34.53
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 38.8
+      },
+      {
+        "name": "진로동기",
+        "tScore": 55.82
+      }
+    ],
+    "comment": "진로명확성·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 역량준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 역량준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-011",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-05-03",
+    "headline": "지원요구",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 37.46
+      },
+      {
+        "name": "학업병행",
+        "tScore": 34.19
+      },
+      {
+        "name": "지원요구",
+        "tScore": 44.1
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 37.61
+      }
+    ],
+    "comment": "참여동기·지원요구·이탈위험는 평균 수준을 유지하고 있지만, 학업병행 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 학업병행을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-011",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-22",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 47.16
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 31.5
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 45.15
+      },
+      {
+        "name": "진로동기",
+        "tScore": 31.99
+      }
+    ],
+    "comment": "진로명확성·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 역량준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 역량준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-012",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-04-01",
+    "headline": "탐색행동",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 37.37
+      },
+      {
+        "name": "흥미",
+        "tScore": 39.32
+      },
+      {
+        "name": "가치관",
+        "tScore": 38.01
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 49.89
+      }
+    ],
+    "comment": "흥미·가치관·탐색행동는 평균 수준을 유지하고 있지만, 자기이해 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 자기이해을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-012",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-24",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 54.73
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 43.17
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 36.87
+      },
+      {
+        "name": "진로동기",
+        "tScore": 34.03
+      }
+    ],
+    "comment": "진로명확성·역량준비도·취업준비도는 평균 수준을 유지하고 있지만, 진로동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-013",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-16",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 65.24
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 66.79
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 59.87
+      },
+      {
+        "name": "진로동기",
+        "tScore": 70.95
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 취업준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-014",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-03-03",
+    "headline": "흥미",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 41.76
+      },
+      {
+        "name": "흥미",
+        "tScore": 46.65
+      },
+      {
+        "name": "가치관",
+        "tScore": 46.49
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 35.63
+      }
+    ],
+    "comment": "자기이해·흥미·가치관는 평균 수준을 유지하고 있지만, 탐색행동 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 탐색행동을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-015",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-25",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 41.47
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 40.43
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 35.41
+      },
+      {
+        "name": "진로동기",
+        "tScore": 40.79
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-016",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-06-02",
+    "headline": "대인적합성",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 42.29
+      },
+      {
+        "name": "문제해결",
+        "tScore": 47.08
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 57.82
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 55.57
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로몰입부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-016",
+    "testId": "ccore",
+    "attemptNo": 2,
+    "testedAt": "2026-04-26",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 59.43
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 51.47
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 45.87
+      },
+      {
+        "name": "진로동기",
+        "tScore": 65.25
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 취업준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-017",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-05-01",
+    "headline": "가치관",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 51.43
+      },
+      {
+        "name": "흥미",
+        "tScore": 45.41
+      },
+      {
+        "name": "가치관",
+        "tScore": 52.82
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 47.8
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 흥미부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-017",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-24",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 49.03
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 46.68
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 53.98
+      },
+      {
+        "name": "진로동기",
+        "tScore": 53.4
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 역량준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-018",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-05-08",
+    "headline": "설계수준",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 42.98
+      },
+      {
+        "name": "목표",
+        "tScore": 46.04
+      },
+      {
+        "name": "의사결정",
+        "tScore": 38.72
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 43.64
+      },
+      {
+        "name": "설계수준",
+        "tScore": 55.83
+      }
+    ],
+    "comment": "진로학습·목표·탐색행동·설계수준는 평균 수준을 유지하고 있지만, 의사결정 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 의사결정을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-018",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-08",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 50.29
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 51.32
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 40.72
+      },
+      {
+        "name": "진로동기",
+        "tScore": 56.09
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 취업준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-020",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-05-27",
+    "headline": "의사결정",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 37.38
+      },
+      {
+        "name": "목표",
+        "tScore": 47.01
+      },
+      {
+        "name": "의사결정",
+        "tScore": 58.27
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 49.77
+      },
+      {
+        "name": "설계수준",
+        "tScore": 46.29
+      }
+    ],
+    "comment": "목표·의사결정·탐색행동·설계수준는 평균 수준을 유지하고 있지만, 진로학습 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로학습을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-021",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-03-24",
+    "headline": "대인적합성",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 57.86
+      },
+      {
+        "name": "문제해결",
+        "tScore": 52.92
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 58.62
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 53.09
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 문제해결부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-021",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-07",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 41.38
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 59.52
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 46.52
+      },
+      {
+        "name": "진로동기",
+        "tScore": 52.9
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로명확성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-022",
+    "testId": "c4",
+    "attemptNo": 1,
+    "testedAt": "2026-04-06",
+    "headline": "면접역량",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 56.69
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 58.42
+      },
+      {
+        "name": "면접역량",
+        "tScore": 63.19
+      },
+      {
+        "name": "구직전략",
+        "tScore": 55.74
+      }
+    ],
+    "comment": "면접역량이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 구직전략을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-022",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-14",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 49.1
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 60.47
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 56.54
+      },
+      {
+        "name": "진로동기",
+        "tScore": 52.64
+      }
+    ],
+    "comment": "역량준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로명확성을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-023",
+    "testId": "ccore",
+    "attemptNo": 2,
+    "testedAt": "2026-03-16",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 44.17
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 37.88
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 32.41
+      },
+      {
+        "name": "진로동기",
+        "tScore": 53.36
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-024",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-20",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 55.01
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 43.05
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 62.31
+      },
+      {
+        "name": "진로동기",
+        "tScore": 55.95
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 역량준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-026",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-05-05",
+    "headline": "설계수준",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 53.6
+      },
+      {
+        "name": "목표",
+        "tScore": 55.92
+      },
+      {
+        "name": "의사결정",
+        "tScore": 55.23
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 41.85
+      },
+      {
+        "name": "설계수준",
+        "tScore": 58.56
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 탐색행동부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-027",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-05-15",
+    "headline": "네트워킹",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 41.41
+      },
+      {
+        "name": "문제해결",
+        "tScore": 56.08
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 46.84
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 59.25
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로몰입부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-027",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-30",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 59.7
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 46.36
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 59.79
+      },
+      {
+        "name": "진로동기",
+        "tScore": 61.85
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 역량준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-028",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-16",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 55.86
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 53.74
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 46.91
+      },
+      {
+        "name": "진로동기",
+        "tScore": 60.66
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 취업준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-029",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-04-07",
+    "headline": "대인적합성",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 44.97
+      },
+      {
+        "name": "문제해결",
+        "tScore": 43.36
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 62.69
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 49.2
+      }
+    ],
+    "comment": "대인적합성이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 문제해결을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-029",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-28",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 52.24
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 49.64
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 44.89
+      },
+      {
+        "name": "진로동기",
+        "tScore": 61.28
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 취업준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-030",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-02",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 49.91
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 50.54
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 62.63
+      },
+      {
+        "name": "진로동기",
+        "tScore": 46.05
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로동기을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-031",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-06-05",
+    "headline": "흥미",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 35.02
+      },
+      {
+        "name": "흥미",
+        "tScore": 50.55
+      },
+      {
+        "name": "가치관",
+        "tScore": 49.23
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 42.51
+      }
+    ],
+    "comment": "흥미·가치관·탐색행동는 평균 수준을 유지하고 있지만, 자기이해 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 자기이해을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-031",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-14",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 49.62
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 52.83
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 34.51
+      },
+      {
+        "name": "진로동기",
+        "tScore": 54.54
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-032",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-03-17",
+    "headline": "탐색행동",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 46.56
+      },
+      {
+        "name": "목표",
+        "tScore": 43.86
+      },
+      {
+        "name": "의사결정",
+        "tScore": 37.64
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 56.74
+      },
+      {
+        "name": "설계수준",
+        "tScore": 52.54
+      }
+    ],
+    "comment": "진로학습·목표·탐색행동·설계수준는 평균 수준을 유지하고 있지만, 의사결정 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 의사결정을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-032",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-17",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 43.68
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 54.66
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 52.72
+      },
+      {
+        "name": "진로동기",
+        "tScore": 55.07
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로명확성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-033",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-05-29",
+    "headline": "목표",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 47.94
+      },
+      {
+        "name": "목표",
+        "tScore": 52.04
+      },
+      {
+        "name": "의사결정",
+        "tScore": 48.26
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 49.37
+      },
+      {
+        "name": "설계수준",
+        "tScore": 46.19
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 설계수준부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-033",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-05",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 50.41
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 43.92
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 41.68
+      },
+      {
+        "name": "진로동기",
+        "tScore": 39.31
+      }
+    ],
+    "comment": "진로명확성·역량준비도·취업준비도는 평균 수준을 유지하고 있지만, 진로동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-034",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-25",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 45.99
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 52.35
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 57.49
+      },
+      {
+        "name": "진로동기",
+        "tScore": 54.8
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로명확성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-035",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-03-18",
+    "headline": "설계수준",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 40.47
+      },
+      {
+        "name": "목표",
+        "tScore": 42.31
+      },
+      {
+        "name": "의사결정",
+        "tScore": 41
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 41.81
+      },
+      {
+        "name": "설계수준",
+        "tScore": 51.11
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로학습부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-035",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-03",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 47.53
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 41.72
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 55.95
+      },
+      {
+        "name": "진로동기",
+        "tScore": 58.19
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 역량준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-036",
+    "testId": "c5",
+    "attemptNo": 2,
+    "testedAt": "2026-05-08",
+    "headline": "학업병행",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 46.06
+      },
+      {
+        "name": "학업병행",
+        "tScore": 51.48
+      },
+      {
+        "name": "지원요구",
+        "tScore": 35.54
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 39.9
+      }
+    ],
+    "comment": "참여동기·학업병행·이탈위험는 평균 수준을 유지하고 있지만, 지원요구 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 지원요구을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-037",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-05-31",
+    "headline": "대인적합성",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 50.5
+      },
+      {
+        "name": "문제해결",
+        "tScore": 44.68
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 54.48
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 41.4
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 네트워킹부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-037",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-30",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 48.32
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 44.93
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 42.58
+      },
+      {
+        "name": "진로동기",
+        "tScore": 59.41
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 취업준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-038",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-10",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 58.16
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 65.55
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 61.46
+      },
+      {
+        "name": "진로동기",
+        "tScore": 44.59
+      }
+    ],
+    "comment": "역량준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로동기을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-039",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-05-21",
+    "headline": "설계수준",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 45.13
+      },
+      {
+        "name": "목표",
+        "tScore": 39.08
+      },
+      {
+        "name": "의사결정",
+        "tScore": 39.02
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 38.8
+      },
+      {
+        "name": "설계수준",
+        "tScore": 45.77
+      }
+    ],
+    "comment": "진로학습·목표·의사결정·설계수준는 평균 수준을 유지하고 있지만, 탐색행동 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 탐색행동을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-039",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-26",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 53.18
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 53.94
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 43.69
+      },
+      {
+        "name": "진로동기",
+        "tScore": 51.76
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 취업준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-042",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-26",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 51.84
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 62.29
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 55.19
+      },
+      {
+        "name": "진로동기",
+        "tScore": 45.21
+      }
+    ],
+    "comment": "역량준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로동기을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-043",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-28",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 49.77
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 51.72
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 62.69
+      },
+      {
+        "name": "진로동기",
+        "tScore": 53.55
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로명확성을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-044",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-08",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 55.76
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 57.14
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 50.66
+      },
+      {
+        "name": "진로동기",
+        "tScore": 41.54
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로동기부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-045",
+    "testId": "c6",
+    "attemptNo": 2,
+    "testedAt": "2026-06-04",
+    "headline": "성과관리",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 71.68
+      },
+      {
+        "name": "리더십",
+        "tScore": 61.79
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 54.26
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 69.56
+      }
+    ],
+    "comment": "성과관리이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 기업적합도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-045",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-09",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 58.07
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 63.02
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 61.65
+      },
+      {
+        "name": "진로동기",
+        "tScore": 71.89
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로명확성을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-046",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-25",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 59.22
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 61.13
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 53.61
+      },
+      {
+        "name": "진로동기",
+        "tScore": 59.55
+      }
+    ],
+    "comment": "역량준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 취업준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-047",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-03-30",
+    "headline": "이탈위험",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 39.47
+      },
+      {
+        "name": "학업병행",
+        "tScore": 31.75
+      },
+      {
+        "name": "지원요구",
+        "tScore": 29.39
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 50.09
+      }
+    ],
+    "comment": "참여동기·학업병행·이탈위험는 평균 수준을 유지하고 있지만, 지원요구 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 지원요구을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-048",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-05-26",
+    "headline": "가치관",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 34.36
+      },
+      {
+        "name": "흥미",
+        "tScore": 35.49
+      },
+      {
+        "name": "가치관",
+        "tScore": 50.5
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 35.33
+      }
+    ],
+    "comment": "흥미·가치관·탐색행동는 평균 수준을 유지하고 있지만, 자기이해 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 자기이해을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-048",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-19",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 52.98
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 39.08
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 54.06
+      },
+      {
+        "name": "진로동기",
+        "tScore": 55.41
+      }
+    ],
+    "comment": "진로명확성·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 역량준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 역량준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-049",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-03-13",
+    "headline": "이탈위험",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 43.21
+      },
+      {
+        "name": "학업병행",
+        "tScore": 37.72
+      },
+      {
+        "name": "지원요구",
+        "tScore": 39.4
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 48.48
+      }
+    ],
+    "comment": "참여동기·지원요구·이탈위험는 평균 수준을 유지하고 있지만, 학업병행 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 학업병행을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-049",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-06",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 39.58
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 33.25
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 32.79
+      },
+      {
+        "name": "진로동기",
+        "tScore": 50.29
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-050",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-04-03",
+    "headline": "지원요구",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 45.98
+      },
+      {
+        "name": "학업병행",
+        "tScore": 39.71
+      },
+      {
+        "name": "지원요구",
+        "tScore": 46.61
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 29.93
+      }
+    ],
+    "comment": "참여동기·학업병행·지원요구는 평균 수준을 유지하고 있지만, 이탈위험 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 이탈위험을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-050",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-07",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 50.49
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 44.54
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 42.97
+      },
+      {
+        "name": "진로동기",
+        "tScore": 36.19
+      }
+    ],
+    "comment": "진로명확성·역량준비도·취업준비도는 평균 수준을 유지하고 있지만, 진로동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-051",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-24",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 55.96
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 46.28
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 45.63
+      },
+      {
+        "name": "진로동기",
+        "tScore": 54.34
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 취업준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-052",
+    "testId": "ccore",
+    "attemptNo": 2,
+    "testedAt": "2026-05-31",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 63.9
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 61.2
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 68.15
+      },
+      {
+        "name": "진로동기",
+        "tScore": 63.44
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 역량준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-053",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-05-02",
+    "headline": "흥미",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 46.27
+      },
+      {
+        "name": "흥미",
+        "tScore": 53.35
+      },
+      {
+        "name": "가치관",
+        "tScore": 46.82
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 37.87
+      }
+    ],
+    "comment": "자기이해·흥미·가치관는 평균 수준을 유지하고 있지만, 탐색행동 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 탐색행동을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-053",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-02",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 41.83
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 38.37
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 40.4
+      },
+      {
+        "name": "진로동기",
+        "tScore": 50.65
+      }
+    ],
+    "comment": "진로명확성·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 역량준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 역량준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-054",
+    "testId": "c6",
+    "attemptNo": 1,
+    "testedAt": "2026-05-24",
+    "headline": "성과관리",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 70.58
+      },
+      {
+        "name": "리더십",
+        "tScore": 60.76
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 66.49
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 57.75
+      }
+    ],
+    "comment": "성과관리이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 브랜딩을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-054",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-07",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 54.27
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 57.33
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 57.62
+      },
+      {
+        "name": "진로동기",
+        "tScore": 61.35
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로명확성을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-056",
+    "testId": "c6",
+    "attemptNo": 1,
+    "testedAt": "2026-04-16",
+    "headline": "브랜딩",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 64.13
+      },
+      {
+        "name": "리더십",
+        "tScore": 57.8
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 58.83
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 70.58
+      }
+    ],
+    "comment": "브랜딩이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 리더십을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-057",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-09",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 46.77
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 55.44
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 49.42
+      },
+      {
+        "name": "진로동기",
+        "tScore": 56.65
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로명확성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-058",
+    "testId": "c6",
+    "attemptNo": 1,
+    "testedAt": "2026-03-23",
+    "headline": "브랜딩",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 68.06
+      },
+      {
+        "name": "리더십",
+        "tScore": 61.37
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 68.29
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 68.84
+      }
+    ],
+    "comment": "브랜딩이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 리더십을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-058",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-12",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 66.68
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 54.52
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 62.62
+      },
+      {
+        "name": "진로동기",
+        "tScore": 61.81
+      }
+    ],
+    "comment": "진로명확성이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 역량준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-059",
+    "testId": "c4",
+    "attemptNo": 1,
+    "testedAt": "2026-04-24",
+    "headline": "개인 브랜딩",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 60.44
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 52.9
+      },
+      {
+        "name": "면접역량",
+        "tScore": 54.49
+      },
+      {
+        "name": "구직전략",
+        "tScore": 47.23
+      }
+    ],
+    "comment": "개인 브랜딩이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 구직전략을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-059",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-02",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 51.27
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 64.38
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 50.65
+      },
+      {
+        "name": "진로동기",
+        "tScore": 64.76
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 취업준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-060",
+    "testId": "c4",
+    "attemptNo": 1,
+    "testedAt": "2026-06-03",
+    "headline": "개인 브랜딩",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 65.24
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 57.11
+      },
+      {
+        "name": "면접역량",
+        "tScore": 55.9
+      },
+      {
+        "name": "구직전략",
+        "tScore": 61.63
+      }
+    ],
+    "comment": "개인 브랜딩이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 면접역량을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-060",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-01",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 64.58
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 45.07
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 65.74
+      },
+      {
+        "name": "진로동기",
+        "tScore": 48.57
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 역량준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-061",
+    "testId": "c6",
+    "attemptNo": 1,
+    "testedAt": "2026-06-05",
+    "headline": "기업적합도",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 59.61
+      },
+      {
+        "name": "리더십",
+        "tScore": 71.25
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 72.32
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 66.79
+      }
+    ],
+    "comment": "기업적합도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 성과관리을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-061",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-15",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 60.68
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 51.07
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 64.57
+      },
+      {
+        "name": "진로동기",
+        "tScore": 53.18
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 역량준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-062",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-04-14",
+    "headline": "가치관",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 35.2
+      },
+      {
+        "name": "흥미",
+        "tScore": 38.16
+      },
+      {
+        "name": "가치관",
+        "tScore": 46.06
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 36.02
+      }
+    ],
+    "comment": "흥미·가치관·탐색행동는 평균 수준을 유지하고 있지만, 자기이해 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 자기이해을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-062",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-25",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 36.44
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 36.48
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 47.49
+      },
+      {
+        "name": "진로동기",
+        "tScore": 43.89
+      }
+    ],
+    "comment": "역량준비도·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 진로명확성 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로명확성을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-063",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-04-24",
+    "headline": "탐색행동",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 45.18
+      },
+      {
+        "name": "흥미",
+        "tScore": 47.56
+      },
+      {
+        "name": "가치관",
+        "tScore": 53.51
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 55.13
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 자기이해부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-063",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-22",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 42.93
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 51.86
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 41.49
+      },
+      {
+        "name": "진로동기",
+        "tScore": 45.97
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 취업준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-064",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-05-24",
+    "headline": "탐색행동",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 43.1
+      },
+      {
+        "name": "흥미",
+        "tScore": 48.4
+      },
+      {
+        "name": "가치관",
+        "tScore": 38.06
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 51.41
+      }
+    ],
+    "comment": "자기이해·흥미·탐색행동는 평균 수준을 유지하고 있지만, 가치관 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 가치관을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-064",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-07",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 34.88
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 53.58
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 37.4
+      },
+      {
+        "name": "진로동기",
+        "tScore": 47.95
+      }
+    ],
+    "comment": "역량준비도·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 진로명확성 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로명확성을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-065",
+    "testId": "c5",
+    "attemptNo": 2,
+    "testedAt": "2026-05-23",
+    "headline": "지원요구",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 44.53
+      },
+      {
+        "name": "학업병행",
+        "tScore": 40.57
+      },
+      {
+        "name": "지원요구",
+        "tScore": 51.69
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 46.69
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 학업병행부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-065",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-09",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 49.43
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 35.96
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 32.68
+      },
+      {
+        "name": "진로동기",
+        "tScore": 33.17
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-066",
+    "testId": "c6",
+    "attemptNo": 1,
+    "testedAt": "2026-05-01",
+    "headline": "기업적합도",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 63.69
+      },
+      {
+        "name": "리더십",
+        "tScore": 60.32
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 69.75
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 63.88
+      }
+    ],
+    "comment": "기업적합도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 리더십을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-066",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-12",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 67.27
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 55.73
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 58.52
+      },
+      {
+        "name": "진로동기",
+        "tScore": 67.86
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 역량준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-067",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-04-10",
+    "headline": "참여동기",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 45.31
+      },
+      {
+        "name": "학업병행",
+        "tScore": 42.83
+      },
+      {
+        "name": "지원요구",
+        "tScore": 33.81
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 44.1
+      }
+    ],
+    "comment": "참여동기·학업병행·이탈위험는 평균 수준을 유지하고 있지만, 지원요구 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 지원요구을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-067",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-06",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 47.69
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 40.89
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 31.06
+      },
+      {
+        "name": "진로동기",
+        "tScore": 44.7
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-068",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-03-10",
+    "headline": "지원요구",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 32.23
+      },
+      {
+        "name": "학업병행",
+        "tScore": 33.08
+      },
+      {
+        "name": "지원요구",
+        "tScore": 48.9
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 41.5
+      }
+    ],
+    "comment": "학업병행·지원요구·이탈위험는 평균 수준을 유지하고 있지만, 참여동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 참여동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-068",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-12",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 31.01
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 50.63
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 42.89
+      },
+      {
+        "name": "진로동기",
+        "tScore": 50.92
+      }
+    ],
+    "comment": "역량준비도·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 진로명확성 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로명확성을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-069",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-04",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 44.55
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 41.32
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 43.49
+      },
+      {
+        "name": "진로동기",
+        "tScore": 31.83
+      }
+    ],
+    "comment": "진로명확성·역량준비도·취업준비도는 평균 수준을 유지하고 있지만, 진로동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-070",
+    "testId": "c4",
+    "attemptNo": 2,
+    "testedAt": "2026-03-23",
+    "headline": "개인 브랜딩",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 56.7
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 55.55
+      },
+      {
+        "name": "면접역량",
+        "tScore": 52.13
+      },
+      {
+        "name": "구직전략",
+        "tScore": 50.61
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 구직전략부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-070",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-29",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 53.78
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 57.53
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 63.86
+      },
+      {
+        "name": "진로동기",
+        "tScore": 55.03
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로명확성을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-071",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-30",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 47.88
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 53.81
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 61.16
+      },
+      {
+        "name": "진로동기",
+        "tScore": 58.11
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로명확성을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-072",
+    "testId": "c4",
+    "attemptNo": 1,
+    "testedAt": "2026-04-17",
+    "headline": "구직전략",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 44.3
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 59.94
+      },
+      {
+        "name": "면접역량",
+        "tScore": 44.35
+      },
+      {
+        "name": "구직전략",
+        "tScore": 61.25
+      }
+    ],
+    "comment": "구직전략이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 개인 브랜딩을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-072",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-03",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 53.28
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 48.78
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 46.14
+      },
+      {
+        "name": "진로동기",
+        "tScore": 51.5
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 취업준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-073",
+    "testId": "c6",
+    "attemptNo": 2,
+    "testedAt": "2026-05-01",
+    "headline": "브랜딩",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 72.18
+      },
+      {
+        "name": "리더십",
+        "tScore": 56.88
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 56.1
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 74.44
+      }
+    ],
+    "comment": "브랜딩이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 기업적합도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-073",
+    "testId": "ccore",
+    "attemptNo": 2,
+    "testedAt": "2026-03-24",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 61.41
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 56.95
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 65.48
+      },
+      {
+        "name": "진로동기",
+        "tScore": 75
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 역량준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-075",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-04-23",
+    "headline": "탐색행동",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 39.84
+      },
+      {
+        "name": "목표",
+        "tScore": 47.93
+      },
+      {
+        "name": "의사결정",
+        "tScore": 55.42
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 57.6
+      },
+      {
+        "name": "설계수준",
+        "tScore": 55.49
+      }
+    ],
+    "comment": "목표·의사결정·탐색행동·설계수준는 평균 수준을 유지하고 있지만, 진로학습 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로학습을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-075",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-06",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 41.69
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 48.38
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 54.64
+      },
+      {
+        "name": "진로동기",
+        "tScore": 38.89
+      }
+    ],
+    "comment": "진로명확성·역량준비도·취업준비도는 평균 수준을 유지하고 있지만, 진로동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-076",
+    "testId": "c6",
+    "attemptNo": 1,
+    "testedAt": "2026-04-02",
+    "headline": "기업적합도",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 72.09
+      },
+      {
+        "name": "리더십",
+        "tScore": 69.69
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 72.14
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 71.44
+      }
+    ],
+    "comment": "기업적합도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 리더십을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-076",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-01",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 68.2
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 55.88
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 66.97
+      },
+      {
+        "name": "진로동기",
+        "tScore": 52.34
+      }
+    ],
+    "comment": "진로명확성이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로동기을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-078",
+    "testId": "c1",
+    "attemptNo": 1,
+    "testedAt": "2026-04-11",
+    "headline": "자기이해",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "자기이해",
+        "tScore": 48.99
+      },
+      {
+        "name": "흥미",
+        "tScore": 43.88
+      },
+      {
+        "name": "가치관",
+        "tScore": 45.52
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 44.23
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 흥미부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-078",
+    "testId": "ccore",
+    "attemptNo": 2,
+    "testedAt": "2026-04-30",
+    "headline": "진로탐색형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 49
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 47.32
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 55.49
+      },
+      {
+        "name": "진로동기",
+        "tScore": 51.04
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 역량준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-079",
+    "testId": "c6",
+    "attemptNo": 1,
+    "testedAt": "2026-06-03",
+    "headline": "브랜딩",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 53.71
+      },
+      {
+        "name": "리더십",
+        "tScore": 69.7
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 71.41
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 72.39
+      }
+    ],
+    "comment": "브랜딩이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 성과관리을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-079",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-29",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 67.15
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 68.89
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 60.34
+      },
+      {
+        "name": "진로동기",
+        "tScore": 53.74
+      }
+    ],
+    "comment": "역량준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로동기을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-080",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-04-15",
+    "headline": "이탈위험",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 43.83
+      },
+      {
+        "name": "학업병행",
+        "tScore": 39.63
+      },
+      {
+        "name": "지원요구",
+        "tScore": 45.67
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 50.84
+      }
+    ],
+    "comment": "참여동기·지원요구·이탈위험는 평균 수준을 유지하고 있지만, 학업병행 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 학업병행을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-080",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-06",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 32.77
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 48.64
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 39.69
+      },
+      {
+        "name": "진로동기",
+        "tScore": 47.55
+      }
+    ],
+    "comment": "역량준비도·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 진로명확성 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로명확성을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-081",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-05-21",
+    "headline": "학업병행",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 36.65
+      },
+      {
+        "name": "학업병행",
+        "tScore": 43.81
+      },
+      {
+        "name": "지원요구",
+        "tScore": 29.46
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 42.21
+      }
+    ],
+    "comment": "참여동기·학업병행·이탈위험는 평균 수준을 유지하고 있지만, 지원요구 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 지원요구을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-082",
+    "testId": "c6",
+    "attemptNo": 1,
+    "testedAt": "2026-05-26",
+    "headline": "브랜딩",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 66.23
+      },
+      {
+        "name": "리더십",
+        "tScore": 63.41
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 59.67
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 71.05
+      }
+    ],
+    "comment": "브랜딩이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 기업적합도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-082",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-09",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 65.59
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 63.22
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 66.65
+      },
+      {
+        "name": "진로동기",
+        "tScore": 58.46
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로동기을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-083",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-03-28",
+    "headline": "지원요구",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 34.93
+      },
+      {
+        "name": "학업병행",
+        "tScore": 31.91
+      },
+      {
+        "name": "지원요구",
+        "tScore": 40.75
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 38.76
+      }
+    ],
+    "comment": "참여동기·지원요구·이탈위험는 평균 수준을 유지하고 있지만, 학업병행 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 학업병행을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-083",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-08",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 35.13
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 31.9
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 45.26
+      },
+      {
+        "name": "진로동기",
+        "tScore": 39.37
+      }
+    ],
+    "comment": "진로명확성·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 역량준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 역량준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-084",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-03-23",
+    "headline": "목표",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 44.28
+      },
+      {
+        "name": "목표",
+        "tScore": 58.18
+      },
+      {
+        "name": "의사결정",
+        "tScore": 51.13
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 52.51
+      },
+      {
+        "name": "설계수준",
+        "tScore": 50.76
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로학습부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-084",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-10",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 50.78
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 52.58
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 37.31
+      },
+      {
+        "name": "진로동기",
+        "tScore": 52.49
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-086",
+    "testId": "c6",
+    "attemptNo": 1,
+    "testedAt": "2026-05-05",
+    "headline": "기업적합도",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "성과관리",
+        "tScore": 61.92
+      },
+      {
+        "name": "리더십",
+        "tScore": 59.67
+      },
+      {
+        "name": "기업적합도",
+        "tScore": 69.08
+      },
+      {
+        "name": "브랜딩",
+        "tScore": 59.28
+      }
+    ],
+    "comment": "기업적합도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 브랜딩을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-086",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-14",
+    "headline": "우수인재형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 52.17
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 56.89
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 70.61
+      },
+      {
+        "name": "진로동기",
+        "tScore": 58.61
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로명확성을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-087",
+    "testId": "c5",
+    "attemptNo": 1,
+    "testedAt": "2026-04-05",
+    "headline": "학업병행",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 30.63
+      },
+      {
+        "name": "학업병행",
+        "tScore": 50.17
+      },
+      {
+        "name": "지원요구",
+        "tScore": 50.16
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 48.99
+      }
+    ],
+    "comment": "학업병행·지원요구·이탈위험는 평균 수준을 유지하고 있지만, 참여동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 참여동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-087",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-12",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 32.57
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 37.69
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 30.72
+      },
+      {
+        "name": "진로동기",
+        "tScore": 50.07
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-089",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-05-13",
+    "headline": "문제해결",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 50.41
+      },
+      {
+        "name": "문제해결",
+        "tScore": 56.55
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 45.84
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 55.18
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 대인적합성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-090",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-04-14",
+    "headline": "목표",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 44.56
+      },
+      {
+        "name": "목표",
+        "tScore": 54.92
+      },
+      {
+        "name": "의사결정",
+        "tScore": 50.1
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 51.54
+      },
+      {
+        "name": "설계수준",
+        "tScore": 50.39
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로학습부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-090",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-14",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 55.49
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 43.65
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 44.92
+      },
+      {
+        "name": "진로동기",
+        "tScore": 57.43
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 역량준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-092",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-03",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 46.88
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 50.9
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 41.19
+      },
+      {
+        "name": "진로동기",
+        "tScore": 38.65
+      }
+    ],
+    "comment": "진로명확성·역량준비도·취업준비도는 평균 수준을 유지하고 있지만, 진로동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-093",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-08",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 46.5
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 53.46
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 54.68
+      },
+      {
+        "name": "진로동기",
+        "tScore": 55.59
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로명확성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-094",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-04-13",
+    "headline": "목표",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 56.25
+      },
+      {
+        "name": "목표",
+        "tScore": 57.62
+      },
+      {
+        "name": "의사결정",
+        "tScore": 46.89
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 39.48
+      },
+      {
+        "name": "설계수준",
+        "tScore": 47.4
+      }
+    ],
+    "comment": "진로학습·목표·의사결정·설계수준는 평균 수준을 유지하고 있지만, 탐색행동 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 탐색행동을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-094",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-30",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 41.3
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 51.89
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 42.49
+      },
+      {
+        "name": "진로동기",
+        "tScore": 53.32
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로명확성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-095",
+    "testId": "c2",
+    "attemptNo": 1,
+    "testedAt": "2026-04-05",
+    "headline": "목표",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로학습",
+        "tScore": 38.99
+      },
+      {
+        "name": "목표",
+        "tScore": 56.92
+      },
+      {
+        "name": "의사결정",
+        "tScore": 39.16
+      },
+      {
+        "name": "탐색행동",
+        "tScore": 42.87
+      },
+      {
+        "name": "설계수준",
+        "tScore": 48.21
+      }
+    ],
+    "comment": "목표·의사결정·탐색행동·설계수준는 평균 수준을 유지하고 있지만, 진로학습 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로학습을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-095",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-06",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 55.76
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 47.14
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 37.77
+      },
+      {
+        "name": "진로동기",
+        "tScore": 58.32
+      }
+    ],
+    "comment": "진로명확성·역량준비도·진로동기는 평균 수준을 유지하고 있지만, 취업준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 취업준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-096",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-03-05",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 36.13
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 34.61
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 38.68
+      },
+      {
+        "name": "진로동기",
+        "tScore": 39.22
+      }
+    ],
+    "comment": "진로명확성·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 역량준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 역량준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-097",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-17",
+    "headline": "진로설정형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 43.73
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 45.48
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 48.11
+      },
+      {
+        "name": "진로동기",
+        "tScore": 47.28
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로명확성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-098",
+    "testId": "c5",
+    "attemptNo": 2,
+    "testedAt": "2026-04-27",
+    "headline": "학업병행",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "참여동기",
+        "tScore": 34.74
+      },
+      {
+        "name": "학업병행",
+        "tScore": 51.13
+      },
+      {
+        "name": "지원요구",
+        "tScore": 32.2
+      },
+      {
+        "name": "이탈위험",
+        "tScore": 47.94
+      }
+    ],
+    "comment": "참여동기·학업병행·이탈위험는 평균 수준을 유지하고 있지만, 지원요구 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 지원요구을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-098",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-06-05",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 36.78
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 46.47
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 46.74
+      },
+      {
+        "name": "진로동기",
+        "tScore": 37.88
+      }
+    ],
+    "comment": "역량준비도·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 진로명확성 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로명확성을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-100",
+    "testId": "c3",
+    "attemptNo": 2,
+    "testedAt": "2026-03-17",
+    "headline": "대인적합성",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 48.46
+      },
+      {
+        "name": "문제해결",
+        "tScore": 52.51
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 59.24
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 49.01
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로몰입부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-100",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-03",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 61.41
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 60.42
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 49.39
+      },
+      {
+        "name": "진로동기",
+        "tScore": 60.84
+      }
+    ],
+    "comment": "진로명확성이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 취업준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-101",
+    "testId": "ccore",
+    "attemptNo": 2,
+    "testedAt": "2026-03-17",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 36.33
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 32.07
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 42.11
+      },
+      {
+        "name": "진로동기",
+        "tScore": 34.84
+      }
+    ],
+    "comment": "진로명확성·취업준비도·진로동기는 평균 수준을 유지하고 있지만, 역량준비도 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 역량준비도을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-102",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-04-25",
+    "headline": "진로몰입",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 55.7
+      },
+      {
+        "name": "문제해결",
+        "tScore": 54.25
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 41.98
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 49.23
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 대인적합성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-102",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-14",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 50.15
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 46.43
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 57.78
+      },
+      {
+        "name": "진로동기",
+        "tScore": 44.54
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로동기부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-103",
+    "testId": "c4",
+    "attemptNo": 1,
+    "testedAt": "2026-03-12",
+    "headline": "구직전략",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 48.15
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 44.06
+      },
+      {
+        "name": "면접역량",
+        "tScore": 47.66
+      },
+      {
+        "name": "구직전략",
+        "tScore": 52.84
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 정보탐색 및 분석부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-103",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-04",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 61.28
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 53.79
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 63.99
+      },
+      {
+        "name": "진로동기",
+        "tScore": 65.55
+      }
+    ],
+    "comment": "진로동기이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 역량준비도을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-104",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-05-17",
+    "headline": "진로몰입",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 62.6
+      },
+      {
+        "name": "문제해결",
+        "tScore": 58.91
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 43.03
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 59.69
+      }
+    ],
+    "comment": "진로몰입이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 대인적합성을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-104",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-18",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 55.94
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 42.79
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 47.19
+      },
+      {
+        "name": "진로동기",
+        "tScore": 45.2
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 역량준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-105",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-29",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 54.41
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 44.51
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 46.57
+      },
+      {
+        "name": "진로동기",
+        "tScore": 59.41
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 역량준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-106",
+    "testId": "c3",
+    "attemptNo": 2,
+    "testedAt": "2026-04-12",
+    "headline": "네트워킹",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 62.94
+      },
+      {
+        "name": "문제해결",
+        "tScore": 54.05
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 54.63
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 65.2
+      }
+    ],
+    "comment": "네트워킹이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 문제해결을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-107",
+    "testId": "c4",
+    "attemptNo": 1,
+    "testedAt": "2026-03-05",
+    "headline": "개인 브랜딩",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 63.44
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 54.94
+      },
+      {
+        "name": "면접역량",
+        "tScore": 46.03
+      },
+      {
+        "name": "구직전략",
+        "tScore": 50.76
+      }
+    ],
+    "comment": "개인 브랜딩이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 면접역량을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-107",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-13",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 47.31
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 62.86
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 50.75
+      },
+      {
+        "name": "진로동기",
+        "tScore": 45.76
+      }
+    ],
+    "comment": "역량준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로동기을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-108",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-14",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 57.59
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 41.27
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 56.93
+      },
+      {
+        "name": "진로동기",
+        "tScore": 47.48
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 역량준비도부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-109",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-04-22",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 54.09
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 50.9
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 65.92
+      },
+      {
+        "name": "진로동기",
+        "tScore": 48.4
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로동기을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-110",
+    "testId": "c3",
+    "attemptNo": 1,
+    "testedAt": "2026-04-17",
+    "headline": "네트워킹",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "진로몰입",
+        "tScore": 54.56
+      },
+      {
+        "name": "문제해결",
+        "tScore": 61.06
+      },
+      {
+        "name": "대인적합성",
+        "tScore": 60.61
+      },
+      {
+        "name": "네트워킹",
+        "tScore": 61.74
+      }
+    ],
+    "comment": "네트워킹이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로몰입을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-110",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-25",
+    "headline": "역량성장형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 50.51
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 62.54
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 62.65
+      },
+      {
+        "name": "진로동기",
+        "tScore": 51.79
+      }
+    ],
+    "comment": "취업준비도이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 진로명확성을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-111",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-05",
+    "headline": "취약관리형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 36.06
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 37.92
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 50.93
+      },
+      {
+        "name": "진로동기",
+        "tScore": 30.01
+      }
+    ],
+    "comment": "진로명확성·역량준비도·취업준비도는 평균 수준을 유지하고 있지만, 진로동기 점수가 상대적으로 낮게 나타났습니다. 목표 직무와 직접 연결된 활동에 참여하며 진로동기을(를) 끌어올리는 것을 추천합니다."
+  },
+  {
+    "studentId": "stu-112",
+    "testId": "c4",
+    "attemptNo": 1,
+    "testedAt": "2026-03-08",
+    "headline": "구직전략",
+    "headlineCaption": "강점 요인",
+    "factors": [
+      {
+        "name": "개인 브랜딩",
+        "tScore": 46.85
+      },
+      {
+        "name": "정보탐색 및 분석",
+        "tScore": 52.59
+      },
+      {
+        "name": "면접역량",
+        "tScore": 47.52
+      },
+      {
+        "name": "구직전략",
+        "tScore": 60.81
+      }
+    ],
+    "comment": "구직전략이(가) 강점 요인으로 나타났습니다. 전반적으로 평균 이상을 유지하고 있으며, 상대적으로 낮은 개인 브랜딩을(를) 함께 보완하면 균형 있는 준비가 가능합니다."
+  },
+  {
+    "studentId": "stu-112",
+    "testId": "ccore",
+    "attemptNo": 1,
+    "testedAt": "2026-05-31",
+    "headline": "취업준비형",
+    "headlineCaption": "핵심진단 검사 결과 유형",
+    "factors": [
+      {
+        "name": "진로명확성",
+        "tScore": 46.9
+      },
+      {
+        "name": "역량준비도",
+        "tScore": 50.69
+      },
+      {
+        "name": "취업준비도",
+        "tScore": 47.77
+      },
+      {
+        "name": "진로동기",
+        "tScore": 57.71
+      }
+    ],
+    "comment": "요인별 점수가 대체로 평균 범위에 분포합니다. 가장 낮은 진로명확성부터 구체적인 실행 과제를 정해 단계적으로 보완하는 것을 추천합니다."
+  }
+]

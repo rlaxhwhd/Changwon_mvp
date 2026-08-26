@@ -36,13 +36,18 @@ export interface RosterStudent {
   /** 로드맵 진행률 0~100 */
   progress: number
   status: EnrollStatus
+  /** 학점 (4.5 만점, 소수 2자리 문자열) — 학사 유래. 우리가 수정하지 않는다. */
+  gpa?: string
+  /** 비교과 이수 건수 — 목록·집계용 경량 집계(상세는 programs 신청자 목록) */
+  programCount?: number
+  /** 상담 누적 횟수 — 목록·집계용 경량 집계(상세는 counselRequests) */
+  counselCount?: number
   /** 누적 벌점 총점 (벌점 있는 학생만) — 블랙리스트 단일 소스 */
   penaltyTotal?: number
   /** 벌점 변동 이력 (벌점 있는 학생만) */
   penaltyEntries?: PenaltyEntry[]
   // ── 기본 프로필 (A counselSeed 수준) — 블랙리스트 30명만 보유 ──
   phone?: string
-  gpa?: string
   language?: string
   competencyScore?: number
   typeScores?: { 진로명확도: string; 역량준비도: string; 취업준비도: string }

@@ -6,7 +6,7 @@
     "major": "디자인학과",
     "grade": 3,
     "studentType": "T5",
-    "progress": 31,
+    "progress": 22,
     "status": "재학",
     "phone": "010-0100-1000",
     "gpa": "2.40",
@@ -41,7 +41,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "하위"
+    "tier": "하위",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-002",
@@ -87,7 +89,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 4,
+    "counselCount": 2
   },
   {
     "id": "stu-003",
@@ -143,7 +147,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "하위"
+    "tier": "하위",
+    "programCount": 1,
+    "counselCount": 0
   },
   {
     "id": "stu-004",
@@ -179,7 +185,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 4,
+    "counselCount": 4
   },
   {
     "id": "stu-005",
@@ -225,7 +233,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "하위"
+    "tier": "하위",
+    "programCount": 1,
+    "counselCount": 0
   },
   {
     "id": "stu-006",
@@ -237,7 +247,10 @@
     "progress": 76,
     "status": "재학",
     "phone": "010-0006-0006",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.05",
+    "programCount": 3,
+    "counselCount": 2
   },
   {
     "id": "stu-007",
@@ -249,7 +262,10 @@
     "progress": 45,
     "status": "재학",
     "phone": "010-0007-0007",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.92",
+    "programCount": 5,
+    "counselCount": 2
   },
   {
     "id": "stu-008",
@@ -261,7 +277,10 @@
     "progress": 86,
     "status": "재학",
     "phone": "010-0008-0008",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.67",
+    "programCount": 2,
+    "counselCount": 1
   },
   {
     "id": "stu-009",
@@ -273,7 +292,10 @@
     "progress": 82,
     "status": "재학",
     "phone": "010-0009-0009",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.51",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-010",
@@ -285,7 +307,10 @@
     "progress": 29,
     "status": "재학",
     "phone": "010-0010-0010",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.01",
+    "programCount": 2,
+    "counselCount": 0
   },
   {
     "id": "stu-011",
@@ -297,7 +322,10 @@
     "progress": 43,
     "status": "재학",
     "phone": "010-0011-0011",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.68",
+    "programCount": 1,
+    "counselCount": 0
   },
   {
     "id": "stu-012",
@@ -309,7 +337,10 @@
     "progress": 88,
     "status": "재학",
     "phone": "010-0012-0012",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.60",
+    "programCount": 1,
+    "counselCount": 0
   },
   {
     "id": "stu-013",
@@ -321,7 +352,10 @@
     "progress": 68,
     "status": "재학",
     "phone": "010-0013-0013",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "4.00",
+    "programCount": 6,
+    "counselCount": 3
   },
   {
     "id": "stu-014",
@@ -333,7 +367,10 @@
     "progress": 100,
     "status": "졸업",
     "phone": "010-0014-0014",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.88",
+    "programCount": 2,
+    "counselCount": 1
   },
   {
     "id": "stu-015",
@@ -345,7 +382,10 @@
     "progress": 21,
     "status": "재학",
     "phone": "010-0015-0015",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.64",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-016",
@@ -409,7 +449,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 2,
+    "counselCount": 1
   },
   {
     "id": "stu-017",
@@ -445,7 +487,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 1,
+    "counselCount": 0
   },
   {
     "id": "stu-018",
@@ -491,7 +535,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 1,
+    "counselCount": 2
   },
   {
     "id": "stu-019",
@@ -547,7 +593,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "하위"
+    "tier": "하위",
+    "programCount": 1,
+    "counselCount": 0
   },
   {
     "id": "stu-020",
@@ -559,7 +607,10 @@
     "progress": 65,
     "status": "재학",
     "phone": "010-0020-0020",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.61",
+    "programCount": 2,
+    "counselCount": 1
   },
   {
     "id": "stu-021",
@@ -571,7 +622,10 @@
     "progress": 83,
     "status": "휴학",
     "phone": "010-0021-0021",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.50",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-022",
@@ -583,7 +637,10 @@
     "progress": 53,
     "status": "휴학",
     "phone": "010-0022-0022",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.50",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-023",
@@ -592,10 +649,13 @@
     "major": "물리학과",
     "grade": 3,
     "studentType": "T5",
-    "progress": 32,
+    "progress": 10,
     "status": "휴학",
     "phone": "010-0023-0023",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.48",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-024",
@@ -607,7 +667,10 @@
     "progress": 68,
     "status": "재학",
     "phone": "010-0024-0024",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.67",
+    "programCount": 2,
+    "counselCount": 1
   },
   {
     "id": "stu-025",
@@ -619,7 +682,10 @@
     "progress": 78,
     "status": "재학",
     "phone": "010-0025-0025",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.75",
+    "programCount": 5,
+    "counselCount": 2
   },
   {
     "id": "stu-026",
@@ -631,7 +697,10 @@
     "progress": 69,
     "status": "재학",
     "phone": "010-0026-0026",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.95",
+    "programCount": 1,
+    "counselCount": 1
   },
   {
     "id": "stu-027",
@@ -643,7 +712,10 @@
     "progress": 85,
     "status": "휴학",
     "phone": "010-0027-0027",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.87",
+    "programCount": 4,
+    "counselCount": 1
   },
   {
     "id": "stu-028",
@@ -655,7 +727,10 @@
     "progress": 27,
     "status": "휴학",
     "phone": "010-0028-0028",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.06",
+    "programCount": 5,
+    "counselCount": 2
   },
   {
     "id": "stu-029",
@@ -667,7 +742,10 @@
     "progress": 28,
     "status": "휴학",
     "phone": "010-0029-0029",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.12",
+    "programCount": 1,
+    "counselCount": 1
   },
   {
     "id": "stu-030",
@@ -703,7 +781,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 5,
+    "counselCount": 2
   },
   {
     "id": "stu-031",
@@ -765,7 +845,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 0,
+    "counselCount": 1
   },
   {
     "id": "stu-032",
@@ -821,7 +903,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 3,
+    "counselCount": 1
   },
   {
     "id": "stu-033",
@@ -857,7 +941,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 2,
+    "counselCount": 1
   },
   {
     "id": "stu-034",
@@ -869,7 +955,10 @@
     "progress": 100,
     "status": "졸업",
     "phone": "010-0034-0034",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.06",
+    "programCount": 1,
+    "counselCount": 2
   },
   {
     "id": "stu-035",
@@ -881,7 +970,10 @@
     "progress": 73,
     "status": "재학",
     "phone": "010-0035-0035",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.08",
+    "programCount": 3,
+    "counselCount": 2
   },
   {
     "id": "stu-036",
@@ -890,10 +982,13 @@
     "major": "화학공학과",
     "grade": 4,
     "studentType": "T5",
-    "progress": 41,
+    "progress": 2,
     "status": "휴학",
     "phone": "010-0036-0036",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.49",
+    "programCount": 0,
+    "counselCount": 1
   },
   {
     "id": "stu-037",
@@ -905,7 +1000,10 @@
     "progress": 41,
     "status": "휴학",
     "phone": "010-0037-0037",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.65",
+    "programCount": 1,
+    "counselCount": 3
   },
   {
     "id": "stu-038",
@@ -917,7 +1015,10 @@
     "progress": 61,
     "status": "휴학",
     "phone": "010-0038-0038",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.36",
+    "programCount": 4,
+    "counselCount": 4
   },
   {
     "id": "stu-039",
@@ -929,7 +1030,10 @@
     "progress": 80,
     "status": "재학",
     "phone": "010-0039-0039",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.77",
+    "programCount": 2,
+    "counselCount": 2
   },
   {
     "id": "stu-040",
@@ -941,7 +1045,10 @@
     "progress": 34,
     "status": "재학",
     "phone": "010-0040-0040",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.67",
+    "programCount": 2,
+    "counselCount": 0
   },
   {
     "id": "stu-041",
@@ -953,7 +1060,10 @@
     "progress": 62,
     "status": "재학",
     "phone": "010-0041-0041",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.48",
+    "programCount": 1,
+    "counselCount": 0
   },
   {
     "id": "stu-042",
@@ -965,7 +1075,10 @@
     "progress": 36,
     "status": "재학",
     "phone": "010-0042-0042",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.87",
+    "programCount": 5,
+    "counselCount": 3
   },
   {
     "id": "stu-043",
@@ -977,7 +1090,10 @@
     "progress": 72,
     "status": "재학",
     "phone": "010-0043-0043",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.42",
+    "programCount": 4,
+    "counselCount": 3
   },
   {
     "id": "stu-044",
@@ -1023,7 +1139,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 3,
+    "counselCount": 1
   },
   {
     "id": "stu-045",
@@ -1079,7 +1197,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 3,
+    "counselCount": 4
   },
   {
     "id": "stu-046",
@@ -1123,7 +1243,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-047",
@@ -1169,7 +1291,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "하위"
+    "tier": "하위",
+    "programCount": 5,
+    "counselCount": 4
   },
   {
     "id": "stu-048",
@@ -1233,7 +1357,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 1,
+    "counselCount": 1
   },
   {
     "id": "stu-049",
@@ -1242,10 +1368,13 @@
     "major": "간호학과",
     "grade": 3,
     "studentType": "T5",
-    "progress": 100,
+    "progress": 23,
     "status": "졸업",
     "phone": "010-0049-0049",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.40",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-050",
@@ -1254,10 +1383,13 @@
     "major": "음악학과",
     "grade": 4,
     "studentType": "T5",
-    "progress": 50,
+    "progress": 15,
     "status": "휴학",
     "phone": "010-0050-0050",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "1.67",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-051",
@@ -1269,7 +1401,10 @@
     "progress": 24,
     "status": "재학",
     "phone": "010-0051-0051",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.87",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-052",
@@ -1281,7 +1416,10 @@
     "progress": 100,
     "status": "졸업",
     "phone": "010-0052-0052",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "4.13",
+    "programCount": 6,
+    "counselCount": 3
   },
   {
     "id": "stu-053",
@@ -1293,7 +1431,10 @@
     "progress": 44,
     "status": "재학",
     "phone": "010-0053-0053",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.72",
+    "programCount": 2,
+    "counselCount": 1
   },
   {
     "id": "stu-054",
@@ -1305,7 +1446,10 @@
     "progress": 55,
     "status": "휴학",
     "phone": "010-0054-0054",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.62",
+    "programCount": 3,
+    "counselCount": 2
   },
   {
     "id": "stu-055",
@@ -1317,7 +1461,10 @@
     "progress": 30,
     "status": "재학",
     "phone": "010-0055-0055",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.42",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-056",
@@ -1329,7 +1476,10 @@
     "progress": 78,
     "status": "재학",
     "phone": "010-0056-0056",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "4.33",
+    "programCount": 4,
+    "counselCount": 4
   },
   {
     "id": "stu-057",
@@ -1341,7 +1491,10 @@
     "progress": 29,
     "status": "재학",
     "phone": "010-0057-0057",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.51",
+    "programCount": 3,
+    "counselCount": 2
   },
   {
     "id": "stu-058",
@@ -1353,7 +1506,10 @@
     "progress": 49,
     "status": "재학",
     "phone": "010-0058-0058",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "4.12",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-059",
@@ -1389,7 +1545,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 4,
+    "counselCount": 3
   },
   {
     "id": "stu-060",
@@ -1435,7 +1593,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 2,
+    "counselCount": 2
   },
   {
     "id": "stu-061",
@@ -1499,7 +1659,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-062",
@@ -1535,7 +1697,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-063",
@@ -1544,10 +1708,13 @@
     "major": "건축학과",
     "grade": 3,
     "studentType": "T1",
-    "progress": 53,
+    "progress": 3,
     "status": "재학",
     "phone": "010-0063-0063",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.24",
+    "programCount": 0,
+    "counselCount": 1
   },
   {
     "id": "stu-064",
@@ -1559,7 +1726,10 @@
     "progress": 62,
     "status": "재학",
     "phone": "010-0064-0064",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.42",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-065",
@@ -1568,10 +1738,13 @@
     "major": "영어영문학과",
     "grade": 4,
     "studentType": "T5",
-    "progress": 26,
+    "progress": 78,
     "status": "재학",
     "phone": "010-0065-0065",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.29",
+    "programCount": 6,
+    "counselCount": 2
   },
   {
     "id": "stu-066",
@@ -1583,7 +1756,10 @@
     "progress": 79,
     "status": "재학",
     "phone": "010-0066-0066",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.95",
+    "programCount": 4,
+    "counselCount": 4
   },
   {
     "id": "stu-067",
@@ -1595,7 +1771,10 @@
     "progress": 7,
     "status": "재학",
     "phone": "010-0067-0067",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "1.68",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-068",
@@ -1607,7 +1786,10 @@
     "progress": 17,
     "status": "재학",
     "phone": "010-0068-0068",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.28",
+    "programCount": 1,
+    "counselCount": 0
   },
   {
     "id": "stu-069",
@@ -1616,10 +1798,13 @@
     "major": "경영학과",
     "grade": 4,
     "studentType": "T5",
-    "progress": 27,
+    "progress": 82,
     "status": "재학",
     "phone": "010-0069-0069",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.00",
+    "programCount": 4,
+    "counselCount": 2
   },
   {
     "id": "stu-070",
@@ -1631,7 +1816,10 @@
     "progress": 22,
     "status": "재학",
     "phone": "010-0070-0070",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.05",
+    "programCount": 4,
+    "counselCount": 2
   },
   {
     "id": "stu-071",
@@ -1643,7 +1831,10 @@
     "progress": 71,
     "status": "휴학",
     "phone": "010-0071-0071",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.01",
+    "programCount": 3,
+    "counselCount": 1
   },
   {
     "id": "stu-072",
@@ -1655,7 +1846,10 @@
     "progress": 72,
     "status": "재학",
     "phone": "010-0072-0072",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.33",
+    "programCount": 5,
+    "counselCount": 3
   },
   {
     "id": "stu-073",
@@ -1701,7 +1895,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 3,
+    "counselCount": 5
   },
   {
     "id": "stu-074",
@@ -1757,7 +1953,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 2,
+    "counselCount": 1
   },
   {
     "id": "stu-075",
@@ -1793,7 +1991,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 3,
+    "counselCount": 2
   },
   {
     "id": "stu-076",
@@ -1847,7 +2047,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 6,
+    "counselCount": 4
   },
   {
     "id": "stu-077",
@@ -1859,7 +2061,10 @@
     "progress": 87,
     "status": "재학",
     "phone": "010-0077-0077",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.94",
+    "programCount": 3,
+    "counselCount": 1
   },
   {
     "id": "stu-078",
@@ -1868,10 +2073,13 @@
     "major": "행정학과",
     "grade": 4,
     "studentType": "T1",
-    "progress": 72,
+    "progress": 1,
     "status": "재학",
     "phone": "010-0078-0078",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.43",
+    "programCount": 1,
+    "counselCount": 1
   },
   {
     "id": "stu-079",
@@ -1883,7 +2091,10 @@
     "progress": 100,
     "status": "졸업",
     "phone": "010-0079-0079",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "4.10",
+    "programCount": 4,
+    "counselCount": 3
   },
   {
     "id": "stu-080",
@@ -1892,10 +2103,13 @@
     "major": "물리학과",
     "grade": 1,
     "studentType": "T5",
-    "progress": 24,
+    "progress": 88,
     "status": "휴학",
     "phone": "010-0080-0080",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.37",
+    "programCount": 4,
+    "counselCount": 4
   },
   {
     "id": "stu-081",
@@ -1904,10 +2118,13 @@
     "major": "식품영양학과",
     "grade": 3,
     "studentType": "T5",
-    "progress": 12,
+    "progress": 62,
     "status": "휴학",
     "phone": "010-0081-0081",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.32",
+    "programCount": 3,
+    "counselCount": 2
   },
   {
     "id": "stu-082",
@@ -1919,7 +2136,10 @@
     "progress": 39,
     "status": "휴학",
     "phone": "010-0082-0082",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "4.01",
+    "programCount": 6,
+    "counselCount": 3
   },
   {
     "id": "stu-083",
@@ -1928,10 +2148,13 @@
     "major": "영어영문학과",
     "grade": 4,
     "studentType": "T5",
-    "progress": 60,
+    "progress": 78,
     "status": "휴학",
     "phone": "010-0083-0083",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "1.99",
+    "programCount": 6,
+    "counselCount": 3
   },
   {
     "id": "stu-084",
@@ -1943,7 +2166,10 @@
     "progress": 76,
     "status": "재학",
     "phone": "010-0084-0084",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.65",
+    "programCount": 1,
+    "counselCount": 1
   },
   {
     "id": "stu-085",
@@ -1955,7 +2181,10 @@
     "progress": 64,
     "status": "재학",
     "phone": "010-0085-0085",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.82",
+    "programCount": 4,
+    "counselCount": 1
   },
   {
     "id": "stu-086",
@@ -1967,7 +2196,10 @@
     "progress": 47,
     "status": "재학",
     "phone": "010-0086-0086",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.53",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-087",
@@ -2023,7 +2255,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "하위"
+    "tier": "하위",
+    "programCount": 0,
+    "counselCount": 1
   },
   {
     "id": "stu-088",
@@ -2059,7 +2293,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 3,
+    "counselCount": 4
   },
   {
     "id": "stu-089",
@@ -2105,7 +2341,9 @@
         "by": "career_park"
       }
     ],
-    "tier": "상위"
+    "tier": "상위",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-090",
@@ -2161,7 +2399,9 @@
         "by": "career_kim"
       }
     ],
-    "tier": "중간"
+    "tier": "중간",
+    "programCount": 3,
+    "counselCount": 1
   },
   {
     "id": "stu-091",
@@ -2173,7 +2413,10 @@
     "progress": 20,
     "status": "재학",
     "phone": "010-0091-0091",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.29",
+    "programCount": 3,
+    "counselCount": 4
   },
   {
     "id": "stu-092",
@@ -2185,7 +2428,10 @@
     "progress": 15,
     "status": "휴학",
     "phone": "010-0092-0092",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "1.73",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-093",
@@ -2197,7 +2443,10 @@
     "progress": 29,
     "status": "재학",
     "phone": "010-0093-0093",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "2.81",
+    "programCount": 2,
+    "counselCount": 2
   },
   {
     "id": "stu-094",
@@ -2209,7 +2458,10 @@
     "progress": 55,
     "status": "재학",
     "phone": "010-0094-0094",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.12",
+    "programCount": 1,
+    "counselCount": 1
   },
   {
     "id": "stu-095",
@@ -2221,7 +2473,10 @@
     "progress": 80,
     "status": "재학",
     "phone": "010-0095-0095",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.07",
+    "programCount": 1,
+    "counselCount": 1
   },
   {
     "id": "stu-096",
@@ -2233,7 +2488,10 @@
     "progress": 27,
     "status": "재학",
     "phone": "010-0096-0096",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "1.79",
+    "programCount": 0,
+    "counselCount": 0
   },
   {
     "id": "stu-097",
@@ -2245,7 +2503,10 @@
     "progress": 75,
     "status": "재학",
     "phone": "010-0097-0097",
-    "tier": "중간"
+    "tier": "중간",
+    "gpa": "3.41",
+    "programCount": 1,
+    "counselCount": 2
   },
   {
     "id": "stu-098",
@@ -2254,10 +2515,13 @@
     "major": "건축학과",
     "grade": 2,
     "studentType": "T5",
-    "progress": 37,
+    "progress": 6,
     "status": "재학",
     "phone": "010-0098-0098",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.20",
+    "programCount": 0,
+    "counselCount": 1
   },
   {
     "id": "stu-099",
@@ -2269,7 +2533,10 @@
     "progress": 71,
     "status": "재학",
     "phone": "010-0099-0099",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.30",
+    "programCount": 4,
+    "counselCount": 4
   },
   {
     "id": "stu-100",
@@ -2281,7 +2548,10 @@
     "progress": 43,
     "status": "재학",
     "phone": "010-0100-0100",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.79",
+    "programCount": 1,
+    "counselCount": 1
   },
   {
     "id": "stu-101",
@@ -2290,10 +2560,13 @@
     "major": "컴퓨터공학과",
     "grade": 1,
     "studentType": "T5",
-    "progress": 12,
+    "progress": 83,
     "status": "재학",
     "phone": "010-0101-0101",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "2.42",
+    "programCount": 6,
+    "counselCount": 3
   },
   {
     "id": "stu-102",
@@ -2305,7 +2578,10 @@
     "progress": 9,
     "status": "재학",
     "phone": "010-0102-0102",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.24",
+    "programCount": 1,
+    "counselCount": 1
   },
   {
     "id": "stu-103",
@@ -2317,7 +2593,10 @@
     "progress": 34,
     "status": "재학",
     "phone": "010-0103-0103",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.21",
+    "programCount": 4,
+    "counselCount": 2
   },
   {
     "id": "stu-104",
@@ -2329,7 +2608,10 @@
     "progress": 58,
     "status": "재학",
     "phone": "010-0104-0104",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.96",
+    "programCount": 1,
+    "counselCount": 2
   },
   {
     "id": "stu-105",
@@ -2341,7 +2623,10 @@
     "progress": 47,
     "status": "재학",
     "phone": "010-0105-0105",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.14",
+    "programCount": 5,
+    "counselCount": 2
   },
   {
     "id": "stu-106",
@@ -2353,7 +2638,10 @@
     "progress": 72,
     "status": "재학",
     "phone": "010-0106-0106",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "2.72",
+    "programCount": 3,
+    "counselCount": 1
   },
   {
     "id": "stu-107",
@@ -2365,7 +2653,10 @@
     "progress": 41,
     "status": "재학",
     "phone": "010-0107-0107",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.69",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-108",
@@ -2377,7 +2668,10 @@
     "progress": 66,
     "status": "휴학",
     "phone": "010-0108-0108",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.47",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-109",
@@ -2389,7 +2683,10 @@
     "progress": 88,
     "status": "재학",
     "phone": "010-0109-0109",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.96",
+    "programCount": 5,
+    "counselCount": 2
   },
   {
     "id": "stu-110",
@@ -2401,7 +2698,10 @@
     "progress": 95,
     "status": "졸업",
     "phone": "010-0110-0110",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.36",
+    "programCount": 3,
+    "counselCount": 3
   },
   {
     "id": "stu-111",
@@ -2410,10 +2710,13 @@
     "major": "컴퓨터공학과",
     "grade": 1,
     "studentType": "T5",
-    "progress": 15,
+    "progress": 86,
     "status": "재학",
     "phone": "010-0111-0111",
-    "tier": "하위"
+    "tier": "하위",
+    "gpa": "1.81",
+    "programCount": 5,
+    "counselCount": 4
   },
   {
     "id": "stu-112",
@@ -2425,6 +2728,9 @@
     "progress": 29,
     "status": "재학",
     "phone": "010-0112-0112",
-    "tier": "상위"
+    "tier": "상위",
+    "gpa": "3.04",
+    "programCount": 5,
+    "counselCount": 3
   }
 ]

@@ -1,5 +1,5 @@
 import type { IconType } from 'react-icons'
-import { LuBan, LuCircleCheck, LuHourglass, LuInbox, LuPencilRuler, LuRoute, LuX } from 'react-icons/lu'
+import { LuBan, LuBellRing, LuCircleCheck, LuHourglass, LuInbox, LuPencilRuler, LuRoute, LuX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -8,7 +8,13 @@ import {
   rejectRoadmapRequest,
 } from '../data/roadmapRequests'
 import type { RoadmapChangeRequest, RoadmapRequestStatus } from '../data/roadmapRequests'
+import { getLatestNudges, sendDiagnosisNudge } from '../data/diagnosisAttempts'
+import { getActiveCounselor } from '../data/counselors'
+import { getModule } from '../../src_v2/data/careerProcess'
 import EmptyState from '../components/EmptyState'
+
+/** 재진단을 요청할 검사 — 검사 키는 careerProcess 단일 소스에서 가져온다(문자열을 박지 않는다). */
+const CCORE = getModule('CCORE')!
 
 const TABS: { key: RoadmapRequestStatus; label: string; icon: IconType }[] = [
   { key: '대기', label: '대기', icon: LuHourglass },
@@ -33,7 +39,12 @@ function fmt(iso: string): string {
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
 
-function RequestCard({ req }: { req: RoadmapChangeRequest }) {
+function RequestCard({ req, nudgedAt, onNudge }: {
+  req: RoadmapChangeRequest
+  /** 이 학생에게 C-CORE 진단을 이미 요청한 시각 (없으면 미요청) */
+  nudgedAt?: string
+  onNudge: (studentId: string) => void
+}) {
   return (
     <li className="admin-request-card">
       <div className="admin-request-top">
@@ -59,6 +70,19 @@ function RequestCard({ req }: { req: RoadmapChangeRequest }) {
             <Link to={`/roadmap/${req.studentId}`} className="admin-btn admin-btn-primary sm">
               <LuPencilRuler /> 편집기에서 반영
             </Link>
+            {/* 로드맵을 고치기 전에 유형부터 다시 봐야 할 때 — 학생에게 C-CORE 재응시를 요청한다.
+                권유는 append-only 이벤트(dc_diag_nudges)로 쌓인다. */}
+            {nudgedAt ? (
+              <span className="admin-field-hint"><LuBellRing /> C-CORE 요청 {fmt(nudgedAt)}</span>
+            ) : (
+              <button
+                type="button"
+                className="admin-btn admin-btn-ghost sm"
+                onClick={() => onNudge(req.studentId)}
+              >
+                <LuBellRing /> C-CORE 진단 요청
+              </button>
+            )}
             <button
               className="admin-btn admin-btn-danger-ghost sm"
               onClick={() => {
@@ -81,9 +105,18 @@ function RequestCard({ req }: { req: RoadmapChangeRequest }) {
 
 export default function RoadmapRequests() {
   const [tab, setTab] = useState<RoadmapRequestStatus>('대기')
+  // 권유를 보내면 스토어를 다시 읽어야 한다(로컬 오버레이라 리로드 없이 갱신).
+  const [version, setVersion] = useState(0)
+  const counselor = getActiveCounselor()
 
   const all = useMemo(() => getRoadmapRequests(), [])
   const counts = useMemo(() => countRoadmapRequests(), [])
+  const nudges = useMemo(() => getLatestNudges(), [version])
+
+  const onNudge = (studentId: string) => {
+    sendDiagnosisNudge({ studentId, testId: CCORE.testId, by: counselor.id })
+    setVersion(v => v + 1)
+  }
 
   const list = all
     .filter(r => r.status === tab)
@@ -121,7 +154,12 @@ export default function RoadmapRequests() {
         ) : (
           <ul className="admin-request-list">
             {list.map(req => (
-              <RequestCard key={req.id} req={req} />
+              <RequestCard
+                key={req.id}
+                req={req}
+                nudgedAt={nudges.get(`${req.studentId}::${CCORE.testId}`)?.sentAt}
+                onNudge={onNudge}
+              />
             ))}
           </ul>
         )}
