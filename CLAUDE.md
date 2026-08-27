@@ -149,6 +149,38 @@ tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
 
 ---
 
+## gstack
+
+`~/.claude/skills/gstack`에 설치된 스킬 모음. 이 프로젝트는 테스트 러너가 없으므로 **시각 검증·QA를 gstack에 의존한다.**
+
+### ★ 웹 브라우징은 반드시 `/browse`
+
+**모든 웹 브라우징은 gstack의 `/browse` 스킬을 사용한다.**
+**`mcp__claude-in-chrome__*` 도구는 절대 사용하지 않는다.**
+
+렌더 확인·스크린샷·QA·스크래핑 어느 경우든 `/browse`가 유일한 경로다.
+
+> ⚠️ `_workspace` 함정 — browse/스크린샷 도구의 크롬 프로필 덤프가 vite dev를 hang시킨다.
+> `.gitignore`·vite `watch.ignored` mitigation을 유지할 것.
+
+### 사용 가능한 스킬
+
+`/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`,
+`/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`,
+`/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`,
+`/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`,
+`/setup-gbrain`, `/retro`, `/investigate`, `/document-release`, `/document-generate`,
+`/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`,
+`/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
+
+### 이 프로젝트에서의 제약
+
+- **디자인 스킬은 리뷰·적용 전용.** `/design-consultation`·`/design-shotgun`·`/design-html`은 **새 팔레트·폰트를 생성하는 데 쓰지 않는다** — 디자인은 `DESIGN.md`에 잠겨 있다(위 디자인 가드레일).
+- **빌드 게이트는 `npx tsc -b`.** `/ship`·`/review`가 무엇을 실행하든 이 게이트는 별도로 통과해야 한다.
+- Windows(Git Bash) 설치라 skill 파일이 **심볼릭 링크가 아니라 복사본**이다 → `git pull` 후에는 `cd ~/.claude/skills/gstack && ./setup`을 다시 실행해야 갱신된다.
+
+---
+
 ## 하네스: 드림캐치 화면 제작 팀
 
 **Claude Code(기획·검수) × Codex(구현)** 협업. 둘은 메모리를 공유하지 않고 **파일(`.ai/handoff/`)로만 소통**한다(규약 `.ai/interop.md`).

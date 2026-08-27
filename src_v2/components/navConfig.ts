@@ -117,6 +117,7 @@ export const NAV_SECTIONS: NavSection[] = [
     children: [
       { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open', minGrade: 4 },
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
+      { label: '추천채용 지원 내역', path: '/mypage/applications', icon: 'fa-file-signature' },
       { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check' },
     ],
   },

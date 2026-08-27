@@ -12,6 +12,13 @@
   border-radius: 10px; background: var(--color-primary); color: #fff; font-weight: 800; font-size: 15px;
 }
 .jd-apply-btn:hover { filter: brightness(0.96); }
+.jd-apply-btn:disabled { background: var(--color-surface-alt); color: var(--color-text-sub); cursor: not-allowed; filter: none; }
+.jd-apply-btn-ghost { background: transparent; border: 1px solid var(--color-primary); color: var(--color-primary); }
+.jd-apply-state {
+  margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: 13px; font-weight: 700; color: var(--color-text-sub); text-align: center;
+}
+.jd-apply-state .fa-circle-check { color: var(--color-primary); }
 .jd-content { font-size: 15px; line-height: 1.7; color: var(--color-navy); }
 .jd-content img { max-width: 100%; height: auto; border-radius: 8px; }
 .jd-content ul, .jd-content ol { padding-left: 20px; margin: 8px 0; }

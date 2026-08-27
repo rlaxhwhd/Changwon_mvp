@@ -8,6 +8,7 @@
 //
 // ⚠️ 실제 공고 데이터는 사용자 추후 제공(§8). 지금은 스키마 + CRUD 골격만.
 // ─────────────────────────────────────────────────────────────────────────
+import type { HiringStage } from './jobApplication'
 
 /** 게시 상태 — 목록/필터에서 사용 */
 export type JobStatus = '게시' | '마감'
@@ -99,6 +100,13 @@ export interface JobPosting {
   content?: string
   /** 첨부파일명 목록 */
   attachments?: string[]
+  /**
+   * 전형 단계 정의 — **교내 추천채용 공고만** 쓴다(지원 관리 대상이 그것뿐).
+   * 상담사가 공고별로 정의하며 단계 수·이름이 공고마다 다르다.
+   * 미정의(기존 공고)면 로더가 DEFAULT_STAGE_NAMES 로 폴백한다 — 기존 데이터가
+   * 깨지지 않도록 NULL 허용으로 둔다(SPEC.md §5 #2).
+   */
+  stages?: HiringStage[]
   // ── 운영 전용 메타 ──
   /** 게시/마감 상태 */
   status: JobStatus

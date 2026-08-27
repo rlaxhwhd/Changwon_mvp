@@ -18,6 +18,8 @@ import RoadmapRequests from './pages/RoadmapRequests'
 import RoadmapEditor from './pages/RoadmapEditor'
 import JobList from './pages/JobList'
 import JobForm from './pages/JobForm'
+import JobApplicantsList from './pages/JobApplicantsList'
+import JobApplicants from './pages/JobApplicants'
 import ProgramList from './pages/ProgramList'
 import ProgramManage from './pages/ProgramManage'
 import ProgramForm from './pages/ProgramForm'
@@ -117,6 +119,9 @@ const router = createBrowserRouter(
                 { path: '/jobs', element: <JobList scope="internal" /> },
                 { path: '/jobs/external', element: <JobList scope="external" /> },
                 { path: '/jobs/new', element: <JobForm /> },
+                // 지원자관리는 :id/edit 보다 먼저 둔다 — 'applicants'가 :id 로 먹히지 않도록.
+                { path: '/jobs/applicants', element: <JobApplicantsList /> },
+                { path: '/jobs/applicants/:jobId', element: <JobApplicants /> },
                 { path: '/jobs/:id/edit', element: <JobForm /> },
                 { path: '/programs', element: <ProgramList /> },
                 { path: '/programs/manage', element: <ProgramManage /> },

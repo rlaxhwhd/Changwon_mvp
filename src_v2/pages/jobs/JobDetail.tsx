@@ -1,5 +1,15 @@
-import { Link, Navigate, useParams } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { getJobById, jobDdayLabel } from '../../../src_admin/data/jobsSource'
+import {
+  APPLICATION_STATUS_LABEL,
+  applyToJob,
+  canApplyTo,
+  currentStageLabel,
+  getApplication,
+  isRecommendedInternal,
+} from '../../../src_admin/data/jobApplications'
+import { getActiveStudent } from '../../data/students'
 import './JobDetail.css'
 
 function joinOr(arr: string[] | undefined, fallback: string): string {
@@ -8,9 +18,37 @@ function joinOr(arr: string[] | undefined, fallback: string): string {
 
 export default function JobDetail() {
   const { id } = useParams()
+  const navigate = useNavigate()
+  // 지원 직후 화면을 다시 읽기 위한 트리거 (스토어가 localStorage 라 재조회로 끝난다)
+  const [tick, setTick] = useState(0)
   const job = id ? getJobById(id) : undefined
 
   if (!job) return <Navigate to="/jobs" replace />
+
+  // 교내 추천채용만 사이트 안에서 지원을 받는다. 나머지는 기존대로 외부 링크로 나간다.
+  const acceptsApply = isRecommendedInternal(job)
+  const me = getActiveStudent()
+  const mine = acceptsApply ? getApplication(job.id, me.id) : undefined
+  const applied = !!mine && mine.status !== 'CANCELED'
+  const gate = acceptsApply ? canApplyTo(job.id, me.id) : undefined
+
+  const submitApply = () => {
+    if (!window.confirm(`«${job.company} — ${job.role}»에 지원합니다.\n지원 후에는 마이페이지에서 진행 상황을 확인할 수 있습니다.`)) return
+    const created = applyToJob(job.id, {
+      id: me.id,
+      studentNo: me.studentNo,
+      name: me.name,
+      major: me.major,
+      grade: me.grade,
+      enrollmentStatus: me.enrollmentStatus,
+    })
+    if (!created) {
+      window.alert('지원할 수 없는 공고입니다. 잠시 후 다시 확인해 주세요.')
+      return
+    }
+    setTick(t => t + 1)
+  }
+  void tick
 
   const closed = job.status === '마감'
   const salary = job.salaryNegotiable ? '회사내규 및 협의' : job.salary ? `${job.salary}만원` : '회사내규'
@@ -44,10 +82,43 @@ export default function JobDetail() {
               <dd>{dday}</dd>
             </div>
           </dl>
-          {job.applyUrl && (
-            <a className="jd-apply-btn" href={job.applyUrl} target="_blank" rel="noreferrer">
-              지원하기 <i className="fa-solid fa-arrow-up-right-from-square" />
-            </a>
+          {/* 교내 추천채용 — 사이트 안에서 접수한다. 진행 상황은 마이페이지에서 본다. */}
+          {acceptsApply ? (
+            applied ? (
+              <>
+                <p className="jd-apply-state">
+                  <i className="fa-solid fa-circle-check" />
+                  {mine!.status === 'IN_PROGRESS'
+                    ? `전형 진행 중 · ${currentStageLabel(mine!)}`
+                    : APPLICATION_STATUS_LABEL[mine!.status]}
+                </p>
+                <button
+                  type="button"
+                  className="jd-apply-btn jd-apply-btn-ghost"
+                  onClick={() => navigate('/mypage/applications')}
+                >
+                  지원 현황 보기
+                </button>
+              </>
+            ) : (
+              <>
+                <button
+                  type="button"
+                  className="jd-apply-btn"
+                  onClick={submitApply}
+                  disabled={!gate?.ok}
+                >
+                  지원하기
+                </button>
+                {gate && !gate.ok && <p className="jd-apply-state">{gate.reason}</p>}
+              </>
+            )
+          ) : (
+            job.applyUrl && (
+              <a className="jd-apply-btn" href={job.applyUrl} target="_blank" rel="noreferrer">
+                지원하기 <i className="fa-solid fa-arrow-up-right-from-square" />
+              </a>
+            )
           )}
         </aside>
       </article>

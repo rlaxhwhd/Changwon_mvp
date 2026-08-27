@@ -1617,6 +1617,32 @@ input, textarea, select { font-family: var(--font); }
   font-size: 13px; font-weight: 700; cursor: pointer;
 }
 
+/* ── 추천채용 지원자관리 ─────────────────────────────────────────────── */
+/* 공고 목록 — 체크 · 회사·공고 · 마감 · 지원 · 진행중 · 최종합격 · 탈락 */
+.admin-jobapp-roster { overflow-x: auto; }
+.admin-jobapp-roster .admin-roster-head,
+.admin-jobapp-roster .admin-roster-row {
+  min-width: 880px;
+  grid-template-columns: 36px 3fr 0.8fr 0.6fr 0.6fr 0.7fr 0.6fr;
+}
+.admin-jobapp-roster .admin-roster-row { cursor: pointer; border: 0; font: inherit; }
+.admin-jobapp-roster .admin-roster-cell { white-space: nowrap; }
+.admin-jobapp-roster .admin-roster-cell strong { overflow: hidden; font-size: 14px; font-weight: 800; color: var(--color-text); text-overflow: ellipsis; }
+/* 지원자 목록 — 학생 · 학번 · 학과·학년 · 학적 · 지원일 · 현재전형 · 상태 · 관리 */
+.admin-jobapp-applicant-roster { overflow-x: auto; margin-top: 14px; }
+.admin-jobapp-applicant-roster .admin-roster-head,
+.admin-jobapp-applicant-roster .admin-roster-row {
+  min-width: 1040px;
+  gap: 10px;
+  grid-template-columns: 0.75fr 0.8fr 1.15fr 0.5fr 0.95fr 0.95fr 0.7fr 1.2fr;
+}
+.admin-jobapp-applicant-roster .admin-roster-row { cursor: default; }
+.admin-jobapp-applicant-roster .admin-roster-row:hover { background: var(--color-section-bg); }
+.admin-jobapp-applicant-roster .admin-roster-cell small { display: block; white-space: nowrap; }
+/* 단계 카드의 제목줄을 버튼으로 쓴다(클릭하면 이름 편집) — 버튼 기본 스타일 제거 */
+.admin-phase-top { width: 100%; padding: 0; border: 0; background: none; font: inherit; text-align: left; cursor: pointer; }
+.admin-phase-top:hover strong { color: var(--color-primary); }
+
 .admin-participant-roster { overflow-x: auto; margin-top: 14px; }
 .admin-participant-roster .admin-roster-row { cursor: default; }
 .admin-participant-roster .admin-roster-row:hover { background: var(--color-section-bg); }

@@ -93,6 +93,7 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '교내 공고 목록', path: '/jobs', icon: LuList },
       { label: '공고 등록', path: '/jobs/new', icon: LuPlus },
       { label: '외부 공고 목록', path: '/jobs/external', icon: LuGlobe },
+      { label: '추천채용 지원자관리', path: '/jobs/applicants', icon: LuUsers },
     ],
   },
   {
