@@ -1,6 +1,10 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { getActiveStudent, getStudentTypeMeta, type TermLabel } from '../../data/students'
+import { getActiveStudent, getStudentTypeMeta } from '../../data/students'
+import { ROADMAP_AXES } from '../../data/schema/roadmap'
+import type { RoadmapAxis } from '../../data/schema/roadmap'
+import { getStudentRoadmap } from '../../../src_admin/data/roadmap'
+import RoadmapAxisBoard from '../../components/RoadmapAxisBoard'
 import './AiRoadmap.css'
 import './AiRoadmapIap.css'
 
@@ -12,19 +16,20 @@ const statusLabel: Record<PhaseStatus, string> = {
   upcoming: '예정',
 }
 
-function parseLinkedTask(text: string): { term: TermLabel; title: string; why: string } | null {
-  const m = text.match(/^\[(단기|중기|장기)\s*연계\]\s*(.+?)\s*—\s*(.+)$/)
+/** 4단계(역량강화) task 는 어느 축의 실행인지를 앞머리에 달고 있다 — "[IAP 실행 연계] …" */
+function parseLinkedTask(text: string): { axis: RoadmapAxis; title: string; why: string } | null {
+  const m = text.match(/^\[(.+?)\s*연계\]\s*(.+?)\s*—\s*(.+)$/)
   if (!m) return null
-  return { term: m[1] as TermLabel, title: m[2].trim(), why: m[3].trim() }
+  const meta = ROADMAP_AXES.find(a => a.label === m[1].trim())
+  if (!meta) return null
+  return { axis: meta.code, title: m[2].trim(), why: m[3].trim() }
 }
 
-const termIcon: Record<TermLabel, string> = {
-  단기: 'fa-bolt',
-  중기: 'fa-chart-line',
-  장기: 'fa-flag-checkered',
+const axisIcon: Record<RoadmapAxis, string> = {
+  IAP: 'fa-bolt',
+  CORE: 'fa-graduation-cap',
+  GROWTH: 'fa-flag-checkered',
 }
-
-const termOrder: TermLabel[] = ['단기', '중기', '장기']
 
 // 중요도 가중치(0~1)를 상/중/하 + 게이지로 직관 표시
 function ImportanceBadge({ label }: { label: string }) {
@@ -84,7 +89,8 @@ export default function AiRoadmap() {
   const strengthWeakness = student.strengthWeakness
   const gapItems = student.gapItems
   const [collapsedPhases, setCollapsedPhases] = useState<Set<number>>(new Set())
-  const [expandedTerm, setExpandedTerm] = useState<TermLabel | null>(null)
+  // 로드맵 3축 = base ⊕ 상담사 수정 ⊕ 프로그램 편입분 (data/roadmap.ts 가 조립)
+  const roadmap = getStudentRoadmap(student.id)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [generating, setGenerating] = useState(false)
   const [roadmapGenerated, setRoadmapGenerated] = useState(false)
@@ -210,83 +216,22 @@ export default function AiRoadmap() {
 
                     {!isCollapsed && (
                       <div className="ar-phase-content">
-                        {phase.num === 3 && phase.termDetails ? (
-                          <div className="ar-term-grid">
-                            {termOrder.map(label => {
-                              const detail = phase.termDetails?.[label]
-                              if (!detail) return null
-                              const isOpen = expandedTerm === label
-                              const isDone = detail.done ?? false
-                              return (
-                                <div
-                                  key={label}
-                                  className={`ar-term-card${isDone ? ' done' : ''}${isOpen ? ' open' : ''}`}
-                                  role="button"
-                                  tabIndex={0}
-                                  onClick={() => setExpandedTerm(prev => (prev === label ? null : label))}
-                                  onKeyDown={e => {
-                                    if (e.key === 'Enter' || e.key === ' ') {
-                                      e.preventDefault()
-                                      setExpandedTerm(prev => (prev === label ? null : label))
-                                    }
-                                  }}
-                                  aria-expanded={isOpen}
-                                >
-                                  <div className="ar-term-head">
-                                    <span className="ar-term-badge">
-                                      <i className={`fa-solid ${termIcon[label]}`} />
-                                      {label}
-                                    </span>
-                                    <span className="ar-term-period">{detail.period}</span>
-                                    <span className={`ar-term-status${isDone ? ' done' : ''}`}>
-                                      {isDone
-                                        ? <><i className="fa-solid fa-circle-check" /> 완료</>
-                                        : <><i className="fa-regular fa-circle-dot" /> 진행 중</>}
-                                    </span>
-                                    <i className={`fa-solid fa-chevron-${isOpen ? 'up' : 'down'} ar-term-chev`} />
-                                  </div>
-                                  <div className="ar-term-headline">{detail.headline}</div>
-                                  {!isOpen && (
-                                    <div className="ar-term-summary">
-                                      {detail.items.length}개 목표 · 클릭해서 자세한 추천 근거 보기
-                                    </div>
-                                  )}
-                                  {isOpen && (
-                                    <>
-                                      <p className="ar-term-rationale">
-                                        <i className="fa-solid fa-lightbulb" /> {detail.rationale}
-                                      </p>
-                                      <ul className="ar-term-items">
-                                        {detail.items.map((item, i) => (
-                                          <li key={i} className="ar-term-item">
-                                            <div className="ar-term-item-head">
-                                              <span className={`ar-pri-chip ar-pri-${item.priority}`}>{item.priority}</span>
-                                              <span className={`ar-imp-chip ar-imp-${item.importance}`}>{item.importance}</span>
-                                              <strong className="ar-term-item-title">{item.title}</strong>
-                                            </div>
-                                            <p className="ar-term-item-why">{item.why}</p>
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </>
-                                  )}
-                                </div>
-                              )
-                            })}
-                          </div>
+                        {phase.num === 3 && roadmap ? (
+                          /* 로드맵 3축 — 상담사 화면과 같은 공용 컴포넌트 */
+                          <RoadmapAxisBoard axes={roadmap.axes} />
                         ) : phase.num === 4 && phase.tasks.some(t => parseLinkedTask(t.text)) ? (
                           <div className="ar-link-groups">
-                            {termOrder.map(label => {
+                            {ROADMAP_AXES.map(meta => {
                               const grouped = phase.tasks
                                 .map(task => ({ task, parsed: parseLinkedTask(task.text) }))
-                                .filter(x => x.parsed?.term === label)
+                                .filter(x => x.parsed?.axis === meta.code)
                               if (grouped.length === 0) return null
                               return (
-                                <section key={label} className={`ar-link-group ar-link-group-${label}`}>
+                                <section key={meta.code} className={`ar-link-group ar-link-group-${meta.code}`}>
                                   <header className="ar-link-group-head">
                                     <span className="ar-term-badge">
-                                      <i className={`fa-solid ${termIcon[label]}`} />
-                                      {label} 연계
+                                      <i className={`fa-solid ${axisIcon[meta.code]}`} />
+                                      {meta.label} 연계
                                     </span>
                                     <span className="ar-link-group-count">{grouped.length}개 실행 항목</span>
                                   </header>
@@ -336,7 +281,7 @@ export default function AiRoadmap() {
                     <span className="ar-generate-lock-ico"><i className="fa-solid fa-lock" /></span>
                     <div>
                       <strong>PHASE 3 ~ 6 로드맵이 잠겨 있습니다</strong>
-                      <p>진단 · 상담 결과와 수강 이력 · 외부활동 스펙 3축을 분석해 단·중·장기 계획을 생성합니다.</p>
+                      <p>진단 · 상담 결과, 교과목 · 학과, 외부활동 스펙을 재료로 IAP 실행 · 핵심역량 수행 · 내 성장 활동 3축을 생성합니다.</p>
                     </div>
                   </div>
                   <button className="ar-generate-btn" onClick={handleGenerateRoadmap} disabled={!phase2Done}>

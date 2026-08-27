@@ -355,7 +355,7 @@ export function getBriefing(
     time: next.time,
     mode: next.meta.split(' · ').at(-1) ?? '개인상담',
     scores: [
-      { label: '로드맵 이수율', value: String(progress), unit: '%', ink: 'f-green' },
+      { label: '로드맵 이행률', value: String(progress), unit: '%', ink: 'f-green' },
       { label: '상담 횟수', value: String(myDone), unit: '회', ink: 'f-orange' },
       { label: '진단 완료', value: String(attemptsDone), unit: `/${attempts.length}`, ink: 'f-blue' },
     ],

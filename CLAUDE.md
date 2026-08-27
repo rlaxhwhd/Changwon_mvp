@@ -66,9 +66,12 @@ React 19 + TypeScript 5.9 + Vite 8. 프론트엔드 전용, 백엔드 없음. �
 | 심리검사 결과 작성 | 심리검사 결과 | `dc_psych_tests` |
 | 진단 응시·코멘트·권유 | 진단 이력 | `dc_diag_attempts` · `_comments` · `_nudges` |
 | **상담에서 6유형 확정** | 학생 유형·계층 (append) | `dc_student_type` |
-| **로드맵 생성**(상담과 동시 · 3축) | 학생 로드맵 1개 | `dc_roadmap` |
-| 상담사가 로드맵 수정 | 로드맵 항목 override | `dc_roadmap_overrides` |
+| **로드맵 생성**(상담과 동시 · 재료3→축3 · 15칸) | 학생 로드맵 1개 | `dc_roadmap` |
+| 상담사가 로드맵 수정 | 로드맵 칸 override | `dc_roadmap_overrides` |
 | 로드맵 변경 요청 | 로드맵 요청 스토어 | `dc_roadmap_requests` |
+| **프로그램 개설 시 로드맵 편입**(추천/필수) | 대상 유형 학생의 **IAP 축에 칸 추가** | `dc_programs.roadmapEntry` → `dc_roadmap` |
+| **프로그램 선발** | 그 IAP 칸 **자동 완료** | `dc_program_apply` → `dc_roadmap` |
+| **로드맵 연 1회 스냅샷·재생성** | 스냅샷 (append-only) | `dc_roadmap_snapshots` |
 | 비교과 미참여 벌점 | 학생 벌점 | `dc_penalty` |
 | 전담교수 배정 | 배정 이력 | `dc_advisor_assign` |
 | 상담사가 공고·프로그램 CRUD | 각 리스트 | `dc_jobs` · `dc_programs` |

@@ -11,6 +11,7 @@ import type { RoadmapChangeRequest, RoadmapRequestStatus } from '../data/roadmap
 import { getLatestNudges, sendDiagnosisNudge } from '../data/diagnosisAttempts'
 import { getActiveCounselor } from '../data/counselors'
 import { getModule } from '../../src_v2/data/careerProcess'
+import { axisLabel } from '../../src_v2/data/schema/roadmap'
 import EmptyState from '../components/EmptyState'
 
 /** 재진단을 요청할 검사 — 검사 키는 careerProcess 단일 소스에서 가져온다(문자열을 박지 않는다). */
@@ -49,7 +50,7 @@ function RequestCard({ req, nudgedAt, onNudge }: {
     <li className="admin-request-card">
       <div className="admin-request-top">
         <span className={`admin-chip ${statusChip(req.status)}`}>{req.status}</span>
-        {req.term && <span className="admin-tag admin-tag-soft">{req.term}</span>}
+        {req.axis && <span className="admin-tag admin-tag-soft">{axisLabel(req.axis)}</span>}
         <span className="admin-request-at">신청 {fmt(req.requestedAt)}</span>
       </div>
 

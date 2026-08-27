@@ -9,7 +9,7 @@
 // ⚠ 여기서 새 판정식·새 유형·새 축을 만들지 않는다(14조). 원천이 주는 값만 옮긴다.
 // ─────────────────────────────────────────────────────────────────────────
 import type { StudentData } from '../../src_v2/data/students'
-import type { TermLabel } from '../../src_v2/data/students'
+import type { RoadmapAxis, RoadmapAxisPlan } from '../../src_v2/data/schema/roadmap'
 import { computeAll, type Competency, type ScoreResult } from '../../src_v2/lib/scoring'
 import { DIAGNOSIS_MODULES, getRequiredTests, type DiagnosisModule, type StudentType } from '../../src_v2/data/careerProcess'
 import { getAttemptsByStudent } from './diagnosisAttempts'
@@ -21,7 +21,7 @@ import { getProfCounselRecords } from './profCounselRecords'
 import { PROF_COUNSEL_CATEGORIES, type ProfCounselCategoryCode } from './schema/profCounselRecord'
 import { getPrograms } from './programs'
 import type { ProgramApplicant } from './schema/program'
-import { getMergedRoadmap } from './roadmapOverrides'
+import { getStudentRoadmap, getRoadmapProgress } from './roadmap'
 
 // ── ① 역량 레이더 (시안 '6대 핵심역량' 카드) ───────────────────────────────
 // 이 프로젝트의 역량 축은 scoring.ts가 정의한 5개다(진로·직무·자기관리·취업·성장).
@@ -253,80 +253,42 @@ export function getStudentPrograms(studentId: string): StudentProgramSummary {
   }
 }
 
-// ── ⑤ 목표 달성 계획 (시안 goal-card) ──────────────────────────────────────
-// 시안 3열(IAP실행/핵심역량수행/내성장활동)은 우리 구조에 없다.
-// 실제 3분할은 로드맵 3단계의 단·중·장기(TermDetail)다 — 카드 모양만 시안을 따른다.
-
-export const GOAL_TERM_ORDER: TermLabel[] = ['단기', '중기', '장기']
-
-export interface GoalTask {
-  title: string
-  priority: 'P0' | 'P1' | 'P2'
-  importance: '필수' | '중요' | '권장'
-  why: string
-}
-
-export interface GoalColumn {
-  term: TermLabel
-  period: string
-  headline: string
-  tint: string
-  /** 상담사 수정본으로 교체된 열인지 */
-  overridden: boolean
-  tasks: GoalTask[]
-}
+// ── ⑤ 목표 달성 계획 = 로드맵 3축 ──────────────────────────────────────────
+// 시안의 3열(IAP실행 / 핵심역량수행 / 내성장활동)이 곧 확정 프로세스의 3축이다.
+// 축·칸·이행률은 data/roadmap.ts 가 조립한다 — 여기서 다시 세지 않는다.
 
 export interface GoalPlan {
   /** 목표 직무 */
   role: string
   company: string
-  /** 전체 진척도 % — 로드맵 전 단계 task 완료율 */
+  /** 전체 이행률 % — 수행 완료 칸 ÷ 살아 있는 전체 칸 (PROCESS.md §6-5) */
   progress: number
-  columns: GoalColumn[]
+  done: number
+  total: number
+  axes: RoadmapAxisPlan[]
+  origin: Record<RoadmapAxis, 'base' | 'override'>
   /** 상담사 확정 로드맵 버전 (없으면 null) */
   version: number | null
   confirmed: boolean
 }
 
-const TERM_TINT: Record<TermLabel, string> = { 단기: 'green', 중기: 'blue', 장기: 'purple' }
-
-/** 로드맵 진척도 % — phases 전체 task 완료율. 화면에서 다시 세지 않는다. */
-export function getRoadmapProgress(student: StudentData): number {
-  const tasks = student.phases.flatMap(p => p.tasks)
-  if (tasks.length === 0) return 0
-  return Math.round((tasks.filter(t => t.done).length / tasks.length) * 100)
-}
+/** 로드맵 이행률 % — 단일 소스는 data/roadmap.ts. 재구현하지 않는다. */
+export { getRoadmapProgress }
 
 export function getGoalPlan(student: StudentData): GoalPlan | null {
-  const merged = getMergedRoadmap(student.id)
-  if (!merged) return null
-
-  const columns: GoalColumn[] = []
-  for (const term of GOAL_TERM_ORDER) {
-    const detail = merged.phase.termDetails?.[term]
-    if (!detail) continue
-    columns.push({
-      term,
-      period: detail.period,
-      headline: detail.headline,
-      tint: TERM_TINT[term],
-      overridden: merged.origin[term] === 'override',
-      tasks: detail.items.map(it => ({
-        title: it.title,
-        priority: it.priority,
-        importance: it.importance,
-        why: it.why,
-      })),
-    })
-  }
+  const roadmap = getStudentRoadmap(student.id)
+  if (!roadmap) return null
 
   return {
     role: student.targetCompany.role,
     company: student.targetCompany.name,
-    progress: getRoadmapProgress(student),
-    columns,
-    version: merged.meta?.version ?? null,
-    confirmed: merged.meta?.confirmed ?? false,
+    progress: roadmap.progress.pct,
+    done: roadmap.progress.done,
+    total: roadmap.progress.total,
+    axes: roadmap.axes,
+    origin: roadmap.origin,
+    version: roadmap.meta?.version ?? null,
+    confirmed: roadmap.meta?.confirmed ?? false,
   }
 }
 
@@ -353,15 +315,15 @@ export interface DetailStat {
  * 상세 헤더 KPI 4장 — 진단·상담·로드맵·비교과.
  * 각 값의 출처가 모두 다르므로 여기서 한 번에 모아 화면엔 완성된 배열만 넘긴다.
  */
-export function getDetailStats(student: StudentData, type: StudentType, tierLabel: string): DetailStat[] {
+export function getDetailStats(student: StudentData, type: StudentType): DetailStat[] {
   const cards = getDiagnosisCards(student.id, type)
   const diagDone = cards.filter(c => c.state === '완료').length
   const counsel = getCounselOverview(student.id)
   const counselTotal = counsel.reduce((n, c) => n + c.total, 0)
   const counselDone = counsel.reduce((n, c) => n + c.done, 0)
-  const progress = getRoadmapProgress(student)
+  const roadmap = getStudentRoadmap(student.id)
+  const progress = roadmap?.progress.pct ?? 0
   const programs = getStudentPrograms(student.id)
-  const radar = getCompetencyRadar(student, tierLabel)
 
   // 색 배정은 시안 stats 4장을 그대로 따른다 (진단=mint · 상담=sky · 이행률=blue · 비교과=pink).
   const allDiagDone = cards.length > 0 && diagDone === cards.length
@@ -384,12 +346,12 @@ export function getDetailStats(student: StudentData, type: StudentType, tierLabe
       tint: 'sky',
     },
     {
-      label: '로드맵 이수율',
+      label: '로드맵 이행률',
       value: String(progress),
       unit: '%',
       pct: progress,
-      foot: `종합 역량 ${radar.overall}점`,
-      badge: `${radar.overall}점`,
+      foot: roadmap ? `수행 ${roadmap.progress.done} / 전체 ${roadmap.progress.total}칸` : '로드맵 미생성',
+      badge: roadmap ? `${roadmap.progress.done}칸 완료` : '없음',
       tint: 'blue',
     },
     {

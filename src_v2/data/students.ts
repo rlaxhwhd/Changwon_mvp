@@ -4,26 +4,14 @@
 // (프로토타입용 — 백엔드 대신 학생 JSON을 단일 소스로 사용)
 // ─────────────────────────────────────────────────────────────────────────
 import { STUDENT_TYPE_MAP, type StudentType, type StudentTypeMeta } from './careerProcess'
+import type { RoadmapPlan } from './schema/roadmap'
 import type { StudentInputs } from '../lib/scoring'
 import chaewon from './students/chaewon.json'
 import changwon from './students/changwon.json'
 import counselSeed from './students/counselSeedStudents.json'
 
 export interface PhaseTask { text: string; done: boolean }
-export type TermLabel = '단기' | '중기' | '장기'
-export interface TermItem {
-  title: string
-  priority: 'P0' | 'P1' | 'P2'
-  importance: '필수' | '중요' | '권장'
-  why: string
-}
-export interface TermDetail {
-  period: string
-  headline: string
-  rationale: string
-  items: TermItem[]
-  done?: boolean
-}
+/** 파이프라인 6단계 — 로드맵(3축)과 다른 것이다. 이건 진단→상담→…→사후관리 진행 표시다. */
 export interface RoadmapPhase {
   num: number
   title: string
@@ -31,7 +19,6 @@ export interface RoadmapPhase {
   status: 'done' | 'active' | 'upcoming'
   period: string
   tasks: PhaseTask[]
-  termDetails?: Partial<Record<TermLabel, TermDetail>>
   recommendation: string
   nextPath: string
 }
@@ -146,6 +133,8 @@ export interface StudentData {
   targetCompany: TargetCompany
   strengthWeakness: SWItem[]
   phases: RoadmapPhase[]
+  /** 로드맵 본체 — 3축 × 5칸에서 시작한다. IAP 축만 이후에 늘어난다. → PROCESS.md §6 */
+  roadmapAxes?: RoadmapPlan
   gapItems: GapItem[]
   recommendations: Recommendations
   insight: string

@@ -1,0 +1,160 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   채용공고 보드 (공용) — /v2/jobs 와 /admin/jobs 가 같은 화면을 쓴다.
+   카드는 학생 화면 JobSupport 의 .jc-card 원안 그대로다.
+
+   두 SPA 의 토큰 이름이 달라(navy/text-sub vs text/text-secondary) 여기서
+   한 번만 별칭으로 잇는다. 새 색을 만들지 않는다 — DESIGN.md 락.
+   ───────────────────────────────────────────────────────────────────────── */
+.jb {
+  --jb-ink: var(--color-navy, var(--color-text));
+  --jb-sub: var(--color-text-sub, var(--color-text-secondary));
+  --jb-muted: var(--color-text-muted, var(--color-text-secondary));
+  --jb-line: var(--color-border);
+  --jb-surface: var(--color-bg, #fff);
+}
+
+/* ── 툴바 ─────────────────────────────────────────────────────────────── */
+.jb-toolbar {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 18px;
+}
+.jb-search,
+.jb-count {
+  height: 38px;
+  display: inline-flex; align-items: center; gap: 8px;
+  border: 1px solid var(--jb-line);
+  border-radius: var(--radius-sm);
+  background: var(--jb-surface);
+  color: var(--jb-sub);
+  font-size: 15px; font-weight: 800;
+}
+.jb-search { flex: 1; max-width: 420px; padding: 0 12px; }
+.jb-search i { color: var(--jb-muted); }
+.jb-search input {
+  width: 100%; border: 0; outline: 0; background: transparent;
+  color: var(--jb-ink); font-size: 15px; font-weight: 600;
+}
+.jb-search input::placeholder { color: var(--jb-muted); }
+.jb-count { margin-left: auto; padding: 0 14px; }
+.jb-count strong { color: var(--color-primary); }
+
+.jb-select { display: inline-flex; align-items: center; gap: 8px; }
+.jb-select > span { font-size: 13px; font-weight: 800; color: var(--jb-sub); }
+.jb-select select {
+  height: 38px; padding: 0 12px;
+  border: 1px solid var(--jb-line); border-radius: var(--radius-sm);
+  background: var(--jb-surface); color: var(--jb-ink);
+  font-size: 14px; font-weight: 700; cursor: pointer;
+}
+
+/* ── 섹션 제목 (추천채용 / 일반채용) ──────────────────────────────────── */
+.jb-section {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 12px;
+  color: var(--jb-ink); font-size: 17px; font-weight: 800;
+}
+.jb-section i { color: var(--color-primary); font-size: 15px; }
+.jb-section em { font-style: normal; color: var(--color-primary); }
+.jc-grid + .jb-section,
+.jb-list + .jb-section { margin-top: 28px; }
+
+/* ── 추천채용 카드 ────────────────────────────────────────────────────── */
+.jc-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 18px;
+}
+@media (max-width: 1400px) { .jc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 1024px) { .jc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+.jc-card {
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 20px;
+  background: #fff;
+  border: 1px solid var(--jb-line);
+  border-radius: 0;
+  text-align: left;
+  min-height: 196px;
+  cursor: pointer;
+  font: inherit;
+  transition: box-shadow 0.15s, transform 0.15s, border-color 0.15s;
+}
+.jc-card:hover { border-color: var(--color-primary); box-shadow: 0 10px 28px rgba(16, 24, 40, 0.10); transform: translateY(-3px); }
+.jc-card.is-closed { opacity: 0.62; }
+/* 읽기 전용(외부 공고) — 클릭 대상이 아니라 hover 반응을 없앤다 */
+.jc-card.is-static,
+.jb-row.is-static { cursor: default; }
+.jc-card.is-static:hover { border-color: var(--jb-line); box-shadow: none; transform: none; }
+.jb-row.is-static:hover { background: #fff; }
+
+.jc-top { display: flex; align-items: center; gap: 10px; }
+.jc-company { font-size: 14px; font-weight: 800; color: var(--jb-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jc-badge-rec { flex: 0 0 auto; padding: 2px 8px; border-radius: 999px; background: #fff0f6; color: #e64980; font-size: 11px; font-weight: 800; }
+.jc-star { margin-left: auto; flex: 0 0 auto; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; border-radius: 8px; color: #adb5bd; cursor: pointer; }
+.jc-star:hover { background: #f8f9fa; color: #f59f00; }
+.jc-star.is-on { color: #f59f00; }
+
+.jc-title {
+  font-size: 16px; font-weight: 800; color: var(--jb-ink); line-height: 1.4;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+
+.jc-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.jc-tag { padding: 3px 9px; border-radius: 6px; background: #f1f3f5; color: #495057; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.jc-tag-emp { background: #edf2ff; color: #3b5bdb; }
+/* 특이사항 — 오늘마감은 강조색, 그 외(서류면제 등)는 보조색 */
+.jc-tag-flag { background: var(--blue-bg, #edf2ff); color: var(--blue, #3b5bdb); }
+.jc-tag-urgent { background: var(--red-bg, #fff0f0); color: var(--red, #e03131); }
+
+.jc-meta { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: auto; }
+.jc-meta span { display: inline-flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--jb-sub); }
+.jc-meta i { color: #adb5bd; font-size: 12px; }
+
+.jc-foot { display: flex; align-items: center; justify-content: space-between; padding-top: 10px; border-top: 1px solid #f1f3f5; }
+.jc-dday { font-size: 13px; font-weight: 800; color: #e8590c; }
+.jc-dday.is-closed { color: #adb5bd; }
+.jc-foot time { font-size: 12px; color: var(--jb-sub); }
+
+/* ── 일반채용 리스트 ──────────────────────────────────────────────────── */
+.jb-list { border-top: 1px solid var(--jb-line); }
+.jb-row {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 150px minmax(280px, 1fr) 220px 120px 64px 74px;
+  align-items: center; gap: 16px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--jb-line);
+  background: #fff;
+  text-align: left; font: inherit; cursor: pointer;
+  transition: background 0.14s;
+}
+.jb-row:hover { background: #f8fbff; }
+.jb-row.is-closed { opacity: 0.62; }
+.jb-row-company { font-size: 14px; font-weight: 800; color: var(--jb-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jb-row-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.jb-row-title strong { font-size: 15px; font-weight: 800; color: var(--jb-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jb-row-meta { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; color: var(--jb-sub); }
+.jb-row-meta i { color: #adb5bd; font-size: 12px; }
+.jb-row-salary { font-size: 13px; font-weight: 700; color: var(--jb-sub); }
+.jb-row time { font-size: 12px; color: var(--jb-sub); }
+
+/* ── 빈 상태 ──────────────────────────────────────────────────────────── */
+.jb-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 56px 24px; text-align: center; color: var(--jb-muted);
+}
+.jb-empty i { font-size: 36px; color: var(--jb-muted); }
+.jb-empty p { margin: 6px 0 0; color: var(--jb-ink); font-size: 17px; font-weight: 800; }
+.jb-empty span { font-size: 15px; color: var(--jb-muted); }
+
+@media (max-width: 1024px) {
+  .jb-toolbar { align-items: stretch; flex-direction: column; }
+  .jb-search { max-width: none; }
+  .jb-count { margin-left: 0; }
+  .jb-row { grid-template-columns: 1fr auto; gap: 6px 12px; }
+  .jb-row-company,
+  .jb-row-title,
+  .jb-row-meta { grid-column: 1 / -1; }
+  .jb-row-title { align-items: flex-start; flex-direction: column; }
+  .jb-row-title strong { white-space: normal; }
+}

@@ -1,60 +1,48 @@
-import { LuCheck, LuEye, LuFrown, LuHistory, LuInbox, LuInfo, LuPencilRuler, LuPlus, LuRotateCcw, LuTrash2, LuUser } from 'react-icons/lu'
+import { LuCheck, LuEye, LuFrown, LuHistory, LuInbox, LuInfo, LuLock, LuPencilRuler, LuPlus, LuRotateCcw, LuTrash2, LuUser } from 'react-icons/lu'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getActiveCounselor } from '../data/counselors'
 import { STUDENTS } from '../../src_v2/data/students'
-import type { TermDetail, TermItem, TermLabel } from '../../src_v2/data/students'
+import { ROADMAP_AXES, ROADMAP_AXIS_MAP, axisLabel } from '../../src_v2/data/schema/roadmap'
+import type { CellImportance, CellPriority, RoadmapAxis, RoadmapAxisPlan, RoadmapCell } from '../../src_v2/data/schema/roadmap'
 import {
   getMergedRoadmap,
   saveRoadmapOverride,
   resetRoadmapOverride,
-  TERM_ORDER,
 } from '../data/roadmapOverrides'
+import { getStudentRoadmap } from '../data/roadmap'
 import EmptyState from '../components/EmptyState'
 
-const PRIORITIES: TermItem['priority'][] = ['P0', 'P1', 'P2']
-const IMPORTANCES: TermItem['importance'][] = ['필수', '중요', '권장']
+const PRIORITIES: CellPriority[] = ['P0', 'P1', 'P2']
+const IMPORTANCES: CellImportance[] = ['필수', '중요', '권장']
 
-/** 새 항목 기본값 */
-function blankItem(): TermItem {
-  return { title: '', priority: 'P1', importance: '중요', why: '' }
+let cellSeq = 0
+/** 새 칸 기본값 */
+function blankCell(axis: RoadmapAxis): RoadmapCell {
+  return { id: `${axis.toLowerCase()}-new-${(cellSeq += 1)}`, title: '', priority: 'P1', importance: '중요', why: '', status: 'TODO' }
 }
 
-/** 새 term 상세 기본값 (base 에 해당 term 이 없을 때 추가용) */
-function blankTerm(label: TermLabel): TermDetail {
-  const period = label === '단기' ? '1학기' : label === '중기' ? '1년' : '졸업 전'
-  return { period, headline: '', rationale: '', items: [] }
+/** 새 축 기본값 (base 에 해당 축이 없을 때 추가용) */
+function blankAxis(axis: RoadmapAxis): RoadmapAxisPlan {
+  return { axis, headline: '', rationale: '', cells: [] }
 }
 
-type Draft = Partial<Record<TermLabel, TermDetail>>
+type Draft = Partial<Record<RoadmapAxis, RoadmapAxisPlan>>
 
-/** 편집 대상 term 상세를 깊은 복사해 draft 로 만든다 */
-function cloneTerms(src: Partial<Record<TermLabel, TermDetail>>): Draft {
+/** 편집 대상 축을 깊은 복사해 draft 로 만든다 */
+function cloneAxes(src: RoadmapAxisPlan[]): Draft {
   const out: Draft = {}
-  for (const label of TERM_ORDER) {
-    const d = src[label]
-    if (d) {
-      out[label] = {
-        ...d,
-        items: d.items.map(it => ({ ...it })),
-      }
-    }
-  }
+  for (const a of src) out[a.axis] = { ...a, cells: a.cells.map(c => ({ ...c })) }
   return out
 }
 
-/** draft 를 base 원본과 비교해 변경된 term 만 override 로 추출 */
-function diffOverride(
-  draft: Draft,
-  base: Partial<Record<TermLabel, TermDetail>>,
-): Draft {
+/** draft 를 base 원본과 비교해 변경된 축만 override 로 추출 */
+function diffOverride(draft: Draft, base: Draft): Draft {
   const out: Draft = {}
-  for (const label of TERM_ORDER) {
-    const d = draft[label]
+  for (const meta of ROADMAP_AXES) {
+    const d = draft[meta.code]
     if (!d) continue
-    if (JSON.stringify(d) !== JSON.stringify(base[label])) {
-      out[label] = d
-    }
+    if (JSON.stringify(d) !== JSON.stringify(base[meta.code])) out[meta.code] = d
   }
   return out
 }
@@ -65,17 +53,19 @@ export default function RoadmapEditor() {
 
   const student = STUDENTS.find(s => s.id === studentId)
   // base 원본(override 미반영) — diff 비교 기준
-  const basePhase = student?.phases.find(p => p.num === 3) ?? null
-  const baseTerms = cloneTerms(basePhase?.termDetails ?? {})
+  const baseAxes = cloneAxes(student?.roadmapAxes ?? [])
 
   const merged = studentId ? getMergedRoadmap(studentId) : null
+  // 프로그램에서 붙은 IAP 칸 — 읽기 전용(결정 1-a). 정본은 프로그램 쪽이라 override 에 넣지 않는다.
+  const composed = studentId ? getStudentRoadmap(studentId) : null
+  const lockedCells = composed?.axes.find(a => a.axis === 'IAP')?.cells.filter(c => c.programId) ?? []
 
   // draft 초기값 = 병합 결과(base ⊕ 기존 override) 깊은 복사
-  const [draft, setDraft] = useState<Draft>(() => cloneTerms(merged?.phase.termDetails ?? {}))
+  const [draft, setDraft] = useState<Draft>(() => cloneAxes(merged?.axes ?? []))
   const [note, setNote] = useState('')
   const [saved, setSaved] = useState(false)
 
-  if (!student || !basePhase || !merged) {
+  if (!student || !student.roadmapAxes || !merged) {
     return (
       <div className="admin-page">
         <header className="admin-page-head">
@@ -92,50 +82,48 @@ export default function RoadmapEditor() {
     )
   }
 
-  const overrideDiff = diffOverride(draft, baseTerms)
+  const overrideDiff = diffOverride(draft, baseAxes)
   const dirty = Object.keys(overrideDiff).length > 0
 
   // ── draft 변경 헬퍼 ──────────────────────────────────────────────────────
-  const updateTerm = (label: TermLabel, patch: Partial<TermDetail>) =>
+  const updateAxis = (axis: RoadmapAxis, patch: Partial<RoadmapAxisPlan>) =>
     setDraft(prev => {
-      const cur = prev[label]
+      const cur = prev[axis]
       if (!cur) return prev
-      return { ...prev, [label]: { ...cur, ...patch } }
+      return { ...prev, [axis]: { ...cur, ...patch } }
     })
 
-  const addTerm = (label: TermLabel) =>
-    setDraft(prev => ({ ...prev, [label]: blankTerm(label) }))
+  const addAxis = (axis: RoadmapAxis) =>
+    setDraft(prev => ({ ...prev, [axis]: blankAxis(axis) }))
 
-  const updateItem = (label: TermLabel, idx: number, patch: Partial<TermItem>) =>
+  const updateCell = (axis: RoadmapAxis, idx: number, patch: Partial<RoadmapCell>) =>
     setDraft(prev => {
-      const cur = prev[label]
+      const cur = prev[axis]
       if (!cur) return prev
-      const items = cur.items.map((it, i) => (i === idx ? { ...it, ...patch } : it))
-      return { ...prev, [label]: { ...cur, items } }
+      const cells = cur.cells.map((c, i) => (i === idx ? { ...c, ...patch } : c))
+      return { ...prev, [axis]: { ...cur, cells } }
     })
 
-  const addItem = (label: TermLabel) =>
+  const addCell = (axis: RoadmapAxis) =>
     setDraft(prev => {
-      const cur = prev[label]
+      const cur = prev[axis]
       if (!cur) return prev
-      return { ...prev, [label]: { ...cur, items: [...cur.items, blankItem()] } }
+      return { ...prev, [axis]: { ...cur, cells: [...cur.cells, blankCell(axis)] } }
     })
 
-  const removeItem = (label: TermLabel, idx: number) =>
+  const removeCell = (axis: RoadmapAxis, idx: number) =>
     setDraft(prev => {
-      const cur = prev[label]
+      const cur = prev[axis]
       if (!cur) return prev
-      return { ...prev, [label]: { ...cur, items: cur.items.filter((_, i) => i !== idx) } }
+      return { ...prev, [axis]: { ...cur, cells: cur.cells.filter((_, i) => i !== idx) } }
     })
 
   // ── 확정 저장 ────────────────────────────────────────────────────────────
   const handleConfirm = () => {
-    const changedLabels = Object.keys(overrideDiff) as TermLabel[]
+    const changed = Object.keys(overrideDiff) as RoadmapAxis[]
     const autoNote =
       note.trim() ||
-      changedLabels
-        .map(l => `${l} ${overrideDiff[l]?.items.length ?? 0}건`)
-        .join(' · ') ||
+      changed.map(a => `${axisLabel(a)} ${overrideDiff[a]?.cells.length ?? 0}칸`).join(' · ') ||
       '로드맵 수정'
     saveRoadmapOverride(student.id, overrideDiff, counselor.id, autoNote)
     setSaved(true)
@@ -148,8 +136,8 @@ export default function RoadmapEditor() {
     window.location.reload()
   }
 
-  const invalidItems = (Object.values(draft) as TermDetail[]).some(d =>
-    d.items.some(it => it.title.trim() === ''),
+  const invalidItems = (Object.values(draft) as RoadmapAxisPlan[]).some(d =>
+    d.cells.some(c => c.title.trim() === ''),
   )
 
   return (
@@ -181,76 +169,70 @@ export default function RoadmapEditor() {
         학생 원본 로드맵(JSON)은 변경되지 않습니다. 확정하면 수정분만 override 로 저장되어 학생 화면에 병합·반영됩니다.
       </div>
 
-      {/* 편집 영역 — 단·중·장기 컬럼 */}
+      {/* 편집 영역 — 로드맵 3축 */}
       <div className="admin-editor-cols">
-        {TERM_ORDER.map(label => {
-          const detail = draft[label]
-          const origin = merged.origin[label]
+        {ROADMAP_AXES.map(meta => {
+          const axis = meta.code
+          const plan = draft[axis]
+          const origin = merged.origin[axis]
+          const locked = axis === 'IAP' ? lockedCells : []
           return (
-            <section key={label} className="admin-editor-col admin-card">
+            <section key={axis} className="admin-editor-col admin-card">
               <div className="admin-editor-col-head">
                 <h2>
-                  <span className={`admin-term-badge term-${label}`}>{label}</span>
+                  <span className={`admin-axis-badge axis-${axis}`}>{meta.label}</span>
                   {origin === 'override' && !dirty && <span className="admin-tag admin-tag-override">저장된 수정</span>}
                 </h2>
+                <p className="admin-editor-col-desc">{meta.desc}</p>
               </div>
 
-              {!detail ? (
+              {!plan ? (
                 <div className="admin-editor-empty">
-                  <p>이 구간에는 계획이 없습니다.</p>
-                  <button className="admin-btn admin-btn-ghost sm" onClick={() => addTerm(label)}>
-                    <LuPlus /> {label} 계획 추가
+                  <p>이 축에는 계획이 없습니다.</p>
+                  <button className="admin-btn admin-btn-ghost sm" onClick={() => addAxis(axis)}>
+                    <LuPlus /> {meta.label} 계획 추가
                   </button>
                 </div>
               ) : (
                 <>
                   <label className="admin-field">
-                    <span>기간</span>
-                    <input
-                      type="text"
-                      value={detail.period}
-                      onChange={e => updateTerm(label, { period: e.target.value })}
-                      placeholder="예: 1학기 · ~2026.08"
-                    />
-                  </label>
-                  <label className="admin-field">
                     <span>헤드라인</span>
                     <input
                       type="text"
-                      value={detail.headline}
-                      onChange={e => updateTerm(label, { headline: e.target.value })}
-                      placeholder="이 구간의 핵심 목표 한 줄"
+                      value={plan.headline}
+                      onChange={e => updateAxis(axis, { headline: e.target.value })}
+                      placeholder="이 축의 핵심 목표 한 줄"
                     />
                   </label>
                   <label className="admin-field">
                     <span>근거(rationale)</span>
                     <textarea
                       rows={3}
-                      value={detail.rationale}
-                      onChange={e => updateTerm(label, { rationale: e.target.value })}
-                      placeholder="왜 이 구간에 이 목표들을 배치했는지"
+                      value={plan.rationale}
+                      onChange={e => updateAxis(axis, { rationale: e.target.value })}
+                      placeholder="왜 이 축에 이 칸들을 배치했는지"
                     />
                   </label>
 
                   <div className="admin-editor-items">
-                    <span className="admin-record-label">항목 ({detail.items.length})</span>
-                    {detail.items.length === 0 && (
-                      <p className="admin-editor-items-empty">항목이 없습니다. 아래에서 추가하세요.</p>
+                    <span className="admin-record-label">칸 ({plan.cells.length}{locked.length > 0 && ` + 프로그램 ${locked.length}`})</span>
+                    {plan.cells.length === 0 && (
+                      <p className="admin-editor-items-empty">칸이 없습니다. 아래에서 추가하세요.</p>
                     )}
-                    {detail.items.map((it, idx) => (
-                      <div key={idx} className="admin-item-editor">
+                    {plan.cells.map((cell, idx) => (
+                      <div key={cell.id} className="admin-item-editor">
                         <div className="admin-item-editor-row">
                           <input
                             type="text"
-                            className={`admin-item-title-input${it.title.trim() === '' ? ' invalid' : ''}`}
-                            value={it.title}
-                            onChange={e => updateItem(label, idx, { title: e.target.value })}
-                            placeholder="항목 제목"
+                            className={`admin-item-title-input${cell.title.trim() === '' ? ' invalid' : ''}`}
+                            value={cell.title}
+                            onChange={e => updateCell(axis, idx, { title: e.target.value })}
+                            placeholder="칸 제목"
                           />
                           <button
                             className="admin-icon-btn danger"
                             title="삭제"
-                            onClick={() => removeItem(label, idx)}
+                            onClick={() => removeCell(axis, idx)}
                           >
                             <LuTrash2 />
                           </button>
@@ -259,38 +241,68 @@ export default function RoadmapEditor() {
                           <label>
                             <span>우선순위</span>
                             <select
-                              value={it.priority}
-                              onChange={e => updateItem(label, idx, { priority: e.target.value as TermItem['priority'] })}
+                              value={cell.priority}
+                              onChange={e => updateCell(axis, idx, { priority: e.target.value as CellPriority })}
                             >
-                              {PRIORITIES.map(p => (
-                                <option key={p} value={p}>{p}</option>
-                              ))}
+                              {PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}
                             </select>
                           </label>
                           <label>
                             <span>중요도</span>
                             <select
-                              value={it.importance}
-                              onChange={e => updateItem(label, idx, { importance: e.target.value as TermItem['importance'] })}
+                              value={cell.importance}
+                              onChange={e => updateCell(axis, idx, { importance: e.target.value as CellImportance })}
                             >
-                              {IMPORTANCES.map(im => (
-                                <option key={im} value={im}>{im}</option>
-                              ))}
+                              {IMPORTANCES.map(im => <option key={im} value={im}>{im}</option>)}
+                            </select>
+                          </label>
+                          <label>
+                            <span>수행</span>
+                            <select
+                              value={cell.status}
+                              onChange={e => updateCell(axis, idx, { status: e.target.value as RoadmapCell['status'] })}
+                            >
+                              <option value="TODO">미수행</option>
+                              <option value="DONE">수행</option>
                             </select>
                           </label>
                         </div>
                         <textarea
                           className="admin-item-why-input"
                           rows={2}
-                          value={it.why}
-                          onChange={e => updateItem(label, idx, { why: e.target.value })}
-                          placeholder="이 항목이 필요한 이유 (why)"
+                          value={cell.why}
+                          onChange={e => updateCell(axis, idx, { why: e.target.value })}
+                          placeholder="이 칸이 필요한 이유 (why)"
                         />
                       </div>
                     ))}
-                    <button className="admin-btn admin-btn-ghost sm" onClick={() => addItem(label)}>
-                      <LuPlus /> 항목 추가
+                    <button className="admin-btn admin-btn-ghost sm" onClick={() => addCell(axis)}>
+                      <LuPlus /> 칸 추가
                     </button>
+
+                    {/* 프로그램 개설로 붙은 칸 — 읽기 전용. 정본은 비교과 프로그램 쪽이다. */}
+                    {locked.length > 0 && (
+                      <div className="admin-editor-locked">
+                        <span className="admin-record-label"><LuLock /> 프로그램 편입 칸 (읽기 전용)</span>
+                        {locked.map(cell => (
+                          <div key={cell.id} className="admin-locked-cell">
+                            <div className="admin-locked-cell-top">
+                              <b>{cell.title}</b>
+                              <span className={`admin-tag admin-tag-soft${cell.entry === 'REQUIRED' ? ' is-req' : ''}`}>
+                                {cell.entry === 'REQUIRED' ? '필수' : '추천'}
+                              </span>
+                              <span className={`admin-chip ${cell.status === 'DONE' ? 'admin-chip-done' : 'admin-chip-wait'}`}>
+                                {cell.status === 'DONE' ? '수료' : '미수료'}
+                              </span>
+                            </div>
+                            <small>
+                              비교과 프로그램에서 관리합니다.
+                              {cell.programId && <Link to={`/programs/${cell.programId}/edit`} className="admin-inline-link"> 프로그램 열기</Link>}
+                            </small>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </>
               )}
@@ -308,22 +320,23 @@ export default function RoadmapEditor() {
           <p className="admin-detail-note">변경 사항이 없습니다. 항목을 편집하면 여기에 미리보기가 표시됩니다.</p>
         ) : (
           <div className="admin-preview">
-            {(Object.keys(overrideDiff) as TermLabel[]).map(label => {
-              const d = overrideDiff[label]!
+            {(Object.keys(overrideDiff) as RoadmapAxis[]).map(axis => {
+              const d = overrideDiff[axis]!
               return (
-                <div key={label} className="admin-preview-term">
+                <div key={axis} className="admin-preview-term">
                   <div className="admin-preview-term-head">
-                    <span className={`admin-term-badge term-${label}`}>{label}</span>
+                    <span className={`admin-axis-badge axis-${axis}`}>{ROADMAP_AXIS_MAP[axis].label}</span>
                     <span className="admin-tag admin-tag-override">수정</span>
-                    <span className="admin-term-period">{d.period}</span>
+                    <span className="admin-term-period">{d.cells.length}칸</span>
                   </div>
                   {d.headline && <p className="admin-term-headline">{d.headline}</p>}
                   <ul className="admin-term-items">
-                    {d.items.map((it, i) => (
-                      <li key={i}>
-                        <span className={`admin-pri admin-pri-${it.priority}`}>{it.priority}</span>
-                        <span className={`admin-imp admin-imp-${it.importance}`}>{it.importance}</span>
-                        <span className="admin-term-item-title">{it.title || <em>(제목 없음)</em>}</span>
+                    {d.cells.map(cell => (
+                      <li key={cell.id}>
+                        <span className={`admin-pri admin-pri-${cell.priority}`}>{cell.priority}</span>
+                        <span className={`admin-imp admin-imp-${cell.importance}`}>{cell.importance}</span>
+                        <span className="admin-term-item-title">{cell.title || <em>(제목 없음)</em>}</span>
+                        {cell.status === 'DONE' && <span className="admin-chip admin-chip-done">수행</span>}
                       </li>
                     ))}
                   </ul>
@@ -339,7 +352,7 @@ export default function RoadmapEditor() {
             type="text"
             value={note}
             onChange={e => setNote(e.target.value)}
-            placeholder="예: 학생 요청 반영 — 단기 어학 목표 상향"
+            placeholder="예: 학생 요청 반영 — 내 성장 활동 어학 목표 상향"
           />
         </label>
 

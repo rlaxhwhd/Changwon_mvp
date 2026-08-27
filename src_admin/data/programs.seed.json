@@ -4,6 +4,11 @@
     "title": "데이터 직무 부트캠프",
     "desc": "Python 데이터 분석·자동화 실습 중심 교육으로 IT 직무 실무 역량을 기릅니다.",
     "category": "취업",
+    "careTypes": [
+      "T2",
+      "T3"
+    ],
+    "roadmapEntry": "REQUIRED",
     "startDate": "2026-07-14",
     "endDate": "2026-07-18",
     "runStartDate": "2026-07-21",
@@ -38,6 +43,11 @@
     "title": "자기탐색 진로설계 워크숍",
     "desc": "강점 진단과 자기 탐색을 통해 진로 방향을 설계하는 진로 역량 강화 프로그램입니다.",
     "category": "진로",
+    "careTypes": [
+      "T2",
+      "T3"
+    ],
+    "roadmapEntry": "RECOMMEND",
     "startDate": "2026-07-21",
     "endDate": "2026-07-22",
     "runStartDate": "2026-07-28",

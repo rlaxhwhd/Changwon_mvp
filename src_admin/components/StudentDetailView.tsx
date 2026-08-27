@@ -17,9 +17,10 @@ import { STUDENT_ROSTER, enrollStatusClass, studentTypeClass } from '../data/stu
 import {
   getCompetencyRadar, getCounselOverview, getDetailStats, getDiagnosisCards, getGoalPlan,
   getRoadmapProgress, getStudentPrograms,
-  type CompetencyAxis, type CompetencyRadar, type DiagnosisCard, type DetailStat, type GoalColumn,
+  type CompetencyAxis, type CompetencyRadar, type DiagnosisCard, type DetailStat,
 } from '../data/studentDetail'
 import DiagnosisResultReport from '../../src_v2/components/DiagnosisResultReport'
+import RoadmapAxisBoard from '../../src_v2/components/RoadmapAxisBoard'
 import EmptyState from './EmptyState'
 import './StudentDetailView.css'
 
@@ -357,7 +358,7 @@ function CounselTab({ studentId }: { studentId: string }) {
 // ── 탭 ③: 로드맵 진행 ──────────────────────────────────────────────────────
 
 function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boolean }) {
-  const pct = getRoadmapProgress(student)
+  const pct = getRoadmapProgress(student.id)
   const plan = useMemo(() => getGoalPlan(student), [student])
   const current = student.phases.find(p => p.status === 'active') ?? student.phases[student.phases.length - 1]
 
@@ -412,51 +413,22 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
         <section data-slot="card" className="goal-card">
           <CardHead
             title="목표 달성 계획"
-            desc={`${plan.role} 목표를 향한 단·중·장기 실행 과제입니다.`}
+            desc={`${plan.role} 목표를 향한 로드맵 3축입니다. 축·칸 정의는 PROCESS.md §6.`}
             action={plan.confirmed ? <span className="badge mint">확정 v{plan.version}</span> : <span className="badge">초안</span>}
           />
           <div data-slot="card-content">
-            <div className="goal-overview">
-              <article className="goal-core">
-                <small>목표 직무</small>
-                <h3>{plan.role}</h3>
-                <p>{plan.company} 기준 · 단기·중기·장기 {plan.columns.length}개 구간을 하나의 로드맵으로 관리합니다.</p>
-                <div className="goal-number">{plan.progress}<span>% 전체 진척도</span></div>
-              </article>
-              <div className="goal-plan">
-                <div className="goal-plan-columns">
-                  {plan.columns.map(col => <GoalPlanColumn key={col.term} col={col} />)}
-                </div>
-              </div>
-            </div>
+            <article className="goal-core" style={{ marginBottom: 16 }}>
+              <small>목표 직무</small>
+              <h3>{plan.role}</h3>
+              <p>{plan.company} 기준 · IAP 실행 · 핵심역량 수행 · 내 성장 활동 3축을 하나의 로드맵으로 관리합니다.</p>
+              <div className="goal-number">{plan.progress}<span>% 이행률 · {plan.done}/{plan.total}칸</span></div>
+            </article>
+            {/* 3축 렌더는 학생 화면과 같은 공용 컴포넌트 — 수정은 RoadmapAxisBoard 한 곳에서만 */}
+            <RoadmapAxisBoard axes={plan.axes} origin={plan.origin} />
           </div>
         </section>
       )}
     </div>
-  )
-}
-
-function GoalPlanColumn({ col }: { col: GoalColumn }) {
-  return (
-    <section className="goal-plan-column" style={tintVars(col.tint, ['plan-color', 'plan-soft'])}>
-      <div className="goal-plan-head">
-        <span className="goal-plan-head-icon"><LuCalendarCheck className="icon" /></span>
-        <div className="goal-plan-head-copy">
-          <b>{col.term} {col.overridden && '· 수정본'}</b>
-          <span>{col.period}</span>
-        </div>
-      </div>
-      <p data-slot="card-description" style={{ margin: '0 0 10px' }}>{col.headline}</p>
-      <div className="goal-task-list">
-        {col.tasks.map((t, i) => (
-          <div key={i} className="goal-task" title={t.why}>
-            <span className="goal-task-icon">{t.priority}</span>
-            <span className="goal-task-copy"><b>{t.title}</b></span>
-            <span className={`goal-task-status${t.importance === '권장' ? ' planned' : ''}`}>{t.importance}</span>
-          </div>
-        ))}
-      </div>
-    </section>
   )
 }
 
@@ -819,7 +791,7 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
   const type = getStudentTypeMeta(student)
   const activeTab = visibleTabs.some(t => t.key === tab) ? tab : visibleTabs[0].key
   const radar = getCompetencyRadar(student, type.tierLabel)
-  const stats = getDetailStats(student, student.studentType, type.tierLabel)
+  const stats = getDetailStats(student, student.studentType)
 
   return (
     <div className="sdv">

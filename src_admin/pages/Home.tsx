@@ -8,7 +8,9 @@ import {
   getTodayTimeline, getIntake, getMyPrograms, getPerformance,
   getBriefing, getDefaultOpenStudentId,
 } from '../data/counselorDashboard'
+import { mockLatency } from '../data/query'
 import EmptyState from '../components/EmptyState'
+import StudentDetailModal from '../components/StudentDetailModal'
 import './TestAdminHome.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -32,6 +34,9 @@ const KPI_META: Record<string, { icon: string; to: string }> = {
   roadmap: { icon: 'route', to: '/roadmap/requests' },
   record: { icon: 'pen', to: '/counsel/records' },
 }
+
+/** AI 추천 질문 생성에 걸리는 시간(모의). 실제 생성 API가 붙으면 이 상수는 사라진다. */
+const AI_QUESTION_MS = 900
 
 /** 성과 지표 4행의 아이콘 — key 는 getPerformance() 가 정한다 */
 const PERF_ICON: Record<string, string> = {
@@ -78,6 +83,20 @@ export default function Home() {
   // 시안 동작: 항목을 누르면 그 아래로 브리핑이 펼쳐진다(하나만 열림)
   const [openId, setOpenId] = useState<string | null>(() => getDefaultOpenStudentId(me.id, depts))
   const briefing = openId ? getBriefing(openId, me.id, depts) : null
+
+  // 학생정보 모달 — 상담사 학생관리 상세와 같은 화면(StudentDetailModal 공용)
+  const [infoId, setInfoId] = useState<string | null>(null)
+
+  // AI 추천 질문은 '생성'이다 — 브리핑을 펼치자마자 보여주지 않고 버튼을 눌러야 만들어진다.
+  // 한 번 생성한 학생은 다시 펼쳐도 재생성하지 않는다.
+  const [askedIds, setAskedIds] = useState<string[]>([])
+  const [askingId, setAskingId] = useState<string | null>(null)
+  const generateQuestions = async (studentId: string) => {
+    setAskingId(studentId)
+    await mockLatency(AI_QUESTION_MS)
+    setAskingId(null)
+    setAskedIds(prev => (prev.includes(studentId) ? prev : [...prev, studentId]))
+  }
 
   // 사전 문진표 모달
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -250,6 +269,14 @@ export default function Home() {
                             </div>
                           </div>
                           <div className="tl-act">
+                            {/* 행 클릭(브리핑 토글)과 겹치지 않게 이벤트를 멈춘다 */}
+                            <button
+                              type="button"
+                              className="btn sm student-info-btn"
+                              onClick={e => { e.stopPropagation(); setInfoId(item.studentId) }}
+                            >
+                              <Ico id="user" /><span>학생정보</span>
+                            </button>
                             <button
                               type="button"
                               className={`btn sm briefing-toggle${on ? ' is-open' : ''}`}
@@ -289,7 +316,24 @@ export default function Home() {
                                 <div key={row.label} className="brow">
                                   <div className="lab">{row.label}</div>
                                   <div className="val">
-                                    {row.items ? <ul>{row.items.map(q => <li key={q}>{q}</li>)}</ul> : row.value}
+                                    {/* 목록형 행(AI 추천 질문)은 버튼을 눌러 생성한 뒤에 나온다 */}
+                                    {!row.items ? row.value
+                                      : askedIds.includes(briefing.studentId)
+                                        ? <ul>{row.items.map(q => <li key={q}>{q}</li>)}</ul>
+                                        : (
+                                          <button
+                                            type="button"
+                                            className="btn sm ai-question-btn"
+                                            disabled={askingId === briefing.studentId}
+                                            onClick={() => generateQuestions(briefing.studentId)}
+                                          >
+                                            {askingId === briefing.studentId ? (
+                                              <><span className="ai-question-spin" aria-hidden="true" />질문 생성 중…</>
+                                            ) : (
+                                              <><Ico id="help" />AI추천질문</>
+                                            )}
+                                          </button>
+                                        )}
                                   </div>
                                 </div>
                               ))}
@@ -412,6 +456,11 @@ export default function Home() {
 
         </div>
       </div>
+
+      {/* 학생정보 — 학생관리 상세와 같은 화면(공용 StudentDetailModal) */}
+      {infoId && (
+        <StudentDetailModal studentId={infoId} role={me.role} onClose={() => setInfoId(null)} />
+      )}
 
       {/* 사전 문진표 — 브리핑의 AI 추천 질문을 문항으로 보여준다 */}
       {sheetOpen && briefing && (

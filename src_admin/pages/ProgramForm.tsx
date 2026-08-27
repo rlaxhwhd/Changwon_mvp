@@ -11,6 +11,10 @@ import RichEditor from '../components/RichEditor'
 import { COUNSELORS } from '../data/counselors'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
 import type { ProgramCategory } from '../data/schema/program'
+import { STUDENT_TYPES, typeLabel } from '../../src_v2/data/careerProcess'
+import type { StudentType } from '../../src_v2/data/careerProcess'
+import { ROADMAP_ENTRIES, ROADMAP_ENTRY_DESC, ROADMAP_ENTRY_LABEL } from '../../src_v2/data/schema/roadmap'
+import type { RoadmapEntry } from '../../src_v2/data/schema/roadmap'
 import './ProgramForm.css'
 
 const MAJOR_CATS = ['진로', '취업', 'STAR트랙', 'FJT트랙']
@@ -59,6 +63,10 @@ export default function ProgramForm() {
 
   const [majorCat, setMajorCat] = useState<string>(existing && MAJOR_CATS.includes(existing.category) ? existing.category : MAJOR_CATS[0])
   const [minorCat, setMinorCat] = useState(MINOR_CATS[0])
+  // CARE 7+ 분류 — 6유형 중복 선택. 코드(T1~T6)만 담고 라벨은 typeLabel()로 그린다.
+  const [careTypes, setCareTypes] = useState<StudentType[]>(existing?.careTypes ?? [])
+  // 로드맵 편입 — 선택한 유형 학생의 IAP 실행 축에 칸을 만든다(PROCESS.md §6-4)
+  const [roadmapEntry, setRoadmapEntry] = useState<RoadmapEntry>(existing?.roadmapEntry ?? 'NONE')
   const [title, setTitle] = useState(existing?.title ?? '')
   const [fiscalYear, setFiscalYear] = useState(existing?.fiscalYear ?? FISCAL_YEARS[0])
   const [purpose, setPurpose] = useState(existing?.desc ?? '')
@@ -118,6 +126,9 @@ export default function ProgramForm() {
       title: title.trim(),
       desc: (detail || purpose).trim(),
       category: CATEGORY_MAP[majorCat] ?? '기타',
+      careTypes,
+      // 유형을 아무것도 안 골랐으면 편입할 대상이 없다 — 값이 남지 않게 정리한다.
+      roadmapEntry: careTypes.length === 0 ? ('NONE' as RoadmapEntry) : roadmapEntry,
       startDate: applyStartDate,
       endDate: applyEndDate,
       runStartDate,
@@ -138,6 +149,13 @@ export default function ProgramForm() {
     setSaved(true)
     window.setTimeout(() => navigate(editing ? '/programs/manage' : '/programs'), 400)
   }
+
+  /** 유형 체크 토글 — 저장 순서는 항상 T1~T6를 유지한다. */
+  const toggleCareType = (code: StudentType) =>
+    setCareTypes(prev => {
+      const next = prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
+      return STUDENT_TYPES.filter(t => next.includes(t.code)).map(t => t.code)
+    })
 
   const addExtra = () => setExtras(prev => [...prev, { id: nextId(), type: EXTRA_TYPES[0], question: '' }])
   const removeExtra = (id: string) => setExtras(prev => prev.filter(x => x.id !== id))
@@ -203,6 +221,54 @@ export default function ProgramForm() {
                   </div>
                 </div>
                 <span className="pf-help">프로그램 성격에 맞는 분류를 선택해주세요.</span>
+              </div>
+
+              {/* CARE 7+ 분류 — 진단 6유형(T1~T6) 중복 선택 */}
+              <div className="pf-field">
+                <span className="pf-label">CARE 7+ 분류</span>
+                <div className="pf-inline">
+                  {STUDENT_TYPES.map(t => (
+                    <label key={t.code} className="pf-check">
+                      <input
+                        type="checkbox"
+                        checked={careTypes.includes(t.code)}
+                        onChange={() => toggleCareType(t.code)}
+                      />
+                      {typeLabel(t.code)}
+                    </label>
+                  ))}
+                </div>
+                <span className="pf-help">이 프로그램을 권장할 진단 유형을 선택해주세요. 중복 선택할 수 있습니다.</span>
+              </div>
+
+              {/* 로드맵 편입 — 선택한 유형 학생의 IAP 실행 축에 칸을 만든다 */}
+              <div className="pf-field">
+                <span className="pf-label">로드맵 편입</span>
+                <div className="pf-inline">
+                  {ROADMAP_ENTRIES.map(e => (
+                    <label key={e} className="pf-radio">
+                      <input
+                        type="radio"
+                        name="roadmapEntry"
+                        checked={roadmapEntry === e}
+                        disabled={careTypes.length === 0}
+                        onChange={() => setRoadmapEntry(e)}
+                      />
+                      {ROADMAP_ENTRY_LABEL[e]}
+                    </label>
+                  ))}
+                </div>
+                <span className="pf-help">
+                  {careTypes.length === 0
+                    ? 'CARE 7+ 분류에서 대상 유형을 먼저 선택해주세요.'
+                    : ROADMAP_ENTRY_DESC[roadmapEntry]}
+                </span>
+                {roadmapEntry !== 'NONE' && careTypes.length > 0 && (
+                  <span className="pf-help">
+                    {careTypes.map(t => typeLabel(t)).join(' · ')} 학생의 <b>IAP 실행</b> 축에 이 프로그램 칸이 추가됩니다.
+                    칸은 학생이 <b>수료</b>하면 자동으로 완료 처리됩니다.
+                  </span>
+                )}
               </div>
 
               {/* 프로그램명 */}

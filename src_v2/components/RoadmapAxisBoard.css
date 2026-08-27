@@ -1,0 +1,154 @@
+/* 로드맵 3축 보드 — 학생·교직원 공용. 두 SPA 토큰만 참조하고 새 색을 만들지 않는다. */
+
+.rab {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.rab-empty {
+  margin: 0;
+  padding: 28px 16px;
+  border: 1px dashed var(--color-border, #E5E8EC);
+  border-radius: 12px;
+  color: var(--text-sub, #6B7683);
+  font-size: 13.5px;
+  text-align: center;
+}
+
+.rab-axis {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--color-border, #E5E8EC);
+  border-top: 3px solid var(--axis-color);
+  border-radius: 12px;
+  background: var(--bg-card, #FFF);
+}
+
+.rab-axis-head { display: flex; flex-direction: column; gap: 6px; }
+
+.rab-axis-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rab-axis-title h3 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--axis-color);
+}
+
+.rab-badge-edit {
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--axis-soft);
+  color: var(--axis-color);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.rab-axis-desc {
+  margin: 0;
+  color: var(--text-sub, #6B7683);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.rab-axis-meter { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.rab-axis-count {
+  flex: none;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-sub, #6B7683);
+}
+.rab-axis-bar {
+  flex: 1;
+  height: 6px;
+  min-width: 0;
+  border-radius: 999px;
+  background: var(--axis-soft);
+  overflow: hidden;
+}
+.rab-axis-bar i { display: block; height: 100%; border-radius: 999px; background: var(--axis-color); }
+.rab-axis-pct {
+  flex: none;
+  font-size: 12px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--axis-color);
+}
+
+.rab-axis-headline {
+  margin: 12px 0 0;
+  padding: 9px 11px;
+  border-radius: 9px;
+  background: var(--axis-soft);
+  color: var(--axis-color);
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.rab-cells { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+
+.rab-cell {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: 4px 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--color-border, #E5E8EC);
+  border-radius: 10px;
+  background: var(--bg-card, #FFF);
+}
+.rab-cell.is-clickable { cursor: pointer; }
+.rab-cell.is-clickable:hover { border-color: var(--axis-color); }
+
+.rab-cell-check {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--color-border, #E5E8EC);
+  border-radius: 7px;
+  color: var(--text-sub, #6B7683);
+  font-size: 10.5px;
+  font-weight: 900;
+}
+.rab-cell.is-done .rab-cell-check {
+  border-color: var(--axis-color);
+  background: var(--axis-color);
+  color: #FFF;
+  font-size: 13px;
+}
+
+.rab-cell-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rab-cell-title { font-size: 13px; font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
+.rab-cell.is-done .rab-cell-title { color: var(--text-sub, #6B7683); }
+.rab-cell-why {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text-sub, #6B7683);
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.rab-cell-tags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; }
+.rab-tag {
+  padding: 2px 7px;
+  border: 1px solid var(--color-border, #E5E8EC);
+  border-radius: 999px;
+  color: var(--text-sub, #6B7683);
+  font-size: 10.5px;
+  font-weight: 700;
+}
+.rab-tag.req { border-color: var(--axis-color); background: var(--axis-soft); color: var(--axis-color); }
+.rab-tag.rec { border-color: var(--axis-soft); background: var(--axis-soft); color: var(--axis-color); }
+
+@media (max-width: 1180px) {
+  .rab { grid-template-columns: minmax(0, 1fr); }
+}

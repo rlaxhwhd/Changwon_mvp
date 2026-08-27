@@ -34,6 +34,12 @@ export const JOB_CATEGORIES = [
 export const CAREER_TYPES = ['신입', '경력'] as const
 /** 성별 */
 export const GENDERS = ['남자', '여자'] as const
+/**
+ * 카드에 컬러로 강조할 특이사항 태그.
+ * 태그는 상담사가 자유 입력하므로, 이 목록에 있는 값만 강조 배지로 승격한다.
+ * (오늘마감은 마감일에서 파생 — 태그로 받지 않는다)
+ */
+export const JOB_HIGHLIGHT_TAGS = ['서류면제'] as const
 /** 근무 지역 */
 export const REGIONS = [
   '전체', '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',

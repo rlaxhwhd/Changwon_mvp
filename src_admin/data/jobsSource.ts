@@ -9,6 +9,7 @@
 // 학생(/jobs)과 교직원(/admin/jobs)은 같은 소스를 구독하고, 보는 목록만 scope 로 갈린다.
 // ─────────────────────────────────────────────────────────────────────────
 import type { JobPosting, JobStatus, JobSource } from './schema/job'
+import { JOB_HIGHLIGHT_TAGS } from './schema/job'
 import seed from './jobs.seed.json'
 
 const STORAGE_KEY = 'dc_jobs'
@@ -62,7 +63,9 @@ export function getJobById(id: string): JobPosting | undefined {
 export function jobDdayLabel(job: JobPosting): string {
   if (job.status === '마감') return '마감'
   if (!job.deadline || job.deadline === '채용시') return job.deadlineOnHire ? '채용시 마감' : '상시'
-  const end = new Date(job.deadline)
+  // 마감일은 날짜만 있는 값이다. 'YYYY-MM-DD'를 그대로 Date 에 넣으면 UTC 자정으로
+  // 읽혀 KST 에선 오늘 마감이 D-1 로 나온다 — 로컬 자정으로 고정해서 읽는다.
+  const end = new Date(`${job.deadline.slice(0, 10)}T00:00:00`)
   if (Number.isNaN(end.getTime())) return job.deadline
   const now = new Date()
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
@@ -70,6 +73,43 @@ export function jobDdayLabel(job: JobPosting): string {
   if (diff < 0) return '마감'
   if (diff === 0) return 'D-day'
   return `D-${diff}`
+}
+
+/**
+ * 카드 특이사항 배지 — 오늘 마감(마감일 파생) + 강조 태그(JOB_HIGHLIGHT_TAGS).
+ * 화면이 태그 문자열을 직접 비교하지 않도록 여기서 만든다.
+ */
+export function jobHighlights(job: JobPosting): string[] {
+  const flags = jobDdayLabel(job) === 'D-day' ? ['오늘마감'] : []
+  return [...flags, ...job.tags.filter(t => (JOB_HIGHLIGHT_TAGS as readonly string[]).includes(t))]
+}
+
+/** 목록 정렬 기준 — 화면 select 의 단일 소스 */
+export type JobSort = 'latest' | 'deadline'
+export const JOB_SORTS: JobSort[] = ['latest', 'deadline']
+export const JOB_SORT_LABEL: Record<JobSort, string> = {
+  latest: '최신순',
+  deadline: '마감순',
+}
+
+/** 정렬 키 — 마감일 없는 공고(상시·채용시)는 맨 뒤로 보낸다. */
+function deadlineKey(job: JobPosting): string {
+  const d = job.deadline
+  return d && !Number.isNaN(new Date(d).getTime()) ? d : '9999-12-31'
+}
+
+/**
+ * 목록 정렬. 기준과 무관하게 **마감된 공고는 항상 아래로** 내린다
+ * (최신은 위로 / 마감은 아래로).
+ */
+export function sortJobs(list: JobPosting[], sort: JobSort): JobPosting[] {
+  return [...list].sort((a, b) => {
+    const closed = Number(a.status === '마감') - Number(b.status === '마감')
+    if (closed !== 0) return closed
+    return sort === 'deadline'
+      ? deadlineKey(a).localeCompare(deadlineKey(b))
+      : b.postedAt.localeCompare(a.postedAt)
+  })
 }
 
 /** 상태별 카운트 집계 (필터 배지용). scope 생략 시 전체. */
@@ -115,3 +155,4 @@ export function removeJob(id: string): void {
 }
 
 export type { JobPosting, JobStatus, JobSource }
+export type { RecruitType } from './schema/job'

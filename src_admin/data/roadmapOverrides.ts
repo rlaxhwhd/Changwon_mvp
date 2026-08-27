@@ -1,26 +1,23 @@
 // ─────────────────────────────────────────────────────────────────────────
 // 로드맵 override 로더 (localStorage 공유 스토어) — students.ts 패턴 미러
 //
-// Counsel_README §7: 학생 base 로드맵(students phases 3단계 termDetails)은 불변.
+// Counsel_README §7: 학생 base 로드맵(students roadmapAxes 3축)은 불변.
 // 상담사 수정분을 dc_roadmap_overrides[studentId] 에 저장하고, base ⊕ override
 // 를 병합해 편집기/미리보기/학생 화면이 동일한 결과를 본다.
 //
 // ★ 원본 students JSON 은 절대 수정하지 않는다. override 레이어만 갱신.
 // ─────────────────────────────────────────────────────────────────────────
 import { STUDENTS } from '../../src_v2/data/students'
-import type { RoadmapPhase, TermDetail, TermLabel } from '../../src_v2/data/students'
+import { ROADMAP_AXES } from '../../src_v2/data/schema/roadmap'
+import type { RoadmapAxis, RoadmapAxisPlan } from '../../src_v2/data/schema/roadmap'
 import type {
   RoadmapOverride,
   MergedRoadmap,
-  TermOrigin,
+  AxisOrigin,
   RoadmapHistoryEntry,
 } from './schema/roadmapEdit'
 
 const STORAGE_KEY = 'dc_roadmap_overrides'
-
-/** 3단계(경력개발 로드맵) — 편집 대상 phase.num */
-export const ROADMAP_PHASE_NUM = 3
-export const TERM_ORDER: TermLabel[] = ['단기', '중기', '장기']
 
 // ── override 맵 읽기/쓰기 ───────────────────────────────────────────────────
 
@@ -53,44 +50,44 @@ export function getRoadmapOverride(studentId: string): RoadmapOverride | null {
 
 // ── base 로드맵 조회 ────────────────────────────────────────────────────────
 
-/** 학생 base 로드맵의 3단계 phase (원본, override 미반영). 없으면 null. */
-export function getBaseRoadmapPhase(studentId: string): RoadmapPhase | null {
+/** 학생 base 로드맵 3축 (원본, override 미반영). 없으면 null. */
+export function getBaseRoadmapAxes(studentId: string): RoadmapAxisPlan[] | null {
   const student = STUDENTS.find(s => s.id === studentId)
-  if (!student) return null
-  return student.phases.find(p => p.num === ROADMAP_PHASE_NUM) ?? null
+  return student?.roadmapAxes ?? null
 }
 
 // ── 병합 (base ⊕ override) ─────────────────────────────────────────────────
 
 /**
- * base phase 의 termDetails 에 override.termDetails 를 term 단위로 얹어 병합.
- * override 에 존재하는 term 은 통째로 교체, 없는 term 은 base 유지.
+ * base 3축에 override.axes 를 축 단위로 얹어 병합.
+ * override 에 존재하는 축은 통째로 교체, 없는 축은 base 유지.
  * 학생 화면·편집기·미리보기가 모두 이 함수를 통해 동일 결과를 본다.
  */
 export function getMergedRoadmap(studentId: string): MergedRoadmap | null {
-  const basePhase = getBaseRoadmapPhase(studentId)
-  if (!basePhase) return null
+  const base = getBaseRoadmapAxes(studentId)
+  if (!base) return null
 
   const override = getRoadmapOverride(studentId)
-  const baseTerms = basePhase.termDetails ?? {}
-  const overrideTerms = override?.termDetails ?? {}
+  const overrideAxes = override?.axes ?? {}
 
-  const mergedTerms: Partial<Record<TermLabel, TermDetail>> = {}
-  const origin = {} as Record<TermLabel, TermOrigin>
+  const axes: RoadmapAxisPlan[] = []
+  const origin = {} as Record<RoadmapAxis, AxisOrigin>
 
-  for (const label of TERM_ORDER) {
-    if (overrideTerms[label]) {
-      mergedTerms[label] = overrideTerms[label]
-      origin[label] = 'override'
-    } else if (baseTerms[label]) {
-      mergedTerms[label] = baseTerms[label]
-      origin[label] = 'base'
+  // 표시 순서는 항상 ROADMAP_AXES — JSON 순서에 의존하지 않는다.
+  for (const meta of ROADMAP_AXES) {
+    const fromOverride = overrideAxes[meta.code]
+    const fromBase = base.find(a => a.axis === meta.code)
+    if (fromOverride) {
+      axes.push(fromOverride)
+      origin[meta.code] = 'override'
+    } else if (fromBase) {
+      axes.push(fromBase)
+      origin[meta.code] = 'base'
     } else {
-      origin[label] = 'base'
+      origin[meta.code] = 'base'
     }
   }
 
-  const phase: RoadmapPhase = { ...basePhase, termDetails: mergedTerms }
   const meta = override
     ? {
         version: override.version,
@@ -101,18 +98,18 @@ export function getMergedRoadmap(studentId: string): MergedRoadmap | null {
       }
     : null
 
-  return { phase, origin, meta }
+  return { axes, origin, meta }
 }
 
 // ── 저장 (확정) ────────────────────────────────────────────────────────────
 
 /**
- * 편집된 termDetails 를 override 로 저장·확정한다. 원본 students JSON 불변.
+ * 편집된 3축을 override 로 저장·확정한다. 원본 students JSON 불변.
  * 버전을 1 올리고 이력 1건을 쌓는다. 확정(confirmed=true) 시 학생 화면에 반영.
  */
 export function saveRoadmapOverride(
   studentId: string,
-  termDetails: Partial<Record<TermLabel, TermDetail>>,
+  axes: Partial<Record<RoadmapAxis, RoadmapAxisPlan>>,
   updatedBy: string,
   note: string,
 ): RoadmapOverride {
@@ -126,7 +123,7 @@ export function saveRoadmapOverride(
 
   const next: RoadmapOverride = {
     studentId,
-    termDetails,
+    axes,
     version: nextVersion,
     updatedAt: at,
     updatedBy,

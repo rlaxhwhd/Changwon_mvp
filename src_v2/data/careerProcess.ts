@@ -141,7 +141,7 @@ export const COUNSEL_TOPICS: CounselTopic[] = [
   { code: 'A05', type: 'T2', label: '진로의사결정', goal: '복수 대안 중 목표 진로 확정' },
   { code: 'A06', type: 'T2', label: '목표 직무 구체화', goal: '목표 직무를 채용공고 수준으로 구체화' },
   { code: 'A07', type: 'T2', label: '직무기초역량 진단·설계', goal: '목표 직무 대비 역량 갭 산출' },
-  { code: 'A08', type: 'T2', label: '경력개발 로드맵 설계', goal: '단기·중기·장기 실행계획 수립' },
+  { code: 'A08', type: 'T2', label: '경력개발 로드맵 설계', goal: '로드맵 3축 실행계획 수립' },
   { code: 'A09', type: 'T3', label: '실무 프로젝트 설계·수행', goal: '직무 역량을 산출물로 증명' },
   { code: 'A10', type: 'T3', label: '직무 실습·현장경험 설계', goal: '현장실습·일경험 참여 설계' },
   { code: 'A11', type: 'T3', label: '전공심화·자격취득 설계', goal: '목표 직무 요구 자격·교육 이수 계획' },

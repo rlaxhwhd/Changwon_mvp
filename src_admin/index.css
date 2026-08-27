@@ -811,6 +811,8 @@ input, textarea, select { font-family: var(--font); }
 .admin-chip-ok     { background: var(--color-primary-bg); color: var(--color-primary); }
 .admin-chip-done   { background: #E2F7EF; color: var(--color-success); }
 .admin-chip-cancel { background: #F1F4F9; color: var(--color-text-secondary); }
+/* 누적 벌점 — 블랙리스트와 같은 경고 색 */
+.admin-chip-penalty { background: var(--red-bg); color: var(--red); }
 
 /* ─── Tabs ───────────────────────────────────────────────────────────── */
 /* 탭 = 세그먼티드 컨트롤 (DESIGN.md §20).
@@ -1050,6 +1052,38 @@ input, textarea, select { font-family: var(--font); }
   font-size: 14px; font-weight: 700; color: var(--color-text);
 }
 .admin-record-topic svg { color: var(--color-primary); margin-right: 6px; }
+
+/* ─── 상담일지 대장 ──────────────────────────────────────────────────── */
+.admin-journal-roster { overflow-x: auto; }
+.admin-journal-roster .admin-roster-head,
+.admin-journal-roster .admin-roster-row {
+  min-width: 1206px;
+  gap: 10px;
+  grid-template-columns: 48px 96px 92px 104px 1fr 96px 88px 1.5fr 78px 176px;
+}
+.admin-journal-roster .admin-roster-head { text-align: center; }
+.admin-journal-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-journal-roster .admin-roster-cell .admin-chip,
+.admin-journal-roster .admin-roster-cell .admin-type-tag { align-self: center; }
+.admin-journal-topic { text-align: left !important; align-items: flex-start !important; }
+.admin-journal-roster .admin-journal-actions { flex-direction: row; justify-content: center; gap: 6px; }
+/* 작성 패널 — 상담 개요(읽기전용) + 입력 항목 */
+.admin-journal-brief {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px;
+  margin-bottom: 18px; padding: 14px 16px;
+  border: 1px solid var(--color-divider); border-radius: var(--radius-sm);
+  background: var(--color-section-bg);
+}
+.admin-journal-brief dt { margin-bottom: 4px; font-size: 12px; font-weight: 800; color: var(--color-text-secondary); }
+.admin-journal-brief dd { font-size: 14px; font-weight: 700; color: var(--color-text); }
+.admin-journal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.admin-journal-attach {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 14px;
+  border: 1px dashed var(--color-border); border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 600; color: var(--color-text-secondary);
+}
+.admin-journal-attach button { margin-left: auto; }
 
 /* ─── Records (완료 내역) ────────────────────────────────────────────── */
 .admin-record-item-list { display: flex; flex-direction: column; gap: 16px; }
@@ -1456,9 +1490,21 @@ input, textarea, select { font-family: var(--font); }
 .admin-editor-col { display: flex; flex-direction: column; gap: 12px; }
 .admin-editor-col-head h2 { display: flex; align-items: center; gap: 8px; font-size: 16px; font-weight: 800; color: var(--color-text); }
 .admin-term-badge { display: inline-flex; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 800; }
-.term-단기 { background: #FFF3E0; color: var(--color-warning); }
-.term-중기 { background: var(--color-primary-bg); color: var(--color-primary); }
-.term-장기 { background: #E2F7EF; color: var(--color-success); }
+/* 로드맵 3축 배지 — 축 색은 schema/roadmap.ts 의 tint(green/blue/purple)와 같다 */
+.admin-axis-badge { display: inline-flex; padding: 4px 12px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 800; white-space: nowrap; }
+.axis-IAP { background: var(--green-bg); color: var(--green); }
+.axis-CORE { background: var(--blue-bg); color: var(--blue); }
+.axis-GROWTH { background: var(--purple-bg); color: var(--purple); }
+.admin-editor-col-desc { margin: 0; font-size: 12px; font-weight: 500; line-height: 1.5; color: var(--color-text-secondary); }
+
+/* 프로그램 개설로 편입된 IAP 칸 — 읽기 전용(PROCESS.md §6-4, 결정 1-a) */
+.admin-editor-locked { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--color-border); }
+.admin-editor-locked .admin-record-label { display: inline-flex; align-items: center; gap: 6px; }
+.admin-locked-cell { padding: 10px 11px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--muted); }
+.admin-locked-cell-top { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.admin-locked-cell-top b { font-size: 13px; font-weight: 700; }
+.admin-locked-cell small { display: block; margin-top: 4px; font-size: 11.5px; color: var(--color-text-secondary); }
+.admin-tag-soft.is-req { background: var(--green-bg); color: var(--green); }
 .admin-editor-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 24px 0; text-align: center; }
 .admin-editor-empty p { font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
 
@@ -1509,15 +1555,7 @@ input, textarea, select { font-family: var(--font); }
 
 /* ═══ G3 · 채용공고 + 비교과 운영 ═══════════════════════════════════════ */
 
-/* ── 채용공고 로스터 ─────────────────────────────────────────────────── */
-.admin-job-roster .admin-roster-head,
-.admin-job-roster .admin-roster-row {
-  grid-template-columns: 1.4fr 1.6fr 1.3fr 0.9fr 1fr 0.8fr;
-}
-/* 외부 공고 행 — 수정 불가라 클릭 대상이 아니다(hover 강조 제거) */
-.admin-job-row-static { cursor: default; }
-.admin-job-row-static:hover { background: transparent; }
-.admin-job-tags { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 5px; }
+/* ── 채용공고 등록 폼 ───────────────────────────────── */
 .admin-job-tag-preview { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 
 /* ── 비교과 프로그램 로스터 ──────────────────────────────────────────── */
@@ -1528,8 +1566,8 @@ input, textarea, select { font-family: var(--font); }
 .admin-program-manage-roster { overflow-x: auto; }
 .admin-program-manage-roster .admin-roster-head,
 .admin-program-manage-roster .admin-roster-row {
-  min-width: 1180px;
-  grid-template-columns: 0.5fr 0.45fr 0.8fr 2fr 0.7fr 1.55fr 0.8fr 0.8fr 0.9fr 0.85fr;
+  min-width: 1216px;
+  grid-template-columns: 36px 0.5fr 0.45fr 0.8fr 2fr 0.7fr 1.55fr 0.8fr 0.8fr 0.9fr 0.85fr;
 }
 .admin-program-manage-roster .admin-roster-row { cursor: pointer; border: 0; font: inherit; }
 .admin-program-manage-roster .admin-roster-row.is-pinned { background: rgba(6, 83, 182, 0.045); }
@@ -1584,11 +1622,25 @@ input, textarea, select { font-family: var(--font); }
 .admin-participant-roster .admin-roster-row:hover { background: var(--color-section-bg); }
 .admin-participant-roster .admin-roster-cell { white-space: nowrap; }
 .admin-participant-roster .admin-roster-cell strong { font-size: 14px; font-weight: 800; color: var(--color-text); }
+/* 열이 14~15개로 촘촘해 gap을 좁히고 중앙 정렬한다(다른 로스터와 동일 규약) */
 .admin-applicant-mgmt-roster .admin-roster-head,
 .admin-applicant-mgmt-roster .admin-roster-row {
-  min-width: 1180px;
-  grid-template-columns: 36px 44px 48px 76px 96px 88px 1.4fr 56px 78px 74px 132px 60px 52px;
+  min-width: 1208px;
+  gap: 10px;
+  grid-template-columns: 36px 44px 48px 76px 96px 88px 1fr 96px 56px 78px 74px 132px 60px 60px;
 }
+/* 신청자 관리 전용 — 신청일 우측에 취소일 1칸 더 */
+.admin-applicant-mgmt-roster.has-cancel-col .admin-roster-head,
+.admin-applicant-mgmt-roster.has-cancel-col .admin-roster-row {
+  min-width: 1338px;
+  grid-template-columns: 36px 44px 48px 76px 96px 88px 1fr 96px 56px 78px 74px 132px 132px 60px 60px;
+}
+/* 헤더 텍스트와 값(배지 포함)이 같은 중심선에 놓이도록 셀 전체를 중앙 정렬 */
+.admin-applicant-mgmt-roster .admin-roster-head { text-align: center; }
+.admin-applicant-mgmt-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-applicant-mgmt-roster .admin-roster-cell .admin-chip,
+.admin-applicant-mgmt-roster .admin-roster-cell .admin-type-tag,
+.admin-applicant-mgmt-roster .admin-roster-cell .admin-enroll { align-self: center; }
 .admin-selected-mgmt-roster .admin-roster-head,
 .admin-selected-mgmt-roster .admin-roster-row {
   min-width: 1420px;
@@ -1597,13 +1649,6 @@ input, textarea, select { font-family: var(--font); }
 .admin-check-cell { align-items: center; }
 .admin-check-cell input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary); }
 .admin-attach-cell { align-items: center; color: var(--color-text-tertiary, var(--color-text-secondary)); }
-.admin-del-cell { align-items: center; }
-.admin-icon-del {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; border-radius: var(--radius-sm);
-  color: var(--color-text-secondary); transition: background 0.12s, color 0.12s;
-}
-.admin-icon-del:hover { background: var(--tint-danger-bg); color: var(--tint-danger-ink); }
 .admin-participant-roster .admin-attendance-toggle { justify-self: start; }
 
 /* ── 출석 체크 토글 ──────────────────────────────────────────────────── */

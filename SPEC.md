@@ -677,6 +677,8 @@ const filtered = roster.filter(s => s.major === myDept)
 | `deptCode` | `DEPT_CD` | 주관부서 |
 | `place` | `PLACE` | |
 | `categoryCodes` | `PRM_GB_1~4` | 1~4차 분류 (`EP_CUR_GUBUN`) |
+| `careTypes[]` | — (**신설**) | **CARE 7+ 분류** — 대상 6유형 `T1`~`T6` 중복 선택. 코드만 저장하고 라벨은 `typeLabel()` |
+| `roadmapEntry` | — (**신설**) | **로드맵 편입** `NONE`/`RECOMMEND`/`REQUIRED`. `careTypes`에 든 유형의 **IAP 실행 축에 칸을 추가**한다 → `PROCESS.md` §6-4 |
 | `competencyRatio[]` | `CAP_PER1~6` | 역량 반영 비율 6종 |
 | `mileage` / `point` | `POINT1/2` · `MIN/MAX_MILEAGE` | 균등/차등 (`MILEAGE_DIV`) |
 | `targets` | `TRGT_STU11~15`·`TRGT_STU21~24`·`TRGT_STU31~35`·`TRGT_EMP`·`TRGT_OUT` | **참가대상 — 학적상태/대학원학년/학부학년/교직원/외부인** |
@@ -885,12 +887,14 @@ export const STUDENT_UG_ONLY  = ['STU_UG'] as const              // 학부 한�
 | `CANCELED` | 취소 | `4` | 신청자관리 |
 | `ATTENDED` | 참석 | `8` | 선발자관리 |
 | `NOSHOW_1` | **불참 (벌점 1점)** | `9` | 선발자관리 |
+| `NOSHOW_2` | **불참 (벌점 2점)** | — *(신설)* | 선발자관리 |
 | `NOSHOW_3` | **불참 (벌점 3점)** | `10` | 선발자관리 |
 | `COMPLETED` | 수료 | `5` | 선발자관리 |
 | `INCOMPLETE` | 미수료 | `6` | 선발자관리 |
 | `DELETED` | 삭제 | `9999` | 양쪽 |
 
 > **노쇼 벌점은 신설이 아니라 계승**이다. 현행이 이미 2단계 벌점(1점/3점)을 상태값에 내장하고 블랙리스트 화면도 운영한다.
+> ⚠️ **`NOSHOW_2`(2점)만 우리 쪽 신설**이다 — 현행 코드값이 없으므로 이관 시 `SY_CODE`에 값을 추가해야 한다.
 > 집계 정의도 그대로 계승: 신청자수 = `≠CANCELED` · 수료자수 = `COMPLETED`.
 > ⚠️ 현행은 그룹형 수료 판정이 두 벌이다(`EP_PRM_MAPPING.STATUS='2'` vs `EP_PRM_APP.STATUS='5'`) — **우리는 `ApplyStatus` 하나로 통일한다.**
 
@@ -983,6 +987,33 @@ export const STUDENT_UG_ONLY  = ['STU_UG'] as const              // 학부 한�
 
 > 그룹코드 전수는 `docs/dbmeta/out/E4_tables.csv`(3,874행)에 있다. **이관 전 이 CSV를 코드 테이블 초기 데이터로 변환한다.**
 
+### 7-13. 로드맵 코드 <span>`RoadmapAxis` · `RoadmapEntry` · `CellStatus`</span>
+
+> **축의 정의·칸 수·이행률 공식·재생성 주기는 `PROCESS.md` §6이 단일 소스다.** 여기에는 코드값만 둔다.
+
+**축 코드** `RoadmapAxis` — 로드맵 1개는 이 3축으로만 나뉜다.
+
+| 코드 | 라벨 | 기본 칸 수 | 학기 중 증가 |
+|---|---|---|---|
+| `IAP` | IAP 실행 | 5 | **가능** (프로그램 개설로 추가 — §6-4) |
+| `CORE` | 핵심역량 수행 | 5 | 없음 |
+| `GROWTH` | 내 성장 활동 | 5 | 없음 |
+
+> ⚠️ `IAP`는 **축 이름일 뿐**이다. 폐기된 IAP 유형 `R1`~`R6`과 무관하다 — `PROCESS.md` §6-2.
+> ⚠️ **단기·중기·장기(`TermDetail`)는 폐기됐다.** 칸에 시기 라벨을 새로 붙이지 않는다.
+
+**로드맵 편입** `RoadmapEntry` — 비교과 프로그램 개설 시 지정(§6-4). `Program.roadmapEntry`.
+
+| 코드 | 라벨 | 칸 수명 | 이행률 분모 |
+|---|---|---|---|
+| `NONE` | 미편입 | 칸을 만들지 않음 | 제외 |
+| `RECOMMEND` | 추천 | **프로그램 신청 마감일시까지** (미체크 칸은 증발) | 살아 있는 동안만 |
+| `REQUIRED` | 필수 | 영구 | **포함** |
+
+**칸 상태** `CellStatus` — `TODO` / `DONE`. IAP 칸은 프로그램 **`outcomeStatus='수료'` 시 자동으로** `DONE`이 된다. 선발·출석은 완료가 아니다 — `PROCESS.md` §6-4.
+
+**단일소스** — 축·편입 코드와 이행률 계산은 데이터층 한 곳에 둔다. 화면이 칸 배열을 받아 세지 않는다(CLAUDE.md 규칙 10).
+
 ---
 
 ## 8. 대학원 지원 요건 <span>(필수)</span>
@@ -1047,7 +1078,7 @@ export const STUDENT_UG_ONLY  = ['STU_UG'] as const              // 학부 한�
 |---|---|
 | 상담 가능시간 방식 | **UI는 제한(불가) 등록** / **저장은 슬롯+사용여부**(현행 승계) — §3-1-⑦ |
 | 진단 계승 범위 | **구조만 계승.** 문항·역량축·판정·대상자 규칙은 신설(§7-10) |
-| **로드맵 개수** | **1개.** 3축(진단·상담 / 수강·학과 / 외부활동)으로 생성 — `PROCESS.md` §6 |
+| **로드맵 개수** | **1개.** 재료 3(진단·상담 / 교과목·학과 / 외부활동) → **축 3**(IAP 실행 / 핵심역량 수행 / 내 성장 활동) × 5칸 — `PROCESS.md` §6 |
 | **유형 강등** | **구현하지 않는다.** 승급만 — `PROCESS.md` §8 |
 | `iapType` `R1`~`R6` | **폐기.** 상담에서 `studentType`을 확정하고 로드맵을 생성하므로 별도 분류가 없다 |
 | 교수상담 도메인 분리 | `CounselRequestType`에 '교수'를 넣지 않는다 — 상담사 통계 오염 방지(§3-2-③) |
@@ -1080,20 +1111,24 @@ export const STUDENT_UG_ONLY  = ['STU_UG'] as const              // 학부 한�
 | **이력** | 결과는 전부 append-only. 모델·프롬프트가 바뀌면 **과거 결과와 비교하지 않는다** |
 | **재현성** | 모든 결과는 `model_id` + `prompt_id` + `snapshot_id` 를 달고 저장한다. 이 셋이 없으면 "왜 지난달과 다르지"에 답할 수 없다 |
 
-### 10-2. 로드맵은 1개다 <span>★ 3축으로 생성</span>
+### 10-2. 로드맵은 1개다 <span>★ 재료 3 → 축 3</span>
 
-> **3축의 정의와 생성·수정 규칙은 `PROCESS.md` §6이 단일 소스다.** 여기에는 **저장 위치와 화면 매핑**만 둔다.
+> **축의 정의와 생성·수정 규칙은 `PROCESS.md` §6이 단일 소스다.** 코드값은 §7-13. 여기에는 **저장 위치와 화면 매핑**만 둔다.
 
 | | 무엇 | 사람이 손대나 | 저장 위치 |
 |---|---|---|---|
-| **로드맵** (정본) | 단기·중기·장기 실행항목 | ✅ 상담사 수정 · 학생 변경요청 | AI 초안 = `ai_roadmap`<br>**확정본 = `dc_roadmap`** (서비스DB) |
+| **로드맵** (정본) | **3축 × 5칸**(IAP 실행 / 핵심역량 수행 / 내 성장 활동) | ✅ 상담사 수정 · 학생 변경요청 | AI 초안 = `ai_roadmap`<br>**확정본 = `dc_roadmap`** (서비스DB) |
+| **연 스냅샷** | 재생성 직전의 칸 구성 + 이행 결과 | ❌ append-only | `dc_roadmap_snapshots` |
 | **직무 적합도** (참고) | 직무 추천 + 적합도 + 근거 | ❌ 읽기 전용 | `ai_job_fit` · `ai_job_fit_reason` (AI DB만) |
 
 ```
-  축A 진단·상담 ┐
-  축B 수강·학과 ├──> AI 초안 ──> 상담사 조정 ──> 확정    dc_roadmap (초안/검토중/확정)
-  축C 외부스펙  ┘                   │              변경은 dc_roadmap_history 에 append
-                                    └──> 참고지표   ai_job_fit (읽기 전용)
+  재료A 진단·상담   ┐
+  재료B 교과목·학과 ├──> AI 초안 ──> 상담사 조정 ──> 확정   dc_roadmap (초안/검토중/확정)
+  재료C 외부스펙    ┘     3축 × 5칸      │             변경은 dc_roadmap_history 에 append
+                                       └──> 참고지표   ai_job_fit (읽기 전용)
+
+  IAP 축만 이후에 늘어난다 — 프로그램 개설 시 CARE 7+ 유형 + roadmapEntry(추천/필수)
+  1년 주기: dc_roadmap_snapshots 에 얼리고 재생성
 ```
 
 > **로드맵만 서비스DB에 실체를 갖는다.** 상담사가 고치고 학생이 변경을 요청하므로 조회·권한·이력이

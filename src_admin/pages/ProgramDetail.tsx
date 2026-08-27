@@ -1,27 +1,34 @@
 import {
   LuCheck, LuCircleHelp, LuClipboardCheck,
-  LuFrown, LuInfo, LuPaperclip, LuTrash2,
-  LuUser, LuUserCheck, LuUsers, LuUserX, LuX,
+  LuInfo, LuPaperclip, LuTrash2,
+  LuUser, LuUserCheck, LuUserPlus, LuUsers, LuUserX,
 } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useOutletContext } from 'react-router-dom'
+import type { ProgramTabContext } from './ProgramShell'
 import {
-  getProgramById,
   updateProgram,
   removeProgram,
   setApplicantsStatus,
   setApplicantsOutcome,
-  removeApplicant,
+  addApplicant,
+  selectionOf,
+  pendingApplicants,
+  selectedApplicants,
 } from '../data/programs'
 import { PROGRAM_STATUSES, SELECTION_STATUSES, SELECTED_ACTIONS } from '../data/schema/program'
+import { ROADMAP_ENTRY_LABEL } from '../../src_v2/data/schema/roadmap'
 import type {
-  ProgramApplicant,
   ProgramStatus,
   SelectionStatus,
   SelectedAction,
 } from '../data/schema/program'
-import { studentLiteOf, collegeOf, enrollStatusClass } from '../data/studentRoster'
+import { studentLiteOf, collegeOf, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
+// 6유형 표시명은 단일소스에서 받는다 — 한글 리터럴을 화면에 박지 않는다.
+import { typeLabel } from '../../src_v2/data/careerProcess'
+import { getPenaltyTotal } from '../data/penalties'
 import EmptyState from '../components/EmptyState'
+import StudentPicker from '../components/StudentPicker'
 
 type Mode = 'applicants' | 'selected'
 
@@ -30,8 +37,6 @@ function fmtDateTime(iso: string): string {
   if (Number.isNaN(d.getTime())) return iso
   return `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
 }
-
-const statusOf = (a: ProgramApplicant): SelectionStatus => a.selectionStatus ?? '대기'
 
 function selectionChipClass(status: SelectionStatus): string {
   switch (status) {
@@ -50,38 +55,27 @@ function outcomeChipClass(status: string): string {
 }
 
 export default function ProgramDetail({ mode }: { mode: Mode }) {
-  const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
 
-  // localStorage 단일소스. 변경 후 refresh 로 재조회해 화면에 반영(전체 reload 대신).
-  const [program, setProgram] = useState(() => (id ? getProgramById(id) : undefined))
-  const refresh = () => setProgram(id ? getProgramById(id) : undefined)
+  // localStorage 단일소스. 프로그램 1건은 셸이 소유한다 — 변경 후 refresh() 하면
+  // 셸이 다시 읽어 이 목록과 탭 카운트가 같이 갱신된다.
+  const { program, refresh } = useOutletContext<ProgramTabContext>()
 
-  const [status, setStatus] = useState<ProgramStatus | ''>(program?.status ?? '')
+  const [status, setStatus] = useState<ProgramStatus | ''>(program.status)
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [bulkValue, setBulkValue] = useState<string>('선발')
+  const [picking, setPicking] = useState(false)
 
   // 신청자/선발자 페이지 전환 시 선택 초기화
   useEffect(() => { setChecked(new Set()) }, [mode])
 
-  if (!program) {
-    return (
-      <section className="admin-card">
-        <EmptyState
-          icon={LuFrown}
-          message="해당 프로그램을 찾을 수 없습니다."
-          action={{ label: '프로그램 목록으로', onClick: () => navigate('/programs/manage') }}
-        />
-      </section>
-    )
-  }
-
   const applicants = program.applicants
-  const selectedList = applicants.filter(a => statusOf(a) === '선발')
-  const currentList = mode === 'applicants' ? applicants : selectedList
+  const selectedList = selectedApplicants(program)
+  // 선발되면 선발자 관리로 넘어간다 — 신청자 관리에는 남지 않는다.
+  const currentList = mode === 'applicants' ? pendingApplicants(program) : selectedList
 
-  const waitingCount = applicants.filter(a => statusOf(a) === '대기').length
-  const rejectedCount = applicants.filter(a => statusOf(a) === '탈락').length
+  const waitingCount = applicants.filter(a => selectionOf(a) === '대기').length
+  const rejectedCount = applicants.filter(a => selectionOf(a) === '탈락').length
 
   const allChecked = currentList.length > 0 && currentList.every(a => checked.has(a.studentId))
   const bulkOptions: readonly string[] = mode === 'applicants' ? SELECTION_STATUSES : SELECTED_ACTIONS
@@ -107,17 +101,6 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
       setApplicantsOutcome(program.id, [...checked], bulkValue as SelectedAction)
     }
     setChecked(new Set())
-    refresh()
-  }
-
-  const handleRemoveApplicant = (studentId: string, name: string) => {
-    if (!window.confirm(`'${name}' 학생의 신청을 삭제할까요?`)) return
-    removeApplicant(program.id, studentId)
-    setChecked(prev => {
-      const next = new Set(prev)
-      next.delete(studentId)
-      return next
-    })
     refresh()
   }
 
@@ -195,6 +178,17 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
 
       {/* 신청자 관리 / 선발자 관리 표 */}
       <section className="admin-card">
+        <div className="admin-card-head">
+          <h2>
+            {mode === 'applicants' ? <><LuUsers /> 신청자 관리</> : <><LuUserCheck /> 선발자 관리</>}
+          </h2>
+          {mode === 'applicants' && (
+            <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => setPicking(true)}>
+              <LuUserPlus /> 학생 추가
+            </button>
+          )}
+        </div>
+
         {checked.size > 0 && (
           <div className="admin-bulkbar">
             <span className="admin-bulkbar-count"><strong>{checked.size}</strong>명 선택됨</span>
@@ -218,13 +212,15 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
           <EmptyState
             icon={LuUser}
             message={
-              mode === 'applicants'
-                ? '아직 신청자가 없습니다.'
-                : '아직 선발된 학생이 없습니다. 신청자 관리에서 학생을 체크한 뒤 상태를 선발로 변경하세요.'
+              mode !== 'applicants'
+                ? '아직 선발된 학생이 없습니다. 신청자 관리에서 학생을 체크한 뒤 상태를 선발로 변경하세요.'
+                : applicants.length === 0
+                  ? '아직 신청자가 없습니다.'
+                  : '선발을 기다리는 신청자가 없습니다. 선발한 학생은 선발자 관리 탭에 있습니다.'
             }
           />
         ) : (
-          <div className="admin-roster admin-participant-roster admin-applicant-mgmt-roster">
+          <div className={`admin-roster admin-participant-roster admin-applicant-mgmt-roster${mode === 'applicants' ? ' has-cancel-col' : ''}`}>
             <div className="admin-roster-head">
               <span className="admin-check-cell">
                 <input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="전체 선택" />
@@ -235,12 +231,14 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
               <span>학번</span>
               <span>대학</span>
               <span>학과</span>
+              <span>진단유형</span>
               <span>학년</span>
               <span>학적구분</span>
               <span>상태</span>
               <span>신청일</span>
+              {mode === 'applicants' && <span>취소일</span>}
               <span>첨부파일</span>
-              <span>삭제</span>
+              <span>벌점</span>
             </div>
             {currentList.map((a, index) => {
               const lite = studentLiteOf(a.studentId)
@@ -249,8 +247,11 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
               const major = lite?.major ?? a.studentMajor
               const grade = lite?.grade
               const enroll = lite?.status
-              const label = mode === 'applicants' ? statusOf(a) : (a.outcomeStatus ?? '선발')
-              const chipCls = mode === 'applicants' ? selectionChipClass(statusOf(a)) : outcomeChipClass(label)
+              const studentType = lite?.studentType
+              // 누적 벌점 — 블랙리스트 단일소스. 선발 판단에 쓰라고 표에 띄운다.
+              const penalty = getPenaltyTotal(a.studentId)
+              const label = mode === 'applicants' ? selectionOf(a) : (a.outcomeStatus ?? '선발')
+              const chipCls = mode === 'applicants' ? selectionChipClass(selectionOf(a)) : outcomeChipClass(label)
               return (
                 <div key={a.studentId} className="admin-roster-row admin-participant-row">
                   <span className="admin-roster-cell admin-check-cell">
@@ -267,6 +268,11 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                   <span className="admin-roster-cell">{studentNo}</span>
                   <span className="admin-roster-cell">{collegeOf(major)}</span>
                   <span className="admin-roster-cell">{major}</span>
+                  <span className="admin-roster-cell">
+                    {studentType
+                      ? <span className={studentTypeClass(studentType)}>{typeLabel(studentType)}</span>
+                      : <small>—</small>}
+                  </span>
                   <span className="admin-roster-cell">{grade ? `${grade}학년` : '—'}</span>
                   <span className="admin-roster-cell">
                     {enroll ? <span className={enrollStatusClass(enroll)}>{enroll}</span> : <small>—</small>}
@@ -275,16 +281,16 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                     <span className={`admin-chip ${chipCls}`}>{label}</span>
                   </span>
                   <span className="admin-roster-cell"><small>{fmtDateTime(a.appliedAt)}</small></span>
+                  {mode === 'applicants' && (
+                    <span className="admin-roster-cell">
+                      {a.canceledAt ? <small>{fmtDateTime(a.canceledAt)}</small> : <small>—</small>}
+                    </span>
+                  )}
                   <span className="admin-roster-cell admin-attach-cell" title="첨부파일 없음"><LuPaperclip /></span>
-                  <span className="admin-roster-cell admin-del-cell">
-                    <button
-                      type="button"
-                      className="admin-icon-del"
-                      onClick={() => handleRemoveApplicant(a.studentId, name)}
-                      aria-label={`${name} 신청 삭제`}
-                    >
-                      <LuX />
-                    </button>
+                  <span className="admin-roster-cell">
+                    {penalty > 0
+                      ? <span className="admin-chip admin-chip-penalty">{penalty}점</span>
+                      : <small>—</small>}
                   </span>
                 </div>
               )
@@ -295,10 +301,32 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
         {mode === 'selected' && selectedList.length > 0 && (
           <div className="admin-editor-hint">
             <LuInfo />
-            상태를 <strong>불참(벌점1점/3점)</strong>으로 변경하면 해당 학생에게 벌점이 부여되어 <Link to="/programs/blacklist" className="admin-inline-link">블랙리스트</Link>에 반영됩니다. 참석·수료 등으로 되돌리면 벌점이 회수됩니다.
+            {/* 안내문은 한 덩어리로 감싼다 — 힌트가 flex row라 인라인 요소가 각각 flex item이 되면 문장이 조각난다. */}
+            <span>
+              상태를 <strong>불참(벌점1점/2점/3점)</strong>으로 변경하면 해당 학생에게 벌점이 부여되어 <Link to="/programs/blacklist" className="admin-inline-link">블랙리스트</Link>에 반영됩니다. 참석·수료 등으로 되돌리면 벌점이 회수됩니다.
+              {program.roadmapEntry && program.roadmapEntry !== 'NONE' && (
+                <>
+                  {' '}이 프로그램은 <strong>로드맵 편입({ROADMAP_ENTRY_LABEL[program.roadmapEntry]})</strong> 상태입니다 —
+                  <strong> 수료</strong>로 변경하면 해당 학생의 <strong>IAP 실행</strong> 칸이 완료 처리되어 이행률이 오릅니다. 선발·출석만으로는 완료되지 않습니다.
+                </>
+              )}
+            </span>
           </div>
         )}
       </section>
+
+      {/* 신청자 직접 추가 — 집단상담 참여자 추가와 같은 학생 검색 피커를 쓴다. */}
+      {picking && (
+        <StudentPicker
+          title="신청 학생 추가"
+          excludeIds={applicants.map(a => a.studentId)}
+          onClose={() => setPicking(false)}
+          onPick={student => {
+            addApplicant(program.id, { id: student.id, name: student.name, major: student.major })
+            refresh()
+          }}
+        />
+      )}
     </>
   )
 }

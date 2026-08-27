@@ -12,8 +12,7 @@ import type { RosterStudent } from '../data/studentRoster'
 import { totalPages } from '../data/query'
 import { useListData } from '../hooks/useListData'
 import EmptyState from './EmptyState'
-import AdminModal from './AdminModal'
-import StudentDetailView from './StudentDetailView'
+import StudentDetailModal from './StudentDetailModal'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 학생현황 목록 표 (조교·교수 공유) — 번호·이름·학번·학년·대학·학과·상태·학생정보(보기).
@@ -172,9 +171,7 @@ export default function StudentRosterTable({ departments, studentIds, title, sub
       </section>
 
       {selected && (
-        <AdminModal title="학생 상세 정보" size="xl" onClose={() => setSelected(null)}>
-          <StudentDetailView studentId={selected.id} role={viewerRole} />
-        </AdminModal>
+        <StudentDetailModal studentId={selected.id} role={viewerRole} onClose={() => setSelected(null)} />
       )}
     </div>
   )

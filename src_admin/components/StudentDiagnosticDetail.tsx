@@ -1,11 +1,15 @@
 import { LuBot, LuChartColumn, LuCheck, LuGraduationCap, LuInfo, LuLightbulb, LuPlus, LuRotateCcw, LuRoute, LuTrash2, LuWorkflow } from 'react-icons/lu'
 import { useState } from 'react'
 import { getActiveCounselor } from '../data/counselors'
-import { getMergedRoadmap, saveRoadmapOverride, resetRoadmapOverride, TERM_ORDER } from '../data/roadmapOverrides'
-import type { StudentData, TermDetail, TermItem, TermLabel } from '../../src_v2/data/students'
+import { getMergedRoadmap, saveRoadmapOverride, resetRoadmapOverride } from '../data/roadmapOverrides'
+import { ROADMAP_AXES } from '../../src_v2/data/schema/roadmap'
+import type { CellImportance, CellPriority, RoadmapAxis, RoadmapAxisPlan, RoadmapCell } from '../../src_v2/data/schema/roadmap'
+import type { StudentData } from '../../src_v2/data/students'
 
-const PRIORITIES: TermItem['priority'][] = ['P0', 'P1', 'P2']
-const IMPORTANCES: TermItem['importance'][] = ['필수', '중요', '권장']
+const PRIORITIES: CellPriority[] = ['P0', 'P1', 'P2']
+const IMPORTANCES: CellImportance[] = ['필수', '중요', '권장']
+
+let cellSeq = 0
 
 /** 막대 그래프 (진단·직무 공용) */
 function Bar({ label, value, max = 100, color }: { label: string; value: number; max?: number; color?: string }) {
@@ -18,51 +22,52 @@ function Bar({ label, value, max = 100, color }: { label: string; value: number;
   )
 }
 
-/** AI 진로 로드맵 (편집 가능 — roadmapOverrides 재사용, 학생 원본 JSON 불변) */
+/** 로드맵 3축 (편집 가능 — roadmapOverrides 재사용, 학생 원본 JSON 불변) */
 function RoadmapEditable({ studentId }: { studentId: string }) {
   const counselor = getActiveCounselor()
   const merged = getMergedRoadmap(studentId)
-  const [draft, setDraft] = useState<Partial<Record<TermLabel, TermDetail>>>(() => {
-    const out: Partial<Record<TermLabel, TermDetail>> = {}
-    for (const l of TERM_ORDER) { const d = merged?.phase.termDetails?.[l]; if (d) out[l] = { ...d, items: d.items.map(i => ({ ...i })) } }
+  const [draft, setDraft] = useState<Partial<Record<RoadmapAxis, RoadmapAxisPlan>>>(() => {
+    const out: Partial<Record<RoadmapAxis, RoadmapAxisPlan>> = {}
+    for (const a of merged?.axes ?? []) out[a.axis] = { ...a, cells: a.cells.map(c => ({ ...c })) }
     return out
   })
   const [saved, setSaved] = useState(false)
   if (!merged) return <p className="admin-detail-note">이 학생은 편집 가능한 상세 로드맵이 없습니다.</p>
 
-  const update = (l: TermLabel, patch: Partial<TermDetail>) => setDraft(p => p[l] ? { ...p, [l]: { ...p[l]!, ...patch } } : p)
-  const updateItem = (l: TermLabel, i: number, patch: Partial<TermItem>) => setDraft(p => p[l] ? { ...p, [l]: { ...p[l]!, items: p[l]!.items.map((it, x) => x === i ? { ...it, ...patch } : it) } } : p)
-  const addItem = (l: TermLabel) => setDraft(p => p[l] ? { ...p, [l]: { ...p[l]!, items: [...p[l]!.items, { title: '', priority: 'P1', importance: '중요', why: '' }] } } : p)
-  const removeItem = (l: TermLabel, i: number) => setDraft(p => p[l] ? { ...p, [l]: { ...p[l]!, items: p[l]!.items.filter((_, x) => x !== i) } } : p)
+  const update = (a: RoadmapAxis, patch: Partial<RoadmapAxisPlan>) => setDraft(p => p[a] ? { ...p, [a]: { ...p[a]!, ...patch } } : p)
+  const updateCell = (a: RoadmapAxis, i: number, patch: Partial<RoadmapCell>) => setDraft(p => p[a] ? { ...p, [a]: { ...p[a]!, cells: p[a]!.cells.map((c, x) => x === i ? { ...c, ...patch } : c) } } : p)
+  const addCell = (a: RoadmapAxis) => setDraft(p => p[a] ? { ...p, [a]: { ...p[a]!, cells: [...p[a]!.cells, { id: `${a.toLowerCase()}-new-${(cellSeq += 1)}`, title: '', priority: 'P1', importance: '중요', why: '', status: 'TODO' }] } } : p)
+  const removeCell = (a: RoadmapAxis, i: number) => setDraft(p => p[a] ? { ...p, [a]: { ...p[a]!, cells: p[a]!.cells.filter((_, x) => x !== i) } } : p)
 
   const save = () => { saveRoadmapOverride(studentId, draft, counselor.id, '상담 진행 화면 로드맵 수정'); setSaved(true); window.setTimeout(() => window.location.reload(), 500) }
   const reset = () => { if (window.confirm('상담사 수정분을 지우고 학생 원본 로드맵으로 되돌립니다. 계속할까요?')) { resetRoadmapOverride(studentId); window.location.reload() } }
 
   return (
     <>
-      <p className="admin-editor-hint"><LuInfo /> 학생 원본 JSON은 불변입니다. 확정하면 수정분만 override로 저장되어 학생 화면에 병합됩니다.</p>
+      <p className="admin-editor-hint"><LuInfo /> 학생 원본 JSON은 불변입니다. 확정하면 수정분만 override로 저장되어 학생 화면에 병합됩니다. 프로그램에서 편입된 IAP 칸은 여기서 편집하지 않습니다.</p>
       <div className="counsel-roadmap-cols">
-        {TERM_ORDER.map(label => {
-          const d = draft[label]
+        {ROADMAP_AXES.map(meta => {
+          const d = draft[meta.code]
           if (!d) return null
           return (
-            <section key={label} className="counsel-roadmap-term">
-              <div className="counsel-roadmap-term-head"><span className={`admin-term-badge term-${label}`}>{label}</span><span className="counsel-roadmap-period">{d.period}</span></div>
-              <input className="counsel-roadmap-headline" value={d.headline} onChange={e => update(label, { headline: e.target.value })} placeholder="이 구간의 핵심 목표 한 줄" />
-              {d.items.map((it, i) => (
-                <div key={i} className="counsel-roadmap-item">
+            <section key={meta.code} className="counsel-roadmap-term">
+              <div className="counsel-roadmap-term-head"><span className={`admin-axis-badge axis-${meta.code}`}>{meta.label}</span><span className="counsel-roadmap-period">{d.cells.length}칸</span></div>
+              <input className="counsel-roadmap-headline" value={d.headline} onChange={e => update(meta.code, { headline: e.target.value })} placeholder="이 축의 핵심 목표 한 줄" />
+              {d.cells.map((cell, i) => (
+                <div key={cell.id} className="counsel-roadmap-item">
                   <div className="counsel-roadmap-item-top">
-                    <input value={it.title} onChange={e => updateItem(label, i, { title: e.target.value })} placeholder="항목 제목" />
-                    <button type="button" className="admin-icon-btn danger" title="삭제" onClick={() => removeItem(label, i)}><LuTrash2 /></button>
+                    <input value={cell.title} onChange={e => updateCell(meta.code, i, { title: e.target.value })} placeholder="칸 제목" />
+                    <button type="button" className="admin-icon-btn danger" title="삭제" onClick={() => removeCell(meta.code, i)}><LuTrash2 /></button>
                   </div>
                   <div className="counsel-roadmap-item-selects">
-                    <select value={it.priority} onChange={e => updateItem(label, i, { priority: e.target.value as TermItem['priority'] })}>{PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}</select>
-                    <select value={it.importance} onChange={e => updateItem(label, i, { importance: e.target.value as TermItem['importance'] })}>{IMPORTANCES.map(im => <option key={im} value={im}>{im}</option>)}</select>
+                    <select value={cell.priority} onChange={e => updateCell(meta.code, i, { priority: e.target.value as CellPriority })}>{PRIORITIES.map(p => <option key={p} value={p}>{p}</option>)}</select>
+                    <select value={cell.importance} onChange={e => updateCell(meta.code, i, { importance: e.target.value as CellImportance })}>{IMPORTANCES.map(im => <option key={im} value={im}>{im}</option>)}</select>
+                    <select value={cell.status} onChange={e => updateCell(meta.code, i, { status: e.target.value as RoadmapCell['status'] })}><option value="TODO">미수행</option><option value="DONE">수행</option></select>
                   </div>
-                  <textarea rows={2} value={it.why} onChange={e => updateItem(label, i, { why: e.target.value })} placeholder="이 항목이 필요한 이유" />
+                  <textarea rows={2} value={cell.why} onChange={e => updateCell(meta.code, i, { why: e.target.value })} placeholder="이 칸이 필요한 이유" />
                 </div>
               ))}
-              <button type="button" className="counsel-outline-btn sm" onClick={() => addItem(label)}><LuPlus /> 항목 추가</button>
+              <button type="button" className="counsel-outline-btn sm" onClick={() => addCell(meta.code)}><LuPlus /> 칸 추가</button>
             </section>
           )
         })}

@@ -120,6 +120,21 @@ export function removeProgram(id: string): void {
   persist(getPrograms().filter(p => p.id !== id))
 }
 
+/** 신청자의 선발 상태 — 미지정이면 '대기'. 화면마다 다시 판단하지 않는다. */
+export function selectionOf(applicant: ProgramApplicant): SelectionStatus {
+  return applicant.selectionStatus ?? '대기'
+}
+
+/** '신청자 관리' 목록 — 선발된 학생은 선발자 관리로 넘어가므로 여기서 빠진다. */
+export function pendingApplicants(program: Program): ProgramApplicant[] {
+  return program.applicants.filter(a => selectionOf(a) !== '선발')
+}
+
+/** '선발자 관리' 목록 */
+export function selectedApplicants(program: Program): ProgramApplicant[] {
+  return program.applicants.filter(a => selectionOf(a) === '선발')
+}
+
 /** 신청자 다중 선발 상태변경 — '신청자 관리' 체크박스 다중선택의 일괄 상태변경. */
 export function setApplicantsStatus(
   programId: string,
@@ -142,7 +157,7 @@ export function setApplicantsStatus(
 
 /**
  * 선발자 결과 일괄 변경 — '선발자 관리' 상태변경 select.
- * 삭제=행 제거, 불참(벌점N점)=벌점 부여, 그 외=결과 라벨 설정(+기존 불참 벌점 회수).
+ * 삭제=행 제거, 불참(벌점N점)=벌점 부여, 대기=선발 취소, 그 외=결과 라벨 설정(+기존 불참 벌점 회수).
  */
 export function setApplicantsOutcome(
   programId: string,
@@ -156,7 +171,7 @@ export function setApplicantsOutcome(
   const program = getPrograms().find(p => p.id === programId)
   if (!program) return
 
-  // 벌점 연동: 불참 tier → 부과, 그 외(참석/수료/미수료/선발) → 이 프로그램 불참 벌점 회수
+  // 벌점 연동: 불참 tier → 부과, 그 외(참석/수료/미수료/선발/대기) → 이 프로그램 불참 벌점 회수
   studentIds.forEach(sid => {
     const applicant = program.applicants.find(a => a.studentId === sid)
     if (!applicant) return
@@ -165,18 +180,46 @@ export function setApplicantsOutcome(
     else revertNoShowPenalty(sid, programId)
   })
 
-  // 결과 라벨 저장 ('선발'은 결과 해제 → undefined)
-  const outcome: OutcomeStatus | undefined = action === '선발' ? undefined : (action as OutcomeStatus)
+  // '대기'는 선발 취소 — 선발 상태를 되돌리고 결과도 함께 지운다(신청자 관리로 복귀).
+  // '선발'은 결과만 해제하고 선발 상태는 유지한다.
+  const patch: Partial<ProgramApplicant> =
+    action === '대기'
+      ? { selectionStatus: '대기', outcomeStatus: undefined }
+      : { outcomeStatus: action === '선발' ? undefined : (action as OutcomeStatus) }
   const ids = new Set(studentIds)
   const next = getPrograms().map(p =>
     p.id !== programId
       ? p
       : {
           ...p,
-          applicants: p.applicants.map(a =>
-            ids.has(a.studentId) ? { ...a, outcomeStatus: outcome } : a,
-          ),
+          applicants: p.applicants.map(a => (ids.has(a.studentId) ? { ...a, ...patch } : a)),
         },
+  )
+  persist(next)
+}
+
+/**
+ * 신청자 1명 추가 — 상담사가 신청자 관리에서 학생을 직접 넣는 경로.
+ * 신청 시점 학적 스냅샷(이름·학과)을 함께 저장한다(CLAUDE.md 규칙 2).
+ * 이미 신청한 학생은 거부한다 — 중복 방지는 로더가 전담한다(규칙 5).
+ */
+export function addApplicant(
+  programId: string,
+  student: { id: string; name: string; major: string },
+): void {
+  const program = getPrograms().find(p => p.id === programId)
+  if (!program || program.applicants.some(a => a.studentId === student.id)) return
+
+  const applicant: ProgramApplicant = {
+    studentId: student.id,
+    studentName: student.name,
+    studentMajor: student.major,
+    appliedAt: new Date().toISOString(),
+    attendance: '미확인',
+    selectionStatus: '대기',
+  }
+  const next = getPrograms().map(p =>
+    p.id !== programId ? p : { ...p, applicants: [...p.applicants, applicant] },
   )
   persist(next)
 }

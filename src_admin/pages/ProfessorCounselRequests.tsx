@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
-import StudentDetailView from '../components/StudentDetailView'
+import StudentDetailModal from '../components/StudentDetailModal'
 import { formatRelativeTime } from '../data/counselRequests'
 import {
   cancelProfRequest,
@@ -297,10 +297,7 @@ export default function ProfessorCounselRequests() {
         />
       )}
       {viewing && (
-        // 상담사 학생상세와 같은 컴포넌트 — 수정은 StudentDetailView 한 곳에서만.
-        <AdminModal title="학생 상세 정보" size="xl" onClose={() => setViewing(null)}>
-          <StudentDetailView studentId={viewing.studentId} role="professor" />
-        </AdminModal>
+        <StudentDetailModal studentId={viewing.studentId} role="professor" onClose={() => setViewing(null)} />
       )}
     </div>
   )

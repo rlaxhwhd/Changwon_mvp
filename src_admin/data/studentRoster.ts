@@ -10,6 +10,7 @@ import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
 import { STUDENTS, getStudentTypeMeta } from '../../src_v2/data/students'
 import { typeLabel, type StudentType } from '../../src_v2/data/careerProcess'
 import type { PenaltyEntry } from './schema/penalty'
+import { getRoadmapProgress } from './roadmap'
 import { paginate, mockLatency } from './query'
 import type { ListParams, Paginated } from './query'
 
@@ -70,22 +71,24 @@ export function studentNoOf(id: string): string {
   return STUDENT_NO_BY_ID[id] ?? id
 }
 
-/** 신청자 리스트 표시용 경량 프로필 — 학번·이름·학과·학년·학적구분(학생 단일소스). */
+/** 신청자 리스트 표시용 경량 프로필 — 학번·이름·학과·학년·학적구분·진단유형(학생 단일소스). */
 export interface StudentLite {
   studentNo: string
   name: string
   major: string
   grade: number
   status: EnrollStatus
+  /** 6유형 진단 코드 T1~T6 — 표시명은 typeLabel()로 파생한다. */
+  studentType: StudentType
 }
 
 /** 학생 id → 경량 프로필 맵 (상세 STUDENTS 우선, 없으면 로스터). */
 const STUDENT_LITE_BY_ID: Record<string, StudentLite> = {
   ...Object.fromEntries(
-    STUDENT_ROSTER.map(s => [s.id, { studentNo: s.studentNo, name: s.name, major: s.major, grade: s.grade, status: s.status }]),
+    STUDENT_ROSTER.map(s => [s.id, { studentNo: s.studentNo, name: s.name, major: s.major, grade: s.grade, status: s.status, studentType: s.studentType }]),
   ),
   ...Object.fromEntries(
-    STUDENTS.map(s => [s.id, { studentNo: s.studentNo, name: s.name, major: s.major, grade: s.grade, status: s.enrollmentStatus }]),
+    STUDENTS.map(s => [s.id, { studentNo: s.studentNo, name: s.name, major: s.major, grade: s.grade, status: s.enrollmentStatus, studentType: s.studentType }]),
   ),
 }
 
@@ -164,13 +167,6 @@ export function mergeDetailedIntoRoster(detailed: RosterStudent[]): RosterStuden
 // DB 전환 시: getFullRoster 슬라이스 대신 서버가 WHERE/LIMIT/OFFSET로 같은 봉투 반환.
 // ─────────────────────────────────────────────────────────────────────────
 
-/** 상세 학생(src_v2 STUDENTS) 로드맵 완료율(%) 근사 */
-function roadmapProgress(student: StudentData): number {
-  const tasks = student.phases.flatMap(p => p.tasks)
-  if (tasks.length === 0) return 0
-  return Math.round((tasks.filter(t => t.done).length / tasks.length) * 100)
-}
-
 /** 상세 학생 → 로스터 뷰 모델 (목록 단일 소스에 병합) */
 function detailToRoster(s: StudentData): RosterStudent {
   const type = getStudentTypeMeta(s)
@@ -182,7 +178,8 @@ function detailToRoster(s: StudentData): RosterStudent {
     grade: s.grade,
     studentType: s.studentType,
     tier: type.tierLabel as RosterTier,
-    progress: roadmapProgress(s),
+    // 이행률 계산은 data/roadmap.ts 한 곳이다 — 여기서 다시 세지 않는다.
+    progress: getRoadmapProgress(s.id),
     status: '재학',
     phone: s.phone,
   }

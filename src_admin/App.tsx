@@ -6,6 +6,7 @@ import CounselRequests from './pages/CounselRequests'
 import CounselSchedule from './pages/CounselSchedule'
 import CounselSession from './pages/CounselSession'
 import CounselRecords from './pages/CounselRecords'
+import CounselJournals from './pages/CounselJournals'
 import CounselRecordPrint from './pages/CounselRecordPrint'
 import CounselStats from './pages/CounselStats'
 import DiagnosisStatus from './pages/DiagnosisStatus'
@@ -88,6 +89,7 @@ const router = createBrowserRouter(
                 { path: '/counsel/requests', element: <CounselRequests /> },
                 { path: '/counsel/schedule', element: <CounselSchedule /> },
                 { path: '/counsel/session/:studentId', element: <CounselSession /> },
+                { path: '/counsel/journals', element: <CounselJournals /> },
                 { path: '/counsel/records', element: <CounselRecords /> },
                 { path: '/counsel/groups', element: <GroupCounsels /> },
                 { path: '/counsel/stats', element: <CounselStats /> },
