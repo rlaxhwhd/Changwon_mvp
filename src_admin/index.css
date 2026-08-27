@@ -2136,8 +2136,9 @@ input, textarea, select { font-family: var(--font); }
 .counsel-request-columns,
 .counsel-request-row {
   display: grid;
-  /* 4번째 = 유형(T1~T6 + 표시명). "T3 역량성장형"이 한 줄에 들어가야 해서 116px. */
-  grid-template-columns: 60px 100px 74px 116px 80px minmax(96px, 1fr) 88px 140px;
+  /* 4번째 = 유형(T1~T6 + 표시명). "T3 역량성장형"이 한 줄에 들어가야 해서 116px.
+     마지막 = 관리. 「상세 보기」(학생 상세 모달) + 「상담 처리」(일정·재배정) + 재배정 메뉴가 들어간다. */
+  grid-template-columns: 60px 100px 74px 116px 80px minmax(96px, 1fr) 88px 208px;
   align-items: center;
   text-align: center;
 }

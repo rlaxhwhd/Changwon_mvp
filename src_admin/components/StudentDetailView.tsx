@@ -9,11 +9,12 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { StaffRole } from '../data/schema/staff'
-import { STUDENTS, getStudentTypeMeta } from '../../src_v2/data/students'
+import { STUDENTS, getCounselOwnerById, getStudentTypeMeta } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
-import { areaOf, typeLabel } from '../../src_v2/data/careerProcess'
+import { STUDENT_TYPE_MAP, areaOf, typeLabel } from '../../src_v2/data/careerProcess'
 import { loadJournalEntries } from '../../src_v2/data/growthJournal'
 import { STUDENT_ROSTER, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
+import type { RosterStudent } from '../data/studentRoster'
 import {
   getCompetencyRadar, getCounselOverview, getDetailStats, getDiagnosisCards, getGoalPlan,
   getRoadmapProgress, getStudentPrograms,
@@ -710,6 +711,36 @@ interface StudentDetailViewProps {
   headerAction?: ReactNode
 }
 
+/**
+ * 상담 시드 학생(학번을 id 로 쓰는 데모 학생)을 로스터 플레이스홀더 모양으로 옮긴다.
+ * 이 학생들은 STUDENTS·STUDENT_ROSTER 어디에도 없어서 폴백이 한 겹 더 필요하다.
+ * 계층(tier)·진행률은 저장값이 아니라 파생값이다 — 유형 맵과 로드맵 로더에서 뽑는다.
+ */
+function counselOwnerAsRoster(studentId: string): RosterStudent | undefined {
+  const owner = getCounselOwnerById(studentId)
+  if (!owner) return undefined
+  return {
+    id: owner.id,
+    studentNo: owner.studentNo,
+    name: owner.name,
+    // ⚠ 상담 시드는 major 에 학년을 붙여 둔다("경영학과 3학년") — grade 필드가 따로 있는데도.
+    //   플레이스홀더가 학년을 따로 그리므로 여기서 떼어내지 않으면 "경영학과 3학년 · 3학년"이 된다.
+    //   시드를 고치지 않는 이유: 접수함 행은 major 한 칸만 보여줘서 거기선 학년이 정보다.
+    major: owner.major.replace(/\s*\d+학년\s*$/, ''),
+    grade: owner.grade,
+    studentType: owner.studentType,
+    tier: STUDENT_TYPE_MAP[owner.studentType].tierLabel as RosterStudent['tier'],
+    progress: getRoadmapProgress(owner.id),
+    status: owner.enrollmentStatus,
+    gpa: owner.gpa,
+    phone: owner.phone,
+    language: owner.language,
+    competencyScore: owner.competencyScore,
+    targetCompanySummary: owner.targetCompanySummary,
+    roadmapSummary: owner.roadmapSummary,
+  }
+}
+
 export default function StudentDetailView({ studentId, role, headerAction }: StudentDetailViewProps) {
   const canEdit = role === 'career' // 로드맵 편집은 진로상담사 전용
   const isPsych = role === 'psych'
@@ -723,8 +754,11 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
   const [tab, setTab] = useState<TabKey>(visibleTabs[0]?.key ?? 'diagnosis')
 
   if (!student) {
-    // 상세 데이터가 없는 더미 로스터 학생 → 경량 플레이스홀더 (graceful)
-    const roster = STUDENT_ROSTER.find(s => s.id === studentId)
+    // 상세 데이터가 없는 학생 → 경량 플레이스홀더 (graceful).
+    // 학생 id 체계가 세 갈래다 — STUDENTS(상세) · STUDENT_ROSTER(stu-NNN) ·
+    // 상담 시드(학번). 상담 신청은 studentId 에 학번을 쓰므로 세 번째까지 봐야
+    // 접수함·홈에서 연 상세가 "찾을 수 없습니다"로 떨어지지 않는다.
+    const roster = STUDENT_ROSTER.find(s => s.id === studentId) ?? counselOwnerAsRoster(studentId)
     if (roster) {
       return (
         <div className="sdv">
