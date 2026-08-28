@@ -219,16 +219,16 @@
 /* 상담 3종 — 시안 순서(진로취업 · 심리 · 지도교수) 그대로 색을 매긴다.
    admin 은 solid 색을 글자에 쓰지 않는 규칙이 있어 점(--type-color)과 글자(--type-ink)를 나눈다. */
 .ssc-channels > span:nth-child(1) {
-  --type-color: var(--counsel-1, var(--yellow, #F2B544));
-  --type-ink:   var(--counsel-1, var(--on-yellow, #8A5D0A));
+  --type-color: var(--counsel-1, #F2B544);
+  --type-ink:   var(--counsel-1-ink, var(--counsel-1, #8A5D0A));
 }
 .ssc-channels > span:nth-child(2) {
-  --type-color: var(--counsel-2, var(--purple, #8B63D9));
-  --type-ink:   var(--counsel-2, var(--on-purple, #6739B8));
+  --type-color: var(--counsel-2, #8B63D9);
+  --type-ink:   var(--counsel-2-ink, var(--counsel-2, #6739B8));
 }
 .ssc-channels > span:nth-child(3) {
-  --type-color: var(--counsel-3, var(--green, #24B37A));
-  --type-ink:   var(--counsel-3, var(--on-green, #157A52));
+  --type-color: var(--counsel-3, #24B37A);
+  --type-ink:   var(--counsel-3-ink, var(--counsel-3, #157A52));
 }
 .ssc-channels i { width: 8px; height: 8px; border-radius: 50%; background: var(--type-color); }
 .ssc-channels em { color: var(--type-ink); font-style: normal; font-weight: 900; }

@@ -115,7 +115,22 @@
   --tint-danger-bg:   var(--red-bg);     --tint-danger-ink:   var(--on-red);
   --tint-warning-bg:  var(--yellow-bg);  --tint-warning-ink:  var(--on-yellow);
   --tint-success-bg:  var(--green-bg);   --tint-success-ink:  var(--on-green);
+  --tint-info-bg:     var(--blue-bg);    --tint-info-ink:     var(--on-blue);
   --tint-neutral-bg:  var(--muted);      --tint-neutral-ink:  var(--text-sub);
+
+  /* ── 상담 3채널 ── 화면마다 다른 색을 고르지 않도록 여기서 한 번만 정한다.
+     학생 포털(--counsel-1/2/3)과 같은 이름이라 공용 컴포넌트가 그대로 읽는다.
+     새 색이 아니라 위 7색에서 고른 것이다. */
+  --counsel-1: var(--green);   --counsel-1-soft: var(--green-bg);   --counsel-1-ink: var(--on-green);
+  --counsel-2: var(--purple);  --counsel-2-soft: var(--purple-bg);  --counsel-2-ink: var(--on-purple);
+  --counsel-3: var(--blue);    --counsel-3-soft: var(--blue-bg);    --counsel-3-ink: var(--on-blue);
+
+  /* ── 상담 신청 4상태 ── 대기=처리 필요 · 확정=예약됨 · 완료=끝 · 취소=중립.
+     넷이 한 색이면 목록에서 서로 구분되지 않는다. */
+  --state-wait-bg:   var(--yellow-bg); --state-wait-ink:   var(--on-yellow);
+  --state-fixed-bg:  var(--blue-bg);   --state-fixed-ink:  var(--on-blue);
+  --state-done-bg:   var(--green-bg);  --state-done-ink:   var(--on-green);
+  --state-cancel-bg: var(--muted);     --state-cancel-ink: var(--text-sub);
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────── */
@@ -1969,11 +1984,18 @@ input, textarea, select { font-family: var(--font); }
   font-size: 12px;
   font-weight: 800;
 }
+/* 탭 5개가 한 색이면 지금 어느 상태를 보고 있는지 색으로 알 수 없다.
+   상태별 잉크를 --tab-ink 로 물려 활성 탭과 카운트 칩이 같은 색을 쓴다. */
+.counsel-status-tabs button { --tab-ink: var(--color-text); }
+.counsel-status-tabs button.tab-대기 { --tab-ink: var(--state-wait-ink); }
+.counsel-status-tabs button.tab-확정 { --tab-ink: var(--state-fixed-ink); }
+.counsel-status-tabs button.tab-완료 { --tab-ink: var(--state-done-ink); }
+.counsel-status-tabs button.tab-취소 { --tab-ink: var(--state-cancel-ink); }
 .counsel-status-tabs button.active {
   color: #fff;
-  background: var(--color-primary);
+  background: var(--tab-ink);
 }
-.counsel-status-tabs button.active strong { background: #fff; color: var(--color-primary); }
+.counsel-status-tabs button.active strong { background: #fff; color: var(--tab-ink); }
 
 .counsel-requests-layout {
   display: grid;
@@ -2031,7 +2053,9 @@ input, textarea, select { font-family: var(--font); }
   font-weight: 700;
   text-align: center;
 }
-.counsel-calendar-weekdays span:last-child { color: var(--color-primary); }
+/* 주말 — 일요일 빨강 · 토요일 파랑 (달력 관례). 전에는 토요일만 초록이었다. */
+.counsel-calendar-weekdays span:first-child { color: var(--on-red); }
+.counsel-calendar-weekdays span:last-child { color: var(--on-blue); }
 .counsel-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
@@ -2065,8 +2089,9 @@ input, textarea, select { font-family: var(--font); }
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-pill);
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
+  /* 건수는 '해야 할 일'이 아니라 정보다 — 초록(액션)과 구분해 파랑을 쓴다 */
+  background: var(--tint-info-bg);
+  color: var(--tint-info-ink);
   font-size: 10px;
   font-style: normal;
   font-weight: 800;
@@ -2080,7 +2105,7 @@ input, textarea, select { font-family: var(--font); }
   box-shadow: inset 0 0 0 2px var(--color-primary);
 }
 .counsel-calendar-grid button.is-selected:hover { background: var(--color-section-bg); }
-.counsel-calendar-grid button.is-selected em { background: var(--color-primary-bg); color: var(--color-primary); }
+.counsel-calendar-grid button.is-selected em { background: var(--tint-info-bg); color: var(--tint-info-ink); }
 .counsel-calendar-legend {
   display: flex;
   align-items: center;
@@ -2089,7 +2114,7 @@ input, textarea, select { font-family: var(--font); }
   color: var(--color-text-secondary);
   font-size: 11px;
 }
-.counsel-calendar-legend span { width: 8px; height: 8px; border-radius: 50%; background: var(--color-primary); }
+.counsel-calendar-legend span { width: 8px; height: 8px; border-radius: 50%; background: var(--color-info); }
 
 .counsel-request-table-card { display: flex; flex-direction: column; }
 .counsel-request-table-head {
@@ -2204,7 +2229,8 @@ input, textarea, select { font-family: var(--font); }
 .counsel-track-badge { display: inline-flex; align-items: center; justify-content: center; padding: 5px 9px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 800; white-space: nowrap; }
 .counsel-track-badge.track-집중관리 { background: var(--tint-danger-bg); color: var(--tint-danger-ink); }
 .counsel-track-badge.track-위험 { background: var(--tint-warning-bg); color: var(--tint-warning-ink); }
-.counsel-track-badge.track-표준 { background: var(--color-primary-bg); color: var(--color-primary); }
+/* 표준은 '문제 없음'이지 '우수'가 아니다 — 둘 다 초록이면 트랙 4단계가 3단계로 보인다. */
+.counsel-track-badge.track-표준 { background: var(--tint-info-bg); color: var(--tint-info-ink); }
 .counsel-track-badge.track-우수 { background: var(--tint-success-bg); color: var(--tint-success-ink); }
 .counsel-type-badge,
 .counsel-status-badge {
@@ -2216,14 +2242,16 @@ input, textarea, select { font-family: var(--font); }
   font-weight: 800;
   white-space: nowrap;
 }
-.counsel-type-badge { padding: 7px 10px; background: var(--color-primary-bg); color: var(--color-primary); }
-.counsel-type-badge.is-psych { background: var(--color-primary-bg); color: var(--color-primary); }
+/* 상담 유형 — 진로취업/심리가 같은 색이면 목록에서 유형이 안 읽힌다 */
+.counsel-type-badge { padding: 7px 10px; background: var(--counsel-1-soft); color: var(--counsel-1-ink); }
+.counsel-type-badge.is-psych { background: var(--counsel-2-soft); color: var(--counsel-2-ink); }
 .counsel-request-type-cell { transform: translateX(6px); }
+/* 4상태 4색 — 확정(예약됨)과 완료(끝)는 다른 일이다 */
 .counsel-status-badge { min-width: 48px; padding: 7px 10px; }
-.counsel-status-badge.is-waiting { background: var(--tint-warning-bg); color: var(--tint-warning-ink); }
-.counsel-status-badge.is-confirmed,
-.counsel-status-badge.is-complete { background: var(--tint-success-bg); color: var(--tint-success-ink); }
-.counsel-status-badge.is-cancelled { background: var(--tint-neutral-bg); color: var(--tint-neutral-ink); }
+.counsel-status-badge.is-waiting { background: var(--state-wait-bg); color: var(--state-wait-ink); }
+.counsel-status-badge.is-confirmed { background: var(--state-fixed-bg); color: var(--state-fixed-ink); }
+.counsel-status-badge.is-complete { background: var(--state-done-bg); color: var(--state-done-ink); }
+.counsel-status-badge.is-cancelled { background: var(--state-cancel-bg); color: var(--state-cancel-ink); }
 .counsel-request-topic-cell {
   padding-right: 18px;
   transform: translateX(6px);
@@ -2263,8 +2291,8 @@ input, textarea, select { font-family: var(--font); }
 .counsel-event-trail p { margin-top: 2px; font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
 .counsel-event-trail small { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--color-caption); }
 .counsel-event-kind { display: inline-flex; justify-content: center; padding: 3px 0; border-radius: var(--radius-pill); font-size: 11px; font-weight: 800; background: var(--tint-neutral-bg); color: var(--tint-neutral-ink); }
-.counsel-event-kind.is-확정 { background: var(--color-primary-bg); color: var(--color-primary); }
-.counsel-event-kind.is-완료 { background: var(--tint-success-bg); color: var(--tint-success-ink); }
+.counsel-event-kind.is-확정 { background: var(--state-fixed-bg); color: var(--state-fixed-ink); }
+.counsel-event-kind.is-완료 { background: var(--state-done-bg); color: var(--state-done-ink); }
 .counsel-event-kind.is-취소 { background: var(--tint-danger-bg); color: var(--tint-danger-ink); }
 .counsel-event-kind.is-재배정 { background: var(--tint-warning-bg); color: var(--tint-warning-ink); }
 .counsel-request-detail-actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }

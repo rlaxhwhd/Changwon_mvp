@@ -149,10 +149,12 @@ export interface CounselChannelSummary {
   rows: CounselChannelRow[]
 }
 
+/** 채널 색은 index.css 의 --counsel-1/2/3 이 정본이다. 여기 값은 그 매핑을 따른다.
+ *  ⚠ 심리를 red 로 두지 않는다 — red 는 위험·오류 색이라 상담 유형에 쓰면 뜻이 어긋난다. */
 const CHANNEL_META: Record<CounselChannel, { desc: string; tint: string }> = {
   진로취업: { desc: '직무·취업 준비 상담', tint: 'green' },
-  심리: { desc: '검사 해석·정서 상담', tint: 'red' },
-  지도교수: { desc: '학업·진로 방향 상담', tint: 'purple' },
+  심리: { desc: '검사 해석·정서 상담', tint: 'purple' },
+  지도교수: { desc: '학업·진로 방향 상담', tint: 'blue' },
 }
 
 const byDateDesc = (a: { date: string }, b: { date: string }) => b.date.localeCompare(a.date)
