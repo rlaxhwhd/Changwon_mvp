@@ -1,14 +1,23 @@
-import { LuCalendarCheck, LuFolderOpen, LuMessageSquareMore, LuPen, LuPrinter, LuQuote, LuSearch } from 'react-icons/lu'
+import { LuCalendarCheck, LuDownload, LuFolderOpen, LuMessageSquareMore, LuPen, LuPrinter, LuQuote, LuSearch } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { getActiveCounselor } from '../data/counselors'
 import { handledRequestTypes } from '../data/schema/counselor'
 import { getRecordsByType, upsertRecord } from '../data/counselRecords'
+import { toRecordCsv } from '../data/counselExport'
 import type { CounselRecord } from '../data/counselRecords'
 import EmptyState from '../components/EmptyState'
 
 /** 완료 기록 1건 카드 — 코멘트 열람 + 인라인 편집 */
-function RecordItem({ record }: { record: CounselRecord }) {
+function RecordItem({
+  record,
+  checked,
+  onToggle,
+}: {
+  record: CounselRecord
+  checked: boolean
+  onToggle: () => void
+}) {
   const [editing, setEditing] = useState(false)
   const [comment, setComment] = useState(record.comment)
   const [followUp, setFollowUp] = useState(record.followUp ?? '')
@@ -25,9 +34,17 @@ function RecordItem({ record }: { record: CounselRecord }) {
   }
 
   return (
-    <li className="admin-record-item">
+    <li className={`admin-record-item${checked ? ' is-checked' : ''}`}>
       <div className="admin-record-item-head">
         <div className="admin-record-item-student">
+          <span className="admin-check-cell">
+            <input
+              type="checkbox"
+              checked={checked}
+              onChange={onToggle}
+              aria-label={`${record.studentName} 상담일지 선택`}
+            />
+          </span>
           <div>
             <strong>{record.studentName}</strong>
             <small>
@@ -114,6 +131,7 @@ export default function CounselRecords() {
   const counselor = getActiveCounselor()
   const myType = handledRequestTypes(counselor.role)[0]
   const [query, setQuery] = useState('')
+  const [checked, setChecked] = useState<Set<string>>(new Set())
 
   const completed = useMemo(
     () =>
@@ -133,6 +151,41 @@ export default function CounselRecords() {
         r.studentMajor.toLowerCase().includes(q),
     )
   }, [completed, query])
+
+  const allChecked = list.length > 0 && list.every(r => checked.has(r.id))
+
+  const toggle = (id: string) => {
+    setChecked(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
+
+  const toggleAll = () => {
+    setChecked(prev => {
+      const next = new Set(prev)
+      list.forEach(r => (allChecked ? next.delete(r.id) : next.add(r.id)))
+      return next
+    })
+  }
+
+  // 대상 = 선택분, 선택이 없으면 화면에 보이는 목록 전체.
+  // 검색으로 가려진 선택은 제외한다 — 버튼에 적힌 건수와 실제 대상이 어긋나면 안 된다.
+  const targetIds = (checked.size > 0 ? list.filter(r => checked.has(r.id)) : list).map(r => r.id)
+
+  const downloadCsv = () => {
+    if (targetIds.length === 0) return
+    const url = URL.createObjectURL(
+      new Blob([`﻿${toRecordCsv(targetIds)}`], { type: 'text/csv;charset=utf-8' }),
+    )
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `상담기록_${myType}_${new Date().toISOString().slice(0, 10).replaceAll('-', '')}.csv`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="admin-page">
@@ -159,6 +212,25 @@ export default function CounselRecords() {
           />
         </div>
         <span className="admin-toolbar-count">총 {completed.length}건</span>
+        {list.length > 0 && (
+          <div className="admin-toolbar-actions">
+            <label className="admin-check-all">
+              <input type="checkbox" checked={allChecked} onChange={toggleAll} />
+              전체선택
+            </label>
+            <Link
+              to={`/counsel/records/print?ids=${targetIds.join(',')}`}
+              className="admin-btn admin-btn-ghost sm"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <LuPrinter /> 선택 인쇄 ({targetIds.length})
+            </Link>
+            <button type="button" className="admin-btn admin-btn-primary sm" onClick={downloadCsv}>
+              <LuDownload /> 엑셀 다운로드 ({targetIds.length})
+            </button>
+          </div>
+        )}
       </div>
 
       <section className="admin-card">
@@ -174,7 +246,12 @@ export default function CounselRecords() {
         ) : (
           <ul className="admin-record-item-list">
             {list.map(r => (
-              <RecordItem key={r.id} record={r} />
+              <RecordItem
+                key={r.id}
+                record={r}
+                checked={checked.has(r.id)}
+                onToggle={() => toggle(r.id)}
+              />
             ))}
           </ul>
         )}

@@ -1,7 +1,7 @@
 import {
   LuCalendar, LuCalendarClock, LuCalendarRange, LuChevronRight,
   LuCircleHelp, LuClipboardList, LuClock, LuGripVertical, LuHouse, LuImage,
-  LuMapPin, LuPlus, LuSmile, LuTrash2,
+  LuMapPin, LuPaperclip, LuPlus, LuSmile, LuTrash2,
   LuUpload, LuUserRound, LuUsers, LuX,
 } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
@@ -10,6 +10,11 @@ import AdminModal from '../components/AdminModal'
 import RichEditor from '../components/RichEditor'
 import { COUNSELORS } from '../data/counselors'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
+import {
+  COMPETENCY_SURVEY_ATTACHMENT,
+  COMPETENCY_SURVEY_GROUPS,
+  SATISFACTION_FORMS,
+} from '../data/schema/program'
 import type { ProgramCategory } from '../data/schema/program'
 import { STUDENT_TYPES, typeLabel } from '../../src_v2/data/careerProcess'
 import type { StudentType } from '../../src_v2/data/careerProcess'
@@ -100,6 +105,14 @@ export default function ProgramForm() {
   const [extraOpen, setExtraOpen] = useState(false)
   const [extras, setExtras] = useState<ExtraItem[]>(DEFAULT_EXTRAS)
   const [pinned, setPinned] = useState(existing?.pinned ?? false)
+  // 만족도 조사 — 실시할 때만 질문지를 고른다. 질문지는 관리자 모듈이 사전 등록한다.
+  const [satisfaction, setSatisfaction] = useState(existing?.satisfactionSurvey ?? true)
+  const [satisfactionFormId, setSatisfactionFormId] = useState(existing?.satisfactionFormId ?? SATISFACTION_FORMS[0].id)
+  // 역량향상률 조사 — 실시할 때만 조사 영역을 고른다. 체크한 영역의 질문지만 조사된다.
+  const [competency, setCompetency] = useState(existing?.competencySurvey ?? true)
+  const [competencyAreas, setCompetencyAreas] = useState<string[]>(existing?.competencyAreas ?? [])
+  // 통계값 반영 — 미포함이면 통계 요청의 참가/수료 인원에서 빠진다.
+  const [includeInStats, setIncludeInStats] = useState(existing?.includeInStats ?? true)
   const [saved, setSaved] = useState(false)
 
   const onlyGradeDisabled = targets.대학원생 || targets.교직원
@@ -140,6 +153,12 @@ export default function ProgramForm() {
       location: place.trim(),
       status: existing?.status ?? '모집중',
       pinned,
+      satisfactionSurvey: satisfaction,
+      // 미실시면 질문지 선택은 의미가 없다 — 값이 남지 않게 정리한다.
+      satisfactionFormId: satisfaction ? satisfactionFormId : undefined,
+      competencySurvey: competency,
+      competencyAreas: competency ? competencyAreas : [],
+      includeInStats,
     }
     if (editing && id) {
       updateProgram(id, payload)
@@ -155,6 +174,13 @@ export default function ProgramForm() {
     setCareTypes(prev => {
       const next = prev.includes(code) ? prev.filter(c => c !== code) : [...prev, code]
       return STUDENT_TYPES.filter(t => next.includes(t.code)).map(t => t.code)
+    })
+
+  /** 조사 영역 체크 토글 — 저장 순서는 항상 COMPETENCY_SURVEY_GROUPS 순서를 유지한다. */
+  const toggleArea = (key: string) =>
+    setCompetencyAreas(prev => {
+      const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
+      return COMPETENCY_SURVEY_GROUPS.flatMap(g => g.areas.map(a => a.key)).filter(k => next.includes(k))
     })
 
   const addExtra = () => setExtras(prev => [...prev, { id: nextId(), type: EXTRA_TYPES[0], question: '' }])
@@ -476,6 +502,111 @@ export default function ProgramForm() {
                 <span className="pf-label">신청 시 추가 정보</span>
                 <div><button type="button" className="pf-btn-outline" onClick={() => setExtraOpen(true)}>추가 설정</button></div>
                 <span className="pf-help">신청서 작성 시 추가로 수집할 정보를 설정합니다.</span>
+              </div>
+
+              {/* 만족도 조사 */}
+              <div className="pf-field">
+                <span className="pf-label">만족도 조사 <span className="pf-req">*</span></span>
+                <div className="pf-radio-row">
+                  <label className="pf-radio">
+                    <input type="radio" name="satisfaction" checked={satisfaction} onChange={() => setSatisfaction(true)} /> 실시
+                  </label>
+                  <label className="pf-radio">
+                    <input type="radio" name="satisfaction" checked={!satisfaction} onChange={() => setSatisfaction(false)} /> 미실시
+                  </label>
+                </div>
+
+                {satisfaction && (
+                  <div className="pf-survey-body">
+                    <div className="pf-field" style={{ gap: 6 }}>
+                      <span className="pf-sub">질문지 선택</span>
+                      <select
+                        className="pf-select"
+                        style={{ maxWidth: 320 }}
+                        value={satisfactionFormId}
+                        onChange={e => setSatisfactionFormId(e.target.value)}
+                      >
+                        {SATISFACTION_FORMS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
+                      </select>
+                    </div>
+                    <span className="pf-attach-note">
+                      <LuPaperclip />
+                      {SATISFACTION_FORMS.find(f => f.id === satisfactionFormId)?.attachment}
+                    </span>
+                  </div>
+                )}
+
+                <span className="pf-help">
+                  실시할 경우 관리자 모듈에서 사전에 설정한 질문지를 선택합니다.
+                  현재는 질문지가 1개지만, 관리자 모듈에서 질문지 종류를 추가 등록할 수 있습니다.
+                </span>
+              </div>
+
+              {/* 역량향상률 조사 */}
+              <div className="pf-field">
+                <span className="pf-label">역량향상률 조사 <span className="pf-req">*</span></span>
+                <div className="pf-field" style={{ gap: 6 }}>
+                  <span className="pf-sub">대분류</span>
+                  <select
+                    className="pf-select"
+                    style={{ maxWidth: 200 }}
+                    value={competency ? '실시' : '미실시'}
+                    onChange={e => setCompetency(e.target.value === '실시')}
+                  >
+                    <option value="실시">실시</option>
+                    <option value="미실시">미실시</option>
+                  </select>
+                </div>
+
+                {competency && (
+                  <div className="pf-survey-body">
+                    <span className="pf-sub">중분류</span>
+                    {COMPETENCY_SURVEY_GROUPS.map(g => (
+                      <div className="pf-survey-group" key={g.code}>
+                        <span className="pf-survey-group-head">
+                          <b>{g.label}</b>
+                          <small>{g.areas.length}개 영역 · 총 {g.itemCount}개 항목</small>
+                        </span>
+                        <div className="pf-inline">
+                          {g.areas.map(a => (
+                            <label key={a.key} className="pf-check">
+                              <input
+                                type="checkbox"
+                                checked={competencyAreas.includes(a.key)}
+                                onChange={() => toggleArea(a.key)}
+                              />
+                              {a.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    <span className="pf-attach-note">
+                      <LuPaperclip />
+                      {COMPETENCY_SURVEY_ATTACHMENT}
+                    </span>
+                  </div>
+                )}
+
+                <span className="pf-help">
+                  설문조사 할 영역만 중복 체크합니다. 체크에 따라 해당 영역 질문지만 활성화되고 조사됩니다.
+                </span>
+              </div>
+
+              {/* 통계값 반영 유무 */}
+              <div className="pf-field">
+                <span className="pf-label">통계값 반영 유무 <span className="pf-req">*</span></span>
+                <div className="pf-radio-row">
+                  <label className="pf-radio">
+                    <input type="radio" name="includeInStats" checked={includeInStats} onChange={() => setIncludeInStats(true)} /> 포함
+                  </label>
+                  <label className="pf-radio">
+                    <input type="radio" name="includeInStats" checked={!includeInStats} onChange={() => setIncludeInStats(false)} /> 미포함
+                  </label>
+                </div>
+                <span className="pf-help">
+                  미포함을 선택하면 이 프로그램은 통계 요청의 참가/수료 인원에 포함되지 않습니다.
+                </span>
               </div>
 
               {/* 썸네일 이미지 */}

@@ -1,5 +1,5 @@
 import {
-  LuFileText, LuFolderOpen, LuInfo, LuPaperclip, LuPen, LuPrinter, LuSearch,
+  LuDownload, LuFileText, LuFolderOpen, LuInfo, LuPaperclip, LuPen, LuPrinter, LuSearch,
 } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -11,6 +11,7 @@ import {
   getJournalRows, getJournalSummary, JOURNAL_STATUSES, JOURNAL_STATUS_CLASS,
 } from '../data/counselJournals'
 import type { JournalRow, JournalStatus } from '../data/counselJournals'
+import { toJournalCsv } from '../data/counselExport'
 import { studentTypeClass } from '../data/studentRoster'
 import { typeLabel } from '../../src_v2/data/careerProcess'
 
@@ -94,6 +95,7 @@ export default function CounselJournals() {
   const [status, setStatus] = useState<JournalStatus | typeof ALL>(ALL)
   const [writing, setWriting] = useState<JournalRow | null>(null)
   const [infoId, setInfoId] = useState<string | null>(null)
+  const [checked, setChecked] = useState<Set<string>>(new Set())
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -103,6 +105,43 @@ export default function CounselJournals() {
       return true
     })
   }, [rows, query, status])
+
+  const allChecked = list.length > 0 && list.every(r => checked.has(r.requestId))
+
+  const toggle = (requestId: string) => {
+    setChecked(prev => {
+      const next = new Set(prev)
+      if (next.has(requestId)) next.delete(requestId)
+      else next.add(requestId)
+      return next
+    })
+  }
+
+  const toggleAll = () => {
+    setChecked(prev => {
+      const next = new Set(prev)
+      list.forEach(r => (allChecked ? next.delete(r.requestId) : next.add(r.requestId)))
+      return next
+    })
+  }
+
+  // 대상 = 선택분, 선택이 없으면 화면에 보이는 목록 전체.
+  // 필터로 가려진 선택은 제외한다 — 버튼에 적힌 건수와 실제 대상이 어긋나면 안 된다.
+  const targetRows = checked.size > 0 ? list.filter(r => checked.has(r.requestId)) : list
+  // 인쇄는 작성된 일지만 — 미작성 행은 인쇄할 서식이 없다.
+  const printIds = targetRows.flatMap(r => (r.record ? [r.record.id] : []))
+
+  const downloadCsv = () => {
+    if (targetRows.length === 0) return
+    const url = URL.createObjectURL(
+      new Blob([`﻿${toJournalCsv(targetRows)}`], { type: 'text/csv;charset=utf-8' }),
+    )
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `상담일지대장_${new Date().toISOString().slice(0, 10).replaceAll('-', '')}.csv`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
     <div className="admin-page">
@@ -175,6 +214,23 @@ export default function CounselJournals() {
           </select>
         </label>
         <span className="admin-toolbar-count">검색 결과 {list.length}건</span>
+        {list.length > 0 && (
+          <div className="admin-toolbar-actions">
+            <Link
+              to={`/counsel/records/print?ids=${printIds.join(',')}`}
+              className={`admin-btn admin-btn-ghost sm${printIds.length === 0 ? ' is-disabled' : ''}`}
+              target="_blank"
+              rel="noreferrer"
+              aria-disabled={printIds.length === 0}
+              title={printIds.length === 0 ? '작성된 일지가 없습니다' : undefined}
+            >
+              <LuPrinter /> 선택 인쇄 ({printIds.length})
+            </Link>
+            <button type="button" className="admin-btn admin-btn-primary sm" onClick={downloadCsv}>
+              <LuDownload /> 엑셀 다운로드 ({targetRows.length})
+            </button>
+          </div>
+        )}
       </div>
 
       <section className="admin-card">
@@ -186,6 +242,9 @@ export default function CounselJournals() {
         ) : (
           <div className="admin-roster admin-journal-roster">
             <div className="admin-roster-head">
+              <span className="admin-check-cell">
+                <input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="전체 선택" />
+              </span>
               <span>번호</span>
               <span>상담일</span>
               <span>시간</span>
@@ -199,6 +258,14 @@ export default function CounselJournals() {
             </div>
             {list.map((r, index) => (
               <div key={r.requestId} className="admin-roster-row">
+                <span className="admin-roster-cell admin-check-cell">
+                  <input
+                    type="checkbox"
+                    checked={checked.has(r.requestId)}
+                    onChange={() => toggle(r.requestId)}
+                    aria-label={`${r.studentName} 상담일지 선택`}
+                  />
+                </span>
                 <span className="admin-roster-cell">{list.length - index}</span>
                 <span className="admin-roster-cell">{r.date}</span>
                 <span className="admin-roster-cell"><small>{r.time || '—'}</small></span>

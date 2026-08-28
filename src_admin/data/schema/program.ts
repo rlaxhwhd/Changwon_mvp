@@ -53,6 +53,49 @@ export const ABSENCE_PENALTY: Record<string, number> = {
 /** 신청자별 출석 상태 — '노쇼'가 블랙리스트 벌점 대상 */
 export type AttendanceStatus = '미확인' | '출석' | '노쇼'
 
+// ── 조사 설정 (프로그램 개설 시 지정) ─────────────────────────────────────
+
+/**
+ * 만족도 조사 질문지 — 관리자 모듈에서 사전 등록한 것 중 하나를 고른다.
+ * 현재 1종이고, 관리자 모듈에서 종류를 추가 등록할 수 있다.
+ */
+export interface SatisfactionForm {
+  id: string
+  label: string
+  /** 참고 설문지 파일명 — 개설 화면에는 이름만 표시한다(업로드 아님). */
+  attachment: string
+}
+
+export const SATISFACTION_FORMS: SatisfactionForm[] = [
+  { id: 'SAT_DEFAULT', label: '기본 만족도 질문지', attachment: '만족도조사_설문지.hwp' },
+]
+
+/**
+ * 역량향상률 조사 중분류 — 진로 · 직무 · 취업.
+ * `itemCount`(진로 22 · 직무 23 · 취업 21)는 확정값이다.
+ * ⚠️ `areas`의 영역 명칭은 아직 미확정이라 자리표시자다.
+ *    설문지(한글)를 받으면 이 배열의 label만 교체하면 화면이 따라간다.
+ */
+export interface CompetencySurveyGroup {
+  code: 'CAREER' | 'JOB' | 'EMPLOY'
+  label: string
+  /** 이 중분류의 전체 문항 수 */
+  itemCount: number
+  areas: { key: string; label: string }[]
+}
+
+const areasOf = (code: string): { key: string; label: string }[] =>
+  Array.from({ length: 5 }, (_, i) => ({ key: `${code}_${i + 1}`, label: `영역 ${i + 1}` }))
+
+export const COMPETENCY_SURVEY_GROUPS: CompetencySurveyGroup[] = [
+  { code: 'CAREER', label: '진로', itemCount: 22, areas: areasOf('CAREER') },
+  { code: 'JOB',    label: '직무', itemCount: 23, areas: areasOf('JOB') },
+  { code: 'EMPLOY', label: '취업', itemCount: 21, areas: areasOf('EMPLOY') },
+]
+
+/** 역량향상률 조사 참고 설문지 — 이름만 표시한다(업로드 아님). */
+export const COMPETENCY_SURVEY_ATTACHMENT = '역량향상률조사_설문지(한글).hwp'
+
 /** 프로그램 신청자 1명 */
 export interface ProgramApplicant {
   /** 학생 id (StudentData.id) */
@@ -110,6 +153,16 @@ export interface Program {
   status: ProgramStatus
   /** 상단 고정 — true면 등록일과 무관하게 목록 최상단에 우선 노출 */
   pinned?: boolean
+  /** 만족도 조사 실시 여부 */
+  satisfactionSurvey?: boolean
+  /** 실시할 때 쓰는 질문지 id — SATISFACTION_FORMS 중 하나 */
+  satisfactionFormId?: string
+  /** 역량향상률 조사 실시 여부 */
+  competencySurvey?: boolean
+  /** 조사할 영역 키 목록 — 체크한 영역의 질문지만 활성화된다. 예: ['CAREER_1','JOB_3'] */
+  competencyAreas?: string[]
+  /** 통계값 반영 — false면 통계 요청의 참가/수료 인원 집계에서 제외한다 */
+  includeInStats?: boolean
   /** 신청자 목록 (출석 포함) */
   applicants: ProgramApplicant[]
   /** 등록 일시 (ISO 8601) */
@@ -135,5 +188,10 @@ export function blankProgram(): Omit<Program, 'id' | 'applicants' | 'createdAt'>
     location: '',
     status: '모집중',
     pinned: false,
+    satisfactionSurvey: true,
+    satisfactionFormId: SATISFACTION_FORMS[0].id,
+    competencySurvey: true,
+    competencyAreas: [],
+    includeInStats: true,
   }
 }

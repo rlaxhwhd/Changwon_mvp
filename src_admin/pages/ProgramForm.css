@@ -240,6 +240,43 @@
 .pf-meta-value.is-empty { color: var(--pf-placeholder); font-weight: 500; }
 .pf-preview-foot { font-size: 12px; color: var(--pf-muted); margin-top: 4px; }
 
+/* ─── 만족도 · 역량향상률 조사 설정 ─────────────────────────────────
+   대분류(실시/미실시)를 고른 뒤 펼쳐지는 본문. 실제 설문 첨부·응답 수집은 없고
+   조사 대상 영역만 지정한다 — 첨부는 참고 파일명 표시뿐이다. */
+.pf-survey-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+  padding: 14px;
+  border: 1px solid var(--pf-border);
+  border-radius: 12px;
+  background: #FBFCFE;
+}
+
+.pf-survey-group { display: flex; flex-direction: column; gap: 8px; }
+.pf-survey-group + .pf-survey-group { padding-top: 12px; border-top: 1px solid var(--pf-border); }
+
+.pf-survey-group-head { display: flex; align-items: baseline; gap: 8px; }
+.pf-survey-group-head b { font-size: 13.5px; font-weight: 700; color: var(--pf-text); }
+.pf-survey-group-head small { font-size: 12px; color: var(--pf-muted); }
+
+/* 참고 설문지 — 파일명만 보여준다. 업로드/다운로드 동작 없음. */
+.pf-attach-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 6px 10px;
+  border: 1px solid var(--pf-border);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 12.5px;
+  color: var(--pf-text-2);
+}
+
+.pf-attach-note svg { width: 14px; height: 14px; color: var(--pf-muted); }
+
 /* ─── 추가 정보 설정 modal 내용 (.pf 스코프로 토큰 적용) ───────────── */
 .pf-modal { color: var(--pf-text); font-family: 'Pretendard', 'Noto Sans KR', sans-serif; }
 .pf-modal-desc { font-size: 13.5px; color: var(--pf-muted); margin-bottom: 16px; }
