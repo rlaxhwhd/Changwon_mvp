@@ -63,6 +63,16 @@
   --teal:   #1FA7A5;  --teal-bg:   #DDF6F5;  --on-teal:   #0E7573;
   --yellow: #F2B544;  --yellow-bg: #FFF5DE;  --on-yellow: #8A5D0A;
 
+  /* ── 그래프 채움 ─────────────────────────────────────────────
+     차트를 --color-primary(#157A52)에 묶지 않는다. 그 값은 버튼·텍스트용
+     짙은 초록이라 막대를 채우면 면적이 넓어 화면이 무거워진다.
+     막대·진행률은 한 단계 밝은 #24b47a 로 칠한다.
+     ⚠ 카테고리형(홈 도넛 6색 · 월별추이 신청/완료 · 역량 레이더 3계열)은
+     색이 곧 의미라 여기 묶지 않는다 — 그 색들은 의미색 7종을 그대로 쓴다. */
+  --chart-fill:      #24b47a;
+  --chart-fill-2:    #5fcaa0;  /* 그라데이션 끝·2차 계열 */
+  --chart-fill-soft: #d9f2e7;  /* 옅은 면·호버 */
+
   /* ── Radius — 카드는 전부 12 ─────────────────────────────── */
   --radius-xs:   6px;
   --radius-sm:  10px;   /* 칩 · 배지 · 소형 컨트롤 */
@@ -1213,7 +1223,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-progress-track.lg { height: 12px; }
 .admin-progress-fill {
   position: absolute; inset: 0 auto 0 0;
-  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  background: linear-gradient(90deg, var(--chart-fill), var(--chart-fill-2));
   border-radius: var(--radius-pill);
 }
 .admin-progress-fill.warn { background: linear-gradient(90deg, var(--color-warning), var(--color-accent)); }
@@ -1317,7 +1327,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-diag-rate span { font-size: 26px; font-weight: 800; color: var(--color-primary); }
 .admin-diag-rate small { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
 .admin-diag-bar { height: 6px; border-radius: var(--radius-pill); background: var(--color-divider); overflow: hidden; }
-.admin-diag-bar span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--color-primary); }
+.admin-diag-bar span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--chart-fill); }
 .admin-diag-legend { display: flex; gap: 12px; }
 .admin-diag-legend em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--color-caption); }
 
@@ -1358,7 +1368,11 @@ input, textarea, select { font-family: var(--font); }
 .admin-stat-bars li { display: grid; grid-template-columns: 110px 1fr 42px; align-items: center; gap: 10px; }
 .admin-stat-bar-label { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-stat-bar-track { height: 10px; border-radius: var(--radius-pill); background: var(--color-divider); overflow: hidden; }
-.admin-stat-bar-track span { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--color-primary); }
+/* 통계 막대 — 차트 채움 토큰(밝은 초록). 브랜드 primary 를 쓰면 너무 진하다. */
+.admin-stat-bar-track span {
+  display: block; height: 100%; border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--chart-fill), var(--chart-fill-2));
+}
 .admin-stat-bar-value { font-size: 13px; font-weight: 800; color: var(--color-text); text-align: right; }
 .admin-advisor-name { color: var(--color-primary); font-weight: 800; }
 .admin-roster-student { display: flex; align-items: center; gap: 10px; }
