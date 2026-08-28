@@ -3,9 +3,8 @@
 .rs-page {
   flex: 1;
   width: 100%;
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 0 28px 56px;
+  /* 폭·좌우여백은 .v2-main 이 정한다 — 컨테이너를 다시 만들지 않는다. */
+  padding: 0 0 56px;
   min-width: 0;
 }
 

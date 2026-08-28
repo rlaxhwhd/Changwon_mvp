@@ -49,14 +49,22 @@ export default function MyApplications() {
   }
 
   return (
-    <div className="ma-page">
-      <header className="ma-head">
-        <h1>나의 지원 내역</h1>
-        <p>교내 추천채용 공고에 지원한 내역과 전형 진행 상황입니다.</p>
+    // 폭·좌우 여백은 .v2-main 한 곳이 정한다 — 페이지가 자기 컨테이너를 만들지 않는다.
+    <div className="v2-page">
+      <header className="v2-page-head">
+        <div>
+          <nav className="v2-page-crumb" aria-label="현재 위치">
+            <span>마이페이지</span>
+            <i className="fa-solid fa-chevron-right" />
+            <span>추천채용 지원 내역</span>
+          </nav>
+          <h1 className="v2-page-title">나의 지원 내역</h1>
+          <p className="v2-page-desc">교내 추천채용 공고에 지원한 내역과 전형 진행 상황입니다.</p>
+        </div>
       </header>
 
       {applications.length === 0 ? (
-        <div className="ma-empty">
+        <div data-slot="card" className="ma-empty">
           <i className="fa-regular fa-folder-open" />
           <strong>아직 지원한 공고가 없습니다.</strong>
           <p>교내 채용공고에서 추천채용 공고에 지원하면 이곳에서 진행 상황을 확인할 수 있습니다.</p>
@@ -69,7 +77,7 @@ export default function MyApplications() {
             const steps = getProgressTimeline(application)
             const open = application.status === 'APPLIED' || application.status === 'IN_PROGRESS'
             return (
-              <article key={application.id} className="ma-card">
+              <article key={application.id} data-slot="card" className="ma-card">
                 <div className="ma-card-head">
                   <div className="ma-card-title">
                     <span className="ma-tag">추천채용</span>

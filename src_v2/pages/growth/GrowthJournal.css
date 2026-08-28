@@ -9,12 +9,11 @@
 .gj-content {
   flex: 1;
   min-width: 0;
-  max-width: var(--page-max);
   margin-left: auto;
   margin-right: auto;
   display: flex;
   flex-direction: column;
-  padding: 0 28px 60px;
+  padding: 0 0 60px;
   gap: 24px;
 }
 
@@ -776,7 +775,7 @@
 @media (max-width: 768px) {
   body { min-width: 0; }
   .gj-wrapper { flex-direction: column; }
-  .gj-content { padding: 16px 12px 48px; gap: 12px; }
+  .gj-content { padding: 16px 0 48px; gap: 12px; }
   .gj-page-header { flex-direction: column; align-items: stretch; gap: 12px; padding: 20px 18px; }
   .gj-page-title { font-size: 32px; }
   .gj-btn-primary { width: 100%; justify-content: center; }

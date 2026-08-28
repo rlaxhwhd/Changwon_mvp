@@ -1,4 +1,4 @@
-.pd-wrap { max-width: var(--page-max); margin: 0 auto; padding: 0 28px 40px; }
+.pd-wrap { padding: 0 0 40px; }
 .pd-breadcrumb { display: flex; align-items: center; gap: 6px; margin: 24px 0 16px; color: var(--color-text-sub); font-size: 15px; font-weight: 700; }
 .pd-breadcrumb a { color: var(--color-text-muted); }
 .pd-breadcrumb a:hover { color: var(--color-primary); }
@@ -37,7 +37,7 @@
 .pd-apply-btn:hover { opacity: 0.88; }
 .pd-back-btn { border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); text-decoration: none; }
 .pd-back-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
-.pd-wish-area { max-width: var(--page-max); margin: -28px auto 40px; padding: 0 28px; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.pd-wish-area { margin: -28px auto 40px; padding: 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .pd-wish-btn { padding: 0 16px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-sub); }
 .pd-wish-btn.wished { border-color: var(--color-primary); color: var(--color-primary); }
 .pd-wish-saved, .pd-applied-toast { margin: 0; color: var(--color-primary); font-size: 13px; font-weight: 700; }

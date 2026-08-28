@@ -1,7 +1,5 @@
 .dr-wrap {
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 28px 40px 48px;
+  padding: 28px 0 48px;
 }
 
 /* ── 헤더 ─────────────────────────────────────────────── */

@@ -318,51 +318,13 @@ select:focus-visible {
   background-image: none !important;
 }
 
-/* ─── Section semantic accents ─────────────────────────────────────
-   과거 화면 CSS는 모두 `--color-primary`만 사용해 보라색이 과도했다.
-   토큰을 새로 만들지 않고, 화면 목적에 맞는 기존 의미 색상을 legacy 별칭으로
-   매핑한다. 라운지는 원본 대시보드의 violet 축을 그대로 유지한다. */
-.v2-section-diagnosis {
-  --color-primary: var(--sky);
-  --color-primary-light: var(--blue);
-  --color-primary-bg: var(--sky-soft);
-  --color-surface-alt: var(--sky-soft);
-}
-
-.v2-section-counsel {
-  --color-primary: var(--mint);
-  --color-primary-light: var(--teal);
-  --color-primary-bg: var(--mint-soft);
-  --color-surface-alt: var(--teal-soft);
-}
-
-.v2-section-roadmap {
-  --color-primary: var(--blue);
-  --color-primary-light: var(--sky);
-  --color-primary-bg: var(--blue-soft);
-  --color-surface-alt: var(--blue-soft);
-}
-
-.v2-section-growth {
-  --color-primary: var(--mint);
-  --color-primary-light: var(--teal);
-  --color-primary-bg: var(--mint-soft);
-  --color-surface-alt: var(--mint-soft);
-}
-
-.v2-section-jobs {
-  --color-primary: var(--sky);
-  --color-primary-light: var(--blue);
-  --color-primary-bg: var(--sky-soft);
-  --color-surface-alt: var(--sky-soft);
-}
-
-.v2-section-mypage {
-  --color-primary: var(--pink);
-  --color-primary-light: var(--violet);
-  --color-primary-bg: var(--pink-soft);
-  --color-surface-alt: var(--pink-soft);
-}
+/* ─── Section accents — 폐기 ────────────────────────────────────────
+   섹션마다 강조색을 바꾸던 오버라이드(진단=sky · 상담=mint · 로드맵=blue ·
+   성장=mint · 취업=sky · 마이페이지=pink)를 걷어냈다.
+   메인 강조색은 DESIGN.md 의 바이올렛(`--primary` #7c5cfc) 하나다 —
+   화면을 옮길 때마다 버튼·배지 색이 바뀌면 같은 사이트로 읽히지 않는다.
+   :root 기본값(--color-primary: var(--primary) 등)이 그대로 적용된다.
+   ⚠ 섹션별 색을 되살리지 말 것. 의미색(mint/sky/pink…)은 상태 표시에만 쓴다. */
 
 /* ─── Topbar (시안 .topbar) ───────────────────────────────────────── */
 .topbar {

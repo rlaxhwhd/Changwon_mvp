@@ -1,9 +1,7 @@
 /* ─── AI 자소서/인터뷰 홈 (jh- prefix) ───────────────────────────── */
 
 .jh-wrap {
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 32px 40px 44px;
+  padding: 32px 0 44px;
 }
 
 /* ── 헤더 ─────────────────────────────────────────────── */

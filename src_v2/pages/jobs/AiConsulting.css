@@ -1,9 +1,7 @@
 /* ─── AI 컨설팅 (ac- prefix) ─────────────────────────────────────── */
 
 .ac-wrap {
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 28px 40px 44px;
+  padding: 28px 0 44px;
 }
 
 /* ── 헤더 ─────────────────────────────────────────────── */

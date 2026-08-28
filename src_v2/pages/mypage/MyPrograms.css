@@ -1,8 +1,6 @@
 /* ── MyPrograms (mp-) ────────────────────────────────────────────── */
 .mp-wrap {
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 0 28px 48px;
+  padding: 0 0 48px;
   color: var(--color-text);
 }
 

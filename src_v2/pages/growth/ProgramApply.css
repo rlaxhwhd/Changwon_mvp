@@ -8,9 +8,7 @@
 .pa-wrap {
   flex: 1;
   min-width: 0;
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 0 28px 40px;
+  padding: 0 0 40px;
 }
 
 /* Header — 통일 hero spec */
@@ -422,7 +420,7 @@
     flex-direction: column;
   }
 
-  .pa-wrap { padding: 16px; }
+  .pa-wrap { padding: 16px 0; }
 
   .pa-card {
     grid-template-columns: 100px 1fr;

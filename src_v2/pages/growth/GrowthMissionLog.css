@@ -1,8 +1,6 @@
 .gml-page {
   min-height: calc(100vh - var(--gnb-height));
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 0 28px 54px;
+  padding: 0 0 54px;
   background: var(--color-bg);
   color: var(--color-navy);
 }
@@ -256,7 +254,6 @@
 }
 
 .gml-pagination {
-  max-width: var(--page-max);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -370,7 +367,7 @@
 
 @media (max-width: 900px) {
   .gml-page {
-    padding: 26px 18px 42px;
+    padding: 26px 0 42px;
   }
 
   .gml-stats {

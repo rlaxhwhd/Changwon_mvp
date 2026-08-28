@@ -1,7 +1,5 @@
 .de-wrap {
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 0 40px 44px;
+  padding: 0 0 44px;
 }
 
 .de-hero {

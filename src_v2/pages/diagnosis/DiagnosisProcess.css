@@ -298,13 +298,15 @@
 .de-card--locked .de-card-image { filter: grayscale(0.6); opacity: 0.5; }
 
 .de-card--available {
-  border-color: rgba(34, 197, 94, 0.4);
+  border-color: var(--color-primary-light);
 }
 
-/* 버튼 상태 변형 */
+/* 버튼 상태 변형.
+   CTA 는 메인 강조색(바이올렛) 하나로 간다 — 같은 화면의 「결과 보기」와 「검사 시작」이
+   서로 다른 색이면 같은 역할의 버튼이 둘로 읽힌다. 상태 구분은 잠금(회색)으로만 한다. */
 .de-start-btn--available {
-  background: var(--color-success);
-  box-shadow: 0 9px 18px rgba(34, 197, 94, 0.18);
+  background: var(--color-primary);
+  box-shadow: 0 9px 18px rgba(124, 92, 252, 0.18);
 }
 
 .de-start-btn--locked {

@@ -1,6 +1,4 @@
 .rs-wrap {
-  max-width: var(--page-max);
-  margin: 0 auto;
   min-height: calc(100vh - var(--gnb-height));
   display: grid;
   grid-template-columns: minmax(0, 1fr) 292px;
