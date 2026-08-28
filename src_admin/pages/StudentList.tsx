@@ -133,11 +133,12 @@ export default function StudentList() {
           <EmptyState icon={LuFrown} message="조건에 맞는 학생이 없습니다." />
         ) : (
           <>
-            <div className="admin-roster">
+            <div className="admin-roster admin-charge-roster">
               <div className="admin-roster-head">
                 <span>번호</span>
                 <span>학생</span>
-                <span>학과 · 학년</span>
+                <span>학과</span>
+                <span>학년</span>
                 <span>진단 유형</span>
                 <span>학적</span>
                 <span>IAP 진행률</span>
@@ -155,13 +156,11 @@ export default function StudentList() {
                     <strong>{s.name}</strong>
                     {detailedIds.has(s.id) && <span className="admin-tag admin-tag-soft">상세</span>}
                   </span>
+                  <span className="admin-roster-cell">{s.major}</span>
+                  <span className="admin-roster-cell">{s.grade}학년</span>
                   <span className="admin-roster-cell">
-                    {s.major}
-                    <small>{s.grade}학년</small>
-                  </span>
-                  <span className="admin-roster-cell">
-                    <span className={studentTypeClass(s.studentType)}>{typeLabel(s.studentType)}</span>
-                    <small>{s.studentType}</small>
+                    {/* 유형은 '코드 → 라벨' 순서로 읽는다 (T3 역량성장형) */}
+                    <span className={studentTypeClass(s.studentType)}><b>{s.studentType}</b>{typeLabel(s.studentType)}</span>
                   </span>
                   <span className="admin-roster-cell">
                     <span className={enrollStatusClass(s.status)}>{s.status}</span>

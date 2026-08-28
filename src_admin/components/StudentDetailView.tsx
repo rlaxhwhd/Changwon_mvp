@@ -2,7 +2,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import type { IconType } from 'react-icons'
 import {
   LuArrowRight, LuBook, LuBoxes, LuBriefcase, LuCalendarCheck, LuChartColumn, LuChartLine,
-  LuCircleDot, LuClipboardCheck, LuFolderOpen, LuFrown, LuGraduationCap, LuInfo,
+  LuCircleDot, LuClipboardCheck, LuFolderOpen, LuFrown, LuGraduationCap,
   LuListChecks, LuLock, LuMessagesSquare, LuPencilRuler, LuRoute, LuRotateCw, LuSparkles, LuSprout,
   LuStar, LuTrophy, LuWorkflow, LuX,
 } from 'react-icons/lu'
@@ -16,12 +16,13 @@ import { loadJournalEntries } from '../../src_v2/data/growthJournal'
 import { STUDENT_ROSTER, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 import type { RosterStudent } from '../data/studentRoster'
 import {
-  getCompetencyRadar, getCounselOverview, getDetailStats, getDiagnosisCards, getGoalPlan,
+  getCompetencyRadar, getCounselOverview, getStudentStatCards, getDiagnosisCards, getGoalPlan,
   getRoadmapProgress, getStudentPrograms,
-  type CompetencyAxis, type CompetencyRadar, type DiagnosisCard, type DetailStat,
+  type CompetencyAxis, type CompetencyRadar, type DiagnosisCard,
 } from '../data/studentDetail'
 import DiagnosisResultReport from '../../src_v2/components/DiagnosisResultReport'
 import RoadmapAxisBoard from '../../src_v2/components/RoadmapAxisBoard'
+import StudentStatCards from '../../src_v2/components/StudentStatCards'
 import EmptyState from './EmptyState'
 import './StudentDetailView.css'
 
@@ -69,11 +70,6 @@ const TABS: TabDef[] = [
 /** 시안 --result-color/--plan-color 등 인라인 커스텀 프로퍼티용 헬퍼 */
 function tintVars(tint: string, names: [string, string]): CSSProperties {
   return { [`--${names[0]}`]: `var(--${tint})`, [`--${names[1]}`]: `var(--${tint}-bg)` } as CSSProperties
-}
-
-/** 시안 stat-meter 는 --value/--accent 로 막대를 그린다 */
-function meterVars(pct: number, tint: string): CSSProperties {
-  return { '--value': `${pct}%`, '--accent': `var(--${tint})` } as CSSProperties
 }
 
 // ── 레이더 차트 (시안 .radar 클래스 사용, n축 가변) ─────────────────────────
@@ -139,41 +135,6 @@ function CardHead({ title, desc, action }: { title: string; desc?: string; actio
       </div>
       {action && <div data-slot="card-action">{action}</div>}
     </div>
-  )
-}
-
-/** 요약 지표 4장 — 시안 stu_v1 의 .stat-card 마크업을 그대로 따른다.
- *  head(라벨+아이콘) → value → foot(설명+배지) → meter(막대+%) 순서를 바꾸지 말 것. */
-function StatRow({ stats }: { stats: DetailStat[] }) {
-  const ICONS: Record<string, IconType> = {
-    mint: LuClipboardCheck, sky: LuMessagesSquare, blue: LuRoute, pink: LuBoxes,
-  }
-  return (
-    <section className="stats" aria-label="학생 요약 지표">
-      {stats.map(s => {
-        const Icon = ICONS[s.tint] ?? LuInfo
-        return (
-          <article key={s.label} data-slot="card" className="stat-card">
-            <div data-slot="card-content">
-              <div className="stat-head">
-                <span className="stat-label">{s.label}</span>
-                <span className={`stat-icon ${s.tint}`}><Icon className="icon" /></span>
-              </div>
-              <div className="stat-value">{s.value}{s.unit && <small>{s.unit}</small>}</div>
-              <div className="stat-foot">
-                <span>{s.foot}</span>
-                {s.badge && <span className={`badge ${s.tint}`}>{s.badge}</span>}
-              </div>
-              {s.pct != null && (
-                <div className="stat-meter" style={meterVars(s.pct, s.tint)} aria-label={`${s.label} ${s.pct}%`}>
-                  <span className="stat-meter-track"><i /></span><b>{s.pct}%</b>
-                </div>
-              )}
-            </div>
-          </article>
-        )
-      })}
-    </section>
   )
 }
 
@@ -825,7 +786,7 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
   const type = getStudentTypeMeta(student)
   const activeTab = visibleTabs.some(t => t.key === tab) ? tab : visibleTabs[0].key
   const radar = getCompetencyRadar(student, type.tierLabel)
-  const stats = getDetailStats(student, student.studentType)
+  const stats = getStudentStatCards(student, student.studentType)
 
   return (
     <div className="sdv">
@@ -856,7 +817,8 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
         </div>
       )}
 
-      <StatRow stats={stats} />
+      {/* 요약 지표 5장은 학생 라운지와 같은 공용 컴포넌트 — 수정은 StudentStatCards 한 곳에서만 */}
+      <StudentStatCards stats={stats} />
 
       <div className="admin-tabs" role="tablist">
         {visibleTabs.map(t => {

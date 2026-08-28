@@ -798,6 +798,8 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-btn-danger-ghost:hover { background: #FDECEC; border-color: var(--color-danger); }
 .admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* 링크(<a>)는 disabled 속성이 없어서 상태 클래스로 막는다 */
+.admin-btn.is-disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
 
 /* ─── Chips (상태) ───────────────────────────────────────────────────── */
 .admin-chip {
@@ -872,6 +874,13 @@ input, textarea, select { font-family: var(--font); }
 .admin-search svg { color: var(--color-text-secondary); font-size: 14px; }
 .admin-search input { flex: 1; border: none; outline: none; font-size: 14px; color: var(--color-text); background: transparent; }
 .admin-toolbar-count { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+/* 목록 카드 바깥 우측 상단 — 선택 인쇄·엑셀 다운로드 */
+.admin-toolbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+.admin-check-all {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 700; color: var(--color-text-secondary); cursor: pointer;
+}
+.admin-check-all input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary); }
 
 /* ─── Forms ──────────────────────────────────────────────────────────── */
 .admin-field { display: flex; flex-direction: column; gap: 6px; }
@@ -1057,15 +1066,43 @@ input, textarea, select { font-family: var(--font); }
 .admin-journal-roster { overflow-x: auto; }
 .admin-journal-roster .admin-roster-head,
 .admin-journal-roster .admin-roster-row {
-  min-width: 1206px;
+  min-width: 1252px;
   gap: 10px;
-  grid-template-columns: 48px 96px 92px 104px 1fr 96px 88px 1.5fr 78px 176px;
+  grid-template-columns: 36px 48px 96px 92px 104px 1fr 96px 88px 1.5fr 78px 176px;
 }
 .admin-journal-roster .admin-roster-head { text-align: center; }
 .admin-journal-roster .admin-roster-cell { align-items: center; text-align: center; }
 .admin-journal-roster .admin-roster-cell .admin-chip,
 .admin-journal-roster .admin-roster-cell .admin-type-tag { align-self: center; }
 .admin-journal-topic { text-align: left !important; align-items: flex-start !important; }
+/* 로드맵 변경 요청함 — 체크·번호·이름·학번·학과·신청사항·신청일·상태·처리 */
+.admin-rmreq-roster .admin-roster-head,
+.admin-rmreq-roster .admin-roster-row {
+  min-width: 1180px;
+  gap: 10px;
+  grid-template-columns: 36px 48px 92px 104px 132px 1fr 150px 84px 148px;
+}
+.admin-rmreq-roster .admin-roster-head { text-align: center; }
+.admin-rmreq-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-rmreq-roster .admin-roster-cell .admin-chip { align-self: center; }
+.admin-rmreq-detail { text-align: left !important; align-items: flex-start !important; }
+.admin-rmreq-detail b { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.admin-rmreq-detail small {
+  display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical;
+  overflow: hidden; font-weight: 500; line-height: 1.5;
+}
+.admin-rmreq-actions { flex-direction: row !important; justify-content: center; gap: 6px !important; }
+
+/* 로드맵 편집 — 목표 직무·이행률 머리띠 (본문 3축은 공용 RoadmapAxisBoard 가 그린다) */
+.admin-rme-goal { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; }
+.admin-rme-goal strong { display: block; margin-top: 4px; font-size: 20px; font-weight: 800; color: var(--color-text); }
+.admin-rme-goal small { font-size: 13px; font-weight: 600; color: var(--color-text-secondary); }
+.admin-rme-meter { display: flex; align-items: center; gap: 10px; min-width: 320px; }
+.admin-rme-meter .admin-progress-track { flex: 1; }
+.admin-rme-meter em {
+  font-style: normal; font-size: 13px; font-weight: 800; white-space: nowrap;
+  font-variant-numeric: tabular-nums; color: var(--color-primary);
+}
 .admin-journal-roster .admin-journal-actions { flex-direction: row; justify-content: center; gap: 6px; }
 /* 작성 패널 — 상담 개요(읽기전용) + 입력 항목 */
 .admin-journal-brief {
@@ -1093,8 +1130,10 @@ input, textarea, select { font-family: var(--font); }
   padding: 18px;
   display: flex; flex-direction: column; gap: 12px;
 }
+.admin-record-item.is-checked { border-color: var(--color-primary); background: var(--color-primary-bg); }
 .admin-record-item-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .admin-record-item-student { display: flex; align-items: center; gap: 10px; }
+.admin-record-item-student .admin-check-cell { display: inline-flex; }
 .admin-record-item-student strong { display: block; font-size: 15px; font-weight: 800; color: var(--color-text); }
 .admin-record-item-student small { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
 .admin-record-item-meta { display: flex; align-items: center; gap: 6px; }
@@ -1217,6 +1256,11 @@ input, textarea, select { font-family: var(--font); }
   background: transparent; transition: background 0.12s;
 }
 .admin-roster-row:hover { background: var(--color-section-bg); }
+/* 담당 학생 목록 — 번호·학생·학과·학년·진단유형·학적·IAP진행률. 학과와 학년은 별도 열이다. */
+.admin-charge-roster .admin-roster-head,
+.admin-charge-roster .admin-roster-row {
+  grid-template-columns: 52px 1.1fr 1.4fr 0.6fr 1.4fr 0.8fr 1fr;
+}
 /* 학생현황 표(조교·교수 공유) — 번호·이름·학번·학년·대학·학과·상태·학생정보(보기). 중앙 정렬로 열 간격 균일 */
 .admin-student-roster .admin-roster-head,
 .admin-student-roster .admin-roster-row {
@@ -1427,17 +1471,6 @@ input, textarea, select { font-family: var(--font); }
 .admin-term-items { display: flex; flex-direction: column; gap: 8px; }
 .admin-term-items li { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; font-size: 13px; }
 .admin-term-item-title { font-weight: 700; color: var(--color-text); }
-
-.admin-pri, .admin-imp {
-  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--radius-pill);
-  font-size: 11px; font-weight: 800;
-}
-.admin-pri-P0 { background: #FDECEC; color: var(--color-danger); }
-.admin-pri-P1 { background: #FFF3E0; color: var(--color-warning); }
-.admin-pri-P2 { background: var(--color-primary-bg); color: var(--color-primary); }
-.admin-imp-필수 { background: var(--color-primary); color: #fff; }
-.admin-imp-중요 { background: var(--color-primary-bg); color: var(--color-primary); }
-.admin-imp-권장 { background: var(--color-section-bg); color: var(--color-text-secondary); border: 1px solid var(--color-border); }
 
 .admin-tag-override { background: #FFEDE4; color: var(--color-accent); border-color: #FCD9C6; }
 
@@ -2252,10 +2285,6 @@ input, textarea, select { font-family: var(--font); }
 .counsel-detail-aside { position: sticky; top: calc(var(--gnb-height) + 20px); }
 @media (max-width: 1360px) { .counsel-detail-layout { grid-template-columns: 1fr; } .counsel-detail-aside { position: static; } }
 
-.counsel-detail-h3 { font-size: 13px; font-weight: 800; color: var(--color-text-secondary); margin-bottom: 10px; }
-.counsel-detail-subhead { font-size: 14px; font-weight: 800; color: var(--color-title); margin: 18px 0 10px; padding-top: 16px; border-top: 1px solid var(--color-divider); }
-.counsel-detail-tag { font-size: 11px; font-weight: 700; color: var(--color-primary); background: var(--color-primary-bg); padding: 3px 8px; border-radius: var(--radius-pill); margin-left: 8px; }
-
 .counsel-detail-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 .counsel-detail-form-grid .is-wide { grid-column: 1 / -1; }
 .counsel-detail-form-grid label, .counsel-reassign-row label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
@@ -2264,41 +2293,7 @@ input, textarea, select { font-family: var(--font); }
 .counsel-action-buttons { display: flex; gap: 10px; justify-content: flex-end; }
 .counsel-reassign-row { display: flex; gap: 10px; align-items: flex-end; padding-top: 14px; border-top: 1px solid var(--color-divider); }
 .counsel-reassign-row label { flex: 1; }
-
-.counsel-diag-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-.counsel-bar { margin-bottom: 12px; }
-.counsel-bar-head { display: flex; justify-content: space-between; font-size: 13px; font-weight: 700; color: var(--color-text); margin-bottom: 5px; }
-.counsel-bar-head strong { color: var(--color-title); }
-.counsel-bar-track { height: 8px; border-radius: var(--radius-pill); background: var(--color-primary-bg); overflow: hidden; }
-.counsel-bar-track span { display: block; height: 100%; border-radius: var(--radius-pill); }
-
-.counsel-ai-comment { display: flex; gap: 12px; margin-top: 16px; padding: 14px 16px; border-radius: var(--radius-md); background: var(--color-section-bg); border: 1px solid var(--color-border); }
-.counsel-ai-comment svg { color: var(--color-primary); font-size: 16px; margin-top: 2px; }
 .counsel-ai-comment.is-coach svg { color: var(--color-success); }
-.counsel-ai-comment p { font-size: 14px; line-height: 1.65; color: var(--color-text); margin: 0; }
-.counsel-insight-list { display: flex; flex-direction: column; gap: 12px; margin-top: 14px; }
-.counsel-insight-item { padding: 12px 14px; border-radius: var(--radius-md); border: 1px solid var(--color-border); }
-.counsel-insight-tag { display: inline-block; font-size: 12px; font-weight: 800; color: var(--color-primary); margin-bottom: 4px; }
-.counsel-insight-item strong { display: block; font-size: 14px; font-weight: 800; color: var(--color-title); margin-bottom: 4px; }
-.counsel-insight-item p { font-size: 13px; line-height: 1.6; color: var(--color-text-secondary); margin: 0; }
-
-.counsel-job-row { display: grid; grid-template-columns: 84px 1fr auto; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--color-divider); font-size: 13px; }
-.counsel-job-row strong { font-weight: 800; color: var(--color-title); }
-.counsel-job-row span { color: var(--color-text-secondary); }
-.counsel-job-row em { font-weight: 800; font-style: normal; color: var(--color-primary); }
-
-.counsel-roadmap-cols { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 6px; }
-.counsel-roadmap-term { border: 1px solid var(--color-border); border-radius: var(--radius-md); padding: 14px; background: var(--color-bg); display: flex; flex-direction: column; gap: 10px; }
-.counsel-roadmap-term-head { display: flex; align-items: center; gap: 8px; }
-.counsel-roadmap-period { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
-.counsel-roadmap-headline { height: 38px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); font-size: 13px; font-weight: 700; color: var(--color-title); }
-.counsel-roadmap-item { border: 1px solid var(--color-divider); border-radius: var(--radius-sm); padding: 10px; display: flex; flex-direction: column; gap: 6px; background: var(--color-section-bg); }
-.counsel-roadmap-item-top { display: flex; gap: 6px; }
-.counsel-roadmap-item-top input { flex: 1; height: 34px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: var(--radius-xs); font-size: 13px; }
-.counsel-roadmap-item-selects { display: flex; gap: 6px; }
-.counsel-roadmap-item-selects select { flex: 1; height: 32px; border: 1px solid var(--color-border); border-radius: var(--radius-xs); font-size: 12px; background: #fff; }
-.counsel-roadmap-item textarea { border: 1px solid var(--color-border); border-radius: var(--radius-xs); padding: 7px 10px; font-size: 12px; resize: vertical; font-family: var(--font); }
-.counsel-roadmap-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 16px; }
 
 .counsel-questions-card { border: 1px solid var(--color-primary-light); }
 .counsel-questions-desc { font-size: 13px; line-height: 1.55; color: var(--color-text-secondary); margin-bottom: 14px; }
@@ -2443,6 +2438,8 @@ input, textarea, select { font-family: var(--font); }
 .print-toolbar { display: flex; justify-content: space-between; gap: 8px; max-width: 820px; margin: 0 auto 16px; }
 .print-missing { max-width: 820px; margin: 0 auto 16px; font-size: 14px; font-weight: 700; color: var(--color-text-secondary); }
 .print-sheet { max-width: 820px; margin: 0 auto; padding: 40px 44px; background: #fff; border: 1px solid var(--color-border); }
+/* 다건 인쇄 — 일지 1장 = 1페이지 */
+.print-sheet + .print-sheet { margin-top: 24px; }
 .print-head { text-align: center; padding-bottom: 18px; border-bottom: 2px solid var(--color-title); }
 .print-head h1 { font-size: 26px; font-weight: 800; letter-spacing: 6px; color: var(--color-title); }
 .print-head p { margin-top: 6px; font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
@@ -2464,7 +2461,8 @@ input, textarea, select { font-family: var(--font); }
 @media print {
   .print-page { padding: 0; background: #fff; }
   .print-toolbar { display: none; }
-  .print-sheet { max-width: none; margin: 0; padding: 0; border: 0; }
+  .print-sheet { max-width: none; margin: 0; padding: 0; border: 0; break-after: page; }
+  .print-sheet:last-child { break-after: auto; }
   .print-block p { min-height: 0; }
   @page { size: A4; margin: 16mm; }
 }

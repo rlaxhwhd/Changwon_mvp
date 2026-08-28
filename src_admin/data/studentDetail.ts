@@ -10,6 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { StudentData } from '../../src_v2/data/students'
 import type { RoadmapAxis, RoadmapAxisPlan } from '../../src_v2/data/schema/roadmap'
+import type { StudentStat } from '../../src_v2/components/StudentStatCards'
 import { computeAll, type Competency, type ScoreResult } from '../../src_v2/lib/scoring'
 import { DIAGNOSIS_MODULES, getRequiredTests, type DiagnosisModule, type StudentType } from '../../src_v2/data/careerProcess'
 import { getAttemptsByStudent } from './diagnosisAttempts'
@@ -294,28 +295,12 @@ export function getGoalPlan(student: StudentData): GoalPlan | null {
 
 // ── ⑥ 헤더 요약 지표 (시안 stats 행) ───────────────────────────────────────
 
-export interface DetailStat {
-  label: string
-  value: string
-  unit?: string
-  /** 0~100 진행률 (없으면 막대 미표시) */
-  pct?: number
-  foot: string
-  /** stat-foot 우측 배지 문구 (시안 .badge) */
-  badge?: string
-  /**
-   * 시안(stu_v1) 색 이름 — mint · sky · blue · pink · coral · violet · amber.
-   * ⚠ admin 토큰 이름(green/teal/…)을 넣으면 .stat-icon.{name} 규칙이 안 걸려 아이콘이 무색이 된다.
-   *   시안 이름 → DESIGN.md 팔레트 매핑은 StudentDetailView.css 상단 토큰 브리지가 한다.
-   */
-  tint: string
-}
-
 /**
- * 상세 헤더 KPI 4장 — 진단·상담·로드맵·비교과.
- * 각 값의 출처가 모두 다르므로 여기서 한 번에 모아 화면엔 완성된 배열만 넘긴다.
+ * 상세 헤더 요약 지표 5장 — 진단·상담·이행률·비교과·성장레벨.
+ * 화면(StudentStatCards)은 그리기만 하므로 문구까지 여기서 완성해 넘긴다.
+ * 카드 순서·종류는 학생 라운지(/v2/lounge)와 같다 — 같은 공용 컴포넌트를 쓴다.
  */
-export function getDetailStats(student: StudentData, type: StudentType): DetailStat[] {
+export function getStudentStatCards(student: StudentData, type: StudentType): StudentStat[] {
   const cards = getDiagnosisCards(student.id, type)
   const diagDone = cards.filter(c => c.state === '완료').length
   const counsel = getCounselOverview(student.id)
@@ -324,44 +309,62 @@ export function getDetailStats(student: StudentData, type: StudentType): DetailS
   const roadmap = getStudentRoadmap(student.id)
   const progress = roadmap?.progress.pct ?? 0
   const programs = getStudentPrograms(student.id)
+  const growth = student.growth
 
-  // 색 배정은 시안 stats 4장을 그대로 따른다 (진단=mint · 상담=sky · 이행률=blue · 비교과=pink).
   const allDiagDone = cards.length > 0 && diagDone === cards.length
-  return [
+  const stats: StudentStat[] = [
     {
+      kind: 'diagnosis',
       label: '진단 완료',
       value: String(diagDone),
       unit: `/${cards.length}`,
       pct: cards.length > 0 ? Math.round((diagDone / cards.length) * 100) : 0,
       foot: allDiagDone ? '대상 진단 모두 완료' : `미실시 ${cards.length - diagDone}건`,
       badge: allDiagDone ? '완료' : '진행 중',
-      tint: 'mint',
     },
     {
-      label: '상담 누적',
-      value: String(counselTotal),
+      kind: 'counsel',
+      label: '상담 현황',
+      total: String(counselTotal),
       unit: '건',
-      foot: `완료 ${counselDone} · 예정 ${counselTotal - counselDone}`,
-      badge: counselTotal > 0 ? `완료 ${counselDone}` : '이력 없음',
-      tint: 'sky',
+      foot: counselTotal > 0 ? `완료 ${counselDone} · 예정 ${counselTotal - counselDone}` : '이력 없음',
+      // 순서가 색을 정한다 — getCounselOverview 는 진로취업 · 심리 · 지도교수 순으로 준다.
+      channels: counsel.map(c => ({ label: c.channel, count: `${c.total}건` })),
     },
     {
+      kind: 'roadmap',
       label: '로드맵 이행률',
       value: String(progress),
       unit: '%',
       pct: progress,
       foot: roadmap ? `수행 ${roadmap.progress.done} / 전체 ${roadmap.progress.total}칸` : '로드맵 미생성',
       badge: roadmap ? `${roadmap.progress.done}칸 완료` : '없음',
-      tint: 'blue',
     },
     {
+      kind: 'program',
       label: '비교과 이수',
       value: String(programs.completed),
       unit: `/${programs.applied}`,
       pct: programs.applied > 0 ? Math.round((programs.completed / programs.applied) * 100) : 0,
       foot: programs.applied === 0 ? '신청 이력 없음' : `출석 ${programs.attended}건`,
       badge: programs.applied === 0 ? '없음' : `${programs.applied - programs.completed}건 남음`,
-      tint: 'pink',
     },
   ]
+
+  // 성장 레벨은 시드에 growth 블록이 있는 학생만 (승급 산식 미확정 — PROCESS.md §9)
+  if (growth) {
+    stats.push({
+      kind: 'level',
+      label: '성장 레벨',
+      levelUnit: 'LV',
+      level: String(growth.level),
+      tierLabel: '현재 성장 단계',
+      tier: growth.tier,
+      xp: `${growth.xp.toLocaleString('ko-KR')} XP`,
+      xpFoot: `다음 레벨까지 ${(growth.xpNext - growth.xp).toLocaleString('ko-KR')} XP`,
+      pct: growth.xpNext > 0 ? Math.round((growth.xp / growth.xpNext) * 100) : 0,
+    })
+  }
+
+  return stats
 }

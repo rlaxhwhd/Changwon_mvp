@@ -25,6 +25,15 @@
         "method": "대면",
         "topic": "진로 방향 설정 및 취업 준비 전략",
         "requestedAt": "2026-07-10T09:30:00+09:00"
+      },
+      {
+        "id": "req_021",
+        "type": "진로취업",
+        "status": "대기",
+        "method": "대면",
+        "topic": "목표 직무 확정 후 직무기초역량 갭 점검",
+        "requestedAt": "2026-08-26T09:40:00+09:00",
+        "assignedCounselorId": "career_kim"
       }
     ]
   },
@@ -54,6 +63,21 @@
         "method": "대면",
         "topic": "직무 역량 개발 및 기업 분석",
         "requestedAt": "2026-07-10T10:30:00+09:00"
+      },
+      {
+        "id": "req_022",
+        "type": "진로취업",
+        "status": "확정",
+        "method": "대면",
+        "topic": "하반기 공채 지원전략 및 자기소개서 클리닉",
+        "requestedAt": "2026-08-25T11:10:00+09:00",
+        "assignedCounselorId": "career_kim",
+        "slot": {
+          "date": "2026-08-28",
+          "start": "10:00",
+          "end": "10:40",
+          "place": "진로취업지원센터 상담실 1"
+        }
       }
     ]
   },
@@ -98,6 +122,21 @@
           "end": "17:00",
           "place": "공학관 706호"
         }
+      },
+      {
+        "id": "req_027",
+        "type": "진로취업",
+        "status": "확정",
+        "method": "비대면",
+        "topic": "학업·진로 병행 점검 및 참여 계획 재설정",
+        "requestedAt": "2026-08-27T09:15:00+09:00",
+        "assignedCounselorId": "career_kim",
+        "slot": {
+          "date": "2026-09-01",
+          "start": "11:00",
+          "end": "11:40",
+          "place": "온라인 (Zoom 링크 안내)"
+        }
       }
     ]
   },
@@ -132,6 +171,21 @@
           "start": "14:30",
           "end": "15:10",
           "place": "진로취업지원센터 상담실 1"
+        }
+      },
+      {
+        "id": "req_023",
+        "type": "진로취업",
+        "status": "확정",
+        "method": "대면",
+        "topic": "전공기반 진출분야 분석 및 직업군 좁히기",
+        "requestedAt": "2026-08-26T16:20:00+09:00",
+        "assignedCounselorId": "career_kim",
+        "slot": {
+          "date": "2026-08-28",
+          "start": "13:30",
+          "end": "14:10",
+          "place": "진로취업지원센터 상담실 2"
         }
       }
     ]
@@ -182,6 +236,21 @@
           "start": "15:00",
           "end": "16:00",
           "place": "공학관 706호"
+        }
+      },
+      {
+        "id": "req_024",
+        "type": "진로취업",
+        "status": "완료",
+        "method": "대면",
+        "topic": "채용연계 인턴십 전형 대비 점검",
+        "requestedAt": "2026-08-18T10:00:00+09:00",
+        "assignedCounselorId": "career_kim",
+        "slot": {
+          "date": "2026-08-21",
+          "start": "15:00",
+          "end": "15:50",
+          "place": "진로취업지원센터 상담실 1"
         }
       }
     ]

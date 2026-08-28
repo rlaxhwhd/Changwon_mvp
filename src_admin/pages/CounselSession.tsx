@@ -1,4 +1,4 @@
-import { LuArrowLeft, LuCheck, LuChevronRight, LuClipboardCheck, LuFileText, LuHistory, LuIdCard, LuMessageSquareMore, LuQuote, LuSquarePen, LuUserX } from 'react-icons/lu'
+import { LuArrowLeft, LuCheck, LuChevronRight, LuClipboardCheck, LuFileText, LuQuote, LuSquarePen, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getActiveCounselor, getActiveCounselorId } from '../data/counselors'
@@ -8,100 +8,15 @@ import {
   completeRequest,
 } from '../data/counselRequests'
 import type { CounselRequest } from '../data/counselRequests'
-import { getRecordsByStudent, getRecordByRequest, upsertRecord } from '../data/counselRecords'
+import { getRecordByRequest, upsertRecord } from '../data/counselRecords'
 import type { CounselRecord } from '../data/counselRecords'
-import { studentTypeClass } from '../data/studentRoster'
-import { STUDENTS, getStudentTypeMeta } from '../../src_v2/data/students'
+import { STUDENTS } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
 import EmptyState from '../components/EmptyState'
-import StudentDiagnosticDetail from '../components/StudentDiagnosticDetail'
+import StudentDetailView from '../components/StudentDetailView'
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
-}
-
-/** 좌측 — 학생 진단결과·프로필 (src_v2 학생 데이터 공유 읽기) */
-function StudentPanel({ student }: { student: StudentData }) {
-  const type = getStudentTypeMeta(student)
-  return (
-    <div className="admin-session-student">
-      <div className="admin-session-student-head">
-        <div>
-          <strong>{student.name}</strong>
-          <small>
-            {student.grade}학년 · {student.major}
-          </small>
-          <div className="admin-session-tags">
-            <span className={studentTypeClass(student.studentType)}>{student.studentType}</span>
-            <span className="admin-tag">{type.label}</span>
-          </div>
-        </div>
-      </div>
-
-      <dl className="admin-kv">
-        <div>
-          <dt>학점</dt>
-          <dd>{student.gpa}</dd>
-        </div>
-        <div>
-          <dt>어학</dt>
-          <dd>{student.language}</dd>
-        </div>
-        <div>
-          <dt>목표 직무</dt>
-          <dd>{student.targetRole}</dd>
-        </div>
-        <div>
-          <dt>목표 기업</dt>
-          <dd>
-            {student.targetCompany.name} <em>({student.targetCompany.matchScore}%)</em>
-          </dd>
-        </div>
-      </dl>
-
-      <div className="admin-session-block">
-        <h4>상담 방향</h4>
-        <p className="admin-session-note">
-          <strong>{type.goal}</strong>
-          <br />
-          {type.focus}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-/** 좌측 하단 — 이전 상담 이력 */
-function HistoryPanel({ studentId }: { studentId: string }) {
-  const records = getRecordsByStudent(studentId)
-  return (
-    <div className="admin-session-block">
-      <h4>
-        <LuHistory /> 이전 상담 이력
-      </h4>
-      {records.length === 0 ? (
-        <p className="admin-session-empty">이전 상담 기록이 없습니다.</p>
-      ) : (
-        <ul className="admin-history-list">
-          {records.map(r => (
-            <li key={r.id} className="admin-history-item">
-              <div className="admin-history-top">
-                <span className="admin-history-date">{r.date}</span>
-                <span className="admin-tag admin-tag-soft">{r.type}</span>
-              </div>
-              <strong className="admin-history-topic">{r.topic}</strong>
-              <p className="admin-history-summary">{r.summary}</p>
-              {r.comment && (
-                <p className="admin-history-comment">
-                  <LuMessageSquareMore /> {r.comment}
-                </p>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
-    </div>
-  )
 }
 
 /** 우측 — 상담 기록지 작성 폼 */
@@ -287,19 +202,18 @@ export default function CounselSession() {
       </header>
 
       <div className="admin-session-split">
-        {/* 좌측: 학생 진단·프로필·이력 */}
-        <aside className="admin-card admin-session-left">
-          <div className="admin-card-head">
-            <h2>
-              <LuIdCard /> 학생 진단결과
-            </h2>
-            <Link to={`/students`} className="admin-card-more">
-              학생 상세 <LuChevronRight />
-            </Link>
-          </div>
-          <StudentPanel student={student} />
-          <StudentDiagnosticDetail student={student} />
-          <HistoryPanel studentId={student.id} />
+        {/* 좌측: 학생 상세 — 학생관리 상세 페이지·조교 '보기' 모달과 같은 공용 뷰다.
+            진단·상담·로드맵·비교과를 이 한 컴포넌트가 소유한다(화면별 복붙 금지). */}
+        <aside className="admin-session-left">
+          <StudentDetailView
+            studentId={student.id}
+            role={counselor.role}
+            headerAction={
+              <Link to={`/students/${student.id}`} className="admin-btn admin-btn-ghost">
+                학생 상세 <LuChevronRight />
+              </Link>
+            }
+          />
         </aside>
 
         {/* 우측: 상담 기록지 */}

@@ -191,59 +191,6 @@
       color: var(--muted-foreground);
       line-height: 20px
     }
-.sdv .stat-foot {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-      font-size: 13px;
-      line-height: 18px
-    }
-.sdv .stat-foot span {
-      color: var(--muted-foreground)
-    }
-.sdv .stat-meter {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 8px;
-      margin: 16px 0 0
-    }
-.sdv .stat-meter-track {
-      height: 10px;
-      border-radius: 6px;
-      background: repeating-linear-gradient(90deg, var(--muted) 0 12px, transparent 12px 16px);
-      overflow: visible
-    }
-.sdv .stat-meter-track>i {
-      position: relative;
-      display: block;
-      width: var(--value);
-      height: 100%;
-      border-radius: 6px;
-      background: repeating-linear-gradient(90deg, var(--accent) 0 12px, transparent 12px 16px);
-      transition: width 700ms cubic-bezier(.2, .8, .2, 1)
-    }
-.sdv .stat-meter-track>i::after {
-      content: "";
-      position: absolute;
-      right: 0;
-      top: 50%;
-      width: 6px;
-      height: 16px;
-      border: 2px solid var(--card);
-      border-radius: 4px;
-      background: var(--accent);
-      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
-      transform: translate(50%, -50%)
-    }
-.sdv .stat-meter b {
-      min-width: 34px;
-      color: var(--accent);
-      font-size: 12px;
-      line-height: 18px;
-      text-align: right
-    }
 .sdv .dashboard-grid {
       display: grid;
       grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -1222,9 +1169,6 @@
       height: 100%;
       display: flex;
       flex-direction: column
-    }
-.sdv .stat-card .stat-meter {
-      margin-top: auto
     }
 .sdv .journey-card {
       grid-column: span 12;

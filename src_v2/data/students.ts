@@ -31,6 +31,16 @@ export interface TargetCompany {
   requirements: TargetReq[]
 }
 export interface SWItem { label: string; value: number; type: 'strength' | 'weakness' }
+/** 성장 레벨 카드 값. 승급 산식이 확정되면 이 구조를 데이터 층에서 계산해 채운다. */
+export interface GrowthLevel {
+  level: number
+  /** 현재 성장 단계 이름 */
+  tier: string
+  /** 현재 누적 XP */
+  xp: number
+  /** 다음 레벨 도달 XP */
+  xpNext: number
+}
 export interface GapBadge { label: string; type: 'required' | 'preferred' | 'weight' }
 export interface GapItem {
   title: string
@@ -145,6 +155,8 @@ export interface StudentData {
   finalRoadmap: FinalRoadmap
   /** 점수 계산식(lib/scoring.ts)이 사용하는 9개 raw 입력값. JSON에서 직접 주입. */
   scoreInputs: StudentInputs
+  /** 성장 레벨(XP) — 요약 지표 5번째 카드. 레벨 산식·단계명 체계가 아직 없어 시드 값을 그대로 읽는다. */
+  growth?: GrowthLevel
   /** 상담사 상세 화면 — AI가 학생 정보·고민을 토대로 상담사에게 추천하는 질문. */
   counselorQuestions?: string[]
   /** 역량 점수(0~100) — 상담 접수함 위험 단계 트랙 분류 기준. */

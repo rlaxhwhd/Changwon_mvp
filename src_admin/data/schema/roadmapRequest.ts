@@ -12,6 +12,8 @@ export interface RoadmapChangeRequest {
   id: string
   /** 대상 학생 id (StudentData.id) */
   studentId: string
+  /** 신청 시점 학번 스냅샷 — 동명이인을 목록에서 가르는 유일한 값이다(CLAUDE.md 2조). */
+  studentNo: string
   studentName: string
   studentMajor: string
   /** 변경을 원하는 축(IAP 실행·핵심역량 수행·내 성장 활동). 전반이면 생략 가능. */

@@ -905,6 +905,12 @@
     "sprint2Score": 82,
     "psychCounselCount": 0
   },
+  "growth": {
+    "level": 31,
+    "tier": "Career Runner",
+    "xp": 1840,
+    "xpNext": 2400
+  },
   "counselRequests": [
     {
       "id": "req_002",
@@ -964,6 +970,15 @@
         "end": "11:00",
         "place": "경영관 302호"
       }
+    },
+    {
+      "id": "req_026",
+      "type": "진로취업",
+      "status": "대기",
+      "method": "비대면",
+      "topic": "포트폴리오 직무 증빙 구성 상담",
+      "requestedAt": "2026-08-27T13:05:00+09:00",
+      "assignedCounselorId": "career_kim"
     }
   ]
 }

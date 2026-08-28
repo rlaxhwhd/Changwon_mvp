@@ -77,6 +77,8 @@ const router = createBrowserRouter(
       element: <RequireLogin />,
       children: [
         // 인쇄면 — 레이아웃(GNB·사이드바) 밖에 두어 화면 그대로가 인쇄물이 된다.
+        // 다건(?ids=)을 :recordId 보다 먼저 둔다 — 'print'가 id로 잡히지 않게.
+        { path: '/counsel/records/print', element: <CounselRecordPrint /> },
         { path: '/counsel/records/:recordId/print', element: <CounselRecordPrint /> },
         {
           element: <Layout />,
@@ -95,8 +97,8 @@ const router = createBrowserRouter(
                 { path: '/counsel/records', element: <CounselRecords /> },
                 { path: '/counsel/groups', element: <GroupCounsels /> },
                 { path: '/counsel/stats', element: <CounselStats /> },
+                { path: '/diagnosis/status', element: <DiagnosisStatus /> },
                 { path: '/students', element: <StudentList /> },
-                { path: '/students/diagnostics', element: <DiagnosisStatus /> },
                 { path: '/students/:id', element: <StudentDetail /> },
                 { path: '/settings/availability', element: <SettingsAvailability /> },
               ],

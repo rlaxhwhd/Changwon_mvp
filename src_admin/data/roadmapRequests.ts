@@ -61,7 +61,16 @@ export function markRoadmapRequestHandled(id: string): void {
 
 /** 대기 → 반려 */
 export function rejectRoadmapRequest(id: string): void {
-  updateRequest(id, { status: '반려', handledAt: new Date().toISOString() })
+  rejectRoadmapRequests([id])
+}
+
+/** 대기 → 반려 (여러 건 한 번에). 이미 처리된 건은 건드리지 않는다. */
+export function rejectRoadmapRequests(ids: string[]): void {
+  const target = new Set(ids)
+  const handledAt = new Date().toISOString()
+  persist(getRoadmapRequests().map(r =>
+    target.has(r.id) && r.status === '대기' ? { ...r, status: '반려' as const, handledAt } : r,
+  ))
 }
 
 export type { RoadmapChangeRequest, RoadmapRequestStatus }

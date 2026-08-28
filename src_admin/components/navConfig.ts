@@ -3,7 +3,7 @@ import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardC
 // ─────────────────────────────────────────────────────────────────────────
 // 교직원(백오피스) 포털 네비 단일 소스 — 상담사·교수·조교 공용.
 // 역할(StaffRole)로 섹션과 하위 항목을 필터한다 = 현행 SY_MENU_AUTH(역할↔메뉴) 계승.
-//   상담사(career/psych): 홈 → 상담 관리 → 학생 관리 → 로드맵/채용/비교과[career] → 설정
+//   상담사(career/psych): 홈 → 진단 관리 → 상담 관리 → 학생 관리 → 로드맵/채용/비교과[career] → 설정
 //   교수(professor): SPEC §3-5   조교(assistant): SPEC §3-2
 // [career] 표시 섹션은 진로상담사 전용. 설정의 "가능 시간대"는 상담사 전용(child roles).
 // ─────────────────────────────────────────────────────────────────────────
@@ -45,6 +45,16 @@ const ALL_SECTIONS: NavSection[] = [
     children: [],
   },
   {
+    id: 'diagnosis',
+    label: '진단 관리',
+    roles: COUNSELOR,
+    basePaths: ['/diagnosis'],
+    icon: LuClipboardCheck,
+    children: [
+      { label: '검사 현황', path: '/diagnosis/status', icon: LuClipboardCheck },
+    ],
+  },
+  {
     id: 'counsel',
     label: '상담 관리',
     roles: COUNSELOR,
@@ -67,10 +77,8 @@ const ALL_SECTIONS: NavSection[] = [
     basePaths: ['/students'],
     path: '/students',
     icon: LuUsers,
-    children: [
-      { label: '담당 학생 목록', path: '/students', icon: LuUsers },
-      { label: '검사 현황', path: '/students/diagnostics', icon: LuClipboardCheck },
-    ],
+    // 하위 항목은 '담당 학생 목록' 하나뿐이라 섹션 링크(path)와 중복된다 → 드롭다운을 두지 않는다.
+    children: [],
   },
   {
     id: 'roadmap',

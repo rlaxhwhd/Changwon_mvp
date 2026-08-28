@@ -20,25 +20,23 @@ export interface RoadmapAxisMeta {
   desc: string
   /** 이 축이 읽는 재료 (PROCESS.md §6-1) */
   source: string
-  /** DESIGN.md 토큰 이름 */
-  tint: string
   /** 학기 중 칸이 늘어나는 축인가 — IAP 만 true */
   growable: boolean
 }
 
 export const ROADMAP_AXIS_MAP: Record<RoadmapAxis, RoadmapAxisMeta> = {
   IAP: {
-    code: 'IAP', label: 'IAP 실행', tint: 'green', growable: true,
+    code: 'IAP', label: 'IAP 실행', growable: true,
     desc: '비교과 프로그램 · 후속진단 · 상담 신청',
     source: '진단·상담 결과',
   },
   CORE: {
-    code: 'CORE', label: '핵심역량 수행', tint: 'blue', growable: false,
+    code: 'CORE', label: '핵심역량 수행', growable: false,
     desc: '학과 개설 강의를 목표 직무에 맞춰 좁힌 수강 계획',
     source: '교과목·학과',
   },
   GROWTH: {
-    code: 'GROWTH', label: '내 성장 활동', tint: 'purple', growable: false,
+    code: 'GROWTH', label: '내 성장 활동', growable: false,
     desc: '자격증 · 공모전 · 어학 · AI 자소서 등 스펙업',
     source: '외부활동 스펙',
   },

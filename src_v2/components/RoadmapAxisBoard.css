@@ -1,10 +1,29 @@
-/* 로드맵 3축 보드 — 학생·교직원 공용. 두 SPA 토큰만 참조하고 새 색을 만들지 않는다. */
+/* 로드맵 3축 보드 — 학생·교직원 공용.
+   시안: /v2/lounge '목표 달성 계획' 카드의 .goal-plan-column.
+   두 SPA 는 토큰 이름이 다르다(v2 --goal-N / admin --green·--blue·--purple).
+   var() 폴백 사슬로 각 SPA 가 이미 가진 토큰만 고른다 — 새 색을 만들지 않는다.
+   admin 은 '텍스트는 --on-* 잉크' 규칙이 있어 면색(--axis-color)과 글자색(--axis-ink)을 나눈다. */
 
 .rab {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  align-items: start;
+  gap: 12px;
+}
+
+.rab-axis.is-IAP {
+  --axis-color: var(--goal-1, var(--green, #24B37A));
+  --axis-soft:  var(--goal-1-soft, var(--green-bg, #DFF5EA));
+  --axis-ink:   var(--goal-1, var(--on-green, #157A52));
+}
+.rab-axis.is-CORE {
+  --axis-color: var(--goal-2, var(--blue, #3B82F6));
+  --axis-soft:  var(--goal-2-soft, var(--blue-bg, #E8F1FF));
+  --axis-ink:   var(--goal-2, var(--on-blue, #1A5FCC));
+}
+.rab-axis.is-GROWTH {
+  --axis-color: var(--goal-3, var(--purple, #8B63D9));
+  --axis-soft:  var(--goal-3-soft, var(--purple-bg, #EFE6FB));
+  --axis-ink:   var(--goal-3, var(--on-purple, #6739B8));
 }
 
 .rab-empty {
@@ -12,142 +31,182 @@
   padding: 28px 16px;
   border: 1px dashed var(--color-border, #E5E8EC);
   border-radius: 12px;
-  color: var(--text-sub, #6B7683);
-  font-size: 13.5px;
+  color: var(--color-text-sub, var(--color-text-secondary, #6B7683));
+  font-size: 13px;
   text-align: center;
 }
 
 .rab-axis {
-  display: flex;
-  flex-direction: column;
   min-width: 0;
-  padding: 16px;
+  padding: 14px;
   border: 1px solid var(--color-border, #E5E8EC);
-  border-top: 3px solid var(--axis-color);
   border-radius: 12px;
-  background: var(--bg-card, #FFF);
+  background: color-mix(in srgb, var(--axis-soft) 42%, var(--color-bg, #FFF));
 }
 
-.rab-axis-head { display: flex; flex-direction: column; gap: 6px; }
+/* ── 축 머리 ── */
+.rab-axis-head {
+  min-height: 48px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
 
-.rab-axis-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.rab-axis-title h3 {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-  color: var(--axis-color);
+.rab-axis-mark {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--axis-soft);
+  color: var(--axis-ink);
+}
+.rab-axis-mark svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.rab-axis-copy { min-width: 0; flex: 1; }
+.rab-axis-copy b {
+  display: block;
+  color: var(--axis-ink);
+  font-size: 14px;
+  font-weight: 700;
+}
+.rab-axis-copy span {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-sub, var(--color-text-secondary, #6B7683));
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+/* 축별 수행 칸 수 — 상단 이행률(목표 직무 카드)의 축 단위 내역 */
+.rab-axis-count {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  color: var(--axis-ink);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
 
 .rab-badge-edit {
-  padding: 2px 7px;
+  display: inline-block;
+  margin-bottom: 8px;
+  padding: 2px 8px;
   border-radius: 999px;
   background: var(--axis-soft);
-  color: var(--axis-color);
+  color: var(--axis-ink);
   font-size: 11px;
   font-weight: 700;
 }
 
-.rab-axis-desc {
-  margin: 0;
-  color: var(--text-sub, #6B7683);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.rab-axis-meter { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
-.rab-axis-count {
-  flex: none;
-  font-size: 12px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--text-sub, #6B7683);
-}
-.rab-axis-bar {
-  flex: 1;
-  height: 6px;
-  min-width: 0;
-  border-radius: 999px;
-  background: var(--axis-soft);
-  overflow: hidden;
-}
-.rab-axis-bar i { display: block; height: 100%; border-radius: 999px; background: var(--axis-color); }
-.rab-axis-pct {
-  flex: none;
-  font-size: 12px;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
-  color: var(--axis-color);
-}
-
 .rab-axis-headline {
-  margin: 12px 0 0;
-  padding: 9px 11px;
-  border-radius: 9px;
-  background: var(--axis-soft);
-  color: var(--axis-color);
-  font-size: 12.5px;
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: var(--color-bg, #FFF);
+  color: var(--axis-ink);
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.5;
 }
 
-.rab-cells { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
+/* ── 칸 ── */
+.rab-cells { display: grid; gap: 6px; }
+
+/* 편집 화면이 넘긴 조작 영역 (axisFooter). 읽기 전용 화면에는 아예 없다. */
+.rab-axis-foot { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 
 .rab-cell {
-  display: grid;
-  grid-template-columns: 24px minmax(0, 1fr);
-  gap: 4px 10px;
-  padding: 10px 11px;
+  width: 100%;
+  min-height: 48px;
+  padding: 8px;
   border: 1px solid var(--color-border, #E5E8EC);
   border-radius: 10px;
-  background: var(--bg-card, #FFF);
+  background: var(--color-bg, #FFF);
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  font: inherit;
+  transition: border-color 180ms ease;
 }
 .rab-cell.is-clickable { cursor: pointer; }
 .rab-cell.is-clickable:hover { border-color: var(--axis-color); }
 
-.rab-cell-check {
+/* 수행 여부 체크 — 우선순위 글자(P0/P1)를 대신한다 */
+.rab-cell-box {
+  justify-self: center;
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
-  border: 1px solid var(--color-border, #E5E8EC);
-  border-radius: 7px;
-  color: var(--text-sub, #6B7683);
-  font-size: 10.5px;
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, var(--axis-color) 44%, var(--color-border, #E5E8EC));
+  border-radius: 6px;
+  background: var(--color-bg, #FFF);
+  color: #FFF;
+  font-size: 12px;
   font-weight: 900;
+  line-height: 1;
 }
-.rab-cell.is-done .rab-cell-check {
+.rab-cell.is-done .rab-cell-box {
   border-color: var(--axis-color);
   background: var(--axis-color);
-  color: #FFF;
-  font-size: 13px;
 }
+.rab-cell.is-done .rab-cell-box::before { content: "✓"; }
 
-.rab-cell-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
-.rab-cell-title { font-size: 13px; font-weight: 700; line-height: 1.45; overflow-wrap: anywhere; }
-.rab-cell.is-done .rab-cell-title { color: var(--text-sub, #6B7683); }
-.rab-cell-why {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  line-clamp: 2;
-  -webkit-box-orient: vertical;
+.rab-cell-copy { min-width: 0; }
+.rab-cell-copy b {
+  display: block;
   overflow: hidden;
-  color: var(--text-sub, #6B7683);
-  font-size: 11.5px;
-  line-height: 1.5;
+  color: var(--color-text, #1D2433);
+  font-size: 12px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.rab-cell-copy small {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--color-text-sub, var(--color-text-secondary, #6B7683));
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.rab-cell-tags { grid-column: 2; display: flex; flex-wrap: wrap; gap: 4px; }
-.rab-tag {
-  padding: 2px 7px;
-  border: 1px solid var(--color-border, #E5E8EC);
-  border-radius: 999px;
-  color: var(--text-sub, #6B7683);
-  font-size: 10.5px;
+.rab-cell-side { display: flex; align-items: center; gap: 6px; }
+
+.rab-cell-status {
+  color: var(--goal-status-active, var(--on-green, #157A52));
+  font-size: 12px;
   font-weight: 700;
+  white-space: nowrap;
 }
-.rab-tag.req { border-color: var(--axis-color); background: var(--axis-soft); color: var(--axis-color); }
-.rab-tag.rec { border-color: var(--axis-soft); background: var(--axis-soft); color: var(--axis-color); }
+.rab-cell-status.is-planned { color: var(--goal-status-planned, var(--on-yellow, #8A5D0A)); }
+
+/* 비교과 편입 값 — 이행률 분모를 좌우하므로 남긴다 (PROCESS.md §6-4) */
+.rab-entry {
+  padding: 2px 7px;
+  border: 1px solid var(--axis-soft);
+  border-radius: 999px;
+  background: var(--axis-soft);
+  color: var(--axis-ink);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.rab-entry.is-req { border-color: var(--axis-color); }
 
 @media (max-width: 1180px) {
   .rab { grid-template-columns: minmax(0, 1fr); }
