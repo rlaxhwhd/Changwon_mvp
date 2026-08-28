@@ -1,643 +1,187 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Modal from '../components/Modal'
-import { getActiveStudent } from '../data/students'
-import { computeAll, type Competency } from '../lib/scoring'
 import './Main.css'
 
-/** Main 종합 역량 레이더 — 5축 표시 순서 (디자인 유지, 텍스트/수치만 동적화) */
-const MAIN_RADAR_ORDER: Competency[] = ['취업', '직무', '자기관리', '성장', '진로']
-
-/* ── Mock Data ─────────────────────────────────────────────────── */
-const RANKING = [
-  { rank: 1, name: '박지민', xp: 2340 },
-  { rank: 2, name: '이서연', xp: 2210 },
-  { rank: 3, name: '최민수', xp: 2100 },
-  { rank: 4, name: '정하늘', xp: 1980 },
-  { rank: 5, name: '한도윤', xp: 1920 },
-]
-
-const MY_RANK = { rank: 12, total: 45, name: getActiveStudent().name, xp: 1850 }
-
-/* 학과 랭킹 전체 보기(모달)용 — TOP5 이후 순위까지 */
-const RANKING_FULL = [
-  ...RANKING,
-  { rank: 6, name: '오지호', xp: 1890 },
-  { rank: 7, name: '윤서아', xp: 1870 },
-  { rank: 8, name: '강민재', xp: 1840 },
-  { rank: 9, name: '임수빈', xp: 1810 },
-  { rank: 10, name: '서준오', xp: 1780 },
-  { rank: 11, name: '조은우', xp: 1760 },
-  { rank: MY_RANK.rank, name: MY_RANK.name, xp: MY_RANK.xp, me: true },
-]
-
-const RECOMMENDED_PROGRAMS = [
-  { id: 1, title: '데이터 기초 프로그래밍 교육', category: '취업', dDay: 5, image: '/비교과프로그램1.png' },
-  { id: 4, title: '자기탐색으로 개인 역량 찾기', category: '진로', dDay: 3, image: '/비교과프로그램4.png' },
-  { id: 2, title: '데이터 직무역량 개발 교육', category: '취업', dDay: 12, image: '/비교과프로그램2.png' },
-  { id: 3, title: 'ChatGPT 서비스의 발전 방향', category: '진로', dDay: 20, image: '/비교과프로그램3.png' },
-]
-
-const CAT_COLORS: Record<string, string> = {
-  취업: '#2E5BFF',
-  진로: '#22C55E',
-  어학: '#F59E0B',
-  창업: '#EF4444',
-}
-
-/* 밝은 로고 배경이면 글자색을 네이비로 (가독성) */
-function logoTextColor(hex: string): string {
-  const m = /^#?([0-9a-fA-F]{6})$/.exec(hex)
-  if (!m) return '#fff'
-  const n = parseInt(m[1], 16)
-  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255
-  const brightness = (r * 299 + g * 587 + b * 114) / 1000
-  return brightness > 180 ? '#1C2442' : '#fff'
-}
-
-/* 활성 학생의 추천 공고 4개 + 강조 배지(마감임박·HOT) */
-function buildRecommendedJobs() {
-  const jobs = getActiveStudent().jobs.slice(0, 4)
-  // 마감일이 가장 이른 공고 → 마감임박
-  const soonest = jobs.reduce((min, j) => (j.deadline < min ? j.deadline : min), jobs[0]?.deadline ?? '')
-  return jobs.map(j => ({
-    id: j.id,
-    company: j.company,
-    initial: j.initial,
-    color: j.color,
-    textColor: logoTextColor(j.color),
-    role: j.role,
-    match: j.match,
-    deadline: j.deadline,
-    hot: j.match >= 88,
-    urgent: j.deadline === soonest,
-  }))
-}
-const RECOMMENDED_JOBS = buildRecommendedJobs()
-
-const NOTICES = [
-  { label: '2024 하계 현장실습 참여자 모집', date: '05.20' },
-  { label: '직무 특강: "빅데이터 개발자 취업 준비"', date: '05.18' },
-  { label: 'AI 자소서 첨삭 이벤트 안내', date: '05.17' },
-]
-
-interface RadarAxisData { label: string; value: number }
-
-/* ── Polygon Radar Chart (n축 가변, 디자인 유지) ────────────────── */
-function RadarChart({ axes }: { axes: RadarAxisData[] }) {
-  const cx = 100, cy = 100, r = 72
-  const n = axes.length
-
-  const pt = (i: number, ratio: number) => {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2
-    return {
-      x: cx + r * ratio * Math.cos(angle),
-      y: cy + r * ratio * Math.sin(angle),
-    }
-  }
-
-  const gridLevels = [0.25, 0.5, 0.75, 1.0]
-  const dataPoints = axes.map((ax, i) => pt(i, ax.value))
-  const dataPath = dataPoints.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
-  const outerPoints = axes.map((_, i) => pt(i, 1.0))
-  const outerPath = outerPoints.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
-
-  return (
-    <svg viewBox="-50 -10 300 220" className="mn-radar-svg">
-      <defs>
-        {/* 홀로그램 메인 그라데이션 */}
-        <linearGradient id="holo-main" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stopColor="#7B6EFF" stopOpacity="0.9" />
-          <stop offset="30%"  stopColor="#4A90FF" stopOpacity="0.85" />
-          <stop offset="60%"  stopColor="#00D4FF" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.9" />
-        </linearGradient>
-        {/* 광택 오버레이 그라데이션 */}
-        <linearGradient id="holo-sheen" x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.35" />
-          <stop offset="40%"  stopColor="#C4B5FD" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.25" />
-        </linearGradient>
-        {/* 방사형 내부 광원 */}
-        <radialGradient id="holo-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.4" />
-          <stop offset="60%"  stopColor="#818CF8" stopOpacity="0.1" />
-          <stop offset="100%" stopColor="#818CF8" stopOpacity="0" />
-        </radialGradient>
-        {/* 외곽 글로우 필터 */}
-        <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        {/* 클리핑 마스크 */}
-        <clipPath id="data-clip">
-          <path d={dataPath} />
-        </clipPath>
-      </defs>
-
-      {/* 배경 육각형 (가장 바깥 그리드에 연한 틴트) */}
-      <path d={outerPath} fill="url(#holo-main)" fillOpacity="0.06" />
-
-      {/* Grid rings */}
-      {gridLevels.map((lv, li) => (
-        <polygon key={li}
-          points={axes.map((_, i) => { const p = pt(i, lv); return `${p.x},${p.y}` }).join(' ')}
-          fill="none"
-          stroke={lv === 1.0 ? '#A5B4FC' : '#C7D2FE'}
-          strokeWidth={lv === 1.0 ? 1.2 : 0.8}
-          strokeOpacity={lv === 1.0 ? 0.7 : 0.5}
-        />
-      ))}
-
-      {/* Axes */}
-      {axes.map((_, i) => {
-        const outer = pt(i, 1.0)
-        return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#C7D2FE" strokeWidth="0.8" strokeOpacity="0.6" />
-      })}
-
-      {/* 홀로그램 데이터 채우기 — 메인 */}
-      <path d={dataPath} fill="url(#holo-main)" fillOpacity="0.55" />
-      {/* 광택 오버레이 */}
-      <path d={dataPath} fill="url(#holo-sheen)" fillOpacity="1" />
-      {/* 내부 광원 */}
-      <path d={dataPath} fill="url(#holo-glow)" fillOpacity="1" />
-
-      {/* 외곽선 — 글로우 효과 */}
-      <path d={dataPath} fill="none" stroke="#818CF8" strokeWidth="3.5" strokeOpacity="0.3" filter="url(#glow-filter)" />
-      <path d={dataPath} fill="none" stroke="url(#holo-main)" strokeWidth="1.8" />
-
-      {/* 꼭짓점 도트 */}
-      {dataPoints.map(({ x, y }, i) => (
-        <g key={i}>
-          <circle cx={x} cy={y} r="5" fill="#7B6EFF" fillOpacity="0.25" />
-          <circle cx={x} cy={y} r="3" fill="url(#holo-main)" />
-        </g>
-      ))}
-
-      {/* Labels */}
-      {axes.map((ax, i) => {
-        const { x, y } = pt(i, 1.28)
-        const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
-        return (
-          <text key={i} x={x} y={y} textAnchor={anchor} fontSize="13" fill="#1C2442" fontFamily="Pretendard, sans-serif" fontWeight="700">
-            {ax.label}
-          </text>
-        )
-      })}
-    </svg>
-  )
-}
-
-/* ── Mini Sparkline ────────────────────────────────────────────── */
-function Sparkline({ points, color = '#2E5BFF' }: { points: number[]; color?: string }) {
-  const w = 90, h = 34
-  const min = Math.min(...points), max = Math.max(...points)
-  const span = max - min || 1
-  const stepX = w / (points.length - 1)
-  const toY = (v: number) => h - ((v - min) / span) * (h * 0.85) - h * 0.05
-  const poly = points.map((v, i) => `${i * stepX},${toY(v)}`).join(' ')
-  const area = `M0,${h} ` + points.map((v, i) => `L${i * stepX},${toY(v)}`).join(' ') + ` L${w},${h} Z`
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }}>
-      <defs>
-        <linearGradient id={`sg-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.18" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#sg-${color.replace('#', '')})`} />
-      <polyline points={poly} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-/* ── Mission Donut (오늘의 퀘스트) — 원호 따라 진해지는 그라데이션 ── */
-function MissionDonut({ value, total }: { value: number; total: number }) {
-  const pct = Math.min(value / total, 1)
-  const deg = pct * 360
-
-  // conic-gradient: 원호를 따라 시작점(연한 파랑) → 진행점(진한 파랑)
-  const ringStyle: React.CSSProperties = {
-    background: `conic-gradient(from 0deg,
-      #A6C0FF 0deg,
-      #4A78FF ${deg * 0.5}deg,
-      #1B3D9E ${deg}deg,
-      #E3E9F8 ${deg}deg,
-      #E3E9F8 360deg)`,
-    WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 11px))',
-    mask: 'radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 11px))',
-  }
-
-  return (
-    <div className="relative w-[108px] h-[108px]">
-      <div className="absolute inset-0 rounded-full" style={ringStyle} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="flex items-baseline">
-          <span className="text-[26px] font-black text-[var(--color-navy)] leading-none">{value}</span>
-          <span className="text-xs font-bold text-[var(--color-text-muted)]">/{total}</span>
-        </div>
-        <span className="mt-1 text-[12px] font-bold tracking-wide text-[var(--color-primary)]">완료</span>
-      </div>
-    </div>
-  )
-}
-
-/* ── Growth Chart (역량 성장 그래프) — 우상향 차트 ──────────────── */
-function GrowthChart({ currentScore }: { currentScore: number }) {
-  // 마지막 데이터 포인트는 종합 역량 점수 (AiLounge 계산값)와 동일
-  const data = [34, 41, 38, 49, 55, 62, currentScore]
-  const w = 180, h = 78, pad = 6
-  const min = Math.min(...data), max = Math.max(...data)
-  const span = max - min || 1
-  const stepX = (w - pad * 2) / (data.length - 1)
-  const toX = (i: number) => pad + i * stepX
-  const toY = (v: number) => h - pad - ((v - min) / span) * (h - pad * 2 - 8)
-  const pts = data.map((v, i) => [toX(i), toY(v)] as const)
-  const line = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ')
-  const area = `M${pts[0][0]},${h} ` + pts.map(([x, y]) => `L${x},${y}`).join(' ') + ` L${pts[pts.length - 1][0]},${h} Z`
-  const last = pts[pts.length - 1]
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="block w-full overflow-visible">
-      <defs>
-        {/* 홀로그램 라인 그라데이션 */}
-        <linearGradient id="gc-holo" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor="#7B6EFF" />
-          <stop offset="55%"  stopColor="#4A90FF" />
-          <stop offset="100%" stopColor="#00D4FF" />
-        </linearGradient>
-        {/* 면 그라데이션 */}
-        <linearGradient id="gc-area" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%"   stopColor="#4A90FF" stopOpacity="0.34" />
-          <stop offset="100%" stopColor="#4A90FF" stopOpacity="0" />
-        </linearGradient>
-        <filter id="gc-glow" x="-30%" y="-40%" width="160%" height="180%">
-          <feGaussianBlur stdDeviation="2.4" />
-        </filter>
-      </defs>
-      {/* 면 채우기 */}
-      <path d={area} fill="url(#gc-area)" />
-      {/* 글로우 라인 */}
-      <path d={line} fill="none" stroke="url(#gc-holo)" strokeWidth="4.2"
-        strokeLinecap="round" strokeLinejoin="round" filter="url(#gc-glow)" opacity="0.6" />
-      {/* 메인 라인 */}
-      <path d={line} fill="none" stroke="url(#gc-holo)" strokeWidth="2.6"
-        strokeLinecap="round" strokeLinejoin="round" />
-      {/* 끝점 도트 */}
-      <circle cx={last[0]} cy={last[1]} r="6" fill="#00D4FF" opacity="0.22" />
-      <circle cx={last[0]} cy={last[1]} r="3.2" fill="url(#gc-holo)" />
-    </svg>
-  )
-}
-
-/* ── Pass Donut (합격예측) ──────────────────────────────────────── */
-/* ── Main Page ─────────────────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────
+// 메인 홈 — 시안 그대로: 창원디자인시안작업/main.html (= stu_v1.jsx)
+// ★ 마크업은 시안 HTML 을 기계 변환해 그대로 옮긴 것이다.
+//   클래스·구조를 손대면 시안 CSS 가 어긋난다. 수정은 시안 쪽에서 먼저 한다.
+//   내용(수치·문구)은 시안 값 그대로 — 데이터 배선은 디자인 확정 후 별도로 한다.
 export default function Main() {
-  const navigate = useNavigate()
-  const [rankOpen, setRankOpen] = useState(false)
-  const student = getActiveStudent()
-
-  const xp = 1250, xpMax = 2000
-  const xpPct = (xp / xpMax) * 100
-
-  // ── 5대 역량 점수 — 학생 JSON의 scoreInputs로 동적 계산 ─────
-  const scoreResult = useMemo(() => computeAll(student.scoreInputs), [student.scoreInputs])
-  const compByKey = useMemo(
-    () => Object.fromEntries(scoreResult.competencies.map(c => [c.key, c])),
-    [scoreResult],
-  )
-  const radarAxes: RadarAxisData[] = MAIN_RADAR_ORDER.map(k => ({
-    label: `${k} 역량`,
-    value: compByKey[k].scoreRounded / 100,  // 0~1 (RadarChart는 비율로 그림)
-  }))
-
   return (
     <div className="mn-page">
-
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="mn-hero">
-        <div className="mn-hero-content">
-          <div className="mn-greeting">
-            <h1 className="mn-greeting-title">안녕하세요, {MY_RANK.name}님</h1>
-            <p className="mn-greeting-sub">오늘도 성장하는 당신을 응원해요!</p>
-          </div>
-
-          {/* Stat cards row */}
-          <div className="mn-stat-cards">
-
-            {/* 역량 성장 그래프 — 우상향 차트 */}
-            <div className="mn-stat-card mn-quest-card">
-              <p className="mn-sc-label">역량 성장 그래프</p>
-              <div className="mb-1 flex items-baseline gap-1">
-                <span className="text-[30px] font-black leading-none text-[var(--color-navy)]">{scoreResult.overall}</span>
-                <span className="text-[13px] font-bold text-[var(--color-text-sub)]">점</span>
-                <span className="ml-auto flex items-center gap-1 rounded-full bg-[#22C55E]/12 px-2 py-0.5 text-[13px] font-extrabold text-[var(--color-success)]">
-                  <i className="fa-solid fa-arrow-trend-up text-[12px]" />
-                  +8
-                </span>
-              </div>
-              <div className="flex flex-1 items-end">
-                <GrowthChart currentScore={scoreResult.overall} />
-              </div>
+        <section className="career-hero reveal" aria-labelledby="welcomeTitle">
+          <div className="career-hero-left">
+            <div className="career-hero-copy">
+              <p className="career-hero-kicker">MY CAREER DASHBOARD</p>
+              <h1 id="welcomeTitle">한눈에 보는<span>오늘 나의 성장</span></h1>
+              <p>진단 결과부터 상담, 로드맵과 역량까지 연결된 나의 현재 위치를 확인하고 오늘의 행동을 시작해 보세요.</p>
             </div>
 
-            {/* Profile card */}
-            <div className="mn-stat-card mn-profile-card">
-              <div className="mn-avatar-wrap">
-                <img className="mn-avatar-photo" src="/student-profile.png" alt={`${MY_RANK.name} 프로필`} />
+          <section data-slot="card" className="journey-card hero-roadmap" id="journey" aria-labelledby="journeyTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="journeyTitle">나의 진로 여정</h2><p data-slot="card-description">내 CARE+7의 현재 위치입니다.</p></div>
+            </header>
+            <div data-slot="card-content">
+              <div className="journey-summary">
+                <div className="hero-progress-meta"><strong>58%</strong><span>역량강화 진행 중</span></div>
+                <div className="progress-track" style={{ '--value': '58%' } as React.CSSProperties} aria-label="전체 진행률 58퍼센트"><i></i></div>
               </div>
-              <div className="mn-profile-body">
-                <span className="mn-level-badge">Lv. 23</span>
-                <div className="mn-xp-bar-track">
-                  <div className="mn-xp-bar-fill" style={{ width: `${xpPct}%` }} />
+              <div className="journey-scroll" tabIndex={0} aria-label="CARE+7 단계 목록, 가로로 스크롤할 수 있습니다">
+                <div className="journey-steps">
+                  <div className="journey-step done"><span className="journey-dot"><svg className="icon"><use href="#i-check" /></svg></span><strong>진단</strong><small>완료</small></div>
+                  <div className="journey-step done"><span className="journey-dot"><svg className="icon"><use href="#i-check" /></svg></span><strong>상담</strong><small>완료</small></div>
+                  <div className="journey-step done"><span className="journey-dot"><svg className="icon"><use href="#i-check" /></svg></span><strong>로드맵</strong><small>완료</small></div>
+                  <div className="journey-step current"><span className="journey-dot">C4</span><strong>역량강화</strong><small>진행 중</small></div>
+                  <div className="journey-step"><span className="journey-dot">C5</span><strong>기업연계</strong><small>예정</small></div>
+                  <div className="journey-step"><span className="journey-dot">C6</span><strong>취업지원</strong><small>예정</small></div>
+                  <div className="journey-step"><span className="journey-dot">C7</span><strong>사후관리</strong><small>예정</small></div>
                 </div>
-                <p className="mn-xp-label">{xp.toLocaleString()} / {xpMax.toLocaleString()} XP</p>
               </div>
             </div>
+          </section>
 
-            {/* 오늘의 퀘스트 — 홀로그램 원형 그래프 */}
-            <div className="mn-stat-card mn-mission-card">
-              <p className="mn-sc-label">오늘의 퀘스트</p>
-              <div className="flex flex-1 items-center justify-center">
-                <MissionDonut value={1} total={5} />
+          </div>
+
+          <div className="career-hero-board">
+            <div className="career-hero-top">
+              <div className="career-hero-stack">
+
+          <section data-slot="card" className="hero-panel hero-todo" id="today" aria-labelledby="todoTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="todoTitle">오늘 할 일</h2></div>
+              <span data-slot="card-action" className="badge blue">08.26 수요일</span>
+            </header>
+            <div data-slot="card-content">
+              <div className="todo-list">
+                <div className="todo-item completed"><button className="todo-check" type="button" aria-label="기업 분석 노트 작성 완료 상태 변경" aria-pressed="true"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>기업 분석 노트 작성</b><small>DN솔루션즈 · 채용공고 분석</small></span><span className="todo-time">완료</span></div>
+                <div className="todo-item"><button className="todo-check" type="button" aria-label="IAP 목표 활동 등록 완료 상태 변경" aria-pressed="false"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>IAP 목표 활동 등록</b><small>로드맵 설계 · 필수 항목</small></span><span className="todo-time">D-2</span></div>
+                <div className="todo-item"><button className="todo-check" type="button" aria-label="진로 상담 사전 질문 작성 완료 상태 변경" aria-pressed="false"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>진로 상담 사전 질문 작성</b><small>상담 예약 · 김지현 상담사</small></span><span className="todo-time">16:00</span></div>
               </div>
-              <button className="mn-sc-btn" onClick={() => navigate('/growth/quest')}>
-                퀘스트 확인하기
-              </button>
+            </div>
+            <footer data-slot="card-footer"><button className="button" type="button">전체 일정 보기 <svg className="icon"><use href="#i-arrow" /></svg></button></footer>
+          </section>
+
+          <section data-slot="card" className="hero-panel hero-quest" aria-labelledby="questTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="questTitle">오늘의 퀘스트</h2><p data-slot="card-description">작은 실행을 모아 성장 포인트를 쌓아보세요.</p></div>
+              <button data-slot="card-action" className="hero-inline-action" type="button">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></button>
+            </header>
+            <div data-slot="card-content">
+              <div className="quest-layout">
+                <div className="quest-ring" role="img" aria-label="오늘의 퀘스트 달성률 72퍼센트"><span className="quest-value"><strong>72%</strong></span></div>
+                <div className="quest-copy"><b>커리어 루틴 만들기</b><p>오늘 5개 중 3개 완료<br />2개만 더 달성해 보세요!</p><div className="quest-steps" aria-hidden="true"><i className="done"></i><i className="done"></i><i className="done"></i><i></i><i></i></div></div>
+              </div>
+            </div>
+            <footer data-slot="card-footer"><button className="button" type="button">전체 퀘스트 보기 <svg className="icon"><use href="#i-arrow" /></svg></button></footer>
+          </section>
+
+              </div>
+
+          <section data-slot="card" className="hero-panel hero-attendance attendance-card" aria-labelledby="attendanceTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="attendanceTitle">출석체크</h2><p data-slot="card-description">매일 접속하고 성장 포인트를 받아요.</p></div>
+              <span data-slot="card-action" className="badge amber">12일 연속</span>
+            </header>
+            <div data-slot="card-content">
+              <div className="attendance-center"><div className="attendance-streak"><span><strong>TODAY<br />CHECK</strong></span></div><div><p>매일 출석하고 성장 포인트를 모아보세요.</p><button className="button primary attendance-button" type="button">출석하기 +10P</button></div></div>
+            </div>
+          </section>
+
             </div>
 
-          </div>
-        </div>
-
-        {/* Hero image */}
-        <div className="mn-hero-img">
-          <img src="/changwon_mascort3.webp" alt="창원대학교 마스코트" />
-        </div>
-      </section>
-
-      {/* ── Body ─────────────────────────────────────────────── */}
-      <section className="mn-body">
-
-        {/* 종합 역량 */}
-        <div className="mn-body-card">
-          <div className="mn-body-card-head">
-            <h2 className="mn-body-card-title">종합 역량</h2>
-          </div>
-          <div className="mn-radar-wrap">
-            <div className="mn-radar-score">
-              <span className="mn-radar-num">{scoreResult.overall}</span>
-              <span className="mn-radar-denom">/100</span>
-            </div>
-            <p className="mn-radar-sub">상위 28%</p>
-            <RadarChart axes={radarAxes} />
-          </div>
-        </div>
-
-        {/* 학과 랭킹 TOP 5 */}
-        <div className="mn-body-card">
-          <div className="mn-body-card-head">
-            <h2 className="mn-body-card-title">학과 랭킹 TOP 5</h2>
-          </div>
-          <ul className="mn-rank-list">
-            {RANKING.map(r => (
-              <li key={r.rank} className="mn-rank-item">
-                <span className={`mn-rank-pos${r.rank <= 3 ? ' top' : ''}`}>{r.rank}</span>
-                <span className="mn-rank-name">{r.name}</span>
-                <span className="mn-rank-xp">{r.xp.toLocaleString()} XP</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mn-rank-my">
-            <span className="mn-rank-pos me">{MY_RANK.rank}</span>
-            <span className="mn-rank-name">{MY_RANK.name} <small>(나)</small></span>
-            <span className="mn-rank-my-pos">{MY_RANK.rank} / {MY_RANK.total}위</span>
-          </div>
-          <button className="mn-more-btn" onClick={() => setRankOpen(true)}>학과 전체 순위 보기</button>
-        </div>
-
-        {/* 이번 주 출석 체크 */}
-        <div className="mn-body-card">
-          <div className="mn-body-card-head">
-            <h2 className="mn-body-card-title">이번 주 출석 체크</h2>
-          </div>
-          <div className="mn-att-wrap">
-            <div className="mn-att-streak">
-              <span className="mn-att-streak-num">7</span>
-              <span className="mn-att-streak-unit">일 연속</span>
-            </div>
-            <p className="mn-att-best">최고 기록 <strong>12일</strong></p>
-            <div className="mn-att-week">
-              {[
-                { day: '월', checked: true },
-                { day: '화', checked: true },
-                { day: '수', checked: true },
-                { day: '목', checked: true },
-                { day: '금', checked: false },
-                { day: '토', checked: false },
-                { day: '일', checked: false },
-              ].map(d => (
-                <div key={d.day} className={`mn-att-day${d.checked ? ' checked' : ''}`}>
-                  <span className="mn-att-day-label">{d.day}</span>
-                  <span className="mn-att-day-mark">
-                    {d.checked
-                      ? <i className="fa-solid fa-check" />
-                      : <i className="fa-regular fa-circle" />}
-                  </span>
+          <section data-slot="card" className="hero-panel hero-competency" id="competency" aria-labelledby="competencyTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="competencyTitle">나의 6대 핵심역량</h2></div>
+              <button data-slot="card-action" className="hero-inline-action" type="button">진단 결과 <svg className="icon"><use href="#i-arrow" /></svg></button>
+            </header>
+            <div data-slot="card-content">
+              <div className="competency-layout">
+                <div className="radar-wrap">
+                  <svg className="radar-chart" viewBox="0 0 300 280" role="img" aria-label="의사소통 68, 문제해결 74, 협업 81, 창의성 59, 직무전문성 62, 글로벌 72">
+                    <polygon className="radar-grid" points="150,22 256,84 256,196 150,258 44,196 44,84" />
+                    <polygon className="radar-grid" points="150,52 230,98 230,182 150,228 70,182 70,98" />
+                    <polygon className="radar-grid" points="150,82 204,112 204,168 150,198 96,168 96,112" />
+                    <path className="radar-axis" d="M150 140V22M150 140l106-56M150 140l106 56M150 140v118M150 140L44 196M150 140L44 84" />
+                    <polygon className="radar-average" points="150,60 220,102 224,179 150,212 78,178 90,106" />
+                    <polygon className="radar-target" points="150,46 238,92 230,182 150,216 82,176 86,104" />
+                    <polygon className="radar-current" points="150,60 228,99 236,185 150,210 84,175 74,100" />
+                    <text className="radar-label" x={150} y={10} textAnchor="middle">의사소통</text><text className="radar-label" x={266} y={80}>문제해결</text><text className="radar-label" x={266} y={204}>협업</text><text className="radar-label" x={150} y={276} textAnchor="middle">창의성</text><text className="radar-label" x={10} y={204}>직무전문성</text><text className="radar-label" x={10} y={80}>글로벌</text>
+                  </svg>
                 </div>
-              ))}
+                <div className="competency-side">
+                  <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'var(--competency-current)' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 직무</span><span><i style={{ background: 'var(--chart-reference)' } as React.CSSProperties}></i>학과 평균</span></div>
+                  <div className="axis-list">
+                    <div className="axis-item"><div className="axis-head"><b>의사소통</b><strong>68</strong></div><div className="axis-track"><i style={{ '--value': '68%' } as React.CSSProperties}></i></div></div>
+                    <div className="axis-item"><div className="axis-head"><b>문제해결</b><strong>74</strong></div><div className="axis-track"><i style={{ '--value': '74%' } as React.CSSProperties}></i></div></div>
+                    <div className="axis-item"><div className="axis-head"><b>협업</b><strong>81</strong></div><div className="axis-track"><i style={{ '--value': '81%' } as React.CSSProperties}></i></div></div>
+                    <div className="axis-item"><div className="axis-head"><b>창의성</b><strong>59</strong></div><div className="axis-track"><i style={{ '--value': '59%' } as React.CSSProperties}></i></div></div>
+                    <div className="axis-item"><div className="axis-head"><b>직무전문성</b><strong>62</strong></div><div className="axis-track"><i style={{ '--value': '62%' } as React.CSSProperties}></i></div></div>
+                    <div className="axis-item"><div className="axis-head"><b>글로벌</b><strong>72</strong></div><div className="axis-track"><i style={{ '--value': '72%' } as React.CSSProperties}></i></div></div>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-          <button className="mn-more-btn" onClick={() => navigate('/mypage/attendance')}>출석 기록 보기</button>
-        </div>
+          </section>
 
-        {/* 추천 프로그램 + 공지사항 */}
-        <div className="mn-body-card">
-          <div className="mn-body-card-head">
-            <h2 className="mn-body-card-title">추천 프로그램</h2>
           </div>
+        </section>
 
-          {/* Program card */}
-          <div className="mn-prog-card">
-            <p className="mn-prog-title">AI 면접 전략 특강</p>
-            <p className="mn-prog-date">2024.06.01 (토) 14:00</p>
-            <button className="mn-prog-btn" onClick={() => navigate('/growth/program')}>신청하기</button>
-            <div className="mn-prog-chart">
-              <Sparkline points={[10, 30, 20, 50, 40, 70, 60]} color="#ffffff" />
+        <div className="dashboard-grid">
+
+          <section data-slot="card" className="program-card-shell span-12 reveal" id="programs" aria-labelledby="programTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="programTitle">진행 중인 진로·취업 프로그램</h2><p data-slot="card-description">나의 진로 유형과 관심 직무를 바탕으로 선별했어요.</p></div>
+              <a data-slot="card-action" className="button" href="#">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></a>
+            </header>
+            <div data-slot="card-content">
+              <div className="program-viewport">
+                <div className="program-track" tabIndex={0} aria-label="추천 프로그램 목록">
+                <a className="program-card" href="#"><img src="/thumb1.png" alt="인적성 NCS 역량검사 프로그램 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">공기업준비</span><span className="program-dday">D-04</span></div><h3>2026 하반기 공채 대비 인적성·NCS 역량검사 특강</h3></div></a>
+                <a className="program-card" href="#"><img src="/thumb2.png" alt="Career-Up 멘토링 스터디 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">멘토링</span><span className="program-dday">D-08</span></div><h3>2026 졸업생 특화 Career-Up 멘토링 스터디 참가자 모집</h3></div></a>
+                <a className="program-card" href="#"><img src="/thumb3.jpg" alt="취업 부스트업 트랙 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">직무역량</span><span className="program-dday">D-12</span></div><h3>재맞고 점프업 직무역량강화 취업 부스트업 트랙</h3></div></a>
+                <a className="program-card" href="#"><img src="/thumb4.png" alt="Career-Up 멘토링 프로그램 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">상담</span><span className="program-dday">D-16</span></div><h3>2026 졸업생 특화 Career-Up 멘토링 스터디</h3></div></a>
+                <a className="program-card" href="#"><img src="/thumb5.png" alt="취업콘텐츠 이러닝 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">e-러닝</span><span className="program-dday">D-22</span></div><h3>경남형 AI-CES 취업콘텐츠 e-러닝 참여자 모집</h3></div></a>
+                </div>
+                <div className="program-nav program-nav-prev"><button className="carousel-button" type="button" aria-label="이전 프로그램"><svg className="icon"><use href="#i-chevron-left" /></svg></button></div>
+                <div className="program-nav program-nav-next"><button className="carousel-button" type="button" aria-label="다음 프로그램"><svg className="icon"><use href="#i-chevron-right" /></svg></button></div>
+              </div>
             </div>
-          </div>
+          </section>
 
-          {/* 공지사항 */}
-          <div className="mn-notice-head">
-            <span className="mn-body-card-title">공지사항</span>
-            <button className="mn-text-btn">더보기 <i className="fa-solid fa-chevron-right" /></button>
-          </div>
-          <ul className="mn-notice-list">
-            {NOTICES.map((n, i) => (
-              <li key={i} className="mn-notice-item">
-                <i className="fa-solid fa-plus" />
-                <span>{n.label}</span>
-                <span className="mn-notice-date">{n.date}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-      </section>
-
-      {/* ── 추천 비교과 + AI 추천 채용공고 ───────────────────────── */}
-      <section className="mn-ai-section">
-        <div className="mn-recommend-grid">
-
-          {/* 추천 비교과 프로그램 */}
-          <div className="mn-rec-card">
-            <div className="mn-rec-head">
-              <h2 className="mn-rec-title">
-                <i className="fa-solid fa-clipboard-check" />
-                추천 비교과 프로그램
-              </h2>
-              <button className="mn-text-btn" onClick={() => navigate('/growth/program')}>
-                전체 보기 <i className="fa-solid fa-chevron-right" />
-              </button>
+          <section data-slot="card" className="jobs-card span-12 reveal" id="jobs" aria-labelledby="jobsTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="jobsTitle">AI 추천 채용공고</h2><p data-slot="card-description">진단 결과와 활동 데이터를 바탕으로 나와 잘 맞는 공고를 추천해요.</p></div>
+              <a data-slot="card-action" className="button" href="#">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></a>
+            </header>
+            <div data-slot="card-content">
+              <div className="jobs-layout">
+                <article className="featured-job"><div className="featured-top"><span className="company-mark">DN</span><span className="match-badge">AI 매칭 92%</span></div><h3>DN솔루션즈<br />생산기술 신입사원</h3><p>공정개선 및 생산성 향상 업무를 담당하며 스마트 제조 환경 구축에 함께합니다.</p><div className="job-tags"><span>창원시</span><span>정규직</span><span>기계·산업공학</span></div><div className="featured-footer"><strong>2026.08.28 마감 · D-9</strong><a className="featured-link" href="#" aria-label="DN솔루션즈 공고 보기"><svg className="icon"><use href="#i-external" /></svg></a></div></article>
+                <div className="job-list">
+                  <a className="job-row" href="#"><span className="job-logo">LG</span><div className="job-copy"><span className="job-match">AI 매칭 88%</span><h3>LG전자 H&amp;A본부 R&amp;D 신입</h3><p>창원 · 정규직 · 기계/전기전자</p></div><div className="job-deadline"><b>D-7</b><span>08.26 마감</span></div></a>
+                  <a className="job-row" href="#"><span className="job-logo">HD</span><div className="job-copy"><span className="job-match">AI 매칭 84%</span><h3>HD현대중공업 생산관리</h3><p>울산 · 정규직 · 산업공학</p></div><div className="job-deadline"><b>D-12</b><span>08.31 마감</span></div></a>
+                  <a className="job-row" href="#"><span className="job-logo">HAN</span><div className="job-copy"><span className="job-match">AI 매칭 81%</span><h3>한화에어로스페이스 품질기술</h3><p>창원 · 채용연계형 인턴 · 공학계열</p></div><div className="job-deadline"><b>D-14</b><span>09.02 마감</span></div></a>
+                  <a className="job-row" href="#"><span className="job-logo">KAI</span><div className="job-copy"><span className="job-match">AI 매칭 77%</span><h3>한국항공우주산업 체험형 인턴</h3><p>사천 · 인턴 · 전공무관</p></div><div className="job-deadline"><b>D-18</b><span>09.06 마감</span></div></a>
+                </div>
+              </div>
             </div>
-            <ul className="mn-rec-prog-list">
-              {RECOMMENDED_PROGRAMS.map(p => (
-                <li
-                  key={p.id}
-                  className="mn-rec-prog-item"
-                  onClick={() => navigate(`/growth/program/${p.id}`)}
-                >
-                  <div className="mn-rec-prog-thumb">
-                    <img src={p.image} alt={p.title} />
-                  </div>
-                  <div className="mn-rec-prog-info">
-                    <div className="mn-rec-prog-tags">
-                      <span
-                        className="mn-rec-prog-cat"
-                        style={{
-                          background: (CAT_COLORS[p.category] ?? '#6B7280') + '18',
-                          color: CAT_COLORS[p.category] ?? '#6B7280',
-                        }}
-                      >
-                        {p.category}
-                      </span>
-                      <span className={`mn-rec-prog-dday${p.dDay <= 5 ? ' urgent' : ''}`}>
-                        D-{p.dDay}
-                      </span>
-                    </div>
-                    <p className="mn-rec-prog-name">{p.title}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+          </section>
 
-          {/* AI 추천 채용공고 */}
-          <div className="mn-rec-card">
-            <div className="mn-rec-head">
-              <h2 className="mn-rec-title">
-                <i className="fa-solid fa-briefcase" />
-                AI 추천 채용공고
-              </h2>
-              <button className="mn-text-btn" onClick={() => navigate('/jobs')}>
-                전체 보기 <i className="fa-solid fa-chevron-right" />
-              </button>
+          <section data-slot="card" className="span-12 reveal" id="notices" aria-labelledby="noticeTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="noticeTitle">공지사항</h2><p data-slot="card-description">프로그램과 진로·취업 관련 새 소식을 확인하세요.</p></div>
+              <a data-slot="card-action" className="button" href="#">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></a>
+            </header>
+            <div data-slot="card-content">
+              <div className="section-toolbar notice-toolbar"><div className="notice-tabs" role="tablist" aria-label="공지사항 분류"><button className="notice-tab active" type="button" role="tab" aria-selected="true" data-notice-tab="all">전체</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="program">프로그램</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="career">진로·취업</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="system">시스템</button></div></div>
+              <div className="notice-list" role="tabpanel">
+                <a className="notice-row" data-category="program" href="#"><span className="notice-category">프로그램</span><span className="notice-copy"><b>2026학년도 하반기 비교과 프로그램 참여 안내</b><small>역량별 추천 프로그램과 신청 일정을 확인해 주세요.</small></span><time dateTime="2026-08-19">2026.08.19</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+                <a className="notice-row" data-category="career" href="#"><span className="notice-category">진로·취업</span><span className="notice-copy"><b>취업전략센터 1:1 맞춤 상담 예약 오픈</b><small>목표 직무별 전문 컨설턴트와 상담할 수 있습니다.</small></span><time dateTime="2026-08-18">2026.08.18</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+                <a className="notice-row" data-category="system" href="#"><span className="notice-category">시스템</span><span className="notice-copy"><b>AI 역량진단 결과 리포트 기능 업데이트</b><small>변화 추이와 추천 활동을 한 화면에서 확인하세요.</small></span><time dateTime="2026-08-14">2026.08.14</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+                <a className="notice-row" data-category="career" href="#"><span className="notice-category">진로·취업</span><span className="notice-copy"><b>지역 우수기업 온라인 채용설명회 개최</b><small>기업 담당자에게 직무와 채용 정보를 직접 들어보세요.</small></span><time dateTime="2026-08-12">2026.08.12</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+                <a className="notice-row" data-category="program" href="#"><span className="notice-category">프로그램</span><span className="notice-copy"><b>CARE+7 성장 포인트 운영 기준 안내</b><small>활동별 적립 기준과 활용 방법을 안내드립니다.</small></span><time dateTime="2026-08-08">2026.08.08</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+              </div>
             </div>
-            <ul className="mn-rec-job-list">
-              {RECOMMENDED_JOBS.map(j => (
-                <li
-                  key={j.id}
-                  className="mn-rec-job-item"
-                  onClick={() => navigate('/jobs')}
-                >
-                  <div
-                    className="mn-rec-job-logo"
-                    style={{ background: j.color, color: j.textColor ?? '#fff' }}
-                  >
-                    {j.initial}
-                  </div>
-                  <div className="mn-rec-job-info">
-                    <p className="mn-rec-job-company">
-                      {j.company}
-                      {j.urgent && <span className="mn-job-badge mn-job-badge--urgent">마감임박</span>}
-                      {j.hot && <span className="mn-job-badge mn-job-badge--hot">HOT</span>}
-                    </p>
-                    <p className="mn-rec-job-role">{j.role} · {j.deadline}</p>
-                  </div>
-                  <div className={`mn-rec-job-match${j.match >= 85 ? ' high' : ''}`}>
-                    <strong>{j.match}</strong>
-                    <span>%</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
+          </section>
         </div>
-      </section>
-
-      {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="mn-footer">
-        <div className="mn-footer-inner">
-          <div className="mn-footer-brand">
-            <div className="mn-footer-logo">CWNU</div>
-            <p className="mn-footer-school">국립창원대학교</p>
-          </div>
-
-          <div className="mn-footer-info">
-            <p className="mn-footer-line">
-              <span className="mn-footer-label">E-MAIL</span>
-              <span>:</span>
-              <a href="mailto:cwjob@changwon.ac.kr">cwjob@changwon.ac.kr</a>
-            </p>
-            <p className="mn-footer-line">
-              51140) 경상남도 창원시 의창구 창원대학로 20
-            </p>
-            <p className="mn-footer-line mn-footer-copy">
-              <span>COPYRIGHT</span>
-              <span>CHANGWON NATIONAL UNIVERSITY. ALL RIGHTS RESERVED.</span>
-            </p>
-            <ul className="mn-footer-links">
-              <li>
-                <a href="#privacy">
-                  개인정보처리방침
-                  <i className="fa-solid fa-arrow-up-right-from-square" />
-                </a>
-              </li>
-              <li>
-                <a href="#email-reject">
-                  이메일무단수집거부
-                  <i className="fa-solid fa-arrow-up-right-from-square" />
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </footer>
-
-      {/* 학과 전체 순위 모달 (TOP5 이후 순위까지) */}
-      <Modal open={rankOpen} onClose={() => setRankOpen(false)} title="학과 전체 순위" size="sm">
-        <ul className="mn-rank-modal-list">
-          {RANKING_FULL.map(r => (
-            <li
-              key={r.rank}
-              className={`mn-rank-modal-item${'me' in r && r.me ? ' me' : ''}`}
-            >
-              <span className={`mn-rank-pos${r.rank <= 3 ? ' top' : ''}${'me' in r && r.me ? ' me' : ''}`}>{r.rank}</span>
-              <span className="mn-rank-name">
-                {r.name}{'me' in r && r.me && <small> (나)</small>}
-              </span>
-              <span className="mn-rank-xp">{r.xp.toLocaleString()} XP</span>
-            </li>
-          ))}
-        </ul>
-        <p className="mn-rank-modal-foot">
-          전체 {MY_RANK.total}명 중 현재 <strong>{MY_RANK.rank}위</strong>입니다.
-        </p>
-      </Modal>
-
     </div>
   )
 }

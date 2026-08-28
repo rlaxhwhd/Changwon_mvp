@@ -78,6 +78,20 @@
   -webkit-mask-composite: source-in;
 }
 
+/* 진단센터는 결과와 다음 행동에 집중하는 평면형 정보 화면으로 유지한다.
+   배경 성격의 이미지가 읽기 흐름과 색상 계층을 방해하지 않도록 제거한다. */
+.de-hero {
+  display: none;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 0;
+  gap: 0;
+}
+
+.de-hero-visual,
+.de-card-image {
+  display: none;
+}
+
 .de-toolbar {
   display: flex;
   align-items: center;

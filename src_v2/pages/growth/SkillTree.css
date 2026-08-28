@@ -18,7 +18,7 @@
 /* ─── Header ─────────────────────────────────────────────────────────────── */
 
 .st-header {
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
@@ -236,7 +236,7 @@
 
 .st-analyze-sub {
   font-size: 14px;
-  color: var(--color-text-muted);
+  color: var(--muted-foreground);
   margin: 0 0 22px;
   line-height: 1.5;
 }
@@ -348,7 +348,7 @@
 
 .st-dir-section-sub {
   font-size: 16px;
-  color: var(--color-text-muted);
+  color: var(--muted-foreground);
 }
 
 .st-dir-add-btn {
@@ -438,7 +438,7 @@
 
 .st-dir-card-sub {
   font-size: 16px;
-  color: #6E7C9C;
+  color: var(--muted-foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -734,22 +734,30 @@
   pointer-events: none;
 }
 
+/* 열 머리 배경 — AI 분석 입력(재료 카드)의 열별 색을 그대로 계승한다.
+   기초 역량 = 진단유형/상담(mint) · 핵심역량 = 수강강의/학과(blue) · 내 성장 활동 = 학생 스펙(violet) */
+.st-col--foundation { --st-col-head: var(--mint-soft);   --st-col-accent: var(--mint); }
+.st-col--course     { --st-col-head: var(--blue-soft);   --st-col-accent: var(--blue); }
+.st-col--growth     { --st-col-head: var(--violet-soft); --st-col-accent: var(--violet); }
+
 .st-col-header {
   padding: 22px 18px 16px;
   border-bottom: 0;
   text-align: center;
+  background: var(--st-col-head);
 }
 
 .st-col-title {
   font-size: 21px;
   font-weight: 800;
-  color: var(--color-primary);
+  letter-spacing: -0.02em;
+  color: var(--foreground);
   margin-bottom: 8px;
 }
 
 .st-col-subtitle {
   font-size: 16px;
-  color: var(--color-text-muted);
+  color: var(--muted-foreground);
 }
 
 .st-col-fit {
@@ -758,7 +766,8 @@
   text-align: center;
   font-size: 20px;
   font-weight: 900;
-  color: var(--color-primary);
+  letter-spacing: -0.02em;
+  color: var(--st-col-accent);
 }
 
 .st-col-body {
@@ -838,7 +847,7 @@
 
 .st-found-sub {
   font-size: 16px;
-  color: var(--color-text-muted);
+  color: var(--muted-foreground);
   margin-top: 1px;
   white-space: nowrap;
   overflow: hidden;
@@ -851,7 +860,7 @@
   gap: 3px;
   font-size: 16px;
   font-weight: 600;
-  color: #96A6C4;
+  color: var(--muted-foreground);
   flex-shrink: 0;
 }
 
@@ -1023,7 +1032,7 @@
 .st-skill-sub {
   font-size: 16px;
   line-height: 1.35;
-  color: #6E7C9C;
+  color: var(--muted-foreground);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1142,7 +1151,7 @@
 
 .st-dir-add-sub {
   font-size: 16px;
-  color: #6E7C9C;
+  color: var(--muted-foreground);
 }
 
 /* ─── 직무 선택 모달 ─────────────────────────────────────────────────────── */
@@ -1209,7 +1218,7 @@
 
 .st-picker-sub {
   font-size: 16px;
-  color: #6E7C9C;
+  color: var(--muted-foreground);
 }
 
 .st-picker-fit {
@@ -1222,7 +1231,7 @@
 .st-picker-empty {
   text-align: center;
   font-size: 17px;
-  color: var(--color-text-muted);
+  color: var(--muted-foreground);
   padding: 24px 0;
 }
 
@@ -1284,7 +1293,7 @@
 .st-stat-total {
   font-size: 19px;
   font-weight: 600;
-  color: var(--color-text-muted);
+  color: var(--muted-foreground);
 }
 
 .st-stat-strong {
@@ -1355,10 +1364,13 @@
   border-radius: var(--radius-md);
   padding: 15px 20px;
   font-size: 17px;
-  color: #3B5FD4;
-  font-weight: 500;
+  color: var(--muted-foreground);
+  font-weight: 600;
   line-height: 1.5;
 }
+
+.st-tip i { color: var(--blue); margin-right: 6px; }
+.st-tip strong { color: var(--foreground); font-weight: 800; }
 
 /* ─── Responsive ─────────────────────────────────────────────────────────── */
 
@@ -1718,8 +1730,75 @@
   white-space: nowrap;
   flex-shrink: 0;
 }
+
+/* PROCESS.md §6 — 핵심역량 수행과 내 성장 활동만 남긴 3열 구조 */
+.st-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.st-cert-add,
+.st-analysis {
+  display: none;
+}
+
+.st-job-input {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  margin: 16px 0 0;
+  padding: 14px;
+  border: 1px solid var(--color-primary-light);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-bg);
+}
+
+.st-job-input input {
+  min-width: 0;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font: inherit;
+}
+
+.st-job-input button {
+  height: 38px;
+  padding: 0 14px;
+  border-radius: var(--radius-sm);
+  background: var(--color-primary);
+  color: var(--color-text);
+  font-weight: 700;
+}
+
+.st-job-input .st-job-input-cancel {
+  width: 38px;
+  padding: 0;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+  color: var(--color-text-sub);
+}
+
+.st-job-input p {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--color-coral, var(--coral));
+  font-size: 13px;
+  font-weight: 600;
+}
 .st-header-dept { font-weight: 700; color: var(--color-primary); }
 .st-header-sep { color: var(--color-border); }
+
+/* 역량 카드 장식 제거 — 정보와 상태만 남긴다. */
+.st-grid > .st-col::before { display: none; }
+
+.st-grid .st-found-icon,
+.st-grid .st-skill-icon { display: none; }
+
+.st-grid .st-found-top,
+.st-grid .st-skill-row { gap: 0; }
 
 /* 기초역량 아이콘 — 이전에는 JSON 인라인 스타일이었다. 단일 토큰으로 통일. */
 .st-found-icon {
@@ -1729,9 +1808,10 @@
 
 /* 과목 행 */
 .st-skill-code {
-  font-family: "Cascadia Mono", Consolas, monospace;
+  font-family: var(--font);
   font-size: 14px;
-  color: var(--color-text-muted);
+  font-weight: 600;
+  color: var(--muted-foreground);
   margin-right: 8px;
   letter-spacing: -0.01em;
 }
@@ -1774,7 +1854,7 @@
 .st-dir-detail-none {
   margin: 0;
   font-size: 16px;
-  color: var(--color-text-muted);
+  color: var(--muted-foreground);
 }
 
 /* 빈 상태 */
@@ -1783,7 +1863,7 @@
   padding: 26px 8px;
   text-align: center;
   font-size: 15px;
-  color: var(--color-text-muted);
+  color: var(--muted-foreground);
 }
 .st-empty {
   margin: 80px auto;

@@ -1,14 +1,54 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { NAV_SECTIONS, getSectionForPath, getActiveChildPath, getVisibleNavChildren } from './navConfig'
-import BrandLogo from './BrandLogo'
+import { NAV_SECTIONS, getSectionForPath, getActiveChildPath, getVisibleNavChildren, type NavChild } from './navConfig'
+import { Icon } from './Icon'
 import { STUDENTS, getActiveStudent, getActiveStudentId, setActiveStudent } from '../data/students'
 
+/** 드롭다운/모바일 하위 링크 — 중첩(depth 1)까지 평탄화해 렌더한다. */
+function SubLinks({
+  items,
+  activeChildPath,
+  className,
+  onNavigate,
+}: {
+  items: NavChild[]
+  activeChildPath?: string
+  className: string
+  onNavigate?: () => void
+}) {
+  return (
+    <>
+      {items.map(child => (
+        <div key={child.path}>
+          <Link
+            to={child.path}
+            className={`${className}${child.path === activeChildPath ? ' active' : ''}`}
+            onClick={onNavigate}
+          >
+            {child.label}
+          </Link>
+          {child.children?.map(sub => (
+            <Link
+              key={sub.path}
+              to={sub.path}
+              className={`${className} depth-1${sub.path === activeChildPath ? ' active' : ''}`}
+              onClick={onNavigate}
+            >
+              {sub.label}
+            </Link>
+          ))}
+        </div>
+      ))}
+    </>
+  )
+}
+
 export default function GNB() {
-  const { pathname } = useLocation()
+  const { pathname, hash } = useLocation()
   const currentSection = getSectionForPath(pathname)
   const activeStudent = getActiveStudent()
   const activeId = getActiveStudentId()
+  const myPagePath = activeStudent.grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -43,7 +83,6 @@ export default function GNB() {
     const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setMobileMenuOpen(false) }
     document.addEventListener('mousedown', onDocClick)
     document.addEventListener('keydown', onEsc)
-    // 메뉴 열림 동안 body 스크롤 잠금
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
     return () => {
@@ -57,177 +96,172 @@ export default function GNB() {
 
   return (
     <>
-      <header className="gnb">
-        <Link to="/main" className="gnb-logo" aria-label="드림캐치 홈">
-          <BrandLogo className="gnb-logo-img" />
-        </Link>
+      <header className="topbar">
+        <div className="topbar-inner">
+          <Link to="/main" className="brand" aria-label="DREAMCATCH 홈">
+            <img src="/logo.png" alt="국립창원대학교 DREAMCATCH" />
+          </Link>
 
-        <nav className="gnb-nav" aria-label="주요 메뉴">
-          {NAV_SECTIONS.map(section => {
-            const active = currentSection?.id === section.id
-            const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade)
-            const firstPath = section.path ?? visibleChildren[0]?.path ?? '/'
-            const visibleSection = { ...section, children: visibleChildren }
-            const activeChildPath = getActiveChildPath(pathname, visibleSection)
+          <nav className="top-nav" id="topNavigation" aria-label="주 메뉴">
+            {NAV_SECTIONS.map(section => {
+              const active = currentSection?.id === section.id
+              const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade)
+              const firstPath = section.path ?? visibleChildren[0]?.path ?? '/'
+              const activeChildPath = getActiveChildPath(pathname, { ...section, children: visibleChildren }, hash)
 
-            return (
-              <div className="gnb-nav-item" key={section.id}>
-                <Link to={firstPath} className={`gnb-nav-link ${active ? 'active' : ''}`}>
-                  {section.label}
-                </Link>
-                {visibleChildren.length > 1 && (
-                  <div className="gnb-dropdown">
-                    {visibleChildren.map(child => (
-                      <Link
-                        key={child.path}
-                        to={child.path}
-                        className={`gnb-dropdown-link ${child.path === activeChildPath ? 'active' : ''}`}
-                      >
-                        {child.label}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )
-          })}
-        </nav>
+              return (
+                <div className="nav-group" key={section.id}>
+                  <Link to={firstPath} className={`nav-item${active ? ' active' : ''}`}>
+                    <Icon name={section.icon} />
+                    {section.label}
+                  </Link>
+                  {visibleChildren.length > 1 && (
+                    <div className="nav-dropdown">
+                      <SubLinks
+                        items={visibleChildren}
+                        activeChildPath={activeChildPath}
+                        className="nav-dropdown-link"
+                      />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
+          </nav>
 
-        <div className="gnb-actions">
-          <button className="gnb-icon-btn" title="검색" aria-label="검색">
-            <i className="fa-solid fa-magnifying-glass" />
-          </button>
-          <button className="gnb-icon-btn gnb-bell-wrap" title="알림" aria-label="알림">
-            <i className="fa-regular fa-bell" />
-            <span className="gnb-badge">3</span>
-          </button>
-          <div className={`gnb-profile ${profileOpen ? 'is-open' : ''}`} ref={profileRef}>
-            <button
-              type="button"
-              className="gnb-profile-trigger"
-              aria-haspopup="menu"
-              aria-expanded={profileOpen}
-              onClick={() => setProfileOpen(v => !v)}
-              title={`${activeStudent.name} 메뉴`}
-            >
-              <span className="gnb-avatar" aria-hidden="true">
-                <img className="gnb-avatar-photo" src="/student-profile.png" alt="" />
-              </span>
-              <i className="fa-solid fa-chevron-down gnb-avatar-caret" aria-hidden="true" />
+          <div className="topbar-right">
+            <button className="icon-button" type="button" title="검색" aria-label="검색">
+              <Icon name="search" />
             </button>
-            {profileOpen && (
-              <div className="gnb-profile-menu" role="menu">
-                <div className="gnb-profile-head">
-                  <img className="gnb-profile-photo" src="/student-profile.png" alt="" />
-                  <div className="gnb-profile-meta">
-                    <strong>{activeStudent.name}</strong>
-                    <small>{activeStudent.grade}학년 · {activeStudent.major}</small>
+
+            <button className="icon-button" type="button" title="알림" aria-label="알림 3건">
+              <Icon name="bell" />
+              <span className="notification-dot">3</span>
+            </button>
+
+            <div className={`header-profile${profileOpen ? ' is-open' : ''}`} ref={profileRef}>
+              <button
+                type="button"
+                className="profile-trigger"
+                aria-haspopup="menu"
+                aria-expanded={profileOpen}
+                onClick={() => setProfileOpen(v => !v)}
+                title={`${activeStudent.name} 메뉴`}
+              >
+                <span className="profile-avatar-icon">
+                  <img src="/student-profile.png" alt="" />
+                </span>
+                <Icon name="chevron-down" className="profile-caret" />
+              </button>
+
+              {profileOpen && (
+                <div className="profile-popover" role="menu">
+                  <div className="profile-popover-head">
+                    <span className="profile-avatar-icon">
+                      <img src="/student-profile.png" alt="" />
+                    </span>
+                    <div className="profile-popover-meta">
+                      <strong>{activeStudent.name}</strong>
+                      <small>{activeStudent.grade}학년 · {activeStudent.major}</small>
+                    </div>
+                  </div>
+
+                  <Link
+                    to={myPagePath}
+                    className="profile-action"
+                    role="menuitem"
+                    onClick={() => setProfileOpen(false)}
+                  >
+                    <Icon name="user" />
+                    <span>마이페이지</span>
+                    <Icon name="chevron-right" />
+                  </Link>
+
+                  <div className="profile-section">
+                    <span className="profile-section-title">
+                      <Icon name="user" /> 데모 학생 전환
+                    </span>
+                    <div className="profile-switch">
+                      {STUDENTS.map(s => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          className={`profile-switch-btn${s.id === activeId ? ' active' : ''}`}
+                          onClick={() => s.id !== activeId && setActiveStudent(s.id)}
+                          role="menuitemradio"
+                          aria-checked={s.id === activeId}
+                        >
+                          <strong>{s.name}</strong>
+                          <small>{s.grade}학년 · {s.major}</small>
+                          {s.id === activeId && <Icon name="check" className="profile-switch-check" />}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
+              )}
+            </div>
 
-                <Link
-                  to={activeStudent.grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'}
-                  className="gnb-profile-link"
-                  role="menuitem"
-                  onClick={() => setProfileOpen(false)}
-                >
-                  <i className="fa-regular fa-id-badge" />
-                  <span>마이페이지</span>
-                  <i className="fa-solid fa-chevron-right gnb-profile-link-arrow" />
-                </Link>
-
-                <div className="gnb-profile-section">
-                  <span className="gnb-profile-section-title">
-                    <i className="fa-solid fa-user-group" /> 데모 학생 전환
-                  </span>
-                  <div className="gnb-profile-switch">
-                    {STUDENTS.map(s => (
-                      <button
-                        key={s.id}
-                        type="button"
-                        className={`gnb-profile-switch-btn${s.id === activeId ? ' active' : ''}`}
-                        onClick={() => s.id !== activeId && setActiveStudent(s.id)}
-                        role="menuitemradio"
-                        aria-checked={s.id === activeId}
-                      >
-                        <strong>{s.name}</strong>
-                        <small>{s.grade}학년 · {s.major}</small>
-                        {s.id === activeId && <i className="fa-solid fa-check gnb-profile-switch-check" />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
+            <button
+              ref={mobileBtnRef}
+              type="button"
+              className="icon-button mobile-menu-toggle"
+              aria-label="메뉴 열기"
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-menu"
+              onClick={() => setMobileMenuOpen(v => !v)}
+            >
+              <Icon name={mobileMenuOpen ? 'x' : 'menu'} />
+            </button>
           </div>
-
-          {/* 모바일 전용 햄버거 — 우상단 */}
-          <button
-            ref={mobileBtnRef}
-            type="button"
-            className={`gnb-menu-btn${mobileMenuOpen ? ' is-open' : ''}`}
-            aria-label="메뉴 열기"
-            aria-expanded={mobileMenuOpen}
-            aria-controls="gnb-mobile-menu"
-            onClick={() => setMobileMenuOpen(v => !v)}
-          >
-            <i className={`fa-solid ${mobileMenuOpen ? 'fa-xmark' : 'fa-bars'}`} aria-hidden="true" />
-          </button>
         </div>
       </header>
 
-      {/* 모바일 풀스크린 내비게이션 */}
       {mobileMenuOpen && (
         <>
-          <div className="gnb-mobile-backdrop" aria-hidden="true" />
+          <div className="mobile-backdrop" aria-hidden="true" />
           <div
-            id="gnb-mobile-menu"
+            id="mobile-menu"
             ref={mobileMenuRef}
-            className="gnb-mobile-menu"
+            className="mobile-menu"
             role="dialog"
             aria-modal="true"
             aria-label="전체 메뉴"
           >
-            {/* 프로필 + 마이페이지 + 학생 전환 */}
-            <div className="gnb-mobile-profile">
-              <img className="gnb-profile-photo" src="/student-profile.png" alt="" />
-              <div className="gnb-profile-meta">
+            <div className="mobile-profile">
+              <span className="profile-avatar-icon">
+                <img src="/student-profile.png" alt="" />
+              </span>
+              <div className="profile-popover-meta">
                 <strong>{activeStudent.name}</strong>
                 <small>{activeStudent.grade}학년 · {activeStudent.major}</small>
               </div>
-              <Link to={activeStudent.grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'} className="gnb-mobile-profile-link">
-                마이페이지 <i className="fa-solid fa-chevron-right" />
+              <Link to={myPagePath} className="mobile-profile-link">
+                마이페이지 <Icon name="chevron-right" />
               </Link>
             </div>
 
-            <nav className="gnb-mobile-nav" aria-label="모바일 주요 메뉴">
+            <nav aria-label="모바일 주 메뉴">
               {NAV_SECTIONS.map(section => {
                 const active = currentSection?.id === section.id
                 const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade)
                 const firstPath = section.path ?? visibleChildren[0]?.path ?? '/'
-                const visibleSection = { ...section, children: visibleChildren }
-                const activeChildPath = getActiveChildPath(pathname, visibleSection)
+                const activeChildPath = getActiveChildPath(pathname, { ...section, children: visibleChildren }, hash)
 
                 return (
-                  <div className="gnb-mobile-section" key={section.id}>
-                    <Link
-                      to={firstPath}
-                      className={`gnb-mobile-section-link${active ? ' active' : ''}`}
-                    >
+                  <div className="mobile-section" key={section.id}>
+                    <Link to={firstPath} className={`mobile-section-link${active ? ' active' : ''}`}>
+                      <Icon name={section.icon} />
                       {section.label}
-                      <i className="fa-solid fa-chevron-right" aria-hidden="true" />
+                      <Icon name="chevron-right" className="nav-arrow" />
                     </Link>
                     {visibleChildren.length > 1 && (
-                      <div className="gnb-mobile-sublinks">
-                        {visibleChildren.map(child => (
-                          <Link
-                            key={child.path}
-                            to={child.path}
-                            className={`gnb-mobile-sublink${child.path === activeChildPath ? ' active' : ''}`}
-                          >
-                            {child.label}
-                          </Link>
-                        ))}
+                      <div className="mobile-sublinks">
+                        <SubLinks
+                          items={visibleChildren}
+                          activeChildPath={activeChildPath}
+                          className="mobile-sublink"
+                        />
                       </div>
                     )}
                   </div>
@@ -235,22 +269,21 @@ export default function GNB() {
               })}
             </nav>
 
-            {/* 데모 학생 전환 — 모바일에서도 유지 */}
-            <div className="gnb-mobile-switch">
-              <span className="gnb-profile-section-title">
-                <i className="fa-solid fa-user-group" /> 데모 학생 전환
+            <div className="mobile-switch">
+              <span className="profile-section-title">
+                <Icon name="user" /> 데모 학생 전환
               </span>
-              <div className="gnb-profile-switch">
+              <div className="profile-switch">
                 {STUDENTS.map(s => (
                   <button
                     key={s.id}
                     type="button"
-                    className={`gnb-profile-switch-btn${s.id === activeId ? ' active' : ''}`}
+                    className={`profile-switch-btn${s.id === activeId ? ' active' : ''}`}
                     onClick={() => s.id !== activeId && setActiveStudent(s.id)}
                   >
                     <strong>{s.name}</strong>
                     <small>{s.grade}학년 · {s.major}</small>
-                    {s.id === activeId && <i className="fa-solid fa-check gnb-profile-switch-check" />}
+                    {s.id === activeId && <Icon name="check" className="profile-switch-check" />}
                   </button>
                 ))}
               </div>

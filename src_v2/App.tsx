@@ -1,7 +1,5 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
-import NeonTrail from './components/NeonTrail'
-import CustomCursor from './components/CustomCursor'
 import Landing from './pages/Landing'
 import Main from './pages/Main'
 
@@ -31,8 +29,6 @@ import PsychCounsel from './pages/counsel/PsychCounsel'
 import ProfessorCounsel from './pages/counsel/ProfessorCounsel'
 
 // 경력개발 로드맵
-import AiRoadmap from './pages/roadmap/AiRoadmap'
-import FinalRoadmap from './pages/roadmap/FinalRoadmap'
 import Prediction from './pages/roadmap/Prediction'
 import AiJobs from './pages/roadmap/AiJobs'
 import AiResume from './pages/roadmap/AiResume'
@@ -94,10 +90,10 @@ const router = createBrowserRouter(
         { path: '/counsel/professor', element: <ProfessorCounsel /> },
 
         // 경력개발 로드맵
-        { path: '/roadmap',             element: <Navigate to="/roadmap/ai" replace /> },
-        { path: '/roadmap/ai',          element: <AiRoadmap /> },
+        { path: '/roadmap',             element: <Navigate to="/roadmap/skill-tree" replace /> },
+        { path: '/roadmap/ai',          element: <Navigate to="/roadmap/skill-tree" replace /> },
         { path: '/roadmap/skill-tree',  element: <SkillTree /> },
-        { path: '/roadmap/final',       element: <FinalRoadmap /> },
+        { path: '/roadmap/final',       element: <Navigate to="/roadmap/skill-tree" replace /> },
         // 구 경로 → 신 경로 (취업지원 하위로 이동)
         { path: '/roadmap/prediction',  element: <Navigate to="/jobs/prediction" replace /> },
         { path: '/roadmap/jobs',        element: <Navigate to="/jobs/joblist" replace /> },
@@ -135,11 +131,5 @@ const router = createBrowserRouter(
 )
 
 export default function App() {
-  return (
-    <>
-      <NeonTrail />
-      <CustomCursor />
-      <RouterProvider router={router} />
-    </>
-  )
+  return <RouterProvider router={router} />
 }

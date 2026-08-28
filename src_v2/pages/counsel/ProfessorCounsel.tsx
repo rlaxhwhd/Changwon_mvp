@@ -2,6 +2,7 @@ import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
+import CounselTabs from '../../components/CounselTabs'
 import { findDefaultSelection } from '../../data/professors'
 import { getCounselableProfessorGroups } from '../../data/professorProfilesRead'
 import { submitProfessorCounselRequest } from '../../data/counselRequestsWrite'
@@ -125,6 +126,20 @@ export default function ProfessorCounsel() {
           {notice}
         </div>
       )}
+
+      <header className="v2-page-head">
+        <div>
+          <nav className="v2-page-crumb" aria-label="현재 위치">
+            <span>상담센터</span><i className="fa-solid fa-chevron-right" />
+            <span>교수상담</span><i className="fa-solid fa-chevron-right" />
+            <span>상담 신청</span>
+          </nav>
+          <h1 className="v2-page-title">상담 신청</h1>
+          <p className="v2-page-desc">교수님을 선택하고 온라인 또는 오프라인 상담을 신청하세요.</p>
+        </div>
+      </header>
+
+      <CounselTabs />
 
       <section className="cc-hero">
         <div className="cc-breadcrumb">

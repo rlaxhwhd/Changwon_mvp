@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
+import CounselTabs from '../../components/CounselTabs'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
 import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
 import { getCounselWeek, type Day } from '../../lib/counselCalendar'
@@ -121,6 +122,20 @@ export default function PsychCounsel() {
           {notice}
         </div>
       )}
+
+      <header className="v2-page-head">
+        <div>
+          <nav className="v2-page-crumb" aria-label="현재 위치">
+            <span>상담센터</span><i className="fa-solid fa-chevron-right" />
+            <span>심리상담</span><i className="fa-solid fa-chevron-right" />
+            <span>상담 신청</span>
+          </nav>
+          <h1 className="v2-page-title">상담 신청</h1>
+          <p className="v2-page-desc">상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.</p>
+        </div>
+      </header>
+
+      <CounselTabs />
 
       <section className="cc-hero">
         <div className="cc-breadcrumb">

@@ -1623,8 +1623,7 @@
 /* Print */
 @media print {
   body { background: var(--color-bg); }
-  .gnb,
-  .section-sidebar,
+  .topbar,
   .pf-hero,
   .pf-tabs,
   .pf-resume-toolbar,

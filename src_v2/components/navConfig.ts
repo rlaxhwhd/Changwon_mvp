@@ -1,3 +1,5 @@
+import type { IconName } from './Icon'
+
 export interface NavChild {
   label: string
   path: string
@@ -11,7 +13,8 @@ export interface NavSection {
   label: string
   basePaths: string[]
   path?: string
-  icon: string
+  /** 상단바 아이콘 — SVG 스프라이트 심볼 이름 (components/Icon.tsx) */
+  icon: IconName
   children: NavChild[]
 }
 
@@ -21,7 +24,7 @@ export const NAV_SECTIONS: NavSection[] = [
     label: 'AI 커리어 라운지',
     basePaths: ['/lounge'],
     path: '/lounge',
-    icon: 'fa-comments',
+    icon: 'layout',
     children: [
       { label: '종합 분석 리포트', path: '/lounge#report', icon: 'fa-clipboard-list' },
       { label: '역량 비교 분석', path: '/lounge#competency', icon: 'fa-chart-bar' },
@@ -35,7 +38,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'diagnosis',
     label: '진단센터',
     basePaths: ['/diagnosis'],
-    icon: 'fa-clipboard-check',
+    icon: 'scan',
     children: [
       { label: '진단검사 결과', path: '/diagnosis/employment', icon: 'fa-chart-simple' },
     ],
@@ -44,7 +47,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'counsel',
     label: '상담센터',
     basePaths: ['/counsel'],
-    icon: 'fa-headset',
+    icon: 'message',
     children: [
       { label: '진로취업상담', path: '/counsel/career', icon: 'fa-briefcase' },
       { label: '심리상담', path: '/counsel/psych', icon: 'fa-heart' },
@@ -56,7 +59,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'roadmap',
     label: '진로취업 로드맵',
     basePaths: ['/roadmap'],
-    icon: 'fa-route',
+    icon: 'route',
     children: [
       { label: 'AI 진로로드맵', path: '/roadmap/ai', icon: 'fa-route' },
       { label: 'AI 직무 로드맵', path: '/roadmap/skill-tree', icon: 'fa-sitemap' },
@@ -68,7 +71,7 @@ export const NAV_SECTIONS: NavSection[] = [
     label: '비교과 프로그램 신청',
     basePaths: ['/growth/program'],
     path: '/growth/program',
-    icon: 'fa-clipboard-list',
+    icon: 'calendar',
     children: [
       { label: '비교과 프로그램 신청', path: '/growth/program', icon: 'fa-clipboard-list' },
     ],
@@ -77,7 +80,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'growth',
     label: '내 성장',
     basePaths: ['/growth'],
-    icon: 'fa-seedling',
+    icon: 'target',
     children: [
       { label: '홈대시보드', path: '/growth', icon: 'fa-house' },
       { label: '로드맵 진행 현황', path: '/growth/roadmap-status', icon: 'fa-route' },
@@ -92,7 +95,7 @@ export const NAV_SECTIONS: NavSection[] = [
     label: '취업지원',
     basePaths: ['/jobs'],
     path: '/jobs',
-    icon: 'fa-building-user',
+    icon: 'briefcase',
     children: [
       { label: '교내 채용공고', path: '/jobs', icon: 'fa-building-user' },
       { label: '외부 채용공고', path: '/jobs/external', icon: 'fa-globe' },
@@ -113,7 +116,7 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'mypage',
     label: '마이페이지',
     basePaths: ['/mypage'],
-    icon: 'fa-user',
+    icon: 'user',
     children: [
       { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open', minGrade: 4 },
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
@@ -125,6 +128,7 @@ export const NAV_SECTIONS: NavSection[] = [
 
 export function getVisibleNavChildren(children: NavChild[], grade: number): NavChild[] {
   return children
+    .filter(child => child.path !== '/roadmap/ai' && child.path !== '/roadmap/final')
     .filter(child => child.minGrade === undefined || grade >= child.minGrade)
     .map(child => ({
       ...child,

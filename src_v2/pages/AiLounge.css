@@ -1,1363 +1,2090 @@
-/* ── AiLounge Page ─────────────────────────────────────────────── */
+/* AI 커리어 라운지 — 시안 그대로 이식: 창원디자인시안작업/stu_dash.html (= stu_lounge.jsx)
+   공용 프리미티브(:root 토큰 · topbar · card 슬롯 · button · badge · table · footer)는 index.css.
+   이 파일은 시안 CSS 중 이 화면 고유 블록만 옮긴 것이다 — 값 임의 변경 금지. */
 
-.al-page {
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 24px 40px 48px;
-}
-
-/* ── AI 분석 섹션 (DB 정보 vs AI 분석 구분) ──────────────────────── */
-.al-ai-section {
-  margin-top: 36px;
-  padding-top: 36px;
-  border-top: 1px solid var(--color-border);
-}
-
-.al-ai-section-head {
-  text-align: center;
-  margin-bottom: 28px;
+.al-page .sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: var(--sidebar);
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  border-right: 1px solid var(--border);
+  background: var(--card);
+  transition: transform 240ms ease
 }
 
-.al-ai-badge {
-  display: inline-block;
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: 0.6px;
-  padding: 6px 14px;
-  border-radius: 999px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #7B6EFF 100%);
-  color: var(--color-bg);
-  box-shadow: 0 6px 16px rgba(46, 91, 255, 0.22);
-}
-
-.al-ai-section-head h2 {
-  font-size: 26px;
-  font-weight: 900;
-  color: var(--color-navy);
-  letter-spacing: -0.4px;
-  margin: 4px 0 0;
-}
-
-.al-ai-section-head p {
-  font-size: 16px;
-  color: var(--color-text-sub);
-  margin: 0;
-  line-height: 1.6;
-}
-
-/* ── Main Layout: 좌측 콘텐츠 + 우측 sticky 사이드바 2-column ── */
-.al-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 24px;
-  align-items: start;
-}
-
-.al-content {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-
-/* SectionSidebar sub-tab 클릭으로 페이지 내 스크롤 시 GNB(80px) 가림 방지 */
-.al-anchor {
-  scroll-margin-top: calc(var(--gnb-height) + 16px);
-}
-
-/* Page Hero */
-.al-hero { margin: 0 0 24px; }
-.al-hero h1 {
-  font-size: 32px;
-  font-weight: 900;
-  color: var(--color-navy);
-  letter-spacing: 0;
-  margin: 0 0 6px;
-}
-.al-hero p {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--color-text-sub);
-  margin: 0;
-}
-
-/* ── Profile Card ───────────────────────────────────────────────── */
-.al-profile-card {
-  background: var(--color-bg);
-  border: 0;
-  border-radius: var(--radius-md);
-  box-shadow: none;
-  padding: 14px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin: 0 0 20px;
-}
-
-.al-profile-user {
+.al-page .sidebar-header {
+  height: 72px;
+  padding: 0 20px;
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 88px;
-  padding: 12px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
+  border-bottom: 1px solid var(--border)
 }
 
-.al-avatar-box {
-  width: 68px;
-  height: 68px;
-  border-radius: 50%;
-  background: #f8fbff;
-  overflow: hidden;
-  flex-shrink: 0;
-  border: 2px solid var(--color-bg);
-  box-shadow: 0 8px 18px rgba(15, 45, 95, 0.1);
-}
-
-.al-avatar-photo {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  object-position: center;
-}
-
-.al-profile-info { display: flex; flex-direction: column; gap: 3px; }
-.al-profile-name { font-size: 21px; font-weight: 700; color: var(--color-text); }
-.al-profile-dept { font-size: 16px; color: var(--color-text-sub); }
-.al-lv-badge {
-  display: inline-block;
-  padding: 2px 10px;
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
-  border-radius: 20px;
-  font-size: 16px;
-  font-weight: 600;
-  margin-top: 2px;
-  width: fit-content;
-}
-
-.al-stats-row {
-  display: contents;
-}
-
-.al-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  min-height: 88px;
-  padding: 12px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
-}
-
-.al-stat-icon { font-size: 21px; color: var(--color-primary); margin-bottom: 1px; }
-.al-stat-label { font-size: 16px; color: var(--color-text-muted); white-space: nowrap; }
-.al-stat-val { display: flex; align-items: baseline; gap: 2px; }
-.al-stat-val strong { font-size: 23px; font-weight: 700; color: var(--color-text); }
-.al-stat-val span { font-size: 16px; color: var(--color-text-sub); }
-
-/* (legacy .al-main-grid 제거 — .al-layout / .al-content 로 대체됨) */
-
-.al-analysis-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-/* Report Card */
-/* 종합 분석 리포트 — 페이지의 시각적 focal point (F2) */
-.al-report-card {
-  display: flex;
-  flex-direction: column;
-  background:
-    radial-gradient(circle at 78% 14%, rgba(46, 91, 255, 0.10), transparent 42%),
-    linear-gradient(135deg, var(--color-bg) 0%, #f6f9ff 100%);
-  border: 1.5px solid #c7d4ff;
-  box-shadow: 0 18px 42px rgba(46, 91, 255, 0.10);
-}
-.al-report-card .card-title {
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--color-primary);
-}
-.al-card-sub { font-size: 16px; color: var(--color-text-muted); margin-top: 2px; margin-bottom: 12px; }
-.al-score-row { display: flex; align-items: baseline; gap: 4px; margin-bottom: 8px; }
-.al-score-num {
-  font-size: 68px;
-  font-weight: 900;
-  color: var(--color-navy);
-  line-height: 1;
-  letter-spacing: -2px;
-}
-.al-score-denom { font-size: 21px; color: var(--color-text-muted); }
-
-.al-prog-track {
-  height: 8px;
-  background: var(--color-surface);
-  border-radius: var(--radius-xs);
-  margin-bottom: 18px;
-  overflow: hidden;
-}
-.al-prog-fill {
-  height: 100%;
-  background: var(--color-primary);
-  border-radius: var(--radius-xs);
-}
-
-.al-report-3col {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 12px;
+.al-page .sidebar-content {
   flex: 1;
+  overflow: auto;
+  padding: 20px 14px
 }
 
-/* 강점 / 보완 / 추천 — 색·아이콘으로 한눈에 구분 */
-.al-rcol {
-  padding: 14px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: #fff;
-}
-.al-rcol--strength { border-color: #BBF7D0; }
-.al-rcol--weakness { border-color: #FED7AA; }
-.al-rcol--reco     { border-color: #C7D2FE; }
-
-.al-rcol-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--color-navy);
-  margin-bottom: 10px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-}
-.al-rcol-title i { font-size: 15px; }
-.al-rcol--strength .al-rcol-title,
-.al-rcol--strength .al-rcol-title i { color: #16A34A; }
-.al-rcol--weakness .al-rcol-title,
-.al-rcol--weakness .al-rcol-title i { color: #EA580C; }
-.al-rcol--reco .al-rcol-title,
-.al-rcol--reco .al-rcol-title i { color: var(--color-primary); }
-
-.al-bullet {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-size: 16px;
-  color: var(--color-text-sub);
-  margin-bottom: 6px;
-  line-height: 1.5;
-}
-.al-bullet i { font-size: 14px; margin-top: 3px; flex-shrink: 0; }
-.al-rcol--strength .al-bullet i { color: #16A34A; }
-.al-rcol--weakness .al-bullet i { color: #EA580C; }
-.al-rcol--reco .al-bullet i { color: var(--color-primary); }
-
-/* Radar Card */
-.al-radar-card { display: flex; flex-direction: column; }
-.al-radar-legend { display: flex; gap: 14px; margin: 4px 0 8px; }
-.al-leg-item { display: flex; align-items: center; gap: 6px; font-size: 16px; color: var(--color-text-sub); }
-.al-leg-line { width: 22px; height: 2px; display: inline-block; border-radius: 1px; }
-.al-leg-solid { background: var(--color-primary); }
-.al-leg-dash {
-  background: repeating-linear-gradient(
-    to right, var(--color-primary) 0 4px, transparent 4px 7px
-  );
-}
-
-/* ── Right Sidebar — 페이지 흐름 내 sticky (좌측 SectionSidebar와 공존) ── */
-.al-right-sidebar {
-  width: 280px;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  position: sticky;
-  top: calc(var(--gnb-height) + 20px);
-  max-height: calc(100vh - var(--gnb-height) - 40px);
-  overflow-y: auto;
-  padding-right: 2px;
-  scrollbar-width: none;
-}
-.al-right-sidebar::-webkit-scrollbar { width: 0; display: none; }
-
-/* Priority */
-/* 우선순위 요약 카드 — 우측 사이드바 최우선 아이템 강조 */
-.al-priority-card {
-  background: linear-gradient(135deg, #fff5f5 0%, #fff0f0 100%);
-  border-color: #ffd0d0;
-  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.1);
-}
-.al-priority-card .card-title { color: var(--color-danger); }
-.al-priority-card .card-title i { color: var(--color-danger); margin-right: 4px; }
-.al-priority-card .al-pri-item:first-child .al-pri-cnt {
-  font-size: 22px;
-  font-weight: 900;
-}
-
-.al-priority-list { display: flex; flex-direction: column; gap: 10px; }
-.al-pri-item { display: flex; align-items: center; gap: 10px; }
-.al-pri-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.al-pri-label { flex: 1; font-size: 17px; color: var(--color-text-sub); }
-.al-pri-cnt { font-size: 17px; font-weight: 600; color: var(--color-text); }
-
-/* Actions */
-.al-action-list { display: flex; flex-direction: column; gap: 10px; }
-.al-action-item { display: flex; align-items: flex-start; gap: 9px; }
-.al-action-num {
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  color: var(--color-bg); font-size: 16px; font-weight: 700;
-  flex-shrink: 0; margin-top: 1px;
-}
-.al-action-txt { font-size: 16px; color: var(--color-text-sub); line-height: 1.55; }
-
-/* Quick Links */
-.al-quick-list { display: flex; flex-direction: column; gap: 4px; }
-.al-quick-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 7px 8px;
-  border-radius: var(--radius-sm);
-  transition: background 0.1s;
-  text-decoration: none;
-}
-.al-quick-item:hover { background: var(--color-surface); }
-.al-quick-ico {
-  width: 30px; height: 30px; border-radius: 7px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 17px; flex-shrink: 0;
-}
-.al-quick-lbl { flex: 1; font-size: 17px; color: var(--color-text); font-weight: 500; }
-.al-quick-arr { font-size: 15px; color: var(--color-text-muted); }
-
-/* ── Bottom Grid (2 x 2) ────────────────────────────────────────── */
-.al-bottom-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-  margin-bottom: 16px;
-  align-items: stretch;
-}
-
-/* 같은 행의 두 카드 높이가 콘텐츠 양에 따라 함께 늘어나도록 flex column 적용 */
-.al-bottom-grid > .card {
-  display: flex;
-  flex-direction: column;
-}
-
-.al-row-hd {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 16px;
-}
-.al-more-link { font-size: 16px; color: var(--color-primary); font-weight: 500; white-space: nowrap; }
-.al-more-link:hover { text-decoration: underline; }
-
-/* Bar Chart — 라벨 / 막대 / 점수(아래) 세로 배치 */
-.al-bar-list {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.al-bar-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
-}
-
-.al-bar-lbl {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-navy);
-}
-
-.al-bar-track {
-  width: 100%;
-  height: 10px;
-  background: var(--color-surface);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.al-bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary) 60%, var(--color-primary-light) 100%);
-  border-radius: 999px;
-  transition: width 0.3s;
-}
-
-.al-bar-val {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--color-primary);
-  justify-self: end;
-}
-
-.al-ai-box {
-  display: flex;
-  align-items: flex-start;
-  gap: 9px;
-  padding: 14px 16px;
-  background: var(--color-primary-bg);
-  border-radius: var(--radius-md);
-  font-size: 16px;
-  font-weight: 600;
-  color: #2a3858;
-  line-height: 1.7;
-}
-.al-ai-box i { color: var(--color-primary); font-size: 19px; flex-shrink: 0; margin-top: 2px; }
-.al-ai-box strong { color: var(--color-primary); font-weight: 900; }
-
-/* AI 역량별 카드 전용 AI 박스 */
-.al-comp-ai { font-size: 16px; line-height: 1.75; }
-.al-comp-ai em {
-  font-style: normal;
-  color: var(--color-navy);
-  font-weight: 800;
-}
-
-/* ── TOEIC 오답노트 카드 ─────────────────────────────────────────── */
-.al-toeic-summary {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  margin-bottom: 14px;
-  background: linear-gradient(135deg, #f6f9ff 0%, var(--color-primary-bg) 100%);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.al-toeic-stat {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.al-toeic-stat-num {
-  font-size: 34px;
-  font-weight: 900;
-  color: var(--color-primary);
-  line-height: 1;
-}
-
-.al-toeic-stat-unit {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--color-primary);
-  margin-top: -6px;
-}
-
-.al-toeic-stat-lbl {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-sub);
-}
-
-.al-toeic-stat-divider {
-  width: 1px;
-  align-self: stretch;
-  background: #c7d2fe;
-  margin: 4px 0;
-}
-
-.al-toeic-stat-grid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-}
-
-.al-toeic-stat-grid > div {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.al-toeic-stat-num-sm {
-  font-size: 22px;
-  font-weight: 900;
-  color: var(--color-navy);
-  line-height: 1;
-}
-
-.al-toeic-stat-lbl-sm {
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-sub);
-}
-
-.al-toeic-cats {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-
-.al-toeic-cats-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--color-navy);
-  margin-bottom: 2px;
-}
-
-.al-toeic-cat-row {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 4px;
-  padding: 8px 10px;
-  background: #fafcff;
-  border: 1px solid var(--color-primary-bg);
-  border-radius: var(--radius-sm);
-}
-
-.al-toeic-cat-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.al-toeic-cat-lbl {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-navy);
-}
-
-.al-toeic-cat-val {
-  font-size: 16px;
-  font-weight: 900;
-}
-
-.al-toeic-cat-wrong {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--color-text-muted);
-}
-
-.al-toeic-cat-bar {
-  width: 100%;
-  height: 7px;
-  background: #eef2f7;
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.al-toeic-cat-fill {
-  height: 100%;
-  border-radius: 999px;
-  transition: width 0.3s;
-}
-
-.al-toeic-cat-hint {
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.al-toeic-ai {
-  font-size: 16px;
-  line-height: 1.7;
-}
-
-.al-toeic-ai strong {
-  color: var(--color-primary);
-  font-weight: 900;
-}
-
-.al-toeic-ai em {
-  font-style: normal;
-  color: var(--color-navy);
-  font-weight: 800;
-  background: #f5f7ff;
-  padding: 0 4px;
-  border-radius: 4px;
-  margin: 0 1px;
-}
-
-/* Counsel — 질문 + AI 조언 페어 그룹 */
-.al-counsel-list { display: flex; flex-direction: column; gap: 12px; flex: 1; }
-
-.al-counsel-pair {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px 14px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.al-counsel-pair:hover {
-  border-color: #b9c9f5;
-  box-shadow: 0 6px 16px rgba(15, 45, 95, 0.05);
-}
-
-.al-counsel-pair-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px dashed var(--color-border);
-  flex-wrap: wrap;
-}
-
-.al-counsel-type {
-  font-size: 16px;
-  font-weight: 800;
-}
-
-.al-counsel-date {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--color-text-muted);
-}
-
-.al-counsel-msg {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px 12px;
-  border-radius: var(--radius-sm);
-}
-
-.al-counsel-msg-q {
-  background: #f7f9fc;
-  border-left: 3px solid #c5cee0;
-}
-
-.al-counsel-msg-a {
-  background: #f3f7ff;
-  border-left: 3px solid var(--color-primary);
-}
-
-.al-counsel-msg-lbl {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--color-text-muted);
-  letter-spacing: 0.03em;
-}
-
-.al-counsel-msg-a .al-counsel-msg-lbl {
-  color: var(--color-primary);
-}
-
-.al-counsel-msg p {
-  font-size: 16px;
-  color: var(--color-text);
-  line-height: 1.6;
-  margin: 0;
-}
-
-/* ── Test Summary Card ──────────────────────────────────────────── */
-/* 역피라미드: 6컬럼 grid에서 1행 3개(각 2칸), 2행 2개(2-3, 4-5칸)에 배치 */
-.al-test-rings {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 14px 12px;
-  padding: 8px 4px 4px;
-  flex: 1;
-  align-content: start;
-}
-
-.al-test-ring:nth-child(1) { grid-column: 1 / span 2; }
-.al-test-ring:nth-child(2) { grid-column: 3 / span 2; }
-.al-test-ring:nth-child(3) { grid-column: 5 / span 2; }
-.al-test-ring:nth-child(4) { grid-column: 2 / span 2; }
-.al-test-ring:nth-child(5) { grid-column: 4 / span 2; }
-
-.al-test-ring {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 8px;
-  background: var(--color-bg);
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-md);
-  cursor: pointer;
-  transition: all 0.15s;
-  font-family: inherit;
-}
-
-.al-test-ring {
-  position: relative;
-}
-
-.al-test-ring:hover {
-  border-color: #b9c9f5;
-  background: var(--color-surface);
-  box-shadow: 0 8px 20px rgba(46, 91, 255, 0.08);
-  transform: translateY(-2px);
-  z-index: 5;
-}
-
-/* 검사별 결과 미리보기 팝오버 (hover) */
-.al-test-preview {
-  position: absolute;
-  bottom: calc(100% + 10px);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 30;
-  width: 184px;
-  padding: 10px 10px 8px;
-  background: #fff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: 0 14px 34px rgba(28, 36, 66, 0.2);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  pointer-events: none;
-}
-
-.al-test-preview::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 7px solid transparent;
-  border-top-color: #fff;
-  filter: drop-shadow(0 1px 0 var(--color-border));
-}
-
-.al-test-preview-head {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.al-test-preview-name {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--color-navy);
-}
-
-.al-test-preview-head strong {
-  font-size: 15px;
-  font-weight: 900;
-}
-
-.al-test-preview-foot {
+.al-page .nav-label {
+  margin: 0 10px 8px;
+  color: var(--muted-foreground);
   font-size: 12px;
-  font-weight: 700;
-  color: var(--color-text-muted);
+  font-weight: 800;
+  letter-spacing: .12em;
+  text-transform: uppercase
 }
 
-.al-test-name {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-text);
+.al-page .nav-group {
+  display: grid;
+  gap: 4px;
+  margin: 0 0 24px
 }
 
-.al-test-hint {
-  margin-top: auto;
-  padding-top: 12px;
-  border-top: 1px dashed var(--color-border);
-  color: var(--color-text-muted);
-  font-size: 15px;
-  font-weight: 600;
-  text-align: center;
+.al-page .sidebar-footer {
+  position: relative;
+  padding: 14px;
+  border-top: 1px solid var(--border)
 }
 
-/* hint 위쪽에 살짝 여유 공간 */
-.al-test-hint::before {
-  content: '';
-  display: block;
-  height: 6px;
+.al-page .sidebar-footer.open .profile-popover {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none
 }
 
-.al-test-hint i {
-  margin-right: 4px;
-  color: #b9c9d8;
+.al-page .sidebar-footer.open .profile-menu>.icon {
+  transform: rotate(90deg)
 }
 
-/* ── Test Detail Modal ──────────────────────────────────────────── */
-.al-test-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.al-page .avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: linear-gradient(135deg, var(--violet), var(--pink));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900
 }
 
-.al-test-modal-top {
+.al-page .sidebar-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 35;
+  background: rgba(15, 18, 25, .48);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 240ms
+}
+
+.al-page .breadcrumb {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding: 14px 18px;
-  background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-primary-bg) 100%);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 12px
 }
 
-.al-test-modal-score {
-  font-size: 44px;
-  font-weight: 900;
-  line-height: 1;
-  letter-spacing: -1px;
+.al-page .breadcrumb b {
+  color: var(--foreground)
 }
 
-.al-test-modal-score span {
-  font-size: 19px;
-  font-weight: 800;
-  margin-left: 4px;
-}
-
-.al-test-modal-meta {
+.al-page .search {
+  width: 240px;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted-foreground)
 }
 
-.al-test-modal-name {
-  font-size: 21px;
-  font-weight: 900;
-  color: var(--color-navy);
+.al-page .search input {
+  min-width: 0;
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 12px
 }
 
-.al-test-modal-sub {
-  font-size: 16px;
+.al-page .welcome {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 32px;
+  margin: 0 0 28px
+}
+
+.al-page .welcome small {
+  display: block;
+  margin: 0 0 8px;
+  color: var(--muted-foreground);
+  font-size: 14px
+}
+
+.al-page .welcome h1 {
+  margin: 0;
+  font-size: 32px;
+  /* 원본 HTML은 브라우저 기본 h1 굵기(700)를 사용한다. Tailwind preflight가
+     이를 inherit(400)로 초기화하므로 v2에서는 명시적으로 복원한다. */
   font-weight: 700;
-  color: var(--color-text-sub);
+  line-height: 44px;
+  letter-spacing: -.02em
 }
 
-.al-test-modal-chart {
+.al-page .welcome h1 span {
+  color: var(--violet)
+}
+
+.al-page .student-type {
+  padding: 12px 14px;
+  border: 1px solid var(--violet-border);
+  border-radius: 12px;
+  background: var(--violet-soft);
+  display: flex;
+  align-items: center;
+  gap: 12px
+}
+
+.al-page .student-type>.type-code {
+  flex: 0 0 38px;
+  width: 38px;
+  height: 38px;
+  margin: 0;
+  border-radius: 10px;
+  background: var(--violet);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 900
+}
+
+.al-page .type-copy {
+  min-width: 0;
+  display: block
+}
+
+.al-page .type-copy b {
+  display: block;
+  color: var(--violet);
+  font-size: 12px
+}
+
+.al-page .type-copy span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  white-space: nowrap
+}
+
+.al-page .progress {
+  height: 8px;
+  border-radius: 6px;
+  background: var(--muted);
+  overflow: hidden
+}
+
+.al-page .progress>i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  transition: width 700ms cubic-bezier(.2, .8, .2, 1)
+}
+
+.al-page .journey-card {
+  grid-column: span 8;
+  border-color: var(--violet)
+}
+
+.al-page .todo-card {
+  border-color: var(--mint)
+}
+
+.al-page .next-card {
+  grid-column: span 4
+}
+
+.al-page .competency-card {
+  grid-column: span 7
+}
+
+.al-page .diagnosis-card {
+  grid-column: span 5;
+  display: flex;
+  flex-direction: column
+}
+
+.al-page .diagnosis-card [data-slot="card-content"] {
+  flex: 1;
+  display: flex;
+  flex-direction: column
+}
+
+.al-page .goal-card {
+  grid-column: span 12
+}
+
+.al-page .todo-card,
+.al-page .recommend-card {
+  grid-column: span 6
+}
+
+/* 같은 대시보드 행의 정보 밀도를 맞춘다. 전역 grid가 `align-items: start`라
+   내용이 짧은 카드가 먼저 끝나지 않도록, 비교되는 카드 쌍만 행 높이를 공유한다. */
+.al-page .competency-card,
+.al-page .diagnosis-card,
+.al-page .todo-card,
+.al-page .recommend-card {
+  align-self: stretch
+}
+
+.al-page .journey-state {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 24px;
+  margin: 0 0 12px
+}
+
+.al-page .journey-kicker {
+  display: block;
+  margin: 0 0 8px;
+  color: var(--journey-current);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+  letter-spacing: .06em
+}
+
+.al-page .journey-value b {
+  display: block;
+  font-size: 24px;
+  line-height: 32px
+}
+
+.al-page .journey-value p {
+  margin: 6px 0 0;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 20px
+}
+
+.al-page .journey-percent {
+  text-align: right
+}
+
+.al-page .journey-percent span {
+  display: block;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 18px
+}
+
+.al-page .journey-percent b {
+  display: block;
+  margin-top: 4px;
+  font-size: 20px;
+  line-height: 1
+}
+
+.al-page .journey-track {
+  margin: 0 0 28px
+}
+
+.al-page .steps {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  position: relative;
+  padding: 8px 0 0
+}
+
+.al-page .steps::before {
+  content: "";
+  position: absolute;
+  left: 7%;
+  right: 7%;
+  top: 24px;
+  height: 2px;
+  background: var(--border)
+}
+
+.al-page .step {
+  position: relative;
+  z-index: 1;
+  text-align: center
+}
+
+.al-page .step-marker {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 10px;
+  border: 4px solid var(--card);
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  box-shadow: 0 0 0 1px var(--border)
+}
+
+.al-page .step.done .step-marker {
+  color: #fff;
+  background: var(--journey-done);
+  box-shadow: 0 0 0 1px var(--journey-done)
+}
+
+.al-page .step.current .step-marker {
+  color: #fff;
+  background: var(--journey-current);
+  box-shadow: 0 0 0 5px var(--journey-current-soft)
+}
+
+.al-page .step b {
+  display: block;
+  font-size: 12px
+}
+
+.al-page .step span {
   display: flex;
   justify-content: center;
-  padding: 12px 0 6px;
-}
-
-.al-test-modal-ai {
-  padding: 14px 18px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.al-test-modal-ai-head {
-  display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 6px;
-  color: var(--color-primary);
-  font-size: 16px;
-  font-weight: 900;
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 12px
 }
 
-.al-test-modal-ai p {
-  color: #2a3858;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.7;
+.al-page .step.current b {
+  color: var(--journey-current)
 }
 
-.al-test-modal-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.al-page .next-card {
+  background: linear-gradient(325deg, var(--amber-wash-alt), var(--card) 70%)
 }
 
-.al-test-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 6px 12px;
-  border-radius: 999px;
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.al-test-tag-high {
-  background: #eaf6ee;
-  color: #137c3f;
-}
-
-.al-test-tag-mid {
-  background: #fff5e1;
-  color: #b46a00;
-}
-
-.al-test-tag-low {
-  background: #ffe7e7;
-  color: var(--color-danger);
-}
-
-/* ── AI 액션 로드맵 섹션 ────────────────────────────────────────── */
-.al-roadmap-section {
-  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: 0 18px 44px rgba(15, 45, 95, 0.06);
-  padding: 24px 28px;
-}
-
-.al-sec-hd {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.al-sec-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 21px;
-  font-weight: 900;
-  color: var(--color-navy);
-}
-
-.al-sec-title i {
-  color: var(--color-primary);
-  font-size: 19px;
-}
-
-.al-roadmap-intro {
-  margin-bottom: 20px;
-  color: var(--color-text-sub);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.65;
-}
-
-.al-roadmap-intro strong {
-  color: var(--color-navy);
-  font-weight: 800;
-}
-
-/* Vertical timeline — 3-col grid 슬롭 패턴 제거하고 위→아래 시간 흐름으로 표현 */
-.al-roadmap-list {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  margin-bottom: 18px;
-  padding-left: 16px;
-}
-
-/* 좌측 세로 가이드 라인 */
-.al-roadmap-list::before {
-  content: '';
-  position: absolute;
-  left: 31px;
-  top: 16px;
-  bottom: 16px;
-  width: 2px;
-  background: linear-gradient(180deg, var(--color-danger) 0%, var(--color-warning) 50%, var(--color-primary) 100%);
-  border-radius: 1px;
-}
-
-.al-roadmap-phase {
-  position: relative;
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 24px;
-  padding: 18px 22px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: 0 8px 18px rgba(15, 45, 95, 0.04);
-  margin-left: 36px;
-}
-
-.al-roadmap-phase-head {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 0;
-  border-bottom: none;
-  position: relative;
-}
-
-/* 번호 동그라미를 카드 왼쪽 바깥, 타임라인 위에 배치 */
-.al-roadmap-num {
-  position: absolute;
-  left: -60px;
-  top: -2px;
+.al-page .next-icon {
   width: 44px;
   height: 44px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--color-bg);
-  font-size: 19px;
-  font-weight: 900;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12), 0 0 0 4px var(--color-bg);
-}
-
-.al-roadmap-phase-meta {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  min-width: 0;
-}
-
-.al-roadmap-period {
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--color-text-muted);
-  letter-spacing: 0.02em;
-}
-
-.al-roadmap-title {
-  font-size: 16px;
-  font-weight: 900;
-  color: var(--color-navy);
-  line-height: 1.45;
-}
-
-.al-roadmap-actions {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-}
-
-.al-roadmap-actions li {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 13.5px;
-  font-weight: 600;
-  color: #2a3858;
-  line-height: 1.55;
-}
-
-.al-roadmap-actions li i {
-  margin-top: 4px;
-  font-size: 13px;
-  flex-shrink: 0;
-}
-
-.al-roadmap-summary {
-  margin: 0;
-}
-
-.al-roadmap-link {
-  color: var(--color-primary);
-  font-weight: 900;
-  text-decoration: underline;
-}
-
-/* ── Responsive ─────────────────────────────────────────────────── */
-@media (max-width: 1100px) {
-  .al-profile-card { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .al-roadmap-phase { grid-template-columns: 1fr; }
-}
-
-@media (max-width: 900px) {
-  .al-layout { grid-template-columns: 1fr; }
-  .al-right-sidebar {
-    width: auto;
-    position: static;
-    max-height: none;
-    overflow: visible;
-  }
-  .al-bottom-grid { grid-template-columns: 1fr 1fr; }
-}
-
-@media (max-width: 768px) {
-  .al-page { padding: 14px 14px 32px; }
-  .al-analysis-row { grid-template-columns: 1fr; }
-  .al-bottom-grid { grid-template-columns: 1fr; }
-  .al-roadmap-phase { grid-template-columns: 1fr; }
-  .al-profile-card { grid-template-columns: 1fr; padding: 12px; }
-  .al-report-3col { grid-template-columns: 1fr; gap: 12px; }
-  .al-test-rings { grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .al-score-num { font-size: 48px; }
-  .al-hero h1 { font-size: 24px; }
-  .al-hero p { font-size: 16px; }
-  /* roadmap timeline: 좌측 가이드 라인 들여쓰기 줄이기 */
-  .al-roadmap-list { padding-left: 8px; }
-  .al-roadmap-list::before { left: 23px; }
-  .al-roadmap-phase { margin-left: 28px; padding: 14px 16px; }
-  .al-roadmap-num { left: -46px; width: 36px; height: 36px; font-size: 16px; }
-  /* TOEIC card stat-grid stack */
-  .al-toeic-summary { flex-direction: column; align-items: stretch; gap: 10px; }
-  .al-toeic-stat-divider { display: none; }
-  /* counsel pair: stack header */
-  .al-counsel-pair-head { flex-direction: column; align-items: flex-start; gap: 2px; }
-  /* AI 분석 섹션 모바일 패딩 축소 */
-  .al-ai-section { padding-top: 22px; margin-top: 22px; }
-  .al-ai-section-head h2 { font-size: 20px; }
-}
-
-/* ─── 6대 역량 상세 모달 (al-cd-) ─────────────────────────────── */
-
-.al-more-link--btn {
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  font: inherit;
-}
-
-.al-cd-modal {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-/* 상단 종합 점수 + 공식 영역 */
-.al-cd-overall {
+  border-radius: 12px;
+  background: var(--amber-soft);
+  color: var(--amber);
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 18px;
-  padding: 18px 20px;
-  background: linear-gradient(135deg, #f5f8ff 0%, #eef4ff 100%);
-  border: 1px solid #dce8ff;
-  border-radius: var(--radius-md);
+  place-items: center;
+  margin: 0 0 18px
 }
 
-.al-cd-overall-label {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--color-text-muted);
-  letter-spacing: 0.04em;
-}
-
-.al-cd-overall-score {
-  font-size: 56px;
-  font-weight: 900;
-  color: var(--color-navy);
-  line-height: 1;
-  letter-spacing: -2px;
-  margin: 4px 0 8px;
-}
-
-.al-cd-overall-score span {
+.al-page .next-card h3 {
+  margin: 0 0 8px;
   font-size: 18px;
-  color: var(--color-text-muted);
-  font-weight: 800;
-  letter-spacing: 0;
-  margin-left: 2px;
+  font-weight: 700
 }
 
-.al-cd-overall-sub {
+.al-page .next-card>div>p {
+  margin: 0;
+  color: var(--muted-foreground);
   font-size: 13px;
-  color: var(--color-text-sub);
-  line-height: 1.5;
+  line-height: 22px
 }
 
-.al-cd-formula-title {
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--color-primary);
-  margin-bottom: 6px;
-}
-
-.al-cd-formula {
-  display: block;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 12.5px;
-  color: var(--color-navy);
-  background: #fff;
-  padding: 8px 12px;
-  border-radius: 8px;
-  border: 1px solid #e6edf8;
-  word-break: keep-all;
-}
-
-.al-cd-weight-grid {
+.al-page .condition-list {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  margin-top: 8px;
+  gap: 10px;
+  margin: 20px 0
 }
 
-.al-cd-weight-cell {
+.al-page .condition {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px
+}
+
+.al-page .condition i {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-style: normal;
+  font-weight: 900
+}
+
+.al-page .condition.done i {
+  background: var(--mint-soft);
+  color: var(--mint)
+}
+
+.al-page .condition.wait i {
+  background: var(--coral-soft);
+  color: var(--coral)
+}
+
+.al-page .condition b {
+  margin-left: auto
+}
+
+.al-page .chart-layout {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 24px;
+  align-items: center
+}
+
+.al-page .radar {
+  width: 300px;
+  height: 280px;
+  overflow: visible
+}
+
+.al-page .radar .grid {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1
+}
+
+.al-page .radar .axis {
+  stroke: var(--border);
+  stroke-width: 1
+}
+
+.al-page .radar .avg {
+  fill: none;
+  stroke: var(--chart-reference);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 5
+}
+
+.al-page .radar .need {
+  fill: color-mix(in srgb, var(--competency-target) 8%, transparent);
+  stroke: var(--competency-target);
+  stroke-width: 2
+}
+
+.al-page .radar .mine {
+  fill: color-mix(in srgb, var(--competency-current) 18%, transparent);
+  stroke: var(--competency-current);
+  stroke-width: 2.5
+}
+
+.al-page .radar text {
+  font-family: inherit;
+  font-size: 12px;
+  fill: var(--muted-foreground)
+}
+
+.al-page .axis-list {
+  display: grid;
+  gap: 12px
+}
+
+.al-page .axis-row {
+  display: grid;
+  grid-template-columns: 72px 1fr 34px;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.al-page .axis-row b {
+  font-size: 12px
+}
+
+.al-page .axis-track {
+  height: 8px;
+  border-radius: 6px;
+  background: var(--muted);
+  position: relative
+}
+
+.al-page .axis-track i {
+  display: block;
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--competency-current), var(--competency-growth))
+}
+
+.al-page .axis-track u {
+  position: absolute;
+  top: -3px;
+  width: 2px;
+  height: 14px;
+  background: var(--competency-target);
+  text-decoration: none
+}
+
+.al-page .gap-value {
+  text-align: right;
+  font-weight: 700;
+  color: var(--competency-target)
+}
+
+.al-page .legend {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 16px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px
+}
+
+.al-page .legend span {
+  display: flex;
+  align-items: center;
+  gap: 6px
+}
+
+.al-page .legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px
+}
+
+.al-page .diagnosis-list {
+  display: grid;
+  gap: 12px
+}
+
+.al-page .diagnosis {
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--muted) 34%, transparent)
+}
+
+.al-page .diag-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px
+}
+
+.al-page .diag-head b {
+  font-size: 12px
+}
+
+.al-page .diag-score {
+  font-size: 12px;
+  font-weight: 900
+}
+
+.al-page .diagnosis p {
+  margin: 6px 0 14px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 20px
+}
+
+.al-page .tabs-list {
+  display: inline-flex;
+  height: 38px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--muted);
+  gap: 4px
+}
+
+.al-page .tab-trigger {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  font-weight: 700
+}
+
+.al-page .tab-trigger.active {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 1px 4px rgba(16, 24, 40, .08)
+}
+
+.al-page .tab-panel {
+  display: none;
+  padding: 20px 0 0
+}
+
+.al-page .tab-panel.active {
+  display: block
+}
+
+.al-page .goal-overview {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 20px
+}
+
+.al-page .goal-core {
+  padding: 24px;
+  border-radius: 12px;
+  background: linear-gradient(145deg, var(--deep-start), var(--deep-end));
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  min-height: 264px
+}
+
+.al-page .goal-core small {
+  font-size: 13px;
+  color: var(--deep-muted)
+}
+
+.al-page .goal-core h3 {
+  margin: 14px 0 8px;
+  font-size: 28px;
+  font-weight: 700
+}
+
+.al-page .goal-core p {
+  margin: 0;
+  color: var(--deep-subtle);
+  font-size: 13px;
+  line-height: 20px
+}
+
+.al-page .goal-core .goal-number {
+  margin-top: auto;
+  font-size: 32px;
+  font-weight: 600
+}
+
+.al-page .goal-core .goal-number span {
+  font-size: 12px;
+  color: var(--deep-muted)
+}
+
+.al-page .area-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px
+}
+
+.al-page .area-card {
+  min-height: 126px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  text-align: left;
+  transition: border-color 160ms, background 160ms
+}
+
+.al-page .area-card:hover,
+.al-page .area-card.active {
+  border-color: var(--area);
+  background: var(--area-soft)
+}
+
+.al-page .area-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0 0 18px
+}
+
+.al-page .area-code {
+  color: var(--area);
+  font-size: 12px;
+  font-weight: 900
+}
+
+.al-page .area-pct {
+  font-size: 12px;
+  font-weight: 900
+}
+
+.al-page .area-card h4 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700
+}
+
+.al-page .area-card .progress>i {
+  background: var(--area)
+}
+
+.al-page .area-detail {
+  margin: 16px 0 0;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.al-page .detail-head {
   display: flex;
   justify-content: space-between;
-  padding: 4px 8px;
-  background: #fff;
-  border: 1px solid #e6edf8;
-  border-radius: 6px;
+  gap: 16px;
+  margin: 0 0 16px
+}
+
+.al-page .detail-head h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700
+}
+
+.al-page .detail-head p {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px
+}
+
+.al-page .detail-head b {
+  color: var(--violet);
+  font-size: 18px
+}
+
+.al-page .action-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap
+}
+
+.al-page .action-chip {
+  height: 28px;
+  padding: 0 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: var(--card);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px
+}
+
+.al-page .action-chip.done {
+  border-color: var(--mint-border);
+  color: var(--mint-ink);
+  background: var(--mint-soft)
+}
+
+.al-page .action-chip.doing {
+  border-color: var(--violet-border);
+  color: var(--violet);
+  background: var(--violet-soft)
+}
+
+.al-page .table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px
+}
+.al-page td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap
+}
+
+.al-page .metric-list {
+  display: grid;
+  gap: 12px
+}
+
+.al-page .metric-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 44px;
+  gap: 12px;
+  align-items: center;
+  font-size: 12px
+}
+
+.al-page .metric-row b {
+  font-size: 12px
+}
+
+.al-page .metric-row strong {
+  text-align: right
+}
+
+.al-page .row-list {
+  display: grid;
+  gap: 8px
+}
+
+.al-page .list-item {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  transition: border-color 160ms, background 160ms
+}
+
+.al-page .list-item:hover {
+  border-color: var(--input);
+  background: var(--muted)
+}
+
+.al-page .item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
   font-size: 12px;
+  font-weight: 900
 }
 
-.al-cd-weight-label {
+.al-page .item-copy b {
+  display: block;
+  font-size: 13px
+}
+
+.al-page .item-copy span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.5
+}
+
+.al-page .item-action {
+  display: flex;
+  align-items: center;
+  gap: 8px
+}
+
+.al-page .checkbox {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  border: 2px solid var(--input);
+  border-radius: 5px;
+  background: var(--card);
+  position: relative;
+  cursor: pointer
+}
+
+.al-page .todo-card .list-item {
+  grid-template-columns: 18px minmax(0, 1fr) auto;
+  column-gap: 8px
+}
+
+.al-page .checkbox:checked {
+  border-color: var(--mint);
+  background: var(--mint)
+}
+
+.al-page .checkbox:checked::after {
+  content: "✓";
+  position: absolute;
+  left: 2px;
+  top: 0px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 800
+}
+
+.al-page .checkbox:checked~.item-copy b {
+  text-decoration: line-through;
+  color: var(--muted-foreground)
+}
+
+.al-page /* Reference-style top navigation,
+.al-page global search,
+.al-page and footer */
+
+/* Growth summary and goal plan extensions */
+.al-page .growth-card [data-slot="card-content"] {
+  height: 100%;
+  display: flex;
+  flex-direction: column
+}
+
+.al-page .growth-score-row {
+  margin: 14px 0 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px
+}
+
+.al-page .growth-delta {
+  height: 24px;
+  padding: 0 8px;
+  border-radius: 12px;
+  background: var(--mint-soft);
+  color: var(--mint);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 900
+}
+
+.al-page .growth-chart {
+  width: 100%;
+  height: 72px;
+  margin-top: auto;
+  overflow: visible
+}
+
+.al-page .growth-chart-grid {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 4 6
+}
+
+.al-page .growth-chart-area {
+  fill: url(#growthAreaGradient)
+}
+
+.al-page .growth-chart-line-soft {
+  fill: none;
+  stroke: color-mix(in srgb, var(--sky) 22%, transparent);
+  stroke-width: 8;
+  stroke-linecap: round;
+  stroke-linejoin: round
+}
+
+.al-page .growth-chart-line {
+  fill: none;
+  stroke: var(--sky);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round
+}
+
+.al-page .growth-chart-dot {
+  fill: var(--card);
+  stroke: var(--sky);
+  stroke-width: 3
+}
+
+.al-page .level-profile {
+  margin: 14px 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px
+}
+
+.al-page .level-avatar {
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--violet-border);
+  border-radius: 50%;
+  background: linear-gradient(145deg, var(--blue-soft), var(--violet-soft));
+  color: var(--violet);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto
+}
+
+.al-page .level-avatar .icon {
+  width: 20px;
+  height: 20px
+}
+
+.al-page .level-badge {
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 16px;
+  background: var(--violet);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 900
+}
+
+.al-page .goal-overview {
+  grid-template-columns: 260px minmax(0, 1fr)
+}
+
+.al-page .goal-plan {
+  min-width: 0
+}
+
+.al-page .goal-plan-columns {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px
+}
+
+.al-page .goal-plan-column {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--plan-soft) 42%, var(--card));
+  box-shadow: var(--shadow)
+}
+
+.al-page .goal-plan-head {
+  min-height: 48px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px
+}
+
+.al-page .goal-plan-head-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--plan-soft);
+  color: var(--plan-color);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto
+}
+
+.al-page .goal-plan-head b {
+  display: block;
+  color: var(--plan-color);
+  font-size: 14px
+}
+
+.al-page .goal-plan-head-copy span {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.5
+}
+
+.al-page .goal-task-list {
+  display: grid;
+  gap: 6px
+}
+
+.al-page .goal-task {
+  width: 100%;
+  min-height: 58px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto 14px;
+  align-items: center;
+  gap: 6px;
+  text-align: left;
+  transition: border-color 180ms ease, transform 180ms ease
+}
+
+.al-page .goal-task:hover {
+  border-color: var(--plan-color);
+}
+
+.al-page .goal-task-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: var(--plan-soft);
+  color: var(--plan-color);
+  display: grid;
+  place-items: center
+}
+
+.al-page .goal-task-icon .icon {
+  width: 16px;
+  height: 16px
+}
+
+.al-page .goal-task-copy {
+  min-width: 0
+}
+
+.al-page .goal-task-copy b {
+  display: block;
+  overflow: hidden;
+  color: var(--foreground);
   font-weight: 700;
-  color: var(--color-navy);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap
 }
 
-.al-cd-weight-val {
-  font-weight: 800;
-  color: var(--color-primary);
+.al-page .goal-task-copy small {
+  display: block;
+  margin-top: 2px;
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap
 }
 
-/* 6대 역량 리스트 */
-.al-cd-list {
+.al-page .goal-task-status {
+  color: var(--goal-status-active);
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap
+}
+
+.al-page .goal-task-status.planned {
+  color: var(--goal-status-planned)
+}
+
+.al-page .goal-task>.icon {
+  width: 14px;
+  height: 14px;
+  color: var(--muted-foreground)
+}
+
+.al-page .goal-coach {
+  margin-top: 12px;
+  padding: 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--deep-start), var(--deep-end));
+  color: #fff;
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px
+}
+
+.al-page .goal-coach-icon {
+  width: 40px;
+  height: 40px;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, .12);
+  color: #fff;
+  display: grid;
+  place-items: center
+}
+
+.al-page .goal-coach-copy b {
+  display: block;
+  font-size: 14px
+}
+
+.al-page .goal-coach-copy p {
+  margin: 4px 0 0;
+  color: var(--deep-subtle);
+  font-size: 13px;
+  line-height: 20px
+}
+
+.al-page .goal-coach-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px
+}
+
+.al-page .goal-coach-actions .button {
+  border-color: rgba(255, 255, 255, .24);
+  background: rgba(255, 255, 255, .12);
+  color: #fff
+}
+
+.al-page .goal-coach-actions .button:hover {
+  background: rgba(255, 255, 255, .2)
+}
+
+.al-page /* Refined level card and interactive diagnosis visualization */
+.level-summary {
+  margin: 14px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px
+}
+
+.al-page .diagnosis-visual-list {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 12px
+}
+
+.al-page .diagnosis-visual {
+  min-width: 0;
+  min-height: 280px;
+  height: 100%;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--foreground);
   display: flex;
   flex-direction: column;
-  gap: 8px;
-}
-
-.al-cd-row {
-  border: 1px solid #e6edf8;
-  border-radius: var(--radius-md);
-  background: #fff;
-  overflow: hidden;
-  transition: border-color 0.15s;
-}
-
-.al-cd-row[open] {
-  border-color: #b9c9f5;
-  box-shadow: 0 6px 16px rgba(15, 45, 95, 0.05);
-}
-
-.al-cd-row-head {
-  display: grid;
-  grid-template-columns: 110px 1fr 56px 18px;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  cursor: pointer;
-  list-style: none;
-  user-select: none;
-}
-
-.al-cd-row-head::-webkit-details-marker { display: none; }
-
-.al-cd-row-name {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--color-navy);
-}
-
-.al-cd-row-track {
-  position: relative;
-  height: 8px;
-  background: var(--color-surface);
-  border-radius: 999px;
-  overflow: hidden;
-}
-
-.al-cd-row-fill {
-  position: absolute;
-  inset: 0 auto 0 0;
-  background: linear-gradient(90deg, #2455ff 0%, #2f65ff 60%, #5b80ff 100%);
-  border-radius: 999px;
-}
-
-.al-cd-row-score {
-  font-size: 18px;
-  font-weight: 900;
-  color: var(--color-primary);
-  text-align: right;
-}
-
-.al-cd-row-chev {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  transition: transform 0.15s;
-}
-
-.al-cd-row[open] .al-cd-row-chev {
-  transform: rotate(180deg);
-}
-
-.al-cd-row-body {
-  padding: 0 16px 14px;
-  border-top: 1px dashed #e6edf8;
-  padding-top: 12px;
-}
-
-.al-cd-row-formula {
-  font-size: 12.5px;
-  font-weight: 700;
-  color: var(--color-text-sub);
-  margin-bottom: 8px;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-}
-
-.al-cd-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 13px;
-}
-
-.al-cd-table thead th {
   text-align: left;
-  font-weight: 800;
-  color: var(--color-text-muted);
-  padding: 6px 8px;
-  border-bottom: 1px solid #e6edf8;
-  font-size: 12px;
-  letter-spacing: 0.02em;
+  transition: border-color 180ms ease, background 180ms ease
 }
 
-.al-cd-table tbody td {
-  padding: 7px 8px;
-  color: var(--color-navy);
-  border-bottom: 1px dashed #f0f4fb;
+.al-page .diagnosis-visual:hover,
+.al-page .diagnosis-visual:focus-visible {
+  border-color: var(--diagnosis-color);
+  background: color-mix(in srgb, var(--diagnosis-soft) 64%, var(--card));
+  outline: 0
 }
 
-.al-cd-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.al-cd-table-num {
-  font-weight: 800;
-  color: var(--color-primary);
-  text-align: right;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-}
-
-.al-cd-note {
+.al-page .diagnosis-visual-head {
   display: flex;
-  gap: 10px;
-  padding: 12px 14px;
-  background: var(--color-primary-bg);
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  line-height: 1.6;
-  color: #2a3858;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px
 }
 
-.al-cd-note i {
-  color: var(--color-primary);
-  margin-top: 2px;
-  flex-shrink: 0;
+.al-page .diagnosis-visual-head small,
+.al-page .diagnosis-visual-head b {
+  display: block
 }
 
-.al-cd-note strong {
-  color: var(--color-primary);
+.al-page .diagnosis-visual-head small {
+  margin-bottom: 4px;
+  color: var(--diagnosis-color);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .06em
+}
+
+.al-page .diagnosis-visual-head b {
+  font-size: 14px
+}
+
+.al-page .diagnosis-visual-head strong {
+  color: var(--diagnosis-color);
+  font-size: 18px;
+  white-space: nowrap
+}
+
+.al-page .diagnosis-mini-chart {
+  flex: 1;
+  min-height: 138px;
+  margin: 8px 0;
+  display: grid;
+  place-items: center
+}
+
+.al-page .diagnosis-mini-chart svg {
+  width: 138px;
+  height: 138px;
+  overflow: visible
+}
+
+.al-page .diagnosis-radar-grid {
+  fill: none;
+  stroke: var(--border);
+  stroke-width: 1
+}
+
+.al-page .diagnosis-radar-axis {
+  stroke: var(--border);
+  stroke-width: 1
+}
+
+.al-page .diagnosis-radar-area {
+  fill: var(--diagnosis-color);
+  fill-opacity: .22;
+  stroke: var(--diagnosis-color);
+  stroke-width: 2;
+  stroke-linejoin: round
+}
+
+.al-page .diagnosis-radar-dot {
+  fill: var(--card);
+  stroke: var(--diagnosis-color);
+  stroke-width: 2
+}
+
+.al-page .diagnosis-radar-label {
+  fill: var(--muted-foreground);
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700
+}
+
+.al-page .diagnosis-visual-foot {
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted-foreground);
+  font-size: 12px
+}
+
+.al-page .diagnosis-visual-foot>span:last-child {
+  color: var(--diagnosis-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800
+}
+
+.al-page .diagnosis-visual-foot .icon {
+  width: 14px;
+  height: 14px
+}
+
+.al-page .diagnosis-all-button {
+  width: 100%;
+  margin-top: auto;
+  justify-content: center
+}
+
+.al-page .diagnosis-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  visibility: hidden;
+  opacity: 0;
+  transition: opacity 200ms ease, visibility 200ms ease
+}
+
+.al-page .diagnosis-modal.open {
+  visibility: visible;
+  opacity: 1
+}
+
+.al-page .diagnosis-modal-backdrop {
+  border: 0;
+  background: rgba(15, 23, 42, .52);
+  position: absolute;
+  inset: 0
+}
+
+.al-page .diagnosis-dialog {
+  width: min(860px, 100%);
+  max-height: calc(100vh - 48px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  background: var(--card);
+  box-shadow: 0 32px 80px rgba(15, 23, 42, .24);
+  position: relative;
+  overflow: hidden;
+  transform: translateY(16px) scale(.98);
+  transition: transform 220ms ease
+}
+
+.al-page .diagnosis-modal.open .diagnosis-dialog {
+  transform: none
+}
+
+.al-page .diagnosis-modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px
+}
+
+.al-page .diagnosis-modal-header small {
+  color: var(--diagnosis-color);
+  font-size: 12px;
   font-weight: 900;
+  letter-spacing: .08em
 }
 
-@media (max-width: 768px) {
-  .al-cd-overall { grid-template-columns: 1fr; }
-  .al-cd-weight-grid { grid-template-columns: repeat(2, 1fr); }
-  .al-cd-row-head { grid-template-columns: 90px 1fr 44px 16px; gap: 10px; }
-  .al-cd-table { font-size: 12px; }
+.al-page .diagnosis-modal-header h2 {
+  margin: 2px 0 0;
+  font-size: 20px;
+  font-weight: 700
 }
+
+.al-page .diagnosis-modal-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: 20px
+}
+
+.al-page .diagnosis-modal-content {
+  max-height: calc(100vh - 120px);
+  padding: 20px;
+  overflow-y: auto
+}
+
+.al-page .diagnosis-result-banner {
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: var(--diagnosis-soft);
+  display: flex;
+  align-items: center;
+  gap: 14px
+}
+
+.al-page .diagnosis-result-banner>strong {
+  color: var(--diagnosis-color);
+  font-size: 30px
+}
+
+.al-page .diagnosis-result-banner b,
+.al-page .diagnosis-result-banner small {
+  display: block
+}
+
+.al-page .diagnosis-result-banner b {
+  font-size: 14px
+}
+
+.al-page .diagnosis-result-banner small {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 12px
+}
+
+.al-page .diagnosis-detail-grid {
+  margin-top: 18px;
+  display: grid;
+  grid-template-columns: 340px minmax(0, 1fr);
+  align-items: center;
+  gap: 24px
+}
+
+.al-page .diagnosis-detail-chart {
+  min-width: 0;
+  display: grid;
+  place-items: center
+}
+
+.al-page .diagnosis-detail-chart svg {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
+  overflow: hidden
+}
+
+.al-page .diagnosis-axis-detail {
+  display: grid;
+  gap: 10px
+}
+
+.al-page .diagnosis-axis-row {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) 34px;
+  align-items: center;
+  gap: 8px
+}
+
+.al-page .diagnosis-axis-row b,
+.al-page .diagnosis-axis-row strong {
+  font-size: 12px
+}
+
+.al-page .diagnosis-axis-row strong {
+  color: var(--diagnosis-color);
+  text-align: right
+}
+
+.al-page .diagnosis-axis-track {
+  height: 8px;
+  border-radius: 6px;
+  background: var(--muted);
+  overflow: hidden
+}
+
+.al-page .diagnosis-axis-track i {
+  display: block;
+  width: var(--axis-value);
+  height: 100%;
+  border-radius: 6px;
+  background: var(--diagnosis-color)
+}
+
+.al-page .diagnosis-ai-comment {
+  margin-top: 18px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--diagnosis-color) 24%, var(--border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--diagnosis-soft) 52%, var(--card));
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px
+}
+
+.al-page .diagnosis-ai-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--diagnosis-soft);
+  color: var(--diagnosis-color);
+  display: grid;
+  place-items: center
+}
+
+.al-page .diagnosis-ai-comment b {
+  color: var(--diagnosis-color);
+  font-size: 14px
+}
+
+.al-page .diagnosis-ai-comment p {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 20px
+}
+
+.al-page /* Final dashboard content composition */
+.student-type {
+  min-width: 360px;
+  padding: 16px 20px;
+  border-color: var(--violet-border-strong);
+  background: linear-gradient(135deg, var(--violet-wash), var(--blue-wash));
+  align-items: center
+}
+
+.al-page .student-type-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--violet);
+  color: #fff;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto
+}
+
+.al-page .student-type-icon .icon {
+  width: 20px;
+  height: 20px
+}
+
+.al-page .type-copy small {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 18px
+}
+
+.al-page .type-copy b {
+  font-size: 18px;
+  color: var(--violet);
+  line-height: 24px
+}
+
+.al-page .type-copy span {
+  margin-top: 2px;
+  line-height: 18px
+}
+
+.al-page .journey-card {
+  grid-column: span 12;
+  order: 1
+}
+
+.al-page .goal-card {
+  order: 2
+}
+
+.al-page .todo-card {
+  order: 3
+}
+
+.al-page .recommend-card {
+  order: 4
+}
+
+.al-page .competency-card {
+  order: 5;
+  display: flex;
+  flex-direction: column
+}
+
+.al-page .competency-card>[data-slot="card-content"] {
+  flex: 1;
+  display: flex;
+  align-items: center
+}
+
+.al-page .competency-card .chart-layout {
+  width: 100%
+}
+
+.al-page .diagnosis-card {
+  order: 6
+}
+
+.al-page .counseling-card {
+  grid-column: span 12;
+  order: 7
+}
+
+.al-page .chart-layout {
+  grid-template-columns: 260px minmax(0, 1fr);
+  gap: 32px
+}
+
+.al-page .chart-layout>div:first-child {
+  min-width: 0
+}
+
+.al-page .radar {
+  width: 248px;
+  height: 232px;
+  display: block;
+  margin: 0 auto
+}
+
+.al-page .diagnosis-result-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.al-page .diagnosis-result-item {
+  min-width: 0;
+  min-height: 152px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent;
+  color: var(--foreground);
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  transition: border-color 180ms ease, background 180ms ease
+}
+
+.al-page .diagnosis-result-item:hover,
+.al-page .diagnosis-result-item:focus-visible {
+  border-color: var(--result-color);
+  background: color-mix(in srgb, var(--result-soft) 56%, var(--card));
+  outline: 0
+}
+
+.al-page .diagnosis-result-item.not-taken {
+  border-style: dashed;
+  background: color-mix(in srgb, var(--muted) 56%, transparent)
+}
+
+.al-page .diagnosis-result-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px
+}
+
+.al-page .diagnosis-result-name small,
+.al-page .diagnosis-result-name b {
+  display: block
+}
+
+.al-page .diagnosis-result-name small {
+  margin-bottom: 4px;
+  color: var(--result-color);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .04em
+}
+
+.al-page .diagnosis-result-name b {
+  font-size: 14px;
+  line-height: 20px
+}
+
+.al-page .diagnosis-result-date {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  white-space: nowrap
+}
+
+.al-page .diagnosis-primary-result {
+  margin: 16px 0 12px;
+  color: var(--result-color);
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px
+}
+
+.al-page .diagnosis-result-tags {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px
+}
+
+.al-page .diagnosis-result-tags span {
+  min-height: 24px;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: var(--result-soft);
+  color: var(--result-color);
+  display: inline-flex;
+  align-items: center;
+  font-size: 12px;
+  font-weight: 600
+}
+
+.al-page .diagnosis-notice {
+  margin: 16px 0 12px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 20px
+}
+
+.al-page .diagnosis-start-label {
+  margin-top: auto;
+  color: var(--result-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 900
+}
+
+.al-page .diagnosis-start-label .icon {
+  width: 14px;
+  height: 14px
+}
+
+.al-page .diagnosis-result-item.locked {
+  position: relative;
+  min-height: 208px;
+  overflow: hidden;
+  cursor: default
+}
+
+.al-page .diagnosis-result-item.locked>.diagnosis-result-top,
+.al-page .diagnosis-result-item.locked>.diagnosis-primary-result,
+.al-page .diagnosis-result-item.locked>.diagnosis-result-tags {
+  opacity: .36;
+  filter: saturate(.3)
+}
+
+.al-page .diagnosis-lock-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  padding: 16px;
+  border-radius: inherit;
+  background: linear-gradient(180deg, transparent 26%, color-mix(in srgb, var(--card) 74%, transparent) 48%, var(--card) 68%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 10px;
+  pointer-events: none
+}
+
+.al-page .diagnosis-lock-message {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px
+}
+
+.al-page .diagnosis-lock-icon {
+  width: 34px;
+  height: 34px;
+  border: 1px solid color-mix(in srgb, var(--result-color) 24%, var(--border));
+  border-radius: 10px;
+  background: var(--result-soft);
+  color: var(--result-color);
+  display: grid;
+  place-items: center
+}
+
+.al-page .diagnosis-lock-icon .icon {
+  width: 16px;
+  height: 16px
+}
+
+.al-page .diagnosis-lock-copy b,
+.al-page .diagnosis-lock-copy small {
+  display: block
+}
+
+.al-page .diagnosis-lock-copy b {
+  font-size: 12px;
+  line-height: 18px
+}
+
+.al-page .diagnosis-lock-copy small {
+  margin-top: 2px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 18px
+}
+
+.al-page .diagnosis-lock-button {
+  width: 100%;
+  height: 32px;
+  border-color: color-mix(in srgb, var(--result-color) 28%, var(--border));
+  color: var(--result-color);
+  background: color-mix(in srgb, var(--result-soft) 52%, var(--card));
+  pointer-events: auto
+}
+
+.al-page .diagnosis-lock-button:hover {
+  border-color: var(--result-color);
+  background: var(--result-soft)
+}
+
+.al-page .goal-task {
+  min-height: 48px;
+  grid-template-columns: 20px minmax(0, 1fr) auto
+}
+
+.al-page .goal-task-icon {
+  display: none
+}
+
+.al-page .goal-task>.icon {
+  display: none
+}
+
+.al-page .goal-task::before {
+  content: "";
+  width: 14px;
+  height: 14px;
+  border: 2px solid color-mix(in srgb, var(--plan-color) 44%, var(--border));
+  border-radius: 6px;
+  background: var(--card);
+  display: grid;
+  place-items: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1
+}
+
+.al-page .goal-task.is-complete::before {
+  content: "✓";
+  border-color: var(--plan-color);
+  background: var(--plan-color)
+}
+
+.al-page .ai-recommend-card {
+  background: linear-gradient(325deg, var(--recommend-surface-wash), var(--card) 72%)
+}
+
+.al-page .ai-recommend-card [data-slot="card-content"] {
+  height: 100%;
+  display: flex;
+  flex-direction: column
+}
+
+.al-page .ai-recommend-icon {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--recommend-surface-soft), var(--recommend-surface-highlight));
+  color: var(--recommend-surface);
+  display: grid;
+  place-items: center
+}
+
+.al-page .ai-recommend-card h3 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 26px
+}
+
+.al-page .ai-recommend-card>div>p {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  line-height: 22px
+}
+
+.al-page .ai-recommend-list {
+  display: grid;
+  gap: 10px;
+  margin: 20px 0
+}
+
+.al-page .ai-recommend-item {
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px
+}
+
+.al-page .ai-recommend-item>span:first-child {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--recommend-soft);
+  color: var(--recommend-color);
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 900
+}
+
+.al-page .ai-recommend-copy b,
+.al-page .ai-recommend-copy small {
+  display: block
+}
+
+.al-page .ai-recommend-copy b {
+  font-size: 13px
+}
+
+.al-page .ai-recommend-copy small {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 13px
+}
+
+.al-page .ai-recommend-item>strong {
+  color: var(--recommend-color);
+  font-size: 12px;
+  white-space: nowrap
+}
+
+.al-page .ai-recommend-card .button {
+  align-self: flex-start;
+  margin-top: auto
+}
+
+.al-page .counseling-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px
+}
+
+.al-page .counseling-detail-column {
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: transparent
+}
+
+.al-page .counseling-detail-head {
+  display: grid;
+  grid-template-columns: 38px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px
+}
+
+.al-page .counseling-detail-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--counsel-soft);
+  color: var(--counsel-color);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto
+}
+
+.al-page .counseling-detail-icon .icon {
+  width: 18px;
+  height: 18px
+}
+
+.al-page .counseling-detail-copy,
+.al-page .counseling-detail-copy>span {
+  display: block;
+}
+
+.al-page .counseling-detail-copy {
+  font-weight: 700
+}
+
+.al-page .counseling-detail-title {
+  font-size: 14px
+}
+
+.al-page .counseling-detail-copy>span:last-child {
+  margin-top: 4px;
+  font-weight: normal;
+  font-size: 13px
+}
+
+.al-page .counseling-detail-total {
+  align-self: start;
+  color: var(--counsel-color);
+  font-size: 20px;
+  line-height: 1.2
+}
+
+.al-page .counseling-detail-summary {
+  margin: 16px 0 8px;
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.al-page .counseling-record-list {
+  display: grid;
+  gap: 6px
+}
+
+.al-page .counseling-record {
+  min-height: 40px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--card);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px
+}
+
+.al-page .counseling-record-title,
+.al-page .counseling-record small {
+  display: block
+}
+
+.al-page .counseling-record-title {
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap
+}
+
+.al-page .counseling-record small {
+  margin-top: 4px;
+  color: var(--muted-foreground);
+  font-size: 12px
+}
+
+.al-page .counseling-record .badge {
+  color: var(--counsel-color);
+  background: var(--counsel-soft)
+}
+
+/* ==========================================================
+   폴백 굵기 보정 — Pretendard를 쓸 수 없을 때만 적용된다.
+   (CDN 차단 / 오프라인 / 폰트 미설치 PC)
+   맑은 고딕에는 500 웨이트가 없어 400(Regular)으로 떨어지므로
+   작은 글씨가 흐릿해 보인다. 이때만 한 단계 올려 Bold(700)로 매칭시킨다.
+   Pretendard가 정상 로드되면 .no-pretendard가 붙지 않아
+   기존 디자인(Medium 500)이 100% 그대로 유지된다.
+   클래스 부여: </body> 직전 폰트 감지 스크립트
+   ========================================================== */
+
+/* 긴 설명문은 Regular 유지 — 전부 볼드가 되면 답답해진다 */
+/* Color tone variations */

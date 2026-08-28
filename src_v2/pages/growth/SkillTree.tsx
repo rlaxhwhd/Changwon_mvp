@@ -17,6 +17,9 @@ export default function SkillTree() {
   const [selectedDirection, setSelectedDirection] = useState<string | null>(null)
   const [expandedDirection, setExpandedDirection] = useState<string | null>(null)
   const [pickerOpen, setPickerOpen] = useState(false)
+  const [jobInputOpen, setJobInputOpen] = useState(false)
+  const [jobInput, setJobInput] = useState('')
+  const [jobInputError, setJobInputError] = useState('')
   const [certPickerOpen, setCertPickerOpen] = useState(false)
   const [analyzing, setAnalyzing] = useState(false)
   const [progress, setProgress] = useState(0)
@@ -100,6 +103,39 @@ export default function SkillTree() {
   }
   const handleAddCert = (certId: string) => { addCert(certId); setCertPickerOpen(false) }
 
+  const handleReanalyzeJob = () => {
+    const query = jobInput.trim().toLocaleLowerCase()
+    if (!query) {
+      setJobInputError('직무를 입력하거나 목록에서 선택하세요.')
+      return
+    }
+    const current = data.directions.find(direction => direction.name.toLocaleLowerCase() === query)
+    const candidate = jobOptions.find(job => job.label.toLocaleLowerCase() === query)
+    if (current) {
+      setSelectedDirection(current.jobId)
+      setExpandedDirection(current.jobId)
+    } else if (candidate) {
+      handleAddJob(candidate.jobId)
+    } else {
+      setJobInputError('등록된 직무 목록에서 선택할 수 있습니다.')
+      return
+    }
+    setJobInputError('')
+    setJobInputOpen(false)
+    setJobInput('')
+    startAnalyze()
+  }
+
+  const mergedCompetency: CourseGroup = {
+    title: '핵심역량',
+    subtitle: '목표 직무와 연결되는 전공·전문 과목',
+    rows: [...data.core.rows, ...data.expert.rows],
+    doneCount: data.core.doneCount + data.expert.doneCount,
+    totalCount: data.core.totalCount + data.expert.totalCount,
+    fitPercent: Math.round(((data.core.doneCount + data.expert.doneCount) /
+      Math.max(1, data.core.totalCount + data.expert.totalCount)) * 100),
+  }
+
   const expanded = data.directions.find(d => d.jobId === expandedDirection)
 
   return (
@@ -129,7 +165,7 @@ export default function SkillTree() {
         <div className="st-grid">
 
           {/* Col 1: 기초 역량 */}
-          <div className="st-col">
+          <div className="st-col st-col--foundation">
             <div className="st-col-header">
               <div className="st-col-title">기초 역량</div>
               <div className="st-col-subtitle">모든 역량의 시작점</div>
@@ -164,14 +200,13 @@ export default function SkillTree() {
           </div>
 
           {/* Col 2·3: 핵심 / 전문 역량 — 교육과정 + 수강이력에서 파생 */}
-          <CourseColumn group={data.core} />
-          <CourseColumn group={data.expert} />
+          <CourseColumn group={mergedCompetency} />
 
           {/* Col 4: 자격 */}
-          <div className="st-col">
+          <div className="st-col st-col--growth">
             <div className="st-col-header">
-              <div className="st-col-title">{data.certification.title}</div>
-              <div className="st-col-subtitle">{data.certification.subtitle}</div>
+              <div className="st-col-title">내 성장 활동</div>
+              <div className="st-col-subtitle">자격증·어학 등 보유 활동 현황</div>
             </div>
             <div className="st-col-body st-skill-list">
               {data.certification.rows.map(cert => (
@@ -237,14 +272,12 @@ export default function SkillTree() {
                 </feMerge>
               </filter>
             </defs>
-            <path className="st-flow-path" d="M 125 0 C 125 82, 430 112, 500 210" />
-            <path className="st-flow-path" d="M 375 0 C 375 82, 470 122, 500 210" />
-            <path className="st-flow-path" d="M 625 0 C 625 82, 530 122, 500 210" />
-            <path className="st-flow-path" d="M 875 0 C 875 82, 570 112, 500 210" />
-            <path className="st-flow-beam st-flow-beam-1" pathLength="100" d="M 125 0 C 125 82, 430 112, 500 210" />
-            <path className="st-flow-beam st-flow-beam-2" pathLength="100" d="M 375 0 C 375 82, 470 122, 500 210" />
-            <path className="st-flow-beam st-flow-beam-3" pathLength="100" d="M 625 0 C 625 82, 530 122, 500 210" />
-            <path className="st-flow-beam st-flow-beam-4" pathLength="100" d="M 875 0 C 875 82, 570 112, 500 210" />
+            <path className="st-flow-path" d="M 166 0 C 166 84, 420 116, 500 210" />
+            <path className="st-flow-path" d="M 500 0 C 500 92, 500 128, 500 210" />
+            <path className="st-flow-path" d="M 834 0 C 834 84, 580 116, 500 210" />
+            <path className="st-flow-beam st-flow-beam-1" pathLength="100" d="M 166 0 C 166 84, 420 116, 500 210" />
+            <path className="st-flow-beam st-flow-beam-2" pathLength="100" d="M 500 0 C 500 92, 500 128, 500 210" />
+            <path className="st-flow-beam st-flow-beam-3" pathLength="100" d="M 834 0 C 834 84, 580 116, 500 210" />
           </svg>
           <button
             type="button"
@@ -267,10 +300,33 @@ export default function SkillTree() {
               <div className="st-dir-section-title">직무 방향</div>
               <div className="st-dir-section-sub">현재 역량과 가장 잘 맞는 커리어를 확인하세요</div>
             </div>
-            <button className="st-dir-add-btn" onClick={() => setPickerOpen(true)}>
+            <button className="st-dir-add-btn" onClick={() => setJobInputOpen(true)}>
               <i className="fa-solid fa-plus" /> 직무 추가
             </button>
           </div>
+
+          {jobInputOpen && (
+            <div className="st-job-input" role="group" aria-label="직무 입력 및 재분석">
+              <input
+                value={jobInput}
+                onChange={event => { setJobInput(event.target.value); setJobInputError('') }}
+                onKeyDown={event => { if (event.key === 'Enter') handleReanalyzeJob() }}
+                list="skill-tree-job-options"
+                placeholder="분석할 직무를 입력하세요"
+                autoFocus
+              />
+              <datalist id="skill-tree-job-options">
+                {[...data.directions.map(direction => direction.name), ...jobOptions.map(job => job.label)].map(label => (
+                  <option key={label} value={label} />
+                ))}
+              </datalist>
+              <button type="button" onClick={handleReanalyzeJob}>재분석</button>
+              <button type="button" className="st-job-input-cancel" onClick={() => setJobInputOpen(false)} aria-label="직무 입력 닫기">
+                <i className="fa-solid fa-xmark" />
+              </button>
+              {jobInputError && <p>{jobInputError}</p>}
+            </div>
+          )}
 
           <div className="st-dir-grid">
             {data.directions.map(dir => (
@@ -342,7 +398,7 @@ export default function SkillTree() {
 
         {/* ── TIP Bar ── */}
         <div className="st-tip">
-          💡 <strong>TIP</strong>&nbsp; 타학과 수강 과목도 역량으로 반영됩니다. 부족한 역량은 다음 학기 수강신청에 참고하세요!
+          <i className="fa-solid fa-circle-info" /><strong>TIP</strong>&nbsp; 타학과 수강 과목도 역량으로 반영됩니다. 부족한 역량은 다음 학기 수강신청에 참고하세요!
         </div>
       </div>
 
@@ -459,7 +515,7 @@ function Notice({ icon, title, children }: {
 /** 과목 열(핵심 역량 · 전문 역량). 교육과정 ∪ 수강이력에서 파생된 행을 그린다. */
 function CourseColumn({ group }: { group: CourseGroup }) {
   return (
-    <div className="st-col">
+    <div className="st-col st-col--course">
       <div className="st-col-header">
         <div className="st-col-title">{group.title}</div>
         <div className="st-col-subtitle">{group.subtitle}</div>

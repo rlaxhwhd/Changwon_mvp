@@ -1,0 +1,764 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DREAMCATCH · AI 기반 학생 맞춤형 로드맵</title>
+<link rel="stylesheet" as="style" crossorigin
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* =========================================================
+   DREAMCATCH — AI 기반 학생 맞춤형 로드맵 (시안)
+   출처: public_t/roadmap.png
+
+   [CSS 목차]
+   1. 토큰          DESIGN.md 값을 그대로 옮긴 것. 새 색을 만들지 않는다.
+   2. 베이스        리셋 + 한글 타이포 기본값
+   3. 공용          panel · card · badge · tag · icon · chip
+   4. 헤더
+   5. 01 AI 분석 입력   재료 카드 3종 + 커넥터
+   6. AI 플로우      분석 → 오브 → 목표 직무 → 생성
+   7. 02 로드맵 결과   히어로 · 축 카드 · 칸(step) · 푸터
+   8. 축 테마        축1 mint · 축2 blue · 축3 violet
+
+   [수정 가이드]
+   - 진행률은 CSS가 아니라 데이터다 → 인라인 style="--v:33%" 하나만 고친다.
+   - 도넛도 마찬가지 → style="--pct:38".
+   - 새 색을 만들지 말고 DESIGN.md 7색 + soft/line/ink 짝에서 고른다.
+   - 어두운 면·그라데이션은 color-mix로 토큰에서 파생시킨다. 하드코딩 금지.
+   - 아이콘은 하단 스프라이트의 outline SVG만 쓴다. 이모지 금지.
+   ========================================================= */
+
+/* ---------- 1. 토큰 (DESIGN.md §3~§10) ---------- */
+:root{
+  --background:#f7f8fb;
+  --foreground:#181c25;
+  --card:#ffffff;
+  --muted:#f1f3f6;
+  --muted-foreground:#565e6d;
+  --border:#e2e6ec;
+  --input:#d8dde5;
+
+  --violet:#7c5cfc;  --violet-soft:#f0edff;  --violet-line:#d9d0ff;
+  --blue:#356dff;    --blue-soft:#eaf0ff;    --blue-line:#cbd8ff;
+  --mint:#20b486;    --mint-soft:#e5f8f2;    --mint-line:#bdebdc;   --mint-ink:#148262;
+  --coral:#ff6b6b;   --coral-soft:#fff0f0;   --coral-line:#ffcfcf;  --coral-ink:#dc4444;
+  --amber:#f5a524;   --amber-soft:#fff6df;   --amber-line:#f4d99d;  --amber-ink:#9a6300;
+  --sky:#17a9e6;     --sky-soft:#e7f7fd;
+  --pink:#e85aad;    --pink-soft:#fdebf6;
+
+  --radius-sm:8px; --radius-md:10px; --radius-lg:12px; --radius-panel:14px;
+  --shadow:0 2px 8px rgba(22,28,45,.04);
+  --shadow-orb:0 10px 26px rgba(99,79,240,.32);
+
+  /* 파생 면 — 토큰에서만 만든다 */
+  --subtle:color-mix(in srgb, var(--muted) 52%, var(--card));
+  --hero-1:color-mix(in srgb, var(--violet) 58%, #14163a);
+  --hero-2:color-mix(in srgb, var(--violet) 82%, #1b1740);
+  --dot:#c3cddf;
+}
+
+/* ---------- 2. 베이스 ---------- */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  min-width:1280px;
+  background:var(--background);
+  color:var(--foreground);
+  font-family:"Pretendard Variable",Pretendard,"SUIT Variable",SUIT,"Noto Sans KR","Malgun Gothic",Arial,sans-serif;
+  font-weight:500;
+  font-synthesis:none;
+  text-rendering:optimizeLegibility;
+  -webkit-font-smoothing:subpixel-antialiased;
+  word-break:keep-all;
+}
+h1,h2,h3,h4,p,dl,dd,dt,ul,ol{margin:0}
+ul,ol{padding:0;list-style:none}
+.shell{max-width:1280px;margin:0 auto;padding:28px 24px 56px}
+
+/* ---------- 3. 공용 ---------- */
+.panel{
+  border:1px solid var(--border);
+  border-radius:var(--radius-panel);
+  background:var(--card);
+  padding:24px;
+}
+.icon{width:18px;height:18px;flex:none;stroke:currentColor;stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.icon.sm{width:15px;height:15px}
+.icon.xs{width:13px;height:13px;stroke-width:2.2}
+
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  height:24px;padding:0 9px;
+  border:1px solid var(--border);border-radius:12px;
+  background:var(--card);
+  font-size:12px;font-weight:800;white-space:nowrap;
+}
+.badge.violet{border-color:var(--violet-line);color:var(--violet);background:var(--violet-soft)}
+.badge.blue  {border-color:var(--blue-line);  color:var(--blue);  background:var(--blue-soft)}
+.badge.mint  {border-color:var(--mint-line);  color:var(--mint-ink);background:var(--mint-soft)}
+
+/* 강의 분류 태그 */
+.tag{
+  display:inline-flex;align-items:center;justify-content:center;
+  min-width:56px;height:21px;padding:0 8px;border-radius:6px;
+  font-size:11px;font-weight:800;letter-spacing:-.02em;white-space:nowrap;
+}
+.tag.req{background:var(--blue-soft);color:var(--blue)}
+.tag.sel{background:color-mix(in srgb,var(--blue-soft) 60%,var(--card));color:color-mix(in srgb,var(--blue) 74%,var(--muted-foreground))}
+.tag.etc{background:var(--amber-soft);color:var(--amber-ink)}
+.tag.lib{background:var(--violet-soft);color:var(--violet)}
+
+/* 섹션 머리 */
+.sec-head{display:flex;align-items:center;gap:10px}
+.sec-no{
+  display:grid;place-items:center;
+  width:28px;height:23px;border-radius:7px;
+  background:linear-gradient(135deg,var(--blue),var(--violet));
+  color:#fff;font-size:12px;font-weight:800;letter-spacing:.02em;
+}
+.sec-title{font-size:19px;font-weight:800;letter-spacing:-.02em}
+.sec-note{font-size:13px;font-weight:600;color:var(--muted-foreground)}
+.sec-desc{margin-top:8px;font-size:13px;line-height:1.6;color:var(--muted-foreground)}
+
+/* ---------- 4. 헤더 ---------- */
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:0 4px 20px}
+.head h1{display:flex;align-items:center;gap:8px;font-size:28px;font-weight:800;letter-spacing:-.03em}
+.head h1 .icon{width:22px;height:22px;color:var(--violet)}
+.head .flow-line{margin-top:8px;font-size:13px;font-weight:600;color:var(--muted-foreground)}
+.head .flow-line b{font-weight:600;color:color-mix(in srgb,var(--violet) 70%,var(--muted-foreground))}
+.head-pills{display:flex;gap:8px;flex:none}
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  height:40px;padding:0 14px;
+  border:1px solid var(--border);border-radius:var(--radius-md);
+  background:var(--card);box-shadow:var(--shadow);
+  font-size:13px;font-weight:700;white-space:nowrap;
+}
+.pill .icon{width:16px;height:16px;color:var(--blue)}
+
+/* ---------- 5. 01 AI 분석 입력 ---------- */
+.sources{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:18px}
+.src{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--card);overflow:hidden}
+.src-head{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--sc-soft);
+}
+.src-ico{display:grid;place-items:center;width:28px;height:28px;border-radius:var(--radius-md);color:var(--sc);background:color-mix(in srgb,var(--sc-soft) 60%,var(--card))}
+.src-title{font-size:15px;font-weight:800;letter-spacing:-.02em}
+.src-title i{font-style:normal;color:var(--sc);margin-right:4px}
+.src-body{display:flex;flex-direction:column;flex:1;padding:16px}
+.src[data-color="mint"]  {--sc:var(--mint);  --sc-soft:var(--mint-soft);  --sc-line:var(--mint-line)}
+.src[data-color="blue"]  {--sc:var(--blue);  --sc-soft:var(--blue-soft);  --sc-line:var(--blue-line)}
+.src[data-color="violet"]{--sc:var(--violet);--sc-soft:var(--violet-soft);--sc-line:var(--violet-line)}
+.src[data-color="mint"]  {border-color:var(--mint-line)}
+.src[data-color="blue"]  {border-color:var(--blue-line)}
+.src[data-color="violet"]{border-color:var(--violet-line)}
+
+/* 5-1. 진단유형 / 상담 */
+.kv{border:1px solid var(--border);border-radius:var(--radius-md);overflow:hidden}
+.kv .row{display:grid;grid-template-columns:96px 1fr;border-top:1px solid var(--border)}
+.kv .row:first-child{border-top:0}
+.kv dt{
+  display:flex;align-items:center;
+  padding:15px 12px;
+  background:var(--subtle);
+  border-right:1px solid var(--border);
+  font-size:12.5px;font-weight:700;
+}
+.kv dd{display:flex;align-items:center;flex-wrap:wrap;gap:8px;padding:15px 14px;font-size:12.5px;font-weight:600;line-height:1.7}
+.kv dd p{color:var(--muted-foreground);font-weight:500}
+.kv dd .muted{color:var(--muted-foreground);font-weight:600}
+.checks{margin-top:auto;border:1px solid var(--border);border-radius:var(--radius-md);padding:14px;display:grid;gap:11px}
+.checks li{display:flex;align-items:center;gap:9px;font-size:12.5px;font-weight:600;color:color-mix(in srgb,var(--foreground) 78%,var(--muted-foreground))}
+.checks .mark{display:grid;place-items:center;width:16px;height:16px;flex:none;border-radius:50%;background:var(--mint);color:#fff}
+.checks .mark .icon{width:10px;height:10px;stroke-width:3}
+
+/* 5-2. 수강강의 / 학과 */
+.courses{border:1px solid var(--border);border-radius:var(--radius-md);padding:14px}
+.courses + .courses{margin-top:12px}
+.courses h4{font-size:13px;font-weight:800;color:var(--blue);letter-spacing:-.02em;margin-bottom:8px}
+.course{display:grid;grid-template-columns:64px 1fr auto auto;align-items:center;gap:10px;padding:4px 0}
+.course .code{font-size:11.5px;font-weight:600;color:var(--muted-foreground);letter-spacing:0}
+.course .name{font-size:13px;font-weight:700;letter-spacing:-.02em}
+.course .cr{font-size:12px;font-weight:600;color:var(--muted-foreground);width:38px;text-align:right}
+
+/* 5-3. 학생 스펙 */
+.specs{display:grid;flex:1;align-content:space-between;gap:12px}
+.spec{display:grid;grid-template-columns:28px 66px 1fr;align-items:start;gap:10px;border:1px solid var(--border);border-radius:var(--radius-md);padding:15px 13px}
+.spec-ico{display:grid;place-items:center;width:28px;height:28px;border-radius:var(--radius-sm);color:var(--violet);background:var(--violet-soft)}
+.spec dt{font-size:12.5px;font-weight:800;padding-top:5px}
+.spec dd{display:grid;gap:6px;padding-top:5px;font-size:12px;font-weight:600;letter-spacing:-.02em;color:var(--muted-foreground)}
+
+/* 5-4. 커넥터 (재료 3종 → AI 오브)
+   드롭 x = 재료 카드 중심(16.3% / 50% / 83.7%), 테일 x = 오브 중심(36.8%). */
+.connector{position:relative;height:40px;margin-top:8px}
+.connector span{position:absolute}
+.connector .drop{top:0;height:22px;border-left:1.5px dashed var(--dot)}
+.connector .drop::before{content:"";position:absolute;left:-3.5px;top:-3px;width:6px;height:6px;border-radius:50%;background:var(--dot)}
+.connector .bus{top:22px;height:0;border-top:1.5px dashed var(--dot)}
+.connector .tail{top:22px;height:18px;border-left:1.5px dashed var(--dot)}
+.connector .tail::after{content:"";position:absolute;left:-3.5px;bottom:-3px;width:6px;height:6px;border-radius:50%;background:var(--dot)}
+
+/* ---------- 6. AI 플로우 ---------- */
+.flow{display:grid;grid-template-columns:1.08fr auto auto auto 1.02fr auto 1fr;align-items:center;gap:12px}
+.flow-card{border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--card);padding:14px 16px}
+.flow-card h4{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:800;letter-spacing:-.02em;margin-bottom:11px}
+.flow-card h4 .icon{color:var(--blue)}
+.flow-card li{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12.5px;font-weight:600;color:color-mix(in srgb,var(--foreground) 76%,var(--muted-foreground))}
+.flow-card li .icon{width:14px;height:14px;color:var(--muted-foreground)}
+.chev{display:flex;align-items:center;gap:-2px;color:color-mix(in srgb,var(--violet) 55%,#fff)}
+.chev .icon{width:16px;height:16px;stroke-width:2.6;margin-right:-6px}
+.orb{
+  display:grid;place-items:center;
+  width:78px;height:78px;border-radius:50%;
+  background:
+    radial-gradient(circle at 33% 27%,rgba(255,255,255,.45),transparent 46%),
+    linear-gradient(140deg,var(--blue),var(--violet));
+  box-shadow:var(--shadow-orb);
+  color:#fff;
+}
+.orb span{display:flex;align-items:flex-start;gap:1px;font-size:23px;font-weight:900;letter-spacing:-.03em}
+.orb span i{font-style:normal;letter-spacing:-.06em}
+.orb .icon{width:11px;height:11px;stroke-width:2.4;margin-top:1px}
+.job-box{margin-top:2px;border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px}
+.job-box .job{font-size:17px;font-weight:800;color:var(--blue);letter-spacing:-.02em}
+.job-meta{display:grid;grid-template-columns:repeat(3,auto);justify-content:start;gap:6px 16px;margin-top:10px}
+.job-meta dt{justify-self:start;padding:2px 7px;border-radius:5px;background:var(--muted);color:var(--muted-foreground);font-size:11px;font-weight:700}
+.job-meta dd{grid-row:2;font-size:12.5px;font-weight:700}
+.gen{
+  display:grid;place-items:center;gap:3px;
+  min-height:82px;padding:14px 16px;border-radius:var(--radius-lg);
+  background:linear-gradient(115deg,var(--blue),var(--violet));
+  color:#fff;text-align:center;
+}
+.gen b{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:800;letter-spacing:-.02em}
+.gen small{font-size:12px;font-weight:600;color:rgba(255,255,255,.85)}
+
+/* 섹션 사이 화살표 */
+.link-arrow{display:grid;place-items:center;padding:14px 0}
+
+/* ---------- 7. 02 로드맵 결과 ---------- */
+.result-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px}
+.hero{
+  display:flex;align-items:center;justify-content:space-between;gap:32px;
+  margin-top:18px;padding:24px 28px;
+  border-radius:var(--radius-lg);
+  background:linear-gradient(118deg,var(--hero-1),var(--hero-2));
+  color:#fff;
+}
+.hero .kicker{font-size:12px;font-weight:700;color:rgba(255,255,255,.62)}
+.hero h3{margin:6px 0 8px;font-size:30px;font-weight:800;letter-spacing:-.03em}
+.hero p{font-size:13px;font-weight:600;color:rgba(255,255,255,.8);line-height:1.6}
+.hero-chips{display:flex;align-items:center;gap:10px;margin-top:14px}
+.chip{display:inline-flex;align-items:stretch;border-radius:8px;overflow:hidden;font-size:12px;font-weight:800}
+.chip em{display:flex;align-items:center;padding:5px 9px;font-style:normal;background:rgba(255,255,255,.18);color:rgba(255,255,255,.9)}
+.chip b{display:flex;align-items:center;padding:5px 10px;background:rgba(255,255,255,.08);color:#fff}
+.chip.accent em{background:var(--violet);color:#fff}
+.chip-div{width:1px;height:18px;background:rgba(255,255,255,.22)}
+.hero-stat{display:flex;align-items:center;gap:22px;flex:none}
+.hero-stat .label{font-size:12.5px;font-weight:700;color:rgba(255,255,255,.72)}
+.hero-stat .value{display:flex;align-items:baseline;gap:2px;margin:4px 0 6px;font-size:46px;font-weight:900;letter-spacing:-.04em;line-height:1}
+.hero-stat .value small{font-size:18px;font-weight:800}
+.hero-stat .sub{font-size:12.5px;font-weight:700;color:rgba(255,255,255,.82)}
+.donut{
+  width:112px;height:112px;border-radius:50%;
+  background:conic-gradient(from -90deg,
+    color-mix(in srgb,var(--blue) 78%,#fff) 0deg,
+    var(--violet) calc(var(--pct)*3.6deg),
+    rgba(255,255,255,.16) calc(var(--pct)*3.6deg) 360deg);
+  -webkit-mask:radial-gradient(farthest-side,transparent 63%,#000 64%);
+          mask:radial-gradient(farthest-side,transparent 63%,#000 64%);
+}
+
+/* 7-1. 축 카드 */
+.axes{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:16px}
+.axis{display:flex;flex-direction:column;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--card);padding:16px}
+.axis-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.axis-head h4{font-size:16px;font-weight:800;color:var(--ax);letter-spacing:-.02em}
+.axis-head .rate{font-size:17px;font-weight:900;color:var(--ax);letter-spacing:-.02em}
+.axis-sub{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:7px 0 10px;font-size:12px;font-weight:600;color:var(--muted-foreground)}
+.axis-sub b{font-weight:700;color:color-mix(in srgb,var(--foreground) 72%,var(--muted-foreground))}
+.progress{height:6px;border-radius:6px;background:var(--muted);overflow:hidden}
+.progress i{display:block;height:100%;width:var(--v);border-radius:6px;background:var(--ax)}
+
+/* 7-2. 칸(step) — 골든 컴포넌트 */
+.steps{display:grid;gap:11px;margin:14px 0 12px}
+.step{
+  display:grid;grid-template-columns:22px 1fr auto;align-items:start;gap:10px;
+  border:1px solid var(--border);border-radius:var(--radius-md);
+  padding:14px 13px;
+}
+.step .no{
+  display:grid;place-items:center;
+  width:22px;height:22px;border-radius:7px;
+  background:var(--ax);color:#fff;
+  font-size:11.5px;font-weight:800;
+}
+.step .body{min-width:0}
+.step .title{font-size:13.5px;font-weight:800;letter-spacing:-.02em;line-height:1.35}
+.step .meta{display:flex;align-items:center;gap:9px;margin-top:6px}
+.step .meta .code{font-size:11.5px;font-weight:600;color:var(--muted-foreground)}
+.step .meta .cr{font-size:11.5px;font-weight:600;color:var(--muted-foreground)}
+.step .desc{margin-top:6px;font-size:12px;font-weight:500;line-height:1.55;color:var(--muted-foreground)}
+.state{
+  display:inline-flex;align-items:center;justify-content:center;
+  height:22px;padding:0 9px;border-radius:11px;
+  border:1px solid var(--border);background:var(--card);
+  color:var(--muted-foreground);
+  font-size:11.5px;font-weight:800;white-space:nowrap;
+}
+.state.done{border-color:var(--mint-line);background:var(--mint-soft);color:var(--mint-ink)}
+.state.doing{border-color:var(--blue-line);background:var(--blue-soft);color:var(--blue)}
+.step.done{background:color-mix(in srgb,var(--mint-soft) 34%,var(--card));border-color:color-mix(in srgb,var(--mint-line) 55%,var(--border))}
+.step.doing{background:color-mix(in srgb,var(--blue-soft) 34%,var(--card));border-color:color-mix(in srgb,var(--blue-line) 55%,var(--border))}
+
+.axis-more{
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  width:100%;height:40px;margin-top:auto;padding-top:0;
+  border:1px solid var(--blue-line);border-radius:var(--radius-md);
+  background:color-mix(in srgb,var(--blue-soft) 52%,var(--card));
+  color:var(--blue);
+  font-family:inherit;font-size:12.5px;font-weight:800;
+  cursor:pointer;
+}
+.axis-more:hover{background:var(--blue-soft)}
+
+/* 7-3. 결과 푸터 */
+.result-foot{
+  display:flex;align-items:center;justify-content:space-between;gap:20px;
+  margin-top:16px;padding:12px 16px;
+  border:1px solid var(--border);border-radius:var(--radius-md);
+  background:var(--subtle);
+  font-size:12.5px;font-weight:600;color:var(--muted-foreground);
+}
+.result-foot .note{display:flex;align-items:center;gap:9px}
+.result-foot .note .icon{color:var(--blue)}
+.result-foot .stamp{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.result-foot .stamp b{font-weight:700;color:color-mix(in srgb,var(--foreground) 72%,var(--muted-foreground))}
+.result-foot .stamp span{color:var(--input)}
+
+/* ---------- 8. 축 테마 ---------- */
+.axis[data-axis="1"]{--ax:var(--mint)}
+.axis[data-axis="2"]{--ax:var(--blue)}
+.axis[data-axis="3"]{--ax:var(--violet)}
+</style>
+</head>
+<body>
+
+<!-- 아이콘 스프라이트 (outline, DESIGN.md §21) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-spark" viewBox="0 0 24 24"><path d="M11 3l1.7 4.3L17 9l-4.3 1.7L11 15l-1.7-4.3L5 9l4.3-1.7z"/><path d="M18.5 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 10-12 0c0 7-2.5 7-2.5 9h17C20.5 15 18 15 18 8z"/><path d="M13.7 20.5a2 2 0 01-3.4 0"/></symbol>
+  <symbol id="i-funnel" viewBox="0 0 24 24"><path d="M3.5 4.5h17l-6.8 8v6.2l-3.4 1.8v-8z"/></symbol>
+  <symbol id="i-hourglass" viewBox="0 0 24 24"><path d="M6.5 3h11M6.5 21h11M8 3v3.6l4 4 4-4V3M8 21v-3.6l4-4 4 4V21"/></symbol>
+  <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 2.5V6M16 2.5V6M3.5 10h17"/><circle cx="12" cy="14.5" r="1.2" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M15.5 20v-1.8a3.7 3.7 0 00-3.7-3.7H6.2A3.7 3.7 0 002.5 18.2V20"/><circle cx="9" cy="7.5" r="3.6"/><path d="M21.5 20v-1.8a3.7 3.7 0 00-2.8-3.6M16.5 4.2a3.7 3.7 0 010 6.7"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4.5h6.2a1.8 1.8 0 011.8 1.8v13a1.8 1.8 0 00-1.8-1.8H4z"/><path d="M20 4.5h-6.2a1.8 1.8 0 00-1.8 1.8v13a1.8 1.8 0 011.8-1.8H20z"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><path d="M19.5 20.5v-2a4 4 0 00-4-4h-7a4 4 0 00-4 4v2"/><circle cx="12" cy="7.5" r="4"/></symbol>
+  <symbol id="i-lang" viewBox="0 0 24 24"><path d="M20.5 14.5a2 2 0 01-2 2H7.5l-4 3.5v-15a2 2 0 012-2h13a2 2 0 012 2z"/><path d="M8 9.5h8M8 12.8h5"/></symbol>
+  <symbol id="i-cert" viewBox="0 0 24 24"><path d="M12 2.8l7.5 2.8v5.6c0 4.8-3.2 7.6-7.5 8.8-4.3-1.2-7.5-4-7.5-8.8V5.6z"/><path d="M9 11.8l2.1 2.1 4.1-4.2"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M8 3.5h8v5.2a4 4 0 01-8 0z"/><path d="M8 4.8H5v1.9a3 3 0 003 3M16 4.8h3v1.9a3 3 0 01-3 3"/><path d="M12 12.8v4M9.5 20.5h5"/></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path d="M14 3v5h5"/><path d="M14 3H7a2 2 0 00-2 2v14a2 2 0 002 2h10a2 2 0 002-2V8z"/><path d="M8.5 13h7M8.5 16.5h4.5"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><path d="M11 4.2a2.6 2.6 0 00-4.6 1.5 2.6 2.6 0 00-1.6 4.5 2.7 2.7 0 00.8 4.6 2.6 2.6 0 004.5 2.2h.9z"/><path d="M13 4.2a2.6 2.6 0 014.6 1.5 2.6 2.6 0 011.6 4.5 2.7 2.7 0 01-.8 4.6 2.6 2.6 0 01-4.5 2.2H13z"/><path d="M12 4v14.5"/></symbol>
+  <symbol id="i-check-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9.2"/><path d="M8.2 12.2l2.6 2.6 5-5.2"/></symbol>
+  <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v-5M12 8h.01"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5.5v13M5.5 12h13"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6.5L9.4 17.2 4 11.8"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 5.5l6.5 6.5L9 18.5"/></symbol>
+</svg>
+
+<div class="shell">
+
+  <!-- ===== 헤더 ===== -->
+  <header class="head">
+    <div>
+      <h1>AI 기반 학생 맞춤형 로드맵 <svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg></h1>
+      <p class="flow-line">진단 <b>→</b> 상담 <b>→</b> 로드맵 생성 <b>→</b> 역량 성장 <b>→</b> 취업 지원</p>
+    </div>
+    <div class="head-pills">
+      <span class="pill"><svg class="icon" aria-hidden="true"><use href="#i-bell"/></svg>상담 자리에서 즉시 생성</span>
+      <span class="pill"><svg class="icon" aria-hidden="true"><use href="#i-funnel"/></svg>학생당 로드맵 1개</span>
+      <span class="pill"><svg class="icon" aria-hidden="true"><use href="#i-hourglass"/></svg>축1 동적 확장</span>
+      <span class="pill"><svg class="icon" aria-hidden="true"><use href="#i-calendar"/></svg>연 1회 스냅샷 재생성</span>
+    </div>
+  </header>
+
+  <!-- ===== 01 AI 분석 입력 ===== -->
+  <section class="panel">
+    <div class="sec-head">
+      <span class="sec-no">01</span>
+      <h2 class="sec-title">AI 분석 입력</h2>
+      <span class="sec-note">(3가지 자료)</span>
+    </div>
+    <p class="sec-desc">진단·상담 결과와 수강 정보, 학생 스펙을 종합하여 AI가 분석하고 목표 직무를 설정합니다.</p>
+
+    <div class="sources">
+
+      <!-- 재료 1 · 진단유형 / 상담 -->
+      <article class="src" data-color="mint">
+        <div class="src-head">
+          <span class="src-ico"><svg class="icon" aria-hidden="true"><use href="#i-users"/></svg></span>
+          <h3 class="src-title"><i>1</i>진단유형 / 상담</h3>
+        </div>
+        <div class="src-body">
+          <dl class="kv">
+            <div class="row">
+              <dt>확정 유형</dt>
+              <dd><span class="badge mint">T2 진로설정형</span></dd>
+            </div>
+            <div class="row">
+              <dt>상담사 코멘트</dt>
+              <dd><p>분석적 사고와 의사소통 강점이 IT 프로젝트 관리 직무에 적합합니다. 일정·리스크 관리 역량을 강화하세요.</p></dd>
+            </div>
+            <div class="row">
+              <dt>후속진단</dt>
+              <dd><span class="badge mint">C2</span><span class="muted">역량 정밀 진단</span></dd>
+            </div>
+            <div class="row">
+              <dt>추천 상담주제</dt>
+              <dd><span class="badge mint">A05~A08</span><span class="muted">진로·취업 전략</span></dd>
+            </div>
+          </dl>
+          <ul class="checks">
+            <li><span class="mark"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span>비교과 프로그램 참여 경험 보유</li>
+            <li><span class="mark"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span>프로젝트 경험을 통한 문제해결 역량 우수</li>
+            <li><span class="mark"><svg class="icon" aria-hidden="true"><use href="#i-check"/></svg></span>연계 학습을 통한 PM 전문성 강화 필요</li>
+          </ul>
+        </div>
+      </article>
+
+      <!-- 재료 2 · 수강강의 / 학과 -->
+      <article class="src" data-color="blue">
+        <div class="src-head">
+          <span class="src-ico"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg></span>
+          <h3 class="src-title"><i>2</i>수강강의 / 학과</h3>
+        </div>
+        <div class="src-body">
+          <section class="courses">
+            <h4>나의 수강 강의</h4>
+            <div class="course"><span class="code">CSE3001</span><span class="name">운영체제</span><span class="tag req">전공필수</span><span class="cr">3학점</span></div>
+            <div class="course"><span class="code">CSE3004</span><span class="name">오픈소스소프트웨어</span><span class="tag sel">전공선택</span><span class="cr">3학점</span></div>
+            <div class="course"><span class="code">BUS1001</span><span class="name">경영학원론</span><span class="tag etc">타학과</span><span class="cr">3학점</span></div>
+            <div class="course"><span class="code">CSE1002</span><span class="name">컴퓨터프로그래밍II</span><span class="tag req">전공필수</span><span class="cr">3학점</span></div>
+            <div class="course"><span class="code">MAT2001</span><span class="name">확률과통계</span><span class="tag lib">교양</span><span class="cr">3학점</span></div>
+          </section>
+          <section class="courses">
+            <h4>학과 개설 강의 (PM 관련 추천)</h4>
+            <div class="course"><span class="code">CSE4001</span><span class="name">프로젝트관리</span><span class="tag sel">전공선택</span><span class="cr">3학점</span></div>
+            <div class="course"><span class="code">CSE4002</span><span class="name">소프트웨어공학</span><span class="tag sel">전공선택</span><span class="cr">3학점</span></div>
+            <div class="course"><span class="code">BUS1001</span><span class="name">마케팅원론</span><span class="tag etc">타학과</span><span class="cr">3학점</span></div>
+            <div class="course"><span class="code">CSE3002</span><span class="name">컴퓨터네트워크</span><span class="tag req">전공필수</span><span class="cr">3학점</span></div>
+            <div class="course"><span class="code">CSE3003</span><span class="name">데이터베이스</span><span class="tag req">전공필수</span><span class="cr">3학점</span></div>
+          </section>
+        </div>
+      </article>
+
+      <!-- 재료 3 · 학생 스펙 -->
+      <article class="src" data-color="violet">
+        <div class="src-head">
+          <span class="src-ico"><svg class="icon" aria-hidden="true"><use href="#i-user"/></svg></span>
+          <h3 class="src-title"><i>3</i>학생 스펙</h3>
+        </div>
+        <div class="src-body">
+          <dl class="specs">
+            <div class="spec">
+              <span class="spec-ico"><svg class="icon sm" aria-hidden="true"><use href="#i-lang"/></svg></span>
+              <dt>어학 성적</dt>
+              <dd><span>TOEIC 700 (2024-03)</span><span>TOEIC Speaking Lv. 6</span></dd>
+            </div>
+            <div class="spec">
+              <span class="spec-ico"><svg class="icon sm" aria-hidden="true"><use href="#i-cert"/></svg></span>
+              <dt>자격증</dt>
+              <dd><span>SQLD (2024-05)</span><span>컴퓨터활용능력 1급 (2023-11)</span><span>정보처리기사 (준비중)</span></dd>
+            </div>
+            <div class="spec">
+              <span class="spec-ico"><svg class="icon sm" aria-hidden="true"><use href="#i-trophy"/></svg></span>
+              <dt>공모전</dt>
+              <dd><span>한국사능력검정 국사편찬위원회 (2022)</span><span>데이터 분석 아이디어 공모전 (장려상)</span></dd>
+            </div>
+            <div class="spec">
+              <span class="spec-ico"><svg class="icon sm" aria-hidden="true"><use href="#i-file"/></svg></span>
+              <dt>프로젝트</dt>
+              <dd><span>캡스톤디자인 PM 역할 수행 (2023-2)</span><span>학과 웹서비스 기획·개발 (2023-1)</span></dd>
+            </div>
+          </dl>
+        </div>
+      </article>
+    </div>
+
+    <!-- 재료 3종 → AI 오브 커넥터 -->
+    <div class="connector" aria-hidden="true">
+      <span class="drop" style="left:16.3%"></span>
+      <span class="drop" style="left:50%"></span>
+      <span class="drop" style="left:83.7%"></span>
+      <span class="bus"  style="left:16.3%;right:16.3%"></span>
+      <span class="tail" style="left:36.8%"></span>
+    </div>
+
+    <!-- AI 플로우 -->
+    <div class="flow">
+      <div class="flow-card">
+        <h4><svg class="icon" aria-hidden="true"><use href="#i-brain"/></svg>AI 종합 분석</h4>
+        <ul>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>진단 결과 + 수강 패턴 + 스펙 분석</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>직무 요구역량 매칭 및 역량 갭 분석</li>
+          <li><svg class="icon" aria-hidden="true"><use href="#i-check-circle"/></svg>개인 성장 우선순위 도출</li>
+        </ul>
+      </div>
+
+      <span class="chev" aria-hidden="true">
+        <svg class="icon" aria-hidden="true"><use href="#i-chev"/></svg>
+        <svg class="icon" aria-hidden="true"><use href="#i-chev"/></svg>
+        <svg class="icon" aria-hidden="true"><use href="#i-chev"/></svg>
+      </span>
+
+      <div class="orb"><span>A<i>I</i><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg></span></div>
+
+      <span class="chev" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-chev"/></svg></span>
+
+      <div class="flow-card">
+        <h4><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg>목표 직무 설정</h4>
+        <div class="job-box">
+          <p class="job">IT Project Manager</p>
+          <dl class="job-meta">
+            <dt>직무 그룹</dt><dt>직무 레벨</dt><dt>설정일</dt>
+            <dd>IT 기획/관리</dd><dd>주니어</dd><dd>2024-05-16</dd>
+          </dl>
+        </div>
+      </div>
+
+      <span class="chev" aria-hidden="true"><svg class="icon" aria-hidden="true"><use href="#i-chev"/></svg></span>
+
+      <div class="gen">
+        <b><svg class="icon" aria-hidden="true"><use href="#i-spark"/></svg>AI 분석 / 로드맵 생성</b>
+        <small>맞춤형 로드맵 1개 생성</small>
+      </div>
+    </div>
+  </section>
+
+  <!-- 01 → 02 -->
+  <div class="link-arrow" aria-hidden="true">
+    <svg width="34" height="30" viewBox="0 0 34 30" fill="none">
+      <defs><linearGradient id="g-arrow" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="var(--violet-soft)"/><stop offset="1" stop-color="var(--violet)"/>
+      </linearGradient></defs>
+      <path d="M11 0h12v14h8L17 30 3 14h8z" fill="url(#g-arrow)"/>
+    </svg>
+  </div>
+
+  <!-- ===== 02 맞춤형 로드맵 결과 ===== -->
+  <section class="panel">
+    <div class="result-head">
+      <div>
+        <div class="sec-head">
+          <span class="sec-no">02</span>
+          <h2 class="sec-title">맞춤형 로드맵 결과</h2>
+          <span class="sec-note">(1개)</span>
+          <span class="badge violet">학생당 로드맵 1개</span>
+        </div>
+        <p class="sec-desc">AI 분석 결과를 바탕으로 생성된 맞춤형 로드맵입니다.</p>
+      </div>
+      <span class="badge blue">3축 × 5칸 = 15칸</span>
+    </div>
+
+    <!-- 히어로 -->
+    <div class="hero">
+      <div>
+        <p class="kicker">나만을 위한 단 하나의 로드맵</p>
+        <h3>IT Project Manager</h3>
+        <p>목표 직무 기준 · IAP 실행 · 핵심역량 수행 · 내 성장 활동 3축을 하나의 로드맵으로 관리합니다.</p>
+        <div class="hero-chips">
+          <span class="chip"><em>유형</em><b>T2 진로설정형</b></span>
+          <span class="chip-div"></span>
+          <span class="chip"><em>후속진단</em><b>C2</b></span>
+          <span class="chip accent"><em>상담주제</em><b>A05~A08</b></span>
+        </div>
+      </div>
+      <div class="hero-stat">
+        <div>
+          <p class="label">전체 이행률</p>
+          <p class="value">38<small>%</small></p>
+          <p class="sub">이행률 6 / 16칸</p>
+        </div>
+        <div class="donut" style="--pct:38" role="img" aria-label="전체 이행률 38%"></div>
+      </div>
+    </div>
+
+    <!-- 3축 -->
+    <div class="axes">
+
+      <!-- 축 1 -->
+      <article class="axis" data-axis="1">
+        <div class="axis-head"><h4>축 1. IAP 실행</h4><span class="rate">33%</span></div>
+        <div class="axis-sub"><span>비교과 프로그램 · 후속진단 · 상담 · 참여</span><b>2 / 6칸 이행</b></div>
+        <div class="progress"><i style="--v:33%"></i></div>
+
+        <div class="steps">
+          <div class="step done">
+            <span class="no">1</span>
+            <div class="body">
+              <p class="title">C-3 역량수준 진단검사 응시</p>
+              <p class="desc">역량성장형(T3)의 후속진단이다. 상담 전에 반드시 응시해야 유형이 최종 확정된다.</p>
+            </div>
+            <span class="state done">완료</span>
+          </div>
+          <div class="step done">
+            <span class="no">2</span>
+            <div class="body">
+              <p class="title">진로취업상담 4주제 이수</p>
+              <p class="desc">역량성장형 4주제(A09~A12) 상담을 마쳐야 로드맵이 확정된다.</p>
+            </div>
+            <span class="state done">완료</span>
+          </div>
+          <div class="step doing">
+            <span class="no">3</span>
+            <div class="body">
+              <p class="title">비교과 프로그램 참여</p>
+              <p class="desc">PM 관련 비교과 프로그램 1개 이상 참여</p>
+            </div>
+            <span class="state doing">진행중</span>
+          </div>
+          <div class="step">
+            <span class="no">4</span>
+            <div class="body">
+              <p class="title">후속진단 C2 응시</p>
+              <p class="desc">역량 변화 측정을 위한 정밀 진단</p>
+            </div>
+            <span class="state">대기</span>
+          </div>
+          <div class="step">
+            <span class="no">5</span>
+            <div class="body">
+              <p class="title">심층 상담 신청</p>
+              <p class="desc">진로·취업 전략 심층 상담 예약</p>
+            </div>
+            <span class="state">대기</span>
+          </div>
+        </div>
+
+        <button type="button" class="axis-more"><svg class="icon xs" aria-hidden="true"><use href="#i-plus"/></svg>비교과 프로그램 더보기</button>
+      </article>
+
+      <!-- 축 2 -->
+      <article class="axis" data-axis="2">
+        <div class="axis-head"><h4>축 2. 핵심역량 수행</h4><span class="rate">60%</span></div>
+        <div class="axis-sub"><span>학과 개설 강의로 목표 직무에 맞춰 학습</span><b>3 / 5칸 이행</b></div>
+        <div class="progress"><i style="--v:60%"></i></div>
+
+        <div class="steps">
+          <div class="step done">
+            <span class="no">1</span>
+            <div class="body">
+              <p class="title">프로젝트관리</p>
+              <p class="meta"><span class="code">CSE4001</span><span class="tag sel">전공선택</span><span class="cr">3학점</span></p>
+              <p class="desc">프로젝트 생명주기와 PM 도구/기법 학습</p>
+            </div>
+            <span class="state done">완료</span>
+          </div>
+          <div class="step done">
+            <span class="no">2</span>
+            <div class="body">
+              <p class="title">소프트웨어공학</p>
+              <p class="meta"><span class="code">CSE4002</span><span class="tag req">전공필수</span><span class="cr">3학점</span></p>
+              <p class="desc">개발 프로세스 이해와 품질 관리 역량</p>
+            </div>
+            <span class="state done">완료</span>
+          </div>
+          <div class="step doing">
+            <span class="no">3</span>
+            <div class="body">
+              <p class="title">컴퓨터네트워크</p>
+              <p class="meta"><span class="code">CSE3002</span><span class="tag req">전공필수</span><span class="cr">3학점</span></p>
+              <p class="desc">시스템 구성 및 네트워크 이해</p>
+            </div>
+            <span class="state doing">진행중</span>
+          </div>
+          <div class="step">
+            <span class="no">4</span>
+            <div class="body">
+              <p class="title">데이터베이스</p>
+              <p class="meta"><span class="code">CSE3003</span><span class="tag req">전공필수</span><span class="cr">3학점</span></p>
+              <p class="desc">데이터 모델링 및 SQL 활용 능력</p>
+            </div>
+            <span class="state">대기</span>
+          </div>
+          <div class="step">
+            <span class="no">5</span>
+            <div class="body">
+              <p class="title">마케팅관리</p>
+              <p class="meta"><span class="code">BUS3001</span><span class="tag etc">타학과</span><span class="cr">3학점</span></p>
+              <p class="desc">이해관계자 관리와 시장분석 역량</p>
+            </div>
+            <span class="state">대기</span>
+          </div>
+        </div>
+
+        <button type="button" class="axis-more"><svg class="icon xs" aria-hidden="true"><use href="#i-plus"/></svg>학과 개설 강의 더보기</button>
+      </article>
+
+      <!-- 축 3 -->
+      <article class="axis" data-axis="3">
+        <div class="axis-head"><h4>축 3. 내 성장 활동</h4><span class="rate">20%</span></div>
+        <div class="axis-sub"><span>자격증 · 공모전 · 어학 · AI 자소서 · 포트폴리오</span><b>1 / 5칸 이행</b></div>
+        <div class="progress"><i style="--v:20%"></i></div>
+
+        <div class="steps">
+          <div class="step done">
+            <span class="no">1</span>
+            <div class="body">
+              <p class="title">정보처리기사 취득</p>
+              <p class="desc">IT 직무 공통 기본 자격이다. 합격 기준선 통과율을 약 8% 끌어올린다.</p>
+            </div>
+            <span class="state done">완료</span>
+          </div>
+          <div class="step doing">
+            <span class="no">2</span>
+            <div class="body">
+              <p class="title">TOEIC 550 → 700 향상</p>
+              <p class="desc">어학이 가장 큰 결손(78% 부족)이다. 기준선 700 충족까지 150점이 남았다.</p>
+            </div>
+            <span class="state doing">진행중</span>
+          </div>
+          <div class="step">
+            <span class="no">3</span>
+            <div class="body">
+              <p class="title">AI 자기소개서 완성</p>
+              <p class="desc">AI 기반 자기소개서 작성 및 피드백 반영</p>
+            </div>
+            <span class="state">대기</span>
+          </div>
+          <div class="step">
+            <span class="no">4</span>
+            <div class="body">
+              <p class="title">PM 포트폴리오 제작</p>
+              <p class="desc">프로젝트 경험 중심 포트폴리오 구축</p>
+            </div>
+            <span class="state">대기</span>
+          </div>
+          <div class="step">
+            <span class="no">5</span>
+            <div class="body">
+              <p class="title">공모전 1회 참여</p>
+              <p class="desc">실전 경험 및 팀워크 역량 향상</p>
+            </div>
+            <span class="state">대기</span>
+          </div>
+        </div>
+
+        <button type="button" class="axis-more"><svg class="icon xs" aria-hidden="true"><use href="#i-plus"/></svg>성장 활동 더보기</button>
+      </article>
+    </div>
+
+    <div class="result-foot">
+      <p class="note"><svg class="icon sm" aria-hidden="true"><use href="#i-info"/></svg>축 1은 프로그램 개설에 따라 동적 확장 가능하며, 매 학기 변화하는 학습 환경에 맞춰 업데이트됩니다.</p>
+      <p class="stamp">최근 생성일 <b>2024-05-16 15:30</b><span>|</span>다음 스냅샷 재생성 <b>2025-05 예정</b></p>
+    </div>
+  </section>
+
+</div>
+</body>
+</html>

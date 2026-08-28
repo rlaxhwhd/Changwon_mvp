@@ -15,6 +15,7 @@
 
 /* Header — 통일 hero spec */
 .pa-header {
+  display: none;
   min-height: 178px;
   margin: 24px 0 24px;
   padding: 34px 44px 32px;
