@@ -157,7 +157,10 @@ export default function DiagnosisStatus() {
               <span>{item.rate}%</span>
               <small>{item.done} / {item.target}명</small>
             </div>
-            <div className="admin-diag-bar"><span style={{ width: `${item.rate}%` }} /></div>
+            {/* 막대 색은 데이터층이 정한다 — 후속진단 Cn 은 유형 Tn 색(유형 분포 카드와 동일) */}
+            <div className="admin-diag-bar">
+              <span style={{ width: `${item.rate}%`, background: item.color }} />
+            </div>
             <div className="admin-diag-legend">
               <em>미응시 {item.notStarted}</em>
               <em>진행중 {item.inProgress}</em>

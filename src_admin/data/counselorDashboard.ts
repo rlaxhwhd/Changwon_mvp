@@ -18,7 +18,7 @@ import {
   getCounselStudentProfile,
 } from './counselRequests'
 import type { CounselRequest } from './schema/counselRequest'
-import { getFullRoster, getRosterSummary, TYPE_TINT } from './studentRoster'
+import { getFullRoster, getRosterSummary, TYPE_TINT, typeColorVar, typeSwatchClass } from './studentRoster'
 import type { RosterStudent } from './studentRoster'
 import { getPrograms } from './programs'
 import { getRoadmapRequests } from './roadmapRequests'
@@ -27,14 +27,7 @@ import { getAttemptsByStudent } from './diagnosisAttempts'
 import { STUDENT_TYPES, type StudentType } from '../../src_v2/data/careerProcess'
 
 /** 유형별 도넛·범례 색 — DESIGN.md 7색 solid 유틸 클래스명. 새 색을 만들지 않는다. */
-const TYPE_SWATCH: Record<StudentType, string> = {
-  T1: 'b-green',
-  T2: 'b-teal',
-  T3: 'b-blue',
-  T4: 'b-yellow',
-  T5: 'b-red',
-  T6: 'b-purple',
-}
+// 유형 색은 studentRoster(TYPE_HUE)가 단일 소스다 — 여기서 다시 정의하지 않는다.
 
 function pct(part: number, total: number): number {
   return total === 0 ? 0 : Math.round((part / total) * 1000) / 10
@@ -229,14 +222,10 @@ export function getTypeDistribution(departments: string[]): TypeDistribution {
     const ratio = pct(count, total)
     const from = cursor
     cursor += ratio
-    return { code: meta.code, label: meta.label, count, ratio, swatch: TYPE_SWATCH[meta.code], from, to: cursor }
+    return { code: meta.code, label: meta.label, count, ratio, swatch: typeSwatchClass(meta.code), from, to: cursor }
   })
-  // 유틸 클래스는 CSS라 gradient에는 값이 필요하다 — DESIGN.md 토큰을 var()로 참조
-  const VAR: Record<StudentType, string> = {
-    T1: 'var(--green)', T2: 'var(--teal)', T3: 'var(--blue)',
-    T4: 'var(--yellow)', T5: 'var(--red)', T6: 'var(--purple)',
-  }
-  const stops = slices.map(s => `${VAR[s.code]} ${s.from}% ${s.to}%`).join(', ')
+  // 유틸 클래스는 CSS라 gradient에는 값이 필요하다 — 같은 단일 소스에서 var()로 뽑는다
+  const stops = slices.map(s => `${typeColorVar(s.code)} ${s.from}% ${s.to}%`).join(', ')
   return { total, slices, gradient: `conic-gradient(${stops})` }
 }
 

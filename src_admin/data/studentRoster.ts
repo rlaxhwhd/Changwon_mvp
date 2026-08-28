@@ -124,18 +124,36 @@ export function enrollStatusClass(status: EnrollStatus): string {
  * 6유형 → 틴트 유틸 클래스 (DESIGN.md 7색 중 6색). 새 색을 만들지 않는다.
  * 유형 배지를 그리는 모든 화면의 단일 소스 — 여기 말고 다른 데서 유형 색을 정하지 않는다.
  */
-export const TYPE_TINT: Record<StudentType, string> = {
-  T1: 's-green',
-  T2: 's-teal',
-  T3: 's-blue',
-  T4: 's-yellow',
-  T5: 's-red',
-  T6: 's-purple',
+const TYPE_HUE: Record<StudentType, string> = {
+  T1: 'green',
+  T2: 'teal',
+  T3: 'blue',
+  T4: 'yellow',
+  T5: 'red',
+  T6: 'purple',
 }
+
+/** 유형 배지 틴트 클래스 (옅은 배경) */
+export const TYPE_TINT: Record<StudentType, string> = Object.fromEntries(
+  Object.entries(TYPE_HUE).map(([code, hue]) => [code, `s-${hue}`]),
+) as Record<StudentType, string>
 
 /** 유형 배지 CSS 클래스 (모양 + 유형별 틴트) — enrollStatusClass와 동일 규약 */
 export function studentTypeClass(code: StudentType): string {
   return `admin-type-tag ${TYPE_TINT[code]}`
+}
+
+/** 유형 점(solid swatch) 클래스 — 홈 '담당 학생 유형 분포' 범례 */
+export function typeSwatchClass(code: StudentType): string {
+  return `b-${TYPE_HUE[code]}`
+}
+
+/**
+ * 유형 색을 CSS 값으로 — 그라데이션·차트처럼 클래스를 못 쓰는 자리에 넣는다.
+ * 배지·점·차트가 같은 색을 쓰도록 세 표기가 전부 TYPE_HUE 하나에서 파생된다.
+ */
+export function typeColorVar(code: StudentType): string {
+  return `var(--${TYPE_HUE[code]})`
 }
 
 /** 계층 배지 CSS 클래스 (index.css 토큰) — StudentList와 동일 규약 */

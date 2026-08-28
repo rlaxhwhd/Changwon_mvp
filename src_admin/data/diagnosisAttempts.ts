@@ -12,12 +12,13 @@
 // 나머지를 파생한다. 그래야 로스터가 늘어도 seed 를 다시 만들 필요가 없다.
 // DB 전환 시 이 모듈만 API 로 교체하면 화면은 그대로 나간다.
 // ─────────────────────────────────────────────────────────────────────────────
-import { DIAGNOSIS_MODULES, getRequiredTests } from '../../src_v2/data/careerProcess'
+import { DIAGNOSIS_MODULES, STUDENT_TYPES, getRequiredTests } from '../../src_v2/data/careerProcess'
+import type { StudentType } from '../../src_v2/data/careerProcess'
 import seed from './diagnosisAttempts.seed.json'
 import { mockLatency, paginate } from './query'
 import type { ListParams, Paginated } from './query'
 import type { AttemptStatus, DiagnosisAttempt, DiagnosisComment, DiagnosisNudge } from './schema/diagnosisAttempt'
-import { getFullRoster } from './studentRoster'
+import { getFullRoster, typeColorVar } from './studentRoster'
 import type { EnrollStatus } from './studentRoster'
 
 const ATTEMPT_KEY = 'dc_diag_attempts'
@@ -214,6 +215,26 @@ export interface TestSummary {
   notStarted: number
   /** 완료율 % (대상 0이면 0) */
   rate: number
+  /**
+   * 막대 색 (CSS 값). 후속진단 Cn 은 그 진단을 받는 유형 Tn 의 색을 쓴다 —
+   * 홈 '담당 학생 유형 분포' 카드와 같은 색이라 화면을 오가도 유형이 같은 색으로 읽힌다.
+   * C-CORE 는 전 학생 필수라 특정 유형이 없다 → 차트 기본 채움색.
+   */
+  color: string
+}
+
+/**
+ * 후속진단 → 유형 역인덱스. STUDENT_TYPE_MAP 의 followUpTest 에서 파생한다
+ * (C1=T1 같은 대응을 여기에 다시 적지 않는다 — 매핑의 단일 소스는 careerProcess).
+ */
+const TYPE_BY_FOLLOW_UP = new Map<string, StudentType>(
+  STUDENT_TYPES.map(meta => [meta.followUpTest.toLowerCase(), meta.code]),
+)
+
+/** 검사 코드 → 막대 색. 유형이 딸린 후속진단만 유형 색을 갖는다. */
+function testColor(testId: string): string {
+  const type = TYPE_BY_FOLLOW_UP.get(testId.toLowerCase())
+  return type ? typeColorVar(type) : 'var(--chart-fill)'
 }
 
 export function getTestSummaries(departments: string[]): TestSummary[] {
@@ -229,6 +250,7 @@ export function getTestSummaries(departments: string[]): TestSummary[] {
       inProgress: scoped.filter(row => row.status === '진행중').length,
       notStarted: scoped.filter(row => row.status === '미응시').length,
       rate: scoped.length === 0 ? 0 : Math.round((done / scoped.length) * 100),
+      color: testColor(module.testId),
     }
   })
 }
