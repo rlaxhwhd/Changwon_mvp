@@ -82,7 +82,7 @@
 }
 
 .pa-tab.active {
-  background: var(--color-primary);
+  background: var(--color-cta);
   border-color: var(--color-primary);
   color: var(--color-bg);
   font-weight: 700;
@@ -323,7 +323,7 @@
 
 .pa-apply-btn {
   padding: 9px 22px;
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: var(--color-bg);
   font-size: 17px;
   font-weight: 700;
@@ -403,7 +403,7 @@
 }
 
 .pa-page-btn.active {
-  background: var(--color-primary);
+  background: var(--color-cta);
   border-color: var(--color-primary);
   color: var(--color-bg);
   font-weight: 700;

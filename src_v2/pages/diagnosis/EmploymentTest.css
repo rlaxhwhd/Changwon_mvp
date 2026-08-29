@@ -126,10 +126,10 @@
 }
 
 .de-tabs button.active {
-  background: var(--color-primary);
+  background: var(--color-cta);
   border-color: var(--color-primary);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(46, 91, 255, 0.18);
+  box-shadow: 0 8px 18px var(--cta-shadow);
 }
 
 .de-sort {
@@ -281,11 +281,11 @@
   justify-content: center;
   gap: 9px;
   border-radius: var(--radius-sm);
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
   font-size: 19px;
   font-weight: 900;
-  box-shadow: 0 9px 18px rgba(46, 91, 255, 0.18);
+  box-shadow: 0 9px 18px var(--cta-shadow);
 }
 
 .de-start-btn:hover {
@@ -585,7 +585,7 @@
 
 .de-modal-primary {
   padding: 10px 22px;
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
   font-size: 16px;
   font-weight: 800;
@@ -769,10 +769,10 @@
 }
 
 .de-consent-submit {
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
   border: 1px solid var(--color-primary);
-  box-shadow: 0 9px 18px rgba(46, 91, 255, 0.18);
+  box-shadow: 0 9px 18px var(--cta-shadow);
 }
 
 .de-consent-submit:hover:not(:disabled) {

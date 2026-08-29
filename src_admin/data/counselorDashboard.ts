@@ -18,8 +18,11 @@ import {
   getCounselStudentProfile,
 } from './counselRequests'
 import type { CounselRequest } from './schema/counselRequest'
-import { getFullRoster, getRosterSummary, TYPE_TINT, typeColorVar, typeSwatchClass } from './studentRoster'
-import type { RosterStudent } from './studentRoster'
+import {
+  getFullRoster, getRosterSummary, isCoreCare, isHighRisk, RISK_RULE,
+  TYPE_TINT, typeColorVar, typeSwatchClass,
+} from './studentRoster'
+import type { FocusFilter } from './studentRoster'
 import { getPrograms } from './programs'
 import { getRoadmapRequests } from './roadmapRequests'
 import { getCounselRecords } from './counselRecords'
@@ -69,6 +72,8 @@ export interface RiskRow {
   label: string
   /** 유형 코드 배지 (있으면 표시) */
   code?: StudentType
+  /** 전체 학생 목록에서 이 분류만 거르는 필터 값 — 링크(?focus=)에 그대로 쓴다. */
+  focus: FocusFilter
   count: number
   ratio: number
   /** solid 유틸 클래스 (막대용) */
@@ -82,45 +87,8 @@ export interface RiskSummary {
   rows: RiskRow[]
 }
 
-/**
- * 집중관리 분류 기준 — 화면이 아니라 여기서만 정한다.
- * DB 전환 시 이 상수들이 WHERE 절이 된다. 화면·다른 로더에서 다시 판정하지 말 것.
- */
-export const RISK_RULE = {
-  /** 저학점 경계 (4.5 만점) */
-  lowGpa: 2.5,
-  /** '열심히 참여'로 보는 비교과 이수 건수 */
-  activePrograms: 3,
-  /** 진단-상담-로드맵 이수가 궤도에 올랐다고 보는 로드맵 진행률 */
-  onTrackProgress: 60,
-  /** 1학년은 판정 대상에서 제외한다 — 아직 이수 이력이 쌓이지 않는다. */
-  excludeGrade: 1,
-} as const
-
-const gpaOf = (s: RosterStudent) => Number(s.gpa ?? NaN)
-const progCount = (s: RosterStudent) => s.programCount ?? 0
-const counselCount = (s: RosterStudent) => s.counselCount ?? 0
-
-/** 학점이 낮고 비교과·상담 어디에도 참여하지 않는 학생 */
-export function isHighRisk(s: RosterStudent): boolean {
-  return (
-    s.grade !== RISK_RULE.excludeGrade &&
-    gpaOf(s) < RISK_RULE.lowGpa &&
-    progCount(s) === 0 &&
-    counselCount(s) === 0
-  )
-}
-
-/** 학점은 낮지만 비교과를 꾸준히 이수하고 진단-상담-로드맵이 궤도에 오른 학생 */
-export function isCoreCare(s: RosterStudent): boolean {
-  return (
-    s.grade !== RISK_RULE.excludeGrade &&
-    gpaOf(s) < RISK_RULE.lowGpa &&
-    progCount(s) >= RISK_RULE.activePrograms &&
-    counselCount(s) >= 1 &&
-    s.progress >= RISK_RULE.onTrackProgress
-  )
-}
+// 분류 기준·판정 함수는 studentRoster.ts 가 단일 소스다 — 목록 필터가 같은 것을 본다.
+// 여기서 다시 정의하면 카드 인원과 목록 인원이 갈린다.
 
 /** 집중관리 현황 2분류. 모집단은 1학년을 뺀 담당 학생이다. */
 export function getRiskSummary(departments: string[]): RiskSummary {
@@ -131,8 +99,8 @@ export function getRiskSummary(departments: string[]): RiskSummary {
   return {
     total,
     rows: [
-      { label: '고위험군', count: high, ratio: pct(high, total), solid: 'b-red', ink: 'f-red' },
-      { label: '핵심관리대상', count: core, ratio: pct(core, total), solid: 'b-green', ink: 'f-green' },
+      { label: '고위험군', focus: 'high', count: high, ratio: pct(high, total), solid: 'b-red', ink: 'f-red' },
+      { label: '핵심관리대상', focus: 'core', count: core, ratio: pct(core, total), solid: 'b-green', ink: 'f-green' },
     ],
   }
 }

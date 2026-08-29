@@ -10,6 +10,7 @@ import { getActiveStudent } from '../../data/students'
 import { getCounselWeek, type Day } from '../../lib/counselCalendar'
 import './CareerCounsel.css'
 import './ProfessorCounsel.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type CounselMode = 'online' | 'offline'
 type SlotStatus = 'available' | 'reserved' | 'selected'
@@ -38,6 +39,8 @@ const reservedSlots = new Set([
 ])
 
 export default function ProfessorCounsel() {
+  // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
+  usePageHead('상담 신청', '교수님을 선택하고 온라인 또는 오프라인 상담을 신청하세요.')
   const [selectedGroupName, setSelectedGroupName] = useState(defaultSelection.groupName)
   const selectedGroup = professorGroups.find(group => group.name === selectedGroupName) ?? professorGroups[0]
   const divisionNames = Object.keys(selectedGroup.divisions)
@@ -126,18 +129,6 @@ export default function ProfessorCounsel() {
           {notice}
         </div>
       )}
-
-      <header className="v2-page-head">
-        <div>
-          <nav className="v2-page-crumb" aria-label="현재 위치">
-            <span>상담센터</span><i className="fa-solid fa-chevron-right" />
-            <span>교수상담</span><i className="fa-solid fa-chevron-right" />
-            <span>상담 신청</span>
-          </nav>
-          <h1 className="v2-page-title">상담 신청</h1>
-          <p className="v2-page-desc">교수님을 선택하고 온라인 또는 오프라인 상담을 신청하세요.</p>
-        </div>
-      </header>
 
       <CounselTabs />
 

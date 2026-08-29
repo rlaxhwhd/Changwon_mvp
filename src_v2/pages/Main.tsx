@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import './Main.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -6,6 +8,11 @@ import './Main.css'
 //   클래스·구조를 손대면 시안 CSS 가 어긋난다. 수정은 시안 쪽에서 먼저 한다.
 //   내용(수치·문구)은 시안 값 그대로 — 데이터 배선은 디자인 확정 후 별도로 한다.
 export default function Main() {
+  // 출석 체크 — 누르면 다른 화면으로 가는 게 아니라 이 자리에서 '출석 완료'로 바뀐다.
+  // 아직 화면 안에서만 사는 상태다(새로고침하면 풀린다). 출석 이벤트를 남기려면
+  // CLAUDE.md 의 '이벤트 → JSON 반영' 표에 저장소를 먼저 정의해야 한다.
+  const [attended, setAttended] = useState(false)
+
   return (
     <div className="mn-page">
         <section className="career-hero reveal" aria-labelledby="welcomeTitle">
@@ -82,7 +89,12 @@ export default function Main() {
               <span data-slot="card-action" className="badge amber">12일 연속</span>
             </header>
             <div data-slot="card-content">
-              <div className="attendance-center"><div className="attendance-streak"><span><strong>TODAY<br />CHECK</strong></span></div><div><p>매일 출석하고 성장 포인트를 모아보세요.</p><button className="button primary attendance-button" type="button">출석하기 +10P</button></div></div>
+              <div className="attendance-center"><div className="attendance-streak"><span><strong>TODAY<br />CHECK</strong></span></div><div><p>매일 출석하고 성장 포인트를 모아보세요.</p><button
+                className={`button primary attendance-button${attended ? ' completed' : ''}`}
+                type="button"
+                aria-pressed={attended}
+                onClick={() => setAttended(true)}
+              >{attended ? '출석 완료 +10P' : '출석하기 +10P'}</button></div></div>
             </div>
           </section>
 
@@ -97,6 +109,14 @@ export default function Main() {
               <div className="competency-layout">
                 <div className="radar-wrap">
                   <svg className="radar-chart" viewBox="0 0 300 280" role="img" aria-label="의사소통 68, 문제해결 74, 협업 81, 창의성 59, 직무전문성 62, 글로벌 72">
+                    {/* '나의 현재' 면색 — 옆 역량 막대(.axis-track i)와 같은 보라→하늘 축.
+                        SVG 는 CSS 그라데이션을 못 받으므로 여기 정의하고 CSS 가 url(#…)로 참조한다. */}
+                    <defs>
+                      <linearGradient id="main-competency-mine" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="var(--competency-current)" />
+                        <stop offset="100%" stopColor="var(--competency-growth)" />
+                      </linearGradient>
+                    </defs>
                     <polygon className="radar-grid" points="150,22 256,84 256,196 150,258 44,196 44,84" />
                     <polygon className="radar-grid" points="150,52 230,98 230,182 150,228 70,182 70,98" />
                     <polygon className="radar-grid" points="150,82 204,112 204,168 150,198 96,168 96,112" />
@@ -108,7 +128,7 @@ export default function Main() {
                   </svg>
                 </div>
                 <div className="competency-side">
-                  <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'var(--competency-current)' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 직무</span><span><i style={{ background: 'var(--chart-reference)' } as React.CSSProperties}></i>학과 평균</span></div>
+                  <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 직무</span><span><i style={{ background: 'var(--chart-reference)' } as React.CSSProperties}></i>학과 평균</span></div>
                   <div className="axis-list">
                     <div className="axis-item"><div className="axis-head"><b>의사소통</b><strong>68</strong></div><div className="axis-track"><i style={{ '--value': '68%' } as React.CSSProperties}></i></div></div>
                     <div className="axis-item"><div className="axis-head"><b>문제해결</b><strong>74</strong></div><div className="axis-track"><i style={{ '--value': '74%' } as React.CSSProperties}></i></div></div>
@@ -130,7 +150,7 @@ export default function Main() {
           <section data-slot="card" className="program-card-shell span-12 reveal" id="programs" aria-labelledby="programTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="programTitle">진행 중인 진로·취업 프로그램</h2><p data-slot="card-description">나의 진로 유형과 관심 직무를 바탕으로 선별했어요.</p></div>
-              <a data-slot="card-action" className="button" href="#">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></a>
+              <Link data-slot="card-action" className="button" to="/growth/program">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
             </header>
             <div data-slot="card-content">
               <div className="program-viewport">
@@ -150,7 +170,7 @@ export default function Main() {
           <section data-slot="card" className="jobs-card span-12 reveal" id="jobs" aria-labelledby="jobsTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="jobsTitle">AI 추천 채용공고</h2><p data-slot="card-description">진단 결과와 활동 데이터를 바탕으로 나와 잘 맞는 공고를 추천해요.</p></div>
-              <a data-slot="card-action" className="button" href="#">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></a>
+              <Link data-slot="card-action" className="button" to="/jobs/joblist">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
             </header>
             <div data-slot="card-content">
               <div className="jobs-layout">
@@ -168,7 +188,7 @@ export default function Main() {
           <section data-slot="card" className="span-12 reveal" id="notices" aria-labelledby="noticeTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="noticeTitle">공지사항</h2><p data-slot="card-description">프로그램과 진로·취업 관련 새 소식을 확인하세요.</p></div>
-              <a data-slot="card-action" className="button" href="#">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></a>
+              <Link data-slot="card-action" className="button" to="/mypage/notices">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
             </header>
             <div data-slot="card-content">
               <div className="section-toolbar notice-toolbar"><div className="notice-tabs" role="tablist" aria-label="공지사항 분류"><button className="notice-tab active" type="button" role="tab" aria-selected="true" data-notice-tab="all">전체</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="program">프로그램</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="career">진로·취업</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="system">시스템</button></div></div>

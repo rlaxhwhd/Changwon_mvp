@@ -165,7 +165,7 @@
 .pc-mode-tabs button.active {
   color: #fff;
   border-color: var(--color-primary);
-  background: var(--color-primary);
+  background: var(--color-cta);
   box-shadow: var(--shadow-md);
 }
 

@@ -23,6 +23,8 @@ import {
   APPLICATION_OPEN_STATUSES,
   APPLICATION_STATUS_LABEL,
   DEFAULT_STAGE_NAMES,
+  INTERNAL_STAGES,
+  isInternalStage,
 } from './schema/jobApplication'
 import { getJobById, getInternalJobs, updateJob } from './jobsSource'
 import { appendJobApplicationEvent, getEventsByApplication } from './jobApplicationEvents'
@@ -77,9 +79,24 @@ export function getStages(jobId: string): HiringStage[] {
   return DEFAULT_STAGE_NAMES.map((name, i) => ({ id: `${jobId}__default_${i + 1}`, order: i + 1, name }))
 }
 
-/** 단계 배열을 통째로 저장 — order 를 1..n 으로 재부여한다(순서변경·삭제 공용). */
+/**
+ * 실제 진행 순서 — 교내 절차(서류 검토·기업 전달) + 공고별 기업 전형.
+ *
+ * ★ 단계 이동·집계·타임라인은 전부 이 함수를 본다. getStages 는 **편집 대상**(기업 전형)
+ *   만 돌려주므로 진행 판정에 쓰지 말 것 — 둘이 갈리면 학생 화면과 상담사 화면이 어긋난다.
+ */
+export function getFlowStages(jobId: string): HiringStage[] {
+  return [...INTERNAL_STAGES, ...getStages(jobId)]
+}
+
+/**
+ * 단계 배열을 통째로 저장 — order 를 1..n 으로 재부여한다(순서변경·삭제 공용).
+ * 교내 절차는 코드 상수라 저장 대상이 아니다 — 섞여 들어오면 걸러낸다.
+ */
 export function setStages(jobId: string, stages: HiringStage[]): void {
-  const normalized = stages.map((s, i) => ({ ...s, order: i + 1 }))
+  const normalized = stages
+    .filter(s => !isInternalStage(s.id))
+    .map((s, i) => ({ ...s, order: i + 1 }))
   updateJob(jobId, { stages: normalized })
 }
 
@@ -107,6 +124,8 @@ export function renameStage(jobId: string, stageId: string, name: string): void 
  * 반환값 false 는 "진행 중인 지원자가 있어 못 지웠다"는 뜻이다(화면이 안내한다).
  */
 export function removeStage(jobId: string, stageId: string): boolean {
+  // 교내 절차는 모든 공고에 항상 있어야 한다 — 삭제 대상이 아니다.
+  if (isInternalStage(stageId)) return false
   const occupied = getApplicationsByJob(jobId)
     .some(a => a.status === 'IN_PROGRESS' && a.currentStageId === stageId)
   if (occupied) return false
@@ -116,6 +135,7 @@ export function removeStage(jobId: string, stageId: string): boolean {
 
 /** 단계 순서 이동 (-1 위 / +1 아래). 범위를 벗어나면 무시한다. */
 export function moveStage(jobId: string, stageId: string, delta: -1 | 1): void {
+  if (isInternalStage(stageId)) return
   const stages = getStages(jobId)
   const i = stages.findIndex(s => s.id === stageId)
   const j = i + delta
@@ -264,7 +284,8 @@ export function advanceStage(id: string): void {
   const application = getApplicationById(id)
   if (!application || !APPLICATION_OPEN_STATUSES.includes(application.status)) return
 
-  const stages = getStages(application.jobId)
+  // 교내 절차 → 기업 전형 순서로 이어 붙인 전체 흐름 위에서 움직인다.
+  const stages = getFlowStages(application.jobId)
   if (!stages.length) return
 
   const currentIndex = application.currentStageId
@@ -307,7 +328,7 @@ export function rejectApplication(id: string, reason?: string): void {
   const application = getApplicationById(id)
   if (!application || !APPLICATION_OPEN_STATUSES.includes(application.status)) return
 
-  const from = getStages(application.jobId).find(s => s.id === application.currentStageId)
+  const from = getFlowStages(application.jobId).find(s => s.id === application.currentStageId)
   patch(id, { status: 'REJECTED' })
   appendJobApplicationEvent({
     applicationId: id,
@@ -326,7 +347,7 @@ export function rejectApplication(id: string, reason?: string): void {
 /** 지원 건의 현재 위치 라벨 — 단계에 올라가 있으면 단계명, 아니면 상태 라벨. */
 export function currentStageLabel(application: JobApplication): string {
   if (application.status === 'IN_PROGRESS' && application.currentStageId) {
-    const stage = getStages(application.jobId).find(s => s.id === application.currentStageId)
+    const stage = getFlowStages(application.jobId).find(s => s.id === application.currentStageId)
     if (stage) return stage.name
   }
   return APPLICATION_STATUS_LABEL[application.status]
@@ -335,7 +356,7 @@ export function currentStageLabel(application: JobApplication): string {
 /** 단계별 현재 인원 — 전형 단계 관리 화면의 '(N명)' 표시 */
 export function stageCounts(jobId: string): Record<string, number> {
   const counts: Record<string, number> = {}
-  for (const stage of getStages(jobId)) counts[stage.id] = 0
+  for (const stage of getFlowStages(jobId)) counts[stage.id] = 0
   for (const a of getApplicationsByJob(jobId)) {
     if (a.status === 'IN_PROGRESS' && a.currentStageId && a.currentStageId in counts) {
       counts[a.currentStageId] += 1
@@ -354,15 +375,18 @@ export interface ProgressStep {
   current: boolean
   /** 그 칸에 도달한 일시 ISO (지나온 칸만) */
   at?: string
+  /** 교내 절차(상담사가 처리하는 칸)인가 — 기업 전형과 담당이 다르다는 표시용 */
+  internal: boolean
 }
 
 /**
  * 학생 마이페이지 진행 타임라인 (image10).
- * '지원 완료' + 공고의 전형 단계 전부를 칸으로 깔고, 이력에서 도달 시각을 채운다.
+ * '지원 완료' + 교내 절차(서류 검토·기업 전달) + 공고의 기업 전형 전부를 칸으로 깔고,
+ * 이력에서 도달 시각을 채운다.
  * 탈락·취소는 그 자리에서 멈춘 것으로 그린다 — 뒤 칸은 done/current 둘 다 false.
  */
 export function getProgressTimeline(application: JobApplication): ProgressStep[] {
-  const stages = getStages(application.jobId)
+  const stages = getFlowStages(application.jobId)
   const events = getEventsByApplication(application.id)
 
   // 칸별 도달 시각 — '지원'은 0번 칸, '단계이동'은 도착 단계 칸.
@@ -389,6 +413,7 @@ export function getProgressTimeline(application: JobApplication): ProgressStep[]
     done: i <= doneThrough && (i < currentIndex || settled || i === 0),
     current: !settled && i === currentIndex,
     at: reachedAt.get(key),
+    internal: isInternalStage(key),
   }))
 }
 
@@ -414,4 +439,4 @@ export function summarizeJob(jobId: string): JobApplicationSummary {
 }
 
 export type { JobApplication, HiringStage, ApplicationStatus }
-export { APPLICATION_STATUS_LABEL }
+export { APPLICATION_STATUS_LABEL, INTERNAL_STAGES, isInternalStage }

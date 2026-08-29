@@ -37,6 +37,27 @@ export interface HiringStage {
 /** 공고에 단계가 아직 정의되지 않았을 때 쓰는 기본 3단계 (image8 기준) */
 export const DEFAULT_STAGE_NAMES = ['서류 전형', '면접 전형', '최종 결과'] as const
 
+/**
+ * 교내 추천 절차 — 학생이 지원한 뒤, 기업 전형이 시작되기 전에 **상담사가** 처리하는 고정 2단계.
+ *
+ * 위의 HiringStage 와 성격이 다르다:
+ *   - 기업 전형(HiringStage) = 공고마다 다르고 상담사가 정의·삭제한다. 수행 주체는 기업.
+ *   - 교내 절차(여기)         = 모든 추천채용 공고에 항상 같다. 수행 주체는 상담사.
+ * 그래서 공고 데이터(job.stages)에 넣지 않고 코드 상수로 둔다 — 지울 수 있으면 안 된다.
+ *
+ * 실제 진행 순서는 `getFlowStages()` 가 합쳐서 만든다:
+ *   지원 완료 → 서류 검토 → 기업 전달 → (공고별 기업 전형…)
+ */
+export const INTERNAL_STAGES: HiringStage[] = [
+  { id: 'sys_review', order: 1, name: '서류 검토' },
+  { id: 'sys_forward', order: 2, name: '기업 전달' },
+]
+
+/** 이 단계가 교내 절차인가(상담사 처리 · 삭제·순서변경 불가) */
+export function isInternalStage(stageId: string | undefined): boolean {
+  return !!stageId && INTERNAL_STAGES.some(s => s.id === stageId)
+}
+
 // ── 상태 코드 ────────────────────────────────────────────────────────────────
 //
 // 코드값은 영문 상수, 표시는 라벨 맵으로 분리한다 (CLAUDE.md 규칙 4 · SPEC §7-0 규칙 4).

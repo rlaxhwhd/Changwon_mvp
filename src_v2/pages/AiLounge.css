@@ -477,8 +477,11 @@
 }
 
 .al-page .radar .mine {
-  fill: color-mix(in srgb, var(--competency-current) 18%, transparent);
-  stroke: var(--competency-current);
+  /* 면·선 모두 SVG 그라데이션(#competency-mine)을 쓴다 — 옆 역량 막대와 같은 보라→하늘 축.
+     그라데이션은 알파를 못 섞으므로 면 투명도는 fill-opacity 로 준다(예전 18% 와 같은 값). */
+  fill: url(#competency-mine);
+  fill-opacity: .18;
+  stroke: url(#competency-mine);
   stroke-width: 2.5
 }
 
@@ -1882,7 +1885,10 @@
 .al-page .ai-recommend-card [data-slot="card-content"] {
   height: 100%;
   display: flex;
-  flex-direction: column
+  flex-direction: column;
+  /* 「추천 전체 보기」 버튼을 뺀 뒤로 아래를 채우는 요소가 없다(그 버튼이 margin-top:auto 였다).
+     같은 행의 '이번 주 할 일' 카드가 높이를 잡아 늘어나므로, 남는 여백을 위아래로 나눈다. */
+  justify-content: center
 }
 
 .al-page .ai-recommend-icon {
@@ -1961,10 +1967,6 @@
   white-space: nowrap
 }
 
-.al-page .ai-recommend-card .button {
-  align-self: flex-start;
-  margin-top: auto
-}
 
 .al-page .counseling-detail-grid {
   display: grid;

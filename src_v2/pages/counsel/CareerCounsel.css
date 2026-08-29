@@ -400,7 +400,7 @@
 .cc-reserve-btn {
   height: 42px;
   border-radius: var(--radius-sm);
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
   font-size: 19px;
   font-weight: 900;

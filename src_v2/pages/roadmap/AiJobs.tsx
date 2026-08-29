@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { getActiveStudent } from '../../data/students'
 import { computeAll } from '../../lib/scoring'
 import './AiJobs.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 /* ── Types ─────────────────────────────────────────────────────── */
 type SortKey = '매칭률 높은순' | '최신 등록순' | '마감임박순'
@@ -62,6 +63,7 @@ const regionMatches = (jobLoc: string, checked: string[]) => {
 }
 
 export default function AiJobs() {
+  usePageHead('AI 맞춤채용', '나의 스펙과 역량을 분석해 최적화된 기업을 추천합니다. 합격 가능성이 높은 순서로 정렬됩니다.')
   const student = getActiveStudent()
   const JOBS = student.jobs
   const SKILLS = student.jobSkills
@@ -130,11 +132,6 @@ export default function AiJobs() {
         <i className="fa-solid fa-chevron-right" />
         <span className="active">AI 맞춤 채용 추천</span>
       </div>
-      <h1 className="aj-page-title">AI 맞춤 채용 추천</h1>
-      <p className="aj-page-desc">
-        나의 스펙과 역량을 분석하여 최적화된 기업을 추천합니다. 합격 가능성이 높은 순서로 정렬됩니다.
-      </p>
-
       {/* ── Summary Stats ────────────────────────────────────── */}
       <div className="aj-stats">
         <div className="aj-stat-card">

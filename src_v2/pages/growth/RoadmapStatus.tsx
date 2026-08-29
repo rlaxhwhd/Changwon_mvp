@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { getActiveStudent, getStudentTypeMeta } from '../../data/students'
 import './RoadmapStatus.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 const STATUS_LABEL: Record<'done' | 'active' | 'upcoming', string> = {
   done: '완료',
@@ -18,6 +19,7 @@ const STATUS_LABEL: Record<'done' | 'active' | 'upcoming', string> = {
  * 상담사 관리자 화면에서만 가능합니다.
  */
 export default function RoadmapStatus() {
+  usePageHead('로드맵 진행 현황', '상담사와 협의해 확정한 로드맵의 진행률과 단계별 기록을 확인합니다.')
   const student = getActiveStudent()
   const type = getStudentTypeMeta(student)
   const phases = student.phases
@@ -34,10 +36,6 @@ export default function RoadmapStatus() {
       <header className="rs-hero">
         <div className="rs-hero-left">
           <span className="rs-hero-icon"><i className="fa-solid fa-route" /></span>
-          <div>
-            <h1>AI 진로 로드맵 현황</h1>
-            <p>상담사와 협의해 확정한 로드맵의 진행률과 단계별 기록을 확인하세요.</p>
-          </div>
         </div>
         <div className="rs-hero-progress">
           <div className="rs-hero-progress-num">{doneCount}<span>/{total}</span></div>

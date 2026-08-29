@@ -7,6 +7,7 @@ import { submitCounselRequest } from '../../data/counselRequestsWrite'
 import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
 import { getCounselWeek, type Day } from '../../lib/counselCalendar'
 import './CareerCounsel.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type CounselorId = string
 type SlotStatus = 'available' | 'reserved' | 'selected'
@@ -45,6 +46,8 @@ function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
 }
 
 export default function CareerCounsel() {
+  // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
+  usePageHead('상담 신청', '상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.')
   const [selectedCounselor, setSelectedCounselor] = useState<CounselorId>('')
   const [search, setSearch] = useState('')
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null)
@@ -126,20 +129,6 @@ export default function CareerCounsel() {
           {notice}
         </div>
       )}
-
-      <header className="v2-page-head">
-        <div>
-          <nav className="v2-page-crumb" aria-label="현재 위치">
-            <span>상담센터</span>
-            <i className="fa-solid fa-chevron-right" />
-            <span>진로취업 상담</span>
-            <i className="fa-solid fa-chevron-right" />
-            <span>상담 신청</span>
-          </nav>
-          <h1 className="v2-page-title">상담 신청</h1>
-          <p className="v2-page-desc">상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.</p>
-        </div>
-      </header>
 
       <IapSummaryBanner note="상담 시 참고할 내 진단 요약 (자동 공유)" />
 

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './TodayGrowthMission.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type MissionTab = 'word' | 'major' | 'ncs'
 type MissionPhase = 'study' | 'quiz' | 'result'
@@ -145,6 +146,7 @@ export default function TodayGrowthMission() {
 
   const quizzes = tab === 'major' ? majorQuizzes : ncsQuizzes
   const tabInfo = missionTabs[tab]
+  usePageHead(tabInfo.title, tabInfo.description)
 
   const correctCount = useMemo(() => {
     if (!submitted) return 0
@@ -177,11 +179,6 @@ export default function TodayGrowthMission() {
   return (
     <main className="tgm-page">
       <header className="tgm-header">
-        <div>
-          <span className="tgm-kicker">오늘의 성장퀘스트</span>
-          <h1>{tabInfo.title}</h1>
-          <p>{tabInfo.description}</p>
-        </div>
         <button className="tgm-log-btn" type="button" onClick={() => navigate('/growth/mission-log')}>
           기록노트 보기
           <i className="fa-solid fa-arrow-right" />

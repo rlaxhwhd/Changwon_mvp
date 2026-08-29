@@ -16,40 +16,48 @@
   gap: 16px;
   margin: 0 0 16px;
 
-  /* 중립 */
-  --ssc-card:   var(--card, var(--bg-card, #FFF));
-  --ssc-text:   var(--foreground, var(--text, #1D2433));
-  --ssc-sub:    var(--muted-foreground, var(--text-sub, #5F6B7A));
-  --ssc-border: var(--border, #E2E6EC);
-  --ssc-muted:  var(--muted, #F1F3F6);
-  --ssc-radius: var(--radius, var(--radius-lg, 12px));
+  /* 중립 — 학생 포털 값으로 고정한다.
+     호스트 토큰을 찾아가면 교직원 포털에서 글자색이 #1D2433/#5F6B7A 로 갈렸다.
+     공용 컴포넌트는 어디에 놓여도 같아야 하므로 호스트 팔레트를 따르지 않는다. */
+  --ssc-card:   #ffffff;
+  --ssc-text:   #181c25;
+  --ssc-sub:    #565e6d;
+  --ssc-border: #e2e6ec;
+  --ssc-muted:  #f1f3f6;
+  --ssc-radius: 12px;
 }
 
-/* 지표 5종 — 진단완료 · 상담현황 · 이행률 · 비교과이수 · 성장레벨 */
+/* 지표 5종 — 진단완료 · 상담현황 · 이행률 · 비교과이수 · 성장레벨
+   ★ 강조색은 학생 포털(stu_lounge 시안) 값을 이 파일에 고정한다.
+     예전에는 var(--stat-N, var(--green …)) 처럼 호스트 토큰을 찾아갔는데,
+     교직원 포털에는 --stat-N 이 없어 admin 팔레트(--green/--teal/--orange)로
+     폴백했다 → 같은 카드가 두 포털에서 다른 색으로 보였다.
+     공용 컴포넌트는 어디에 놓여도 같은 색이어야 하므로 호스트 색 규칙을
+     따르지 않는다. 색을 바꿀 일이 있으면 여기 한 곳만 고친다. */
 .ssc-card.is-diagnosis {
-  --stat-color: var(--stat-1, var(--green, #24B37A));
-  --stat-soft:  var(--stat-1-soft, var(--green-bg, #DFF5EA));
-  --stat-alt:   var(--stat-1, var(--green, #24B37A));
+  --stat-color: #20b486;  /* mint */
+  --stat-soft:  #e5f8f2;
+  --stat-alt:   #20b486;
 }
 .ssc-card.is-counsel {
-  --stat-color: var(--stat-2, var(--teal, #1FA7A5));
-  --stat-soft:  var(--stat-2-soft, var(--teal-bg, #DDF6F5));
-  --stat-alt:   var(--stat-2, var(--teal, #1FA7A5));
+  --stat-color: #17a9e6;  /* sky */
+  --stat-soft:  #e7f7fd;
+  --stat-alt:   #17a9e6;
 }
 .ssc-card.is-roadmap {
-  --stat-color: var(--stat-3, var(--blue, #3B82F6));
-  --stat-soft:  var(--stat-3-soft, var(--blue-bg, #E8F1FF));
-  --stat-alt:   var(--stat-3, var(--blue, #3B82F6));
+  --stat-color: #356dff;  /* blue */
+  --stat-soft:  #eaf0ff;
+  --stat-alt:   #356dff;
 }
 .ssc-card.is-program {
-  --stat-color: var(--stat-4, var(--orange, #F59A23));
-  --stat-soft:  var(--stat-4-soft, var(--orange-bg, #FFF0DD));
-  --stat-alt:   var(--stat-4, var(--orange, #F59A23));
+  --stat-color: #e85aad;  /* pink */
+  --stat-soft:  #fdebf6;
+  --stat-alt:   #e85aad;
 }
 .ssc-card.is-level {
-  --stat-color: var(--stat-5, var(--purple, #8B63D9));
-  --stat-soft:  var(--stat-5-soft, var(--purple-bg, #EFE6FB));
-  --stat-alt:   var(--stat-5-alt, var(--blue, #3B82F6));
+  --stat-color: #7c5cfc;  /* violet */
+  --stat-soft:  #f0edff;
+  --stat-alt:   #356dff;  /* XP 막대 끝 — 시안의 violet→blue 그라데이션 */
 }
 
 /* ── 카드 ── */
@@ -217,18 +225,19 @@
   font-size: 13px;
 }
 /* 상담 3종 — 시안 순서(진로취업 · 심리 · 지도교수) 그대로 색을 매긴다.
-   admin 은 solid 색을 글자에 쓰지 않는 규칙이 있어 점(--type-color)과 글자(--type-ink)를 나눈다. */
+   ★ 여기도 학생 포털 값 고정이다. 호스트 --counsel-N 을 따라가면
+     학생 amber/violet/mint ↔ 교직원 green/purple/blue 로 점 색이 갈렸다. */
 .ssc-channels > span:nth-child(1) {
-  --type-color: var(--counsel-1, #F2B544);
-  --type-ink:   var(--counsel-1-ink, var(--counsel-1, #8A5D0A));
+  --type-color: #f5a524;  /* amber */
+  --type-ink:   #f5a524;
 }
 .ssc-channels > span:nth-child(2) {
-  --type-color: var(--counsel-2, #8B63D9);
-  --type-ink:   var(--counsel-2-ink, var(--counsel-2, #6739B8));
+  --type-color: #7c5cfc;  /* violet */
+  --type-ink:   #7c5cfc;
 }
 .ssc-channels > span:nth-child(3) {
-  --type-color: var(--counsel-3, #24B37A);
-  --type-ink:   var(--counsel-3-ink, var(--counsel-3, #157A52));
+  --type-color: #20b486;  /* mint */
+  --type-ink:   #20b486;
 }
 .ssc-channels i { width: 8px; height: 8px; border-radius: 50%; background: var(--type-color); }
 .ssc-channels em { color: var(--type-ink); font-style: normal; font-weight: 900; }

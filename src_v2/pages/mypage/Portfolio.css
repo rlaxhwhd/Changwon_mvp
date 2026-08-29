@@ -210,7 +210,7 @@
 
 .pf-add-btn:hover,
 .pf-add-btn-sm:hover {
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
 }
 
@@ -788,7 +788,7 @@
 .pf-btn--ghost:hover { border-color: var(--color-primary); color: var(--color-primary); }
 
 .pf-btn--primary {
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
 }
 .pf-btn--primary:hover { background: #1b46e8; }
@@ -1189,7 +1189,7 @@
 }
 
 .pf-inline-edit-btn:hover {
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
 }
 
@@ -1257,7 +1257,7 @@
   gap: 4px;
   height: 30px;
   padding: 0 10px;
-  background: var(--color-primary);
+  background: var(--color-cta);
   border: none;
   border-radius: var(--radius-sm);
   color: #fff;

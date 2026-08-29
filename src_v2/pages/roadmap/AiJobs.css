@@ -197,7 +197,7 @@
 .aj-filter-apply {
   width: 100%;
   padding: 10px;
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: var(--color-bg);
   font-size: 17px;
   font-weight: 700;
@@ -378,12 +378,13 @@
   flex-shrink: 0;
 }
 
+/* 지원하기 = 채용 초록. 공고 상세와 같은 토큰을 본다(index.css --apply-cta). */
 .aj-apply-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   padding: 8px 16px;
-  background: var(--color-primary);
+  background: var(--apply-cta);
   color: var(--color-bg);
   font-size: 16px;
   font-weight: 700;
@@ -535,7 +536,7 @@
 .aj-cta-btn {
   width: 100%;
   padding: 10px;
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: var(--color-bg);
   font-size: 16px;
   font-weight: 700;

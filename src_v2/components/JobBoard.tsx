@@ -27,6 +27,13 @@ interface JobBoardProps {
   showWish?: boolean
   /** 추천/일반 분리 — 교내 공고만. 외부 공고는 추천 구분이 없다. */
   split?: boolean
+  /**
+   * 카드 하단 보조 동작 (교직원 '수정') — 없으면 그리지 않는다.
+   * 카드 자체가 button 이라 button 을 중첩할 수 없다 → 찜(별)과 같은 role="button" 으로 그리고
+   * 클릭을 stopPropagation 해서 카드 열기(onOpen)와 겹치지 않게 한다.
+   * 일반채용 '행'에는 붙이지 않는다 — 행은 열 폭이 고정된 표다.
+   */
+  cardAction?: { label: string; onClick: (job: JobPosting) => void }
   emptyMain: string
   emptyHint: string
 }
@@ -69,7 +76,7 @@ function tagsOf(job: JobPosting): { label: string; kind: 'emp' | 'cat' | 'flag' 
 }
 
 export default function JobBoard({
-  jobs, onOpen, showWish = false, split = true, emptyMain, emptyHint,
+  jobs, onOpen, showWish = false, split = true, cardAction, emptyMain, emptyHint,
 }: JobBoardProps) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<JobStatus | typeof ALL>(ALL)
@@ -155,6 +162,22 @@ export default function JobBoard({
           <span className={`jc-dday${closed ? ' is-closed' : ''}`}>{dday}</span>
           <time>{deadlineLabel(job)}</time>
         </div>
+
+        {cardAction && (
+          <span
+            role="button"
+            tabIndex={0}
+            className="jc-card-action"
+            onClick={e => { e.stopPropagation(); cardAction.onClick(job) }}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault(); e.stopPropagation(); cardAction.onClick(job)
+              }
+            }}
+          >
+            {cardAction.label}
+          </span>
+        )}
       </Tag>
     )
   }

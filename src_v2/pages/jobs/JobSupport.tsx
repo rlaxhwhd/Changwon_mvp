@@ -4,6 +4,7 @@ import { getJobsByScope } from '../../../src_admin/data/jobsSource'
 import type { JobScope } from '../../../src_admin/data/jobsSource'
 import JobBoard from '../../components/JobBoard'
 import './JobSupport.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 /** scope 별 화면 문구 — 같은 목록 컴포넌트를 교내/외부 두 화면이 공유한다. */
 const SCOPE_COPY: Record<JobScope, { eyebrow: string; title: string; emptyMain: string; emptyHint: string }> = {
@@ -22,6 +23,7 @@ const SCOPE_COPY: Record<JobScope, { eyebrow: string; title: string; emptyMain: 
 }
 
 export default function JobSupport({ scope }: { scope: JobScope }) {
+  usePageHead(SCOPE_COPY[scope].title, SCOPE_COPY[scope].eyebrow)
   const navigate = useNavigate()
   const copy = SCOPE_COPY[scope]
 
@@ -30,13 +32,6 @@ export default function JobSupport({ scope }: { scope: JobScope }) {
 
   return (
     <div className="job-page">
-      <header className="job-header">
-        <div>
-          <p>{copy.eyebrow}</p>
-          <h1>{copy.title}</h1>
-        </div>
-      </header>
-
       {/* 목록 본문은 교직원 /admin/jobs 와 같은 컴포넌트다 — 화면이 갈리지 않는다. */}
       <JobBoard
         jobs={all}

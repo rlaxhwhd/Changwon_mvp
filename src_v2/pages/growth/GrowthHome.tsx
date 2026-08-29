@@ -4,6 +4,7 @@ import Modal from '../../components/Modal'
 import { getActiveStudent } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
 import './GrowthHome.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 const SKILLS = [
   { name: 'Java', level: 4, category: '언어' },
@@ -80,6 +81,7 @@ function upsert<T>(items: T[], index: number | null, value: T): T[] {
 }
 
 export default function GrowthHome() {
+  usePageHead('홈대시보드', '퀘스트·레벨·성장 기록을 한 화면에서 확인합니다.')
   const student = getActiveStudent()
   const storagePrefix = `dc_growth_portfolio_${student.id}`
   const [projects, setProjects] = useStoredList<Project>(`${storagePrefix}_projects`, PROJECTS)
@@ -156,7 +158,7 @@ export default function GrowthHome() {
           <div className="gh-avatar" aria-hidden="true">{student.name.slice(-2)}</div>
           <div>
             <span className="gh-eyebrow">{isSenior ? 'CAREER PORTFOLIO' : 'MY GROWTH RECORD'}</span>
-            <h1 id="growth-title">{student.name}의 {isSenior ? '성장 포트폴리오' : '성장 기록'}</h1>
+            <h2 id="growth-title">{student.name}의 {isSenior ? '성장 포트폴리오' : '성장 기록'}</h2>
             <p>{student.major} · {student.grade}학년 · {student.studentNo}</p>
           </div>
         </div>

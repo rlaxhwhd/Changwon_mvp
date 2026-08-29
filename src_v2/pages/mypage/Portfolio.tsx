@@ -2,6 +2,7 @@ import { useMemo, useState, type ReactNode } from 'react'
 import Modal from '../../components/Modal'
 import { getActiveStudent } from '../../data/students'
 import './Portfolio.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'resume'
 
@@ -216,6 +217,7 @@ const LEVEL_LABELS = ['', '초급', '초중급', '중급', '고급', '전문가'
 
 /* ── Page ───────────────────────────────────────────────────────── */
 export default function Portfolio() {
+  usePageHead('포트폴리오', '스킬·자격증·수상·자소서·이력서를 한 곳에서 관리하고 PDF로 내보낼 수 있어요.')
   const [tab, setTab] = useState<TabId>('profile')
   const [profile, setProfile] = useState<ProfileData>(() => buildInitialProfile())
   const [skills, setSkills] = useState<Skill[]>(INITIAL_SKILLS)
@@ -265,11 +267,6 @@ export default function Portfolio() {
   return (
     <div className="pf-wrap">
       <header className="pf-hero">
-        <div className="pf-hero-copy">
-          <span className="pf-breadcrumb">마이페이지 · 포트폴리오</span>
-          <h1>나의 포트폴리오</h1>
-          <p>스킬·자격증·수상·자소서·이력서를 한 곳에서 관리하고 PDF로 내보낼 수 있어요.</p>
-        </div>
         <div className="pf-hero-actions">
           <div className="pf-completeness">
             <span className="pf-completeness-num">{completeness}<small>%</small></span>

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { loadJournalEntries, saveJournalEntries, type Category, type Entry } from '../../data/growthJournal'
 import { getActiveStudentId } from '../../data/students'
 import './GrowthJournal.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 const KEYWORDS = [
   { tag: '고객응대', cnt: 3 }, { tag: '문제해결', cnt: 3 },
@@ -65,6 +66,7 @@ function DonutChart({ value, total }: { value: number; total: number }) {
 
 /* ── Page ────────────────────────────────────────────────────────── */
 export default function GrowthJournal() {
+  usePageHead('성장경험일지', '아르바이트·팀프로젝트·동아리 활동에서 겪은 일을 기록해 두면 자기소개서 작성에 활용할 수 있어요.')
   const navigate = useNavigate()
   const studentId = getActiveStudentId()
   const [entries, setEntries] = useState<Entry[]>(() => loadJournalEntries(studentId))
@@ -106,15 +108,6 @@ export default function GrowthJournal() {
 
         {/* Header */}
         <div className="gj-page-header">
-          <div>
-            <h1 className="gj-page-title">
-              <i className="fa-solid fa-book-open" /> 4. 성장경험일지
-            </h1>
-            <p className="gj-page-desc">
-              아르바이트, 팀프로젝트, 동아리 활동 등 일상 속에서 경험한 다양한 일을 기록해보세요.<br />
-              기록한 내용은 자기소개서 작성 시 유용하게 활용할 수 있어요.
-            </p>
-          </div>
           <button className="gj-btn-primary" onClick={() => navigate('/growth/journal/new')}>
             <i className="fa-solid fa-plus" /> 새로운 경험 기록하기
           </button>

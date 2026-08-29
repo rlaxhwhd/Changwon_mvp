@@ -16,7 +16,7 @@
 .ma-empty p { font-size: 14px; color: var(--color-text-sub); }
 .ma-empty-btn {
   margin-top: 6px; padding: 10px 18px; border-radius: 10px;
-  background: var(--color-primary); color: #fff; font-size: 14px; font-weight: 700;
+  background: var(--color-cta); color: #fff; font-size: 14px; font-weight: 700;
 }
 
 /* ── 카드 ────────────────────────────────────────────────── */
@@ -80,6 +80,16 @@
 .ma-step-label { font-size: 13px; font-weight: 700; color: var(--color-text-sub); }
 .ma-step.is-done .ma-step-label, .ma-step.is-current .ma-step-label { color: var(--color-navy); font-weight: 800; }
 .ma-step-at { font-size: 11px; color: var(--color-text-muted); }
+/* 교내 절차(서류 검토·기업 전달) 표시 — 기업 전형과 담당이 다르다.
+   칸 자체의 색은 건드리지 않는다. 진행 색은 '지나왔나'만 뜻해야 한다. */
+.ma-step-who {
+  padding: 1px 6px; border-radius: 999px;
+  background: var(--color-surface-alt); color: var(--color-text-muted);
+  font-size: 10px; font-weight: 800;
+}
+.ma-step.is-done .ma-step-who, .ma-step.is-current .ma-step-who { color: var(--color-text-sub); }
+
+.ma-progress-desc { margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--color-text-sub); }
 .ma-step-now {
   padding: 2px 8px; border-radius: 999px;
   background: var(--color-primary); color: #fff; font-size: 11px; font-weight: 800;

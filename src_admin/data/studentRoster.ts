@@ -209,6 +209,64 @@ export function getFullRoster(departments: string[] = []): RosterStudent[] {
   return departments.length === 0 ? merged : merged.filter(s => departments.includes(s.major))
 }
 
+// ── 집중관리 분류 (고위험군 · 핵심관리대상) ────────────────────────────────
+//
+// ★ 판정 기준은 여기 한 곳이다(CLAUDE.md 규칙 10 · 13). 홈 대시보드 집계와
+//   전체 학생 목록 필터가 같은 함수를 본다 — 화면마다 다시 판정하면 카드에 적힌
+//   인원과 목록에 나오는 인원이 어긋난다.
+//   DB 전환 시 이 상수들이 그대로 WHERE 절이 된다.
+
+/** 집중관리 분류 기준 */
+export const RISK_RULE = {
+  /** 저학점 경계 (4.5 만점) */
+  lowGpa: 2.5,
+  /** '열심히 참여'로 보는 비교과 이수 건수 */
+  activePrograms: 3,
+  /** 진단-상담-로드맵 이수가 궤도에 올랐다고 보는 로드맵 진행률 */
+  onTrackProgress: 60,
+  /** 1학년은 판정 대상에서 제외한다 — 아직 이수 이력이 쌓이지 않는다. */
+  excludeGrade: 1,
+} as const
+
+const gpaOf = (s: RosterStudent) => Number(s.gpa ?? NaN)
+const progCount = (s: RosterStudent) => s.programCount ?? 0
+const counselCount = (s: RosterStudent) => s.counselCount ?? 0
+
+/** 학점이 낮고 비교과·상담 어디에도 참여하지 않는 학생 */
+export function isHighRisk(s: RosterStudent): boolean {
+  return (
+    s.grade !== RISK_RULE.excludeGrade &&
+    gpaOf(s) < RISK_RULE.lowGpa &&
+    progCount(s) === 0 &&
+    counselCount(s) === 0
+  )
+}
+
+/** 학점은 낮지만 비교과를 꾸준히 이수하고 진단-상담-로드맵이 궤도에 오른 학생 */
+export function isCoreCare(s: RosterStudent): boolean {
+  return (
+    s.grade !== RISK_RULE.excludeGrade &&
+    gpaOf(s) < RISK_RULE.lowGpa &&
+    progCount(s) >= RISK_RULE.activePrograms &&
+    counselCount(s) >= 1 &&
+    s.progress >= RISK_RULE.onTrackProgress
+  )
+}
+
+/** 집중관리 필터 값 — 홈 카드 링크(?focus=)와 목록 버튼이 같은 코드를 쓴다. */
+export type FocusFilter = 'high' | 'core'
+
+/** 필터 값 → 판정 함수. 화면은 코드만 넘기고 조건 자체를 알지 못한다. */
+const FOCUS_PREDICATE: Record<FocusFilter, (s: RosterStudent) => boolean> = {
+  high: isHighRisk,
+  core: isCoreCare,
+}
+
+/** 쿼리스트링·상태값이 유효한 필터인지 — 화면이 문자열을 그대로 넘겨도 안전하게. */
+export function isFocusFilter(value: string | null | undefined): value is FocusFilter {
+  return value === 'high' || value === 'core'
+}
+
 /** [DB-ready] 로스터 목록 조회 — async + 페이징. 6천건이 와도 화면은 현재 페이지만 받는다. */
 export async function queryStudentRoster(
   params: ListParams & { departments?: string[]; studentIds?: string[] } = {},
@@ -224,6 +282,7 @@ export async function queryStudentRoster(
     if (f.studentType && s.studentType !== f.studentType) return false
     if (f.tier && s.tier !== f.tier) return false
     if (f.status && s.status !== f.status) return false
+    if (isFocusFilter(f.focus) && !FOCUS_PREDICATE[f.focus](s)) return false
     if (q && !`${s.name} ${s.major} ${typeLabel(s.studentType)}`.toLowerCase().includes(q)) return false
     return true
   })
@@ -250,5 +309,8 @@ export function getRosterSummary(departments: string[] = [], studentIds?: string
   return {
     total: base.length,
     focusCount: base.filter(s => s.tier === '하위').length,
+    // 집중관리 2분류 — 홈 카드와 같은 판정 함수를 쓴다(수치가 갈리지 않게).
+    highRiskCount: base.filter(isHighRisk).length,
+    coreCareCount: base.filter(isCoreCare).length,
   }
 }

@@ -3,12 +3,14 @@ import Modal from '../../components/Modal'
 import type { CourseGroup, CourseRow, DirectionRow } from '../../data/academic'
 import { useSkillTree } from '../../hooks/useSkillTree'
 import './SkillTree.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 // 데이터는 전부 useSkillTree → data/academic(파생) → academic/repository(스왑 지점)
 // 에서 온다. 이 컴포넌트에는 과목·스킬·직무·자격증 리터럴을 두지 않는다.
 
 export default function SkillTree() {
+  usePageHead('AI 직무 로드맵', '진단·상담·수강과목·자격증을 기반으로 직무 방향의 적합도를 확인합니다.')
   const {
     status, data, jobOptions, certOptions, studentName, error, reload,
     addJob, removeJob, addCert, removeCert,
@@ -146,12 +148,6 @@ export default function SkillTree() {
           <div className="st-header-left">
             <div className="st-header-icon">
               <i className="fa-solid fa-sitemap" />
-            </div>
-            <div>
-              <h1 className="st-header-title">AI 직무 로드맵</h1>
-              <p className="st-header-subtitle">
-                진단, 상담, 수강과목, 자격증을 기반으로 직무 방향의 적합도를 확인하세요
-              </p>
             </div>
           </div>
           <div className="st-header-meta">

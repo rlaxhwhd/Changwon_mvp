@@ -179,10 +179,10 @@
 }
 .gj-tab:hover { background: var(--color-surface); color: var(--color-text); }
 .gj-tab.active {
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(46, 91, 255, 0.22);
+  box-shadow: 0 2px 8px var(--cta-shadow);
 }
 .gj-search-wrap { position: relative; }
 .gj-search {
@@ -405,11 +405,11 @@
   background: var(--color-primary-bg);
 }
 .gj-page-btn.on {
-  background: var(--color-primary);
+  background: var(--color-cta);
   border-color: var(--color-primary);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(46,91,255,.25);
+  box-shadow: 0 2px 8px var(--cta-shadow);
 }
 .gj-page-btn:disabled { opacity: 0.38; cursor: not-allowed; }
 

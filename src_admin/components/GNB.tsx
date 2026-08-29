@@ -14,7 +14,7 @@ import './GNB.css'
 // ─────────────────────────────────────────────────────────────────────────
 // 상단 네비게이션 — 시안(test_admin_react) 상단바 마크업 그대로.
 // 클래스명·구조는 시안을 따르고, 항목은 navConfig(역할 필터) 단일소스에서 온다.
-// 시안의 브랜드 로고 블록은 제외했다(요구사항).
+// 좌측 로고는 학생 포털과 같은 것을 쓴다(/logo.png, 164×28) — 시안의 텍스트 워드마크가 아니다.
 // 우측 프로필 팝오버에는 데모 계정 전환을 유지한다 — 더미 데이터 전환 수단.
 // ─────────────────────────────────────────────────────────────────────────
 
@@ -56,6 +56,11 @@ export default function GNB() {
   return (
     <header className={`gnb tadmin-gnb${mobileOpen ? ' mobile-nav-open' : ''}`}>
       <div className="gnb-in">
+
+        {/* 좌측 상단 로고 — 학생 포털 .brand 와 같은 이미지·같은 크기다. */}
+        <Link to="/" className="brand" aria-label="DREAMCATCH 홈">
+          <img src="/logo.png" alt="국립창원대학교 DREAMCATCH" />
+        </Link>
 
         <nav className="gnb-nav" id="adminTopNavigation" aria-label="주 메뉴">
           {sections.map(section => {

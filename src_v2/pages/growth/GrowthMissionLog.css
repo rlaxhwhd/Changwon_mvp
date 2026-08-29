@@ -144,7 +144,7 @@
 }
 
 .gml-filters button.active {
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #ffffff;
 }
 
@@ -275,7 +275,7 @@
 
 .gml-pagination button.active {
   border-color: var(--color-primary);
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #ffffff;
 }
 

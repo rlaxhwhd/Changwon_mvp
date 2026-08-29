@@ -124,7 +124,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | 5 | **학생 포트폴리오 관리(첨삭)** | — | ❌ **3역할 공용 · 현행 `SS_JOB_RES` 계승** |
 | 6 | **상담 통계** | `CounselStats` · `/counsel/stats` | ✅ |
 | 7 | **상담 제한일정 관리** | `SettingsAvailability` | ⚠️ **재설계 필요** (가능 → 제한 등록) |
-| 8 | 학생 관리 (목록·상세) | `StudentList` + `StudentDetail` | ✅ |
+| 8 | 학생 관리 (목록·상세) | `StudentList`(`/students` 담당) + `StudentAll`(`/students/all` 전체) — 표는 `StudentChargeTable` 공유, 범위만 다름 · + `StudentDetail` | ✅ |
 | 9 | 프로필 설정 | `SettingsProfile` | ✅ |
 | 10 | **재배정 + 처리 이력** | `counselEvents` · 접수함 모달 | ✅ |
 | 11 | **집단상담 / 집단심리검사** | `GroupCounsels` · `/counsel/groups` | ✅ |

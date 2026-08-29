@@ -33,7 +33,7 @@
 .pd-info-list dt { color: var(--color-text-sub); font-size: 13px; font-weight: 700; }
 .pd-info-list dd { margin: 0; color: var(--color-text); font-size: 13px; line-height: 1.55; word-break: keep-all; }
 .pd-apply-btn, .pd-back-btn, .pd-wish-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; border-radius: var(--radius-md); font-size: 15px; font-weight: 800; cursor: pointer; }
-.pd-apply-btn { border: 0; background: var(--color-primary); color: #fff; }
+.pd-apply-btn { border: 0; background: var(--color-cta); color: #fff; }
 .pd-apply-btn:hover { opacity: 0.88; }
 .pd-back-btn { border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); text-decoration: none; }
 .pd-back-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }

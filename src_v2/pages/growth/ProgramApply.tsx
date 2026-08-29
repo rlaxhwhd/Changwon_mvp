@@ -9,12 +9,14 @@ import ProgramCardGrid from './ProgramCardGrid'
 import type { ProgramCardVM } from './ProgramCardGrid'
 import './ProgramApply.css'
 import './ProgramReco.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type Category = '전체' | ProgramCategory
 
 const CATEGORIES: Category[] = ['전체', ...PROGRAM_CATEGORIES]
 
 export default function ProgramApply() {
+  usePageHead('비교과 프로그램 신청', 'CWNU 학생을 위한 진로·취업 역량 강화 프로그램을 신청하고 XP와 수료증을 획득하세요.')
   const navigate = useNavigate()
   const profile = getActiveStudent()
   // 자격증·어학 카드는 별도 페이지로 분리됨 — 여기는 비교과·외부활동 2개만
@@ -65,14 +67,6 @@ export default function ProgramApply() {
   return (
     <div className="pa-shell">
       <div className="pa-wrap">
-        <div className="pa-header">
-          <p className="pa-breadcrumb">역량개발 / 비교과 프로그램</p>
-          <h1 className="pa-title">비교과 프로그램</h1>
-          <p className="pa-desc">
-            CWNU 학생을 위한 진로, 취업 역량 강화 프로그램을 신청하고 XP와 수료증을 획득하세요.
-          </p>
-        </div>
-
         {/* AI 맞춤 추천 — 잠금 → 로딩 → 잠금해제 3단계 */}
         <section className="pr-reco" aria-label="AI 맞춤 추천">
           <div className="pr-reco-head">

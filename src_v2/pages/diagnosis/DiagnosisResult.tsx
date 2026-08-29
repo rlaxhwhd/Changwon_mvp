@@ -10,6 +10,7 @@ import {
 import { getActiveStudent } from '../../data/students'
 import './EmploymentTest.css'
 import './DiagnosisProcess.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 const STATUS_LABEL: Record<TestStatus, string> = {
   done: '완료',
@@ -41,6 +42,7 @@ const GUIDE_ITEMS = [
 ]
 
 export default function DiagnosisResult() {
+  usePageHead('진단검사 결과', '1회차 진단은 학생이 자유롭게 실시할 수 있습니다. 재진단과 진단유형 변경은 상담사와 상담 후 진행됩니다.')
   const navigate = useNavigate()
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [hasRequestedTypeChange, setHasRequestedTypeChange] = useState(false)
@@ -62,14 +64,6 @@ export default function DiagnosisResult() {
   return (
     <div className="de-wrap">
       <section className="de-hero">
-        <div className="de-hero-copy">
-          <span>진단센터</span>
-          <h1>다양한 검사로 나를 더 깊이 이해해보세요</h1>
-          <p>
-            <strong>1회차 진단은 학생이 자유롭게 실시</strong>할 수 있습니다.<br />
-            재진단과 진단유형 변경은 상담사와 상담 후 진행됩니다.
-          </p>
-        </div>
         <div className="de-hero-visual" aria-label="AI 홀로그램 진단 이미지">
           <img className="de-hero-image" src="/diagnosis_1.2.png" alt="AI 홀로그램 진단 이미지" />
         </div>

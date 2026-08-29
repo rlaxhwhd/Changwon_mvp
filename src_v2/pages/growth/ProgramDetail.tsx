@@ -5,11 +5,13 @@ import { isWished as isWishedStore, toggleWish as toggleWishStore } from '../../
 import { getPrograms } from '../../../src_admin/data/programs'
 import ProgramNotice from './ProgramNotice'
 import './ProgramDetail.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 export default function ProgramDetail() {
   const { id } = useParams<{ id: string }>()
   const programId = id ?? ''
   const program = getPrograms().find(item => item.id === programId)
+  usePageHead(program?.title, '프로그램 내용과 일정을 확인하고 신청합니다.')
   const [wished, setWished] = useState(() => isWishedStore(programId))
   const [applyOpen, setApplyOpen] = useState(false)
   const [applied, setApplied] = useState(false)

@@ -1,7 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // 추천채용 지원자관리 — 공고 1건
 //
-// 위: 전형 단계 정의·관리 (단계는 공고마다 다르다 — 추가·이름변경·순서변경·삭제)
+// 위: 전형 단계 정의·관리
+//     - 교내 절차 2단계(서류 검토·기업 전달)는 모든 공고 공통이라 코드 상수다 — 편집 대상 아님.
+//     - 그 뒤 기업 전형은 공고마다 다르다 — 추가·이름변경·순서변경·삭제.
 // 아래: 지원자 목록 + 상태 변경 (다음 단계로 / 탈락)
 //
 // 상태 전이·정합성·집계는 전부 jobApplications 로더가 한다 — 이 화면은 부르고 그린다.
@@ -22,6 +24,7 @@ import {
   currentStageLabel,
   getApplicationsByJob,
   getStages,
+  INTERNAL_STAGES,
   isRecommendedInternal,
   moveStage,
   rejectApplication,
@@ -143,19 +146,37 @@ export default function JobApplicants() {
       <section className="admin-card">
         <div className="admin-card-head">
           <h2>전형 단계 정의 및 관리</h2>
-          <span className="admin-card-count">{stages.length}단계</span>
+          <span className="admin-card-count">{INTERNAL_STAGES.length + stages.length}단계</span>
         </div>
 
         <div className="admin-editor-hint">
           <LuInfo />
-          단계는 공고마다 다르게 정할 수 있습니다. 지원자는 <strong>정의한 순서대로만</strong> 이동하며,
-          마지막 단계를 통과하면 최종 합격 처리됩니다.
+          앞의 <strong>{INTERNAL_STAGES.length}단계는 교내 절차</strong>입니다 — 상담사가 서류를 검토한 뒤
+          기업에 전달하며, 모든 추천채용 공고에 공통이라 수정·삭제할 수 없습니다.
+          그 뒤 기업 전형은 공고마다 다르게 정할 수 있습니다. 지원자는
+          <strong> 정의한 순서대로만</strong> 이동하며, 마지막 단계를 통과하면 최종 합격 처리됩니다.
+        </div>
+
+        {/* 교내 절차 — 코드 상수(INTERNAL_STAGES). 보여만 주고 편집 버튼을 두지 않는다. */}
+        <div className="admin-phase-list">
+          {INTERNAL_STAGES.map(stage => (
+            <div key={stage.id} className="admin-phase-item">
+              <span className="admin-phase-icon">{stage.order}</span>
+              <div className="admin-phase-body">
+                <div className="admin-phase-top">
+                  <strong>{stage.order}단계: {stage.name}</strong>
+                  <small>현재 {counts[stage.id] ?? 0}명 · 상담사 처리</small>
+                </div>
+              </div>
+              <span className="admin-chip admin-chip-wait">교내 절차</span>
+            </div>
+          ))}
         </div>
 
         <div className="admin-phase-list">
           {stages.map((stage, i) => (
             <div key={stage.id} className="admin-phase-item">
-              <span className="admin-phase-icon">{stage.order}</span>
+              <span className="admin-phase-icon">{INTERNAL_STAGES.length + stage.order}</span>
               <div className="admin-phase-body">
                 {editing?.id === stage.id ? (
                   <input
@@ -176,8 +197,8 @@ export default function JobApplicants() {
                     className="admin-phase-top"
                     onClick={() => setEditing({ id: stage.id, name: stage.name })}
                   >
-                    <strong>{stage.order}단계: {stage.name}</strong>
-                    <small>현재 {counts[stage.id] ?? 0}명</small>
+                    <strong>{INTERNAL_STAGES.length + stage.order}단계: {stage.name}</strong>
+                    <small>현재 {counts[stage.id] ?? 0}명 · 기업 전형</small>
                   </button>
                 )}
               </div>

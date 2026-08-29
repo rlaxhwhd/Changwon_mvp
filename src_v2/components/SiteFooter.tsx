@@ -1,4 +1,8 @@
-// 시안(main.html / stu_dash.html)의 .site-footer — 전 페이지 공통. Layout 에서만 렌더한다.
+import './SiteFooter.css'
+
+// 시안(main.html / stu_dash.html)의 .site-footer — 두 포털 전 페이지 공통.
+// 학생 Layout(src_v2)·교직원 Layout(src_admin) 이 각자 마지막에 한 번만 렌더한다.
+// 스타일은 SiteFooter.css 가 들고 있다(포털 index.css 에 두면 admin 이 못 쓴다).
 export default function SiteFooter() {
   return (
     <footer className="site-footer">

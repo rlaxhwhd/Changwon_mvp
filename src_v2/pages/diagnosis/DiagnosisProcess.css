@@ -39,13 +39,13 @@
   justify-content: center;
   gap: 9px;
   flex-shrink: 0;
-  background: var(--color-primary);
+  background: var(--color-cta);
   border: 1px solid var(--color-primary);
   border-radius: var(--radius-sm);
   color: #fff;
   font-size: 16px;
   font-weight: 900;
-  box-shadow: 0 8px 18px rgba(46, 91, 255, 0.18);
+  box-shadow: 0 8px 18px var(--cta-shadow);
 }
 
 .de-type-request-btn:hover:not(:disabled) { opacity: 0.9; }
@@ -305,8 +305,8 @@
    CTA 는 메인 강조색(바이올렛) 하나로 간다 — 같은 화면의 「결과 보기」와 「검사 시작」이
    서로 다른 색이면 같은 역할의 버튼이 둘로 읽힌다. 상태 구분은 잠금(회색)으로만 한다. */
 .de-start-btn--available {
-  background: var(--color-primary);
-  box-shadow: 0 9px 18px rgba(124, 92, 252, 0.18);
+  background: var(--color-cta);
+  box-shadow: 0 9px 18px var(--cta-shadow);
 }
 
 .de-start-btn--locked {

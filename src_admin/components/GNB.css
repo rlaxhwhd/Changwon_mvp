@@ -494,8 +494,10 @@
 }
 
 /* SPA 레이아웃 전제: 헤더는 고정, 본문은 --gnb-height 만큼 내려간다 */
-.gnb.tadmin-gnb{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--gnb-height);min-height:var(--gnb-height)}
-.tadmin-gnb .gnb-in{height:var(--gnb-height);min-height:var(--gnb-height);max-width:1440px;margin:0 auto;padding:0 24px}
+.gnb.tadmin-gnb{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--gnb-total);min-height:var(--gnb-total)}
+/* 폭은 학생 포털 .topbar-inner 와 같다 — 1488 + 좌우 24 라야 로고가 학생과 같은 x(80px)에 선다.
+   본문(.admin-page)은 1440 기준이라 상단바가 본문보다 24px 바깥으로 나오는데, 이는 시안 그대로다. */
+.tadmin-gnb .gnb-in{height:var(--gnb-height);min-height:var(--gnb-height);max-width:1488px;margin:0 auto;padding:0 24px}
 
 /* ── 데모 계정 전환 — 시안에 없는 블록. 시안 .profile-action 값을 그대로 재사용한다 ── */
 .tadmin-gnb .profile-switch{margin:4px 0;padding:4px 0;border-top:1px solid #EFF1F4;border-bottom:1px solid #EFF1F4}
@@ -521,4 +523,17 @@
   }
   .tadmin-gnb .gnb-nav{width:auto;align-self:stretch;padding:0;overflow-x:visible}
   .tadmin-gnb .gnb-btn{height:var(--gnb-height)}
+}
+
+/* ── 좌측 상단 로고 ──────────────────────────────────────────────────
+   학생 포털(.topbar .brand)과 같은 이미지·같은 크기(164×28)를 쓴다.
+   시안의 텍스트 워드마크(.mark / .brand-div / .brand-sub)는 쓰지 않으므로
+   그쪽 gap 값을 여기서 되돌린다. 위 .tadmin-gnb .brand 규칙보다 뒤에 와야 이긴다. */
+.tadmin-gnb .brand { flex: 0 0 164px; gap: 0; }
+
+.tadmin-gnb .brand img {
+  width: 164px;
+  height: 28px;
+  object-fit: contain;
+  object-position: left center;
 }

@@ -94,8 +94,13 @@
   --pad: 20px;       /* 카드 안쪽 — 전 카드 동일 */
   --pad-sm: 16px;
 
-  /* 시안(test_admin) 상단바 높이. GNB.css 가 이 값으로 헤더를 고정한다. */
-  --gnb-height: 64px;
+  /* 상단바 높이 — 학생 포털 --topbar-h 와 같은 값이어야 한다(두 포털 상단바가 갈리면 안 됨).
+     GNB.css 가 이 값으로 헤더를 고정하고, .admin-main 의 margin-top·sticky 오프셋이 모두 여기서 나온다. */
+  --gnb-height: 80px;
+  /* 헤더가 실제로 차지하는 높이 = 내용 80 + 하단 경계선 1.
+     학생 포털 .topbar 는 min-height 80 위에 경계선이 얹혀 81 이 된다 — 그 값을 맞춘다.
+     본문 오프셋(margin-top·min-height)은 이 값을, 내부 요소 높이는 --gnb-height 를 쓴다. */
+  --gnb-total: calc(var(--gnb-height) + 1px);
   --font: 'Pretendard Variable', 'Pretendard', 'Apple SD Gothic Neo', 'Noto Sans KR', sans-serif;
   --page-max: 1440px;
 
@@ -227,7 +232,7 @@ input, textarea, select { font-family: var(--font); }
 }
 
 .admin-main {
-  margin-top: var(--gnb-height);
+  margin-top: var(--gnb-total);
   flex: 1;
   background: var(--color-page-bg);
 }
@@ -235,7 +240,7 @@ input, textarea, select { font-family: var(--font); }
 .admin-main-shell {
   display: flex;
   align-items: stretch;
-  min-height: calc(100vh - var(--gnb-height));
+  min-height: calc(100vh - var(--gnb-total));
 }
 
 .admin-content {
@@ -244,30 +249,9 @@ input, textarea, select { font-family: var(--font); }
   background: var(--color-page-bg);
 }
 
-.admin-layout-footer {
-  position: relative;
-  max-width: var(--page-max);
-  margin: 0 auto;
-  min-height: 64px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px 24px 28px;
-  color: var(--color-caption);
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-}
-
-/* 좌측 하단 브랜드 로고 — 본문과 같은 축(좌측 여백 24px)에 붙는다. */
-.admin-footer-logo {
-  position: absolute;
-  left: 24px;
-  bottom: 22px;
-  width: 132px;
-  height: auto;
-  opacity: 0.9;
-}
+/* 푸터는 학생 포털과 같은 컴포넌트·같은 CSS 를 쓴다
+   → src_v2/components/SiteFooter.tsx + SiteFooter.css.
+   여기에 .admin-layout-footer 같은 교직원 전용 푸터 스타일을 다시 만들지 말 것. */
 
 /* 본문 폭·여백 — 홈(/admin)의 .page 와 같은 값이어야 상단바와 같은 축에 선다.
    GNB(.gnb-in)도 max-width 1440 + 좌우 24 → 콘텐츠 시작 x 가 정확히 일치한다.
@@ -543,6 +527,27 @@ input, textarea, select { font-family: var(--font); }
 }
 /* 페이지 제목·설명 — 홈(/admin) 시안의 헤딩과 같은 값이어야 화면 간 위계가 하나로 읽힌다.
    시안 .hello h1 = 28px/700/-0.03em, 보조문 = 13px/500. 여기서만 정하고 화면별로 덮지 말 것. */
+/* 경로 표시 — Layout 이 서브페이지 맨 위에 한 번 그린다. 본문(.admin-page)과 같은 축에 선다.
+   규격은 학생 포털(.v2-crumb-bar)과 같다 — 두 포털이 갈리면 안 된다. */
+.admin-crumb-bar {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  padding: 22px 24px 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+}
+.admin-crumb-item { display: inline-flex; align-items: center; gap: 6px; }
+.admin-crumb-sep { width: 12px; height: 12px; color: var(--color-caption); }
+.admin-crumb-bar a:hover { color: var(--color-primary); }
+.admin-crumb-bar > :last-child { color: var(--color-text); font-weight: 800; }
+/* 경로 표시가 위를 이미 띄웠으므로 본문 상단 여백을 줄인다(합계가 시안 리듬을 넘지 않게). */
+.admin-crumb-bar + .admin-page { padding-top: 14px; }
+
 .admin-page-title { font-size: 28px; font-weight: 700; color: var(--color-text); letter-spacing: -0.03em; }
 .admin-page-desc { margin-top: 6px; font-size: 13px; font-weight: 500; color: var(--color-text-secondary); }
 
@@ -1252,6 +1257,52 @@ input, textarea, select { font-family: var(--font); }
   display: inline-flex; align-items: center; gap: 3px;
   color: var(--color-accent); font-weight: 800; white-space: nowrap;
 }
+
+/* ── 집중관리 필터 버튼 (전체 학생 목록) ─────────────────────────────────
+   고위험군 = 위험(빨강) · 핵심관리대상 = 성공(초록). 홈 「집중관리 현황」 카드의
+   막대 색과 같은 의미다. 새 색을 만들지 않고 기존 상태색 토큰을 그대로 쓴다. */
+.admin-focus-filter {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.admin-focus-filter-label {
+  font-size: 12px; font-weight: 800; color: var(--color-text-secondary);
+}
+.admin-focus-filter-hint {
+  font-size: 12px; font-weight: 700; color: var(--color-text-secondary);
+}
+.admin-focus-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px;
+  border: 1px solid var(--color-border); border-radius: 999px;
+  background: #fff; color: var(--color-text-secondary);
+  font-size: 13px; font-weight: 800; cursor: pointer;
+}
+.admin-focus-btn em { font-style: normal; font-weight: 900; color: var(--color-text); }
+.admin-focus-btn:hover { border-color: var(--color-text-secondary); }
+.admin-focus-btn.is-on { background: var(--color-text); border-color: var(--color-text); color: #fff; }
+.admin-focus-btn.is-on em { color: #fff; }
+
+.admin-focus-btn.is-high { border-color: #F5C7C7; color: var(--color-danger); }
+.admin-focus-btn.is-high em { color: var(--color-danger); }
+.admin-focus-btn.is-high:hover { background: #FDECEC; }
+.admin-focus-btn.is-high.is-on { background: var(--color-danger); border-color: var(--color-danger); color: #fff; }
+.admin-focus-btn.is-high.is-on em { color: #fff; }
+
+.admin-focus-btn.is-core { border-color: #B9E7D4; color: var(--color-success); }
+.admin-focus-btn.is-core em { color: var(--color-success); }
+.admin-focus-btn.is-core:hover { background: #E2F7EF; }
+.admin-focus-btn.is-core.is-on { background: var(--color-success); border-color: var(--color-success); color: #fff; }
+.admin-focus-btn.is-core.is-on em { color: #fff; }
+
+/* 결과 줄에 표시하는 '걸린 필터' — 중립색. 상태 경고가 아니다. */
+.admin-toolbar-filter {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--color-text-secondary); font-weight: 800; white-space: nowrap;
+}
+
+/* 필터 줄 맨 끝의 검색 실행 버튼 — 셀렉트와 아랫줄을 맞춘다(.admin-filterbar 는 flex-end). */
+.admin-filter-submit { height: 38px; }
 
 /* ── 학생 로스터(표) ─────────────────────────────────────────────────── */
 .admin-roster { display: flex; flex-direction: column; }
@@ -2011,23 +2062,30 @@ input, textarea, select { font-family: var(--font); }
 }
 .counsel-status-tabs button.active strong { background: #fff; color: var(--tab-ink); }
 
+/* 캘린더는 날짜를 고르는 보조 도구다 — 폭을 고정해 좁게 두고, 남는 폭은 전부 목록이 가진다.
+   (예전에는 .76fr/1.24fr 비례였고 캘린더가 521px 를 먹었다.) */
 .counsel-requests-layout {
   display: grid;
-  grid-template-columns: minmax(390px, .76fr) minmax(680px, 1.24fr);
+  grid-template-columns: 365px minmax(0, 1fr);
   gap: 22px;
-  align-items: stretch;
+  align-items: start;
 }
 .counsel-calendar-card,
 .counsel-request-table-card {
-  min-height: 650px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
-.counsel-calendar-card { padding: 24px 18px 20px; }
-.counsel-calendar-card > h2,
+/* 목록만 높이를 잡는다. 캘린더는 내용 높이에 맞춰 끝난다(align-items:start). */
+.counsel-request-table-card { min-height: 650px; }
+.counsel-calendar-card { padding: 17px 13px 14px; }
+.counsel-calendar-card > h2 {
+  color: var(--color-title);
+  font-size: 15px;
+  font-weight: 800;
+}
 .counsel-request-table-head h2 {
   color: var(--color-title);
   font-size: 17px;
@@ -2035,35 +2093,35 @@ input, textarea, select { font-family: var(--font); }
 }
 
 .counsel-calendar-toolbar {
-  height: 66px;
+  height: 46px;
   display: grid;
-  grid-template-columns: 90px 1fr 72px;
+  grid-template-columns: 64px 1fr 52px;
   align-items: center;
-  gap: 10px;
+  gap: 7px;
 }
-.counsel-calendar-toolbar > strong { text-align: center; font-size: 17px; color: var(--color-title); }
-.counsel-calendar-nav { display: flex; gap: 8px; }
+.counsel-calendar-toolbar > strong { text-align: center; font-size: 14px; color: var(--color-title); }
+.counsel-calendar-nav { display: flex; gap: 6px; }
 .counsel-calendar-nav button,
 .counsel-today-btn {
-  height: 38px;
+  height: 28px;
   border: 1px solid var(--color-border);
-  border-radius: 8px;
+  border-radius: 7px;
   color: var(--color-text);
   background: #fff;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
 }
-.counsel-calendar-nav button { width: 40px; }
+.counsel-calendar-nav button { width: 28px; }
 .counsel-calendar-nav button:hover,
 .counsel-today-btn:hover { border-color: var(--color-primary-light); color: var(--color-primary); }
 
 .counsel-calendar-weekdays {
-  height: 42px;
+  height: 30px;
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   align-items: center;
   color: var(--color-text-secondary);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   text-align: center;
 }
@@ -2073,7 +2131,7 @@ input, textarea, select { font-family: var(--font); }
 .counsel-calendar-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  grid-template-rows: repeat(6, 64px);
+  grid-template-rows: repeat(6, 45px);
   border-top: 1px solid var(--color-border);
   border-left: 1px solid var(--color-border);
   border-radius: 8px;
@@ -2085,20 +2143,20 @@ input, textarea, select { font-family: var(--font); }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 3px;
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
   background: #fff;
   color: var(--color-title);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
 }
 .counsel-calendar-grid button:hover { background: var(--color-section-bg); }
 .counsel-calendar-grid button.is-muted { color: var(--color-caption); }
 .counsel-calendar-grid button em {
-  min-width: 20px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 15px;
+  height: 14px;
+  padding: 0 4px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2106,7 +2164,7 @@ input, textarea, select { font-family: var(--font); }
   /* 건수는 '해야 할 일'이 아니라 정보다 — 초록(액션)과 구분해 파랑을 쓴다 */
   background: var(--tint-info-bg);
   color: var(--tint-info-ink);
-  font-size: 10px;
+  font-size: 9px;
   font-style: normal;
   font-weight: 800;
 }
@@ -2123,12 +2181,12 @@ input, textarea, select { font-family: var(--font); }
 .counsel-calendar-legend {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-top: 17px;
+  gap: 6px;
+  margin-top: 12px;
   color: var(--color-text-secondary);
-  font-size: 11px;
+  font-size: 10px;
 }
-.counsel-calendar-legend span { width: 8px; height: 8px; border-radius: 50%; background: var(--color-info); }
+.counsel-calendar-legend span { width: 7px; height: 7px; border-radius: 50%; background: var(--color-info); }
 
 .counsel-request-table-card { display: flex; flex-direction: column; }
 .counsel-request-table-head {
@@ -2208,38 +2266,70 @@ input, textarea, select { font-family: var(--font); }
 .counsel-request-columns,
 .counsel-request-row {
   display: grid;
-  /* 4번째 = 유형(T1~T6 + 표시명). "T3 역량성장형"이 한 줄에 들어가야 해서 116px.
-     마지막 = 관리. 「상세 보기」(학생 상세 모달) + 「상담 처리」(일정·재배정) + 재배정 메뉴가 들어간다. */
-  grid-template-columns: 60px 100px 74px 116px 80px minmax(96px, 1fr) 88px 208px;
+  /* 한 칸 = 두 줄(윗줄 주값 / 아랫줄 보조값). 기준은 신청 시간의 「11:00 / 2일 전 신청」이다.
+     신청시간 · 학생/학번 · 학과/재학 · 유형 · 상담유형/상태 · 상담주제 · 상세보기/상담처리.
+     상담 주제만 1fr 로 남는 폭을 전부 먹고 두 줄까지 줄바꿈한다(넘치면 「더보기」). */
+  grid-template-columns: 72px 96px 152px 104px 100px minmax(100px, 1fr) 128px;
+  column-gap: 10px;
   align-items: center;
   text-align: center;
 }
 .counsel-request-columns {
-  min-height: 50px;
-  padding: 0 18px;
+  min-height: 44px;
+  padding: 0 16px;
   background: var(--color-section-bg);
   border-bottom: 1px solid var(--color-border);
   color: var(--color-text-secondary);
   font-size: 12px;
   font-weight: 700;
+  line-height: 1.35;
 }
 .counsel-request-row-wrap { border-bottom: 1px solid var(--color-border); }
 .counsel-request-row {
-  min-height: 88px;
-  padding: 10px 18px;
+  min-height: 92px;
+  padding: 12px 16px;
   color: var(--color-text);
 }
 .counsel-request-row-wrap:hover { background: var(--color-section-bg); }
-.counsel-request-time { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+
+/* 두 줄 칸의 공통 골격 — 윗줄/아랫줄을 세로로 쌓고 가운데 정렬한다. */
+.counsel-request-cell {
+  min-width: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+.counsel-request-cell > * { max-width: 100%; }
+
 .counsel-request-time strong { font-size: 14px; font-weight: 800; }
-.counsel-request-time small { color: var(--color-text-secondary); font-size: 11px; }
-.counsel-request-person { display: flex; align-items: center; justify-content: center; gap: 10px; min-width: 0; }
-.counsel-request-person > span:last-child { min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 2px; }
-.counsel-request-person strong { font-size: 14px; font-weight: 800; }
-.counsel-request-person .admin-enroll { padding: 1px 6px; font-size: 10px; }
-.counsel-request-person small,
-.counsel-request-person em { overflow: hidden; color: var(--color-text-secondary); font-size: 11px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
-.counsel-request-studentid { overflow: hidden; color: var(--color-text); font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; transform: translateX(-6px); }
+.counsel-request-time small { color: var(--color-text-secondary); font-size: 11px; white-space: nowrap; }
+
+.counsel-request-person strong { overflow: hidden; font-size: 14px; font-weight: 800; text-overflow: ellipsis; white-space: nowrap; }
+.counsel-request-person small { color: var(--color-text-secondary); font-size: 12px; font-weight: 700; }
+
+/* 학과는 한 줄에 13자까지 담고 넘치면 줄바꿈한다(최대 두 줄).
+   13px/700 에서 한글 한 자가 11.2px → 13자 = 146px. 칸 폭 152px 이 그 경계다.
+   ★ word-break:keep-all 만으로는 안 꺾인다 — '미디어커뮤니케이션학과'처럼 띄어쓰기 없는
+     학과명은 통째로 한 단어라 줄바꿈 지점이 없어 그대로 넘쳐 잘렸다.
+     overflow-wrap:anywhere 를 얹어 '넘칠 때만' 음절 사이를 끊는다(띄어쓰기가 있으면 거기 먼저). */
+.counsel-request-major > span {
+  display: -webkit-box;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.35;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.counsel-request-major small { display: inline-flex; align-items: center; gap: 5px; }
+.counsel-request-major .admin-enroll { padding: 1px 6px; font-size: 10px; }
+.counsel-request-major em { color: var(--color-text-secondary); font-size: 11px; font-style: normal; font-weight: 700; }
+
 .counsel-track-badge { display: inline-flex; align-items: center; justify-content: center; padding: 5px 9px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 800; white-space: nowrap; }
 .counsel-track-badge.track-집중관리 { background: var(--tint-danger-bg); color: var(--tint-danger-ink); }
 .counsel-track-badge.track-위험 { background: var(--tint-warning-bg); color: var(--tint-warning-ink); }
@@ -2259,31 +2349,45 @@ input, textarea, select { font-family: var(--font); }
 /* 상담 유형 — 진로취업/심리가 같은 색이면 목록에서 유형이 안 읽힌다 */
 .counsel-type-badge { padding: 7px 10px; background: var(--counsel-1-soft); color: var(--counsel-1-ink); }
 .counsel-type-badge.is-psych { background: var(--counsel-2-soft); color: var(--counsel-2-ink); }
-.counsel-request-type-cell { transform: translateX(6px); }
 /* 4상태 4색 — 확정(예약됨)과 완료(끝)는 다른 일이다 */
 .counsel-status-badge { min-width: 48px; padding: 7px 10px; }
 .counsel-status-badge.is-waiting { background: var(--state-wait-bg); color: var(--state-wait-ink); }
 .counsel-status-badge.is-confirmed { background: var(--state-fixed-bg); color: var(--state-fixed-ink); }
 .counsel-status-badge.is-complete { background: var(--state-done-bg); color: var(--state-done-ink); }
 .counsel-status-badge.is-cancelled { background: var(--state-cancel-bg); color: var(--state-cancel-ink); }
-.counsel-request-topic-cell {
-  padding-right: 18px;
-  transform: translateX(6px);
+
+/* ── 상담 주제 — 넘치는 글은 자르지 않고 줄바꿈한다(넘치면 「더보기」).
+   정렬은 나머지 6칸과 같이 가운데다. 왼쪽 정렬로 두면 1fr 이 남긴 여백이 전부
+   오른쪽에 몰려서 머리글 줄이 이 칸에서만 삐뚤어 보인다. ── */
+.counsel-request-topic-cell { gap: 4px; }
+.counsel-request-topic-text {
+  width: 100%;
+  margin: 0;
   display: -webkit-box;
   overflow: hidden;
   color: var(--color-title);
   font-size: 13px;
   font-weight: 700;
-  line-height: 1.55;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  word-break: keep-all;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
-.counsel-request-topic-cell.is-expandable { width: 100%; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding-right: 18px; cursor: pointer; -webkit-line-clamp: none; }
-.counsel-request-topic-cell.is-expandable svg { flex: 0 0 auto; color: var(--color-caption); font-size: 11px; }
-.counsel-topic-full { margin: 0 18px 12px; padding: 10px 12px; border-left: 3px solid var(--color-primary); background: var(--color-section-bg); color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; }
-.counsel-request-status-cell { display: inline-flex; flex-direction: column; align-items: center; gap: 5px; }
-.counsel-assignee-tag { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; font-weight: 700; color: var(--color-text-secondary); }
-.counsel-request-manage { display: flex; align-items: center; justify-content: center; gap: 8px; }
+.counsel-topic-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: var(--color-primary);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.counsel-topic-toggle svg { font-size: 11px; }
+.counsel-topic-full { margin: 0 16px 12px; padding: 10px 12px; border-left: 3px solid var(--color-primary); background: var(--color-section-bg); color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; text-align: left; }
+
+/* 행 안의 버튼은 두 개가 세로로 쌓이므로 기본(36px)보다 낮춘다. */
+.counsel-request-row .counsel-detail-btn { min-height: 30px; padding: 0 8px; font-size: 12px; }
 .counsel-detail-btn { min-height: 36px; padding: 0 10px; color: var(--color-primary); }
 
 .counsel-request-detail { padding: 16px 18px; background: var(--color-section-bg); }
@@ -2454,8 +2558,11 @@ input, textarea, select { font-family: var(--font); }
 .counsel-request-table-footer nav button.active { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
 .counsel-request-table-footer button:disabled { opacity: .45; cursor: default; }
 
-@media (max-width: 1440px) {
-  .counsel-requests-layout { grid-template-columns: 390px minmax(650px, 1fr); }
+/* 1440 미만 — 캘린더를 한 단계 더 줄여 목록에 넘긴다. 표가 7칸을 접지 않고 담으려면
+   833px 가 필요한데, 캘린더가 365px 를 그대로 쥐면 그 아래로 떨어져 가로 스크롤이 생긴다.
+   (390px 은 .76fr/1.24fr 비례 시절의 잔재였다.) */
+@media (max-width: 1439px) {
+  .counsel-requests-layout { grid-template-columns: 320px minmax(0, 1fr); }
   .counsel-request-table-head { align-items: flex-start; }
   .counsel-request-table-head > div { flex-wrap: wrap; justify-content: flex-end; }
 }

@@ -77,6 +77,16 @@ export function getRequestsByAssignee(counselorId: string): CounselRequest[] {
   return getCounselRequests().filter(r => r.assignedCounselorId === counselorId)
 }
 
+/**
+ * 상담 시드는 studentMajor 에 학년을 붙여 둔다("경영학과 3학년").
+ * 목록은 학과와 학년을 다른 줄에 놓으므로 여기서 한 번만 쪼갠다 — 화면에서 정규식을 돌리지 않는다.
+ * 학년이 붙어 있지 않으면 grade 는 undefined.
+ */
+export function splitMajorGrade(studentMajor: string): { major: string; grade?: string } {
+  const matched = studentMajor.match(/^(.*?)\s*(\d+학년)\s*$/)
+  return matched ? { major: matched[1], grade: matched[2] } : { major: studentMajor }
+}
+
 /** 신청 시각을 현재 시각 기준의 상대 시간으로 표시한다. */
 export function formatRelativeTime(requestedAt: string): string {
   const requestedTime = new Date(requestedAt).getTime()

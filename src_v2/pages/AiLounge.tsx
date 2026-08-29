@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import { getActiveStudent } from '../data/students'
 import StudentStatCards, { type StudentStat } from '../components/StudentStatCards'
 import './AiLounge.css'
@@ -44,7 +45,7 @@ export default function AiLounge() {
         <StudentStatCards stats={LOUNGE_STATS} />
 
         <div className="dashboard-grid">
-          <section data-slot="card" className="journey-card reveal">
+          <section data-slot="card" className="journey-card reveal" id="journey">
             <div data-slot="card-header">
               <div>
                 <h2 data-slot="card-title">나의 진로 여정</h2>
@@ -72,7 +73,7 @@ export default function AiLounge() {
             </div>
           </section>
 
-          <section data-slot="card" className="competency-card reveal">
+          <section data-slot="card" className="competency-card reveal" id="competency">
             <div data-slot="card-header">
               <div>
                 <h2 data-slot="card-title">6대 핵심역량</h2>
@@ -82,6 +83,14 @@ export default function AiLounge() {
             <div data-slot="card-content">
               <div className="chart-layout">
                 <div><svg className="radar" viewBox="0 0 300 280" role="img" aria-label="6대 핵심역량 레이더 차트">
+                    {/* '나의 현재' 면색 — 오른쪽 역량 막대(.axis-track i)와 같은 보라→하늘 축.
+                        SVG 는 CSS 그라데이션을 못 받으므로 여기에 정의하고 CSS 가 url(#…)로 참조한다. */}
+                    <defs>
+                      <linearGradient id="competency-mine" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="var(--competency-current)" />
+                        <stop offset="100%" stopColor="var(--competency-growth)" />
+                      </linearGradient>
+                    </defs>
                     <polygon className="grid" points="150,22 256,84 256,196 150,258 44,196 44,84" />
                     <polygon className="grid" points="150,52 230,98 230,182 150,228 70,182 70,98" />
                     <polygon className="grid" points="150,82 204,112 204,168 150,198 96,168 96,112" />
@@ -94,7 +103,7 @@ export default function AiLounge() {
                     <polygon className="avg" points="150,60 220,102 224,179 150,212 78,178 90,106" />
                     <polygon className="need" points="150,46 238,92 230,182 150,216 82,176 86,104" />
                     <polygon className="mine" points="150,58 212,104 236,187 150,208 88,174 92,108" /><text x={150} y={10} textAnchor="middle">의사소통</text><text x={266} y={80}>문제해결</text><text x={266} y={204}>협업</text><text x={150} y={276} textAnchor="middle">창의성</text><text x={10} y={204}>직무전문성</text><text x={10} y={80}>글로벌</text></svg>
-                  <div className="legend"><span><i style={{ background: 'var(--competency-current)' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 직무</span><span><i style={{ background: 'var(--chart-reference)' } as React.CSSProperties}></i>학과
+                  <div className="legend"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 직무</span><span><i style={{ background: 'var(--chart-reference)' } as React.CSSProperties}></i>학과
                       평균</span></div>
                 </div>
                 <div className="axis-list">
@@ -109,7 +118,7 @@ export default function AiLounge() {
             </div>
           </section>
 
-          <section data-slot="card" className="diagnosis-card reveal">
+          <section data-slot="card" className="diagnosis-card reveal" id="diagnosis">
             <div data-slot="card-header">
               <div>
                 <h2 data-slot="card-title">진단 결과</h2>
@@ -118,31 +127,32 @@ export default function AiLounge() {
             </div>
             <div data-slot="card-content">
               <div className="diagnosis-result-grid">
-                <button className="diagnosis-result-item" type="button" style={{ '--result-color': 'var(--diagnosis-1)', '--result-soft': 'var(--diagnosis-1-soft)' } as React.CSSProperties}>
+                {/* 완료 진단은 결과 상세로. testId 는 careerProcess.DIAGNOSIS_MODULES 값(ccore·c1~c6). */}
+                <Link className="diagnosis-result-item" to="/diagnosis/employment/ccore" style={{ '--result-color': 'var(--diagnosis-1)', '--result-soft': 'var(--diagnosis-1-soft)' } as React.CSSProperties}>
                   <span className="diagnosis-result-top"><span className="diagnosis-result-name"><small>C-CORE</small><b>핵심진단
                         검사</b></span><span className="diagnosis-result-date">완료</span></span>
                   <strong className="diagnosis-primary-result">역량성장형</strong>
                   <span className="diagnosis-result-tags"><span>의욕 만렙형</span><span>미래 준비 유형</span><span>개인 브랜딩</span></span>
-                </button>
-                <button className="diagnosis-result-item" type="button" style={{ '--result-color': 'var(--diagnosis-2)', '--result-soft': 'var(--diagnosis-2-soft)' } as React.CSSProperties}>
+                </Link>
+                <Link className="diagnosis-result-item" to="/diagnosis/employment/c2" style={{ '--result-color': 'var(--diagnosis-2)', '--result-soft': 'var(--diagnosis-2-soft)' } as React.CSSProperties}>
                   <span className="diagnosis-result-top"><span className="diagnosis-result-name"><small>C-2</small><b>진로설정
                         진단</b></span><span className="diagnosis-result-date">완료</span></span>
                   <strong className="diagnosis-primary-result">추상적 개념화형</strong>
                   <span className="diagnosis-result-tags"><span>진로 수행회피목표</span><span>창의적 의사결정</span></span>
-                </button>
+                </Link>
                 <article className="diagnosis-result-item locked" aria-label="C-3 역량수준 진단 이용 제한" style={{ '--result-color': 'var(--diagnosis-3)', '--result-soft': 'var(--diagnosis-3-soft)' } as React.CSSProperties}>
                   <span className="diagnosis-result-top"><span className="diagnosis-result-name"><small>C-3</small><b>역량수준
                         진단</b></span><span className="diagnosis-result-date">이용 제한</span></span>
                   <strong className="diagnosis-primary-result">미래 유보형</strong>
                   <span className="diagnosis-result-tags"><span>온라인 네트워킹</span><span>교내 네트워킹</span><span>행동파 돌격형</span></span>
-                  <span className="diagnosis-lock-layer"><span className="diagnosis-lock-message"><span className="diagnosis-lock-icon"><svg className="icon"><use href="#i-lock" /></svg></span><span className="diagnosis-lock-copy"><b>진로설정형에서는 이용할 수 없어요</b><small>다음 진로 유형으로 전환되면 진단이 열립니다.</small></span></span><button className="button diagnosis-lock-button" type="button">이용 조건 확인</button></span>
+                  <span className="diagnosis-lock-layer"><span className="diagnosis-lock-message"><span className="diagnosis-lock-icon"><svg className="icon"><use href="#i-lock" /></svg></span><span className="diagnosis-lock-copy"><b>진로설정형에서는 이용할 수 없어요</b><small>다음 진로 유형으로 전환되면 진단이 열립니다.</small></span></span><Link className="button diagnosis-lock-button" to="/diagnosis/employment">이용 조건 확인</Link></span>
                 </article>
                 <article className="diagnosis-result-item locked" aria-label="C-4 구직역량 진단 이용 제한" style={{ '--result-color': 'var(--diagnosis-4)', '--result-soft': 'var(--diagnosis-4-soft)' } as React.CSSProperties}>
                   <span className="diagnosis-result-top"><span className="diagnosis-result-name"><small>C-4</small><b>구직역량
                         진단</b></span><span className="diagnosis-result-date">이용 제한</span></span>
                   <strong className="diagnosis-primary-result">구직역량 유형 분석</strong>
                   <span className="diagnosis-result-tags"><span>구직 준비도</span><span>취업 실행역량</span></span>
-                  <span className="diagnosis-lock-layer"><span className="diagnosis-lock-message"><span className="diagnosis-lock-icon"><svg className="icon"><use href="#i-lock" /></svg></span><span className="diagnosis-lock-copy"><b>진로설정형에서는 이용할 수 없어요</b><small>구직 실행 단계에 진입하면 진단이 열립니다.</small></span></span><button className="button diagnosis-lock-button" type="button">유형별 진단 안내</button></span>
+                  <span className="diagnosis-lock-layer"><span className="diagnosis-lock-message"><span className="diagnosis-lock-icon"><svg className="icon"><use href="#i-lock" /></svg></span><span className="diagnosis-lock-copy"><b>진로설정형에서는 이용할 수 없어요</b><small>구직 실행 단계에 진입하면 진단이 열립니다.</small></span></span><Link className="button diagnosis-lock-button" to="/diagnosis/employment">유형별 진단 안내</Link></span>
                 </article>
               </div>
             </div>
@@ -237,8 +247,11 @@ export default function AiLounge() {
                     <div className="goal-coach-copy"><b>AI 코치의 한마디</b>
                       <p>IAP 실행·핵심역량 수행·내 성장 활동을 균형 있게 진행하고 있어요. 다음 단계 진입을 위해 진행 중인 과제 2개를 먼저 완료해 보세요.</p>
                     </div>
-                    <div className="goal-coach-actions"><button className="button" type="button">지도교수
-                        상담</button><button className="button" type="button">로드맵 다시 보기</button>
+                    {/* 코치 제안 → 실제 화면으로. 로드맵은 이 카드와 같은 3축(IAP·핵심역량·성장활동)을
+                        보여 주는 '로드맵 진행 현황'으로 간다 — 진로취업 로드맵(/roadmap)이 아니다. */}
+                    <div className="goal-coach-actions">
+                      <Link className="button" to="/counsel/professor">지도교수 상담</Link>
+                      <Link className="button" to="/growth/roadmap-status">로드맵 다시 보기</Link>
                     </div>
                   </aside>
                 </div>
@@ -274,8 +287,6 @@ export default function AiLounge() {
                   <span>02</span><span className="ai-recommend-copy"><b>현직 데이터 분석가 멘토링</b><small>진로 수행회피목표를 행동으로
                       전환해요.</small></span><strong>추천 91%</strong></div>
               </div>
-              <button className="button primary" type="button">추천 전체 보기<svg className="icon">
-                  <use href="#i-arrow" /></svg></button>
             </div>
           </section>
 
@@ -285,8 +296,8 @@ export default function AiLounge() {
                 <h2 data-slot="card-title">상담 현황</h2>
                 <p data-slot="card-description">이번 학기 상담 유형별 진행 상황과 최근 기록을 확인합니다.</p>
               </div>
-              <div data-slot="card-action"><button className="button" type="button">전체 내역 보기<svg className="icon">
-                    <use href="#i-arrow" /></svg></button></div>
+              <div data-slot="card-action"><Link className="button" to="/counsel/record">전체 내역 보기<svg className="icon">
+                    <use href="#i-arrow" /></svg></Link></div>
             </div>
             <div data-slot="card-content">
               <div className="counseling-detail-grid">

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import './Prediction.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 const COMPANIES = [
   { name: '넥슨코리아', rate: 58, gpa: '3.8', toeic: 750 },
@@ -50,6 +51,7 @@ const GUIDE_FACTORS = [
 ]
 
 export default function Prediction() {
+  usePageHead('취업예측분석', 'AI가 분석한 기업별 합격 예측 결과입니다.')
   const navigate = useNavigate()
   const [guideOpen, setGuideOpen] = useState(false)
 
@@ -61,8 +63,6 @@ export default function Prediction() {
             <i className="fa-solid fa-arrow-left" />
           </button>
           <div>
-            <h1>취업예측 분석</h1>
-            <p>AI가 분석한 기업별 합격 예측 결과입니다.</p>
             <button className="pred-guide-btn" onClick={() => setGuideOpen(true)}>
               <i className="fa-regular fa-lightbulb" />
               분석 가이드

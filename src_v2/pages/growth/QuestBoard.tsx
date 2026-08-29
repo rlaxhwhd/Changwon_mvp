@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import './QuestBoard.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type QuestTab = 'daily' | 'monthly' | 'semester'
 
@@ -93,17 +94,13 @@ const guideItems = [
 ]
 
 export default function QuestBoard() {
+  usePageHead('퀘스트 보드', '일일·주간·월간 퀘스트와 학과 랭킹을 확인합니다. 매일 성장하는 습관이 큰 변화를 만듭니다.')
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<QuestTab>('daily')
   const activeQuests = questsByTab[activeTab]
 
   return (
     <main className="qb-page">
-      <header className="qb-header">
-        <h1>퀘스트 보드</h1>
-        <p>매일 성장하는 습관이 큰 변화를 만듭니다!</p>
-      </header>
-
       <section className="qb-summary-grid" aria-label="퀘스트 요약">
         <article className="qb-card qb-progress-card">
           <div>

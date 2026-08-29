@@ -17,6 +17,7 @@ import { getJobById } from '../../../src_admin/data/jobsSource'
 import { getActiveStudent } from '../../data/students'
 import type { ApplicationStatus } from '../../../src_admin/data/schema/jobApplication'
 import './MyApplications.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 /** 상태 배지 색 — 진행/합격/탈락/취소 */
 function statusClass(status: ApplicationStatus): string {
@@ -38,6 +39,8 @@ function formatDateTime(iso: string): string {
 }
 
 export default function MyApplications() {
+  // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
+  usePageHead('나의 지원 내역', '교내 추천채용 공고에 지원한 내역과 전형 진행 상황입니다.')
   const me = getActiveStudent()
   const [tick, setTick] = useState(0)
   const applications = useMemo(() => getApplicationsByStudent(me.id), [me.id, tick])
@@ -51,18 +54,6 @@ export default function MyApplications() {
   return (
     // 폭·좌우 여백은 .v2-main 한 곳이 정한다 — 페이지가 자기 컨테이너를 만들지 않는다.
     <div className="v2-page">
-      <header className="v2-page-head">
-        <div>
-          <nav className="v2-page-crumb" aria-label="현재 위치">
-            <span>마이페이지</span>
-            <i className="fa-solid fa-chevron-right" />
-            <span>추천채용 지원 내역</span>
-          </nav>
-          <h1 className="v2-page-title">나의 지원 내역</h1>
-          <p className="v2-page-desc">교내 추천채용 공고에 지원한 내역과 전형 진행 상황입니다.</p>
-        </div>
-      </header>
-
       {applications.length === 0 ? (
         <div data-slot="card" className="ma-empty">
           <i className="fa-regular fa-folder-open" />
@@ -105,15 +96,21 @@ export default function MyApplications() {
 
                 <div className="ma-progress">
                   <h3>지원 진행 상황</h3>
+                  <p className="ma-progress-desc">
+                    지원서는 상담사가 검토한 뒤 기업에 전달되며, 이후 기업 전형이 진행됩니다.
+                  </p>
                   <ol className="ma-steps">
                     {steps.map((step, i) => (
                       <li
                         key={i}
-                        className={`ma-step${step.done ? ' is-done' : ''}${step.current ? ' is-current' : ''}`}
+                        className={`ma-step${step.done ? ' is-done' : ''}${step.current ? ' is-current' : ''}${step.internal ? ' is-internal' : ''}`}
                       >
                         <span className="ma-step-dot" aria-hidden="true" />
                         <span className="ma-step-label">{step.label}</span>
                         {step.at && <span className="ma-step-at">{formatDateTime(step.at)}</span>}
+                        {/* 교내 절차 칸은 담당이 기업이 아니라 상담사다 — 학생이 기다릴 곳을 알아야 한다.
+                            날짜 아래에 둔다 — 위에 끼우면 칸마다 날짜 높이가 어긋난다. */}
+                        {step.internal && <span className="ma-step-who">상담사 처리</span>}
                         {step.current && <span className="ma-step-now">진행중</span>}
                       </li>
                     ))}

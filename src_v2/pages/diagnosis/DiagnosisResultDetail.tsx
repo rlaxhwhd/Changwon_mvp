@@ -17,6 +17,7 @@ import CRAReport from '../../components/CRAReport'
 import { getActiveStudent } from '../../data/students'
 import { DIAGNOSIS_MODULES } from '../../data/careerProcess'
 import './DiagnosisResultDetail.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
 
@@ -199,6 +200,8 @@ export default function DiagnosisResultDetail() {
   }
 
   const avg = Math.round(cores.reduce((a, c) => a + c.score, 0) / cores.length)
+  // 머리글은 avg 가 정해진 뒤에 등록한다(훅 순서는 조건 분기가 없어 안전).
+  usePageHead(`${testName} 결과`, `9개 핵심 역량 검사 결과입니다 · 평균 ${avg}점`)
   const ability = abilityModal !== null ? cores[abilityModal] : null
   const lowest = cores.reduce((min, c) => (c.score < min.score ? c : min))
   const strong = cores.filter(c => c.score >= 80).map(c => `${c.name}(${c.score}점)`).join(', ') || '없음'
@@ -246,14 +249,11 @@ export default function DiagnosisResultDetail() {
   return (
     <div className="dr-wrap">
       {/* 헤더 */}
+      {/* 제목·설명은 공용 머리글(usePageHead)이 그린다 — 여기 다시 적으면 같은 제목이 두 번 나온다. */}
       <div className="dr-header">
         <button className="dr-back-btn" onClick={() => navigate('/diagnosis/employment')} aria-label="뒤로 가기">
           <i className="fa-solid fa-arrow-left" />
         </button>
-        <div>
-          <h1>{testName} 결과</h1>
-          <p>9개 핵심 역량 검사 결과입니다 · 평균 <strong>{avg}점</strong></p>
-        </div>
       </div>
 
       <div className="dr-grid">

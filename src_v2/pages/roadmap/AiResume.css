@@ -192,7 +192,7 @@
 }
 
 .rs-primary-btn {
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: var(--color-bg);
 }
 
@@ -289,7 +289,7 @@
   min-width: 70px;
   height: 34px;
   border-radius: var(--radius-sm);
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: var(--color-bg);
   font-size: 16px;
   font-weight: 900;
@@ -399,7 +399,7 @@
 }
 
 .rs-doc-tabs button.active {
-  background: var(--color-primary);
+  background: var(--color-cta);
   border-color: var(--color-primary);
   color: #fff;
 }
@@ -664,9 +664,9 @@
 }
 
 .rs-consult-btn:hover {
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
-  box-shadow: 0 8px 18px rgba(46, 91, 255, 0.22);
+  box-shadow: 0 8px 18px var(--cta-shadow);
 }
 
 @media (max-width: 768px) {

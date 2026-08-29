@@ -5,6 +5,7 @@ import { loadJournalEntries, type Entry } from '../../data/growthJournal'
 import { getActiveStudentId } from '../../data/students'
 import { deleteUserResume, getAllResumes, upsertUserResume, type SavedResume } from '../jobs/resumeMock'
 import './AiResume.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type ResumeCategory =
   | '지원동기'
@@ -77,6 +78,7 @@ const AI_DRAFT_SAMPLE = `카페 매장에서 아르바이트를 하며 고객 �
 type DraftState = 'idle' | 'loading' | 'done'
 
 export default function AiResume() {
+  usePageHead('AI 자소서 생성', 'AI가 맞춤형 피드백과 예시를 제공해 효과적인 자기소개서 작성을 도와드립니다.')
   const navigate = useNavigate()
   const [activeCategory, setActiveCategory] = useState<ResumeCategory>('지원동기')
   const [filterTab, setFilterTab] = useState('전체')
@@ -184,10 +186,6 @@ export default function AiResume() {
     <div className="rs-wrap">
       <main className="rs-main">
         <header className="rs-header">
-          <div>
-            <h1><i className="fa-solid fa-wand-magic-sparkles" /> AI 자소서 작성</h1>
-            <p>AI가 맞춤형 피드백과 예시를 제공하여 효과적인 자기소개서 작성을 도와드립니다.</p>
-          </div>
           <div className="rs-header-actions">
             <button><i className="fa-regular fa-circle-question" /> 작성 가이드</button>
             <button className="tip"><i className="fa-solid fa-lightbulb" /> AI 활용 팁</button>

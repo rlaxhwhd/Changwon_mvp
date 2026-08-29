@@ -140,7 +140,6 @@ tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
 
 ### 디자인 가드레일
 
-**디자인은 `DESIGN.md`에 잠겨 있다. 어떤 디자인 스킬도 새 팔레트·스타일을 생성하지 않는다 — 적용/리뷰만.**
 - 렌더 후 시각 리뷰·drift 감사 → gstack `/design-review` + `/browse`
 - 레퍼런스 참조 → MengTo/Skills(설치 아님): `~/.claude/refs/MengTo-Skills/agent-skills/`에서 해당 SKILL.md만 Read
 - `ui-ux-pro-max`·MengTo의 landing/style 생성류는 **직접 디자인 생성에 쓰지 않는다**(아이디어만, DESIGN.md 토큰으로 환원)

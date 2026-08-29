@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import './Attendance.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 /* 데모 데이터 — '26년 1학기(3~6월) 출석 기록 */
 const ATTENDED: ReadonlySet<string> = new Set([
@@ -81,6 +82,7 @@ function computeStreak(today: Date): number {
 const BEST_STREAK = 12
 
 export default function Attendance() {
+  usePageHead('출석 기록', '매일 출석 체크하고 더 많은 XP와 혜택을 받아보세요.')
   const [cursor, setCursor] = useState(() => ({ y: TODAY.getFullYear(), m: TODAY.getMonth() }))
 
   const cells = useMemo(() => buildMonthGrid(cursor.y, cursor.m), [cursor])
@@ -97,11 +99,6 @@ export default function Attendance() {
   return (
     <div className="v2-page att-page">
       <header className="att-head">
-        <h1 className="att-title">
-          <i className="fa-solid fa-calendar-check" />
-          출석 기록
-        </h1>
-        <p className="att-sub">매일 출석 체크하고 더 많은 XP와 혜택을 받아보세요.</p>
       </header>
 
       <section className="att-card">

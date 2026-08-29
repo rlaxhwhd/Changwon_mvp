@@ -195,7 +195,7 @@
 .pam-btn-ghost:hover { background: var(--color-surface); }
 
 .pam-btn-primary {
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #fff;
   border: none;
   transition: opacity 0.15s;

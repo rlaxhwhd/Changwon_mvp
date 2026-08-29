@@ -1766,7 +1766,7 @@
   height: 38px;
   padding: 0 14px;
   border-radius: var(--radius-sm);
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: var(--color-text);
   font-weight: 700;
 }

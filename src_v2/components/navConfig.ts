@@ -25,13 +25,17 @@ export const NAV_SECTIONS: NavSection[] = [
     basePaths: ['/lounge'],
     path: '/lounge',
     icon: 'layout',
+    // 라운지는 한 페이지짜리 대시보드다 — 하위메뉴는 다른 화면이 아니라 이 페이지의 카드로 가는
+    // 앵커다. 라벨은 카드 제목과 같게 두고(다르면 눌러서 도착한 곳이 딴 이름이 된다),
+    // 순서도 화면에 보이는 순서를 따른다. 스크롤은 ScrollToTop 이 hash 를 보고 처리한다.
     children: [
-      { label: '종합 분석 리포트', path: '/lounge#report', icon: 'fa-clipboard-list' },
-      { label: '역량 비교 분석', path: '/lounge#competency', icon: 'fa-chart-bar' },
-      { label: '진단검사 결과', path: '/lounge#tests', icon: 'fa-chart-pie' },
-      { label: '상담 내역', path: '/lounge#counsel', icon: 'fa-comments' },
-      { label: 'TOEIC 학습 분석', path: '/lounge#toeic', icon: 'fa-book' },
-      { label: 'AI 액션 로드맵', path: '/lounge#roadmap', icon: 'fa-wand-magic-sparkles' },
+      { label: '나의 진로 여정', path: '/lounge#journey', icon: 'fa-route' },
+      { label: '목표 달성 계획', path: '/lounge#goal', icon: 'fa-bullseye' },
+      { label: '이번 주 할 일', path: '/lounge#todo', icon: 'fa-list-check' },
+      { label: '나를 위한 AI추천', path: '/lounge#recommend', icon: 'fa-wand-magic-sparkles' },
+      { label: '6대 핵심역량', path: '/lounge#competency', icon: 'fa-chart-bar' },
+      { label: '진단 결과', path: '/lounge#diagnosis', icon: 'fa-chart-pie' },
+      { label: '상담 현황', path: '/lounge#counseling-status', icon: 'fa-comments' },
     ],
   },
   {
@@ -122,6 +126,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
       { label: '추천채용 지원 내역', path: '/mypage/applications', icon: 'fa-file-signature' },
       { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check' },
+      { label: '공지사항', path: '/mypage/notices', icon: 'fa-bullhorn' },
     ],
   },
 ]
@@ -174,4 +179,46 @@ export function getActiveChildPath(pathname: string, section: NavSection, hash =
   }
 
   return matches.reduce((best, child) => (child.path.length > best.path.length ? child : best)).path
+}
+
+/** 경로 표시(빵부스러기) 한 칸. path 가 없으면 링크가 아니라 현재 위치다. */
+export interface CrumbItem {
+  label: string
+  path?: string
+}
+
+/**
+ * 현재 경로의 상위 계층을 상단바 구성(NAV_SECTIONS)에서 파생한다.
+ * 예: '/counsel/career' → [상담센터, 진로취업상담]
+ *
+ * ★ 라벨을 화면에 다시 적지 않는다 — 상단바 이름이 바뀌면 경로 표시도 같이 바뀌어야 한다.
+ *   중첩 children(예: 취업지원 > AI 자소서/면접 > AI 자소서 생성)도 조상까지 모두 담는다.
+ */
+export function getCrumbTrail(pathname: string): CrumbItem[] {
+  const section = getSectionForPath(pathname)
+  if (!section) return []
+
+  const trail: CrumbItem[] = [{ label: section.label, path: section.path }]
+
+  // 활성 child 를 찾은 뒤, 그 조상 체인을 되짚어 담는다.
+  const activePath = getActiveChildPath(pathname, section)
+  if (!activePath) return trail
+
+  const chain: NavChild[] = []
+  const walk = (items: NavChild[], ancestors: NavChild[]): boolean =>
+    items.some(child => {
+      if (child.path === activePath) {
+        chain.push(...ancestors, child)
+        return true
+      }
+      return child.children ? walk(child.children, [...ancestors, child]) : false
+    })
+  walk(section.children, [])
+
+  // 섹션과 첫 child 의 이름이 같으면(예: 비교과 프로그램 신청) 같은 말을 두 번 쓰지 않는다.
+  for (const child of chain) {
+    if (trail.some(item => item.label === child.label)) continue
+    trail.push({ label: child.label, path: child.path.split('#')[0] })
+  }
+  return trail
 }

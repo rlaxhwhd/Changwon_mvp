@@ -43,6 +43,7 @@ import AiConsulting from './pages/jobs/AiConsulting'
 import Portfolio from './pages/mypage/Portfolio'
 import MyPrograms from './pages/mypage/MyPrograms'
 import MyApplications from './pages/mypage/MyApplications'
+import Notices from './pages/mypage/Notices'
 import CounselStatus from './pages/mypage/CounselStatus'
 import Attendance from './pages/mypage/Attendance'
 import { getActiveStudent } from './data/students'
@@ -115,6 +116,7 @@ const router = createBrowserRouter(
         { path: '/mypage/portfolio',  element: getActiveStudent().grade >= 4 ? <Portfolio /> : <Navigate to="/growth" replace /> },
         { path: '/mypage/programs',   element: <MyPrograms /> },
         { path: '/mypage/applications', element: <MyApplications /> },
+        { path: '/mypage/notices',    element: <Notices /> },
         // 상담 현황: 라우팅을 /counsel/record로 이동 (기존 /mypage/counsel은 하위 호환용 리다이렉트)
         { path: '/counsel/record',    element: <CounselStatus /> },
         { path: '/mypage/counsel',    element: <Navigate to="/counsel/record" replace /> },

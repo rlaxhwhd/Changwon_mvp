@@ -351,7 +351,7 @@
 
 .qb-start-btn:hover {
   border-color: var(--color-primary);
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: var(--color-bg);
 }
 

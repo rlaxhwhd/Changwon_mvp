@@ -13,11 +13,14 @@ import DiagnosisStatus from './pages/DiagnosisStatus'
 import GroupCounsels from './pages/GroupCounsels'
 import PsychTests from './pages/PsychTests'
 import StudentList from './pages/StudentList'
+import StudentAll from './pages/StudentAll'
 import StudentDetail from './pages/StudentDetail'
 import RoadmapRequests from './pages/RoadmapRequests'
 import RoadmapEditor from './pages/RoadmapEditor'
 import JobList from './pages/JobList'
 import JobForm from './pages/JobForm'
+import JobView from './pages/JobView'
+import JobManage from './pages/JobManage'
 import JobApplicantsList from './pages/JobApplicantsList'
 import JobApplicants from './pages/JobApplicants'
 import ProgramList from './pages/ProgramList'
@@ -99,6 +102,8 @@ const router = createBrowserRouter(
                 { path: '/counsel/stats', element: <CounselStats /> },
                 { path: '/diagnosis/status', element: <DiagnosisStatus /> },
                 { path: '/students', element: <StudentList /> },
+                // '/students/all' 은 반드시 ':id' 보다 위에 — 아래로 내려가면 id='all' 로 잡힌다.
+                { path: '/students/all', element: <StudentAll /> },
                 { path: '/students/:id', element: <StudentDetail /> },
                 { path: '/settings/availability', element: <SettingsAvailability /> },
               ],
@@ -121,10 +126,13 @@ const router = createBrowserRouter(
                 { path: '/jobs', element: <JobList scope="internal" /> },
                 { path: '/jobs/external', element: <JobList scope="external" /> },
                 { path: '/jobs/new', element: <JobForm /> },
+                // 고정 경로는 ':id' 보다 위에 — 아래로 내려가면 id='manage' 로 잡힌다.
+                { path: '/jobs/manage', element: <JobManage /> },
                 // 지원자관리는 :id/edit 보다 먼저 둔다 — 'applicants'가 :id 로 먹히지 않도록.
                 { path: '/jobs/applicants', element: <JobApplicantsList /> },
                 { path: '/jobs/applicants/:jobId', element: <JobApplicants /> },
                 { path: '/jobs/:id/edit', element: <JobForm /> },
+                { path: '/jobs/:id', element: <JobView /> },
                 { path: '/programs', element: <ProgramList /> },
                 { path: '/programs/manage', element: <ProgramManage /> },
                 { path: '/programs/new', element: <ProgramForm /> },

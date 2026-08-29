@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { getJobById, jobDdayLabel } from '../../../src_admin/data/jobsSource'
+import { getJobById } from '../../../src_admin/data/jobsSource'
 import {
   APPLICATION_STATUS_LABEL,
   applyToJob,
@@ -10,18 +10,17 @@ import {
   isRecommendedInternal,
 } from '../../../src_admin/data/jobApplications'
 import { getActiveStudent } from '../../data/students'
-import './JobDetail.css'
+import JobDetailView from '../../components/JobDetailView'
+import { usePageHead } from '../../components/PageCrumb'
 
-function joinOr(arr: string[] | undefined, fallback: string): string {
-  return arr && arr.length ? arr.join(', ') : fallback
-}
-
+// 공고 본문은 교직원 화면과 같은 JobDetailView 다 — 여기서 그리는 것은 지원 CTA 뿐이다.
 export default function JobDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
   // 지원 직후 화면을 다시 읽기 위한 트리거 (스토어가 localStorage 라 재조회로 끝난다)
   const [tick, setTick] = useState(0)
   const job = id ? getJobById(id) : undefined
+  usePageHead(job?.role, '공고 상세와 지원 자격을 확인하고 지원합니다.')
 
   if (!job) return <Navigate to="/jobs" replace />
 
@@ -50,103 +49,58 @@ export default function JobDetail() {
   }
   void tick
 
-  const closed = job.status === '마감'
-  const salary = job.salaryNegotiable ? '회사내규 및 협의' : job.salary ? `${job.salary}만원` : '회사내규'
-  const dday = jobDdayLabel(job)
-  const deadline = job.deadlineOnHire ? '채용시 마감' : job.deadline || '상시'
   // 출처에 따라 왔던 목록으로 되돌린다.
   const external = job.source === 'external'
   const listPath = external ? '/jobs/external' : '/jobs'
 
   return (
-    <div className="jd-page">
-      <Link to={listPath} className="jd-back">
-        <i className="fa-solid fa-arrow-left" />
-        {external ? '외부 채용공고 목록' : '교내 채용공고 목록'}
-      </Link>
-
-      <article className="jd-head">
-        <div className="jd-head-main">
-          <div className="jd-meta-line">
-            <span>{job.company}</span>
-            {job.recruitType === '추천채용' && <em>추천</em>}
-          </div>
-          <h1>{job.role}</h1>
-          {job.companyType && <p>{job.companyType}</p>}
-        </div>
-        <aside className="jd-status-card">
-          <span className={`jd-status ${closed ? 'closed' : 'open'}`}>{closed ? '마감' : '접수중'}</span>
-          <dl>
-            <div>
-              <dt>마감</dt>
-              <dd>{dday}</dd>
-            </div>
-          </dl>
-          {/* 교내 추천채용 — 사이트 안에서 접수한다. 진행 상황은 마이페이지에서 본다. */}
-          {acceptsApply ? (
-            applied ? (
-              <>
-                <p className="jd-apply-state">
-                  <i className="fa-solid fa-circle-check" />
-                  {mine!.status === 'IN_PROGRESS'
-                    ? `전형 진행 중 · ${currentStageLabel(mine!)}`
-                    : APPLICATION_STATUS_LABEL[mine!.status]}
-                </p>
-                <button
-                  type="button"
-                  className="jd-apply-btn jd-apply-btn-ghost"
-                  onClick={() => navigate('/mypage/applications')}
-                >
-                  지원 현황 보기
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  type="button"
-                  className="jd-apply-btn"
-                  onClick={submitApply}
-                  disabled={!gate?.ok}
-                >
-                  지원하기
-                </button>
-                {gate && !gate.ok && <p className="jd-apply-state">{gate.reason}</p>}
-              </>
-            )
-          ) : (
-            job.applyUrl && (
-              <a className="jd-apply-btn" href={job.applyUrl} target="_blank" rel="noreferrer">
-                지원하기 <i className="fa-solid fa-arrow-up-right-from-square" />
-              </a>
-            )
-          )}
-        </aside>
-      </article>
-
-      <section className="jd-grid">
-        <article className="jd-card">
-          <h2>공고 정보</h2>
-          <dl className="jd-info-list">
-            <div><dt>기업명</dt><dd>{job.company}</dd></div>
-            <div><dt>근무형태</dt><dd>{joinOr(job.employmentTypes, job.jobType)}</dd></div>
-            <div><dt>직종</dt><dd>{joinOr(job.jobCategories, '-')}</dd></div>
-            <div><dt>근무지역</dt><dd>{joinOr((job.regions ?? []).filter(r => r !== '전체'), job.location || '전국')}</dd></div>
-            <div><dt>경력</dt><dd>{joinOr(job.careerTypes, job.jobType)}</dd></div>
-            <div><dt>연봉</dt><dd>{salary}</dd></div>
-            <div><dt>지원 마감</dt><dd>{deadline}</dd></div>
-            {job.email && <div><dt>지원 이메일</dt><dd>{job.email}</dd></div>}
-          </dl>
-        </article>
-
-        <article className="jd-card jd-card-wide">
-          <h2>모집요강</h2>
-          {job.content ? (
-            <div className="jd-content" dangerouslySetInnerHTML={{ __html: job.content }} />
-          ) : (
-            <p className="jd-content-empty">등록된 모집요강이 없습니다.</p>
-          )}
-        </article>
-      </section>
-    </div>
+    <JobDetailView
+      job={job}
+      /* 제목은 공용 머리글이 그린다 — 카드 안에 또 넣지 않는다. */
+      showHeading={false}
+      back={(
+        <Link to={listPath} className="jd-back">
+          <i className="fa-solid fa-arrow-left" />
+          {external ? '외부 채용공고 목록' : '교내 채용공고 목록'}
+        </Link>
+      )}
+      action={acceptsApply ? (
+        applied ? (
+          <>
+            <p className="jd-apply-state">
+              <i className="fa-solid fa-circle-check" />
+              {mine!.status === 'IN_PROGRESS'
+                ? `전형 진행 중 · ${currentStageLabel(mine!)}`
+                : APPLICATION_STATUS_LABEL[mine!.status]}
+            </p>
+            <button
+              type="button"
+              className="jd-apply-btn jd-apply-btn-ghost"
+              onClick={() => navigate('/mypage/applications')}
+            >
+              지원 현황 보기
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              className="jd-apply-btn"
+              onClick={submitApply}
+              disabled={!gate?.ok}
+            >
+              지원하기
+            </button>
+            {gate && !gate.ok && <p className="jd-apply-state">{gate.reason}</p>}
+          </>
+        )
+      ) : (
+        job.applyUrl && (
+          <a className="jd-apply-btn" href={job.applyUrl} target="_blank" rel="noreferrer">
+            지원하기 <i className="fa-solid fa-arrow-up-right-from-square" />
+          </a>
+        )
+      )}
+    />
   )
 }

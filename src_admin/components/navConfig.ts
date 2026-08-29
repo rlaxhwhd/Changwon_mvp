@@ -77,8 +77,11 @@ const ALL_SECTIONS: NavSection[] = [
     basePaths: ['/students'],
     path: '/students',
     icon: LuUsers,
-    // 하위 항목은 '담당 학생 목록' 하나뿐이라 섹션 링크(path)와 중복된다 → 드롭다운을 두지 않는다.
-    children: [],
+    children: [
+      // 표·데이터 항목은 같다(StudentChargeTable 공유). 다른 것은 조회 범위뿐이다.
+      { label: '담당 학생 목록', path: '/students', icon: LuUsers },
+      { label: '전체 학생 목록', path: '/students/all', icon: LuTable },
+    ],
   },
   {
     id: 'roadmap',
@@ -99,6 +102,8 @@ const ALL_SECTIONS: NavSection[] = [
     roles: ['career'],
     children: [
       { label: '교내 공고 목록', path: '/jobs', icon: LuList },
+      // 목록은 학생이 보는 카드 그대로 '보기', 수정·삭제는 관리 화면에서 — 비교과와 같은 갈래다.
+      { label: '교내공고 관리', path: '/jobs/manage', icon: LuTable },
       { label: '공고 등록', path: '/jobs/new', icon: LuPlus },
       { label: '외부 공고 목록', path: '/jobs/external', icon: LuGlobe },
       { label: '추천채용 지원자관리', path: '/jobs/applicants', icon: LuUsers },
@@ -238,4 +243,44 @@ export function getActiveChildPath(pathname: string, section: NavSection): strin
   const matches = flat.filter(child => matchesPath(pathname, child.path))
   if (matches.length === 0) return undefined
   return matches.reduce((best, child) => (child.path.length > best.path.length ? child : best)).path
+}
+
+/** 경로 표시(빵부스러기) 한 칸. path 가 없으면 링크가 아니라 현재 위치다. */
+export interface CrumbItem {
+  label: string
+  path?: string
+}
+
+/**
+ * 현재 경로의 상위 계층을 상단바 구성에서 파생한다.
+ * 예: '/counsel/requests' → [상담 관리, 신청 접수함]
+ *
+ * ★ 라벨을 화면에 다시 적지 않는다 — 상단바 이름이 바뀌면 경로 표시도 같이 바뀌어야 한다.
+ *   역할별로 보이는 메뉴가 다르므로 sections 를 인자로 받는다(getNavSections(role) 결과).
+ */
+export function getCrumbTrail(pathname: string, sections: NavSection[]): CrumbItem[] {
+  const section = getSectionForPath(pathname, sections)
+  if (!section) return []
+
+  const trail: CrumbItem[] = [{ label: section.label, path: section.path }]
+  const activePath = getActiveChildPath(pathname, section)
+  if (!activePath) return trail
+
+  const chain: NavChild[] = []
+  const walk = (items: NavChild[], ancestors: NavChild[]): boolean =>
+    items.some(child => {
+      if (child.path === activePath) {
+        chain.push(...ancestors, child)
+        return true
+      }
+      return child.children ? walk(child.children, [...ancestors, child]) : false
+    })
+  walk(section.children, [])
+
+  // 섹션과 첫 child 의 이름이 같으면 같은 말을 두 번 쓰지 않는다.
+  for (const child of chain) {
+    if (trail.some(item => item.label === child.label)) continue
+    trail.push({ label: child.label, path: child.path })
+  }
+  return trail
 }

@@ -51,11 +51,16 @@ export default function JobList({ scope }: { scope: JobScope }) {
       </div>
 
       {/* 목록 본문은 학생 /v2/jobs 와 같은 컴포넌트다 — 카드 디자인이 갈리지 않는다.
-          찜(별)은 학생 전용이라 여기선 끄고, 클릭은 상세가 아니라 공고 수정으로 보낸다.
-          외부 공고는 수정할 수 없어 클릭해도 이동하지 않는다. */}
+          찜(별)은 학생 전용이라 여기선 끈다.
+          카드 클릭 = '보기'(학생 화면에 어떻게 나가는지 확인), 카드 하단 '수정' = 편집 화면.
+          외부 공고는 원본이 외부에 있어 수정 버튼을 주지 않는다.
+          「교내공고 관리」(/jobs/manage)는 그대로 둔다 — 일반채용 행까지 한 번에 다루는 자리다. */}
       <JobBoard
         jobs={all}
-        onOpen={scope === 'internal' ? job => navigate(`/jobs/${job.id}/edit`) : undefined}
+        onOpen={job => navigate(`/jobs/${job.id}`)}
+        cardAction={scope === 'internal'
+          ? { label: '수정', onClick: job => navigate(`/jobs/${job.id}/edit`) }
+          : undefined}
         split={scope === 'internal'}
         emptyMain={copy.emptyTitle}
         emptyHint={copy.emptyMessage}

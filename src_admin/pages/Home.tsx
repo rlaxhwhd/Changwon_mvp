@@ -165,8 +165,10 @@ export default function Home() {
                   <div className="s">1학년 제외 {risk.total}명 대비</div>
                 </div>
               </div>
+              {/* 분류를 누르면 전체 학생 목록이 그 분류로 걸린 채 열린다.
+                  담당 목록이 아니라 전체 목록이다 — 집중관리는 담당 배정과 무관하게 본다. */}
               {risk.rows.map(row => (
-                <Link key={row.label} to="/students" className="risk-row">
+                <Link key={row.label} to={`/students/all?focus=${row.focus}`} className="risk-row">
                   <span className="nm">{row.code && <span className="cd">{row.code}</span>}{row.label}</span>
                   <span className="v">{row.count}<u>명</u></span>
                   <span className={`p ${row.ink}`}>{row.ratio}%</span>

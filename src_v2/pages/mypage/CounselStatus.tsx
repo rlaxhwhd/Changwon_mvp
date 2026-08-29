@@ -6,6 +6,7 @@ import { typeLabel } from '../../data/careerProcess'
 import { getCounselorLabel } from '../../data/counselorsRead'
 import { COUNSEL_RECORDS, COUNSEL_TYPE_STATS } from '../../data/counsel'
 import './CounselStatus.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 // 상담 내역 행 — 데모 기록(COUNSEL_RECORDS)과 학생 실제 예약(스토어)을 공통 형태로 렌더.
 interface CsRow {
@@ -26,6 +27,7 @@ const STATUS_TONE: Record<string, CsRow['statusTone']> = { 대기: 'scheduled', 
 const typeStats = COUNSEL_TYPE_STATS
 
 export default function CounselStatus() {
+  usePageHead('상담 현황', '전문가 상담 내역과 AI 종합 분석을 확인합니다.')
   const navigate = useNavigate()
   const student = getActiveStudent()
 
@@ -77,10 +79,6 @@ export default function CounselStatus() {
         <button className="cs-back-btn" type="button" onClick={() => navigate('/main')}>
           홈으로
         </button>
-        <div className="cs-hero-copy">
-          <h1>상담현황</h1>
-          <p>전문가 상담 내역과 AI 종합 분석을 확인하세요</p>
-        </div>
       </section>
 
       <section className="cs-stats" aria-label="상담 요약">

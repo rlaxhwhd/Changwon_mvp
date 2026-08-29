@@ -420,8 +420,11 @@
 }
 
 .mn-page .radar-current {
-  fill: color-mix(in srgb, var(--competency-current) 20%, transparent);
-  stroke: var(--competency-current);
+  /* 면·선 모두 SVG 그라데이션(#main-competency-mine) — 옆 역량 막대와 같은 보라→하늘 축.
+     그라데이션은 알파를 못 섞으므로 면 투명도는 fill-opacity 로 준다(예전 20% 와 같은 값). */
+  fill: url(#main-competency-mine);
+  fill-opacity: .2;
+  stroke: url(#main-competency-mine);
   stroke-width: 2.5;
 }
 
@@ -506,7 +509,8 @@
   width: var(--value);
   height: 100%;
   border-radius: inherit;
-  background: var(--competency-current);
+  /* 라운지(.al-page .axis-track i)와 같은 보라→하늘 축 — 두 화면의 같은 지표가 갈리면 안 된다. */
+  background: linear-gradient(90deg, var(--competency-current), var(--competency-growth));
 }
 
 .mn-page .program-card-shell [data-slot="card-content"] {
@@ -1195,9 +1199,7 @@
   line-height: 1.7;
 }
 
-.mn-page .career-hero [id] {
-  scroll-margin-top: 144px;
-}
+/* #섹션 착지 여백은 index.css 의 .v2-main [id] 가 준다 — 여기 다시 박지 않는다. */
 
 .mn-page .hero-roadmap {
   margin-top: auto;

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import './MyPrograms.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type Status = '신청완료' | '진행중' | '수료' | '취소'
 
@@ -145,6 +146,7 @@ const FILTERS = ['전체', '진행중', '신청완료', '수료', '취소'] as c
 type Filter = (typeof FILTERS)[number]
 
 export default function MyPrograms() {
+  usePageHead('비교과프로그램 현황', '지금까지 신청·수료한 비교과 프로그램과 누적 활동 시간을 확인합니다.')
   const [filter, setFilter] = useState<Filter>('전체')
   const [detail, setDetail] = useState<AppliedProgram | null>(null)
 
@@ -166,11 +168,6 @@ export default function MyPrograms() {
   return (
     <div className="mp-wrap">
       <header className="mp-hero">
-        <div className="mp-hero-copy">
-          <span className="mp-breadcrumb">마이페이지 · 비교과프로그램 현황</span>
-          <h1>비교과 프로그램 신청 기록</h1>
-          <p>지금까지 신청·수료한 비교과 프로그램과 누적 활동 시간을 한눈에 확인할 수 있어요.</p>
-        </div>
         <Link to="/growth/program" className="mp-hero-cta">
           <i className="fa-solid fa-plus" /> 새 프로그램 신청
         </Link>
