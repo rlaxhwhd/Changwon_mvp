@@ -273,9 +273,10 @@
    카드 폭의 절반이 기본이고, 라벨이 긴 잠금 상태('선행 검사 완료 후 응시')만 늘어난다
    — 고정폭으로 두면 글자가 잘린다.
 
-   색도 그 버튼과 같은 하늘 계열이다 — 면 sky-soft · 테두리 sky · 글자 blue.
-   글자에 sky 본색(#17a9e6)을 쓰지 않는 이유: 흰 배경·흰 글자 어느 쪽으로도 2.7:1 이다.
-   같은 계열에서 읽히는 --blue 를 쓴다(sky-soft 위 4.0:1). */
+   색은 라운지 C-3 카드의 잠금 버튼(.diagnosis-lock-button) 배합을 그대로 옮긴 것이다 —
+   면 mint-soft 52% + 흰색, 테두리 mint 28% + border.
+   글자만 --mint 가 아니라 --mint-ink 다: 라운지 배합 그대로면 2.5:1 이라 읽히지 않고,
+   잉크로 바꾸면 4.5:1 이 된다. 초록 톤이 한 단계 깊어질 뿐 형태는 같다. */
 .de-start-btn {
   height: 38px;
   min-width: 50%;
@@ -288,14 +289,14 @@
   justify-content: center;
   gap: 6px;
   border-radius: var(--radius-md);
-  background: var(--sky-soft);
-  border: 1px solid var(--sky);
-  color: var(--blue);
+  background: color-mix(in srgb, var(--mint-soft) 52%, var(--color-bg));
+  border: 1px solid color-mix(in srgb, var(--mint) 28%, var(--color-border));
+  color: var(--mint-ink);
   font-size: var(--fs-body);
   font-weight: 500;
 }
 
-.de-start-btn:hover { background: color-mix(in srgb, var(--sky) 14%, #fff); opacity: 1; }
+.de-start-btn:hover { background: var(--mint-soft); opacity: 1; }
 
 .de-start-btn:hover {
   opacity: 0.9;

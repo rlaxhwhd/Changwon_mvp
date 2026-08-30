@@ -316,7 +316,7 @@
    「결과 보기」와 「검사 시작」은 같은 역할이므로 같은 색이다 — 상태로 색을 가르지 않는다.
    구분은 잠금(회색)에서만 준다. */
 .de-start-btn--available {
-  background: var(--sky-soft);
+  background: color-mix(in srgb, var(--mint-soft) 52%, var(--color-bg));
 }
 
 .de-start-btn--locked {
