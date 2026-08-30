@@ -35,28 +35,33 @@
   font-weight: 700;
 }
 
+/* 진단유형 수정 신청 — 주 동작이 아니라 곁들이는 요청이다.
+   보조 동작이므로 채움을 옅게, 글자를 작고 가볍게 둔다.
+   색은 하늘 계열: 면·테두리는 sky, 글자는 blue.
+   ⚠ sky 본색(#17a9e6)은 흰 배경·흰 글자 어느 쪽으로도 2.7:1 이라 글자로 쓸 수 없다.
+     그래서 같은 계열에서 읽히는 --blue 를 글자로 쓴다(sky-soft 위 4.0:1). */
 .de-type-request-btn {
-  min-height: 38px;
-  padding: 0 16px;
+  min-height: 36px;
+  padding: 0 14px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 9px;
+  gap: 7px;
   flex-shrink: 0;
-  background: var(--color-cta);
-  border: 1px solid var(--color-primary);
+  background: var(--sky-soft);
+  border: 1px solid var(--sky);
   border-radius: var(--radius-md);
-  color: #fff;
+  color: var(--blue);
   font-size: var(--fs-body);
-  font-weight: 700;
+  font-weight: 500;
 }
 
-.de-type-request-btn:hover:not(:disabled) { opacity: 0.9; }
+.de-type-request-btn:hover:not(:disabled) { background: #dbf1fb; }
 
 .de-type-request-btn.is-requested {
   background: var(--color-bg);
   border-color: var(--color-border);
-  color: var(--color-success);
+  color: var(--mint-ink);
   box-shadow: none;
 }
 
@@ -308,14 +313,15 @@
 }
 
 /* 버튼 상태 변형.
-   CTA 는 메인 강조색(바이올렛) 하나로 간다 — 같은 화면의 「결과 보기」와 「검사 시작」이
-   서로 다른 색이면 같은 역할의 버튼이 둘로 읽힌다. 상태 구분은 잠금(회색)으로만 한다. */
+   「결과 보기」와 「검사 시작」은 같은 역할이므로 같은 색이다 — 상태로 색을 가르지 않는다.
+   구분은 잠금(회색)에서만 준다. */
 .de-start-btn--available {
-  background: var(--color-cta);
+  background: var(--violet-soft);
 }
 
 .de-start-btn--locked {
-  background: var(--color-surface-alt);
+  background: var(--color-surface);
+  border-color: var(--color-border);
   color: var(--color-text-muted);
   box-shadow: none;
   cursor: not-allowed;

@@ -269,19 +269,33 @@
   font-weight: 700;
 }
 
+/* 검사 카드 버튼 — 「진단유형 수정 신청」과 같은 옅은 면 + 테두리 꼴.
+   카드 폭의 절반이 기본이고, 라벨이 긴 잠금 상태('선행 검사 완료 후 응시')만 늘어난다
+   — 고정폭으로 두면 글자가 잘린다.
+
+   글자는 --violet-hover 다. 옅은 보라 면 위에서 --violet 은 3.8:1 이라 모자라고,
+   --violet-hover 는 4.9:1 로 크기와 무관하게 통과한다. 흰 글자 파스텔(3.45:1)에서
+   여기로 옮기면서 대비가 오히려 올라갔다. */
 .de-start-btn {
-  height: 40px;
-  margin: auto 20px 12px;
+  height: 38px;
+  min-width: 50%;
+  width: fit-content;
+  max-width: calc(100% - 40px);
+  padding: 0 18px;
+  margin: auto auto 12px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 6px;
   border-radius: var(--radius-md);
-  background: var(--color-cta);
-  color: #fff;
+  background: var(--violet-soft);
+  border: 1px solid var(--violet);
+  color: var(--violet-hover);
   font-size: var(--fs-body);
-  font-weight: 700;
+  font-weight: 500;
 }
+
+.de-start-btn:hover { background: var(--violet-wash); opacity: 1; }
 
 .de-start-btn:hover {
   opacity: 0.9;
@@ -579,9 +593,9 @@
 
 .de-modal-primary {
   padding: 10px 22px;
-  background: var(--color-cta);
+  background: color-mix(in srgb, var(--violet) 85%, #fff);
   color: #fff;
-  font-size: var(--fs-body);
+  font-size: var(--fs-lead);
   font-weight: 700;
   border-radius: var(--radius-md);
   transition: opacity 0.15s;
@@ -746,7 +760,7 @@
   justify-content: center;
   gap: 8px;
   border-radius: var(--radius-md);
-  font-size: var(--fs-body);
+  font-size: var(--fs-lead);
   font-weight: 700;
   transition: opacity 0.15s, background 0.15s, border-color 0.15s;
 }
@@ -763,10 +777,10 @@
 }
 
 .de-consent-submit {
-  background: var(--color-cta);
+  background: color-mix(in srgb, var(--violet) 85%, #fff);
   color: #fff;
-  border: 1px solid var(--color-primary);
-  box-shadow: 0 9px 18px var(--cta-shadow);
+  border: 1px solid transparent;
+  box-shadow: none;
 }
 
 .de-consent-submit:hover:not(:disabled) {
