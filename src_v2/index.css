@@ -96,11 +96,14 @@
   --goal-status-active:  var(--mint);
   --goal-status-planned: var(--amber);
 
-  /* 진단 4종 — 라운지 진단 결과 카드 */
+  /* 진단 5종 — 라운지 진단 결과 카드 · 진단센터 검사 카드가 같은 색을 본다.
+     1~4 는 라운지의 C-CORE·C-2·C-3·C-4 순서 그대로다. 5 는 진단센터에만 나오는
+     집중관리(C-5) 몫으로, 이미 있는 pink 를 끌어 쓴다 — 새 색이 아니다. */
   --diagnosis-1: var(--violet); --diagnosis-1-soft: var(--violet-soft);
   --diagnosis-2: var(--blue);   --diagnosis-2-soft: var(--blue-soft);
   --diagnosis-3: var(--mint);   --diagnosis-3-soft: var(--mint-soft);
   --diagnosis-4: var(--amber);  --diagnosis-4-soft: var(--amber-soft);
+  --diagnosis-5: var(--pink);   --diagnosis-5-soft: var(--pink-soft);
 
   /* AI 추천 카드 표면·순번 */
   --recommend-surface:           var(--amber);

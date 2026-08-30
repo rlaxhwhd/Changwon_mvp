@@ -111,14 +111,14 @@ export default function PsychCounsel() {
 
   if (counselors.length === 0) {
     return (
-      <div className="cc-wrap">
+      <div className="cc-wrap cc-psych">
         <p style={{ padding: '48px 0', textAlign: 'center', color: '#6b7280' }}>등록된 심리 상담사가 없습니다.</p>
       </div>
     )
   }
 
   return (
-    <div className="cc-wrap">
+    <div className="cc-wrap cc-psych">
       {notice && (
         <div className="cc-toast" role="status">
           <i className="fa-solid fa-circle-check" />

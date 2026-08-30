@@ -28,7 +28,7 @@
   display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
   padding-bottom: 16px; border-bottom: 1px solid var(--color-border);
 }
-.ma-card-title h2 { margin-top: 6px; font-size: 17px; font-weight: 800; color: var(--color-navy); }
+.ma-card-title h2 { margin-top: 6px; font-size: 16px; font-weight: 800; color: var(--color-navy); }
 .ma-card-title p { margin-top: 4px; font-size: 13px; color: var(--color-text-sub); }
 .ma-tag {
   display: inline-block; padding: 3px 8px; border-radius: 6px;

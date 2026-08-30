@@ -100,8 +100,8 @@
 
 .rs-category-select span {
   color: var(--color-navy);
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .rs-category-select select {
@@ -135,13 +135,13 @@
 .rs-doc-head h2 {
   color: var(--color-navy);
   font-size: 20px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .rs-editor-head p,
 .rs-section-head p {
   color: var(--color-text-sub);
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.5;
   margin-top: 5px;
 }
@@ -160,7 +160,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   color: var(--color-text);
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.55;
   resize: vertical;
   outline: none;
@@ -187,8 +187,8 @@
   gap: 7px;
   border-radius: var(--radius-sm);
   padding: 0 16px;
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .rs-primary-btn {
@@ -225,7 +225,7 @@
   border-radius: 999px;
   padding: 5px 10px;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .rs-attached-list {
@@ -269,7 +269,7 @@
 .rs-journal-item strong {
   display: block;
   color: var(--color-navy);
-  font-size: 17px;
+  font-size: 16px;
   margin-bottom: 5px;
 }
 
@@ -292,7 +292,7 @@
   background: var(--color-cta);
   color: var(--color-bg);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .rs-journal-item button.attached,
@@ -344,7 +344,7 @@
 
 .rs-helper-grid strong {
   color: var(--color-navy);
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .rs-helper-grid span {
@@ -426,8 +426,8 @@
 .rs-status {
   border-radius: 999px;
   padding: 3px 8px;
-  font-size: 15px;
-  font-weight: 900;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .rs-status.writing { background: #fef2f2; color: var(--color-danger); }
@@ -487,7 +487,7 @@
     padding: 20px 18px 18px;
     border-radius: var(--radius-md);
   }
-  .rs-header h1 { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .rs-header h1 { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
   .rs-header p { font-size: 16px; line-height: 1.55; }
 }
 /* ─── AI 자소서 생성 로딩 오버레이 ────────────────────────────── */
@@ -562,8 +562,8 @@
 
 .rs-loading-title {
   margin: 4px 0 0;
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--color-navy);
 }
 
@@ -629,7 +629,7 @@
   padding: 0 14px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--color-navy);
   background: #fff;
@@ -657,7 +657,7 @@
   border-radius: 10px;
   background: #fff;
   color: var(--color-primary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
   transition: background 0.15s, color 0.15s, box-shadow 0.15s;
@@ -741,7 +741,7 @@
   background: #fff;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.75;
   color: var(--color-navy);
 }
@@ -799,7 +799,7 @@
   border-radius: 10px;
   background: var(--color-success);
   color: #fff;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 8px 18px rgba(34, 197, 94, 0.28);

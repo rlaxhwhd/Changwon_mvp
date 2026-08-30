@@ -101,7 +101,7 @@
   background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%);
   color: #fff;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   border-radius: var(--radius-sm);
   box-shadow: 0 10px 24px rgba(220, 38, 38, 0.28);
   cursor: pointer;
@@ -149,7 +149,7 @@
   box-shadow: var(--shadow-md);
 }
 
-.pf-tab i { font-size: 15px; }
+.pf-tab i { font-size: 14px; }
 
 /* Body */
 .pf-body { display: flex; flex-direction: column; gap: 16px; }
@@ -175,7 +175,7 @@
   align-items: center;
   gap: 8px;
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-navy);
 }
 
@@ -201,8 +201,8 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-primary);
-  font-size: 15px;
-  font-weight: 900;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -250,8 +250,8 @@
 .pf-profile-info { flex: 1; min-width: 0; }
 
 .pf-profile-info h2 {
-  font-size: 22px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--color-navy);
 }
 .pf-profile-info h2 small {
@@ -323,7 +323,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: var(--color-navy);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -337,7 +337,7 @@
   display: block;
   margin-bottom: 8px;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-text-muted);
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -367,7 +367,7 @@
 
 .pf-skill-name {
   flex: 1;
-  font-weight: 900;
+  font-weight: 700;
   font-size: 16px;
   color: var(--color-navy);
 }
@@ -459,7 +459,7 @@
 .pf-list-body strong {
   display: block;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 2px;
 }
@@ -519,7 +519,7 @@
 
 .pf-timeline-head strong {
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-navy);
 }
 
@@ -531,7 +531,7 @@
   color: #92400e;
   border-radius: var(--radius-pill);
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .pf-timeline-meta {
@@ -542,7 +542,7 @@
 }
 
 .pf-timeline-desc {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text);
   line-height: 1.6;
 }
@@ -571,7 +571,7 @@
 
 .pf-project-head strong {
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-navy);
   line-height: 1.3;
 }
@@ -601,7 +601,7 @@
 }
 
 .pf-project-desc {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text);
   line-height: 1.6;
   margin-bottom: 10px;
@@ -714,7 +714,7 @@
 
 .pf-resume-title {
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 6px;
   line-height: 1.4;
@@ -775,7 +775,7 @@
   padding: 0 18px;
   border-radius: var(--radius-sm);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   cursor: pointer;
   border: none;
 }
@@ -804,7 +804,7 @@
 
 .pf-resume-summary-desc {
   color: var(--color-text-sub);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.65;
   margin-bottom: 14px;
 }
@@ -833,7 +833,7 @@
 }
 
 .pf-resume-summary-grid span {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--color-navy);
 }
@@ -862,7 +862,7 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--color-navy);
 }
@@ -946,7 +946,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--color-navy);
 }
@@ -995,7 +995,7 @@
   animation: pfToastIn 0.25s ease;
 }
 
-.pf-toast i { color: var(--color-success); font-size: 17px; }
+.pf-toast i { color: var(--color-success); font-size: 16px; }
 
 @keyframes pfToastIn {
   from { opacity: 0; transform: translate(-50%, 10px); }
@@ -1026,7 +1026,7 @@
   align-items: center;
   gap: 8px;
   color: var(--color-text-sub);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.45;
 }
@@ -1094,7 +1094,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 6px 18px;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text);
   font-weight: 700;
 }
@@ -1129,7 +1129,7 @@
 
 .pf-resume-block-head h3 {
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-primary);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1262,7 +1262,7 @@
   border-radius: var(--radius-sm);
   color: #fff;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -1287,8 +1287,8 @@
 }
 
 .pf-resume-edu-line strong {
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 700;
   color: var(--color-navy);
 }
 
@@ -1302,7 +1302,7 @@
   display: flex;
   gap: 6px 18px;
   flex-wrap: wrap;
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text-sub);
   font-weight: 700;
 }
@@ -1328,7 +1328,7 @@
   background: #fafbff;
   color: var(--color-text-sub);
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
   letter-spacing: 0.04em;
 }
 
@@ -1346,7 +1346,7 @@
   background: var(--color-primary-bg);
   border-radius: var(--radius-pill);
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-navy);
 }
 
@@ -1366,7 +1366,7 @@
 .pf-resume-2col h5 {
   margin-bottom: 8px;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-primary);
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1389,9 +1389,9 @@
 }
 
 .pf-resume-2col li strong {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-navy);
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .pf-resume-2col li strong em {
@@ -1433,7 +1433,7 @@
 
 .pf-resume-award-head strong {
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-navy);
 }
 
@@ -1462,7 +1462,7 @@
 }
 
 .pf-resume-award-list li p {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text);
   line-height: 1.6;
 }
@@ -1492,7 +1492,7 @@
 
 .pf-resume-proj-head strong {
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-navy);
 }
 
@@ -1513,7 +1513,7 @@
 }
 
 .pf-resume-proj-list p {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text);
   line-height: 1.6;
   margin-bottom: 6px;
@@ -1567,7 +1567,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
   background: var(--color-bg);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--color-navy);
   font-family: inherit;
@@ -1590,7 +1590,7 @@
 
 .pf-resume-attach-meta strong {
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   color: var(--color-navy);
 }
 
@@ -1601,7 +1601,7 @@
 }
 
 .pf-resume-attach-body p {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text);
   line-height: 1.7;
   white-space: pre-wrap;
@@ -1653,7 +1653,7 @@
     padding: 20px 18px 18px;
     border-radius: var(--radius-md);
   }
-  .pf-hero h1 { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .pf-hero h1 { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
   .pf-hero p { font-size: 16px; line-height: 1.5; }
   .pf-hero-actions {
     width: 100%;
@@ -1674,7 +1674,7 @@
   .pf-tab {
     min-width: auto;
     padding: 0 12px;
-    font-size: 15px;
+    font-size: 14px;
     flex: 0 0 auto;
     height: 38px;
   }
@@ -1694,7 +1694,7 @@
     gap: 14px;
     padding-bottom: 14px;
   }
-  .pf-resume-name { font-size: 26px; }
+  .pf-resume-name { font-size: 24px; }
   .pf-resume-contact-block { align-items: flex-start; width: 100%; }
   .pf-resume-contact { grid-template-columns: 1fr; }
   .pf-resume-skill-table th {

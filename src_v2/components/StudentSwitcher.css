@@ -44,7 +44,7 @@
 }
 
 .ss-btn strong { font-size: 14px; font-weight: 800; }
-.ss-btn small { font-size: 11.5px; font-weight: 600; }
+.ss-btn small { font-size: 11px; font-weight: 600; }
 
 .ss-btn:hover { border-color: var(--color-primary-light); }
 

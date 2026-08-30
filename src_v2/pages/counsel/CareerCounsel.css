@@ -1,3 +1,38 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   상담센터 색 — 갈래마다 다른 휴를 쓴다.
+   토큰은 이미 있다(--counsel-1 진로취업 · 2 심리 · 3 지도교수). 라운지 「상담 현황」
+   카드의 점 색, 마이페이지 「상담 유형별 분포」와 같은 색이다 — 같은 갈래는 어디서나 같은 색.
+
+   ink   = 주 색. 제목·테두리·「선택됨」 채움처럼 갈래를 대표하는 자리.
+   ok    = 「예약 가능」 표시(글자·점). 열려 있다는 뜻이라 초록 계열이 맞는다.
+   soft  = 옅은 면(시간축·머리행·요약 바).   line = 옅은 테두리.
+   휴 본색은 흰 배경 대비가 모자라 글자에는 잉크를 쓴다(민트 2.7:1 → mint-ink 4.9:1).
+
+   ★ 진로·취업만 두 색을 섞는다 — 파랑(주) + 초록(가능) + 연한 파랑(면).
+     앰버는 라운지 범례처럼 '점' 크기에서는 읽히지만 화면 전체 면으로 깔면 노랗게 잠긴다.
+     라운지·상담현황 범례의 점 색(--counsel-1)은 그대로 둔다 — 점과 면은 다른 문제다.
+   ───────────────────────────────────────────────────────────────────────── */
+.cc-wrap {
+  --cc-ink:  var(--violet);
+  --cc-ok:   var(--violet);
+  --cc-soft: var(--counsel-2-soft);
+  --cc-line: var(--violet-border);
+}
+
+.cc-wrap.cc-career {
+  --cc-ink:  var(--blue);
+  --cc-ok:   var(--mint-ink);
+  --cc-soft: var(--blue-soft);
+  --cc-line: var(--blue-border);
+}
+
+.cc-wrap.cc-professor {
+  --cc-ink:  var(--mint-ink);
+  --cc-ok:   var(--mint-ink);
+  --cc-soft: var(--counsel-3-soft);
+  --cc-line: var(--mint-border);
+}
+
 .cc-wrap {
   position: relative;
   display: flex;
@@ -22,11 +57,11 @@
   border: 1px solid var(--color-border);
   box-shadow: var(--shadow-md);
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .cc-toast i {
-  color: var(--color-primary);
+  color: var(--cc-ink);
 }
 
 
@@ -71,13 +106,13 @@
 }
 
 .cc-panel-title i {
-  color: var(--color-primary);
-  font-size: 21px;
+  color: var(--cc-ink);
+  font-size: 20px;
 }
 
 .cc-panel-title h2 {
-  font-size: 21px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .cc-search {
@@ -98,7 +133,7 @@
   border: 0;
   outline: 0;
   color: var(--color-text);
-  font-size: 17px;
+  font-size: 16px;
 }
 
 .cc-search input::placeholder {
@@ -137,7 +172,7 @@
 .cc-counselor-row strong {
   display: block;
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 700;
   margin-bottom: 3px;
 }
 
@@ -149,12 +184,12 @@
 }
 
 .cc-counselor-row i {
-  color: var(--color-primary);
+  color: var(--cc-ink);
   font-size: 16px;
 }
 
 .cc-counselor-row.active {
-  border: 1px solid var(--color-primary);
+  border: 1px solid var(--cc-ink);
   background: linear-gradient(90deg, var(--color-bg), #f4f7ff);
   box-shadow: inset 0 0 0 1px rgba(46, 91, 255, 0.08);
 }
@@ -193,11 +228,11 @@
   justify-content: center;
   gap: 14px;
   color: var(--color-navy);
-  font-size: 21px;
+  font-size: 20px;
 }
 
 .cc-week-title i {
-  color: var(--color-primary);
+  color: var(--cc-ink);
 }
 
 .cc-week-title strong {
@@ -212,7 +247,7 @@
 
 .cc-this-week {
   padding: 0 16px;
-  color: var(--color-primary);
+  color: var(--cc-ink);
 }
 
 .cc-legend {
@@ -242,9 +277,9 @@
   display: inline-block;
 }
 
-.cc-legend .available { background: var(--color-primary-light); }
+.cc-legend .available { background: var(--cc-ok); }
 .cc-legend .reserved { background: #d8dde8; }
-.cc-legend .selected { background: var(--color-primary); }
+.cc-legend .selected { background: var(--cc-ink); }
 
 .cc-calendar-grid {
   display: grid;
@@ -263,7 +298,7 @@
   justify-content: center;
   color: var(--color-navy);
   font-size: 18px;
-  font-weight: 900;
+  font-weight: 700;
   background: var(--color-bg);
   border-right: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
@@ -295,11 +330,11 @@
   justify-content: center;
   gap: 7px;
   border-radius: 6px;
-  border: 1px solid #d7e3fb;
-  background: linear-gradient(180deg, #f9fbff, #f2f6ff);
-  color: var(--color-primary);
-  font-size: 17px;
-  font-weight: 900;
+  border: 1px solid var(--cc-line);
+  background: var(--color-bg);
+  color: var(--cc-ok);
+  font-size: 16px;
+  font-weight: 700;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
@@ -310,8 +345,8 @@
 }
 
 .cc-slot-selected {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
+  border-color: var(--cc-ink);
+  background: var(--cc-ink);
   color: #fff;
   box-shadow: var(--shadow-md);
 }
@@ -321,7 +356,7 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 5px;
   padding: 5px;
-  background: linear-gradient(180deg, #f9fbff, #f2f6ff);
+  background: var(--cc-soft);
 }
 
 .cc-slot-counselors button,
@@ -333,9 +368,9 @@
   border-radius: 5px;
   background: var(--color-bg);
   border: 1px solid rgba(46, 91, 255, 0.18);
-  color: var(--color-primary);
+  color: var(--cc-ink);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .cc-selected-bar {
@@ -347,7 +382,7 @@
   margin-top: 18px;
   padding: 12px 18px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #f8fbff, var(--color-primary-bg));
+  background: var(--cc-soft);
   border: 1px solid var(--color-border);
 }
 
@@ -360,7 +395,7 @@
 
 .cc-selected-title {
   gap: 10px;
-  color: var(--color-primary);
+  color: var(--cc-ink);
 }
 
 .cc-selected-title i {
@@ -370,13 +405,13 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  border: 2px solid var(--color-primary);
+  border: 2px solid var(--cc-ink);
 }
 
 .cc-selected-title strong {
-  color: var(--color-primary);
-  font-size: 17px;
-  font-weight: 900;
+  color: var(--cc-ink);
+  font-size: 16px;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -397,15 +432,16 @@
   color: var(--color-navy);
 }
 
+/* 예약·신청 버튼 — 갈래 색의 파스텔.
+   흰 글자 대비 3.4~3.7:1 로, 앱 CTA(--cta #8f74fd 3.45:1)와 같은 기준이다.
+   그 기준은 '큰 글씨(18.66px 이상 굵게)'를 전제하므로 20px/700 을 함께 고정한다 —
+   크기를 줄이면 대비 근거가 무너진다. */
 .cc-reserve-btn {
-  height: 42px;
-  border-radius: var(--radius-sm);
-  background: var(--color-cta);
+  background: color-mix(in srgb, var(--cc-ink) 85%, #fff);
   color: #fff;
-  font-size: 19px;
-  font-weight: 900;
-  box-shadow: var(--shadow-md);
 }
+
+.cc-reserve-btn:hover { background: var(--cc-ink); }
 
 @media (max-width: 1100px) {
   .cc-layout {
@@ -508,15 +544,15 @@
 .cc-reservation-summary {
   margin-top: 20px;
   padding: 16px;
-  border: 1px solid var(--color-primary-light);
+  border: 1px solid var(--cc-line);
   border-radius: var(--radius-md);
-  background: var(--color-primary-bg);
+  background: var(--cc-soft);
 }
 
 .cc-reservation-summary > strong {
   display: block;
-  color: var(--color-primary);
-  font-size: 15px;
+  color: var(--cc-ink);
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -568,12 +604,12 @@
 }
 
 .cc-counselor-row:hover {
-  background: var(--color-surface-alt);
+  background: var(--cc-soft);
 }
 
 .cc-counselor-row.active {
-  border-color: var(--color-primary);
-  background: var(--color-primary-bg);
+  border-color: var(--cc-ink);
+  background: var(--cc-soft);
   box-shadow: none;
 }
 
@@ -590,7 +626,7 @@
 
 .cc-calendar-head button:hover,
 .cc-this-week:hover {
-  background: var(--color-surface-alt);
+  background: var(--cc-soft);
 }
 
 .cc-legend {
@@ -608,9 +644,9 @@
 .cc-grid-head,
 .cc-time-cell {
   min-height: 44px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
-  background: var(--color-surface-alt);
+  background: var(--cc-soft);
 }
 
 .cc-slot {
@@ -625,11 +661,11 @@
 }
 
 .cc-slot:hover:not(.cc-slot-reserved) {
-  border-color: var(--color-primary);
+  border-color: var(--cc-ink);
 }
 
 .cc-slot-reserved {
-  background: var(--color-surface-alt);
+  background: var(--color-surface);
 }
 
 .cc-slot-selected {
@@ -665,13 +701,13 @@
 }
 
 .cc-counsel-tabs a:hover {
-  color: var(--color-primary);
-  background: var(--color-surface-alt);
+  color: var(--cc-ink);
+  background: var(--cc-soft);
 }
 
 .cc-counsel-tabs a.active {
   color: var(--color-text);
-  background: var(--color-primary-bg);
+  background: var(--cc-soft);
 }
 
 .cc-slot-reserved {
@@ -692,20 +728,22 @@
   margin-top: 24px;
   padding: 14px 18px;
   border-radius: var(--radius-md);
-  background: var(--color-primary-bg);
+  background: var(--cc-soft);
 }
 
 .cc-selected-info {
   gap: 14px;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
 }
 
+/* 글씨 크기는 대비 근거의 일부다 — 파스텔 채움은 흰 글자 대비가 3.4~3.7:1 이고,
+   그 기준은 '큰 글씨(18.66px 이상 굵게)'에만 적용된다. 20px/700 아래로 내리지 말 것. */
 .cc-reserve-btn {
   height: 44px;
   border-radius: var(--radius-md);
   box-shadow: none;
-  font-size: 16px;
+  font-size: 20px;
   transition: background 160ms, transform 160ms;
 }
 

@@ -122,7 +122,7 @@ export default function ProfessorCounsel() {
   }
 
   return (
-    <div className="cc-wrap pc-wrap">
+    <div className="cc-wrap cc-professor pc-wrap">
       {notice && (
         <div className="cc-toast" role="status">
           <i className="fa-solid fa-circle-check" />

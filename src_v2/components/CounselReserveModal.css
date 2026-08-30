@@ -25,7 +25,7 @@
 .crm-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .crm-table th,
@@ -55,7 +55,7 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-family: var(--font);
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-navy);
   line-height: 1.6;
   resize: vertical;

@@ -51,8 +51,8 @@
 .pcg-category { background: var(--color-primary-bg); color: var(--color-primary); }
 .pcg-dday { background: var(--color-surface); color: var(--color-text-sub); }
 .pcg-dday--urgent { background: #FEF2F2; color: var(--color-danger); }
-.pcg-title { overflow: hidden; color: var(--color-navy); font-size: 19px; font-weight: 800; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
-.pcg-desc { display: -webkit-box; min-height: 48px; overflow: hidden; color: var(--color-text-sub); font-size: 15px; line-height: 1.6; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.pcg-title { overflow: hidden; color: var(--color-navy); font-size: 18px; font-weight: 800; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
+.pcg-desc { display: -webkit-box; min-height: 48px; overflow: hidden; color: var(--color-text-sub); font-size: 14px; line-height: 1.6; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .pcg-meta { display: flex; flex-direction: column; gap: 5px; padding-top: 3px; color: var(--color-text-muted); font-size: 13px; line-height: 1.45; }
 .pcg-meta i { width: 15px; color: var(--color-primary); }
 
@@ -69,7 +69,7 @@
   border-radius: 50%;
   background: var(--color-bg);
   color: var(--color-text-muted);
-  font-size: 17px;
+  font-size: 16px;
 }
 .pcg-wish:hover, .pcg-wish.active { border-color: var(--color-danger); color: var(--color-danger); }
 .pcg-wish.active { background: #FFF1F2; }

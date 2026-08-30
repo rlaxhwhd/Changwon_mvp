@@ -26,7 +26,7 @@
 }
 
 .pa-breadcrumb {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-text-sub);
   margin-bottom: 20px;
@@ -67,7 +67,7 @@
 .pa-tab {
   padding: 7px 16px;
   border-radius: 20px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text-sub);
   border: 1.5px solid var(--color-border);
@@ -143,7 +143,7 @@
   padding: 7px 32px 7px 12px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 17px;
+  font-size: 16px;
   color: var(--color-text-sub);
   background: var(--color-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2399A1A9' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
   appearance: none;
@@ -186,8 +186,8 @@
 }
 
 .pa-card--featured .pa-card-title {
-  font-size: 22px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .pa-featured-badge {
@@ -200,7 +200,7 @@
   padding: 6px 12px;
   background: var(--color-success);
   color: var(--color-bg);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   border-radius: var(--radius-pill);
   box-shadow: 0 6px 14px rgba(34, 197, 94, 0.32);
@@ -217,7 +217,7 @@
   align-items: center;
   justify-content: center;
   color: var(--color-text-muted);
-  font-size: 27px;
+  font-size: 28px;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -290,7 +290,7 @@
 }
 
 .pa-card-desc {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--color-text-sub);
   line-height: 1.5;
   display: -webkit-box;
@@ -325,7 +325,7 @@
   padding: 9px 22px;
   background: var(--color-cta);
   color: var(--color-bg);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   border-radius: var(--radius-sm);
   white-space: nowrap;
@@ -387,7 +387,7 @@
   height: 34px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text-sub);
   background: var(--color-bg);
@@ -447,6 +447,6 @@
     padding: 20px 18px 18px;
     border-radius: var(--radius-md);
   }
-  .pa-title { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .pa-title { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
   .pa-desc { font-size: 16px; line-height: 1.55; }
 }

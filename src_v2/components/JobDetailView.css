@@ -25,7 +25,7 @@
 .jd-apply-btn {
   margin-top: 14px; width: 100%; height: 44px;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  border-radius: 10px; background: var(--jd-fill); color: #fff; font-weight: 800; font-size: 15px;
+  border-radius: 10px; background: var(--jd-fill); color: #fff; font-weight: 800; font-size: 14px;
 }
 .jd-apply-btn:hover { filter: brightness(0.96); }
 .jd-apply-btn:disabled { background: var(--jd-flat); color: var(--jd-sub); cursor: not-allowed; filter: none; }
@@ -35,10 +35,10 @@
   font-size: 13px; font-weight: 700; color: var(--jd-sub); text-align: center;
 }
 .jd-apply-state .fa-circle-check { color: var(--color-primary); }
-.jd-content { font-size: 15px; line-height: 1.7; color: var(--jd-ink); }
+.jd-content { font-size: 14px; line-height: 1.7; color: var(--jd-ink); }
 .jd-content img { max-width: 100%; height: auto; border-radius: 8px; }
 .jd-content ul, .jd-content ol { padding-left: 20px; margin: 8px 0; }
-.jd-content-empty { color: var(--jd-sub); font-size: 15px; }
+.jd-content-empty { color: var(--jd-sub); font-size: 14px; }
 .jd-status.open { color: var(--color-primary); }
 .jd-status.closed { color: var(--jd-sub); }
 
@@ -50,7 +50,7 @@
   margin-bottom: 16px;
   color: var(--color-primary);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .jd-head {
@@ -86,7 +86,7 @@
   color: #00984f;
   font-size: 14px;
   font-style: normal;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .jd-head h1 {
@@ -114,8 +114,8 @@
 .jd-status {
   display: inline-flex;
   margin-bottom: 18px;
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .jd-status.open { color: var(--color-primary); }
@@ -136,14 +136,14 @@
 
 .jd-status-card dt {
   color: var(--jd-muted);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .jd-status-card dd {
   color: var(--jd-ink);
-  font-size: 15px;
-  font-weight: 900;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .jd-grid {
@@ -181,8 +181,8 @@
 .jd-card h2 {
   margin-bottom: 16px;
   color: var(--jd-ink);
-  font-size: 19px;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .jd-info-list {
@@ -198,7 +198,7 @@
 
 .jd-info-list dt {
   color: var(--jd-muted);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
 }
 

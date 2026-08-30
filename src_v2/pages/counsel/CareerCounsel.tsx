@@ -115,14 +115,14 @@ export default function CareerCounsel() {
 
   if (counselors.length === 0) {
     return (
-      <div className="cc-wrap">
+      <div className="cc-wrap cc-career">
         <p style={{ padding: '48px 0', textAlign: 'center', color: '#6b7280' }}>등록된 진로취업 상담사가 없습니다.</p>
       </div>
     )
   }
 
   return (
-    <div className="cc-wrap">
+    <div className="cc-wrap cc-career">
       {notice && (
         <div className="cc-toast" role="status">
           <i className="fa-solid fa-circle-check" />

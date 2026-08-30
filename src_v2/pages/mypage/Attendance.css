@@ -17,7 +17,7 @@
   display: inline-flex;
   align-items: center;
   gap: 12px;
-  font-size: 26px;
+  font-size: 24px;
   font-weight: 900;
   color: var(--color-navy);
   letter-spacing: -0.3px;
@@ -29,7 +29,7 @@
 }
 
 .att-sub {
-  font-size: 15px;
+  font-size: 14px;
   color: var(--color-text-sub);
 }
 
@@ -61,14 +61,14 @@
   padding: 8px 16px;
   background: var(--color-primary-bg);
   color: var(--color-primary);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 800;
   border-radius: var(--radius-pill, 999px);
   letter-spacing: -0.2px;
 }
 
 .att-semester i {
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .att-month-nav {
@@ -103,7 +103,7 @@
 }
 
 .att-month-label {
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--color-navy);
   letter-spacing: -0.4px;
@@ -164,7 +164,7 @@
 }
 
 .att-cell-num {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--color-text-sub);
   line-height: 1;
@@ -232,7 +232,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
+  font-size: 18px;
   color: #fff;
   flex-shrink: 0;
 }
@@ -290,13 +290,13 @@
 
 @media (max-width: 768px) {
   .att-page { gap: 18px; }
-  .att-title { font-size: 22px; }
+  .att-title { font-size: 20px; }
   .att-title i { font-size: 20px; }
   .att-sub { font-size: 14px; }
   .att-card { padding: 18px 16px 18px; gap: 16px; border-radius: 14px; }
   .att-card-head { gap: 10px; }
-  .att-semester { font-size: 15px; padding: 6px 12px; }
-  .att-month-label { font-size: 17px; min-width: 90px; }
+  .att-semester { font-size: 14px; padding: 6px 12px; }
+  .att-month-label { font-size: 16px; min-width: 90px; }
   .att-month-btn { width: 34px; height: 34px; }
   .att-cal-grid { grid-auto-rows: minmax(48px, 1fr); gap: 5px; }
   .att-cal-dow { gap: 5px; }

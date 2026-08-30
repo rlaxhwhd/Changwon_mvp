@@ -10,6 +10,7 @@ import {
   Legend,
   type ChartData,
   type ChartOptions,
+  type ScriptableContext,
 } from 'chart.js'
 import { Radar } from 'react-chartjs-2'
 import Modal from '../../components/Modal'
@@ -59,8 +60,32 @@ const TEST_NAMES: Record<string, string> = {
 }
 
 const scoreLevel = (s: number) => (s >= 80 ? 'high' : s >= 60 ? 'mid' : 'low')
-// 막대그래프 색상: 0~40 빨강 / 41~70 초록 / 71~100 파랑
-const barColor = (s: number) => (s >= 71 ? 'var(--color-primary)' : s >= 41 ? 'var(--color-success)' : 'var(--color-danger)')
+
+// 점수 띠: 0~40 코랄 / 41~70 민트 / 71~100 보라.
+// 채움은 단색이 아니라 그라데이션이다 — 라운지의 진행 막대와 같은 말투.
+// 글자는 잉크(진한 쪽)를 쓴다 — 휴 본색은 흰 배경에서 대비가 모자란다(민트 2.7:1).
+const BAR_BANDS = [
+  { min: 71, ink: 'var(--violet)',    fill: 'linear-gradient(90deg, var(--blue), var(--violet))' },
+  { min: 41, ink: 'var(--mint-ink)',  fill: 'linear-gradient(90deg, var(--teal), var(--mint))' },
+  { min: 0,  ink: 'var(--coral-ink)', fill: 'linear-gradient(90deg, var(--amber), var(--coral))' },
+]
+const band = (s: number) => BAR_BANDS.find(b => s >= b.min) ?? BAR_BANDS[BAR_BANDS.length - 1]
+
+/** 캔버스는 CSS 변수를 못 읽는다 — 토큰 값을 여기서 한 번 꺼내 쓴다(색을 다시 적지 않는다). */
+const token = (name: string) =>
+  getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+
+/** 이력 레이더의 면 — 단색 대신 파랑→보라 그라데이션. 차트 영역이 잡힌 뒤에만 만들 수 있다. */
+function radarAreaFill(ctx: ScriptableContext<'radar'>): CanvasGradient | string {
+  const { chartArea, ctx: canvas } = ctx.chart
+  if (!chartArea) return 'transparent'
+  const g = canvas.createLinearGradient(chartArea.left, chartArea.bottom, chartArea.right, chartArea.top)
+  g.addColorStop(0, `${token('--blue')}14`)
+  g.addColorStop(1, `${token('--violet')}59`)
+  return g
+}
+const barColor = (s: number) => band(s).ink
+const barFill = (s: number) => band(s).fill
 
 /* ── 홀로그램 레이더 차트 (Main 스타일 SVG) ──────────────────────── */
 function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
@@ -226,11 +251,12 @@ export default function DiagnosisResultDetail() {
     datasets: historyData.map((h, i) => ({
       label: h.label,
       data: h.scores,
-      backgroundColor: i === 0 ? 'rgba(46,91,255,.18)' : 'transparent',
-      borderColor: i === 0 ? '#2E5BFF' : i === 1 ? '#22C55E' : '#F59E0B',
+      // 최신 회차만 면을 채운다 — 지난 회차는 점선 윤곽으로 남겨 비교만 되게.
+      backgroundColor: i === 0 ? radarAreaFill : 'transparent',
+      borderColor: i === 0 ? token('--violet') : i === 1 ? token('--mint') : token('--amber'),
       borderWidth: i === 0 ? 2 : 1.5,
       borderDash: i === 0 ? [] : [5, 5],
-      pointBackgroundColor: i === 0 ? '#2E5BFF' : i === 1 ? '#22C55E' : '#F59E0B',
+      pointBackgroundColor: i === 0 ? token('--violet') : i === 1 ? token('--mint') : token('--amber'),
       pointRadius: i === 0 ? 4 : 3,
     })),
   }
@@ -337,7 +363,7 @@ export default function DiagnosisResultDetail() {
                   <span className="dr-score-num" style={{ color: barColor(c.score) }}>{c.score}점</span>
                 </div>
                 <div className="dr-bar">
-                  <span className="dr-bar-fill" style={{ width: `${c.score}%`, background: barColor(c.score) }} />
+                  <span className="dr-bar-fill" style={{ width: `${c.score}%`, background: barFill(c.score) }} />
                 </div>
               </button>
             ))}
@@ -375,7 +401,7 @@ export default function DiagnosisResultDetail() {
                     <span className="dr-score-num" style={{ color: barColor(s.score) }}>{s.score}점</span>
                   </div>
                   <div className="dr-bar">
-                    <span className="dr-bar-fill" style={{ width: `${s.score}%`, background: barColor(s.score) }} />
+                    <span className="dr-bar-fill" style={{ width: `${s.score}%`, background: barFill(s.score) }} />
                   </div>
                 </div>
               ))}
