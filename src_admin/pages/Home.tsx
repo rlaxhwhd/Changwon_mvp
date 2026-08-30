@@ -223,7 +223,7 @@ export default function Home() {
 
           {/* ========== 중앙 ========== */}
           <div className="col">
-            <div className="card lg">
+            <div className="card lg today-counsel">
               <div className="card-hd">
                 <h2>오늘의 상담</h2>
                 <div className="right"><span className="badge s-teal">{timeline.length}건</span></div>

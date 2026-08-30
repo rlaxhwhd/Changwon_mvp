@@ -21,6 +21,7 @@ import type {
 } from './schema/jobApplication'
 import {
   APPLICATION_OPEN_STATUSES,
+  APPLICATION_STATUSES,
   APPLICATION_STATUS_LABEL,
   DEFAULT_STAGE_NAMES,
   INTERNAL_STAGES,
@@ -415,6 +416,60 @@ export function getProgressTimeline(application: JobApplication): ProgressStep[]
     at: reachedAt.get(key),
     internal: isInternalStage(key),
   }))
+}
+
+// ── 지원자 현황 필터 (단계·상태) ────────────────────────────────────────────
+//
+// 값 공간은 하나다: 'ALL' | 전형 단계 id | 상태 코드(APPLIED·PASSED·…).
+// 단계 id 는 stg_/sys_/`${jobId}__default_N` 이라 상태 코드와 겹치지 않는다.
+// 선택지와 인원은 여기서 완성해 넘긴다 — 화면이 배열을 받아 세지 않는다(규칙 10).
+
+export const APPLICANT_FILTER_ALL = 'ALL'
+
+export interface ApplicantFilterOption {
+  value: string
+  label: string
+  count: number
+}
+
+/** 「전형 단계」 필터 선택지 — 전체 · 지원 완료 · 단계별 · 최종 결과(합격/탈락/취소) */
+export function getApplicantFilterOptions(jobId: string): ApplicantFilterOption[] {
+  const list = getApplicationsByJob(jobId)
+  const onStage = (stageId: string) =>
+    list.filter(a => a.status === 'IN_PROGRESS' && a.currentStageId === stageId).length
+  const onStatus = (status: ApplicationStatus) => list.filter(a => a.status === status).length
+
+  return [
+    { value: APPLICANT_FILTER_ALL, label: '전체', count: list.length },
+    { value: 'APPLIED', label: APPLICATION_STATUS_LABEL.APPLIED, count: onStatus('APPLIED') },
+    ...getFlowStages(jobId).map(stage => ({
+      value: stage.id,
+      label: stage.name,
+      count: onStage(stage.id),
+    })),
+    { value: 'PASSED', label: APPLICATION_STATUS_LABEL.PASSED, count: onStatus('PASSED') },
+    { value: 'REJECTED', label: APPLICATION_STATUS_LABEL.REJECTED, count: onStatus('REJECTED') },
+    { value: 'CANCELED', label: APPLICATION_STATUS_LABEL.CANCELED, count: onStatus('CANCELED') },
+  ]
+}
+
+function isApplicationStatus(value: string): value is ApplicationStatus {
+  return (APPLICATION_STATUSES as string[]).includes(value)
+}
+
+/**
+ * 필터를 적용한 지원자 목록 — 지원자 현황 표의 단일 조회 지점.
+ * 화면에서 다시 거르지 않는다. DB 전환 시 이 함수가 WHERE 절이 된다.
+ */
+export function queryJobApplicants(
+  jobId: string,
+  filter: string = APPLICANT_FILTER_ALL,
+): JobApplication[] {
+  const list = getApplicationsByJob(jobId)
+  if (filter === APPLICANT_FILTER_ALL) return list
+  // 상태 코드면 상태로, 아니면 '그 단계에 올라가 있는 사람'으로 읽는다.
+  if (isApplicationStatus(filter)) return list.filter(a => a.status === filter)
+  return list.filter(a => a.status === 'IN_PROGRESS' && a.currentStageId === filter)
 }
 
 /** 공고 1건의 지원 현황 요약 — 목록 카드·헤더용 */

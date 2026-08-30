@@ -1,9 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // 추천채용 지원자관리 — 공고 1건
 //
-// 위: 전형 단계 정의·관리
-//     - 교내 절차 2단계(서류 검토·기업 전달)는 모든 공고 공통이라 코드 상수다 — 편집 대상 아님.
-//     - 그 뒤 기업 전형은 공고마다 다르다 — 추가·이름변경·순서변경·삭제.
+// 위: 기업 전형 단계 정의·관리 (공고마다 다르다 — 추가·이름변경·순서변경·삭제)
+//     교내 절차 2단계(서류 검토·기업 전달)는 코드 상수(INTERNAL_STAGES)라 여기 나오지 않는다.
+//     실제 진행 순서에는 앞에 붙는다 — 지원자 필터·현재 전형은 getFlowStages 를 본다.
 // 아래: 지원자 목록 + 상태 변경 (다음 단계로 / 탈락)
 //
 // 상태 전이·정합성·집계는 전부 jobApplications 로더가 한다 — 이 화면은 부르고 그린다.
@@ -12,21 +12,22 @@
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
 import {
-  LuArrowLeft, LuChevronDown, LuChevronUp, LuDownload, LuInfo,
+  LuArrowLeft, LuChevronDown, LuChevronUp, LuDownload, LuFileText,
   LuPlus, LuTrash2, LuUsers,
 } from 'react-icons/lu'
 import EmptyState from '../components/EmptyState'
 import { getJobById, jobDdayLabel } from '../data/jobsSource'
 import {
+  APPLICANT_FILTER_ALL,
   APPLICATION_STATUS_LABEL,
   addStage,
   advanceStage,
   currentStageLabel,
-  getApplicationsByJob,
+  getApplicantFilterOptions,
   getStages,
-  INTERNAL_STAGES,
   isRecommendedInternal,
   moveStage,
+  queryJobApplicants,
   rejectApplication,
   removeStage,
   renameStage,
@@ -60,11 +61,17 @@ export default function JobApplicants() {
   const [tick, setTick] = useState(0)
   const [newStage, setNewStage] = useState('')
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
+  // 전형 단계 필터 — 'ALL' | 단계 id | 상태 코드. 판정은 데이터층(queryJobApplicants)이 한다.
+  const [stageFilter, setStageFilter] = useState<string>(APPLICANT_FILTER_ALL)
 
   const job = jobId ? getJobById(jobId) : undefined
   const stages = useMemo(() => (jobId ? getStages(jobId) : []), [jobId, tick])
   const counts = useMemo(() => (jobId ? stageCounts(jobId) : {}), [jobId, tick])
-  const applications = useMemo(() => (jobId ? getApplicationsByJob(jobId) : []), [jobId, tick])
+  const filterOptions = useMemo(() => (jobId ? getApplicantFilterOptions(jobId) : []), [jobId, tick])
+  const applications = useMemo(
+    () => (jobId ? queryJobApplicants(jobId, stageFilter) : []),
+    [jobId, stageFilter, tick],
+  )
   const summary = useMemo(() => (jobId ? summarizeJob(jobId) : undefined), [jobId, tick])
 
   // 지원 접수 대상이 아닌 공고는 이 화면에 들어올 이유가 없다.
@@ -135,7 +142,7 @@ export default function JobApplicants() {
             type="button"
             className="admin-btn admin-btn-primary"
             onClick={downloadCsv}
-            disabled={applications.length === 0}
+            disabled={!summary || summary.total === 0}
           >
             <LuDownload /> 엑셀 다운로드
           </button>
@@ -146,37 +153,13 @@ export default function JobApplicants() {
       <section className="admin-card">
         <div className="admin-card-head">
           <h2>전형 단계 정의 및 관리</h2>
-          <span className="admin-card-count">{INTERNAL_STAGES.length + stages.length}단계</span>
-        </div>
-
-        <div className="admin-editor-hint">
-          <LuInfo />
-          앞의 <strong>{INTERNAL_STAGES.length}단계는 교내 절차</strong>입니다 — 상담사가 서류를 검토한 뒤
-          기업에 전달하며, 모든 추천채용 공고에 공통이라 수정·삭제할 수 없습니다.
-          그 뒤 기업 전형은 공고마다 다르게 정할 수 있습니다. 지원자는
-          <strong> 정의한 순서대로만</strong> 이동하며, 마지막 단계를 통과하면 최종 합격 처리됩니다.
-        </div>
-
-        {/* 교내 절차 — 코드 상수(INTERNAL_STAGES). 보여만 주고 편집 버튼을 두지 않는다. */}
-        <div className="admin-phase-list">
-          {INTERNAL_STAGES.map(stage => (
-            <div key={stage.id} className="admin-phase-item">
-              <span className="admin-phase-icon">{stage.order}</span>
-              <div className="admin-phase-body">
-                <div className="admin-phase-top">
-                  <strong>{stage.order}단계: {stage.name}</strong>
-                  <small>현재 {counts[stage.id] ?? 0}명 · 상담사 처리</small>
-                </div>
-              </div>
-              <span className="admin-chip admin-chip-wait">교내 절차</span>
-            </div>
-          ))}
+          <span className="admin-card-count">{stages.length}단계</span>
         </div>
 
         <div className="admin-phase-list">
           {stages.map((stage, i) => (
             <div key={stage.id} className="admin-phase-item">
-              <span className="admin-phase-icon">{INTERNAL_STAGES.length + stage.order}</span>
+              <span className="admin-phase-icon">{stage.order}</span>
               <div className="admin-phase-body">
                 {editing?.id === stage.id ? (
                   <input
@@ -197,8 +180,8 @@ export default function JobApplicants() {
                     className="admin-phase-top"
                     onClick={() => setEditing({ id: stage.id, name: stage.name })}
                   >
-                    <strong>{INTERNAL_STAGES.length + stage.order}단계: {stage.name}</strong>
-                    <small>현재 {counts[stage.id] ?? 0}명 · 기업 전형</small>
+                    <strong>{stage.order}단계: {stage.name}</strong>
+                    <small>현재 {counts[stage.id] ?? 0}명</small>
                   </button>
                 )}
               </div>
@@ -261,11 +244,35 @@ export default function JobApplicants() {
           <span className="admin-card-count">{applications.length}명</span>
         </div>
 
+        {/* 전형 단계 필터 — 선택지·인원 모두 데이터층이 만든다(getApplicantFilterOptions).
+            교내 절차(서류 검토·기업 전달)도 실제 진행 단계라 함께 나온다. */}
+        <div className="admin-filterbar">
+          <label className="admin-select">
+            <span>전형 단계</span>
+            <select value={stageFilter} onChange={e => setStageFilter(e.target.value)}>
+              {filterOptions.map(o => (
+                <option key={o.value} value={o.value}>{o.label} ({o.count})</option>
+              ))}
+            </select>
+          </label>
+          {stageFilter !== APPLICANT_FILTER_ALL && (
+            <button
+              type="button"
+              className="admin-btn admin-btn-ghost"
+              onClick={() => setStageFilter(APPLICANT_FILTER_ALL)}
+            >
+              필터 해제
+            </button>
+          )}
+        </div>
+
         {applications.length === 0 ? (
           <EmptyState
             icon={LuUsers}
-            title="아직 지원자가 없습니다"
-            message="학생이 교내 채용공고에서 지원하면 이곳에 표시됩니다."
+            title={stageFilter === APPLICANT_FILTER_ALL ? '아직 지원자가 없습니다' : '이 단계에 있는 지원자가 없습니다'}
+            message={stageFilter === APPLICANT_FILTER_ALL
+              ? '학생이 교내 채용공고에서 지원하면 이곳에 표시됩니다.'
+              : '다른 전형 단계를 선택하거나 필터를 해제해 보세요.'}
           />
         ) : (
           <div className="admin-roster admin-jobapp-applicant-roster">
@@ -278,6 +285,7 @@ export default function JobApplicants() {
               <span>현재 전형</span>
               <span>상태</span>
               <span>관리</span>
+              <span>지원서</span>
             </div>
             {applications.map(a => {
               const open = a.status === 'APPLIED' || a.status === 'IN_PROGRESS'
@@ -322,6 +330,12 @@ export default function JobApplicants() {
                     ) : (
                       <span className="admin-field-hint">처리 완료</span>
                     )}
+                  </span>
+                  <span className="admin-request-actions">
+                    {/* 첨부 포트폴리오 열람 — 뷰어는 아직 붙이지 않았다(버튼만). */}
+                    <button type="button" className="admin-btn admin-btn-ghost sm">
+                      <LuFileText /> 지원서 보기
+                    </button>
                   </span>
                 </div>
               )
