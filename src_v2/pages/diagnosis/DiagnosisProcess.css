@@ -56,7 +56,7 @@
   font-weight: 500;
 }
 
-.de-type-request-btn:hover:not(:disabled) { background: #dbf1fb; }
+.de-type-request-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--sky) 14%, #fff); }
 
 .de-type-request-btn.is-requested {
   background: var(--color-bg);
@@ -316,7 +316,7 @@
    「결과 보기」와 「검사 시작」은 같은 역할이므로 같은 색이다 — 상태로 색을 가르지 않는다.
    구분은 잠금(회색)에서만 준다. */
 .de-start-btn--available {
-  background: var(--violet-soft);
+  background: var(--sky-soft);
 }
 
 .de-start-btn--locked {
