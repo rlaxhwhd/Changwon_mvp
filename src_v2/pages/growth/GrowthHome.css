@@ -18,6 +18,7 @@
 .gh-cover-profile { display: flex; align-items: center; gap: 18px; min-width: 0; }
 .gh-avatar { width: 76px; height: 76px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 22px; color: #fff; background: linear-gradient(135deg, var(--gh-violet), #a891ff); font-size: 20px; font-weight: 700; box-shadow: 0 12px 28px rgba(124, 92, 252, .2); }
 .gh-eyebrow, .gh-section-kicker { display: block; margin-bottom: 6px; color: var(--gh-violet); font-size: 12px; line-height: 1.4; letter-spacing: .1em; font-weight: 900; }
+.gh-card .gh-section-kicker { color: var(--gh-ink); }
 .gh-cover h1 { margin: 0; font-size: 28px; line-height: 1.35; letter-spacing: -.03em; font-weight: 900; }
 .gh-cover-profile p { margin: 8px 0 0; color: var(--gh-sub); font-size: 12px; }
 .gh-cover-copy { padding-left: 32px; border-left: 1px solid var(--gh-border); }
@@ -37,15 +38,29 @@
 .gh-card-head { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; }
 .gh-card-head h2 { margin: 0; font-size: 16px; line-height: 1.4; letter-spacing: -.02em; font-weight: 850; }
 .gh-card-head p { margin: 5px 0 0; color: var(--gh-sub); font-size: 12px; line-height: 1.6; }
-.gh-card-head > a { color: var(--gh-violet); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.gh-card-head > a { color: var(--gh-ink); font-size: 12px; font-weight: 800; white-space: nowrap; }
 .gh-head-actions { display: flex; align-items: center; gap: 8px; }
-.gh-head-actions > a { color: var(--gh-violet); font-size: 12px; font-weight: 800; white-space: nowrap; }
-.gh-add-btn { min-height: 32px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid #d9d0ff; border-radius: 9px; color: var(--gh-violet); background: #fff; font-size: 12px; font-weight: 850; white-space: nowrap; cursor: pointer; }
-.gh-add-btn:hover { background: var(--gh-violet-soft); }
-.gh-count { min-width: 42px; padding: 6px 9px; border-radius: 999px; color: var(--gh-violet); background: var(--gh-violet-soft); font-size: 12px; font-weight: 850; text-align: center; }
+.gh-head-actions > a { color: var(--gh-ink); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.gh-add-btn { min-height: 32px; padding: 0 10px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--gh-line); border-radius: 9px; color: var(--gh-ink); background: #fff; font-size: 12px; font-weight: 850; white-space: nowrap; cursor: pointer; }
+.gh-add-btn:hover { background: var(--gh-soft); }
+.gh-count { min-width: 42px; padding: 6px 9px; border-radius: 999px; color: var(--gh-ink); background: var(--gh-soft); font-size: 12px; font-weight: 850; text-align: center; }
+/* 세 줄의 열 비율을 8/4 로 통일한다 — 보유 스킬(7/5)만 어긋나 성장 활동 기록과
+   좌우가 맞지 않았다. */
 .gh-projects { grid-column: span 8; } .gh-profile-card { grid-column: span 4; }
-.gh-skills { grid-column: span 7; } .gh-qualifications { grid-column: span 5; }
+.gh-skills { grid-column: span 8; } .gh-qualifications { grid-column: span 4; }
 .gh-archive { grid-column: span 8; } .gh-next { grid-column: span 4; }
+
+/* 카드마다 강조색을 나눈다 — 여섯 장이 전부 보라면 무엇이 무엇인지 구분되지 않는다.
+   ink = 글자·아이콘(대비가 필요한 자리) / soft = 옅은 면 / line = 옅은 테두리.
+   휴 본색은 흰 배경 대비가 모자라 글자에는 잉크를 쓴다(민트 2.7:1 · 앰버 1.9:1).
+   시안 팔레트(:root)에 있는 값만 쓴다 — 새 색을 만들지 않는다. */
+.gh-card { --gh-ink: var(--gh-violet); --gh-soft: var(--gh-violet-soft); --gh-line: var(--violet-border); }
+.gh-profile-card   { --gh-ink: var(--blue);      --gh-soft: var(--blue-soft);  --gh-line: var(--blue-border); }
+.gh-skills         { --gh-ink: var(--mint-ink);  --gh-soft: var(--mint-soft);  --gh-line: var(--mint-border); }
+.gh-qualifications { --gh-ink: var(--amber-ink); --gh-soft: var(--amber-soft); --gh-line: var(--amber-border); }
+/* 성장 활동 기록은 기본(보라)을 쓴다 — 항목 색은 아래에서 기록 종류(dot tone)가 정한다.
+   다음에 채울 기록은 앞으로 할 일이라 민트. */
+.gh-next           { --gh-ink: var(--mint-ink);  --gh-soft: var(--mint-soft);  --gh-line: var(--mint-border); }
 .gh-project-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .gh-project { overflow: hidden; border: 1px solid var(--gh-border); border-radius: 12px; background: #fff; }
 .gh-project-visual { min-height: 126px; padding: 17px; display: flex; justify-content: space-between; align-items: flex-start; color: #fff; }
@@ -55,7 +70,7 @@
 .gh-project-visual i { align-self: center; margin-right: 20px; font-size: 44px; opacity: .72; }
 .gh-project-body { position: relative; padding: 17px 17px 52px; }
 .gh-project-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.gh-project-meta span { color: var(--gh-sub); font-size: 12px; } .gh-project-meta b { color: var(--gh-violet); font-size: 12px; }
+.gh-project-meta span { color: var(--gh-sub); font-size: 12px; } .gh-project-meta b { color: var(--gh-ink); font-size: 12px; }
 .gh-project h3 { margin: 12px 0 5px; font-size: 14px; line-height: 1.4; }
 .gh-project-body > strong { color: var(--gh-sub); font-size: 12px; }
 .gh-project-body > p { min-height: 58px; margin: 10px 0 13px; color: var(--gh-sub); font-size: 12px; line-height: 1.6; }
@@ -64,7 +79,7 @@
 .gh-item-actions { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
 .gh-project-body > .gh-item-actions { position: absolute; right: 13px; bottom: 13px; }
 .gh-item-actions button { width: 28px; height: 28px; display: grid; place-items: center; border: 1px solid var(--gh-border); border-radius: 8px; color: var(--gh-sub); background: #fff; font-size: 12px; cursor: pointer; }
-.gh-item-actions button:hover { color: var(--gh-violet); border-color: #d9d0ff; background: var(--gh-violet-soft); }
+.gh-item-actions button:hover { color: var(--gh-ink); border-color: var(--gh-line); background: var(--gh-soft); }
 .gh-item-actions button:last-child:hover { color: #dc4444; border-color: #ffcfcf; background: #fff0f0; }
 .gh-empty { grid-column: 1 / -1; margin: 0; padding: 28px 16px; border: 1px dashed var(--gh-border); border-radius: 10px; color: var(--gh-sub); background: #fbfbfd; font-size: 12px; line-height: 1.6; text-align: center; }
 .gh-profile-list { margin: 0; }
@@ -73,19 +88,19 @@
 .gh-profile-list dd { margin: 0; font-size: 14px; font-weight: 800; text-align: right; }
 .gh-strengths { margin-top: 22px; } .gh-strengths h3 { margin: 0 0 12px; font-size: 14px; }
 .gh-strengths > div { display: grid; grid-template-columns: 64px 1fr 28px; gap: 8px; align-items: center; margin-top: 10px; }
-.gh-strengths span, .gh-strengths strong { font-size: 12px; } .gh-strengths strong { color: var(--gh-violet); text-align: right; }
+.gh-strengths span, .gh-strengths strong { font-size: 12px; } .gh-strengths strong { color: var(--gh-ink); text-align: right; }
 .gh-strengths > div > div { height: 6px; overflow: hidden; border-radius: 999px; background: var(--gh-muted); }
-.gh-strengths i { display: block; height: 100%; border-radius: inherit; background: var(--gh-violet); }
+.gh-strengths i { display: block; height: 100%; border-radius: inherit; background: var(--gh-ink); }
 .gh-skill-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .gh-skill { padding: 13px; display: flex; align-items: center; justify-content: space-between; gap: 14px; border: 1px solid var(--gh-border); border-radius: 10px; }
 .gh-skill strong, .gh-skill span { display: block; } .gh-skill strong { font-size: 14px; }
 .gh-skill span { margin-top: 3px; color: var(--gh-sub); font-size: 12px; }
 .gh-skill-controls { display: flex; align-items: center; gap: 9px; }
 .gh-level { display: flex; gap: 4px; } .gh-level i { width: 6px; height: 18px; border-radius: 3px; background: var(--gh-muted); }
-.gh-level i.filled { background: var(--gh-violet); }
+.gh-level i.filled { background: var(--gh-ink); }
 .gh-qualification-list > div { padding: 11px 0; display: grid; grid-template-columns: 34px 1fr auto auto; gap: 11px; align-items: center; border-bottom: 1px solid var(--gh-border); }
 .gh-qualification-list > div:last-child { border-bottom: 0; }
-.gh-record-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: var(--gh-violet); background: var(--gh-violet-soft); font-size: 12px; }
+.gh-record-icon { width: 34px; height: 34px; display: grid; place-items: center; border-radius: 9px; color: var(--gh-ink); background: var(--gh-soft); font-size: 12px; }
 .gh-qualification-list strong, .gh-qualification-list small { display: block; } .gh-qualification-list strong { font-size: 14px; }
 .gh-qualification-list small, .gh-qualification-list time { margin-top: 3px; color: var(--gh-sub); font-size: 12px; }
 .gh-timeline { display: flex; flex-direction: column; }
@@ -95,19 +110,24 @@
 .gh-timeline-dot::after { content: ""; position: absolute; top: 14px; left: 4px; width: 2px; height: 54px; background: var(--gh-border); }
 .gh-timeline-item:last-child .gh-timeline-dot::after { display: none; }
 .gh-shell .gh-timeline-dot.is-mint { background: var(--gh-mint); } .gh-shell .gh-timeline-dot.is-blue { background: var(--gh-blue); } .gh-shell .gh-timeline-dot.is-amber { background: var(--gh-amber); }
+/* 항목 라벨(진단·비교과·성과)은 옆의 점과 같은 색이어야 한다 — 점만 색이 달라
+   라벨이 전부 한 색이면 둘이 따로 논다. 점 색은 tone 클래스가 정한다. */
 .gh-timeline-item > div > span { display: block; margin-bottom: 3px; color: var(--gh-violet); font-size: 12px; font-weight: 850; }
+.gh-timeline-item:has(.gh-timeline-dot.is-mint) > div > span  { color: var(--mint-ink); }
+.gh-timeline-item:has(.gh-timeline-dot.is-blue) > div > span  { color: var(--blue); }
+.gh-timeline-item:has(.gh-timeline-dot.is-amber) > div > span { color: var(--amber-ink); }
 .gh-timeline-item strong { display: block; font-size: 14px; } .gh-timeline-item p { margin: 5px 0 0; color: var(--gh-sub); font-size: 12px; line-height: 1.5; }
 .gh-next { border-color: #d9d0ff; background: linear-gradient(145deg, #fff 0%, #faf8ff 100%); }
-.gh-current-phase { padding: 16px; border-radius: 11px; background: var(--gh-violet-soft); }
+.gh-current-phase { padding: 16px; border-radius: 11px; background: var(--gh-soft); }
 .gh-current-phase small, .gh-current-phase strong, .gh-current-phase span { display: block; }
-.gh-current-phase small { color: var(--gh-violet); font-size: 12px; font-weight: 850; }
+.gh-current-phase small { color: var(--gh-ink); font-size: 12px; font-weight: 850; }
 .gh-current-phase strong { margin-top: 7px; font-size: 14px; } .gh-current-phase span { margin-top: 4px; color: var(--gh-sub); font-size: 12px; }
-.gh-next-action { padding: 20px 2px 2px; } .gh-next-action > span { color: var(--gh-violet); font-size: 12px; font-weight: 850; }
+.gh-next-action { padding: 20px 2px 2px; } .gh-next-action > span { color: var(--gh-ink); font-size: 12px; font-weight: 850; }
 .gh-next-action h3 { margin: 7px 0 6px; font-size: 14px; line-height: 1.45; }
 .gh-next-action p { margin: 0 0 14px; color: var(--gh-sub); font-size: 12px; line-height: 1.6; }
-.gh-next-action a { display: inline-flex; align-items: center; gap: 7px; color: var(--gh-violet); font-size: 12px; font-weight: 850; }
+.gh-next-action a { display: inline-flex; align-items: center; gap: 7px; color: var(--gh-ink); font-size: 12px; font-weight: 850; }
 .gh-document-policy { margin-top: 18px; padding: 13px; display: flex; gap: 10px; align-items: flex-start; border-top: 1px solid #d9d0ff; color: var(--gh-sub); }
-.gh-document-policy > i { margin-top: 3px; color: var(--gh-violet); } .gh-document-policy p { margin: 0; }
+.gh-document-policy > i { margin-top: 3px; color: var(--gh-ink); } .gh-document-policy p { margin: 0; }
 .gh-document-policy strong, .gh-document-policy span { display: block; }
 .gh-document-policy strong { color: var(--gh-text); font-size: 14px; line-height: 1.5; } .gh-document-policy span { margin-top: 4px; font-size: 12px; line-height: 1.5; }
 .gh-editor-form { display: flex; flex-direction: column; gap: 16px; }
