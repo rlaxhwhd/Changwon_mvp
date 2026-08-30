@@ -8,8 +8,8 @@
   color: var(--color-navy);
 }
 
+/* 삽화가 높이를 정한다 — 빈 여백을 만들던 min-height 를 두지 않는다. */
 .pred-hero {
-  min-height: 170px;
   display: grid;
   grid-template-columns: minmax(360px, 1fr) minmax(360px, 620px);
   align-items: center;

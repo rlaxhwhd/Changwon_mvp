@@ -20,18 +20,16 @@
 .tgm-tabs button:nth-child(3) { --tgm-tab: var(--amber-ink); --tgm-tab-soft: var(--daily-3-soft); }
 .tgm-tabs button i { color: var(--tgm-tab); }
 
+/* 페이지 제목·설명은 공용 머리글(usePageHead)이 그린다. 이 띠에 있던 제목은 그때
+   지워졌고 배경·높이만 남아 빈 칸이 됐다 → 버튼 한 줄로 접는다.
+   그라데이션·테두리·min-height 를 되살리지 말 것. */
 .tgm-header {
-  min-height: 178px;
-  margin: 24px 0 24px;
-  padding: 34px 44px 32px;
+  margin: 20px 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  background:
-    radial-gradient(circle at 74% 36%, rgba(46, 91, 255, 0.16), transparent 30%),
-    linear-gradient(108deg, #ffffff 0%, #f8faff 42%, var(--tgm-soft) 100%);
-  border: 1px solid var(--color-border);
+  border: 0;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
