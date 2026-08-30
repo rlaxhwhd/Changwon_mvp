@@ -177,12 +177,21 @@
   transition: all 0.15s;
   white-space: nowrap;
 }
-.gj-tab:hover { background: var(--color-surface); color: var(--color-text); }
+/* 필터 칩은 갈래마다 색이 다르다 — 아래 기록 카드의 왼쪽 띠·태그와 같은 색이라
+   칩을 고르면 어떤 카드가 걸리는지 색으로 먼저 읽힌다.
+   순서는 TABS 상수 그대로: 전체 · 아르바이트 · 팀프로젝트 · 기타 활동.
+   '전체'는 갈래가 아니라 해제라 중립(네이비)이다. */
+.gj-tab:nth-child(1) { --gj-tab-ink: var(--color-navy); }
+.gj-tab:nth-child(2) { --gj-tab-ink: #0284C7; }
+.gj-tab:nth-child(3) { --gj-tab-ink: var(--violet); }
+.gj-tab:nth-child(4) { --gj-tab-ink: #16A34A; }
+
+.gj-tab:hover { background: var(--color-surface); color: var(--gj-tab-ink); }
 .gj-tab.active {
-  background: var(--color-cta);
+  background: var(--gj-tab-ink);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 8px var(--cta-shadow);
+  box-shadow: none;
 }
 .gj-search-wrap { position: relative; }
 .gj-search {
@@ -405,11 +414,11 @@
   background: var(--color-primary-bg);
 }
 .gj-page-btn.on {
-  background: var(--color-cta);
-  border-color: var(--color-primary);
+  background: var(--color-navy);
+  border-color: var(--color-navy);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 8px var(--cta-shadow);
+  box-shadow: none;
 }
 .gj-page-btn:disabled { opacity: 0.38; cursor: not-allowed; }
 

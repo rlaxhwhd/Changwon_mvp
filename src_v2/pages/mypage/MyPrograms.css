@@ -99,6 +99,13 @@
 }
 
 /* 스탯 숫자는 navy 통일, 액센트는 XP 하나만 (단일 액센트 규칙) */
+/* 여섯 지표를 뜻대로 가른다 — 숫자가 전부 검정이면 무엇이 중요한지 안 보인다.
+   수료=민트 · 진행중=앰버 · 신청완료=파랑은 아래 상태 배지와 같은 뜻·같은 색이다.
+   글자에는 잉크를 쓴다(민트 본색 2.7:1 · 앰버 1.9:1). '전체 신청'은 합계라 중립. */
+.mp-stat--done .mp-stat-num     { color: var(--mint-ink); }
+.mp-stat--active .mp-stat-num   { color: var(--amber-ink); }
+.mp-stat--upcoming .mp-stat-num { color: var(--blue); }
+.mp-stat--hours .mp-stat-num    { color: var(--sky); }
 .mp-stat--xp .mp-stat-num { color: var(--color-primary); }
 
 /* Filter bar */

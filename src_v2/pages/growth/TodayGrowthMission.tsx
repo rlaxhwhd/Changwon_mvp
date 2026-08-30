@@ -177,7 +177,8 @@ export default function TodayGrowthMission() {
   }
 
   return (
-    <main className="tgm-page">
+    // 활성 퀘스트를 클래스로 내보낸다 — 페이지 강조색이 퀘스트 종류를 따라간다.
+    <main className={`tgm-page is-${tab}`}>
       <header className="tgm-header">
         <button className="tgm-log-btn" type="button" onClick={() => navigate('/growth/mission-log')}>
           기록노트 보기

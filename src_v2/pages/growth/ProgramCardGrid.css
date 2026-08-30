@@ -48,7 +48,18 @@
 .pcg-body { display: flex; flex-direction: column; gap: 10px; padding: 18px; }
 .pcg-badges { display: flex; align-items: center; gap: 7px; }
 .pcg-category, .pcg-dday { padding: 4px 8px; border-radius: var(--radius-pill); font-size: 14px; font-weight: 800; }
-.pcg-category { background: var(--color-primary-bg); color: var(--color-primary); }
+
+/* 카테고리 색 — 6개 갈래를 눈으로 가른다. 전부 보라면 목록을 훑을 때 갈래가 안 보인다.
+   값은 :root 팔레트에서만 고르고, 글자에는 잉크를 쓴다
+   (민트 본색 2.7:1 · 앰버 1.9:1 은 칩 글자로 못 쓴다).
+   '기타'는 색을 주지 않는다 — 분류가 없다는 뜻이므로 중립이 맞다. */
+.pcg-category { background: var(--pcg-cat-soft, var(--color-primary-bg)); color: var(--pcg-cat-ink, var(--color-primary)); }
+.pcg-category[data-cat="진로"]   { --pcg-cat-ink: var(--blue);      --pcg-cat-soft: var(--blue-soft); }
+.pcg-category[data-cat="취업"]   { --pcg-cat-ink: var(--mint-ink);  --pcg-cat-soft: var(--mint-soft); }
+.pcg-category[data-cat="어학"]   { --pcg-cat-ink: var(--amber-ink); --pcg-cat-soft: var(--amber-soft); }
+.pcg-category[data-cat="창업"]   { --pcg-cat-ink: var(--coral-ink); --pcg-cat-soft: var(--coral-soft); }
+.pcg-category[data-cat="자격증"] { --pcg-cat-ink: var(--violet);    --pcg-cat-soft: var(--violet-soft); }
+.pcg-category[data-cat="기타"]   { --pcg-cat-ink: var(--color-text-sub); --pcg-cat-soft: var(--color-surface); }
 .pcg-dday { background: var(--color-surface); color: var(--color-text-sub); }
 .pcg-dday--urgent { background: #FEF2F2; color: var(--color-danger); }
 .pcg-title { overflow: hidden; color: var(--color-navy); font-size: 18px; font-weight: 800; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
