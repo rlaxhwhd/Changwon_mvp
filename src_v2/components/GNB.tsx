@@ -52,6 +52,10 @@ export default function GNB() {
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  // 하위 메뉴는 CSS :hover 로 열린다. 항목을 눌러 이동해도 포인터가 그 자리에 남아
+  // 메뉴가 계속 펼쳐져 있었다 → 누른 그룹만 접어 두고, 포인터가 그 그룹을 벗어나면 푼다.
+  // 그룹 단위라 옆 메뉴로 옮기면 정상적으로 다시 열린다.
+  const [collapsedNavId, setCollapsedNavId] = useState<string | null>(null)
   const profileRef = useRef<HTMLDivElement | null>(null)
   const mobileMenuRef = useRef<HTMLDivElement | null>(null)
   const mobileBtnRef = useRef<HTMLButtonElement | null>(null)
@@ -110,7 +114,12 @@ export default function GNB() {
               const activeChildPath = getActiveChildPath(pathname, { ...section, children: visibleChildren }, hash)
 
               return (
-                <div className="nav-group" key={section.id}>
+                <div
+                  className={`nav-group${collapsedNavId === section.id ? ' is-collapsed' : ''}`}
+                  key={section.id}
+                  onClick={() => setCollapsedNavId(section.id)}
+                  onMouseLeave={() => setCollapsedNavId(null)}
+                >
                   <Link to={firstPath} className={`nav-item${active ? ' active' : ''}`}>
                     <Icon name={section.icon} />
                     {section.label}

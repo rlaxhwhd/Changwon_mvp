@@ -435,10 +435,19 @@ select:focus-visible {
 }
 
 .nav-group:hover .nav-dropdown,
-.nav-group:focus-within .nav-dropdown {
+.nav-group:has(:focus-visible) .nav-dropdown {
   opacity: 1;
   visibility: visible;
   transform: translate(-50%, 0);
+}
+
+/* 눌러서 이동한 직후에는 접어 둔다(GNB.collapsedNavId). 포인터가 그 그룹을 벗어나면 풀린다.
+   :focus-within 이 아니라 :has(:focus-visible) 인 것도 같은 이유다 —
+   마우스로 누른 링크가 포커스를 쥐고 있으면 메뉴가 계속 열려 있었다. */
+.top-nav .nav-group.is-collapsed .nav-dropdown {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -4px);
 }
 
 .nav-dropdown-link {

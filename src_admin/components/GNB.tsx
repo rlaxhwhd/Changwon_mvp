@@ -27,6 +27,9 @@ export default function GNB() {
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  // 하위 메뉴는 CSS :hover 로 열린다. 항목을 눌러 이동해도 포인터가 그 자리에 남아
+  // 메뉴가 계속 펼쳐져 있었다 → 누른 항목만 접어 두고, 포인터가 벗어나면 푼다.
+  const [collapsedNavId, setCollapsedNavId] = useState<string | null>(null)
   const profileRef = useRef<HTMLDivElement | null>(null)
 
   // 경로가 바뀌면 열려 있던 것들을 닫는다
@@ -73,7 +76,9 @@ export default function GNB() {
             return (
               <div
                 key={section.id}
-                className={`gnb-item${active ? ' is-active' : ''}${hasSub ? ' has-sub' : ''}`}
+                className={`gnb-item${active ? ' is-active' : ''}${hasSub ? ' has-sub' : ''}${collapsedNavId === section.id ? ' is-collapsed' : ''}`}
+                onClick={() => setCollapsedNavId(section.id)}
+                onMouseLeave={() => setCollapsedNavId(null)}
               >
                 <Link
                   to={firstPath}

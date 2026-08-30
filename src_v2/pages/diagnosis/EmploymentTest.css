@@ -292,8 +292,9 @@
   background: color-mix(in srgb, var(--mint-soft) 52%, var(--color-bg));
   border: 1px solid color-mix(in srgb, var(--mint) 28%, var(--color-border));
   color: var(--mint-ink);
+  /* 라운지 .diagnosis-lock-button 과 같은 14px/700 */
   font-size: var(--fs-body);
-  font-weight: 500;
+  font-weight: 700;
 }
 
 .de-start-btn:hover { background: var(--mint-soft); opacity: 1; }
