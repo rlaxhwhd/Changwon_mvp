@@ -29,7 +29,6 @@ import ProfessorCounsel from './pages/counsel/ProfessorCounsel'
 
 // 경력개발 로드맵
 import AiRoadmap from './pages/roadmap/AiRoadmap'
-import Prediction from './pages/roadmap/Prediction'
 import AiJobs from './pages/roadmap/AiJobs'
 import AiResume from './pages/roadmap/AiResume'
 
@@ -102,14 +101,12 @@ const router = createBrowserRouter(
         { path: '/roadmap/skill-tree',  element: <AiRoadmap /> },
         { path: '/roadmap/final',       element: <Navigate to="/roadmap/skill-tree" replace /> },
         // 구 경로 → 신 경로 (취업지원 하위로 이동)
-        { path: '/roadmap/prediction',  element: <Navigate to="/jobs/prediction" replace /> },
         { path: '/roadmap/jobs',        element: <Navigate to="/jobs/joblist" replace /> },
         { path: '/roadmap/resume',      element: <Navigate to="/jobs/home" replace /> },
 
         // 취업지원
         { path: '/jobs',                 element: <JobSupport scope="internal" /> },
         { path: '/jobs/external',        element: <JobSupport scope="external" /> },
-        { path: '/jobs/prediction',      element: <Prediction /> },
         { path: '/jobs/joblist',         element: <AiJobs /> },
         { path: '/jobs/home',            element: <JobsHome /> },
         { path: '/jobs/home/resume',     element: <AiResume /> },

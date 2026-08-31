@@ -109,7 +109,6 @@ index.html  ──(meta refresh)──▶  /v2
 |---|---|---|
 | `/jobs` | JobSupport | 채용공고 목록 |
 | `/jobs/:id` | JobDetail | 채용공고 상세 |
-| `/jobs/prediction` | Prediction | 취업예측분석 (목표기업·유사기업 합격 예측) |
 | `/jobs/joblist` | AiJobs | AI 맞춤채용 (스펙 기반 기업 추천) |
 | `/jobs/home` | JobsHome | AI 자소서/면접 허브 |
 | `/jobs/home/resume` | AiResume | AI 자소서 생성 |
@@ -124,7 +123,7 @@ index.html  ──(meta refresh)──▶  /v2
 
 ### 🔁 하위 호환 리다이렉트
 URL·즐겨찾기 유지를 위해 구 경로는 신 경로로 매핑:
-`/roadmap/prediction → /jobs/prediction` · `/roadmap/jobs → /jobs/joblist` · `/roadmap/resume → /jobs/home` · `/growth/skill-tree → /roadmap/skill-tree` · `/mypage/counsel → /counsel/record` · `/mypage/mission → /growth/mission-log` · `/diagnosis/result → /diagnosis/employment`
+`/roadmap/jobs → /jobs/joblist` · `/roadmap/resume → /jobs/home` · `/growth/skill-tree → /roadmap/skill-tree` · `/mypage/counsel → /counsel/record` · `/mypage/mission → /growth/mission-log` · `/diagnosis/result → /diagnosis/employment`
 
 ---
 
