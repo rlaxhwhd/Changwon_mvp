@@ -1,98 +1,36 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import {
-  Chart as ChartJS,
-  RadialLinearScale,
-  PointElement,
-  LineElement,
-  Filler,
-  Tooltip,
-  Legend,
-  type ChartData,
-  type ChartOptions,
-  type ScriptableContext,
-} from 'chart.js'
-import { Radar } from 'react-chartjs-2'
-import Modal from '../../components/Modal'
 import CRAReport from '../../components/CRAReport'
+import DiagnosisResultReport from '../../components/DiagnosisResultReport'
 import { getActiveStudent } from '../../data/students'
-import { DIAGNOSIS_MODULES } from '../../data/careerProcess'
+import { getModuleByTestId } from '../../data/careerProcess'
+import { getDiagnosisResult, getResultRows, type FactorLevel } from '../../data/diagnosisResults'
 import './DiagnosisResultDetail.css'
 import { usePageHead } from '../../components/PageCrumb'
 
-ChartJS.register(RadialLinearScale, PointElement, LineElement, Filler, Tooltip, Legend)
+// ─────────────────────────────────────────────────────────────────────────────
+// 진단 결과 상세 (학생) — 요인 레이더 + 결과표.
+//
+// 요인은 검사가 정한다(careerProcess.DIAGNOSIS_MODULES[].factors). C-CORE 는 4개다:
+// 진로명확성 · 역량준비도 · 취업준비도 · 진로동기. 점수는 응시 결과(diagnosisResults)가
+// 주는 T점수를 그대로 쓴다 — 화면에서 계산하지 않는다(CLAUDE.md 14조).
+//
+// 표·코멘트는 상담사 포털과 공유하는 DiagnosisResultReport 가 그린다. 여기서 다시
+// 만들지 않는다(재생성 금지) — 같은 검사 결과가 두 화면에서 달라지면 안 된다.
+// ─────────────────────────────────────────────────────────────────────────────
 
-interface Core {
-  name: string
-  score: number
-  color: string
-  detail: string
-  subItems: { name: string; score: number }[]
-  suggestion: string
-}
+/** T점수 만점. 레이더 반지름과 눈금이 이 값을 기준으로 그려진다. */
+const T_MAX = 100
 
-const cores: Core[] = [
-  { name: '의사소통', score: 78, color: '#2E5BFF', detail: '타인의 의견을 경청하고 자신의 생각을 명확하게 전달하는 능력입니다. 문서 작성, 발표, 토론 등 다양한 소통 역량을 평가합니다.', subItems: [{ name: '경청능력', score: 82 }, { name: '문서작성', score: 75 }, { name: '발표능력', score: 70 }, { name: '토론능력', score: 85 }], suggestion: '발표/프레젠테이션 비교과 활동에 참여하여 실전 경험을 쌓으세요.' },
-  { name: '문제해결', score: 82, color: '#3B82F6', detail: '복잡한 상황에서 문제를 분석하고 창의적으로 해결하는 능력입니다. 논리적 사고와 분석력을 포함합니다.', subItems: [{ name: '분석력', score: 85 }, { name: '논리적사고', score: 88 }, { name: '창의적해결', score: 72 }, { name: '의사결정', score: 83 }], suggestion: '해커톤이나 공모전 참여로 실전 문제 해결 경험을 쌓으세요.' },
-  { name: '자기관리', score: 70, color: '#22C55E', detail: '목표를 설정하고 체계적으로 실행하며, 시간과 자원을 효율적으로 관리하는 능력입니다.', subItems: [{ name: '목표설정', score: 75 }, { name: '시간관리', score: 68 }, { name: '스트레스관리', score: 65 }, { name: '자기개발', score: 72 }], suggestion: '일정 관리 앱을 활용한 체계적 시간관리 습관을 만드세요.' },
-  { name: '대인관계', score: 65, color: '#F59E0B', detail: '다양한 사람들과 원만한 관계를 형성하고 유지하며, 갈등 상황을 건설적으로 해결하는 능력입니다.', subItems: [{ name: '협동능력', score: 70 }, { name: '갈등관리', score: 58 }, { name: '네트워킹', score: 60 }, { name: '공감능력', score: 72 }], suggestion: '팀 프로젝트와 동아리 활동으로 대인관계 역량을 강화하세요.' },
-  { name: '정보활용', score: 88, color: '#2E5BFF', detail: '디지털 도구와 정보 기술을 활용하여 필요한 정보를 수집, 분석, 활용하는 능력입니다.', subItems: [{ name: '정보수집', score: 90 }, { name: '정보분석', score: 88 }, { name: '디지털활용', score: 92 }, { name: '정보윤리', score: 82 }], suggestion: '데이터 분석 관련 자격증 취득으로 역량을 공인받으세요.' },
-  { name: '글로벌', score: 35, color: '#EF4444', detail: '외국어 능력과 다문화 이해를 바탕으로 글로벌 환경에서 소통하고 협업하는 능력입니다.', subItems: [{ name: '외국어능력', score: 25 }, { name: '다문화이해', score: 45 }, { name: '글로벌감각', score: 40 }, { name: '국제협력', score: 30 }], suggestion: 'TOEIC 700점 이상 취득과 국제 교류 프로그램 참여를 최우선으로 추진하세요.' },
-  { name: '리더십', score: 60, color: '#F59E0B', detail: '조직을 이끌고 구성원의 역량을 이끌어내며, 공동의 목표를 달성하는 능력입니다.', subItems: [{ name: '비전제시', score: 55 }, { name: '동기부여', score: 62 }, { name: '팀빌딩', score: 65 }, { name: '책임감', score: 58 }], suggestion: '학생회, 동아리 임원 활동을 통해 리더십 경험을 쌓으세요.' },
-  { name: '창의융합', score: 72, color: '#3B82F6', detail: '다양한 분야의 지식을 융합하여 새로운 아이디어를 창출하고 혁신적으로 사고하는 능력입니다.', subItems: [{ name: '융합적사고', score: 75 }, { name: '아이디어발상', score: 78 }, { name: '혁신추구', score: 65 }, { name: '유연성', score: 70 }], suggestion: '타 전공 수업 수강이나 융합 프로젝트 참여를 권장합니다.' },
-  { name: '직업윤리', score: 75, color: '#22C55E', detail: '직업에 대한 올바른 가치관과 윤리의식을 갖추고, 성실하고 책임감 있게 행동하는 능력입니다.', subItems: [{ name: '성실성', score: 80 }, { name: '책임의식', score: 78 }, { name: '준법정신', score: 72 }, { name: '직업관', score: 70 }], suggestion: '봉사활동과 멘토링 프로그램에 참여하여 직업윤리 의식을 높이세요.' },
-]
-
-const historyData = [
-  { date: '2026-03-15', label: '3차 검사', scores: [78, 82, 70, 65, 88, 35, 60, 72, 75] },
-  { date: '2025-09-20', label: '2차 검사', scores: [72, 75, 65, 60, 82, 30, 55, 68, 70] },
-  { date: '2025-03-10', label: '1차 검사', scores: [65, 68, 58, 55, 75, 20, 48, 60, 62] },
-]
-
-const TEST_NAMES: Record<string, string> = {
-  '9core': '9CORE 검사',
-  psychology: '심리검사',
-  cares: 'CARES 진로인식검사',
-  job: '직무역량검사',
-  aptitude: '직업적성검사',
-  // 진단 모듈(careerProcess.DIAGNOSIS_MODULES) testId 연동 — 이름은 단일소스에서 파생
-  ...Object.fromEntries(DIAGNOSIS_MODULES.map(m => [m.testId, m.name])),
-}
-
-const scoreLevel = (s: number) => (s >= 80 ? 'high' : s >= 60 ? 'mid' : 'low')
-
-// 점수 띠: 0~40 코랄 / 41~70 민트 / 71~100 보라.
-// 채움은 단색이 아니라 그라데이션이다 — 라운지의 진행 막대와 같은 말투.
-// 글자는 잉크(진한 쪽)를 쓴다 — 휴 본색은 흰 배경에서 대비가 모자란다(민트 2.7:1).
-const BAR_BANDS = [
-  { min: 71, ink: 'var(--violet)',    fill: 'linear-gradient(90deg, var(--blue), var(--violet))' },
-  { min: 41, ink: 'var(--mint-ink)',  fill: 'linear-gradient(90deg, var(--teal), var(--mint))' },
-  { min: 0,  ink: 'var(--coral-ink)', fill: 'linear-gradient(90deg, var(--amber), var(--coral))' },
-]
-const band = (s: number) => BAR_BANDS.find(b => s >= b.min) ?? BAR_BANDS[BAR_BANDS.length - 1]
-
-/** 캔버스는 CSS 변수를 못 읽는다 — 토큰 값을 여기서 한 번 꺼내 쓴다(색을 다시 적지 않는다). */
-const token = (name: string) =>
-  getComputedStyle(document.documentElement).getPropertyValue(name).trim()
-
-/** 이력 레이더의 면 — 단색 대신 파랑→보라 그라데이션. 차트 영역이 잡힌 뒤에만 만들 수 있다. */
-function radarAreaFill(ctx: ScriptableContext<'radar'>): CanvasGradient | string {
-  const { chartArea, ctx: canvas } = ctx.chart
-  if (!chartArea) return 'transparent'
-  const g = canvas.createLinearGradient(chartArea.left, chartArea.bottom, chartArea.right, chartArea.top)
-  g.addColorStop(0, `${token('--blue')}14`)
-  g.addColorStop(1, `${token('--violet')}59`)
-  return g
-}
-const barColor = (s: number) => band(s).ink
-const barFill = (s: number) => band(s).fill
+/** 수준 → 색 클래스. 결과표(DiagnosisResultReport)와 같은 이름·같은 뜻을 쓴다. */
+const LEVEL_CLASS: Record<FactorLevel, string> = { 낮음: 'low', 보통: 'mid', 높음: 'high' }
 
 /* ── 홀로그램 레이더 차트 (Main 스타일 SVG) ──────────────────────── */
 function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
   const size = 280
   const cx = size / 2
   const cy = size / 2
-  const r = 82
+  const r = 104
   const n = axes.length
 
   const pt = (i: number, ratio: number) => {
@@ -111,8 +49,12 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
     return `${i === 0 ? 'M' : 'L'}${p.x},${p.y}`
   }).join(' ') + ' Z'
 
+  // 축이 4개면 좌·우 라벨이 정확히 수평 끝에 놓여 그림 밖으로 밀린다("역량준비도"가 잘림).
+  // 라벨이 차지할 만큼 가로 여백을 두고 그린다.
+  const padX = 62
+
   return (
-    <svg viewBox={`0 0 ${size} ${size}`} className="w-full max-w-[320px]">
+    <svg viewBox={`${-padX} 0 ${size + padX * 2} ${size}`} className="dr-radar-svg">
       <defs>
         {/* 홀로그램 메인 그라데이션 */}
         <linearGradient id="dr-holo-main" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -146,14 +88,15 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
       {/* 배경 다각형 틴트 */}
       <path d={outerPath} fill="url(#dr-holo-main)" fillOpacity="0.06" />
 
-      {/* 그리드 링 */}
+      {/* 그리드 링 — T점수 눈금. 0.5(=50점)가 평균선이라 그 링을 강조한다. */}
       {gridLevels.map((lv, li) => (
         <polygon key={li}
           points={axes.map((_, i) => { const p = pt(i, lv); return `${p.x},${p.y}` }).join(' ')}
           fill="none"
-          stroke={lv === 1 ? '#A5B4FC' : '#C7D2FE'}
-          strokeWidth={lv === 1 ? 1.2 : 0.8}
-          strokeOpacity={lv === 1 ? 0.7 : 0.5}
+          stroke={lv === 0.5 ? '#A5B4FC' : '#C7D2FE'}
+          strokeWidth={lv === 0.5 ? 1.2 : 0.8}
+          strokeDasharray={lv === 0.5 ? '3 3' : undefined}
+          strokeOpacity={lv === 0.5 ? 0.9 : 0.5}
         />
       ))}
 
@@ -162,6 +105,14 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
         const o = pt(i, 1)
         return <line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke="#C7D2FE" strokeWidth="0.8" strokeOpacity="0.6" />
       })}
+
+      {/* 눈금 숫자 — 만점이 100 이라는 것이 차트 안에서 읽혀야 한다 */}
+      {gridLevels.map(lv => (
+        <text key={`tick-${lv}`} x={cx + 5} y={cy - r * lv} dominantBaseline="middle"
+          fontSize="10" fill="#9AA3B2" fontFamily="Pretendard, sans-serif">
+          {lv * T_MAX}
+        </text>
+      ))}
 
       {/* 홀로그램 데이터 채우기 */}
       <path d={dataPath} fill="url(#dr-holo-main)" fillOpacity="0.55" />
@@ -182,11 +133,11 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
 
       {/* 라벨 */}
       {axes.map((ax, i) => {
-        const { x, y } = pt(i, 1.24)
+        const { x, y } = pt(i, 1.2)
         const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
         return (
           <text key={i} x={x} y={y} textAnchor={anchor} dominantBaseline="middle"
-            fontSize="10" fill="#4B5563" fontFamily="Pretendard, sans-serif" fontWeight="600">
+            fontSize="13" fill="#4B5563" fontFamily="Pretendard, sans-serif" fontWeight="700">
             {ax.label}
           </text>
         )
@@ -197,283 +148,133 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
 
 export default function DiagnosisResultDetail() {
   const navigate = useNavigate()
-  const { testId = '9core' } = useParams()
-  const testName = TEST_NAMES[testId] ?? '진단 검사'
-  const studentName = getActiveStudent().name
+  const { testId = 'ccore' } = useParams()
+  const student = getActiveStudent()
+  const module = getModuleByTestId(testId)
+  const testName = module?.name ?? '진단 검사'
 
-  const [abilityModal, setAbilityModal] = useState<number | null>(null)
-  const [historyModal, setHistoryModal] = useState(false)
-  const [craDate, setCraDate] = useState<string | null>(null)
-  const [showAi, setShowAi] = useState(false)          // 기본 접힘
-  const [analyzing, setAnalyzing] = useState(false)    // AI 분석 로딩 중
-  const [hasAnalyzed, setHasAnalyzed] = useState(false) // 한 번이라도 분석 완료했는지
+  const result = getDiagnosisResult(student.id, testId)
+  const rows = result ? getResultRows(result, module) : []
 
-  const handleAiToggle = () => {
+  // 결과지 전체 보기 — CCORE 를 축으로 짜인 결과표라 핵심진단에서만 연다.
+  const [reportOpen, setReportOpen] = useState(false)
+  const hasFullReport = testId === 'ccore' && rows.length > 0
+
+  // AI 분석은 '생성'이다 — 열자마자 보여주지 않고 버튼을 눌러야 만들어진다.
+  // 한 번 만든 뒤에는 다시 접었다 펴도 재생성하지 않는다.
+  const [aiOpen, setAiOpen] = useState(false)
+  const [analyzing, setAnalyzing] = useState(false)
+  const [analyzed, setAnalyzed] = useState(false)
+  const runAnalysis = () => {
     if (analyzing) return
-    if (hasAnalyzed) {
-      // 이미 분석 완료 → 즉시 펼침/접힘 토글 (로딩 없음)
-      setShowAi(v => !v)
-      return
-    }
-    // 첫 클릭 → 로딩 후 펼침
+    if (analyzed) { setAiOpen(v => !v); return }
     setAnalyzing(true)
-    window.setTimeout(() => {
-      setAnalyzing(false)
-      setHasAnalyzed(true)
-      setShowAi(true)
-    }, 1800)
+    window.setTimeout(() => { setAnalyzing(false); setAnalyzed(true); setAiOpen(true) }, 1400)
   }
 
-  const avg = Math.round(cores.reduce((a, c) => a + c.score, 0) / cores.length)
-  // 머리글은 avg 가 정해진 뒤에 등록한다(훅 순서는 조건 분기가 없어 안전).
-  usePageHead(`${testName} 결과`, `9개 핵심 역량 검사 결과입니다 · 평균 ${avg}점`)
-  const ability = abilityModal !== null ? cores[abilityModal] : null
-  const lowest = cores.reduce((min, c) => (c.score < min.score ? c : min))
-  const strong = cores.filter(c => c.score >= 80).map(c => `${c.name}(${c.score}점)`).join(', ') || '없음'
-  const weak = cores.filter(c => c.score < 60).map(c => `${c.name}(${c.score}점)`).join(', ') || '없음'
+  // 요약은 T점수에서 그대로 뽑는다 — 판정식을 새로 만들지 않는다(CLAUDE.md 14조).
+  // 수준(낮음·보통·높음)도 levelOf 한 곳에서만 나온다.
+  const avg = rows.length > 0 ? rows.reduce((sum, r) => sum + r.tScore, 0) / rows.length : 0
+  const best = rows.length > 0 ? rows.reduce((m, r) => (r.tScore > m.tScore ? r : m)) : undefined
+  const worst = rows.length > 0 ? rows.reduce((m, r) => (r.tScore < m.tScore ? r : m)) : undefined
 
-  const radarOptions: ChartOptions<'radar'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    scales: {
-      r: {
-        beginAtZero: true,
-        max: 100,
-        ticks: { stepSize: 20, font: { size: 10 } },
-        pointLabels: { font: { size: 11, family: 'Pretendard' } },
-      },
-    },
-    plugins: { legend: { display: false } },
-  }
-
-  const historyRadarData: ChartData<'radar'> = {
-    labels: cores.map(c => c.name),
-    datasets: historyData.map((h, i) => ({
-      label: h.label,
-      data: h.scores,
-      // 최신 회차만 면을 채운다 — 지난 회차는 점선 윤곽으로 남겨 비교만 되게.
-      backgroundColor: i === 0 ? radarAreaFill : 'transparent',
-      borderColor: i === 0 ? token('--violet') : i === 1 ? token('--mint') : token('--amber'),
-      borderWidth: i === 0 ? 2 : 1.5,
-      borderDash: i === 0 ? [] : [5, 5],
-      pointBackgroundColor: i === 0 ? token('--violet') : i === 1 ? token('--mint') : token('--amber'),
-      pointRadius: i === 0 ? 4 : 3,
-    })),
-  }
-
-  const historyRadarOptions: ChartOptions<'radar'> = {
-    ...radarOptions,
-    plugins: {
-      legend: {
-        display: true,
-        position: 'bottom',
-        labels: { font: { size: 11, family: 'Pretendard' } },
-      },
-    },
-  }
+  usePageHead(
+    `${testName} 결과`,
+    rows.length > 0
+      ? `${rows.length}개 요인의 T점수입니다 · 만점 ${T_MAX}점 (평균 50)`
+      : '아직 응시 결과가 등록되지 않았습니다',
+  )
 
   return (
     <div className="dr-wrap">
-      {/* 헤더 */}
-      {/* 제목·설명은 공용 머리글(usePageHead)이 그린다 — 여기 다시 적으면 같은 제목이 두 번 나온다. */}
       <div className="dr-header">
         <button className="dr-back-btn" onClick={() => navigate('/diagnosis/employment')} aria-label="뒤로 가기">
           <i className="fa-solid fa-arrow-left" />
         </button>
       </div>
 
-      <div className="dr-grid">
-        {/* 레이더 차트 카드 */}
+      {rows.length === 0 ? (
         <div className="dr-card">
-          <div className="dr-card-head">
-            <h2><i className="fa-solid fa-chart-area" /> 역량 레이더 차트</h2>
-            <button className="dr-history-btn" onClick={() => setHistoryModal(true)}>
-              <i className="fa-solid fa-clock-rotate-left" /> 검사 이력
-            </button>
-          </div>
-
-          <div className="flex items-center justify-center py-3">
-            <HoloRadar axes={cores.map(c => ({ label: c.name, value: c.score / 100 }))} />
-          </div>
-
-          <div className="dr-ai-toggle">
-            <button
-              className={showAi ? 'dr-ai-btn dr-ai-btn--ghost' : 'dr-ai-btn'}
-              onClick={handleAiToggle}
-              disabled={analyzing}
-            >
-              <i className={`fa-solid ${analyzing ? 'fa-spinner fa-spin' : 'fa-robot'}`} />
-              {analyzing
-                ? 'AI가 분석 중…'
-                : `AI 평가분석 ${showAi ? '접기' : '보기'}`}
-            </button>
-          </div>
-
-          {analyzing && (
-            <div className="dr-ai-loading" role="status" aria-live="polite">
-              <div className="dr-ai-loading-spinner">
-                <i className="fa-solid fa-robot" />
-                <span className="dr-ai-loading-ring" />
-              </div>
-              <p className="dr-ai-loading-title">AI가 {studentName}님의 결과를 분석하고 있어요</p>
-              <p className="dr-ai-loading-sub">
-                9개 역량 점수 · 강점 · 보완 포인트를 종합해 개인화된 코멘트를 준비 중입니다…
-              </p>
-              <div className="dr-ai-loading-bar"><div className="dr-ai-loading-fill" /></div>
-            </div>
-          )}
-
-          {showAi && !analyzing && (
-            <div className="dr-ai-box">
-              <div className="dr-ai-label"><i className="fa-solid fa-robot" /> AI 역량 평가 분석</div>
-              <p>
-                {studentName}님의 {testName} 역량 평균 점수는 <strong>{avg}점</strong>으로
-                {avg >= 75 ? ' 양호한 수준입니다.' : avg >= 60 ? ' 보통 수준으로 일부 보완이 필요합니다.' : ' 전반적인 역량 강화가 필요합니다.'}
-              </p>
-              <p>
-                <strong>강점 역량:</strong> {strong}<br />
-                <strong>보완 역량:</strong> {weak}
-              </p>
-              <p>
-                <strong>종합 제언:</strong> {lowest.name} 역량이 {lowest.score}점으로 가장 낮습니다. {lowest.suggestion}
-              </p>
-              <div className="dr-tag-row">
-                {cores.map(c => (
-                  <span key={c.name} className={`dr-tag dr-tag--${scoreLevel(c.score)}`}>
-                    {c.name} {c.score}점
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
+          <DiagnosisResultReport studentId={student.id} testId={testId} />
         </div>
+      ) : (
+        <div className="dr-grid">
+          <div className="dr-card">
+            <div className="dr-card-head">
+              <h2><i className="fa-solid fa-chart-area" /> 요인별 T점수</h2>
+              <span className="dr-scale-note">만점 {T_MAX}점 · 평균 50</span>
+            </div>
 
-        {/* 역량별 점수 카드 */}
-        <div className="dr-card">
-          <div className="dr-card-head">
-            <h2><i className="fa-solid fa-list-ol" /> 역량별 점수</h2>
-          </div>
-          <div className="dr-score-list">
-            {cores.map((c, i) => (
-              <button key={c.name} className="dr-score-item" onClick={() => setAbilityModal(i)}>
-                <div className="dr-score-row">
-                  <span className="dr-score-name">
-                    {c.name} <i className="fa-solid fa-chevron-right" />
-                  </span>
-                  <span className="dr-score-num" style={{ color: barColor(c.score) }}>{c.score}점</span>
-                </div>
-                <div className="dr-bar">
-                  <span className="dr-bar-fill" style={{ width: `${c.score}%`, background: barFill(c.score) }} />
-                </div>
+            <div className="dr-radar-box">
+              <HoloRadar axes={rows.map(r => ({ label: r.name, value: r.tScore / T_MAX }))} />
+            </div>
+
+            <div className="dr-ai-toggle">
+              <button
+                className={aiOpen ? 'dr-ai-btn is-ghost' : 'dr-ai-btn'}
+                onClick={runAnalysis}
+                disabled={analyzing}
+                aria-expanded={aiOpen}
+              >
+                <i className={`fa-solid ${analyzing ? 'fa-spinner fa-spin' : 'fa-robot'}`} />
+                {analyzing ? 'AI가 분석 중…' : `AI 분석결과 ${analyzed && aiOpen ? '접기' : '보기'}`}
               </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* 역량 상세 모달 */}
-      <Modal
-        open={abilityModal !== null}
-        onClose={() => setAbilityModal(null)}
-        title={ability ? `${ability.name} 상세 분석` : ''}
-        size="md"
-      >
-        {ability && (
-          <div>
-            <div className="dr-modal-score">
-              <div className="dr-modal-score-num" style={{ color: barColor(ability.score) }}>{ability.score}점</div>
-              <span className={`dr-badge dr-badge--${scoreLevel(ability.score)}`}>
-                {ability.score >= 80 ? '우수' : ability.score >= 60 ? '보통' : '보완필요'}
-              </span>
             </div>
 
-            <div className="dr-detail-section">
-              <div className="dr-detail-title">역량 설명</div>
-              <p className="dr-detail-text">{ability.detail}</p>
-            </div>
+            {aiOpen && !analyzing && best && worst && (
+              <div className="dr-ai-panel">
+                <div className="dr-ai-label"><i className="fa-solid fa-robot" /> AI 분석결과</div>
 
-            <div className="dr-detail-section">
-              <div className="dr-detail-title">세부 항목</div>
-              {ability.subItems.map(s => (
-                <div key={s.name} className="dr-sub-item">
-                  <div className="dr-score-row">
-                    <span className="dr-sub-name">{s.name}</span>
-                    <span className="dr-score-num" style={{ color: barColor(s.score) }}>{s.score}점</span>
+                <dl className="dr-ai-rows">
+                  <div>
+                    <dt>평균 T점수</dt>
+                    <dd>
+                      <b>{avg.toFixed(2)}</b>
+                      <span>기준 평균 50점 대비 {avg >= 50 ? '+' : ''}{(avg - 50).toFixed(2)}</span>
+                    </dd>
                   </div>
-                  <div className="dr-bar">
-                    <span className="dr-bar-fill" style={{ width: `${s.score}%`, background: barFill(s.score) }} />
+                  <div>
+                    <dt>강점 요인</dt>
+                    <dd><b>{best.name}</b><span>{best.tScore.toFixed(2)} · {best.level}</span></dd>
                   </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="dr-ai-box">
-              <div className="dr-ai-label"><i className="fa-solid fa-lightbulb" /> AI 제안</div>
-              <p>{ability.suggestion}</p>
-            </div>
-          </div>
-        )}
-      </Modal>
-
-      {/* 검사 이력 모달 */}
-      <Modal
-        open={historyModal}
-        onClose={() => setHistoryModal(false)}
-        title={`${testName} 이력`}
-        size="lg"
-      >
-        <div className="dr-detail-section">
-          <div className="dr-detail-title">검사 이력 비교 (레이더 차트)</div>
-          <div className="dr-radar dr-radar--history">
-            <Radar data={historyRadarData} options={historyRadarOptions} />
-          </div>
-          <div className="dr-legend">
-            <span className="dr-legend-item" style={{ color: '#2E5BFF' }}><i className="fa-solid fa-circle" /> 3차 (현재)</span>
-            <span className="dr-legend-item" style={{ color: '#22C55E' }}><i className="fa-solid fa-circle" /> 2차</span>
-            <span className="dr-legend-item" style={{ color: '#F59E0B' }}><i className="fa-solid fa-circle" /> 1차</span>
-          </div>
-        </div>
-
-        <div className="dr-detail-section">
-          <div className="dr-detail-title">검사별 상세</div>
-          {historyData.map(h => {
-            const hAvg = Math.round(h.scores.reduce((a, b) => a + b, 0) / h.scores.length)
-            return (
-              <div key={h.date} className="dr-history-item">
-                <div className="dr-history-top">
-                  <span className="dr-history-label">{h.label}</span>
-                  <div className="dr-history-meta">
-                    <span className="dr-history-date">{h.date}</span>
-                    <button className="dr-history-detail-btn" onClick={() => setCraDate(h.date)}>
-                      <i className="fa-solid fa-file-lines" /> 결과 상세보기
-                    </button>
+                  <div>
+                    <dt>보완 요인</dt>
+                    <dd><b>{worst.name}</b><span>{worst.tScore.toFixed(2)} · {worst.level}</span></dd>
                   </div>
-                </div>
-                <div className="dr-history-stats">
-                  <span>평균 <strong>{hAvg}점</strong></span>
-                  <span>최고 <strong>{Math.max(...h.scores)}점</strong></span>
-                  <span>최저 <strong>{Math.min(...h.scores)}점</strong></span>
+                </dl>
+
+                <div className="dr-level-chips">
+                  {rows.map(r => (
+                    <span key={r.name} className={`dr-level-chip is-${LEVEL_CLASS[r.level]}`}>
+                      {r.name} {r.level}
+                    </span>
+                  ))}
                 </div>
               </div>
-            )
-          })}
-        </div>
+            )}
+          </div>
 
-        <div className="dr-ai-box">
-          <div className="dr-ai-label"><i className="fa-solid fa-robot" /> AI 성장 분석</div>
-          <p>
-            1차 검사 대비 평균 점수가 <strong>12.4점 상승</strong>했습니다.
-            특히 정보활용(+13점)과 문제해결(+14점) 역량이 크게 향상되었습니다.
-            글로벌 역량은 여전히 보완이 필요한 영역입니다.
-          </p>
+          <div className="dr-card">
+            <div className="dr-card-head">
+              <h2><i className="fa-solid fa-list-ol" /> 검사 결과표</h2>
+              {hasFullReport && (
+                <button className="dr-history-btn" onClick={() => setReportOpen(true)}>
+                  <i className="fa-solid fa-file-lines" /> 결과지 전체 보기
+                </button>
+              )}
+            </div>
+
+            {/* 표·코멘트는 상담사 포털과 공유하는 단일 컴포넌트가 그린다 — 점수를 여기 박지 않는다. */}
+            <DiagnosisResultReport result={result} showFactorDesc />
+          </div>
         </div>
-      </Modal>
+      )}
 
       {/* CRA 진로준비도 진단검사 결과표 */}
       <CRAReport
-        open={craDate !== null}
-        onClose={() => setCraDate(null)}
-        examDate={craDate ?? ''}
+        open={reportOpen}
+        onClose={() => setReportOpen(false)}
+        examDate={result?.testedAt ?? ''}
       />
     </div>
   )

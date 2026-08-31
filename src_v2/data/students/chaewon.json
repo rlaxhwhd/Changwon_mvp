@@ -1014,6 +1014,36 @@
         "end": "16:50",
         "place": "진로취업지원센터 상담실 2"
       }
+    },
+    {
+      "id": "req_029",
+      "type": "진로취업",
+      "status": "확정",
+      "method": "대면",
+      "topic": "하반기 인턴 지원 전략과 포트폴리오 보완 상담",
+      "requestedAt": "2026-08-27T09:40:00+09:00",
+      "assignedCounselorId": "career_kim",
+      "slot": {
+        "date": "2026-09-01",
+        "start": "10:00",
+        "end": "10:50",
+        "place": "진로취업지원센터 상담실 1"
+      }
+    },
+    {
+      "id": "req_031",
+      "type": "진로취업",
+      "status": "확정",
+      "method": "비대면",
+      "topic": "IT PM 직무 자격증 로드맵 중간 점검",
+      "requestedAt": "2026-08-29T15:10:00+09:00",
+      "assignedCounselorId": "career_kim",
+      "slot": {
+        "date": "2026-09-03",
+        "start": "14:00",
+        "end": "14:50",
+        "place": "온라인 (Zoom 링크 안내)"
+      }
     }
   ]
 }
