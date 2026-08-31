@@ -673,6 +673,12 @@
   color: var(--color-text);
 }
 
+/* 진로·취업만 「예약 가능」 글자를 본문색으로 둔다 — 빈 칸이 5×5로 깔려 있어
+   글자까지 색을 입히면 격자 전체가 물든다. 열려 있다는 신호는 범례 점(--cc-ok)이 계속 진다. */
+.cc-career .cc-slot {
+  color: var(--color-text);
+}
+
 .cc-wrap .iap-banner,
 .cc-wrap .cc-hero { display: none; }
 

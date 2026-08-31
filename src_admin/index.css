@@ -2348,10 +2348,10 @@ input, textarea, select { font-family: var(--font); }
   white-space: nowrap;
 }
 /* 상담 유형 — 진로취업/심리가 같은 색이면 목록에서 유형이 안 읽힌다 */
-.counsel-type-badge { padding: 7px 10px; background: var(--counsel-1-soft); color: var(--counsel-1-ink); }
+.counsel-type-badge { padding: 4px 10px; background: var(--counsel-1-soft); color: var(--counsel-1-ink); }
 .counsel-type-badge.is-psych { background: var(--counsel-2-soft); color: var(--counsel-2-ink); }
 /* 4상태 4색 — 확정(예약됨)과 완료(끝)는 다른 일이다 */
-.counsel-status-badge { min-width: 48px; padding: 7px 10px; }
+.counsel-status-badge { min-width: 48px; padding: 4px 10px; }
 .counsel-status-badge.is-waiting { background: var(--state-wait-bg); color: var(--state-wait-ink); }
 .counsel-status-badge.is-confirmed { background: var(--state-fixed-bg); color: var(--state-fixed-ink); }
 .counsel-status-badge.is-complete { background: var(--state-done-bg); color: var(--state-done-ink); }
