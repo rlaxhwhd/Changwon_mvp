@@ -113,3 +113,34 @@
   background: #C4CEE6;
   cursor: not-allowed;
 }
+
+/* ── 상담 문진표 ────────────────────────────────────────────────
+   질문은 data/counselIntake.ts 가 준다. 여기엔 문구를 두지 않는다. */
+.crm-intake-hint { margin: 0 0 12px; font-size: 13px; font-weight: 600; color: var(--muted-foreground); }
+.crm-intake { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.crm-intake li { display: grid; gap: 8px; }
+.crm-intake label {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: 13.5px; font-weight: 700; line-height: 1.5; color: var(--foreground);
+}
+.crm-intake-no {
+  display: grid; place-items: center; flex: none;
+  width: 20px; height: 20px; margin-top: 1px;
+  border-radius: 6px;
+  background: var(--violet-soft); color: var(--violet);
+  font-size: 12px; font-weight: 800;
+}
+.crm-intake-answer { min-height: 76px; }
+
+/* ── 신청 완료 ──────────────────────────────────────────────────
+   토스트로 흘리지 않고 큰 안내로 확실히 알린다. */
+.crm-done { display: grid; justify-items: center; gap: 14px; padding: 42px 24px 34px; text-align: center; }
+.crm-done-mark {
+  display: grid; place-items: center;
+  width: 68px; height: 68px; border-radius: 50%;
+  background: var(--mint-soft); color: var(--mint);
+  font-size: 30px;
+}
+.crm-done-title { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; color: var(--foreground); }
+.crm-done-desc { margin: 0; max-width: 420px; font-size: 14.5px; font-weight: 600; line-height: 1.7; color: var(--muted-foreground); }
+.crm-done-btn { margin-top: 8px; min-width: 140px; }

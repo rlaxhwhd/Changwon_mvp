@@ -9,6 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { addCounselRequest, getActiveStudent } from './students'
 import type { CounselMethod, CounselRequestType } from './students'
+import type { CounselIntakeAnswer } from './counselIntake'
 
 export interface SubmitCounselInput {
   /** 상담 유형 — 호출 페이지가 지정 (CareerCounsel → 진로취업 / PsychCounsel → 심리) */
@@ -23,6 +24,8 @@ export interface SubmitCounselInput {
   time: string
   /** 대면 장소 (slot.place) */
   place?: string
+  /** 신청 단계 문진표 답변. 템플릿이 있는 유형만 채워진다(현재 진로취업). */
+  intake?: CounselIntakeAnswer[]
 }
 
 export interface SubmitProfCounselInput {
@@ -66,6 +69,8 @@ export function submitCounselRequest(input: SubmitCounselInput): void {
     slot: input.slotDate
       ? { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place }
       : undefined,
+    // 답변이 없는 유형은 필드를 만들지 않는다 — 빈 배열을 남기면 '답했는데 비었다'와 구분이 안 된다.
+    intake: input.intake?.length ? input.intake : undefined,
   })
 }
 

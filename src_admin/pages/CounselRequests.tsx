@@ -14,7 +14,7 @@ import { enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 import { typeLabel } from '../../src_v2/data/careerProcess'
 
 type RequestTab = '전체' | CounselRequestStatus
-type ModalTab = 'schedule' | 'reassign'
+type ModalTab = 'schedule' | 'reassign' | 'intake'
 const TABS: RequestTab[] = ['전체', '대기', '확정', '완료', '취소']
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const ROADMAP_STATUS: Record<string, string> = { done: '완료', active: '진행 중', upcoming: '예정' }
@@ -42,6 +42,36 @@ function ReassignAction({ request, onClose }: { request: CounselRequest; onClose
   const candidates = getReassignableCounselors(request.assignedCounselorId ?? ''); const [selectedId, setSelectedId] = useState(candidates[0]?.id ?? ''); const [reason, setReason] = useState('')
   if (!candidates.length) return <div className="counsel-modal-action"><p className="counsel-request-detail-empty">재배정할 다른 상담사가 없습니다.</p></div>
   return <div className="counsel-modal-action"><div className="counsel-request-detail-grid"><label className="is-wide"><span>재배정할 상담사</span><select value={selectedId} onChange={e => setSelectedId(e.target.value)}>{candidates.map(c => <option key={c.id} value={c.id}>{c.name} · {c.roleLabel}</option>)}</select></label><label className="is-wide"><span>재배정 사유 <em className="counsel-optional">선택</em></span><textarea rows={2} value={reason} onChange={e => setReason(e.target.value)} placeholder="이관 사유를 남기면 처리 이력에 함께 기록됩니다." /></label></div><div className="counsel-request-detail-actions"><button type="button" className="counsel-outline-btn" onClick={onClose}>닫기</button><button type="button" className="counsel-primary-btn" disabled={!selectedId} onClick={() => { reassignRequest(request.id, selectedId, reason); window.location.reload() }}>재배정</button></div></div>
+}
+
+/**
+ * 문진표 — 학생이 신청 단계에서 낸 답변을 그대로 보여 준다(읽기 전용).
+ * 질문 문구는 저장된 답변에 함께 들어 있다. 여기서 템플릿을 다시 참조하지 않는다 —
+ * 템플릿이 바뀌어도 그때 무엇을 물었는지가 남아야 하기 때문이다.
+ */
+function IntakePane({ request }: { request: CounselRequest }) {
+  const intake = request.intake ?? []
+  if (intake.length === 0) {
+    return (
+      <div className="counsel-modal-action">
+        <p className="counsel-request-detail-empty">
+          이 신청에는 문진표가 없습니다. 문진표는 진로취업 상담 신청에서만 받습니다.
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div className="counsel-modal-action">
+      <ol className="counsel-intake">
+        {intake.map((row, index) => (
+          <li key={row.question}>
+            <p className="counsel-intake-q"><span>{index + 1}</span>{row.question}</p>
+            <p className="counsel-intake-a">{row.answer || '답변 없음'}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  )
 }
 
 /** 처리 이력 — 확정·일정변경·재배정·취소·완료가 일어난 순서대로. append-only 스토어를 그대로 읽는다. */
@@ -87,7 +117,7 @@ function TopicCell({ topic, expanded, onToggle }: { topic: string; expanded: boo
 function RequestModal({ request, initialTab, onClose }: { request: CounselRequest; initialTab: ModalTab; onClose: () => void }) {
   const [actionTab, setActionTab] = useState<ModalTab>(initialTab); const profile = getCounselStudentProfile(request.studentId); if (!profile) return null
   const canAct = request.status === '대기' || request.status === '확정'; const canReassign = request.status === '확정'; const slot = request.slot; const assignee = getCounselorById(request.assignedCounselorId)
-  return <AdminModal title="상담 처리" onClose={onClose} size="lg"><div className="counsel-profile-heading"><div><strong>{profile.name}</strong><span>{profile.studentNo}</span></div><span className={enrollStatusClass(profile.enrollmentStatus)}>{profile.enrollmentStatus}</span></div><section className="counsel-modal-section"><h3>학생 기본 정보</h3><dl className="counsel-profile-grid"><div><dt>학과 · 학년</dt><dd>{profile.major}</dd></div><div><dt>휴대폰</dt><dd>{profile.phone}</dd></div><div><dt>성적</dt><dd>{profile.gpa}</dd></div><div><dt>어학</dt><dd>{profile.language}</dd></div><div className="is-wide"><dt>목표 기업</dt><dd>{profile.targetCompanySummary}</dd></div></dl></section><section className="counsel-modal-section"><h3>진단 유형</h3><dl className="counsel-profile-grid"><div><dt>진단 유형</dt><dd>{profile.typeMeta.label}</dd></div><div><dt>후속진단</dt><dd>{profile.typeMeta.followUpTest}</dd></div></dl></section><section className="counsel-modal-section"><h3>이번 상담 요청</h3><dl className="counsel-profile-grid"><div><dt>상담 유형</dt><dd><span className={`counsel-type-badge ${request.type === '심리' ? 'is-psych' : ''}`}>{requestTypeLabel(request)}</span></dd></div><div><dt>상태</dt><dd><span className={`counsel-status-badge ${statusClass(request.status)}`}>{request.status}</span></dd></div><div className="is-wide"><dt>주제</dt><dd>{request.topic}</dd></div><div><dt>신청 일시</dt><dd>{formatRelativeTime(request.requestedAt)} 신청</dd></div><div><dt>일정</dt><dd>{slot ? `${slot.date} ${slot.start}–${slot.end}${slot.place ? ` · ${slot.place}` : ''}` : '미확정'}</dd></div><div className="is-wide"><dt>담당 상담사</dt><dd>{assignee?.name ?? '미배정'}</dd></div></dl></section><section className="counsel-modal-section"><h3>처리 이력</h3><EventTrail requestId={request.id} /></section><section className="counsel-modal-section"><h3>로드맵</h3>{profile.detailed ? <ol className="counsel-roadmap-phases">{profile.detailed.phases.map(phase => <li key={phase.num}><strong>{phase.num}단계 {phase.title}</strong><span>{ROADMAP_STATUS[phase.status] ?? phase.status} · {phase.period}</span></li>)}</ol> : <p className="counsel-roadmap-summary">{profile.roadmapSummary}</p>}</section>{canAct && <section className="counsel-modal-actions">{canReassign && <div className="counsel-modal-action-tabs" role="tablist"><button type="button" role="tab" aria-selected={actionTab === 'schedule'} className={actionTab === 'schedule' ? 'active' : ''} onClick={() => setActionTab('schedule')}>일정 변경</button><button type="button" role="tab" aria-selected={actionTab === 'reassign'} className={actionTab === 'reassign' ? 'active' : ''} onClick={() => setActionTab('reassign')}>재배정</button></div>}{actionTab === 'reassign' && canReassign ? <ReassignAction request={request} onClose={onClose} /> : <ScheduleAction request={request} onClose={onClose} />}</section>}{request.status === '완료' && <Link to="/counsel/records" className="counsel-record-link">기록 보기</Link>}</AdminModal>
+  return <AdminModal title="상담 처리" onClose={onClose} size="lg"><div className="counsel-profile-heading"><div><strong>{profile.name}</strong><span>{profile.studentNo}</span></div><span className={enrollStatusClass(profile.enrollmentStatus)}>{profile.enrollmentStatus}</span></div><section className="counsel-modal-section"><h3>학생 기본 정보</h3><dl className="counsel-profile-grid"><div><dt>학과 · 학년</dt><dd>{profile.major}</dd></div><div><dt>휴대폰</dt><dd>{profile.phone}</dd></div><div><dt>성적</dt><dd>{profile.gpa}</dd></div><div><dt>어학</dt><dd>{profile.language}</dd></div><div className="is-wide"><dt>목표 기업</dt><dd>{profile.targetCompanySummary}</dd></div></dl></section><section className="counsel-modal-section"><h3>진단 유형</h3><dl className="counsel-profile-grid"><div><dt>진단 유형</dt><dd>{profile.typeMeta.label}</dd></div><div><dt>후속진단</dt><dd>{profile.typeMeta.followUpTest}</dd></div></dl></section><section className="counsel-modal-section"><h3>이번 상담 요청</h3><dl className="counsel-profile-grid"><div><dt>상담 유형</dt><dd><span className={`counsel-type-badge ${request.type === '심리' ? 'is-psych' : ''}`}>{requestTypeLabel(request)}</span></dd></div><div><dt>상태</dt><dd><span className={`counsel-status-badge ${statusClass(request.status)}`}>{request.status}</span></dd></div><div className="is-wide"><dt>주제</dt><dd>{request.topic}</dd></div><div><dt>신청 일시</dt><dd>{formatRelativeTime(request.requestedAt)} 신청</dd></div><div><dt>일정</dt><dd>{slot ? `${slot.date} ${slot.start}–${slot.end}${slot.place ? ` · ${slot.place}` : ''}` : '미확정'}</dd></div><div className="is-wide"><dt>담당 상담사</dt><dd>{assignee?.name ?? '미배정'}</dd></div></dl></section><section className="counsel-modal-section"><h3>처리 이력</h3><EventTrail requestId={request.id} /></section><section className="counsel-modal-section"><h3>로드맵</h3>{profile.detailed ? <ol className="counsel-roadmap-phases">{profile.detailed.phases.map(phase => <li key={phase.num}><strong>{phase.num}단계 {phase.title}</strong><span>{ROADMAP_STATUS[phase.status] ?? phase.status} · {phase.period}</span></li>)}</ol> : <p className="counsel-roadmap-summary">{profile.roadmapSummary}</p>}</section>{canAct && <section className="counsel-modal-actions">{/* 탭 줄은 '확정'일 때만 뜨던 것을 항상 띄운다 — 문진표는 '대기' 단계에서 읽어야 확정 판단에 쓸 수 있다. */}<div className="counsel-modal-action-tabs" role="tablist"><button type="button" role="tab" aria-selected={actionTab === 'schedule'} className={actionTab === 'schedule' ? 'active' : ''} onClick={() => setActionTab('schedule')}>일정 변경</button>{canReassign && <button type="button" role="tab" aria-selected={actionTab === 'reassign'} className={actionTab === 'reassign' ? 'active' : ''} onClick={() => setActionTab('reassign')}>재배정</button>}<button type="button" role="tab" aria-selected={actionTab === 'intake'} className={actionTab === 'intake' ? 'active' : ''} onClick={() => setActionTab('intake')}>문진표{request.intake?.length ? <em className="counsel-tab-count">{request.intake.length}</em> : null}</button></div>{actionTab === 'intake' ? <IntakePane request={request} /> : actionTab === 'reassign' && canReassign ? <ReassignAction request={request} onClose={onClose} /> : <ScheduleAction request={request} onClose={onClose} />}</section>}{request.status === '완료' && <Link to="/counsel/records" className="counsel-record-link">기록 보기</Link>}</AdminModal>
 }
 
 export default function CounselRequests() {

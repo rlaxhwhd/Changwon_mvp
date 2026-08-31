@@ -4,6 +4,7 @@ import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import CounselTabs from '../../components/CounselTabs'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
+import { CAREER_INTAKE_QUESTIONS } from '../../data/counselIntake'
 import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
 import { getCounselWeek, type Day } from '../../lib/counselCalendar'
 import './CareerCounsel.css'
@@ -297,7 +298,12 @@ export default function CareerCounsel() {
         time={selectedSlot?.time ?? ''}
         room="학생회관 2층 진로취업상담실"
         phone="055-213-3214"
-        onSubmit={purpose => {
+        questions={CAREER_INTAKE_QUESTIONS}
+        completion={{
+          title: '상담 신청이 완료되었습니다',
+          desc: '상담사가 문진표를 확인한 뒤 일정을 확정합니다. 확정 결과는 마이페이지 상담현황에서 볼 수 있습니다.',
+        }}
+        onSubmit={(purpose, answers) => {
           submitCounselRequest({
             type: '진로취업',
             purpose,
@@ -305,9 +311,9 @@ export default function CareerCounsel() {
             slotDate: selectedSlot?.day.iso ?? '',
             time: selectedSlot?.time ?? '',
             place: '학생회관 2층 진로취업상담실',
+            intake: CAREER_INTAKE_QUESTIONS.map((question, i) => ({ question, answer: answers[i] ?? '' })),
           })
-          setReserveOpen(false)
-          showNotice('상담 예약이 신청되었습니다')
+          // 완료 화면을 모달이 직접 띄운다 — 여기서 닫으면 안내가 안 보인다.
         }}
       />
     </div>

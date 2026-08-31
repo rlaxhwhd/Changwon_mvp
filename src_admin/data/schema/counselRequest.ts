@@ -7,6 +7,7 @@
 import type { EnrollmentStatus, StudentTrack } from '../../../src_v2/data/students'
 // 6유형(T1~T6)은 careerProcess 가 단일 원천.
 import type { StudentType } from '../../../src_v2/data/careerProcess'
+import type { CounselIntakeAnswer } from '../../../src_v2/data/counselIntake'
 
 /** 상담 유형 — 진로취업상담사는 '진로취업', 심리상담사는 '심리' 접수 */
 export type CounselRequestType = '진로취업' | '심리'
@@ -44,6 +45,8 @@ export interface CounselRequest {
   slot?: CounselSlot
   /** 담당 상담사 id (counselors.ts 의 Counselor.id). 재배정으로 변경 가능. */
   assignedCounselorId?: string
+  /** 신청 단계 문진표 답변 (학생이 낸 그대로). 템플릿이 없는 유형은 비어 있다. */
+  intake?: CounselIntakeAnswer[]
 }
 
 /** 확정된 상담 시간 슬롯 */

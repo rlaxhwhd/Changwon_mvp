@@ -4,6 +4,7 @@
 // (프로토타입용 — 백엔드 대신 학생 JSON을 단일 소스로 사용)
 // ─────────────────────────────────────────────────────────────────────────
 import { STUDENT_TYPE_MAP, type StudentType, type StudentTypeMeta } from './careerProcess'
+import type { CounselIntakeAnswer } from './counselIntake'
 import type { RoadmapPlan } from './schema/roadmap'
 import type { StudentInputs } from '../lib/scoring'
 import chaewon from './students/chaewon.json'
@@ -120,6 +121,8 @@ export interface StudentCounselRequest {
   professorId?: string
   /** 확정된 상담 슬롯 (확정/완료 시). */
   slot?: CounselSlot
+  /** 신청 시 받은 문진표 답변. 템플릿이 없는 유형(심리·교수)은 비어 있다. */
+  intake?: CounselIntakeAnswer[]
   counselorComment?: string
   completedAt?: string
 }

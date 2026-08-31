@@ -14,7 +14,13 @@ interface Props {
   time: string
   room: string
   phone: string
-  onSubmit: (purpose: string) => void
+  /** 문진표 질문 — 넘기면 「상담 목적」 아래에 답변칸이 붙는다(진로취업 전용).
+   *  없으면 이 모달은 지금까지와 똑같이 동작한다. */
+  questions?: string[]
+  /** 신청 완료 안내 — 넘기면 제출 후 이 모달이 완료 화면으로 바뀐다.
+   *  이때 부모는 모달을 닫지 않는다(닫으면 완료 화면이 안 보인다). */
+  completion?: { title: string; desc: string }
+  onSubmit: (purpose: string, answers: string[]) => void
 }
 
 export default function CounselReserveModal({
@@ -26,6 +32,8 @@ export default function CounselReserveModal({
   time,
   room,
   phone,
+  questions,
+  completion,
   onSubmit,
 }: Props) {
   const active = getActiveStudent()
@@ -40,16 +48,42 @@ export default function CounselReserveModal({
     contact: '010-1234-5678',
   }
   const [purpose, setPurpose] = useState('')
+  const [answers, setAnswers] = useState<string[]>([])
+  const [done, setDone] = useState(false)
+
+  const ask = questions ?? []
+  const answerAt = (index: number) => answers[index] ?? ''
+  const setAnswerAt = (index: number, value: string) =>
+    setAnswers(prev => { const next = [...prev]; next[index] = value; return next })
+
+  // 문진표가 있으면 모든 문항이 채워져야 신청할 수 있다.
+  const canSubmit = purpose.trim().length > 0 && ask.every((_, i) => answerAt(i).trim().length > 0)
+
+  const reset = () => { setPurpose(''); setAnswers([]); setDone(false) }
 
   const handleSubmit = () => {
-    if (!purpose.trim()) return
-    onSubmit(purpose.trim())
-    setPurpose('')
+    if (!canSubmit) return
+    onSubmit(purpose.trim(), ask.map((_, i) => answerAt(i).trim()))
+    if (completion) setDone(true)
+    else reset()
   }
 
   const handleClose = () => {
-    setPurpose('')
+    reset()
     onClose()
+  }
+
+  if (done && completion) {
+    return (
+      <Modal open={open} onClose={handleClose} title="상담 신청 완료" size="md">
+        <div className="crm-done" role="status" aria-live="polite">
+          <span className="crm-done-mark"><i className="fa-solid fa-check" /></span>
+          <h3 className="crm-done-title">{completion.title}</h3>
+          <p className="crm-done-desc">{completion.desc}</p>
+          <button className="crm-btn-primary crm-done-btn" onClick={handleClose}>확인</button>
+        </div>
+      </Modal>
+    )
   }
 
   return (
@@ -113,10 +147,36 @@ export default function CounselReserveModal({
         />
       </div>
 
+      {/* 상담 문진표 — 질문은 data/counselIntake.ts 가 준다. 여기 문구를 박지 않는다. */}
+      {ask.length > 0 && (
+        <div className="crm-section">
+          <div className="crm-section-title">
+            <i className="fa-regular fa-clipboard" /> 상담 문진표 <span className="crm-req">*</span>
+          </div>
+          <p className="crm-intake-hint">상담사가 미리 읽고 준비합니다. 편하게 적어 주세요.</p>
+          <ol className="crm-intake">
+            {ask.map((question, index) => (
+              <li key={question}>
+                <label htmlFor={`crm-intake-${index}`}>
+                  <span className="crm-intake-no">{index + 1}</span>{question}
+                </label>
+                <textarea
+                  id={`crm-intake-${index}`}
+                  className="crm-textarea crm-intake-answer"
+                  value={answerAt(index)}
+                  onChange={event => setAnswerAt(index, event.target.value)}
+                  placeholder="답변을 입력해 주세요."
+                />
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       <div className="crm-actions">
         <button className="crm-btn-ghost" onClick={handleClose}>취소</button>
-        <button className="crm-btn-primary" onClick={handleSubmit} disabled={!purpose.trim()}>
-          예약 신청하기
+        <button className="crm-btn-primary" onClick={handleSubmit} disabled={!canSubmit}>
+          {ask.length > 0 ? '상담 신청' : '예약 신청하기'}
         </button>
       </div>
     </Modal>

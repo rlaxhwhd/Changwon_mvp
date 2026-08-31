@@ -2517,7 +2517,41 @@ input, textarea, select { font-family: var(--font); }
 .counsel-modal-action-tabs { display: flex; padding: 0 20px; border-bottom: 1px solid var(--color-border); }
 .counsel-modal-action-tabs button { padding: 13px 16px; border-bottom: 2px solid transparent; color: var(--color-text-secondary); font-size: 13px; font-weight: 800; }
 .counsel-modal-action-tabs button.active { border-bottom-color: var(--color-primary); color: var(--color-primary); }
+/* 탭 옆 건수 배지 — 열기 전에 문진표가 있는지 알 수 있어야 한다. */
+.counsel-tab-count {
+  display: inline-grid; place-items: center;
+  min-width: 17px; height: 17px; margin-left: 6px; padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--blue-bg); color: var(--on-blue);
+  font-style: normal; font-size: 11px; font-weight: 800;
+}
+.counsel-modal-action-tabs button.active .counsel-tab-count { background: var(--color-primary); color: #fff; }
 .counsel-modal-action { padding: 16px 20px 20px; background: var(--color-section-bg); }
+
+/* 문진표 — 학생 답변 읽기 전용. 질문/답변을 시각적으로 갈라 놓는다. */
+.counsel-intake { display: grid; gap: 14px; margin: 0; padding: 0; list-style: none; }
+.counsel-intake li {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+.counsel-intake-q {
+  display: flex; align-items: flex-start; gap: 9px;
+  margin: 0 0 9px;
+  font-size: 13px; font-weight: 800; line-height: 1.5; color: var(--color-text);
+}
+.counsel-intake-q span {
+  display: grid; place-items: center; flex: none;
+  width: 19px; height: 19px; margin-top: 1px;
+  border-radius: var(--radius-xs);
+  background: var(--blue-bg); color: var(--on-blue);
+  font-size: 11px; font-weight: 800;
+}
+.counsel-intake-a {
+  margin: 0; padding-left: 28px;
+  font-size: 13px; font-weight: 600; line-height: 1.7; color: var(--color-text-secondary);
+  white-space: pre-wrap; word-break: keep-all; overflow-wrap: anywhere;
+}
 .counsel-record-link { display: inline-flex; margin-top: 4px; color: var(--color-primary); font-size: 13px; font-weight: 800; }
 .counsel-request-empty {
   min-height: 440px;

@@ -62,6 +62,7 @@ export function getCounselRequests(): CounselRequest[] {
           requestedAt: r.requestedAt,
           slot: r.slot,
           assignedCounselorId: r.assignedCounselorId ?? defaultAssigneeFor(type),
+          intake: r.intake,
         }
       }),
   )
