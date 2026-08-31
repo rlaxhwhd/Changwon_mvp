@@ -3,8 +3,9 @@
   --gh-border: #e2e6ec; --gh-muted: #f1f3f6; --gh-violet: #7c5cfc;
   --gh-violet-soft: #f0edff; --gh-blue: #356dff; --gh-mint: #20b486; --gh-amber: #f5a524;
   /* 폭·좌우여백은 .v2-main 이 정한다 — 컨테이너를 다시 만들지 않는다. */
-  width: 100%; min-height: calc(100vh - var(--gnb-height));
-  padding: 32px 0 60px; color: var(--gh-text); background: var(--gh-bg);
+  /* 배경·min-height 는 두지 않는다 — body 배경이 그대로 흐르게 둔다. */
+  width: 100%;
+  padding: 32px 0 60px; color: var(--gh-text);
   font-family: Pretendard, "Noto Sans KR", "Malgun Gothic", sans-serif; word-break: keep-all;
 }
 .gh-shell a { text-decoration: none; }

@@ -1,7 +1,7 @@
+/* 배경·min-height 를 페이지 루트에 두지 않는다 — .v2-main 이 폭·여백을,
+   body 가 배경을 맡는다. 다른 하위페이지와 같은 규격. */
 .gml-page {
-  min-height: calc(100vh - var(--gnb-height));
   padding: 0 0 54px;
-  background: var(--color-bg);
   color: var(--color-navy);
 }
 

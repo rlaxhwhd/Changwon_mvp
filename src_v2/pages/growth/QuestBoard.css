@@ -1,7 +1,9 @@
+/* 폭·좌우여백·배경은 .v2-main 이 정한다 — 페이지가 제 배경(--color-bg = 흰색)을
+   칠하면 1440px 짜리 흰 판이 생겨 본문이 좌우 여백에 잘린 상자처럼 보인다.
+   min-height 도 두지 않는다(그 흰 판이 화면 끝까지 늘어나 빈 공백을 만든다).
+   마이페이지·취업지원 등 다른 하위페이지와 같은 규격이다. */
 .qb-page {
-  min-height: calc(100vh - var(--gnb-height));
   padding: 0 0 54px;
-  background: var(--color-bg);
   color: var(--color-navy);
 }
 

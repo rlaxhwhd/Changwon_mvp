@@ -5,9 +5,8 @@
   --tgm-ink:  var(--daily-1);
   --tgm-soft: var(--daily-1-soft);
   --tgm-line: var(--blue-border);
-  min-height: calc(100vh - var(--gnb-height));
+  /* 배경·min-height 를 두지 않는다 — 페이지가 제 흰 판을 칠하면 1440px 상자로 잘려 보인다. */
   padding: 0 0 54px;
-  background: var(--color-bg);
   color: var(--color-navy);
 }
 

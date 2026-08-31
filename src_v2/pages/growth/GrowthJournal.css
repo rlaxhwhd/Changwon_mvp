@@ -1,8 +1,7 @@
 /* ── Wrapper ──────────────────────────────────────────────────────── */
+/* 사이드바가 없어진 뒤 남은 껍데기 — 폭·여백·배경은 .v2-main 과 body 가 맡는다. */
 .gj-wrapper {
   display: flex;
-  min-height: calc(100vh - var(--gnb-height));
-  background: var(--color-bg);
 }
 
 /* ── Content Area ─────────────────────────────────────────────────── */
