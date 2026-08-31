@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import CareerPopup from '../components/CareerPopup'
 import './Main.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -202,6 +203,9 @@ export default function Main() {
             </div>
           </section>
         </div>
+
+        {/* 시안의 #careerPopup + 「팝업 보기」 떠 있는 버튼 */}
+        <CareerPopup />
     </div>
   )
 }

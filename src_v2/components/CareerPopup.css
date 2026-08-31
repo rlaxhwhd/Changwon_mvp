@@ -1,0 +1,266 @@
+/* =========================================================
+   메인 POPUP — 시안 창원디자인시안작업/main.html 의 #careerPopup 이식.
+
+   [수정 가이드]
+   - 값은 시안에서 그대로 옮긴 것이다. 임의로 바꾸지 말 것.
+   - 어두운 막 위에 흰 글자로 뜨는 오버레이라, 여기서만 rgba 리터럴을 쓴다.
+     팔레트(휴 토큰)는 밝은 면 위를 전제한 값이라 이 막 위에서는 쓸 수 없다.
+     예외는 「팝업 N건」 칩 하나로, 시안이 --blue 를 지정해 두었다.
+   ========================================================= */
+
+body.popup-open { overflow: hidden; }
+
+.career-popup {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  min-width: 0;
+  min-height: 0;
+  padding: 48px 64px 32px;
+  background: rgba(8, 14, 28, .78);
+  backdrop-filter: blur(2px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  gap: 24px;
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 240ms ease, visibility 240ms ease;
+}
+
+.career-popup[aria-hidden="true"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.career-popup-title {
+  margin: 0;
+  color: #ffffff;
+  font-size: 40px;
+  font-weight: 800;
+  line-height: 48px;
+  text-align: center;
+}
+
+.career-popup-stage {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+
+.career-popup-carousel {
+  position: relative;
+  width: min(1120px, calc(100vw - 160px));
+  height: min(58vh, 600px);
+  min-height: 360px;
+}
+
+/* 슬라이드는 전부 겹쳐 두고 left 로만 자리를 옮긴다 — 3장(prev·active·next)만 보인다. */
+.career-popup-slide {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: calc((100% - 48px) / 3);
+  height: 100%;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, .12);
+  box-shadow: 0 24px 56px rgba(0, 0, 0, .22);
+  opacity: 0;
+  overflow: hidden;
+  pointer-events: none;
+  transform: translateX(-50%) scale(.86);
+  transition: left 420ms cubic-bezier(.22, 1, .36, 1), opacity 320ms ease, transform 420ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.career-popup-slide.is-prev,
+.career-popup-slide.is-active,
+.career-popup-slide.is-next {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.career-popup-slide.is-prev {
+  left: 16.666%;
+  transform: translateX(-50%) scale(.92);
+}
+
+.career-popup-slide.is-active {
+  left: 50%;
+  z-index: 2;
+  border-color: rgba(255, 255, 255, .56);
+  transform: translateX(-50%) scale(1);
+}
+
+.career-popup-slide.is-next {
+  left: 83.333%;
+  transform: translateX(-50%) scale(.92);
+}
+
+.career-popup-slide img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #ffffff;
+}
+
+.career-popup-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 4;
+  width: 52px;
+  height: 52px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, .48);
+  border-radius: 50%;
+  background: rgba(8, 14, 28, .32);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  transform: translateY(-50%);
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.career-popup-arrow:hover {
+  border-color: #ffffff;
+  background: rgba(8, 14, 28, .68);
+}
+
+.career-popup-prev { left: 0; }
+.career-popup-next { right: 0; }
+
+.career-popup-arrow .icon {
+  width: 28px;
+  height: 28px;
+}
+
+.career-popup-controls {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.career-popup-control {
+  min-height: 48px;
+  padding: 0 20px;
+  border: 1px solid rgba(255, 255, 255, .72);
+  border-radius: 28px;
+  background: rgba(8, 14, 28, .24);
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+
+.career-popup-control:hover {
+  border-color: #ffffff;
+  background: rgba(255, 255, 255, .12);
+}
+
+.career-popup-control.icon-only {
+  width: 48px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.career-popup-control.count {
+  border-color: var(--blue);
+  background: var(--blue);
+}
+
+.career-popup-control .icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* ── 「팝업 보기」 떠 있는 버튼 ─────────────────────────────────────── */
+.floating-control-stack {
+  position: fixed;
+  right: max(24px, env(safe-area-inset-right));
+  bottom: max(24px, env(safe-area-inset-bottom));
+  z-index: 45;
+  max-width: calc(100vw - 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.popup-float-button {
+  min-height: 40px;
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  box-shadow: 0 8px 28px rgba(24, 28, 37, .14);
+  backdrop-filter: blur(16px);
+}
+
+@media (max-width: 768px) {
+  .floating-control-stack {
+    right: 12px;
+    bottom: 12px;
+  }
+
+  .career-popup {
+    padding: 24px 16px 20px;
+    gap: 16px;
+  }
+
+  .career-popup-title {
+    font-size: 24px;
+    line-height: 32px;
+  }
+
+  .career-popup-carousel {
+    width: min(100%, 360px);
+    height: min(66vh, 560px);
+    min-height: 360px;
+  }
+
+  .career-popup-slide { width: 100%; }
+
+  /* 좁은 화면에서는 한 장만 — 옆 카드가 화면 밖으로 잘린다. */
+  .career-popup-slide.is-prev,
+  .career-popup-slide.is-next {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .career-popup-slide.is-active {
+    left: 50%;
+    transform: translateX(-50%);
+  }
+
+  .career-popup-arrow {
+    width: 44px;
+    height: 44px;
+  }
+
+  .career-popup-prev { left: -8px; }
+  .career-popup-next { right: -8px; }
+
+  .career-popup-controls { gap: 8px; }
+
+  .career-popup-control {
+    min-height: 44px;
+    padding: 0 14px;
+    font-size: 12px;
+  }
+
+  .career-popup-control.icon-only { width: 44px; }
+}
+
+@media (max-width: 420px) {
+  .career-popup-control.count { display: none; }
+}
