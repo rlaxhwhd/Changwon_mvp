@@ -71,7 +71,7 @@ export default function Main() {
           <section data-slot="card" className="hero-panel hero-quest" aria-labelledby="questTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="questTitle">오늘의 퀘스트</h2><p data-slot="card-description">작은 실행을 모아 성장 포인트를 쌓아보세요.</p></div>
-              <button data-slot="card-action" className="hero-inline-action" type="button">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></button>
+              <Link data-slot="card-action" className="hero-inline-action" to="/growth/quest">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
             </header>
             <div data-slot="card-content">
               <div className="quest-layout">
@@ -79,7 +79,7 @@ export default function Main() {
                 <div className="quest-copy"><b>커리어 루틴 만들기</b><p>오늘 5개 중 3개 완료<br />2개만 더 달성해 보세요!</p><div className="quest-steps" aria-hidden="true"><i className="done"></i><i className="done"></i><i className="done"></i><i></i><i></i></div></div>
               </div>
             </div>
-            <footer data-slot="card-footer"><button className="button" type="button">전체 퀘스트 보기 <svg className="icon"><use href="#i-arrow" /></svg></button></footer>
+            <footer data-slot="card-footer"><Link className="button" to="/growth/quest">전체 퀘스트 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link></footer>
           </section>
 
               </div>
@@ -104,7 +104,6 @@ export default function Main() {
           <section data-slot="card" className="hero-panel hero-competency" id="competency" aria-labelledby="competencyTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="competencyTitle">나의 6대 핵심역량</h2></div>
-              <button data-slot="card-action" className="hero-inline-action" type="button">진단 결과 <svg className="icon"><use href="#i-arrow" /></svg></button>
             </header>
             <div data-slot="card-content">
               <div className="competency-layout">

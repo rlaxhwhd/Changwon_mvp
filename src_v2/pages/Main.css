@@ -1556,10 +1556,6 @@
   min-height: 56px;
 }
 
-.mn-page .hero-competency .hero-inline-action {
-  color: var(--blue);
-}
-
 .mn-page .hero-competency [data-slot="card-content"] {
   padding-top: 8px;
 }
