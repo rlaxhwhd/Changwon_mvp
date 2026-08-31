@@ -226,6 +226,14 @@ export const RISK_RULE = {
   onTrackProgress: 60,
   /** 1학년은 판정 대상에서 제외한다 — 아직 이수 이력이 쌓이지 않는다. */
   excludeGrade: 1,
+  /**
+   * 핵심관리대상에서 제외하는 유형 — 취약관리형(`T5`).
+   * 이 분류는 "학점은 낮지만 이행률이 높은" 학생을 골라내는 것인데, T5 는 계층이 하위이고
+   * 목표 자체가 '참여 회복·이탈 방지'다(`careerProcess.STUDENT_TYPE_MAP`).
+   * 수치가 우연히 문턱을 넘더라도 이 분류에 들어오면 안 된다 — 지원 방향이 반대다.
+   * (고위험군에는 그대로 둔다. 거기서는 T5 가 오히려 맞는 대상이다)
+   */
+  coreExcludeType: 'T5',
 } as const
 
 const gpaOf = (s: RosterStudent) => Number(s.gpa ?? NaN)
@@ -246,6 +254,7 @@ export function isHighRisk(s: RosterStudent): boolean {
 export function isCoreCare(s: RosterStudent): boolean {
   return (
     s.grade !== RISK_RULE.excludeGrade &&
+    s.studentType !== RISK_RULE.coreExcludeType &&
     gpaOf(s) < RISK_RULE.lowGpa &&
     progCount(s) >= RISK_RULE.activePrograms &&
     counselCount(s) >= 1 &&
