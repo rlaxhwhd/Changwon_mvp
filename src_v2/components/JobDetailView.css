@@ -1,244 +1,269 @@
 /* ─────────────────────────────────────────────────────────────────────────
    채용공고 상세 (공용) — /v2/jobs/:id 와 /admin/jobs/:id 가 같은 화면을 쓴다.
-   본문은 학생 화면 JobDetail 원안 그대로이고, 지원 CTA 자리만 슬롯으로 비워 둔다.
+   레이아웃 출처: public_t/job.png (구조·밀도만. 시안은 파랑이지만 팔레트는 DESIGN.md 락)
 
-   두 SPA 의 토큰 이름이 달라(navy/text-sub vs text/text-secondary) 여기서
-   한 번만 별칭으로 잇는다 — JobBoard.css 와 같은 방식. 새 색을 만들지 않는다(DESIGN.md 락).
+   [토큰]
+   두 SPA 의 토큰 이름이 달라(navy/text-sub vs text/text-secondary) 여기서 한 번만
+   별칭으로 잇는다 — JobBoard.css 와 같은 방식. 새 색을 만들지 않는다.
+   짙은 히어로는 src_v2 의 --deep-start/--deep-end 를 쓰고, 그 토큰이 없는 교직원
+   SPA 에는 같은 값을 폴백으로 준다(새 색이 아니라 같은 색을 잇는 것).
+
+   [구조]
+   .jd-hero  짙은 배너 (로고 · 회사/직무/칩 · 우측 3지표)
+   .jd-body  좌: A/B/C 섹션 · 우: 요약 카드 + CTA
+   .jd-kv    골든 컴포넌트 — 라벨/값 표. A·B·요약이 전부 이걸 쓴다.
    ───────────────────────────────────────────────────────────────────────── */
 .jd-page {
   --jd-ink: var(--color-navy, var(--color-text));
   --jd-sub: var(--color-text-sub, var(--color-text-secondary));
   --jd-muted: var(--color-text-muted, var(--color-text-secondary));
-  /* 상태 카드 버튼 채움색.
-     학생 = 채용 초록(--apply-cta) — 「지원하기」는 채용 갈래 색이다.
-     교직원 = --apply-cta 가 없어 자기 강조색(초록)으로 떨어진다 → 「공고 수정」 색은 그대로. */
+  --jd-line: var(--color-border);
+  --jd-surface: var(--color-bg, #fff);
+  /* 중립 면 — --color-surface-alt 를 폴백에 끼우면 src_v2 에서 violet-soft 로 풀려
+     마감 공고가 강조된 것처럼 보라색으로 물든다. 반드시 --color-surface 로 잇는다. */
+  --jd-flat: var(--color-section-bg, var(--color-surface));
+  --jd-hero-1: var(--deep-start, #242a3b);
+  --jd-hero-2: var(--deep-end, #5042a8);
+  /* 지원 버튼 채움색. 학생 = 채용 갈래 초록(--apply-cta) / 교직원 = 자기 강조색. */
   --jd-fill: var(--apply-cta, var(--color-primary));
-  --jd-flat: var(--color-surface-alt, var(--color-surface));
+
+  padding: 20px 0 48px;
+  word-break: keep-all;
 }
 
-.jd-page {
-  padding: 30px 0 48px;
+.jd-icon {
+  width: 15px; height: 15px; flex: none;
+  stroke: currentColor; stroke-width: 1.8; fill: none;
+  stroke-linecap: round; stroke-linejoin: round;
 }
 
-/* ── JobPosting(단일소스) 상세 — 지원 버튼·모집요강 HTML ─────────────────── */
-.jd-card-wide { grid-column: 1 / -1; }
-.jd-apply-btn {
-  margin-top: 14px; width: 100%; height: 44px;
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  border-radius: 10px; background: var(--jd-fill); color: #fff; font-weight: 800; font-size: 14px;
-}
-.jd-apply-btn:hover { filter: brightness(0.96); }
-.jd-apply-btn:disabled { background: var(--jd-flat); color: var(--jd-sub); cursor: not-allowed; filter: none; }
-.jd-apply-btn-ghost { background: transparent; border: 1px solid var(--color-primary); color: var(--color-primary); }
-.jd-apply-state {
-  margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 6px;
-  font-size: 13px; font-weight: 700; color: var(--jd-sub); text-align: center;
-}
-.jd-apply-state .fa-circle-check { color: var(--color-primary); }
-.jd-content { font-size: 14px; line-height: 1.7; color: var(--jd-ink); }
-.jd-content img { max-width: 100%; height: auto; border-radius: 8px; }
-.jd-content ul, .jd-content ol { padding-left: 20px; margin: 8px 0; }
-.jd-content-empty { color: var(--jd-sub); font-size: 14px; }
-.jd-status.open { color: var(--color-primary); }
-.jd-status.closed { color: var(--jd-sub); }
-
+/* ── 상단 바 ────────────────────────────────────────────────────────────── */
+.jd-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
 .jd-back {
-  height: 38px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 16px;
-  color: var(--color-primary);
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.jd-head {
-  display: grid;
-  grid-template-columns: 1fr 220px;
-  gap: 20px;
-  padding: 28px;
-  margin-bottom: 18px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  box-shadow: var(--shadow-lg);
-}
-
-.jd-meta-line {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-bottom: 14px;
+  display: inline-flex; align-items: center; gap: 7px;
   color: var(--jd-sub);
-  font-size: 16px;
-  font-weight: 800;
+  font-size: 13px; font-weight: 700; text-decoration: none;
+}
+.jd-back:hover { color: var(--color-primary); }
+.jd-recruit-tag {
+  margin-left: auto;
+  padding: 4px 11px; border-radius: 999px;
+  border: 1px solid var(--jd-line); background: var(--jd-surface);
+  color: var(--jd-sub); font-size: 12px; font-weight: 800;
+}
+.jd-recruit-tag.is-rec {
+  border-color: transparent;
+  background: var(--violet-soft, #f0edff); color: var(--violet, #7c5cfc);
 }
 
-.jd-meta-line em {
-  min-width: 52px;
-  height: 28px;
-  display: inline-flex;
+/* ── 히어로 배너 ────────────────────────────────────────────────────────── */
+.jd-hero {
+  /* 우측 지표를 34% 로 고정한다 — 배경 이미지에 세로 구분선이 약 66% 지점에 새겨져 있어
+     지표 칸이 그 선에 맞아야 한다. auto 로 두면 내용 길이에 따라 선과 어긋난다. */
+  display: grid; grid-template-columns: 72px minmax(0, 1fr) 34%; gap: 22px;
   align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-xs);
-  background: #dff5ea;
-  color: #00984f;
-  font-size: 14px;
-  font-style: normal;
-  font-weight: 700;
+  padding: 26px 28px;
+  border-radius: var(--radius-lg, 12px);
+  /* 배너 이미지(public/job-temp.png). 이미지에 흰 여백과 둥근 모서리가 함께 들어 있어
+     106% 로 살짝 키워 좌우 흰 테두리를 화면 밖으로 밀어낸다.
+     아래 그라데이션은 폴백 — 이미지를 못 받아도 흰 글자 대비가 유지된다. */
+  background:
+    url('/job-temp.png') center / 106% auto no-repeat,
+    linear-gradient(118deg, var(--jd-hero-1), var(--jd-hero-2));
+  color: #fff;
+}
+/* 마감이어도 배너 색을 바꾸지 않는다 — 탁한 회보라가 되고, 상태는 우측 '마감' 배지가 이미 말한다. */
+
+.jd-logo {
+  display: grid; place-items: center;
+  width: 72px; height: 72px; border-radius: var(--radius-md, 10px);
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .18);
+  font-size: 20px; font-weight: 900; letter-spacing: -.02em;
 }
 
-.jd-head h1 {
-  margin-bottom: 14px;
-  color: var(--jd-ink);
-  font-size: 28px;
-  font-weight: 900;
-  letter-spacing: 0;
+.jd-hero-main { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.jd-hero-company { margin: 0; font-size: 14px; font-weight: 700; color: rgba(255, 255, 255, .78); }
+.jd-hero-title { margin: 0; font-size: 28px; font-weight: 800; line-height: 1.3; letter-spacing: -.025em; }
+.jd-hero-desc { margin: 0; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, .72); }
+
+.jd-hero-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 5px 0 0; padding: 0; list-style: none; }
+.jd-hero-chip {
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  color: rgba(255, 255, 255, .92);
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.jd-hero-chip.is-rec { border-color: transparent; background: rgba(255, 255, 255, .92); color: var(--jd-hero-2); font-weight: 800; }
+.jd-hero-chip.is-urgent { border-color: transparent; background: var(--coral, #ff6b6b); color: #fff; font-weight: 800; }
+
+/* 우측 3지표 — 세로선으로 본문과 끊는다 */
+/* 구분선은 배경 이미지에 이미 있다 — CSS 로 또 그리면 두 줄이 된다. */
+.jd-hero-stats {
+  display: grid; gap: 14px; margin: 0;
+  padding-left: 24px;
+  white-space: nowrap;
+}
+.jd-hero-stats dt {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, .7);
+}
+.jd-hero-stats dd { margin: 3px 0 0 22px; font-size: 15px; font-weight: 800; }
+.jd-hero-stats dd em {
+  margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+  background: rgba(255, 255, 255, .16);
+  font-style: normal; font-size: 11.5px; font-weight: 800;
 }
 
-.jd-head p {
-  color: var(--jd-sub);
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.75;
+/* ── 본문 2열 ───────────────────────────────────────────────────────────── */
+.jd-body {
+  display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px;
+  margin-top: 16px;
+  align-items: start;
+}
+.jd-main { display: grid; gap: 16px; min-width: 0; }
+.jd-side { display: grid; gap: 16px; position: sticky; top: 16px; }
+
+.jd-sec {
+  padding: 20px 22px;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-lg, 12px);
+  background: var(--jd-surface);
+}
+.jd-sec-head {
+  display: flex; align-items: center; gap: 9px;
+  margin: 0 0 14px;
+  font-size: 15px; font-weight: 800; letter-spacing: -.02em; color: var(--jd-ink);
+}
+.jd-sec-head em {
+  display: grid; place-items: center;
+  width: 22px; height: 22px; border-radius: 6px;
+  background: var(--jd-flat); color: var(--jd-sub);
+  font-style: normal; font-size: 12px; font-weight: 900;
 }
 
-.jd-status-card {
-  padding: 18px;
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  background: #f8fbff;
+/* ── 골든 컴포넌트: 라벨/값 표 ──────────────────────────────────────────── */
+.jd-kv {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-md, 10px);
+  overflow: hidden;
+}
+.jd-kv > div { display: grid; grid-template-columns: 118px minmax(0, 1fr); border-top: 1px solid var(--jd-line); }
+.jd-kv > div:nth-child(-n+2) { border-top: 0; }
+/* 홀수 개일 때 마지막 칸이 반만 차는 것을 막는다 */
+.jd-kv > div:last-child:nth-child(odd) { grid-column: 1 / -1; grid-template-columns: 118px minmax(0, 1fr); }
+.jd-kv dt {
+  display: flex; align-items: center;
+  padding: 12px 14px;
+  background: var(--jd-flat);
+  border-right: 1px solid var(--jd-line);
+  font-size: 12.5px; font-weight: 700; color: var(--jd-sub);
+}
+.jd-kv dd {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  margin: 0; padding: 12px 14px;
+  font-size: 13px; font-weight: 700; color: var(--jd-ink);
+  word-break: break-all;
+}
+.jd-kv-chip {
+  padding: 2px 9px; border-radius: 999px;
+  background: var(--violet-soft, #f0edff); color: var(--violet, #7c5cfc);
+  font-size: 12px; font-weight: 800;
+}
+/* 요약 카드는 폭이 좁아 1열로 쌓는다 */
+.jd-kv.is-stack { grid-template-columns: minmax(0, 1fr); }
+.jd-kv.is-stack > div { grid-template-columns: 84px minmax(0, 1fr); border-top: 1px solid var(--jd-line); }
+.jd-kv.is-stack > div:first-child { border-top: 0; }
+.jd-kv.is-stack dd { font-size: 12.5px; }
+
+/* ── 모집요강 본문 (상담사가 입력한 HTML) ───────────────────────────────── */
+.jd-content { font-size: 14px; line-height: 1.75; color: var(--jd-sub); }
+.jd-content > :first-child { margin-top: 0; }
+.jd-content > :last-child { margin-bottom: 0; }
+.jd-content p { margin: 0 0 12px; }
+.jd-content ul, .jd-content ol { margin: 0 0 12px; padding-left: 20px; }
+.jd-content li { margin-bottom: 5px; }
+.jd-content strong, .jd-content b { color: var(--jd-ink); font-weight: 800; }
+.jd-content img { max-width: 100%; height: auto; border-radius: var(--radius-md, 10px); }
+.jd-content table { width: 100%; border-collapse: collapse; }
+.jd-content th, .jd-content td { padding: 8px 10px; border: 1px solid var(--jd-line); }
+
+.jd-empty { margin: 0; padding: 26px 0; text-align: center; font-size: 13.5px; font-weight: 600; color: var(--jd-muted); }
+
+/* ── 전형 절차 ──────────────────────────────────────────────────────────── */
+.jd-stages { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.jd-stages li {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-md, 10px);
+  background: var(--jd-flat);
+}
+.jd-stage-no {
+  display: grid; place-items: center; flex: none;
+  width: 22px; height: 22px; border-radius: 7px;
+  background: var(--jd-fill); color: #fff;
+  font-size: 11.5px; font-weight: 800;
+}
+.jd-stage-name { font-size: 13.5px; font-weight: 700; color: var(--jd-ink); }
+
+/* ── CTA (관심공고 저장 · 지원하기) ─────────────────────────────────────── */
+.jd-cta { display: grid; gap: 8px; margin-top: 14px; }
+.jd-wish {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; height: 44px;
+  border: 1px solid var(--color-primary); border-radius: var(--radius-md, 10px);
+  background: var(--jd-surface); color: var(--color-primary);
+  font-family: inherit; font-size: 14px; font-weight: 800;
+  cursor: pointer;
+}
+.jd-wish:hover { background: var(--violet-soft, #f0edff); }
+.jd-wish.is-on { background: var(--violet-soft, #f0edff); }
+.jd-wish .jd-icon { width: 17px; height: 17px; }
+
+/* 호스트 페이지(학생 '지원하기' / 교직원 '공고 수정')가 이 클래스로 버튼을 넣는다. */
+.jd-apply-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; height: 46px;
+  border: 0; border-radius: var(--radius-md, 10px);
+  background: var(--jd-fill); color: #fff;
+  font-family: inherit; font-size: 14.5px; font-weight: 800; text-decoration: none;
+  cursor: pointer;
+}
+.jd-apply-btn:hover { filter: brightness(1.05); }
+.jd-apply-btn:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+.jd-apply-btn-ghost { background: var(--jd-surface); color: var(--jd-ink); border: 1px solid var(--jd-line); }
+.jd-apply-state {
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; margin: 0;
+  font-size: 12.5px; font-weight: 700; line-height: 1.5; color: var(--jd-sub);
 }
 
-.jd-status {
-  display: inline-flex;
-  margin-bottom: 18px;
-  font-size: 16px;
-  font-weight: 700;
+.jd-files { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.jd-files li {
+  padding: 9px 11px;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-sm, 8px);
+  background: var(--jd-flat);
+  font-size: 12.5px; font-weight: 700; color: var(--jd-ink);
+  word-break: break-all;
 }
 
-.jd-status.open { color: var(--color-primary); }
-.jd-status.soon { color: var(--color-warning); }
-.jd-status.closed { color: var(--jd-ink); }
-
-.jd-status-card dl {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
+/* ── 하단 안내 ──────────────────────────────────────────────────────────── */
+.jd-note {
+  display: flex; align-items: center; gap: 9px;
+  margin: 16px 0 0; padding: 13px 16px;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-md, 10px);
+  background: var(--jd-flat);
+  font-size: 12.5px; font-weight: 600; color: var(--jd-sub);
 }
+.jd-note .jd-icon { color: var(--color-primary); }
 
-.jd-status-card div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.jd-status-card dt {
-  color: var(--jd-muted);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.jd-status-card dd {
-  color: var(--jd-ink);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.jd-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.jd-image-card,
-.jd-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  box-shadow: var(--shadow-lg);
-}
-
-.jd-image-card {
-  margin-top: 18px;
-  padding: 18px;
-}
-
-.jd-image-card img {
-  display: block;
-  width: 100%;
-  max-width: 760px;
-  margin: 0 auto;
-  height: auto;
-  border: 1px solid var(--color-border);
-}
-
-.jd-card {
-  padding: 22px;
-}
-
-.jd-card h2 {
-  margin-bottom: 16px;
-  color: var(--jd-ink);
-  font-size: 18px;
-  font-weight: 700;
-}
-
-.jd-info-list {
-  display: grid;
-  gap: 11px;
-}
-
-.jd-info-list div {
-  display: grid;
-  grid-template-columns: 92px 1fr;
-  gap: 12px;
-}
-
-.jd-info-list dt {
-  color: var(--jd-muted);
-  font-size: 14px;
-  font-weight: 800;
-}
-
-.jd-info-list dd,
-.jd-list li,
-.jd-process li {
-  color: var(--jd-sub);
-  font-size: 16px;
-  font-weight: 700;
-  line-height: 1.65;
-}
-
-.jd-list,
-.jd-process {
-  display: flex;
-  flex-direction: column;
-  gap: 9px;
-  padding-left: 18px;
-}
-
-.jd-process li::marker {
-  color: var(--color-primary);
-  font-weight: 900;
-}
-
-@media (max-width: 1024px) {
-  .jd-page {
-    padding: 22px 0 36px;
-  }
-
-  .jd-head,
-  .jd-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .jd-head {
-    padding: 22px;
-  }
-
-  .jd-meta-line {
-    flex-wrap: wrap;
-  }
+/* 데스크톱 전용이라 한 단계면 충분하다 — 사이드를 본문 아래로 내린다. */
+@media (max-width: 1180px) {
+  .jd-hero { grid-template-columns: 72px minmax(0, 1fr); }
+  .jd-hero-stats { grid-column: 1 / -1; grid-template-columns: repeat(3, auto); justify-content: start; gap: 22px; padding: 16px 0 0; border-top: 1px solid rgba(255, 255, 255, .2); }
+  .jd-body { grid-template-columns: minmax(0, 1fr); }
+  .jd-side { position: static; }
+  .jd-kv { grid-template-columns: minmax(0, 1fr); }
+  .jd-kv > div { border-top: 1px solid var(--jd-line); }
+  .jd-kv > div:first-child { border-top: 0; }
 }

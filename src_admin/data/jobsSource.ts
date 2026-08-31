@@ -79,6 +79,15 @@ export function jobDdayLabel(job: JobPosting): string {
  * 카드 특이사항 배지 — 오늘 마감(마감일 파생) + 강조 태그(JOB_HIGHLIGHT_TAGS).
  * 화면이 태그 문자열을 직접 비교하지 않도록 여기서 만든다.
  */
+/**
+ * 마감 여부 — 목록과 상세가 같은 답을 내야 한다.
+ * 운영 상태(status='마감')와 마감일 경과를 둘 다 본다. 화면마다 다시 판정하지 않는다
+ * (예전에 상세가 status 만 보다가 「접수중」인데 D-day 는 「마감」인 모순이 났다).
+ */
+export function isJobClosed(job: JobPosting): boolean {
+  return jobDdayLabel(job) === '마감'
+}
+
 export function jobHighlights(job: JobPosting): string[] {
   const flags = jobDdayLabel(job) === 'D-day' ? ['오늘마감'] : []
   return [...flags, ...job.tags.filter(t => (JOB_HIGHLIGHT_TAGS as readonly string[]).includes(t))]

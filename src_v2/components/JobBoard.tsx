@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import {
-  jobDdayLabel, jobHighlights, sortJobs, JOB_SORTS, JOB_SORT_LABEL,
+  jobDdayLabel, jobHighlights, isJobClosed, sortJobs, JOB_SORTS, JOB_SORT_LABEL,
 } from '../../src_admin/data/jobsSource'
 import type { JobPosting, JobSort, JobStatus } from '../../src_admin/data/jobsSource'
+import { getJobWishlist, toggleJobWish } from '../data/jobWishlist'
 import './JobBoard.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -34,6 +35,8 @@ interface JobBoardProps {
    * 일반채용 '행'에는 붙이지 않는다 — 행은 열 폭이 고정된 표다.
    */
   cardAction?: { label: string; onClick: (job: JobPosting) => void }
+  /** 지원자 수 — 교직원 화면만 넘긴다. 학생에게는 의미가 없어 안 넘기면 그리지 않는다. */
+  applicantCountOf?: (job: JobPosting) => number
   emptyMain: string
   emptyHint: string
 }
@@ -56,6 +59,12 @@ function salaryLabel(job: JobPosting): string {
   return /^[\d,]+$/.test(s) ? `${s}만원` : s
 }
 
+/** 등록일 — 목록의 '최신순'이 무엇 기준인지 보이게 한다. */
+function postedLabel(job: JobPosting): string {
+  const value = (job.postedAt ?? '').slice(0, 10)
+  return value ? value.slice(5).replace('-', '.') : ''
+}
+
 function deadlineLabel(job: JobPosting): string {
   if (job.deadlineOnHire) return '채용시 마감'
   return job.deadline ? `~${job.deadline.slice(5).replace('-', '.')}` : '상시'
@@ -76,12 +85,13 @@ function tagsOf(job: JobPosting): { label: string; kind: 'emp' | 'cat' | 'flag' 
 }
 
 export default function JobBoard({
-  jobs, onOpen, showWish = false, split = true, cardAction, emptyMain, emptyHint,
+  jobs, onOpen, showWish = false, split = true, cardAction, applicantCountOf, emptyMain, emptyHint,
 }: JobBoardProps) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<JobStatus | typeof ALL>(ALL)
   const [sort, setSort] = useState<JobSort>('latest')
-  const [wished, setWished] = useState<Set<string>>(() => new Set())
+  // 관심공고는 상세 화면과 같은 저장소를 본다 — 예전엔 화면 안에서만 살아 새로고침하면 풀렸다.
+  const [wished, setWished] = useState<Set<string>>(() => new Set(getJobWishlist()))
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -99,13 +109,7 @@ export default function JobBoard({
   const recommended = split ? list.filter(j => j.recruitType === '추천채용') : []
   const general = split ? list.filter(j => j.recruitType !== '추천채용') : list
 
-  const toggleWish = (id: string) =>
-    setWished(prev => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
+  const toggleWish = (id: string) => setWished(new Set(toggleJobWish(id)))
 
   // 클릭 대상이 없으면 button 이 아니라 정적 블록으로 그린다 — 눌러도 되는 것처럼 보이지 않게.
   const Tag = onOpen ? 'button' : 'div'
@@ -114,7 +118,7 @@ export default function JobBoard({
 
   const card = (job: JobPosting) => {
     const dday = jobDdayLabel(job)
-    const closed = dday === '마감'
+    const closed = isJobClosed(job)
     const on = wished.has(job.id)
     return (
       <Tag
@@ -124,7 +128,10 @@ export default function JobBoard({
       >
         <div className="jc-top">
           <span className="jc-company">{job.company}</span>
+          {job.companyType && <span className="jc-companytype">{job.companyType}</span>}
           {job.recruitType === '추천채용' && <span className="jc-badge-rec">추천</span>}
+          {/* 마감까지 며칠인가 — 이 카드에서 가장 결정적인 값이라 눈에 먼저 걸리게 위로 올린다. */}
+          <span className={`jc-dday${closed ? ' is-closed' : ''}`}>{dday}</span>
           {showWish && (
             <span
               role="button"
@@ -154,13 +161,25 @@ export default function JobBoard({
         <div className="jc-meta">
           <span><i className="fa-solid fa-location-dot" /> {regionLabel(job)}</span>
           <span><i className="fa-solid fa-briefcase" /> {careerLabel(job)}</span>
-          <span><i className="fa-solid fa-graduation-cap" /> 학력무관</span>
           <span><i className="fa-solid fa-won-sign" /> {salaryLabel(job)}</span>
         </div>
 
+        {/* 매칭도는 계산된 값이 있을 때만 — 0% 를 모든 카드에 찍으면 정보가 아니라 잡음이다. */}
+        {job.match > 0 && (
+          <div className="jc-match" title={`내 스펙 기준 적합도 ${job.match}%`}>
+            <span className="jc-match-track"><i style={{ width: `${job.match}%` }} /></span>
+            <b>{job.match}%</b>
+          </div>
+        )}
+
         <div className="jc-foot">
-          <span className={`jc-dday${closed ? ' is-closed' : ''}`}>{dday}</span>
-          <time>{deadlineLabel(job)}</time>
+          <span className="jc-foot-dates">
+            <span>마감 {deadlineLabel(job)}</span>
+            {postedLabel(job) && <span>등록 {postedLabel(job)}</span>}
+          </span>
+          {applicantCountOf && (
+            <span className="jc-applicants"><i className="fa-solid fa-user-group" /> 지원 {applicantCountOf(job)}명</span>
+          )}
         </div>
 
         {cardAction && (
@@ -184,7 +203,7 @@ export default function JobBoard({
 
   const row = (job: JobPosting) => {
     const dday = jobDdayLabel(job)
-    const closed = dday === '마감'
+    const closed = isJobClosed(job)
     return (
       <Tag
         key={job.id}

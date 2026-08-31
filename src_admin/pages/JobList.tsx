@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { getJobsByScope, countJobs } from '../data/jobsSource'
 import type { JobScope } from '../data/jobsSource'
 import JobBoard from '../../src_v2/components/JobBoard'
+import { summarizeJob } from '../data/jobApplications'
 
 /** scope 별 화면 문구 — 교내(직접 등록)와 외부(API 수집) 목록이 같은 컴포넌트를 공유한다. */
 const SCOPE_COPY: Record<JobScope, { title: string; hint: string; emptyTitle: string; emptyMessage: string }> = {
@@ -56,6 +57,7 @@ export default function JobList({ scope }: { scope: JobScope }) {
           외부 공고는 원본이 외부에 있어 수정 버튼을 주지 않는다.
           「교내공고 관리」(/jobs/manage)는 그대로 둔다 — 일반채용 행까지 한 번에 다루는 자리다. */}
       <JobBoard
+        applicantCountOf={job => summarizeJob(job.id).total}
         jobs={all}
         onOpen={job => navigate(`/jobs/${job.id}`)}
         cardAction={scope === 'internal'

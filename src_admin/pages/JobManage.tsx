@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getJobsByScope, countJobs } from '../data/jobsSource'
 import JobBoard from '../../src_v2/components/JobBoard'
+import { summarizeJob } from '../data/jobApplications'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 교내공고 관리 — 목록(/jobs)과 같은 카드 보드다(JobBoard 공유).
@@ -41,6 +42,7 @@ export default function JobManage() {
       </div>
 
       <JobBoard
+        applicantCountOf={job => summarizeJob(job.id).total}
         jobs={jobs}
         onOpen={job => navigate(`/jobs/${job.id}/edit`)}
         split

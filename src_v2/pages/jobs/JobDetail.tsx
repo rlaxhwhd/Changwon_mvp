@@ -20,7 +20,8 @@ export default function JobDetail() {
   // 지원 직후 화면을 다시 읽기 위한 트리거 (스토어가 localStorage 라 재조회로 끝난다)
   const [tick, setTick] = useState(0)
   const job = id ? getJobById(id) : undefined
-  usePageHead(job?.role, '공고 상세와 지원 자격을 확인하고 지원합니다.')
+  // 시안(public_t/job.png)처럼 머리글은 '채용공고 상세', 직무명은 히어로가 갖는다.
+  usePageHead('채용공고 상세', '공고 내용을 확인하고 지원을 준비하세요.')
 
   if (!job) return <Navigate to="/jobs" replace />
 
@@ -56,8 +57,7 @@ export default function JobDetail() {
   return (
     <JobDetailView
       job={job}
-      /* 제목은 공용 머리글이 그린다 — 카드 안에 또 넣지 않는다. */
-      showHeading={false}
+      showWish
       back={(
         <Link to={listPath} className="jd-back">
           <i className="fa-solid fa-arrow-left" />
