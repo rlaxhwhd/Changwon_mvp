@@ -5,7 +5,7 @@ import { usePageHead } from '../../components/PageCrumb'
 // 생성된 로드맵은 새로 그리지 않는다 — 상담사 편집기(/admin/roadmap/:id)와 같은 공용 보드다.
 import RoadmapAxisBoard from '../../components/RoadmapAxisBoard'
 import { useSkillTree } from '../../hooks/useSkillTree'
-import { getActiveStudent } from '../../data/students'
+import { getActiveStudent, getHeadlineCompetency } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
 import { ROADMAP_AXIS_MAP } from '../../data/schema/roadmap'
 import type { RoadmapAxis } from '../../data/schema/roadmap'
@@ -173,10 +173,6 @@ export default function AiRoadmap() {
                   <dd><span className="air-badge is-mint">{student.studentType} {typeLabel(student.studentType)}</span></dd>
                 </div>
                 <div className="air-kv-row">
-                  <dt>AI 분석</dt>
-                  <dd><p>{student.insight}</p></dd>
-                </div>
-                <div className="air-kv-row">
                   <dt>상담 코멘트</dt>
                   <dd>
                     {lastComment
@@ -185,14 +181,25 @@ export default function AiRoadmap() {
                   </dd>
                 </div>
               </dl>
-              <ul className="air-checks">
-                {student.strengthWeakness.filter(item => item.type === 'strength').map(item => (
-                  <li key={item.label}>
-                    <span className="air-check-mark"><AirIcon name="check" /></span>
-                    {item.label} 강점 ({item.value}점)
-                  </li>
-                ))}
-              </ul>
+              {/* AI 분석 — 서술과 대표 역량을 한 상자에 모은다.
+                  같은 판정을 두 군데에 나누어 놓으면 따로 읽힌다. */}
+              <section className="air-analysis">
+                <h4>AI 분석</h4>
+                <p>{student.insight}</p>
+                <ul className="air-checks">
+                  {getHeadlineCompetency(student).map(item => {
+                    const strong = item.type === 'strength'
+                    return (
+                      <li key={item.label} className={strong ? 'is-strength' : 'is-weak'}>
+                        <span className="air-check-mark">
+                          <AirIcon name={strong ? 'check' : 'alert'} />
+                        </span>
+                        {item.label} {strong ? '강점' : '약점'} ({item.value}점)
+                      </li>
+                    )
+                  })}
+                </ul>
+              </section>
             </div>
           </article>
 
@@ -510,6 +517,8 @@ const ICON_PATHS: Record<string, React.ReactNode> = {
   'check-circle': <><circle cx="12" cy="12" r="9.2" /><path d="M8.2 12.2l2.6 2.6 5-5.2" /></>,
   target: <><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5" /><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" /></>,
   info: <><circle cx="12" cy="12" r="9" /><path d="M12 16.5v-5M12 8h.01" /></>,
+  // 배지 자체가 원이라 아이콘까지 원을 그리면 10px 에서 뭉개진다 — 느낌표만 남긴다.
+  alert: <><path d="M12 5.5v8.5" /><path d="M12 18.4h.01" /></>,
   plus: <path d="M12 5.5v13M5.5 12h13" />,
   check: <path d="M20 6.5L9.4 17.2 4 11.8" />,
   chev: <path d="M9 5.5l6.5 6.5L9 18.5" />,

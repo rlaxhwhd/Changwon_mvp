@@ -50,14 +50,14 @@
   },
   "strengthWeakness": [
     {
-      "label": "학점",
+      "label": "취업인식",
       "value": 90,
       "type": "strength"
     },
     {
-      "label": "인성/심리",
+      "label": "취업준비",
       "value": 80,
-      "type": "strength"
+      "type": "weakness"
     },
     {
       "label": "어학",

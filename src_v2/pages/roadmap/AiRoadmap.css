@@ -111,10 +111,21 @@
 /* 코멘트 작성자·날짜 — 본문과 구분되게 한 줄 내려 놓는다 */
 .air-kv-by { display: block; margin-top: 5px; font-style: normal; font-size: 11.5px; font-weight: 700; color: color-mix(in srgb, var(--mint-ink) 82%, var(--muted-foreground)); }
 
-.air-checks { margin: 12px 0 0; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); display: grid; gap: 11px; list-style: none; }
+/* AI 분석 — 서술 한 단락 + 대표 역량 두 줄을 한 상자에 묶는다.
+   진단 갈래 색(민트)으로 머리만 물들이고 면은 흰색으로 둔다 — 카드 안에
+   옆 칸(수강·성장)과 같은 무게로 서야 한쪽만 돋보이지 않는다. */
+.air-analysis { margin-top: 12px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.air-analysis h4 { margin: 0 0 8px; display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--mint-ink); }
+.air-analysis h4::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--mint); }
+.air-analysis > p { margin: 0; font-size: 12.5px; font-weight: 500; line-height: 1.7; color: var(--muted-foreground); }
+
+/* 대표 역량 — 서술 밑에 붙는 두 줄. 상자 안이라 테두리를 다시 치지 않는다. */
+.air-checks { margin: 12px 0 0; padding: 12px 0 0; border-top: 1px solid var(--border); display: grid; gap: 11px; list-style: none; }
 .air-checks li { display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600; color: color-mix(in srgb, var(--foreground) 78%, var(--muted-foreground)); }
 .air-check-mark { display: grid; place-items: center; width: 16px; height: 16px; flex: none; border-radius: 50%; background: var(--mint); color: #fff; }
 .air-check-mark .air-icon { width: 10px; height: 10px; stroke-width: 3; }
+/* 약점은 강점과 같은 초록 표시를 쓰면 안 된다 — 상태 사전의 '주의'는 코랄이다. */
+.air-checks li.is-weak .air-check-mark { background: var(--coral-ink); }
 
 /* 재료 2 — 수강강의 / 학과 */
 .air-courses { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; }

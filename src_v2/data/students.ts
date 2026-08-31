@@ -202,6 +202,15 @@ export function getStudentTypeMeta(student: StudentData): StudentTypeMeta {
   return STUDENT_TYPE_MAP[student.studentType]
 }
 
+/**
+ * AI 현재역량현황 카드가 짚는 대표 역량.
+ * 강점·약점을 가리지 않고 점수가 가장 높은 항목부터 고른다 — 점수가 큰 지표가
+ * 그 학생을 가장 잘 설명하기 때문이다. 화면이 항목을 골라내지 않는다(CLAUDE.md 규칙 10).
+ */
+export function getHeadlineCompetency(student: StudentData, limit = 2): SWItem[] {
+  return [...student.strengthWeakness].sort((a, b) => b.value - a.value).slice(0, limit)
+}
+
 // ─────────────────────────────────────────────────────────────────────────
 // 상담신청 스토어 (단일 DB 스왑 seam)
 // 상담신청의 소유 주체를 CounselOwner로 통일한다. 상세 학생(STUDENTS, counselRequests 내장)과
