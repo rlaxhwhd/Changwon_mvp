@@ -3,6 +3,7 @@ import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import CounselTabs from '../../components/CounselTabs'
+import CounselWeekCard from '../../components/CounselWeekCard'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
 import { CAREER_INTAKE_QUESTIONS } from '../../data/counselIntake'
 import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
@@ -62,7 +63,7 @@ export default function CareerCounsel() {
   }
 
   const openReserve = () => {
-    if (isAllMode || !selectedCounselor || !selectedSlot) {
+    if (!canReserve) {
       showNotice('상담사와 날짜·시간을 먼저 선택해주세요')
       return
     }
@@ -75,6 +76,7 @@ export default function CareerCounsel() {
   }
 
   const activeCounselor = counselors.find(counselor => counselor.id === selectedCounselor) ?? counselors[0]
+  const canReserve = !!selectedSlot && !!selectedCounselor
   const isAllMode = false
   const slotCounselors = useMemo(
     () => days.map((_, dayIndex) => times.map((__, timeIndex) => getCounselorsForSlot(dayIndex, timeIndex))),
@@ -134,6 +136,8 @@ export default function CareerCounsel() {
       <IapSummaryBanner note="상담 시 참고할 내 진단 요약 (자동 공유)" />
 
       <CounselTabs />
+
+      <CounselWeekCard />
 
       <div className="cc-layout">
         <aside className="cc-counselor-panel">
@@ -195,6 +199,10 @@ export default function CareerCounsel() {
               </dl>
             </section>
           )}
+
+          <button className="cc-reserve-btn cc-reserve-panel" onClick={openReserve} disabled={!canReserve}>
+            상담 예약하기
+          </button>
         </aside>
 
         <main className="cc-calendar-card">
@@ -274,11 +282,10 @@ export default function CareerCounsel() {
               <strong>선택한 일정</strong>
             </div>
             <div className="cc-selected-info">
-              <span><i className="fa-regular fa-user" />{isAllMode ? '전체 상담사 보기' : `${activeCounselor.name} ${activeCounselor.title}`}</span>
+              <span><i className="fa-regular fa-user" />{selectedCounselor ? `${activeCounselor.name} ${activeCounselor.title}` : '상담사 미선택'}</span>
               <span><i className="fa-regular fa-calendar-days" />{selectedSlot ? selectedSlot.day.date : '날짜 미선택'}</span>
               <span><i className="fa-regular fa-clock" />{selectedSlot ? selectedSlot.time : '시간 미선택'}</span>
             </div>
-            <button className="cc-reserve-btn" onClick={openReserve}>상담 예약하기</button>
           </div>
         </main>
       </div>

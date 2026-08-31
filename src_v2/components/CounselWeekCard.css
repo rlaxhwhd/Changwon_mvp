@@ -1,0 +1,147 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   「이번 주 상담내역」 카드 — 상담 3화면(진로취업·심리·교수)이 함께 쓴다.
+
+   카드 자체는 갈래 색을 쓰지 않는다. 유형을 섞어 보여주는 카드라
+   한 갈래 색으로 감싸면 그 갈래 화면처럼 읽힌다 — 색은 행의 유형 칩이 진다.
+   유형 칩 색은 상담 갈래 사전과 같다(진로취업 파랑 · 심리 보라 · 교수 민트).
+   글자에는 잉크를 쓴다 — 민트 본색은 흰 배경 2.65:1 이라 못 읽는다.
+   ───────────────────────────────────────────────────────────────────────── */
+.cwk-card {
+  padding: 18px 20px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+
+.cwk-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cwk-head i {
+  color: var(--color-text-sub);
+  font-size: 16px;
+}
+
+.cwk-head h2 {
+  margin: 0;
+  color: var(--color-navy);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.cwk-count {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 0 9px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+  color: var(--color-text-sub);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cwk-empty {
+  margin: 14px 0 0;
+  color: var(--color-text-sub);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cwk-list {
+  display: grid;
+  gap: 8px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cwk-item {
+  display: grid;
+  grid-template-columns: 82px 190px minmax(0, 1fr) minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--cwk-ink, var(--color-border));
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+/* 유형별 색 — 값(type)에서 색을 고른다. 화면에 분기를 두지 않는다. */
+.cwk-item[data-type='진로취업'] { --cwk-ink: var(--blue);     --cwk-soft: var(--blue-soft); }
+.cwk-item[data-type='심리']     { --cwk-ink: var(--violet);   --cwk-soft: var(--violet-soft); }
+.cwk-item[data-type='교수']     { --cwk-ink: var(--mint-ink); --cwk-soft: var(--mint-soft); }
+
+.cwk-type {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  background: var(--cwk-soft);
+  color: var(--cwk-ink);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.cwk-when,
+.cwk-who,
+.cwk-place {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.cwk-when { font-weight: 700; }
+
+.cwk-who,
+.cwk-place {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.cwk-when i,
+.cwk-who i,
+.cwk-place i {
+  flex: none;
+  color: var(--color-text-sub);
+  font-size: 13px;
+}
+
+.cwk-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+/* 상태 색 사전 — 완료 민트 / 예정(확정) 파랑 / 대기 앰버 */
+.cwk-status[data-tone='done']      { background: var(--mint-soft);   color: var(--mint-ink); }
+.cwk-status[data-tone='scheduled'] { background: var(--blue-soft);   color: var(--blue); }
+.cwk-status[data-tone='pending']   { background: var(--amber-soft);  color: var(--amber-ink); }
+
+@media (max-width: 1100px) {
+  .cwk-item {
+    grid-template-columns: 82px minmax(0, 1fr) 72px;
+    row-gap: 4px;
+    padding: 10px 14px;
+  }
+
+  .cwk-place {
+    grid-column: 2 / 4;
+  }
+}

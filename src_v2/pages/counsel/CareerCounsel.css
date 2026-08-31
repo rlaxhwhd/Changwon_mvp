@@ -13,6 +13,10 @@
      라운지·상담현황 범례의 점 색(--counsel-1)은 그대로 둔다 — 점과 면은 다른 문제다.
    ───────────────────────────────────────────────────────────────────────── */
 .cc-wrap {
+  /* 오른쪽 상담사 패널 폭. 캘린더 폭 = 전체 − 이 값 − gap 이라
+     같은 폭을 맞춰야 하는 곳(이번 주 상담내역 카드)이 여기서 파생한다. */
+  --cc-aside: 320px;
+
   --cc-ink:  var(--violet);
   --cc-ok:   var(--violet);
   --cc-soft: var(--counsel-2-soft);
@@ -376,7 +380,7 @@
 .cc-selected-bar {
   min-height: 64px;
   display: grid;
-  grid-template-columns: auto 1fr 220px;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
   gap: 18px;
   margin-top: 18px;
@@ -474,7 +478,8 @@
     flex-wrap: wrap;
   }
 
-  .cc-reserve-btn {
+  /* 바 안에 버튼이 남은 건 교수상담뿐이다 — 1열로 접힐 때만 폭을 채운다. */
+  .cc-selected-bar .cc-reserve-btn {
     width: 100%;
   }
 }
@@ -511,9 +516,15 @@
 }
 
 .cc-layout {
-  grid-template-columns: minmax(0, 1fr) 320px;
+  grid-template-columns: minmax(0, 1fr) var(--cc-aside);
   gap: var(--space-6);
   align-items: start;
+}
+
+/* 「이번 주 상담내역」은 캘린더 위에 놓이는 카드다 — 폭도 캘린더와 같아야 한다.
+   .cc-wrap 이 flex 라 그냥 두면 상담사 패널까지 덮는 전체 폭이 된다. */
+.cc-wrap .cwk-card {
+  width: calc(100% - var(--cc-aside) - var(--space-6));
 }
 
 .cc-calendar-card,
@@ -729,7 +740,7 @@
 
 .cc-selected-bar {
   min-height: 72px;
-  grid-template-columns: auto 1fr 196px;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 16px;
   margin-top: 24px;
   padding: 14px 18px;
@@ -757,6 +768,22 @@
   transform: translateY(-1px);
 }
 
+.cc-reserve-panel {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.cc-reserve-btn:disabled {
+  background: var(--color-surface);
+  color: var(--color-text-sub);
+  cursor: not-allowed;
+}
+
+.cc-reserve-btn:disabled:hover {
+  background: var(--color-surface);
+  transform: none;
+}
+
 @media (max-width: 1100px) {
   .cc-layout {
     grid-template-columns: 1fr;
@@ -766,5 +793,9 @@
   .cc-calendar-card,
   .cc-counselor-panel {
     order: initial;
+  }
+
+  .cc-wrap .cwk-card {
+    width: 100%;
   }
 }
