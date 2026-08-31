@@ -60,9 +60,9 @@ export default function Main() {
             </header>
             <div data-slot="card-content">
               <div className="todo-list">
-                <div className="todo-item completed"><button className="todo-check" type="button" aria-label="기업 분석 노트 작성 완료 상태 변경" aria-pressed="true"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>기업 분석 노트 작성</b><small>DN솔루션즈 · 채용공고 분석</small></span><span className="todo-time">완료</span></div>
-                <div className="todo-item"><button className="todo-check" type="button" aria-label="IAP 목표 활동 등록 완료 상태 변경" aria-pressed="false"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>IAP 목표 활동 등록</b><small>로드맵 설계 · 필수 항목</small></span><span className="todo-time">D-2</span></div>
-                <div className="todo-item"><button className="todo-check" type="button" aria-label="진로 상담 사전 질문 작성 완료 상태 변경" aria-pressed="false"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>진로 상담 사전 질문 작성</b><small>상담 예약 · 김지현 상담사</small></span><span className="todo-time">16:00</span></div>
+                <div className="todo-item completed"><button className="todo-check" type="button" aria-label="자기탐색 진로설계 워크숍 프로그램 마감 임박" aria-pressed="true"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>자기탐색 진로설계 워크숍 프로그램 마감 임박</b><small>DN솔루션즈 · 채용공고 분석</small></span><span className="todo-time">완료</span></div>
+                <div className="todo-item"><button className="todo-check" type="button" aria-label="9/3일 14시 진로취업상담 예정" aria-pressed="false"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>9/3일 14시 진로취업상담 예정</b><small>로드맵 설계 · 필수 항목</small></span><span className="todo-time">D-2</span></div>
+                <div className="todo-item"><button className="todo-check" type="button" aria-label="찜한 추천 채용공고 지원하기" aria-pressed="false"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>찜한 추천 채용공고 지원하기</b><small>상담 예약 · 김지현 상담사</small></span><span className="todo-time">16:00</span></div>
               </div>
             </div>
             <footer data-slot="card-footer"><button className="button" type="button">전체 일정 보기 <svg className="icon"><use href="#i-arrow" /></svg></button></footer>
