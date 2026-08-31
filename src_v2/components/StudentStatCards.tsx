@@ -13,19 +13,22 @@ import './StudentStatCards.css'
 // 아이콘 스프라이트가 없다.
 // ─────────────────────────────────────────────────────────────────────────
 
-type StatKind = 'diagnosis' | 'counsel' | 'roadmap' | 'program' | 'level'
+// course = 필수교과 이수. 전용 카드가 따로 있는 게 아니라 진단완료와 **같은 값+막대 형**이고
+// 색과 아이콘만 다르다 — STAR 트랙(/v2/star)이 쓴다.
+type StatKind = 'diagnosis' | 'counsel' | 'roadmap' | 'program' | 'course' | 'level'
 
 const ICON: Record<StatKind, ReactNode> = {
   diagnosis: <path d="m5 12 4 4L19 6" />,
   counsel: <><path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z" /><path d="M8 10h8M8 14h5" /></>,
   roadmap: <><circle cx="6" cy="19" r="2" /><circle cx="18" cy="5" r="2" /><path d="M8 19h3a3 3 0 0 0 3-3V8a3 3 0 0 1 3-3h-1" /></>,
   program: <><rect x="3" y="5" width="18" height="16" rx="2" /><path d="M16 3v4M8 3v4M3 10h18" /></>,
+  course: <><path d="M4 5a2 2 0 0 1 2-2h13v16H6a2 2 0 0 0-2 2z" /><path d="M9 7.5h6" /></>,
   level: <><circle cx="12" cy="8" r="5" /><path d="m8.5 12-1 9 4.5-2.5 4.5 2.5-1-9M10 8l1.3 1.3L14 6.5" /></>,
 }
 
-/** 값 + 막대 형 (진단 완료 · IAP 이행률 · 비교과 이수) */
+/** 값 + 막대 형 (진단 완료 · IAP 이행률 · 비교과 이수 · 필수교과) */
 export interface MetricStat {
-  kind: 'diagnosis' | 'roadmap' | 'program'
+  kind: 'diagnosis' | 'roadmap' | 'program' | 'course'
   label: string
   value: string
   unit?: string

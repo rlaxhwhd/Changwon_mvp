@@ -479,6 +479,34 @@ select:focus-visible {
   gap: 8px;
 }
 
+/* STAR Track 표식 — 정사각 원본이라 폭·높이를 같이 잡는다. 상단바가 80px 이라 48px 이면
+   아래 워드마크까지 뭉개지지 않고 들어간다. */
+.topbar-brandmark {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/* 이 표식이 STAR 트랙 대시보드 진입점이다 — 누를 수 있다는 것이 보여야 해서
+   호버에 바닥과 확대를 준다(다른 상단바 아이콘과 같은 반응). */
+.topbar-brandmark-link {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: background .15s, transform .15s;
+  /* 메뉴 줄의 마지막 칸 — .top-nav 가 align-items: stretch 라 그대로 두면 상단바 높이만큼 늘어난다. */
+  align-self: center;
+  /* 오른쪽(알림 벨)까지의 간격도 메뉴 사이 간격과 같게 맞춘다.
+     space-evenly 는 항목 사이에 gap(8px) + 남는 폭 한 칸을, 양 끝에는 남는 폭 한 칸만 준다.
+     즉 여기서 상단바까지가 (메뉴간격 − 8px), 거기에 topbar-inner 의 간격이 더 붙는다.
+     그 둘을 상쇄하면 화면 폭이 얼마든 정확히 메뉴 사이 간격만 남는다. */
+  margin-right: calc(8px - var(--page-gutter));
+}
+.topbar-brandmark-link:hover { background: var(--muted); transform: scale(1.05); }
+
 .icon-button {
   position: relative;
   width: 36px;

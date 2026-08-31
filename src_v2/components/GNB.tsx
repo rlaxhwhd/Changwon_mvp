@@ -138,6 +138,14 @@ export default function GNB() {
                 </div>
               )
             })}
+            {/* STAR Track 표식 — 선발형 트랙 대시보드로 가는 진입점.
+                NAV_SECTIONS 에는 넣지 않는다(선발된 학생만 쓰는 별도 트랙이라 메뉴 데이터를
+                늘리지 않는다). 다만 자리는 메뉴와 같은 flex 줄이어야 한다 — 메뉴 사이 간격은
+                space-evenly 가 화면 폭마다 다시 계산하는 값이라, 밖에 두면 「마이페이지」와의
+                간격만 따로 놀았다. */}
+            <Link to="/star" className="topbar-brandmark-link" title="STAR 트랙 대시보드">
+              <img src="/startarck_icon.png" alt="STAR 트랙" className="topbar-brandmark" />
+            </Link>
           </nav>
 
           <div className="topbar-right">

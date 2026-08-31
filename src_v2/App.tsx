@@ -39,6 +39,9 @@ import JobDetail from './pages/jobs/JobDetail'
 import JobsHome from './pages/jobs/JobsHome'
 import AiConsulting from './pages/jobs/AiConsulting'
 
+// STAR 트랙 — 선발된 학생만 들어오는 별도 트랙. GNB 우측 STAR 표식이 진입점이다.
+import StarTrack from './pages/star/StarTrack'
+
 // 마이페이지
 import Portfolio from './pages/mypage/Portfolio'
 import MyPrograms from './pages/mypage/MyPrograms'
@@ -62,6 +65,9 @@ const router = createBrowserRouter(
 
         // AI 커리어 라운지
         { path: '/lounge', element: <AiLounge /> },
+
+        // STAR 트랙 (선발형) — 주 메뉴가 아니라 상단바 STAR 표식으로 들어온다
+        { path: '/star', element: <StarTrack /> },
 
         // 역량 강화
         { path: '/growth',              element: <GrowthHome /> },

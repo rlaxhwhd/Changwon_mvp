@@ -54,6 +54,14 @@
   --stat-soft:  #fdebf6;
   --stat-alt:   #e85aad;
 }
+/* 필수교과(STAR 트랙) — 진단완료와 같은 형이고 색만 다르다.
+   amber 가 남아 있었지만 #f5a524 는 흰 배경 대비가 2:1 이라 막대 옆 % 숫자가 안 읽힌다.
+   violet 은 4.4:1 이라 안전하고, STAR 4장(mint·sky·violet·pink)에서 서로 구분된다. */
+.ssc-card.is-course {
+  --stat-color: #7c5cfc;  /* violet */
+  --stat-soft:  #f0edff;
+  --stat-alt:   #7c5cfc;
+}
 .ssc-card.is-level {
   --stat-color: #7c5cfc;  /* violet */
   --stat-soft:  #f0edff;
