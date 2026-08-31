@@ -12,6 +12,8 @@ import type { RoadmapAxis } from '../../data/schema/roadmap'
 // 로드맵 1개의 정본은 교직원 포털의 읽기 모델이다(base ⊕ 상담사 override ⊕ 프로그램 편입분).
 // 학생 화면이 축·칸을 다시 조립하지 않는다 — DB 전환 시 이 import 하나가 쿼리로 바뀐다.
 import { getStudentRoadmap } from '../../../src_admin/data/roadmap'
+// 상담 코멘트도 같은 단일소스(상담 기록)에서 읽는다. comment 는 '학생에게 공개되는' 필드다.
+import { getRecordsByStudent } from '../../../src_admin/data/counselRecords'
 import type { CourseRow } from '../../data/academic'
 import './AiRoadmap.css'
 
@@ -75,6 +77,11 @@ export default function AiRoadmap() {
   const { status, data, jobOptions, addJob } = useSkillTree()
   const student = getActiveStudent()
   const roadmap = useMemo(() => getStudentRoadmap(student.id), [student.id])
+  // 기록은 최신순이다. 코멘트를 아직 안 쓴 회차가 섞이므로 '코멘트가 있는' 최신 1건을 고른다.
+  const lastComment = useMemo(
+    () => getRecordsByStudent(student.id).find(record => record.comment?.trim()),
+    [student.id],
+  )
 
   // 모달은 두 국면을 갖는다 — 열면 먼저 분석하고(loading), 끝나면 목록을 보여준다(list).
   const [pickerOpen, setPickerOpen] = useState(false)
@@ -157,7 +164,7 @@ export default function AiRoadmap() {
           <article className="air-src is-mint">
             <div className="air-src-head">
               <span className="air-src-ico"><AirIcon name="users" /></span>
-              <h3 className="air-src-title"><i>1</i>진단유형 / 상담</h3>
+              <h3 className="air-src-title">진단유형 / 상담</h3>
             </div>
             <div className="air-src-body">
               <dl className="air-kv">
@@ -168,6 +175,14 @@ export default function AiRoadmap() {
                 <div className="air-kv-row">
                   <dt>AI 분석</dt>
                   <dd><p>{student.insight}</p></dd>
+                </div>
+                <div className="air-kv-row">
+                  <dt>상담 코멘트</dt>
+                  <dd>
+                    {lastComment
+                      ? <p>{lastComment.comment}<em className="air-kv-by">{lastComment.counselorName} · {lastComment.date}</em></p>
+                      : <p>아직 등록된 상담 코멘트가 없습니다.</p>}
+                  </dd>
                 </div>
               </dl>
               <ul className="air-checks">
@@ -185,7 +200,7 @@ export default function AiRoadmap() {
           <article className="air-src is-blue">
             <div className="air-src-head">
               <span className="air-src-ico"><AirIcon name="book" /></span>
-              <h3 className="air-src-title"><i>2</i>수강강의 / 학과</h3>
+              <h3 className="air-src-title">수강강의 / 학과</h3>
             </div>
             <div className="air-src-body">
               <section className="air-courses">
@@ -198,18 +213,18 @@ export default function AiRoadmap() {
                 )}
               </section>
               <section className="air-courses">
-                <h4>학과 개설 강의 (추천)</h4>
+                <h4>학과 개설 강의</h4>
                 {openCourses.map(row => <CourseLine key={row.code} row={row} />)}
                 {openCourses.length === 0 && <p className="air-course-empty">추천할 남은 강의가 없습니다.</p>}
               </section>
             </div>
           </article>
 
-          {/* 재료 3 — 학생 스펙 */}
+          {/* 재료 3 — 학생 성장 */}
           <article className="air-src is-violet">
             <div className="air-src-head">
               <span className="air-src-ico"><AirIcon name="user" /></span>
-              <h3 className="air-src-title"><i>3</i>학생 스펙</h3>
+              <h3 className="air-src-title">학생 성장</h3>
             </div>
             <div className="air-src-body">
               <dl className="air-specs">
