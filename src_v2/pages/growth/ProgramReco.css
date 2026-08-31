@@ -1,22 +1,35 @@
+/* ★ 이 섹션은 바이올렛 · 블루 · 민트 세 색으로 짠다. 색마다 역할이 하나씩 있다.
+     바이올렛 = AI 표식(배지 · 자물쇠 · 스피너)
+     블루     = 동작(CTA 버튼 · 잠금 카드 경계)
+     민트     = 결과(추천이 열린 쪽 · 진행이 끝나는 쪽)
+   면은 세 색을 모서리마다 한 점씩 아주 옅게 깔아 섞는다 — 한 색으로 칠하면
+   아래 카드 그리드(카테고리 다색)와 대비만 생기고 이 구역 자체는 단조로워진다.
+   전에 박혀 있던 rgba(46,91,255)는 팔레트에 없는 값이었다. */
 .pr-reco {
   margin-bottom: 22px;
   padding: 22px 24px;
   background:
-    radial-gradient(circle at 95% 6%, rgba(46, 91, 255, 0.12), transparent 36%),
-    linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 100%);
-  border: 1px solid var(--color-surface-alt);
+    radial-gradient(circle at 4% 0%,   color-mix(in srgb, var(--violet) 15%, transparent), transparent 40%),
+    radial-gradient(circle at 97% 4%,  color-mix(in srgb, var(--blue)   13%, transparent), transparent 34%),
+    radial-gradient(circle at 80% 106%, color-mix(in srgb, var(--mint)  14%, transparent), transparent 44%),
+    var(--color-bg);
+  border: 1px solid var(--violet-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
 
+/* 배지는 라벨이지 동작이 아니다 — 채움을 옅게 낮춰 h2 보다 앞서지 않게 한다.
+   글자는 --violet 이 아니라 --violet-hover 다: 본색은 violet-soft 위 3.8:1 이라
+   13px/800 작은 글씨로 못 읽는다. 한 단 짙은 쪽으로 내리면 4.9:1 이 된다. */
 .pr-reco-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 5px 12px;
   border-radius: var(--radius-pill);
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--violet-soft);
+  border: 1px solid var(--violet-border);
+  color: var(--violet-hover);
   font-size: 13px;
   font-weight: 800;
   margin-bottom: 10px;
@@ -62,7 +75,13 @@
   border-bottom: 1px solid var(--color-border);
 }
 
-.pr-reco-col h3 i { color: var(--color-primary); font-size: 14px; }
+/* 두 열은 서로 다른 갈래다(비교과 프로그램 · 외부활동/인턴).
+   같은 보라 아이콘 두 개면 열이 나뉜 이유가 안 보인다 — 추천 순번색 2종을 그대로 쓴다. */
+.pr-reco-col h3 i { font-size: 14px; }
+.pr-reco-col:nth-child(1) h3 i { color: var(--recommend-1); }
+/* --recommend-2(민트 본색)는 흰 배경 2.7:1 이라 아이콘으로도 안 잡힌다 — 잉크로 낮춘다.
+   :root 가 --apply-cta 를 mint-ink 로 둔 것과 같은 이유다. */
+.pr-reco-col:nth-child(2) h3 i { color: var(--mint-ink); }
 
 .pr-reco-col ul {
   list-style: none;
@@ -92,26 +111,37 @@
   font-weight: 600;
 }
 
+/* 태그 색 — 10종이 세 그룹으로 보라에 몰려 있어 열을 훑어도 갈래가 안 보였다.
+   ★ 값은 :root 팔레트에서만 고른다. 전에 있던 #FBEAEA·#C2790B·#F1ECFF·#7C3AED 는
+     팔레트 밖 리터럴이었다.
+   ★ 11px/800 작은 글씨라 4.5:1 을 넘겨야 한다 → 휴 본색이 아니라 잉크를 쓴다
+     (blue 4.5 · mint-ink 4.9 · amber-ink 6.3 · coral-ink 4.6 · violet 4.4).
+   기본값은 중립이다 — 모르는 태그가 브랜드색을 얻으면 안 된다. */
 .pr-reco-tag {
   flex-shrink: 0;
   padding: 3px 9px;
   border-radius: var(--radius-pill);
   font-size: 11px;
   font-weight: 800;
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-text-sub);
 }
 
-.pr-reco-tag-필수 { background: #FBEAEA; color: var(--color-danger); }
-.pr-reco-tag-우대 { background: var(--color-primary-bg); color: var(--color-primary); }
-.pr-reco-tag-권장 { background: #FFF4E2; color: #C2790B; }
-.pr-reco-tag-보유 { background: #EAF7EE; color: var(--color-success); }
-.pr-reco-tag-인턴,
-.pr-reco-tag-대외활동,
-.pr-reco-tag-포트폴리오 { background: #F1ECFF; color: #7C3AED; }
-.pr-reco-tag-직무,
-.pr-reco-tag-취업,
-.pr-reco-tag-어학 { background: var(--color-primary-bg); color: var(--color-primary); }
+/* 자격증 4종 — 필수(시급)부터 보유(완료)까지 온도를 내린다 */
+.pr-reco-tag-필수 { background: var(--coral-soft);  color: var(--coral-ink); }
+.pr-reco-tag-권장 { background: var(--amber-soft);  color: var(--amber-ink); }
+.pr-reco-tag-우대 { background: var(--violet-soft); color: var(--violet); }
+.pr-reco-tag-보유 { background: var(--mint-soft);   color: var(--mint-ink); }
+
+/* 비교과 3종 — 분야가 다르면 색도 다르다 */
+.pr-reco-tag-직무 { background: var(--blue-soft);  color: var(--blue); }
+.pr-reco-tag-취업 { background: var(--mint-soft);  color: var(--mint-ink); }
+.pr-reco-tag-어학 { background: var(--amber-soft); color: var(--amber-ink); }
+
+/* 외부활동 3종 */
+.pr-reco-tag-인턴       { background: var(--blue-soft);   color: var(--blue); }
+.pr-reco-tag-대외활동   { background: var(--coral-soft);  color: var(--coral-ink); }
+.pr-reco-tag-포트폴리오 { background: var(--violet-soft); color: var(--violet); }
 
 @media (max-width: 980px) {
   .pr-reco-cols { grid-template-columns: 1fr; }
@@ -152,13 +182,16 @@
   gap: 10px;
   max-width: 460px;
   padding: 28px 28px 24px;
-  background: #ffffff;
-  border: 1px solid #dce8ff;
+  background: var(--color-bg);
+  border: 1px solid var(--blue-border);
   border-radius: var(--radius-lg);
   box-shadow: 0 18px 44px rgba(15, 45, 95, 0.12);
   text-align: center;
 }
 
+/* 자물쇠 링에 세 색을 한 바퀴 감는다 — 이 화면에서 셋이 한자리에 모이는 유일한 지점이다.
+   안쪽 면은 카드와 같은 흰색이라 링만 남는다(padding-box/border-box 2단 배경).
+   같은 링이 로딩 스피너로 그대로 돌기 시작한다 — 잠금이 풀리는 것을 색으로 잇는다. */
 .pr-reco-lock-icon {
   width: 56px;
   height: 56px;
@@ -166,11 +199,13 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #f3f7ff 0%, #e6efff 100%);
-  border: 1px solid #d3deff;
-  color: var(--color-primary);
+  border: 2px solid transparent;
+  background:
+    linear-gradient(var(--color-bg), var(--color-bg)) padding-box,
+    conic-gradient(from 210deg, var(--violet), var(--blue) 40%, var(--mint) 72%, var(--violet)) border-box;
+  color: var(--violet);
   font-size: 20px;
-  box-shadow: 0 8px 18px rgba(46, 91, 255, 0.12);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--violet) 18%, transparent);
 }
 
 .pr-reco-lock-card h4 {
@@ -189,6 +224,10 @@
   line-height: 1.6;
 }
 
+/* 이 화면의 유일한 주 동작 — 섹션색(앰버)이 아니라 동작색을 준다.
+   앰버는 표식이라 옅고, 눌러야 할 것은 진해야 한다. 블루는 흰 글자 4.5:1 로 채움에 쓸 수 있다
+   (앰버 본색은 1.9:1 이라 채움이 불가능하다).
+   그라디언트는 걷어냈다 — 보라→보라라 단계를 만들지 못했고, 면 하나로 충분하다. */
 .pr-reco-cta {
   margin-top: 6px;
   display: inline-flex;
@@ -196,19 +235,19 @@
   gap: 8px;
   padding: 12px 22px;
   border: none;
-  border-radius: 12px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #7B6EFF 100%);
+  border-radius: var(--radius-md);
+  background: var(--blue);
   color: #fff;
   font-size: 14px;
   font-weight: 800;
   cursor: pointer;
-  box-shadow: 0 12px 24px rgba(46, 91, 255, 0.28);
+  box-shadow: 0 12px 24px color-mix(in srgb, var(--blue) 28%, transparent);
   transition: transform 0.15s, box-shadow 0.15s, filter 0.15s;
 }
 
 .pr-reco-cta:hover {
   transform: translateY(-1px);
-  box-shadow: 0 14px 28px rgba(46, 91, 255, 0.34);
+  box-shadow: 0 14px 28px color-mix(in srgb, var(--blue) 34%, transparent);
   filter: brightness(1.04);
 }
 
@@ -227,8 +266,11 @@
   align-items: center;
   gap: 12px;
   padding: 48px 24px 44px;
-  background: linear-gradient(135deg, #f6f9ff 0%, #eef4ff 100%);
-  border: 1px solid #dce8ff;
+  background:
+    radial-gradient(circle at 10% 6%,  color-mix(in srgb, var(--violet) 13%, transparent), transparent 46%),
+    radial-gradient(circle at 90% 96%, color-mix(in srgb, var(--mint)   13%, transparent), transparent 46%),
+    var(--color-bg);
+  border: 1px solid var(--blue-border);
   border-radius: var(--radius-md);
 }
 
@@ -242,20 +284,31 @@
   margin-bottom: 4px;
 }
 
+/* 로딩은 동작이 아니라 AI 가 일하고 있는 상태다 — 그래서 버튼색(블루)이 아니라 바이올렛이다. */
 .pr-reco-spinner > i {
   font-size: 20px;
-  color: var(--color-primary);
+  color: var(--violet);
   z-index: 1;
   animation: prRecoSpinPulse 1.4s ease-in-out infinite;
 }
 
+/* 자물쇠 링과 같은 3색 링이 돌아간다. 테두리 4변으로는 세 색을 감을 수 없어
+   conic + mask 로 도넛을 만든다(원호 한쪽이 끊겨야 회전이 보인다). */
 .pr-reco-spinner-ring {
   position: absolute;
   inset: 0;
+  border: none;
   border-radius: 50%;
-  border: 3px solid #dce8ff;
-  border-top-color: var(--color-primary);
-  border-right-color: var(--color-primary);
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    var(--violet) 70deg,
+    var(--blue) 175deg,
+    var(--mint) 285deg,
+    transparent 345deg
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
   animation: prRecoSpin 1.1s linear infinite;
 }
 
@@ -287,15 +340,18 @@
   width: 240px;
   max-width: 80%;
   height: 6px;
-  background: rgba(255,255,255,0.85);
+  /* 면이 흰 바탕으로 바뀌어 흰 트랙은 사라진다 — 회색 홈으로 되돌린다. */
+  background: var(--color-surface);
   border-radius: 999px;
   overflow: hidden;
 }
 
+/* 진행 바의 그라디언트만 남긴다 — 여기서는 색 변화가 '진행'이라는 역할을 갖는다.
+   바이올렛(AI가 시작) → 블루 → 민트(결과)로, 세 색의 역할 순서를 그대로 눕힌 것이다. */
 .pr-reco-loading-fill {
   height: 100%;
   width: 35%;
-  background: linear-gradient(90deg, var(--color-primary) 0%, #7B6EFF 100%);
+  background: linear-gradient(90deg, var(--violet) 0%, var(--blue) 55%, var(--mint) 100%);
   border-radius: 999px;
   animation: prRecoLoadingBar 1.8s ease-in-out;
 }

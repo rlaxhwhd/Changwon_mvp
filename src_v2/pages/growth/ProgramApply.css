@@ -408,14 +408,17 @@
   transition: all 0.15s;
 }
 
+/* 페이지 이동은 분류가 아니라 위치다 — 카테고리 색을 쓰지 않고 블루 하나로 둔다.
+   보라(--color-cta)를 걷어낸 이유: 이 화면에서 보라는 목록 위 「자격증」 갈래의 색이라
+   페이지 번호까지 보라면 그 갈래가 선택된 것처럼 읽힌다. */
 .pa-page-btn:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border-color: var(--blue);
+  color: var(--blue);
 }
 
 .pa-page-btn.active {
-  background: var(--color-cta);
-  border-color: var(--color-primary);
+  background: var(--blue);
+  border-color: var(--blue);
   color: var(--color-bg);
   font-weight: 700;
 }
