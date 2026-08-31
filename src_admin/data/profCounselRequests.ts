@@ -89,6 +89,14 @@ export async function queryProfCounselRequests(
       || b.requestedAt.localeCompare(a.requestedAt))
   return paginate(rows, params)
 }
+/** [DB-ready] 교수 범위의 상태별 신청 — 알림 벨처럼 페이징이 필요 없는 곳이 쓴다. */
+export function getProfRequestsByStatus(
+  professorId: string,
+  status: CounselRequestStatus,
+): ProfCounselRequestRow[] {
+  return allRows(professorId).filter(row => row.status === status)
+}
+
 export function getProfReqTabCounts(professorId: string): Record<ProfReqTab, number> {
   const rows = allRows(professorId)
   const counts: Record<ProfReqTab, number> = { 전체: rows.length, 대기: 0, 확정: 0, 완료: 0, 취소: 0 }

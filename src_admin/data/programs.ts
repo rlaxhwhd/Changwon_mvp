@@ -142,13 +142,15 @@ export function setApplicantsStatus(
   selectionStatus: SelectionStatus,
 ): void {
   const ids = new Set(studentIds)
+  // 선발 시점을 함께 남긴다 — 학생 쪽 '선발됨' 알림이 "언제"를 이 값으로 읽는다.
+  const selectedAt = selectionStatus === '선발' ? new Date().toISOString() : undefined
   const next = getPrograms().map(p =>
     p.id !== programId
       ? p
       : {
           ...p,
           applicants: p.applicants.map(a =>
-            ids.has(a.studentId) ? { ...a, selectionStatus } : a,
+            ids.has(a.studentId) ? { ...a, selectionStatus, selectedAt } : a,
           ),
         },
   )
@@ -184,7 +186,7 @@ export function setApplicantsOutcome(
   // '선발'은 결과만 해제하고 선발 상태는 유지한다.
   const patch: Partial<ProgramApplicant> =
     action === '대기'
-      ? { selectionStatus: '대기', outcomeStatus: undefined }
+      ? { selectionStatus: '대기', selectedAt: undefined, outcomeStatus: undefined }
       : { outcomeStatus: action === '선발' ? undefined : (action as OutcomeStatus) }
   const ids = new Set(studentIds)
   const next = getPrograms().map(p =>

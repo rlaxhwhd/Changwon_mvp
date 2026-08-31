@@ -177,6 +177,17 @@ function statusRows(departments: string[]): DiagnosisStatusRow[] {
   return rows
 }
 
+/**
+ * 담당 범위의 재검사(회차 ≥ 2) 행 — 최근 응시 순.
+ * 범위 판정은 statusRows 가 전담한다(여기서 다시 학과를 거르지 않는다).
+ * 알림 벨처럼 페이징이 필요 없는 곳이 쓴다.
+ */
+export function getRetakeRows(departments: string[]): DiagnosisStatusRow[] {
+  return statusRows(departments)
+    .filter(row => row.isRetake)
+    .sort((a, b) => (b.date ?? '').localeCompare(a.date ?? ''))
+}
+
 export interface DiagnosisStatusParams extends ListParams {
   departments?: string[]
 }

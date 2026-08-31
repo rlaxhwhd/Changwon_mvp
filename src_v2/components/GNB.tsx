@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { NAV_SECTIONS, getSectionForPath, getActiveChildPath, getVisibleNavChildren, type NavChild } from './navConfig'
 import { Icon } from './Icon'
+import NotificationBell from './NotificationBell'
+import { getStudentNotifications } from '../data/notifications'
 import { STUDENTS, getActiveStudent, getActiveStudentId, setActiveStudent } from '../data/students'
 
 /** 드롭다운/모바일 하위 링크 — 중첩(depth 1)까지 평탄화해 렌더한다. */
@@ -139,14 +141,12 @@ export default function GNB() {
           </nav>
 
           <div className="topbar-right">
-            <button className="icon-button" type="button" title="검색" aria-label="검색">
-              <Icon name="search" />
-            </button>
-
-            <button className="icon-button" type="button" title="알림" aria-label="알림 3건">
-              <Icon name="bell" />
-              <span className="notification-dot">3</span>
-            </button>
+            {/* 알림 목록은 데이터 층이 만든다 — 여기서는 그리기만 한다. */}
+            <NotificationBell
+              items={getStudentNotifications(activeId)}
+              icon={<Icon name="bell" />}
+              triggerClassName="icon-button"
+            />
 
             <div className={`header-profile${profileOpen ? ' is-open' : ''}`} ref={profileRef}>
               <button

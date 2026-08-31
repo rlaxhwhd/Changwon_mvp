@@ -494,24 +494,6 @@ select:focus-visible {
 
 .icon-button:hover { background: var(--violet-soft); color: var(--primary); }
 
-.notification-dot {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  min-width: 16px;
-  height: 16px;
-  padding: 0 4px;
-  border: 2px solid var(--card);
-  border-radius: 999px;
-  background: var(--coral);
-  color: #fff;
-  font-size: 10px;
-  font-weight: 800;
-  line-height: 12px;
-  text-align: center;
-  pointer-events: none;
-}
-
 /* 프로필 */
 .header-profile { position: relative; display: inline-flex; }
 

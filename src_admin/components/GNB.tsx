@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LuBell, LuCheck, LuChevronDown, LuLogOut, LuMenu, LuSearch, LuUser, LuUsers, LuX } from 'react-icons/lu'
+import { LuBell, LuCheck, LuChevronDown, LuLogOut, LuMenu, LuUser, LuUsers, LuX } from 'react-icons/lu'
+import NotificationBell from '../../src_v2/components/NotificationBell'
+import { getStaffNotifications } from '../data/notifications'
 import { getNavSections, getSectionForPath, getActiveChildPath } from './navConfig'
 import {
   STAFF_USERS,
@@ -109,8 +111,12 @@ export default function GNB() {
         </nav>
 
         <div className="gnb-user">
-          <button type="button" className="icon-btn" aria-label="통합검색"><LuSearch /></button>
-          <button type="button" className="icon-btn has-dot" aria-label="알림"><LuBell /></button>
+          {/* 알림 목록은 데이터 층이 만든다(역할별 범위 격리) — 여기서는 그리기만 한다. */}
+          <NotificationBell
+            items={getStaffNotifications(user)}
+            icon={<LuBell />}
+            triggerClassName="icon-btn"
+          />
 
           <div className={`header-profile${profileOpen ? ' open' : ''}`} ref={profileRef}>
             <div className="profile-popover" role="menu" aria-label="사용자 메뉴" aria-hidden={!profileOpen}>

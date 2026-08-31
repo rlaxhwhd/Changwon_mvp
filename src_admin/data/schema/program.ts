@@ -113,6 +113,9 @@ export interface ProgramApplicant {
   round?: number
   /** 선발 상태 — 미지정이면 '대기'. '선발'만 선발자 관리 페이지에 노출된다. */
   selectionStatus?: SelectionStatus
+  /** 선발 확정 일시 (ISO 8601) — '선발'로 바뀐 시점. 학생 알림의 "언제"가 이 값이다.
+   *  선발이 풀리면 함께 지운다(선발되지 않은 신청자에게 남아 있으면 안 된다). */
+  selectedAt?: string
   /** 선발 후 결과 상태 — 선발자 관리에서 설정(수료/미수료/참석/불참). */
   outcomeStatus?: OutcomeStatus
 }
