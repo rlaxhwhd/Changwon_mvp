@@ -13,7 +13,6 @@ import ProgramDetail from './pages/growth/ProgramDetail'
 import QuestBoard from './pages/growth/QuestBoard'
 import GrowthJournal from './pages/growth/GrowthJournal'
 import GrowthJournalForm from './pages/growth/GrowthJournalForm'
-import SkillTree from './pages/growth/SkillTree'
 import TodayGrowthMission from './pages/growth/TodayGrowthMission'
 import GrowthMissionLog from './pages/growth/GrowthMissionLog'
 import RoadmapStatus from './pages/growth/RoadmapStatus'
@@ -29,6 +28,7 @@ import PsychCounsel from './pages/counsel/PsychCounsel'
 import ProfessorCounsel from './pages/counsel/ProfessorCounsel'
 
 // 경력개발 로드맵
+import AiRoadmap from './pages/roadmap/AiRoadmap'
 import Prediction from './pages/roadmap/Prediction'
 import AiJobs from './pages/roadmap/AiJobs'
 import AiResume from './pages/roadmap/AiResume'
@@ -93,7 +93,7 @@ const router = createBrowserRouter(
         // 경력개발 로드맵
         { path: '/roadmap',             element: <Navigate to="/roadmap/skill-tree" replace /> },
         { path: '/roadmap/ai',          element: <Navigate to="/roadmap/skill-tree" replace /> },
-        { path: '/roadmap/skill-tree',  element: <SkillTree /> },
+        { path: '/roadmap/skill-tree',  element: <AiRoadmap /> },
         { path: '/roadmap/final',       element: <Navigate to="/roadmap/skill-tree" replace /> },
         // 구 경로 → 신 경로 (취업지원 하위로 이동)
         { path: '/roadmap/prediction',  element: <Navigate to="/jobs/prediction" replace /> },

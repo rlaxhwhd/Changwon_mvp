@@ -1,0 +1,323 @@
+/* =========================================================
+   AI 직무 로드맵 — 시안 roadmap.html 이식
+   출처: roadmap.png · roadmap.html
+
+   [수정 가이드]
+   - 진행률은 CSS가 아니라 데이터다 → 인라인 style="--v:33%" 하나만 고친다.
+   - 도넛도 마찬가지 → style="--pct:38".
+   - 새 색을 만들지 않는다. index.css 의 휴 토큰 + soft 짝에서만 고른다.
+   - 시안의 `-line`(테두리) 값은 토큰이 없어 color-mix 로 파생시킨다. 하드코딩 금지.
+   - 모든 규칙은 .air 스코프 안에 둔다 — 전역 클래스명(.panel·.badge·.step)과 겹치기 때문.
+   ========================================================= */
+
+.air {
+  /* 시안이 쓴 파생 값 — 전부 기존 토큰에서 만든다 */
+  --air-mint-line: color-mix(in srgb, var(--mint) 26%, var(--card));
+  --air-blue-line: color-mix(in srgb, var(--blue) 22%, var(--card));
+  --air-violet-line: var(--violet-border);
+  --air-subtle: color-mix(in srgb, var(--muted) 52%, var(--card));
+  --air-hero-1: color-mix(in srgb, var(--violet) 58%, #14163a);
+  --air-hero-2: color-mix(in srgb, var(--violet) 82%, #1b1740);
+  --air-dot: color-mix(in srgb, var(--muted-foreground) 38%, var(--card));
+  --air-orb-glow: 0 10px 26px color-mix(in srgb, var(--violet) 34%, transparent);
+
+  word-break: keep-all;
+}
+
+/* ---------- 공용 ---------- */
+.air-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  padding: 24px;
+}
+.air-icon {
+  width: 18px; height: 18px; flex: none;
+  stroke: currentColor; stroke-width: 1.8; fill: none;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.air-icon.sm { width: 15px; height: 15px; }
+.air-icon.xs { width: 13px; height: 13px; stroke-width: 2.2; }
+
+.air-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 24px; padding: 0 9px;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card);
+  font-size: 12px; font-weight: 800; white-space: nowrap;
+}
+.air-badge.is-mint   { border-color: var(--air-mint-line);   color: var(--mint-ink); background: var(--mint-soft); }
+
+/* 강의 분류 태그 */
+.air-tag {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 56px; height: 21px; padding: 0 8px; border-radius: 6px;
+  font-size: 11px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap;
+}
+.air-tag.is-req { background: var(--blue-soft); color: var(--blue); }
+.air-tag.is-sel { background: color-mix(in srgb, var(--blue-soft) 60%, var(--card)); color: color-mix(in srgb, var(--blue) 74%, var(--muted-foreground)); }
+.air-tag.is-etc { background: var(--amber-soft); color: var(--amber-ink); }
+.air-tag.is-lib { background: var(--violet-soft); color: var(--violet); }
+
+/* 섹션 머리 */
+.air-sec-head { display: flex; align-items: center; gap: 10px; }
+.air-sec-no {
+  display: grid; place-items: center;
+  width: 28px; height: 23px; border-radius: 7px;
+  background: linear-gradient(135deg, var(--blue), var(--violet));
+  color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .02em;
+}
+.air-sec-title { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+.air-sec-desc { margin-top: 8px; font-size: 13px; line-height: 1.6; color: var(--muted-foreground); }
+
+/* ---------- 01 AI 분석 입력 ---------- */
+.air-sources { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
+.air-src { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--card); overflow: hidden; }
+.air-src-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--air-sc-soft);
+}
+.air-src-ico {
+  display: grid; place-items: center;
+  width: 28px; height: 28px; border-radius: var(--radius-md);
+  color: var(--air-sc); background: color-mix(in srgb, var(--air-sc-soft) 60%, var(--card));
+}
+.air-src-title { font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
+.air-src-title i { font-style: normal; color: var(--air-sc); margin-right: 4px; }
+.air-src-body { display: flex; flex-direction: column; flex: 1; padding: 16px; }
+
+.air-src.is-mint   { --air-sc: var(--mint);   --air-sc-soft: var(--mint-soft);   border-color: var(--air-mint-line); }
+.air-src.is-blue   { --air-sc: var(--blue);   --air-sc-soft: var(--blue-soft);   border-color: var(--air-blue-line); }
+.air-src.is-violet { --air-sc: var(--violet); --air-sc-soft: var(--violet-soft); border-color: var(--air-violet-line); }
+
+/* 재료 1 — 진단유형 / 상담 */
+.air-kv { border: 1px solid var(--border); border-radius: var(--radius-md); overflow: hidden; }
+.air-kv-row { display: grid; grid-template-columns: 96px 1fr; border-top: 1px solid var(--border); }
+.air-kv-row:first-child { border-top: 0; }
+.air-kv dt {
+  display: flex; align-items: center;
+  padding: 15px 12px;
+  background: var(--air-subtle);
+  border-right: 1px solid var(--border);
+  font-size: 12.5px; font-weight: 700;
+}
+.air-kv dd { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 15px 14px; font-size: 12.5px; font-weight: 600; line-height: 1.7; }
+.air-kv dd p { margin: 0; color: var(--muted-foreground); font-weight: 500; }
+
+.air-checks { margin: 12px 0 0; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); display: grid; gap: 11px; list-style: none; }
+.air-checks li { display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600; color: color-mix(in srgb, var(--foreground) 78%, var(--muted-foreground)); }
+.air-check-mark { display: grid; place-items: center; width: 16px; height: 16px; flex: none; border-radius: 50%; background: var(--mint); color: #fff; }
+.air-check-mark .air-icon { width: 10px; height: 10px; stroke-width: 3; }
+
+/* 재료 2 — 수강강의 / 학과 */
+.air-courses { border: 1px solid var(--border); border-radius: var(--radius-md); padding: 14px; }
+.air-courses + .air-courses { margin-top: 12px; }
+.air-courses h4 { margin: 0 0 8px; font-size: 13px; font-weight: 800; color: var(--blue); letter-spacing: -.02em; }
+.air-course { display: grid; grid-template-columns: 64px 1fr auto auto; align-items: center; gap: 10px; padding: 4px 0; }
+.air-course-code { font-size: 11.5px; font-weight: 600; color: var(--muted-foreground); }
+.air-course-name { font-size: 13px; font-weight: 700; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.air-course-cr { font-size: 12px; font-weight: 600; color: var(--muted-foreground); width: 38px; text-align: right; }
+.air-course-empty { padding: 4px 0; font-size: 12px; font-weight: 600; color: var(--muted-foreground); }
+
+/* 재료 3 — 학생 스펙 */
+.air-specs { display: grid; flex: 1; align-content: space-between; gap: 12px; margin: 0; }
+.air-spec { display: grid; grid-template-columns: 28px 66px 1fr; align-items: start; gap: 10px; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 15px 13px; }
+.air-spec-ico { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-sm); color: var(--violet); background: var(--violet-soft); }
+.air-spec dt { font-size: 12.5px; font-weight: 800; padding-top: 5px; }
+.air-spec dd { display: grid; gap: 6px; margin: 0; padding-top: 5px; font-size: 12px; font-weight: 600; letter-spacing: -.02em; color: var(--muted-foreground); }
+
+/* 커넥터 (재료 3종 → AI 오브)
+   드롭 x = 재료 카드 중심(16.3% / 50% / 83.7%), 테일 x = 오브 중심(36.8%). */
+.air-connector { position: relative; height: 40px; margin-top: 8px; }
+.air-connector span { position: absolute; }
+.air-connector .air-drop { top: 0; height: 22px; border-left: 1.5px dashed var(--air-dot); }
+.air-connector .air-drop::before { content: ""; position: absolute; left: -3.5px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--air-dot); }
+.air-connector .air-bus { top: 22px; height: 0; border-top: 1.5px dashed var(--air-dot); }
+.air-connector .air-tail { top: 22px; height: 18px; border-left: 1.5px dashed var(--air-dot); }
+.air-connector .air-tail::after { content: ""; position: absolute; left: -3.5px; bottom: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--air-dot); }
+
+/* ---------- AI 플로우 ---------- */
+.air-flow { display: grid; grid-template-columns: 1.08fr auto auto auto 1.02fr auto 1fr; align-items: center; gap: 12px; }
+.air-flow-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--card); padding: 14px 16px; }
+.air-flow-card h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 11px; font-size: 14px; font-weight: 800; letter-spacing: -.02em; }
+.air-flow-card h4 .air-icon { color: var(--blue); }
+.air-flow-card ul { margin: 0; padding: 0; list-style: none; }
+.air-flow-card li { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12.5px; font-weight: 600; color: color-mix(in srgb, var(--foreground) 76%, var(--muted-foreground)); }
+.air-flow-card li .air-icon { width: 14px; height: 14px; color: var(--muted-foreground); }
+
+.air-chev { display: flex; align-items: center; color: color-mix(in srgb, var(--violet) 55%, var(--card)); }
+.air-chev .air-icon { width: 16px; height: 16px; stroke-width: 2.6; margin-right: -6px; }
+
+/* AI 오브 — 직무 분석 모달을 여는 버튼.
+   라벨이 16px 한 줄로 들어가야 해서 시안(78px)보다 원을 키웠다.
+   별은 글자 사이에 끼우지 않고 텍스트 위에 따로 놓는다 — 끼우면 줄이 접힌다. */
+.air-orb {
+  display: grid; place-items: center; gap: 3px;
+  width: 108px; height: 108px; border-radius: 50%;
+  border: 0; padding: 0;
+  background:
+    radial-gradient(circle at 33% 27%, rgba(255, 255, 255, .45), transparent 46%),
+    linear-gradient(140deg, var(--blue), var(--violet));
+  box-shadow: var(--air-orb-glow);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.air-orb:hover { transform: translateY(-2px); box-shadow: 0 14px 30px color-mix(in srgb, var(--violet) 42%, transparent); }
+.air-orb:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; }
+.air-orb:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+/* 오브 안 라벨 — 요청 사양: 16px 한 줄 */
+.air-orb-label { font-size: 16px; font-weight: 800; letter-spacing: -.03em; white-space: nowrap; }
+.air-orb-star { width: 16px; height: 16px; stroke-width: 2.2; opacity: .92; }
+
+.air-job-box { margin-top: 2px; border: 1px solid var(--border); border-radius: var(--radius-md); padding: 12px 14px; }
+.air-job-name { margin: 0; font-size: 17px; font-weight: 800; color: var(--blue); letter-spacing: -.02em; }
+.air-job-name.is-empty { color: var(--muted-foreground); font-weight: 700; }
+.air-job-meta { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 6px 16px; margin: 10px 0 0; }
+.air-job-meta dt { justify-self: start; padding: 2px 7px; border-radius: 5px; background: var(--muted); color: var(--muted-foreground); font-size: 11px; font-weight: 700; }
+.air-job-meta dd { grid-row: 2; margin: 0; font-size: 12.5px; font-weight: 700; }
+
+/* 생성 버튼 */
+.air-gen {
+  display: grid; place-items: center; gap: 3px;
+  width: 100%; min-height: 82px; padding: 14px 16px;
+  border: 0; border-radius: var(--radius-lg);
+  background: linear-gradient(115deg, var(--blue), var(--violet));
+  color: #fff; text-align: center;
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter .16s ease, transform .16s ease;
+}
+.air-gen:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+.air-gen:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; }
+.air-gen:disabled { background: var(--muted); color: var(--muted-foreground); cursor: not-allowed; }
+.air-gen b { display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
+.air-gen small { font-size: 12px; font-weight: 600; color: rgba(255, 255, 255, .85); }
+.air-gen:disabled small { color: var(--muted-foreground); }
+
+/* 섹션 사이 화살표 */
+.air-link-arrow { display: grid; place-items: center; padding: 14px 0; }
+
+/* ---------- 02 로드맵 결과 ---------- */
+.air-hero {
+  display: flex; align-items: center; justify-content: space-between; gap: 32px;
+  margin-top: 18px; padding: 24px 28px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(118deg, var(--air-hero-1), var(--air-hero-2));
+  color: #fff;
+}
+.air-hero-kicker { margin: 0; font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, .62); }
+.air-hero h3 { margin: 6px 0 8px; font-size: 30px; font-weight: 800; letter-spacing: -.03em; }
+.air-hero-desc { margin: 0; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, .8); line-height: 1.6; }
+
+.air-hero-stat { display: flex; align-items: center; gap: 22px; flex: none; }
+.air-hero-stat .air-label { margin: 0; font-size: 12.5px; font-weight: 700; color: rgba(255, 255, 255, .72); }
+.air-hero-stat .air-value { display: flex; align-items: baseline; gap: 2px; margin: 4px 0 6px; font-size: 46px; font-weight: 900; letter-spacing: -.04em; line-height: 1; }
+.air-hero-stat .air-value small { font-size: 18px; font-weight: 800; }
+.air-hero-stat .air-sub { margin: 0; font-size: 12.5px; font-weight: 700; color: rgba(255, 255, 255, .82); }
+.air-donut {
+  width: 112px; height: 112px; border-radius: 50%;
+  background: conic-gradient(from -90deg,
+    color-mix(in srgb, var(--blue) 78%, #fff) 0deg,
+    var(--violet) calc(var(--pct) * 3.6deg),
+    rgba(255, 255, 255, .16) calc(var(--pct) * 3.6deg) 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent 63%, #000 64%);
+          mask: radial-gradient(farthest-side, transparent 63%, #000 64%);
+}
+
+/* 3축 보드 — 마크업·상태색은 공용 RoadmapAxisBoard 가 갖는다.
+   여기서는 결과 패널 안 여백과, 보드가 열어 준 axisFooter 슬롯만 꾸민다. */
+.air-board { margin-top: 16px; }
+
+.air-axis-more {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; height: 38px;
+  border: 1px solid var(--air-blue-line); border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--blue-soft) 52%, var(--card));
+  color: var(--blue);
+  font-family: inherit; font-size: 12.5px; font-weight: 800;
+  cursor: pointer;
+  text-decoration: none;
+}
+.air-axis-more:hover { background: var(--blue-soft); }
+
+/* ---------- 잠금·빈 상태 ---------- */
+.air-locked {
+  display: grid; place-items: center; gap: 10px;
+  padding: 40px 24px; margin-top: 18px;
+  border: 1px dashed var(--border); border-radius: var(--radius-lg);
+  background: var(--air-subtle);
+  text-align: center;
+}
+.air-locked .air-icon { width: 26px; height: 26px; color: var(--muted-foreground); }
+.air-locked h3 { margin: 0; font-size: 15px; font-weight: 800; }
+.air-locked p { margin: 0; font-size: 13px; font-weight: 600; line-height: 1.6; color: var(--muted-foreground); }
+.air-locked a {
+  display: inline-flex; align-items: center; gap: 6px;
+  height: 36px; padding: 0 14px; margin-top: 4px;
+  border-radius: var(--radius-md); background: var(--violet); color: #fff;
+  font-size: 13px; font-weight: 700; text-decoration: none;
+}
+.air-locked a:hover { background: var(--violet-hover); }
+
+/* ---------- 직무 선택 모달 ---------- */
+.air-pick-desc { margin: 0 0 14px; font-size: 13px; font-weight: 600; line-height: 1.6; color: var(--muted-foreground); }
+.air-pick-list { display: grid; gap: 10px; }
+.air-pick-item {
+  display: grid; grid-template-columns: 36px 1fr auto; align-items: center; gap: 12px;
+  width: 100%; padding: 13px 14px;
+  border: 1px solid var(--border); border-radius: var(--radius-md);
+  background: var(--card);
+  font-family: inherit; text-align: left; cursor: pointer;
+  transition: border-color .14s ease, background .14s ease;
+}
+.air-pick-item:hover { border-color: var(--air-violet-line); background: var(--violet-soft); }
+.air-pick-item.is-selected { border-color: var(--violet); background: var(--violet-soft); }
+.air-pick-ico { display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--radius-md); background: var(--violet-soft); color: var(--violet); }
+.air-pick-info { min-width: 0; }
+.air-pick-name { display: block; font-size: 14px; font-weight: 800; letter-spacing: -.02em; }
+.air-pick-sub { display: block; margin-top: 3px; font-size: 12px; font-weight: 600; color: var(--muted-foreground); }
+.air-pick-fit { display: grid; justify-items: end; gap: 2px; }
+.air-pick-fit b { font-size: 17px; font-weight: 900; letter-spacing: -.02em; color: var(--violet); }
+.air-pick-fit small { font-size: 11px; font-weight: 700; color: var(--muted-foreground); }
+.air-pick-empty { padding: 20px 0; text-align: center; font-size: 13px; font-weight: 600; color: var(--muted-foreground); }
+
+/* 모달 안 직무 추가 */
+.air-pick-add { display: flex; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); }
+.air-pick-add input {
+  flex: 1; height: 38px; padding: 0 12px;
+  border: 1px solid var(--input); border-radius: var(--radius-md);
+  background: var(--card); color: var(--foreground);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+}
+.air-pick-add input:focus { outline: none; border-color: var(--violet); }
+.air-pick-add button {
+  height: 38px; padding: 0 16px;
+  border: 1px solid var(--violet); border-radius: var(--radius-md);
+  background: var(--violet); color: #fff;
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.air-pick-add button:hover { background: var(--violet-hover); }
+.air-pick-error { margin: 8px 0 0; font-size: 12px; font-weight: 700; color: var(--coral); }
+
+/* 모달 안 분석 로딩 */
+.air-analyzing { display: grid; place-items: center; gap: 14px; padding: 34px 0; text-align: center; }
+.air-analyzing-spinner {
+  width: 46px; height: 46px; border-radius: 50%;
+  border: 4px solid var(--violet-soft); border-top-color: var(--violet);
+  animation: air-spin .8s linear infinite;
+}
+@keyframes air-spin { to { transform: rotate(360deg); } }
+.air-analyzing h3 { margin: 0; font-size: 15px; font-weight: 800; }
+.air-analyzing p { margin: 0; font-size: 13px; font-weight: 600; color: var(--muted-foreground); }
+.air-analyzing-bar { width: 100%; height: 6px; border-radius: 6px; background: var(--muted); overflow: hidden; }
+.air-analyzing-bar i { display: block; height: 100%; border-radius: 6px; background: linear-gradient(90deg, var(--blue), var(--violet)); transition: width .1s linear; }
+.air-analyzing-pct { font-size: 13px; font-weight: 800; color: var(--violet); }
+
+@media (prefers-reduced-motion: reduce) {
+  .air-orb, .air-gen, .air-pick-item, .air-analyzing-bar i { transition: none; }
+  .air-analyzing-spinner { animation-duration: 2.4s; }
+}
