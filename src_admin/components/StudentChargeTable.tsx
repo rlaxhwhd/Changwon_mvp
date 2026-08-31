@@ -19,7 +19,8 @@ import { useListData } from '../hooks/useListData'
 import EmptyState from './EmptyState'
 
 // ─────────────────────────────────────────────────────────────────────────
-// 상담사 학생 목록 표 (담당·전체 공유) — 번호·학생·학과·학년·진단 유형·학적·IAP 진행률.
+// 상담사 학생 목록 표 (담당·전체 공유) — 번호·학생·학과·학년·진단 유형·학적·IAP 이행률.
+// 이 값의 이름은 데이터층(roadmap.ts·counselorDashboard.ts)이 쓰는 '이행률'을 따른다.
 // 행을 누르면 /students/:id 상세 페이지로 간다.
 //
 // 담당 목록(/students)과 전체 목록(/students/all)은 같은 표·같은 데이터 항목이고
@@ -223,7 +224,7 @@ export default function StudentChargeTable({ departments, title, scopeLabel }: S
                 <span>학년</span>
                 <span>진단 유형</span>
                 <span>학적</span>
-                <span>IAP 진행률</span>
+                <span>IAP 이행률</span>
               </div>
               {items.map((s, i) => (
                 <button

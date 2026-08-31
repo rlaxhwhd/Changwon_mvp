@@ -1332,11 +1332,21 @@ input, textarea, select { font-family: var(--font); }
   background: transparent; transition: background 0.12s;
 }
 .admin-roster-row:hover { background: var(--color-section-bg); }
-/* 담당 학생 목록 — 번호·학생·학과·학년·진단유형·학적·IAP진행률. 학과와 학년은 별도 열이다. */
+/* 담당 학생 목록 — 번호·학생·학과·학년·진단유형·학적·IAP이행률. 학과와 학년은 별도 열이다. */
 .admin-charge-roster .admin-roster-head,
 .admin-charge-roster .admin-roster-row {
   grid-template-columns: 52px 1.1fr 1.4fr 0.6fr 1.4fr 0.8fr 1fr;
 }
+/* 머리글과 값을 같은 축에 세운다 — 다른 로스터(.admin-student-roster 등)와 같은 규칙이다.
+   전에는 머리글만 왼쪽, 번호는 가운데, 이행률 %는 오른쪽이라 열마다 축이 갈렸다.
+   셀이 flex column 이라 배지·이름·미터는 align-self / justify-content 로 따로 세워야 한다. */
+.admin-charge-roster .admin-roster-head { text-align: center; }
+.admin-charge-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-charge-roster .admin-roster-cell .admin-type-tag,
+.admin-charge-roster .admin-roster-cell .admin-enroll { align-self: center; }
+.admin-charge-roster .admin-roster-student { justify-content: center; }
+/* 미터는 폭을 채우는 게 맞다 — 대신 옆의 % 를 가운데로 붙여 머리글 축과 맞춘다. */
+.admin-charge-roster .admin-roster-progress em { min-width: 38px; text-align: center; }
 /* 학생현황 표(조교·교수 공유) — 번호·이름·학번·학년·대학·학과·상태·학생정보(보기). 중앙 정렬로 열 간격 균일 */
 .admin-student-roster .admin-roster-head,
 .admin-student-roster .admin-roster-row {
