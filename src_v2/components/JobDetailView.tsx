@@ -118,8 +118,10 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
         <main className="jd-main">
         {/* ── 히어로 배너 ── */}
         <header className={`jd-hero${closed ? ' is-closed' : ''}`}>
-          {/* 로고 이미지는 데이터에 없다 — 가짜 로고를 넣지 않고 회사명 이니셜로 자리를 만든다. */}
-          <span className="jd-logo" aria-hidden="true">{job.company.slice(0, 2)}</span>
+          {/* 로고는 추천채용 등록 화면에서만 올린다 — 없으면 회사명 이니셜로 자리를 만든다(목록 카드와 같은 규약). */}
+          <span className={`jd-logo${job.logo ? ' has-img' : ''}`} aria-hidden="true">
+            {job.logo ? <img src={job.logo} alt="" /> : job.company.slice(0, 2)}
+          </span>
 
           <div className="jd-hero-main">
             <p className="jd-hero-company">{job.company}</p>

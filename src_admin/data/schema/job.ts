@@ -74,6 +74,14 @@ export interface JobPosting {
   // ── 등록 폼 상세(사진 순서) — 학생 Job에는 없는 상담사 등록 전용 필드 ──
   /** 채용 유형 (일반공고/추천채용) */
   recruitType?: RecruitType
+  /**
+   * 기업 로고/이미지 (data URL) — **추천채용 공고만** 등록·표시한다.
+   * 파일을 올려둘 서버가 없어 등록 화면에서 LOGO_MAX_PX 로 줄여 data URL 로 담는다.
+   * 원본을 그대로 담으면 공고 목록(dc_jobs) 하나가 localStorage 한도를 넘겨 저장이
+   * 통째로 실패한다 — 줄이는 것이 선택이 아니라 조건이다.
+   * (DB 전환 시 이 자리는 업로드된 파일의 URL 이 된다 — 소비 측 코드는 그대로다)
+   */
+  logo?: string
   /** 기업 구분 */
   companyType?: string
   /** 제목 클릭 시 URL로 이동 */

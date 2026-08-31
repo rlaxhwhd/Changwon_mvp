@@ -87,6 +87,25 @@
 .jc-card.is-static:hover { border-color: var(--jb-line); box-shadow: none; transform: none; }
 .jb-row.is-static:hover { background: #fff; }
 
+/* 머리 — 로고 칸 + 본문 칸. 로고의 세로 길이 안에 회사명·제목·태그가 들어간다. */
+.jc-head { display: flex; align-items: flex-start; gap: 12px; }
+.jc-headmain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+
+/* 추천채용 기업 로고 — 등록된 공고만 그린다.
+   가로세로 같은 칸에 두르고 contain 으로 담는다: 로고는 정사각·가로형이 섞여 들어오므로
+   칸을 고정해야 카드들의 첫 열이 같은 자리에서 시작한다. 비율은 contain 이 지킨다.
+   테두리를 얇게 두는 이유는 로고 배경이 대개 비어 있어서다 — 흰 카드 위에 그냥 놓으면
+   로고가 어디서 끝나는지 보이지 않는다. */
+.jc-logo {
+  flex: 0 0 auto;
+  width: 64px; height: 64px;
+  display: grid; place-items: center;
+  padding: 6px;
+  border: 1px solid var(--jb-line); border-radius: var(--radius-sm, 8px);
+  background: #fff; overflow: hidden;
+}
+.jc-logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+
 .jc-top { display: flex; align-items: center; gap: 10px; }
 .jc-company { font-size: 14px; font-weight: 800; color: var(--jb-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .jc-badge-rec { flex: 0 0 auto; padding: 2px 8px; border-radius: 999px; background: #fff0f6; color: #e64980; font-size: 11px; font-weight: 800; }
@@ -134,12 +153,13 @@
 .jb-row .jc-dday.is-closed { color: var(--jb-sub); }
 .jb-row time { font-size: 12px; color: var(--jb-sub); }
 
-/* 기업 구분 — 회사명 옆 보조값이라 회사명보다 약하게. */
+/* 기업 구분 — 태그줄의 첫 칸. 공고가 아니라 기업의 값이라 나머지 태그와 다르게 테두리로 그린다. */
+/* 테두리 1px 만큼 세로 여백을 덜어 옆 태그와 같은 높이로 선다. */
 .jc-companytype {
   flex: 0 0 auto;
-  padding: 2px 7px; border-radius: var(--radius-sm, 8px);
+  padding: 2px 8px; border-radius: 6px;
   background: var(--jb-surface); border: 1px solid var(--jb-line);
-  color: var(--jb-sub); font-size: 11px; font-weight: 700; white-space: nowrap;
+  color: var(--jb-sub); font-size: 12px; font-weight: 700; white-space: nowrap;
 }
 
 /* 매칭도 — 값이 있을 때만 그린다. 숫자만 쓰면 비교가 안 돼 막대를 같이 둔다. */
@@ -165,26 +185,45 @@
 .jc-card-action:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 
 /* ── 일반채용 리스트 ──────────────────────────────────────────────────── */
-.jb-list { border-top: 1px solid var(--jb-line); }
+.jb-list {
+  /* 열 폭은 여기 한 곳에만 둔다 — 머리글과 행에 따로 적으면 반드시 어긋난다. */
+  --jb-cols: 56px 148px minmax(240px, 1fr) 120px 132px 110px 116px;
+  border-top: 1px solid var(--jb-line);
+}
+.jb-head,
 .jb-row {
-  width: 100%;
   display: grid;
-  grid-template-columns: 150px minmax(280px, 1fr) 220px 120px 64px 74px;
+  grid-template-columns: var(--jb-cols);
   align-items: center; gap: 16px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--jb-line);
+}
+.jb-head {
+  padding: 10px 16px;
+  background: #f8f9fa;
+  font-size: 14px; font-weight: 800; color: var(--jb-sub);
+}
+.jb-row {
+  width: 100%;
   background: #fff;
   text-align: left; font: inherit; cursor: pointer;
   transition: background 0.14s;
 }
 .jb-row:hover { background: #f8fbff; }
 .jb-row.is-closed { opacity: 0.62; }
+/* 번호는 값이 아니라 자리 표시다 — 가운데로 모아 열이 흔들리지 않게 한다. */
+.jb-head span:first-child,
+.jb-row-no { text-align: center; }
+.jb-row-no { font-size: 13px; font-weight: 700; color: var(--jb-muted); }
 .jb-row-company { font-size: 14px; font-weight: 800; color: var(--jb-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .jb-row-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .jb-row-title strong { font-size: 14px; font-weight: 800; color: var(--jb-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.jb-row-meta { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: var(--jb-sub); }
-.jb-row-meta i { color: #adb5bd; font-size: 12px; }
+/* 직무는 배지가 아니라 열 값이다 — 배경을 씌우면 열이 열로 읽히지 않는다. */
+.jb-row-job,
+.jb-row-region { font-size: 13px; color: var(--jb-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .jb-row-salary { font-size: 13px; font-weight: 700; color: var(--jb-sub); }
+/* 남은 일수(D-N)와 실제 마감일은 같은 열의 위아래다 — 열을 둘로 쪼개면 머리글이 안 맞는다. */
+.jb-row-deadline { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .jb-row time { font-size: 12px; color: var(--jb-sub); }
 
 /* ── 빈 상태 ──────────────────────────────────────────────────────────── */
@@ -200,10 +239,15 @@
   .jb-toolbar { align-items: stretch; flex-direction: column; }
   .jb-search { max-width: none; }
   .jb-count { margin-left: 0; }
+  /* 열이 접히면 머리글이 가리키는 칸이 사라진다 — 어긋난 머리글보다 없는 편이 낫다. */
+  .jb-head { display: none; }
   .jb-row { grid-template-columns: 1fr auto; gap: 6px 12px; }
+  .jb-row-no,
   .jb-row-company,
   .jb-row-title,
-  .jb-row-meta { grid-column: 1 / -1; }
+  .jb-row-job,
+  .jb-row-region { grid-column: 1 / -1; }
+  .jb-row-no { text-align: left; }
   .jb-row-title { align-items: flex-start; flex-direction: column; }
   .jb-row-title strong { white-space: normal; }
 }

@@ -14,6 +14,40 @@ import './JobForm.css'
 type Draft = Omit<JobPosting, 'id' | 'postedAt'>
 type ArrayKey = 'employmentTypes' | 'jobCategories' | 'careerTypes' | 'genders' | 'regions'
 
+/** 로고 저장 규격 — 카드가 40px, 상세가 72px 로 쓴다. 2배수까지만 남기고 줄인다. */
+const LOGO_MAX_PX = 160
+/** 줄인 뒤에도 이만큼 크면 거부한다 — 공고 목록 전체가 localStorage 한도를 못 넘게. */
+const LOGO_MAX_BYTES = 200_000
+
+/**
+ * 업로드한 이미지를 LOGO_MAX_PX 안으로 줄여 data URL 로 만든다.
+ * 로고는 배경이 비어 있는 경우가 많아 PNG 로 다시 쓴다(JPEG 로 바꾸면 검은 배경이 깔린다).
+ */
+function toLogoDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('이미지 파일만 등록할 수 있습니다.'))
+      img.onload = () => {
+        const scale = Math.min(1, LOGO_MAX_PX / Math.max(img.width, img.height))
+        const w = Math.max(1, Math.round(img.width * scale))
+        const h = Math.max(1, Math.round(img.height * scale))
+        const canvas = document.createElement('canvas')
+        canvas.width = w
+        canvas.height = h
+        const ctx = canvas.getContext('2d')
+        if (!ctx) { reject(new Error('이미지를 처리하지 못했습니다.')); return }
+        ctx.drawImage(img, 0, 0, w, h)
+        resolve(canvas.toDataURL('image/png'))
+      }
+      img.src = reader.result as string
+    }
+    reader.readAsDataURL(file)
+  })
+}
+
 function toDraft(job: JobPosting): Draft {
   const { id, postedAt, ...rest } = job
   void id
@@ -43,6 +77,7 @@ export default function JobForm() {
   const [draft, setDraft] = useState<Draft>(() => (existing ? toDraft(existing) : blankJob()))
   const [regionScope, setRegionScope] = useState('대한민국 전지역')
   const [saved, setSaved] = useState(false)
+  const [logoError, setLogoError] = useState('')
 
   if (notFound || readOnly) {
     return (
@@ -75,6 +110,21 @@ export default function JobForm() {
     })
   const pickOne = (key: ArrayKey, value: string) => set(key, [value] as Draft[ArrayKey])
 
+  const pickLogo = async (file: File | undefined) => {
+    if (!file) return
+    setLogoError('')
+    try {
+      const dataUrl = await toLogoDataUrl(file)
+      if (dataUrl.length > LOGO_MAX_BYTES) {
+        setLogoError('이미지 용량이 너무 큽니다. 더 작은 파일로 등록해주세요.')
+        return
+      }
+      set('logo', dataUrl)
+    } catch (e) {
+      setLogoError(e instanceof Error ? e.message : '이미지를 불러오지 못했습니다.')
+    }
+  }
+
   const regions = arr('regions')
   const canSave = draft.company.trim() !== '' && draft.role.trim() !== '' && !saved
 
@@ -94,6 +144,9 @@ export default function JobForm() {
       jobType: (careers.length === 1 ? careers[0] : '신입') as JobEmploymentType,
       deadline: draft.deadlineOnHire ? onHireDeadline() : draft.deadline,
       tags: [...arr('employmentTypes'), ...careers, ...arr('jobCategories')].slice(0, 6),
+      // 로고는 추천채용에서만 보이는 값이다 — 일반공고로 바꿔 저장하면 담지 않는다.
+      // (draft 에는 남겨둔다. 유형을 되돌리면 올렸던 이미지가 그대로 살아난다)
+      logo: draft.recruitType === '추천채용' ? draft.logo : undefined,
       source: 'manual',
     }
     if (isEdit && existing) updateJob(existing.id, payload)
@@ -137,6 +190,44 @@ export default function JobForm() {
           <Row label="회사명" required>
             <input className="jf-input" value={draft.company} onChange={e => set('company', e.target.value)} placeholder="회사명을 입력해주세요." />
           </Row>
+
+          {/* 로고는 추천채용 카드에만 나온다 — 유형이 추천채용일 때만 묻는다. */}
+          {draft.recruitType === '추천채용' && (
+            <Row label="기업 로고" top>
+              <div className="jf-logo">
+                <span className={`jf-logo-preview${draft.logo ? ' has-img' : ''}`}>
+                  {draft.logo
+                    ? <img src={draft.logo} alt="등록한 기업 로고 미리보기" />
+                    : <em>{draft.company.trim().slice(0, 2) || '로고'}</em>}
+                </span>
+                <div className="jf-logo-side">
+                  <div className="jf-logo-btns">
+                    <label className="jf-btn jf-btn-outline jf-logo-pick">
+                      {draft.logo ? '이미지 변경' : '이미지 선택'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        onChange={e => { void pickLogo(e.target.files?.[0]); e.target.value = '' }}
+                      />
+                    </label>
+                    {draft.logo && (
+                      <button
+                        type="button"
+                        className="jf-btn jf-btn-outline"
+                        onClick={() => { set('logo', undefined); setLogoError('') }}
+                      >
+                        삭제
+                      </button>
+                    )}
+                  </div>
+                  <span className="jf-hint">
+                    추천채용 카드와 공고 상세에 표시됩니다. 정사각형 이미지를 권장하며 {LOGO_MAX_PX}px로 줄여 저장합니다.
+                  </span>
+                  {logoError && <span className="jf-logo-error">{logoError}</span>}
+                </div>
+              </div>
+            </Row>
+          )}
 
           <Row label="기업구분" required>
             <div className="jf-opts">

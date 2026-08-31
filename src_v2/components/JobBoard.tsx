@@ -52,6 +52,11 @@ function careerLabel(job: JobPosting): string {
   return careers.length ? careers.join('·') : job.jobType
 }
 
+/** 직무(직종) — 표의 한 열이라 여러 개여도 첫 값만 쓴다. */
+function jobCategoryLabel(job: JobPosting): string {
+  return (job.jobCategories ?? [])[0] ?? '-'
+}
+
 function salaryLabel(job: JobPosting): string {
   if (job.salaryNegotiable) return '회사내규'
   const s = (job.salary ?? '').trim()
@@ -126,40 +131,54 @@ export default function JobBoard({
         {...openProps(job)}
         className={`jc-card${closed ? ' is-closed' : ''}${onOpen ? '' : ' is-static'}`}
       >
-        <div className="jc-top">
-          <span className="jc-company">{job.company}</span>
-          {job.companyType && <span className="jc-companytype">{job.companyType}</span>}
-          {job.recruitType === '추천채용' && <span className="jc-badge-rec">추천</span>}
-          {/* 마감까지 며칠인가 — 이 카드에서 가장 결정적인 값이라 눈에 먼저 걸리게 위로 올린다. */}
-          <span className={`jc-dday${closed ? ' is-closed' : ''}`}>{dday}</span>
-          {showWish && (
-            <span
-              role="button"
-              tabIndex={0}
-              className={`jc-star${on ? ' is-on' : ''}`}
-              aria-label={on ? '찜 해제' : '찜하기'}
-              onClick={e => { e.stopPropagation(); toggleWish(job.id) }}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault(); e.stopPropagation(); toggleWish(job.id)
-                }
-              }}
-            >
-              <i className={on ? 'fa-solid fa-star' : 'fa-regular fa-star'} />
-            </span>
+        {/* 머리 — 로고 한 칸 + 그 오른쪽에 회사명·제목·태그를 쌓는다.
+            로고가 없으면(일반공고) 오른쪽 칸이 카드 폭을 그대로 쓴다. */}
+        <div className="jc-head">
+          {/* 기업 로고 — 추천채용만 등록한다(등록 화면도 이때만 묻는다). */}
+          {job.recruitType === '추천채용' && job.logo && (
+            <span className="jc-logo"><img src={job.logo} alt={`${job.company} 로고`} /></span>
           )}
-        </div>
 
-        <h3 className="jc-title">{job.role}</h3>
+          <div className="jc-headmain">
+            <div className="jc-top">
+              <span className="jc-company">{job.company}</span>
+              {job.recruitType === '추천채용' && <span className="jc-badge-rec">추천</span>}
+              {/* 마감까지 며칠인가 — 이 카드에서 가장 결정적인 값이라 눈에 먼저 걸리게 위로 올린다. */}
+              <span className={`jc-dday${closed ? ' is-closed' : ''}`}>{dday}</span>
+              {showWish && (
+                <span
+                  role="button"
+                  tabIndex={0}
+                  className={`jc-star${on ? ' is-on' : ''}`}
+                  aria-label={on ? '찜 해제' : '찜하기'}
+                  onClick={e => { e.stopPropagation(); toggleWish(job.id) }}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault(); e.stopPropagation(); toggleWish(job.id)
+                    }
+                  }}
+                >
+                  <i className={on ? 'fa-solid fa-star' : 'fa-regular fa-star'} />
+                </span>
+              )}
+            </div>
 
-        <div className="jc-tags">
-          {tagsOf(job).map(t => (
-            <span key={t.label} className={`jc-tag jc-tag-${t.kind}`}>{t.label}</span>
-          ))}
+            <h3 className="jc-title">{job.role}</h3>
+
+            {/* 기업구분은 회사명 줄에서 여기로 내려왔다 — 로고가 들어온 만큼 그 줄이 좁아져
+                회사명이 여섯 글자쯤에서 잘렸다. 지역도 아래 메타줄에서 올라왔다.
+                둘 다 자리만 옮긴 것이고, 같은 값을 두 번 쓰지 않는다. */}
+            <div className="jc-tags">
+              {job.companyType && <span className="jc-companytype">{job.companyType}</span>}
+              {tagsOf(job).map(t => (
+                <span key={t.label} className={`jc-tag jc-tag-${t.kind}`}>{t.label}</span>
+              ))}
+              <span className="jc-tag">{regionLabel(job)}</span>
+            </div>
+          </div>
         </div>
 
         <div className="jc-meta">
-          <span><i className="fa-solid fa-location-dot" /> {regionLabel(job)}</span>
           <span><i className="fa-solid fa-briefcase" /> {careerLabel(job)}</span>
           <span><i className="fa-solid fa-won-sign" /> {salaryLabel(job)}</span>
         </div>
@@ -201,7 +220,9 @@ export default function JobBoard({
     )
   }
 
-  const row = (job: JobPosting) => {
+  // no = 화면에 보이는 순번(1부터). 검색·정렬로 목록이 바뀌면 같이 다시 매겨진다 —
+  // 공고를 가리키는 식별자가 아니라 "지금 목록의 몇 번째"를 읽기 위한 값이다.
+  const row = (job: JobPosting, no: number) => {
     const dday = jobDdayLabel(job)
     const closed = isJobClosed(job)
     return (
@@ -210,21 +231,24 @@ export default function JobBoard({
         {...openProps(job)}
         className={`jb-row${closed ? ' is-closed' : ''}${onOpen ? '' : ' is-static'}`}
       >
+        <span className="jb-row-no">{no}</span>
         <span className="jb-row-company">{job.company}</span>
         <span className="jb-row-title">
           <strong>{job.role}</strong>
           <span className="jc-tags">
-            {tagsOf(job).map(t => (
+            {/* 직종은 아래 '직무' 열로 나갔다 — 여기 남기면 같은 값이 두 번 나온다. */}
+            {tagsOf(job).filter(t => t.kind !== 'cat').map(t => (
               <span key={t.label} className={`jc-tag jc-tag-${t.kind}`}>{t.label}</span>
             ))}
           </span>
         </span>
-        <span className="jb-row-meta">
-          <i className="fa-solid fa-location-dot" /> {regionLabel(job)} · {careerLabel(job)}
-        </span>
+        <span className="jb-row-job">{jobCategoryLabel(job)}</span>
+        <span className="jb-row-region">{regionLabel(job)}</span>
         <span className="jb-row-salary">{salaryLabel(job)}</span>
-        <span className={`jc-dday${closed ? ' is-closed' : ''}`}>{dday}</span>
-        <time>{deadlineLabel(job)}</time>
+        <span className="jb-row-deadline">
+          <b className={`jc-dday${closed ? ' is-closed' : ''}`}>{dday}</b>
+          <time>{deadlineLabel(job)}</time>
+        </span>
       </Tag>
     )
   }
@@ -276,7 +300,20 @@ export default function JobBoard({
                 <h2 className="jb-section"><i className="fa-solid fa-list-ul" /> 일반채용 <em>{general.length}</em></h2>
               )}
               {split ? (
-                <section className="jb-list" aria-label="일반채용">{general.map(row)}</section>
+                <section className="jb-list" aria-label="일반채용">
+                  {/* 열 이름 — 행이 표 모양인데 머리글이 없으면 각 칸이 무슨 값인지 읽히지 않는다.
+                      열 폭은 .jb-list 의 --jb-cols 하나로 머리글·행이 같이 쓴다. */}
+                  <div className="jb-head">
+                    <span>번호</span>
+                    <span>회사명</span>
+                    <span>공고제목</span>
+                    <span>직무</span>
+                    <span>지역</span>
+                    <span>연봉</span>
+                    <span>마감기한</span>
+                  </div>
+                  {general.map((job, i) => row(job, i + 1))}
+                </section>
               ) : (
                 <section className="jc-grid" aria-label="채용공고 목록">{general.map(card)}</section>
               )}
