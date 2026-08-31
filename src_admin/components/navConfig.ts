@@ -91,6 +91,7 @@ const ALL_SECTIONS: NavSection[] = [
     roles: ['career'],
     children: [
       { label: '변경 요청함', path: '/roadmap/requests', icon: LuInbox },
+      { label: '로드맵 이행률 현황', path: '/roadmap/progress', icon: LuChartNoAxesColumn },
     ],
   },
   {

@@ -16,6 +16,7 @@ import StudentList from './pages/StudentList'
 import StudentAll from './pages/StudentAll'
 import StudentDetail from './pages/StudentDetail'
 import RoadmapRequests from './pages/RoadmapRequests'
+import RoadmapProgress from './pages/RoadmapProgress'
 import RoadmapEditor from './pages/RoadmapEditor'
 import JobList from './pages/JobList'
 import JobForm from './pages/JobForm'
@@ -122,6 +123,7 @@ const router = createBrowserRouter(
               element: <RequireRole roles={['career']} />,
               children: [
                 { path: '/roadmap/requests', element: <RoadmapRequests /> },
+                { path: '/roadmap/progress', element: <RoadmapProgress /> },
                 { path: '/roadmap/:studentId', element: <RoadmapEditor /> },
                 { path: '/jobs', element: <JobList scope="internal" /> },
                 { path: '/jobs/external', element: <JobList scope="external" /> },

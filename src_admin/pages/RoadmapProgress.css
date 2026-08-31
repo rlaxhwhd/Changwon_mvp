@@ -1,0 +1,114 @@
+/* =========================================================
+   로드맵 이행률 현황 — 통계 대시보드
+
+   [규칙]
+   - 색은 index.css 의미색 7종을 .b-*/.s-* 유틸로만 쓴다. 새 색을 만들지 않는다.
+   - 막대 폭·비율은 CSS가 아니라 데이터다 → 인라인 width 하나만 바뀐다.
+   - 이행률 색은 red→orange→yellow→teal→green 단계색이다. 단색 농담을 쓰지 않는다
+     (구간은 '정도'가 아니라 '단계'라서 농담으로 나누면 경계가 안 읽힌다).
+   - 경계값·색 배정은 data/roadmapProgressStats.ts 의 PROGRESS_BANDS 가 단일 소스다.
+   ========================================================= */
+
+.rmp-page { display: flex; flex-direction: column; gap: 16px; }
+
+/* ── 범위 탭 (담당 / 전체) ── */
+.rmp-scope { display: inline-flex; gap: 6px; padding: 4px; background: var(--color-section-bg); border: 1px solid var(--color-border); border-radius: var(--radius-ctl); }
+.rmp-scope button {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 36px; padding: 0 14px;
+  border: 1px solid transparent; border-radius: var(--radius-sm);
+  background: transparent; color: var(--color-text-secondary);
+  font-family: inherit; font-size: 13px; font-weight: 700; white-space: nowrap;
+  cursor: pointer;
+}
+.rmp-scope button:hover { color: var(--color-text); }
+.rmp-scope button.is-active { background: var(--color-bg); border-color: var(--color-border); color: var(--color-text); }
+.rmp-scope button em { font-style: normal; font-weight: 800; color: var(--color-primary); }
+.rmp-scope button svg { width: 15px; height: 15px; }
+
+/* ── 요약 5칸 ── */
+/* 지표마다 색이 달라야 한 줄이 다섯 번 읽힌다 — 왼쪽 띠로만 구분하고 면은 흰색을 유지한다. */
+.rmp-sum-card { position: relative; overflow: hidden; padding-left: 20px; }
+.rmp-sum-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; }
+.rmp-sum-card.is-blue::before   { background: var(--blue); }
+.rmp-sum-card.is-purple::before { background: var(--purple); }
+.rmp-sum-card.is-green::before  { background: var(--green); }
+.rmp-sum-card.is-red::before    { background: var(--red); }
+.rmp-sum-card.is-teal::before   { background: var(--teal); }
+
+.rmp-sum-label { display: inline-flex; align-items: center; gap: 8px; }
+.rmp-sum-ico {
+  display: grid; place-items: center;
+  width: 22px; height: 22px; border-radius: var(--radius-xs);
+  font-style: normal;
+}
+.rmp-sum-ico svg { width: 14px; height: 14px; }
+
+/* ── 구간 분포: 100% 가로 스택 ── */
+.rmp-stack { display: flex; height: 18px; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 16px; gap: 2px; }
+.rmp-stack span { min-width: 3px; transition: flex-grow .2s ease; }
+
+.rmp-bands { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.rmp-band {
+  display: grid; grid-template-columns: 10px 1fr auto; align-items: center; gap: 9px;
+  padding: 12px 13px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+.rmp-band-dot { width: 10px; height: 10px; border-radius: 3px; }
+.rmp-band-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.rmp-band-copy strong { font-size: 13px; font-weight: 800; color: var(--color-text); }
+.rmp-band-copy small { font-size: 11px; font-weight: 600; color: var(--color-caption); }
+.rmp-band-num { text-align: right; white-space: nowrap; }
+.rmp-band-num b { font-size: 17px; font-weight: 800; color: var(--color-text); }
+.rmp-band-num em { display: block; font-style: normal; font-size: 11px; font-weight: 700; color: var(--color-caption); }
+
+/* ── 공용 막대 트랙 ── */
+.rmp-track { height: 8px; border-radius: 999px; background: var(--color-section-bg); overflow: hidden; }
+.rmp-track i { display: block; height: 100%; border-radius: 999px; transition: width .25s ease; }
+
+/* ── 유형별 · 학년별 가로 막대 ── */
+.rmp-bar-list { display: grid; gap: 12px; }
+.rmp-bar { display: grid; grid-template-columns: 128px 1fr 74px; align-items: center; gap: 12px; }
+.rmp-bar-label { font-size: 12.5px; font-weight: 700; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rmp-bar-num { text-align: right; white-space: nowrap; }
+.rmp-bar-num b { font-size: 13.5px; font-weight: 800; color: var(--color-text); }
+.rmp-bar-num em { display: block; font-style: normal; font-size: 11px; font-weight: 700; color: var(--color-caption); }
+
+/* ── 학과별 ── */
+.rmp-dept-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+.rmp-dept {
+  display: flex; flex-direction: column; gap: 7px;
+  padding: 13px 14px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+.rmp-dept-top { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.rmp-dept-top strong { font-size: 12.5px; font-weight: 800; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rmp-dept-top span { font-size: 14px; font-weight: 800; color: var(--color-text); }
+.rmp-dept small { font-size: 11px; font-weight: 700; color: var(--color-caption); }
+
+/* ── 이행률 하위 학생 표 ── */
+.rmp-lag-table { display: flex; flex-direction: column; }
+.rmp-lag-row {
+  display: grid; grid-template-columns: 96px 1fr 148px 190px 72px;
+  align-items: center; gap: 12px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 13px; color: var(--color-text);
+}
+.rmp-lag-row:last-child { border-bottom: 0; }
+.rmp-lag-row.is-head {
+  padding: 0 4px 10px;
+  color: var(--color-text-secondary); font-size: 12px; font-weight: 700;
+}
+.rmp-lag-row strong { font-weight: 800; }
+.rmp-lag-rate { display: grid; grid-template-columns: 1fr 42px; align-items: center; gap: 10px; }
+.rmp-lag-rate em { font-style: normal; font-size: 13px; font-weight: 800; text-align: right; }
+
+.rmp-head-note { font-size: 12px; font-weight: 700; color: var(--color-caption); }
+.rmp-empty { padding: 22px 0; text-align: center; font-size: 13px; font-weight: 600; color: var(--color-caption); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rmp-stack span, .rmp-track i { transition: none; }
+}
