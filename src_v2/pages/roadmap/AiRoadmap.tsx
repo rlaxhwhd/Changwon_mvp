@@ -20,7 +20,7 @@ import './AiRoadmap.css'
 // ─────────────────────────────────────────────────────────────────────────
 // AI 직무 로드맵 — 시안 roadmap.html 이식
 //
-//   01 AI 분석 입력   재료 3종(진단·상담 / 수강강의 / 스펙) → AI 오브 → 목표 직무 → 생성
+//   01 AI 현재역량현황 재료 3종(진단·상담 / 수강강의 / 스펙) → AI 오브 → 목표 직무 → 생성
 //   02 로드맵 결과    RoadmapAxisBoard(공용 3축 보드)
 //
 // 흐름: 오브 클릭 → 분석 로딩 → 직무 적합도 목록 → 직무 선택(목표 확정)
@@ -149,11 +149,11 @@ export default function AiRoadmap() {
 
   return (
     <div className="air">
-      {/* ===== 01 AI 분석 입력 ===== */}
+      {/* ===== 01 AI 현재역량현황 ===== */}
       <section className="air-panel">
         <div className="air-sec-head">
           <span className="air-sec-no">01</span>
-          <h2 className="air-sec-title">AI 분석 입력</h2>
+          <h2 className="air-sec-title">AI 현재역량현황</h2>
         </div>
         <p className="air-sec-desc">
           진단·상담 결과와 수강 정보, 학생 스펙을 종합하여 AI가 분석하고 목표 직무를 설정합니다.
