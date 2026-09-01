@@ -12,7 +12,13 @@ const fileToBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file)
   })
 
-/** 본문 이미지 저장 규격 — 상세 화면이 900px 안쪽에서 그린다. 2배수까지만 남기고 줄인다. */
+/**
+ * 본문 이미지 저장 규격 — **폭** 기준이다. 상세 화면이 1010px 안쪽에서 그린다.
+ *
+ * 긴 변으로 재면 안 된다: 채용 포스터는 세로로 길어서 1000x3000 이 533px 폭으로,
+ * 800x4000 은 320px 폭으로 찌그러진다. 본문에서 다시 늘려 그리게 되니 그만큼 뭉개진다.
+ * 화면이 제약하는 건 폭 하나뿐이라 폭만 맞추고 높이는 비율대로 따라가게 둔다.
+ */
 const IMAGE_MAX_PX = 1600
 /**
  * 줄인 뒤에도 이만큼 크면 거부한다.
@@ -24,7 +30,7 @@ const IMAGE_MAX_PX = 1600
 const IMAGE_MAX_CHARS = 1_500_000
 
 /**
- * 올린 이미지를 IMAGE_MAX_PX 안으로 줄인다.
+ * 올린 이미지의 **폭**을 IMAGE_MAX_PX 안으로 줄인다(높이는 비율대로 따라간다).
  * 투명한 자리는 흰색으로 메우고 JPEG 로 다시 쓴다 — 그냥 JPEG 로 바꾸면 검은 배경이 깔린다.
  * 다시 쓴 쪽이 원본보다 크면(작은 아이콘·단순 PNG) 원본을 그대로 둔다 — 괜히 화질만 버린다.
  */
@@ -33,7 +39,7 @@ function shrinkImage(dataUrl: string): Promise<string> {
     const img = new Image()
     img.onerror = () => reject(new Error('이미지 파일만 넣을 수 있습니다.'))
     img.onload = () => {
-      const scale = Math.min(1, IMAGE_MAX_PX / Math.max(img.width, img.height))
+      const scale = Math.min(1, IMAGE_MAX_PX / img.width)
       const w = Math.max(1, Math.round(img.width * scale))
       const h = Math.max(1, Math.round(img.height * scale))
       const canvas = document.createElement('canvas')
