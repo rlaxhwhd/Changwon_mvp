@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import { getActiveStudent } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
+// 기록 목록은 라운지(/v2/lounge)도 읽는다 — seed·저장소 키는 데이터 층 단일소스에 둔다.
+import { GROWTH_RECORDS, growthRecordsKey, type GrowthRecord } from '../../data/growthRecords'
 import './GrowthHome.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -35,17 +37,9 @@ const QUALIFICATIONS = [
   { title: 'OPIc IM2', detail: '말하기', date: '2025.12.08', icon: 'fa-microphone-lines' },
 ]
 
-const GROWTH_RECORDS = [
-  { date: '2026.05.21', type: '진단', title: 'C3 역량성장 후속진단 완료', description: '직무 역량 강화가 필요한 핵심 영역을 확인했습니다.', tone: 'violet' },
-  { date: '2026.04.22', type: '비교과', title: '데이터 분석 기초 참여', description: 'Python과 Pandas를 활용한 데이터 분석 실습을 진행 중입니다.', tone: 'mint' },
-  { date: '2026.04.08', type: '비교과', title: 'AI 활용 자소서 특강 수료', description: '총 3시간의 취업역량 프로그램을 이수했습니다.', tone: 'blue' },
-  { date: '2026.03.20', type: '성과', title: '취업역량강화 캠프 수료', description: '24시간 집중 과정의 모든 활동을 완료했습니다.', tone: 'amber' },
-]
-
 type Project = (typeof PROJECTS)[number]
 type Skill = (typeof SKILLS)[number]
 type Qualification = (typeof QUALIFICATIONS)[number]
-type GrowthRecord = (typeof GROWTH_RECORDS)[number]
 type EditorKind = 'project' | 'skill' | 'qualification' | 'record'
 
 interface EditorState {
@@ -87,7 +81,7 @@ export default function GrowthHome() {
   const [projects, setProjects] = useStoredList<Project>(`${storagePrefix}_projects`, PROJECTS)
   const [skills, setSkills] = useStoredList<Skill>(`${storagePrefix}_skills`, SKILLS)
   const [qualifications, setQualifications] = useStoredList<Qualification>(`${storagePrefix}_qualifications`, QUALIFICATIONS)
-  const [growthRecords, setGrowthRecords] = useStoredList<GrowthRecord>(`${storagePrefix}_records`, GROWTH_RECORDS)
+  const [growthRecords, setGrowthRecords] = useStoredList<GrowthRecord>(growthRecordsKey(student.id), GROWTH_RECORDS)
   const [editor, setEditor] = useState<EditorState | null>(null)
   const isSenior = student.grade >= 4
   const strengths = student.strengthWeakness.filter(item => item.type === 'strength')

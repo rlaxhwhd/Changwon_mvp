@@ -24,6 +24,7 @@ import { PROF_COUNSEL_CATEGORIES, type ProfCounselCategoryCode } from './schema/
 import { getPrograms } from './programs'
 import type { ProgramApplicant } from './schema/program'
 import { getStudentRoadmap, getRoadmapProgress } from './roadmap'
+import { getRoadmapRequests } from './roadmapRequests'
 
 // ── ① 역량 레이더 (5대 핵심역량 카드) ──────────────────────────────────────
 // 축·점수는 학생 포털과 같은 곳에서 온다(src_v2/data/competency).
@@ -290,33 +291,72 @@ export function getStudentStatCards(student: StudentData, type: StudentType): St
   const counsel = getCounselOverview(student.id)
   const counselTotal = counsel.reduce((n, c) => n + c.total, 0)
   const counselDone = counsel.reduce((n, c) => n + c.done, 0)
+  // 요약 카드의 갈래는 「누가 상담했나」(진로취업·심리·지도교수)가 아니라
+  // 「어떤 경로로 들어왔나」다. 진로취업을 일반 신청과 로드맵 변경 요청으로 가르고,
+  // 나머지(심리·지도교수)는 기타로 묶는다.
+  // ★ 라벨만 바꾸면 숫자가 거짓말이 된다 — 세는 대상을 함께 바꾼다.
+  const careerCount = counsel.find(c => c.channel === '진로취업')?.total ?? 0
+  const roadmapReqCount = getRoadmapRequests().filter(r => r.studentId === student.id).length
+  const etcCount = counsel
+    .filter(c => c.channel !== '진로취업')
+    .reduce((n, c) => n + c.total, 0)
   const roadmap = getStudentRoadmap(student.id)
   const progress = roadmap?.progress.pct ?? 0
   const programs = getStudentPrograms(student.id)
   const growth = student.growth
 
   const allDiagDone = cards.length > 0 && diagDone === cards.length
+  // 이 네 장은 CARE 7+ 체계의 지표다 — 카드마다 같은 문자열을 다시 적지 않는다.
+  const CARE = 'CARE 7+'
+
+  /**
+   * ⚠️ 시연용 고정값 — 진단 완료는 「2/2」로 못박는다(요청).
+   *
+   * 원래는 getDiagnosisCards 가 준 대상 진단 수에서 계산한다. 진단 문항·판정식이
+   * 아직 확정 전이라(PROCESS.md §9 · CLAUDE.md 14조) 학생 시드에 따라 값이 흔들리는데,
+   * 시연에서는 이 카드가 항상 같은 수를 보여야 한다.
+   *
+   * ★ 진단 스펙이 확정되면 이 블록을 통째로 지우고 아래 계산식을 되살린다:
+   *     value: String(diagDone)
+   *     unit: `/${cards.length}`
+   *     pct:  cards.length > 0 ? Math.round((diagDone / cards.length) * 100) : 0
+   *     foot: allDiagDone ? '대상 진단 모두 완료' : `미실시 ${cards.length - diagDone}건`
+   *     badge: allDiagDone ? '완료' : '진행 중'
+   *   (diagDone·allDiagDone 은 그때 다시 쓰인다 — 지우지 말 것)
+   */
+  const DEMO_DIAGNOSIS = { done: 2, total: 2 }
+  void diagDone
+  void allDiagDone
+
   const stats: StudentStat[] = [
     {
       kind: 'diagnosis',
+      kicker: CARE,
       label: '진단 완료',
-      value: String(diagDone),
-      unit: `/${cards.length}`,
-      pct: cards.length > 0 ? Math.round((diagDone / cards.length) * 100) : 0,
-      foot: allDiagDone ? '대상 진단 모두 완료' : `미실시 ${cards.length - diagDone}건`,
-      badge: allDiagDone ? '완료' : '진행 중',
+      value: String(DEMO_DIAGNOSIS.done),
+      unit: `/${DEMO_DIAGNOSIS.total}`,
+      pct: Math.round((DEMO_DIAGNOSIS.done / DEMO_DIAGNOSIS.total) * 100),
+      foot: '대상 진단 모두 완료',
+      badge: '완료',
     },
     {
       kind: 'counsel',
+      kicker: CARE,
       label: '상담 현황',
+      // 총계는 상담 건수 그대로 둔다 — 로드맵 요청은 상담이 아니라 요청이라 합계에 섞지 않는다.
       total: String(counselTotal),
       unit: '건',
       foot: counselTotal > 0 ? `완료 ${counselDone} · 예정 ${counselTotal - counselDone}` : '이력 없음',
-      // 순서가 색을 정한다 — getCounselOverview 는 진로취업 · 심리 · 지도교수 순으로 준다.
-      channels: counsel.map(c => ({ label: c.channel, count: `${c.total}건` })),
+      // 순서가 색을 정한다 — 아래 순서를 바꾸면 카드의 점 색이 함께 바뀐다.
+      channels: [
+        { label: '진로취업-일반', count: `${careerCount}건` },
+        { label: '진로취업 - 로드맵요청', count: `${roadmapReqCount}건` },
+        { label: '기타', count: `${etcCount}건` },
+      ],
     },
     {
       kind: 'roadmap',
+      kicker: CARE,
       label: '로드맵 이행률',
       value: String(progress),
       unit: '%',
@@ -326,6 +366,7 @@ export function getStudentStatCards(student: StudentData, type: StudentType): St
     },
     {
       kind: 'program',
+      kicker: CARE,
       label: '비교과 이수',
       value: String(programs.completed),
       unit: `/${programs.applied}`,

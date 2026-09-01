@@ -3,22 +3,30 @@ import { getActiveStudent } from '../data/students'
 import StudentStatCards, { type StudentStat } from '../components/StudentStatCards'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
 import { getCompetencyAxes } from '../data/competency'
+import { getGrowthRecords } from '../data/growthRecords'
 import './AiLounge.css'
+// 성장 활동 기록 카드는 「내 성장」과 같은 모양이다 — 그 스타일시트를 그대로 쓴다.
+// 클래스가 전부 gh- 로 시작해 이 페이지의 다른 카드와 부딪히지 않는다.
+import './growth/GrowthHome.css'
 
 // 요약 지표 5장 — 상담사 학생 상세와 같은 공용 컴포넌트(StudentStatCards)가 그린다.
 // 값은 아직 시안 값 그대로다. 배선할 때 이 상수만 학생 데이터에서 만들면 된다.
+/** 이 네 장은 CARE 7+ 체계의 지표다 — 카드마다 같은 문자열을 다시 적지 않는다. */
+const CARE = 'CARE 7+'
+
 const LOUNGE_STATS: StudentStat[] = [
-  { kind: 'diagnosis', label: '진단 완료', value: '3', unit: '/3', pct: 100, foot: '모든 진단 완료', badge: '완료' },
+  { kind: 'diagnosis', kicker: CARE, label: '진단 완료', value: '2', unit: '/2', pct: 100, foot: '모든 진단 완료', badge: '완료' },
   {
-    kind: 'counsel', label: '상담 현황', total: '5', unit: '건', foot: '이번 학기 누적',
+    kind: 'counsel', kicker: CARE, label: '상담 현황', total: '5', unit: '건', foot: '이번 학기 누적',
+    // 갈래는 「누가 상담했나」가 아니라 「어떤 경로로 들어왔나」로 나눈다.
     channels: [
-      { label: '진로취업', count: '3건' },
-      { label: '심리검사', count: '1건' },
-      { label: '지도교수', count: '1건' },
+      { label: '진로취업-일반', count: '3건' },
+      { label: '진로취업 - 로드맵요청', count: '1건' },
+      { label: '기타', count: '1건' },
     ],
   },
-  { kind: 'roadmap', label: 'IAP 이행률', value: '62', unit: '%', pct: 62, foot: '지난달 대비', badge: '+14%p' },
-  { kind: 'program', label: '비교과 이수', value: '4', unit: '/6', pct: 67, foot: '이번 학기', badge: '2개 남음' },
+  { kind: 'roadmap', kicker: CARE, label: '로드맵 이행률', value: '62', unit: '%', pct: 62, foot: '지난달 대비', badge: '+14%p' },
+  { kind: 'program', kicker: CARE, label: '비교과 이수', value: '4', unit: '/6', pct: 67, foot: '이번 학기', badge: '2개 남음' },
   {
     kind: 'level', label: '성장 레벨', levelUnit: 'LV', level: '23',
     tierLabel: '현재 성장 단계', tier: 'Career Builder',
@@ -35,6 +43,8 @@ export default function AiLounge() {
   const student = getActiveStudent()
   // 5대 핵심역량 — 좌표·점수를 화면에 적지 않는다(data/competency).
   const competencyAxes = getCompetencyAxes(student)
+  // 성장 활동 기록 — /v2/growth 가 쓰는 그 목록을 그대로 읽는다.
+  const growthRecords = getGrowthRecords(student.id)
 
   return (
     <div className="al-page">
@@ -239,7 +249,6 @@ export default function AiLounge() {
                     {/* 코치 제안 → 실제 화면으로. 로드맵은 이 카드와 같은 3축(IAP·핵심역량·성장활동)을
                         보여 주는 '로드맵 진행 현황'으로 간다 — 진로취업 로드맵(/roadmap)이 아니다. */}
                     <div className="goal-coach-actions">
-                      <Link className="button" to="/counsel/professor">지도교수 상담</Link>
                       <Link className="button" to="/growth/roadmap-status">로드맵 다시 보기</Link>
                     </div>
                   </aside>
@@ -264,19 +273,30 @@ export default function AiLounge() {
             </div>
           </section>
 
-          <section data-slot="card" className="recommend-card ai-recommend-card reveal" id="recommend">
-            <div data-slot="card-content"><span className="ai-recommend-icon"><svg className="icon">
-                  <use href="#i-spark" /></svg></span>
-              <h3>나를 위한 AI추천</h3>
-              <p>목표 직무와 현재 역량을 분석해 지금 우선하면 좋은 활동을 골랐습니다.</p>
-              <div className="ai-recommend-list">
-                <div className="ai-recommend-item" style={{ '--recommend-color': 'var(--recommend-1)', '--recommend-soft': 'var(--recommend-1-soft)' } as React.CSSProperties}><span>01</span><span className="ai-recommend-copy"><b>데이터 분석 실무 부트캠프</b><small>직무전문성 갭을 우선 보완해요.</small></span><strong>추천
-                    96%</strong></div>
-                <div className="ai-recommend-item" style={{ '--recommend-color': 'var(--recommend-2)', '--recommend-soft': 'var(--recommend-2-soft)' } as React.CSSProperties}>
-                  <span>02</span><span className="ai-recommend-copy"><b>현직 데이터 분석가 멘토링</b><small>진로 수행회피목표를 행동으로
-                      전환해요.</small></span><strong>추천 91%</strong></div>
+          {/* 성장 활동 기록 — 「내 성장」(/v2/growth)의 같은 카드다.
+              값은 같은 단일소스를 읽으므로, 거기서 기록을 더하면 여기에도 그대로 나온다.
+              다만 여기서는 읽기만 한다 — 등록·수정·삭제는 /v2/growth 한 곳에서만 한다. */}
+          <section data-slot="card" className="recommend-card reveal" id="recommend">
+            <article className="gh-card gh-archive">
+              <header className="gh-card-head">
+                <div>
+                  <span className="gh-section-kicker">GROWTH ARCHIVE</span>
+                  <h2>성장 활동 기록</h2>
+                  <p>진단, 비교과, 로드맵 이행이 하나의 성장 서사로 축적됩니다.</p>
+                </div>
+                <div className="gh-head-actions"><Link to="/growth">활동 전체 보기</Link></div>
+              </header>
+              <div className="gh-timeline">
+                {growthRecords.map((record, index) => (
+                  <div className="gh-timeline-item" key={`${record.date}-${record.title}-${index}`}>
+                    <time>{record.date}</time>
+                    <span className={`gh-timeline-dot is-${record.tone}`} />
+                    <div><span>{record.type}</span><strong>{record.title}</strong><p>{record.description}</p></div>
+                  </div>
+                ))}
+                {growthRecords.length === 0 && <p className="gh-empty">아직 기록된 성장 활동이 없습니다.</p>}
               </div>
-            </div>
+            </article>
           </section>
 
           <section data-slot="card" className="counseling-card reveal" id="counseling-status">

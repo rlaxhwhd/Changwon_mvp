@@ -26,9 +26,11 @@ const ICON: Record<StatKind, ReactNode> = {
   level: <><circle cx="12" cy="8" r="5" /><path d="m8.5 12-1 9 4.5-2.5 4.5 2.5-1-9M10 8l1.3 1.3L14 6.5" /></>,
 }
 
-/** 값 + 막대 형 (진단 완료 · IAP 이행률 · 비교과 이수 · 필수교과) */
+/** 값 + 막대 형 (진단 완료 · 로드맵 이행률 · 비교과 이수 · 필수교과) */
 export interface MetricStat {
   kind: 'diagnosis' | 'roadmap' | 'program' | 'course'
+  /** 라벨 위 작은 머리글 (예: 'CARE 7+') — 그 지표가 어느 체계의 것인지 밝힌다. */
+  kicker?: string
   label: string
   value: string
   unit?: string
@@ -41,6 +43,7 @@ export interface MetricStat {
 /** 상담 현황 — 총계 + 유형별 내역 */
 export interface CounselStat {
   kind: 'counsel'
+  kicker?: string
   label: string
   total: string
   unit: string
@@ -52,6 +55,7 @@ export interface CounselStat {
 /** 성장 레벨 — 메달 + XP 막대 */
 export interface LevelStat {
   kind: 'level'
+  kicker?: string
   label: string
   /** 메달 위 작은 글자 (예: LV) */
   levelUnit: string
@@ -79,7 +83,11 @@ export default function StudentStatCards({ stats }: { stats: StudentStat[] }) {
         <article key={stat.label} className={`ssc-card is-${stat.kind}`}>
           <div className="ssc-body">
             <div className="ssc-head">
-              <span className="ssc-label">{stat.label}</span>
+              {/* 머리글은 주입받는다 — 어느 체계의 지표인지는 host 의 데이터 층이 정한다. */}
+              <span className="ssc-heading">
+                {stat.kicker && <small className="ssc-kicker">{stat.kicker}</small>}
+                <span className="ssc-label">{stat.label}</span>
+              </span>
               <span className="ssc-icon" aria-hidden="true"><svg viewBox="0 0 24 24">{ICON[stat.kind]}</svg></span>
             </div>
             {stat.kind === 'counsel' ? <CounselBody stat={stat} />
