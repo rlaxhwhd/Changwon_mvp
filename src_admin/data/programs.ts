@@ -43,6 +43,41 @@ export function getProgramById(id: string): Program | undefined {
   return getPrograms().find(p => p.id === id)
 }
 
+/** 신청을 받을 수 있는가 — 상태와 마감일 둘 다 본다(상태만 믿으면 지난 공고가 열려 있다). */
+export function isProgramClosed(program: Program): boolean {
+  if (program.status !== '모집중') return true
+  return programDdayLabel(program) === '마감'
+}
+
+/**
+ * 학생에게 보이는 공고 상태 — 저장된 status 와 마감일이 어긋나면 마감일이 이긴다.
+ * 담당자가 '모집중'인 채로 둔 지난 공고를 학생에게 열린 것처럼 보이면 안 된다.
+ * 관리 화면(ProgramManage)은 저장값을 그대로 쓴다 — 거기서는 담당자가 설정한 값이 사실이다.
+ */
+export function noticeStatusLabel(program: Program): ProgramStatus {
+  if (program.status === '모집중' && isProgramClosed(program)) return '모집마감'
+  return program.status
+}
+
+/**
+ * 신청 마감까지 남은 날 — 'D-3' · 'D-day' · '마감'.
+ * 마감일은 날짜만 있는 값이다. 'YYYY-MM-DD'를 그대로 Date 에 넣으면 UTC 자정으로
+ * 읽혀 KST 에선 오늘 마감이 D-1 로 나온다 — 로컬 자정으로 고정해서 읽는다.
+ * (채용공고의 jobDdayLabel 과 같은 규약 — 두 공고가 같은 날짜를 다르게 세면 안 된다)
+ */
+export function programDdayLabel(program: Program): string {
+  if (program.status === '종료') return '종료'
+  if (!program.endDate) return '상시'
+  const end = new Date(`${program.endDate.slice(0, 10)}T00:00:00`)
+  if (Number.isNaN(end.getTime())) return program.endDate
+  const now = new Date()
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const diff = Math.ceil((end.getTime() - start.getTime()) / 86400000)
+  if (diff < 0) return '마감'
+  if (diff === 0) return 'D-day'
+  return `D-${diff}`
+}
+
 /**
  * [DB-ready 레퍼런스] 프로그램 목록 조회 — 실제 API 계약(async + 페이징 봉투)을 모사한다.
  * 화면은 getPrograms()(전체 sync 배열) 대신 이 시그니처를 따르면 6천건이 와도 안전하다.

@@ -53,6 +53,44 @@ const DEFAULT_EXTRAS: ExtraItem[] = [
 ]
 
 const pad = (n: number) => String(n).padStart(2, '0')
+
+/**
+ * 오늘 YYYY-MM-DD — 날짜칸 기본값.
+ * toISOString() 은 UTC 라 KST 오전 9시 전에는 어제가 나온다. 로컬 값으로 조립한다.
+ */
+function todayISO(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
+/** 썸네일 저장 한도 — 권장 800x450 을 담을 수 있는 긴 변 기준. */
+const THUMB_MAX_PX = 800
+
+/** 고른 이미지를 THUMB_MAX_PX 안으로 줄여 data URL 로 만든다(채용공고 로고와 같은 방식). */
+function toThumbDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'))
+    reader.onload = () => {
+      const img = new Image()
+      img.onerror = () => reject(new Error('이미지 파일만 등록할 수 있습니다.'))
+      img.onload = () => {
+        const scale = Math.min(1, THUMB_MAX_PX / Math.max(img.width, img.height))
+        const w = Math.max(1, Math.round(img.width * scale))
+        const h = Math.max(1, Math.round(img.height * scale))
+        const canvas = document.createElement('canvas')
+        canvas.width = w; canvas.height = h
+        const ctx = canvas.getContext('2d')
+        if (!ctx) { reject(new Error('이미지를 처리하지 못했습니다.')); return }
+        ctx.drawImage(img, 0, 0, w, h)
+        // 사진 계열이라 JPEG 가 PNG 보다 훨씬 작다 — 저장 한도를 넘기지 않는 쪽을 고른다.
+        resolve(canvas.toDataURL('image/jpeg', 0.85))
+      }
+      img.src = reader.result as string
+    }
+    reader.readAsDataURL(file)
+  })
+}
 function fmtDate(date: string, time: string) {
   if (!date) return ''
   const [y, m, d] = date.split('-').map(Number)
@@ -65,6 +103,7 @@ export default function ProgramForm() {
   const { id } = useParams<{ id: string }>()
   const editing = Boolean(id)
   const existing = useMemo(() => (id ? getProgramById(id) : undefined), [id])
+  const today = todayISO()
 
   const [majorCat, setMajorCat] = useState<string>(existing && MAJOR_CATS.includes(existing.category) ? existing.category : MAJOR_CATS[0])
   const [minorCat, setMinorCat] = useState(MINOR_CATS[0])
@@ -75,15 +114,17 @@ export default function ProgramForm() {
   const [title, setTitle] = useState(existing?.title ?? '')
   const [fiscalYear, setFiscalYear] = useState(existing?.fiscalYear ?? FISCAL_YEARS[0])
   const [purpose, setPurpose] = useState(existing?.desc ?? '')
-  const [noticeDate, setNoticeDate] = useState('2024-06-01')
+  // 새로 등록할 때 날짜칸은 전부 오늘에서 시작한다 — 담당자가 지나간 날짜를 지우고
+  // 다시 쓰지 않게. 수정할 때는 저장된 값이 우선이다.
+  const [noticeDate, setNoticeDate] = useState(today)
   const [noticeTime, setNoticeTime] = useState('10:00')
-  const [applyStartDate, setApplyStartDate] = useState(existing?.startDate ?? '2024-06-01')
+  const [applyStartDate, setApplyStartDate] = useState(existing?.startDate ?? today)
   const [applyStartTime, setApplyStartTime] = useState('10:00')
-  const [applyEndDate, setApplyEndDate] = useState(existing?.endDate ?? '2024-06-15')
+  const [applyEndDate, setApplyEndDate] = useState(existing?.endDate ?? today)
   const [applyEndTime, setApplyEndTime] = useState('17:00')
-  const [runStartDate, setRunStartDate] = useState(existing?.runStartDate ?? '2024-06-20')
+  const [runStartDate, setRunStartDate] = useState(existing?.runStartDate ?? today)
   const [runStartTime, setRunStartTime] = useState('10:00')
-  const [runEndDate, setRunEndDate] = useState(existing?.runEndDate ?? '2024-06-30')
+  const [runEndDate, setRunEndDate] = useState(existing?.runEndDate ?? today)
   const [runEndTime, setRunEndTime] = useState('17:00')
   const [place, setPlace] = useState(existing?.location ?? '')
   const [sessions, setSessions] = useState(existing ? String(existing.sessions) : '1')
@@ -101,7 +142,14 @@ export default function ProgramForm() {
   const [selectMethod, setSelectMethod] = useState<'선착순' | '심사'>('선착순')
   const [certificate, setCertificate] = useState<'발급' | '미발급'>('발급')
   const [completeHours, setCompleteHours] = useState('2')
-  const [detail, setDetail] = useState('')
+  // 기존 글을 불러온다 — 예전에는 항상 빈 값으로 시작해서, 수정하려고 열면
+  // 이미 쓴 상세 내용이 사라진 것처럼 보였다.
+  const [detail, setDetail] = useState(existing?.detail ?? '')
+  // 썸네일 — 올려둘 서버가 없어 THUMB_MAX_PX 로 줄여 data URL 로 담는다.
+  // 원본을 그대로 담으면 목록(dc_programs) 하나가 localStorage 한도를 넘겨 저장이
+  // 통째로 실패한다(채용공고 로고와 같은 규약). DB 전환 시 이 자리는 파일 URL 이 된다.
+  const [thumb, setThumb] = useState(existing?.image ?? '')
+  const [thumbError, setThumbError] = useState('')
   const [extraOpen, setExtraOpen] = useState(false)
   const [extras, setExtras] = useState<ExtraItem[]>(DEFAULT_EXTRAS)
   const [pinned, setPinned] = useState(existing?.pinned ?? false)
@@ -137,7 +185,9 @@ export default function ProgramForm() {
     if (!canSave) return
     const payload = {
       title: title.trim(),
-      desc: (detail || purpose).trim(),
+      // 두 칸은 서로 다른 것이다 — 한 칸에 합치면 상세 내용이 프로그램 내용을 덮어썼다.
+      desc: purpose.trim(),
+      detail: detail.trim() || undefined,
       category: CATEGORY_MAP[majorCat] ?? '기타',
       careTypes,
       // 유형을 아무것도 안 골랐으면 편입할 대상이 없다 — 값이 남지 않게 정리한다.
@@ -159,6 +209,8 @@ export default function ProgramForm() {
       competencySurvey: competency,
       competencyAreas: competency ? competencyAreas : [],
       includeInStats,
+      // 안 고르면 필드를 만들지 않는다 — 빈 문자열이 남으면 공고가 '이미지 있음'으로 읽는다.
+      image: thumb || undefined,
     }
     if (editing && id) {
       updateProgram(id, payload)
@@ -315,11 +367,11 @@ export default function ProgramForm() {
                 <span className="pf-help">프로그램 예산 및 정산이 이루어지는 회계연도를 선택해주세요.</span>
               </div>
 
-              {/* 프로그램 목적 */}
+              {/* 프로그램 내용 — 학생 공고의 「프로그램 내용」 칸에 그대로 나간다 */}
               <div className="pf-field">
-                <span className="pf-label">프로그램 목적 <span className="pf-req">*</span></span>
+                <span className="pf-label">프로그램 내용 <span className="pf-req">*</span></span>
                 <div className="pf-textarea-wrap">
-                  <textarea className="pf-textarea" maxLength={1000} value={purpose} onChange={e => setPurpose(e.target.value)} placeholder="프로그램의 목적 및 목표를 입력해주세요." />
+                  <textarea className="pf-textarea" maxLength={1000} value={purpose} onChange={e => setPurpose(e.target.value)} placeholder="프로그램의 목적과 진행 내용을 입력해주세요." />
                   <span className="pf-counter">{purpose.length} / 1000</span>
                 </div>
               </div>
@@ -609,16 +661,40 @@ export default function ProgramForm() {
                 </span>
               </div>
 
-              {/* 썸네일 이미지 */}
+              {/* 썸네일 이미지 — 고르면 800px 로 줄여 담고, 학생 공고 배너에 쓰인다. */}
               <div className="pf-field">
                 <span className="pf-label">썸네일 이미지</span>
                 <div className="pf-attach-row">
-                  <div className="pf-dropzone">
+                  <label className="pf-dropzone">
                     <span className="pf-dropzone-title"><LuUpload /> 파일 선택 또는 드래그하여 업로드</span>
                     <span className="pf-dropzone-hint">JPG, PNG 파일 지원 (권장 사이즈 800x450px, 최대 5MB)</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="pf-dropzone-input"
+                      onChange={async e => {
+                        const file = e.target.files?.[0]
+                        e.target.value = ''
+                        if (!file) return
+                        try {
+                          setThumb(await toThumbDataUrl(file))
+                          setThumbError('')
+                        } catch (err) {
+                          setThumbError(err instanceof Error ? err.message : '이미지를 등록하지 못했습니다.')
+                        }
+                      }}
+                    />
+                  </label>
+                  <div className={`pf-thumb-preview${thumb ? ' has-img' : ''}`}>
+                    {thumb ? <img src={thumb} alt="썸네일 미리보기" /> : <><LuImage /> 미리보기</>}
                   </div>
-                  <div className="pf-thumb-preview"><LuImage /> 미리보기</div>
                 </div>
+                {thumb && (
+                  <button type="button" className="pf-thumb-clear" onClick={() => setThumb('')}>
+                    썸네일 제거
+                  </button>
+                )}
+                {thumbError && <p className="pf-thumb-error">{thumbError}</p>}
               </div>
 
               {/* 상세 내용 */}

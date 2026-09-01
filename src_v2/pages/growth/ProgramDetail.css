@@ -1,48 +1,61 @@
-.pd-wrap { padding: 0 0 40px; }
-.pd-breadcrumb { display: flex; align-items: center; gap: 6px; margin: 24px 0 16px; color: var(--color-text-sub); font-size: 14px; font-weight: 700; }
-.pd-breadcrumb a { color: var(--color-text-muted); }
-.pd-breadcrumb a:hover { color: var(--color-primary); }
-.pd-breadcrumb span { color: var(--color-navy); }
-.pd-breadcrumb i { font-size: 12px; }
-.pd-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 28px; align-items: start; }
-.pd-left { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
-.pd-title-area { display: flex; flex-direction: column; gap: 8px; }
-.pd-tags { display: flex; flex-wrap: wrap; gap: 6px; }
-.pd-tag { padding: 3px 10px; border-radius: var(--radius-pill); font-size: 13px; font-weight: 700; }
-.pd-tag--cat { background: var(--color-surface); color: var(--color-text-sub); }
-.pd-tag--status { background: var(--color-primary-bg); color: var(--color-primary); }
-.pd-title { color: var(--color-navy); font-size: 28px; font-weight: 800; line-height: 1.35; }
-.pd-title-meta { display: flex; align-items: center; gap: 6px; color: var(--color-text-muted); font-size: 14px; }
-.pd-title-meta i, .pd-info-list i { color: var(--color-primary); }
-.pd-thumb { display: grid; width: 100%; min-height: 320px; overflow: hidden; border-radius: var(--radius-lg); background: var(--color-surface); }
-.pd-thumb img { width: 100%; height: 100%; min-height: 320px; object-fit: cover; }
-.pd-image-empty { display: grid; place-content: center; gap: 10px; color: var(--color-text-muted); text-align: center; font-size: 14px; }
-.pd-image-empty i { font-size: 32px; }
-.pd-content, .pd-info-card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-bg); }
-.pd-section { padding: 28px; }
-.pd-section-title, .pd-info-title { margin: 0 0 18px; color: var(--color-navy); font-size: 18px; font-weight: 800; }
-.pd-section-title i { margin-right: 7px; color: var(--color-primary); }
-.pd-para { margin: 0; color: var(--color-text); font-size: 14px; line-height: 1.8; white-space: pre-wrap; }
-.pd-para + .pd-para { margin-top: 12px; }
-.pd-right { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 12px; }
-.pd-info-card { padding: 22px; }
-.pd-info-list { margin: 0; }
-.pd-info-list > div { display: grid; grid-template-columns: 94px minmax(0, 1fr); gap: 10px; padding: 13px 0; border-top: 1px solid var(--color-border); }
-.pd-info-list > div:first-child { border-top: 0; padding-top: 0; }
-.pd-info-list > div:last-child { padding-bottom: 0; }
-.pd-info-list dt { color: var(--color-text-sub); font-size: 13px; font-weight: 700; }
-.pd-info-list dd { margin: 0; color: var(--color-text); font-size: 13px; line-height: 1.55; word-break: keep-all; }
-.pd-apply-btn, .pd-back-btn, .pd-wish-btn { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 48px; border-radius: var(--radius-md); font-size: 14px; font-weight: 800; cursor: pointer; }
-.pd-apply-btn { border: 0; background: var(--color-cta); color: #fff; }
-.pd-apply-btn:hover { opacity: 0.88; }
-.pd-back-btn { border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); text-decoration: none; }
-.pd-back-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
-.pd-wish-area { margin: -28px auto 40px; padding: 0 0; display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
-.pd-wish-btn { padding: 0 16px; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-sub); }
-.pd-wish-btn.wished { border-color: var(--color-primary); color: var(--color-primary); }
-.pd-wish-saved, .pd-applied-toast { margin: 0; color: var(--color-primary); font-size: 13px; font-weight: 700; }
-.pd-empty { display: grid; min-height: 300px; place-content: center; justify-items: center; gap: 14px; color: var(--color-text-muted); text-align: center; }
-.pd-empty i { font-size: 32px; }
-.pd-empty p { margin: 0; font-weight: 700; }
-.pd-empty .pd-back-btn { padding: 0 18px; }
-@media (max-width: 1360px) { .pd-layout { grid-template-columns: 1fr; } .pd-right { position: static; } .pd-info-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 20px; } .pd-info-list > div { grid-template-columns: 84px minmax(0, 1fr); } }
+/* ─────────────────────────────────────────────────────────────────────────
+   비교과 프로그램 공고 — 껍데기는 JobDetailView.css 가 준다.
+   여기엔 채용공고와 달라야 하는 것만 둔다. 전부 .pn-page 아래로 스코프해서
+   같은 스타일시트를 쓰는 채용공고 상세로 새어 나가지 않게 한다.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── 히어로 — 채용공고의 배너 이미지 대신 블루 그라데이션 ────────────────
+   --jd-hero-1/-2 를 다시 물리는 방식이라, 이 값을 쓰는 다른 규칙
+   (.jd-hero-chip.is-rec 의 글자색)도 함께 파랑으로 따라온다.
+   ★ 하늘색 정지점이 85% 인 이유 — 흰 글자 대비다.
+     우측 지표(마감일·정원·장소)의 오른쪽 끝이 그라데이션 82% 지점에 걸린다.
+     하늘색(#17a9e6)은 흰 글자와 2.7:1 이고 72% 에 두면 그 자리가 3.6:1 로 떨어진다.
+     85% 로 밀면 글자가 닿는 데까지는 파랑(4.6:1)이고 하늘색은 빈 모서리에만 남는다. */
+.pn-page .jd-hero {
+  --jd-hero-1: var(--deep-start, #242a3b);
+  --jd-hero-2: var(--blue, #356dff);
+  background: linear-gradient(
+    118deg,
+    var(--jd-hero-1) 0%,
+    var(--jd-hero-2) 85%,
+    var(--sky, #17a9e6) 100%
+  );
+}
+/* 지표 라벨은 채용공고에서 흰색 70% 다. 그 배너는 짙어서 괜찮지만 파랑 위에선
+   3.3:1 까지 떨어진다 — 여기서만 조금 올린다(측정값 4.4:1). */
+.pn-page .jd-hero-stats dt { color: rgba(255, 255, 255, .88); }
+
+/* ── 강조 카드 (프로그램 내용) ──────────────────────────────────────────
+   공고에서 제일 먼저 읽혀야 하는 칸이라 테두리·바탕으로 한 단계 띄운다. */
+.pn-page .jd-sec.is-accent {
+  border: 1.5px solid var(--blue-border, #cbd8ff);
+  background: var(--blue-wash, #eef4ff);
+}
+.pn-page .jd-sec.is-accent .jd-sec-head { color: var(--on-blue, #1a5fcc); }
+/* 본문은 --jd-sub(회색)이 기본이라 소개글이 흐리게 읽힌다 — 여기서만 잉크로 올린다. */
+.pn-page .jd-sec.is-accent .jd-content {
+  font-size: 14.5px; line-height: 1.85;
+  color: var(--jd-ink);
+}
+.pn-page .jd-sec.is-accent .jd-content p { margin: 0 0 10px; }
+
+/* ★ 붙여넣은 이미지가 칸보다 작게 보이는 문제 —
+   Summernote 는 insertImage 에서 width 를 min(편집기 폭, 원본 폭) 으로 계산해
+   인라인 style 로 박는다. 편집기는 790px 인데 공고 본문 칸은 1010px 라,
+   포스터를 붙여넣으면 항상 220px 좁게 그려진다.
+   여기서 그 인라인 폭을 풀어 칸을 채우게 한다(원본보다 크게 늘리지는 않는다).
+   → 편집기에서 일부러 줄여 놓은 이미지도 같이 풀린다. 그 대신 "붙여넣으면
+     칸에 맞는다"를 얻는 쪽을 택했다. 개별 크기 지정이 필요해지면 되돌린다. */
+.pn-page .jd-content img { width: auto !important; height: auto !important; max-width: 100%; }
+
+/* 저장된 내용에 아주 긴 문자열(base64 등)이 섞여도 가로가 터지지 않게 막는다. */
+.pn-page .jd-content { overflow-wrap: anywhere; }
+
+.pn-applied-toast {
+  display: flex; align-items: center; gap: 8px;
+  margin: 12px 0 0; padding: 12px 16px;
+  border: 1px solid var(--mint, #20b486); border-radius: var(--radius-md, 10px);
+  background: var(--mint-soft, #e5f8f2);
+  color: var(--mint-ink, #12805f);
+  font-size: 13px; font-weight: 700;
+}

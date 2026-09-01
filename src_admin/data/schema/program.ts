@@ -124,7 +124,14 @@ export interface ProgramApplicant {
 export interface Program {
   id: string
   title: string
+  /** 프로그램 내용 — 등록 화면의 평문 입력칸. 목록 카드·요약이 쓰는 짧은 소개다. */
   desc: string
+  /**
+   * 상세 내용 — 등록 화면의 리치에디터가 만든 **HTML**. 공고 하단에 그대로 펼친다.
+   * desc 와 한 칸을 쓰면 둘 중 하나가 조용히 사라지므로 반드시 분리해서 둔다.
+   * 붙여넣은 이미지는 이 HTML 안에 data URL 로 들어온다(파일 서버가 없다).
+   */
+  detail?: string
   category: ProgramCategory
   /** CARE 7+ 분류 — 이 프로그램이 겨냥하는 6유형(T1~T6). 중복 선택 가능.
    *  유형 정의는 careerProcess(STUDENT_TYPE_MAP)가 단일 소스이므로 코드만 저장하고
@@ -177,6 +184,7 @@ export function blankProgram(): Omit<Program, 'id' | 'applicants' | 'createdAt'>
   return {
     title: '',
     desc: '',
+    detail: '',
     category: '진로',
     careTypes: [],
     roadmapEntry: 'NONE',

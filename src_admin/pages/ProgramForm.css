@@ -36,7 +36,13 @@
   padding: 24px 24px 64px;
 }
 .pf * { box-sizing: border-box; }
-.pf-inner { max-width: 1320px; margin: 0 auto; }
+/* 본문 축은 다른 서브페이지와 같아야 한다 — .admin-page 는 max-width 1440 안쪽에 좌우 24 를
+   두므로 실제 글 상자가 1392 다. 여기는 배경을 전폭으로 깔아야 해서 그 24 가 바깥(.pf)에
+   있으니, 안쪽 상자를 1392 로 잡아야 경로 표시·제목이 같은 세로선에서 시작한다.
+   고정값(1320)을 쓰면 화면이 넓을수록 이 화면만 좌우가 더 벌어졌다. */
+.pf-inner { max-width: calc(var(--page-max) - 48px); margin: 0 auto; }
+/* 경로 표시가 위를 이미 띄웠다 — 다른 서브페이지(.admin-crumb-bar + .admin-page)와 같은 값. */
+.admin-crumb-bar + .pf { padding-top: 14px; }
 
 /* 수정 탭으로 부모 셸(admin-page) 안에 임베드될 때 — 자체 풀페이지 배경/여백 제거 */
 .pf.pf-embedded { background: transparent; min-height: 0; padding: 0; }
@@ -201,6 +207,18 @@
   color: var(--pf-placeholder); font-size: 11px;
 }
 .pf-thumb-preview svg { width: 20px; height: 20px; }
+/* 파일 입력은 dropzone 라벨 안에 숨긴다 — 상자 전체가 클릭 영역이 된다. */
+.pf-dropzone { position: relative; cursor: pointer; }
+.pf-dropzone-input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.pf-thumb-preview.has-img { padding: 0; overflow: hidden; background: #fff; }
+.pf-thumb-preview.has-img img { width: 100%; height: 100%; object-fit: cover; }
+.pf-thumb-clear {
+  align-self: flex-start; margin-top: 8px; padding: 6px 12px;
+  border: 1px solid var(--pf-border); border-radius: 8px; background: #fff;
+  color: var(--pf-text-2); font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.pf-thumb-clear:hover { border-color: var(--pf-primary); color: var(--pf-primary); }
+.pf-thumb-error { margin: 8px 0 0; font-size: 12.5px; font-weight: 600; color: #d92d20; }
 
 /* rich text editor (visual) */
 .pf-editor { border: 1px solid var(--pf-border); border-radius: 12px; overflow: hidden; }
