@@ -1,6 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import CareerPopup from '../components/CareerPopup'
+import CompetencyRadarChart from '../components/CompetencyRadarChart'
+import { getCompetencyAxes } from '../data/competency'
+import { getActiveStudent } from '../data/students'
 import './Main.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -13,6 +16,8 @@ export default function Main() {
   // 아직 화면 안에서만 사는 상태다(새로고침하면 풀린다). 출석 이벤트를 남기려면
   // CLAUDE.md 의 '이벤트 → JSON 반영' 표에 저장소를 먼저 정의해야 한다.
   const [attended, setAttended] = useState(false)
+  // 5대 핵심역량 — 점수·목표선은 데이터층에서 온다(하드코딩된 6축을 대체).
+  const competencyAxes = getCompetencyAxes(getActiveStudent())
 
   return (
     <div className="mn-page">
@@ -103,39 +108,39 @@ export default function Main() {
 
           <section data-slot="card" className="hero-panel hero-competency" id="competency" aria-labelledby="competencyTitle">
             <header data-slot="card-header">
-              <div><h2 data-slot="card-title" id="competencyTitle">나의 6대 핵심역량</h2></div>
+              <div><h2 data-slot="card-title" id="competencyTitle">나의 5대 핵심역량</h2></div>
             </header>
             <div data-slot="card-content">
               <div className="competency-layout">
                 <div className="radar-wrap">
-                  <svg className="radar-chart" viewBox="0 0 300 280" role="img" aria-label="의사소통 68, 문제해결 74, 협업 81, 창의성 59, 직무전문성 62, 글로벌 72">
+                  {/* 축·점수는 데이터층이 준다(data/competency). 좌표를 화면에 적지 않는다. */}
+                  <CompetencyRadarChart
+                    axes={competencyAxes}
+                    currentFill="main-competency-mine"
+                    classes={{
+                      svg: 'radar-chart', grid: 'radar-grid', axis: 'radar-axis',
+                      target: 'radar-target', current: 'radar-current', label: 'radar-label',
+                    }}
+                  >
                     {/* '나의 현재' 면색 — 옆 역량 막대(.axis-track i)와 같은 보라→하늘 축.
-                        SVG 는 CSS 그라데이션을 못 받으므로 여기 정의하고 CSS 가 url(#…)로 참조한다. */}
+                        SVG 는 CSS 그라데이션을 못 받으므로 여기 정의하고 fill 이 url(#…)로 참조한다. */}
                     <defs>
                       <linearGradient id="main-competency-mine" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor="var(--competency-current)" />
                         <stop offset="100%" stopColor="var(--competency-growth)" />
                       </linearGradient>
                     </defs>
-                    <polygon className="radar-grid" points="150,22 256,84 256,196 150,258 44,196 44,84" />
-                    <polygon className="radar-grid" points="150,52 230,98 230,182 150,228 70,182 70,98" />
-                    <polygon className="radar-grid" points="150,82 204,112 204,168 150,198 96,168 96,112" />
-                    <path className="radar-axis" d="M150 140V22M150 140l106-56M150 140l106 56M150 140v118M150 140L44 196M150 140L44 84" />
-                    <polygon className="radar-average" points="150,60 220,102 224,179 150,212 78,178 90,106" />
-                    <polygon className="radar-target" points="150,46 238,92 230,182 150,216 82,176 86,104" />
-                    <polygon className="radar-current" points="150,60 228,99 236,185 150,210 84,175 74,100" />
-                    <text className="radar-label" x={150} y={10} textAnchor="middle">의사소통</text><text className="radar-label" x={266} y={80}>문제해결</text><text className="radar-label" x={266} y={204}>협업</text><text className="radar-label" x={150} y={276} textAnchor="middle">창의성</text><text className="radar-label" x={10} y={204}>직무전문성</text><text className="radar-label" x={10} y={80}>글로벌</text>
-                  </svg>
+                  </CompetencyRadarChart>
                 </div>
                 <div className="competency-side">
-                  <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 직무</span><span><i style={{ background: 'var(--chart-reference)' } as React.CSSProperties}></i>학과 평균</span></div>
+                  <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 수준</span></div>
                   <div className="axis-list">
-                    <div className="axis-item"><div className="axis-head"><b>의사소통</b><strong>68</strong></div><div className="axis-track"><i style={{ '--value': '68%' } as React.CSSProperties}></i></div></div>
-                    <div className="axis-item"><div className="axis-head"><b>문제해결</b><strong>74</strong></div><div className="axis-track"><i style={{ '--value': '74%' } as React.CSSProperties}></i></div></div>
-                    <div className="axis-item"><div className="axis-head"><b>협업</b><strong>81</strong></div><div className="axis-track"><i style={{ '--value': '81%' } as React.CSSProperties}></i></div></div>
-                    <div className="axis-item"><div className="axis-head"><b>창의성</b><strong>59</strong></div><div className="axis-track"><i style={{ '--value': '59%' } as React.CSSProperties}></i></div></div>
-                    <div className="axis-item"><div className="axis-head"><b>직무전문성</b><strong>62</strong></div><div className="axis-track"><i style={{ '--value': '62%' } as React.CSSProperties}></i></div></div>
-                    <div className="axis-item"><div className="axis-head"><b>글로벌</b><strong>72</strong></div><div className="axis-track"><i style={{ '--value': '72%' } as React.CSSProperties}></i></div></div>
+                    {competencyAxes.map(axis => (
+                      <div key={axis.key} className="axis-item">
+                        <div className="axis-head"><b>{axis.label}</b><strong>{axis.score}</strong></div>
+                        <div className="axis-track"><i style={{ '--value': `${axis.score}%` } as React.CSSProperties}></i></div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

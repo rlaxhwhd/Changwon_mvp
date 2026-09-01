@@ -1,8 +1,8 @@
 /**
  * 드림캐치 5대 역량 점수 계산 모듈
  *
- * 18개 raw 데이터를 0~100으로 정규화 → 5대 역량(진로/직무/자기관리/취업/성장)으로 그룹화 →
- * "취업 가중평균"으로 종합 점수 산출.
+ * 18개 raw 데이터를 0~100으로 정규화 → 5대 역량(창의적사고/실용적융복합/의사소통/글로벌/지역형리더)으로 그룹화 →
+ * "글로벌 가중평균"으로 종합 점수 산출.
  *
  * 모든 화면(Main, AiLounge, AiRoadmap)이 이 모듈을 import해서 같은 결과를 받게 함으로써
  * 화면 간 점수 불일치를 제거. raw 입력은 학생 JSON(scoreInputs)에서 온다.
@@ -10,7 +10,7 @@
 
 // ── Types ──────────────────────────────────────────────────────────
 
-export type Competency = '진로' | '직무' | '자기관리' | '취업' | '성장'
+export type Competency = '창의적사고' | '실용적융복합' | '의사소통' | '글로벌' | '지역형리더'
 
 export interface StudentInputs {
   /** 학년 1~4 (졸업유예 = 4) */
@@ -21,7 +21,7 @@ export interface StudentInputs {
   toeic: number
   /** 비교과 프로그램 참여 횟수 */
   programs: number
-  /** 전체 상담 횟수 (진로/심리/교수 합산) — 화면 표시용 */
+  /** 전체 상담 횟수 (창의적사고/심리/교수 합산) — 화면 표시용 */
   counsel: number
   /** KVCT 직무역량검사 종합 점수 (0~100) */
   kvct: number
@@ -137,29 +137,29 @@ export const INPUT_RAW_FORMATTERS: Record<InputKey, (v: number) => string> = {
 
 // ── 5대 역량 × 입력 sparse matrix (각 역량 가중치 합 = 1.0) ─────
 // 사용자 정의:
-//   진로 = M2 + M1
-//   직무 = 전공학점 + KVCT + 캡스톤 (캡스톤은 1-3학년 0 → 가중치 낮게)
-//   자기관리 = 심리상담 + 출석일 + 강의출석률
-//   취업 = 자격증 + 성장일지 + 어학 + 학점 + AI자소서/면접 + SPRINT2
-//   성장 = 퀘스트XP + 비교과
+//   창의적사고 = M2 + M1
+//   실용적융복합 = 전공학점 + KVCT + 캡스톤 (캡스톤은 1-3학년 0 → 가중치 낮게)
+//   의사소통 = 심리상담 + 출석일 + 강의출석률
+//   글로벌 = 자격증 + 성장일지 + 어학 + 학점 + AI자소서/면접 + SPRINT2
+//   지역형리더 = 퀘스트XP + 비교과
 // 그룹 내 가중치: 자동 (순서 기반, 앞일수록 무겁게)
 
 export const CONTRIBUTION_MATRIX: Record<Competency, Partial<Record<InputKey, number>>> = {
-  진로: {
+  창의적사고: {
     m2Score: 0.55,
     m1Score: 0.45,
   },
-  직무: {
+  실용적융복합: {
     majorGpa:      0.50,
     kvct:          0.35,
     capstoneScore: 0.15,  // 1-3학년 0 → 낮은 가중치로 영향 최소화
   },
-  자기관리: {
+  의사소통: {
     lectureAttendanceRate: 0.40,
     attendanceDays:        0.35,
     psychCounselCount:     0.25,
   },
-  취업: {
+  글로벌: {
     certifications:         0.22,
     journalCount:           0.20,
     toeic:                  0.18,
@@ -167,30 +167,39 @@ export const CONTRIBUTION_MATRIX: Record<Competency, Partial<Record<InputKey, nu
     aiResumeInterviewCount: 0.13,
     sprint2Score:           0.12,
   },
-  성장: {
+  지역형리더: {
     programs: 0.50,
     xpLevel:  0.50,
   },
 }
 
 // ── 종합 점수 가중치 (5개 합 = 1.0, 사용자 확정) ─────────────────
-//   취업 0.30 + 직무 0.25 + 진로 0.20 + 자기관리 0.15 + 성장 0.10
+//   글로벌 0.30 + 실용적융복합 0.25 + 창의적사고 0.20 + 의사소통 0.15 + 지역형리더 0.10
 
 export const OVERALL_WEIGHTS: Record<Competency, number> = {
-  취업: 0.30,
-  직무: 0.25,
-  진로: 0.20,
-  자기관리: 0.15,
-  성장: 0.10,
+  글로벌: 0.30,
+  실용적융복합: 0.25,
+  창의적사고: 0.20,
+  의사소통: 0.15,
+  지역형리더: 0.10,
 }
 
+/**
+ * 표시명 — 국립창원대 5대 핵심역량. 화면 순서도 이 순서다.
+ * 키는 띄어쓰기 없이 두고(객체 키·정렬에 쓰인다) 라벨만 표기법을 따른다.
+ */
 export const COMPETENCY_LABELS: Record<Competency, string> = {
-  진로: '진로 역량',
-  직무: '직무 역량',
-  자기관리: '자기관리 역량',
-  취업: '취업 역량',
-  성장: '성장 역량',
+  지역형리더: '지역형리더',
+  창의적사고: '창의적 사고',
+  실용적융복합: '실용적 융복합',
+  의사소통: '의사소통',
+  글로벌: '글로벌',
 }
+
+/** 화면에 그리는 순서 — 5대 핵심역량 공식 순서. */
+export const COMPETENCY_ORDER: Competency[] = [
+  '지역형리더', '창의적사고', '실용적융복합', '의사소통', '글로벌',
+]
 
 // ── 결과 타입 ────────────────────────────────────────────────────
 
@@ -271,9 +280,8 @@ export function computeCompetency(
 
 export function computeAll(inputs: StudentInputs): ScoreResult {
   const normalized = normalizeInputs(inputs)
-  const competencies: CompetencyBreakdown[] = (
-    ['진로', '직무', '자기관리', '취업', '성장'] as Competency[]
-  ).map((c) => computeCompetency(c, normalized, inputs))
+  const competencies: CompetencyBreakdown[] = COMPETENCY_ORDER
+    .map((c) => computeCompetency(c, normalized, inputs))
 
   const overallRaw = competencies.reduce(
     (sum, c) => sum + c.score * OVERALL_WEIGHTS[c.key],
@@ -290,44 +298,44 @@ export function computeAll(inputs: StudentInputs): ScoreResult {
 }
 
 export const OVERALL_FORMULA_TEXT =
-  '종합 = 취업×0.30 + 직무×0.25 + 진로×0.20 + 자기관리×0.15 + 성장×0.10'
+  '종합 = 글로벌×0.30 + 실용적융복합×0.25 + 창의적사고×0.20 + 의사소통×0.15 + 지역형리더×0.10'
 
 // ── AI 코멘트 생성 — 점수 데이터 기반 강점/약점 자동 도출 ────────
 
 /** 각 역량의 "의미" — 코멘트 본문에서 인용 */
 const COMPETENCY_MEANING: Record<Competency, string> = {
-  진로: '진로 방향성과 자기이해',
-  직무: '전공·직무 지식 영역',
-  자기관리: '출결·심리 안정 영역',
-  취업: '취업 시장 적합도',
-  성장: '지속적 학습·활동 영역',
+  지역형리더: '비교과 참여와 활동 지속성',
+  창의적사고: '진로 탐색 진단이 보여 주는 자기이해',
+  실용적융복합: '전공 학점·캡스톤 등 실무 적용',
+  의사소통: '출결·정서 안정과 상담 참여',
+  글로벌: '어학·자격 등 대외 경쟁력',
 }
 
 /** 각 역량별 권장 행동 — 약점일 때 제안 */
 const COMPETENCY_ACTION: Record<Competency, string> = {
-  진로: '1단계 유형진단 재응시 + 진로 상담 1회 추가',
-  직무: '캡스톤 등록 · 전공학점 관리 · KVCT 재응시',
-  자기관리: '강의 출석 관리 · 필요 시 심리 상담 신청',
-  취업: 'TOEIC 700+ 응시 · 자격증 1개 추가 · AI 자소서 첨삭',
-  성장: '주간 퀘스트 + 비교과 1건 추가',
+  지역형리더: '주간 퀘스트 + 비교과 1건 추가',
+  창의적사고: '1단계 유형진단 재응시 + 진로 상담 1회 추가',
+  실용적융복합: '캡스톤 등록 · 전공학점 관리 · KVCT 재응시',
+  의사소통: '강의 출석 관리 · 필요 시 심리 상담 신청',
+  글로벌: 'TOEIC 700+ 응시 · 자격증 1개 추가 · AI 자소서 첨삭',
 }
 
 /** 카드용 강점 한 줄 — 점수 70 이상일 때 노출 */
 const COMPETENCY_STRENGTH_BULLET: Record<Competency, string> = {
-  진로: '진로 방향이 명확해요',
-  직무: '전공·직무 역량이 탄탄해요',
-  자기관리: '출결·정서 관리가 우수해요',
-  취업: '취업 시장 적합도가 높아요',
-  성장: '지속적 성장 가능성이 높아요',
+  지역형리더: '교내 활동 참여가 꾸준해요',
+  창의적사고: '진로 방향이 명확해요',
+  실용적융복합: '전공·실무 역량이 탄탄해요',
+  의사소통: '출결·정서 관리가 우수해요',
+  글로벌: '어학·자격 경쟁력이 높아요',
 }
 
 /** 카드용 보완 한 줄 — 점수 70 미만일 때 노출 */
 const COMPETENCY_WEAKNESS_BULLET: Record<Competency, string> = {
-  진로: '진로 방향성을 더 구체화해보세요',
-  직무: '전공 학점·KVCT 점수를 보강하세요',
-  자기관리: '강의 출석·심리 안정에 신경 쓰세요',
-  취업: '어학·자격증·실전 경험을 늘리세요',
-  성장: '퀘스트·비교과 활동을 늘려보세요',
+  지역형리더: '퀘스트·비교과 활동을 늘려보세요',
+  창의적사고: '진로 방향성을 더 구체화해보세요',
+  실용적융복합: '전공 학점·KVCT 점수를 보강하세요',
+  의사소통: '강의 출석·심리 안정에 신경 쓰세요',
+  글로벌: '어학·자격증·실전 경험을 늘리세요',
 }
 
 const STRENGTH_THRESHOLD = 70

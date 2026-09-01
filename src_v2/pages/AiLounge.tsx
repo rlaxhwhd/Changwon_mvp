@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { getActiveStudent } from '../data/students'
 import StudentStatCards, { type StudentStat } from '../components/StudentStatCards'
+import CompetencyRadarChart from '../components/CompetencyRadarChart'
+import { getCompetencyAxes } from '../data/competency'
 import './AiLounge.css'
 
 // 요약 지표 5장 — 상담사 학생 상세와 같은 공용 컴포넌트(StudentStatCards)가 그린다.
@@ -31,6 +33,8 @@ const LOUNGE_STATS: StudentStat[] = [
 //   내용(수치·문구)은 시안 값 그대로 — 데이터 배선은 디자인 확정 후 별도로 한다.
 export default function AiLounge() {
   const student = getActiveStudent()
+  // 5대 핵심역량 — 좌표·점수를 화면에 적지 않는다(data/competency).
+  const competencyAxes = getCompetencyAxes(student)
 
   return (
     <div className="al-page">
@@ -76,43 +80,28 @@ export default function AiLounge() {
           <section data-slot="card" className="competency-card reveal" id="competency">
             <div data-slot="card-header">
               <div>
-                <h2 data-slot="card-title">6대 핵심역량</h2>
-                <p data-slot="card-description">현재 수준, 목표 직무 요구 수준, 학과 평균을 비교합니다.</p>
+                <h2 data-slot="card-title">5대 핵심역량</h2>
+                <p data-slot="card-description">현재 수준과 목표 도달선을 비교합니다.</p>
               </div>
             </div>
             <div data-slot="card-content">
               <div className="chart-layout">
-                <div><svg className="radar" viewBox="0 0 300 280" role="img" aria-label="6대 핵심역량 레이더 차트">
+                <div><CompetencyRadarChart axes={competencyAxes} currentFill="competency-mine">
                     {/* '나의 현재' 면색 — 오른쪽 역량 막대(.axis-track i)와 같은 보라→하늘 축.
-                        SVG 는 CSS 그라데이션을 못 받으므로 여기에 정의하고 CSS 가 url(#…)로 참조한다. */}
+                        SVG 는 CSS 그라데이션을 못 받으므로 여기에 정의하고 fill 이 url(#…)로 참조한다. */}
                     <defs>
                       <linearGradient id="competency-mine" x1="0" y1="0" x2="1" y2="0">
                         <stop offset="0%" stopColor="var(--competency-current)" />
                         <stop offset="100%" stopColor="var(--competency-growth)" />
                       </linearGradient>
                     </defs>
-                    <polygon className="grid" points="150,22 256,84 256,196 150,258 44,196 44,84" />
-                    <polygon className="grid" points="150,52 230,98 230,182 150,228 70,182 70,98" />
-                    <polygon className="grid" points="150,82 204,112 204,168 150,198 96,168 96,112" />
-                    <line className="axis" x1={150} y1={140} x2={150} y2={22} />
-                    <line className="axis" x1={150} y1={140} x2={256} y2={84} />
-                    <line className="axis" x1={150} y1={140} x2={256} y2={196} />
-                    <line className="axis" x1={150} y1={140} x2={150} y2={258} />
-                    <line className="axis" x1={150} y1={140} x2={44} y2={196} />
-                    <line className="axis" x1={150} y1={140} x2={44} y2={84} />
-                    <polygon className="avg" points="150,60 220,102 224,179 150,212 78,178 90,106" />
-                    <polygon className="need" points="150,46 238,92 230,182 150,216 82,176 86,104" />
-                    <polygon className="mine" points="150,58 212,104 236,187 150,208 88,174 92,108" /><text x={150} y={10} textAnchor="middle">의사소통</text><text x={266} y={80}>문제해결</text><text x={266} y={204}>협업</text><text x={150} y={276} textAnchor="middle">창의성</text><text x={10} y={204}>직무전문성</text><text x={10} y={80}>글로벌</text></svg>
-                  <div className="legend"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 직무</span><span><i style={{ background: 'var(--chart-reference)' } as React.CSSProperties}></i>학과
-                      평균</span></div>
+                  </CompetencyRadarChart>
+                  <div className="legend"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 직무</span></div>
                 </div>
                 <div className="axis-list">
-                  <div className="axis-row">의사소통<span className="axis-track"><i style={{ width: '72%' }}></i><u style={{ left: '80%' }}></u></span><span className="gap-value">-8</span></div>
-                  <div className="axis-row">문제해결<span className="axis-track"><i style={{ width: '64%' }}></i><u style={{ left: '85%' }}></u></span><span className="gap-value">-21</span></div>
-                  <div className="axis-row">협업<span className="axis-track"><i style={{ width: '81%' }}></i><u style={{ left: '75%' }}></u></span><span className="gap-value" style={{ color: 'var(--mint)' } as React.CSSProperties}>+6</span></div>
-                  <div className="axis-row">창의성<span className="axis-track"><i style={{ width: '58%' }}></i><u style={{ left: '65%' }}></u></span><span className="gap-value">-7</span></div>
-                  <div className="axis-row">직무전문성<span className="axis-track"><i style={{ width: '47%' }}></i><u style={{ left: '88%' }}></u></span><span className="gap-value">-41</span></div>
-                  <div className="axis-row">글로벌<span className="axis-track"><i style={{ width: '55%' }}></i><u style={{ left: '60%' }}></u></span><span className="gap-value">-5</span></div>
+                  {competencyAxes.map(axis => (
+                    <div key={axis.key} className="axis-row">{axis.label}<span className="axis-track"><i style={{ width: `${axis.score}%` }}></i><u style={{ left: `${axis.target}%` }}></u></span><span className="gap-value" style={axis.gap >= 0 ? ({ color: 'var(--mint)' } as React.CSSProperties) : undefined}>{axis.gap >= 0 ? `+${axis.gap}` : axis.gap}</span></div>
+                  ))}
                 </div>
               </div>
             </div>

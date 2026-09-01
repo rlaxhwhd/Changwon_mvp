@@ -11,7 +11,8 @@
 import type { StudentData } from '../../src_v2/data/students'
 import type { RoadmapAxis, RoadmapAxisPlan } from '../../src_v2/data/schema/roadmap'
 import type { StudentStat } from '../../src_v2/components/StudentStatCards'
-import { computeAll, type Competency, type ScoreResult } from '../../src_v2/lib/scoring'
+import { getCompetencyAxes, getCompetencyOverall } from '../../src_v2/data/competency'
+import type { CompetencyAxisView } from '../../src_v2/data/competency'
 import { DIAGNOSIS_MODULES, getRequiredTests, type DiagnosisModule, type StudentType } from '../../src_v2/data/careerProcess'
 import { getAttemptsByStudent } from './diagnosisAttempts'
 import type { DiagnosisAttempt } from './schema/diagnosisAttempt'
@@ -24,50 +25,31 @@ import { getPrograms } from './programs'
 import type { ProgramApplicant } from './schema/program'
 import { getStudentRoadmap, getRoadmapProgress } from './roadmap'
 
-// ── ① 역량 레이더 (시안 '6대 핵심역량' 카드) ───────────────────────────────
-// 이 프로젝트의 역량 축은 scoring.ts가 정의한 5개다(진로·직무·자기관리·취업·성장).
-// 시안의 6축(의사소통·문제해결…)은 우리 데이터에 없다 — 축을 지어내지 않는다.
+// ── ① 역량 레이더 (5대 핵심역량 카드) ──────────────────────────────────────
+// 축·점수는 학생 포털과 같은 곳에서 온다(src_v2/data/competency).
+// 같은 학생에게 두 포털이 다른 점수를 보이면 안 되므로 여기서 다시 계산하지 않는다.
 
-/** 레이더 1축 — 현재 점수 / 목표 수준 / 학과 평균 */
-export interface CompetencyAxis {
-  key: Competency
-  label: string
-  /** 학생 현재 점수 0~100 (scoring.ts 가중평균) */
-  score: number
-  /** 목표 수준 0~100 — 유형 계층이 정하는 도달선 */
-  target: number
-  /** 갭 = score - target (음수면 미달) */
-  gap: number
-}
+export type CompetencyAxis = CompetencyAxisView
 
 export interface CompetencyRadar {
   axes: CompetencyAxis[]
-  /** 종합 점수 (취업0.30+직무0.25+진로0.20+자기관리0.15+성장0.10) */
+  /** 종합 점수 — 5개 축 평균 */
   overall: number
   /** 종합 목표선 */
   overallTarget: number
   /** 갭이 가장 큰 축 (보강 1순위) */
   weakest: CompetencyAxis
-  raw: ScoreResult
 }
 
-/** 계층별 목표 도달선 — 상위/중간/하위 학생에게 같은 잣대를 대지 않는다. */
-const TIER_TARGET: Record<string, number> = { 상위: 90, 중간: 75, 하위: 60 }
-
-export function getCompetencyRadar(student: StudentData, tierLabel: string): CompetencyRadar {
-  const raw = computeAll(student.scoreInputs)
-  const target = TIER_TARGET[tierLabel] ?? 75
-
-  const axes: CompetencyAxis[] = raw.competencies.map(c => ({
-    key: c.key,
-    label: c.label,
-    score: c.scoreRounded,
-    target,
-    gap: c.scoreRounded - target,
-  }))
-
+export function getCompetencyRadar(student: StudentData): CompetencyRadar {
+  const axes = getCompetencyAxes(student)
   const weakest = axes.reduce((lo, a) => (a.gap < lo.gap ? a : lo), axes[0])
-  return { axes, overall: raw.overall, overallTarget: target, weakest, raw }
+  return {
+    axes,
+    overall: getCompetencyOverall(student),
+    overallTarget: axes[0]?.target ?? 75,
+    weakest,
+  }
 }
 
 // ── ② 진단 결과 카드 (시안 diagnosis-result-grid) ──────────────────────────
@@ -348,7 +330,7 @@ export function getStudentStatCards(student: StudentData, type: StudentType): St
       value: String(programs.completed),
       unit: `/${programs.applied}`,
       pct: programs.applied > 0 ? Math.round((programs.completed / programs.applied) * 100) : 0,
-      foot: programs.applied === 0 ? '신청 이력 없음' : `출석 ${programs.attended}건`,
+      foot: programs.applied === 0 ? '신청 이력 없음' : `이번 학기 ${programs.attended}건`,
       badge: programs.applied === 0 ? '없음' : `${programs.applied - programs.completed}건 남음`,
     },
   ]
