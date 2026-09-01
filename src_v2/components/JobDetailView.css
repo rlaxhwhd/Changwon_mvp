@@ -207,7 +207,9 @@
   display: block;
   max-width: 100%;
   height: auto !important;
-  margin: 14px 0;
+  /* 글 폭보다 좁은 이미지는 가운데로 — 왼쪽에 붙으면 오른쪽 여백이 잘린 것처럼 보인다.
+     아주 긴 포스터는 용량 한도에 맞추느라 글 폭보다 좁게 저장될 수 있다. */
+  margin: 14px auto;
   border-radius: var(--radius-md, 10px);
 }
 .jd-content table { width: 100%; border-collapse: collapse; }

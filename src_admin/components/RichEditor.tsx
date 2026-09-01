@@ -21,17 +21,38 @@ const fileToBase64 = (file: File): Promise<string> =>
  */
 const IMAGE_MAX_PX = 1600
 /**
- * 줄인 뒤에도 이만큼 크면 거부한다.
+ * 이미지 한 장이 차지해도 되는 최대 용량(data URL 문자 수 ≒ 1.43MB).
  * 파일을 올려둘 서버가 없어 이미지가 본문 HTML 안에 data URL 로 통째로 들어간다.
- * 그 본문은 localStorage(출처당 5MB 안팎)에 저장되므로, 원본을 그대로 담으면
- * 사진 한 장이 공고·프로그램 목록 전체의 저장을 거부하게 만든다.
+ * 그 본문은 localStorage(출처당 5MB 안팎)에 저장되므로, 한 장이 이보다 커지면
+ * 공고·프로그램 목록 전체의 저장이 거부된다.
  * 기업 로고(JobForm.LOGO_MAX_BYTES)와 같은 이유의 같은 규칙이다.
  */
 const IMAGE_MAX_CHARS = 1_500_000
 
+/** 한 번 그려서 JPEG 로 뽑는다. 투명한 자리는 흰색으로 — 안 메우면 검은 배경이 깔린다. */
+function renderJpeg(img: HTMLImageElement, width: number, quality: number): string | null {
+  const w = Math.max(1, Math.round(width))
+  const h = Math.max(1, Math.round((img.height * w) / img.width))
+  const canvas = document.createElement('canvas')
+  canvas.width = w
+  canvas.height = h
+  const ctx = canvas.getContext('2d')
+  if (!ctx) return null
+  ctx.fillStyle = '#fff'
+  ctx.fillRect(0, 0, w, h)
+  ctx.drawImage(img, 0, 0, w, h)
+  return canvas.toDataURL('image/jpeg', quality)
+}
+
 /**
- * 올린 이미지의 **폭**을 IMAGE_MAX_PX 안으로 줄인다(높이는 비율대로 따라간다).
- * 투명한 자리는 흰색으로 메우고 JPEG 로 다시 쓴다 — 그냥 JPEG 로 바꾸면 검은 배경이 깔린다.
+ * 올린 이미지를 IMAGE_MAX_PX 폭 · IMAGE_MAX_CHARS 용량 **둘 다** 안에 들어오게 맞춘다.
+ *
+ * 폭만 맞추면 충분하지 않다: 세로로 아주 긴 포스터(예: 2992x22441)는 폭을 1600 으로
+ * 줄여도 12000px 높이가 남아 5MB 가 넘는다. 예전엔 그런 이미지를 그냥 거부했고,
+ * 올린 사람에게는 「넣었는데 그대로다」로 보였다.
+ * 그래서 넘치면 거부하는 대신 넘친 만큼 폭을 더 줄여 다시 뽑는다.
+ * 용량은 대략 픽셀 수에 비례하므로 줄일 선형 배율은 그 제곱근이다 — 두세 번이면 수렴한다.
+ *
  * 다시 쓴 쪽이 원본보다 크면(작은 아이콘·단순 PNG) 원본을 그대로 둔다 — 괜히 화질만 버린다.
  */
 function shrinkImage(dataUrl: string): Promise<string> {
@@ -39,19 +60,18 @@ function shrinkImage(dataUrl: string): Promise<string> {
     const img = new Image()
     img.onerror = () => reject(new Error('이미지 파일만 넣을 수 있습니다.'))
     img.onload = () => {
-      const scale = Math.min(1, IMAGE_MAX_PX / img.width)
-      const w = Math.max(1, Math.round(img.width * scale))
-      const h = Math.max(1, Math.round(img.height * scale))
-      const canvas = document.createElement('canvas')
-      canvas.width = w
-      canvas.height = h
-      const ctx = canvas.getContext('2d')
-      if (!ctx) { resolve(dataUrl); return }
-      ctx.fillStyle = '#fff'
-      ctx.fillRect(0, 0, w, h)
-      ctx.drawImage(img, 0, 0, w, h)
-      const shrunk = canvas.toDataURL('image/jpeg', 0.82)
-      resolve(shrunk.length < dataUrl.length ? shrunk : dataUrl)
+      let width = Math.min(IMAGE_MAX_PX, img.width)
+      let quality = 0.82
+      let out: string | null = null
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        out = renderJpeg(img, width, quality)
+        if (!out) { resolve(dataUrl); return }
+        if (out.length <= IMAGE_MAX_CHARS) break
+        // 0.95 는 여유분 — 딱 맞게 겨냥하면 경계에서 한 번 더 돌게 된다.
+        width *= Math.sqrt(IMAGE_MAX_CHARS / out.length) * 0.95
+        quality = 0.7
+      }
+      resolve(out && out.length < dataUrl.length ? out : dataUrl)
     }
     img.src = dataUrl
   })
