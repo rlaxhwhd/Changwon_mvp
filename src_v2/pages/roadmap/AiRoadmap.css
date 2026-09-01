@@ -155,6 +155,41 @@
 .air-connector .air-tail::after { content: ""; position: absolute; left: -3.5px; bottom: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--air-dot); }
 
 /* ---------- AI 플로우 ---------- */
+/* ── 생성 후 잠금 ────────────────────────────────────────────────────────
+   로드맵이 만들어지면 아래 플로우(AI 종합분석·직무분석·목표설정·생성)를 흐린다.
+   숨기지 않고 흐리는 이유 — 무엇이 잠겼는지 보여야 "왜 못 누르지"가 안 생긴다. */
+.air-flow-wrap { position: relative; }
+.air-flow-wrap.is-locked .air-flow {
+  filter: blur(3px);
+  opacity: .55;
+  /* 흐린 채로 눌리면 안 된다. 포커스도 막아야 Tab 으로 도달하지 않는다. */
+  pointer-events: none;
+  user-select: none;
+}
+.air-flow-lock {
+  position: absolute; inset: 0;
+  display: grid; place-content: center; justify-items: center; gap: 10px;
+  padding: 20px; text-align: center;
+  /* 흐린 그림 위에 글자를 그냥 얹으면 서로 물린다 — 흰 스크림으로 한 겹 띄운다. */
+  background: rgba(255, 255, 255, .62);
+  border-radius: var(--radius-lg);
+}
+.air-flow-lock-icon {
+  display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%;
+  background: var(--violet-soft); color: var(--violet); font-size: 21px;
+}
+.air-flow-lock-text {
+  margin: 0; font-size: 15px; font-weight: 800; letter-spacing: -.02em;
+  color: var(--foreground);
+}
+.air-flow-lock-btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 44px; padding: 0 22px; border-radius: var(--radius-md);
+  background: var(--color-cta); color: #fff;
+  font-size: 14px; font-weight: 800; text-decoration: none;
+}
+.air-flow-lock-btn:hover { filter: brightness(1.05); }
+
 .air-flow { display: grid; grid-template-columns: 1.08fr auto auto auto 1.02fr auto 1fr; align-items: center; gap: 12px; }
 .air-flow-card { border: 1px solid var(--border); border-radius: var(--radius-lg); background: var(--card); padding: 14px 16px; }
 .air-flow-card h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 11px; font-size: 14px; font-weight: 800; letter-spacing: -.02em; }

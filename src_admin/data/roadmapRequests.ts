@@ -49,6 +49,24 @@ function persist(list: RoadmapChangeRequest[]): void {
   }
 }
 
+/**
+ * 학생이 낸 변경 요청을 append 한다 — 학생 SPA 의 「로드맵 수정요청」 화면이 호출한다.
+ * 학생 화면 스냅샷(학번·이름·학과)을 함께 담는 이유는 현행 EP_PRM_APP 과 같다:
+ * 나중에 학적이 바뀌어도 '그때 누가 요청했는지'가 남아야 한다(CLAUDE.md 2조).
+ */
+export function addRoadmapRequest(
+  input: Omit<RoadmapChangeRequest, 'id' | 'status' | 'requestedAt' | 'handledAt'>,
+): RoadmapChangeRequest {
+  const created: RoadmapChangeRequest = {
+    ...input,
+    id: `rmreq_${Date.now().toString(36)}`,
+    status: '대기',
+    requestedAt: new Date().toISOString(),
+  }
+  persist([...getRoadmapRequests(), created])
+  return created
+}
+
 function updateRequest(id: string, patch: Partial<RoadmapChangeRequest>): void {
   const next = getRoadmapRequests().map(r => (r.id === id ? { ...r, ...patch } : r))
   persist(next)

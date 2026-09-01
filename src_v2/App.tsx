@@ -10,6 +10,7 @@ import AiLounge from './pages/AiLounge'
 import GrowthHome from './pages/growth/GrowthHome'
 import ProgramApply from './pages/growth/ProgramApply'
 import ProgramDetail from './pages/growth/ProgramDetail'
+import RoadmapRequest from './pages/roadmap/RoadmapRequest'
 import QuestBoard from './pages/growth/QuestBoard'
 import GrowthJournal from './pages/growth/GrowthJournal'
 import GrowthJournalForm from './pages/growth/GrowthJournalForm'
@@ -99,6 +100,7 @@ const router = createBrowserRouter(
         { path: '/roadmap',             element: <Navigate to="/roadmap/skill-tree" replace /> },
         { path: '/roadmap/ai',          element: <Navigate to="/roadmap/skill-tree" replace /> },
         { path: '/roadmap/skill-tree',  element: <AiRoadmap /> },
+        { path: '/roadmap/request',     element: <RoadmapRequest /> },
         { path: '/roadmap/final',       element: <Navigate to="/roadmap/skill-tree" replace /> },
         // 구 경로 → 신 경로 (취업지원 하위로 이동)
         { path: '/roadmap/jobs',        element: <Navigate to="/jobs/joblist" replace /> },

@@ -67,6 +67,7 @@ export const NAV_SECTIONS: NavSection[] = [
     children: [
       { label: 'AI 진로로드맵', path: '/roadmap/ai', icon: 'fa-route' },
       { label: 'AI 직무 로드맵', path: '/roadmap/skill-tree', icon: 'fa-sitemap' },
+      { label: '로드맵 수정요청', path: '/roadmap/request', icon: 'fa-pen-to-square' },
       { label: '최종 로드맵', path: '/roadmap/final', icon: 'fa-bullseye' },
     ],
   },

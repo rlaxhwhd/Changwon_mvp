@@ -109,7 +109,8 @@ export default function AiRoadmap() {
     setGenerated(false)
   }, [student.id])
 
-  const directions = data?.directions ?? []
+  // 적합도가 높은 순으로 — 모달에서 학생이 위에서부터 고르게 한다.
+  const directions = [...(data?.directions ?? [])].sort((a, b) => b.fitPercent - a.fitPercent)
   const target = directions.find(d => d.jobId === targetJobId) ?? null
   const targetOption = jobOptions.find(job => job.jobId === targetJobId) ?? null
 
@@ -268,8 +269,11 @@ export default function AiRoadmap() {
           <span className="air-tail" style={{ left: '36.8%' }} />
         </div>
 
-        {/* AI 플로우 */}
-        <div className="air-flow">
+        {/* AI 플로우 — 로드맵이 생성된 뒤에는 잠근다.
+            로드맵 정본은 상담사가 쥐고 있어(PROCESS.md), 학생이 여기서 다시 생성하면
+            상담사가 만든 로드맵을 학생이 덮어쓰는 셈이 된다. */}
+        <div className={`air-flow-wrap${generated ? ' is-locked' : ''}`}>
+        <div className="air-flow" aria-hidden={generated || undefined}>
           <div className="air-flow-card">
             <h4><AirIcon name="brain" />AI 종합 분석</h4>
             <ul>
@@ -323,6 +327,18 @@ export default function AiRoadmap() {
             <b><AirIcon name="spark" />AI분석 / 로드맵 생성</b>
             <small>{target ? '맞춤형 로드맵 1개 생성' : '목표 직무를 먼저 설정하세요'}</small>
           </button>
+        </div>
+
+        {generated && (
+          <div className="air-flow-lock">
+            {/* 자물쇠는 Font Awesome 아이콘이다 — 비교과 추천 잠금(pr-reco-lock)과 같은 표기다. */}
+            <span className="air-flow-lock-icon"><i className="fa-solid fa-lock" /></span>
+            <p className="air-flow-lock-text">로드맵 변경은 상담사의 승인이 필요합니다.</p>
+            <Link to="/roadmap/request" className="air-flow-lock-btn">
+              <AirIcon name="plus" className="xs" />로드맵 변경하기
+            </Link>
+          </div>
+        )}
         </div>
       </section>
 
