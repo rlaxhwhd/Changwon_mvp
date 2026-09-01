@@ -106,7 +106,7 @@ export default function AiLounge() {
                       </linearGradient>
                     </defs>
                   </CompetencyRadarChart>
-                  <div className="legend"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 직무</span></div>
+                  <div className="legend"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 역량</span></div>
                 </div>
                 <div className="axis-list">
                   {competencyAxes.map(axis => (
