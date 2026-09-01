@@ -87,7 +87,8 @@ export default function Modal({ open, onClose, title, size = 'md', children }: P
         {title && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--color-border)' }}>
             <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--color-text)' }}>{title}</span>
-            <button onClick={onClose} aria-label="닫기" style={{ color: 'var(--color-text-muted)', fontSize: 19, cursor: 'pointer', background: 'none', border: 'none' }}>
+            {/* 폴백은 admin 대응 — 이 모달을 교직원 포털에서도 쓴다(--color-text-muted 가 admin 에 없다) */}
+            <button onClick={onClose} aria-label="닫기" style={{ color: 'var(--color-text-muted, #8a92a2)', fontSize: 19, cursor: 'pointer', background: 'none', border: 'none' }}>
               <i className="fa-solid fa-xmark" />
             </button>
           </div>

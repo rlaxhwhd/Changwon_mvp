@@ -1,4 +1,4 @@
-import { LuCalendarX, LuChevronUp, LuFilter } from 'react-icons/lu'
+import { LuCalendarDays, LuCalendarX, LuChevronUp, LuFilter, LuListChecks } from 'react-icons/lu'
 import { LuChevronDown, LuChevronLeft, LuChevronRight, LuDownload, LuRotateCcw, LuSearch } from 'react-icons/lu'
 import { useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -6,16 +6,25 @@ import AdminModal from '../components/AdminModal'
 import StudentDetailModal from '../components/StudentDetailModal'
 import { getEventsByRequest } from '../data/counselEvents'
 import { getActiveCounselor, getCounselorById, getReassignableCounselors } from '../data/counselors'
-import { confirmRequest, formatRelativeTime, getCounselStudentProfile, getRequestsByAssignee, pickReferenceDate, reassignRequest, rejectRequest, rescheduleRequest, splitMajorGrade } from '../data/counselRequests'
+import { buildDaySchedule, confirmRequest, formatRelativeTime, getCounselStudentProfile, getRequestsByAssignee, pickReferenceDate, reassignRequest, rejectRequest, rescheduleRequest, splitMajorGrade } from '../data/counselRequests'
 import type { CounselRequest, CounselRequestStatus, CounselSlot } from '../data/counselRequests'
+import { getOpenHours } from '../data/availability'
+import type { WeekdayKey } from '../data/schema/availability'
 import type { CounselRequestType } from '../data/schema/counselRequest'
 import { enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 // 6유형 표시명·틴트는 단일소스에서 받는다 — 한글 리터럴·새 색을 만들지 않는다.
 import { typeLabel } from '../../src_v2/data/careerProcess'
+// 문진표는 학생이 신청할 때 본 서식 그대로 보여 준다 — 서식을 두 벌로 만들지 않는다.
+import CounselReserveModal from '../../src_v2/components/CounselReserveModal'
+import type { ReserveStudent } from '../../src_v2/components/CounselReserveModal'
 
 type RequestTab = '전체' | CounselRequestStatus
 type ModalTab = 'schedule' | 'reassign' | 'intake'
-const TABS: RequestTab[] = ['전체', '대기', '확정', '완료', '취소']
+/** 목록 카드가 무엇을 그리는가 — 신청 목록 / 그날의 상담 일정. */
+type RequestView = 'list' | 'schedule'
+// 접수함이 다루는 상태만 탭으로 둔다 — 완료 건은 「상담일지」가 맡는다.
+// counts 는 '완료' 키를 그대로 유지한다(요청 상태를 그대로 세는 자리라 키가 빠지면 집계가 깨진다).
+const TABS: RequestTab[] = ['전체', '대기', '확정', '취소']
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 const ROADMAP_STATUS: Record<string, string> = { done: '완료', active: '진행 중', upcoming: '예정' }
 
@@ -24,6 +33,7 @@ const dateKey = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1
 function requestDate(req: CounselRequest) { if (req.slot?.date) return req.slot.date; const date = new Date(req.requestedAt); return Number.isNaN(date.getTime()) ? req.requestedAt.slice(0, 10) : dateKey(date) }
 function requestTime(req: CounselRequest) { if (req.slot?.start) return req.slot.start; const date = new Date(req.requestedAt); return Number.isNaN(date.getTime()) ? req.requestedAt.slice(11, 16) : `${pad(date.getHours())}:${pad(date.getMinutes())}` }
 function formatSelectedDate(value: string) { const [year, month, day] = value.split('-').map(Number); return `${year}.${pad(month)}.${pad(day)} (${WEEKDAYS[new Date(year, month - 1, day).getDay()]})` }
+function weekdayOf(value: string): WeekdayKey { const [year, month, day] = value.split('-').map(Number); return new Date(year, month - 1, day).getDay() as WeekdayKey }
 function statusClass(status: CounselRequestStatus) { return status === '대기' ? 'is-waiting' : status === '확정' ? 'is-confirmed' : status === '완료' ? 'is-complete' : 'is-cancelled' }
 function requestTypeLabel(req: CounselRequest) { return req.type === '심리' ? '심리상담' : '진로취업 상담' }
 function calendarDays(month: Date) { const first = new Date(month.getFullYear(), month.getMonth(), 1); const start = new Date(month.getFullYear(), month.getMonth(), 1 - first.getDay()); return Array.from({ length: 42 }, (_, index) => { const current = new Date(start); current.setDate(start.getDate() + index); return { key: dateKey(current), day: current.getDate(), inMonth: current.getMonth() === month.getMonth() } }) }
@@ -71,6 +81,45 @@ function IntakePane({ request }: { request: CounselRequest }) {
         ))}
       </ol>
     </div>
+  )
+}
+
+/**
+ * 문진표 확인 — 학생이 신청할 때 본 서식(CounselReserveModal)을 읽기 모드로 연다.
+ * 신청서를 상담사용으로 다시 그리지 않는다 — 학생이 낸 화면과 상담사가 읽는 화면이
+ * 갈리면 "학생이 뭘 보고 답했는지"를 상담사가 알 수 없게 된다.
+ *
+ * 학생 기본정보는 로스터(owner)에서 온다. 성별은 학사 데이터에 없어 '-' 로 둔다 —
+ * 학생 화면과 같은 자리이고, 없는 값을 지어내지 않는다.
+ */
+function IntakeReserveModal({ request, onClose }: { request: CounselRequest; onClose: () => void }) {
+  const profile = getCounselStudentProfile(request.studentId)
+  const counselor = getCounselorById(request.assignedCounselorId ?? '')
+  const slot = request.slot
+
+  const student: ReserveStudent = {
+    name: profile?.name ?? request.studentName,
+    studentNo: profile?.studentNo ?? request.studentNo,
+    major: profile ? profile.major : splitMajorGrade(request.studentMajor).major,
+    grade: profile ? `${profile.grade}학년` : (splitMajorGrade(request.studentMajor).grade ?? '—'),
+    gender: '-',
+    contact: profile?.phone ?? '—',
+    enrollmentStatus: profile?.enrollmentStatus ?? request.studentEnrollmentStatus,
+  }
+
+  return (
+    <CounselReserveModal
+      open
+      onClose={onClose}
+      roleLabel="상담사"
+      counselorName={counselor ? `${counselor.name} ${counselor.roleLabel}` : '미배정'}
+      date={slot ? formatSelectedDate(slot.date) : '미정'}
+      time={slot ? `${slot.start}–${slot.end}` : ''}
+      room={slot?.place ?? ''}
+      phone=""
+      student={student}
+      submitted={{ purpose: request.topic, intake: request.intake ?? [] }}
+    />
   )
 }
 
@@ -127,10 +176,49 @@ const initialKey = useMemo(() => pickReferenceDate(all.map(requestDate), dateKey
   // 학생 상세 모달 — 홈 '학생정보' 버튼과 같은 공용 컴포넌트(StudentDetailModal)를 쓴다.
   // 상담 처리(일정·재배정)와는 다른 관심사라 모달을 나눈다.
   const [infoId, setInfoId] = useState<string | null>(null)
-  const counts = useMemo(() => { const result: Record<RequestTab, number> = { 전체: all.length, 대기: 0, 확정: 0, 완료: 0, 취소: 0 }; all.forEach(req => result[req.status] += 1); return result }, [all]); const dateCounts = useMemo(() => { const result = new Map<string, number>(); all.forEach(req => result.set(requestDate(req), (result.get(requestDate(req)) ?? 0) + 1)); return result }, [all]); const days = useMemo(() => calendarDays(month), [month]); const list = useMemo(() => all.filter(req => requestDate(req) === selectedDate).filter(req => tab === '전체' || req.status === tab).filter(req => typeFilter === '전체' || req.type === typeFilter).filter(req => !query.trim() || req.studentName.toLowerCase().includes(query.trim().toLowerCase()) || req.studentNo.toLowerCase().includes(query.trim().toLowerCase())).sort((a,b) => requestTime(a).localeCompare(requestTime(b))), [all, selectedDate, tab, typeFilter, query])
+  // 문진표 모달 — 학생이 신청할 때 본 서식 그대로(공용 CounselReserveModal 읽기 모드).
+  const [intakeReq, setIntakeReq] = useState<CounselRequest | null>(null)
+  // 같은 카드 안에서 신청 목록 ↔ 그날의 상담 일정을 갈아 끼운다. 캘린더·상태 탭·검색은
+  // 두 뷰가 공유한다 — 「일정·예약」 화면으로 나가지 않고 확정·진행까지 여기서 끝낸다.
+  const [view, setView] = useState<RequestView>('list')
+  const counts = useMemo(() => { const result: Record<RequestTab, number> = { 전체: all.length, 대기: 0, 확정: 0, 완료: 0, 취소: 0 }; all.forEach(req => result[req.status] += 1); return result }, [all]); const dateCounts = useMemo(() => { const result = new Map<string, number>(); all.forEach(req => result.set(requestDate(req), (result.get(requestDate(req)) ?? 0) + 1)); return result }, [all]); const days = useMemo(() => calendarDays(month), [month]); // 상태 탭·유형·검색어는 두 뷰가 똑같이 쓴다. 다른 것은 날짜 기준뿐 —
+  // 목록은 신청 대표일(requestDate), 일정은 실제로 잡힌 슬롯 날짜다.
+  const matchesFilters = (req: CounselRequest) => (tab === '전체' || req.status === tab) && (typeFilter === '전체' || req.type === typeFilter) && (!query.trim() || req.studentName.toLowerCase().includes(query.trim().toLowerCase()) || req.studentNo.toLowerCase().includes(query.trim().toLowerCase()))
+  const list = useMemo(() => all.filter(req => requestDate(req) === selectedDate).filter(matchesFilters).sort((a,b) => requestTime(a).localeCompare(requestTime(b))), [all, selectedDate, tab, typeFilter, query])
+  // 그날의 일정 — 슬롯 없는 신청은 시간축에 올릴 근거가 없어 빠진다. 축은 가능 시간대가 깐다.
+  const daySchedule = useMemo(() => buildDaySchedule(all.filter(req => req.slot?.date === selectedDate).filter(matchesFilters), getOpenHours(counselor.id, weekdayOf(selectedDate))), [all, selectedDate, tab, typeFilter, query, counselor.id])
+  const dayCount = useMemo(() => daySchedule.reduce((sum, row) => sum + row.items.length, 0), [daySchedule])
   const updateSelectedDate = (value: string) => { setSelectedDate(value); const [year, valueMonth] = value.split('-').map(Number); setMonth(new Date(year, valueMonth - 1, 1)) }; const openModal = (request: CounselRequest, nextTab: ModalTab = 'schedule') => { setModalRequest(request); setModalTab(nextTab) }; const toggleTopic = (id: string) => setExpandedTopics(current => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next })
   const downloadCsv = () => { const header = ['상담시간','학생명','학과','상담유형','상담주제','상태']; const rows = list.map(req => [requestTime(req), req.studentName, req.studentMajor, requestTypeLabel(req), req.topic, req.status]); const csv = [header, ...rows].map(row => row.map(value => `"${String(value).replaceAll('"', '""')}"`).join(',')).join('\n'); const url = URL.createObjectURL(new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = `상담신청_${selectedDate}.csv`; anchor.click(); URL.revokeObjectURL(url) }
-  return <div className="admin-page counsel-requests-page"><header className="admin-page-head"><div><h1 className="admin-page-title">신청 접수함</h1><p className="admin-page-desc">학생들이 신청한 상담 요청을 확인하고 관리할 수 있습니다.</p></div></header><form className="counsel-filter-bar" onSubmit={event => event.preventDefault()}><label className="counsel-filter-search"><LuSearch aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="이름, 학번 검색" aria-label="이름 또는 학번 검색" /></label><select className="counsel-filter-select" value={typeFilter} onChange={event => setTypeFilter(event.target.value as '전체' | CounselRequestType)} aria-label="상담 유형"><option value="전체">전체 유형</option><option value="진로취업">진로취업 상담</option><option value="심리">심리상담</option></select><input type="date" className="counsel-filter-date" value={selectedDate} onChange={event => updateSelectedDate(event.target.value)} aria-label="상담 신청 날짜" /><button type="submit" className="counsel-primary-btn"><LuSearch /> 검색</button><button type="button" className="counsel-outline-btn" onClick={() => { setQuery(''); setTypeFilter('전체'); setTab('전체'); updateSelectedDate(initialKey) }}><LuRotateCcw /> 초기화</button></form><div className="counsel-status-tabs" role="tablist" aria-label="상담 신청 상태">{TABS.map(item => <button key={item} type="button" role="tab" aria-selected={tab === item} className={`tab-${item}${tab === item ? ' active' : ''}`} onClick={() => setTab(item)}><span>{item}</span><strong>{counts[item]}</strong></button>)}</div><div className="counsel-requests-layout"><section className="counsel-calendar-card" aria-label="상담 신청 달력"><h2>상담 신청 캘린더</h2><div className="counsel-calendar-toolbar"><div className="counsel-calendar-nav"><button type="button" aria-label="이전 달" onClick={() => setMonth(current => new Date(current.getFullYear(), current.getMonth() - 1, 1))}><LuChevronLeft /></button><button type="button" aria-label="다음 달" onClick={() => setMonth(current => new Date(current.getFullYear(), current.getMonth() + 1, 1))}><LuChevronRight /></button></div><strong>{month.getFullYear()}년 {month.getMonth() + 1}월</strong><button type="button" className="counsel-today-btn" onClick={() => { const today = new Date(); setMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setSelectedDate(dateKey(today)) }}>오늘</button></div><div className="counsel-calendar-weekdays">{WEEKDAYS.map(day => <span key={day}>{day}</span>)}</div><div className="counsel-calendar-grid">{days.map(day => { const count = dateCounts.get(day.key) ?? 0; return <button key={day.key} type="button" className={`${day.inMonth ? '' : 'is-muted'}${day.key === selectedDate ? ' is-selected' : ''}`} onClick={() => updateSelectedDate(day.key)}><span>{day.day}</span>{count > 0 && <em>{count}</em>}</button> })}</div><p className="counsel-calendar-legend"><span /> 해당 날짜의 상담 신청 건수</p></section><section className="counsel-request-table-card"><header className="counsel-request-table-head"><h2>{formatSelectedDate(selectedDate)} <span>상담 신청 목록</span> <em>{list.length}건</em></h2><div><button type="button" className="counsel-outline-btn"><LuFilter /> 필터</button><button type="button" className="counsel-outline-btn" onClick={downloadCsv}><LuDownload /> 엑셀 다운로드</button></div></header><div className="counsel-request-table-scroll"><div className="counsel-request-table"><div className="counsel-request-columns" aria-hidden="true"><span>신청 시간</span><span>학생 정보/학번</span><span>학과/재학</span><span>유형</span><span>상담 유형/상태</span><span>상담 주제</span><span>상세 보기/상담 처리</span></div>{list.length === 0 ? <div className="counsel-request-empty"><LuCalendarX /><strong>선택한 날짜에 상담 신청이 없습니다.</strong><span>다른 날짜 또는 상태를 선택해 주세요.</span></div> : list.map(req => {
+  return <div className="admin-page counsel-requests-page"><header className="admin-page-head"><div><h1 className="admin-page-title">신청 접수함</h1><p className="admin-page-desc">학생들이 신청한 상담 요청을 확인하고 관리할 수 있습니다.</p></div></header><form className="counsel-filter-bar" onSubmit={event => event.preventDefault()}><label className="counsel-filter-search"><LuSearch aria-hidden="true" /><input value={query} onChange={event => setQuery(event.target.value)} placeholder="이름, 학번 검색" aria-label="이름 또는 학번 검색" /></label><select className="counsel-filter-select" value={typeFilter} onChange={event => setTypeFilter(event.target.value as '전체' | CounselRequestType)} aria-label="상담 유형"><option value="전체">전체 유형</option><option value="진로취업">진로취업 상담</option><option value="심리">심리상담</option></select><input type="date" className="counsel-filter-date" value={selectedDate} onChange={event => updateSelectedDate(event.target.value)} aria-label="상담 신청 날짜" /><button type="submit" className="counsel-primary-btn"><LuSearch /> 검색</button><button type="button" className="counsel-outline-btn" onClick={() => { setQuery(''); setTypeFilter('전체'); setTab('전체'); updateSelectedDate(initialKey) }}><LuRotateCcw /> 초기화</button></form><div className="counsel-status-tabs" role="tablist" aria-label="상담 신청 상태">{TABS.map(item => <button key={item} type="button" role="tab" aria-selected={tab === item} className={`tab-${item}${tab === item ? ' active' : ''}`} onClick={() => setTab(item)}><span>{item}</span><strong>{counts[item]}</strong></button>)}</div><div className="counsel-requests-layout"><section className="counsel-calendar-card" aria-label="상담 신청 달력"><h2>상담 신청 캘린더</h2><div className="counsel-calendar-toolbar"><div className="counsel-calendar-nav"><button type="button" aria-label="이전 달" onClick={() => setMonth(current => new Date(current.getFullYear(), current.getMonth() - 1, 1))}><LuChevronLeft /></button><button type="button" aria-label="다음 달" onClick={() => setMonth(current => new Date(current.getFullYear(), current.getMonth() + 1, 1))}><LuChevronRight /></button></div><strong>{month.getFullYear()}년 {month.getMonth() + 1}월</strong><button type="button" className="counsel-today-btn" onClick={() => { const today = new Date(); setMonth(new Date(today.getFullYear(), today.getMonth(), 1)); setSelectedDate(dateKey(today)) }}>오늘</button></div><div className="counsel-calendar-weekdays">{WEEKDAYS.map(day => <span key={day}>{day}</span>)}</div><div className="counsel-calendar-grid">{days.map(day => { const count = dateCounts.get(day.key) ?? 0; return <button key={day.key} type="button" className={`${day.inMonth ? '' : 'is-muted'}${day.key === selectedDate ? ' is-selected' : ''}`} onClick={() => updateSelectedDate(day.key)}><span>{day.day}</span>{count > 0 && <em>{count}</em>}</button> })}</div><p className="counsel-calendar-legend"><span /> 해당 날짜의 상담 신청 건수</p></section><section className="counsel-request-table-card"><header className="counsel-request-table-head"><h2>{formatSelectedDate(selectedDate)} <span>{view === 'schedule' ? '상담 일정' : '상담 신청 목록'}</span> <em>{view === 'schedule' ? dayCount : list.length}건</em></h2><div><button type="button" className={`counsel-outline-btn${view === 'schedule' ? ' is-active' : ''}`} aria-pressed={view === 'schedule'} onClick={() => setView(current => (current === 'schedule' ? 'list' : 'schedule'))}>{view === 'schedule' ? <><LuListChecks /> 신청 목록</> : <><LuCalendarDays /> 상담일정</>}</button><button type="button" className="counsel-outline-btn"><LuFilter /> 필터</button><button type="button" className="counsel-outline-btn" onClick={downloadCsv}><LuDownload /> 엑셀 다운로드</button></div></header>{view === 'schedule' ? <div className="counsel-day-schedule">{daySchedule.length === 0 ? <div className="counsel-request-empty"><LuCalendarX /><strong>이 날짜에 잡힌 상담 일정이 없습니다.</strong><span>예약이 잡히거나 가능 시간대를 설정하면 이곳에 시간순으로 나타납니다.</span></div> : daySchedule.map(row => (
+              <div key={row.time} className={`counsel-day-row${row.items.length === 0 ? ' is-free' : ''}`}>
+                <span className="counsel-day-time">{row.time}</span>
+                {row.items.length === 0 ? <p className="counsel-day-free">예약 없음</p> : (
+                  <div className="counsel-day-items">
+                    {row.items.map(req => (
+                      <article key={req.id} className="counsel-day-item">
+                        <div className="counsel-day-main">
+                          {/* 시간은 왼쪽 counsel-day-time 이 이미 말한다 — 여기선 학과만. */}
+                          <strong>{req.studentName}</strong>
+                          <small>{splitMajorGrade(req.studentMajor).major}</small>
+                          <p>{req.topic}</p>
+                        </div>
+                        <div className="counsel-day-side">
+                          <span className={`counsel-type-badge ${req.type === '심리' ? 'is-psych' : ''}`}>{requestTypeLabel(req)}</span>
+                          <span className={`counsel-status-badge ${statusClass(req.status)}`}>{req.status}</span>
+                          <button type="button" className="counsel-detail-btn" onClick={() => setInfoId(req.studentId)}>상세 보기</button>
+                          {/* 학생이 낸 신청서를 상담 전에 읽는다 — 학생이 본 서식 그대로(공용 모달). */}
+                          <button type="button" className="counsel-detail-btn" onClick={() => setIntakeReq(req)}>문진표 확인</button>
+                          {/* 대기는 확정부터 — 목록의 「상담 처리」와 같은 모달을 연다(처리 경로를 둘로 만들지 않는다). */}
+                          {req.status === '대기' && <button type="button" className="counsel-detail-btn" onClick={() => openModal(req)}>확정하기</button>}
+                          {req.status === '확정' && <Link to={`/counsel/session/${req.studentId}`} className="counsel-detail-btn">상담 진행</Link>}
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}</div> : <><div className="counsel-request-table-scroll"><div className="counsel-request-table"><div className="counsel-request-columns" aria-hidden="true"><span>신청 시간</span><span>학생 정보/학번</span><span>학과/재학</span><span>유형</span><span>상담 유형/상태</span><span>상담 주제</span><span>상세 보기/상담 처리</span></div>{list.length === 0 ? <div className="counsel-request-empty"><LuCalendarX /><strong>선택한 날짜에 상담 신청이 없습니다.</strong><span>다른 날짜 또는 상태를 선택해 주세요.</span></div> : list.map(req => {
               const expanded = expandedTopics.has(req.id)
               const canAct = req.status === '대기' || req.status === '확정'
               const { major, grade } = splitMajorGrade(req.studentMajor)
@@ -175,5 +263,5 @@ const initialKey = useMemo(() => pickReferenceDate(all.map(requestDate), dateKey
                   {expanded && <div className="counsel-topic-full">{req.topic}</div>}
                 </div>
               )
-            })}</div></div><footer className="counsel-request-table-footer"><span>총 {list.length}건</span><button type="button">10개씩 보기 <LuChevronDown /></button><nav aria-label="상담 신청 페이지"><button type="button" disabled><LuChevronLeft /></button><button type="button" className="active">1</button><button type="button" disabled><LuChevronRight /></button></nav></footer></section></div>{modalRequest && <RequestModal request={modalRequest} initialTab={modalTab} onClose={() => setModalRequest(null)} />}{infoId && <StudentDetailModal studentId={infoId} role={counselor.role} onClose={() => setInfoId(null)} />}</div>
+            })}</div></div><footer className="counsel-request-table-footer"><span>총 {list.length}건</span><button type="button">10개씩 보기 <LuChevronDown /></button><nav aria-label="상담 신청 페이지"><button type="button" disabled><LuChevronLeft /></button><button type="button" className="active">1</button><button type="button" disabled><LuChevronRight /></button></nav></footer></>}</section></div>{modalRequest && <RequestModal request={modalRequest} initialTab={modalTab} onClose={() => setModalRequest(null)} />}{infoId && <StudentDetailModal studentId={infoId} role={counselor.role} onClose={() => setInfoId(null)} />}{intakeReq && <IntakeReserveModal request={intakeReq} onClose={() => setIntakeReq(null)} />}</div>
 }

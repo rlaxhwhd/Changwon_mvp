@@ -32,7 +32,7 @@ const KPI_META: Record<string, { icon: string; to: string }> = {
   today: { icon: 'cal', to: '/counsel/schedule' },
   intake: { icon: 'clip', to: '/counsel/requests' },
   roadmap: { icon: 'route', to: '/roadmap/requests' },
-  record: { icon: 'pen', to: '/counsel/records' },
+  record: { icon: 'pen', to: '/counsel/journals' },
 }
 
 /** AI 추천 질문 생성에 걸리는 시간(모의). 실제 생성 API가 붙으면 이 상수는 사라진다. */

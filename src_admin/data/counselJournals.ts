@@ -5,8 +5,10 @@
 //   완료 상담 중 dc_counsel_records 에 기록이 없으면 미작성.
 // 판정·집계는 여기 한 곳이다(CLAUDE.md 규칙 10) — 화면이 다시 세지 않는다.
 // ─────────────────────────────────────────────────────────────────────────
-import { getRequestsByAssignee } from './counselRequests'
+import { getRequestsByAssignee, splitMajorGrade } from './counselRequests'
 import { getCounselRecords } from './counselRecords'
+import { studentLiteOf } from './studentRoster'
+import type { EnrollStatus } from './studentRoster'
 import type { CounselRecord } from './schema/counselRecord'
 import type { CounselMethod, CounselRequestType } from './schema/counselRequest'
 import type { StudentType } from '../../src_v2/data/careerProcess'
@@ -30,6 +32,12 @@ export interface JournalRow {
   studentNo: string
   studentName: string
   studentMajor: string
+  /** 학년 — 학생 단일소스에서. 로스터에 없는 학생이면 비어 있다(필터에서 제외된다). */
+  studentGrade?: number
+  /** 학적 상태 — 지금 값(학생 단일소스)이 먼저, 없으면 신청 시점 스냅샷.
+      상담일지는 「지금 휴학 중인 학생」을 걸러 보는 자리라 현재 값이 맞다.
+      jobApplicationExport 가 쓰는 판정과 같은 규약이다. */
+  studentStatus: EnrollStatus
   studentType: StudentType
   type: CounselRequestType
   method: CounselMethod
@@ -56,12 +64,18 @@ export function getJournalRows(counselorId: string): JournalRow[] {
     .filter(r => r.status === '완료')
     .map(r => {
       const record = byRequest.get(r.id)
+      const lite = studentLiteOf(r.studentId)
+      // 상담 시드의 studentMajor 에는 학년이 붙어 있다("컴퓨터공학과 4학년").
+      // 그대로 두면 학과 필터가 같은 학과를 둘로 갈라 놓는다 — 쪼개는 규칙은 counselRequests 가 갖고 있다.
+      const snap = splitMajorGrade(r.studentMajor)
       return {
         requestId: r.id,
         studentId: r.studentId,
         studentNo: r.studentNo,
         studentName: r.studentName,
-        studentMajor: r.studentMajor,
+        studentMajor: snap.major,
+        studentGrade: lite?.grade ?? (snap.grade ? parseInt(snap.grade, 10) : undefined),
+        studentStatus: lite?.status ?? r.studentEnrollmentStatus,
         studentType: r.studentType,
         type: r.type,
         method: r.method,
@@ -74,6 +88,27 @@ export function getJournalRows(counselorId: string): JournalRow[] {
       }
     })
     .sort((a, b) => b.date.localeCompare(a.date))
+}
+
+/**
+ * 학적 상태 선택지 — 값이 정해진 열거형이라 대장에 있는 값만 뽑지 않고 늘 전부 내놓는다.
+ * 지금 대장이 전원 재학이어도 「휴학」을 고를 수 있어야 필터가 필터로 읽힌다.
+ * 사전순이면 「수료·재학·졸업·휴학」이 되므로 순서도 여기서 못박는다.
+ */
+const ENROLL_STATUSES: EnrollStatus[] = ['재학', '휴학', '졸업', '수료']
+
+/**
+ * 필터 드롭다운 옵션.
+ * 학과·학년은 끝이 열린 집합이라 대장에 실제로 있는 값에서만 만든다 —
+ * 전 학과를 늘어놓으면 고르는 족족 0건인 항목이 대부분이 된다.
+ * studentRoster.getRosterFilterOptions 와 같은 규약 — DB 전환 시 별도 집계 엔드포인트.
+ */
+export function getJournalFilterOptions(rows: JournalRow[]) {
+  return {
+    majors: [...new Set(rows.map(r => r.studentMajor))].sort(),
+    grades: [...new Set(rows.flatMap(r => (r.studentGrade ? [r.studentGrade] : [])))].sort((a, b) => a - b),
+    statuses: ENROLL_STATUSES,
+  }
 }
 
 /** 상단 요약 — 대상·단계별 건수와 작성률. DB 전환 시 COUNT 쿼리. */

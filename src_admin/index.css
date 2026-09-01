@@ -906,11 +906,6 @@ input, textarea, select { font-family: var(--font); }
 .admin-toolbar-count { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
 /* 목록 카드 바깥 우측 상단 — 선택 인쇄·엑셀 다운로드 */
 .admin-toolbar-actions { display: flex; align-items: center; gap: 8px; margin-left: auto; }
-.admin-check-all {
-  display: inline-flex; align-items: center; gap: 6px;
-  font-size: 13px; font-weight: 700; color: var(--color-text-secondary); cursor: pointer;
-}
-.admin-check-all input { width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary); }
 
 /* ─── Forms ──────────────────────────────────────────────────────────── */
 .admin-field { display: flex; flex-direction: column; gap: 6px; }
@@ -1105,6 +1100,28 @@ input, textarea, select { font-family: var(--font); }
 .admin-journal-roster .admin-roster-cell .admin-chip,
 .admin-journal-roster .admin-roster-cell .admin-type-tag { align-self: center; }
 .admin-journal-topic { text-align: left !important; align-items: flex-start !important; }
+/* 주제를 누르면 작성된 일지 본문이 펼쳐진다(옛 「완료 상담 내역」을 흡수한 자리) */
+.admin-journal-topic-toggle {
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; padding: 0; border: 0; background: none;
+  font: inherit; text-align: left; color: inherit; cursor: pointer;
+}
+.admin-journal-topic-toggle:hover { color: var(--color-primary); }
+.admin-journal-topic-toggle svg {
+  flex: 0 0 auto; width: 14px; height: 14px;
+  color: var(--color-text-secondary); transition: transform 0.15s;
+}
+.admin-journal-topic-toggle.is-open svg { transform: rotate(180deg); color: var(--color-primary); }
+/* 행이 가로 스크롤되므로 펼침 패널도 같은 최소폭을 갖는다 — 스크롤해도 어긋나지 않는다.
+   이름이 .admin-journal-detail 이 아닌 이유: 그 클래스는 아래(§상담일지 카드)에 이미 있다. */
+.admin-journal-body {
+  min-width: 1252px;
+  display: flex; flex-direction: column; gap: 12px;
+  padding: 14px 18px 18px 100px;
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-section-bg);
+}
+.admin-journal-body .admin-record-item-comment { background: #fff; }
 /* 로드맵 변경 요청함 — 체크·번호·이름·학번·학과·신청사항·신청일·상태·처리 */
 .admin-rmreq-roster .admin-roster-head,
 .admin-rmreq-roster .admin-roster-row {
@@ -1143,7 +1160,6 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-journal-brief dt { margin-bottom: 4px; font-size: 12px; font-weight: 800; color: var(--color-text-secondary); }
 .admin-journal-brief dd { font-size: 14px; font-weight: 700; color: var(--color-text); }
-.admin-journal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .admin-journal-attach {
   display: flex; align-items: center; gap: 10px;
   padding: 12px 14px;
@@ -1152,28 +1168,7 @@ input, textarea, select { font-family: var(--font); }
 }
 .admin-journal-attach button { margin-left: auto; }
 
-/* ─── Records (완료 내역) ────────────────────────────────────────────── */
-.admin-record-item-list { display: flex; flex-direction: column; gap: 16px; }
-.admin-record-item {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 18px;
-  display: flex; flex-direction: column; gap: 12px;
-}
-.admin-record-item.is-checked { border-color: var(--color-primary); background: var(--color-primary-bg); }
-.admin-record-item-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.admin-record-item-student { display: flex; align-items: center; gap: 10px; }
-.admin-record-item-student .admin-check-cell { display: inline-flex; }
-.admin-record-item-student strong { display: block; font-size: 15px; font-weight: 800; color: var(--color-text); }
-.admin-record-item-student small { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
-.admin-record-item-meta { display: flex; align-items: center; gap: 6px; }
-.admin-record-item-topic {
-  padding: 10px 14px;
-  background: var(--color-primary-bg);
-  border-radius: var(--radius-sm);
-  font-size: 14px; font-weight: 700; color: var(--color-text);
-}
-.admin-record-item-topic svg { color: var(--color-primary); margin-right: 6px; }
+/* ─── 상담 기록 본문 (일지 펼침 · 집단상담 · 진단 코멘트가 공유) ─────── */
 .admin-record-label { display: block; font-size: 12px; font-weight: 800; color: var(--color-text-secondary); margin-bottom: 4px; }
 .admin-record-label svg { color: var(--color-primary); margin-right: 4px; }
 .admin-record-item-summary p,
@@ -1184,7 +1179,6 @@ input, textarea, select { font-family: var(--font); }
   background: var(--color-section-bg);
   border-radius: var(--radius-sm);
 }
-.admin-record-edit { display: flex; flex-direction: column; gap: 12px; }
 
 /* ─── Profile / Availability settings ────────────────────────────────── */
 .admin-profile-card { display: flex; flex-direction: column; gap: 20px; }
@@ -2024,11 +2018,13 @@ input, textarea, select { font-family: var(--font); }
 .counsel-filter-bar .counsel-primary-btn,
 .counsel-filter-bar .counsel-outline-btn { min-height: 44px; }
 
+/* 폭은 왼쪽 캘린더 열과 같다 — 두 요소가 같은 세로선에서 시작하고 끝난다.
+   365px 는 .counsel-requests-layout 의 첫 열과 같은 값이다(둘을 같이 고쳐야 한다). */
 .counsel-status-tabs {
-  width: min(100%, 560px);
+  width: min(100%, 365px);
   height: 52px;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   align-items: center;
   padding: 5px;
   background: var(--color-bg);
@@ -2060,12 +2056,11 @@ input, textarea, select { font-family: var(--font); }
   font-size: 12px;
   font-weight: 800;
 }
-/* 탭 5개가 한 색이면 지금 어느 상태를 보고 있는지 색으로 알 수 없다.
+/* 탭이 한 색이면 지금 어느 상태를 보고 있는지 색으로 알 수 없다.
    상태별 잉크를 --tab-ink 로 물려 활성 탭과 카운트 칩이 같은 색을 쓴다. */
 .counsel-status-tabs button { --tab-ink: var(--color-text); }
 .counsel-status-tabs button.tab-대기 { --tab-ink: var(--state-wait-ink); }
 .counsel-status-tabs button.tab-확정 { --tab-ink: var(--state-fixed-ink); }
-.counsel-status-tabs button.tab-완료 { --tab-ink: var(--state-done-ink); }
 .counsel-status-tabs button.tab-취소 { --tab-ink: var(--state-cancel-ink); }
 .counsel-status-tabs button.active {
   color: #fff;
@@ -2576,6 +2571,52 @@ input, textarea, select { font-family: var(--font); }
 .counsel-request-empty strong { color: var(--color-text); font-size: 14px; }
 .counsel-request-empty span { font-size: 12px; }
 
+/* ─── 상담 일정 뷰 ────────────────────────────────────────────────────
+   신청 목록 카드 안에서 「상담일정」으로 갈아 끼우는 하루 시간표.
+   축은 상담사 가능 시간대(dc_availability)가 깔고, 그 밖 시각에 잡힌 예약도 제 줄을 얻는다. */
+.counsel-outline-btn.is-active {
+  border-color: var(--color-primary);
+  background: var(--color-primary);
+  color: #fff;
+}
+.counsel-outline-btn.is-active:hover { border-color: var(--color-primary); color: #fff; }
+
+.counsel-day-schedule { padding: 6px 20px 18px; }
+.counsel-day-row {
+  display: grid;
+  grid-template-columns: 64px 1fr;
+  gap: 14px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.counsel-day-row:last-child { border-bottom: 0; }
+.counsel-day-time {
+  padding-top: 3px;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.counsel-day-row.is-free .counsel-day-time { color: var(--color-caption); font-weight: 700; }
+.counsel-day-free { padding-top: 3px; color: var(--color-caption); font-size: 12px; }
+.counsel-day-items { display: flex; flex-direction: column; gap: 8px; }
+.counsel-day-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-section-bg);
+}
+.counsel-day-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.counsel-day-main strong { color: var(--color-title); font-size: 14px; font-weight: 800; }
+.counsel-day-main small { color: var(--color-text-secondary); font-size: 12px; }
+.counsel-day-main p { color: var(--color-text); font-size: 13px; }
+.counsel-day-side { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.counsel-day-side a.counsel-detail-btn { text-decoration: none; }
+
 .counsel-request-table-footer {
   min-height: 66px;
   margin-top: auto;
@@ -2608,6 +2649,8 @@ input, textarea, select { font-family: var(--font); }
    (390px 은 .76fr/1.24fr 비례 시절의 잔재였다.) */
 @media (max-width: 1439px) {
   .counsel-requests-layout { grid-template-columns: 320px minmax(0, 1fr); }
+  /* 캘린더가 줄면 탭도 같이 줄어야 세로선이 맞는다. */
+  .counsel-status-tabs { width: min(100%, 320px); }
   .counsel-request-table-head { align-items: flex-start; }
   .counsel-request-table-head > div { flex-wrap: wrap; justify-content: flex-end; }
 }

@@ -5,7 +5,6 @@ import Home from './pages/Home'
 import CounselRequests from './pages/CounselRequests'
 import CounselSchedule from './pages/CounselSchedule'
 import CounselSession from './pages/CounselSession'
-import CounselRecords from './pages/CounselRecords'
 import CounselJournals from './pages/CounselJournals'
 import CounselRecordPrint from './pages/CounselRecordPrint'
 import CounselStats from './pages/CounselStats'
@@ -98,7 +97,8 @@ const router = createBrowserRouter(
                 { path: '/counsel/schedule', element: <CounselSchedule /> },
                 { path: '/counsel/session/:studentId', element: <CounselSession /> },
                 { path: '/counsel/journals', element: <CounselJournals /> },
-                { path: '/counsel/records', element: <CounselRecords /> },
+                // 옛 「완료 상담 내역」 — 상담일지 대장의 '완료' 필터와 같은 집합이라 흡수했다.
+                { path: '/counsel/records', element: <Navigate to="/counsel/journals" replace /> },
                 { path: '/counsel/groups', element: <GroupCounsels /> },
                 { path: '/counsel/stats', element: <CounselStats /> },
                 { path: '/diagnosis/status', element: <DiagnosisStatus /> },

@@ -8,7 +8,7 @@ import {
   completeRequest,
 } from '../data/counselRequests'
 import type { CounselRequest } from '../data/counselRequests'
-import { getRecordByRequest, upsertRecord } from '../data/counselRecords'
+import { buildRecord, getRecordByRequest, upsertRecord } from '../data/counselRecords'
 import type { CounselRecord } from '../data/counselRecords'
 import { STUDENTS } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
@@ -38,41 +38,38 @@ function RecordForm({
 
   const canComplete = summary.trim() !== '' && comment.trim() !== ''
 
-  const buildRecord = (status: CounselRecord['status']): CounselRecord => {
-    const now = new Date().toISOString()
-    return {
-      id: existing?.id ?? `rec_${request.id}_${Date.now().toString(36)}`,
-      requestId: request.id,
-      studentId: student.id,
-      studentName: student.name,
-      studentMajor: student.major,
-      type: request.type,
-      method: request.method,
-      topic: request.topic,
-      date: request.slot?.date ?? todayISO(),
-      counselorId,
-      counselorName: counselor.name,
-      summary: summary.trim(),
-      comment: comment.trim(),
-      followUp: followUp.trim() || undefined,
+  // 조립은 데이터층 한 곳이다 — 상담일지 대장도 같은 함수로 쓴다.
+  const draft = (status: CounselRecord['status']): CounselRecord =>
+    buildRecord(
+      {
+        requestId: request.id,
+        studentId: student.id,
+        studentName: student.name,
+        studentMajor: student.major,
+        type: request.type,
+        method: request.method,
+        topic: request.topic,
+        date: request.slot?.date ?? todayISO(),
+        counselorId,
+        counselorName: counselor.name,
+      },
+      { summary, comment, followUp },
       status,
-      createdAt: existing?.createdAt ?? now,
-      updatedAt: now,
-    }
-  }
+      existing,
+    )
 
   const handleSaveDraft = () => {
-    upsertRecord(buildRecord('작성중'))
+    upsertRecord(draft('작성중'))
     setSaved(true)
     window.setTimeout(() => setSaved(false), 2000)
   }
 
   const handleComplete = () => {
     if (!canComplete) return
-    upsertRecord(buildRecord('완료'))
+    upsertRecord(draft('완료'))
     completeRequest(request.id)
-    // 완료 후 완료 내역으로 이동
-    window.location.href = '/admin/counsel/records'
+    // 완료 후 상담일지 대장으로 이동 — 방금 쓴 일지가 '완료'로 올라온다
+    window.location.href = '/admin/counsel/journals'
   }
 
   return (
