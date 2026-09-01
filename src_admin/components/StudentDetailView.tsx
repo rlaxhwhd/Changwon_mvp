@@ -20,8 +20,16 @@ import {
   getRoadmapProgress, getStudentPrograms,
   type CompetencyAxis, type CompetencyRadar, type DiagnosisCard,
 } from '../data/studentDetail'
+import { getStarTrack, STAR_TRACK_LABEL, STAR_TRACK_META } from '../../src_v2/data/starTrack'
 import DiagnosisResultReport from '../../src_v2/components/DiagnosisResultReport'
 import RoadmapAxisBoard from '../../src_v2/components/RoadmapAxisBoard'
+// 포트폴리오 탭은 학생 이력서 화면을 그대로 쓴다 — 값도 같은 단일소스에서 읽는다.
+import ResumeSheet from '../../src_v2/components/ResumeSheet'
+import {
+  buildProfile,
+  INITIAL_SKILLS, INITIAL_CERTS, INITIAL_LANGS, INITIAL_AWARDS, INITIAL_PROJECTS, INITIAL_RESUMES,
+} from '../../src_v2/data/portfolio'
+import StarRoadmapCard from '../../src_v2/components/StarRoadmapCard'
 import StudentStatCards from '../../src_v2/components/StudentStatCards'
 import EmptyState from './EmptyState'
 import './StudentDetailView.css'
@@ -47,7 +55,7 @@ const PHASE_ICONS: Record<string, IconType> = {
   'fa-rotate': LuRotateCw,
 }
 
-type TabKey = 'diagnosis' | 'counsel' | 'roadmap' | 'program' | 'gap' | 'growth' | 'portfolio'
+type TabKey = 'diagnosis' | 'counsel' | 'roadmap' | 'program' | 'gap' | 'growth' | 'portfolio' | 'star'
 
 interface TabDef {
   key: TabKey
@@ -64,7 +72,9 @@ const TABS: TabDef[] = [
   { key: 'program', label: '비교과 프로그램', icon: LuBoxes, psychAllowed: false },
   { key: 'gap', label: '역량 GAP', icon: LuChartColumn, psychAllowed: false },
   { key: 'growth', label: '성장·퀘스트', icon: LuSprout, psychAllowed: true },
-  { key: 'portfolio', label: '포트폴리오·목표', icon: LuFolderOpen, psychAllowed: false },
+  { key: 'portfolio', label: '포트폴리오', icon: LuFolderOpen, psychAllowed: false },
+  // 선발 트랙이라 미참여가 정상이다 — 탭은 늘 두고 안쪽에서 참여 여부를 밝힌다.
+  { key: 'star', label: 'STAR 트랙', icon: LuStar, psychAllowed: false },
 ]
 
 /** 시안 --result-color/--plan-color 등 인라인 커스텀 프로퍼티용 헬퍼 */
@@ -610,56 +620,62 @@ function GrowthTab({ student }: { student: StudentData }) {
   )
 }
 
-// ── 탭 ⑦: 포트폴리오·목표 ──────────────────────────────────────────────────
+// ── 탭 ⑦: 포트폴리오 ──────────────────────────────────────────────────────
+//
+// 학생의 「마이페이지 > 포트폴리오 > 이력서」(/v2/mypage/portfolio) 화면을 그대로 쓴다.
+// 상담사가 보는 이력서가 학생이 보는 것과 다르면 상담이 성립하지 않으므로
+// 뷰를 다시 만들지 않는다(CLAUDE.md 12조).
+//
+// 읽기 전용이다 — 편집·PDF 콜백을 넘기지 않으면 그 장치가 그려지지 않는다.
+// 「탭에서 편집」 링크도 v2 라우트라 넘기지 않는다(admin 에서는 죽은 링크가 된다).
 
 function PortfolioTab({ student }: { student: StudentData }) {
-  const tc = student.targetCompany
   return (
-    <div className="dashboard-grid">
-      <section data-slot="card" className="col-7">
-        <CardHead
-          title="목표 기업"
-          desc={`${tc.industry} · ${tc.role}`}
-          action={<span className="badge violet">매칭 {tc.matchScore}%</span>}
-        />
-        <div data-slot="card-content">
-          <article className="goal-core" style={{ marginBottom: 16 }}>
-            <small>목표 기업</small>
-            <h3>{tc.name}</h3>
-            <p>{tc.industry} 산업의 {tc.role} 직무 기준으로 요구 조건 {tc.requirements.length}개를 대조합니다.</p>
-            <div className="goal-number">{tc.matchScore}<span>% 매칭률</span></div>
-          </article>
-          <div className="axis-list">
-            {tc.requirements.map((r, i) => {
-              const pct = r.target > 0 ? Math.min(100, Math.round((r.current / r.target) * 100)) : 0
-              return (
-                <div key={i} className="axis-row fig">
-                  {r.label}
-                  <span className="axis-track"><i style={{ width: `${pct}%` }} /></span>
-                  <span className="gap-value" style={pct >= 100 ? { color: 'var(--mint)' } : undefined}>
-                    {r.current}{r.unit} / {r.target}{r.unit}
-                  </span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
+    <ResumeSheet
+      profile={buildProfile(student)}
+      skills={INITIAL_SKILLS}
+      certs={INITIAL_CERTS}
+      langs={INITIAL_LANGS}
+      awards={INITIAL_AWARDS}
+      projects={INITIAL_PROJECTS}
+      resumes={INITIAL_RESUMES}
+    />
+  )
+}
 
-      <section data-slot="card" className="col-5">
-        <CardHead title={`직무 역량 (${student.jobField})`} desc="목표 직무 기준 보유 역량 수준입니다." />
-        <div data-slot="card-content">
-          <div className="axis-list">
-            {student.jobSkills.map(sk => (
-              <div key={sk.label} className="axis-row">
-                {sk.label}
-                <span className="axis-track"><i style={{ width: `${(sk.score / sk.max) * 100}%` }} /></span>
-                <span className="gap-value">{sk.score}</span>
-              </div>
-            ))}
-          </div>
-        </div>
+// ── 탭 ⑧: STAR 트랙 ────────────────────────────────────────────────────────
+//
+// 학생 대시보드(/v2/star)의 「성장 로드맵」 카드를 그대로 쓴다 — 같은 학생의 마일리지가
+// 두 화면에서 다르게 보이면 안 되므로 카드를 다시 만들지 않는다(CLAUDE.md 12조).
+// 축 아래 「더 보기」 링크는 v2 라우트라 넘기지 않는다(admin 에서는 죽은 링크가 된다).
+
+function StarTab({ student }: { student: StudentData }) {
+  const record = getStarTrack(student.id)
+
+  // 선발되지 않은 학생이 정상이다(2·3학년 40명 선발) — 빈 카드를 그리지 않는다.
+  if (!record) {
+    return (
+      <section className="admin-card">
+        <EmptyState
+          icon={LuStar}
+          message={`${student.name} 학생은 STAR 트랙 참여자가 아닙니다. 학부 2·3학년 40명을 서류심사로 선발합니다.`}
+        />
       </section>
+    )
+  }
+
+  const meta = STAR_TRACK_META[record.track]
+  return (
+    <div className="sdv-star">
+      <p className="sdv-star-meta">
+        <span className="badge amber">{record.cohort}기 {STAR_TRACK_LABEL[record.track]}</span>
+        {meta.grade}학년 {meta.kind} · {record.selectedAt} 선발
+      </p>
+      <StarRoadmapCard
+        record={record}
+        title={`${STAR_TRACK_LABEL[record.track]} 성장 로드맵`}
+        note={meta.goal}
+      />
     </div>
   )
 }
@@ -844,6 +860,7 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
       {activeTab === 'gap' && <GapTab student={student} radar={radar} />}
       {activeTab === 'growth' && <GrowthTab student={student} />}
       {activeTab === 'portfolio' && <PortfolioTab student={student} />}
+      {activeTab === 'star' && <StarTab student={student} />}
     </div>
   )
 }
