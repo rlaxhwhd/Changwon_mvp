@@ -56,6 +56,8 @@ export default function CareerCounsel() {
   const [notice, setNotice] = useState('')
   const [reserveOpen, setReserveOpen] = useState(false)
   const [consentOpen, setConsentOpen] = useState(false)
+  // 이번에 연 예약 모달에서 실제로 신청까지 갔는지 — 취소로 닫은 경우와 구분한다.
+  const [submitted, setSubmitted] = useState(false)
 
   const showNotice = (message: string) => {
     setNotice(message)
@@ -73,6 +75,19 @@ export default function CareerCounsel() {
   const handleConsentAgree = () => {
     setConsentOpen(false)
     setReserveOpen(true)
+  }
+
+  // 예약 모달을 닫는다. 신청까지 끝낸 경우에만 고른 값을 비우고 맨 위로 되돌린다.
+  // 새로고침을 하지 않는 이유 — 위의 「이번 주 상담내역」이 렌더할 때마다 신청 스토어를
+  // 다시 읽으므로, 이 리렌더만으로 방금 낸 신청이 거기 나타난다. 그래서 맨 위가 목적지다.
+  // 취소로 닫았을 때는 고르던 슬롯을 그대로 둔다(다시 고르게 하면 안 된다).
+  const closeReserve = () => {
+    setReserveOpen(false)
+    if (!submitted) return
+    setSubmitted(false)
+    setSelectedSlot(null)
+    setSelectedCounselor('')
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
   const activeCounselor = counselors.find(counselor => counselor.id === selectedCounselor) ?? counselors[0]
@@ -298,7 +313,7 @@ export default function CareerCounsel() {
 
       <CounselReserveModal
         open={reserveOpen}
-        onClose={() => setReserveOpen(false)}
+        onClose={closeReserve}
         roleLabel="상담사"
         counselorName={`${activeCounselor.name} ${activeCounselor.title}`}
         date={selectedSlot?.day.date ?? ''}
@@ -320,7 +335,10 @@ export default function CareerCounsel() {
             place: '학생회관 2층 진로취업상담실',
             intake: CAREER_INTAKE_QUESTIONS.map((question, i) => ({ question, answer: answers[i] ?? '' })),
           })
+          setSubmitted(true)
           // 완료 화면을 모달이 직접 띄운다 — 여기서 닫으면 안내가 안 보인다.
+          // 선택 초기화는 완료 화면을 닫을 때(closeReserve) 한다 — 지금 비우면
+          // 모달에 뜬 상담사·일시가 눈앞에서 지워진다.
         }}
       />
     </div>

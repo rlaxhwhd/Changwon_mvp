@@ -64,16 +64,19 @@
 .gh-next           { --gh-ink: var(--mint-ink);  --gh-soft: var(--mint-soft);  --gh-line: var(--mint-border); }
 .gh-project-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .gh-project { overflow: hidden; border: 1px solid var(--gh-border); border-radius: 12px; background: #fff; }
-.gh-project-visual { min-height: 126px; padding: 17px; display: flex; justify-content: space-between; align-items: flex-start; color: #fff; }
-.gh-project-visual.tone-1 { background: linear-gradient(135deg, #6b4cf0, #9c88ef); }
+/* 띠는 번호(위) + 제목(아래) 두 줄이다 — 제목이 띠 안으로 올라오면서 가로 배치가 아니게 됐다. */
+.gh-project-visual { min-height: 126px; padding: 17px; display: flex; flex-direction: column; justify-content: space-between; gap: 10px; color: #fff; }
+/* 흰 제목이 얹히는 면이라 밝은 쪽 끝(#3f6fe0)에서도 대비 4.6:1 이 나오게 낮춰 잡았다.
+   --blue(#356dff)를 그대로 쓰면 4.4:1 로 14px 굵은 글자 기준(4.5:1)에 못 미친다. */
+.gh-project-visual.tone-1 { background: linear-gradient(135deg, #1b3fa8, #3f6fe0); }
 .gh-project-visual.tone-2 { background: linear-gradient(135deg, #168d74, #57c7a8); }
 .gh-project-visual span { font-size: 12px; letter-spacing: .13em; font-weight: 900; opacity: .8; }
-.gh-project-visual i { align-self: center; margin-right: 20px; font-size: 44px; opacity: .72; }
+.gh-project-visual h3 { margin: 0; color: #fff; font-size: 15px; font-weight: 800; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .gh-project-body { position: relative; padding: 17px 17px 52px; }
 .gh-project-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .gh-project-meta span { color: var(--gh-sub); font-size: 12px; } .gh-project-meta b { color: var(--gh-ink); font-size: 12px; }
-.gh-project h3 { margin: 12px 0 5px; font-size: 14px; line-height: 1.4; }
-.gh-project-body > strong { color: var(--gh-sub); font-size: 12px; }
+/* 제목이 띠로 올라가 본문 첫 줄이 역할(strong)이다 — 제목이 주던 윗여백을 여기로 옮긴다. */
+.gh-project-body > strong { display: block; margin-top: 12px; color: var(--gh-sub); font-size: 12px; }
 .gh-project-body > p { min-height: 58px; margin: 10px 0 13px; color: var(--gh-sub); font-size: 12px; line-height: 1.6; }
 .gh-tag-list { display: flex; flex-wrap: wrap; gap: 6px; }
 .gh-tag-list span { padding: 4px 7px; background: var(--gh-muted); color: var(--gh-sub); font-size: 12px; }

@@ -26,7 +26,7 @@
         "studentId": "stu-003",
         "studentNo": "20250003",
         "name": "박주원",
-        "major": "음악학과",
+        "major": "음악과",
         "grade": 2,
         "attended": true,
         "addedAt": "2026-07-01T02:05:00.000Z"
@@ -35,7 +35,7 @@
         "studentId": "stu-007",
         "studentNo": "20230007",
         "name": "조민준",
-        "major": "건축학과",
+        "major": "건축학부 건축학전공",
         "grade": 4,
         "attended": false,
         "addedAt": "2026-07-02T01:10:00.000Z"
@@ -64,7 +64,7 @@
         "studentId": "stu-011",
         "studentNo": "20230011",
         "name": "한다은",
-        "major": "화학공학과",
+        "major": "에너지화학과",
         "grade": 4,
         "addedAt": "2026-07-20T05:00:00.000Z"
       }
@@ -91,7 +91,7 @@
         "studentId": "stu-002",
         "studentNo": "20230002",
         "name": "이아윤",
-        "major": "토목공학과",
+        "major": "스마트그린공학부 건설시스템공학전공",
         "grade": 4,
         "attended": true,
         "addedAt": "2026-07-06T00:30:00.000Z"

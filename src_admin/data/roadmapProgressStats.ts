@@ -15,6 +15,7 @@ import { STUDENT_TYPE_MAP, typeLabel } from '../../src_v2/data/careerProcess'
 import type { StudentType } from '../../src_v2/data/careerProcess'
 import { getFullRoster, typeSwatchClass } from './studentRoster'
 import type { RosterStudent } from './studentRoster'
+import { collegeOf } from './departments'
 
 /**
  * 이행률 구간 — 색이 곧 의미다(정체 red → 완주 green).
@@ -61,6 +62,11 @@ export interface GroupStat {
   avg: number
 }
 
+/** 단과대학 한 칸 — 펼쳤을 때 보여 줄 소속 학과 집계를 함께 들고 있다. */
+export interface CollegeStat extends GroupStat {
+  depts: GroupStat[]
+}
+
 export interface LaggardRow {
   id: string
   name: string
@@ -83,7 +89,7 @@ export interface RoadmapProgressStats {
   bands: BandStat[]
   byType: GroupStat[]
   byGrade: GroupStat[]
-  byDept: GroupStat[]
+  byCollege: CollegeStat[]
   /** 이행률이 낮은 순 — 조치가 필요한 학생 */
   laggards: LaggardRow[]
 }
@@ -148,21 +154,42 @@ function byGradeOf(rows: RosterStudent[]): GroupStat[] {
   })
 }
 
-/** 학과별 평균 — 평균이 낮은 순. 인원 3명 미만 학과는 평균이 튀어 제외한다. */
-function byDeptOf(rows: RosterStudent[]): GroupStat[] {
+/**
+ * 한 단과대학 안의 학과별 평균 — 평균이 낮은 순.
+ * 단대를 펼쳤을 때만 쓰므로 인원 컷을 두지 않는다. 이미 한 단대로 좁힌 뒤라
+ * 3명 미만을 잘라내면 펼쳤는데 빈 카드가 나오는 일이 생긴다. 대신 인원을 함께 보여 준다.
+ */
+function deptsOf(rows: RosterStudent[]): GroupStat[] {
   const majors = [...new Set(rows.map(s => s.major))]
   return majors
-    .map(major => {
-      const group = rows.filter(s => s.major === major)
-      return { major, group }
-    })
-    .filter(({ group }) => group.length >= 3)
+    .map(major => ({ major, group: rows.filter(s => s.major === major) }))
     .map(({ major, group }, index) => ({
       key: major,
       label: major,
       solid: `b-${CYCLE_HUES[index % CYCLE_HUES.length]}`,
       count: group.length,
       avg: average(group),
+    }))
+    .sort((a, b) => a.avg - b.avg)
+}
+
+/**
+ * 단과대학별 평균 — 평균이 낮은 순.
+ * 소속 판정은 학과 트리 단일소스(departments.collegeOf)가 한다. 여기서 학과명을 묶지 않는다.
+ * 학과 단위보다 모수가 커서 3명 미만 컷은 두지 않는다 — 단대가 통째로 사라지면 안 된다.
+ * 소속 학과 집계(depts)를 미리 붙여 둔다 — 화면이 펼칠 때 학생 배열을 다시 세지 않게 한다.
+ */
+function byCollegeOf(rows: RosterStudent[]): CollegeStat[] {
+  const colleges = [...new Set(rows.map(s => collegeOf(s.major)))]
+  return colleges
+    .map(college => ({ college, group: rows.filter(s => collegeOf(s.major) === college) }))
+    .map(({ college, group }, index) => ({
+      key: college,
+      label: college,
+      solid: `b-${CYCLE_HUES[index % CYCLE_HUES.length]}`,
+      count: group.length,
+      avg: average(group),
+      depts: deptsOf(group),
     }))
     .sort((a, b) => a.avg - b.avg)
 }
@@ -194,7 +221,7 @@ export function getRoadmapProgressStats(departments: string[] = []): RoadmapProg
     bands: bandsOf(rows),
     byType: byTypeOf(rows),
     byGrade: byGradeOf(rows),
-    byDept: byDeptOf(rows),
+    byCollege: byCollegeOf(rows),
     laggards: laggardsOf(rows),
   }
 }

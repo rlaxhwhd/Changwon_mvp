@@ -131,31 +131,39 @@ export function countJobs(scope?: JobScope): { total: number; 게시: number; �
   }
 }
 
-function persist(list: JobPosting[]): void {
+/**
+ * 오버레이 저장. 성공 여부를 반드시 돌려준다.
+ *
+ * localStorage 는 출처당 5MB 안팎이고, 넘으면 setItem 이 **목록 전체**를 거부한다.
+ * 본문에 큰 이미지를 넣은 공고 한 건이 이미 저장돼 있던 공고까지 못 쓰게 만든다는 뜻이다.
+ * 예전엔 이 실패를 삼켰다 — 등록 화면은 성공한 것처럼 목록으로 넘어가고, 그 목록에는
+ * 방금 등록한 공고가 없었다. 원인을 화면에 알리려면 여기서부터 감추지 않아야 한다.
+ */
+function persist(list: JobPosting[]): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+    return true
   } catch {
-    /* localStorage 접근 실패 시 무시 (데모 범위) */
+    return false
   }
 }
 
-/** 새 공고 등록 — id·postedAt 자동 부여 후 교내 목록 맨 앞에 추가. */
-export function addJob(input: Omit<JobPosting, 'id' | 'postedAt'>): JobPosting {
+/** 새 공고 등록 — id·postedAt 자동 부여 후 교내 목록 맨 앞에 추가. 저장에 실패하면 null. */
+export function addJob(input: Omit<JobPosting, 'id' | 'postedAt'>): JobPosting | null {
   const job: JobPosting = {
     ...input,
     source: 'manual',
     id: `job_${Date.now()}`,
     postedAt: new Date().toISOString(),
   }
-  persist([job, ...getInternalJobs()])
-  return job
+  return persist([job, ...getInternalJobs()]) ? job : null
 }
 
-/** 공고 수정 — 교내 공고만. 외부 공고는 원본이 API라 수정하지 않는다. */
-export function updateJob(id: string, patch: Partial<Omit<JobPosting, 'id'>>): void {
+/** 공고 수정 — 교내 공고만. 외부 공고는 원본이 API라 수정하지 않는다. 저장 성공 여부를 돌려준다. */
+export function updateJob(id: string, patch: Partial<Omit<JobPosting, 'id'>>): boolean {
   const internal = getInternalJobs()
-  if (!internal.some(j => j.id === id)) return
-  persist(internal.map(j => (j.id === id ? { ...j, ...patch, source: 'manual' } : j)))
+  if (!internal.some(j => j.id === id)) return false
+  return persist(internal.map(j => (j.id === id ? { ...j, ...patch, source: 'manual' } : j)))
 }
 
 /** 공고 삭제 — 교내 공고만. */

@@ -100,6 +100,12 @@
   background: var(--journey-done);
 }
 
+/* 진행 중 칸은 제 점(50%)까지만 초록으로 채운다 —
+   칸 단위로 선을 그리는 구조라 이게 없으면 완료 구간이 현재 점 반 칸 앞에서 끊긴다. */
+.mn-page .journey-step.current::before {
+  background: linear-gradient(to right, var(--journey-done) 50%, var(--border) 50%);
+}
+
 .mn-page .journey-step.done .journey-dot {
   background: var(--journey-done);
   color: #ffffff;

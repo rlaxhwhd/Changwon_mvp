@@ -7,6 +7,7 @@ import {
   blankJob, COMPANY_TYPES, EMPLOYMENT_TYPES, JOB_CATEGORIES, CAREER_TYPES, GENDERS, REGIONS,
 } from '../data/schema/job'
 import type { JobPosting, RecruitType, JobEmploymentType } from '../data/schema/job'
+import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
 import RichEditor from '../components/RichEditor'
 import './JobForm.css'
@@ -78,6 +79,9 @@ export default function JobForm() {
   const [regionScope, setRegionScope] = useState('대한민국 전지역')
   const [saved, setSaved] = useState(false)
   const [logoError, setLogoError] = useState('')
+  // 저장 결과 알림. 성공은 확인을 눌러야 목록으로 넘어가고, 실패는 화면에 남는다
+  // — 넘어가 버리면 방금 입력한 내용을 통째로 잃는다.
+  const [notice, setNotice] = useState<{ ok: boolean; title: string; text: string } | null>(null)
 
   if (notFound || readOnly) {
     return (
@@ -149,11 +153,28 @@ export default function JobForm() {
       logo: draft.recruitType === '추천채용' ? draft.logo : undefined,
       source: 'manual',
     }
-    if (isEdit && existing) updateJob(existing.id, payload)
-    else addJob(payload)
+    const ok = isEdit && existing ? updateJob(existing.id, payload) : addJob(payload) !== null
+    if (!ok) {
+      // 저장이 거부되는 사유는 사실상 하나다 — 본문에 넣은 이미지로 목록이 한도를 넘은 것.
+      setNotice({
+        ok: false,
+        title: '저장하지 못했습니다',
+        text: '모집요강에 넣은 이미지가 커서 브라우저 저장 한도를 넘었습니다.'
+          + ' 이미지를 지우거나 더 작은 파일로 바꾼 뒤 다시 등록해주세요.'
+          + ' (입력한 내용은 그대로 있습니다)',
+      })
+      return
+    }
     setSaved(true)
-    if (goList) window.setTimeout(() => navigate('/jobs'), 500)
-    else window.setTimeout(() => setSaved(false), 1200)
+    if (goList) {
+      setNotice({
+        ok: true,
+        title: isEdit ? '수정되었습니다' : '등록되었습니다',
+        text: isEdit
+          ? `'${payload.company} · ${payload.role}' 공고를 수정했습니다.`
+          : `'${payload.company} · ${payload.role}' 공고를 등록했습니다. 교내 채용공고 목록과 학생 화면에 함께 노출됩니다.`,
+      })
+    } else window.setTimeout(() => setSaved(false), 1200)
   }
 
   const handleDelete = () => {
@@ -363,6 +384,34 @@ export default function JobForm() {
           <button type="button" className="jf-btn jf-btn-outline" onClick={() => navigate('/jobs')}>목록</button>
         </div>
       </div>
+
+      {notice && (
+        <AdminModal
+          title={notice.title}
+          size="md"
+          onClose={() => {
+            setNotice(null)
+            // 성공했을 때만 목록으로. 실패는 제자리에 남아 다시 손볼 수 있어야 한다.
+            if (notice.ok) navigate('/jobs')
+            else setSaved(false)
+          }}
+        >
+          <p className="jf-notice">{notice.text}</p>
+          <div className="jf-actions">
+            <button
+              type="button"
+              className="jf-btn jf-btn-primary"
+              onClick={() => {
+                setNotice(null)
+                if (notice.ok) navigate('/jobs')
+                else setSaved(false)
+              }}
+            >
+              확인
+            </button>
+          </div>
+        </AdminModal>
+      )}
     </div>
   )
 }

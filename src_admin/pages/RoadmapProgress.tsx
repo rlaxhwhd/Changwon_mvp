@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   LuBuilding2, LuChartColumn, LuCircleAlert, LuGauge, LuGraduationCap,
-  LuRoute, LuTarget, LuTrendingUp, LuTriangleAlert, LuUsers,
+  LuRoute, LuTarget, LuTrendingUp, LuTriangleAlert, LuUsers, LuX,
 } from 'react-icons/lu'
 import { getActiveCounselor } from '../data/counselors'
 import { PROGRESS_RULE, getRoadmapProgressStats } from '../data/roadmapProgressStats'
@@ -26,6 +26,8 @@ type Scope = 'mine' | 'all'
 export default function RoadmapProgress() {
   const counselor = getActiveCounselor()
   const [scope, setScope] = useState<Scope>('mine')
+  // 펼친 단과대학. 범위를 바꾸면 그 단대가 없을 수도 있어 아래에서 유효성을 다시 본다.
+  const [openCollege, setOpenCollege] = useState<string | null>(null)
 
   const mine = useMemo(() => getRoadmapProgressStats(counselor.departments), [counselor.departments])
   const all = useMemo(() => getRoadmapProgressStats([]), [])
@@ -35,13 +37,17 @@ export default function RoadmapProgress() {
   const delta = mine.avg - all.avg
   const sameScope = mine.count === all.count
 
+  // 펼친 단대를 현재 범위에서 찾는다. 못 찾으면(범위 전환으로 사라진 단대) 닫힌 것으로 본다 —
+  // 별도 useEffect 로 상태를 되돌리지 않는다(렌더 한 번을 더 쓰지 않으려고).
+  const openStat = stats.byCollege.find(college => college.key === openCollege) ?? null
+
   return (
     <div className="admin-page rmp-page">
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">로드맵 이행률 현황</h1>
           <p className="admin-page-desc">
-            담당 학생과 전체 학생의 로드맵 이행률을 구간·유형·학년·학과별로 비교합니다.
+            담당 학생과 전체 학생의 로드맵 이행률을 구간·유형·학년·단과대학별로 비교합니다.
           </p>
           {sameScope && (
             <p className="admin-field-hint">
@@ -140,28 +146,46 @@ export default function RoadmapProgress() {
         />
       </div>
 
-      {/* ── 학과별 (하위) ── */}
+      {/* ── 단과대학별 (하위) — 카드를 누르면 아래에 소속 학과 카드가 열린다 ── */}
       <section className="admin-card">
         <div className="admin-card-head">
-          <h2><LuBuilding2 /> 학과별 평균 이행률</h2>
-          <span className="rmp-head-note">낮은 순 · 3명 이상 학과만</span>
+          <h2><LuBuilding2 /> 단과대학별 평균 이행률</h2>
+          <span className="rmp-head-note">낮은 순 · 누르면 학과별로 펼칩니다</span>
         </div>
         <div className="rmp-dept-grid">
-          {stats.byDept.map(dept => (
-            <div key={dept.key} className="rmp-dept">
+          {stats.byCollege.map(college => (
+            <button
+              key={college.key}
+              type="button"
+              className={`rmp-dept is-clickable${openCollege === college.key ? ' is-open' : ''}`}
+              aria-expanded={openCollege === college.key}
+              onClick={() => setOpenCollege(current => (current === college.key ? null : college.key))}
+            >
               <div className="rmp-dept-top">
-                <strong>{dept.label}</strong>
-                <span>{dept.avg}%</span>
+                <strong>{college.label}</strong>
+                <span>{college.avg}%</span>
               </div>
               <div className="rmp-track">
-                <i className={dept.solid} style={{ width: `${dept.avg}%` }} />
+                <i className={college.solid} style={{ width: `${college.avg}%` }} />
               </div>
-              <small>{dept.count}명</small>
-            </div>
+              <small>{college.count}명 · 학과 {college.depts.length}개</small>
+            </button>
           ))}
-          {stats.byDept.length === 0 && <p className="rmp-empty">집계할 학과가 없습니다.</p>}
+          {stats.byCollege.length === 0 && <p className="rmp-empty">집계할 단과대학이 없습니다.</p>}
         </div>
       </section>
+
+      {/* ── 펼친 단과대학의 학과별 (유형·학년 카드와 같은 막대 형식을 쓴다) ── */}
+      {openStat && (
+        <BarCard
+          title={`${openStat.label} 학과별 평균 이행률`}
+          icon={<LuGraduationCap />}
+          rows={openStat.depts}
+          emptyText="이 단과대학에 집계할 학과가 없습니다."
+          note={`${openStat.count}명 · 단과대 평균 ${openStat.avg}%`}
+          onClose={() => setOpenCollege(null)}
+        />
+      )}
 
       {/* ── 조치가 필요한 학생 ── */}
       <section className="admin-card">
@@ -227,12 +251,28 @@ function SumCard({ hue, icon, label, value, note }: {
   )
 }
 
-function BarCard({ title, icon, rows, emptyText }: {
+function BarCard({ title, icon, rows, emptyText, note, onClose }: {
   title: string; icon: React.ReactNode; rows: GroupStat[]; emptyText: string
+  /** 제목 오른쪽 보조 문구 — 펼친 단대 카드가 모수를 적는 데 쓴다. */
+  note?: string
+  /** 넘기면 닫기 버튼이 붙는다(펼쳐서 연 카드 전용). */
+  onClose?: () => void
 }) {
   return (
     <section className="admin-card">
-      <div className="admin-card-head"><h2>{icon} {title}</h2></div>
+      <div className="admin-card-head">
+        <h2>{icon} {title}</h2>
+        {(note || onClose) && (
+          <span className="rmp-card-actions">
+            {note && <span className="rmp-head-note">{note}</span>}
+            {onClose && (
+              <button type="button" className="admin-btn admin-btn-ghost sm" onClick={onClose}>
+                <LuX aria-hidden="true" /> 닫기
+              </button>
+            )}
+          </span>
+        )}
+      </div>
       <div className="rmp-bar-list">
         {rows.filter(row => row.count > 0).map(row => (
           <div key={row.key} className="rmp-bar">

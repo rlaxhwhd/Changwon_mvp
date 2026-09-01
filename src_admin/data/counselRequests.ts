@@ -178,6 +178,40 @@ export function getRequestById(id: string): CounselRequest | undefined {
   return getCounselRequests().find(r => r.id === id)
 }
 
+/** 일정 뷰의 한 줄 — 정시 한 칸과 그 시각에 시작하는 상담. items 가 비면 예약 없는 시간이다. */
+export interface DayScheduleRow {
+  time: string
+  items: CounselRequest[]
+}
+
+/**
+ * 하루치 시간표를 만든다. 축은 상담사 가능 시간(openHours)이 깔고, 그 밖의 시각에 잡힌
+ * 예약도 제 행을 얻는다 — 일정 변경으로 가능 시간 밖에 잡힐 수 있어 빠뜨리면 안 된다.
+ * 슬롯 없는 신청은 시간축에 놓을 근거가 없으므로 제외한다.
+ * 화면은 이 배열만 그린다(CLAUDE.md 규칙 10).
+ */
+export function buildDaySchedule(
+  requests: CounselRequest[],
+  openHours: string[],
+): DayScheduleRow[] {
+  const rows = new Map<string, CounselRequest[]>()
+  for (const hour of openHours) rows.set(hour, [])
+
+  for (const request of requests) {
+    if (!request.slot) continue
+    const hour = `${request.slot.start.slice(0, 2)}:00`
+    if (!rows.has(hour)) rows.set(hour, [])
+    rows.get(hour)!.push(request)
+  }
+
+  return [...rows.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([time, items]) => ({
+      time,
+      items: [...items].sort((a, b) => a.slot!.start.localeCompare(b.slot!.start)),
+    }))
+}
+
 // ── 학생 상세 프로필 (상세 보기 모달 단일 구독 소스) ──────────────────────────
 // 코어 프로필은 owner 스토어(seed+override seam)에서, 유형 메타는 careerProcess 단일소스에서 파생.
 // 상세학생(STUDENTS)이면 로드맵 phases 렌더용으로 detailed(StudentData)를 병합한다.

@@ -35,6 +35,23 @@ export function getAvailability(counselorId: string): AvailabilitySlot[] {
   return [...slots].sort((a, b) => a.weekday - b.weekday || a.start.localeCompare(b.start))
 }
 
+/**
+ * 특정 요일의 가능 시간대를 1시간 단위 시작 시각으로 펼친다.
+ * 14:00–17:00 → ['14:00','15:00','16:00']. 일정 화면의 시간 축이 된다.
+ * 가능 시간이 없는 요일은 빈 배열 — 그날은 예약된 시각만 축이 된다.
+ */
+export function getOpenHours(counselorId: string, weekday: WeekdayKey): string[] {
+  const hours = new Set<string>()
+  for (const slot of getAvailability(counselorId)) {
+    if (slot.weekday !== weekday) continue
+    const from = Number(slot.start.slice(0, 2))
+    const to = Number(slot.end.slice(0, 2))
+    if (Number.isNaN(from) || Number.isNaN(to)) continue
+    for (let hour = from; hour < to; hour += 1) hours.add(`${String(hour).padStart(2, '0')}:00`)
+  }
+  return [...hours].sort()
+}
+
 function persistAll(list: AvailabilityConfig[]): void {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(list))

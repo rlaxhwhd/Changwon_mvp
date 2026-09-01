@@ -2,7 +2,9 @@
    로드맵 이행률 현황 — 통계 대시보드
 
    [규칙]
-   - 색은 index.css 의미색 7종을 .b-*/.s-* 유틸로만 쓴다. 새 색을 만들지 않는다.
+   - 색은 index.css 의미색 7종을 .b-* / .s-* 유틸로만 쓴다. 새 색을 만들지 않는다.
+     (슬래시 앞은 반드시 띄운다. 별표에 슬래시를 붙이면 주석이 거기서 닫히고,
+      남은 한글이 CSS 로 파싱돼 빌드가 깨진다.)
    - 막대 폭·비율은 CSS가 아니라 데이터다 → 인라인 width 하나만 바뀐다.
    - 이행률 색은 red→orange→yellow→teal→green 단계색이다. 단색 농담을 쓰지 않는다
      (구간은 '정도'가 아니라 '단계'라서 농담으로 나누면 경계가 안 읽힌다).
@@ -87,6 +89,24 @@
 .rmp-dept-top strong { font-size: 12.5px; font-weight: 800; color: var(--color-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rmp-dept-top span { font-size: 14px; font-weight: 800; color: var(--color-text); }
 .rmp-dept small { font-size: 11px; font-weight: 700; color: var(--color-caption); }
+
+/* 누르면 학과별로 펼쳐지는 단과대 카드. button 이라 기본 여백·정렬을 되돌린다. */
+.rmp-dept.is-clickable {
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color .15s ease, box-shadow .15s ease;
+}
+.rmp-dept.is-clickable:hover { border-color: var(--color-primary-light); }
+.rmp-dept.is-clickable.is-open {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary);
+}
+.rmp-card-actions { display: flex; align-items: center; gap: 10px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rmp-dept.is-clickable { transition: none; }
+}
 
 /* ── 이행률 하위 학생 표 ── */
 .rmp-lag-table { display: flex; flex-direction: column; }

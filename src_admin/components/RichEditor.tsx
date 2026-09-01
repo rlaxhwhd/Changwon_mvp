@@ -12,6 +12,45 @@ const fileToBase64 = (file: File): Promise<string> =>
     reader.readAsDataURL(file)
   })
 
+/** 본문 이미지 저장 규격 — 상세 화면이 900px 안쪽에서 그린다. 2배수까지만 남기고 줄인다. */
+const IMAGE_MAX_PX = 1600
+/**
+ * 줄인 뒤에도 이만큼 크면 거부한다.
+ * 파일을 올려둘 서버가 없어 이미지가 본문 HTML 안에 data URL 로 통째로 들어간다.
+ * 그 본문은 localStorage(출처당 5MB 안팎)에 저장되므로, 원본을 그대로 담으면
+ * 사진 한 장이 공고·프로그램 목록 전체의 저장을 거부하게 만든다.
+ * 기업 로고(JobForm.LOGO_MAX_BYTES)와 같은 이유의 같은 규칙이다.
+ */
+const IMAGE_MAX_CHARS = 1_500_000
+
+/**
+ * 올린 이미지를 IMAGE_MAX_PX 안으로 줄인다.
+ * 투명한 자리는 흰색으로 메우고 JPEG 로 다시 쓴다 — 그냥 JPEG 로 바꾸면 검은 배경이 깔린다.
+ * 다시 쓴 쪽이 원본보다 크면(작은 아이콘·단순 PNG) 원본을 그대로 둔다 — 괜히 화질만 버린다.
+ */
+function shrinkImage(dataUrl: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.onerror = () => reject(new Error('이미지 파일만 넣을 수 있습니다.'))
+    img.onload = () => {
+      const scale = Math.min(1, IMAGE_MAX_PX / Math.max(img.width, img.height))
+      const w = Math.max(1, Math.round(img.width * scale))
+      const h = Math.max(1, Math.round(img.height * scale))
+      const canvas = document.createElement('canvas')
+      canvas.width = w
+      canvas.height = h
+      const ctx = canvas.getContext('2d')
+      if (!ctx) { resolve(dataUrl); return }
+      ctx.fillStyle = '#fff'
+      ctx.fillRect(0, 0, w, h)
+      ctx.drawImage(img, 0, 0, w, h)
+      const shrunk = canvas.toDataURL('image/jpeg', 0.82)
+      resolve(shrunk.length < dataUrl.length ? shrunk : dataUrl)
+    }
+    img.src = dataUrl
+  })
+}
+
 interface Props {
   value: string
   onChange: (html: string) => void
@@ -68,10 +107,17 @@ export default function RichEditor({ value, onChange, height = 320, placeholder 
         onImageUpload: async (files: FileList) => {
           for (const file of Array.from(files)) {
             try {
-              const dataUrl = await fileToBase64(file)
+              const dataUrl = await shrinkImage(await fileToBase64(file))
+              // 줄이고도 한도를 넘으면 넣지 않는다. 넣어 두면 저장할 때
+              // 「본문이 통째로 안 들어간다」로 뒤늦게 터진다 — 올린 자리에서 바로 알린다.
+              if (dataUrl.length > IMAGE_MAX_CHARS) {
+                window.alert(`'${file.name}' 은(는) 줄여도 너무 큽니다.\n이미지를 더 작게 만들어 다시 넣어주세요.`)
+                continue
+              }
               $note.summernote('insertImage', dataUrl, file.name)
             } catch (err) {
               console.error('image embed failed', err)
+              window.alert(`'${file.name}' 을(를) 넣지 못했습니다. 이미지 파일인지 확인해주세요.`)
             }
           }
         },

@@ -154,12 +154,6 @@
   margin: 0 0 14px;
   font-size: 15px; font-weight: 800; letter-spacing: -.02em; color: var(--jd-ink);
 }
-.jd-sec-head em {
-  display: grid; place-items: center;
-  width: 22px; height: 22px; border-radius: 6px;
-  background: var(--jd-flat); color: var(--jd-sub);
-  font-style: normal; font-size: 12px; font-weight: 900;
-}
 
 /* ── 골든 컴포넌트: 라벨/값 표 ──────────────────────────────────────────── */
 .jd-kv {
@@ -204,7 +198,18 @@
 .jd-content ul, .jd-content ol { margin: 0 0 12px; padding-left: 20px; }
 .jd-content li { margin-bottom: 5px; }
 .jd-content strong, .jd-content b { color: var(--jd-ink); font-weight: 800; }
-.jd-content img { max-width: 100%; height: auto; border-radius: var(--radius-md, 10px); }
+/* 본문 이미지 — 편집기에서 정해진 크기를 따르되, 글 폭은 넘지 않는다.
+   억지로 width:100% 로 늘리지 않는다: 원본보다 크게 늘리면 늘린 배수만큼 뭉개진다.
+   편집기(summernote)가 넣을 때 width = min(편집기 폭, 원본 폭) 을 인라인으로 박아 주므로
+   충분히 큰 사진은 그것만으로 본문을 꽉 채우고, 원본이 작은 이미지는 제 크기로 남는다.
+   height 만 강제로 auto 다 — 폭이 줄 때 인라인 height 가 남아 있으면 비율이 깨진다. */
+.jd-content img {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+  margin: 14px 0;
+  border-radius: var(--radius-md, 10px);
+}
 .jd-content table { width: 100%; border-collapse: collapse; }
 .jd-content th, .jd-content td { padding: 8px 10px; border: 1px solid var(--jd-line); }
 

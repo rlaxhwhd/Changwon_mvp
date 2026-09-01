@@ -192,11 +192,13 @@ export default function GrowthHome() {
           <div className="gh-project-list">
             {projects.map((project, index) => (
               <section className="gh-project" key={project.title}>
-                <div className={`gh-project-visual tone-${index + 1}`}><span>PROJECT 0{index + 1}</span><i className={`fa-solid ${index === 0 ? 'fa-message' : 'fa-utensils'}`} /></div>
+                {/* 띠에는 제목이 들어간다. 그림 아이콘은 프로젝트마다 index 로 골라 박아 둔
+                    것이라(등록한 세 번째 프로젝트부터는 고를 것도 없었다) 걷어냈다. */}
+                <div className={`gh-project-visual tone-${index + 1}`}><span>PROJECT 0{index + 1}</span><h3>{project.title}</h3></div>
                 <div className="gh-project-body">
                   <div className="gh-project-meta"><span>{project.period}</span><b>{project.result}</b></div>
                   <div className="gh-item-actions"><button type="button" onClick={() => openEdit('project', index)} aria-label={`${project.title} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('project', index, project.title)} aria-label={`${project.title} 삭제`}><i className="fa-regular fa-trash-can" /></button></div>
-                  <h3>{project.title}</h3><strong>{project.role}</strong><p>{project.description}</p>
+                  <strong>{project.role}</strong><p>{project.description}</p>
                   <div className="gh-tag-list">{project.stack.map(stack => <span key={stack}>{stack}</span>)}</div>
                 </div>
               </section>

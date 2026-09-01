@@ -27,7 +27,13 @@
   font-size: 14px;
 }
 .jf * { box-sizing: border-box; }
-.jf-inner { max-width: 1180px; margin: 0 auto; }
+/* 본문 축은 다른 서브페이지와 같아야 한다 — .admin-page 는 max-width 1440 안쪽에 좌우 24 를
+   두므로 실제 글 상자가 1392 다. 여기는 배경을 전폭으로 깔아야 해서 그 24 가 바깥(.jf)에
+   있으니, 안쪽 상자를 1392 로 잡아야 경로 표시·제목이 같은 세로선에서 시작한다.
+   고정값(1180)을 쓰면 화면이 넓을수록 이 화면만 좌우가 더 벌어졌다. */
+.jf-inner { max-width: calc(var(--page-max) - 48px); margin: 0 auto; }
+/* 경로 표시가 위를 이미 띄웠다 — 다른 서브페이지(.admin-crumb-bar + .admin-page)와 같은 값. */
+.admin-crumb-bar + .jf { padding-top: 14px; }
 
 /* ── 헤더 ── */
 .jf-page-title { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--jf-text); }
@@ -137,6 +143,8 @@
 
 /* ── 하단 액션 ── */
 .jf-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+/* 저장 결과 알림창 본문 — 실패 사유가 두 줄이라 읽히는 줄간격을 준다. */
+.jf-notice { margin: 0 0 20px; font-size: 14px; line-height: 1.65; color: var(--jf-label); }
 .jf-btn {
   height: 42px; padding: 0 24px; border-radius: var(--jf-r-input);
   font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;

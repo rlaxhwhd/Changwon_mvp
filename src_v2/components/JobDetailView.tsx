@@ -10,7 +10,7 @@ import './JobDetailView.css'
 // 공고를 그리는 곳은 여기 하나다 — 두 포털의 상세가 갈리지 않는다.
 //
 // 레이아웃은 시안 public_t/job.png 의 구조를 따른다:
-//   짙은 히어로 배너 → A/B/C 섹션(키-값 표) → 우측 요약 카드 + CTA → 하단 안내바.
+//   짙은 히어로 배너 → 본문 섹션(키-값 표) → 우측 요약 카드 + CTA → 하단 안내바.
 // 색은 시안이 파랑이지만 DESIGN.md 가 보라로 잠겨 있어 구조·밀도만 가져왔다.
 //
 // 값이 없는 항목은 줄을 만들지 않는다 — 빈 칸을 남기면 성겨 보이고 '-' 는 잡음이다.
@@ -69,7 +69,7 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
     ...(job.regions ?? []).filter(r => r !== '전체'),
   ]
 
-  // A. 기업 일반정보
+  // 기업 일반정보
   const companyRows = rows([
     { label: '채용유형', value: job.recruitType ?? '일반공고' },
     { label: '회사명', value: job.company },
@@ -79,7 +79,7 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
     { label: 'Email', value: job.email ?? '' },
   ])
 
-  // B. 모집 내용
+  // 모집 내용
   const postingRows = rows([
     { label: '모집제목', value: job.role },
     { label: '근무형태', value: join(job.employmentTypes) || job.jobType, chip: true },
@@ -157,10 +157,10 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
           </dl>
         </header>
 
-          <Section letter="A" title="기업 일반정보"><KvTable rows={companyRows} /></Section>
-          <Section letter="B" title="모집 내용"><KvTable rows={postingRows} /></Section>
+          <Section title="기업 일반정보"><KvTable rows={companyRows} /></Section>
+          <Section title="모집 내용"><KvTable rows={postingRows} /></Section>
 
-          <Section letter="C" title="모집요강">
+          <Section title="모집요강">
             {job.content
               ? <div className="jd-content" dangerouslySetInnerHTML={{ __html: job.content }} />
               : <p className="jd-empty">등록된 모집요강이 없습니다.</p>}
@@ -168,7 +168,7 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
 
           {/* 전형 단계는 상담사가 정의한 공고만 — 없는 절차를 기본값으로 지어내지 않는다. */}
           {stages.length > 0 && (
-            <Section letter="D" title="전형 절차">
+            <Section title="전형 절차">
               <ol className="jd-stages">
                 {stages.map((stage, index) => (
                   <li key={stage.id}>
@@ -230,16 +230,16 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
 
 // ─── Sub-components ───────────────────────────────────────────────────────
 
-function Section({ letter, title, children }: { letter: string; title: string; children: ReactNode }) {
+function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section className="jd-sec">
-      <h2 className="jd-sec-head"><em>{letter}</em><span>{title}</span></h2>
+      <h2 className="jd-sec-head"><span>{title}</span></h2>
       {children}
     </section>
   )
 }
 
-/** 골든 컴포넌트 — A·B 섹션과 요약 카드가 전부 이 표 하나를 쓴다. */
+/** 골든 컴포넌트 — 기업정보·모집내용 섹션과 요약 카드가 전부 이 표 하나를 쓴다. */
 function KvTable({ rows: list }: { rows: Row[] }) {
   return (
     <dl className="jd-kv">

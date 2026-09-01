@@ -34,7 +34,7 @@ export const JOB_CATEGORIES = [
 /** 경력 구분 */
 export const CAREER_TYPES = ['신입', '경력'] as const
 /** 성별 */
-export const GENDERS = ['남자', '여자'] as const
+export const GENDERS = ['남자', '여자', '무관'] as const
 /**
  * 카드에 컬러로 강조할 특이사항 태그.
  * 태그는 상담사가 자유 입력하므로, 이 목록에 있는 값만 강조 배지로 승격한다.
