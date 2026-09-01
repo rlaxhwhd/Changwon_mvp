@@ -72,12 +72,12 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'program-apply',
-    label: '비교과 프로그램 신청',
+    label: '비교과 프로그램',
     basePaths: ['/growth/program'],
     path: '/growth/program',
     icon: 'calendar',
     children: [
-      { label: '비교과 프로그램 신청', path: '/growth/program', icon: 'fa-clipboard-list' },
+      { label: '비교과 프로그램', path: '/growth/program', icon: 'fa-clipboard-list' },
     ],
   },
   {
@@ -96,7 +96,7 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'jobs',
-    label: '취업지원',
+    label: '기업정보 플랫폼',
     basePaths: ['/jobs'],
     path: '/jobs',
     icon: 'briefcase',
@@ -214,7 +214,7 @@ export function getCrumbTrail(pathname: string): CrumbItem[] {
     })
   walk(section.children, [])
 
-  // 섹션과 첫 child 의 이름이 같으면(예: 비교과 프로그램 신청) 같은 말을 두 번 쓰지 않는다.
+  // 섹션과 첫 child 의 이름이 같으면(예: 비교과 프로그램) 같은 말을 두 번 쓰지 않는다.
   for (const child of chain) {
     if (trail.some(item => item.label === child.label)) continue
     trail.push({ label: child.label, path: child.path.split('#')[0] })

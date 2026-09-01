@@ -64,7 +64,6 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '신청 접수함', path: '/counsel/requests', icon: LuInbox },
       { label: '일정·예약', path: '/counsel/schedule', icon: LuCalendarDays },
       { label: '상담일지', path: '/counsel/journals', icon: LuFileText },
-      { label: '완료 상담 내역', path: '/counsel/records', icon: LuClipboardCheck },
       { label: '집단상담', path: '/counsel/groups', icon: LuUsersRound },
       { label: '심리검사 결과', path: '/counsel/psych-tests', icon: LuBrain, roles: ['psych'] },
       { label: '상담 통계', path: '/counsel/stats', icon: LuChartNoAxesColumn },
@@ -95,6 +94,19 @@ const ALL_SECTIONS: NavSection[] = [
     ],
   },
   {
+    id: 'programs',
+    label: '비교과 운영',
+    basePaths: ['/programs'],
+    icon: LuGraduationCap,
+    roles: ['career'],
+    children: [
+      { label: '프로그램 목록', path: '/programs', icon: LuList },
+      { label: '프로그램 관리', path: '/programs/manage', icon: LuTable },
+      { label: '프로그램 등록', path: '/programs/new', icon: LuPlus },
+      { label: '블랙리스트', path: '/programs/blacklist', icon: LuUserX },
+    ],
+  },
+  {
     id: 'jobs',
     label: '채용공고',
     basePaths: ['/jobs'],
@@ -108,19 +120,6 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '공고 등록', path: '/jobs/new', icon: LuPlus },
       { label: '외부 공고 목록', path: '/jobs/external', icon: LuGlobe },
       { label: '추천채용 지원자관리', path: '/jobs/applicants', icon: LuUsers },
-    ],
-  },
-  {
-    id: 'programs',
-    label: '비교과 운영',
-    basePaths: ['/programs'],
-    icon: LuGraduationCap,
-    roles: ['career'],
-    children: [
-      { label: '프로그램 목록', path: '/programs', icon: LuList },
-      { label: '프로그램 관리', path: '/programs/manage', icon: LuTable },
-      { label: '프로그램 등록', path: '/programs/new', icon: LuPlus },
-      { label: '블랙리스트', path: '/programs/blacklist', icon: LuUserX },
     ],
   },
 

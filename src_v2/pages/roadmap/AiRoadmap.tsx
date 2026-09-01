@@ -141,10 +141,9 @@ export default function AiRoadmap() {
     setJobInputError('')
   }
 
-  // 재료 2 — 수강한 과목과 아직 남은 과목을 나눈다.
+  // 재료 2 — 수강했거나 수강 중인 과목만 재료로 쓴다.
   const allCourses = data ? [...data.core.rows, ...data.expert.rows] : []
   const takenCourses = allCourses.filter(row => row.done || row.inProgress).slice(0, 5)
-  const openCourses = allCourses.filter(row => !row.done && !row.inProgress).slice(0, 5)
   const ownedCerts = data?.certification.rows.filter(cert => cert.owned) ?? []
 
   return (
@@ -218,11 +217,6 @@ export default function AiRoadmap() {
                     {status === 'loading' ? '수강 이력을 불러오는 중입니다.' : '수강 이력이 아직 연동되지 않았습니다.'}
                   </p>
                 )}
-              </section>
-              <section className="air-courses">
-                <h4>학과 개설 강의</h4>
-                {openCourses.map(row => <CourseLine key={row.code} row={row} />)}
-                {openCourses.length === 0 && <p className="air-course-empty">추천할 남은 강의가 없습니다.</p>}
               </section>
             </div>
           </article>
