@@ -249,7 +249,7 @@ export default function AiLounge() {
                     {/* 코치 제안 → 실제 화면으로. 로드맵은 이 카드와 같은 3축(IAP·핵심역량·성장활동)을
                         보여 주는 '로드맵 진행 현황'으로 간다 — 진로취업 로드맵(/roadmap)이 아니다. */}
                     <div className="goal-coach-actions">
-                      <Link className="button" to="/growth/roadmap-status">로드맵 다시 보기</Link>
+                      <Link className="button" to="/growth/roadmap-status">로드맵 진행 현황</Link>
                     </div>
                   </aside>
                 </div>
@@ -276,7 +276,9 @@ export default function AiLounge() {
           {/* 성장 활동 기록 — 「내 성장」(/v2/growth)의 같은 카드다.
               값은 같은 단일소스를 읽으므로, 거기서 기록을 더하면 여기에도 그대로 나온다.
               다만 여기서는 읽기만 한다 — 등록·수정·삭제는 /v2/growth 한 곳에서만 한다. */}
-          <section data-slot="card" className="recommend-card reveal" id="recommend">
+          {/* gh-shell 이 필요하다 — --gh-* 색 토큰과 점 색 규칙이 전부 그 클래스 하위로
+              스코프돼 있어(GrowthHome.css), 없으면 점이 투명해지고 색이 하나도 안 산다. */}
+          <section data-slot="card" className="recommend-card gh-shell reveal" id="recommend">
             <article className="gh-card gh-archive">
               <header className="gh-card-head">
                 <div>

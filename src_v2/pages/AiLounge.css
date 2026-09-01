@@ -2090,3 +2090,35 @@
 
 /* 긴 설명문은 Regular 유지 — 전부 볼드가 되면 답답해진다 */
 /* Color tone variations */
+
+/* ── 성장 활동 기록 카드 ──────────────────────────────────────────────────
+   「내 성장」(/v2/growth)의 카드를 그대로 가져온 자리다.
+   그쪽 색 토큰(--gh-violet 등)과 점 색 규칙(.gh-shell .gh-timeline-dot.is-*)이
+   전부 .gh-shell 하위로 스코프돼 있어, 그 클래스를 함께 얹어야 색이 산다.
+   대신 셸이 갖고 있는 페이지 여백과 안쪽 카드 테두리는 여기서 중복이다 —
+   바깥 [data-slot="card"] 가 이미 카드다. 겹치면 카드 안에 카드가 된다. */
+.al-page .recommend-card.gh-shell { width: auto; padding: 0; }
+.al-page .recommend-card .gh-card {
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* ── 대시보드 격자 — 두 줄의 분할선을 맞춘다 ────────────────────────────────
+   「이번 주 할 일 · 성장 활동 기록」과 「5대 핵심역량 · 진단 결과」가 같은 세로선에서
+   갈려야 한다. 12열 1fr 격자로는 6/6(688px) 아니면 7/5(805px)뿐이라 720px 이 안 나오고,
+   두 줄이 실제로 808px 과 925px 에서 갈려 어긋나 보였다.
+
+   그래서 이 페이지의 격자만 두 칸으로 바꾼다. 720:656 은 gap(16) 을 뺀 나머지를
+   그대로 가르는 비율이라 1392px 에서 정확히 720 / 656 이 되고, 폭이 달라져도 비율이 남는다.
+   전면 카드는 span 숫자 대신 1/-1 로 못박는다 — 두 칸짜리 격자에서 span 12 를 두면
+   빈 열이 10개 생겨 격자가 도로 12열이 된다. */
+.al-page .dashboard-grid { grid-template-columns: minmax(0, 720fr) minmax(0, 656fr); }
+.al-page .journey-card,
+.al-page .goal-card,
+.al-page .counseling-card { grid-column: 1 / -1; }
+.al-page .todo-card,
+.al-page .recommend-card,
+.al-page .competency-card,
+.al-page .diagnosis-card { grid-column: span 1; }
