@@ -11,6 +11,8 @@ import { STUDENTS, getStudentTypeMeta } from '../../src_v2/data/students'
 import { typeLabel, type StudentType } from '../../src_v2/data/careerProcess'
 import type { PenaltyEntry } from './schema/penalty'
 import { getRoadmapProgress } from './roadmap'
+// STAR 트랙 선발 결과는 학생 SPA 의 시드가 단일 원천 — 여기서 명단을 다시 두지 않는다.
+import { getStarTrack } from '../../src_v2/data/starTrack'
 import { paginate, mockLatency } from './query'
 import type { ListParams, Paginated } from './query'
 
@@ -262,18 +264,30 @@ export function isCoreCare(s: RosterStudent): boolean {
   )
 }
 
-/** 집중관리 필터 값 — 홈 카드 링크(?focus=)와 목록 버튼이 같은 코드를 쓴다. */
-export type FocusFilter = 'high' | 'core'
+/**
+ * STAR 트랙 참여 학생 — 위 둘과 달리 **판정이 아니라 소속**이다.
+ * 선발 결과는 starTrack 시드가 쥐고 있으므로 여기서 기준을 다시 만들지 않는다.
+ */
+export function isStarTrack(s: RosterStudent): boolean {
+  return getStarTrack(s.id) !== undefined
+}
+
+/**
+ * 목록 필터 값 — 홈 카드 링크(?focus=)와 목록 버튼이 같은 코드를 쓴다.
+ * high·core 는 집중관리 판정이고 star 는 트랙 소속이다 — 성격이 달라 화면에서 갈라 보인다.
+ */
+export type FocusFilter = 'high' | 'core' | 'star'
 
 /** 필터 값 → 판정 함수. 화면은 코드만 넘기고 조건 자체를 알지 못한다. */
 const FOCUS_PREDICATE: Record<FocusFilter, (s: RosterStudent) => boolean> = {
   high: isHighRisk,
   core: isCoreCare,
+  star: isStarTrack,
 }
 
 /** 쿼리스트링·상태값이 유효한 필터인지 — 화면이 문자열을 그대로 넘겨도 안전하게. */
 export function isFocusFilter(value: string | null | undefined): value is FocusFilter {
-  return value === 'high' || value === 'core'
+  return value === 'high' || value === 'core' || value === 'star'
 }
 
 /** [DB-ready] 로스터 목록 조회 — async + 페이징. 6천건이 와도 화면은 현재 페이지만 받는다. */
@@ -321,5 +335,6 @@ export function getRosterSummary(departments: string[] = [], studentIds?: string
     // 집중관리 2분류 — 홈 카드와 같은 판정 함수를 쓴다(수치가 갈리지 않게).
     highRiskCount: base.filter(isHighRisk).length,
     coreCareCount: base.filter(isCoreCare).length,
+    starCount: base.filter(isStarTrack).length,
   }
 }

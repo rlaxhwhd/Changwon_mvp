@@ -101,115 +101,11 @@
 .st-bar-fill.hue-2 { background: var(--blue); }
 .st-bar-fill.hue-warn { background: var(--coral); }
 
-/* 상태 배지 — 완료·진행중·대기. 배경만 다르고 글자색은 대비를 지킨다. */
-.st-state {
-  flex: 0 0 auto; padding: 2px 8px; border-radius: var(--radius-pill);
-  font-size: var(--fs-label); font-weight: 800; white-space: nowrap;
-}
-.st-state.is-done    { background: var(--mint-soft);   color: var(--mint-ink); }
-.st-state.is-ongoing { background: var(--amber-soft);  color: var(--amber-ink); }
-.st-state.is-todo    { background: var(--muted);       color: var(--muted-foreground); }
 
 /* ── 성장 로드맵 ───────────────────────────────────────────────────────── */
-.st-roadmap {
-  padding: var(--space-5);
-  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-}
-.st-sec-head {
-  display: flex; align-items: center; gap: 8px;
-  margin-bottom: var(--space-4);
-  font-size: var(--fs-card); font-weight: 900; color: var(--foreground);
-}
-.st-sec-head i { color: var(--amber); }
-.st-sec-note { margin-left: auto; font-size: var(--fs-label); font-weight: 700; color: var(--muted-foreground); }
-
-.st-metrics {
-  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3);
-  padding: var(--space-4); margin-bottom: var(--space-4);
-  border-radius: var(--radius-md); background: var(--background);
-}
-.st-metric { display: flex; align-items: center; gap: 12px; }
-.st-metric small { display: block; font-size: var(--fs-label); font-weight: 700; color: var(--muted-foreground); }
-.st-metric strong { font-size: var(--fs-metric); font-weight: 900; color: var(--foreground); letter-spacing: -.02em; }
-.st-metric strong em { font-size: var(--fs-meta); font-style: normal; }
-.st-metric strong.is-text { font-size: var(--fs-body); }
-.st-metric-sub { display: block; margin-top: 1px; font-size: var(--fs-label); color: var(--muted-foreground); }
-.st-metric-badge {
-  flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%;
-  display: grid; place-items: center; font-size: var(--fs-card);
-}
-.st-metric-badge.is-mileage { background: var(--amber-soft); color: var(--amber); }
-.st-metric-badge.is-goal    { background: var(--blue-soft);  color: var(--blue); }
-/* 도넛 가운데를 흰 원으로 뚫는다 — 링 두께는 inset 하나로 정한다. */
-.st-donut { position: relative; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; }
-.st-donut::after {
-  content: ''; position: absolute; inset: 6px;
-  border-radius: 50%; background: var(--background);
-}
-
-.st-blocker {
-  display: flex; align-items: flex-start; gap: 10px;
-  padding: 12px var(--space-4); margin-bottom: var(--space-4);
-  border: 1px solid var(--coral); border-radius: var(--radius-md);
-  background: var(--coral-soft);
-  font-size: var(--fs-meta); line-height: 1.6; color: var(--foreground);
-}
-.st-blocker i { margin-top: 2px; color: var(--coral); }
-
-.st-axes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3); }
-.st-axis {
-  padding: var(--space-4);
-  border: 1px solid var(--border); border-radius: var(--radius-md);
-  background: var(--card);
-}
-/* 축마다 다른 휴 — 세 축이 다른 성격이라 머리글로 구분한다. */
-.st-axis-1 { border-top: 3px solid var(--mint); }
-.st-axis-2 { border-top: 3px solid var(--blue); }
-.st-axis-3 { border-top: 3px solid var(--amber); }
-/* 단계 목록 아래로 밀어 붙인다 — 축마다 단계 수가 달라 아래가 들쭉날쭉해진다. */
-.st-axis { display: flex; flex-direction: column; }
-.st-axis-more {
-  margin-top: auto; padding-top: var(--space-3);
-  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-  font-size: var(--fs-label); font-weight: 800; color: var(--muted-foreground);
-}
-.st-axis-more:hover { color: var(--primary); }
-.st-axis h3 {
-  display: flex; align-items: center; gap: 8px; margin-bottom: var(--space-3);
-  font-size: var(--fs-meta); font-weight: 900; color: var(--foreground);
-}
-.st-axis h3 em {
-  margin-left: auto; padding: 2px 8px; border-radius: var(--radius-pill);
-  background: var(--muted); font-size: var(--fs-label); font-style: normal; color: var(--muted-foreground);
-}
-.st-axis-1 h3 em { background: var(--mint-soft);  color: var(--mint-ink); }
-.st-axis-2 h3 em { background: var(--blue-soft);  color: var(--blue); }
-.st-axis-3 h3 em { background: var(--amber-soft); color: var(--amber); }
-
-.st-steps { display: flex; flex-direction: column; gap: 6px; }
-/* 라벨이 여러 줄이면 배점·상태 배지가 가운데 떠 보인다 — 첫 줄에 맞춰 위로 붙인다. */
-.st-steps li {
-  display: flex; align-items: flex-start; gap: 8px;
-  padding: 9px 10px; border-radius: var(--radius-sm);
-  background: var(--background);
-  font-size: var(--fs-label); color: var(--foreground);
-}
-.st-steps li.is-done { background: var(--mint-soft); }
-.st-steps li.is-ongoing { background: var(--amber-soft); }
-.st-step-no {
-  flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%;
-  display: grid; place-items: center;
-  background: var(--card); border: 1px solid var(--border);
-  font-size: var(--fs-label); font-weight: 800; color: var(--muted-foreground);
-}
-.st-steps li.is-done .st-step-no { background: var(--mint); border-color: var(--mint); color: #fff; }
-.st-step-label { flex: 1; min-width: 0; font-weight: 700; line-height: 1.4; }
-.st-step-req {
-  margin-left: 5px; padding: 1px 5px; border-radius: var(--radius-xs);
-  background: var(--coral-soft); color: var(--coral); font-size: var(--fs-label); font-weight: 800;
-}
-.st-step-note { display: block; margin-top: 2px; font-size: var(--fs-label); font-weight: 600; color: var(--muted-foreground); }
-.st-step-pt { flex: 0 0 auto; font-size: var(--fs-label); font-weight: 900; color: var(--amber); }
+/* 카드 속살(지표·블로커·축·단계·상태 배지)은 상담사 상세와 공유하므로
+   components/StarRoadmapCard.css 에 있다. 여기에는 이 화면의 자리 배치만 남긴다.
+   (.st-state 는 아래 자격증 패널도 쓰는데, 카드 컴포넌트를 import 하면 같이 실린다) */
 
 .st-tip {
   display: flex; align-items: center; gap: 10px;

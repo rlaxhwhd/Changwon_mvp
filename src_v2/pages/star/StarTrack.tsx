@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom'
 import { getActiveStudent } from '../../data/students'
 import {
-  getStarTrack, getStarSummary, getStarLinkedData, getAxisProgress,
-  STAR_TRACK_LABEL, STAR_TRACK_META, STAR_STATUS_LABEL, CPASS_STAGES, MILEAGE_PASS_MARK,
+  getStarTrack, getStarSummary, getStarLinkedData,
+  STAR_TRACK_LABEL, STAR_TRACK_META, CPASS_STAGES,
 } from '../../data/starTrack'
-import type { StarAxis, StarLanguage, StarStep } from '../../data/starTrack'
+import type { StarLanguage } from '../../data/starTrack'
 import StudentStatCards from '../../components/StudentStatCards'
 import type { StudentStat } from '../../components/StudentStatCards'
+// 로드맵 카드는 상담사 학생 상세와 공유한다 — 한 벌만 둔다(CLAUDE.md 12조).
+import StarRoadmapCard from '../../components/StarRoadmapCard'
 import './StarTrack.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -38,18 +40,6 @@ const TRAITS = ['선발형 트랙', '기업연계', 'C-PASS 마일리지', '우�
 const AXIS_MORE: Record<string, { label: string; to: string } | undefined> = {
   AX1: { label: '상담 내역 보기', to: '/counsel/record' },
   AX3: { label: '비교과 활동 보기', to: '/growth/program' },
-}
-
-/**
- * 「이수 기준까지」 — 마일리지와 필수 항목은 **둘 다** 채워야 인증이 난다.
- * 마일리지를 넘겨도 필수가 남으면 "0점"이 아니라 남은 필수를 말해야 한다.
- */
-function passGoal(summary: ReturnType<typeof getStarSummary>): { value: string; sub: string } {
-  if (summary.passed) return { value: '기준 충족', sub: '인증 신청 가능' }
-  if (summary.mileage < MILEAGE_PASS_MARK) {
-    return { value: `마일리지 ${MILEAGE_PASS_MARK - summary.mileage}점`, sub: `필수 항목 ${summary.blockers.length}건 포함` }
-  }
-  return { value: `필수 ${summary.blockers.length}건`, sub: `마일리지 ${MILEAGE_PASS_MARK}점은 충족` }
 }
 
 export default function StarTrack() {
@@ -127,54 +117,12 @@ export default function StarTrack() {
       </div>
 
       {/* 로드맵이 이 화면의 본문이다 — 요약 4장보다 먼저 온다. */}
-      <section className="st-roadmap" aria-label={`${trackName} 성장 로드맵`}>
-        <h2 className="st-sec-head">
-          <i className="fa-solid fa-crown" />{trackName} 성장 로드맵
-          <span className="st-sec-note">{meta.kind} · {meta.goal}</span>
-        </h2>
-
-        <div className="st-metrics">
-          <div className="st-metric">
-            <span className="st-metric-badge is-mileage"><i className="fa-solid fa-coins" /></span>
-            <div>
-              <small>누적 마일리지</small>
-              <strong>{summary.mileage}<em>점</em></strong>
-              <span className="st-metric-sub">최대 {summary.mileageMax}점</span>
-            </div>
-          </div>
-          <div className="st-metric">
-            <Donut rate={summary.rate} />
-            <div>
-              <small>이수율</small>
-              <strong>{summary.rate}<em>%</em></strong>
-              <span className="st-metric-sub">{summary.doneSteps}/{summary.totalSteps}단계 완료</span>
-            </div>
-          </div>
-          <div className="st-metric">
-            <span className="st-metric-badge is-goal"><i className="fa-solid fa-flag" /></span>
-            <div>
-              <small>이수 기준까지</small>
-              <strong className="is-text">{passGoal(summary).value}</strong>
-              <span className="st-metric-sub">{passGoal(summary).sub}</span>
-            </div>
-          </div>
-        </div>
-
-        {/* 마일리지를 채워도 필수 항목이 남으면 인증이 안 나온다 — 가장 먼저 알려야 할 값이다. */}
-        {summary.blockers.length > 0 && (
-          <p className="st-blocker">
-            <i className="fa-solid fa-triangle-exclamation" />
-            <span>
-              <b>필수 항목 {summary.blockers.length}건이 남아 마일리지와 무관하게 인증이 나오지 않습니다</b> —
-              {' '}{summary.blockers.map(b => b.label).join(' · ')}
-            </span>
-          </p>
-        )}
-
-        <div className="st-axes">
-          {record.axes.map((axis, i) => <AxisColumn key={axis.id} axis={axis} no={i + 1} />)}
-        </div>
-      </section>
+      <StarRoadmapCard
+        record={record}
+        title={`${trackName} 성장 로드맵`}
+        note={`${meta.kind} · ${meta.goal}`}
+        axisLinks={AXIS_MORE}
+      />
 
       <main className="st-main">
         {/* 요약 4장은 라운지(/v2/lounge)와 같은 카드다 — StudentStatCards 를 그대로 쓴다.
@@ -243,54 +191,6 @@ export default function StarTrack() {
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────
-
-function AxisColumn({ axis, no }: { axis: StarAxis; no: number }) {
-  const progress = getAxisProgress(axis)
-  const more = AXIS_MORE[axis.id]
-  return (
-    // no 는 라벨이 아니라 축 색(st-axis-1~3)을 고르는 값이다.
-    <section className={`st-axis st-axis-${no}`}>
-      <h3>
-        <span>{axis.title}</span>
-        <em>{progress.done}/{progress.total}</em>
-      </h3>
-      <ol className="st-steps">
-        {axis.steps.map((step, i) => <StepRow key={step.id} step={step} no={i + 1} />)}
-      </ol>
-      {more && (
-        <Link to={more.to} className="st-axis-more">
-          <i className="fa-solid fa-plus" />{more.label}
-        </Link>
-      )}
-    </section>
-  )
-}
-
-function StepRow({ step, no }: { step: StarStep; no: number }) {
-  return (
-    <li className={`is-${step.status}`}>
-      <span className="st-step-no">{no}</span>
-      <span className="st-step-label">
-        {step.label}
-        {step.required && <b className="st-step-req">필수</b>}
-        {step.note && <small className="st-step-note">{step.note}</small>}
-      </span>
-      {step.points != null && <span className="st-step-pt">+{step.points}</span>}
-      <span className={`st-state is-${step.status}`}>{STAR_STATUS_LABEL[step.status]}</span>
-    </li>
-  )
-}
-
-/** 이수율 도넛 — conic-gradient 한 겹이라 차트 라이브러리를 들이지 않는다. */
-function Donut({ rate }: { rate: number }) {
-  return (
-    <span
-      className="st-donut"
-      style={{ background: `conic-gradient(var(--mint) ${rate * 3.6}deg, var(--muted) 0)` }}
-      aria-hidden="true"
-    />
-  )
-}
 
 function LanguageRow({ lang }: { lang: StarLanguage }) {
   // 점수형(토익)은 막대로, 등급형(OPIc)은 배지로 — 등급은 선형이 아니라 막대로 그리면 거짓말이 된다.

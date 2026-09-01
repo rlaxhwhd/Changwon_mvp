@@ -28,6 +28,19 @@
   --sky:    var(--teal);    --sky-soft:    var(--teal-bg);
   --pink:   var(--orange);  --pink-soft:   var(--orange-bg);
   --blue-soft: var(--blue-bg);
+
+  /* STAR 로드맵 카드(src_v2/components/StarRoadmapCard.css)가 더 부르는 이름들.
+     소프트 배경 위 글자색은 admin 이 이미 갖고 있는 --on-* 을 그대로 쓴다. */
+  --background: var(--bg-page);
+  --mint-ink:  var(--on-green);
+  --amber-ink: var(--on-yellow);
+}
+
+/* ── STAR 트랙 탭 ─────────────────────────────────────────────────────── */
+.sdv-star { display: flex; flex-direction: column; gap: 12px; }
+.sdv-star-meta {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 13px; font-weight: 700; color: var(--text-sub);
 }
 
 .sdv .icon {

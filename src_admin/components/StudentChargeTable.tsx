@@ -1,5 +1,5 @@
 import {
-  LuChevronLeft, LuChevronRight, LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuTriangleAlert,
+  LuChevronLeft, LuChevronRight, LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuStar, LuTriangleAlert,
 } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -32,13 +32,19 @@ import EmptyState from './EmptyState'
 const ALL = '전체'
 const PAGE_SIZE = 20
 
+type RosterSummary = ReturnType<typeof getRosterSummary>
+
 /**
- * 집중관리 버튼 정의 — 라벨·색만 갖는다. 누가 고위험군인지는 데이터층(studentRoster)이
+ * 목록 필터 버튼 — 라벨·색만 갖는다. 누가 고위험군인지는 데이터층(studentRoster)이
  * 판정한다. 홈 「집중관리 현황」 카드가 같은 focus 코드로 링크를 건다.
+ *
+ * STAR 트랙은 판정이 아니라 **선발 트랙 소속**이라 집중관리 두 개와 성격이 다르다 —
+ * 같은 줄에 두되 구분선으로 갈라 놓는다(집중관리로 읽히면 안 된다).
  */
-const FOCUS_BUTTONS: { focus: FocusFilter; label: string; tone: string }[] = [
-  { focus: 'high', label: '고위험군', tone: 'is-high' },
-  { focus: 'core', label: '핵심관리대상', tone: 'is-core' },
+const FOCUS_BUTTONS: { focus: FocusFilter; label: string; tone: string; count: (s: RosterSummary) => number }[] = [
+  { focus: 'high', label: '고위험군', tone: 'is-high', count: s => s.highRiskCount },
+  { focus: 'core', label: '핵심관리대상', tone: 'is-core', count: s => s.coreCareCount },
+  { focus: 'star', label: 'STAR 트랙', tone: 'is-star', count: s => s.starCount },
 ]
 
 interface StudentChargeTableProps {
@@ -138,16 +144,20 @@ export default function StudentChargeTable({ departments, title, scopeLabel }: S
           전체 <em>{summary.total}</em>
         </button>
         {FOCUS_BUTTONS.map(b => (
-          <button
-            key={b.focus}
-            type="button"
-            className={`admin-focus-btn ${b.tone}${focus === b.focus ? ' is-on' : ''}`}
-            onClick={() => toggleFocus(b.focus)}
-          >
-            {b.label} <em>{b.focus === 'high' ? summary.highRiskCount : summary.coreCareCount}</em>
-          </button>
+          <span key={b.focus} className="admin-focus-slot">
+            {/* STAR 트랙 앞에서 한 번 끊는다 — 앞 두 개만 집중관리 판정이다. */}
+            {b.focus === 'star' && <i className="admin-focus-sep" aria-hidden="true" />}
+            <button
+              type="button"
+              className={`admin-focus-btn ${b.tone}${focus === b.focus ? ' is-on' : ''}`}
+              onClick={() => toggleFocus(b.focus)}
+            >
+              {b.focus === 'star' && <LuStar />}
+              {b.label} <em>{b.count(summary)}</em>
+            </button>
+          </span>
         ))}
-        <span className="admin-focus-filter-hint">1학년은 판정 대상에서 제외됩니다.</span>
+        <span className="admin-focus-filter-hint">1학년은 집중관리 판정 대상에서 제외됩니다.</span>
       </div>
 
       {/* 필터/검색 — 옵션은 전체 조회 집합에서 파생 */}

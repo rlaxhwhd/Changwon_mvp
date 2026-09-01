@@ -1289,6 +1289,18 @@ input, textarea, select { font-family: var(--font); }
 .admin-focus-btn.is-core.is-on { background: var(--color-success); border-color: var(--color-success); color: #fff; }
 .admin-focus-btn.is-core.is-on em { color: #fff; }
 
+/* STAR 트랙 — 집중관리가 아니라 선발 트랙이라 앞 두 개와 다른 휴(앰버)를 쓰고,
+   앞에 구분선을 하나 둔다. 색은 학생 화면 STAR 배지(--amber)와 맞춘다. */
+.admin-focus-slot { display: inline-flex; align-items: center; gap: 8px; }
+.admin-focus-sep { display: inline-block; width: 1px; height: 18px; background: var(--color-border); }
+.admin-focus-btn.is-star { border-color: #F3D9A6; color: #9A6300; }
+.admin-focus-btn.is-star em { color: #9A6300; }
+.admin-focus-btn.is-star svg { color: #F5A524; }
+.admin-focus-btn.is-star:hover { background: #FFF6DF; }
+.admin-focus-btn.is-star.is-on { background: #9A6300; border-color: #9A6300; color: #fff; }
+.admin-focus-btn.is-star.is-on em,
+.admin-focus-btn.is-star.is-on svg { color: #fff; }
+
 /* 결과 줄에 표시하는 '걸린 필터' — 중립색. 상태 경고가 아니다. */
 .admin-toolbar-filter {
   display: inline-flex; align-items: center; gap: 4px;
