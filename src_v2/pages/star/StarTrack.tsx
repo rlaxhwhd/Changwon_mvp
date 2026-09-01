@@ -29,7 +29,7 @@ const RAIL: { icon: string; label: string; to?: string }[] = [
   { icon: 'fa-people-group', label: '비교과 활동', to: '/growth/program' },
   { icon: 'fa-award', label: 'C-PASS 인증' },
   { icon: 'fa-chart-column', label: '성과 리포트' },
-  { icon: 'fa-bullhorn', label: '공지사항', to: '/mypage/notices' },
+  { icon: 'fa-bullhorn', label: '공지사항', to: '/jobs/notices' },
 ]
 
 const TRAITS = ['선발형 트랙', '기업연계', 'C-PASS 마일리지', '우수인재 집중관리']
@@ -338,7 +338,7 @@ function NotSelected({ name, grade }: { name: string; grade: number }) {
         </p>
         <div className="st-empty-actions">
           <Link to="/growth/program" className="st-empty-cta">진로·취업 프로그램에서 신청</Link>
-          <Link to="/mypage/notices" className="st-empty-sub">모집 공고 보기</Link>
+          <Link to="/jobs/notices" className="st-empty-sub">모집 공고 보기</Link>
         </div>
       </div>
     </div>

@@ -188,7 +188,7 @@ export default function Main() {
           <section data-slot="card" className="span-12 reveal" id="notices" aria-labelledby="noticeTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="noticeTitle">공지사항</h2><p data-slot="card-description">프로그램과 진로·취업 관련 새 소식을 확인하세요.</p></div>
-              <Link data-slot="card-action" className="button" to="/mypage/notices">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
+              <Link data-slot="card-action" className="button" to="/jobs/notices">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
             </header>
             <div data-slot="card-content">
               <div className="section-toolbar notice-toolbar"><div className="notice-tabs" role="tablist" aria-label="공지사항 분류"><button className="notice-tab active" type="button" role="tab" aria-selected="true" data-notice-tab="all">전체</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="program">프로그램</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="career">진로·취업</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="system">시스템</button></div></div>

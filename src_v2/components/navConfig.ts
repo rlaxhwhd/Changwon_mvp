@@ -113,6 +113,7 @@ export const NAV_SECTIONS: NavSection[] = [
           { label: 'AI 컨설팅', path: '/jobs/home/consulting', icon: 'fa-magnifying-glass-chart' },
         ],
       },
+      { label: '공지사항', path: '/jobs/notices', icon: 'fa-bullhorn' },
     ],
   },
   {
@@ -125,7 +126,6 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
       { label: '추천채용 지원 내역', path: '/mypage/applications', icon: 'fa-file-signature' },
       { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check' },
-      { label: '공지사항', path: '/mypage/notices', icon: 'fa-bullhorn' },
     ],
   },
 ]

@@ -37,6 +37,7 @@ import JobSupport from './pages/jobs/JobSupport'
 import JobDetail from './pages/jobs/JobDetail'
 import JobsHome from './pages/jobs/JobsHome'
 import AiConsulting from './pages/jobs/AiConsulting'
+import Notices from './pages/jobs/Notices'
 
 // STAR 트랙 — 선발된 학생만 들어오는 별도 트랙. GNB 우측 STAR 표식이 진입점이다.
 import StarTrack from './pages/star/StarTrack'
@@ -45,7 +46,6 @@ import StarTrack from './pages/star/StarTrack'
 import Portfolio from './pages/mypage/Portfolio'
 import MyPrograms from './pages/mypage/MyPrograms'
 import MyApplications from './pages/mypage/MyApplications'
-import Notices from './pages/mypage/Notices'
 import CounselStatus from './pages/mypage/CounselStatus'
 import Attendance from './pages/mypage/Attendance'
 import { getActiveStudent } from './data/students'
@@ -112,6 +112,9 @@ const router = createBrowserRouter(
         { path: '/jobs/home/resume',     element: <AiResume /> },
         { path: '/jobs/home/consulting', element: <AiConsulting /> },
         { path: '/jobs/resume',          element: <Navigate to="/jobs/home" replace /> },
+        // 공지사항: /mypage/notices 에서 취업지원 하위로 옮겼다(기존 경로는 하위 호환용 리다이렉트).
+        // ⚠ '/jobs/:id' 보다 위에 둔다 — 정적 세그먼트가 먼저 읽히게 해 공고 상세로 새지 않게 한다.
+        { path: '/jobs/notices',         element: <Notices /> },
         { path: '/jobs/:id',             element: <JobDetail /> },
 
         // 마이페이지
@@ -119,7 +122,7 @@ const router = createBrowserRouter(
         { path: '/mypage/portfolio',  element: getActiveStudent().grade >= 4 ? <Portfolio /> : <Navigate to="/growth" replace /> },
         { path: '/mypage/programs',   element: <MyPrograms /> },
         { path: '/mypage/applications', element: <MyApplications /> },
-        { path: '/mypage/notices',    element: <Notices /> },
+        { path: '/mypage/notices',    element: <Navigate to="/jobs/notices" replace /> },
         // 상담 현황: 라우팅을 /counsel/record로 이동 (기존 /mypage/counsel은 하위 호환용 리다이렉트)
         { path: '/counsel/record',    element: <CounselStatus /> },
         { path: '/mypage/counsel',    element: <Navigate to="/counsel/record" replace /> },
