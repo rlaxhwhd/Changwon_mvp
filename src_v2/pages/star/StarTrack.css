@@ -173,8 +173,9 @@
 .st-axis-3 h3 em { background: var(--amber-soft); color: var(--amber); }
 
 .st-steps { display: flex; flex-direction: column; gap: 6px; }
+/* 라벨이 여러 줄이면 배점·상태 배지가 가운데 떠 보인다 — 첫 줄에 맞춰 위로 붙인다. */
 .st-steps li {
-  display: flex; align-items: center; gap: 8px;
+  display: flex; align-items: flex-start; gap: 8px;
   padding: 9px 10px; border-radius: var(--radius-sm);
   background: var(--background);
   font-size: var(--fs-label); color: var(--foreground);

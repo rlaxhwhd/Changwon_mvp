@@ -121,12 +121,7 @@ export default function StarTrack() {
           </ul>
         </header>
 
-        {/* 요약 4장은 라운지(/v2/lounge)와 같은 카드다 — StudentStatCards 를 그대로 쓴다.
-            라운지에 없는 「필수 교과」만 kind='course' 로 더했다(같은 값+막대 형, 색·아이콘만 다름). */}
-        <div className="st-cards">
-          <StudentStatCards stats={statCards} />
-        </div>
-
+        {/* 로드맵이 이 화면의 본문이다 — 요약 4장보다 먼저 온다. */}
         <section className="st-roadmap" aria-label={`${trackName} 성장 로드맵`}>
           <h2 className="st-sec-head">
             <i className="fa-solid fa-crown" />{trackName} 성장 로드맵
@@ -175,6 +170,12 @@ export default function StarTrack() {
             {record.axes.map((axis, i) => <AxisColumn key={axis.id} axis={axis} no={i + 1} />)}
           </div>
         </section>
+
+        {/* 요약 4장은 라운지(/v2/lounge)와 같은 카드다 — StudentStatCards 를 그대로 쓴다.
+            라운지에 없는 「필수 교과」만 kind='course' 로 더했다(같은 값+막대 형, 색·아이콘만 다름). */}
+        <div className="st-cards">
+          <StudentStatCards stats={statCards} />
+        </div>
 
         <p className="st-tip">
           <i className="fa-solid fa-lightbulb" />
@@ -247,9 +248,10 @@ function AxisColumn({ axis, no }: { axis: StarAxis; no: number }) {
   const progress = getAxisProgress(axis)
   const more = AXIS_MORE[axis.id]
   return (
+    // no 는 라벨이 아니라 축 색(st-axis-1~3)을 고르는 값이다.
     <section className={`st-axis st-axis-${no}`}>
       <h3>
-        <span>축 {no}. {axis.title}</span>
+        <span>{axis.title}</span>
         <em>{progress.done}/{progress.total}</em>
       </h3>
       <ol className="st-steps">
