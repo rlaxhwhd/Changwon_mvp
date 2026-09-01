@@ -221,14 +221,20 @@
     padding: 2px 0; text-align: center; height: fit-content;
     letter-spacing: .03em;
   }
-  .item .hd { grid-column: 2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 11px; }
-  .item .bd { grid-column: 2; display: flex; flex-direction: column; gap: 11px; }
+  .item .hd { grid-column: 2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 11px; min-width: 0; }
+  .item .bd { grid-column: 2; display: flex; flex-direction: column; gap: 11px; min-width: 0; }
   .item dl { margin: 0; display: grid; grid-template-columns: 8.5em 1fr; gap: 7px 14px; font-size: 14.5px; }
   .item dt {
     font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
     text-transform: uppercase; color: var(--ink-3); padding-top: 4px;
   }
-  .item dd { margin: 0; color: var(--ink); }
+  .item dd { margin: 0; color: var(--ink); min-width: 0; }
+  /* 항목 카드 안에 들어가는 보조 표 — 그리드 칸을 밀어내지 않게 가둔다 */
+  .item .tscroll { background: var(--card-2); }
+  .item table { font-size: 13.5px; }
+  .item caption { padding: 11px 13px 9px; font-size: 13px; }
+  .item th, .item td { padding: 7px 12px; }
+  .item thead th { background: var(--card); }
   .item dd.why { color: var(--ink-2); }
   .item dd strong { font-weight: 660; }
 
@@ -293,7 +299,7 @@
     <div class="tally">
       <div><span class="n stop">14</span><span class="l">학사DB 의존 항목</span></div>
       <div><span class="n stop">1</span><span class="l">이것 하나가 <br>로드맵 1개 축 전체를 막는다</span></div>
-      <div><span class="n wait">415<span style="font-size:.55em;color:var(--ink-3)"> / 595</span></span><span class="l">학적학과코드 충전율<br>나머지는 수작업</span></div>
+      <div><span class="n wait">180<span style="font-size:.55em;color:var(--ink-3)"> / 595</span></span><span class="l">학적학과코드 미부여<br>죽은 학과인지 미확인</span></div>
       <div><span class="n ours">3</span><span class="l">전산원에 묻기 전<br>우리가 먼저 확인할 것</span></div>
     </div>
     <div class="note">
@@ -333,9 +339,9 @@
           </tr>
           <tr class="grp-end">
             <td class="id" style="color:var(--stop)">A3</td>
-            <td>미부여 <code class="inl">STATUS_DEPT_CODE</code> 채움</td>
-            <td>신설 5개 학과의 자동 매칭</td>
-            <td class="nw"><span class="tag stop">데이터</span></td>
+            <td>미부여 코드 <strong>180건</strong>이 죽은 학과인지 판별</td>
+            <td>죽은 학과가 배정 · 드롭다운에 계속 남는 문제</td>
+            <td class="nw"><span class="tag stop">확인</span></td>
           </tr>
 
           <tr>
@@ -411,6 +417,100 @@
     </div>
   </section>
 
+  <!-- ================= CODE MODEL ================= -->
+  <section>
+    <div class="eyebrow">먼저 — 용어</div>
+    <h2>학과코드와 전공코드가 가리키는 것</h2>
+    <p class="lede">
+      아래 요청을 읽으려면 이 구조를 먼저 알아야 한다.
+      <strong>혼동이 이 프로젝트 유지보수 사고의 절반을 만들어 왔다.</strong>
+    </p>
+
+    <div class="note">
+      <strong>한 문장 요약.</strong> 단대 · 학과 · 전공은 <strong>별도 테이블이 아니라 하나의 자기참조 트리</strong>이며,
+      셋 다 같은 컬럼 <code class="inl">DEPT_CD</code>에 코드를 담는다.
+      <strong>층을 가르는 것은 코드값이 아니라 <code class="inl">GRP_CD</code>다.</strong>
+      코드만 보고는 그게 학과인지 전공인지 알 수 없다.
+    </div>
+
+    <div class="tscroll">
+      <table>
+        <caption>① 조직 트리는 실질 3단이다 — 같은 테이블 안에서 <code>DEPT_UP_CD</code>로 부모를 가리킨다</caption>
+        <thead>
+          <tr><th>GRP_CD</th><th>층</th><th>LVL</th><th>전체</th><th>사용중</th><th>폐지</th><th>학생이 들고 다니는 컬럼</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="num">0001</td><td><strong>단대</strong></td><td class="num">1</td>
+            <td class="num">16</td><td class="num">16</td><td class="num">0</td>
+            <td><code class="inl">DAEHAK_CD</code></td>
+          </tr>
+          <tr>
+            <td class="num">0002</td><td><strong>학과</strong></td><td class="num">2</td>
+            <td class="num">599</td><td class="num">395</td><td class="num" style="color:var(--stop)">204</td>
+            <td><code class="inl">HAKBU_CD</code></td>
+          </tr>
+          <tr>
+            <td class="num">0003</td><td><strong>전공</strong></td><td class="num">3</td>
+            <td class="num">808</td><td class="num">553</td><td class="num" style="color:var(--stop)">255</td>
+            <td><code class="inl">MAJOR_CD</code> · <code class="inl">MAJOR_CD2</code></td>
+          </tr>
+          <tr>
+            <td class="num">0004</td><td>기관</td><td class="num">4</td>
+            <td class="num">498</td><td class="num">317</td><td class="num">180</td>
+            <td class="muted">— 학과 계층 아님(연구소 · 센터)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p>
+      <strong>학생 한 명이 소속 코드를 셋 들고 다닌다</strong> — 단대 · 학과 · 전공.
+      교직원은 <code class="inl">ORGID</code> 하나뿐이라 <strong>학생과 교직원의 소속 비교가 애초에 대칭이 아니다.</strong>
+      &ldquo;교수와 학생을 학과로 잇는다&rdquo;가 간단해 보이지 않는 이유가 여기 있다.
+    </p>
+
+    <div class="tscroll">
+      <table>
+        <caption>② 이 구조가 만드는 함정 셋 — 전부 실측으로 확인됐다</caption>
+        <thead>
+          <tr><th>함정</th><th>실제</th><th>결과</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>학생 수를 전공으로 센다</strong></td>
+            <td>집계 조인이 <code class="inl">V_USR_INF.MAJOR_CD = 전공.DEPT_CD</code>다.
+                <strong>학과 코드로 세지 않는다.</strong></td>
+            <td><strong>전공 행이 없는 학과는 학생 0명으로 보인다.</strong> 학과는 멀쩡히 존재하는데도</td>
+          </tr>
+          <tr>
+            <td><strong>더미 전공 행 관행</strong></td>
+            <td>위를 우회하려고 전공 없는 학부를 <strong>자기 자신을 전공으로 한 번 더 등록</strong>해 둔다 —
+                <code class="inl">건축학부 / 건축학부 / 436 / 436</code></td>
+            <td>같은 코드가 학과 행에도 전공 행에도 있다.
+                <strong>데이터만 보면 계층이 자기를 가리키는 순환처럼 보인다</strong></td>
+          </tr>
+          <tr>
+            <td><strong>이름이 한 칸씩 밀려 있다</strong></td>
+            <td><code class="inl">getDaehakCode_List</code>는 이름이 &ldquo;대학&rdquo;인데 실제로는 <strong>학과</strong>(<code class="inl">0002</code>)를,
+                <code class="inl">getHakgwaCode_List</code>는 이름이 &ldquo;학과&rdquo;인데 실제로는 <strong>전공</strong>(<code class="inl">0003</code>)을 조회한다</td>
+            <td><strong>화면 라벨 · 쿼리 이름 · 실제 데이터가 각각 한 칸씩 어긋나 있다.</strong>
+                모르고 읽으면 반드시 틀린다</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <strong>학적학과코드는 이 트리와 다른 축이다.</strong> 헷갈리기 쉬워 못 박아 둔다.<br><br>
+      <code class="inl">DEPT_CD</code>는 <strong>드림캐치가 보는 조직 트리의 노드 번호</strong>다 —
+      <code class="inl">501</code> · <code class="inl">505</code>처럼 짧고, 개편되면 새 번호가 생긴다.<br>
+      <code class="inl">STATUS_DEPT_CODE</code>는 <strong>학사DB(<code class="inl">MCODE.C_DEPT</code>)가 들고 있는 12자리 동일성 키</strong>다 —
+      <code class="inl">U04070300012</code>. <strong>다른 테이블 · 다른 체계이며 상위 노드를 가리키는 포인터가 아니다.</strong>
+      같은 값을 가진 행끼리 &ldquo;학적상 같은 학과&rdquo;로 묶일 뿐이다.
+    </div>
+  </section>
+
   <!-- ================= A ================= -->
   <section>
     <div class="eyebrow">갈래 A — 데이터가 존재하지 않는다</div>
@@ -428,33 +528,117 @@
           <dl>
             <dt>현 상태</dt>
             <dd>
-              <code class="inl">V_SUGANG</code>(15컬럼) · <code class="inl">V_LECT_INF</code>(20컬럼)이
+              <code class="inl">V_SUGANG</code>(수강, 15컬럼) · <code class="inl">V_LECT_INF</code>(강의, 20컬럼)이
               <strong>테이블도 DB링크도 살아 있는데 행이 0건</strong>이다.
+              <strong>껍데기만 만들어 놓고 적재가 한 번도 켜진 적이 없다.</strong>
             </dd>
+
+            <dt>비어 있는 것</dt>
+            <dd class="why">
+              두 테이블이 담기로 돼 있던 컬럼은 이미 정의돼 있다. 이름만 봐도 무엇을 받으려 했는지 드러난다.
+              <div class="tscroll" style="margin-top:10px">
+                <table>
+                  <thead><tr><th>테이블</th><th>담기로 한 것</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td class="nw"><code class="inl">V_SUGANG</code><br><span class="small muted">수강 이력</span></td>
+                      <td><code class="inl">YEAR</code> · <code class="inl">SMT</code>(학기) ·
+                          <code class="inl">STUDENT_CD</code> · <strong><code class="inl">CURI_NUM</code>(교과목번호)</strong> ·
+                          <code class="inl">COURSE_CLS</code> · <strong><code class="inl">GRAD_DIV</code>(과정구분)</strong> ·
+                          <code class="inl">GRADE</code> · <code class="inl">GPA</code> ·
+                          <code class="inl">FINISH_YN</code>(이수여부) · 재수강</td>
+                    </tr>
+                    <tr>
+                      <td class="nw"><code class="inl">V_LECT_INF</code><br><span class="small muted">개설 강의</span></td>
+                      <td><code class="inl">CURI_NUM</code> · <strong><code class="inl">CURI_NM</code>(교과목명)</strong> ·
+                          <strong><code class="inl">CDT_NUM</code>(학점)</strong> ·
+                          <code class="inl">DEPT_CD</code>(개설 학과) · <code class="inl">PROF_ID</code>(담당교수) ·
+                          <code class="inl">CAP_PER1~6</code>(역량 배분율)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <strong><code class="inl">CAP_PER1~6</code>이 결정적이다</strong> — 교과목마다 역량 배분율을 담는 자리다.
+              <strong>교과 수강으로 역량을 산출하려고 설계해 놓고 데이터가 안 들어온 것</strong>이 명확하다.
+            </dd>
+
             <dt>왜 개발 불가</dt>
             <dd class="why">
-              <strong>조인 쿼리가 이미 다 작성돼 있다.</strong>
-              <code class="inl">Ca.getGoalCour_List</code>(ca.xml:334) ·
+              <strong>받을 준비가 네 겹으로 끝나 있고 마지막 한 겹만 비어 있다.</strong>
+              <div class="tscroll" style="margin-top:10px">
+                <table>
+                  <thead><tr><th>준비물</th><th>상태</th></tr></thead>
+                  <tbody>
+                    <tr><td>테이블 정의</td><td><span class="tag ours">있음</span> 15 · 20 컬럼</td></tr>
+                    <tr><td>DB링크</td><td><span class="tag ours">있음</span> 다른 학사 테이블은 이 링크로 매일 들어온다</td></tr>
+                    <tr><td>조인 쿼리</td><td><span class="tag ours">있음</span> <strong>세 군데에 이미 작성</strong></td></tr>
+                    <tr><td>조인키 합의</td><td><span class="tag ours">있음</span> <code class="inl">YEAR+SMT+GRAD_DIV+CURI_NUM</code> 4컬럼 복합</td></tr>
+                    <tr><td><strong>데이터</strong></td><td><span class="tag stop">0건</span> <strong>여기만 비어 있다</strong></td></tr>
+                  </tbody>
+                </table>
+              </div>
+              조인 쿼리 위치 — <code class="inl">Ca.getGoalCour_List</code>(ca.xml:334) ·
               <code class="inl">Ca.getLecList</code>(ca.xml:2345) ·
-              <code class="inl">Common.getLecList</code>(common.xml:1325)가
-              두 테이블을 <code class="inl">YEAR+SMT+GRAD_DIV+CURI_NUM</code> 4컬럼 복합키로 조인한다.
-              <strong>코드가 없어서 안 되는 게 아니라 데이터가 안 들어와서 안 된다.</strong>
-              적재만 켜지면 그날 바로 동작한다.
+              <code class="inl">Common.getLecList</code>(common.xml:1325).
+              <strong>코드가 없어서 안 되는 게 아니다. 적재만 켜지면 그날 동작한다.</strong>
+              <br><br>
+              <strong>우회로가 없다.</strong> 학생이 직접 입력하게 하면 신뢰할 수 없는 값으로 역량을 산출하게 되고,
+              이건 <strong>현행 운영 데이터를 이관받는 프로젝트라는 전제 자체를 깬다.</strong>
+              추정으로 채울 수 있는 종류의 데이터가 아니다.
             </dd>
+
             <dt>요청</dt>
             <dd>
-              적재 활성화. 학사 원본 뷰 이름을 알고 있으므로 지정해서 요청 가능하다 —
+              학사 원본 뷰 이름을 알고 있으므로 <strong>지정해서 요청할 수 있다</strong> —
               <strong><code class="inl">수강전체</code>(<code class="inl">VIEW_SUGANG_ALL</code>)</strong> ·
               <strong><code class="inl">수업개설</code>(<code class="inl">VIEW_SUUP_GAESUL</code>)</strong>.
-              <code class="inl">GRAD_DIV</code>(과정구분) · <code class="inl">GRADE</code> ·
-              <code class="inl">GPA</code> · <code class="inl">CDT_NUM</code>(학점) 포함이 필요하다.
+              <br><br>
+              <strong>단계를 나눠 요청하는 것을 권한다.</strong> 성적은 민감도가 달라 한 묶음으로 올리면 전체가 함께 막힐 수 있다.
+              <div class="tscroll" style="margin-top:10px">
+                <table>
+                  <thead><tr><th>단계</th><th>범위</th><th>이걸로 되는 것</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td class="nw"><strong>1단계</strong></td>
+                      <td>수강 이력 + 개설 강의<br>
+                          <span class="small muted"><code class="inl">CURI_NM</code> · <code class="inl">CDT_NUM</code> ·
+                          <code class="inl">FINISH_YN</code> · <strong><code class="inl">GRAD_DIV</code></strong></span></td>
+                      <td><strong>로드맵 수강 · 학과 축이 여기서 이미 동작한다</strong></td>
+                    </tr>
+                    <tr>
+                      <td class="nw"><strong>2단계</strong></td>
+                      <td>성적 <span class="small muted">(<code class="inl">GRADE</code> · <code class="inl">GPA</code>)</span></td>
+                      <td>역량 산출 정밀도 · 직무 적합도 가중</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <strong><code class="inl">GRAD_DIV</code>(과정구분)은 1단계에 반드시 포함</strong>돼야 한다 —
+              빠지면 대학원생 수강이 학부와 섞이거나 통째로 누락된다.
+              <br><br>
+              <span class="muted"><strong>요청 대상이 아닌 것</strong> — <code class="inl">V_PC_SUGANG</code> ·
+              <code class="inl">V_USR_SCORE</code> · <code class="inl">VIEW_HAKGWA_HYUNJAE</code> ·
+              <code class="inl">VIEW_MEMBER_SOSOK</code>는 구버전 · 복제본이다. 같이 요청하면 논점이 흐려진다.</span>
             </dd>
+
             <dt>막히는 것</dt>
             <dd>
               <strong>로드맵 3축 중 &lsquo;수강 교과목 · 학과&rsquo; 축이 통째로 비어 있다.</strong>
-              직무 적합도 · 추천과목도 같은 데이터를 쓴다.
-              스킬트리 화면은 지금 <strong>학사DB 미러를 목업으로 채워 만들고 있다</strong> —
-              데이터가 오면 로더만 갈아끼우게 설계했지만, 안 오면 목업인 채로 납품된다.
+              로드맵은 학생당 1개이고 축이 셋인데, <strong>그중 하나를 채울 방법이 지금 없다.</strong>
+              <div class="tscroll" style="margin-top:10px">
+                <table>
+                  <thead><tr><th>화면 · 기능</th><th>지금</th></tr></thead>
+                  <tbody>
+                    <tr><td>로드맵 수강 · 학과 축</td><td><span class="tag stop">불가</span> 시드로만 채울 수 있다</td></tr>
+                    <tr><td>스킬트리</td><td><span class="tag stop">목업</span> 학사DB 미러 자리를 가짜 데이터로 채워 만드는 중</td></tr>
+                    <tr><td>직무 적합도</td><td><span class="tag stop">불가</span> 이수 교과목이 입력이다</td></tr>
+                    <tr><td>추천 교과목</td><td><span class="tag stop">불가</span> 개설 강의 목록이 없다</td></tr>
+                    <tr><td>교과 기반 역량 산출</td><td><span class="tag stop">불가</span> <code class="inl">CAP_PER1~6</code>이 비어 있다</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <strong>스킬트리는 로더만 갈아끼우면 되게 설계했다.</strong> 데이터가 오면 하루면 실데이터로 전환된다.
+              안 오면 <strong>목업인 채로 납품된다</strong> — 화면은 있는데 값이 가짜인 상태다.
             </dd>
           </dl>
         </div>
@@ -470,32 +654,129 @@
           <dl>
             <dt>현 상태</dt>
             <dd>
-              이관 · 중복 · 학위과정은 <code class="inl">STATUS_DEPT_CODE</code>로 잡힌다.
+              이관 · 중복 · 학위과정은 <code class="inl">STATUS_DEPT_CODE</code>로 <strong>잡힌다.</strong>
               <strong>통합 · 분리만 어느 컬럼에도 없다.</strong>
+              이 한 줄이 유지보수가 매년 반복되는 지점이다.
             </dd>
+
+            <dt>성립 범위</dt>
+            <dd class="why">
+              무엇이 잡히고 무엇이 안 잡히는지는 실측으로 갈렸다. 추정이 아니다.
+              <div class="tscroll" style="margin-top:10px">
+                <table>
+                  <thead><tr><th>관계 유형</th><th>실증</th><th>판정</th></tr></thead>
+                  <tbody>
+                    <tr><td>학과 이관 · 재코딩</td><td class="num">501 → 505</td><td><span class="tag ours">잡는다</span></td></tr>
+                    <tr><td>단대만 다른 중복 등재</td><td class="num">612 · 713</td><td><span class="tag ours">잡는다</span></td></tr>
+                    <tr><td>석사 ↔ 박사</td><td class="num">1528 · 2528</td><td><span class="tag ours">잡는다</span></td></tr>
+                    <tr><td>이름이 바뀐 같은 단위</td><td class="num">1528 · G247</td><td><span class="tag ours">잡는다</span></td></tr>
+                    <tr class="grp-end"><td><strong>통합 · 분리</strong></td><td class="num">505 → 506 + 507</td><td><span class="tag stop">못 잡는다</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </dd>
+
+            <dt>실물 사례</dt>
+            <dd class="why">
+              신소재공학부 건이다. <strong>같은 표 안에 성립과 한계가 함께 들어 있다.</strong>
+              <div class="tscroll" style="margin-top:10px">
+                <table>
+                  <thead><tr><th>코드</th><th>학과명</th><th>단대</th><th>STATUS_DEPT_CODE</th><th>개설</th><th>폐지</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td class="num">501</td><td>신소재공학부</td><td class="num">7</td>
+                      <td class="num"><strong>U04070300012</strong></td><td class="num">2013</td><td class="num">2025-02-28</td>
+                    </tr>
+                    <tr class="grp-end">
+                      <td class="num">505</td><td>신소재공학부</td><td class="num">5</td>
+                      <td class="num"><strong>U04070300012</strong></td><td class="num">2025-03-01</td><td class="num muted">—</td>
+                    </tr>
+                    <tr>
+                      <td class="num">506</td><td>재료금속공학과</td><td class="num">5</td>
+                      <td class="num">U0407<strong>04</strong>00017</td><td class="num">2026-03-01</td><td class="num muted">—</td>
+                    </tr>
+                    <tr>
+                      <td class="num">507</td><td>첨단소재융합공학과</td><td class="num">5</td>
+                      <td class="num" style="color:var(--ink-3)">T00000012296</td><td class="num">2026-03-01</td><td class="num muted">—</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <strong>위 두 줄 — 잡힌다.</strong> <code class="inl">501</code>이 폐지된 <strong>다음 날</strong>
+              <code class="inl">505</code>가 개설됐고, 단대가 7에서 5로 옮겨갔는데도
+              <code class="inl">STATUS_DEPT_CODE</code>가 그대로 따라갔다.
+              <strong>날짜가 하루 차이로 맞물려 우연이 아님이 입증된다.</strong>
+              <br><br>
+              <strong>아래 두 줄 — 못 잡는다.</strong> <code class="inl">505</code>가
+              <code class="inl">506</code> · <code class="inl">507</code>로 나뉘는 관계를 가리키는 값이
+              <strong>네 군데를 다 봐도 없다</strong> —
+              계열키가 <code class="inl">040703</code>에서 <code class="inl">040704</code>로 갈라지고,
+              <code class="inl">SUUP_DEPT_CODE</code>는 셋 다 자기 자신을 가리키고,
+              단대는 <code class="inl">505</code>·<code class="inl">506</code>·<code class="inl">507</code>이 똑같이 5라 구분이 안 되고,
+              <strong><code class="inl">505</code>에는 폐지일조차 없다</strong> — 정리 중이라는 기록마저 없다.
+            </dd>
+
             <dt>왜 개발 불가</dt>
             <dd class="why">
               <code class="inl">STATUS_DEPT_CODE</code>는 <strong>동일성 키지 이력 키가 아니다.</strong>
-              신소재공학부가 <code class="inl">501</code>→<code class="inl">505</code>로 이관될 때는
-              단대가 7에서 5로 바뀌었는데도 <code class="inl">U04070300012</code>가 그대로 따라갔다(폐지 다음 날 개설, 날짜로 입증).
-              그런데 <code class="inl">505</code>에서
-              <strong>재료금속공학과(<code class="inl">506</code>) · 첨단소재융합공학과(<code class="inl">507</code>)</strong>로
-              나뉘는 관계는 — 계열키가 <code class="inl">040703</code>과 <code class="inl">040704</code>로 갈라지고,
-              <code class="inl">SUUP_DEPT_CODE</code>는 셋 다 자기 자신이고,
-              <code class="inl">505</code>에는 폐지일조차 없다.
-              <strong>존재하지 않는 관계는 어떤 쿼리로도 못 만든다.</strong>
+              &ldquo;이 둘은 같은 학과다&rdquo;는 말할 수 있어도
+              <strong>&ldquo;이것이 저것에서 갈라져 나왔다&rdquo;는 말할 수 없는 자료구조</strong>다.
+              <strong>존재하지 않는 관계는 어떤 쿼리로도 만들 수 없다.</strong>
+              <br><br>
+              학과명으로 유추하는 건 <strong>금지</strong>다. 이름이 겹치는 학과가 과정별로 널려 있고,
+              &ldquo;신소재&rdquo;와 &ldquo;재료금속&rdquo;은 애초에 글자가 안 겹친다.
+              사람이 손으로 매핑해 온 이유가 이것이고, <strong>그래서 매년 다시 해야 했다.</strong>
             </dd>
+
+            <dt>규모</dt>
+            <dd class="why">
+              일회성 사고가 아니다. <strong>학과 599개 중 204개(34%)가 이미 폐지</strong>됐고
+              <strong>전공은 808개 중 255개(32%)</strong>다.
+              <strong>대학 조직의 3분의 1이 이미 한 번 이상 갈아엎힌 상태</strong>이며 개편은 계속된다.
+              지금 안 받으면 내년에 같은 요청을 다시 하게 된다.
+            </dd>
+
             <dt>요청</dt>
             <dd>
-              이력을 관리하는 테이블 · 컬럼이 있는지, DB링크로 열람 가능한지.
-              <strong>관리하지 않는다면 실무에서 무엇을 기준으로 판단하는지</strong> —
-              &ldquo;없습니다&rdquo;도 확정 답변이면 우리가 이력 테이블을 신설해 떠안는다.
+              ① 통합 · 분리 이력을 <strong>관리하는 테이블 · 컬럼이 있는지</strong>, DB링크로 열람 가능한지.<br>
+              ② 관리하지 않는다면 <strong>실무에서는 무엇을 기준으로 판단하는지.</strong><br>
+              ③ <strong>앞으로 학과가 개편될 때 통보받을 경로를 만들어 줄 수 있는지.</strong>
+              <br><br>
+              <strong>③이 실질적으로 가장 중요하다.</strong> 과거 이력을 못 받아도
+              <strong>앞으로의 개편을 제때 알 수만 있으면 우리가 이력을 쌓아 나갈 수 있다.</strong>
+              지금은 학생이 상담신청에 실패해야 개편 사실을 안다.
+              <br><br>
+              <span class="muted">&ldquo;관리 안 합니다&rdquo;도 확정 답변이다.
+              그러면 우리가 학과 개편 이력 테이블을 신설해 떠안되,
+              <strong>과거분은 복원 불가로 전제</strong>하고 시작 시점부터 쌓는다.</span>
             </dd>
+
             <dt>막히는 것</dt>
             <dd>
-              개편 전 학과 학생이 개편 후 교수에게 상담신청을 못 한다.
-              <strong>&ldquo;작년 신소재공학부 상담 실적&rdquo;을 개편 후에 답할 수 없다.</strong>
-              대학은 학과 개편이 상시라 이건 일회성 버그가 아니다.
+              <div class="tscroll">
+                <table>
+                  <thead><tr><th>깨지는 것</th><th>구체적으로</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td class="nw">학생 ↔ 교수 매칭</td>
+                      <td>개편 전 학과 학생이 <strong>개편 후 교수에게 상담신청을 못 한다.</strong> 지금 실제로 벌어진 증상</td>
+                    </tr>
+                    <tr>
+                      <td class="nw">과거 실적 집계</td>
+                      <td><strong>&ldquo;작년 신소재공학부 상담 실적&rdquo;을 개편 후에 답할 수 없다.</strong> 학과가 사라져 집계 축이 끊긴다</td>
+                    </tr>
+                    <tr>
+                      <td class="nw">로드맵 스냅샷</td>
+                      <td>로드맵은 <strong>연 1회 스냅샷</strong>을 뜬다. 학과가 개편되면 <strong>과거 스냅샷의 학과가 현재 트리에 없다</strong></td>
+                    </tr>
+                    <tr>
+                      <td class="nw">이관 자체</td>
+                      <td>현행 상담 5.4만 · 교수상담 18.4만 · 비교과 6.8만 건이 <strong>지금은 없는 학과 코드를 달고 있다.</strong>
+                          연결이 없으면 <strong>이관 후 그 이력들의 소속이 미아가 된다</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </dd>
           </dl>
         </div>
@@ -504,7 +785,7 @@
       <div class="item">
         <div class="aid">A3</div>
         <div class="hd">
-          <h3>미부여 학적학과코드 채움</h3>
+          <h3>미부여 코드 180건 &mdash; 죽은 학과인가</h3>
           <span class="tag stop">운영 직결</span>
         </div>
         <div class="bd">
@@ -512,24 +793,73 @@
             <dt>현 상태</dt>
             <dd>
               <code class="inl">MCODE.C_DEPT</code> 595행 중 <strong>415행만 충전(70%)</strong>.
-              <strong>하필 신설 학과가 비어 있다</strong> — <code class="inl">162</code> 전기공학과 ·
-              <code class="inl">519</code> 스마트기계전자과 · <code class="inl">520</code> 소방전기과.
+              <strong>나머지 180행에 학적학과코드가 없다.</strong>
             </dd>
+
+            <dt>질문의 방향</dt>
+            <dd class="why">
+              처음에는 <strong>&ldquo;신설이라 아직 못 받은 것&rdquo;</strong>으로 보고
+              &ldquo;채워 주세요&rdquo;를 요청하려 했다. <strong>그 전제가 틀린 것 같다.</strong>
+              <br><br>
+              트리 실측이 이를 뒷받침한다 — <strong>학과 599개 중 204개, 전공 808개 중 255개가 이미 폐지</strong> 상태다.
+              미부여 180건은 <strong>신설분보다 &lsquo;애초에 안 쓰는 학과&rsquo;가 대부분일 가능성이 높다.</strong>
+              학사에서 실제로 운영하지 않으니 학적 코드를 부여할 이유가 없었던 것이다.
+              <br><br>
+              <strong>그렇다면 요청이 정반대가 된다.</strong>
+              채워 달라는 게 아니라 <strong>&ldquo;이 코드들은 안 쓰는 학과가 맞습니까&rdquo;</strong>를 확인받아
+              <strong>우리 화면에서 빼는 것</strong>이 맞다.
+            </dd>
+
             <dt>왜 개발 불가</dt>
             <dd class="why">
-              코드 부여는 학사DB 소관이다. 우리는 빈 값을 채울 수 없고,
-              <strong>추정으로 채우면 틀렸을 때 학생이 엉뚱한 교수에게 배정된다.</strong>
+              <strong>우리 쪽 데이터로는 살았는지 죽었는지 판별이 안 된다.</strong>
+              <code class="inl">USE_YN</code>이 <code class="inl">'Y'</code>인데 폐지일이 지난 학과가 실재하고
+              (<code class="inl">709</code>·<code class="inl">710</code>·<code class="inl">711</code>),
+              반대로 개설연도가 2027인데 이미 노출되는 학과도 있다(<code class="inl">604</code>).
+              <strong>플래그를 믿을 수 없다는 것이 이미 확인됐다</strong>(B3).
               <br><br>
-              부여 기준도 일관되지 않다. 같은 날 개설된 같은 개편 건인데
-              <code class="inl">506</code>은 정식코드(<code class="inl">U04070400017</code>)를 받았고
-              <code class="inl">507</code>은 임시코드(<code class="inl">T00000012296</code>)에 머물러 있다.
-              <code class="inl">T</code> 접두는 <code class="inl">604</code> AI전기공학과에서도 나온다.
-              <strong>미부여 집계 시 <code class="inl">NULL</code>만 세면 이 건들을 놓친다.</strong>
+              임의 판단의 대가가 양쪽 다 크다 —
+              <strong>살아 있는 학과를 빼면 그 학과 학생이 시스템에서 사라지고,
+              죽은 학과를 남기면 학생이 없는 학과에 교수·조교를 배정하게 된다.</strong>
+              <strong>실제 운영 여부는 학사만 안다.</strong>
             </dd>
+
             <dt>요청</dt>
-            <dd>활성 학과 우선 채움 — <code class="inl">162</code> · <code class="inl">519</code> · <code class="inl">520</code> · <code class="inl">507</code> · <code class="inl">604</code>. 폐과 코드 소급 부여 계획도 함께(졸업생 이력 조회에 필요).</dd>
+            <dd>
+              미부여 180건의 목록을 넘기고 <strong>세 갈래로 분류받는다.</strong>
+              <div class="tscroll" style="margin-top:10px">
+                <table>
+                  <thead><tr><th>분류</th><th>우리 처리</th></tr></thead>
+                  <tbody>
+                    <tr>
+                      <td class="nw"><strong>안 쓰는 학과</strong></td>
+                      <td>화면 · 배정 대상에서 <strong>제외한다.</strong> 요청 종료</td>
+                    </tr>
+                    <tr>
+                      <td class="nw"><strong>운영 중인데 미부여</strong></td>
+                      <td><strong>이 건만 부여를 요청한다.</strong> 180건 전체가 아니라 이 부분집합만</td>
+                    </tr>
+                    <tr>
+                      <td class="nw"><strong>임시코드 보유</strong></td>
+                      <td>정식 전환 시점을 받는다 (<code class="inl">T</code> 접두)</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <strong>집계 주의</strong> — 미부여를 셀 때 <code class="inl">NULL</code>만 세면 안 된다.
+              <code class="inl">507</code> 첨단소재융합공학과는 <code class="inl">T00000012296</code>,
+              <code class="inl">604</code> AI전기공학과는 <code class="inl">T00000012319</code>로
+              <strong>값이 있지만 계열 자리가 전부 0인 임시코드</strong>다.
+              <strong>같은 날 개설된 같은 개편 건인데 <code class="inl">506</code>은 정식코드를 받고
+              <code class="inl">507</code>은 못 받았다</strong> — 부여 기준이 일관되지 않다는 증거다.
+            </dd>
+
             <dt>막히는 것</dt>
-            <dd>자동 확장이 <strong>415개 학과까지만</strong> 적용된다. 나머지는 지금처럼 사람이 매번 매칭한다.</dd>
+            <dd>
+              지금은 <strong>죽었는지 살았는지 모르는 학과가 드롭다운에 그대로 노출</strong>된다.
+              자동 확장도 <strong>415개까지만</strong> 걸리므로 나머지는 사람이 매번 판단한다.
+              <strong>&ldquo;이건 빼도 되나요&rdquo;를 물을 곳이 없어서 아무도 못 빼고 쌓여 왔다.</strong>
+            </dd>
           </dl>
         </div>
       </div>
@@ -970,11 +1300,11 @@
     <div class="eyebrow">받아 나올 것</div>
     <h2>미팅 산출물 체크리스트</h2>
     <ol class="asks">
-      <li><strong>수강 · 강의 · 성적 적재 활성화</strong> — 일정까지. 나머지 13건을 다 못 받아도 이건 받아야 한다</li>
-      <li>학과 통합 · 분리 이력 <strong>제공 또는 부재 확인</strong> — 신소재 → 재료금속 · 첨단소재 건</li>
+      <li><strong>수강 · 강의 적재 활성화</strong>(1단계) — 일정까지. 나머지 13건을 다 못 받아도 이건 받아야 한다</li>
+      <li>학과 통합 · 분리 이력 <strong>제공 또는 부재 확인</strong> + <strong>향후 개편 통보 경로</strong></li>
       <li>학적학과코드 <strong>체계 정의서</strong> + 계열키 관통 여부 확약</li>
       <li><code class="inl">UNIV_CODE</code> 전체 코드값 표 — <code class="inl">90</code> 포함</li>
-      <li>활성 학과 미부여 코드 채움 — <code class="inl">162</code> · <code class="inl">519</code> · <code class="inl">520</code> · <code class="inl">507</code> · <code class="inl">604</code></li>
+      <li>미부여 <strong>180건의 실사용 여부 분류</strong> — 안 쓰는 학과는 우리가 뺀다</li>
       <li>신설 학과 <strong>개강 전 부여 확약</strong> · 임시코드 전환 시점</li>
       <li>학과 유효성 신뢰 기준 <strong>한 줄 확정</strong></li>
       <li>교수 겸직자 등록 — 사번 <code class="inl">13225</code> 외 동일 사례 포함</li>
