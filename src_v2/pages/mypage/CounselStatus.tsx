@@ -4,14 +4,18 @@ import Modal from '../../components/Modal'
 import { getActiveStudent, getActiveStudentId, getStudentCounselRequests } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
 import { getCounselorLabel } from '../../data/counselorsRead'
-import { COUNSEL_RECORDS, COUNSEL_TYPE_STATS } from '../../data/counsel'
+import {
+  COUNSEL_RECORDS, COUNSEL_TYPE_LABEL, counselRecordTypeKey, counselTypeDistribution,
+} from '../../data/counsel'
+import type { CounselTypeKey } from '../../data/counsel'
 import './CounselStatus.css'
 import { usePageHead } from '../../components/PageCrumb'
 
 // 상담 내역 행 — 데모 기록(COUNSEL_RECORDS)과 학생 실제 예약(스토어)을 공통 형태로 렌더.
 interface CsRow {
   id?: string
-  type: string
+  /** 유형별 분포 카드와 같은 축의 키 — 카드 클릭 필터가 이걸로 걸린다. */
+  typeKey: CounselTypeKey
   status: string
   statusTone: 'scheduled' | 'done' | 'cancel'
   counselor: string
@@ -21,10 +25,7 @@ interface CsRow {
   time: string
 }
 
-const TYPE_LABEL: Record<string, string> = { 진로취업: '진로취업상담', 심리: '심리상담', 교수: '교수상담' }
 const STATUS_TONE: Record<string, CsRow['statusTone']> = { 대기: 'scheduled', 확정: 'scheduled', 완료: 'done', 취소: 'cancel' }
-
-const typeStats = COUNSEL_TYPE_STATS
 
 export default function CounselStatus() {
   usePageHead('상담 현황', '전문가 상담 내역과 AI 종합 분석을 확인합니다.')
@@ -38,7 +39,7 @@ export default function CounselStatus() {
     .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
     .map(r => ({
       id: r.id,
-      type: TYPE_LABEL[r.type] ?? r.type,
+      typeKey: r.type,
       status: r.status,
       statusTone: STATUS_TONE[r.status] ?? 'scheduled',
       counselor: getCounselorLabel(r.assignedCounselorId),
@@ -47,7 +48,14 @@ export default function CounselStatus() {
       date: r.slot?.date ?? r.requestedAt.slice(0, 10),
       time: r.slot?.start ?? r.requestedAt.slice(11, 16),
     }))
-  const counselItems: CsRow[] = [...liveRows, ...COUNSEL_RECORDS]
+  const demoRows: CsRow[] = COUNSEL_RECORDS.map(r => ({ ...r, typeKey: counselRecordTypeKey(r) }))
+  const counselItems: CsRow[] = [...liveRows, ...demoRows]
+
+  // 유형별 분포는 목록과 같은 배열에서 센다 — 카드 합계가 아래 목록과 어긋나지 않게.
+  const typeStats = counselTypeDistribution(counselItems.map(i => i.typeKey))
+  // 카드를 다시 누르면 해제된다(전체 보기).
+  const [typeFilter, setTypeFilter] = useState<CounselTypeKey | null>(null)
+  const shownItems = typeFilter ? counselItems.filter(i => i.typeKey === typeFilter) : counselItems
 
   const total = counselItems.length
   const doneCount = counselItems.filter(i => i.statusTone === 'done').length
@@ -104,12 +112,18 @@ export default function CounselStatus() {
         </h2>
         <div className="cs-type-grid">
           {typeStats.map((item) => (
-            <article className={`cs-type-card cs-type-card--${item.color}`} key={item.label}>
+            <button
+              type="button"
+              className={`cs-type-card cs-type-card--${item.hue}${typeFilter === item.key ? ' is-on' : ''}`}
+              key={item.key}
+              aria-pressed={typeFilter === item.key}
+              onClick={() => setTypeFilter(prev => (prev === item.key ? null : item.key))}
+            >
               <div>
                 <p>{item.label}</p>
-                <strong>{item.count}</strong>
+                <strong>{item.count}건</strong>
               </div>
-            </article>
+            </button>
           ))}
         </div>
       </section>
@@ -118,16 +132,23 @@ export default function CounselStatus() {
         <div className="cs-panel-head">
           <h2>
             상담 내역
+            {typeFilter && <em className="cs-filter-tag">{COUNSEL_TYPE_LABEL[typeFilter]} {shownItems.length}건</em>}
           </h2>
-          <span>카드를 클릭하면 상세 코멘트를 볼 수 있습니다</span>
+          {typeFilter
+            ? (
+              <button type="button" className="cs-filter-reset" onClick={() => setTypeFilter(null)}>
+                전체 보기
+              </button>
+            )
+            : <span>유형 카드를 클릭하면 해당 유형만 볼 수 있습니다</span>}
         </div>
 
         <div className="cs-list">
-          {counselItems.map((item) => (
-            <button className="cs-row" type="button" key={item.id ?? `${item.type}-${item.date}`}>
+          {shownItems.map((item) => (
+            <button className="cs-row" type="button" key={item.id ?? `${item.typeKey}-${item.date}`}>
               <div className="cs-row-main">
                 <div className="cs-row-title">
-                  <strong>{item.type}</strong>
+                  <strong>{COUNSEL_TYPE_LABEL[item.typeKey]}</strong>
                   <span className={`cs-status cs-status--${item.statusTone}`}>{item.status}</span>
                 </div>
                 <p className="cs-counselor">{item.counselor}</p>
@@ -144,6 +165,9 @@ export default function CounselStatus() {
               </time>
             </button>
           ))}
+          {shownItems.length === 0 && (
+            <p className="cs-list-empty">아직 {typeFilter ? COUNSEL_TYPE_LABEL[typeFilter] : '상담'} 내역이 없습니다.</p>
+          )}
         </div>
       </section>
 
