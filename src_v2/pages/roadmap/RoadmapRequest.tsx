@@ -4,6 +4,8 @@ import { usePageHead } from '../../components/PageCrumb'
 import { getActiveStudent } from '../../data/students'
 import { ROADMAP_AXIS_MAP } from '../../data/schema/roadmap'
 import type { RoadmapAxis } from '../../data/schema/roadmap'
+// 3축 렌더는 로드맵을 그리는 다른 화면과 같은 공용 컴포넌트다 — 여기서 다시 그리지 않는다.
+import RoadmapAxisBoard from '../../components/RoadmapAxisBoard'
 // 로드맵 정본은 교직원 포털의 읽기 모델이다(base ⊕ 상담사 override ⊕ 프로그램 편입분).
 import { getStudentRoadmap } from '../../../src_admin/data/roadmap'
 // 요청은 상담사 「변경 요청함」이 읽는 그 스토어에 그대로 쌓는다 — 새 저장소를 만들지 않는다.
@@ -138,38 +140,14 @@ export default function RoadmapRequest() {
               ))}
             </div>
 
-            <div className="rr-axes">
-              {shown.map(plan => (
-                <div key={plan.axis} className="rr-axis">
-                  <h3>
-                    {ROADMAP_AXIS_MAP[plan.axis].label}
-                    <small>{ROADMAP_AXIS_MAP[plan.axis].desc}</small>
-                  </h3>
-                  <ul className="rr-cells">
-                    {plan.cells.map(cell => (
-                      <li key={cell.id}>
-                        <label className={`rr-cell${picked.has(cell.id) ? ' is-picked' : ''}`}>
-                          <input
-                            type="checkbox"
-                            checked={picked.has(cell.id)}
-                            onChange={() => togglePick(cell.id)}
-                          />
-                          <span className="rr-cell-body">
-                            <span className="rr-cell-top">
-                              <b>{cell.title}</b>
-                              <span className={`rr-chip rr-chip-${cell.importance}`}>{cell.importance}</span>
-                              {cell.status === 'DONE' && <span className="rr-chip is-done">완료</span>}
-                            </span>
-                            <span className="rr-cell-why">{cell.why}</span>
-                          </span>
-                        </label>
-                      </li>
-                    ))}
-                    {plan.cells.length === 0 && <li className="rr-cells-empty">이 축에는 아직 칸이 없습니다.</li>}
-                  </ul>
-                </div>
-              ))}
-            </div>
+            {/* 로드맵은 로드맵처럼 보여야 한다 — 다른 화면과 같은 공용 3축 보드를 쓴다.
+                칸을 누르면 골라지고 다시 누르면 풀린다(selectedIds 를 주면 고르기 모드). */}
+            <RoadmapAxisBoard
+              axes={shown}
+              selectedIds={picked}
+              onCellClick={cell => togglePick(cell.id)}
+              showEntry={false}
+            />
           </section>
         </main>
 
