@@ -74,7 +74,7 @@ export default function CounselStatus() {
   const targetRole = student.targetRole || 'IT 직무'
 
   return (
-    <main className="cs-page">
+    <div className="v2-page cs-page">
       <section className="cs-hero">
         <button className="cs-back-btn" type="button" onClick={() => navigate('/main')}>
           홈으로
@@ -297,6 +297,6 @@ export default function CounselStatus() {
           </section>
         </div>
       </Modal>
-    </main>
+    </div>
   )
 }
