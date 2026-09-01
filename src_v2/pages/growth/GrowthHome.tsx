@@ -5,6 +5,8 @@ import { getActiveStudent } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
 // 기록 목록은 라운지(/v2/lounge)도 읽는다 — seed·저장소 키는 데이터 층 단일소스에 둔다.
 import { GROWTH_RECORDS, growthRecordsKey, type GrowthRecord } from '../../data/growthRecords'
+// 스킬 후보·분류는 사전 단일소스에서 온다 — 여기에 스킬명·분류 리터럴을 두지 않는다.
+import { SKILL_CATEGORIES, SKILL_CUSTOM, SKILL_GROUPS, categoryOf } from '../../data/skillCatalog'
 import './GrowthHome.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -92,7 +94,7 @@ export default function GrowthHome() {
   const openCreate = (kind: EditorKind) => {
     const defaults: Record<EditorKind, Record<string, string>> = {
       project: { title: '', role: '', period: '', description: '', stack: '', result: '' },
-      skill: { name: '', category: '도구', level: '3' },
+      skill: { name: '', category: SKILL_CATEGORIES[0], level: '3', custom: '' },
       qualification: { title: '', detail: '', date: '', icon: 'fa-certificate' },
       record: { date: '', type: '비교과', title: '', description: '', tone: 'violet' },
     }
@@ -105,7 +107,9 @@ export default function GrowthHome() {
       setEditor({ kind, index, fields: { ...item, stack: item.stack.join(', ') } })
     } else if (kind === 'skill') {
       const item = skills[index]
-      setEditor({ kind, index, fields: { ...item, level: String(item.level) } })
+      // 사전에 없는 이름(직접 입력해 둔 스킬)이면 드롭다운으로 되돌리지 않는다 —
+      // 목록에 없으니 고를 수가 없어 이름이 비어 보인다.
+      setEditor({ kind, index, fields: { ...item, level: String(item.level), custom: categoryOf(item.name) ? '' : '1' } })
     } else if (kind === 'qualification') {
       setEditor({ kind, index, fields: { ...qualifications[index] } })
     } else {
@@ -123,6 +127,21 @@ export default function GrowthHome() {
 
   const updateField = (name: string, value: string) => {
     setEditor(current => current ? { ...current, fields: { ...current.fields, [name]: value } } : current)
+  }
+
+  /**
+   * 드롭다운에서 스킬을 고른다 — 분류는 사전이 알고 있으니 같이 채운다.
+   * 「직접 입력」을 고르면 이름칸을 비우고 자유 입력으로 바꾼다(분류는 학생이 고른 값을 둔다).
+   */
+  const pickSkillName = (value: string) => {
+    if (value === SKILL_CUSTOM) {
+      setEditor(current => current ? { ...current, fields: { ...current.fields, name: '', custom: '1' } } : current)
+      return
+    }
+    const category = categoryOf(value)
+    setEditor(current => current
+      ? { ...current, fields: { ...current.fields, name: value, ...(category ? { category } : {}) } }
+      : current)
   }
 
   const saveEditor = (event: FormEvent) => {
@@ -262,7 +281,30 @@ export default function GrowthHome() {
               </>
             )}
             {editor.kind === 'skill' && (
-              <div className="gh-form-row"><label><span>스킬명</span><input required value={editor.fields.name} onChange={event => updateField('name', event.target.value)} /></label><label><span>분류</span><select value={editor.fields.category} onChange={event => updateField('category', event.target.value)}><option>언어</option><option>프레임워크</option><option>도구</option><option>DB</option><option>디자인</option></select></label><label><span>숙련도</span><select value={editor.fields.level} onChange={event => updateField('level', event.target.value)}>{[1, 2, 3, 4, 5].map(level => <option value={level} key={level}>{level}단계</option>)}</select></label></div>
+              <div className="gh-form-row">
+                <label><span>스킬명</span>
+                  {/* 사전은 드롭다운으로 고른다. 자유 입력이 필요하면 「직접 입력」으로 칸이 바뀐다 —
+                      datalist 는 브라우저 네이티브 팝업이라 모달 밖으로 뚫고 나와 쓰지 않는다. */}
+                  {editor.fields.custom === '1' ? (
+                    <>
+                      <input required autoFocus placeholder="예: 포토샵, 전산회계" value={editor.fields.name} onChange={event => updateField('name', event.target.value)} />
+                      <small><button type="button" className="gh-link-btn" onClick={() => updateField('custom', '')}>목록에서 고르기</button></small>
+                    </>
+                  ) : (
+                    <select required value={editor.fields.name} onChange={event => pickSkillName(event.target.value)}>
+                      <option value="" disabled>스킬을 선택하세요</option>
+                      {SKILL_GROUPS.map(group => (
+                        <optgroup key={group.category} label={group.category}>
+                          {group.names.map(name => <option key={name} value={name}>{name}</option>)}
+                        </optgroup>
+                      ))}
+                      <option value={SKILL_CUSTOM}>직접 입력…</option>
+                    </select>
+                  )}
+                </label>
+                <label><span>분류</span><select value={editor.fields.category} onChange={event => updateField('category', event.target.value)}>{SKILL_CATEGORIES.map(category => <option key={category}>{category}</option>)}</select></label>
+                <label><span>숙련도</span><select value={editor.fields.level} onChange={event => updateField('level', event.target.value)}>{[1, 2, 3, 4, 5].map(level => <option value={level} key={level}>{level}단계</option>)}</select></label>
+              </div>
             )}
             {editor.kind === 'qualification' && (
               <>

@@ -142,6 +142,8 @@
 .gh-editor-form input, .gh-editor-form select { height: 42px; padding: 0 12px; }
 .gh-editor-form textarea { padding: 11px 12px; resize: vertical; line-height: 1.6; }
 .gh-editor-form input:focus, .gh-editor-form select:focus, .gh-editor-form textarea:focus { border-color: var(--gh-violet); box-shadow: 0 0 0 3px var(--gh-violet-soft); }
+/* 「직접 입력」에서 목록으로 되돌아가는 글자 버튼 — 칸 아래 안내문 자리에 앉는다. */
+.gh-link-btn { padding: 0; border: 0; background: none; color: var(--gh-violet); font: inherit; font-size: 12px; font-weight: 800; text-decoration: underline; cursor: pointer; }
 .gh-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .gh-form-row:has(> label:nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .gh-form-actions { padding-top: 16px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--gh-border); }
