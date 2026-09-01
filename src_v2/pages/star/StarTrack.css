@@ -3,15 +3,29 @@
    색은 전부 index.css 토큰이다. 새 팔레트를 만들지 않는다(DESIGN.md 락).
    시안의 파랑·초록·노랑 강조는 각각 --blue · --mint · --amber 로 환원했다.
    ───────────────────────────────────────────────────────────────────────── */
+/* 본문·우측을 각각 한 덩어리로 쌓으면 우측 패널이 「성장 로드맵」보다 한참 길게
+   흘러내린다. 그래서 세 줄로 갈라 로드맵과 우측 묶음을 같은 행에 놓는다.
+     1행 머리말 | 트랙 배지        (start — 배지는 제 높이대로)
+     2행 로드맵 | 우측 패널 4장    (stretch — 우측 묶음이 로드맵 높이에 맞춰진다)
+     3행 요약카드
+   1행이 두 열의 시작선을 맞춰 주므로 2행은 위·아래가 모두 떨어진다. */
 .st {
   display: grid;
   grid-template-columns: 208px minmax(0, 1fr) 308px;
+  /* 행을 명시해야 한다 — 암묵 행만 있으면 레일의 -1 이 1행으로 접혀 레일이 1행 높이를 밀어낸다. */
+  grid-template-rows: auto auto auto;
   gap: var(--space-5);
   align-items: start;
   max-width: 1440px;
   margin: 0 auto;
   padding: var(--space-6) var(--space-6) var(--space-10);
 }
+.st-rail        { grid-area: 1 / 1 / -1 / 2; }
+.st-head        { grid-area: 1 / 2; }
+.st-track-badge { grid-area: 1 / 3; }
+.st-roadmap     { grid-area: 2 / 2; align-self: stretch; }
+.st-side        { grid-area: 2 / 3; align-self: stretch; }
+.st-main        { grid-area: 3 / 2; }
 
 /* ── 좌측 레일 ─────────────────────────────────────────────────────────── */
 .st-rail {
@@ -244,6 +258,19 @@
 .st-lang small { display: block; margin-top: 6px; font-size: var(--fs-label); color: var(--muted-foreground); }
 /* 이수 기준 미달 — 숫자와 설명 둘 다 붉게. 이 화면에서 가장 나쁜 소식이다. */
 .st-lang .is-short { color: var(--coral); }
+
+/* 로드맵 높이 안에 네 장을 다 넣는다. 자격증·어학·AI 코멘트는 글이 들어 있어
+   줄이면 잘리므로 제 높이를 지키게 두고(shrink 0), 남는 만큼을 C-PASS 가 갖는다.
+   단계 목록은 도트와 잇는 선이라 늘고 줄어도 읽기가 상하지 않는다. */
+.st-side > .st-panel { flex: 0 0 auto; }
+.st-side > .st-cpass { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+/* 기본 8px 로는 네 장 합계가 로드맵보다 커서 C-PASS 가 눌린 채 글이 삐져나온다.
+   눌릴 일이 없도록 여백부터 줄여 두고, 자리가 남으면 아래 flex 로 다시 벌린다. */
+.st-cpass .st-stages li { padding: 3px 0; }
+.st-cpass .st-stages { flex: 1; min-height: 0; }
+.st-cpass .st-stages li:not(:last-child) { flex: 1; }
+/* 마지막 단계는 잇는 선이 없다 — 같이 늘리면 그만큼이 그냥 빈 칸으로 남는다. */
+.st-cpass .st-stages li:last-child { flex: 0 0 auto; }
 
 .st-stages { display: flex; flex-direction: column; gap: 2px; }
 .st-stages li {

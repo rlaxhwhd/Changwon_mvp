@@ -112,65 +112,71 @@ export default function StarTrack() {
         </div>
       </nav>
 
+      <header className="st-head">
+        <h1>STAR 트랙 대시보드</h1>
+        <p>선발된 우수학생에게 기업 연계 활동과 마일리지를 제공하고, 우수 인재 채용 기회를 연결합니다.</p>
+        <ul className="st-traits">
+          {TRAITS.map(t => <li key={t}>{t}</li>)}
+        </ul>
+      </header>
+
+      <div className="st-track-badge">
+        <small>현재 트랙</small>
+        <strong>{meta.grade}학년 {trackName}</strong>
+        <span>{record.cohort}기 · {record.selectedAt} 선발</span>
+      </div>
+
+      {/* 로드맵이 이 화면의 본문이다 — 요약 4장보다 먼저 온다. */}
+      <section className="st-roadmap" aria-label={`${trackName} 성장 로드맵`}>
+        <h2 className="st-sec-head">
+          <i className="fa-solid fa-crown" />{trackName} 성장 로드맵
+          <span className="st-sec-note">{meta.kind} · {meta.goal}</span>
+        </h2>
+
+        <div className="st-metrics">
+          <div className="st-metric">
+            <span className="st-metric-badge is-mileage"><i className="fa-solid fa-coins" /></span>
+            <div>
+              <small>누적 마일리지</small>
+              <strong>{summary.mileage}<em>점</em></strong>
+              <span className="st-metric-sub">최대 {summary.mileageMax}점</span>
+            </div>
+          </div>
+          <div className="st-metric">
+            <Donut rate={summary.rate} />
+            <div>
+              <small>이수율</small>
+              <strong>{summary.rate}<em>%</em></strong>
+              <span className="st-metric-sub">{summary.doneSteps}/{summary.totalSteps}단계 완료</span>
+            </div>
+          </div>
+          <div className="st-metric">
+            <span className="st-metric-badge is-goal"><i className="fa-solid fa-flag" /></span>
+            <div>
+              <small>이수 기준까지</small>
+              <strong className="is-text">{passGoal(summary).value}</strong>
+              <span className="st-metric-sub">{passGoal(summary).sub}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 마일리지를 채워도 필수 항목이 남으면 인증이 안 나온다 — 가장 먼저 알려야 할 값이다. */}
+        {summary.blockers.length > 0 && (
+          <p className="st-blocker">
+            <i className="fa-solid fa-triangle-exclamation" />
+            <span>
+              <b>필수 항목 {summary.blockers.length}건이 남아 마일리지와 무관하게 인증이 나오지 않습니다</b> —
+              {' '}{summary.blockers.map(b => b.label).join(' · ')}
+            </span>
+          </p>
+        )}
+
+        <div className="st-axes">
+          {record.axes.map((axis, i) => <AxisColumn key={axis.id} axis={axis} no={i + 1} />)}
+        </div>
+      </section>
+
       <main className="st-main">
-        <header className="st-head">
-          <h1>STAR 트랙 대시보드</h1>
-          <p>선발된 우수학생에게 기업 연계 활동과 마일리지를 제공하고, 우수 인재 채용 기회를 연결합니다.</p>
-          <ul className="st-traits">
-            {TRAITS.map(t => <li key={t}>{t}</li>)}
-          </ul>
-        </header>
-
-        {/* 로드맵이 이 화면의 본문이다 — 요약 4장보다 먼저 온다. */}
-        <section className="st-roadmap" aria-label={`${trackName} 성장 로드맵`}>
-          <h2 className="st-sec-head">
-            <i className="fa-solid fa-crown" />{trackName} 성장 로드맵
-            <span className="st-sec-note">{meta.kind} · {meta.goal}</span>
-          </h2>
-
-          <div className="st-metrics">
-            <div className="st-metric">
-              <span className="st-metric-badge is-mileage"><i className="fa-solid fa-coins" /></span>
-              <div>
-                <small>누적 마일리지</small>
-                <strong>{summary.mileage}<em>점</em></strong>
-                <span className="st-metric-sub">최대 {summary.mileageMax}점</span>
-              </div>
-            </div>
-            <div className="st-metric">
-              <Donut rate={summary.rate} />
-              <div>
-                <small>이수율</small>
-                <strong>{summary.rate}<em>%</em></strong>
-                <span className="st-metric-sub">{summary.doneSteps}/{summary.totalSteps}단계 완료</span>
-              </div>
-            </div>
-            <div className="st-metric">
-              <span className="st-metric-badge is-goal"><i className="fa-solid fa-flag" /></span>
-              <div>
-                <small>이수 기준까지</small>
-                <strong className="is-text">{passGoal(summary).value}</strong>
-                <span className="st-metric-sub">{passGoal(summary).sub}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 마일리지를 채워도 필수 항목이 남으면 인증이 안 나온다 — 가장 먼저 알려야 할 값이다. */}
-          {summary.blockers.length > 0 && (
-            <p className="st-blocker">
-              <i className="fa-solid fa-triangle-exclamation" />
-              <span>
-                <b>필수 항목 {summary.blockers.length}건이 남아 마일리지와 무관하게 인증이 나오지 않습니다</b> —
-                {' '}{summary.blockers.map(b => b.label).join(' · ')}
-              </span>
-            </p>
-          )}
-
-          <div className="st-axes">
-            {record.axes.map((axis, i) => <AxisColumn key={axis.id} axis={axis} no={i + 1} />)}
-          </div>
-        </section>
-
         {/* 요약 4장은 라운지(/v2/lounge)와 같은 카드다 — StudentStatCards 를 그대로 쓴다.
             라운지에 없는 「필수 교과」만 kind='course' 로 더했다(같은 값+막대 형, 색·아이콘만 다름). */}
         <div className="st-cards">
@@ -184,36 +190,7 @@ export default function StarTrack() {
       </main>
 
       <aside className="st-side">
-        <div className="st-track-badge">
-          <small>현재 트랙</small>
-          <strong>{meta.grade}학년 {trackName}</strong>
-          <span>{record.cohort}기 · {record.selectedAt} 선발</span>
-        </div>
-
-        <section className="st-panel">
-          <h2>자격증</h2>
-          <ul className="st-list">
-            {record.certs.map(c => (
-              <li key={c.label}>
-                <span>{c.label}</span>
-                <span className={`st-state ${c.status === '취득' ? 'is-done' : 'is-ongoing'}`}>{c.status}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-
-        <section className="st-panel">
-          <h2>어학</h2>
-          {record.languages.map(lang => <LanguageRow key={lang.label} lang={lang} />)}
-        </section>
-
-        <section className="st-panel is-ai">
-          <h2><i className="fa-solid fa-wand-magic-sparkles" />AI 코멘트</h2>
-          <p className="st-ai-text">{record.aiComment.text}</p>
-          <small className="st-ai-date">분석 기준일 {record.aiComment.basedOn}</small>
-        </section>
-
-        <section className="st-panel">
+        <section className="st-panel st-cpass">
           <h2>C-PASS 현황</h2>
           <ol className="st-stages">
             {CPASS_STAGES.map((stage, i) => {
@@ -236,6 +213,29 @@ export default function StarTrack() {
               ? <>다음 구간 <b>{summary.nextTier.min}점</b> 도달 시 장학금 {summary.nextTier.award}만원</>
               : <>최고 구간에 도달했습니다</>}
           </p>
+        </section>
+
+        <section className="st-panel">
+          <h2>자격증</h2>
+          <ul className="st-list">
+            {record.certs.map(c => (
+              <li key={c.label}>
+                <span>{c.label}</span>
+                <span className={`st-state ${c.status === '취득' ? 'is-done' : 'is-ongoing'}`}>{c.status}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section className="st-panel">
+          <h2>어학</h2>
+          {record.languages.map(lang => <LanguageRow key={lang.label} lang={lang} />)}
+        </section>
+
+        <section className="st-panel is-ai">
+          <h2><i className="fa-solid fa-wand-magic-sparkles" />AI 코멘트</h2>
+          <p className="st-ai-text">{record.aiComment.text}</p>
+          <small className="st-ai-date">분석 기준일 {record.aiComment.basedOn}</small>
         </section>
       </aside>
     </div>
