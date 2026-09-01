@@ -493,32 +493,6 @@ function GapTab({ student, radar }: { student: StudentData; radar: CompetencyRad
         </section>
       </div>
 
-      <div className="dashboard-grid">
-        <section data-slot="card">
-          <CardHead title="목표 직무 대비 GAP" desc="목표 직무 요구 조건과 현재 보유 수준의 차이입니다." />
-          <div data-slot="card-content">
-            {student.gapItems.length === 0 ? (
-              <p className="sdv-empty">분석된 역량 GAP이 없습니다.</p>
-            ) : (
-              student.gapItems.map((g, i) => (
-                <div key={i} className="gap-row">
-                  <div className="gap-row-top">
-                    <b>{g.title}</b>
-                    {g.badges.map((b, bi) => (
-                      <span key={bi} className={`badge${b.type === 'required' ? ' coral' : b.type === 'preferred' ? ' blue' : ''}`}>{b.label}</span>
-                    ))}
-                  </div>
-                  <p>{g.desc}</p>
-                  <div className="axis-row">
-                    <span className="axis-track"><i style={{ width: `${g.pct}%`, background: g.severity === 'critical' ? 'var(--coral)' : undefined }} /></span>
-                    <span className="gap-row-figs">{g.current} <LuArrowRight className="icon" /> {g.target}</span>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </section>
-      </div>
     </>
   )
 }
@@ -573,6 +547,33 @@ function GrowthTab({ student }: { student: StudentData }) {
                   </div>
                 ))}
               </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="dashboard-grid">
+        <section data-slot="card">
+          <CardHead title="목표 직무 대비 GAP" desc="목표 직무 요구 조건과 현재 보유 수준의 차이입니다." />
+          <div data-slot="card-content">
+            {student.gapItems.length === 0 ? (
+              <p className="sdv-empty">분석된 역량 GAP이 없습니다.</p>
+            ) : (
+              student.gapItems.map((g, i) => (
+                <div key={i} className="gap-row">
+                  <div className="gap-row-top">
+                    <b>{g.title}</b>
+                    {g.badges.map((b, bi) => (
+                      <span key={bi} className={`badge${b.type === 'required' ? ' coral' : b.type === 'preferred' ? ' blue' : ''}`}>{b.label}</span>
+                    ))}
+                  </div>
+                  <p>{g.desc}</p>
+                  <div className="axis-row">
+                    <span className="axis-track"><i style={{ width: `${g.pct}%`, background: g.severity === 'critical' ? 'var(--coral)' : undefined }} /></span>
+                    <span className="gap-row-figs">{g.current} <LuArrowRight className="icon" /> {g.target}</span>
+                  </div>
+                </div>
+              ))
             )}
           </div>
         </section>
