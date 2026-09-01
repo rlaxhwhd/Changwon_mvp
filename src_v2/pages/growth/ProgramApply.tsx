@@ -19,10 +19,9 @@ export default function ProgramApply() {
   usePageHead('비교과 프로그램 신청', 'CWNU 학생을 위한 진로·취업 역량 강화 프로그램을 신청하고 XP와 수료증을 획득하세요.')
   const navigate = useNavigate()
   const profile = getActiveStudent()
-  // 자격증·어학 카드는 별도 페이지로 분리됨 — 여기는 비교과·외부활동 2개만
+  // 자격증·어학은 별도 페이지, 외부활동·인턴은 이 화면에서 뺐다 — 비교과 프로그램만 추천한다.
   const recoGroups = [
     { key: 'programs', label: '비교과 프로그램', icon: 'fa-graduation-cap', items: profile.recommendations.programs },
-    { key: 'activities', label: '외부활동 · 인턴', icon: 'fa-briefcase', items: profile.recommendations.activities },
   ]
   const [activeTab, setActiveTab] = useState<Category>('전체')
   const [page, setPage] = useState(1)
@@ -76,7 +75,7 @@ export default function ProgramApply() {
             <h2>{profile.name}님께 추천</h2>
             <p>
               진단 결과 · 역량 점수 · 로드맵 GAP을 종합해 학생에게 가장 적합한
-              비교과·외부활동을 AI가 자동으로 선별합니다.
+              비교과 프로그램을 AI가 자동으로 선별합니다.
             </p>
           </div>
 
@@ -122,7 +121,7 @@ export default function ProgramApply() {
                       <i className="fa-solid fa-lock" />
                     </span>
                     <h4>AI 맞춤 추천이 잠겨 있어요</h4>
-                    <p>버튼을 누르면 AI가 학생 데이터를 분석해 맞춤 비교과·외부활동을 추천해 드립니다.</p>
+                    <p>버튼을 누르면 AI가 학생 데이터를 분석해 맞춤 비교과 프로그램을 추천해 드립니다.</p>
                     <button type="button" className="pr-reco-cta" onClick={handleUnlock}>
                       <i className="fa-solid fa-wand-magic-sparkles" />
                       나에게 맞는 비교과 프로그램 보기
