@@ -32,7 +32,7 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '나의 진로 여정', path: '/lounge#journey', icon: 'fa-route' },
       { label: '목표 달성 계획', path: '/lounge#goal', icon: 'fa-bullseye' },
       { label: '이번 주 할 일', path: '/lounge#todo', icon: 'fa-list-check' },
-      { label: '나를 위한 AI추천', path: '/lounge#recommend', icon: 'fa-wand-magic-sparkles' },
+      { label: '성장 활동 기록', path: '/lounge#recommend', icon: 'fa-timeline' },
       { label: '5대 핵심역량', path: '/lounge#competency', icon: 'fa-chart-bar' },
       { label: '진단 결과', path: '/lounge#diagnosis', icon: 'fa-chart-pie' },
       { label: '상담 현황', path: '/lounge#counseling-status', icon: 'fa-comments' },
