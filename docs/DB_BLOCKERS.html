@@ -1,0 +1,1005 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>학사DB 의존 블로커 — 전산원 요청 대장</title>
+
+<style>
+  :root {
+    --paper:   #E8E7E1;
+    --card:    #FCFCFA;
+    --card-2:  #F2F1EC;
+    --ink:     #16181A;
+    --ink-2:   #565A5E;
+    --ink-3:   #83878B;
+    --rule:    #C7C8C0;
+    --rule-2:  #DEDED8;
+
+    --stop:      #9E2B25;
+    --stop-soft: #F4E3E1;
+    --stop-line: #DCB4B0;
+    --wait:      #8A6516;
+    --wait-soft: #F4EBD9;
+    --wait-line: #D9C58C;
+    --ours:      #2C5A4C;
+    --ours-soft: #DFEAE5;
+    --ours-line: #A9C6BC;
+
+    --sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", Pretendard,
+            "Malgun Gothic", "Segoe UI", system-ui, sans-serif;
+    --mono: ui-monospace, "Cascadia Mono", SFMono-Regular, "SF Mono", Consolas,
+            "Liberation Mono", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:   #131413;
+      --card:    #1C1E1D;
+      --card-2:  #232624;
+      --ink:     #E7E8E3;
+      --ink-2:   #9BA09E;
+      --ink-3:   #71767A;
+      --rule:    #333735;
+      --rule-2:  #282B29;
+      --stop:      #E08078;
+      --stop-soft: #341A18;
+      --stop-line: #6B322D;
+      --wait:      #D3AA55;
+      --wait-soft: #302511;
+      --wait-line: #634A1E;
+      --ours:      #6BB8A2;
+      --ours-soft: #14302A;
+      --ours-line: #2E5A4E;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:   #131413;
+    --card:    #1C1E1D;
+    --card-2:  #232624;
+    --ink:     #E7E8E3;
+    --ink-2:   #9BA09E;
+    --ink-3:   #71767A;
+    --rule:    #333735;
+    --rule-2:  #282B29;
+    --stop:      #E08078;
+    --stop-soft: #341A18;
+    --stop-line: #6B322D;
+    --wait:      #D3AA55;
+    --wait-soft: #302511;
+    --wait-line: #634A1E;
+    --ours:      #6BB8A2;
+    --ours-soft: #14302A;
+    --ours-line: #2E5A4E;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.68;
+    -webkit-font-smoothing: antialiased;
+    word-break: keep-all;
+  }
+
+  .wrap {
+    max-width: 1020px;
+    margin: 0 auto;
+    padding: 56px 26px 110px;
+    display: flex;
+    flex-direction: column;
+    gap: 54px;
+  }
+
+  /* ---------- masthead ---------- */
+  .mast { display: flex; flex-direction: column; gap: 15px; padding-bottom: 28px; border-bottom: 2px solid var(--ink); }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: flex; flex-wrap: wrap; gap: 7px 18px;
+  }
+  .mast h1 {
+    margin: 0;
+    font-size: clamp(29px, 5vw, 42px);
+    line-height: 1.15;
+    letter-spacing: -.024em;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .mast .sub { margin: 0; max-width: 64ch; color: var(--ink-2); font-size: 16.5px; }
+
+  /* ---------- tally band ---------- */
+  .tally {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1px;
+    background: var(--rule);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .tally div { background: var(--card); padding: 18px 20px; display: flex; flex-direction: column; gap: 4px; }
+  .tally .n {
+    font-family: var(--mono);
+    font-size: 31px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -.03em;
+    font-weight: 600;
+  }
+  .tally .n.stop { color: var(--stop); }
+  .tally .n.wait { color: var(--wait); }
+  .tally .n.ours { color: var(--ours); }
+  .tally .l { font-size: 13.5px; color: var(--ink-2); line-height: 1.45; }
+
+  /* ---------- sections ---------- */
+  section { display: flex; flex-direction: column; gap: 20px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .17em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    display: flex; align-items: center; gap: 11px;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+
+  h2 { margin: 0; font-size: 24px; line-height: 1.3; letter-spacing: -.02em; font-weight: 680; text-wrap: balance; }
+  h3 { margin: 0; font-size: 16.5px; font-weight: 660; letter-spacing: -.008em; }
+  p { margin: 0; max-width: 74ch; }
+  p.lede { font-size: 17px; color: var(--ink-2); }
+  .small { font-size: 13.5px; }
+  .muted { color: var(--ink-2); }
+
+  code.inl {
+    font-family: var(--mono);
+    font-size: .87em;
+    background: var(--card-2);
+    border: 1px solid var(--rule-2);
+    border-radius: 2px;
+    padding: 1px 5px;
+    white-space: nowrap;
+  }
+
+  /* ---------- tag ---------- */
+  .tag {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 660;
+    border-radius: 2px;
+    padding: 1px 8px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+  .tag.stop { color: var(--stop); background: var(--stop-soft); border-color: var(--stop-line); }
+  .tag.wait { color: var(--wait); background: var(--wait-soft); border-color: var(--wait-line); }
+  .tag.ours { color: var(--ours); background: var(--ours-soft); border-color: var(--ours-line); }
+
+  /* ---------- index table ---------- */
+  .tscroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 2px; background: var(--card); }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  caption {
+    caption-side: top; text-align: left; padding: 14px 16px 12px;
+    font-size: 14px; font-weight: 640; color: var(--ink);
+    border-bottom: 1px solid var(--rule-2);
+  }
+  th, td { padding: 9px 14px; text-align: left; vertical-align: top; }
+  thead th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-3); font-weight: 500;
+    background: var(--card-2); border-bottom: 1px solid var(--rule); white-space: nowrap;
+  }
+  tbody tr + tr td { border-top: 1px solid var(--rule-2); }
+  tbody tr.grp-end td { border-bottom: 2px solid var(--rule); }
+  td.id { font-family: var(--mono); font-weight: 700; white-space: nowrap; font-size: 13px; }
+  td.nw { white-space: nowrap; }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ---------- item cards ---------- */
+  .items { display: flex; flex-direction: column; gap: 13px; }
+  .item {
+    background: var(--card);
+    border: 1px solid var(--rule);
+    border-radius: 2px;
+    padding: 20px 22px;
+    display: grid;
+    grid-template-columns: 46px 1fr;
+    gap: 8px 16px;
+  }
+  .item .aid {
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    color: var(--ink); background: var(--card-2);
+    border: 1px solid var(--rule); border-radius: 2px;
+    padding: 2px 0; text-align: center; height: fit-content;
+    letter-spacing: .03em;
+  }
+  .item .hd { grid-column: 2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 11px; }
+  .item .bd { grid-column: 2; display: flex; flex-direction: column; gap: 11px; }
+  .item dl { margin: 0; display: grid; grid-template-columns: 8.5em 1fr; gap: 7px 14px; font-size: 14.5px; }
+  .item dt {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--ink-3); padding-top: 4px;
+  }
+  .item dd { margin: 0; color: var(--ink); }
+  .item dd.why { color: var(--ink-2); }
+  .item dd strong { font-weight: 660; }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 36px 17px 76px; gap: 42px; }
+    .item { grid-template-columns: 1fr; }
+    .item .hd, .item .bd { grid-column: 1; }
+    .item dl { grid-template-columns: 1fr; gap: 2px 0; }
+    .item dt { padding-top: 8px; }
+  }
+
+  .note {
+    background: var(--card-2);
+    border: 1px solid var(--rule-2);
+    border-radius: 2px;
+    padding: 16px 18px;
+    font-size: 14.5px;
+    color: var(--ink-2);
+    max-width: 80ch;
+  }
+  .note strong { color: var(--ink); font-weight: 640; }
+
+  ol.asks { margin: 0; padding: 0; list-style: none; counter-reset: a; display: flex; flex-direction: column; gap: 9px; }
+  ol.asks li {
+    counter-increment: a;
+    display: grid; grid-template-columns: 30px 1fr; gap: 14px; align-items: baseline;
+    background: var(--card); border: 1px solid var(--rule); border-radius: 2px;
+    padding: 13px 18px; font-size: 15.5px;
+  }
+  ol.asks li::before {
+    content: counter(a, decimal-leading-zero);
+    font-family: var(--mono); font-size: 12px; color: var(--ink-3);
+  }
+
+  footer {
+    border-top: 1px solid var(--rule); padding-top: 20px;
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: .06em;
+    color: var(--ink-3); text-transform: uppercase;
+    display: flex; flex-wrap: wrap; gap: 6px 20px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="mast">
+    <div class="kicker">
+      <span>전산원 요청 대장</span>
+      <span>창원대 드림캐치 고도화</span>
+      <span>2026-09-01</span>
+    </div>
+    <h1>개발로는 풀 수 없는 것</h1>
+    <p class="sub">
+      신규 드림캐치 구축에서 <strong>쿼리·개발로 해결이 불가능한 항목만</strong> 추렸다.
+      데이터가 아예 없거나 · 정의를 학사DB만 알거나 · 등록 권한이 학교에 있거나 · 승인이 필요한 건이다.
+      우리 코드를 고쳐서 되는 것은 모두 뺐다.
+    </p>
+  </header>
+
+  <!-- ================= TALLY ================= -->
+  <section>
+    <div class="tally">
+      <div><span class="n stop">14</span><span class="l">학사DB 의존 항목</span></div>
+      <div><span class="n stop">1</span><span class="l">이것 하나가 <br>로드맵 1개 축 전체를 막는다</span></div>
+      <div><span class="n wait">415<span style="font-size:.55em;color:var(--ink-3)"> / 595</span></span><span class="l">학적학과코드 충전율<br>나머지는 수작업</span></div>
+      <div><span class="n ours">3</span><span class="l">전산원에 묻기 전<br>우리가 먼저 확인할 것</span></div>
+    </div>
+    <div class="note">
+      <strong>이 문서가 다루지 않는 것.</strong> 신분코드 <code class="inl">'1101'</code> 리터럴 229곳,
+      학과 트리 이중화, 조교배정 화면의 OUTER JOIN 붕괴 — <strong>전부 우리 코드 부채다.</strong>
+      전산원에 가져가면 안 되고, 개발로 끝난다. 요청을 좁게 유지해야 실제로 받아낼 수 있다.
+    </div>
+  </section>
+
+  <!-- ================= INDEX ================= -->
+  <section>
+    <div class="eyebrow">색인</div>
+    <h2>우선순위와 성격</h2>
+    <p class="lede">
+      요청 성격이 넷으로 갈린다. <strong>A는 데이터를 달라는 것, B는 문서를 달라는 것,
+      C는 학사DB에 등록해 달라는 것, D는 승인을 달라는 것</strong>이다. 대응 부서가 다를 수 있다.
+    </p>
+
+    <div class="tscroll">
+      <table>
+        <caption>전산원 소관 14건 — 우선순위順</caption>
+        <thead>
+          <tr><th>#</th><th>항목</th><th>없으면 못 만드는 것</th><th>성격</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="id" style="color:var(--stop)">A1</td>
+            <td>수강 · 강의 · 성적 데이터 적재</td>
+            <td>로드맵 수강·학과 축 · 직무적합도 · 스킬트리 · 추천과목</td>
+            <td class="nw"><span class="tag stop">데이터</span></td>
+          </tr>
+          <tr>
+            <td class="id" style="color:var(--stop)">A2</td>
+            <td>학과 통합 · 분리 이력</td>
+            <td>개편 전후 학생·교수 연결 · 과거 실적 조회</td>
+            <td class="nw"><span class="tag stop">데이터</span></td>
+          </tr>
+          <tr class="grp-end">
+            <td class="id" style="color:var(--stop)">A3</td>
+            <td>미부여 <code class="inl">STATUS_DEPT_CODE</code> 채움</td>
+            <td>신설 5개 학과의 자동 매칭</td>
+            <td class="nw"><span class="tag stop">데이터</span></td>
+          </tr>
+
+          <tr>
+            <td class="id" style="color:var(--wait)">B1</td>
+            <td>학적학과코드 체계 정의서 · 계열키 관통 확약</td>
+            <td>학부 교수 ↔ 대학원생 연결</td>
+            <td class="nw"><span class="tag wait">정의서</span></td>
+          </tr>
+          <tr>
+            <td class="id" style="color:var(--wait)">B2</td>
+            <td><code class="inl">UNIV_CODE</code> 전체 코드값 <span class="small muted">(<code class="inl">90</code> 포함)</span></td>
+            <td>학과명이 빈 채로 적재되는 2건 해소</td>
+            <td class="nw"><span class="tag wait">정의서</span></td>
+          </tr>
+          <tr>
+            <td class="id" style="color:var(--wait)">B3</td>
+            <td>학과 유효성 신뢰 기준 3택 확정</td>
+            <td>폐과가 드롭다운에 남는 문제</td>
+            <td class="nw"><span class="tag wait">정의서</span></td>
+          </tr>
+          <tr>
+            <td class="id" style="color:var(--wait)">B4</td>
+            <td>드림캐치 노출 뷰(<code class="inl">V_*</code>)의 정의</td>
+            <td>신설 학과 누락의 진짜 원인 확정</td>
+            <td class="nw"><span class="tag wait">정의서</span></td>
+          </tr>
+          <tr class="grp-end">
+            <td class="id" style="color:var(--wait)">B5</td>
+            <td>학적학과코드 사후 변경 여부</td>
+            <td>매일 동기화가 조용히 어긋나는 위험</td>
+            <td class="nw"><span class="tag wait">정의서</span></td>
+          </tr>
+
+          <tr>
+            <td class="id" style="color:var(--wait)">C1</td>
+            <td>교수 겸직자 <code class="inl">V_ADD_JOB_PART</code> 등록</td>
+            <td>겸직 교수의 학생 상담 배정</td>
+            <td class="nw"><span class="tag wait">등록</span></td>
+          </tr>
+          <tr class="grp-end">
+            <td class="id" style="color:var(--wait)">C2</td>
+            <td>신설 학과 코드 개강 전 부여 확약</td>
+            <td>매 학기 반복되는 수동 대응</td>
+            <td class="nw"><span class="tag wait">등록</span></td>
+          </tr>
+
+          <tr>
+            <td class="id" style="color:var(--wait)">D1</td>
+            <td>대학원 포함 조직 트리 사용 승인</td>
+            <td>대학원생 비교과 신청 · 교수 상담신청</td>
+            <td class="nw"><span class="tag wait">승인</span></td>
+          </tr>
+          <tr>
+            <td class="id" style="color:var(--wait)">D2</td>
+            <td>통합로그인 프로토콜 · 외부 인원 인증 허용</td>
+            <td>로그인 전체 · 외부 위촉 상담사 접속</td>
+            <td class="nw"><span class="tag wait">승인</span></td>
+          </tr>
+          <tr>
+            <td class="id" style="color:var(--wait)">D3</td>
+            <td>야간 동기화 배치의 현재 가동 주체</td>
+            <td>이관 시점의 데이터 신선도 보장</td>
+            <td class="nw"><span class="tag wait">확인</span></td>
+          </tr>
+          <tr>
+            <td class="id" style="color:var(--wait)">D4</td>
+            <td>학사 유래 개인정보의 파기 주체</td>
+            <td>개인정보파일 정비 · 백업 사본 처리</td>
+            <td class="nw"><span class="tag wait">승인</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= A ================= -->
+  <section>
+    <div class="eyebrow">갈래 A — 데이터가 존재하지 않는다</div>
+    <h2>쿼리를 아무리 잘 짜도 빈 테이블은 빈 테이블이다</h2>
+
+    <div class="items">
+
+      <div class="item">
+        <div class="aid">A1</div>
+        <div class="hd">
+          <h3>수강 · 강의 · 성적 데이터 적재</h3>
+          <span class="tag stop">최우선 · 구현 블로커</span>
+        </div>
+        <div class="bd">
+          <dl>
+            <dt>현 상태</dt>
+            <dd>
+              <code class="inl">V_SUGANG</code>(15컬럼) · <code class="inl">V_LECT_INF</code>(20컬럼)이
+              <strong>테이블도 DB링크도 살아 있는데 행이 0건</strong>이다.
+            </dd>
+            <dt>왜 개발 불가</dt>
+            <dd class="why">
+              <strong>조인 쿼리가 이미 다 작성돼 있다.</strong>
+              <code class="inl">Ca.getGoalCour_List</code>(ca.xml:334) ·
+              <code class="inl">Ca.getLecList</code>(ca.xml:2345) ·
+              <code class="inl">Common.getLecList</code>(common.xml:1325)가
+              두 테이블을 <code class="inl">YEAR+SMT+GRAD_DIV+CURI_NUM</code> 4컬럼 복합키로 조인한다.
+              <strong>코드가 없어서 안 되는 게 아니라 데이터가 안 들어와서 안 된다.</strong>
+              적재만 켜지면 그날 바로 동작한다.
+            </dd>
+            <dt>요청</dt>
+            <dd>
+              적재 활성화. 학사 원본 뷰 이름을 알고 있으므로 지정해서 요청 가능하다 —
+              <strong><code class="inl">수강전체</code>(<code class="inl">VIEW_SUGANG_ALL</code>)</strong> ·
+              <strong><code class="inl">수업개설</code>(<code class="inl">VIEW_SUUP_GAESUL</code>)</strong>.
+              <code class="inl">GRAD_DIV</code>(과정구분) · <code class="inl">GRADE</code> ·
+              <code class="inl">GPA</code> · <code class="inl">CDT_NUM</code>(학점) 포함이 필요하다.
+            </dd>
+            <dt>막히는 것</dt>
+            <dd>
+              <strong>로드맵 3축 중 &lsquo;수강 교과목 · 학과&rsquo; 축이 통째로 비어 있다.</strong>
+              직무 적합도 · 추천과목도 같은 데이터를 쓴다.
+              스킬트리 화면은 지금 <strong>학사DB 미러를 목업으로 채워 만들고 있다</strong> —
+              데이터가 오면 로더만 갈아끼우게 설계했지만, 안 오면 목업인 채로 납품된다.
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">A2</div>
+        <div class="hd">
+          <h3>학과 통합 · 분리 이력</h3>
+          <span class="tag stop">확인된 공백</span>
+        </div>
+        <div class="bd">
+          <dl>
+            <dt>현 상태</dt>
+            <dd>
+              이관 · 중복 · 학위과정은 <code class="inl">STATUS_DEPT_CODE</code>로 잡힌다.
+              <strong>통합 · 분리만 어느 컬럼에도 없다.</strong>
+            </dd>
+            <dt>왜 개발 불가</dt>
+            <dd class="why">
+              <code class="inl">STATUS_DEPT_CODE</code>는 <strong>동일성 키지 이력 키가 아니다.</strong>
+              신소재공학부가 <code class="inl">501</code>→<code class="inl">505</code>로 이관될 때는
+              단대가 7에서 5로 바뀌었는데도 <code class="inl">U04070300012</code>가 그대로 따라갔다(폐지 다음 날 개설, 날짜로 입증).
+              그런데 <code class="inl">505</code>에서
+              <strong>재료금속공학과(<code class="inl">506</code>) · 첨단소재융합공학과(<code class="inl">507</code>)</strong>로
+              나뉘는 관계는 — 계열키가 <code class="inl">040703</code>과 <code class="inl">040704</code>로 갈라지고,
+              <code class="inl">SUUP_DEPT_CODE</code>는 셋 다 자기 자신이고,
+              <code class="inl">505</code>에는 폐지일조차 없다.
+              <strong>존재하지 않는 관계는 어떤 쿼리로도 못 만든다.</strong>
+            </dd>
+            <dt>요청</dt>
+            <dd>
+              이력을 관리하는 테이블 · 컬럼이 있는지, DB링크로 열람 가능한지.
+              <strong>관리하지 않는다면 실무에서 무엇을 기준으로 판단하는지</strong> —
+              &ldquo;없습니다&rdquo;도 확정 답변이면 우리가 이력 테이블을 신설해 떠안는다.
+            </dd>
+            <dt>막히는 것</dt>
+            <dd>
+              개편 전 학과 학생이 개편 후 교수에게 상담신청을 못 한다.
+              <strong>&ldquo;작년 신소재공학부 상담 실적&rdquo;을 개편 후에 답할 수 없다.</strong>
+              대학은 학과 개편이 상시라 이건 일회성 버그가 아니다.
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">A3</div>
+        <div class="hd">
+          <h3>미부여 학적학과코드 채움</h3>
+          <span class="tag stop">운영 직결</span>
+        </div>
+        <div class="bd">
+          <dl>
+            <dt>현 상태</dt>
+            <dd>
+              <code class="inl">MCODE.C_DEPT</code> 595행 중 <strong>415행만 충전(70%)</strong>.
+              <strong>하필 신설 학과가 비어 있다</strong> — <code class="inl">162</code> 전기공학과 ·
+              <code class="inl">519</code> 스마트기계전자과 · <code class="inl">520</code> 소방전기과.
+            </dd>
+            <dt>왜 개발 불가</dt>
+            <dd class="why">
+              코드 부여는 학사DB 소관이다. 우리는 빈 값을 채울 수 없고,
+              <strong>추정으로 채우면 틀렸을 때 학생이 엉뚱한 교수에게 배정된다.</strong>
+              <br><br>
+              부여 기준도 일관되지 않다. 같은 날 개설된 같은 개편 건인데
+              <code class="inl">506</code>은 정식코드(<code class="inl">U04070400017</code>)를 받았고
+              <code class="inl">507</code>은 임시코드(<code class="inl">T00000012296</code>)에 머물러 있다.
+              <code class="inl">T</code> 접두는 <code class="inl">604</code> AI전기공학과에서도 나온다.
+              <strong>미부여 집계 시 <code class="inl">NULL</code>만 세면 이 건들을 놓친다.</strong>
+            </dd>
+            <dt>요청</dt>
+            <dd>활성 학과 우선 채움 — <code class="inl">162</code> · <code class="inl">519</code> · <code class="inl">520</code> · <code class="inl">507</code> · <code class="inl">604</code>. 폐과 코드 소급 부여 계획도 함께(졸업생 이력 조회에 필요).</dd>
+            <dt>막히는 것</dt>
+            <dd>자동 확장이 <strong>415개 학과까지만</strong> 적용된다. 나머지는 지금처럼 사람이 매번 매칭한다.</dd>
+          </dl>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= B ================= -->
+  <section>
+    <div class="eyebrow">갈래 B — 데이터는 있는데 정의를 모른다</div>
+    <h2>값은 읽히지만 무슨 뜻인지는 만든 쪽만 안다</h2>
+    <p class="lede">
+      이 갈래는 <strong>추측으로 개발하면 당장은 돌아간다.</strong> 그게 위험한 이유다 —
+      가설이 틀렸다는 건 몇 달 뒤 학생이 잘못 매칭됐을 때 알게 된다.
+    </p>
+
+    <div class="items">
+
+      <div class="item">
+        <div class="aid">B1</div>
+        <div class="hd">
+          <h3>학적학과코드 체계 정의서 · 계열키 관통 확약</h3>
+          <span class="tag wait">가설 검증</span>
+        </div>
+        <div class="bd">
+          <dl>
+            <dt>우리 가설</dt>
+            <dd>
+              12자리가 <strong>구분 1 + 계열 6 + 일련 5</strong>로 나뉘고,
+              가운데 <strong>계열키가 학부와 대학원을 관통</strong>한다.
+              예: 학부 전기공학과 <code class="inl">U040501…</code> ↔ 대학원 전기공학과 <code class="inl">G040501…</code>
+            </dd>
+            <dt>근거</dt>
+            <dd class="why">
+              전기(<code class="inl">040501</code>) · 전자(<code class="inl">040502</code>) ·
+              신소재(<code class="inl">040703</code>) · 재료(<code class="inl">040704</code>)
+              <strong>네 계열 모두에서 학부(U)와 대학원(G)이 같은 키를 공유하는 것을 실측</strong>했다.
+              다만 <strong>설계된 것인지 우연인지 알 수 없다.</strong>
+            </dd>
+            <dt>요청</dt>
+            <dd>
+              자리수 공식 정의 · 접두 <code class="inl">U</code>/<code class="inl">G</code>/<code class="inl">T</code>의 의미 ·
+              <strong>계열키가 두 과정을 관통하도록 설계된 것인지 확약.</strong>
+              <br><br>
+              <strong>표현 주의</strong> — <code class="inl">DEPT_CODE</code>가 <code class="inl">U04050100006</code>인 행은 없다.
+              상위 행을 가리키는 포인터가 아니라 같은 값끼리 묶이는 동일성 키다.
+              &ldquo;상위코드 맞나요&rdquo;가 아니라
+              <strong>&ldquo;학적 기준으로 동일 학과를 식별하는 키가 맞습니까&rdquo;</strong>로 물어야 한다.
+            </dd>
+            <dt>막히는 것</dt>
+            <dd>
+              <strong>대학원생이 교수 상담신청할 때 교수가 안 나오는 문제.</strong>
+              관통이 확약되면 개발로 끝나고, 부정되면 학부↔대학원 매핑표 요청으로 되돌아간다.
+              <span class="muted">— 이 문서에서 답에 따라 가장 크게 갈리는 항목이다.</span>
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">B2</div>
+        <div class="hd"><h3><code class="inl">UNIV_CODE</code> 전체 코드값 정의서</h3></div>
+        <div class="bd">
+          <dl>
+            <dt>현 상태</dt>
+            <dd>
+              동기화가 <code class="inl">00</code>~<code class="inl">10</code>·<code class="inl">91</code>만 처리한다.
+              <code class="inl">519</code>·<code class="inl">520</code>이 <strong><code class="inl">90</code></strong>이라
+              <strong>학과명이 빈 채로 적재된다.</strong>
+            </dd>
+            <dt>왜 개발 불가</dt>
+            <dd class="why">
+              <code class="inl">90</code>이 무엇인지 모르면 필터에 넣을지 뺄지 정할 수 없다.
+              그냥 통과시키면 나중에 <code class="inl">90</code>이 &ldquo;폐지 예정&rdquo; 같은 값일 때 폐과가 노출된다.
+            </dd>
+            <dt>요청</dt>
+            <dd>전체 코드값 표. <code class="inl">90</code>과 미사용 구간 포함.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">B3</div>
+        <div class="hd"><h3>학과 유효성 신뢰 기준 확정</h3></div>
+        <div class="bd">
+          <dl>
+            <dt>현 상태</dt>
+            <dd>
+              <code class="inl">USE_FLAG</code> · <code class="inl">OPEN_YEAR</code> ·
+              <code class="inl">CLOSE_YEAR</code> <strong>세 값이 서로 모순된다.</strong>
+            </dd>
+            <dt>실물</dt>
+            <dd class="why">
+              <code class="inl">709</code>·<code class="inl">710</code>·<code class="inl">711</code> —
+              <code class="inl">CLOSE_YEAR</code>가 2025-02-28인데 <code class="inl">USE_FLAG</code>는 1(폐과가 드롭다운에 남음).<br>
+              <code class="inl">501</code> 신소재공학부 — 폐지됐는데 <code class="inl">USE_FLAG</code> 1이라
+              <code class="inl">505</code>와 <strong>같은 이름이 둘 다 뜬다.</strong> 학생이 어느 쪽을 고르냐로 결과가 갈린다.<br>
+              <code class="inl">604</code> AI전기공학과 — <code class="inl">OPEN_YEAR</code>가 2027인데 벌써 노출된다.
+            </dd>
+            <dt>왜 개발 불가</dt>
+            <dd class="why">
+              날짜 필터 자체는 우리가 짤 수 있다.
+              <strong>세 값 중 무엇을 신뢰해야 하는지를 정하는 건 데이터 소유자만 할 수 있다.</strong>
+              잘못 고르면 멀쩡한 학과가 사라지거나 폐과가 계속 남는다.
+            </dd>
+            <dt>요청</dt>
+            <dd>&ldquo;활성 학과&rdquo;의 공식 판정 기준 한 줄.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">B4</div>
+        <div class="hd"><h3>드림캐치 노출 뷰의 정의</h3></div>
+        <div class="bd">
+          <dl>
+            <dt>정황</dt>
+            <dd>
+              운영자가 전산원에 <strong>&ldquo;<code class="inl">V_</code> 테이블에 학과를 추가해 달라&rdquo;</strong>고
+              요청해 온 기록이 있다.
+            </dd>
+            <dt>왜 개발 불가</dt>
+            <dd class="why">
+              사실이라면 <strong>신설 학과가 우리 쪽 필터가 아니라 뷰 단계에서 이미 걸러진다</strong>는 뜻이다.
+              우리 코드를 아무리 고쳐도 안 나온다. <strong>뷰 정의를 못 보면 원인을 확정할 수 없다.</strong>
+            </dd>
+            <dt>요청</dt>
+            <dd>드림캐치에 노출되는 <code class="inl">V_*</code> 뷰의 정의(WHERE 조건). 학과 추가가 수동 작업인지 여부.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">B5</div>
+        <div class="hd"><h3>학적학과코드 사후 변경 여부</h3></div>
+        <div class="bd">
+          <dl>
+            <dt>요청</dt>
+            <dd>부여된 <code class="inl">STATUS_DEPT_CODE</code>가 나중에 바뀌는 경우가 있는지, 있다면 변경 이력 조회 방법.</dd>
+            <dt>왜 중요</dt>
+            <dd class="why">
+              값이 바뀌면 <strong>매일 새벽 동기화가 조용히 어긋난다.</strong> 에러도 안 난다.
+              <strong>&ldquo;안 바뀝니다&rdquo; 확답만 받아도 설계가 훨씬 단순해진다</strong> — 변경 감지 레이어를 안 만들어도 된다.
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= C ================= -->
+  <section>
+    <div class="eyebrow">갈래 C — 마스터 등록 권한이 학교에 있다</div>
+    <h2>우리가 할 수 있는 건 하드코딩뿐이다</h2>
+
+    <div class="items">
+
+      <div class="item">
+        <div class="aid">C1</div>
+        <div class="hd">
+          <h3>교수 겸직자의 소속 등록</h3>
+          <span class="tag wait">하드코딩 제거</span>
+        </div>
+        <div class="bd">
+          <dl>
+            <dt>증상</dt>
+            <dd>
+              <strong>산학협력단 소속 직원이지만 교수를 겸하는 인원</strong>이 학생 상담에서 매핑되지 않는다.
+            </dd>
+            <dt>원인</dt>
+            <dd class="why">
+              동기화 로직이 사용자 유형이 &lsquo;직원&rsquo;이면 소속을
+              <strong>학과가 아니라 부서코드로 덮어쓴다.</strong>
+              그래서 겸직 교수의 학과 권한이 <strong>매일 새벽 사라진다.</strong>
+            </dd>
+            <dt>현재 대응</dt>
+            <dd>
+              <strong>사번 <code class="inl">13225</code> 한 명을 배치에 못 박아</strong> 되돌리고 있다.
+              사람이 늘 때마다 코드를 고쳐야 한다.
+            </dd>
+            <dt>왜 개발 불가</dt>
+            <dd class="why">
+              학사DB에 겸직이 등록돼야 근본 해결이다.
+              <strong>등록만 되면 하드코딩은 그날 없어진다</strong> —
+              <code class="inl">V_ADD_JOB_PART</code>는 이미 매일 동기화되고(17행, 최근 갱신 2026-07-28)
+              화면 쿼리도 이미 이 테이블을 참조한다. <strong>받을 준비가 다 돼 있고 데이터만 없다.</strong>
+            </dd>
+            <dt>요청</dt>
+            <dd>
+              겸직 등록이 가능한지. <strong>불가하다면 이런 인원을 학사DB에서 식별할 다른 기준</strong>이 있는지.
+              사번 <code class="inl">13225</code> 외 동일 사례 일괄 포함.
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">C2</div>
+        <div class="hd"><h3>신설 학과 코드 개강 전 부여 확약</h3></div>
+        <div class="bd">
+          <dl>
+            <dt>요청</dt>
+            <dd>
+              신설 학과에 <code class="inl">STATUS_DEPT_CODE</code>가 언제 부여되는지와
+              <strong>개강 전 부여를 확약</strong>받을 수 있는지.
+              임시코드(<code class="inl">T</code> 접두)의 정식 전환 시점도 함께.
+            </dd>
+            <dt>왜 중요</dt>
+            <dd class="why">
+              개강 시점에 안 채워지면 <strong>그 학기는 또 수동 대응</strong>이다.
+              이게 매년 반복돼 온 유지보수의 정체다. 확약은 코드로 못 만든다.
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= D ================= -->
+  <section>
+    <div class="eyebrow">갈래 D — 승인 · 정책</div>
+    <h2>기술이 아니라 결재가 필요한 것</h2>
+
+    <div class="items">
+
+      <div class="item">
+        <div class="aid">D1</div>
+        <div class="hd">
+          <h3>대학원 포함 조직 트리 사용 승인</h3>
+          <span class="tag wait">요구사항 확정분</span>
+        </div>
+        <div class="bd">
+          <dl>
+            <dt>내용</dt>
+            <dd>
+              신규 시스템은 <strong>대학원을 포함한 조직 트리를 정본으로 쓴다.</strong>
+              현행이 쓰는 대학원 누락본을 쓰지 않는다.
+            </dd>
+            <dt>왜 승인 사항</dt>
+            <dd class="why">
+              데이터는 이미 읽힌다. <strong>막고 있는 건 전부 우리 쪽 하드코딩이라 개발로 풀린다.</strong>
+              다만 <strong>&ldquo;대학원생을 정식 대상으로 삼는다&rdquo;는 건 정책 변경</strong>이라
+              전산원·학사 양쪽 합의가 있어야 한다. 대학원생 비교과 신청과 교수 상담신청은
+              <strong>이미 요구사항으로 확정</strong>돼 있다.
+            </dd>
+            <dt>딸린 것</dt>
+            <dd>과정별 동명 학과가 다수 존재하므로 <strong>학과명이 아니라 (단대코드, 학과코드) 쌍</strong>으로 식별한다는 전제 확인.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">D2</div>
+        <div class="hd">
+          <h3>통합로그인 프로토콜 · 외부 인원 인증 경로</h3>
+          <span class="tag wait">보안 결재</span>
+        </div>
+        <div class="bd">
+          <dl>
+            <dt>요청</dt>
+            <dd>SSO 연동 규격(<code class="inl">LOGIN_ID</code> / <code class="inl">INTG_UID</code> 대응)과 연동 절차.</dd>
+            <dt>같이 물을 것</dt>
+            <dd class="why">
+              <strong>외부 인원이 SSO 밖에서 자체 비밀번호로 접속하는 구조가 정식 승인된 것인지.</strong>
+              현행은 외부 위촉 상담사(<code class="inl">COM_CON_INF.CONPWD</code>)와
+              기업 담당자·멘토(<code class="inl">TB_CARR_USER_LOGIN</code>)에 <strong>이미 이 패턴을 쓰고 있다.</strong>
+              신규 시스템이 그대로 계승할지, 아니면 다른 경로를 마련할지는
+              <strong>우리가 정할 수 있는 사안이 아니다.</strong>
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">D3</div>
+        <div class="hd"><h3>야간 동기화 배치의 현재 가동 주체</h3></div>
+        <div class="bd">
+          <dl>
+            <dt>확인된 모순</dt>
+            <dd>
+              학사동기화 배치가 <strong><code class="inl">web.xml:20</code>에서 주석 처리돼 미기동</strong>인데,
+              <strong>데이터는 최근까지 갱신되고 있다</strong>(조직 트리 최종 2026-07-28).
+              <strong>어떤 경로로든 돌고는 있는데 그게 무엇인지 모른다.</strong>
+            </dd>
+            <dt>왜 개발 불가</dt>
+            <dd class="why">
+              소스에 없는 스케줄러는 소스를 아무리 읽어도 안 나온다.
+              <strong>이관 시점에 &ldquo;최신 데이터&rdquo;가 무엇인지 보장할 수 없고,</strong>
+              신규 시스템이 같은 주기를 재현해야 하는지도 정할 수 없다.
+            </dd>
+            <dt>요청</dt>
+            <dd>현재 학사→드림캐치 적재를 수행하는 주체와 주기. 별도 스케줄러 · 외부 잡 여부.</dd>
+          </dl>
+        </div>
+      </div>
+
+      <div class="item">
+        <div class="aid">D4</div>
+        <div class="hd">
+          <h3>학사 유래 개인정보의 파기 주체</h3>
+          <span class="tag wait">개인정보 정비 연계</span>
+        </div>
+        <div class="bd">
+          <dl>
+            <dt>배경</dt>
+            <dd>
+              드림캐치가 보유한 인원은 <strong>113,823명</strong>이고 <strong>전량이 학사DB 미러</strong>다.
+              별도로 <strong>백업 사본 70개 테이블 · 215만 행</strong>이 쌓여 있고,
+              그중 <strong>개인정보 컬럼을 가진 것이 10개 · 44.4만 행</strong>이다
+              (사용자 마스터 스냅샷이 2020-06부터 4벌).
+            </dd>
+            <dt>왜 개발 불가</dt>
+            <dd class="why">
+              미러는 <strong>지워도 다음 동기화에 다시 들어온다.</strong> 우리 쪽 삭제는 의미가 없다.
+              백업 사본은 지울 수 있지만 <strong>원본 소스 조각이 불완전해 무엇이 참조 중인지 확정되지 않았다</strong> —
+              지금 지우면 되돌릴 수 없다.
+            </dd>
+            <dt>요청</dt>
+            <dd>
+              학사 유래 개인정보의 <strong>보존기간과 파기 주체</strong>(학사DB 쪽인지 드림캐치 쪽인지).
+              신규 시스템에서 <strong>미러 범위를 줄일 수 있는지</strong> —
+              현재 43컬럼 전량을 받는데 실제로 쓰는 건 일부다.
+              <span class="muted">보존기간 · 마스킹 · 상담기록 별도 보관 요건은 정보보호 담당과 함께 확인.</span>
+            </dd>
+          </dl>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= NOT THEIRS ================= -->
+  <section>
+    <div class="eyebrow">전산원 소관 아님</div>
+    <h2>가져가면 안 되는 것</h2>
+    <p class="lede">
+      요청 목록이 길어지면 우선순위가 무너지고, 우리 부채를 학교 탓으로 돌리는 것처럼 읽힌다.
+      <strong>아래는 전부 우리가 해결한다.</strong>
+    </p>
+
+    <div class="tscroll">
+      <table>
+        <thead>
+          <tr><th>증상</th><th>진짜 원인</th><th>주체</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>대학원 학과가 조교추가 · 교수배정 화면에 아예 없음</td>
+            <td>우리 동기화 필터가 학부·석사만 통과시킨다</td>
+            <td class="nw"><span class="tag ours">개발</span></td>
+          </tr>
+          <tr>
+            <td>같은 학과가 두 번 떠서 배정을 두 번 함</td>
+            <td>우리 쿼리 — 단대만 다른 중복 등재를 안 묶는다</td>
+            <td class="nw"><span class="tag ours">개발</span></td>
+          </tr>
+          <tr>
+            <td>하위 전공이 없는 학과가 목록에서 사라짐</td>
+            <td>OUTER JOIN이 WHERE 절에 무력화됐다</td>
+            <td class="nw"><span class="tag ours">개발</span></td>
+          </tr>
+          <tr>
+            <td>대학원생이 대상 목록에서 빠짐</td>
+            <td>신분코드 <code class="inl">'1101'</code> 리터럴이 <strong>229곳</strong>에 박혀 있다</td>
+            <td class="nw"><span class="tag ours">개발</span></td>
+          </tr>
+          <tr class="grp-end">
+            <td>학과 트리가 화면마다 다르게 보임</td>
+            <td>트리가 두 벌이고 227곳이 제각각 조회한다</td>
+            <td class="nw"><span class="tag ours">개발</span></td>
+          </tr>
+          <tr>
+            <td>진단 문항 · 판정식</td>
+            <td>미확정 — 사용자 제공 대기</td>
+            <td class="nw"><span class="tag ours">담당자</span></td>
+          </tr>
+          <tr>
+            <td>대학원 수료생을 상담 · 비교과 대상에 넣을지</td>
+            <td>정책 결정</td>
+            <td class="nw"><span class="tag ours">담당자</span></td>
+          </tr>
+          <tr>
+            <td>PK 없는 <strong>122개 / 275개</strong> 테이블의 중복 판정 규칙</td>
+            <td>&ldquo;무엇이 같으면 같은 행인가&rdquo; — <strong>DB가 답을 주지 않는다</strong></td>
+            <td class="nw"><span class="tag ours">운영 담당자</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="note">
+      <strong>맨 아래 한 건만 성격이 다르다.</strong> PK 없는 122개 테이블은
+      <strong>개발로도 쿼리로도 못 푸는데 전산원 소관도 아니다.</strong>
+      신규 설계는 전 테이블에 PK가 있어 <strong>지금 데이터를 그대로 부으면 적재가 실패한다.</strong>
+      상대가 운영 담당자라 이 미팅 건은 아니지만, <strong>이관 착수 전에 반드시 답이 있어야 한다.</strong>
+    </div>
+  </section>
+
+  <!-- ================= PRE-CHECK ================= -->
+  <section>
+    <div class="eyebrow">미팅 전 자체 확인</div>
+    <h2>물어보기 전에 우리가 먼저 확인할 것</h2>
+    <p class="lede">
+      전산원 항목처럼 보이지만 <strong>우리 DB 계정으로 확인 가능한 것들</strong>이다.
+      미팅에 들고 갔다가 &ldquo;그건 그쪽에서 보실 수 있는데요&rdquo;를 듣지 않도록 먼저 돌린다.
+    </p>
+
+    <div class="tscroll">
+      <table>
+        <thead>
+          <tr><th>확인할 것</th><th>방법</th><th>왜 먼저</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>비교과 참가자격 판정 함수 <code class="inl">FN_GET_PRM_TRGT_YN()</code> 본문</td>
+            <td><code class="inl">USER_SOURCE</code> 조회<br><span class="small muted">서비스 스키마 소속이면 바로 읽힌다</span></td>
+            <td>대학원생 비교과 신청의 <strong>최종 관문.</strong> 소스 XML에는 없지만 DB에는 있을 가능성이 높다</td>
+          </tr>
+          <tr>
+            <td>조직 트리 두 벌의 <strong>242행 차이</strong>가 정확히 무엇인가</td>
+            <td>준비된 점검 SQL <code class="inl">F-3</code></td>
+            <td>우리 문서가 &ldquo;대학원이 빠진다&rdquo;고 적었는데 <strong>실측과 어긋난다.</strong> 확정 전엔 이 숫자를 외부에 쓰지 않는다</td>
+          </tr>
+          <tr>
+            <td>학과 배정 190건의 코드가 학사 체계와 일치하는가</td>
+            <td>준비된 점검 SQL <code class="inl">H-2</code></td>
+            <td>안 맞으면 A3 요청 범위가 커진다. <strong>미팅 전에 알아야 요청 규모를 말할 수 있다</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ================= ASKS ================= -->
+  <section>
+    <div class="eyebrow">받아 나올 것</div>
+    <h2>미팅 산출물 체크리스트</h2>
+    <ol class="asks">
+      <li><strong>수강 · 강의 · 성적 적재 활성화</strong> — 일정까지. 나머지 13건을 다 못 받아도 이건 받아야 한다</li>
+      <li>학과 통합 · 분리 이력 <strong>제공 또는 부재 확인</strong> — 신소재 → 재료금속 · 첨단소재 건</li>
+      <li>학적학과코드 <strong>체계 정의서</strong> + 계열키 관통 여부 확약</li>
+      <li><code class="inl">UNIV_CODE</code> 전체 코드값 표 — <code class="inl">90</code> 포함</li>
+      <li>활성 학과 미부여 코드 채움 — <code class="inl">162</code> · <code class="inl">519</code> · <code class="inl">520</code> · <code class="inl">507</code> · <code class="inl">604</code></li>
+      <li>신설 학과 <strong>개강 전 부여 확약</strong> · 임시코드 전환 시점</li>
+      <li>학과 유효성 신뢰 기준 <strong>한 줄 확정</strong></li>
+      <li>교수 겸직자 등록 — 사번 <code class="inl">13225</code> 외 동일 사례 포함</li>
+      <li>드림캐치 노출 뷰의 <strong>WHERE 조건</strong> · 학과 추가가 수동 작업인지</li>
+      <li>학적학과코드 <strong>사후 변경 여부</strong> 확답</li>
+      <li>대학원 포함 조직 트리 <strong>사용 승인</strong></li>
+      <li>SSO 규격 · <strong>외부 인원 자체 인증의 공식 허용 여부</strong></li>
+      <li>현재 동기화를 <strong>실제로 돌리는 주체</strong>와 주기</li>
+      <li>학사 유래 개인정보 <strong>보존기간 · 파기 주체</strong> · 미러 축소 가능 여부</li>
+    </ol>
+
+    <div class="note">
+      <strong>요청이 좁아졌다.</strong> 분석 전에는 &ldquo;전체 학과 매핑표를 만들어 주세요&rdquo;가 요청이었다.
+      이관 · 중복 · 학위과정은 <code class="inl">STATUS_DEPT_CODE</code>로 해결되므로
+      학과 건에서 남은 건 <strong>통합 · 분리 이력 하나</strong>다.
+      실물 코드값을 들고 가는 질문이라 <strong>&ldquo;관리 안 합니다&rdquo;든 &ldquo;여기 있습니다&rdquo;든 한 번에 결론이 난다.</strong>
+    </div>
+  </section>
+
+  <footer>
+    <span>근거 — 운영DB 카탈로그 실사 · 운영 소스 전수 분석 · 학사DB 학과 마스터 전수 조회</span>
+    <span>2026-09-01</span>
+  </footer>
+
+</div>
+
+</body>
+</html>
