@@ -21,6 +21,54 @@
     var(--sky, #17a9e6) 100%
   );
 }
+
+/* 썸네일이 있을 때만 왼쪽을 희게 연다.
+   없으면 그 자리에 분류 두 글자를 흰색으로 얹은 타일만 남아 흰 바탕에서 사라진다. */
+.pn-page .jd-hero:has(.jd-logo.has-img) {
+  /* 썸네일 칸을 260px 로 넓히고 배너 높이만큼 세운다 — 이 화면에서는 포스터 한 장이
+     곧 안내문이라 112x72 타일로는 아무것도 읽히지 않았다.
+     stretch 라야 칸이 행 높이(=옆 글 높이)를 그대로 받는다. */
+  grid-template-columns: 260px minmax(0, 1fr) 34%;
+  align-items: stretch;
+  /* 왼쪽 흰색 → 오른쪽 파랑. 흰 구간은 썸네일이 놓이는 자리다 —
+     포스터는 대개 흰 바탕이라, 흰 배경 위에 얹으면 테두리 없이 사진만 남는다.
+     ★ 정지점은 글자 대비로 정해진다: 흰 글자가 시작하는 곳이 좌측 여백 28 + 썸네일 260
+       + 간격 22 = 310px(≈29%)라, 거기까지는 짙은 남색이 다 올라와 있어야 한다.
+       오른쪽 85%/100% 는 기존 값 그대로다(아래 지표 대비 설명 참조). */
+  background: linear-gradient(
+    96deg,
+    #fff 0%,
+    #fff 15%,
+    var(--jd-hero-1) 29%,
+    var(--jd-hero-2) 85%,
+    var(--sky, #17a9e6) 100%
+  );
+}
+
+/* ── 썸네일 — 흰 타일에 담지 않고 사진 자체를 놓는다 ──────────────────────
+   .jd-logo.has-img 의 112x72 흰 타일·테두리·안쪽 여백을 전부 걷는다. */
+.pn-page .jd-logo.has-img {
+  width: auto; height: auto; padding: 0;
+  background: none; border: none; border-radius: 0;
+  align-self: stretch;
+  /* ★ 사진이 배너 높이를 끌고 가면 안 된다.
+     칸을 auto 로 두고 img 를 흐름에 남기면 칸 높이가 사진에서 나온다 —
+     세로로 긴 포스터(891x1260)가 들어오자 배너가 168px 에서 368px 로 늘어났다.
+     사진을 absolute 로 빼면 칸에 흐르는 내용이 없어져, 높이는 stretch 가 주는
+     행 높이(=옆 글 높이)로만 정해진다. */
+  position: relative;
+}
+.pn-page .jd-logo.has-img img {
+  position: absolute;
+  inset: 0;
+  /* 잘라내지 않는다 — 포스터라 글자가 잘리면 안 된다. 남는 자리는 흰 배경이 받는다. */
+  object-fit: contain;
+  /* 오른쪽 끝만 살짝 녹인다. 흰 사진이 파랑으로 넘어가는 경계에 그대로 서 있으면
+     결국 「흰 박스」로 보인다. ::before 오버레이는 배경색과 어긋나면 선이 남으므로
+     이미지 픽셀 자체를 투명하게 만드는 mask 를 쓴다. */
+  mask-image: linear-gradient(to left, transparent 0%, #000 8%);
+  -webkit-mask-image: linear-gradient(to left, transparent 0%, #000 8%);
+}
 /* 지표 라벨은 채용공고에서 흰색 70% 다. 그 배너는 짙어서 괜찮지만 파랑 위에선
    3.3:1 까지 떨어진다 — 여기서만 조금 올린다(측정값 4.4:1). */
 .pn-page .jd-hero-stats dt { color: rgba(255, 255, 255, .88); }
