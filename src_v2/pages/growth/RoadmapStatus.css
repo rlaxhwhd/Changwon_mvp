@@ -310,6 +310,12 @@
   line-height: 1.55;
 }
 
+.rs-footer-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
 .rs-footer-link {
   display: inline-flex;
   flex-shrink: 0;
@@ -326,6 +332,18 @@
 
 .rs-footer-link:hover {
   background: var(--blue);
+  color: #fff;
+}
+
+/* 변경 요청은 로드맵 갈래(보라)다 — 상담 예약(파랑)과 목적지가 다르다.
+   보라는 옅은 면 + 진한 잉크 꼴로 쓴다(수정.md §2-3): soft 면 위 --violet-hover = 4.87:1. */
+.rs-footer-link.is-request {
+  background: var(--violet-soft);
+  color: var(--violet-hover);
+}
+
+.rs-footer-link.is-request:hover {
+  background: var(--violet-hover);
   color: #fff;
 }
 

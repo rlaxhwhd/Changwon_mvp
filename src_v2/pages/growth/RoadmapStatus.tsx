@@ -137,12 +137,18 @@ export default function RoadmapStatus() {
             <strong>로드맵 변경이 필요한가요?</strong>
             <p>
               이 로드맵은 상담기록 · 진단결과 · 학과 · 진로목표 · 목표회사를 종합해 상담사가 설계합니다.
-              학생 화면에서는 직접 수정할 수 없으니, 진로 목표나 일정이 바뀌었다면 다음 상담에서 알려주세요.
+              목표 직무가 바뀌었거나 로드맵을 크게 다시 짜야 한다면 상담을 예약하고,
+              칸 일부만 고치면 된다면 변경 요청을 보내세요.
             </p>
           </div>
-          <Link to="/counsel/career" className="rs-footer-link">
-            상담 예약 <i className="fa-solid fa-arrow-right" aria-hidden="true" />
-          </Link>
+          <div className="rs-footer-actions">
+            <Link to="/counsel/career" className="rs-footer-link">
+              상담 예약 <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+            </Link>
+            <Link to="/roadmap/request" className="rs-footer-link is-request">
+              변경 요청 <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+            </Link>
+          </div>
         </div>
       </section>
 

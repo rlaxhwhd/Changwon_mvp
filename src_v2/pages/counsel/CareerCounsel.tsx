@@ -197,7 +197,6 @@ export default function CareerCounsel() {
               >
                 <span>
                   <strong>{counselor.name} {counselor.title}</strong>
-                  <small>{counselor.specialty}</small>
                 </span>
                 <i className="fa-solid fa-chevron-right" />
               </button>
