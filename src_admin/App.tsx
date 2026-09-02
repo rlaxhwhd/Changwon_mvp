@@ -42,12 +42,17 @@ import ProfessorCounselRecords from './pages/ProfessorCounselRecords'
 import ProfessorSchedule from './pages/ProfessorSchedule'
 import ProfessorProfile from './pages/ProfessorProfile'
 import NotReady from './pages/NotReady'
-import { hasActiveSession, getActiveUser } from './data/staff'
+import { getActiveUser } from './data/staff'
 import type { StaffRole } from './data/schema/staff'
 
-/** 로그인 게이트 — 활성 교직원 세션이 없으면 /login 으로 보낸다. */
+/** 로그인 게이트 — 지금은 통과시킨다.
+ *  목업 공유용이라 /admin 을 열면 로그인을 거치지 않고 바로 화면이 나와야 한다.
+ *  세션이 없어도 getActiveUser() 가 STAFF_USERS[0](상담사)로 떨어지므로
+ *  역할·권한 판정은 그대로 성립한다.
+ *  /login 라우트는 남겨 둔다 — 역할 전환 화면으로 여전히 쓴다.
+ *  ★ 되살릴 때는 아래 한 줄의 주석만 풀면 된다. */
 function RequireLogin() {
-  if (!hasActiveSession()) return <Navigate to="/login" replace />
+  // if (!hasActiveSession()) return <Navigate to="/login" replace />
   return <Outlet />
 }
 

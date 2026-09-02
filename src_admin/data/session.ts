@@ -36,12 +36,15 @@ export function setActiveId(id: string): void {
   window.location.reload()
 }
 
-/** 로그아웃 — 활성 사용자 해제 후 리로드 */
+/** 로그아웃 — 활성 사용자 해제 후 로그인 화면으로.
+ *  리로드가 아니라 이동인 이유: 로그인 게이트를 열어 둔 상태(App.tsx RequireLogin)라
+ *  제자리에서 새로고침하면 기본 사용자로 같은 화면이 다시 떠 로그아웃이 없던 일이 된다.
+ *  경로에 basename 을 붙여 쓴다 — 이 SPA 는 /admin 아래에서만 산다. */
 export function clearSession(): void {
   try {
     localStorage.removeItem(STORAGE_KEY)
   } catch {
     /* ignore */
   }
-  window.location.reload()
+  window.location.assign('/admin/login')
 }
