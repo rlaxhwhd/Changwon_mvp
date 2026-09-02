@@ -1,0 +1,171 @@
+/* ─── 추천채용 지원 모달 (jam- prefix) ──────────────────────────── */
+/* 값은 전부 :root 토큰이다 — 새 hex 를 만들지 않는다(수정.md §2-1). */
+
+.jam-intro {
+  margin: 0 0 18px;
+  font-size: 16px;
+  color: var(--color-text-sub);
+}
+
+.jam-intro strong { color: var(--color-navy); font-weight: 800; }
+
+/* ─── 서류 선택 두 갈래 ─── */
+
+.jam-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.jam-choice {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: border-color 160ms, background 160ms;
+}
+
+.jam-choice:hover { border-color: var(--violet-border); background: var(--color-surface); }
+
+/* 선택 상태는 옅은 면 + 진한 잉크 — 보라 채움 + 흰 글자는 대비가 안 나온다(수정.md §2-3). */
+.jam-choice.is-on {
+  border-color: var(--violet-border-strong);
+  background: var(--violet-soft);
+}
+
+.jam-choice > i {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  background: var(--color-surface);
+  color: var(--color-text-sub);
+  font-size: 16px;
+}
+
+.jam-choice.is-on > i { background: #fff; color: var(--violet-hover); }
+
+.jam-choice > span { display: block; min-width: 0; }
+
+.jam-choice strong {
+  display: block;
+  color: var(--color-navy);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.jam-choice.is-on strong { color: var(--violet-hover); }
+
+.jam-choice small {
+  display: block;
+  margin-top: 3px;
+  color: var(--color-text-sub);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+/* ─── 개별 이력서 ─── */
+
+/* 선택기는 선택 버튼이 대신 연다 — 기본 파일 입력의 생김새를 그대로 두지 않는다. */
+.jam-file-input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.jam-file-picked {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 12px 0 0;
+  padding: 11px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-sub);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.jam-file-picked i { color: var(--mint-ink); }
+
+/* ─── 포트폴리오 펼침 ─── */
+
+.jam-portfolio {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+}
+
+.jam-portfolio-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 14px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* ─── 하단 버튼 ─── */
+
+.jam-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.jam-btn-ghost,
+.jam-btn-primary {
+  height: 40px;
+  padding: 0 26px;
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: var(--font);
+}
+
+.jam-btn-ghost {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-sub);
+}
+
+.jam-btn-ghost:hover { background: var(--color-surface); }
+
+.jam-btn-primary {
+  background: var(--color-cta);
+  color: #fff;
+  border: none;
+  transition: opacity 0.15s;
+}
+
+.jam-btn-primary:hover { opacity: 0.92; }
+
+.jam-btn-primary:disabled {
+  background: #C4CEE6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 900px) {
+  .jam-choices { grid-template-columns: 1fr; }
+}

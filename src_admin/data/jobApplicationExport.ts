@@ -8,6 +8,7 @@
 import { getJobById } from './jobsSource'
 import {
   APPLICATION_STATUS_LABEL,
+  attachmentLabel,
   currentStageLabel,
   getApplicationsByJob,
   getRecommendedJobs,
@@ -19,7 +20,7 @@ import type { JobApplication } from './schema/jobApplication'
 
 const HEADER = [
   '공고명', '회사명', '이름', '학번', '대학', '학과',
-  '학년', '학적구분', '진단유형', '현재 전형', '상태', '지원일', '최종 변경일',
+  '학년', '학적구분', '진단유형', '제출 서류', '현재 전형', '상태', '지원일', '최종 변경일',
 ]
 
 /** 지원 시점 스냅샷을 먼저 쓰고, 학생 단일소스에 있으면 최신 프로필로 채운다. */
@@ -38,6 +39,7 @@ function rowOf(application: JobApplication): string[] {
     `${lite?.grade ?? application.snapGrade}학년`,
     lite?.status ?? application.snapEnrollStatus,
     lite ? typeLabel(lite.studentType) : '',
+    attachmentLabel(application),
     currentStageLabel(application),
     APPLICATION_STATUS_LABEL[application.status],
     application.appliedAt.slice(0, 10),

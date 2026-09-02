@@ -100,6 +100,47 @@ export const APPLICATION_STATUS_LEGACY: Record<ApplicationStatus, string | null>
 /** 아직 결과가 나오지 않은 = 목록 기본 필터에 걸리는 상태 */
 export const APPLICATION_OPEN_STATUSES: ApplicationStatus[] = ['APPLIED', 'IN_PROGRESS']
 
+// ── 지원 서류 ────────────────────────────────────────────────────────────────
+//
+// 현행 `ReAppD`·`ReAgree` 지원 프로세스에 대응한다(SPEC.md §3-6 S16).
+// 학생은 둘 중 하나를 반드시 고른다 — 첨부 없는 지원은 로더가 거부한다(규칙 5).
+
+/** 지원 시 제출하는 서류의 종류 */
+export type ApplyAttachmentKind =
+  | 'PORTFOLIO'    // 드림캐치 포트폴리오 — 마이페이지 이력서(ResumeSheet)를 그대로 제출
+  | 'RESUME_FILE'  // 개별 이력서 — 학생이 따로 만든 파일
+
+export const APPLY_ATTACHMENT_KINDS: ApplyAttachmentKind[] = ['PORTFOLIO', 'RESUME_FILE']
+
+export const APPLY_ATTACHMENT_LABEL: Record<ApplyAttachmentKind, string> = {
+  PORTFOLIO: '드림캐치 포트폴리오',
+  RESUME_FILE: '개별 이력서',
+}
+
+/**
+ * 현행 이관 매핑 — `APPLICATIONMASTER` 의 제출서류 구분값.
+ * ⚠️ 현행 값이 **미확인**이라 null 이다. 확인 후 채울 것(SPEC.md §7-0 규칙 2).
+ */
+export const APPLY_ATTACHMENT_LEGACY: Record<ApplyAttachmentKind, string | null> = {
+  PORTFOLIO: null,
+  RESUME_FILE: null,
+}
+
+/**
+ * 지원에 붙은 서류 1건.
+ *
+ * ★ `PORTFOLIO` 는 파일이 아니라 **참조**다. 포트폴리오 본문을 여기 복사하지 않는다 —
+ *   학생이 이력서를 고치면 상담사가 보는 것도 같이 바뀌어야 하고, 단일소스는
+ *   `src_v2/data/portfolio` 하나다(CLAUDE.md 규칙 3 · 12조).
+ * ★ `RESUME_FILE` 은 파일명만 남긴다. 백엔드가 없어 바이너리를 보관할 곳이 없다.
+ *   실서비스 전환 시 `SY_FILE` 다형 참조(SPEC.md §7-11)로 `FileRef` 를 달면 된다.
+ */
+export interface ApplyAttachment {
+  kind: ApplyAttachmentKind
+  /** 파일명 스냅샷 — `RESUME_FILE` 일 때만 채운다. */
+  fileName?: string
+}
+
 // ── 지원 1건 ─────────────────────────────────────────────────────────────────
 
 /**
@@ -131,6 +172,12 @@ export interface JobApplication {
   currentStageId?: string
   /** 지원 건 상태 */
   status: ApplicationStatus
+  /**
+   * 제출 서류 — 신청 시점 스냅샷(규칙 2).
+   * 신설 필드라 **선택**이다. 첨부 도입 전에 쌓인 지원 건은 값이 없으므로
+   * 화면은 반드시 폴백을 둔다(SPEC.md §5 #2). 새 지원은 로더가 강제한다.
+   */
+  attachment?: ApplyAttachment
   /** 지원 취소 일시 (ISO 8601) — status='CANCELED' 일 때만 */
   canceledAt?: string
 }

@@ -1761,11 +1761,13 @@ input, textarea, select { font-family: var(--font); }
 .admin-jobapp-applicant-roster { overflow-x: auto; margin-top: 14px; }
 .admin-jobapp-applicant-roster .admin-roster-head,
 .admin-jobapp-applicant-roster .admin-roster-row {
-  min-width: 1210px;
+  min-width: 1360px;
   gap: 10px;
-  /* 학생 · 학번 · 학과·학년 · 학적 · 지원일 · 현재 전형 · 상태 · 관리 · 지원서 */
-  grid-template-columns: 0.75fr 0.8fr 1.15fr 0.5fr 0.95fr 0.95fr 0.7fr 1.2fr 1fr;
+  /* 학생 · 학번 · 학과·학년 · 학적 · 지원일 · 제출 서류 · 현재 전형 · 상태 · 관리 · 지원서 */
+  grid-template-columns: 0.75fr 0.8fr 1.15fr 0.5fr 0.95fr 1.2fr 0.95fr 0.7fr 1.2fr 1fr;
 }
+/* 개별 이력서는 파일명이 붙어 길어진다 — 줄을 밀지 않고 자른다(전문은 title 로 뜬다). */
+.admin-jobapp-attach { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .admin-jobapp-applicant-roster .admin-roster-row { cursor: default; }
 .admin-jobapp-applicant-roster .admin-roster-row:hover { background: var(--color-section-bg); }
 .admin-jobapp-applicant-roster .admin-roster-cell small { display: block; white-space: nowrap; }

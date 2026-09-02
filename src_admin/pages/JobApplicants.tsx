@@ -22,6 +22,7 @@ import {
   APPLICATION_STATUS_LABEL,
   addStage,
   advanceStage,
+  attachmentLabel,
   currentStageLabel,
   getApplicantFilterOptions,
   getStages,
@@ -282,6 +283,7 @@ export default function JobApplicants() {
               <span>학과 · 학년</span>
               <span>학적</span>
               <span>지원일</span>
+              <span>제출 서류</span>
               <span>현재 전형</span>
               <span>상태</span>
               <span>관리</span>
@@ -304,6 +306,10 @@ export default function JobApplicants() {
                   <span className="admin-roster-cell">
                     {a.appliedAt.slice(0, 10)}
                     {updated && <small>변경 {updated.slice(0, 10)}</small>}
+                  </span>
+                  {/* 라벨은 데이터층이 만든다 — 첨부 도입 전 지원 건은 '미제출'로 온다(규칙 10). */}
+                  <span className="admin-roster-cell admin-jobapp-attach" title={attachmentLabel(a)}>
+                    {attachmentLabel(a)}
                   </span>
                   <span className="admin-roster-cell">{currentStageLabel(a)}</span>
                   <span className="admin-roster-cell">

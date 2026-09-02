@@ -16,6 +16,8 @@
 import type { JobPosting } from './schema/job'
 import type {
   ApplicationStatus,
+  ApplyAttachment,
+  ApplyAttachmentKind,
   HiringStage,
   JobApplication,
 } from './schema/jobApplication'
@@ -23,6 +25,7 @@ import {
   APPLICATION_OPEN_STATUSES,
   APPLICATION_STATUSES,
   APPLICATION_STATUS_LABEL,
+  APPLY_ATTACHMENT_LABEL,
   DEFAULT_STAGE_NAMES,
   INTERNAL_STAGES,
   isInternalStage,
@@ -218,13 +221,32 @@ export interface ApplicantIdentity {
 }
 
 /**
+ * 제출 서류가 성립하는가 — 개별 이력서는 파일명이 없으면 첨부가 아니다.
+ * 정합성 판정은 전부 로더에 둔다(규칙 5) — 화면이 이 조건을 다시 쓰지 않는다.
+ */
+function isValidAttachment(a: ApplyAttachment | undefined): a is ApplyAttachment {
+  if (!a) return false
+  if (a.kind === 'RESUME_FILE') return !!a.fileName?.trim()
+  return a.kind === 'PORTFOLIO'
+}
+
+/**
  * 학생 지원. 대상·중복·마감 판정은 canApplyTo 가 전담한다.
  * 거부되면 undefined 를 반환한다(화면이 사유를 다시 물어 안내).
  *
+ * ★ 제출 서류는 필수다 — 드림캐치 포트폴리오 또는 개별 이력서 중 하나를 반드시 받는다.
+ *   첨부 없는 지원은 여기서 거부한다(현행 `ReAppD` 지원 프로세스 계승 · SPEC.md §3-6 S16).
+ *
  * 취소했던 건은 새 행을 만들지 않고 되살린다 — 학생 × 공고 1행 불변을 지킨다.
+ * 되살릴 때 서류도 이번 지원의 것으로 덮는다(스냅샷은 마지막 지원 시점 기준).
  */
-export function applyToJob(jobId: string, student: ApplicantIdentity): JobApplication | undefined {
+export function applyToJob(
+  jobId: string,
+  student: ApplicantIdentity,
+  attachment: ApplyAttachment,
+): JobApplication | undefined {
   if (!canApplyTo(jobId, student.id).ok) return undefined
+  if (!isValidAttachment(attachment)) return undefined
 
   const revived = getApplication(jobId, student.id)
   const now = new Date().toISOString()
@@ -238,6 +260,7 @@ export function applyToJob(jobId: string, student: ApplicantIdentity): JobApplic
     snapEnrollStatus: student.enrollmentStatus,
     appliedAt: now,
     status: 'APPLIED' as ApplicationStatus,
+    attachment,
   }
 
   const application: JobApplication = revived
@@ -352,6 +375,17 @@ export function currentStageLabel(application: JobApplication): string {
     if (stage) return stage.name
   }
   return APPLICATION_STATUS_LABEL[application.status]
+}
+
+/**
+ * 지원 건에 제출된 서류의 표시 문구.
+ * 첨부 도입 전에 쌓인 건은 값이 없다 — 그때는 '미제출'로 읽는다(SPEC.md §5 #2 폴백).
+ */
+export function attachmentLabel(application: JobApplication): string {
+  const a = application.attachment
+  if (!a) return '미제출'
+  if (a.kind === 'RESUME_FILE') return `${APPLY_ATTACHMENT_LABEL.RESUME_FILE} · ${a.fileName}`
+  return APPLY_ATTACHMENT_LABEL.PORTFOLIO
 }
 
 /** 단계별 현재 인원 — 전형 단계 관리 화면의 '(N명)' 표시 */
@@ -493,5 +527,5 @@ export function summarizeJob(jobId: string): JobApplicationSummary {
   }
 }
 
-export type { JobApplication, HiringStage, ApplicationStatus }
-export { APPLICATION_STATUS_LABEL, INTERNAL_STAGES, isInternalStage }
+export type { JobApplication, HiringStage, ApplicationStatus, ApplyAttachment, ApplyAttachmentKind }
+export { APPLICATION_STATUS_LABEL, APPLY_ATTACHMENT_LABEL, INTERNAL_STAGES, isInternalStage }
