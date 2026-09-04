@@ -440,6 +440,53 @@ export function getStageGuide(stage: Stage, state: PipelineState): StageGuide | 
   }
 }
 
+// ── 진로 여정 표시 (진단 → … → 사후관리) ────────────────────────────────
+// 학생 홈 · 라운지 · 상담사 학생상세가 같은 카드(components/CareerJourneyCard)를 그린다.
+// 화면에서 단계를 다시 적지 않는다 — 칸·진행률의 출처는 여기(v2) 또는
+// admin 데이터층(studentDetail.getCareerJourney) 둘 중 하나뿐이다.
+
+export type JourneyStatus = 'done' | 'current' | 'upcoming'
+
+export interface JourneyStep {
+  /** 진행 코드 — 미완료 칸 마커에 그대로 찍힌다(C1~C7) */
+  code: string
+  label: string
+  status: JourneyStatus
+  /** 칸 아래 보조 문구 — 완료 · 진행 중 · 기간 */
+  note?: string
+  /** 마커를 아이콘으로 그리는 쪽(admin)이 읽는 키. 카드는 이 값을 해석하지 않는다. */
+  icon?: string
+}
+
+export interface CareerJourney {
+  /** 카드 상단 소제목 */
+  kicker: string
+  /** 지금 서 있는 단계 이름 */
+  stage: string
+  /** 그 단계 한 줄 설명 */
+  summary: string
+  /** 전체 진행률 % */
+  percent: number
+  steps: JourneyStep[]
+}
+
+/** 학생 포털이 그리는 여정 — 홈과 라운지가 같은 값을 본다(두 화면이 다른 %를 보이면 안 된다). */
+export const CAREER_JOURNEY: CareerJourney = {
+  kicker: 'CARE+7 ROADMAP',
+  stage: '역량강화 단계',
+  summary: '로드맵 설계를 완료하고 목표 직무에 필요한 핵심역량을 강화하고 있어요.',
+  percent: 57,
+  steps: [
+    { code: 'C1', label: '진단', status: 'done', note: '완료' },
+    { code: 'C2', label: '상담', status: 'done', note: '완료' },
+    { code: 'C3', label: '로드맵', status: 'done', note: '완료' },
+    { code: 'C4', label: '역량강화', status: 'current', note: '진행 중' },
+    { code: 'C5', label: '기업연계', status: 'upcoming', note: '예정' },
+    { code: 'C6', label: '취업지원', status: 'upcoming', note: '예정' },
+    { code: 'C7', label: '사후관리', status: 'upcoming', note: '예정' },
+  ],
+}
+
 // ── 유형 승급 (PROCESS.md §8) ────────────────────────────────────────────
 
 /** 승급 사다리. 취약관리형(T5)은 이 사다리에서 제외된다. */

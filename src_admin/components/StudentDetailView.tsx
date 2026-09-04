@@ -16,13 +16,17 @@ import { loadJournalEntries } from '../../src_v2/data/growthJournal'
 import { STUDENT_ROSTER, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 import type { RosterStudent } from '../data/studentRoster'
 import {
-  getCompetencyRadar, getCounselOverview, getStudentStatCards, getDiagnosisCards, getGoalPlan,
-  getRoadmapProgress, getStudentPrograms,
-  type CompetencyAxis, type CompetencyRadar, type DiagnosisCard,
+  getCareerJourney, getCompetencyRadar, getCounselOverview, getStudentStatCards, getDiagnosisCards,
+  getGoalPlan, getRoadmapProgress, getStudentPrograms,
+  type CompetencyRadar, type DiagnosisCard,
 } from '../data/studentDetail'
 import { getStarTrack, STAR_TRACK_LABEL, STAR_TRACK_META } from '../../src_v2/data/starTrack'
 import DiagnosisResultReport from '../../src_v2/components/DiagnosisResultReport'
 import RoadmapAxisBoard from '../../src_v2/components/RoadmapAxisBoard'
+import CareerJourneyCard from '../../src_v2/components/CareerJourneyCard'
+// 레이더 좌표 계산은 학생 화면과 같은 한 벌만 둔다 — 기본 클래스 이름(radar/grid/axis/
+// need/mine)이 이 화면의 시안 CSS 와 그대로 맞아서 넘길 것이 없다.
+import CompetencyRadarChart from '../../src_v2/components/CompetencyRadarChart'
 // 포트폴리오 탭은 학생 이력서 화면을 그대로 쓴다 — 값도 같은 단일소스에서 읽는다.
 import ResumeSheet from '../../src_v2/components/ResumeSheet'
 import {
@@ -80,58 +84,6 @@ const TABS: TabDef[] = [
 /** 시안 --result-color/--plan-color 등 인라인 커스텀 프로퍼티용 헬퍼 */
 function tintVars(tint: string, names: [string, string]): CSSProperties {
   return { [`--${names[0]}`]: `var(--${tint})`, [`--${names[1]}`]: `var(--${tint}-bg)` } as CSSProperties
-}
-
-// ── 레이더 차트 (시안 .radar 클래스 사용, n축 가변) ─────────────────────────
-// 시안은 6축 하드코딩 폴리곤이지만 우리 축 수는 데이터가 정한다 → 좌표만 계산한다.
-const RCX = 150, RCY = 140, RR = 96
-
-function radarPoint(i: number, n: number, r: number) {
-  const angle = ((i * 360) / n - 90) * (Math.PI / 180)
-  return { x: RCX + r * Math.cos(angle), y: RCY + r * Math.sin(angle) }
-}
-
-function radarPoly(values: number[], n: number) {
-  return values
-    .map((v, i) => {
-      const p = radarPoint(i, n, (Math.max(0, Math.min(100, v)) / 100) * RR)
-      return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
-    })
-    .join(' ')
-}
-
-function CompetencyRadarChart({ axes }: { axes: CompetencyAxis[] }) {
-  const n = axes.length
-  return (
-    <svg className="radar" viewBox="0 0 300 280" role="img" aria-label={`${n}대 역량 레이더 차트`}>
-      {[100, 66, 33].map(pct => (
-        <polygon
-          key={pct}
-          className="grid"
-          points={Array.from({ length: n }, (_, i) => {
-            const p = radarPoint(i, n, (pct / 100) * RR)
-            return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
-          }).join(' ')}
-        />
-      ))}
-      {Array.from({ length: n }, (_, i) => {
-        const p = radarPoint(i, n, RR)
-        return <line key={i} className="axis" x1={RCX} y1={RCY} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)} />
-      })}
-      <polygon className="need" points={radarPoly(axes.map(a => a.target), n)} />
-      <polygon className="mine" points={radarPoly(axes.map(a => a.score), n)} />
-      {axes.map((a, i) => {
-        const p = radarPoint(i, n, RR + 20)
-        const dx = p.x - RCX
-        const anchor = Math.abs(dx) < 6 ? 'middle' : dx > 0 ? 'start' : 'end'
-        return (
-          <text key={a.key} x={p.x.toFixed(1)} y={p.y.toFixed(1)} textAnchor={anchor} dominantBaseline="middle">
-            {a.label}
-          </text>
-        )
-      })}
-    </svg>
-  )
 }
 
 // ── 공통 조각 ──────────────────────────────────────────────────────────────
@@ -330,56 +282,24 @@ function CounselTab({ studentId }: { studentId: string }) {
 // ── 탭 ③: 로드맵 진행 ──────────────────────────────────────────────────────
 
 function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boolean }) {
-  const pct = getRoadmapProgress(student.id)
   const plan = useMemo(() => getGoalPlan(student), [student])
-  const current = student.phases.find(p => p.status === 'active') ?? student.phases[student.phases.length - 1]
+  const journey = useMemo(() => getCareerJourney(student), [student])
 
   return (
     <div className="dashboard-grid">
-      <section data-slot="card" className="journey-card">
-        <CardHead
-          title="진로 여정"
-          desc="진단 → 상담 → 로드맵 → 역량강화 → 취업지원 순서에서 지금 서 있는 위치입니다."
-          action={canEdit ? (
-            <Link to={`/roadmap/${student.id}`} className="admin-btn admin-btn-primary sm"><LuPencilRuler /> 로드맵 편집</Link>
-          ) : undefined}
-        />
-        <div data-slot="card-content">
-          <div className="journey-state">
-            <div className="journey-value">
-              <span className="journey-kicker">CAREER ROADMAP</span>
-              <b>{current?.title ?? '단계 미정'}</b>
-              <p>{current?.recommendation ?? '로드맵이 아직 생성되지 않았습니다.'}</p>
-            </div>
-            <div className="journey-percent"><span>전체 진행률</span><b>{pct}%</b></div>
-          </div>
-          <div className="progress journey-track" aria-label={`로드맵 진행률 ${pct}%`}>
-            <i style={{ width: `${pct}%`, background: 'linear-gradient(90deg,var(--mint),var(--violet))' }} />
-          </div>
-          <div
-            className="steps"
-            role="list"
-            aria-label="로드맵 단계"
-            style={{ gridTemplateColumns: `repeat(${student.phases.length}, 1fr)` }}
-          >
-            {student.phases.map(p => {
-              const Icon = PHASE_ICONS[p.icon] ?? LuCircleDot
-              return (
-                <div
-                  key={p.num}
-                  className={`step${p.status === 'done' ? ' done' : p.status === 'active' ? ' current' : ''}`}
-                  role="listitem"
-                  aria-current={p.status === 'active' ? 'step' : undefined}
-                >
-                  <span className="step-marker">{p.status === 'done' ? '✓' : <Icon />}</span>
-                  <b>{p.title}</b>
-                  <span>{p.status === 'done' ? '완료' : p.status === 'active' ? '진행 중' : p.period}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
+      {/* 카드는 학생 화면과 같은 공용 컴포넌트 — 수정은 CareerJourneyCard 한 곳에서만 */}
+      <CareerJourneyCard
+        journey={journey}
+        title="진로 여정"
+        desc="진단 → 상담 → 로드맵 → 역량강화 → 취업지원 순서에서 지금 서 있는 위치입니다."
+        action={canEdit ? (
+          <Link to={`/roadmap/${student.id}`} className="admin-btn admin-btn-primary sm"><LuPencilRuler /> 로드맵 편집</Link>
+        ) : undefined}
+        pendingMarker={step => {
+          const Icon = PHASE_ICONS[step.icon ?? ''] ?? LuCircleDot
+          return <Icon />
+        }}
+      />
 
       {plan && (
         <section data-slot="card" className="goal-card">
@@ -758,22 +678,18 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
           </header>
 
           <div className="dashboard-grid">
-            <section data-slot="card" className="journey-card">
-              <CardHead title="로드맵 진행 현황" desc="진단·GAP·포트폴리오 등 상세 분석은 진단 완료 후 표시됩니다." />
-              <div data-slot="card-content">
-                <div className="journey-state">
-                  <div className="journey-value">
-                    <span className="journey-kicker">CAREER ROADMAP</span>
-                    <b>상세 데이터 수집 전</b>
-                    <p>{roster.roadmapSummary ?? '진단을 완료하면 유형별 로드맵이 생성됩니다.'}</p>
-                  </div>
-                  <div className="journey-percent"><span>전체 진행률</span><b>{roster.progress}%</b></div>
-                </div>
-                <div className="progress journey-track" aria-label={`로드맵 진행률 ${roster.progress}%`}>
-                  <i style={{ width: `${roster.progress}%`, background: 'linear-gradient(90deg,var(--mint),var(--violet))' }} />
-                </div>
-              </div>
-            </section>
+            {/* 단계 데이터가 아직 없는 학생 — 같은 카드를 칸 없이 그린다(빈 화면 금지). */}
+            <CareerJourneyCard
+              journey={{
+                kicker: 'CAREER ROADMAP',
+                stage: '상세 데이터 수집 전',
+                summary: roster.roadmapSummary ?? '진단을 완료하면 유형별 로드맵이 생성됩니다.',
+                percent: roster.progress,
+                steps: [],
+              }}
+              title="로드맵 진행 현황"
+              desc="진단·GAP·포트폴리오 등 상세 분석은 진단 완료 후 표시됩니다."
+            />
 
             {roster.competencyScore != null && (
               <section data-slot="card">

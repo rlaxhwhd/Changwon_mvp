@@ -209,7 +209,9 @@
       grid-template-columns: repeat(12, minmax(0, 1fr));
       gap: 16px
     }
-.sdv .journey-card {
+/* 진로 여정 카드는 공용 컴포넌트다(src_v2/components/CareerJourneyCard.css) —
+   여기 남는 건 이 격자 안에서의 자리뿐이다. */
+.sdv .cj-card {
       grid-column: span 8;
       border-color: var(--violet)
     }
@@ -232,110 +234,6 @@
 .sdv .todo-card,
 .sdv .recommend-card {
       grid-column: span 6
-    }
-.sdv .journey-state {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: end;
-      gap: 24px;
-      margin: 0 0 12px
-    }
-.sdv .journey-kicker {
-      display: block;
-      margin: 0 0 8px;
-      color: var(--violet);
-      font-size: 12px;
-      font-weight: 800;
-      line-height: 18px;
-      letter-spacing: .06em
-    }
-.sdv .journey-value b {
-      display: block;
-      font-size: 24px;
-      line-height: 32px
-    }
-.sdv .journey-value p {
-      margin: 6px 0 0;
-      color: var(--muted-foreground);
-      font-size: 13px;
-      line-height: 20px
-    }
-.sdv .journey-percent {
-      text-align: right
-    }
-.sdv .journey-percent span {
-      display: block;
-      color: var(--muted-foreground);
-      font-size: 12px;
-      line-height: 18px
-    }
-.sdv .journey-percent b {
-      display: block;
-      margin-top: 4px;
-      font-size: 20px;
-      line-height: 1
-    }
-.sdv .journey-track {
-      margin: 0 0 28px
-    }
-.sdv .steps {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      position: relative;
-      padding: 8px 0 0
-    }
-.sdv .steps::before {
-      content: "";
-      position: absolute;
-      left: 7%;
-      right: 7%;
-      top: 24px;
-      height: 2px;
-      background: var(--border)
-    }
-.sdv .step {
-      position: relative;
-      z-index: 1;
-      text-align: center
-    }
-.sdv .step-marker {
-      width: 34px;
-      height: 34px;
-      margin: 0 auto 10px;
-      border: 4px solid var(--card);
-      border-radius: 50%;
-      background: var(--muted);
-      color: var(--muted-foreground);
-      display: grid;
-      place-items: center;
-      font-size: 12px;
-      font-weight: 800;
-      box-shadow: 0 0 0 1px var(--border)
-    }
-.sdv .step.done .step-marker {
-      color: #fff;
-      background: var(--mint);
-      box-shadow: 0 0 0 1px var(--mint)
-    }
-.sdv .step.current .step-marker {
-      color: #fff;
-      background: var(--violet);
-      box-shadow: 0 0 0 5px var(--violet-soft)
-    }
-.sdv .step b {
-      display: block;
-      font-size: 12px
-    }
-.sdv .step span {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin-top: 4px;
-      color: var(--muted-foreground);
-      font-size: 12px
-    }
-.sdv .step.current b {
-      color: var(--violet)
     }
 .sdv .chart-layout {
       display: grid;
@@ -599,7 +497,7 @@
 .sdv .stats {
         grid-template-columns: repeat(2, 1fr)
       }
-.sdv .journey-card,
+.sdv .cj-card,
 .sdv .competency-card,
 .sdv .diagnosis-card {
         grid-column: span 12
@@ -621,25 +519,13 @@
 .sdv .dashboard-grid {
         grid-template-columns: 1fr
       }
-.sdv .journey-card,
+.sdv .cj-card,
 .sdv .competency-card,
 .sdv .diagnosis-card,
 .sdv .goal-card,
 .sdv .todo-card,
 .sdv .recommend-card {
         grid-column: auto
-      }
-.sdv .journey-state {
-        grid-template-columns: 1fr;
-        align-items: start
-      }
-.sdv .journey-percent {
-        text-align: left
-      }
-.sdv .steps {
-        grid-template-columns: repeat(7, 62px);
-        overflow: auto;
-        padding-bottom: 8px
       }
 .sdv .chart-layout {
         grid-template-columns: 1fr
@@ -661,86 +547,21 @@
       }
 }
 @media(max-width:760px) {
+/* 좁은 폭에서 카드가 격자를 밀어내지 않게만 잡는다 —
+   카드 안쪽(요약 줄바꿈·칸 가로 스크롤)은 CareerJourneyCard.css 가 처리한다. */
 .sdv .dashboard-grid,
-.sdv .journey-card,
-.sdv .journey-card [data-slot="card-header"],
-.sdv .journey-card [data-slot="card-content"],
-.sdv .journey-state,
-.sdv .journey-value {
+.sdv .cj-card,
+.sdv .cj-card [data-slot="card-header"],
+.sdv .cj-card [data-slot="card-content"] {
         min-width: 0;
         max-width: 100%
       }
-.sdv .journey-card {
+.sdv .cj-card {
         width: 100%;
         overflow: hidden
       }
-.sdv .journey-card [data-slot="card-content"] {
+.sdv .cj-card [data-slot="card-content"] {
         padding: 16px
-      }
-.sdv .journey-state {
-        gap: 16px;
-        margin-bottom: 12px
-      }
-.sdv .journey-value b {
-        font-size: 22px;
-        line-height: 32px
-      }
-.sdv .journey-value p {
-        overflow-wrap: anywhere
-      }
-.sdv .journey-percent {
-        display: flex;
-        align-items: baseline;
-        justify-content: space-between;
-        gap: 16px;
-        text-align: left
-      }
-.sdv .journey-percent b {
-        margin-top: 0;
-        font-size: 24px
-      }
-.sdv .journey-track {
-        margin-bottom: 20px
-      }
-.sdv .steps {
-        width: 100%;
-        min-width: 0;
-        max-width: 100%;
-        grid-template-columns: repeat(7, 72px);
-        padding: 8px 4px 12px;
-        overflow-x: auto;
-        overflow-y: hidden;
-        overscroll-behavior-inline: contain;
-        scroll-snap-type: inline proximity;
-        scrollbar-width: thin;
-        scrollbar-color: #d8d2f8 transparent;
-        touch-action: pan-x
-      }
-.sdv .steps::-webkit-scrollbar {
-        height: 4px
-      }
-.sdv .steps::-webkit-scrollbar-thumb {
-        border-radius: 4px;
-        background: #d8d2f8
-      }
-.sdv .steps::before {
-        display: none
-      }
-.sdv .step {
-        scroll-snap-align: start
-      }
-.sdv .step:not(:last-child)::after {
-        content: "";
-        width: 100%;
-        height: 2px;
-        background: var(--border);
-        position: absolute;
-        z-index: -1;
-        top: 16px;
-        left: 50%
-      }
-.sdv .step-marker {
-        margin-bottom: 8px
       }
 }
 .sdv .stat-icon.sky {
@@ -1183,7 +1004,7 @@
       display: flex;
       flex-direction: column
     }
-.sdv .journey-card {
+.sdv .cj-card {
       grid-column: span 12;
       order: 1
     }
@@ -1549,7 +1370,7 @@
 .sdv .diagnosis-result-item {
         min-height: 144px
       }
-.sdv .journey-card,
+.sdv .cj-card,
 .sdv .counseling-card {
         grid-column: auto
       }

@@ -56,10 +56,8 @@
 
   /* ─── 2층: 의미 별칭 ──────────────────────────────────────────────
      화면은 1층 휴를 직접 쓰지 않고 이 층을 경유한다. */
-  --journey-done:         var(--mint);
-  --journey-done-soft:    var(--mint-soft);
-  --journey-current:      var(--violet);
-  --journey-current-soft: var(--violet-soft);
+  /* 진로 여정 색은 이제 「완료 초록 / 진행 보라」 두 색이 아니라 C1~C7 색 띠다 —
+     components/CareerJourneyCard.css 가 --mint/--blue/--violet 세 본색을 이어 만든다. */
 
   --daily-1: var(--blue);   --daily-1-soft: var(--blue-soft);
   --daily-2: var(--violet); --daily-2-soft: var(--violet-soft);
@@ -802,7 +800,7 @@ select:focus-visible {
 .v2-page-actions { display: flex; align-items: center; gap: 8px; }
 
 /* ─── Card — data-slot 슬롯 계약 ───────────────────────────────────
-   카드 골격은 이 셀렉터로만 쓴다. 도메인 클래스(.journey-card 등)는 변주 전용.
+   카드 골격은 이 셀렉터로만 쓴다. 도메인 클래스(.cj-card 등)는 변주 전용.
    ★ 그림자 없음. 경계는 1px border 가 만든다. */
 [data-slot="card"] {
   min-width: 0;
@@ -1140,10 +1138,6 @@ select:focus-visible {
 }
 
 @keyframes fillIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-
-.progress-track.journey > i {
-  background: linear-gradient(90deg, var(--journey-done), var(--journey-current));
-}
 
 /* 역량 갭 트랙 — i = 나의 현재(채움), u = 목표(눈금) */
 .axis-track {

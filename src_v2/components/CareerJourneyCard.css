@@ -1,0 +1,178 @@
+/* 진로 여정 카드(components/CareerJourneyCard) — 학생 홈·라운지·상담사 학생상세 공용.
+   ⚠ admin :root 에는 v2 토큰이 다 있지 않다 → 여기서는 var(--x, 폴백) 형태로만 쓴다.
+     (admin 쪽 --mint/--violet 은 StudentDetailView.css 의 토큰 브리지가 채워 준다) */
+
+.cj-card {
+  /* ── 여정 색 띠 C1~C7 — 초록 → 파랑 → 보라 ─────────────────────────────
+     새 색을 만들지 않는다. 양끝과 가운데는 각 SPA 팔레트의 본색을 그대로 쓰고,
+     사이 네 칸은 그 사이를 oklab 으로 고르게 이은 값이다. 그래서 이 띠는
+     v2 에서는 v2 색으로, admin 에서는 admin 색으로 자동으로 맞춰진다. */
+  --cj-c1: var(--mint,   #20b486);
+  --cj-c4: var(--blue,   #356dff);
+  --cj-c7: var(--violet, #7c5cfc);
+  --cj-c2: color-mix(in oklab, var(--cj-c1) 67%, var(--cj-c4));
+  --cj-c3: color-mix(in oklab, var(--cj-c1) 33%, var(--cj-c4));
+  --cj-c5: color-mix(in oklab, var(--cj-c4) 67%, var(--cj-c7));
+  --cj-c6: color-mix(in oklab, var(--cj-c4) 33%, var(--cj-c7));
+  --cj-ramp: linear-gradient(90deg,
+    var(--cj-c1), var(--cj-c2), var(--cj-c3), var(--cj-c4),
+    var(--cj-c5), var(--cj-c6), var(--cj-c7));
+}
+
+/* ── 현재 단계 요약 ──────────────────────────────────────────────────── */
+.cj-state {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 24px;
+  margin: 0 0 12px;
+}
+
+.cj-kicker {
+  display: block;
+  margin: 0 0 8px;
+  color: var(--cj-c7);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+  letter-spacing: .06em;
+}
+
+.cj-stage b {
+  display: block;
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.cj-stage p {
+  margin: 6px 0 0;
+  color: var(--muted-foreground, #5f6b7a);
+  font-size: 13px;
+  line-height: 20px;
+}
+
+.cj-percent { text-align: right; }
+
+.cj-percent span {
+  display: block;
+  color: var(--muted-foreground, #5f6b7a);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.cj-percent b {
+  display: block;
+  margin-top: 4px;
+  font-size: 20px;
+  line-height: 1;
+}
+
+/* ── 진행률 막대 ─────────────────────────────────────────────────────── */
+.cj-track {
+  position: relative;
+  height: 8px;
+  margin: 0 0 28px;
+  border-radius: 6px;
+  background: var(--muted, #f1f3f6);
+  overflow: hidden;
+}
+
+/* 띠는 트랙 전체 폭에 깔고 진행률만큼만 드러낸다.
+   채운 폭에 맞춰 띠를 늘이면 20%일 때도 끝이 보라가 되어 아래 칸 색과 어긋난다. */
+.cj-track > i {
+  position: absolute;
+  inset: 0;
+  background: var(--cj-ramp);
+  clip-path: inset(0 calc(100% - var(--cj-pct, 0%)) 0 0);
+  transition: clip-path 700ms cubic-bezier(.2, .8, .2, 1);
+}
+
+/* ── 단계 칸 ─────────────────────────────────────────────────────────── */
+.cj-steps {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--cj-count, 7), minmax(0, 1fr));
+  padding: 8px 0 0;
+}
+
+/* 연결선은 첫 칸·끝 칸의 마커 중심에서 시작하고 끝난다(= 반 칸 안쪽). */
+.cj-steps::before {
+  content: "";
+  position: absolute;
+  left: var(--cj-edge, 7%);
+  right: var(--cj-edge, 7%);
+  top: 24px;
+  height: 2px;
+  background: var(--border, #e2e6ec);
+}
+
+.cj-step {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  text-align: center;
+}
+
+/* 예정 칸도 제 색을 갖는다 — 띠 전체가 보이도록. 대신 채우지 않고 옅게 물들여
+   「아직 안 한 칸」이 완료 칸처럼 보이지 않게 한다(글자는 같은 색의 짙은 쪽). */
+.cj-marker {
+  width: 34px;
+  height: 34px;
+  margin: 0 auto 10px;
+  border: 4px solid var(--card, #fff);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-size: 12px;
+  font-weight: 800;
+  background: color-mix(in srgb, var(--cj-step) 40%, #fff);
+  color: color-mix(in srgb, var(--cj-step) 78%, #000);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--cj-step) 55%, #fff);
+}
+
+.cj-step.is-done .cj-marker,
+.cj-step.is-current .cj-marker {
+  background: var(--cj-step);
+  color: #fff;
+  box-shadow: 0 0 0 1px var(--cj-step);
+}
+
+.cj-step.is-current .cj-marker {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--cj-step) 20%, transparent);
+}
+
+.cj-step > b {
+  display: block;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.cj-step > span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted-foreground, #5f6b7a);
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.cj-step.is-current > b { color: var(--cj-step); }
+
+/* ── 좁은 화면 — 요약은 한 줄로, 칸은 가로 스크롤 ───────────────────────── */
+@media (max-width: 1080px) {
+  .cj-state {
+    grid-template-columns: 1fr;
+    align-items: start;
+  }
+
+  .cj-percent { text-align: left; }
+
+  .cj-steps {
+    grid-template-columns: repeat(var(--cj-count, 7), 72px);
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-accent, #d8d2f8) transparent;
+  }
+
+  .cj-steps::before { display: none; }
+}

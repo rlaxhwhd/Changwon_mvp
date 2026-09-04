@@ -13,7 +13,10 @@ import type { RoadmapAxis, RoadmapAxisPlan } from '../../src_v2/data/schema/road
 import type { StudentStat } from '../../src_v2/components/StudentStatCards'
 import { getCompetencyAxes, getCompetencyOverall } from '../../src_v2/data/competency'
 import type { CompetencyAxisView } from '../../src_v2/data/competency'
-import { DIAGNOSIS_MODULES, getRequiredTests, type DiagnosisModule, type StudentType } from '../../src_v2/data/careerProcess'
+import {
+  DIAGNOSIS_MODULES, getRequiredTests,
+  type CareerJourney, type DiagnosisModule, type StudentType,
+} from '../../src_v2/data/careerProcess'
 import { getAttemptsByStudent } from './diagnosisAttempts'
 import type { DiagnosisAttempt } from './schema/diagnosisAttempt'
 import { getRecordsByStudent } from './counselRecords'
@@ -260,6 +263,29 @@ export interface GoalPlan {
 
 /** 로드맵 이행률 % — 단일 소스는 data/roadmap.ts. 재구현하지 않는다. */
 export { getRoadmapProgress }
+
+/**
+ * 진로 여정 카드(공용 CareerJourneyCard)가 구독하는 투영.
+ * 칸은 학생 JSON 의 phases(파이프라인 단계)를, 진행률은 로드맵 이행률을 그대로 옮긴다.
+ * 화면에서 phases 를 훑어 현재 단계를 고르지 않는다 — 그 판단이 여기 한 곳에 있다.
+ */
+export function getCareerJourney(student: StudentData): CareerJourney {
+  const current = student.phases.find(p => p.status === 'active') ?? student.phases[student.phases.length - 1]
+
+  return {
+    kicker: 'CAREER ROADMAP',
+    stage: current?.title ?? '단계 미정',
+    summary: current?.recommendation ?? '로드맵이 아직 생성되지 않았습니다.',
+    percent: getRoadmapProgress(student.id),
+    steps: student.phases.map(p => ({
+      code: String(p.num),
+      label: p.title,
+      status: p.status === 'done' ? 'done' : p.status === 'active' ? 'current' : 'upcoming',
+      note: p.status === 'done' ? '완료' : p.status === 'active' ? '진행 중' : p.period,
+      icon: p.icon,
+    })),
+  }
+}
 
 export function getGoalPlan(student: StudentData): GoalPlan | null {
   const roadmap = getStudentRoadmap(student.id)

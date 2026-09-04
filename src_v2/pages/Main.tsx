@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import CareerPopup from '../components/CareerPopup'
+import CareerJourneyCard from '../components/CareerJourneyCard'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
+import { CAREER_JOURNEY } from '../data/careerProcess'
 import { getCompetencyAxes } from '../data/competency'
 import { getActiveStudent } from '../data/students'
 import './Main.css'
@@ -29,28 +31,13 @@ export default function Main() {
               <p>진단 결과부터 상담, 로드맵과 역량까지 연결된 나의 현재 위치를 확인하고 오늘의 행동을 시작해 보세요.</p>
             </div>
 
-          <section data-slot="card" className="journey-card hero-roadmap" id="journey" aria-labelledby="journeyTitle">
-            <header data-slot="card-header">
-              <div><h2 data-slot="card-title" id="journeyTitle">나의 진로 여정</h2><p data-slot="card-description">내 CARE+7의 현재 위치입니다.</p></div>
-            </header>
-            <div data-slot="card-content">
-              <div className="journey-summary">
-                <div className="hero-progress-meta"><strong>58%</strong><span>역량강화 진행 중</span></div>
-                <div className="progress-track" style={{ '--value': '58%' } as React.CSSProperties} aria-label="전체 진행률 58퍼센트"><i></i></div>
-              </div>
-              <div className="journey-scroll" tabIndex={0} aria-label="CARE+7 단계 목록, 가로로 스크롤할 수 있습니다">
-                <div className="journey-steps">
-                  <div className="journey-step done"><span className="journey-dot"><svg className="icon"><use href="#i-check" /></svg></span><strong>진단</strong><small>완료</small></div>
-                  <div className="journey-step done"><span className="journey-dot"><svg className="icon"><use href="#i-check" /></svg></span><strong>상담</strong><small>완료</small></div>
-                  <div className="journey-step done"><span className="journey-dot"><svg className="icon"><use href="#i-check" /></svg></span><strong>로드맵</strong><small>완료</small></div>
-                  <div className="journey-step current"><span className="journey-dot">C4</span><strong>역량강화</strong><small>진행 중</small></div>
-                  <div className="journey-step"><span className="journey-dot">C5</span><strong>기업연계</strong><small>예정</small></div>
-                  <div className="journey-step"><span className="journey-dot">C6</span><strong>취업지원</strong><small>예정</small></div>
-                  <div className="journey-step"><span className="journey-dot">C7</span><strong>사후관리</strong><small>예정</small></div>
-                </div>
-              </div>
-            </div>
-          </section>
+          <CareerJourneyCard
+            journey={CAREER_JOURNEY}
+            title="나의 진로 여정"
+            desc="내 CARE+7의 현재 위치입니다."
+            className="hero-roadmap"
+            id="journey"
+          />
 
           </div>
 

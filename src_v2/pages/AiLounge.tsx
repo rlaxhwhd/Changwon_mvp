@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import { getActiveStudent } from '../data/students'
 import StudentStatCards, { type StudentStat } from '../components/StudentStatCards'
+import CareerJourneyCard from '../components/CareerJourneyCard'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
+import { CAREER_JOURNEY } from '../data/careerProcess'
 import { getCompetencyAxes } from '../data/competency'
 import { getGrowthRecords } from '../data/growthRecords'
 import './AiLounge.css'
@@ -59,33 +61,13 @@ export default function AiLounge() {
         <StudentStatCards stats={LOUNGE_STATS} />
 
         <div className="dashboard-grid">
-          <section data-slot="card" className="journey-card reveal" id="journey">
-            <div data-slot="card-header">
-              <div>
-                <h2 data-slot="card-title">나의 진로 여정</h2>
-                <p data-slot="card-description">내 CARE+7의 현재 위치입니다.</p>
-              </div>
-
-            </div>
-            <div data-slot="card-content">
-              <div className="journey-state">
-                <div className="journey-value"><span className="journey-kicker">CARE+7 ROADMAP</span><b>역량강화 단계</b>
-                  <p>로드맵 설계를 완료하고 목표 직무에 필요한 핵심역량을 강화하고 있어요.</p>
-                </div>
-                <div className="journey-percent"><span>전체 진행률</span><b>57%</b></div>
-              </div>
-              <div className="progress journey-track" aria-label="CARE+7 진행률 57%"><i style={{ width: '57%', background: 'linear-gradient(90deg,var(--journey-done),var(--journey-current))' } as React.CSSProperties}></i></div>
-              <div className="steps" role="list" aria-label="CARE+7 로드맵 단계" tabIndex={0}>
-                <div className="step done" role="listitem"><span className="step-marker">✓</span><b>진단</b><span>완료</span></div>
-                <div className="step done" role="listitem"><span className="step-marker">✓</span><b>상담</b><span>완료</span></div>
-                <div className="step done" role="listitem"><span className="step-marker">✓</span><b>로드맵</b><span>완료</span></div>
-                <div className="step current" role="listitem" aria-current="step"><span className="step-marker">C4</span><b>역량강화</b><span>진행 중</span></div>
-                <div className="step" role="listitem"><span className="step-marker">C5</span><b>기업연계</b></div>
-                <div className="step" role="listitem"><span className="step-marker">C6</span><b>취업지원</b></div>
-                <div className="step" role="listitem"><span className="step-marker">C7</span><b>사후관리</b></div>
-              </div>
-            </div>
-          </section>
+          <CareerJourneyCard
+            journey={CAREER_JOURNEY}
+            title="나의 진로 여정"
+            desc="내 CARE+7의 현재 위치입니다."
+            className="reveal"
+            id="journey"
+          />
 
           <section data-slot="card" className="competency-card reveal" id="competency">
             <div data-slot="card-header">

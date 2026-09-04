@@ -2,142 +2,8 @@
    공용 프리미티브(:root 토큰 · topbar · card 슬롯 · button · badge · footer)는 index.css.
    이 파일은 시안 CSS 중 이 화면 고유 블록만 옮긴 것이다 — 값 임의 변경 금지. */
 
-.mn-page .journey-summary {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 260px;
-  align-items: end;
-  gap: 24px;
-}
-
-.mn-page .journey-stage-title {
-  margin: 0;
-  font-size: 24px;
-  font-weight: 800;
-  line-height: 32px;
-  letter-spacing: -.03em;
-}
-
-.mn-page .journey-stage-copy {
-  margin: 4px 0 0;
-  color: var(--muted-foreground);
-  font-size: 14px;
-  line-height: 20px;
-}
-
-.mn-page .journey-progress-head {
-  margin-bottom: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: var(--muted-foreground);
-  font-size: 12px;
-}
-
-.mn-page .journey-progress-head b {
-  color: var(--foreground);
-  font-size: 14px;
-}
-
-.mn-page .journey-scroll {
-  margin-top: 28px;
-  overflow-x: auto;
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-accent) transparent;
-}
-
-.mn-page .journey-steps {
-  min-width: 760px;
-  padding: 0 4px 4px;
-  display: grid;
-  grid-template-columns: repeat(7, minmax(92px, 1fr));
-}
-
-.mn-page .journey-step {
-  position: relative;
-  min-width: 0;
-  padding-top: 48px;
-  text-align: center;
-}
-
-.mn-page .journey-step::before {
-  content: "";
-  position: absolute;
-  top: 17px;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: var(--border);
-}
-
-.mn-page .journey-step:first-child::before {
-  left: 50%;
-}
-
-.mn-page .journey-step:last-child::before {
-  right: 50%;
-}
-
-.mn-page .journey-dot {
-  position: absolute;
-  top: 0;
-  left: 50%;
-  z-index: 1;
-  width: 36px;
-  height: 36px;
-  border: 4px solid var(--card);
-  border-radius: 50%;
-  background: var(--muted);
-  color: var(--muted-foreground);
-  box-shadow: 0 0 0 1px var(--border);
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  font-weight: 700;
-  transform: translateX(-50%);
-}
-
-.mn-page .journey-step.done::before {
-  background: var(--journey-done);
-}
-
-/* 진행 중 칸은 제 점(50%)까지만 초록으로 채운다 —
-   칸 단위로 선을 그리는 구조라 이게 없으면 완료 구간이 현재 점 반 칸 앞에서 끊긴다. */
-.mn-page .journey-step.current::before {
-  background: linear-gradient(to right, var(--journey-done) 50%, var(--border) 50%);
-}
-
-.mn-page .journey-step.done .journey-dot {
-  background: var(--journey-done);
-  color: #ffffff;
-  box-shadow: 0 0 0 1px var(--journey-done);
-}
-
-.mn-page .journey-step.current .journey-dot {
-  background: var(--journey-current);
-  color: #ffffff;
-  box-shadow: 0 0 0 6px var(--journey-current-soft);
-}
-
-.mn-page .journey-step strong,
-.mn-page .journey-step small {
-  display: block;
-}
-
-.mn-page .journey-step strong {
-  font-size: 12px;
-  line-height: 18px;
-}
-
-.mn-page .journey-step.current strong {
-  color: var(--journey-current);
-}
-
-.mn-page .journey-step small {
-  margin-top: 2px;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 18px;
-}
+/* 진로 여정 카드는 공용 컴포넌트다(components/CareerJourneyCard.css) —
+   여기 남는 건 히어로 칸에 맞추는 축약뿐이다(아래 .hero-roadmap 블록). */
 
 .mn-page .daily-card {
   min-height: 348px;
@@ -1244,73 +1110,43 @@
   flex-direction: column;
 }
 
-.mn-page .hero-roadmap .journey-summary {
-  display: block;
+/* ── 히어로 칸(332px) 축약 ───────────────────────────────────────────────
+   카드 본체는 공용 컴포넌트다. 여기서는 히어로 높이에 들어가도록 줄이기만 한다 —
+   단계 설명 한 줄은 접고, 마커·글자를 한 치수 낮춘다. */
+.mn-page .hero-roadmap .cj-state {
+  margin-bottom: 10px;
 }
 
-.mn-page .hero-progress-meta {
-  margin-bottom: 8px;
-  display: flex;
-  align-items: end;
-  justify-content: space-between;
-  gap: 12px;
+.mn-page .hero-roadmap .cj-stage b {
+  font-size: 20px;
+  line-height: 28px;
 }
 
-.mn-page .hero-progress-meta strong {
-  color: var(--blue);
-  font-size: 32px;
-  font-weight: 800;
-  line-height: 36px;
-  letter-spacing: -.03em;
+.mn-page .hero-roadmap .cj-stage p {
+  display: none;
 }
 
-.mn-page .hero-progress-meta span {
-  color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 18px;
-  text-align: right;
+.mn-page .hero-roadmap .cj-track {
+  margin-bottom: 20px;
 }
 
-.mn-page .hero-roadmap .journey-scroll {
-  margin-top: 0;
-}
-
-.mn-page .hero-roadmap .journey-steps {
-  min-width: 0;
-  padding: 6px 2px 2px;
-  grid-template-columns: repeat(7, minmax(48px, 1fr));
-}
-
-.mn-page .hero-roadmap .journey-step {
-  padding-top: 38px;
-}
-
-.mn-page .hero-roadmap .journey-step::before {
-  top: 14px;
-}
-
-.mn-page .hero-roadmap .journey-dot {
+.mn-page .hero-roadmap .cj-marker {
   width: 30px;
   height: 30px;
   border-width: 3px;
 }
 
-.mn-page .hero-roadmap .journey-step.current .journey-dot {
-  box-shadow: 0 0 0 4px var(--journey-current-soft);
+.mn-page .hero-roadmap .cj-steps::before {
+  top: 22px;
 }
 
-.mn-page .hero-roadmap .journey-step strong {
+.mn-page .hero-roadmap .cj-step > b {
   padding: 0 2px;
-  font-size: 12px;
   line-height: 16px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
-}
-
-.mn-page .hero-roadmap .journey-step small {
-  display: none;
 }
 
 .mn-page .career-hero-board {

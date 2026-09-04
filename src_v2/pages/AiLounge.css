@@ -188,21 +188,9 @@
   white-space: nowrap
 }
 
-.al-page .progress {
-  height: 8px;
-  border-radius: 6px;
-  background: var(--muted);
-  overflow: hidden
-}
-
-.al-page .progress>i {
-  display: block;
-  height: 100%;
-  border-radius: 6px;
-  transition: width 700ms cubic-bezier(.2, .8, .2, 1)
-}
-
-.al-page .journey-card {
+/* 진로 여정 카드는 공용 컴포넌트다(components/CareerJourneyCard.css) —
+   여기 남는 건 이 대시보드 안에서의 자리뿐이다. */
+.al-page .cj-card {
   grid-column: span 8;
   border-color: var(--violet)
 }
@@ -247,127 +235,6 @@
 .al-page .todo-card,
 .al-page .recommend-card {
   align-self: stretch
-}
-
-.al-page .journey-state {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: end;
-  gap: 24px;
-  margin: 0 0 12px
-}
-
-.al-page .journey-kicker {
-  display: block;
-  margin: 0 0 8px;
-  color: var(--journey-current);
-  font-size: 12px;
-  font-weight: 800;
-  line-height: 18px;
-  letter-spacing: .06em
-}
-
-.al-page .journey-value b {
-  display: block;
-  font-size: 24px;
-  line-height: 32px
-}
-
-.al-page .journey-value p {
-  margin: 6px 0 0;
-  color: var(--muted-foreground);
-  font-size: 13px;
-  line-height: 20px
-}
-
-.al-page .journey-percent {
-  text-align: right
-}
-
-.al-page .journey-percent span {
-  display: block;
-  color: var(--muted-foreground);
-  font-size: 12px;
-  line-height: 18px
-}
-
-.al-page .journey-percent b {
-  display: block;
-  margin-top: 4px;
-  font-size: 20px;
-  line-height: 1
-}
-
-.al-page .journey-track {
-  margin: 0 0 28px
-}
-
-.al-page .steps {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  position: relative;
-  padding: 8px 0 0
-}
-
-.al-page .steps::before {
-  content: "";
-  position: absolute;
-  left: 7%;
-  right: 7%;
-  top: 24px;
-  height: 2px;
-  background: var(--border)
-}
-
-.al-page .step {
-  position: relative;
-  z-index: 1;
-  text-align: center
-}
-
-.al-page .step-marker {
-  width: 34px;
-  height: 34px;
-  margin: 0 auto 10px;
-  border: 4px solid var(--card);
-  border-radius: 50%;
-  background: var(--muted);
-  color: var(--muted-foreground);
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  font-weight: 800;
-  box-shadow: 0 0 0 1px var(--border)
-}
-
-.al-page .step.done .step-marker {
-  color: #fff;
-  background: var(--journey-done);
-  box-shadow: 0 0 0 1px var(--journey-done)
-}
-
-.al-page .step.current .step-marker {
-  color: #fff;
-  background: var(--journey-current);
-  box-shadow: 0 0 0 5px var(--journey-current-soft)
-}
-
-.al-page .step b {
-  display: block;
-  font-size: 12px
-}
-
-.al-page .step span {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  margin-top: 4px;
-  color: var(--muted-foreground);
-  font-size: 12px
-}
-
-.al-page .step.current b {
-  color: var(--journey-current)
 }
 
 .al-page .next-card {
@@ -1591,7 +1458,7 @@
   line-height: 18px
 }
 
-.al-page .journey-card {
+.al-page .cj-card {
   grid-column: span 12;
   order: 1
 }
@@ -2115,7 +1982,7 @@
    전면 카드는 span 숫자 대신 1/-1 로 못박는다 — 두 칸짜리 격자에서 span 12 를 두면
    빈 열이 10개 생겨 격자가 도로 12열이 된다. */
 .al-page .dashboard-grid { grid-template-columns: minmax(0, 720fr) minmax(0, 656fr); }
-.al-page .journey-card,
+.al-page .cj-card,
 .al-page .goal-card,
 .al-page .counseling-card { grid-column: 1 / -1; }
 .al-page .todo-card,
