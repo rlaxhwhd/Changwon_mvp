@@ -94,7 +94,7 @@ export default function CareerJourneyCard({
                 {step.status === 'done' ? '✓' : pendingMarker ? pendingMarker(step) : step.code}
               </span>
               <b>{step.label}</b>
-              {step.note && <span>{step.note}</span>}
+              {step.note && <span className="cj-note">{step.note}</span>}
             </div>
           ))}
         </div>

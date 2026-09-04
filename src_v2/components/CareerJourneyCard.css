@@ -147,7 +147,9 @@
   line-height: 18px;
 }
 
-.cj-step > span {
+/* ⚠ 마커도 .cj-step 의 직계 span 이다 — 여기를 `.cj-step > span` 으로 잡으면
+   명시도(0-1-1)가 .cj-marker(0-1-0)를 이겨 마커의 display·margin·색까지 덮어쓴다. */
+.cj-note {
   display: block;
   margin-top: 4px;
   color: var(--muted-foreground, #5f6b7a);
