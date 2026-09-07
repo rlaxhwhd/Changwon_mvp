@@ -154,5 +154,12 @@
         "completed": false
       }
     ]
+  },
+  {
+    "studentId": "jiwoo",
+    "deptCode": "C05-05",
+    "entryYear": "2026",
+    "certs": [],
+    "jobInterests": []
   }
 ]

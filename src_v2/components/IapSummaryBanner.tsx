@@ -15,6 +15,23 @@ export default function IapSummaryBanner({ note = '내 진단 요약' }: IapSumm
   const profile = getActiveStudent()
   const type = getStudentTypeMeta(profile)
 
+  // 진단 전 학생은 요약할 유형이 없다. 빈 칩을 그리지 않고 무엇을 하면 채워지는지 말한다.
+  if (!type) {
+    return (
+      <div className="iap-banner">
+        <span className="iap-banner-ico"><i className="fa-solid fa-user-check" /></span>
+        <div className="iap-banner-body">
+          <span className="iap-banner-note">{note}</span>
+          <div className="iap-banner-chips">
+            <span className="iap-bchip iap-bchip-ghost">
+              C-CORE 핵심진단을 마치면 유형·계층이 여기 표시됩니다.
+            </span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="iap-banner">
       <span className="iap-banner-ico"><i className="fa-solid fa-user-check" /></span>

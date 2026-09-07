@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { getActiveStudent } from '../../data/students'
+import { typeLabel } from '../../data/careerProcess'
 import {
   getStarTrack, getStarSummary, getStarLinkedData,
   STAR_TRACK_LABEL, STAR_TRACK_META, CPASS_STAGES,
@@ -58,7 +59,7 @@ export default function StarTrack() {
   const statCards: StudentStat[] = [
     {
       kind: 'diagnosis', label: '진단 결과',
-      value: linked.type.label, badge: linked.type.code,
+      value: typeLabel(linked.type?.code), badge: linked.type?.code ?? "-",
       foot: `필수 진단 ${linked.diagnosisDone}/${linked.diagnosisTotal}`,
       pct: pct(linked.diagnosisDone, linked.diagnosisTotal),
     },

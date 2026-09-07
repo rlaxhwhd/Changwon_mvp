@@ -52,7 +52,9 @@ function completed(program: Program, studentId: string): boolean {
  * 프로그램 개설로 IAP 축에 붙는 칸들.
  * 조건 = 로드맵 편입값이 NONE 이 아니고, CARE 7+ 분류에 이 학생의 유형이 들어 있을 것.
  */
-function programCells(studentId: string, type: StudentType): RoadmapCell[] {
+/** 유형이 없는 학생(진단 전)에게는 편입할 프로그램도 없다 — 유형이 대상을 정하기 때문이다. */
+function programCells(studentId: string, type: StudentType | null): RoadmapCell[] {
+  if (!type) return []
   return getPrograms()
     .filter(p => p.roadmapEntry && p.roadmapEntry !== 'NONE' && (p.careTypes ?? []).includes(type))
     .map(p => ({

@@ -7,7 +7,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import roster from '../../src_v2/data/studentsRoster.json'
 import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
-import { STUDENTS, getStudentTypeMeta } from '../../src_v2/data/students'
+import { STUDENTS, getStudentType, getStudentTypeMeta } from '../../src_v2/data/students'
 import { typeLabel, type StudentType } from '../../src_v2/data/careerProcess'
 import type { PenaltyEntry } from './schema/penalty'
 import { getRoadmapProgress } from './roadmap'
@@ -32,10 +32,10 @@ export interface RosterStudent {
   major: string
   /** 학년 1~4 */
   grade: number
-  /** 6유형 진단 코드 T1~T6 (표시명은 STUDENT_TYPE_MAP에서 파생) */
-  studentType: StudentType
-  /** 계층 표시명 — 비교과 신청 범위를 가른다 */
-  tier: RosterTier
+  /** 6유형 진단 코드 T1~T6 — 진단 전이면 null (표시명은 typeLabel()로 파생) */
+  studentType: StudentType | null
+  /** 계층 표시명 — 비교과 신청 범위를 가른다. 유형이 없으면 계층도 없다. */
+  tier: RosterTier | null
   /** 로드맵 진행률 0~100 */
   progress: number
   status: EnrollStatus
@@ -80,8 +80,8 @@ export interface StudentLite {
   major: string
   grade: number
   status: EnrollStatus
-  /** 6유형 진단 코드 T1~T6 — 표시명은 typeLabel()로 파생한다. */
-  studentType: StudentType
+  /** 6유형 진단 코드 T1~T6 — 진단 전이면 null. 표시명은 typeLabel()로 파생한다. */
+  studentType: StudentType | null
 }
 
 /** 학생 id → 경량 프로필 맵 (상세 STUDENTS 우선, 없으면 로스터). */
@@ -90,7 +90,7 @@ const STUDENT_LITE_BY_ID: Record<string, StudentLite> = {
     STUDENT_ROSTER.map(s => [s.id, { studentNo: s.studentNo, name: s.name, major: s.major, grade: s.grade, status: s.status, studentType: s.studentType }]),
   ),
   ...Object.fromEntries(
-    STUDENTS.map(s => [s.id, { studentNo: s.studentNo, name: s.name, major: s.major, grade: s.grade, status: s.enrollmentStatus, studentType: s.studentType }]),
+    STUDENTS.map(s => [s.id, { studentNo: s.studentNo, name: s.name, major: s.major, grade: s.grade, status: s.enrollmentStatus, studentType: getStudentType(s) }]),
   ),
 }
 
@@ -141,8 +141,9 @@ export const TYPE_TINT: Record<StudentType, string> = Object.fromEntries(
 ) as Record<StudentType, string>
 
 /** 유형 배지 CSS 클래스 (모양 + 유형별 틴트) — enrollStatusClass와 동일 규약 */
-export function studentTypeClass(code: StudentType): string {
-  return `admin-type-tag ${TYPE_TINT[code]}`
+// 유형이 없는 학생(진단 전)은 색을 지어내지 않고 중립 배지로 둔다.
+export function studentTypeClass(code: StudentType | null): string {
+  return code ? `admin-type-tag ${TYPE_TINT[code]}` : 'admin-type-tag admin-type-pending'
 }
 
 /** 유형 점(solid swatch) 클래스 — 홈 '담당 학생 유형 분포' 범례 */
@@ -154,12 +155,12 @@ export function typeSwatchClass(code: StudentType): string {
  * 유형 색을 CSS 값으로 — 그라데이션·차트처럼 클래스를 못 쓰는 자리에 넣는다.
  * 배지·점·차트가 같은 색을 쓰도록 세 표기가 전부 TYPE_HUE 하나에서 파생된다.
  */
-export function typeColorVar(code: StudentType): string {
-  return `var(--${TYPE_HUE[code]})`
+export function typeColorVar(code: StudentType | null): string {
+  return code ? `var(--${TYPE_HUE[code]})` : 'var(--text-cap)'
 }
 
 /** 계층 배지 CSS 클래스 (index.css 토큰) — StudentList와 동일 규약 */
-export function rosterTierClass(tier: RosterTier): string {
+export function rosterTierClass(tier: RosterTier | null): string {
   switch (tier) {
     case '하위':
       return 'admin-track-focus'
@@ -196,8 +197,9 @@ function detailToRoster(s: StudentData): RosterStudent {
     name: s.name,
     major: s.major,
     grade: s.grade,
-    studentType: s.studentType,
-    tier: type.tierLabel as RosterTier,
+    studentType: getStudentType(s),
+    // 유형이 없으면 계층도 없다 — 비교과 신청 범위를 함부로 열지 않는다.
+    tier: (type?.tierLabel ?? null) as RosterTier | null,
     // 이행률 계산은 data/roadmap.ts 한 곳이다 — 여기서 다시 세지 않는다.
     progress: getRoadmapProgress(s.id),
     status: '재학',
@@ -319,7 +321,7 @@ export function getRosterFilterOptions(departments: string[] = [], studentIds?: 
   return {
     majors: [...new Set(base.map(s => s.major))].sort(),
     grades: [...new Set(base.map(s => s.grade))].sort((a, b) => a - b),
-    types: [...new Set(base.map(s => s.studentType))],
+    types: [...new Set(base.map(s => s.studentType))].filter((t): t is StudentType => t !== null),
     tiers: [...new Set(base.map(s => s.tier))],
     statuses: [...new Set(base.map(s => s.status))],
   }

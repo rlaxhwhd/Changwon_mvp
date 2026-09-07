@@ -54,7 +54,9 @@ export function getCompetencyScores(student: StudentData): Record<Competency, nu
 export function getCompetencyAxes(student: StudentData): CompetencyAxisView[] {
   const scores = getCompetencyScores(student)
   // 계층은 6유형에서 파생된다(careerProcess 단일소스) — 학생 레코드에 따로 저장하지 않는다.
-  const target = TIER_TARGET[STUDENT_TYPE_MAP[student.studentType]?.tierLabel] ?? 75
+  // 유형이 없으면(진단 전) 계층도 없다 — 기본 목표선을 쓴다.
+  const tierLabel = student.studentType ? STUDENT_TYPE_MAP[student.studentType]?.tierLabel : undefined
+  const target = (tierLabel ? TIER_TARGET[tierLabel] : undefined) ?? 75
 
   return COMPETENCY_ORDER.map(key => ({
     key,

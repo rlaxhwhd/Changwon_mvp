@@ -9,7 +9,7 @@ import {
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { StaffRole } from '../data/schema/staff'
-import { STUDENTS, getCounselOwnerById, getStudentTypeMeta } from '../../src_v2/data/students'
+import { STUDENTS, getCounselOwnerById, getStudentType, getStudentTypeMeta } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
 import { STUDENT_TYPE_MAP, areaOf, typeLabel } from '../../src_v2/data/careerProcess'
 import { loadJournalEntries } from '../../src_v2/data/growthJournal'
@@ -104,7 +104,8 @@ function CardHead({ title, desc, action }: { title: string; desc?: string; actio
 
 function DiagnosisTab({ student }: { student: StudentData }) {
   const type = getStudentTypeMeta(student)
-  const cards = useMemo(() => getDiagnosisCards(student.id, student.studentType), [student.id, student.studentType])
+  const studentType = getStudentType(student)
+  const cards = useMemo(() => getDiagnosisCards(student.id, studentType), [student.id, studentType])
   const [openCard, setOpenCard] = useState<DiagnosisCard | null>(null)
 
   return (
@@ -112,7 +113,7 @@ function DiagnosisTab({ student }: { student: StudentData }) {
       {/* 두 카드는 높이를 맞춘다 — 진단 결과 카드가 진단 유형 카드 높이를 따라간다. */}
       <div className="dashboard-grid grid-stretch">
         <section data-slot="card" className="diagnosis-card col-7">
-          <CardHead title="진단 결과" desc={`${typeLabel(student.studentType)} 대상 진단 ${cards.length}종의 응시 현황입니다. 카드를 누르면 상세 결과가 열립니다.`} />
+          <CardHead title="진단 결과" desc={`${typeLabel(studentType)} 대상 진단 ${cards.length}종의 응시 현황입니다. 카드를 누르면 상세 결과가 열립니다.`} />
           <div data-slot="card-content">
             <div className="diagnosis-result-grid">
               {cards.map(c => (
@@ -139,7 +140,7 @@ function DiagnosisTab({ student }: { student: StudentData }) {
                   ) : (
                     <>
                       <strong className="diagnosis-primary-result">
-                        {c.module.id === 'CCORE' ? typeLabel(student.studentType) : (c.tags[0] ?? areaOf(c.module))}
+                        {c.module.id === 'CCORE' ? typeLabel(studentType) : (c.tags[0] ?? areaOf(c.module))}
                       </strong>
                       <span className="diagnosis-result-tags">
                         {c.tags.slice(c.module.id === 'CCORE' ? 0 : 1).map((t, i) => <span key={i}>{t}</span>)}
@@ -157,26 +158,36 @@ function DiagnosisTab({ student }: { student: StudentData }) {
           <CardHead
             title="진단 유형"
             desc="C-CORE 결과로 확정된 6유형과 그에 따른 후속 경로입니다."
-            action={<span className={studentTypeClass(student.studentType)}><b>{student.studentType}</b>{typeLabel(student.studentType)}</span>}
+            action={<span className={studentTypeClass(studentType)}>{studentType && <b>{studentType}</b>}{typeLabel(studentType)}</span>}
           />
           <div data-slot="card-content">
-            <div className="axis-list">
-              {(Object.entries(student.typeScores) as [string, string][]).map(([k, v]) => (
-                <div key={k} className="axis-row kv">
-                  {k}
-                  <span className="badge">{v}</span>
+            {/* 유형이 없으면(진단 전) 점수·후속경로가 전부 빈칸이 된다 — 빈 표 대신 이유를 적는다. */}
+            {!type ? (
+              <EmptyState
+                icon={LuClipboardCheck}
+                message={`${student.name} 학생은 아직 C-CORE 핵심진단을 보지 않았습니다.\n응시하면 6유형이 정해지고 후속진단·상담 주제가 결정됩니다.`}
+              />
+            ) : (
+              <>
+                <div className="axis-list">
+                  {(Object.entries(student.typeScores) as [string, string][]).map(([k, v]) => (
+                    <div key={k} className="axis-row kv">
+                      {k}
+                      <span className="badge">{v}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-            <dl className="kv-list">
-              {[
-                ['후속진단', type.followUpTest],
-                ['목표', type.goal],
-                ['초점', type.focus],
-              ].map(([dt, dd]) => (
-                <div key={dt} className="kv-row"><dt>{dt}</dt><dd>{dd}</dd></div>
-              ))}
-            </dl>
+                <dl className="kv-list">
+                  {[
+                    ['후속진단', type.followUpTest],
+                    ['목표', type.goal],
+                    ['초점', type.focus],
+                  ].map(([dt, dd]) => (
+                    <div key={dt} className="kv-row"><dt>{dt}</dt><dd>{dd}</dd></div>
+                  ))}
+                </dl>
+              </>
+            )}
           </div>
         </section>
       </div>
@@ -292,9 +303,6 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
         journey={journey}
         title="진로 여정"
         desc="진단 → 상담 → 로드맵 → 역량강화 → 취업지원 순서에서 지금 서 있는 위치입니다."
-        action={canEdit ? (
-          <Link to={`/roadmap/${student.id}`} className="admin-btn admin-btn-primary sm"><LuPencilRuler /> 로드맵 편집</Link>
-        ) : undefined}
         pendingMarker={step => {
           const Icon = PHASE_ICONS[step.icon ?? ''] ?? LuCircleDot
           return <Icon />
@@ -303,10 +311,18 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
 
       {plan && (
         <section data-slot="card" className="goal-card">
+          {/* 「로드맵 편집」은 고칠 대상(3축·칸) 바로 옆에 둔다 — 여정 카드는 위치 표시일 뿐이다. */}
           <CardHead
             title="목표 달성 계획"
-            desc={`${plan.role} 목표를 향한 로드맵 3축입니다. 축·칸 정의는 PROCESS.md §6.`}
-            action={plan.confirmed ? <span className="badge mint">확정 v{plan.version}</span> : <span className="badge">초안</span>}
+            desc={`${plan.role} 목표를 향한 로드맵 3축입니다.`}
+            action={
+              <div className="sdv-goal-actions">
+                {plan.confirmed ? <span className="badge mint">확정 v{plan.version}</span> : <span className="badge">초안</span>}
+                {canEdit && (
+                  <Link to={`/roadmap/${student.id}`} className="admin-btn admin-btn-primary sm"><LuPencilRuler /> 로드맵 편집</Link>
+                )}
+              </div>
+            }
           />
           <div data-slot="card-content">
             <article className="goal-core" style={{ marginBottom: 16 }}>
@@ -627,7 +643,8 @@ function counselOwnerAsRoster(studentId: string): RosterStudent | undefined {
     major: owner.major.replace(/\s*\d+학년\s*$/, ''),
     grade: owner.grade,
     studentType: owner.studentType,
-    tier: STUDENT_TYPE_MAP[owner.studentType].tierLabel as RosterStudent['tier'],
+    // 유형이 없으면 계층도 없다 — 진단 전 학생이다.
+    tier: (owner.studentType ? STUDENT_TYPE_MAP[owner.studentType].tierLabel : null) as RosterStudent['tier'],
     progress: getRoadmapProgress(owner.id),
     status: owner.enrollmentStatus,
     gpa: owner.gpa,
@@ -718,7 +735,9 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
 
   const activeTab = visibleTabs.some(t => t.key === tab) ? tab : visibleTabs[0].key
   const radar = getCompetencyRadar(student)
-  const stats = getStudentStatCards(student, student.studentType)
+  // 유형은 시드가 아니라 실효값을 본다 — 학생이 방금 진단을 마쳤다면 그 결과가 여기 반영돼야 한다.
+  const studentType = getStudentType(student)
+  const stats = getStudentStatCards(student, studentType)
 
   return (
     <div className="sdv">
@@ -738,7 +757,7 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
         <div><dt>어학</dt><dd>{student.language}</dd></div>
         <div>
           <dt>진단 유형</dt>
-          <dd><span className={studentTypeClass(student.studentType)}><b>{student.studentType}</b>{typeLabel(student.studentType)}</span></dd>
+          <dd><span className={studentTypeClass(studentType)}>{studentType && <b>{studentType}</b>}{typeLabel(studentType)}</span></dd>
         </div>
       </dl>
 

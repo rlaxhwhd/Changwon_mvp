@@ -3,10 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import {
   getRequiredTests,
-  getModuleStatus,
+  getModuleByTestId,
   typeLabel,
   type TestStatus,
 } from '../../data/careerProcess'
+import { completeDiagnosis, getModuleStatusFor, getStudentType } from '../../data/pipeline'
+import NextStepBanner from '../../components/NextStepBanner'
 import { getActiveStudent } from '../../data/students'
 import './EmploymentTest.css'
 import './DiagnosisProcess.css'
@@ -48,21 +50,38 @@ export default function DiagnosisResult() {
   const [hasRequestedTypeChange, setHasRequestedTypeChange] = useState(false)
 
   const student = getActiveStudent()
+  // 유형은 시드가 아니라 파이프라인이 준다 — C-CORE 를 마치며 주입된 값이 여기로 들어온다.
+  const studentType = getStudentType(student)
   // 응시 대상 = 필수진단 CCORE + 내 유형의 후속진단 1종 (PROCESS.md §3)
   // 학년으로 배정하지 않는다. 전 모듈을 나열하지도 않는다.
-  const modulesWithStatus = getRequiredTests(student.studentType).map(m => ({ ...m, status: getModuleStatus(m) }))
+  const modulesWithStatus = getRequiredTests(studentType).map(m => ({ ...m, status: getModuleStatusFor(student, m) }))
   const doneCount = modulesWithStatus.filter(m => m.status === 'done').length
   const availableCount = modulesWithStatus.filter(m => m.status === 'available').length
   const lockedCount = modulesWithStatus.filter(m => m.status === 'locked').length
 
+  // 응시 확인 — 실제 검사 문항이 없으므로(판정식 미확정) "응시했다"는 사실만 기록한다.
+  const [pendingTestId, setPendingTestId] = useState<string | null>(null)
+  const pendingModule = pendingTestId ? getModuleByTestId(pendingTestId) : undefined
+
   const handleCardAction = (testId: string, status: TestStatus) => {
     if (status === 'locked') return
     if (status === 'done') navigate(`/diagnosis/employment/${testId}`)
-    else navigate('/diagnosis/employment')
+    else setPendingTestId(testId)
+  }
+
+  const confirmAttempt = () => {
+    if (!pendingTestId) return
+    completeDiagnosis(student, pendingTestId)
+    setPendingTestId(null)
+    // 응시 결과가 유형·게이트를 바꾼다 — 화면 전체가 새 상태를 봐야 한다.
+    navigate(0)
   }
 
   return (
     <div className="de-wrap">
+      {/* 진단이 남은 학생에게는 여기서도 다음 걸음을 짚어 준다(끝난 학생에겐 안 뜬다). */}
+      <NextStepBanner />
+
       <section className="de-hero">
         <div className="de-hero-visual" aria-label="AI 홀로그램 진단 이미지">
           <img className="de-hero-image" src="/diagnosis_1.2.png" alt="AI 홀로그램 진단 이미지" />
@@ -109,7 +128,7 @@ export default function DiagnosisResult() {
             <span className="de-access-icon"><i className="fa-solid fa-user-tag" /></span>
             <div>
               <small>현재 진단유형</small>
-              <strong>{typeLabel(student.studentType)}</strong>
+              <strong>{typeLabel(studentType)}</strong>
               <p>진단 결과와 지정 유형은 학생이 직접 수정할 수 없습니다.</p>
             </div>
           </article>
@@ -202,6 +221,40 @@ export default function DiagnosisResult() {
           <i className="fa-solid fa-arrow-up-right-from-square" />
         </button>
       </section>
+
+      {/* 응시 확인 — 누르면 되돌릴 수 없는 기록이 남으므로 한 번 묻는다. */}
+      <Modal
+        open={pendingModule != null}
+        onClose={() => setPendingTestId(null)}
+        title={pendingModule ? `${pendingModule.name} 응시` : ''}
+        size="sm"
+      >
+        {pendingModule && (
+          <div className="de-attempt-confirm">
+            <p className="de-attempt-decides">
+              <i className="fa-solid fa-circle-info" />
+              {pendingModule.decides}
+            </p>
+            <dl className="de-attempt-meta">
+              <div><dt>소요 시간</dt><dd>{pendingModule.time}</dd></div>
+              <div><dt>문항 수</dt><dd>{pendingModule.questions}</dd></div>
+              <div><dt>진단 영역</dt><dd>{pendingModule.factors.map(f => f.name).join(' · ')}</dd></div>
+            </dl>
+            <p className="de-attempt-note">
+              검사 문항은 아직 준비 중입니다. 지금은 <b>응시를 완료한 것으로 기록</b>하고
+              다음 단계를 열어 드립니다.
+            </p>
+            <div className="de-attempt-actions">
+              <button type="button" className="de-attempt-cancel" onClick={() => setPendingTestId(null)}>
+                취소
+              </button>
+              <button type="button" className="de-attempt-submit" onClick={confirmAttempt}>
+                응시 완료 <i className="fa-solid fa-arrow-right" />
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={isGuideOpen}

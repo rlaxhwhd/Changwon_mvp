@@ -38,7 +38,7 @@ export interface JournalRow {
       상담일지는 「지금 휴학 중인 학생」을 걸러 보는 자리라 현재 값이 맞다.
       jobApplicationExport 가 쓰는 판정과 같은 규약이다. */
   studentStatus: EnrollStatus
-  studentType: StudentType
+  studentType: StudentType | null
   type: CounselRequestType
   method: CounselMethod
   topic: string

@@ -1587,3 +1587,26 @@
     min-height: 336px;
   }
 }
+
+/* ── 할 일 없음 / 활동 이력 없음 ─────────────────────────────────────────
+   신입생처럼 아직 아무 기록이 없는 학생에게 시안 수치를 보이지 않는다.
+   빈 칸을 두지 않고 무엇을 하면 채워지는지 말한다(CLAUDE.md 13조). */
+.mn-page .todo-empty {
+  margin: 0;
+  padding: 20px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+  line-height: 20px;
+  text-align: center;
+}
+
+/* 할 일 칸이 링크가 됐다 — 밑줄·색 상속만 되돌린다(모양은 .todo-item 그대로). */
+.mn-page a.todo-item { color: inherit; text-decoration: none; }
+
+.mn-page .quest-ring--empty {
+  background: conic-gradient(var(--muted) 0 100%);
+}
+
+.mn-page .quest-ring--empty .quest-value strong { color: var(--muted-foreground); }

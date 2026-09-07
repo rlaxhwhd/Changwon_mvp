@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
-import { getActiveStudent } from '../data/students'
+import { getActiveStudent, getStudentType, getStudentTypeMeta } from '../data/students'
+import { buildCareerJourney, getStageAccess, typeLabel } from '../data/careerProcess'
+import { getDiagnosisCardViews, getPipelineState } from '../data/pipeline'
 import StudentStatCards, { type StudentStat } from '../components/StudentStatCards'
 import CareerJourneyCard from '../components/CareerJourneyCard'
+import NextStepBanner from '../components/NextStepBanner'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
-import { CAREER_JOURNEY } from '../data/careerProcess'
 import { getCompetencyAxes } from '../data/competency'
 import { getGrowthRecords } from '../data/growthRecords'
 import './AiLounge.css'
@@ -48,27 +50,56 @@ export default function AiLounge() {
   // 성장 활동 기록 — /v2/growth 가 쓰는 그 목록을 그대로 읽는다.
   const growthRecords = getGrowthRecords(student.id)
 
+  const studentType = getStudentType(student)
+  const typeMeta = getStudentTypeMeta(student)
+
+  // ── 카드 노출 판정 ────────────────────────────────────────────────────
+  // 라운지는 「내 기록을 모아 보는 곳」이라, 아직 쌓인 게 없는 카드는 잠금 안내조차
+  // 두지 않고 통째로 감춘다(빈 카드가 늘어서면 대시보드가 거짓말처럼 읽힌다).
+  // 판정은 순차 게이팅 단일 정책을 그대로 쓴다 — 여기서 조건을 새로 만들지 않는다.
+  //   진단 결과 · 진로 여정은 언제나 보인다. 그 둘이 「다음에 뭘 할지」를 알려 주는 카드다.
+  const access = getStageAccess(getPipelineState(student))
+  const journey = buildCareerJourney(getPipelineState(student))
+  // 진단 결과 카드 — 대상 검사·상태·결과를 데이터층이 합쳐 준다.
+  const diagnosisCards = getDiagnosisCardViews(student)
+  const show = {
+    counsel: access.counsel === 'open',   // 지표 5장
+    roadmap: access.roadmap === 'open',   // 목표 달성 계획 · 5대 핵심역량
+    growth: access.growth === 'open',     // 이번 주 할 일 · 성장 활동 기록
+    // 상담 현황 카드 안쪽은 아직 시안 리터럴이다 — 단계만 열렸다고 띄우면
+    // 상담 0건인 학생에게 남의 상담 기록이 보인다. 실제 신청이 있을 때만 그린다.
+    counselRecords: student.counselRequests.length > 0,
+  }
+
   return (
     <div className="al-page">
+        <NextStepBanner />
+
         <section className="welcome reveal">
           <div><small>{student.major} {student.grade}학년</small>
             <h1>안녕하세요, <span>{student.name}</span>님.<br />오늘의 커리어 여정을 시작해 볼까요?</h1>
           </div>
-          <div className="student-type"><span className="type-copy"><small>나의 진로 유형</small><b>진로설정형</b><span>목표 직무를 구체화하고 실행 계획을
-                설계하는 단계</span></span></div>
+          {/* 유형 칩은 실효 유형에서 온다 — 시안 리터럴(「진로설정형」)이 박혀 있어
+              모든 학생이 같은 유형으로 보였다. 진단 전이면 무엇을 하면 정해지는지 말한다. */}
+          <div className="student-type"><span className="type-copy"><small>나의 진로 유형</small>
+            <b>{typeLabel(studentType)}</b>
+            <span>{typeMeta ? typeMeta.goal : 'C-CORE 핵심진단을 마치면 유형이 정해집니다.'}</span>
+          </span></div>
         </section>
 
-        <StudentStatCards stats={LOUNGE_STATS} />
+        {/* 지표 5장은 상담까지 온 학생의 누적치다 — 진단 전에는 셀 것이 없어 아예 감춘다. */}
+        {show.counsel && <StudentStatCards stats={LOUNGE_STATS} />}
 
         <div className="dashboard-grid">
           <CareerJourneyCard
-            journey={CAREER_JOURNEY}
+            journey={journey}
             title="나의 진로 여정"
             desc="내 CARE+7의 현재 위치입니다."
             className="reveal"
             id="journey"
           />
 
+          {show.roadmap && (
           <section data-slot="card" className="competency-card reveal" id="competency">
             <div data-slot="card-header">
               <div>
@@ -98,6 +129,7 @@ export default function AiLounge() {
               </div>
             </div>
           </section>
+          )}
 
           <section data-slot="card" className="diagnosis-card reveal" id="diagnosis">
             <div data-slot="card-header">
@@ -108,37 +140,55 @@ export default function AiLounge() {
             </div>
             <div data-slot="card-content">
               <div className="diagnosis-result-grid">
-                {/* 완료 진단은 결과 상세로. testId 는 careerProcess.DIAGNOSIS_MODULES 값(ccore·c1~c6). */}
-                <Link className="diagnosis-result-item" to="/diagnosis/employment/ccore" style={{ '--result-color': 'var(--diagnosis-1)', '--result-soft': 'var(--diagnosis-1-soft)' } as React.CSSProperties}>
-                  <span className="diagnosis-result-top"><span className="diagnosis-result-name"><small>C-CORE</small><b>핵심진단
-                        검사</b></span><span className="diagnosis-result-date">완료</span></span>
-                  <strong className="diagnosis-primary-result">역량성장형</strong>
-                  <span className="diagnosis-result-tags"><span>의욕 만렙형</span><span>미래 준비 유형</span><span>개인 브랜딩</span></span>
-                </Link>
-                <Link className="diagnosis-result-item" to="/diagnosis/employment/c2" style={{ '--result-color': 'var(--diagnosis-2)', '--result-soft': 'var(--diagnosis-2-soft)' } as React.CSSProperties}>
-                  <span className="diagnosis-result-top"><span className="diagnosis-result-name"><small>C-2</small><b>진로설정
-                        진단</b></span><span className="diagnosis-result-date">완료</span></span>
-                  <strong className="diagnosis-primary-result">추상적 개념화형</strong>
-                  <span className="diagnosis-result-tags"><span>진로 수행회피목표</span><span>창의적 의사결정</span></span>
-                </Link>
-                <article className="diagnosis-result-item locked" aria-label="C-3 역량수준 진단 이용 제한" style={{ '--result-color': 'var(--diagnosis-3)', '--result-soft': 'var(--diagnosis-3-soft)' } as React.CSSProperties}>
-                  <span className="diagnosis-result-top"><span className="diagnosis-result-name"><small>C-3</small><b>역량수준
-                        진단</b></span><span className="diagnosis-result-date">이용 제한</span></span>
-                  <strong className="diagnosis-primary-result">미래 유보형</strong>
-                  <span className="diagnosis-result-tags"><span>온라인 네트워킹</span><span>교내 네트워킹</span><span>행동파 돌격형</span></span>
-                  <span className="diagnosis-lock-layer"><span className="diagnosis-lock-message"><span className="diagnosis-lock-icon"><svg className="icon"><use href="#i-lock" /></svg></span><span className="diagnosis-lock-copy"><b>진로설정형에서는 이용할 수 없어요</b><small>다음 진로 유형으로 전환되면 진단이 열립니다.</small></span></span><Link className="button diagnosis-lock-button" to="/diagnosis/employment">이용 조건 확인</Link></span>
-                </article>
-                <article className="diagnosis-result-item locked" aria-label="C-4 구직역량 진단 이용 제한" style={{ '--result-color': 'var(--diagnosis-4)', '--result-soft': 'var(--diagnosis-4-soft)' } as React.CSSProperties}>
-                  <span className="diagnosis-result-top"><span className="diagnosis-result-name"><small>C-4</small><b>구직역량
-                        진단</b></span><span className="diagnosis-result-date">이용 제한</span></span>
-                  <strong className="diagnosis-primary-result">구직역량 유형 분석</strong>
-                  <span className="diagnosis-result-tags"><span>구직 준비도</span><span>취업 실행역량</span></span>
-                  <span className="diagnosis-lock-layer"><span className="diagnosis-lock-message"><span className="diagnosis-lock-icon"><svg className="icon"><use href="#i-lock" /></svg></span><span className="diagnosis-lock-copy"><b>진로설정형에서는 이용할 수 없어요</b><small>구직 실행 단계에 진입하면 진단이 열립니다.</small></span></span><Link className="button diagnosis-lock-button" to="/diagnosis/employment">유형별 진단 안내</Link></span>
-                </article>
+                {/* 대상 검사·상태·결과는 데이터층이 준다(pipeline.getDiagnosisCardViews).
+                    이 카드는 진단 전 학생도 보는 두 카드 중 하나라 리터럴을 두면 안 된다. */}
+                {diagnosisCards.map((c, i) => {
+                  const n = (i % 5) + 1
+                  const style = {
+                    '--result-color': `var(--diagnosis-${n})`,
+                    '--result-soft': `var(--diagnosis-${n}-soft)`,
+                  } as React.CSSProperties
+
+                  if (c.status !== 'done') {
+                    return (
+                      <article key={c.module.id} className="diagnosis-result-item not-taken" style={style}>
+                        <span className="diagnosis-result-top">
+                          <span className="diagnosis-result-name"><small>{c.module.id}</small><b>{c.module.name}</b></span>
+                          <span className="diagnosis-result-date">{c.status === 'available' ? '응시 가능' : '잠금'}</span>
+                        </span>
+                        <strong className="diagnosis-primary-result">
+                          {c.status === 'available' ? '아직 응시 전' : '선행 진단을 마치면 열립니다'}
+                        </strong>
+                        <span className="diagnosis-result-tags">
+                          {c.module.factors.map(f => <span key={f.name}>{f.name}</span>)}
+                        </span>
+                      </article>
+                    )
+                  }
+
+                  return (
+                    <Link
+                      key={c.module.id}
+                      className="diagnosis-result-item"
+                      to={`/diagnosis/employment/${c.module.testId}`}
+                      style={style}
+                    >
+                      <span className="diagnosis-result-top">
+                        <span className="diagnosis-result-name"><small>{c.module.id}</small><b>{c.module.name}</b></span>
+                        <span className="diagnosis-result-date">완료</span>
+                      </span>
+                      <strong className="diagnosis-primary-result">{c.headline}</strong>
+                      <span className="diagnosis-result-tags">
+                        {c.tags.map(t => <span key={t}>{t}</span>)}
+                      </span>
+                    </Link>
+                  )
+                })}
               </div>
             </div>
           </section>
 
+          {show.roadmap && (
           <section data-slot="card" className="goal-card reveal" id="goal">
             <div data-slot="card-header">
               <div>
@@ -238,7 +288,9 @@ export default function AiLounge() {
               </div>
             </div>
           </section>
+          )}
 
+          {show.growth && (
           <section data-slot="card" className="todo-card reveal" id="todo">
             <div data-slot="card-header">
               <div>
@@ -254,12 +306,14 @@ export default function AiLounge() {
                       필수</span></span><span className="badge">D-20</span></label></div>
             </div>
           </section>
+          )}
 
           {/* 성장 활동 기록 — 「내 성장」(/v2/growth)의 같은 카드다.
               값은 같은 단일소스를 읽으므로, 거기서 기록을 더하면 여기에도 그대로 나온다.
               다만 여기서는 읽기만 한다 — 등록·수정·삭제는 /v2/growth 한 곳에서만 한다. */}
           {/* gh-shell 이 필요하다 — --gh-* 색 토큰과 점 색 규칙이 전부 그 클래스 하위로
               스코프돼 있어(GrowthHome.css), 없으면 점이 투명해지고 색이 하나도 안 산다. */}
+          {show.growth && (
           <section data-slot="card" className="recommend-card gh-shell reveal" id="recommend">
             <article className="gh-card gh-archive">
               <header className="gh-card-head">
@@ -282,7 +336,9 @@ export default function AiLounge() {
               </div>
             </article>
           </section>
+          )}
 
+          {show.counselRecords && (
           <section data-slot="card" className="counseling-card reveal" id="counseling-status">
             <div data-slot="card-header">
               <div>
@@ -324,6 +380,7 @@ export default function AiLounge() {
               </div>
             </div>
           </section>
+          )}
         </div>
     </div>
   )

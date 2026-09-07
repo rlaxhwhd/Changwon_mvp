@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { getActiveStudent, getStudentTypeMeta } from '../../data/students'
+import { typeLabel } from '../../data/careerProcess'
 // 로드맵은 새로 그리지 않는다 — /roadmap/skill-tree · 상담사 편집기와 같은 공용 3축 보드다.
 import RoadmapAxisBoard from '../../components/RoadmapAxisBoard'
 import { ROADMAP_AXIS_MAP } from '../../data/schema/roadmap'
@@ -105,11 +106,11 @@ export default function RoadmapStatus() {
         </div>
         <div className="rs-meta-item">
           <span className="rs-meta-key">진단 유형</span>
-          <span className="rs-meta-val">{type.label}</span>
+          <span className="rs-meta-val">{typeLabel(student.studentType)}</span>
         </div>
         <div className="rs-meta-item">
           <span className="rs-meta-key">계층</span>
-          <span className="rs-meta-val">{type.tierLabel}</span>
+          <span className="rs-meta-val">{type?.tierLabel ?? "-"}</span>
         </div>
         <div className="rs-meta-item">
           <span className="rs-meta-key">목표 회사 매칭</span>

@@ -14,7 +14,7 @@ import type { StudentStat } from '../../src_v2/components/StudentStatCards'
 import { getCompetencyAxes, getCompetencyOverall } from '../../src_v2/data/competency'
 import type { CompetencyAxisView } from '../../src_v2/data/competency'
 import {
-  DIAGNOSIS_MODULES, getRequiredTests,
+  DIAGNOSIS_MODULES, getRequiredTests, journeyProgress,
   type CareerJourney, type DiagnosisModule, type StudentType,
 } from '../../src_v2/data/careerProcess'
 import { getAttemptsByStudent } from './diagnosisAttempts'
@@ -84,7 +84,7 @@ const TEST_TINT: Record<string, string> = {
  * 학생이 봐야 할 검사 목록 × 응시 이력 병합.
  * 대상 검사는 getRequiredTests(유형) — CCORE + 그 유형의 후속진단만. 전체 7종을 늘어놓지 않는다.
  */
-export function getDiagnosisCards(studentId: string, type: StudentType): DiagnosisCard[] {
+export function getDiagnosisCards(studentId: string, type: StudentType | null): DiagnosisCard[] {
   const attempts = getAttemptsByStudent(studentId)
   const latest = new Map<string, DiagnosisAttempt>()
   for (const a of attempts) {
@@ -266,24 +266,29 @@ export { getRoadmapProgress }
 
 /**
  * 진로 여정 카드(공용 CareerJourneyCard)가 구독하는 투영.
- * 칸은 학생 JSON 의 phases(파이프라인 단계)를, 진행률은 로드맵 이행률을 그대로 옮긴다.
+ * 칸은 학생 JSON 의 phases(파이프라인 단계)를 옮긴다.
  * 화면에서 phases 를 훑어 현재 단계를 고르지 않는다 — 그 판단이 여기 한 곳에 있다.
+ *
+ * ⚠ 진행률은 로드맵 이행률(3축 15칸)이 아니라 칸에서 뽑는다. 둘은 다른 수라서
+ *   섞으면 막대 끝이 칸 위치와 어긋난다(4칸째가 진행 중인데 막대는 3칸째 앞에서 끊겼다).
+ *   로드맵 이행률은 목표 달성 계획 카드가 제 자리에서 보여준다.
  */
 export function getCareerJourney(student: StudentData): CareerJourney {
   const current = student.phases.find(p => p.status === 'active') ?? student.phases[student.phases.length - 1]
+  const steps: CareerJourney['steps'] = student.phases.map(p => ({
+    code: String(p.num),
+    label: p.title,
+    status: p.status === 'done' ? 'done' : p.status === 'active' ? 'current' : 'upcoming',
+    note: p.status === 'done' ? '완료' : p.status === 'active' ? '진행 중' : p.period,
+    icon: p.icon,
+  }))
 
   return {
     kicker: 'CAREER ROADMAP',
     stage: current?.title ?? '단계 미정',
     summary: current?.recommendation ?? '로드맵이 아직 생성되지 않았습니다.',
-    percent: getRoadmapProgress(student.id),
-    steps: student.phases.map(p => ({
-      code: String(p.num),
-      label: p.title,
-      status: p.status === 'done' ? 'done' : p.status === 'active' ? 'current' : 'upcoming',
-      note: p.status === 'done' ? '완료' : p.status === 'active' ? '진행 중' : p.period,
-      icon: p.icon,
-    })),
+    percent: journeyProgress(steps),
+    steps,
   }
 }
 
@@ -311,7 +316,7 @@ export function getGoalPlan(student: StudentData): GoalPlan | null {
  * 화면(StudentStatCards)은 그리기만 하므로 문구까지 여기서 완성해 넘긴다.
  * 카드 순서·종류는 학생 라운지(/v2/lounge)와 같다 — 같은 공용 컴포넌트를 쓴다.
  */
-export function getStudentStatCards(student: StudentData, type: StudentType): StudentStat[] {
+export function getStudentStatCards(student: StudentData, type: StudentType | null): StudentStat[] {
   const cards = getDiagnosisCards(student.id, type)
   const diagDone = cards.filter(c => c.state === '완료').length
   const counsel = getCounselOverview(student.id)
@@ -351,19 +356,26 @@ export function getStudentStatCards(student: StudentData, type: StudentType): St
    *   (diagDone·allDiagDone 은 그때 다시 쓰인다 — 지우지 말 것)
    */
   const DEMO_DIAGNOSIS = { done: 2, total: 2 }
-  void diagDone
-  void allDiagDone
+
+  /**
+   * ⚠ 위 고정값은 **유형이 이미 있는 학생**(= 진단을 마치고 들어온 시연 학생)에게만 쓴다.
+   *   진단 전 학생(유형 null)에게까지 「2/2 완료」를 보이면 카드가 거짓말이 된다 —
+   *   상담사가 "진단 다 했네"로 읽고 응시 권유를 걸지 않는다. 그 학생은 실제 값으로 센다.
+   */
+  const pinned = type !== null
+  const diagValue = pinned ? DEMO_DIAGNOSIS.done : diagDone
+  const diagTotal = pinned ? DEMO_DIAGNOSIS.total : cards.length
 
   const stats: StudentStat[] = [
     {
       kind: 'diagnosis',
       kicker: CARE,
       label: '진단 완료',
-      value: String(DEMO_DIAGNOSIS.done),
-      unit: `/${DEMO_DIAGNOSIS.total}`,
-      pct: Math.round((DEMO_DIAGNOSIS.done / DEMO_DIAGNOSIS.total) * 100),
-      foot: '대상 진단 모두 완료',
-      badge: '완료',
+      value: String(diagValue),
+      unit: `/${diagTotal}`,
+      pct: diagTotal > 0 ? Math.round((diagValue / diagTotal) * 100) : 0,
+      foot: pinned || allDiagDone ? '대상 진단 모두 완료' : `미실시 ${diagTotal - diagValue}건`,
+      badge: pinned || allDiagDone ? '완료' : '미실시',
     },
     {
       kind: 'counsel',

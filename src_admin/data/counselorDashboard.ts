@@ -205,7 +205,7 @@ export interface TimelineItem {
   time: string
   name: string
   meta: string
-  typeCode?: StudentType
+  typeCode?: StudentType | null
   typeLabel?: string
   typeTint?: string
   topic: string
@@ -261,7 +261,7 @@ export interface Briefing {
   studentId: string
   name: string
   meta: string
-  typeCode?: StudentType
+  typeCode?: StudentType | null
   typeLabel?: string
   typeTint?: string
   time: string
@@ -301,7 +301,7 @@ export function getBriefing(
   const attempts = getAttemptsByStudent(studentId)
   const attemptsDone = attempts.filter(a => a.completedAt).length
 
-  const tier = profile.typeMeta.tier
+  const tier = profile.typeMeta?.tier ?? null
   return {
     studentId: next.studentId,
     name: profile.name,

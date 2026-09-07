@@ -2,10 +2,13 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import CareerPopup from '../components/CareerPopup'
 import CareerJourneyCard from '../components/CareerJourneyCard'
+import NextStepBanner from '../components/NextStepBanner'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
-import { CAREER_JOURNEY } from '../data/careerProcess'
+import { buildCareerJourney } from '../data/careerProcess'
 import { getCompetencyAxes } from '../data/competency'
+import { getTodayTasks } from '../data/todayTasks'
 import { getActiveStudent } from '../data/students'
+import { getPipelineState } from '../data/pipeline'
 import './Main.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -18,11 +21,25 @@ export default function Main() {
   // 아직 화면 안에서만 사는 상태다(새로고침하면 풀린다). 출석 이벤트를 남기려면
   // CLAUDE.md 의 '이벤트 → JSON 반영' 표에 저장소를 먼저 정의해야 한다.
   const [attended, setAttended] = useState(false)
+  const student = getActiveStudent()
   // 5대 핵심역량 — 점수·목표선은 데이터층에서 온다(하드코딩된 6축을 대체).
-  const competencyAxes = getCompetencyAxes(getActiveStudent())
+  const competencyAxes = getCompetencyAxes(student)
+  // 오늘 할 일 — 진단·상담 상태에서 파생한다. 신입생이면 「핵심진단 응시하기」 한 줄이다.
+  const todayTasks = getTodayTasks(student)
+  // 진로 여정 — 학생 상태에서 파생한다(전 학생 공용 상수가 아니다).
+  const journey = buildCareerJourney(getPipelineState(student))
+  // 퀘스트·출석은 아직 이벤트 저장소가 없다(CLAUDE.md 이벤트 표에 없음).
+  // 활동을 시작하지 않은 학생에게 시안 수치를 보여주지 않기 위한 판정만 둔다.
+  const hasActivity = (student.growth?.xp ?? 0) > 0
+  // 「오늘 할 일」 헤더의 날짜 — 시안 값(08.26)이 박혀 있어 언제 봐도 8월이었다.
+  const now = new Date()
+  const todayLabel = `${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${'일월화수목금토'[now.getDay()]}요일`
 
   return (
     <div className="mn-page">
+        {/* 로그인 직후 첫 인계 — 진단이 남았으면 여기서 바로 다음 걸음을 준다. */}
+        <NextStepBanner />
+
         <section className="career-hero reveal" aria-labelledby="welcomeTitle">
           <div className="career-hero-left">
             <div className="career-hero-copy">
@@ -32,7 +49,7 @@ export default function Main() {
             </div>
 
           <CareerJourneyCard
-            journey={CAREER_JOURNEY}
+            journey={journey}
             title="나의 진로 여정"
             desc="내 CARE+7의 현재 위치입니다."
             className="hero-roadmap"
@@ -48,14 +65,23 @@ export default function Main() {
           <section data-slot="card" className="hero-panel hero-todo" id="today" aria-labelledby="todoTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="todoTitle">오늘 할 일</h2></div>
-              <span data-slot="card-action" className="badge blue">08.26 수요일</span>
+              <span data-slot="card-action" className="badge blue">{todayLabel}</span>
             </header>
             <div data-slot="card-content">
-              <div className="todo-list">
-                <div className="todo-item completed"><button className="todo-check" type="button" aria-label="자기탐색 진로설계 워크숍 프로그램 마감 임박" aria-pressed="true"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>자기탐색 진로설계 워크숍 프로그램 마감 임박</b><small>DN솔루션즈 · 채용공고 분석</small></span><span className="todo-time">완료</span></div>
-                <div className="todo-item"><button className="todo-check" type="button" aria-label="9/3일 14시 진로취업상담 예정" aria-pressed="false"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>9/3일 14시 진로취업상담 예정</b><small>로드맵 설계 · 필수 항목</small></span><span className="todo-time">D-2</span></div>
-                <div className="todo-item"><button className="todo-check" type="button" aria-label="찜한 추천 채용공고 지원하기" aria-pressed="false"><svg className="icon"><use href="#i-check" /></svg></button><span className="todo-copy"><b>찜한 추천 채용공고 지원하기</b><small>상담 예약 · 김지현 상담사</small></span><span className="todo-time">16:00</span></div>
-              </div>
+              {/* 목록은 data/todayTasks 가 학생 상태에서 뽑는다 — 여기에 할 일을 적지 않는다. */}
+              {todayTasks.length === 0 ? (
+                <p className="todo-empty">지금 처리할 일이 없습니다.<br />새 일정이 잡히면 이곳에 표시됩니다.</p>
+              ) : (
+                <div className="todo-list">
+                  {todayTasks.map(t => (
+                    <Link key={t.id} className={`todo-item${t.done ? ' completed' : ''}`} to={t.to}>
+                      <span className="todo-check" aria-hidden="true"><svg className="icon"><use href="#i-check" /></svg></span>
+                      <span className="todo-copy"><b>{t.title}</b><small>{t.note}</small></span>
+                      <span className="todo-time">{t.when}</span>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
             <footer data-slot="card-footer"><button className="button" type="button">전체 일정 보기 <svg className="icon"><use href="#i-arrow" /></svg></button></footer>
           </section>
@@ -66,10 +92,18 @@ export default function Main() {
               <Link data-slot="card-action" className="hero-inline-action" to="/growth/quest">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
             </header>
             <div data-slot="card-content">
-              <div className="quest-layout">
-                <div className="quest-ring" role="img" aria-label="오늘의 퀘스트 달성률 72퍼센트"><span className="quest-value"><strong>72%</strong></span></div>
-                <div className="quest-copy"><b>커리어 루틴 만들기</b><p>오늘 5개 중 3개 완료<br />2개만 더 달성해 보세요!</p><div className="quest-steps" aria-hidden="true"><i className="done"></i><i className="done"></i><i className="done"></i><i></i><i></i></div></div>
-              </div>
+              {/* 퀘스트 이벤트 저장소가 아직 없다 — 활동 이력이 없는 학생에게 시안 수치를 보이지 않는다. */}
+              {hasActivity ? (
+                <div className="quest-layout">
+                  <div className="quest-ring" role="img" aria-label="오늘의 퀘스트 달성률 72퍼센트"><span className="quest-value"><strong>72%</strong></span></div>
+                  <div className="quest-copy"><b>커리어 루틴 만들기</b><p>오늘 5개 중 3개 완료<br />2개만 더 달성해 보세요!</p><div className="quest-steps" aria-hidden="true"><i className="done"></i><i className="done"></i><i className="done"></i><i></i><i></i></div></div>
+                </div>
+              ) : (
+                <div className="quest-layout">
+                  <div className="quest-ring quest-ring--empty" role="img" aria-label="오늘의 퀘스트 달성률 0퍼센트"><span className="quest-value"><strong>0%</strong></span></div>
+                  <div className="quest-copy"><b>아직 시작한 퀘스트가 없어요</b><p>첫 퀘스트를 완료하면<br />성장 포인트가 쌓이기 시작합니다.</p></div>
+                </div>
+              )}
             </div>
             <footer data-slot="card-footer"><Link className="button" to="/growth/quest">전체 퀘스트 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link></footer>
           </section>
@@ -79,7 +113,10 @@ export default function Main() {
           <section data-slot="card" className="hero-panel hero-attendance attendance-card" aria-labelledby="attendanceTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="attendanceTitle">출석체크</h2><p data-slot="card-description">매일 접속하고 성장 포인트를 받아요.</p></div>
-              <span data-slot="card-action" className="badge amber">12일 연속</span>
+              {/* 연속 출석 역시 저장소가 없다 — 오늘 눌렀는지만 사실대로 말한다. */}
+              <span data-slot="card-action" className="badge amber">
+                {hasActivity ? '12일 연속' : attended ? '오늘 출석' : '첫 출석'}
+              </span>
             </header>
             <div data-slot="card-content">
               <div className="attendance-center"><div className="attendance-streak"><span><strong>TODAY<br />CHECK</strong></span></div><div><p>매일 출석하고 성장 포인트를 모아보세요.</p><button

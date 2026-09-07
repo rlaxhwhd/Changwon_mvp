@@ -1,0 +1,93 @@
+/* 다음 할 일 인계 배너 (components/NextStepBanner) */
+
+.nsb {
+  margin: 0 0 20px;
+  padding: 24px 28px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 32px;
+  border: 1px solid var(--violet-border, #d9d0ff);
+  border-radius: var(--radius-lg, 12px);
+  /* 진행 방향(초록 → 보라)을 배경에도 옅게 깐다 — 여정 카드 색 띠와 같은 축이다. */
+  background:
+    linear-gradient(120deg,
+      color-mix(in srgb, var(--mint, #20b486) 6%, var(--card, #fff)),
+      var(--card, #fff) 45%,
+      color-mix(in srgb, var(--violet, #7c5cfc) 8%, var(--card, #fff)));
+}
+
+.nsb-kicker {
+  display: inline-block;
+  margin: 0 0 8px;
+  color: var(--violet, #7c5cfc);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.nsb-kicker b { font-size: 14px; }
+
+.nsb h2 {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 28px;
+  letter-spacing: -.02em;
+}
+
+.nsb p {
+  margin: 0;
+  color: var(--muted-foreground, #5f6b7a);
+  font-size: 14px;
+  line-height: 22px;
+}
+
+.nsb-side {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 14px;
+}
+
+.nsb-dots {
+  margin: 0;
+  padding: 0;
+  display: flex;
+  gap: 6px;
+  list-style: none;
+}
+
+.nsb-dots li {
+  width: 26px;
+  height: 5px;
+  border-radius: 3px;
+  background: var(--muted, #f1f3f6);
+}
+
+.nsb-dots .is-done { background: var(--mint, #20b486); }
+.nsb-dots .is-now { background: var(--violet, #7c5cfc); }
+
+.nsb-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 22px;
+  border-radius: var(--radius-sm, 10px);
+  background: var(--cta, #8f74fd);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.nsb-cta:hover { background: var(--cta-hover, #7d5efb); }
+
+@media (max-width: 1080px) {
+  .nsb {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+  .nsb-side { align-items: flex-start; }
+}

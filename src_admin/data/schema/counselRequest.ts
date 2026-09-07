@@ -33,7 +33,8 @@ export interface CounselRequest {
   /** 역량 점수 기반 위험 단계 트랙 (학년 보정) — owner에서 투영 */
   studentTrack: StudentTrack
   /** 신청 시점 6유형 스냅샷 (목록 배지용) — owner에서 투영. 표시명은 typeLabel()로 파생. */
-  studentType: StudentType
+  /** 진단 전 학생은 유형이 없다(null) — typeLabel()이 「유형 미정」으로 표시한다. */
+  studentType: StudentType | null
   type: CounselRequestType
   status: CounselRequestStatus
   method: CounselMethod

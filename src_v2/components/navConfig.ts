@@ -1,10 +1,17 @@
 import type { IconName } from './Icon'
+import type { Stage } from '../data/careerProcess'
 
 export interface NavChild {
   label: string
   path: string
   icon: string
   minGrade?: number
+  /**
+   * 이 항목이 가리키는 카드가 열려 있어야 하는 단계.
+   * 라운지 하위메뉴는 화면이 아니라 **그 페이지의 카드**로 가는 앵커라, 카드가 감춰지면
+   * 메뉴도 같이 사라져야 한다 — 안 그러면 눌러도 아무 데도 안 가는 링크가 된다.
+   */
+  requiresStage?: Stage
   children?: NavChild[]
 }
 
@@ -28,14 +35,15 @@ export const NAV_SECTIONS: NavSection[] = [
     // 라운지는 한 페이지짜리 대시보드다 — 하위메뉴는 다른 화면이 아니라 이 페이지의 카드로 가는
     // 앵커다. 라벨은 카드 제목과 같게 두고(다르면 눌러서 도착한 곳이 딴 이름이 된다),
     // 순서도 화면에 보이는 순서를 따른다. 스크롤은 ScrollToTop 이 hash 를 보고 처리한다.
+    // requiresStage 는 AiLounge 의 카드 노출 조건과 1:1 이다 — 한쪽만 고치면 어긋난다.
     children: [
       { label: '나의 진로 여정', path: '/lounge#journey', icon: 'fa-route' },
-      { label: '목표 달성 계획', path: '/lounge#goal', icon: 'fa-bullseye' },
-      { label: '이번 주 할 일', path: '/lounge#todo', icon: 'fa-list-check' },
-      { label: '성장 활동 기록', path: '/lounge#recommend', icon: 'fa-timeline' },
-      { label: '5대 핵심역량', path: '/lounge#competency', icon: 'fa-chart-bar' },
+      { label: '목표 달성 계획', path: '/lounge#goal', icon: 'fa-bullseye', requiresStage: 'roadmap' },
+      { label: '이번 주 할 일', path: '/lounge#todo', icon: 'fa-list-check', requiresStage: 'growth' },
+      { label: '성장 활동 기록', path: '/lounge#recommend', icon: 'fa-timeline', requiresStage: 'growth' },
+      { label: '5대 핵심역량', path: '/lounge#competency', icon: 'fa-chart-bar', requiresStage: 'roadmap' },
       { label: '진단 결과', path: '/lounge#diagnosis', icon: 'fa-chart-pie' },
-      { label: '상담 현황', path: '/lounge#counseling-status', icon: 'fa-comments' },
+      { label: '상담 현황', path: '/lounge#counseling-status', icon: 'fa-comments', requiresStage: 'roadmap' },
     ],
   },
   {
@@ -131,13 +139,21 @@ export const NAV_SECTIONS: NavSection[] = [
   },
 ]
 
-export function getVisibleNavChildren(children: NavChild[], grade: number): NavChild[] {
+/**
+ * @param access 단계별 개방 여부(careerProcess.getStageAccess). 넘기지 않으면 단계 필터를 걸지 않는다.
+ */
+export function getVisibleNavChildren(
+  children: NavChild[],
+  grade: number,
+  access?: Record<Stage, 'open' | 'locked'>,
+): NavChild[] {
   return children
     .filter(child => child.path !== '/roadmap/ai' && child.path !== '/roadmap/final')
     .filter(child => child.minGrade === undefined || grade >= child.minGrade)
+    .filter(child => !access || !child.requiresStage || access[child.requiresStage] === 'open')
     .map(child => ({
       ...child,
-      children: child.children ? getVisibleNavChildren(child.children, grade) : undefined,
+      children: child.children ? getVisibleNavChildren(child.children, grade, access) : undefined,
     }))
 }
 

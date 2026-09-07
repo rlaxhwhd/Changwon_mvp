@@ -4,6 +4,12 @@
 // seed JSON 이 "검사가 내놓은 값"을 그대로 담고, 여기서는 조회만 한다.
 // ⚠ 점수를 계산하지 않는다. 수준(낮음/보통/높음)만 T점수 밴드에서 파생한다(levelOf).
 // DB 전환 시: SEED 를 API 응답으로 바꾸면 화면은 그대로 나간다.
+//
+// ⚠ 아직 응시하지 않은 학생의 결과가 seed 에 미리 들어 있을 수 있다(예: jiwoo).
+//   채점 엔진이 없어서(PROCESS.md §9) "응시하면 나올 값"을 미리 적어 두는 것이며,
+//   students.diagnosisOutcome 과 같은 이유·같은 성격의 임시 장치다.
+//   결과 화면은 응시 완료(dc_diag_attempts) 전에는 열리지 않으므로 새어 나가지 않는다.
+//   채점이 붙으면 이 선적재분을 지우고 응시 결과가 그 자리를 대신한다.
 // ─────────────────────────────────────────────────────────────────────────────
 import seed from './diagnosisResults.seed.json'
 import type { DiagnosisResult, FactorScore } from './schema/diagnosisResult'

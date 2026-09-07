@@ -105,13 +105,19 @@ export const STUDENT_TYPES: StudentTypeMeta[] = ['T1', 'T2', 'T3', 'T4', 'T5', '
   code => STUDENT_TYPE_MAP[code as StudentType],
 )
 
-/** 유형 코드 → 표시명. 화면에서 한글 리터럴을 쓰지 말고 이걸 쓴다. */
-export function typeLabel(code: StudentType): string {
+/** 유형이 아직 없는 학생(진단 전)을 부르는 이름. 화면마다 다르게 적지 않는다. */
+export const TYPE_PENDING_LABEL = '유형 미정'
+
+/** 유형 코드 → 표시명. 화면에서 한글 리터럴을 쓰지 말고 이걸 쓴다.
+ *  진단 전 학생은 코드가 없다(null) — 그때는 「유형 미정」으로 부른다. */
+export function typeLabel(code: StudentType | null | undefined): string {
+  if (!code) return TYPE_PENDING_LABEL
   return STUDENT_TYPE_MAP[code]?.label ?? code
 }
 
-/** 유형 코드 → 계층 */
-export function tierOf(code: StudentType): Tier {
+/** 유형 코드 → 계층. 유형이 없으면 계층도 없다(비교과 범위를 함부로 열지 않는다). */
+export function tierOf(code: StudentType | null | undefined): Tier | null {
+  if (!code) return null
   return STUDENT_TYPE_MAP[code].tier
 }
 
@@ -388,19 +394,34 @@ export const STAGE_LABEL: Record<Stage, string> = {
   employment: '취업지원',
 }
 
-/** 게이트 판정에 필요한 최소 상태. 화면이 아니라 데이터층에서 채운다. */
+/**
+ * 게이트 판정에 필요한 최소 상태. 화면이 아니라 데이터층에서 채운다(data/pipeline.ts).
+ *
+ * 진단이 한 덩어리가 아니라 **두 단계**임에 주의한다 — C-CORE 로 유형이 나오고,
+ * 그 유형이 정해 준 후속진단 Cn 을 한 번 더 봐야 상담이 열린다(PROCESS.md).
+ */
 export interface PipelineState {
-  /** CCORE 완료 여부 */
-  diagnosisDone: boolean
+  /** C-CORE 핵심진단 완료 여부 */
+  coreDone: boolean
+  /** C-CORE 결과로 나온 유형. 없으면 아직 유형이 없다 — 우리가 계산하지 않는다. */
+  studentType: StudentType | null
+  /** 유형별 후속진단(Cn) 완료 여부 */
+  followUpDone: boolean
   /** 상담 완료 여부 */
   counselDone: boolean
   /** 로드맵 확정 여부 */
   roadmapConfirmed: boolean
 }
 
+/** 진단 단계 전체가 끝났는가 = C-CORE + 후속진단 둘 다. */
+export function isDiagnosisDone(state: PipelineState): boolean {
+  return state.coreDone && state.followUpDone
+}
+
 /** 순차 게이팅 단일 판정. 화면마다 조건을 다시 쓰지 않는다. */
 export function getStageAccess(state: PipelineState): Record<Stage, 'open' | 'locked'> {
-  const { diagnosisDone, counselDone, roadmapConfirmed } = state
+  const diagnosisDone = isDiagnosisDone(state)
+  const { counselDone, roadmapConfirmed } = state
   return {
     diagnosis: 'open',
     counsel: diagnosisDone ? 'open' : 'locked',
@@ -419,25 +440,89 @@ export interface StageGuide {
 /** 잠긴 단계에 보여줄 안내 + 다음 행동. 빈 화면을 주지 않기 위한 단일 소스. */
 export function getStageGuide(stage: Stage, state: PipelineState): StageGuide | null {
   if (getStageAccess(state)[stage] === 'open') return null
-  if (!state.diagnosisDone) {
+  const next = getNextAction(state)
+  if (!next) return null
+  return { message: next.detail, ctaLabel: next.ctaLabel, ctaPath: next.ctaPath }
+}
+
+// ── 다음 할 일 (로그인 직후 인계) ────────────────────────────────────────
+// 「지금 뭘 해야 하나」를 판정하는 자리는 여기 하나뿐이다. 홈·라운지·진단센터·
+// 잠긴 화면이 전부 이 함수를 구독한다 — 화면마다 순서를 다시 판단하지 않는다.
+
+export interface NextAction {
+  /** 지금 서 있는 단계 */
+  stage: Stage
+  /** 무엇을 해야 하는가 */
+  title: string
+  /** 왜 해야 하는가 · 끝내면 무엇이 열리는가 */
+  detail: string
+  ctaLabel: string
+  ctaPath: string
+  /** 전체 몇 걸음 중 몇 번째인가 — 안내 배너의 진행 표시 */
+  step: number
+  total: number
+}
+
+/** 인계 순서 — 진단(C-CORE) → 진단(후속) → 상담 → 로드맵. 끝나면 null. */
+export const HANDOFF_TOTAL = 4
+
+export function getNextAction(state: PipelineState): NextAction | null {
+  const { coreDone, studentType, followUpDone, counselDone, roadmapConfirmed } = state
+
+  if (!coreDone) {
     return {
-      message: '먼저 C-CORE 핵심진단을 완료하세요. 진단 결과 유형이 정해져야 다음 단계가 열립니다.',
-      ctaLabel: '진단센터로 이동',
+      stage: 'diagnosis', step: 1, total: HANDOFF_TOTAL,
+      title: 'C-CORE 핵심진단부터 시작하세요',
+      detail: '모든 단계의 관문입니다. 이 진단으로 나의 유형이 정해지고, 그 유형이 다음 진단과 상담 주제를 결정합니다.',
+      ctaLabel: '핵심진단 응시하기',
+      ctaPath: `/diagnosis/employment/${MODULE_BY_ID.get('CCORE')!.testId}`,
+    }
+  }
+
+  // 유형은 C-CORE 가 정한다. 아직 안 나왔으면 다음 단계를 열 근거가 없다.
+  if (!studentType) {
+    return {
+      stage: 'diagnosis', step: 1, total: HANDOFF_TOTAL,
+      title: '유형 산출을 기다리는 중입니다',
+      detail: 'C-CORE 응시는 끝났습니다. 결과 유형이 확정되면 후속진단이 열립니다.',
+      ctaLabel: '진단 결과 보기',
       ctaPath: '/diagnosis/employment',
     }
   }
-  if (!state.counselDone) {
+
+  if (!followUpDone) {
+    const followUp = MODULE_BY_ID.get(STUDENT_TYPE_MAP[studentType].followUpTest)!
     return {
-      message: '상담을 완료하면 유형이 최종 확정되고 로드맵을 생성할 수 있습니다.',
+      stage: 'diagnosis', step: 2, total: HANDOFF_TOTAL,
+      // 검사 이름 뒤에 조사를 붙이지 않는다 — 이름이 바뀌면 은/는·을/를이 어긋난다.
+      title: `${followUp.name} 응시가 남았습니다`,
+      detail: `${typeLabel(studentType)}으로 분류됐습니다. 이 유형에 맞춘 후속진단 1종을 마치면 상담을 신청할 수 있습니다.`,
+      ctaLabel: '후속진단 응시하기',
+      ctaPath: `/diagnosis/employment/${followUp.testId}`,
+    }
+  }
+
+  if (!counselDone) {
+    return {
+      stage: 'counsel', step: 3, total: HANDOFF_TOTAL,
+      title: '이제 상담을 신청하세요',
+      detail: `진단 2종을 모두 마쳤습니다. 상담에서 ${typeLabel(studentType)} 유형이 최종 확정되고, 같은 자리에서 로드맵이 만들어집니다.`,
       ctaLabel: '상담 신청하기',
       ctaPath: '/counsel/career',
     }
   }
-  return {
-    message: '상담에서 생성된 로드맵이 확정되면 역량강화·취업지원 단계가 열립니다.',
-    ctaLabel: '로드맵 확인',
-    ctaPath: '/roadmap/ai',
+
+  if (!roadmapConfirmed) {
+    return {
+      stage: 'roadmap', step: 4, total: HANDOFF_TOTAL,
+      title: '로드맵 확정을 기다리는 중입니다',
+      detail: '상담에서 만들어진 로드맵이 확정되면 역량강화와 취업지원 단계가 열립니다.',
+      ctaLabel: '로드맵 확인',
+      ctaPath: '/roadmap/ai',
+    }
   }
+
+  return null
 }
 
 // ── 진로 여정 표시 (진단 → … → 사후관리) ────────────────────────────────
@@ -470,21 +555,65 @@ export interface CareerJourney {
   steps: JourneyStep[]
 }
 
-/** 학생 포털이 그리는 여정 — 홈과 라운지가 같은 값을 본다(두 화면이 다른 %를 보이면 안 된다). */
-export const CAREER_JOURNEY: CareerJourney = {
-  kicker: 'CARE+7 ROADMAP',
-  stage: '역량강화 단계',
-  summary: '로드맵 설계를 완료하고 목표 직무에 필요한 핵심역량을 강화하고 있어요.',
-  percent: 57,
-  steps: [
-    { code: 'C1', label: '진단', status: 'done', note: '완료' },
-    { code: 'C2', label: '상담', status: 'done', note: '완료' },
-    { code: 'C3', label: '로드맵', status: 'done', note: '완료' },
-    { code: 'C4', label: '역량강화', status: 'current', note: '진행 중' },
-    { code: 'C5', label: '기업연계', status: 'upcoming', note: '예정' },
-    { code: 'C6', label: '취업지원', status: 'upcoming', note: '예정' },
-    { code: 'C7', label: '사후관리', status: 'upcoming', note: '예정' },
-  ],
+/**
+ * 여정 진행률 % — 막대가 칸 위치와 어긋나지 않게 칸에서 직접 뽑는다.
+ *
+ * 칸 마커는 제 열의 한가운데, 즉 전체 폭의 (i+0.5)/n 지점에 선다. 진행 중인 칸은
+ * "그 칸에 들어섰지만 아직 끝내지 못한" 상태이므로 막대는 그 칸과 다음 칸의
+ * 한가운데 = (k+1)/n 에서 멈춘다. 7칸 중 4번째가 진행 중이면 4/7 = 57%.
+ *
+ * ⚠ 로드맵 이행률(3축 15칸)과 다른 수다. 그건 목표 달성 계획 카드가 보여준다.
+ */
+export function journeyProgress(steps: JourneyStep[]): number {
+  const n = steps.length
+  if (n === 0) return 0
+  const current = steps.findIndex(s => s.status === 'current')
+  if (current >= 0) return Math.round(((current + 1) / n) * 100)
+  return Math.round((steps.filter(s => s.status === 'done').length / n) * 100)
+}
+
+/** CARE+7 일곱 칸 — 이름·순서는 고정이고, 상태만 학생마다 달라진다. */
+const CARE7_LABELS = ['진단', '상담', '로드맵', '역량강화', '기업연계', '취업지원', '사후관리']
+
+/** 칸별 안내 문구 — 그 칸에 서 있을 때 무엇을 하는 중인지. */
+const CARE7_SUMMARY = [
+  '진단을 마치면 나의 유형이 정해지고 상담 주제가 결정됩니다.',
+  '상담에서 유형이 최종 확정되고, 같은 자리에서 로드맵이 만들어집니다.',
+  '상담에서 만들어진 로드맵이 확정되기를 기다리는 중입니다.',
+  '로드맵 설계를 완료하고 목표 직무에 필요한 핵심역량을 강화하고 있어요.',
+  '기업연계 프로그램으로 현장을 먼저 만나 보는 단계입니다.',
+  '채용 전형에 맞춰 지원 서류와 면접을 준비하는 단계입니다.',
+  '취업 이후의 적응과 경력 관리를 이어 가는 단계입니다.',
+]
+
+/**
+ * 학생 포털이 그리는 여정 — **학생 상태에서 파생한다.**
+ *
+ * 예전에는 모듈 상수 하나를 전 학생이 공유해서, 진단도 안 본 신입생 화면에까지
+ * 「역량강화 단계 · 57%」가 찍혔다. 칸 상태는 게이팅 상태가 정한다.
+ */
+export function buildCareerJourney(state: PipelineState): CareerJourney {
+  const diagnosisDone = isDiagnosisDone(state)
+  // 몇 번째 칸에 서 있는가 (0-based). 뒤 칸일수록 앞 조건이 모두 참이어야 한다.
+  const at = !diagnosisDone ? 0
+    : !state.counselDone ? 1
+    : !state.roadmapConfirmed ? 2
+    : 3
+
+  const steps: JourneyStep[] = CARE7_LABELS.map((label, i) => ({
+    code: `C${i + 1}`,
+    label,
+    status: i < at ? 'done' : i === at ? 'current' : 'upcoming',
+    note: i < at ? '완료' : i === at ? '진행 중' : '예정',
+  }))
+
+  return {
+    kicker: 'CARE+7 ROADMAP',
+    stage: `${CARE7_LABELS[at]} 단계`,
+    summary: CARE7_SUMMARY[at],
+    percent: journeyProgress(steps),
+    steps,
+  }
 }
 
 // ── 유형 승급 (PROCESS.md §8) ────────────────────────────────────────────

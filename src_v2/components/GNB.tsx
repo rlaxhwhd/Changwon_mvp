@@ -5,6 +5,8 @@ import { Icon } from './Icon'
 import NotificationBell from './NotificationBell'
 import { getStudentNotifications } from '../data/notifications'
 import { STUDENTS, getActiveStudent, getActiveStudentId, setActiveStudent } from '../data/students'
+import { getStageAccess } from '../data/careerProcess'
+import { getPipelineState } from '../data/pipeline'
 
 /** 드롭다운/모바일 하위 링크 — 중첩(depth 1)까지 평탄화해 렌더한다. */
 function SubLinks({
@@ -49,6 +51,8 @@ export default function GNB() {
   const { pathname, hash } = useLocation()
   const currentSection = getSectionForPath(pathname)
   const activeStudent = getActiveStudent()
+  // 라운지 하위메뉴는 그 페이지의 카드로 가는 앵커다 — 카드가 감춰지면 메뉴도 같이 빠져야 한다.
+  const stageAccess = getStageAccess(getPipelineState(activeStudent))
   const activeId = getActiveStudentId()
   const myPagePath = activeStudent.grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'
 
@@ -111,7 +115,7 @@ export default function GNB() {
           <nav className="top-nav" id="topNavigation" aria-label="주 메뉴">
             {NAV_SECTIONS.map(section => {
               const active = currentSection?.id === section.id
-              const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade)
+              const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade, stageAccess)
               const firstPath = section.path ?? visibleChildren[0]?.path ?? '/'
               const activeChildPath = getActiveChildPath(pathname, { ...section, children: visibleChildren }, hash)
 
@@ -261,7 +265,7 @@ export default function GNB() {
             <nav aria-label="모바일 주 메뉴">
               {NAV_SECTIONS.map(section => {
                 const active = currentSection?.id === section.id
-                const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade)
+                const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade, stageAccess)
                 const firstPath = section.path ?? visibleChildren[0]?.path ?? '/'
                 const activeChildPath = getActiveChildPath(pathname, { ...section, children: visibleChildren }, hash)
 

@@ -1,6 +1,8 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import Landing from './pages/Landing'
+// 순차 게이팅은 라우트 한 곳에서 건다 — 화면은 자기가 잠겼는지 알 필요가 없다(CLAUDE.md 13조).
+import StageGate from './components/StageGate'
 import Main from './pages/Main'
 
 // AI 커리어 라운지
@@ -69,12 +71,13 @@ const router = createBrowserRouter(
         // STAR 트랙 (선발형) — 주 메뉴가 아니라 상단바 STAR 표식으로 들어온다
         { path: '/star', element: <StarTrack /> },
 
-        // 역량 강화
-        { path: '/growth',              element: <GrowthHome /> },
-        { path: '/growth/program',      element: <ProgramApply /> },
-        { path: '/growth/program/:id',  element: <ProgramDetail /> },
-        { path: '/growth/quest',        element: <QuestBoard /> },
-        { path: '/growth/roadmap-status', element: <RoadmapStatus /> },
+        // 역량 강화 — 로드맵이 정한 것을 실행하는 단계라 로드맵 확정 후 열린다.
+        //   ⚠ 성장일지·미션은 게이팅 밖이다. 진단 전에도 기록은 남길 수 있어야 한다.
+        { path: '/growth',              element: <StageGate stage="growth" title="내 성장"><GrowthHome /></StageGate> },
+        { path: '/growth/program',      element: <StageGate stage="growth" title="비교과 프로그램"><ProgramApply /></StageGate> },
+        { path: '/growth/program/:id',  element: <StageGate stage="growth" title="비교과 프로그램"><ProgramDetail /></StageGate> },
+        { path: '/growth/quest',        element: <StageGate stage="growth" title="퀘스트 보드"><QuestBoard /></StageGate> },
+        { path: '/growth/roadmap-status', element: <StageGate stage="roadmap" title="로드맵 진행 현황"><RoadmapStatus /></StageGate> },
         { path: '/growth/mission',      element: <TodayGrowthMission /> },
         { path: '/growth/mission-log',  element: <GrowthMissionLog /> },
         { path: '/growth/journal',      element: <GrowthJournal /> },
@@ -90,29 +93,29 @@ const router = createBrowserRouter(
         { path: '/diagnosis/result',               element: <Navigate to="/diagnosis/employment" replace /> },
         { path: '/diagnosis/result/:testId',       element: <Navigate to="/diagnosis/employment" replace /> },
 
-        // 전문상담
+        // 전문상담 — 진단 2종(C-CORE + 후속)을 마쳐야 열린다.
         { path: '/counsel',           element: <Navigate to="/counsel/career" replace /> },
-        { path: '/counsel/career',    element: <CareerCounsel /> },
-        { path: '/counsel/psych',     element: <PsychCounsel /> },
-        { path: '/counsel/professor', element: <ProfessorCounsel /> },
+        { path: '/counsel/career',    element: <StageGate stage="counsel" title="진로취업상담"><CareerCounsel /></StageGate> },
+        { path: '/counsel/psych',     element: <StageGate stage="counsel" title="심리상담"><PsychCounsel /></StageGate> },
+        { path: '/counsel/professor', element: <StageGate stage="counsel" title="교수상담"><ProfessorCounsel /></StageGate> },
 
-        // 경력개발 로드맵
+        // 경력개발 로드맵 — 상담에서 만들어진다. 상담 전에는 볼 것이 없다.
         { path: '/roadmap',             element: <Navigate to="/roadmap/skill-tree" replace /> },
         { path: '/roadmap/ai',          element: <Navigate to="/roadmap/skill-tree" replace /> },
-        { path: '/roadmap/skill-tree',  element: <AiRoadmap /> },
-        { path: '/roadmap/request',     element: <RoadmapRequest /> },
+        { path: '/roadmap/skill-tree',  element: <StageGate stage="roadmap" title="경력개발 로드맵"><AiRoadmap /></StageGate> },
+        { path: '/roadmap/request',     element: <StageGate stage="roadmap" title="로드맵 변경 요청"><RoadmapRequest /></StageGate> },
         { path: '/roadmap/final',       element: <Navigate to="/roadmap/skill-tree" replace /> },
         // 구 경로 → 신 경로 (취업지원 하위로 이동)
         { path: '/roadmap/jobs',        element: <Navigate to="/jobs/joblist" replace /> },
         { path: '/roadmap/resume',      element: <Navigate to="/jobs/home" replace /> },
 
-        // 취업지원
-        { path: '/jobs',                 element: <JobSupport scope="internal" /> },
-        { path: '/jobs/external',        element: <JobSupport scope="external" /> },
-        { path: '/jobs/joblist',         element: <AiJobs /> },
-        { path: '/jobs/home',            element: <JobsHome /> },
-        { path: '/jobs/home/resume',     element: <AiResume /> },
-        { path: '/jobs/home/consulting', element: <AiConsulting /> },
+        // 취업지원 — 로드맵이 확정돼야 열린다(PROCESS.md §2).
+        { path: '/jobs',                 element: <StageGate stage="employment" title="취업지원"><JobSupport scope="internal" /></StageGate> },
+        { path: '/jobs/external',        element: <StageGate stage="employment" title="취업지원"><JobSupport scope="external" /></StageGate> },
+        { path: '/jobs/joblist',         element: <StageGate stage="employment" title="AI 맞춤채용"><AiJobs /></StageGate> },
+        { path: '/jobs/home',            element: <StageGate stage="employment" title="취업지원"><JobsHome /></StageGate> },
+        { path: '/jobs/home/resume',     element: <StageGate stage="employment" title="AI 자소서"><AiResume /></StageGate> },
+        { path: '/jobs/home/consulting', element: <StageGate stage="employment" title="AI 면접 코칭"><AiConsulting /></StageGate> },
         { path: '/jobs/resume',          element: <Navigate to="/jobs/home" replace /> },
         // 공지사항: /mypage/notices 에서 취업지원 하위로 옮겼다(기존 경로는 하위 호환용 리다이렉트).
         // ⚠ '/jobs/:id' 보다 위에 둔다 — 정적 세그먼트가 먼저 읽히게 해 공고 상세로 새지 않게 한다.
@@ -122,11 +125,11 @@ const router = createBrowserRouter(
         // 마이페이지
         { path: '/mypage',           element: <Navigate to={getActiveStudent().grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'} replace /> },
         { path: '/mypage/portfolio',  element: getActiveStudent().grade >= 4 ? <Portfolio /> : <Navigate to="/growth" replace /> },
-        { path: '/mypage/programs',   element: <MyPrograms /> },
+        { path: '/mypage/programs',   element: <StageGate stage="growth" title="비교과 프로그램 현황"><MyPrograms /></StageGate> },
         { path: '/mypage/applications', element: <MyApplications /> },
         { path: '/mypage/notices',    element: <Navigate to="/jobs/notices" replace /> },
         // 상담 현황: 라우팅을 /counsel/record로 이동 (기존 /mypage/counsel은 하위 호환용 리다이렉트)
-        { path: '/counsel/record',    element: <CounselStatus /> },
+        { path: '/counsel/record',    element: <StageGate stage="counsel" title="상담 현황"><CounselStatus /></StageGate> },
         { path: '/mypage/counsel',    element: <Navigate to="/counsel/record" replace /> },
         { path: '/mypage/attendance', element: <Attendance /> },
         { path: '/mypage/mission',    element: <Navigate to="/growth/mission-log" replace /> },

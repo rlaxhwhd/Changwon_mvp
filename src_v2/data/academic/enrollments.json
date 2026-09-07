@@ -581,5 +581,71 @@
     "gpa": null,
     "finishYn": "N",
     "chkRecuri": "N"
+  },
+  {
+    "studentId": "jiwoo",
+    "year": "2026",
+    "smt": "1",
+    "curiNum": "CSE1001",
+    "courseCls": "전공필수",
+    "grade": null,
+    "gpa": null,
+    "finishYn": "N",
+    "chkRecuri": "N"
+  },
+  {
+    "studentId": "jiwoo",
+    "year": "2026",
+    "smt": "1",
+    "curiNum": "CSE1004",
+    "courseCls": "전공선택",
+    "grade": null,
+    "gpa": null,
+    "finishYn": "N",
+    "chkRecuri": "N"
+  },
+  {
+    "studentId": "jiwoo",
+    "year": "2026",
+    "smt": "1",
+    "curiNum": "GEN1001",
+    "courseCls": "교양필수",
+    "grade": null,
+    "gpa": null,
+    "finishYn": "N",
+    "chkRecuri": "N"
+  },
+  {
+    "studentId": "jiwoo",
+    "year": "2026",
+    "smt": "1",
+    "curiNum": "GEN1002",
+    "courseCls": "교양필수",
+    "grade": null,
+    "gpa": null,
+    "finishYn": "N",
+    "chkRecuri": "N"
+  },
+  {
+    "studentId": "jiwoo",
+    "year": "2026",
+    "smt": "1",
+    "curiNum": "GEN2003",
+    "courseCls": "교양필수",
+    "grade": null,
+    "gpa": null,
+    "finishYn": "N",
+    "chkRecuri": "N"
+  },
+  {
+    "studentId": "jiwoo",
+    "year": "2026",
+    "smt": "1",
+    "curiNum": "GEN2001",
+    "courseCls": "교양선택",
+    "grade": null,
+    "gpa": null,
+    "finishYn": "N",
+    "chkRecuri": "N"
   }
 ]

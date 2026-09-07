@@ -9,6 +9,7 @@ import type { RoadmapPlan } from './schema/roadmap'
 import type { StudentInputs } from '../lib/scoring'
 import chaewon from './students/chaewon.json'
 import changwon from './students/changwon.json'
+import jiwoo from './students/jiwoo.json'
 import counselSeed from './students/counselSeedStudents.json'
 
 export interface PhaseTask { text: string; done: boolean }
@@ -140,7 +141,19 @@ export interface StudentData {
   enrollmentStatus: EnrollmentStatus
   gpa: string
   language: string
-  studentType: StudentType
+  /**
+   * 6유형 — C-CORE 결과로 정해진다. **아직 진단을 안 본 학생은 null 이다.**
+   * 우리가 계산하지 않고 주입받는 값이다(PROCESS.md §9 · CLAUDE.md 14조).
+   */
+  studentType: StudentType | null
+  /**
+   * ⚠ 데모 전용 — 「이 학생이 C-CORE 를 마치면 무슨 유형이 나오는가」.
+   * 검사 문항·판정식이 미확정이라(PROCESS.md §9) 응시 결과를 계산할 수 없어서,
+   * 주입할 값을 시드에 미리 적어 둔다. data/pipeline.completeDiagnosis 가 이걸 읽어
+   * dc_student_type 에 쌓는다. **판정식이 확정되면 이 필드는 검사 결과로 대체된다.**
+   * 이미 유형이 있는 학생(studentType 보유)에게는 필요 없다.
+   */
+  diagnosisOutcome?: { studentType: StudentType }
   typeScores: { 진로명확도: string; 역량준비도: string; 취업준비도: string }
   targetRole: string
   targetCompany: TargetCompany
@@ -171,6 +184,8 @@ export interface StudentData {
 export const STUDENTS: StudentData[] = [
   chaewon as unknown as StudentData,
   changwon as unknown as StudentData,
+  // 제로베이스 — 학사DB(학과·수강)만 있고 우리 기록은 0. 게이팅 화면의 기준 학생이다.
+  jiwoo as unknown as StudentData,
 ]
 
 const STORAGE_KEY = 'dc_active_student'
@@ -197,9 +212,46 @@ export function setActiveStudent(id: string): void {
   window.location.reload()
 }
 
+/** 유형 확정 이벤트 — append-only. 최신 건이 현재 유형이다(CLAUDE.md 11조). */
+export interface StudentTypeEvent {
+  /** 이벤트 id (dst_ prefix) */
+  id: string
+  studentId: string
+  studentType: StudentType
+  /** 어디서 정해졌는가 — 진단이 산출하고, 상담이 최종 확정한다(PROCESS.md) */
+  source: 'diagnosis' | 'counsel'
+  /** 확정 일시 ISO */
+  decidedAt: string
+}
+
+export const STUDENT_TYPE_EVENT_KEY = 'dc_student_type'
+
+/**
+ * ★ 지금 이 학생의 유형 — 유형을 묻는 자리는 전부 이 함수를 쓴다.
+ *
+ * seed 에 유형이 박혀 있으면(기존 데모 학생) 그 값이고, 없으면(신입생) 진단을 마치며
+ * 쌓인 확정 이벤트의 최신 건이다. `student.studentType` 을 직접 읽으면 **런타임에
+ * 정해진 유형을 놓친다** — 학생 포털은 「진로탐색형」인데 상담사 화면만 「유형 미정」이 된다.
+ */
+export function getStudentType(student: StudentData): StudentType | null {
+  if (student.studentType) return student.studentType
+  try {
+    const raw = localStorage.getItem(STUDENT_TYPE_EVENT_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return null
+    const mine = (parsed as StudentTypeEvent[]).filter(e => e.studentId === student.id)
+    return mine.length > 0 ? mine[mine.length - 1].studentType : null
+  } catch {
+    return null // 데모 범위 — 파싱 실패는 "유형 없음"으로 다룬다
+  }
+}
+
 // 학생 유형 코드 → 유형 메타(라벨·계층·후속진단·상담주제) — careerProcess 단일 소스 재사용
-export function getStudentTypeMeta(student: StudentData): StudentTypeMeta {
-  return STUDENT_TYPE_MAP[student.studentType]
+// 진단 전 학생은 유형이 없다(null). 메타를 지어내지 않고 없다고 답한다.
+export function getStudentTypeMeta(student: StudentData): StudentTypeMeta | null {
+  const type = getStudentType(student)
+  return type ? STUDENT_TYPE_MAP[type] : null
 }
 
 /**
@@ -232,7 +284,7 @@ export interface CounselOwner {
   grade: number
   phone: string
   enrollmentStatus: EnrollmentStatus
-  studentType: StudentType            // careerProcess 6유형 코드 — 라벨·계층은 STUDENT_TYPE_MAP에서 파생(단일소스)
+  studentType: StudentType | null     // careerProcess 6유형 코드 — 진단 전이면 null. 라벨·계층은 STUDENT_TYPE_MAP에서 파생(단일소스)
   gpa: string
   language: string
   targetCompanySummary: string        // 예: "넥슨코리아 · IT Project Manager"
@@ -307,7 +359,8 @@ export function getCounselOwners(): CounselOwner[] {
     grade: s.grade,
     phone: s.phone,
     enrollmentStatus: s.enrollmentStatus,
-    studentType: s.studentType,
+    // 런타임에 정해진 유형까지 반영한다 — 접수함·목록이 「유형 미정」으로 굳지 않게.
+    studentType: getStudentType(s),
     gpa: s.gpa,
     language: s.language,
     targetCompanySummary: `${s.targetCompany.name} · ${s.targetCompany.role}`,

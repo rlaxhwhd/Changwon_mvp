@@ -183,7 +183,8 @@ export function getAxisProgress(axis: StarAxis): { done: number; total: number }
 
 export interface StarLinkedData {
   /** 진단 — students.ts 의 확정 유형을 그대로 읽는다. STAR 가 유형을 따로 갖지 않는다. */
-  type: StudentTypeMeta
+  /** 유형 메타. STAR 는 선발 트랙이라 보통 유형이 있지만, 진단 전이면 없다. */
+  type: StudentTypeMeta | null
   /** 필수 진단 진행 (완료 / 트랙 필수) */
   diagnosisDone: number
   diagnosisTotal: number
@@ -214,7 +215,7 @@ export function getStarLinkedData(student: StudentData, record: StarTrackRecord)
   const programProgress = getAxisProgress(programAxis)
 
   return {
-    type: STUDENT_TYPE_MAP[student.studentType],
+    type: student.studentType ? STUDENT_TYPE_MAP[student.studentType] : null,
     diagnosisDone: record.diagnosisDone.length,
     diagnosisTotal: STAR_REQUIRED_TESTS[record.track].length,
     counselDone: done.length,

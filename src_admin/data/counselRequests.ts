@@ -226,9 +226,10 @@ export interface CounselStudentProfile {
   grade: number
   phone: string
   enrollmentStatus: EnrollmentStatus
-  studentType: StudentType
-  /** STUDENT_TYPE_MAP[studentType] 파생 — 라벨·계층·후속진단·상담주제 (careerProcess 단일소스) */
-  typeMeta: StudentTypeMeta
+  studentType: StudentType | null
+  /** STUDENT_TYPE_MAP[studentType] 파생 — 라벨·계층·후속진단·상담주제 (careerProcess 단일소스).
+   *  진단 전 학생은 유형이 없으므로 메타도 없다. */
+  typeMeta: StudentTypeMeta | null
   gpa: string
   language: string
   targetCompanySummary: string
@@ -253,7 +254,7 @@ export function getCounselStudentProfile(studentId: string): CounselStudentProfi
     phone: owner.phone,
     enrollmentStatus: owner.enrollmentStatus,
     studentType: owner.studentType,
-    typeMeta: STUDENT_TYPE_MAP[owner.studentType],
+    typeMeta: owner.studentType ? STUDENT_TYPE_MAP[owner.studentType] : null,
     gpa: owner.gpa,
     language: owner.language,
     targetCompanySummary: owner.targetCompanySummary,

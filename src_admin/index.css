@@ -671,6 +671,8 @@ input, textarea, select { font-family: var(--font); }
    유형 배지를 쓰는 모든 화면(학생관리·접수함·상담진행·학생상세)이 이 한 벌을 공유한다. */
 .admin-type-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: var(--radius-pill); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .admin-type-tag b { font-weight: 800; opacity: .75; }
+/* 진단 전 학생 — 유형이 없다. 6색 중 하나를 빌려 쓰면 유형이 있는 것처럼 읽히므로 중립으로 둔다. */
+.admin-type-pending { background: var(--muted); color: var(--text-cap); }
 
 .admin-status {
   font-size: 12px; font-weight: 800;

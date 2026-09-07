@@ -72,7 +72,8 @@ export interface LaggardRow {
   name: string
   major: string
   grade: number
-  studentType: StudentType
+  /** 진단 전 학생은 유형이 없다(null) — typeLabel()이 「유형 미정」으로 표시한다. */
+  studentType: StudentType | null
   typeLabel: string
   progress: number
 }
