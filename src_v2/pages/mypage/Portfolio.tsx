@@ -1,6 +1,15 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useMemo, useState } from 'react'
 import Modal from '../../components/Modal'
+import ResumeSheet from '../../components/ResumeSheet'
+import { getActiveStudent } from '../../data/students'
+// 형과 seed 는 데이터층 단일소스다 — 교직원 학생 상세도 같은 값을 읽는다.
+import {
+  buildProfile, LEVEL_LABELS,
+  INITIAL_SKILLS, INITIAL_CERTS, INITIAL_LANGS, INITIAL_AWARDS, INITIAL_PROJECTS, INITIAL_RESUMES,
+} from '../../data/portfolio'
+import type { ProfileData, Skill, Cert, Language, Award, Project, Resume } from '../../data/portfolio'
 import './Portfolio.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'resume'
 
@@ -18,201 +27,12 @@ const TABS: TabDef[] = [
   { id: 'resume',     label: '이력서',     icon: 'fa-id-badge' },
 ]
 
-interface ProfileData {
-  name: string
-  studentId: string
-  school: string
-  dept: string
-  grade: string
-  email: string
-  phone: string
-  gpa: string
-  major: string
-  intro: string
-}
-
-/* ── Data Models ────────────────────────────────────────────────── */
-interface Skill {
-  id: string
-  name: string
-  level: 1 | 2 | 3 | 4 | 5
-  category: '언어' | '프레임워크' | '도구' | 'DB' | '디자인'
-}
-
-interface Cert {
-  id: string
-  name: string
-  issuer: string
-  acquiredAt: string
-  score?: string
-}
-
-interface Language {
-  id: string
-  name: string
-  test: string
-  score: string
-  acquiredAt: string
-}
-
-interface Award {
-  id: string
-  title: string
-  rank: string
-  host: string
-  date: string
-  description: string
-}
-
-interface Project {
-  id: string
-  title: string
-  role: string
-  period: string
-  stack: string[]
-  description: string
-  link?: string
-}
-
-interface Resume {
-  id: string
-  title: string
-  category: string
-  company: string
-  position: string
-  content: string
-  isAi: boolean
-  updatedAt: string
-}
-
-/* ── Mock Data ──────────────────────────────────────────────────── */
-const INITIAL_PROFILE: ProfileData = {
-  name: '김채원',
-  studentId: '20221234',
-  school: '국립창원대학교',
-  dept: '컴퓨터공학과',
-  grade: '3학년',
-  email: 'chae.kim@cwnu.ac.kr',
-  phone: '010-1234-5678',
-  gpa: '3.68 / 4.5',
-  major: 'AI · 데이터',
-  intro:
-    '데이터와 사람이 만나는 지점에 관심이 많은 컴퓨터공학과 3학년입니다. 캡스톤과 비교과를 통해 실제 사용자가 쓰는 제품을 만들어 보는 경험을 쌓고 있어요.',
-}
-
-const INITIAL_SKILLS: Skill[] = [
-  { id: 's1', name: 'Java',       level: 4, category: '언어' },
-  { id: 's2', name: 'Python',     level: 4, category: '언어' },
-  { id: 's3', name: 'TypeScript', level: 3, category: '언어' },
-  { id: 's4', name: 'React',      level: 4, category: '프레임워크' },
-  { id: 's5', name: 'Spring Boot', level: 3, category: '프레임워크' },
-  { id: 's6', name: 'Git / GitHub', level: 4, category: '도구' },
-  { id: 's7', name: 'Figma',      level: 3, category: '디자인' },
-  { id: 's8', name: 'MySQL',      level: 3, category: 'DB' },
-  { id: 's9', name: 'PostgreSQL', level: 2, category: 'DB' },
-]
-
-const INITIAL_CERTS: Cert[] = [
-  { id: 'c1', name: 'SQLD (데이터분석 준전문가)', issuer: '한국데이터산업진흥원', acquiredAt: '2025.06.20' },
-  { id: 'c2', name: '정보처리기능사', issuer: '한국산업인력공단', acquiredAt: '2024.11.10' },
-  { id: 'c3', name: '컴퓨터활용능력 1급', issuer: '대한상공회의소', acquiredAt: '2024.04.05' },
-]
-
-const INITIAL_LANGS: Language[] = [
-  { id: 'l1', name: 'TOEIC',  test: '정기시험', score: '765점', acquiredAt: '2026.02.10' },
-  { id: 'l2', name: 'OPIc',   test: '말하기',  score: 'IM2',    acquiredAt: '2025.12.08' },
-]
-
-const INITIAL_AWARDS: Award[] = [
-  {
-    id: 'a1',
-    title: '교내 캡스톤디자인 경진대회',
-    rank: '우수상',
-    host: '국립창원대학교 공과대학',
-    date: '2025.11.22',
-    description: 'AI 기반 학사 일정 챗봇 프로젝트로 우수상 수상. 팀 4명 중 백엔드 + 프롬프트 설계 담당.',
-  },
-  {
-    id: 'a2',
-    title: 'SW중심대학 해커톤 (제8회)',
-    rank: '본선 진출',
-    host: 'SW중심대학협의회',
-    date: '2025.08.18',
-    description: '청년 1인가구를 위한 식단 추천 서비스. React + FastAPI 풀스택 구현.',
-  },
-  {
-    id: 'a3',
-    title: '2024 창원시 빅데이터 공모전',
-    rank: '장려상',
-    host: '창원특례시',
-    date: '2024.10.15',
-    description: '시내버스 노선 최적화 분석. Python + Pandas + Folium으로 시각화.',
-  },
-]
-
-const INITIAL_PROJECTS: Project[] = [
-  {
-    id: 'pj1',
-    title: 'CWNU 학사 챗봇 — Mate',
-    role: '백엔드 / 프롬프트 설계',
-    period: '2025.09 ~ 2025.11',
-    stack: ['Python', 'FastAPI', 'OpenAI API', 'PostgreSQL'],
-    description: '학사 일정·강의 정보·식단을 자연어로 묻는 LINE 챗봇. 학생 250명 베타 사용.',
-    link: 'https://github.com/example/mate-cwnu',
-  },
-  {
-    id: 'pj2',
-    title: '1인가구 식단 추천 — Soloplate',
-    role: '풀스택 + 모델 튜닝',
-    period: '2025.07 ~ 2025.08',
-    stack: ['React', 'TypeScript', 'FastAPI', 'GPT-4o-mini'],
-    description: '예산·알레르기·냉장고 재료를 입력하면 3끼 식단을 추천. 해커톤 본선 진출작.',
-    link: 'https://github.com/example/soloplate',
-  },
-]
-
-const INITIAL_RESUMES: Resume[] = [
-  {
-    id: 'r1',
-    title: '카카오 백엔드 신입 · 1번 문항',
-    category: '본인 강점',
-    company: '카카오',
-    position: '백엔드 개발',
-    isAi: true,
-    updatedAt: '2026.04.20',
-    content:
-      '대학 4년 동안 가장 자주 마주한 문장은 "한 번 더 측정해 봐"였습니다. 캡스톤 챗봇 프로젝트에서 사용자 250명이 보낸 7,400건의 질문을 직접 라벨링하고...',
-  },
-  {
-    id: 'r2',
-    title: '네이버 클라우드 인턴 · 자기소개',
-    category: '지원동기',
-    company: '네이버 클라우드',
-    position: '플랫폼 인턴',
-    isAi: false,
-    updatedAt: '2026.03.12',
-    content:
-      '클라우드 인프라를 처음 만난 건 1인가구 식단 추천 서비스를 AWS 프리티어에 올리던 2학년 여름이었습니다. 인스턴스를 켜자마자 비용 알림이 떠서 한 시간 만에 내렸지만...',
-  },
-  {
-    id: 'r3',
-    title: '쿠팡 SE 인턴 · 협업 경험',
-    category: '협업 경험',
-    company: '쿠팡',
-    position: 'Software Engineer 인턴',
-    isAi: true,
-    updatedAt: '2026.02.28',
-    content:
-      '협업이 처음부터 순탄했던 건 아닙니다. 캡스톤 첫 2주, 우리 팀은 PR 리뷰 한 번 없이 main 브랜치에 직접 푸시하다가 같은 파일을 세 번 덮어쓴 적이 있어요...',
-  },
-]
-
-const LEVEL_LABELS = ['', '초급', '초중급', '중급', '고급', '전문가']
 
 /* ── Page ───────────────────────────────────────────────────────── */
 export default function Portfolio() {
+  usePageHead('포트폴리오', '스킬·자격증·수상·자소서·이력서를 한 곳에서 관리하고 PDF로 내보낼 수 있어요.')
   const [tab, setTab] = useState<TabId>('profile')
-  const [profile, setProfile] = useState<ProfileData>(INITIAL_PROFILE)
+  const [profile, setProfile] = useState<ProfileData>(() => buildProfile(getActiveStudent()))
   const [skills, setSkills] = useState<Skill[]>(INITIAL_SKILLS)
   const [certs] = useState<Cert[]>(INITIAL_CERTS)
   const [langs] = useState<Language[]>(INITIAL_LANGS)
@@ -260,11 +80,6 @@ export default function Portfolio() {
   return (
     <div className="pf-wrap">
       <header className="pf-hero">
-        <div className="pf-hero-copy">
-          <span className="pf-breadcrumb">마이페이지 · 포트폴리오</span>
-          <h1>나의 포트폴리오</h1>
-          <p>스킬·자격증·수상·자소서·이력서를 한 곳에서 관리하고 PDF로 내보낼 수 있어요.</p>
-        </div>
         <div className="pf-hero-actions">
           <div className="pf-completeness">
             <span className="pf-completeness-num">{completeness}<small>%</small></span>
@@ -312,7 +127,7 @@ export default function Portfolio() {
           />
         )}
         {tab === 'resume' && (
-          <ResumeFullSection
+          <ResumeSheet
             profile={profile}
             onProfileChange={setProfile}
             skills={skills}
@@ -429,7 +244,7 @@ function ProfileSection({ profile, onChange }: { profile: ProfileData; onChange:
     <section className="pf-section">
       <div className="pf-profile-card">
         <div className="pf-profile-avatar">
-          <img className="pf-profile-photo" src="/student-profile.png" alt="김채원 프로필" />
+          <img className="pf-profile-photo" src="/student-profile.png" alt={`${profile.name} 프로필`} />
         </div>
         <div className="pf-profile-info">
           <h2>{profile.name} <small>· {profile.school}</small></h2>
@@ -539,20 +354,23 @@ function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: Skil
             <div className="pf-skill-list">
               {byCategory[cat].map(s => (
                 <div key={s.id} className="pf-skill-chip">
-                  <span className="pf-skill-name">{s.name}</span>
-                  <span className="pf-skill-level">
+                  <div className="pf-skill-chip-head">
+                    <span className="pf-skill-name">{s.name}</span>
+                    <span className={`pf-skill-badge lv${s.level}`}>{LEVEL_LABELS[s.level]}</span>
+                    <button
+                      type="button"
+                      className="pf-skill-remove"
+                      onClick={() => onRemoveSkill(s.id)}
+                      aria-label="삭제"
+                    >
+                      <i className="fa-solid fa-xmark" />
+                    </button>
+                  </div>
+                  <div className="pf-skill-bar" title={`숙련도 ${s.level}/5 · ${LEVEL_LABELS[s.level]}`}>
                     {[1, 2, 3, 4, 5].map(lv => (
-                      <span key={lv} className={`pf-skill-dot${lv <= s.level ? ' on' : ''}`} />
+                      <span key={lv} className={`pf-skill-seg${lv <= s.level ? ` on lv${s.level}` : ''}`} />
                     ))}
-                  </span>
-                  <button
-                    type="button"
-                    className="pf-skill-remove"
-                    onClick={() => onRemoveSkill(s.id)}
-                    aria-label="삭제"
-                  >
-                    <i className="fa-solid fa-xmark" />
-                  </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -759,347 +577,3 @@ function DocumentsSection({ profile, resumes, onView, onRemove }: DocumentsSecti
   )
 }
 
-/* ── Full Resume View (전체 이력서 한 페이지 미리보기 + 인라인 편집) ── */
-
-interface ResumeFullSectionProps {
-  profile: ProfileData
-  onProfileChange: (p: ProfileData) => void
-  skills: Skill[]
-  certs: Cert[]
-  langs: Language[]
-  awards: Award[]
-  projects: Project[]
-  resumes: Resume[]
-  onJumpTab: (id: TabId) => void
-  onExportPdf: () => void
-}
-
-const SKILL_ORDER: Skill['category'][] = ['언어', '프레임워크', '도구', 'DB', '디자인']
-
-function ResumeFullSection({
-  profile,
-  onProfileChange,
-  skills,
-  certs,
-  langs,
-  awards,
-  projects,
-  resumes,
-  onJumpTab,
-  onExportPdf,
-}: ResumeFullSectionProps) {
-  const [editingField, setEditingField] = useState<null | 'intro' | 'contact' | 'name'>(null)
-  const [draftProfile, setDraftProfile] = useState<ProfileData>(profile)
-  const [pickedResumeId, setPickedResumeId] = useState<string>(resumes[0]?.id ?? '')
-
-  const pickedResume = useMemo(
-    () => resumes.find(r => r.id === pickedResumeId) ?? resumes[0] ?? null,
-    [resumes, pickedResumeId],
-  )
-
-  const startEdit = (field: NonNullable<typeof editingField>) => {
-    setDraftProfile(profile)
-    setEditingField(field)
-  }
-  const cancel = () => setEditingField(null)
-  const save = () => {
-    onProfileChange(draftProfile)
-    setEditingField(null)
-  }
-
-  const skillsByCat = useMemo(() => {
-    const out: Record<string, Skill[]> = {}
-    for (const s of skills) {
-      if (!out[s.category]) out[s.category] = []
-      out[s.category].push(s)
-    }
-    return out
-  }, [skills])
-
-  const handlePrint = () => window.print()
-
-  return (
-    <section className="pf-resume-full">
-      <div className="pf-resume-toolbar">
-        <div className="pf-resume-toolbar-info">
-          <i className="fa-solid fa-circle-info" />
-          전체 이력서를 한 페이지로 보고 인라인 편집할 수 있어요. 각 섹션의 연필 아이콘을 눌러 수정하세요.
-        </div>
-        <div className="pf-resume-toolbar-actions">
-          <button type="button" className="pf-btn pf-btn--ghost" onClick={handlePrint}>
-            <i className="fa-solid fa-print" /> 인쇄
-          </button>
-          <button type="button" className="pf-btn pf-btn--primary" onClick={onExportPdf}>
-            <i className="fa-solid fa-file-pdf" /> PDF 내보내기
-          </button>
-        </div>
-      </div>
-
-      <div className="pf-resume-paper" id="resume-paper">
-        {/* ── Header ────────────────────────────────────────────── */}
-        <header className="pf-resume-header">
-          <div className="pf-resume-name-block">
-            {editingField === 'name' ? (
-              <div className="pf-inline-edit">
-                <input
-                  type="text"
-                  value={draftProfile.name}
-                  onChange={e => setDraftProfile({ ...draftProfile, name: e.target.value })}
-                  autoFocus
-                />
-                <div className="pf-inline-actions">
-                  <button type="button" onClick={save} aria-label="저장"><i className="fa-solid fa-check" /></button>
-                  <button type="button" onClick={cancel} aria-label="취소"><i className="fa-solid fa-xmark" /></button>
-                </div>
-              </div>
-            ) : (
-              <h2 className="pf-resume-name">
-                {profile.name}
-                <button type="button" className="pf-inline-edit-btn" onClick={() => startEdit('name')} aria-label="이름 수정">
-                  <i className="fa-solid fa-pen" />
-                </button>
-              </h2>
-            )}
-            <p className="pf-resume-title-line">
-              {profile.dept} · {profile.grade} · {profile.school}
-            </p>
-          </div>
-
-          <div className="pf-resume-contact-block">
-            {editingField === 'contact' ? (
-              <div className="pf-inline-edit pf-inline-edit--block">
-                <label>
-                  <span>이메일</span>
-                  <input
-                    type="text"
-                    value={draftProfile.email}
-                    onChange={e => setDraftProfile({ ...draftProfile, email: e.target.value })}
-                  />
-                </label>
-                <label>
-                  <span>휴대폰</span>
-                  <input
-                    type="text"
-                    value={draftProfile.phone}
-                    onChange={e => setDraftProfile({ ...draftProfile, phone: e.target.value })}
-                  />
-                </label>
-                <div className="pf-inline-actions">
-                  <button type="button" onClick={save} aria-label="저장"><i className="fa-solid fa-check" /></button>
-                  <button type="button" onClick={cancel} aria-label="취소"><i className="fa-solid fa-xmark" /></button>
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="pf-resume-contact">
-                  <span><i className="fa-solid fa-envelope" /> {profile.email}</span>
-                  <span><i className="fa-solid fa-phone" /> {profile.phone}</span>
-                  <span><i className="fa-solid fa-id-card" /> 학번 {profile.studentId}</span>
-                  <span><i className="fa-solid fa-chart-line" /> GPA {profile.gpa}</span>
-                </div>
-                <button type="button" className="pf-inline-edit-btn pf-inline-edit-btn--block" onClick={() => startEdit('contact')}>
-                  <i className="fa-solid fa-pen" /> 수정
-                </button>
-              </>
-            )}
-          </div>
-        </header>
-
-        {/* ── 자기소개 ──────────────────────────────────────────── */}
-        <ResumeBlock title="자기소개" onEdit={() => startEdit('intro')} editing={editingField === 'intro'}>
-          {editingField === 'intro' ? (
-            <div className="pf-inline-edit pf-inline-edit--block">
-              <textarea
-                rows={4}
-                value={draftProfile.intro}
-                onChange={e => setDraftProfile({ ...draftProfile, intro: e.target.value })}
-                autoFocus
-              />
-              <div className="pf-inline-actions">
-                <button type="button" onClick={save} aria-label="저장"><i className="fa-solid fa-check" /> 저장</button>
-                <button type="button" onClick={cancel} aria-label="취소"><i className="fa-solid fa-xmark" /> 취소</button>
-              </div>
-            </div>
-          ) : (
-            <p className="pf-resume-text">{profile.intro}</p>
-          )}
-        </ResumeBlock>
-
-        {/* ── 학력 ──────────────────────────────────────────────── */}
-        <ResumeBlock title="학력">
-          <div className="pf-resume-edu">
-            <div className="pf-resume-edu-line">
-              <strong>{profile.school}</strong>
-              <span>{profile.dept} ({profile.major})</span>
-            </div>
-            <div className="pf-resume-edu-meta">
-              <span>{profile.grade} 재학</span>
-              <span>학점 <strong>{profile.gpa}</strong></span>
-              <span>학번 {profile.studentId}</span>
-            </div>
-          </div>
-        </ResumeBlock>
-
-        {/* ── 보유 스킬 ─────────────────────────────────────────── */}
-        <ResumeBlock title="보유 스킬" onJump={() => onJumpTab('skills')}>
-          <table className="pf-resume-skill-table">
-            <tbody>
-              {SKILL_ORDER.filter(cat => skillsByCat[cat]?.length).map(cat => (
-                <tr key={cat}>
-                  <th>{cat}</th>
-                  <td>
-                    {skillsByCat[cat].map(s => (
-                      <span key={s.id} className="pf-resume-skill">
-                        {s.name}
-                        <small>({s.level}/5)</small>
-                      </span>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </ResumeBlock>
-
-        {/* ── 자격증 & 어학 ─────────────────────────────────────── */}
-        <ResumeBlock title="자격증 · 어학" onJump={() => onJumpTab('skills')}>
-          <div className="pf-resume-2col">
-            <div>
-              <h5>자격증</h5>
-              <ul>
-                {certs.map(c => (
-                  <li key={c.id}>
-                    <strong>{c.name}</strong>
-                    <span>{c.issuer} · {c.acquiredAt}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div>
-              <h5>어학</h5>
-              <ul>
-                {langs.map(l => (
-                  <li key={l.id}>
-                    <strong>{l.name} <em>{l.score}</em></strong>
-                    <span>{l.test} · {l.acquiredAt}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </ResumeBlock>
-
-        {/* ── 수상 ──────────────────────────────────────────────── */}
-        <ResumeBlock title="수상 · 공모전" onJump={() => onJumpTab('experience')}>
-          <ul className="pf-resume-award-list">
-            {awards.map(a => (
-              <li key={a.id}>
-                <div className="pf-resume-award-head">
-                  <strong>{a.title}</strong>
-                  <span className="pf-resume-award-rank">{a.rank}</span>
-                  <span className="pf-resume-award-date">{a.date}</span>
-                </div>
-                <span className="pf-resume-award-host">{a.host}</span>
-                <p>{a.description}</p>
-              </li>
-            ))}
-          </ul>
-        </ResumeBlock>
-
-        {/* ── 프로젝트 ──────────────────────────────────────────── */}
-        <ResumeBlock title="프로젝트" onJump={() => onJumpTab('experience')}>
-          <ul className="pf-resume-proj-list">
-            {projects.map(p => (
-              <li key={p.id}>
-                <div className="pf-resume-proj-head">
-                  <strong>{p.title}</strong>
-                  <span>{p.period}</span>
-                </div>
-                <span className="pf-resume-proj-role">{p.role}</span>
-                <p>{p.description}</p>
-                <div className="pf-resume-proj-stack">
-                  {p.stack.map(s => <span key={s}>{s}</span>)}
-                </div>
-                {p.link && (
-                  <a className="pf-resume-proj-link" href={p.link} target="_blank" rel="noopener noreferrer">
-                    <i className="fa-brands fa-github" /> {p.link.replace('https://', '')}
-                  </a>
-                )}
-              </li>
-            ))}
-          </ul>
-        </ResumeBlock>
-
-        {/* ── 첨부 자소서 (선택 1개) ────────────────────────────── */}
-        {resumes.length > 0 && (
-          <ResumeBlock title="첨부 자소서" onJump={() => onJumpTab('documents')}>
-            <div className="pf-resume-attach-pick">
-              <label>
-                <span>첨부할 자소서</span>
-                <select
-                  value={pickedResumeId}
-                  onChange={e => setPickedResumeId(e.target.value)}
-                >
-                  {resumes.map(r => (
-                    <option key={r.id} value={r.id}>
-                      {r.title}{r.isAi ? ' (AI 작성)' : ''}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            {pickedResume && (
-              <div className="pf-resume-attach-body">
-                <div className="pf-resume-attach-meta">
-                  <strong>{pickedResume.title}</strong>
-                  <span>{pickedResume.company} · {pickedResume.position}</span>
-                </div>
-                <p>{pickedResume.content}</p>
-              </div>
-            )}
-          </ResumeBlock>
-        )}
-
-        <footer className="pf-resume-footer">
-          <span>국립창원대학교 드림캐치 · 자동 생성된 이력서</span>
-          <span>{new Date().toLocaleDateString('ko-KR')}</span>
-        </footer>
-      </div>
-    </section>
-  )
-}
-
-function ResumeBlock({
-  title,
-  children,
-  onEdit,
-  onJump,
-  editing,
-}: {
-  title: string
-  children: ReactNode
-  onEdit?: () => void
-  onJump?: () => void
-  editing?: boolean
-}) {
-  return (
-    <section className="pf-resume-block">
-      <header className="pf-resume-block-head">
-        <h3>{title}</h3>
-        <div className="pf-resume-block-actions">
-          {onJump && !editing && (
-            <button type="button" className="pf-resume-block-jump" onClick={onJump}>
-              <i className="fa-solid fa-arrow-up-right-from-square" /> 탭에서 편집
-            </button>
-          )}
-          {onEdit && !editing && (
-            <button type="button" className="pf-inline-edit-btn" onClick={onEdit} aria-label="섹션 수정">
-              <i className="fa-solid fa-pen" />
-            </button>
-          )}
-        </div>
-      </header>
-      <div className="pf-resume-block-body">{children}</div>
-    </section>
-  )
-}

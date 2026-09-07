@@ -1,814 +1,387 @@
-import { useEffect, useState } from 'react'
-import { Link, useLocation } from 'react-router-dom'
-import Modal from '../components/Modal'
+import { Link } from 'react-router-dom'
+import { getActiveStudent, getStudentType, getStudentTypeMeta } from '../data/students'
+import { buildCareerJourney, getStageAccess, typeLabel } from '../data/careerProcess'
+import { getDiagnosisCardViews, getPipelineState } from '../data/pipeline'
+import StudentStatCards, { type StudentStat } from '../components/StudentStatCards'
+import CareerJourneyCard from '../components/CareerJourneyCard'
+import NextStepBanner from '../components/NextStepBanner'
+import CompetencyRadarChart from '../components/CompetencyRadarChart'
+import { getCompetencyAxes } from '../data/competency'
+import { getGrowthRecords } from '../data/growthRecords'
 import './AiLounge.css'
+// 성장 활동 기록 카드는 「내 성장」과 같은 모양이다 — 그 스타일시트를 그대로 쓴다.
+// 클래스가 전부 gh- 로 시작해 이 페이지의 다른 카드와 부딪히지 않는다.
+import './growth/GrowthHome.css'
 
-// ── Mock Data ──────────────────────────────────────────────────────
-const userStats = [
-  { icon: 'fa-solid fa-clipboard-check', label: '진단 결과',  value: '85',   unit: '점' },
-  { icon: 'fa-solid fa-chart-line',       label: '역량 분석',  value: '72',   unit: '점' },
-  { icon: 'fa-solid fa-graduation-cap',   label: '학점 분석',  value: '3.68', unit: '/ 4.5' },
-  { icon: 'fa-solid fa-id-card',          label: '자격증',     value: '2',    unit: '개' },
-  { icon: 'fa-solid fa-comments',         label: '상담 내역',  value: '3',    unit: '회' },
-  { icon: 'fa-solid fa-book-open',         label: '성장경험일지', value: '12',   unit: '건' },
-  { icon: 'fa-solid fa-clipboard-list',    label: '비교과프로그램 신청', value: '5', unit: '건' },
-]
+// 요약 지표 5장 — 상담사 학생 상세와 같은 공용 컴포넌트(StudentStatCards)가 그린다.
+// 값은 아직 시안 값 그대로다. 배선할 때 이 상수만 학생 데이터에서 만들면 된다.
+/** 이 네 장은 CARE 7+ 체계의 지표다 — 카드마다 같은 문자열을 다시 적지 않는다. */
+const CARE = 'CARE 7+'
 
-const radarAxes = [
-  { label: '전문 역량', user: 88, target: 90 },
-  { label: '실무 역량', user: 78, target: 90 },
-  { label: '실행 역량', user: 76, target: 90 },
-  { label: '성장 역량', user: 65, target: 90 },
-  { label: '인성 역량', user: 82, target: 90 },
-  { label: '취업 역량', user: 70, target: 90 },
-]
-
-const competencyBars = [
-  { label: '전문 역량', value: 88 },
-  { label: '실무 역량', value: 78 },
-  { label: '실행 역량', value: 76 },
-  { label: '인성 역량', value: 82 },
-  { label: '취업 역량', value: 70 },
-  { label: '성장 역량', value: 65 },
-]
-
-const nextActions = [
-  { num: 1, text: 'TOEIC 응시 ~ 목표 700+ (어학 미등록)',           color: '#EF4444' },
-  { num: 2, text: 'PMP 기초 자격증 취득 준비 (PM역량 +15점)',        color: '#F59E0B' },
-  { num: 3, text: '캡스톤 디자인 프로젝트 등록 (프로젝트 경험 보강)', color: '#2E5BFF' },
-  { num: 4, text: 'AI 로드맵 확인 및 다음 단계 계획',                 color: '#2E5BFF' },
-]
-
-const quickLinks = [
-  { icon: 'fa-solid fa-route',    label: 'AI 로드맵',  path: '/roadmap/ai',        iconColor: '#6B7280', bg: '#F3F4F6' },
-  { icon: 'fa-solid fa-folder',   label: '프로그램 신청', path: '/growth/program', iconColor: '#2E5BFF', bg: '#EEF2FF' },
-  { icon: 'fa-solid fa-briefcase',label: '경력관리',   path: '/growth/journal',    iconColor: '#2E5BFF', bg: '#EEF2FF' },
-  { icon: 'fa-solid fa-id-badge', label: '포트폴리오', path: '/mypage/portfolio',  iconColor: '#2E5BFF', bg: '#EEF2FF' },
-]
-
-interface CounselPair {
-  type: string
-  date: string
-  question: string
-  aiAdvice: string
-  typeColor: string
-}
-
-const counselPairs: CounselPair[] = [
+const LOUNGE_STATS: StudentStat[] = [
+  { kind: 'diagnosis', kicker: CARE, label: '진단 완료', value: '2', unit: '/2', pct: 100, foot: '모든 진단 완료', badge: '완료' },
   {
-    type: '진로/취업 상담',
-    date: '2025.04.10 · 김미래 상담사',
-    question: '"학과와 맞는 것 같아서 진로에 대한 고민이 드는 중"',
-    aiAdvice: '진로 적합성에 대한 고민은 매우 자연스러운 탐색 과정입니다. 강점 영역(정보활용·문제해결)에 부합하는 데이터·기획 직무를 우선 탐색해 보시는 것을 권장드려요.',
-    typeColor: '#F59E0B',
+    kind: 'counsel', kicker: CARE, label: '상담 현황', total: '5', unit: '건', foot: '이번 학기 누적',
+    // 갈래는 「누가 상담했나」가 아니라 「어떤 경로로 들어왔나」로 나눈다.
+    channels: [
+      { label: '진로취업-일반', count: '3건' },
+      { label: '진로취업 - 로드맵요청', count: '1건' },
+      { label: '기타', count: '1건' },
+    ],
   },
+  { kind: 'roadmap', kicker: CARE, label: '로드맵 이행률', value: '62', unit: '%', pct: 62, foot: '지난달 대비', badge: '+14%p' },
+  { kind: 'program', kicker: CARE, label: '비교과 이수', value: '4', unit: '/6', pct: 67, foot: '이번 학기', badge: '2개 남음' },
   {
-    type: '심리 상담',
-    date: '2025.04.12 · 박지은 상담사',
-    question: '"최근 이별로 인 상태로 학업과 진로에 집중을 하지 못하는 모습"',
-    aiAdvice: '힘든 시기를 보내고 계시군요. 감정이 흔들릴 때 학업에 집중하기 어려운 것은 당연해요. 하루 10분 마음챙김 명상과 가벼운 운동 루틴으로 정서 안정을 되찾는 것을 추천드립니다.',
-    typeColor: '#8B5CF6',
-  },
-  {
-    type: '교수 상담',
-    date: '2025.04.18 · 박지훈 교수',
-    question: '"전공 진로 방향과 대학원 진학 가능성에 대해 함께 논의"',
-    aiAdvice: '대학원 진학을 고려한다면 학점 관리와 더불어 GRE/TOEFL 일정 확보, 연구실 인턴 참여, 교수 추천서를 위한 관계 형성을 6개월 단위 로드맵으로 준비하시는 것이 좋습니다.',
-    typeColor: '#10B981',
-  },
-  {
-    type: '진로/취업 상담',
-    date: '2025.04.25 · 정유진 상담사',
-    question: '"AI 기업 채용 트렌드와 포트폴리오 구성 전략을 안내"',
-    aiAdvice: 'GitHub 정리와 캡스톤 프로젝트 회고록 작성, 그리고 1개 이상의 사이드 프로젝트 배포 경험으로 포트폴리오 완성도를 끌어올리세요. AI 기업은 "실제 배포 + 회고" 조합을 가장 높게 평가합니다.',
-    typeColor: '#F59E0B',
+    kind: 'level', label: '성장 레벨', levelUnit: 'LV', level: '23',
+    tierLabel: '현재 성장 단계', tier: 'Career Builder',
+    xp: '1,250 XP', xpFoot: '다음 레벨까지 750 XP', pct: 62,
   },
 ]
 
-interface RoadmapPhase {
-  num: number
-  period: string
-  title: string
-  color: string
-  actions: string[]
-}
-
-const roadmapPhases: RoadmapPhase[] = [
-  {
-    num: 1,
-    period: '이번 달 · 0~4주차',
-    title: '가장 큰 격차부터 좁히기 — 글로벌 역량 + 영단어 고득점',
-    color: '#EF4444',
-    actions: [
-      '매일 미션에 고득점 단어 10개 + 난해 단어 5개 우선 배치 (TOEIC 800+ 목표)',
-      '주 2회 LC/RC 실전 모의고사로 체득 여부 확인',
-      '글로벌 PBL / 국제 교류 프로그램 1개 신청 (9CORE 글로벌 35점 → 50점)',
-      '면접 기초 강의 1개 수강 (대인관계·리더십 65점대 보강)',
-    ],
-  },
-  {
-    num: 2,
-    period: '다음 2개월 · 5~12주차',
-    title: '실무 역량 + 포트폴리오의 "결과물" 만들기',
-    color: '#F59E0B',
-    actions: [
-      '캡스톤 디자인 / 학과 팀 프로젝트 1건 등록 → 실무 경험 +1',
-      'GitHub 정리 + 회고록 있는 사이드 프로젝트 1개 배포',
-      'PMP 기초 / 정보처리기사 중 1개 자격증 학습 시작',
-      '비교과 "AI 활용 자소서 특강" 신청해 자소서 1차 초안 완성',
-    ],
-  },
-  {
-    num: 3,
-    period: '다음 학기 · 13~24주차',
-    title: '대학원·취업 트랙 분기 — 선택지를 좁히기',
-    color: '#2E5BFF',
-    actions: [
-      '대학원 트랙: GRE / TOEFL 일정 확보, 연구실 인턴 신청, 교수 추천서 관계 형성',
-      '취업 트랙: AI / 데이터 기업 채용 공고 10개 분석 + 자소서 최종 작성',
-      '면접 / 자소서 AI 컨설팅 신청 → 1:1 피드백 사이클 진입',
-      '본인 강점(전공·문제해결) 기반 직무 우선순위 Top 3 확정',
-    ],
-  },
-]
-
-// ── Radar Chart (SVG) ──────────────────────────────────────────────
-const CX = 150, CY = 150, R = 80
-
-function getRadarPoint(i: number, r: number) {
-  const angle = (i * 60 - 90) * (Math.PI / 180)
-  return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) }
-}
-
-function toPolygon(values: number[]) {
-  return values.map((v, i) => {
-    const p = getRadarPoint(i, (v / 100) * R)
-    return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
-  }).join(' ')
-}
-
-function RadarChart() {
-  const userPoly   = toPolygon(radarAxes.map(a => a.user))
-  const targetPoly = toPolygon(radarAxes.map(a => a.target))
-
-  return (
-    <svg viewBox="0 0 300 300" width="100%" height="280" style={{ overflow: 'visible' }}>
-      {/* Grid hexagons */}
-      {[25, 50, 75, 100].map(pct => (
-        <polygon
-          key={pct}
-          points={Array.from({ length: 6 }, (_, i) => {
-            const p = getRadarPoint(i, (pct / 100) * R)
-            return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
-          }).join(' ')}
-          fill="none"
-          stroke="#E8ECF0"
-          strokeWidth="1"
-        />
-      ))}
-
-      {/* Axis lines */}
-      {Array.from({ length: 6 }, (_, i) => {
-        const p = getRadarPoint(i, R)
-        return <line key={i} x1={CX} y1={CY} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)} stroke="#E8ECF0" strokeWidth="1" />
-      })}
-
-      {/* Target polygon */}
-      <polygon points={targetPoly} fill="rgba(46,91,255,0.05)" stroke="#2E5BFF" strokeWidth="1.5" strokeDasharray="5 3" />
-
-      {/* User polygon */}
-      <polygon points={userPoly} fill="rgba(46,91,255,0.18)" stroke="#2E5BFF" strokeWidth="2" />
-
-      {/* User dots */}
-      {radarAxes.map((a, i) => {
-        const p = getRadarPoint(i, (a.user / 100) * R)
-        return <circle key={i} cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r="3.5" fill="#2E5BFF" />
-      })}
-
-      {/* Labels */}
-      {radarAxes.map((a, i) => {
-        const p = getRadarPoint(i, R + 22)
-        const anchor = i === 0 || i === 3 ? 'middle' : i === 1 || i === 2 ? 'start' : 'end'
-        return (
-          <text key={i} x={p.x.toFixed(1)} y={p.y.toFixed(1)}
-            textAnchor={anchor} dominantBaseline="middle"
-            fontSize="14" fill="#1C2442" fontFamily="Pretendard, sans-serif" fontWeight="700">
-            {a.label}
-          </text>
-        )
-      })}
-    </svg>
-  )
-}
-
-// 점수 구간별 색상: 0~40 빨강 / 41~70 초록 / 71~100 파랑
-const scoreBandColor = (s: number) => (s >= 71 ? '#2E5BFF' : s >= 41 ? '#22C55E' : '#EF4444')
-
-// ── Mini Ring (각 검사 점수) ───────────────────────────────────────
-function MiniRing({ value, color }: { value: number; color: string }) {
-  const r = 38
-  const circ = 2 * Math.PI * r
-  const filled = (value / 100) * circ
-  return (
-    <svg viewBox="0 0 100 100" width="100" height="100">
-      <circle cx="50" cy="50" r={r} fill="none" stroke="#EEF2F7" strokeWidth="8" />
-      <circle cx="50" cy="50" r={r} fill="none" stroke={color} strokeWidth="8"
-        strokeDasharray={`${filled.toFixed(1)} ${circ.toFixed(1)}`}
-        strokeLinecap="round" transform="rotate(-90 50 50)" />
-      <text x="50" y="56" textAnchor="middle" fontSize="22" fontWeight="900" fill={color} fontFamily="Pretendard, sans-serif">
-        {value}
-      </text>
-    </svg>
-  )
-}
-
-// ── Modal Radar (가변 축) ──────────────────────────────────────────
-function ModalRadar({ axes }: { axes: { label: string; value: number }[] }) {
-  const size = 320
-  const cx = size / 2
-  const cy = size / 2
-  const r = 100
-  const n = axes.length
-
-  const pt = (i: number, ratio: number) => {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2
-    return { x: cx + r * ratio * Math.cos(angle), y: cy + r * ratio * Math.sin(angle) }
-  }
-  const grids = [0.25, 0.5, 0.75, 1.0]
-  const pts = axes.map((a, i) => pt(i, a.value / 100))
-  const dataPath = pts.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
-
-  return (
-    <svg viewBox={`0 0 ${size} ${size}`} width="100%" style={{ maxWidth: 340 }}>
-      <defs>
-        <linearGradient id="al-modal-radar" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor="#7B6EFF" stopOpacity="0.85" />
-          <stop offset="50%" stopColor="#4A90FF" stopOpacity="0.85" />
-          <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.85" />
-        </linearGradient>
-      </defs>
-      {grids.map((lv, li) => (
-        <polygon key={li}
-          points={axes.map((_, i) => { const p = pt(i, lv); return `${p.x},${p.y}` }).join(' ')}
-          fill="none" stroke="#C7D2FE" strokeWidth={lv === 1 ? 1.2 : 0.8} strokeOpacity={lv === 1 ? 0.7 : 0.5}
-        />
-      ))}
-      {axes.map((_, i) => {
-        const o = pt(i, 1)
-        return <line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke="#C7D2FE" strokeWidth="0.8" strokeOpacity="0.6" />
-      })}
-      <path d={dataPath} fill="url(#al-modal-radar)" fillOpacity="0.45" />
-      <path d={dataPath} fill="none" stroke="url(#al-modal-radar)" strokeWidth="2" />
-      {pts.map(({ x, y }, i) => (
-        <circle key={i} cx={x} cy={y} r="3.5" fill="#5B5BFF" />
-      ))}
-      {axes.map((a, i) => {
-        const { x, y } = pt(i, 1.22)
-        const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
-        return (
-          <text key={i} x={x} y={y} textAnchor={anchor} dominantBaseline="middle"
-            fontSize="13" fill="#4B5563" fontWeight="700" fontFamily="Pretendard, sans-serif">
-            {a.label}
-          </text>
-        )
-      })}
-    </svg>
-  )
-}
-
-interface TestSummary {
-  id: string
-  label: string
-  score: number
-  color: string
-  axes: { label: string; value: number }[]
-  aiComment: string
-  strengths: string[]
-  weaknesses: string[]
-}
-
-// 진단센터(/v2/diagnosis/employment)에 있는 5개 검사만 표시 — 1열 3 / 2열 2 역피라미드
-const TEST_SUMMARIES: TestSummary[] = [
-  {
-    id: '9core',
-    label: '9CORE 검사',
-    score: 68,
-    color: '#F59E0B',
-    axes: [
-      { label: '의사소통', value: 78 },
-      { label: '문제해결', value: 82 },
-      { label: '자기관리', value: 70 },
-      { label: '대인관계', value: 65 },
-      { label: '정보활용', value: 88 },
-      { label: '글로벌', value: 35 },
-      { label: '리더십', value: 60 },
-      { label: '창의융합', value: 72 },
-      { label: '직업윤리', value: 75 },
-    ],
-    aiComment:
-      '9CORE 검사 평균은 69점으로 보통 수준이며, 영역 간 편차가 큰 편입니다. 문제해결(82)·정보활용(88)·의사소통(78)이 강점이라 분석·기획 직무에 잘 맞습니다. 반면 글로벌 역량(35)이 가장 큰 보완 포인트라, TOEIC 700+ 취득과 학내 글로벌 교류·국제 PBL 프로그램 참여를 1순위로 추천드립니다. 리더십(60)·대인관계(65)는 동아리 임원 활동이나 팀 프로젝트 리더 경험을 통해 단기간에 향상 가능한 영역입니다. 이 흐름대로 6개월 학습 시 평균 75점대 진입이 예상됩니다.',
-    strengths: ['문제해결 82', '정보활용 88'],
-    weaknesses: ['글로벌 35'],
-  },
-  {
-    id: 'psychology',
-    label: '심리검사',
-    score: 76,
-    color: '#F97316',
-    axes: [
-      { label: '정서안정', value: 72 },
-      { label: '자아존중', value: 80 },
-      { label: '대인적응', value: 76 },
-      { label: '스트레스', value: 68 },
-      { label: '회복탄력', value: 82 },
-    ],
-    aiComment:
-      '심리검사 평균은 76점으로 전반적으로 안정된 정서 상태를 유지하고 계십니다. 회복탄력(82)과 자아존중(80)이 우수하다는 것은, 실패나 좌절 상황에서도 빠르게 회복하고 다시 도전할 수 있는 심리적 기초가 단단하다는 의미입니다. 다만 스트레스(68)와 정서안정(72) 영역이 다른 항목보다 낮은 편이라, 학기 중 누적되는 학업 압박이 가끔 큰 부담으로 다가올 가능성이 있습니다. 주 1회 마음챙김 명상(10분)과 운동 루틴(주 3회)을 함께 시작하시면 두 영역 모두 단기간 내 향상이 가능합니다.',
-    strengths: ['회복탄력 82', '자아존중 80'],
-    weaknesses: ['스트레스 68'],
-  },
-  {
-    id: 'cares',
-    label: 'CARES 검사',
-    score: 88,
-    color: '#10B981',
-    axes: [
-      { label: '관심', value: 90 },
-      { label: '통제', value: 86 },
-      { label: '호기심', value: 92 },
-      { label: '자신감', value: 84 },
-      { label: '협력', value: 88 },
-    ],
-    aiComment:
-      'CARES 검사 평균은 88점으로 진로 적응력 영역에서 매우 우수한 수준입니다. 호기심(92)과 관심(90)이 모두 90점대로, 새로운 기술/직무를 빠르게 학습·흡수하는 데 큰 강점이 있습니다. 협력(88)과 통제(86)도 안정적이라 팀 단위 프로젝트나 인턴십에서도 두각을 드러낼 가능성이 높습니다. 자신감(84)은 상대적으로 낮은 편이라, 대외 발표·해커톤 등에서 결과물 공개 경험을 누적하면 점수 + 실제 자신감 모두 상승하실 거예요. 현재 흐름을 유지하시는 것이 최우선 전략입니다.',
-    strengths: ['호기심 92', '관심 90', '협력 88'],
-    weaknesses: [],
-  },
-  {
-    id: 'job-competency',
-    label: '직무역량검사',
-    score: 74,
-    color: '#7C3AED',
-    axes: [
-      { label: '기획력', value: 72 },
-      { label: '실행력', value: 78 },
-      { label: '협업력', value: 80 },
-      { label: '문제해결', value: 76 },
-      { label: '전문지식', value: 70 },
-      { label: '도구활용', value: 68 },
-    ],
-    aiComment:
-      '직무역량 평균은 74점으로 양호한 편이지만, 영역별 편차가 다소 있어 보완이 필요합니다. 협업력(80)과 실행력(78)은 실무 즉시 투입이 가능한 수준이며, 팀 프로젝트 경험과 함께 가시화하면 면접에서도 큰 어필 포인트가 됩니다. 반면 도구활용(68)과 전문지식(70)은 실무에서 가장 빨리 격차가 드러나는 영역이라, 채용공고에서 자주 요구되는 SQL·Python·Figma 등 핵심 툴 중 2개를 선정해 매주 2시간씩 12주만 학습해도 점수 + 실제 업무 적응력이 크게 개선됩니다.',
-    strengths: ['협업력 80', '실행력 78'],
-    weaknesses: ['도구활용 68'],
-  },
-  {
-    id: 'aptitude-job',
-    label: '직업적성검사',
-    score: 82,
-    color: '#0EA5E9',
-    axes: [
-      { label: '분석성향', value: 86 },
-      { label: '창의성향', value: 80 },
-      { label: '실무성향', value: 78 },
-      { label: '대인성향', value: 84 },
-      { label: '관리성향', value: 76 },
-      { label: '연구성향', value: 88 },
-    ],
-    aiComment:
-      '직업적성 평균은 82점으로 연구·분석 영역에 매우 강한 적합도를 보입니다. 연구성향(88)과 분석성향(86), 대인성향(84)이 모두 80점대 이상으로 골고루 우수해, 데이터 사이언티스트·UX 리서처·전략 컨설팅처럼 "분석 + 협업"이 결합된 직무에서 가장 큰 만족도를 얻을 가능성이 높습니다. 실무성향(78)과 관리성향(76)은 중간 수준이라, 추후 PM/리더 트랙으로 확장을 고려한다면 인턴십에서 일정·이해관계자 관리 경험을 의식적으로 쌓는 것을 추천드립니다.',
-    strengths: ['연구성향 88', '분석성향 86'],
-    weaknesses: [],
-  },
-]
-
-// ── Page ───────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
+// AI 커리어 라운지 — 시안 그대로: 창원디자인시안작업/stu_dash.html (= stu_lounge.jsx)
+// ★ 마크업은 시안 HTML 을 기계 변환해 그대로 옮긴 것이다.
+//   클래스·구조를 손대면 시안 CSS 가 어긋난다. 수정은 시안 쪽에서 먼저 한다.
+//   내용(수치·문구)은 시안 값 그대로 — 데이터 배선은 디자인 확정 후 별도로 한다.
 export default function AiLounge() {
-  const [openTestId, setOpenTestId] = useState<string | null>(null)
-  const openTest = openTestId ? TEST_SUMMARIES.find(t => t.id === openTestId) ?? null : null
-  const location = useLocation()
+  const student = getActiveStudent()
+  // 5대 핵심역량 — 좌표·점수를 화면에 적지 않는다(data/competency).
+  const competencyAxes = getCompetencyAxes(student)
+  // 성장 활동 기록 — /v2/growth 가 쓰는 그 목록을 그대로 읽는다.
+  const growthRecords = getGrowthRecords(student.id)
 
-  // 사이드바 sub-tab 클릭 시 해당 섹션으로 부드럽게 스크롤
-  useEffect(() => {
-    if (!location.hash) return
-    const id = location.hash.slice(1)
-    const el = document.getElementById(id)
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }, [location.hash])
+  const studentType = getStudentType(student)
+  const typeMeta = getStudentTypeMeta(student)
+
+  // ── 카드 노출 판정 ────────────────────────────────────────────────────
+  // 라운지는 「내 기록을 모아 보는 곳」이라, 아직 쌓인 게 없는 카드는 잠금 안내조차
+  // 두지 않고 통째로 감춘다(빈 카드가 늘어서면 대시보드가 거짓말처럼 읽힌다).
+  // 판정은 순차 게이팅 단일 정책을 그대로 쓴다 — 여기서 조건을 새로 만들지 않는다.
+  //   진단 결과 · 진로 여정은 언제나 보인다. 그 둘이 「다음에 뭘 할지」를 알려 주는 카드다.
+  const access = getStageAccess(getPipelineState(student))
+  const journey = buildCareerJourney(getPipelineState(student))
+  // 진단 결과 카드 — 대상 검사·상태·결과를 데이터층이 합쳐 준다.
+  const diagnosisCards = getDiagnosisCardViews(student)
+  const show = {
+    counsel: access.counsel === 'open',   // 지표 5장
+    roadmap: access.roadmap === 'open',   // 목표 달성 계획 · 5대 핵심역량
+    growth: access.growth === 'open',     // 이번 주 할 일 · 성장 활동 기록
+    // 상담 현황 카드 안쪽은 아직 시안 리터럴이다 — 단계만 열렸다고 띄우면
+    // 상담 0건인 학생에게 남의 상담 기록이 보인다. 실제 신청이 있을 때만 그린다.
+    counselRecords: student.counselRequests.length > 0,
+  }
 
   return (
     <div className="al-page">
+        <NextStepBanner />
 
-      {/* Hero */}
-      <header className="al-hero">
-        <h1>AI 커리어 라운지</h1>
-        <p>AI가 종합 분석한 나의 커리어 현황을 한눈에 확인하세요.</p>
-      </header>
-
-      {/* Profile Card */}
-      <div className="al-profile-card">
-        <div className="al-profile-user">
-          <div className="al-avatar-box">
-            <img className="al-avatar-photo" src="/student-profile.png" alt="김채원 프로필" />
+        <section className="welcome reveal">
+          <div><small>{student.major} {student.grade}학년</small>
+            <h1>안녕하세요, <span>{student.name}</span>님.<br />오늘의 커리어 여정을 시작해 볼까요?</h1>
           </div>
-          <div className="al-profile-info">
-            <div className="al-profile-name">김채원</div>
-            <div className="al-profile-dept">컴퓨터공학과 3학년</div>
-            <span className="al-lv-badge">Lv. 23</span>
-          </div>
-        </div>
+          {/* 유형 칩은 실효 유형에서 온다 — 시안 리터럴(「진로설정형」)이 박혀 있어
+              모든 학생이 같은 유형으로 보였다. 진단 전이면 무엇을 하면 정해지는지 말한다. */}
+          <div className="student-type"><span className="type-copy"><small>나의 진로 유형</small>
+            <b>{typeLabel(studentType)}</b>
+            <span>{typeMeta ? typeMeta.goal : 'C-CORE 핵심진단을 마치면 유형이 정해집니다.'}</span>
+          </span></div>
+        </section>
 
-        <div className="al-stats-row">
-          {userStats.map((s, i) => (
-            <div key={i} className="al-stat">
-              <i className={`${s.icon} al-stat-icon`} />
-              <span className="al-stat-label">{s.label}</span>
-              <div className="al-stat-val">
-                <strong>{s.value}</strong>
-                <span>{s.unit}</span>
+        {/* 지표 5장은 상담까지 온 학생의 누적치다 — 진단 전에는 셀 것이 없어 아예 감춘다. */}
+        {show.counsel && <StudentStatCards stats={LOUNGE_STATS} />}
+
+        <div className="dashboard-grid">
+          <CareerJourneyCard
+            journey={journey}
+            title="나의 진로 여정"
+            desc="내 CARE+7의 현재 위치입니다."
+            className="reveal"
+            id="journey"
+          />
+
+          {show.roadmap && (
+          <section data-slot="card" className="competency-card reveal" id="competency">
+            <div data-slot="card-header">
+              <div>
+                <h2 data-slot="card-title">5대 핵심역량</h2>
+                <p data-slot="card-description">현재 수준과 목표 도달선을 비교합니다.</p>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── AI 종합 분석 섹션 (DB 정보 vs AI 분석 구분) ──────────────── */}
-      <section className="al-ai-section">
-        <div className="al-ai-section-head">
-          <span className="al-ai-badge">AI 종합 분석</span>
-          <h2>김채원 학생을 위한 AI 맞춤 인사이트</h2>
-          <p>진단 결과 · 역량 · 학습 데이터를 종합해 AI가 실시간으로 분석한 결과입니다.</p>
-        </div>
-
-      {/* ── Main Layout: content stack + sticky right sidebar ─────── */}
-      <div className="al-layout">
-
-        <div className="al-content">
-
-          <div className="al-analysis-row">
-
-            {/* 종합 분석 리포트 */}
-            <div id="report" className="card al-report-card al-anchor">
-              <div className="card-title">종합 분석 리포트</div>
-              <div className="al-card-sub">AI가 분석한 당신의 종합 평가</div>
-              <div className="al-score-row">
-                <span className="al-score-num">72</span>
-                <span className="al-score-denom">/100</span>
-              </div>
-              <div className="al-prog-track">
-                <div className="al-prog-fill" style={{ width: '72%' }} />
-              </div>
-              <div className="al-report-3col">
-                <div className="al-rcol">
-                  <div className="al-rcol-title"><i className="fa-solid fa-star" /> 강점</div>
-                  {['문제해결 능력이 우수해요','전공 역량이 탄탄해요','성장 가능성이 높아요'].map((t,i)=>(
-                    <div key={i} className="al-bullet"><i className="fa-solid fa-check" />{t}</div>
-                  ))}
+            <div data-slot="card-content">
+              <div className="chart-layout">
+                <div><CompetencyRadarChart axes={competencyAxes} currentFill="competency-mine">
+                    {/* '나의 현재' 면색 — 오른쪽 역량 막대(.axis-track i)와 같은 보라→하늘 축.
+                        SVG 는 CSS 그라데이션을 못 받으므로 여기에 정의하고 fill 이 url(#…)로 참조한다. */}
+                    <defs>
+                      <linearGradient id="competency-mine" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="var(--competency-current)" />
+                        <stop offset="100%" stopColor="var(--competency-growth)" />
+                      </linearGradient>
+                    </defs>
+                  </CompetencyRadarChart>
+                  <div className="legend"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 역량</span></div>
                 </div>
-                <div className="al-rcol">
-                  <div className="al-rcol-title"><i className="fa-solid fa-star" /> 보완이 필요한 역량</div>
-                  {['실무 경험을 더 쌓아보세요','프로젝트 경험이 부족해요','커뮤니케이션 능력 향상 필요'].map((t,i)=>(
-                    <div key={i} className="al-bullet"><i className="fa-solid fa-check" />{t}</div>
-                  ))}
-                </div>
-                <div className="al-rcol">
-                  <div className="al-rcol-title"><i className="fa-solid fa-check" /> 맞춤 추천</div>
-                  {['데이터 분석 프로젝트 경험 기획','기업 멘토링 프로그램','프레젠테이션 스킬 향상'].map((t,i)=>(
-                    <div key={i} className="al-bullet"><i className="fa-solid fa-check" />{t}</div>
+                <div className="axis-list">
+                  {competencyAxes.map(axis => (
+                    <div key={axis.key} className="axis-row">{axis.label}<span className="axis-track"><i style={{ width: `${axis.score}%` }}></i><u style={{ left: `${axis.target}%` }}></u></span><span className="gap-value" style={axis.gap >= 0 ? ({ color: 'var(--mint)' } as React.CSSProperties) : undefined}>{axis.gap >= 0 ? `+${axis.gap}` : axis.gap}</span></div>
                   ))}
                 </div>
               </div>
             </div>
+          </section>
+          )}
 
-            {/* 역량 비교 분석 */}
-            <div id="competency" className="card al-radar-card al-anchor">
-              <div className="card-title">역량 비교 분석</div>
-              <div className="al-card-sub">목표 기업 합격자 평균</div>
-              <div className="al-radar-legend">
-                <span className="al-leg-item"><span className="al-leg-line al-leg-solid"/>나의 역량</span>
-                <span className="al-leg-item"><span className="al-leg-line al-leg-dash"/>목표 기업 합격자 평균</span>
-              </div>
-              <RadarChart />
-            </div>
-
-          </div>
-
-          {/* ── Bottom Grid ───────────────────────────────────────────── */}
-      <div className="al-bottom-grid">
-
-        {/* AI 역량별 상세 분석 */}
-        <div className="card">
-          <div className="al-row-hd">
-            <div className="card-title" style={{marginBottom:0}}>
-              <i className="fa-solid fa-chart-bar"/> AI 역량별 상세 분석
-            </div>
-            <Link to="/roadmap/ai" className="al-more-link">상세 보기 →</Link>
-          </div>
-          <div className="al-bar-list">
-            {competencyBars.map((b,i)=>(
-              <div key={i} className="al-bar-row">
-                <span className="al-bar-lbl">{b.label}</span>
-                <div className="al-bar-track">
-                  <div className="al-bar-fill" style={{ width:`${b.value}%` }}/>
-                </div>
-                <span className="al-bar-val">{b.value}점</span>
-              </div>
-            ))}
-          </div>
-          <div className="al-ai-box al-comp-ai">
-            <i className="fa-solid fa-wand-magic-sparkles"/>
-            <span>
-              전문 역량과 인성 역량이 다른 영역 대비 두드러진 강점으로 분석되었습니다. 평균 80점 이상을 유지하고 있어
-              해당 영역과 연관된 직무(R&D, 윤리/컴플라이언스, 기술 컨설팅)에서 즉시 활용 가능한 수준입니다.
-              반면 <strong>실무 역량</strong>과 <strong>실행 역량</strong>은 70점 후반에 머물러 있어, 단기 캡스톤·인턴십·해커톤 같은
-              "실제 결과물을 만드는 활동"을 6주 단위로 사이클링하면 단기간 내 평균 5점 이상 향상이 기대됩니다.
-              지금 흐름을 유지하면서 실행 영역만 보강하면 종합 평균 80점대 진입이 충분히 가능합니다.
-            </span>
-          </div>
-        </div>
-
-        {/* 진단검사 결과 요약 */}
-        <div id="tests" className="card al-anchor">
-          <div className="al-row-hd">
-            <div className="card-title" style={{marginBottom:0}}>
-              <i className="fa-solid fa-chart-pie"/> 진단검사 결과 요약
-            </div>
-            <Link to="/diagnosis/result" className="al-more-link">전체 보기 →</Link>
-          </div>
-          <div className="al-test-rings">
-            {TEST_SUMMARIES.map(t => (
-              <button
-                key={t.id}
-                className="al-test-ring"
-                onClick={() => setOpenTestId(t.id)}
-                aria-label={`${t.label} 상세 보기`}
-              >
-                <MiniRing value={t.score} color={scoreBandColor(t.score)} />
-                <span className="al-test-name">{t.label}</span>
-              </button>
-            ))}
-          </div>
-          <p className="al-test-hint">
-            <i className="fa-solid fa-hand-pointer"/> 클릭하면 세부 결과를 확인할 수 있습니다
-          </p>
-        </div>
-
-        {/* 최근 상담 내역 */}
-        <div id="counsel" className="card al-anchor">
-          <div className="al-row-hd">
-            <div className="card-title" style={{marginBottom:0}}>최근 상담 내역</div>
-            <Link to="/mypage/counsel" className="al-more-link">전체 보기 →</Link>
-          </div>
-          <div className="al-counsel-list">
-            {counselPairs.slice(0, 3).map((p, i) => (
-              <div key={i} className="al-counsel-pair">
-                <div className="al-counsel-pair-head">
-                  <span className="al-counsel-type" style={{ color: p.typeColor }}>{p.type}</span>
-                  <span className="al-counsel-date">{p.date}</span>
-                </div>
-                <div className="al-counsel-msg al-counsel-msg-q">
-                  <span className="al-counsel-msg-lbl">질문</span>
-                  <p>{p.question}</p>
-                </div>
-                <div className="al-counsel-msg al-counsel-msg-a">
-                  <span className="al-counsel-msg-lbl">AI 조언</span>
-                  <p>{p.aiAdvice}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* TOEIC 영단어 오답노트 AI 분석 */}
-        <div id="toeic" className="card al-anchor">
-          <div className="al-row-hd">
-            <div className="card-title" style={{marginBottom:0}}>
-              <i className="fa-solid fa-book"/> TOEIC 영단어 오답노트
-            </div>
-            <Link to="/growth/mission" className="al-more-link">학습 가기 →</Link>
-          </div>
-
-          <div className="al-toeic-summary">
-            <div className="al-toeic-stat">
-              <span className="al-toeic-stat-num">72</span>
-              <span className="al-toeic-stat-unit">%</span>
-              <span className="al-toeic-stat-lbl">최근 14일 정답률</span>
-            </div>
-            <div className="al-toeic-stat-divider" />
-            <div className="al-toeic-stat-grid">
+          <section data-slot="card" className="diagnosis-card reveal" id="diagnosis">
+            <div data-slot="card-header">
               <div>
-                <span className="al-toeic-stat-num-sm">98</span>
-                <span className="al-toeic-stat-lbl-sm">학습 단어</span>
-              </div>
-              <div>
-                <span className="al-toeic-stat-num-sm" style={{ color: '#EF4444' }}>27</span>
-                <span className="al-toeic-stat-lbl-sm">오답 누적</span>
-              </div>
-              <div>
-                <span className="al-toeic-stat-num-sm" style={{ color: '#10B981' }}>71</span>
-                <span className="al-toeic-stat-lbl-sm">정답 누적</span>
+                <h2 data-slot="card-title">진단 결과</h2>
+                <p data-slot="card-description">CARE+ 단계별 진단에서 발견된 나의 대표 유형입니다.</p>
               </div>
             </div>
-          </div>
+            <div data-slot="card-content">
+              <div className="diagnosis-result-grid">
+                {/* 대상 검사·상태·결과는 데이터층이 준다(pipeline.getDiagnosisCardViews).
+                    이 카드는 진단 전 학생도 보는 두 카드 중 하나라 리터럴을 두면 안 된다. */}
+                {diagnosisCards.map((c, i) => {
+                  const n = (i % 5) + 1
+                  const style = {
+                    '--result-color': `var(--diagnosis-${n})`,
+                    '--result-soft': `var(--diagnosis-${n}-soft)`,
+                  } as React.CSSProperties
 
-          <div className="al-toeic-cats">
-            <div className="al-toeic-cats-title">난이도별 정답률</div>
-            {[
-              { label: '필수단어 (600점대 / 빈출 기초)', correct: 88, hint: 'company, increase, provide 등 빈출 1000어' },
-              { label: '핵심단어 (700점대 / 시험 직결)', correct: 70, hint: 'distribute, comply, postpone 등 PART 5·6 키워드' },
-              { label: '고득점 단어 (800점대 / 변별력)', correct: 42, hint: 'discretion, leverage, mitigate 등 PART 7 추론어' },
-              { label: '난해 단어 (900점대 / 고난도)', correct: 30, hint: 'forfeit, succinct, ubiquitous 등 저빈도 추상어' },
-            ].map(c => {
-              const wrong = 100 - c.correct
-              const color = c.correct >= 80 ? '#10B981' : c.correct >= 60 ? '#F59E0B' : '#EF4444'
-              return (
-                <div key={c.label} className="al-toeic-cat-row">
-                  <div className="al-toeic-cat-head">
-                    <span className="al-toeic-cat-lbl">{c.label}</span>
-                    <span className="al-toeic-cat-val" style={{ color }}>
-                      정답 {c.correct}% <span className="al-toeic-cat-wrong">· 오답 {wrong}%</span>
-                    </span>
+                  if (c.status !== 'done') {
+                    return (
+                      <article key={c.module.id} className="diagnosis-result-item not-taken" style={style}>
+                        <span className="diagnosis-result-top">
+                          <span className="diagnosis-result-name"><small>{c.module.id}</small><b>{c.module.name}</b></span>
+                          <span className="diagnosis-result-date">{c.status === 'available' ? '응시 가능' : '잠금'}</span>
+                        </span>
+                        <strong className="diagnosis-primary-result">
+                          {c.status === 'available' ? '아직 응시 전' : '선행 진단을 마치면 열립니다'}
+                        </strong>
+                        <span className="diagnosis-result-tags">
+                          {c.module.factors.map(f => <span key={f.name}>{f.name}</span>)}
+                        </span>
+                      </article>
+                    )
+                  }
+
+                  return (
+                    <Link
+                      key={c.module.id}
+                      className="diagnosis-result-item"
+                      to={`/diagnosis/employment/${c.module.testId}`}
+                      style={style}
+                    >
+                      <span className="diagnosis-result-top">
+                        <span className="diagnosis-result-name"><small>{c.module.id}</small><b>{c.module.name}</b></span>
+                        <span className="diagnosis-result-date">완료</span>
+                      </span>
+                      <strong className="diagnosis-primary-result">{c.headline}</strong>
+                      <span className="diagnosis-result-tags">
+                        {c.tags.map(t => <span key={t}>{t}</span>)}
+                      </span>
+                    </Link>
+                  )
+                })}
+              </div>
+            </div>
+          </section>
+
+          {show.roadmap && (
+          <section data-slot="card" className="goal-card reveal" id="goal">
+            <div data-slot="card-header">
+              <div>
+                <h2 data-slot="card-title">목표 달성 계획</h2>
+                <p data-slot="card-description">데이터 분석가 목표를 위한 8개 영역과 실행 과제를 관리합니다.</p>
+              </div>
+            </div>
+            <div data-slot="card-content">
+              <div className="goal-overview">
+                <article className="goal-core"><small>목표 직무</small>
+                  <h3>데이터 분석가</h3>
+                  <p>진로 탐색부터 네트워크까지 8개 영역의 실행을 하나의 IAP로 관리합니다.</p>
+                  <div className="goal-number">41<span>% 전체 진척도</span></div>
+                </article>
+                <div className="goal-plan">
+                  <div className="goal-plan-columns">
+                    <section className="goal-plan-column" style={{ '--plan-color': 'var(--goal-1)', '--plan-soft': 'var(--goal-1-soft)' } as React.CSSProperties}>
+                      <div className="goal-plan-head"><span className="goal-plan-head-icon"><svg className="icon">
+                            <use href="#i-calendar" /></svg></span>
+                        <div className="goal-plan-head-copy"><b>IAP 실행</b><span>개인별 진로계획에 따른 실행 활동</span></div>
+                      </div>
+                      <div className="goal-task-list">
+                        <button className="goal-task is-complete" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-layout" /></svg></span><span className="goal-task-copy"><b>창대한 멘토단 트랙(9월)
+                              </b></span><span className="goal-task-status">완료</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-spark" /></svg></span><span className="goal-task-copy"><b>CWNU 커리어 골든타임 1:1 개별상담
+                              </b></span><span className="goal-task-status">진행
+                            중</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-scan" /></svg></span><span className="goal-task-copy"><b>비교과 프로그램 3회 수료
+                              실습</b></span><span className="goal-task-status planned">예정</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-user" /></svg></span><span className="goal-task-copy"><b>2026년 직무 부트캠프 
+                              특강</b></span><span className="goal-task-status planned">예정</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                      </div>
+                    </section>
+                    <section className="goal-plan-column" style={{ '--plan-color': 'var(--goal-2)', '--plan-soft': 'var(--goal-2-soft)' } as React.CSSProperties}>
+                      <div className="goal-plan-head"><span className="goal-plan-head-icon"><svg className="icon">
+                            <use href="#i-layout" /></svg></span>
+                        <div className="goal-plan-head-copy"><b>핵심역량 수행</b><span>전공 기반 핵심역량 강화 활동</span></div>
+                      </div>
+                      <div className="goal-task-list">
+                        <button className="goal-task is-complete" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-layout" /></svg></span><span className="goal-task-copy"><b>데이터베이스 개론</b></span><span className="goal-task-status">완료</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-route" /></svg></span><span className="goal-task-copy"><b>자료구조</b></span><span className="goal-task-status">진행 중</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-scan" /></svg></span><span className="goal-task-copy"><b>운영체제</b></span><span className="goal-task-status">진행 중</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-target" /></svg></span><span className="goal-task-copy"><b>선형대수</b></span><span className="goal-task-status planned">예정</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                      </div>
+                    </section>
+                    <section className="goal-plan-column" style={{ '--plan-color': 'var(--goal-3)', '--plan-soft': 'var(--goal-3-soft)' } as React.CSSProperties}>
+                      <div className="goal-plan-head"><span className="goal-plan-head-icon"><svg className="icon">
+                            <use href="#i-target" /></svg></span>
+                        <div className="goal-plan-head-copy"><b>내 성장 활동</b><span>자격증·공모전·어학·프로젝트 활동</span></div>
+                      </div>
+                      <div className="goal-task-list">
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-spark" /></svg></span><span className="goal-task-copy"><b>IT 공모전 참여</b></span><span className="goal-task-status">진행 중</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-check" /></svg></span><span className="goal-task-copy"><b>SQLD 자격증</b></span><span className="goal-task-status">진행 중</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-scan" /></svg></span><span className="goal-task-copy"><b>TOEIC 800+
+                              달성</b></span><span className="goal-task-status">진행 중</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                        <button className="goal-task" type="button"><span className="goal-task-icon"><svg className="icon">
+                              <use href="#i-briefcase" /></svg></span><span className="goal-task-copy"><b>개인
+                              프로젝트</b></span><span className="goal-task-status planned">예정</span><svg className="icon">
+                            <use href="#i-arrow" /></svg></button>
+                      </div>
+                    </section>
                   </div>
-                  <div className="al-toeic-cat-bar">
-                    <div className="al-toeic-cat-fill" style={{ width: `${c.correct}%`, background: color }} />
-                  </div>
-                  <span className="al-toeic-cat-hint">{c.hint}</span>
-                </div>
-              )
-            })}
-          </div>
-
-          <div className="al-ai-box al-toeic-ai">
-            <i className="fa-solid fa-wand-magic-sparkles"/>
-            <span>
-              최근 14일 학습 데이터 분석 결과, <strong>필수단어(88%)</strong>와 <strong>핵심단어(70%)</strong>는
-              비교적 안정적이지만, <strong>고득점 단어(42%)</strong>와 <strong>난해 단어(30%)</strong>에서
-              오답률이 급격히 올라갑니다. 현재 추세라면 <strong>예상 점수 720~760점대</strong>에 머무를
-              가능성이 높습니다. <strong>TOEIC 800점 이상</strong>을 목표로 하신다면, 1) 매일 미션에
-              <em>고득점 단어 10개 + 난해 단어 5개</em>를 우선 배치하고, 2) 동의어/반의어 짝(synonym pair)
-              학습을 병행해 PART 5의 어휘 문제에서 시간을 단축하며, 3) 주 2회 LC/RC 실전 모의고사로
-              체득 여부를 확인하시면 6주 내 800점대 진입이 충분히 가능할 것으로 예측됩니다.
-            </span>
-          </div>
-        </div>
-
-      </div>
-
-      {/* ── AI 액션 로드맵 ─────────────────────────────────────────── */}
-      <div id="roadmap" className="al-roadmap-section al-anchor">
-        <div className="al-sec-hd">
-          <span className="al-sec-title">
-            <i className="fa-solid fa-wand-magic-sparkles"/> 그래서 뭐부터? · AI 액션 로드맵
-          </span>
-          <Link to="/roadmap/ai" className="al-more-link">전체 로드맵 →</Link>
-        </div>
-        <p className="al-roadmap-intro">
-          진단 점수 · 역량 분석 · TOEIC 학습 데이터 · 상담 기록을 모두 종합해서, 김채원님이 <strong>지금 무엇부터,
-          어떤 순서로 진행하면 가장 효율적인지</strong> 3단계 로드맵으로 정리했어요.
-        </p>
-
-        <div className="al-roadmap-list">
-          {roadmapPhases.map(phase => (
-            <div key={phase.num} className="al-roadmap-phase">
-              <div className="al-roadmap-phase-head">
-                <span className="al-roadmap-num" style={{ background: phase.color }}>{phase.num}</span>
-                <div className="al-roadmap-phase-meta">
-                  <span className="al-roadmap-period">{phase.period}</span>
-                  <strong className="al-roadmap-title">{phase.title}</strong>
+                  <aside className="goal-coach"><span className="goal-coach-icon"><svg className="icon">
+                        <use href="#i-spark" /></svg></span>
+                    <div className="goal-coach-copy"><b>AI 코치의 한마디</b>
+                      <p>IAP 실행·핵심역량 수행·내 성장 활동을 균형 있게 진행하고 있어요. 다음 단계 진입을 위해 진행 중인 과제 2개를 먼저 완료해 보세요.</p>
+                    </div>
+                    {/* 코치 제안 → 실제 화면으로. 로드맵은 이 카드와 같은 3축(IAP·핵심역량·성장활동)을
+                        보여 주는 '로드맵 진행 현황'으로 간다 — 진로취업 로드맵(/roadmap)이 아니다. */}
+                    <div className="goal-coach-actions">
+                      <Link className="button" to="/growth/roadmap-status">로드맵 진행 현황</Link>
+                    </div>
+                  </aside>
                 </div>
               </div>
-              <ul className="al-roadmap-actions">
-                {phase.actions.map((a, i) => (
-                  <li key={i}>
-                    <i className="fa-solid fa-check" style={{ color: phase.color }} />
-                    <span>{a}</span>
-                  </li>
+            </div>
+          </section>
+          )}
+
+          {show.growth && (
+          <section data-slot="card" className="todo-card reveal" id="todo">
+            <div data-slot="card-header">
+              <div>
+                <h2 data-slot="card-title">이번 주 할 일</h2>
+                <p data-slot="card-description">마감이 가까운 순서입니다.</p>
+              </div>
+              <div data-slot="card-action"><span className="badge coral">4개 남음</span></div>
+            </div>
+            <div data-slot="card-content">
+              <div className="row-list"><label className="list-item"><input className="checkbox" type="checkbox" defaultChecked={false} /><span className="item-copy"><b>역량 갭 1개 추가 등록</b><span>IAP 승인 조건 · 현재 2/3개</span></span><span className="badge coral">D-3</span></label><label className="list-item"><input className="checkbox" type="checkbox" defaultChecked={false} /><span className="item-copy"><b>상담 예약 — 직무기초역량 진단·설계</b><span>담당 이수진 상담사 ·
+                      50분</span></span><span className="badge amber">D-6</span></label><label className="list-item"><input className="checkbox" type="checkbox" defaultChecked={false} /><span className="item-copy"><b>SQL 실무 과정 수강 신청</b><span>9월 2일 개강 · 정원
+                      30명</span></span><span className="badge">D-12</span></label><label className="list-item"><input className="checkbox" type="checkbox" defaultChecked={false} /><span className="item-copy"><b>현장실습 사전 교육 이수</b><span>실습 신청 전
+                      필수</span></span><span className="badge">D-20</span></label></div>
+            </div>
+          </section>
+          )}
+
+          {/* 성장 활동 기록 — 「내 성장」(/v2/growth)의 같은 카드다.
+              값은 같은 단일소스를 읽으므로, 거기서 기록을 더하면 여기에도 그대로 나온다.
+              다만 여기서는 읽기만 한다 — 등록·수정·삭제는 /v2/growth 한 곳에서만 한다. */}
+          {/* gh-shell 이 필요하다 — --gh-* 색 토큰과 점 색 규칙이 전부 그 클래스 하위로
+              스코프돼 있어(GrowthHome.css), 없으면 점이 투명해지고 색이 하나도 안 산다. */}
+          {show.growth && (
+          <section data-slot="card" className="recommend-card gh-shell reveal" id="recommend">
+            <article className="gh-card gh-archive">
+              <header className="gh-card-head">
+                <div>
+                  <span className="gh-section-kicker">GROWTH ARCHIVE</span>
+                  <h2>성장 활동 기록</h2>
+                  <p>진단, 비교과, 로드맵 이행이 하나의 성장 서사로 축적됩니다.</p>
+                </div>
+                <div className="gh-head-actions"><Link to="/growth">활동 전체 보기</Link></div>
+              </header>
+              <div className="gh-timeline">
+                {growthRecords.map((record, index) => (
+                  <div className="gh-timeline-item" key={`${record.date}-${record.title}-${index}`}>
+                    <time>{record.date}</time>
+                    <span className={`gh-timeline-dot is-${record.tone}`} />
+                    <div><span>{record.type}</span><strong>{record.title}</strong><p>{record.description}</p></div>
+                  </div>
                 ))}
-              </ul>
+                {growthRecords.length === 0 && <p className="gh-empty">아직 기록된 성장 활동이 없습니다.</p>}
+              </div>
+            </article>
+          </section>
+          )}
+
+          {show.counselRecords && (
+          <section data-slot="card" className="counseling-card reveal" id="counseling-status">
+            <div data-slot="card-header">
+              <div>
+                <h2 data-slot="card-title">상담 현황</h2>
+                <p data-slot="card-description">이번 학기 상담 유형별 진행 상황과 최근 기록을 확인합니다.</p>
+              </div>
+              <div data-slot="card-action"><Link className="button" to="/counsel/record">전체 내역 보기<svg className="icon">
+                    <use href="#i-arrow" /></svg></Link></div>
             </div>
-          ))}
+            <div data-slot="card-content">
+              <div className="counseling-detail-grid">
+                <article className="counseling-detail-column" style={{ '--counsel-color': 'var(--counsel-1)', '--counsel-soft': 'var(--counsel-1-soft)' } as React.CSSProperties}>
+                  <div className="counseling-detail-head"><span className="counseling-detail-icon"><svg className="icon">
+                        <use href="#i-message" /></svg></span><span className="counseling-detail-copy"><span className="counseling-detail-title">진로취업</span><span>직무·취업 준비 상담</span></span><strong className="counseling-detail-total">3건</strong></div>
+                  <div className="counseling-detail-summary">완료 2 · 예정 1</div>
+                  <div className="counseling-record-list">
+                    <div className="counseling-record"><span><span className="counseling-record-title">직무기초역량 진단·설계</span><small>09.04 · 이수진 상담사</small></span><span className="badge">예정</span></div>
+                    <div className="counseling-record"><span><span className="counseling-record-title">목표 직무 구체화</span><small>08.18 · 이수진 상담사</small></span><span className="badge">완료</span></div>
+                  </div>
+                </article>
+                <article className="counseling-detail-column" style={{ '--counsel-color': 'var(--counsel-2)', '--counsel-soft': 'var(--counsel-2-soft)' } as React.CSSProperties}>
+                  <div className="counseling-detail-head"><span className="counseling-detail-icon"><svg className="icon">
+                        <use href="#i-scan" /></svg></span><span className="counseling-detail-copy"><span className="counseling-detail-title">심리검사</span><span>검사 해석·정서 상담</span></span><strong className="counseling-detail-total">1건</strong></div>
+                  <div className="counseling-detail-summary">완료 1</div>
+                  <div className="counseling-record-list">
+                    <div className="counseling-record"><span><span className="counseling-record-title">직업흥미검사 해석 상담</span><small>08.12 · 박서연 상담사</small></span><span className="badge">완료</span></div>
+                    <div className="counseling-record"><span><span className="counseling-record-title">추가 상담</span><small>필요 시 예약할 수 있어요</small></span><span className="badge">예약 가능</span></div>
+                  </div>
+                </article>
+                <article className="counseling-detail-column" style={{ '--counsel-color': 'var(--counsel-3)', '--counsel-soft': 'var(--counsel-3-soft)' } as React.CSSProperties}>
+                  <div className="counseling-detail-head"><span className="counseling-detail-icon"><svg className="icon">
+                        <use href="#i-user" /></svg></span><span className="counseling-detail-copy"><span className="counseling-detail-title">지도교수</span><span>학업·진로 방향 상담</span></span><strong className="counseling-detail-total">1건</strong></div>
+                  <div className="counseling-detail-summary">예정 1</div>
+                  <div className="counseling-record-list">
+                    <div className="counseling-record"><span><span className="counseling-record-title">2학기 진로계획 점검</span><small>09.10 · 김창원 교수</small></span><span className="badge">예정</span></div>
+                    <div className="counseling-record"><span><span className="counseling-record-title">상담 전 준비</span><small>IAP 실행 내역을 확인해 주세요</small></span><span className="badge">준비 중</span></div>
+                  </div>
+                </article>
+              </div>
+            </div>
+          </section>
+          )}
         </div>
-
-        <div className="al-ai-box al-roadmap-summary">
-          <i className="fa-solid fa-wand-magic-sparkles"/>
-          <span>
-            이 흐름대로 6개월간 진행하면 <strong>9CORE 평균 75 → 82점</strong>,
-            <strong> TOEIC 720 → 820점대</strong>, <strong>포트폴리오 결과물 +2건</strong> 확보가
-            충분히 가능합니다. 진도가 어긋난다면 <Link to="/roadmap/ai" className="al-roadmap-link">AI 진로 로드맵</Link>에서
-            언제든 자동으로 재조정해 드릴게요.
-          </span>
-        </div>
-      </div>
-
-        </div>
-
-        {/* Right Sidebar — sticky, follows scroll across all content */}
-        <aside className="al-right-sidebar">
-
-          {/* 우선순위 요약 — 가장 중요한 인사이트로 promote */}
-          <div className="card al-priority-card">
-            <div className="card-title">
-              <i className="fa-solid fa-circle-exclamation" /> 우선순위 요약
-            </div>
-            <div className="al-priority-list">
-              <div className="al-pri-item">
-                <span className="al-pri-dot" style={{ background:'#EF4444' }}/>
-                <span className="al-pri-label">긴급 (High)</span>
-                <span className="al-pri-cnt" style={{ color:'#EF4444' }}>2개</span>
-              </div>
-              <div className="al-pri-item">
-                <span className="al-pri-dot" style={{ background:'#99A1A9' }}/>
-                <span className="al-pri-label">보통 (Medium)</span>
-                <span className="al-pri-cnt">1개</span>
-              </div>
-              <div className="al-pri-item">
-                <span className="al-pri-dot" style={{ background:'#D1D5DB' }}/>
-                <span className="al-pri-label">낮음 (Low)</span>
-                <span className="al-pri-cnt">1개</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 추천 다음 행동 */}
-          <div className="card">
-            <div className="card-title">추천 다음 행동</div>
-            <div className="al-action-list">
-              {nextActions.map((a,i)=>(
-                <div key={i} className="al-action-item">
-                  <span className="al-action-num" style={{ background:a.color }}>{a.num}</span>
-                  <span className="al-action-txt">{a.text}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 빠른 이동 */}
-          <div className="card">
-            <div className="card-title">빠른 이동</div>
-            <div className="al-quick-list">
-              {quickLinks.map((q,i)=>(
-                <Link key={i} to={q.path} className="al-quick-item">
-                  <span className="al-quick-ico" style={{ background:q.bg, color:q.iconColor }}>
-                    <i className={q.icon}/>
-                  </span>
-                  <span className="al-quick-lbl">{q.label}</span>
-                  <i className="fa-solid fa-chevron-right al-quick-arr"/>
-                </Link>
-              ))}
-            </div>
-          </div>
-
-        </aside>
-
-      </div>
-      </section>
-
-      {/* ── Test Detail Modal ─────────────────────────────────────── */}
-      <Modal
-        open={openTest !== null}
-        onClose={() => setOpenTestId(null)}
-        title={openTest ? `${openTest.label} 결과` : ''}
-        size="lg"
-      >
-        {openTest && (
-          <div className="al-test-modal">
-            <div className="al-test-modal-top">
-              <div className="al-test-modal-score" style={{ color: scoreBandColor(openTest.score) }}>
-                {openTest.score}<span>점</span>
-              </div>
-              <div className="al-test-modal-meta">
-                <span className="al-test-modal-name">{openTest.label}</span>
-                <span className="al-test-modal-sub">
-                  {openTest.axes.length}개 영역 · 평균 {openTest.score}점
-                </span>
-              </div>
-            </div>
-
-            <div className="al-test-modal-chart">
-              <ModalRadar axes={openTest.axes} />
-            </div>
-
-            <div className="al-test-modal-ai">
-              <div className="al-test-modal-ai-head">
-                <i className="fa-solid fa-wand-magic-sparkles" /> AI 코멘트
-              </div>
-              <p>{openTest.aiComment}</p>
-            </div>
-
-            <div className="al-test-modal-tags">
-              {openTest.axes.map(ax => {
-                const cls = ax.value >= 71 ? 'high' : ax.value >= 41 ? 'mid' : 'low'
-                return (
-                  <span key={ax.label} className={`al-test-tag al-test-tag-${cls}`}>
-                    {ax.label} {ax.value}점
-                  </span>
-                )
-              })}
-            </div>
-          </div>
-        )}
-      </Modal>
-
     </div>
   )
 }

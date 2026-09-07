@@ -1,0 +1,528 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   상단 네비게이션 — 시안(test_admin_react/src/styles.css)의 GNB 계열 규칙만
+   뽑아 .tadmin-gnb 하위로 기계 스코핑한 것. 손으로 고르지 않는다.
+   index.css 의 기존 .gnb* 규칙과 같은 클래스명을 쓰므로 특이도로 이긴다.
+   ───────────────────────────────────────────────────────────────────────── */
+.tadmin-gnb{
+  --bg:#FFFFFF;
+  --card:#FFFFFF;
+  --panel:#FAFAF8;          
+  --sel:#F3FBF7;            
+  --sel-line:#CDE9DC;       
+
+  --text:#1D2433;
+  --text-sub:#5F6B7A;       
+  --text-cap:#6E7787;       
+
+  --border:#E4DFDA;
+  --divider:#EFEBE7;
+
+  
+  --green:#24B37A;  --green-bg:#DFF5EA;
+  --orange:#F59A23; --orange-bg:#FFF0DD;
+  --red:#F05D57;    --red-bg:#FDE7E6;
+  --purple:#8B63D9; --purple-bg:#EFE6FB;
+  --blue:#3B82F6;   --blue-bg:#E8F1FF;
+  --teal:#1FA7A5;   --teal-bg:#DDF6F5;
+  --yellow:#F2B544; --yellow-bg:#FFF5DE;
+
+  
+  --on-green:#157A52;  --on-orange:#92580A; --on-red:#C2332C;
+  --on-purple:#6739B8; --on-blue:#1A5FCC;   --on-teal:#0E7573;
+  --on-yellow:#8A5D0A;
+
+  --r-lg:24px; --r-md:20px; --r-sm:18px; --r-ctl:14px; --r-btn:12px; --r-pill:999px;
+
+  --shadow:0 1px 2px rgba(29,36,51,.05), 0 8px 24px rgba(20,20,20,.05);
+
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:20px; --sp-6:24px; --sp-7:32px;
+  --gap:var(--sp-5);        
+  --gap-set:var(--sp-3);    
+  --pad:var(--sp-6);        
+  --pad-sm:var(--sp-4);
+}
+.gnb.tadmin-gnb{position:sticky;top:0;z-index:50;background:var(--card);border-bottom:1px solid var(--border)}
+.tadmin-gnb .gnb-in{max-width:1560px;margin:0 auto;padding:0 var(--sp-7);height:60px;display:flex;align-items:center;gap:var(--sp-6)}
+.tadmin-gnb .brand{display:flex;align-items:center;gap:var(--sp-3);flex:none}
+.tadmin-gnb .mark{font-size:17px;font-weight:800;letter-spacing:-.01em;line-height:1}
+.tadmin-gnb .mark b{font-weight:800;color:var(--on-green)}
+.tadmin-gnb .brand-div{width:1px;height:16px;background:var(--border);flex:none}
+.tadmin-gnb .brand-sub{font-size:12.5px;font-weight:600;color:var(--text-cap);white-space:nowrap}
+.tadmin-gnb .gnb-nav{display:flex;align-items:stretch;flex:1;min-width:0;gap:2px}
+.tadmin-gnb .gnb-item{position:relative;display:flex}
+.tadmin-gnb .gnb-btn{height:60px;display:inline-flex;align-items:center;gap:6px;padding:0 13px;
+         font-size:14px;font-weight:600;color:var(--text-sub);white-space:nowrap;
+         position:relative;transition:color .15s ease-out}
+.tadmin-gnb .gnb-btn > svg{width:15px;height:15px;flex:none}
+.tadmin-gnb .gnb-btn .caret{width:12px;height:12px;color:var(--text-cap);transition:transform .15s ease-out}
+.tadmin-gnb .gnb-btn:hover{color:var(--text)}
+.tadmin-gnb .gnb-item:hover .caret{transform:rotate(180deg)}
+.tadmin-gnb .gnb-item.is-active .gnb-btn{color:var(--text)}
+.tadmin-gnb .gnb-item.is-active .gnb-btn::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2px;
+                                    background:var(--green);border-radius:2px 2px 0 0}
+.tadmin-gnb .submenu{position:absolute;top:100%;left:0;min-width:184px;background:var(--card);
+         border:1px solid var(--border);border-radius:var(--r-ctl);box-shadow:var(--shadow);
+         padding:6px;display:none;z-index:60}
+.tadmin-gnb .gnb-item.has-sub:hover .submenu, .tadmin-gnb .gnb-item.has-sub:has(:focus-visible) .submenu{display:block}
+/* 눌러서 이동한 직후에는 접어 둔다(GNB.collapsedNavId). 포인터가 벗어나면 풀린다.
+   :focus-within 이 아니라 :has(:focus-visible) 인 것도 같은 이유다 —
+   마우스로 누른 링크가 포커스를 쥐고 있으면 메뉴가 계속 열려 있었다. */
+.tadmin-gnb .gnb-nav .gnb-item.has-sub.is-collapsed .submenu{display:none}
+.tadmin-gnb .sub-i{display:block;padding:8px 10px;border-radius:9px;font-size:13px;font-weight:500;
+       color:var(--text-sub);white-space:nowrap}
+.tadmin-gnb .sub-i:hover{background:var(--panel);color:var(--text)}
+.tadmin-gnb .gnb-user{margin-left:auto;display:flex;align-items:center;gap:var(--sp-3);flex:none}
+.tadmin-gnb .icon-btn{width:34px;height:34px;border-radius:10px;border:1px solid var(--border);background:var(--card);
+          display:grid;place-items:center;color:var(--text-sub);position:relative;flex:none;
+          transition:color .15s ease-out, border-color .15s ease-out}
+.tadmin-gnb .icon-btn:hover{color:var(--text);border-color:var(--text-cap)}
+.tadmin-gnb .icon-btn svg{width:16px;height:16px}
+.tadmin-gnb .me{display:flex;align-items:center;gap:var(--sp-2);padding-left:var(--sp-3);border-left:1px solid var(--border)}
+.tadmin-gnb .me .ava{width:32px;height:32px;font-size:13px}
+.tadmin-gnb .me-t b{display:block;font-size:13px;font-weight:700;line-height:1.3}
+.tadmin-gnb .me-t span{display:block;font-size:12px;font-weight:500;color:var(--text-cap);line-height:1.3}
+.tadmin-gnb .gnb-menu{display:none}
+@media (max-width:1439px){
+.tadmin-gnb .brand-div, .tadmin-gnb .brand-sub{display:none}
+.tadmin-gnb .gnb-in{gap:var(--sp-4)}
+.tadmin-gnb .gnb-btn{padding:0 9px;font-size:13.5px;gap:5px}
+.tadmin-gnb .gnb-btn > svg:first-child{display:none}
+.tadmin-gnb .gnb-item.is-active .gnb-btn::after{left:9px;right:9px}
+}
+@media (max-width:1279px){
+.tadmin-gnb .gnb-nav{display:none}
+.tadmin-gnb .gnb-menu{display:grid}
+}
+@media (max-width:1023px){
+.tadmin-gnb .gnb-in{padding:0 var(--sp-5)}
+}
+@media (max-width:719px){
+.tadmin-gnb .gnb-in{padding:0 var(--sp-4);gap:var(--sp-3)}
+.tadmin-gnb .me{padding-left:0;border-left:0}
+.tadmin-gnb .me-t{display:none}
+}
+.tadmin-gnb{
+  --bg:#F7F8FB;
+  --border:#E2E6EC;
+  --divider:#F1F3F6;
+  --r-lg:12px;
+  --r-md:12px;
+  --r-sm:12px;
+  --shadow:none;
+  --gap:16px;
+  --pad:20px;
+  --pad-sm:16px;
+  --nav-accent:#7C5CFC;
+  --nav-accent-soft:#F0EDFF;
+}
+.tadmin-gnb .submenu{box-shadow:none}
+.gnb.tadmin-gnb{
+  min-height:80px;
+  background:#FFF;
+  border-bottom:1px solid var(--border);
+}
+.tadmin-gnb .gnb-in{
+  width:100%;
+  max-width:1520px;
+  height:80px;
+  margin:0 auto;
+  padding:0 32px;
+  gap:24px;
+}
+.tadmin-gnb .brand{gap:12px}
+.tadmin-gnb .brand-logo{
+  width:156px;
+  height:40px;
+  object-fit:contain;
+  object-position:left center;
+  display:block;
+}
+.tadmin-gnb .brand-div{height:20px;background:var(--border)}
+.tadmin-gnb .brand-sub{font-size:12px;color:#667085}
+.tadmin-gnb .gnb-nav{
+  align-self:stretch;
+  justify-content:center;
+  gap:8px;
+}
+.tadmin-gnb .gnb-btn{
+  height:80px;
+  padding:0 8px;
+  border-bottom:3px solid transparent;
+  border-radius:0;
+  color:#344054;
+  font-size:14px;
+  font-weight:700;
+  transition:color 180ms ease,border-color 180ms ease;
+}
+.tadmin-gnb .gnb-btn>svg:first-child{display:none}
+.tadmin-gnb .gnb-btn:hover{color:var(--nav-accent)}
+.tadmin-gnb .gnb-item.is-active .gnb-btn{color:var(--nav-accent);border-bottom-color:var(--nav-accent)}
+.tadmin-gnb .gnb-item.is-active .gnb-btn::after{display:none}
+.tadmin-gnb .submenu{
+  padding:8px;
+  border-color:var(--border);
+  border-radius:12px;
+  background:#FFF;
+}
+.tadmin-gnb .sub-i{padding:8px 10px;border-radius:8px;font-size:14px}
+.tadmin-gnb .sub-i:hover{background:var(--nav-accent-soft);color:var(--nav-accent)}
+.tadmin-gnb .gnb-user{gap:8px}
+.tadmin-gnb .icon-btn{
+  width:36px;
+  height:36px;
+  border:0;
+  border-radius:50%;
+  background:#F2F4F7;
+  color:#344054;
+}
+.tadmin-gnb .icon-btn:hover{border-color:transparent;background:#EAECF0;color:var(--nav-accent)}
+.tadmin-gnb .me{
+  padding:4px 6px 4px 4px;
+  border-left:0;
+  border-radius:24px;
+  gap:8px;
+}
+.tadmin-gnb .me:hover{background:#F2F4F7}
+.tadmin-gnb .me .ava{width:36px;height:36px;font-size:12px}
+.tadmin-gnb .me-t b{font-size:12px}
+.tadmin-gnb .me-t span{font-size:12px}
+@media (max-width:1439px){
+.tadmin-gnb .gnb-in{gap:16px}
+.tadmin-gnb .gnb-btn{padding:0 8px;font-size:14px;gap:6px}
+}
+@media (max-width:1279px){
+.tadmin-gnb .gnb-nav{display:none}
+.tadmin-gnb .gnb-menu{display:grid}
+}
+@media (max-width:1023px){
+.tadmin-gnb .gnb-in{padding:0 24px}
+}
+@media (max-width:719px){
+.tadmin-gnb .gnb-in{padding:0 14px;gap:12px}
+.tadmin-gnb .brand-logo{width:132px;height:36px}
+}
+.gnb.tadmin-gnb{
+  min-height:80px;
+  padding:0;
+  border-bottom:1px solid var(--border);
+  background:#FFF;
+  position:sticky;
+  top:0;
+  z-index:50;
+}
+.tadmin-gnb .gnb-in{
+  width:100%;
+  max-width:1440px;
+  min-height:80px;
+  height:auto;
+  margin:0 auto;
+  padding:0;
+  display:flex;
+  align-items:center;
+  gap:24px;
+}
+.tadmin-gnb .brand{
+  min-width:0;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:12px;
+}
+.tadmin-gnb .brand-logo{
+  width:164px;
+  height:28px;
+  object-fit:contain;
+  object-position:left center;
+  display:block;
+}
+.tadmin-gnb .brand-div, .tadmin-gnb .brand-sub{display:none}
+.tadmin-gnb .gnb-nav{
+  min-width:0;
+  flex:1;
+  align-self:stretch;
+  display:flex;
+  align-items:center;
+  justify-content:space-evenly;
+  gap:8px;
+}
+.tadmin-gnb .gnb-item{
+  position:relative;
+  flex:0 0 auto;
+  display:flex;
+  align-items:stretch;
+}
+.tadmin-gnb .gnb-btn{
+  height:80px;
+  padding:0 8px;
+  border:0;
+  border-bottom:3px solid transparent;
+  border-radius:0;
+  background:transparent;
+  color:#344054;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  font-size:15px;
+  font-weight:600;
+  white-space:nowrap;
+  position:relative;
+  transition:color 180ms ease,border-color 180ms ease;
+}
+.tadmin-gnb .gnb-btn>svg:first-child{display:none}
+.tadmin-gnb .gnb-btn .caret{width:12px;height:12px;color:#667085}
+.tadmin-gnb .gnb-btn:hover{color:#7C5CFC}
+.tadmin-gnb .gnb-item.is-active .gnb-btn{
+  color:#7C5CFC;
+  font-weight:700;
+  border-bottom-color:#7C5CFC;
+}
+.tadmin-gnb .gnb-item.is-active .gnb-btn::after{display:none}
+.tadmin-gnb .submenu{
+  top:100%;
+  left:0;
+  min-width:184px;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#FFF;
+  box-shadow:0 16px 40px rgba(18,24,38,.14);
+}
+.tadmin-gnb .sub-i{padding:8px 10px;border-radius:8px;font-size:12px}
+.tadmin-gnb .sub-i:hover{background:#F0EDFF;color:#7C5CFC}
+.tadmin-gnb .gnb-user{
+  margin-left:auto;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.tadmin-gnb .icon-btn{
+  width:36px;
+  height:36px;
+  padding:0;
+  border:0;
+  border-radius:50%;
+  background:#F2F4F7;
+  color:#344054;
+  display:grid;
+  place-items:center;
+  position:relative;
+  flex:0 0 auto;
+  transition:background 180ms ease,color 180ms ease;
+}
+.tadmin-gnb .icon-btn:hover{border-color:transparent;background:#EAECF0;color:#7C5CFC}
+.tadmin-gnb .icon-btn svg{width:18px;height:18px}
+.tadmin-gnb .header-profile{position:relative;flex:0 0 auto}
+.tadmin-gnb .profile-trigger{
+  width:44px;
+  height:44px;
+  padding:4px;
+  border:0;
+  border-radius:24px;
+  background:transparent;
+  color:#667085;
+  display:flex;
+  align-items:center;
+  gap:4px;
+  transition:background 180ms ease;
+}
+.tadmin-gnb .profile-trigger:hover, .tadmin-gnb .header-profile.open .profile-trigger{background:#F2F4F7}
+.tadmin-gnb .profile-avatar-icon{
+  width:36px;
+  height:36px;
+  border:1px solid #E4E7EC;
+  border-radius:50%;
+  background:linear-gradient(145deg,#EEF2FF,#F9E8FF);
+  color:#7C5CFC;
+  display:grid;
+  place-items:center;
+  flex:0 0 auto;
+}
+.tadmin-gnb .profile-avatar-icon svg{width:18px;height:18px}
+.tadmin-gnb .profile-popover{
+  width:240px;
+  padding:8px;
+  border:1px solid var(--border);
+  border-radius:12px;
+  background:#FFF;
+  box-shadow:0 16px 40px rgba(18,24,38,.14);
+  position:absolute;
+  z-index:60;
+  top:calc(100% + 10px);
+  right:0;
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translateY(-8px);
+  transition:opacity 160ms ease,transform 160ms ease,visibility 160ms;
+}
+.tadmin-gnb .header-profile.open .profile-popover{
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:none;
+}
+.tadmin-gnb .profile-popover-head{
+  margin-bottom:4px;
+  padding:8px 8px 12px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.tadmin-gnb .profile-popover-head b{display:block;color:#181C25;font-size:14px}
+.tadmin-gnb .profile-popover-head small{display:block;margin-top:2px;color:#565E6D;font-size:12px}
+.tadmin-gnb .profile-action{
+  width:100%;
+  height:40px;
+  padding:0 10px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:#181C25;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:12px;
+  font-weight:700;
+  text-align:left;
+}
+.tadmin-gnb .profile-action:hover{background:#F1F3F6}
+.tadmin-gnb .profile-action.logout{color:#FF6B6B}
+.tadmin-gnb .profile-action svg{width:18px;height:18px}
+.tadmin-gnb .gnb-menu{display:none}
+.tadmin-gnb .gnb-menu .menu-close-icon{display:none}
+@media (max-width:1360px){
+.tadmin-gnb .gnb-in{
+    min-height:0;
+    padding:8px 24px 0;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:0 24px;
+  }
+.tadmin-gnb .brand{grid-column:1;grid-row:1}
+.tadmin-gnb .gnb-user{grid-column:2;grid-row:1;justify-self:end}
+.tadmin-gnb .gnb-nav{
+    width:100%;
+    grid-column:1 / -1;
+    grid-row:2;
+    align-self:auto;
+    justify-content:flex-start;
+    gap:4px;
+    padding:8px 0;
+    overflow-x:auto;
+    scrollbar-width:none;
+  }
+.tadmin-gnb .gnb-nav::-webkit-scrollbar{display:none}
+.tadmin-gnb .gnb-btn{height:40px}
+}
+@media (max-width:760px){
+.gnb.tadmin-gnb{min-height:64px}
+.tadmin-gnb .gnb-in{
+    min-height:64px;
+    height:64px;
+    padding:0 14px;
+    display:flex;
+    gap:12px;
+  }
+.tadmin-gnb .brand-logo{width:164px;height:24px}
+.tadmin-gnb .gnb-user{margin-left:auto;gap:4px}
+.tadmin-gnb .gnb-menu{display:grid}
+.gnb.tadmin-gnb.mobile-nav-open .gnb-menu .menu-open-icon{display:none}
+.gnb.tadmin-gnb.mobile-nav-open .gnb-menu .menu-close-icon{display:block}
+.tadmin-gnb .gnb-nav{
+    width:auto;
+    max-height:calc(100vh - 64px);
+    padding:12px 14px 16px;
+    border-bottom:1px solid #E4E7EC;
+    background:#FFF;
+    box-shadow:0 18px 36px rgba(15,23,42,.12);
+    display:grid;
+    grid-template-columns:1fr;
+    gap:4px;
+    position:absolute;
+    top:100%;
+    left:0;
+    right:0;
+    overflow-y:auto;
+    visibility:hidden;
+    opacity:0;
+    pointer-events:none;
+    transform:translateY(-8px);
+    transition:opacity 180ms ease,transform 180ms ease,visibility 180ms ease;
+  }
+.gnb.tadmin-gnb.mobile-nav-open .gnb-nav{
+    visibility:visible;
+    opacity:1;
+    pointer-events:auto;
+    transform:none;
+  }
+.tadmin-gnb .gnb-item{width:100%;display:block}
+.tadmin-gnb .gnb-btn{
+    width:100%;
+    height:44px;
+    padding:0 14px;
+    border-bottom:0;
+    border-radius:8px;
+    justify-content:flex-start;
+    gap:10px;
+  }
+.tadmin-gnb .gnb-btn>svg:first-child{display:block}
+.tadmin-gnb .gnb-btn .caret{margin-left:auto}
+.tadmin-gnb .gnb-btn:hover{background:#F7F5FF}
+.tadmin-gnb .gnb-item.is-active .gnb-btn{border-bottom-color:transparent;background:#F0EDFF}
+.tadmin-gnb .submenu{position:static;width:100%;margin-top:4px;box-shadow:none}
+}
+@media (max-width:760px){
+.tadmin-gnb .gnb-in{padding:0 12px;gap:4px}
+.tadmin-gnb .brand-logo{width:132px;height:auto}
+.tadmin-gnb .gnb-user{gap:2px}
+.tadmin-gnb .icon-btn{width:36px;height:36px}
+.tadmin-gnb .profile-trigger{width:40px;height:40px}
+.tadmin-gnb .profile-avatar-icon{width:32px;height:32px}
+}
+
+/* SPA 레이아웃 전제: 헤더는 고정, 본문은 --gnb-height 만큼 내려간다 */
+.gnb.tadmin-gnb{position:fixed;top:0;left:0;right:0;z-index:1000;height:var(--gnb-total);min-height:var(--gnb-total)}
+/* 폭은 학생 포털 .topbar-inner 와 같다 — 1488 + 좌우 24 라야 로고가 학생과 같은 x(80px)에 선다.
+   본문(.admin-page)은 1440 기준이라 상단바가 본문보다 24px 바깥으로 나오는데, 이는 시안 그대로다. */
+.tadmin-gnb .gnb-in{height:var(--gnb-height);min-height:var(--gnb-height);max-width:1488px;margin:0 auto;padding:0 24px}
+
+/* ── 데모 계정 전환 — 시안에 없는 블록. 시안 .profile-action 값을 그대로 재사용한다 ── */
+.tadmin-gnb .profile-switch{margin:4px 0;padding:4px 0;border-top:1px solid #EFF1F4;border-bottom:1px solid #EFF1F4}
+.tadmin-gnb .profile-switch-title{display:flex;align-items:center;gap:6px;padding:6px 10px;color:#667085;font-size:12px;font-weight:600}
+.tadmin-gnb .profile-switch-title svg{width:14px;height:14px}
+.tadmin-gnb .profile-switch-btn b{font-weight:700}
+.tadmin-gnb .profile-switch-btn small{color:#667085;font-size:12px;font-weight:500}
+.tadmin-gnb .profile-switch-btn.is-on{background:var(--nav-accent-soft);color:var(--nav-accent)}
+.tadmin-gnb .profile-switch-check{margin-left:auto;width:14px;height:14px}
+.tadmin-gnb .sub-i.is-active{background:var(--nav-accent-soft);color:var(--nav-accent);font-weight:700}
+
+/* 시안의 @media (max-width:1360px) 는 "1행에 브랜드 로고가 있다"는 전제의 2행 그리드다.
+   로고를 뺐으므로 지원 최소폭(데스크톱 전용 1280px)에서는 1행 flex 를 유지한다.
+   gnb-btn 도 시안의 80px가 남아 64px 헤더를 넘쳤다. 모바일 드로어 규칙은 건드리지 않으려고
+   min-width 로 가둔다. */
+@media (min-width:1280px){
+  .tadmin-gnb .gnb-in{
+    display:flex;
+    height:var(--gnb-height);
+    min-height:var(--gnb-height);
+    padding:0 24px;
+    gap:16px;
+  }
+  .tadmin-gnb .gnb-nav{width:auto;align-self:stretch;padding:0;overflow-x:visible}
+  .tadmin-gnb .gnb-btn{height:var(--gnb-height)}
+}
+
+/* ── 좌측 상단 로고 ──────────────────────────────────────────────────
+   학생 포털(.topbar .brand)과 같은 이미지·같은 크기(164×28)를 쓴다.
+   시안의 텍스트 워드마크(.mark / .brand-div / .brand-sub)는 쓰지 않으므로
+   그쪽 gap 값을 여기서 되돌린다. 위 .tadmin-gnb .brand 규칙보다 뒤에 와야 이긴다. */
+.tadmin-gnb .brand { flex: 0 0 164px; gap: 0; }
+
+.tadmin-gnb .brand img {
+  width: 164px;
+  height: 28px;
+  object-fit: contain;
+  object-position: left center;
+}

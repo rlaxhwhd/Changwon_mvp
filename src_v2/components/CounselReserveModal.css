@@ -10,7 +10,7 @@
   gap: 7px;
   font-size: 16px;
   font-weight: 800;
-  color: var(--color-navy);
+  color: var(--color-navy, #181c25);
   margin-bottom: 10px;
 }
 
@@ -25,7 +25,7 @@
 .crm-table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: 14px;
 }
 
 .crm-table th,
@@ -36,15 +36,15 @@
 }
 
 .crm-table th {
-  background: var(--color-surface);
-  color: var(--color-text-sub);
+  background: var(--color-surface, #f1f3f6);
+  color: var(--color-text-sub, #565e6d);
   font-weight: 700;
   width: 92px;
   white-space: nowrap;
 }
 
 .crm-table td {
-  color: var(--color-navy);
+  color: var(--color-navy, #181c25);
   font-weight: 600;
 }
 
@@ -55,8 +55,8 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-family: var(--font);
-  font-size: 15px;
-  color: var(--color-navy);
+  font-size: 14px;
+  color: var(--color-navy, #181c25);
   line-height: 1.6;
   resize: vertical;
 }
@@ -68,7 +68,7 @@
 }
 
 .crm-textarea::placeholder {
-  color: var(--color-text-muted);
+  color: var(--color-text-muted, #8a92a2);
 }
 
 .crm-actions {
@@ -91,15 +91,15 @@
 .crm-btn-ghost {
   background: var(--color-bg);
   border: 1px solid var(--color-border);
-  color: var(--color-text-sub);
+  color: var(--color-text-sub, #565e6d);
 }
 
 .crm-btn-ghost:hover {
-  background: var(--color-surface);
+  background: var(--color-surface, #f1f3f6);
 }
 
 .crm-btn-primary {
-  background: var(--color-primary);
+  background: var(--color-cta, #8f74fd);
   color: #fff;
   border: none;
   transition: opacity 0.15s;
@@ -113,3 +113,54 @@
   background: #C4CEE6;
   cursor: not-allowed;
 }
+
+/* ── 상담 문진표 ────────────────────────────────────────────────
+   질문은 data/counselIntake.ts 가 준다. 여기엔 문구를 두지 않는다. */
+.crm-intake-hint { margin: 0 0 12px; font-size: 13px; font-weight: 600; color: var(--muted-foreground, #565e6d); }
+.crm-intake { display: grid; gap: 16px; margin: 0; padding: 0; list-style: none; counter-reset: none; }
+.crm-intake li { display: grid; gap: 8px; }
+.crm-intake label {
+  display: flex; align-items: flex-start; gap: 9px;
+  font-size: 13.5px; font-weight: 700; line-height: 1.5; color: var(--foreground, #181c25);
+}
+.crm-intake-no {
+  display: grid; place-items: center; flex: none;
+  width: 20px; height: 20px; margin-top: 1px;
+  border-radius: 6px;
+  background: var(--violet-soft, #f0edff); color: var(--violet, #7c5cfc);
+  font-size: 12px; font-weight: 800;
+}
+.crm-intake-answer { min-height: 76px; }
+
+/* ── 읽기 모드 (상담사가 제출된 신청서를 확인) ────────────────────
+   입력칸 자리에 제출값을 그대로 놓는다. 비활성 textarea 를 쓰면
+   '아직 쓸 수 있는 칸'처럼 보이고 회색 글자라 읽기도 나쁘다. */
+.crm-intake-q {
+  display: flex; align-items: flex-start; gap: 9px; margin: 0;
+  font-size: 13.5px; font-weight: 700; line-height: 1.5;
+  color: var(--foreground, #181c25);
+}
+.crm-value {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface, #f1f3f6);
+  font-size: 14px; font-weight: 600; line-height: 1.7;
+  color: var(--color-navy, #181c25);
+  white-space: pre-wrap;
+}
+.crm-value.is-empty { font-weight: 600; color: var(--color-text-sub, #565e6d); }
+
+/* ── 신청 완료 ──────────────────────────────────────────────────
+   토스트로 흘리지 않고 큰 안내로 확실히 알린다. */
+.crm-done { display: grid; justify-items: center; gap: 14px; padding: 42px 24px 34px; text-align: center; }
+.crm-done-mark {
+  display: grid; place-items: center;
+  width: 68px; height: 68px; border-radius: 50%;
+  background: var(--mint-soft, #e5f8f2); color: var(--mint, #20b486);
+  font-size: 30px;
+}
+.crm-done-title { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -.02em; color: var(--foreground, #181c25); }
+.crm-done-desc { margin: 0; max-width: 420px; font-size: 14.5px; font-weight: 600; line-height: 1.7; color: var(--muted-foreground, #565e6d); }
+.crm-done-btn { margin-top: 8px; min-width: 140px; }

@@ -1,0 +1,19 @@
+{
+  "eyebrow": "당신의 미래를 디자인하는",
+  "title": "AI 기반 진로·취업 통합 지원 시스템",
+  "description": ["진단부터 상담, 역량개발, 취업까지", "창원대학교가 함께 하겠습니다."],
+  "loginPrompt": "로그인 유형을 선택해주세요",
+  "platformLabel": "통합 진로·취업 지원 플랫폼",
+  "roles": [
+    { "id": "student", "label": "학생/교직원", "description": "학생 및 교직원 전용 서비스", "icon": "graduation", "accent": "blue", "path": "/login?type=internal" },
+    { "id": "company", "label": "기업", "description": "기업 담당자 전용 서비스", "icon": "building", "accent": "teal", "path": "/login?type=external" },
+    { "id": "youth", "label": "지역청년", "description": "지역청년 전용 서비스", "icon": "users", "accent": "violet", "path": "/login?type=external" }
+  ],
+  "features": [
+    { "id": "diagnosis", "title": "AI 맞춤 진단", "description": "나의 역량과 상황을 분석하여\n맞춤형 진로를 제안합니다.", "icon": "chart" },
+    { "id": "consultation", "title": "전문가 상담", "description": "진로·취업 전문가와\n1:1 상담을 지원합니다.", "icon": "comments" },
+    { "id": "development", "title": "역량 개발", "description": "비교과 프로그램과 학습 콘텐츠로\n역량 강화를 지원합니다.", "icon": "book" },
+    { "id": "employment", "title": "취업 지원", "description": "채용정보 제공 및 맞춤형\n취업 지원 서비스를 제공합니다.", "icon": "briefcase" }
+  ],
+  "footer": { "name": "창원대학교 진로·취업 통합 지원 시스템", "links": ["개인정보처리방침", "이용약관", "문의하기"], "contact": "시스템 문의 : 055-213-XXXX" }
+}

@@ -1,20 +1,19 @@
 /* ── ProgramApply (pa-) ────────────────────────────────────────── */
+/* 사이드바가 없어진 뒤 남은 껍데기 — 폭·여백·배경은 .v2-main 과 body 가 맡는다.
+   여기서 배경·min-height 를 다시 칠하면 본문이 좌우 여백에 잘린 상자로 보인다. */
 .pa-shell {
   display: flex;
-  min-height: calc(100vh - var(--gnb-height));
-  background: var(--color-bg);
 }
 
 .pa-wrap {
   flex: 1;
   min-width: 0;
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 0 28px 40px;
+  padding: 0 0 40px;
 }
 
 /* Header — 통일 hero spec */
 .pa-header {
+  display: none;
   min-height: 178px;
   margin: 24px 0 24px;
   padding: 34px 44px 32px;
@@ -27,7 +26,7 @@
 }
 
 .pa-breadcrumb {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-text-sub);
   margin-bottom: 20px;
@@ -68,7 +67,7 @@
 .pa-tab {
   padding: 7px 16px;
   border-radius: 20px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text-sub);
   border: 1.5px solid var(--color-border);
@@ -77,14 +76,25 @@
   transition: all 0.15s;
 }
 
+/* 카테고리 칩도 카드 태그와 같은 색을 쓴다(ProgramCardGrid.css 와 짝).
+   순서는 CATEGORIES 상수 그대로다: 전체 · 진로 · 취업 · 어학 · 창업 · 자격증 · 기타.
+   '전체'는 분류가 아니라 해제라 중립(네이비)이다. */
+.pa-tab:nth-child(1) { --pa-ink: var(--color-navy); }
+.pa-tab:nth-child(2) { --pa-ink: var(--blue); }
+.pa-tab:nth-child(3) { --pa-ink: var(--mint-ink); }
+.pa-tab:nth-child(4) { --pa-ink: var(--amber-ink); }
+.pa-tab:nth-child(5) { --pa-ink: var(--coral-ink); }
+.pa-tab:nth-child(6) { --pa-ink: var(--violet); }
+.pa-tab:nth-child(7) { --pa-ink: var(--color-text-sub); }
+
 .pa-tab:hover {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border-color: var(--pa-ink);
+  color: var(--pa-ink);
 }
 
 .pa-tab.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--pa-ink);
+  border-color: var(--pa-ink);
   color: var(--color-bg);
   font-weight: 700;
 }
@@ -144,7 +154,7 @@
   padding: 7px 32px 7px 12px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 17px;
+  font-size: 16px;
   color: var(--color-text-sub);
   background: var(--color-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2399A1A9' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
   appearance: none;
@@ -187,8 +197,8 @@
 }
 
 .pa-card--featured .pa-card-title {
-  font-size: 22px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .pa-featured-badge {
@@ -201,7 +211,7 @@
   padding: 6px 12px;
   background: var(--color-success);
   color: var(--color-bg);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   border-radius: var(--radius-pill);
   box-shadow: 0 6px 14px rgba(34, 197, 94, 0.32);
@@ -218,7 +228,7 @@
   align-items: center;
   justify-content: center;
   color: var(--color-text-muted);
-  font-size: 27px;
+  font-size: 28px;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -291,7 +301,7 @@
 }
 
 .pa-card-desc {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--color-text-sub);
   line-height: 1.5;
   display: -webkit-box;
@@ -324,9 +334,9 @@
 
 .pa-apply-btn {
   padding: 9px 22px;
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: var(--color-bg);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   border-radius: var(--radius-sm);
   white-space: nowrap;
@@ -388,7 +398,7 @@
   height: 34px;
   border: 1.5px solid var(--color-border);
   border-radius: var(--radius-sm);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text-sub);
   background: var(--color-bg);
@@ -398,14 +408,17 @@
   transition: all 0.15s;
 }
 
+/* 페이지 이동은 분류가 아니라 위치다 — 카테고리 색을 쓰지 않고 블루 하나로 둔다.
+   보라(--color-cta)를 걷어낸 이유: 이 화면에서 보라는 목록 위 「자격증」 갈래의 색이라
+   페이지 번호까지 보라면 그 갈래가 선택된 것처럼 읽힌다. */
 .pa-page-btn:hover:not(:disabled) {
-  border-color: var(--color-primary);
-  color: var(--color-primary);
+  border-color: var(--blue);
+  color: var(--blue);
 }
 
 .pa-page-btn.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--blue);
+  border-color: var(--blue);
   color: var(--color-bg);
   font-weight: 700;
 }
@@ -421,7 +434,7 @@
     flex-direction: column;
   }
 
-  .pa-wrap { padding: 16px; }
+  .pa-wrap { padding: 16px 0; }
 
   .pa-card {
     grid-template-columns: 100px 1fr;
@@ -448,6 +461,6 @@
     padding: 20px 18px 18px;
     border-radius: var(--radius-md);
   }
-  .pa-title { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .pa-title { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
   .pa-desc { font-size: 16px; line-height: 1.55; }
 }

@@ -1,0 +1,74 @@
+{
+  "_comment": [
+    "STAR 트랙 참여 학생 시드. 선발된 학생만 여기 들어온다 — 목록에 없으면 미참여다.",
+    "배점(points)·항목명은 운영계획(안) star-track.pdf §3-2 「3학년 트랙(STAR-Core Pass)",
+    "이수 기준 및 STAR 마일리지 배점」 표를 그대로 옮긴 것이다. 최종 확정 전이라",
+    "값은 여기서만 바꾼다. 화면에 숫자를 박지 않는다.",
+    "구간형 배점(비교과 누적시간·어학·자격증)은 합산되면 안 되므로 진입 구간만 points 로 두고",
+    "상위 구간은 note 로 적는다 — getStarSummary 가 done 단계의 points 를 그냥 더하기 때문이다.",
+    "진단·상담·비교과는 기존 단일소스와 연동한다 — 여기에는 STAR 전용 상태만 둔다."
+  ],
+  "tracks": [
+    {
+      "studentId": "chaewon",
+      "track": "STAR_CORE",
+      "cohort": "2026",
+      "selectedAt": "2026-09-11",
+      "counselGoal": 3,
+      "diagnosisDone": ["CCORE", "C2", "C3"],
+      "axes": [
+        {
+          "id": "AX1",
+          "title": "기초 진단/상담",
+          "steps": [
+            { "id": "A1S1", "label": "취업 인식조사 참여", "status": "done", "points": 10, "required": true, "note": "C-Core · C-2 · C-3" },
+            { "id": "A1S2", "label": "취업상담 1회차", "status": "done", "points": 10, "required": true, "note": "상담사·잡매니저 1:1 매칭" },
+            { "id": "A1S3", "label": "취업상담 2회차", "status": "done", "points": 10 },
+            { "id": "A1S4", "label": "취업상담 3회차", "status": "done", "points": 10, "note": "회당 10점 · 상한 30점" },
+            { "id": "A1S5", "label": "관심 트랙 설정 및 커리어 로드맵 입력", "status": "done", "points": 20, "required": true, "note": "AI드림캐치 로드맵 입력" }
+          ]
+        },
+        {
+          "id": "AX2",
+          "title": "필수교과·기업이해",
+          "steps": [
+            { "id": "A2S1", "label": "취업핵심역량개발", "status": "done", "points": 50, "note": "교과 이수" },
+            { "id": "A2S2", "label": "취업과진로", "status": "todo", "points": 50, "note": "교과 이수" },
+            { "id": "A2S3", "label": "산학연계 기업체 직무교육", "status": "ongoing", "note": "참여기업 공동 교육과정 · 2학점" },
+            { "id": "A2S4", "label": "현직자 멘토링", "status": "todo", "note": "비교과 누적시간에 합산" },
+            { "id": "A2S5", "label": "채용설명회 · 일자리 박람회 견학", "status": "todo", "note": "비교과 누적시간에 합산" }
+          ]
+        },
+        {
+          "id": "AX3",
+          "title": "비교과 프로그램",
+          "steps": [
+            { "id": "A3S1", "label": "센터 주관 취업 프로그램 참여", "status": "ongoing", "points": 40, "note": "누적 2시간 40점 · 10시간 60점 · 15시간 80점" },
+            { "id": "A3S2", "label": "어학 기준 충족 (토익 700)", "status": "todo", "points": 20, "required": true, "note": "OPIc IL 이상 · 850점·IH면 50점" },
+            { "id": "A3S3", "label": "직무(전공) 자격증 취득", "status": "todo", "points": 50, "note": "기사 50 · 산업기사 30 · 기능사 20점" },
+            { "id": "A3S4", "label": "정보화 및 기타 자격증", "status": "done", "points": 10, "note": "컴퓨터활용능력 1급 · SQLD 취득" },
+            { "id": "A3S5", "label": "성과공유회 · 취업캠프 참가", "status": "todo", "points": 10, "note": "수상 시 최우수 40 · 우수 30 · 장려 20" }
+          ]
+        }
+      ],
+      "courses": [
+        { "label": "취업핵심역량개발", "status": "done" },
+        { "label": "취업과진로", "status": "todo" },
+        { "label": "산학연계 직무교육", "status": "ongoing" }
+      ],
+      "certs": [
+        { "label": "SQLD (SQL 개발자)", "status": "취득", "points": 10 },
+        { "label": "정보처리기사", "status": "준비중", "points": 50 },
+        { "label": "컴퓨터활용능력 1급", "status": "취득", "points": 10 }
+      ],
+      "languages": [
+        { "label": "TOEIC", "score": 550, "pass": 700, "target": 850 },
+        { "label": "OPIc", "grade": "IM1", "passGrade": "IL", "targetGrade": "IH" }
+      ],
+      "aiComment": {
+        "text": "진단·상담·로드맵 필수 항목은 모두 채웠습니다. 지금 이수를 막는 것은 어학 하나입니다 — STAR-Core는 토익 700 이상이 필수라 550점으로는 마일리지를 아무리 쌓아도 인증이 나오지 않습니다. 남은 기간에는 어학을 먼저 올리고, 「취업과진로」 교과(50점)를 병행하면 다음 장학금 구간에 닿습니다.",
+        "basedOn": "2026-08-28"
+      }
+    }
+  ]
+}

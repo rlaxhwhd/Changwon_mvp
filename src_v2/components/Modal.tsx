@@ -21,6 +21,13 @@ const FOCUSABLE =
 
 export default function Modal({ open, onClose, title, size = 'md', children }: Props) {
   const dialogRef = useRef<HTMLDivElement>(null)
+  /**
+   * onClose는 부모에서 매 렌더마다 새 함수 reference로 들어올 수 있어
+   * deps에 넣으면 textarea/input 입력 도중에도 effect가 재실행되어
+   * 첫 번째 focusable(닫기 버튼)로 포커스가 튄다. ref로 안정화.
+   */
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose }, [onClose])
 
   useEffect(() => {
     if (!open) return
@@ -29,7 +36,7 @@ export default function Modal({ open, onClose, title, size = 'md', children }: P
 
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose()
+        onCloseRef.current()
         return
       }
       if (e.key === 'Tab' && dialogRef.current) {
@@ -51,7 +58,7 @@ export default function Modal({ open, onClose, title, size = 'md', children }: P
     }
 
     document.addEventListener('keydown', handleKey)
-    // Move focus into the dialog on open.
+    // Move focus into the dialog on open (open이 true가 되는 순간 1회만).
     const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE)
     ;(firstFocusable ?? dialogRef.current)?.focus()
 
@@ -59,7 +66,7 @@ export default function Modal({ open, onClose, title, size = 'md', children }: P
       document.removeEventListener('keydown', handleKey)
       previouslyFocused?.focus?.()
     }
-  }, [open, onClose])
+  }, [open])
 
   if (!open) return null
 
@@ -80,7 +87,8 @@ export default function Modal({ open, onClose, title, size = 'md', children }: P
         {title && (
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px', borderBottom: '1px solid var(--color-border)' }}>
             <span style={{ fontWeight: 700, fontSize: 17, color: 'var(--color-text)' }}>{title}</span>
-            <button onClick={onClose} aria-label="닫기" style={{ color: 'var(--color-text-muted)', fontSize: 19, cursor: 'pointer', background: 'none', border: 'none' }}>
+            {/* 폴백은 admin 대응 — 이 모달을 교직원 포털에서도 쓴다(--color-text-muted 가 admin 에 없다) */}
+            <button onClick={onClose} aria-label="닫기" style={{ color: 'var(--color-text-muted, #8a92a2)', fontSize: 19, cursor: 'pointer', background: 'none', border: 'none' }}>
               <i className="fa-solid fa-xmark" />
             </button>
           </div>

@@ -1,180 +1,357 @@
-# Design System Inspired by BMW
+# Design System Inspired by 국립창원대학교 드림캐치
+
+> Auto-extracted from `https://sian.njob.net/2026/dreamcatch/stu_dash.html` on 2026-08-28
 
 ## 1. Visual Theme & Atmosphere
 
-BMW's website is automotive engineering made visual — a design system that communicates precision, performance, and German industrial confidence. The page alternates between deep dark hero sections (featuring full-bleed automotive photography) and clean white content areas, creating a cinematic rhythm reminiscent of a luxury car showroom where vehicles are lit against darkness. The BMW CI2020 design language (their corporate identity refresh) defines every element.
+Friendly, approachable design with rounded shapes and generous whitespace.
 
-The typography is built on BMWTypeNextLatin — a proprietary typeface in two variants: BMWTypeNextLatin Light (weight 300) for massive uppercase display headings, and BMWTypeNextLatin Regular for body and UI text. The 60px uppercase headline at weight 300 is the defining typographic gesture — light-weight type that whispers authority rather than shouting it. The fallback stack includes Helvetica and Japanese fonts (Hiragino, Meiryo), reflecting BMW's global presence.
-
-What makes BMW distinctive is its CSS variable-driven theming system. Context-aware variables (`--site-context-highlight-color: #1c69d4`, `--site-context-focus-color: #0653b6`, `--site-context-metainfo-color: #757575`) suggest a design system built for multi-brand, multi-context deployment where colors can be swapped globally. The blue highlight color (`#1c69d4`) is BMW's signature blue — used sparingly for interactive elements and focus states, never decoratively. Zero border-radius was detected — BMW's design is angular, sharp-cornered, and uncompromisingly geometric.
+The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 여정을 시작해 볼까요?".
 
 **Key Characteristics:**
-- BMWTypeNextLatin Light (weight 300) uppercase for display — whispered authority
-- BMW Blue (`#1c69d4`) as singular accent — used only for interactive elements
-- Zero border-radius detected — angular, sharp-cornered, industrial geometry
-- Dark hero photography + white content sections — showroom lighting rhythm
-- CSS variable-driven theming: `--site-context-*` tokens for brand flexibility
-- Weight 900 for navigation emphasis — extreme contrast with 300 display
-- Tight line-heights (1.15–1.30) throughout — compressed, efficient, German engineering
-- Full-bleed automotive photography as primary visual content
+- Pretendard Variable as the heading font (custom web font loaded via @font-face)
+- Pretendard Variable as the body font for all running text
+- Heading weight 700, letter-spacing -0.64px
+- Light/white background (#f7f8fb) as the primary canvas
+- Primary accent `#7c5cfc` used for CTAs and brand highlights
+- 8 shadow level(s) detected — tinted shadows
+- Rounded corners (12px+) creating a friendly, approachable feel
+- Tags: light, rounded, accented, sans-serif
 
 ## 2. Color Palette & Roles
 
-### Primary Brand
-- **Pure White** (`#ffffff`): `--site-context-theme-color`, primary surface, card backgrounds
-- **BMW Blue** (`#1c69d4`): `--site-context-highlight-color`, primary interactive accent
-- **BMW Focus Blue** (`#0653b6`): `--site-context-focus-color`, keyboard focus and active states
+### Primary
+- **Primary Accent** (`#7c5cfc`) · `--color-primary`: Brand color, link text, interactive highlights, icon/border ink.
+- **CTA Fill** (`#8f74fd`) · `--cta` / `--color-cta`: solid button backgrounds only. One step softer (pastel) than the accent. Kept separate so button fills can lighten without dragging violet *text* below its contrast floor — the accent stays `#7c5cfc` as ink.
+- **Secondary Accent** (`#356dff`) · `--color-secondary`: Secondary brand, hover states, complementary highlights.
+- **Background** (`#f7f8fb`) · `--color-bg`: Page background, primary canvas.
+- **Background Secondary** (`#f1f3f6`) · `--color-bg-secondary`: Cards, surfaces, alternating sections.
 
-### Neutral Scale
-- **Near Black** (`#262626`): Primary text on light surfaces, dark link text
-- **Meta Gray** (`#757575`): `--site-context-metainfo-color`, secondary text, metadata
-- **Silver** (`#bbbbbb`): Tertiary text, muted links, footer elements
+### Text
+- **Text Primary** (`#181c25`) · `--color-text`: Headings and body text.
+- **Text Secondary** (`#666666`) · `--color-text-secondary`: Muted text, captions, placeholders.
 
-### Interactive States
-- All links hover to white (`#ffffff`) — suggesting primarily dark-surface navigation
-- Text links use underline: none on hover — clean interaction
+### Borders & Surfaces
+- **Border** (`#f1f3f6`) · `--color-border`: Dividers, outlines, input borders.
 
-### Shadows
-- Minimal shadow system — depth through photography and dark/light section contrast
+### Full Extracted Palette
+
+| # | Hex | CSS Variable | Role | Area | Contrast |
+|---|---|---|---|---|---|
+| 1 | `#ffffff` | `--palette-1` | block | large | text-dark |
+| 2 | `#f1f3f6` | `--palette-2` | button | medium | text-dark |
+| 3 | `#e5f8f2` | `--palette-3` | badge | medium | text-dark |
+| 4 | `#7c5cfc` | `--palette-4` | text-accent | small | text-light |
+| 5 | `#fdebf6` | `--palette-5` | badge | small | text-dark |
+| 6 | `#20b486` | `--palette-6` | text-accent | small | text-dark |
+| 7 | `#fff6df` | `--palette-7` | badge | small | text-dark |
+| 8 | `#344054` | `--palette-8` | text-accent | small | text-light |
+| 9 | `#356dff` | `--palette-9` | text-accent | small | text-light |
 
 ## 3. Typography Rules
 
-### Font Families
-- **Display Light**: `BMWTypeNextLatin Light`, fallbacks: `Helvetica, Arial, Hiragino Kaku Gothic ProN, Hiragino Sans, Meiryo`
-- **Body / UI**: `BMWTypeNextLatin`, same fallback stack
+- **Heading Font:** `Pretendard Variable` (web font)
+- **Body Font:** `Pretendard Variable` (web font)
 
-### Hierarchy
+### Type Hierarchy
 
-| Role | Font | Size | Weight | Line Height | Notes |
-|------|------|------|--------|-------------|-------|
-| Display Hero | BMWTypeNextLatin Light | 60px (3.75rem) | 300 | 1.30 (tight) | `text-transform: uppercase` |
-| Section Heading | BMWTypeNextLatin | 32px (2.00rem) | 400 | 1.30 (tight) | Major section titles |
-| Nav Emphasis | BMWTypeNextLatin | 18px (1.13rem) | 900 | 1.30 (tight) | Navigation bold items |
-| Body | BMWTypeNextLatin | 16px (1.00rem) | 400 | 1.15 (tight) | Standard body text |
-| Button Bold | BMWTypeNextLatin | 16px (1.00rem) | 700 | 1.20–2.88 | CTA buttons |
-| Button | BMWTypeNextLatin | 16px (1.00rem) | 400 | 1.15 (tight) | Standard buttons |
+| Role | Font | Size | Weight | Line Height | Letter Spacing |
+|---|---|---|---|---|---|
+| H1 | Pretendard Variable | 32px | 700 | 44px | -0.64px |
+| H2 | Pretendard Variable | 20px | 700 | 28px | normal |
+| H3 | Pretendard Variable | 28px | 700 | normal | normal |
+| Body | Pretendard Variable | 14px | 400 | 20px | normal |
+| Small | Pretendard Variable | 12px | 400 | normal | normal |
 
-### Principles
-- **Light display, heavy navigation**: Weight 300 for hero headlines creates whispered elegance; weight 900 for navigation creates stark authority. This extreme weight contrast (300 vs 900) is the signature typographic tension.
-- **Universal uppercase display**: The 60px hero is always uppercase — creating a monumental, architectural quality.
-- **Tight everything**: Line-heights from 1.15 to 1.30 across the entire system. Nothing breathes — every line is compressed, efficient, German-engineered.
-- **Single font family**: BMWTypeNextLatin handles everything from 60px display to 16px body — unity through one typeface at different weights.
+### Type Scale
+
+| Token | Size | Suggested Usage |
+|---|---|---|
+| Display | `32px` | headings |
+| H1 | `30px` | headings |
+| H2 | `28px` | headings |
+| H3 | `24px` | headings |
+| H4 | `20px` | headings |
+| Body L | `18px` | body / supporting text |
+| Body | `16px` | body / supporting text |
+| Small | `15px` | body / supporting text |
+| XS | `14px` | body / supporting text |
+| Caption | `13px` | body / supporting text |
 
 ## 4. Component Stylings
 
-### Buttons
-- Text: 16px BMWTypeNextLatin, weight 700 for primary, 400 for secondary
-- Line-height: 1.15–2.88 (large variation suggests padding-driven sizing)
-- Border: white bottom-border on dark surfaces (`1px solid #ffffff`)
-- No border-radius — sharp rectangular buttons
+### Primary Button
 
-### Cards & Containers
-- No border-radius — all containers are sharp-cornered rectangles
-- White backgrounds on light sections
-- Dark backgrounds for hero/feature sections
-- No visible borders on most elements
+```css
+.btn-primary {
+  background: #f2f4f7;
+  color: #344054;
+  border-radius: 50px;
+  padding: 0px 0px;
+  font-size: 16px;
+  font-weight: 400;
+  border: none;
+  cursor: pointer;
+}
+```
 
-### Navigation
-- BMWTypeNextLatin 18px weight 900 for primary nav links
-- White text on dark header
-- BMW logo 54x54px
-- Hover: remains white, text-decoration none
-- "Home" text link in header
+### Ghost Button
 
-### Image Treatment
-- Full-bleed automotive photography
-- Dark cinematic lighting
-- Edge-to-edge hero images
-- Car photography as primary visual content
+```css
+.btn-ghost {
+  background: transparent;
+  color: #ff6b6b;
+  border-radius: 8px;
+  padding: 0px 10px;
+  font-size: 12px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+}
+```
+
+### Ghost Button 2
+
+```css
+.btn-ghost-2 {
+  background: transparent;
+  color: #667085;
+  border-radius: 24px;
+  padding: 4px 4px;
+  font-size: 16px;
+  font-weight: 400;
+  border: none;
+  cursor: pointer;
+}
+```
+
+### Filled Button
+
+```css
+.btn-filled {
+  background: #0f172a;
+  color: #181c25;
+  border-radius: 0px;
+  padding: 1px 6px;
+  font-size: 16px;
+  font-weight: 400;
+  border: none;
+  cursor: pointer;
+}
+```
+
+### Filled Button 2
+
+```css
+.btn-filled-2 {
+  background: #f2f4f7;
+  color: #475467;
+  border-radius: 50px;
+  padding: 0px 0px;
+  font-size: 20px;
+  font-weight: 400;
+  border: none;
+  cursor: pointer;
+}
+```
+
+### Filled Button 3
+
+```css
+.btn-filled-3 {
+  background: #ffffff;
+  color: #181c25;
+  border-radius: 12px;
+  padding: 12px 12px;
+  font-size: 16px;
+  font-weight: 400;
+  border: 1px solid rgb(234, 236, 240);
+  cursor: pointer;
+}
+```
+
+### Card
+
+```css
+.card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  box-shadow: rgba(15, 23, 42, 0.24) 0px 32px 80px 0px;
+}
+```
 
 ## 5. Layout Principles
 
-### Spacing System
-- Base unit: 8px
-- Scale: 1px, 5px, 8px, 10px, 12px, 15px, 16px, 20px, 24px, 30px, 32px, 40px, 45px, 56px, 60px
+- **Base spacing unit:** `8px` — use multiples (16px, 24px, 32px, etc.)
 
-### Grid & Container
-- Full-width hero photography
-- Centered content sections
-- Footer: multi-column link grid
+### Spacing Scale (extracted from real elements)
 
-### Whitespace Philosophy
-- **Showroom pacing**: Dark hero sections with generous padding create the feeling of walking through a showroom where each vehicle is spotlit in its own space.
-- **Compressed content**: Body text areas use tight line-heights and compact spacing — information-dense, no waste.
+| Token | Value | Role |
+|---|---|---|
+| spacing-1 | `8px` | element |
+| spacing-2 | `20px` | element |
+| spacing-3 | `16px` | element |
+| spacing-4 | `3px` | element |
+| spacing-5 | `12px` | element |
+| spacing-6 | `14px` | element |
+| spacing-7 | `1px` | element |
+| spacing-8 | `24px` | card |
 
 ### Border Radius Scale
-- **None detected.** BMW uses sharp corners exclusively — every element is a precise rectangle. This is the most angular design system analyzed.
+
+| Token | Value | Element |
+|---|---|---|
+| radius-button | `12px` | button |
+| radius-button | `10px` | button |
+| radius-button | `6px` | button |
+| radius-button | `8px` | button |
+| radius-card | `50px` | card |
+| radius-subtle | `5px` | subtle |
 
 ## 6. Depth & Elevation
 
-| Level | Treatment | Use |
-|-------|-----------|-----|
-| Photography (Level 0) | Full-bleed dark imagery | Hero backgrounds |
-| Flat (Level 1) | White surface, no shadow | Content sections |
-| Focus (Accessibility) | BMW Focus Blue (`#0653b6`) | Focus states |
+| Level | Shadow | Usage |
+|---|---|---|
+| Low | `rgba(24, 28, 37, 0.16) 0px 0px 0px 1px` | Cards, subtle elevation |
+| Low | `rgb(32, 180, 134) 0px 0px 0px 1px` | Cards, subtle elevation |
+| Low | `rgb(226, 230, 236) 0px 0px 0px 1px` | Cards, subtle elevation |
+| Mid | `rgba(22, 28, 45, 0.04) 0px 2px 8px 0px` | Dropdowns, popovers |
+| Deep | `rgba(15, 23, 42, 0.24) 0px 32px 80px 0px` | Hero sections, deep layers |
 
-**Shadow Philosophy**: BMW uses virtually no shadows. Depth is created entirely through the contrast between dark photographic sections and white content sections — the automotive lighting does the elevation work.
+> **Note:** This site uses chromatic (color-tinted) shadows rather than pure black — this is a deliberate brand choice that adds warmth to elevation.
 
 ## 7. Do's and Don'ts
 
 ### Do
-- Use BMWTypeNextLatin Light (300) uppercase for all display headings
-- Keep ALL corners sharp (0px radius) — angular geometry is non-negotiable
-- Use BMW Blue (`#1c69d4`) only for interactive elements — never decoratively
-- Apply weight 900 for navigation emphasis — the extreme weight contrast is intentional
-- Use full-bleed automotive photography for hero sections
-- Keep line-heights tight (1.15–1.30) throughout
-- Use `--site-context-*` CSS variables for theming
+- Use `#f7f8fb` as the primary background color
+- Use `Pretendard Variable` for all headings and `Pretendard Variable` for body text
+- Use `#7c5cfc` as the single dominant accent/CTA color
+- Maintain `8px` as the base spacing unit — all gaps should be multiples
+- Use rounded corners (`12px`+) consistently for all interactive elements
+- Apply the shadow system for elevation — use the extracted shadow values
+- Use weight 700 for headings to match the brand's typographic voice
 
 ### Don't
-- Don't round corners — zero radius is the BMW identity
-- Don't use BMW Blue for backgrounds or large surfaces — it's an accent only
-- Don't use medium font weights (500–600) — the system uses 300, 400, 700, 900 extremes
-- Don't add decorative elements — the photography and typography carry everything
-- Don't use relaxed line-heights — BMW text is always compressed
-- Don't lighten the dark hero sections — the contrast with white IS the design
+- Don't use colors outside the extracted palette without justification
+- Don't substitute Pretendard Variable/Pretendard Variable with generic alternatives
+- Don't use irregular spacing — stick to 8px grid
+- Don't use dark/black backgrounds — this is a light-themed design
+- Don't use sharp corners — they feel hostile in this rounded design language
+- Don't use pure black (#000000) for text — use `#181c25` instead
+- Don't add decorative elements not present in the original design — no badges, ribbons, banners, or ornaments unless the source site uses them
+- Don't invent UI patterns the source site doesn't have — if the original has no NEW badge, don't add one just because a red is in the palette
 
 ## 8. Responsive Behavior
 
-### Breakpoints
-| Name | Width | Key Changes |
-|------|-------|-------------|
-| Mobile Small | <375px | Minimum supported |
-| Mobile | 375–480px | Single column |
-| Mobile Large | 480–640px | Slight adjustments |
-| Tablet Small | 640–768px | 2-column begins |
-| Tablet | 768–920px | Standard tablet |
-| Desktop Small | 920–1024px | Desktop layout begins |
-| Desktop | 1024–1280px | Standard desktop |
-| Large Desktop | 1280–1440px | Expanded |
-| Ultra-wide | 1440–1600px | Maximum layout |
+| Breakpoint | Width | Notes |
+|---|---|---|
+| Mobile | < 640px | Single column, stack sections, reduce font sizes ~80% |
+| Tablet | 640–1024px | 2-column where appropriate, maintain spacing ratios |
+| Desktop | 1024–1440px | Full layout as designed |
+| Wide | > 1440px | Max-width container, center content |
 
-### Collapsing Strategy
-- Hero: 60px → scales down, maintains uppercase
-- Navigation: horizontal → hamburger
-- Photography: full-bleed maintained at all sizes
-- Content sections: stack vertically
-- Footer: multi-column → stacked
+- Touch targets: minimum 44×44px on mobile
+- Maintain 8px base unit across breakpoints — only scale multipliers
 
 ## 9. Agent Prompt Guide
 
 ### Quick Color Reference
-- Background: Pure White (`#ffffff`)
-- Text: Near Black (`#262626`)
-- Secondary text: Meta Gray (`#757575`)
-- Accent: BMW Blue (`#1c69d4`)
-- Focus: BMW Focus Blue (`#0653b6`)
-- Muted: Silver (`#bbbbbb`)
 
-### Example Component Prompts
-- "Create a hero: full-width dark automotive photography background. Heading at 60px BMWTypeNextLatin Light weight 300, uppercase, line-height 1.30, white text. No border-radius anywhere."
-- "Design navigation: dark background. BMWTypeNextLatin 18px weight 900 for links, white text. BMW logo 54x54. Sharp rectangular layout."
-- "Build a button: 16px BMWTypeNextLatin weight 700, line-height 1.20. Sharp corners (0px radius). White bottom border on dark surface."
-- "Create content section: white background. Heading at 32px weight 400, line-height 1.30, #262626. Body at 16px weight 400, line-height 1.15."
+```
+Background:  #f7f8fb
+Text:        #181c25
+Accent:      #7c5cfc
+Secondary:   #356dff
+Border:      #f1f3f6
+```
+
+### Example Prompts
+
+1. "Build a hero section with a `#f7f8fb` background, `Pretendard Variable` heading in `#181c25`, and a `#7c5cfc` CTA button with 50px radius."
+2. "Create a pricing card using background `#f1f3f6`, border `#f1f3f6`, `Pretendard Variable` for text, and 24px padding."
+3. "Design a navigation bar — `#f7f8fb` background, `#181c25` links, `#7c5cfc` for active state."
+4. "Build a feature grid with 3 columns, 24px gap, each card using the card component style."
+5. "Create a footer with `#181c25` background, `#f7f8fb` text, and 16px padding."
 
 ### Iteration Guide
-1. Zero border-radius — every corner is sharp, no exceptions
-2. Weight extremes: 300 (display), 400 (body), 700 (buttons), 900 (nav)
-3. BMW Blue for interactive only — never as background or decoration
-4. Photography carries emotion — the UI is pure precision
-5. Tight line-heights everywhere — 1.15 to 1.30 is the range
+
+1. Start with layout structure (sections, grid, spacing)
+2. Apply colors from the palette — background first, then text, then accents
+3. Set typography — font families, sizes from the type scale, weights
+4. Add components — buttons, cards, inputs using the specs above
+5. Apply border-radius consistently across all elements
+6. Add shadows for depth — use the extracted shadow values, not defaults
+7. Check responsive behavior — test mobile and tablet layouts
+8. Final pass — verify all colors match, spacing is consistent, fonts are correct
+
+## 10. CSS Custom Properties
+
+> 101 custom properties extracted from `:root` / `html` stylesheets.
+
+### Color Variables
+
+| Variable | Value |
+|---|---|
+| `--background` | `#f7f8fb` |
+| `--foreground` | `#181c25` |
+| `--card` | `#ffffff` |
+| `--card-foreground` | `#181c25` |
+| `--muted` | `#f1f3f6` |
+| `--muted-foreground` | `#565e6d` |
+| `--border` | `#e2e6ec` |
+| `--input` | `#d8dde5` |
+| `--ring` | `#7c5cfc` |
+| `--primary` | `#7c5cfc` |
+| `--primary-foreground` | `#ffffff` |
+| `--cta` | `#8f74fd` |
+| `--cta-hover` | `#7d5efb` |
+| `--cta-shadow` | `rgba(143, 116, 253, .22)` |
+| `--blue` | `#356dff` |
+| `--blue-soft` | `#eaf0ff` |
+| `--violet` | `#7c5cfc` |
+| `--violet-soft` | `#f0edff` |
+| `--mint` | `#20b486` |
+| `--mint-soft` | `#e5f8f2` |
+| `--coral` | `#ff6b6b` |
+| `--coral-soft` | `#fff0f0` |
+| `--amber` | `#f5a524` |
+| `--amber-soft` | `#fff6df` |
+| `--sky` | `#17a9e6` |
+| `--sky-soft` | `#e7f7fd` |
+| `--pink` | `#e85aad` |
+| `--pink-soft` | `#fdebf6` |
+| `--teal` | `#14b8a6` |
+| `--teal-soft` | `#e6faf7` |
+| `--violet-border` | `#d9d0ff` |
+| `--violet-border-strong` | `#cec3ff` |
+| `--violet-hover` | `#6848ec` |
+| ... | *(21 more)* |
+
+### Spacing Variables
+
+| Variable | Value |
+|---|---|
+| `--sidebar` | `264px` |
+| `--radius` | `12px` |
+
+### Other Variables
+
+| Variable | Value |
+|---|---|
+| `--stat-1` | `var(--mint)` |
+| `--stat-1-soft` | `var(--mint-soft)` |
+| `--stat-2` | `var(--sky)` |
+| `--stat-2-soft` | `var(--sky-soft)` |
+| `--stat-3` | `var(--blue)` |
+| `--stat-3-soft` | `var(--blue-soft)` |
+| `--stat-4` | `var(--pink)` |
+| `--stat-4-soft` | `var(--pink-soft)` |
+| `--stat-5` | `var(--violet)` |
+| `--stat-5-soft` | `var(--violet-soft)` |
+| `--stat-5-alt` | `var(--blue)` |
+| `--journey-done` | `var(--mint)` |
+| `--journey-done-soft` | `var(--mint-soft)` |
+| `--journey-current` | `var(--violet)` |
+| `--journey-current-soft` | `var(--violet-soft)` |
+| ... | *(33 more)* |

@@ -1,108 +1,46 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { JOB_POSTINGS, type JobStatus } from './jobsData'
+import { getJobsByScope } from '../../../src_admin/data/jobsSource'
+import type { JobScope } from '../../../src_admin/data/jobsSource'
+import JobBoard from '../../components/JobBoard'
 import './JobSupport.css'
+import { usePageHead } from '../../components/PageCrumb'
 
-const STATUS_CLASS: Record<JobStatus, string> = {
-  접수중: 'open',
-  마감임박: 'soon',
-  마감완료: 'closed',
+/** scope 별 화면 문구 — 같은 목록 컴포넌트를 교내/외부 두 화면이 공유한다. */
+const SCOPE_COPY: Record<JobScope, { eyebrow: string; title: string; emptyMain: string; emptyHint: string }> = {
+  internal: {
+    eyebrow: '학교가 직접 등록·검증한 실제 채용공고',
+    title: '교내 채용공고',
+    emptyMain: '등록된 교내 채용공고가 없습니다.',
+    emptyHint: '상담사가 채용공고를 등록하면 이곳에 노출됩니다.',
+  },
+  external: {
+    eyebrow: '외부 채용 API로 수집한 채용공고',
+    title: '외부 채용공고',
+    emptyMain: '수집된 외부 채용공고가 없습니다.',
+    emptyHint: '외부 채용 API 연동 공고가 들어오면 이곳에 노출됩니다.',
+  },
 }
 
-const STATUS_PRIORITY: Record<JobStatus, number> = {
-  접수중: 0,
-  마감임박: 1,
-  마감완료: 2,
-}
-
-export default function JobSupport() {
+export default function JobSupport({ scope }: { scope: JobScope }) {
+  usePageHead(SCOPE_COPY[scope].title, SCOPE_COPY[scope].eyebrow)
   const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-  const [openFirst, setOpenFirst] = useState(false)
+  const copy = SCOPE_COPY[scope]
 
-  const filteredPostings = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    const result = JOB_POSTINGS.filter(posting =>
-      q === '' ||
-      posting.title.toLowerCase().includes(q) ||
-      posting.company.toLowerCase().includes(q),
-    )
-    result.sort((a, b) => {
-      const statusDiff = openFirst
-        ? STATUS_PRIORITY[a.status] - STATUS_PRIORITY[b.status]
-        : 0
-      if (statusDiff !== 0) return statusDiff
-      return b.postedAt.localeCompare(a.postedAt)
-    })
-    return result
-  }, [query, openFirst])
+  // 단일소스: 교내=상담사 등록분(dc_jobs) · 외부=수집분(seed). 학생 화면은 이 소스를 구독한다.
+  const all = useMemo(() => getJobsByScope(scope), [scope])
 
   return (
     <div className="job-page">
-      <header className="job-header">
-        <div>
-          <p>관리자가 스크래핑해 등록한 실제 채용공고</p>
-          <h1>채용공고</h1>
-        </div>
-        <div className="job-header-actions">
-          <button
-            type="button"
-            className={openFirst ? 'is-active' : ''}
-            aria-pressed={openFirst}
-            onClick={() => setOpenFirst(v => !v)}
-          >
-            <i className="fa-solid fa-sliders" />필터
-          </button>
-          <button
-            type="button"
-            className={openFirst ? 'is-active' : ''}
-            aria-pressed={openFirst}
-            onClick={() => setOpenFirst(v => !v)}
-          >
-            <i className="fa-solid fa-arrow-down-wide-short" />접수중 우선
-          </button>
-        </div>
-      </header>
-
-      <section className="job-toolbar" aria-label="채용공고 검색">
-        <div className="job-search">
-          <i className="fa-solid fa-magnifying-glass" />
-          <input
-            placeholder="기업명, 공고명으로 검색"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            aria-label="기업명, 공고명으로 검색"
-          />
-        </div>
-        <div className="job-count">총 <strong>{filteredPostings.length}</strong>건</div>
-      </section>
-
-      <section className="job-list" aria-label="채용공고 목록">
-        {filteredPostings.length === 0 ? (
-          <div className="job-empty">
-            <i className="fa-regular fa-folder-open" />
-            <p>검색 결과가 없어요.</p>
-            <span>다른 기업명이나 공고명으로 검색해보세요.</span>
-          </div>
-        ) : (
-          filteredPostings.map(posting => (
-            <button
-              key={posting.id}
-              className="job-row"
-              onClick={() => navigate(`/jobs/${posting.id}`)}
-            >
-              <time>{posting.postedAt}</time>
-              <span className="job-company">{posting.company}</span>
-              <span className="job-title-cell">
-                {posting.recommended && <span className="job-recommend">추천</span>}
-                <strong>{posting.title}</strong>
-              </span>
-              <span className={`job-status ${STATUS_CLASS[posting.status]}`}>{posting.status}</span>
-              <span className="job-views">{posting.views}</span>
-            </button>
-          ))
-        )}
-      </section>
+      {/* 목록 본문은 교직원 /admin/jobs 와 같은 컴포넌트다 — 화면이 갈리지 않는다. */}
+      <JobBoard
+        jobs={all}
+        onOpen={job => navigate(`/jobs/${job.id}`)}
+        showWish
+        split={scope === 'internal'}
+        emptyMain={copy.emptyMain}
+        emptyHint={copy.emptyHint}
+      />
     </div>
   )
 }

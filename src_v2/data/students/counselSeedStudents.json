@@ -1,0 +1,258 @@
+[
+  {
+    "id": "20211234",
+    "name": "이수현",
+    "major": "경영학과 3학년",
+    "grade": 3,
+    "phone": "010-0112-2345",
+    "enrollmentStatus": "재학",
+    "studentType": "T2",
+    "competencyScore": 58,
+    "gpa": "3.4",
+    "language": "TOEIC 780",
+    "targetCompanySummary": "CJ제일제당 · 마케팅",
+    "roadmapSummary": "2단계 상담·유형 확정 진행 중 · 목표기업 구체화",
+    "counselorQuestions": [
+      "마케팅 직무로 방향을 굳혔나요, 아직 탐색의 여지가 있나요?",
+      "CJ제일제당 외에 지원할 기업군은 정해두었나요?",
+      "지금 취업 준비에서 가장 우선순위로 두는 건 무엇인가요?"
+    ],
+    "counselRequests": [
+      {
+        "id": "req_009",
+        "type": "진로취업",
+        "status": "대기",
+        "method": "대면",
+        "topic": "진로 방향 설정 및 취업 준비 전략",
+        "requestedAt": "2026-07-10T09:30:00+09:00"
+      },
+      {
+        "id": "req_021",
+        "type": "진로취업",
+        "status": "대기",
+        "method": "대면",
+        "topic": "목표 직무 확정 후 직무기초역량 갭 점검",
+        "requestedAt": "2026-08-26T09:40:00+09:00",
+        "assignedCounselorId": "career_kim"
+      }
+    ]
+  },
+  {
+    "id": "20198765",
+    "name": "박민준",
+    "major": "기계공학부 4학년",
+    "grade": 4,
+    "phone": "010-0987-7654",
+    "enrollmentStatus": "재학",
+    "studentType": "T4",
+    "competencyScore": 74,
+    "gpa": "3.8",
+    "language": "TOEIC 850 · OPIc IM2",
+    "targetCompanySummary": "현대자동차 · 생산기술",
+    "roadmapSummary": "4단계 역량강화 진행 중 · 직무역량 보완",
+    "counselorQuestions": [
+      "생산기술 직무에 대한 실무 이해는 충분하다고 느끼나요?",
+      "현대자동차 외 완성차·부품사도 병행 지원할 계획인가요?",
+      "자소서·면접 준비 중 가장 어려운 부분은 무엇인가요?"
+    ],
+    "counselRequests": [
+      {
+        "id": "req_010",
+        "type": "진로취업",
+        "status": "대기",
+        "method": "대면",
+        "topic": "직무 역량 개발 및 기업 분석",
+        "requestedAt": "2026-07-10T10:30:00+09:00"
+      },
+      {
+        "id": "req_022",
+        "type": "진로취업",
+        "status": "확정",
+        "method": "대면",
+        "topic": "하반기 공채 지원전략 및 자기소개서 클리닉",
+        "requestedAt": "2026-08-25T11:10:00+09:00",
+        "assignedCounselorId": "career_kim",
+        "slot": {
+          "date": "2026-08-28",
+          "start": "10:00",
+          "end": "10:40",
+          "place": "진로취업지원센터 상담실 1"
+        }
+      }
+    ]
+  },
+  {
+    "id": "20229876",
+    "name": "김지연",
+    "major": "미디어커뮤니케이션학과 3학년",
+    "grade": 3,
+    "phone": "010-0298-8765",
+    "enrollmentStatus": "휴학",
+    "studentType": "T5",
+    "competencyScore": 40,
+    "gpa": "3.1",
+    "language": "TOEIC 690",
+    "targetCompanySummary": "미정 (탐색 중)",
+    "roadmapSummary": "집중관리 트랙 · 심리 안정 후 로드맵 재탐색 예정",
+    "counselorQuestions": [
+      "휴학 기간 동안 회복과 진로 탐색 중 어디에 무게를 두고 있나요?",
+      "복학 시점과 이후 계획은 어느 정도 구체화되어 있나요?",
+      "지금 가장 크게 부담으로 느껴지는 것은 무엇인가요?"
+    ],
+    "counselRequests": [
+      {
+        "id": "req_011",
+        "type": "심리",
+        "status": "대기",
+        "method": "비대면",
+        "topic": "스트레스 관리 및 심리적 안정",
+        "requestedAt": "2026-07-10T13:00:00+09:00"
+      },
+      {
+        "id": "preq_med_01",
+        "type": "교수",
+        "professorId": "cse-1",
+        "status": "확정",
+        "method": "대면",
+        "topic": "복수전공(컴퓨터공학)과 진로 상담",
+        "requestedAt": "2026-07-27T09:30:00.000Z",
+        "slot": {
+          "date": "2026-08-03",
+          "start": "16:00",
+          "end": "17:00",
+          "place": "공학관 706호"
+        }
+      },
+      {
+        "id": "req_027",
+        "type": "진로취업",
+        "status": "확정",
+        "method": "비대면",
+        "topic": "학업·진로 병행 점검 및 참여 계획 재설정",
+        "requestedAt": "2026-08-27T09:15:00+09:00",
+        "assignedCounselorId": "career_kim",
+        "slot": {
+          "date": "2026-09-01",
+          "start": "11:00",
+          "end": "11:40",
+          "place": "온라인 (Zoom 링크 안내)"
+        }
+      }
+    ]
+  },
+  {
+    "id": "20231234",
+    "name": "최우진",
+    "major": "전기공학 2학년",
+    "grade": 2,
+    "phone": "010-0312-2345",
+    "enrollmentStatus": "재학",
+    "studentType": "T1",
+    "competencyScore": 36,
+    "gpa": "3.5",
+    "language": "TOEIC 620",
+    "targetCompanySummary": "미정 (직무 탐색 중)",
+    "roadmapSummary": "1단계 유형진단 완료 · 직무 탐색 시작",
+    "counselorQuestions": [
+      "관심이 가는 직무나 산업이 어렴풋이라도 있나요?",
+      "직무 탐색을 위해 지금 시도해볼 수 있는 활동은 무엇일까요?",
+      "진로를 정하는 데 가장 큰 걸림돌은 무엇인가요?"
+    ],
+    "counselRequests": [
+      {
+        "id": "req_012",
+        "type": "진로취업",
+        "status": "확정",
+        "method": "대면",
+        "topic": "직무 탐색 및 포트폴리오 준비",
+        "requestedAt": "2026-07-10T14:30:00+09:00",
+        "slot": {
+          "date": "2026-07-10",
+          "start": "14:30",
+          "end": "15:10",
+          "place": "진로취업지원센터 상담실 1"
+        }
+      },
+      {
+        "id": "req_023",
+        "type": "진로취업",
+        "status": "확정",
+        "method": "대면",
+        "topic": "전공기반 진출분야 분석 및 직업군 좁히기",
+        "requestedAt": "2026-08-26T16:20:00+09:00",
+        "assignedCounselorId": "career_kim",
+        "slot": {
+          "date": "2026-08-28",
+          "start": "13:30",
+          "end": "14:10",
+          "place": "진로취업지원센터 상담실 2"
+        }
+      }
+    ]
+  },
+  {
+    "id": "20196543",
+    "name": "정유진",
+    "major": "컴퓨터공학과 4학년",
+    "grade": 4,
+    "phone": "010-0965-5432",
+    "enrollmentStatus": "재학",
+    "studentType": "T6",
+    "competencyScore": 88,
+    "gpa": "4.1",
+    "language": "TOEIC 920 · OPIc IH",
+    "targetCompanySummary": "네이버클라우드 · 백엔드 개발",
+    "roadmapSummary": "가속 트랙 · 5-2단계 취업지원(자소서·면접) 진행 중",
+    "counselorQuestions": [
+      "준비가 앞선 편인데, 목표를 네이버클라우드로 좁혀도 좋을까요?",
+      "백엔드 외에 고려 중인 포지션이나 기업이 있나요?",
+      "면접 실전에서 특별히 보완하고 싶은 부분이 있나요?"
+    ],
+    "counselRequests": [
+      {
+        "id": "req_013",
+        "type": "진로취업",
+        "status": "확정",
+        "method": "대면",
+        "topic": "면접 준비 및 자기소개서 피드백",
+        "requestedAt": "2026-07-10T16:00:00+09:00",
+        "slot": {
+          "date": "2026-07-10",
+          "start": "16:00",
+          "end": "16:40",
+          "place": "진로취업지원센터 상담실 2"
+        }
+      },
+      {
+        "id": "preq_cse_01",
+        "type": "교수",
+        "professorId": "cse-1",
+        "status": "대기",
+        "method": "대면",
+        "topic": "졸업작품 주제 상담",
+        "requestedAt": "2026-07-29T14:00:00.000Z",
+        "slot": {
+          "date": "2026-08-04",
+          "start": "15:00",
+          "end": "16:00",
+          "place": "공학관 706호"
+        }
+      },
+      {
+        "id": "req_024",
+        "type": "진로취업",
+        "status": "완료",
+        "method": "대면",
+        "topic": "채용연계 인턴십 전형 대비 점검",
+        "requestedAt": "2026-08-18T10:00:00+09:00",
+        "assignedCounselorId": "career_kim",
+        "slot": {
+          "date": "2026-08-21",
+          "start": "15:00",
+          "end": "15:50",
+          "place": "진로취업지원센터 상담실 1"
+        }
+      }
+    ]
+  }
+]

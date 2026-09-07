@@ -1,0 +1,10 @@
+{
+  "id": "asst_kim",
+  "empNo": "80301",
+  "name": "김하늘",
+  "role": "assistant",
+  "roleLabel": "조교",
+  "dept": "컴퓨터공학과",
+  "departments": ["컴퓨터공학과", "경영학과"],
+  "email": "asst.kim@changwon.ac.kr"
+}

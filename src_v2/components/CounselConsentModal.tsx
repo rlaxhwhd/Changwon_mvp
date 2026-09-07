@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal'
+import { getActiveStudent } from '../data/students'
 import './CounselConsentModal.css'
 
 interface Props {
@@ -7,7 +8,7 @@ interface Props {
   onClose: () => void
   /** 동의 완료 후 다음 단계로 진행 (오프라인은 예약 모달, 온라인은 바로 신청) */
   onAgree: () => void
-  /** 신청자 이름 (기본: 김채원) */
+  /** 신청자 이름 (기본: 현재 활성 학생) */
   applicantName?: string
 }
 
@@ -98,7 +99,8 @@ const ITEMS: ConsentItem[] = [
   },
 ]
 
-export default function CounselConsentModal({ open, onClose, onAgree, applicantName = '김채원' }: Props) {
+export default function CounselConsentModal({ open, onClose, onAgree, applicantName }: Props) {
+  const name = applicantName ?? getActiveStudent().name
   const [answers, setAnswers] = useState<Record<string, Answer>>({ privacy: null, uid: null, notice: null })
   const [signature, setSignature] = useState('')
 
@@ -181,7 +183,7 @@ export default function CounselConsentModal({ open, onClose, onAgree, applicantN
           </p>
           <div className="ccm-signature">
             <span className="ccm-signature-label">신청자</span>
-            <span className="ccm-signature-name">{applicantName}</span>
+            <span className="ccm-signature-name">{name}</span>
             <input
               className="ccm-signature-input"
               type="text"
@@ -202,8 +204,9 @@ export default function CounselConsentModal({ open, onClose, onAgree, applicantN
           <button className="ccm-btn-ghost" onClick={onClose}>
             상담신청 닫기
           </button>
+          {/* 여기서 신청이 끝나지 않는다 — 다음 단계(예약·문진표)가 이어진다. */}
           <button className="ccm-btn-primary" onClick={handleSubmit} disabled={!canSubmit}>
-            동의하고 상담 신청
+            다음 <i className="fa-solid fa-arrow-right" />
           </button>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import './MyPrograms.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type Status = '신청완료' | '진행중' | '수료' | '취소'
 
@@ -134,27 +135,18 @@ const PROGRAMS: AppliedProgram[] = [
   },
 ]
 
-const CAT_COLORS: Record<AppliedProgram['category'], string> = {
-  취업: '#0EA5E9',
-  AI: '#8B5CF6',
-  창업: '#F59E0B',
-  전공: '#0D8B7C',
-  멘토링: '#10B981',
-  어학: '#EC4899',
-  글로벌: '#2E5BFF',
-}
-
 const STATUS_COLORS: Record<Status, string> = {
   신청완료: '#2E5BFF',
   진행중: '#F59E0B',
-  수료: '#10B981',
-  취소: '#94A3B8',
+  수료: '#22C55E',
+  취소: '#99A1A9',
 }
 
 const FILTERS = ['전체', '진행중', '신청완료', '수료', '취소'] as const
 type Filter = (typeof FILTERS)[number]
 
 export default function MyPrograms() {
+  usePageHead('비교과프로그램 현황', '지금까지 신청·수료한 비교과 프로그램과 누적 활동 시간을 확인합니다.')
   const [filter, setFilter] = useState<Filter>('전체')
   const [detail, setDetail] = useState<AppliedProgram | null>(null)
 
@@ -176,11 +168,6 @@ export default function MyPrograms() {
   return (
     <div className="mp-wrap">
       <header className="mp-hero">
-        <div className="mp-hero-copy">
-          <span className="mp-breadcrumb">마이페이지 · 비교과프로그램 현황</span>
-          <h1>비교과 프로그램 신청 기록</h1>
-          <p>지금까지 신청·수료한 비교과 프로그램과 누적 활동 시간을 한눈에 확인할 수 있어요.</p>
-        </div>
         <Link to="/growth/program" className="mp-hero-cta">
           <i className="fa-solid fa-plus" /> 새 프로그램 신청
         </Link>
@@ -238,7 +225,7 @@ export default function MyPrograms() {
           visible.map(p => (
             <article key={p.id} className="mp-card" onClick={() => setDetail(p)}>
               <div className="mp-card-top">
-                <span className="mp-cat-badge" style={{ background: CAT_COLORS[p.category] + '18', color: CAT_COLORS[p.category] }}>
+                <span className="mp-cat-badge">
                   {p.category}
                 </span>
                 <span className="mp-status" style={{ background: STATUS_COLORS[p.status] + '1a', color: STATUS_COLORS[p.status] }}>
@@ -278,7 +265,7 @@ export default function MyPrograms() {
         {detail && (
           <div className="mp-detail">
             <div className="mp-detail-tags">
-              <span className="mp-cat-badge" style={{ background: CAT_COLORS[detail.category] + '18', color: CAT_COLORS[detail.category] }}>
+              <span className="mp-cat-badge">
                 {detail.category}
               </span>
               <span className="mp-status" style={{ background: STATUS_COLORS[detail.status] + '1a', color: STATUS_COLORS[detail.status] }}>

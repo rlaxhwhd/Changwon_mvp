@@ -8,6 +8,7 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+.tools/
 dist
 dist-ssr
 *.local
@@ -22,5 +23,26 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-.claude
+
+# Claude Code: 하네스(에이전트·스킬)는 git 추적, 로컬 설정·세션·분석 산출물은 제외
+.claude/*
+!.claude/agents/
+!.claude/skills/
 .gstack/
+
+# 브라우저 프로필 덤프·중간 산출물 (vite watch/Tailwind 스캔 hang 유발) — git 추적·스캔 제외
+_workspace/
+
+# macOS 아카이브 부산물 (폰트 zip 해제 잔여물)
+__MACOSX/
+._*
+
+# Python 바이트코드 캐시 (스킬 스크립트)
+__pycache__/
+*.pyc
+
+# 운영(현행) 시스템 원본 자산 — 저장소에 커밋/외부 공개 금지
+# 현행 드림캐치 운영 소스(Java 컨트롤러·MyBatis SQL 매퍼)
+/origin/
+# 운영 취약점 21건 — 파일 머리말 "외부 유출 금지"
+docs/_analysis/06_findings.md

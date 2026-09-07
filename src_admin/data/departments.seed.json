@@ -1,0 +1,555 @@
+[
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-01",
+    "deptName": "국어국문학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-02",
+    "deptName": "영어영문학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-03",
+    "deptName": "독어독문학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-04",
+    "deptName": "불어불문학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-05",
+    "deptName": "일어일문학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-06",
+    "deptName": "사학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-07",
+    "deptName": "철학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-08",
+    "deptName": "유아교육학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-09",
+    "deptName": "특수교육학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C01",
+    "collegeName": "인문대학",
+    "deptCode": "C01-10",
+    "deptName": "인문계열자율전공학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C02",
+    "collegeName": "예술대학",
+    "deptCode": "C02-01",
+    "deptName": "음악과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C02",
+    "collegeName": "예술대학",
+    "deptCode": "C02-02",
+    "deptName": "미술학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C02",
+    "collegeName": "예술대학",
+    "deptCode": "C02-03",
+    "deptName": "산업디자인학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C02",
+    "collegeName": "예술대학",
+    "deptCode": "C02-04",
+    "deptName": "무용학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C03",
+    "collegeName": "사회과학대학",
+    "deptCode": "C03-01",
+    "deptName": "법학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C03",
+    "collegeName": "사회과학대학",
+    "deptCode": "C03-02",
+    "deptName": "행정학과(주,야)",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C03",
+    "collegeName": "사회과학대학",
+    "deptCode": "C03-03",
+    "deptName": "국제관계학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C03",
+    "collegeName": "사회과학대학",
+    "deptCode": "C03-04",
+    "deptName": "중국학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C03",
+    "collegeName": "사회과학대학",
+    "deptCode": "C03-05",
+    "deptName": "사회학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C03",
+    "collegeName": "사회과학대학",
+    "deptCode": "C03-06",
+    "deptName": "미디어커뮤니케이션학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C03",
+    "collegeName": "사회과학대학",
+    "deptCode": "C03-07",
+    "deptName": "사회복지학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C03",
+    "collegeName": "사회과학대학",
+    "deptCode": "C03-08",
+    "deptName": "사회계열 자울전공학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C04",
+    "collegeName": "본부대학",
+    "deptCode": "C04-01",
+    "deptName": "신산업융합경영학과(야)",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C04",
+    "collegeName": "본부대학",
+    "deptCode": "C04-02",
+    "deptName": "자산경영빅데이터학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C04",
+    "collegeName": "본부대학",
+    "deptCode": "C04-03",
+    "deptName": "빅데이터창업비즈니스학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C04",
+    "collegeName": "본부대학",
+    "deptCode": "C04-04",
+    "deptName": "에너지융합공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C04",
+    "collegeName": "본부대학",
+    "deptCode": "C04-05",
+    "deptName": "사림아너스학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C05",
+    "collegeName": "경영대학",
+    "deptCode": "C05-01",
+    "deptName": "글로벌비지니스학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C05",
+    "collegeName": "경영대학",
+    "deptCode": "C05-02",
+    "deptName": "국제무역학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C05",
+    "collegeName": "경영대학",
+    "deptCode": "C05-03",
+    "deptName": "경영학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C05",
+    "collegeName": "경영대학",
+    "deptCode": "C05-04",
+    "deptName": "회계학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C05",
+    "collegeName": "경영대학",
+    "deptCode": "C05-05",
+    "deptName": "세무학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C05",
+    "collegeName": "경영대학",
+    "deptCode": "C05-06",
+    "deptName": "국제무역학과(주,야)",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C05",
+    "collegeName": "경영대학",
+    "deptCode": "C05-07",
+    "deptName": "경영계열 자울전공학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C06",
+    "collegeName": "자연과학대학",
+    "deptCode": "C06-01",
+    "deptName": "통계학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C06",
+    "collegeName": "자연과학대학",
+    "deptCode": "C06-02",
+    "deptName": "의류학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C06",
+    "collegeName": "자연과학대학",
+    "deptCode": "C06-03",
+    "deptName": "식품영양학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C06",
+    "collegeName": "자연과학대학",
+    "deptCode": "C06-04",
+    "deptName": "체육학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C06",
+    "collegeName": "자연과학대학",
+    "deptCode": "C06-05",
+    "deptName": "간호학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C06",
+    "collegeName": "자연과학대학",
+    "deptCode": "C06-06",
+    "deptName": "스마트헬스케어학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-01",
+    "deptName": "산업시스템공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-02",
+    "deptName": "스마트오션모빌리티공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-03",
+    "deptName": "스마트그린공학부 환경에너지공학전공",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-04",
+    "deptName": "스마트그린공학부 건설시스템공학전공",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-05",
+    "deptName": "건축학부 건축공학전공",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-06",
+    "deptName": "건축학부 건축학전공",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-07",
+    "deptName": "컴퓨터공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-08",
+    "deptName": "정보통신공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-09",
+    "deptName": "전기공학",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-10",
+    "deptName": "전자공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-11",
+    "deptName": "지능로봇융합공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-12",
+    "deptName": "신소재공학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-13",
+    "deptName": "첨단소재융합공학과(신설)",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-14",
+    "deptName": "재료금속공학과(신설)",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-15",
+    "deptName": "메카융합공학과(야)",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C07",
+    "collegeName": "공과대학",
+    "deptCode": "C07-16",
+    "deptName": "공학계열자율전공학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-01",
+    "deptName": "이학융합학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-02",
+    "deptName": "공학융합학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-03",
+    "deptName": "기계공학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-04",
+    "deptName": "우주항공공학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-05",
+    "deptName": "반도체물리학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-06",
+    "deptName": "수리과학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-07",
+    "deptName": "에너지화학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-08",
+    "deptName": "생명과학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-09",
+    "deptName": "미생물생명공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-10",
+    "deptName": "생명보건학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-11",
+    "deptName": "메타융합콘텐츠학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C08",
+    "collegeName": "글로컬첨단과학대학",
+    "deptCode": "C08-12",
+    "deptName": "기술경영공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C09",
+    "collegeName": "GAST-기계공학대학",
+    "deptCode": "C09-01",
+    "deptName": "스마트제조융합공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C09",
+    "collegeName": "GAST-기계공학대학",
+    "deptCode": "C09-02",
+    "deptName": "에너지기계공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C09",
+    "collegeName": "GAST-기계공학대학",
+    "deptCode": "C09-03",
+    "deptName": "모빌리티기계공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C09",
+    "collegeName": "GAST-기계공학대학",
+    "deptCode": "C09-04",
+    "deptName": "원자력기계공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C09",
+    "collegeName": "GAST-기계공학대학",
+    "deptCode": "C09-05",
+    "deptName": "우주항공공학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C09",
+    "collegeName": "GAST-기계공학대학",
+    "deptCode": "C09-06",
+    "deptName": "기계항공자율전공학부",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C10",
+    "collegeName": "GAST-인공지능대학",
+    "deptCode": "C10-01",
+    "deptName": "인공지능공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C10",
+    "collegeName": "GAST-인공지능대학",
+    "deptCode": "C10-02",
+    "deptName": "인공지능화학공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C10",
+    "collegeName": "GAST-인공지능대학",
+    "deptCode": "C10-03",
+    "deptName": "AI생명과학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C10",
+    "collegeName": "GAST-인공지능대학",
+    "deptCode": "C10-04",
+    "deptName": "AI 전기공학과",
+    "course": "학부"
+  },
+  {
+    "collegeCode": "C10",
+    "collegeName": "GAST-인공지능대학",
+    "deptCode": "C10-05",
+    "deptName": "지능로봇융합공학과",
+    "course": "학부"
+  }
+]

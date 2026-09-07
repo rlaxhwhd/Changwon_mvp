@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import { SAVED_RESUMES, type SavedResume } from './resumeMock'
 import './JobsHome.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 /* ── AI 자소서/인터뷰 홈 ─────────────────────────────────────────── */
 export default function JobsHome() {
+  usePageHead('AI 자소서/면접', 'AI가 작성을 도와주고, 완성된 자소서를 평가해드립니다.')
   const navigate = useNavigate()
   const [resumes, setResumes] = useState<SavedResume[]>(SAVED_RESUMES)
   const [viewResume, setViewResume] = useState<SavedResume | null>(null)
@@ -17,11 +19,6 @@ export default function JobsHome() {
   return (
     <div className="jh-wrap">
       {/* 헤더 */}
-      <header className="jh-header">
-        <h1>AI 자소서 / 인터뷰</h1>
-        <p>AI가 작성을 도와주고, 완성된 자소서를 평가해드립니다.</p>
-      </header>
-
       {/* 작성된 자소서 */}
       <div className="jh-section-head">
         <h2><i className="fa-solid fa-folder-open" /> 작성된 자소서</h2>

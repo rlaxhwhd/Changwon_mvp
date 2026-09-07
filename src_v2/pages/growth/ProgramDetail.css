@@ -1,415 +1,125 @@
-/* ── ProgramDetail (pd-) ───────────────────────────────────────── */
-.pd-wrap {
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 0 28px 40px;
+/* ─────────────────────────────────────────────────────────────────────────
+   비교과 프로그램 공고 — 껍데기는 JobDetailView.css 가 준다.
+   여기엔 채용공고와 달라야 하는 것만 둔다. 전부 .pn-page 아래로 스코프해서
+   같은 스타일시트를 쓰는 채용공고 상세로 새어 나가지 않게 한다.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* ── 히어로 — 채용공고의 배너 이미지 대신 블루 그라데이션 ────────────────
+   --jd-hero-1/-2 를 다시 물리는 방식이라, 이 값을 쓰는 다른 규칙
+   (.jd-hero-chip.is-rec 의 글자색)도 함께 파랑으로 따라온다.
+   ★ 하늘색 정지점이 85% 인 이유 — 흰 글자 대비다.
+     우측 지표(마감일·정원·장소)의 오른쪽 끝이 그라데이션 82% 지점에 걸린다.
+     하늘색(#17a9e6)은 흰 글자와 2.7:1 이고 72% 에 두면 그 자리가 3.6:1 로 떨어진다.
+     85% 로 밀면 글자가 닿는 데까지는 파랑(4.6:1)이고 하늘색은 빈 모서리에만 남는다. */
+.pn-page .jd-hero {
+  --jd-hero-1: var(--deep-start, #242a3b);
+  --jd-hero-2: var(--blue, #356dff);
+  background: linear-gradient(
+    118deg,
+    var(--jd-hero-1) 0%,
+    var(--jd-hero-2) 85%,
+    var(--sky, #17a9e6) 100%
+  );
 }
 
-/* Breadcrumb */
-.pd-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--color-text-sub);
-  margin: 24px 0 16px;
+/* 썸네일이 있을 때만 왼쪽을 희게 연다.
+   없으면 그 자리에 분류 두 글자를 흰색으로 얹은 타일만 남아 흰 바탕에서 사라진다. */
+.pn-page .jd-hero:has(.jd-logo.has-img) {
+  /* 썸네일 칸을 260px 로 넓히고 배너 높이만큼 세운다 — 이 화면에서는 포스터 한 장이
+     곧 안내문이라 112x72 타일로는 아무것도 읽히지 않았다.
+     stretch 라야 칸이 행 높이(=옆 글 높이)를 그대로 받는다. */
+  grid-template-columns: 260px minmax(0, 1fr) 34%;
+  align-items: stretch;
+  /* 좌: 썸네일이 놓이는 흰 면 / 우: 하늘 → 연한 블루 → 블루. 블루 계열 하나로만 간다.
+     경계는 썸네일의 우측 면이다 — 좌여백 28 + 썸네일 260 = 288px 에서 딱 끊는다.
+     각도를 주지 않고 to right 로 두는 이유가 이것이다: 기울이면 경계가 사선이 되어
+     썸네일 모서리를 물어뜯는다.
+     가운데 「연한 블루」는 새 색이 아니라 두 토큰의 혼색이다 — 팔레트의 blue 계열
+     연한 값(--blue-soft·--blue-wash)은 흰 바탕용이라 배너에 깔면 흰 글자가 사라진다. */
+  background: linear-gradient(
+    to right,
+    #fff 0, #fff 288px,
+    var(--sky, #17a9e6) 288px,
+    color-mix(in srgb, var(--sky, #17a9e6) 50%, var(--blue, #356dff)) 52%,
+    var(--blue, #356dff) 80%,
+    var(--blue, #356dff) 100%
+  );
 }
 
-.pd-breadcrumb a {
-  color: var(--color-text-muted);
-  transition: color 0.15s;
-}
-
-.pd-breadcrumb a:hover { color: var(--color-primary); }
-
-.pd-breadcrumb span { color: var(--color-navy); font-weight: 600; }
-
-.pd-breadcrumb i { font-size: 15px; }
-
-/* Layout */
-.pd-layout {
-  display: grid;
-  grid-template-columns: 1fr 300px;
-  gap: 28px;
-  align-items: start;
-}
-
-/* ── Left ──────────────────────────────────────────────────────── */
-.pd-left {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-/* Title area */
-.pd-title-area {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.pd-tags {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.pd-tag {
-  font-size: 16px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 20px;
-}
-
-.pd-tag--추천 { background: var(--color-primary-bg); color: var(--color-primary); }
-.pd-tag--인기 { background: #FEF2F2; color: var(--color-danger); }
-.pd-tag--cat  { background: var(--color-surface); color: var(--color-text-sub); }
-
-.pd-title {
-  font-size: 25px;
-  font-weight: 800;
-  color: var(--color-navy);
-  line-height: 1.3;
-}
-
-.pd-title-meta {
-  display: flex;
-  gap: 16px;
-  font-size: 16px;
-  color: var(--color-text-muted);
-  flex-wrap: wrap;
-}
-
-.pd-title-meta i {
-  margin-right: 4px;
-  color: var(--color-primary);
-}
-
-/* Thumbnail */
-.pd-thumb {
-  width: 100%;
-  height: 280px;
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  color: var(--color-text-muted);
-  font-size: 16px;
-  overflow: hidden;
-}
-
-.pd-thumb i { font-size: 35px; }
-
-.pd-thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-}
-
-/* Tabs */
-.pd-tabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 2px solid var(--color-border);
-}
-
-.pd-tab {
-  padding: 10px 20px;
-  font-size: 18px;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  border-bottom: 2px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.15s;
-}
-
-.pd-tab:hover { color: var(--color-primary); }
-
-.pd-tab.active {
-  color: var(--color-primary);
-  font-weight: 700;
-  border-bottom-color: var(--color-primary);
-}
-
-/* Content */
-.pd-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.pd-section {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.pd-section-title {
-  font-size: 19px;
-  font-weight: 700;
-  color: var(--color-navy);
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.pd-section-title i { color: var(--color-primary); }
-
-.pd-para {
-  font-size: 18px;
-  color: var(--color-text-sub);
-  line-height: 1.7;
-}
-
-.pd-ol {
-  padding-left: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.pd-ol li {
-  font-size: 18px;
-  color: var(--color-text-sub);
-  line-height: 1.6;
-}
-
-.pd-ul {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.pd-ul li {
-  font-size: 18px;
-  color: var(--color-text-sub);
-  line-height: 1.6;
-  padding-left: 14px;
+/* ── 썸네일 — 흰 타일에 담지 않고 사진 자체를 놓는다 ──────────────────────
+   .jd-logo.has-img 의 112x72 흰 타일·테두리·안쪽 여백을 전부 걷는다. */
+.pn-page .jd-logo.has-img {
+  width: auto; height: auto; padding: 0;
+  background: none; border: none; border-radius: 0;
+  align-self: stretch;
+  /* ★ 사진이 배너 높이를 끌고 가면 안 된다.
+     칸을 auto 로 두고 img 를 흐름에 남기면 칸 높이가 사진에서 나온다 —
+     세로로 긴 포스터(891x1260)가 들어오자 배너가 168px 에서 368px 로 늘어났다.
+     사진을 absolute 로 빼면 칸에 흐르는 내용이 없어져, 높이는 stretch 가 주는
+     행 높이(=옆 글 높이)로만 정해진다. */
   position: relative;
 }
-
-.pd-ul li::before {
-  content: '•';
+.pn-page .jd-logo.has-img img {
   position: absolute;
-  left: 0;
-  color: var(--color-primary);
-  font-weight: 700;
+  inset: 0;
+  /* 잘라내지 않는다 — 포스터라 글자가 잘리면 안 된다. 남는 자리는 흰 배경이 받는다. */
+  object-fit: contain;
+  /* ★ 흰 면의 가운데에 놓는다 — 썸네일 칸의 가운데가 아니다.
+     흰 면은 배너 좌측 끝 0 에서 시작해 288px 에서 끊기므로 중심이 144px 인데,
+     썸네일 칸은 좌여백 28 뒤에 오는 260px 이라 그 중심이 158px 이다.
+     그냥 contain 으로 두면 사진이 흰 면 안에서 14px 오른쪽으로 치우쳐 앉는다.
+     칸을 좌여백까지 넓히지 않고 object-position 만 당기는 이유는 배너 모서리다 —
+     칸을 x=0 까지 늘리면 사진이 배너의 둥근 모서리 위로 올라선다. */
+  object-position: calc(50% - 14px) center;
+  /* 우측 페이드 마스크는 두지 않는다 — 배경이 썸네일 우측 면에서 끊기므로
+     사진이 그라데이션 위로 넘어가는 구간 자체가 없다. 녹이면 포스터만 깎인다. */
+}
+/* 배너 글자는 전부 --blue(#356dff) 위에 앉는다. 채용공고 배너는 짙은 남색이라
+   흰색 70~90% 로도 읽혔지만, 파랑 위에서는 그 반투명이 3.0~3.8:1 까지 떨어진다.
+   반투명을 걷어 solid 흰색으로 올린다 — 측정 4.39:1 로, 이 팔레트에서 낼 수 있는 최대다.
+   (흰 글자 4.5:1 을 내려면 --blue 보다 어두운 파랑이 필요한데 토큰에 없다.
+    28px 제목은 큰 글자 기준 3:1 이라 여유가 있고, 작은 글자만 이 상한에 걸린다.) */
+.pn-page .jd-hero-company,
+.pn-page .jd-hero-desc,
+.pn-page .jd-hero-stats dt { color: #fff; }
+/* 윤곽선 칩만 손댄다 — is-rec(흰 알약에 파란 글자)·is-urgent(코랄 채움)는
+   제 색이 있어서, 싸잡아 흰색으로 칠하면 흰 알약에 흰 글자가 된다. */
+.pn-page .jd-hero-chip:not(.is-rec):not(.is-urgent) {
+  color: #fff;
+  border-color: rgba(255, 255, 255, .5);
 }
 
-/* Empty tab */
-.pd-tab-empty {
-  padding: 60px 0;
-  text-align: center;
-  color: var(--color-text-muted);
+/* ── 강조 카드 (프로그램 내용) ──────────────────────────────────────────
+   공고에서 제일 먼저 읽혀야 하는 칸이라 테두리·바탕으로 한 단계 띄운다. */
+.pn-page .jd-sec.is-accent {
+  border: 1.5px solid var(--blue-border, #cbd8ff);
+  background: var(--blue-wash, #eef4ff);
 }
-
-.pd-tab-empty i {
-  font-size: 31px;
-  margin-bottom: 10px;
-  display: block;
+.pn-page .jd-sec.is-accent .jd-sec-head { color: var(--on-blue, #1a5fcc); }
+/* 본문은 --jd-sub(회색)이 기본이라 소개글이 흐리게 읽힌다 — 여기서만 잉크로 올린다. */
+.pn-page .jd-sec.is-accent .jd-content {
+  font-size: 14.5px; line-height: 1.85;
+  color: var(--jd-ink);
 }
+.pn-page .jd-sec.is-accent .jd-content p { margin: 0 0 10px; }
 
-.pd-tab-empty p { font-size: 18px; }
+/* ★ 붙여넣은 이미지가 칸보다 작게 보이는 문제 —
+   Summernote 는 insertImage 에서 width 를 min(편집기 폭, 원본 폭) 으로 계산해
+   인라인 style 로 박는다. 편집기는 790px 인데 공고 본문 칸은 1010px 라,
+   포스터를 붙여넣으면 항상 220px 좁게 그려진다.
+   여기서 그 인라인 폭을 풀어 칸을 채우게 한다(원본보다 크게 늘리지는 않는다).
+   → 편집기에서 일부러 줄여 놓은 이미지도 같이 풀린다. 그 대신 "붙여넣으면
+     칸에 맞는다"를 얻는 쪽을 택했다. 개별 크기 지정이 필요해지면 되돌린다. */
+.pn-page .jd-content img { width: auto !important; height: auto !important; max-width: 100%; }
 
-/* ── Right ─────────────────────────────────────────────────────── */
-.pd-right {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  position: sticky;
-  top: 80px;
-}
+/* 저장된 내용에 아주 긴 문자열(base64 등)이 섞여도 가로가 터지지 않게 막는다. */
+.pn-page .jd-content { overflow-wrap: anywhere; }
 
-.pd-info-card,
-.pd-schedule-card {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 20px;
-  box-shadow: var(--shadow-sm);
-}
-
-.pd-info-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-navy);
-  margin-bottom: 14px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.pd-info-list {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 10px 12px;
-  font-size: 17px;
-}
-
-.pd-info-list dt {
-  color: var(--color-text-muted);
-  font-weight: 600;
-  display: flex;
-  align-items: flex-start;
-  gap: 5px;
-  white-space: nowrap;
-}
-
-.pd-info-list dt i { color: var(--color-primary); margin-top: 2px; }
-
-.pd-info-list dd {
-  color: var(--color-navy);
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-.pd-email {
-  color: var(--color-primary);
-  font-size: 16px;
-  text-decoration: underline;
-}
-
-/* Buttons */
-.pd-apply-btn {
-  width: 100%;
-  padding: 12px;
-  background: var(--color-primary);
-  color: var(--color-bg);
-  font-size: 18px;
-  font-weight: 700;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  transition: opacity 0.15s;
-}
-
-.pd-apply-btn:hover { opacity: 0.85; }
-
-.pd-applied-toast {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 10px;
-  padding: 10px 14px;
-  background: #ECFDF3;
-  border: 1px solid #BBF7D0;
-  border-radius: var(--radius-sm);
-  color: #15803D;
-  font-size: 16px;
-  font-weight: 700;
-  animation: pdAppliedFade 0.22s ease;
-}
-.pd-applied-toast i { font-size: 16px; }
-
-@keyframes pdAppliedFade {
-  from { opacity: 0; transform: translateY(-4px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.pd-wish-btn {
-  width: 100%;
-  padding: 10px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-sub);
-  font-size: 17px;
-  font-weight: 600;
-  background: var(--color-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-  transition: all 0.15s;
-}
-
-.pd-wish-btn:hover {
-  border-color: var(--color-danger);
-  color: var(--color-danger);
-}
-
-.pd-wish-btn.wished {
-  border-color: var(--color-danger);
-  background: #FEF2F2;
-  color: var(--color-danger);
-}
-
-/* Schedule */
-.pd-schedule-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.pd-schedule-item {
-  display: flex;
-  gap: 12px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--color-border);
-  align-items: flex-start;
-}
-
-.pd-schedule-item:last-child { border-bottom: none; }
-
-.pd-schedule-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--color-primary);
-  margin-top: 4px;
-  flex-shrink: 0;
-}
-
-.pd-schedule-date {
-  font-size: 16px;
-  color: var(--color-text-muted);
-  margin-bottom: 2px;
-}
-
-.pd-schedule-label {
-  font-size: 17px;
-  color: var(--color-navy);
-  font-weight: 500;
-}
-
-.pd-back-btn {
-  font-size: 17px;
-  color: var(--color-text-muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 0;
-  transition: color 0.15s;
-}
-
-.pd-back-btn:hover { color: var(--color-primary); }
-
-/* Responsive */
-@media (max-width: 900px) {
-  .pd-layout {
-    grid-template-columns: 1fr;
-  }
-
-  .pd-right {
-    position: static;
-  }
-}
-
-@media (max-width: 768px) {
-  .pd-wrap { padding: 16px; }
-
-  .pd-tabs {
-    overflow-x: auto;
-    white-space: nowrap;
-  }
+.pn-applied-toast {
+  display: flex; align-items: center; gap: 8px;
+  margin: 12px 0 0; padding: 12px 16px;
+  border: 1px solid var(--mint, #20b486); border-radius: var(--radius-md, 10px);
+  background: var(--mint-soft, #e5f8f2);
+  color: var(--mint-ink, #12805f);
+  font-size: 13px; font-weight: 700;
 }

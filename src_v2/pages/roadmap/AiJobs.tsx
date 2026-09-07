@@ -1,77 +1,11 @@
 import { useMemo, useState } from 'react'
+import { getActiveStudent } from '../../data/students'
+import { computeAll } from '../../lib/scoring'
 import './AiJobs.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 /* ── Types ─────────────────────────────────────────────────────── */
-interface Job {
-  id: number
-  company: string
-  initial: string
-  color: string
-  role: string
-  tags: string[]
-  match: number
-  salary: string
-  location: string
-  deadline: string
-  jobType: '신입' | '경력'
-  applyUrl: string
-}
-
 type SortKey = '매칭률 높은순' | '최신 등록순' | '마감임박순'
-
-interface Skill {
-  label: string
-  score: number
-  max: number
-  color: string
-}
-
-/* ── Mock Data ─────────────────────────────────────────────────── */
-const JOBS: Job[] = [
-  {
-    id: 1, company: '네이버', initial: 'N', color: '#03C75A',
-    role: '서비스기획/PM', tags: ['대기업', '서울'],
-    match: 92, salary: '4,500만원~', location: '서울', deadline: '상시채용',
-    jobType: '신입',
-    applyUrl: 'https://recruit.navercorp.com/rcrt/view.do?annoId=30004978&sw=&subJobCdArr=3010001%2C3020001%2C3030001%2C3040001%2C3050001%2C3060001%2C3070001&sysCompanyCdArr=&empTypeCdArr=&entTypeCdArr=&workAreaCdArr=',
-  },
-  {
-    id: 2, company: '카카오', initial: 'K', color: '#FEE500',
-    role: '데이터분석', tags: ['대기업', '판교'],
-    match: 88, salary: '4,200만원~', location: '경기', deadline: '2025.05.30',
-    jobType: '신입',
-    applyUrl: 'https://careers.kakao.com/jobs/P-14324?skillSet=&part=TECHNOLOGY&company=KAKAO&keyword=&employeeType=&page=1',
-  },
-  {
-    id: 3, company: '넥슨', initial: 'NX', color: '#FF5C00',
-    role: '백엔드개발', tags: ['대기업', '판교'],
-    match: 80, salary: '3,800만원~', location: '경기', deadline: '2025.06.01',
-    jobType: '신입',
-    applyUrl: 'https://careers.nexon.com/recruit/9730',
-  },
-  {
-    id: 4, company: '쿠팡', initial: 'C', color: '#EE2222',
-    role: 'PM/기획', tags: ['대기업', '서울'],
-    match: 75, salary: '4,000만원~', location: '서울', deadline: '2025.05.31',
-    jobType: '신입',
-    applyUrl: 'https://www.jobkorea.co.kr/Recruit/GI_Read/49248006?Oem_Code=C1&logpath=1&stext=%EC%BF%A0%ED%8C%A1&listno=4&sc=630',
-  },
-  {
-    id: 5, company: '우아한형제들', initial: 'B', color: '#2AC1BC',
-    role: '백엔드', tags: ['중견기업', '서울'],
-    match: 70, salary: '3,600만원~', location: '서울', deadline: '2025.06.15',
-    jobType: '경력',
-    applyUrl: 'https://www.jobkorea.co.kr/Recruit/GI_Read/47594333?Oem_Code=C1&PageGbn=ST',
-  },
-]
-
-const SKILLS: Skill[] = [
-  { label: '서비스 기획력', score: 78, max: 100, color: '#2E5BFF' },
-  { label: '데이터 분석', score: 64, max: 100, color: '#22C55E' },
-  { label: '커뮤니케이션', score: 82, max: 100, color: '#F59E0B' },
-  { label: '문서 작성', score: 71, max: 100, color: '#8B5CF6' },
-  { label: '프로젝트 관리', score: 55, max: 100, color: '#EF4444' },
-]
 
 const JOB_FIELDS = ['서비스기획/PM', '데이터분석', '백엔드개발', '프론트엔드', '마케팅', '디자인']
 const COMPANY_SIZE = ['대기업', '중견기업', '중소기업', '스타트업']
@@ -129,13 +63,20 @@ const regionMatches = (jobLoc: string, checked: string[]) => {
 }
 
 export default function AiJobs() {
+  usePageHead('AI 맞춤채용', '나의 스펙과 역량을 분석해 최적화된 기업을 추천합니다. 합격 가능성이 높은 순서로 정렬됩니다.')
+  const student = getActiveStudent()
+  const JOBS = student.jobs
+  const SKILLS = student.jobSkills
+  // 학생 종합 역량 점수 (5대 역량 가중평균) — "나의 준비율" 카드 표시용
+  const overallScore = useMemo(() => computeAll(student.scoreInputs).overall, [student.scoreInputs])
+
   // checked = 현재 UI 상태, applied = 실제 리스트에 적용된 값
-  const [checkedFields, setCheckedFields] = useState<string[]>(['서비스기획/PM'])
+  const [checkedFields, setCheckedFields] = useState<string[]>([student.jobField])
   const [checkedSizes, setCheckedSizes] = useState<string[]>(['대기업'])
   const [checkedJobTypes, setCheckedJobTypes] = useState<string[]>(['신입'])
   const [checkedRegions, setCheckedRegions] = useState<string[]>(['서울', '경기'])
 
-  const [appliedFields, setAppliedFields] = useState<string[]>(['서비스기획/PM'])
+  const [appliedFields, setAppliedFields] = useState<string[]>([student.jobField])
   const [appliedSizes, setAppliedSizes] = useState<string[]>(['대기업'])
   const [appliedJobTypes, setAppliedJobTypes] = useState<string[]>(['신입'])
   const [appliedRegions, setAppliedRegions] = useState<string[]>(['서울', '경기'])
@@ -191,33 +132,22 @@ export default function AiJobs() {
         <i className="fa-solid fa-chevron-right" />
         <span className="active">AI 맞춤 채용 추천</span>
       </div>
-      <h1 className="aj-page-title">AI 맞춤 채용 추천</h1>
-      <p className="aj-page-desc">
-        나의 스펙과 역량을 분석하여 최적화된 기업을 추천합니다. 합격 가능성이 높은 순서로 정렬됩니다.
-      </p>
-
       {/* ── Summary Stats ────────────────────────────────────── */}
       <div className="aj-stats">
         <div className="aj-stat-card">
-          <div className="aj-stat-icon-wrap" style={{ background: 'var(--color-primary-bg)', color: 'var(--color-primary)' }}>
-            <i className="fa-solid fa-chart-pie" />
-          </div>
           <div className="aj-stat-body">
             <p className="aj-stat-label">나의 준비율</p>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <MatchRing pct={42} />
+              <MatchRing pct={overallScore} />
               <div>
-                <p className="aj-stat-num">1,231 <span>점</span></p>
-                <p className="aj-stat-sub">1,289-2,000 점</p>
+                <p className="aj-stat-num">{overallScore} <span>/ 100</span></p>
+                <p className="aj-stat-sub">5대 역량 종합</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="aj-stat-card">
-          <div className="aj-stat-icon-wrap" style={{ background: '#F0FDF4', color: 'var(--color-success)' }}>
-            <i className="fa-solid fa-bullseye" />
-          </div>
           <div className="aj-stat-body">
             <p className="aj-stat-label">현재 합격 예측</p>
             <p className="aj-stat-big">72<span>%</span></p>
@@ -225,21 +155,8 @@ export default function AiJobs() {
           </div>
         </div>
 
-        <div className="aj-stat-card">
-          <div className="aj-stat-icon-wrap" style={{ background: '#FFFBEB', color: 'var(--color-warning)' }}>
-            <i className="fa-solid fa-trophy" />
-          </div>
-          <div className="aj-stat-body">
-            <p className="aj-stat-label">합격 가능성</p>
-            <p className="aj-stat-big">30<span>%</span></p>
-            <p className="aj-stat-sub aj-stat-badge">달성 가능</p>
-          </div>
-        </div>
 
         <div className="aj-stat-card">
-          <div className="aj-stat-icon-wrap" style={{ background: '#F5F3FF', color: '#8B5CF6' }}>
-            <i className="fa-solid fa-location-dot" />
-          </div>
           <div className="aj-stat-body">
             <p className="aj-stat-label">추천 기업 지역</p>
             <p className="aj-stat-num" style={{ fontSize: 21 }}>서울, 경기</p>

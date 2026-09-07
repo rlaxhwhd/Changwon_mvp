@@ -1,0 +1,173 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   알림 벨 드롭다운 — 두 포털 공용이라 클래스를 nbell- 로 격리한다
+   (양쪽 index.css 에 이미 .notification-*, .icon-btn 이 따로 있다).
+
+   색은 학생 포털 → 교직원 포털 순으로 폴백한다. 새 색을 만들지 않고
+   각 포털이 이미 가진 토큰을 고른다:
+     학생   --violet/--mint/--amber/--pink/--blue (+ -soft)
+     교직원 --purple/--green/--yellow/--orange/--blue (+ -bg)
+   점(solid)만 갈래 색을 쓰고 글자는 본문색이다 — 교직원 DESIGN.md 규칙
+   "solid 는 막대·점 전용, 텍스트는 on-* " 을 양쪽에서 안전하게 지키는 방법이다.
+   ───────────────────────────────────────────────────────────────────────── */
+.nbell {
+  position: relative;
+  display: inline-flex;
+}
+
+/* 트리거 버튼은 포털의 기존 아이콘 버튼 스타일을 그대로 쓴다 — 배지만 얹는다. */
+.nbell > button {
+  position: relative;
+}
+
+.nbell-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--coral, var(--red, #F05D57));
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 0 0 2px var(--card, #fff);
+}
+
+.nbell-panel {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  z-index: 1200;
+  width: 344px;
+  margin-top: 10px;
+  padding: 6px;
+  border: 1px solid var(--border, #E2E6EC);
+  border-radius: 12px;
+  background: var(--card, #fff);
+  box-shadow: 0 12px 32px rgba(24, 28, 37, 0.14);
+}
+
+/* 버튼과 패널 사이 10px 을 다리로 덮는다 — 없으면 내려가는 도중에 hover 가 끊긴다. */
+.nbell-panel::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -10px;
+  height: 10px;
+}
+
+.nbell-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 8px 10px 10px;
+}
+
+.nbell-head strong {
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--foreground, var(--text, #181c25));
+}
+
+.nbell-head span {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted-foreground, var(--text-sub, #565e6d));
+}
+
+.nbell-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 380px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.nbell-item {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  color: inherit;
+  transition: background 140ms;
+}
+
+.nbell-item:hover {
+  background: var(--muted, #f1f3f6);
+}
+
+.nbell-dot {
+  width: 8px;
+  height: 8px;
+  margin-top: 5px;
+  border-radius: 50%;
+  background: var(--n-tone);
+}
+
+.nbell-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.nbell-text strong {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--foreground, var(--text, #181c25));
+}
+
+.nbell-text small {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--muted-foreground, var(--text-sub, #565e6d));
+  /* 주제·사유가 길어도 목록이 흐트러지지 않게 두 줄에서 자른다. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.nbell-item time {
+  flex: none;
+  padding-top: 1px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--muted-foreground, var(--text-cap, #6E7787));
+}
+
+.nbell-empty {
+  margin: 0;
+  padding: 14px 10px;
+  text-align: center;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--muted-foreground, var(--text-sub, #565e6d));
+}
+
+/* 갈래별 점 색 */
+.nbell-item.is-counsel   { --n-tone: var(--blue,   #3B82F6); }
+.nbell-item.is-roadmap   { --n-tone: var(--violet,  var(--purple, #8B63D9)); }
+.nbell-item.is-diagnosis { --n-tone: var(--amber,   var(--yellow, #F2B544)); }
+.nbell-item.is-job       { --n-tone: var(--mint,    var(--green,  #24B37A)); }
+.nbell-item.is-program   { --n-tone: var(--pink,    var(--orange, #F59A23)); }
+
+@media (max-width: 768px) {
+  .nbell-panel {
+    width: min(344px, calc(100vw - 32px));
+  }
+}

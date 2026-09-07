@@ -1,109 +1,32 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
+import IapSummaryBanner from '../../components/IapSummaryBanner'
+import CounselTabs from '../../components/CounselTabs'
+import { findDefaultSelection } from '../../data/professors'
+import { getCounselableProfessorGroups } from '../../data/professorProfilesRead'
+import { submitProfessorCounselRequest } from '../../data/counselRequestsWrite'
+import { getActiveStudent } from '../../data/students'
+import { getCounselWeek, type Day } from '../../lib/counselCalendar'
 import './CareerCounsel.css'
 import './ProfessorCounsel.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type CounselMode = 'online' | 'offline'
 type SlotStatus = 'available' | 'reserved' | 'selected'
-
-interface Professor {
-  id: string
-  name: string
-  title: string
-  major: string
-  room: string
-}
-
-interface DepartmentGroup {
-  name: string
-  divisions: Record<string, Professor[]>
-}
-
-interface Day {
-  key: string
-  label: string
-  date: string
-}
 
 interface SelectedSlot {
   day: Day
   time: string
 }
 
-const departmentGroups: DepartmentGroup[] = [
-  {
-    name: '인문대학',
-    divisions: {
-      국어국문학과: [
-        { id: 'kor-1', name: '김도윤', title: '교수', major: '현대문학', room: '인문관 312호' },
-        { id: 'kor-2', name: '서예린', title: '교수', major: '한국어교육', room: '인문관 318호' },
-        { id: 'kor-3', name: '장우석', title: '교수', major: '고전문학', room: '인문관 321호' },
-      ],
-      영어영문학과: [
-        { id: 'eng-1', name: '박현주', title: '교수', major: '영미문화', room: '인문관 401호' },
-        { id: 'eng-2', name: '이정훈', title: '교수', major: '영어학', room: '인문관 407호' },
-      ],
-      철학과: [
-        { id: 'phi-1', name: '최민석', title: '교수', major: '윤리학', room: '인문관 502호' },
-        { id: 'phi-2', name: '한지우', title: '교수', major: '서양철학', room: '인문관 505호' },
-        { id: 'phi-3', name: '문정아', title: '교수', major: '동양철학', room: '인문관 510호' },
-      ],
-    },
-  },
-  {
-    name: '사회과학대학',
-    divisions: {
-      사회학과: [
-        { id: 'soc-1', name: '정하늘', title: '교수', major: '사회조사방법론', room: '사회관 204호' },
-        { id: 'soc-2', name: '윤태경', title: '교수', major: '지역사회', room: '사회관 210호' },
-      ],
-      행정학과: [
-        { id: 'adm-1', name: '남기범', title: '교수', major: '정책분석', room: '사회관 318호' },
-        { id: 'adm-2', name: '오세은', title: '교수', major: '공공관리', room: '사회관 323호' },
-      ],
-    },
-  },
-  {
-    name: '공과대학',
-    divisions: {
-      컴퓨터공학과: [
-        { id: 'cse-1', name: '박지훈', title: '교수', major: '소프트웨어공학', room: '공학관 706호' },
-        { id: 'cse-2', name: '강민재', title: '교수', major: '인공지능', room: '공학관 712호' },
-        { id: 'cse-3', name: '신유라', title: '교수', major: '데이터베이스', room: '공학관 718호' },
-      ],
-      전자공학과: [
-        { id: 'ele-1', name: '배성호', title: '교수', major: '반도체시스템', room: '공학관 530호' },
-        { id: 'ele-2', name: '송나래', title: '교수', major: '신호처리', room: '공학관 536호' },
-      ],
-      기계공학부: [
-        { id: 'me-1', name: '조현우', title: '교수', major: '로봇공학', room: '공학관 402호' },
-        { id: 'me-2', name: '임다인', title: '교수', major: '열유체', room: '공학관 409호' },
-      ],
-    },
-  },
-  {
-    name: '자연과학대학',
-    divisions: {
-      수학과: [
-        { id: 'math-1', name: '권서준', title: '교수', major: '응용수학', room: '자연관 211호' },
-        { id: 'math-2', name: '류하린', title: '교수', major: '통계학', room: '자연관 215호' },
-      ],
-      생명보건학부: [
-        { id: 'bio-1', name: '백지수', title: '교수', major: '분자생물학', room: '자연관 418호' },
-        { id: 'bio-2', name: '홍태윤', title: '교수', major: '보건과학', room: '자연관 423호' },
-      ],
-    },
-  },
-]
+// 학과별 교수 = 단일소스(professors.ts) 투영. 화면에 하드코딩하지 않는다.
+// 기본 선택은 활성 학생의 학과(major)로 파생한다(본인 학과가 먼저 열림).
+const professorGroups = getCounselableProfessorGroups()
+const defaultSelection = findDefaultSelection(getActiveStudent().major, professorGroups)
 
-const days: Day[] = [
-  { key: 'mon', label: '05/18 (월)', date: '2026. 05. 18 (월)' },
-  { key: 'tue', label: '05/19 (화)', date: '2026. 05. 19 (화)' },
-  { key: 'wed', label: '05/20 (수)', date: '2026. 05. 20 (수)' },
-  { key: 'thu', label: '05/21 (목)', date: '2026. 05. 21 (목)' },
-  { key: 'fri', label: '05/22 (금)', date: '2026. 05. 22 (금)' },
-]
+// 이번 주 월~금 (공용 유틸 — 화면에 날짜 하드코딩 금지)
+const days: Day[] = getCounselWeek()
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
@@ -116,10 +39,12 @@ const reservedSlots = new Set([
 ])
 
 export default function ProfessorCounsel() {
-  const [selectedGroupName, setSelectedGroupName] = useState(departmentGroups[0].name)
-  const selectedGroup = departmentGroups.find(group => group.name === selectedGroupName) ?? departmentGroups[0]
+  // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
+  usePageHead('상담 신청', '교수님을 선택하고 온라인 또는 오프라인 상담을 신청하세요.')
+  const [selectedGroupName, setSelectedGroupName] = useState(defaultSelection.groupName)
+  const selectedGroup = professorGroups.find(group => group.name === selectedGroupName) ?? professorGroups[0]
   const divisionNames = Object.keys(selectedGroup.divisions)
-  const [selectedDivision, setSelectedDivision] = useState(divisionNames[0])
+  const [selectedDivision, setSelectedDivision] = useState(defaultSelection.division)
   const professors = selectedGroup.divisions[selectedDivision] ?? selectedGroup.divisions[divisionNames[0]]
   const [selectedProfessorId, setSelectedProfessorId] = useState(professors[0].id)
   const [mode, setMode] = useState<CounselMode>('online')
@@ -131,12 +56,13 @@ export default function ProfessorCounsel() {
   const [reserveOpen, setReserveOpen] = useState(false)
   const [consentOpen, setConsentOpen] = useState(false)
   const [consentMode, setConsentMode] = useState<CounselMode>('online')
-
+  const [onlineSubject, setOnlineSubject] = useState('학업 및 진로 상담')
   const activeProfessor = professors.find(professor => professor.id === selectedProfessorId) ?? professors[0]
-  const onlineTopic = useMemo(() => `${selectedDivision} ${activeProfessor.name} 교수님께 온라인 상담을 신청합니다.`, [activeProfessor.name, selectedDivision])
+  const onlineTopic = `${selectedDivision} ${activeProfessor.name} 교수님께 온라인 상담을 신청합니다.`
+  const [onlineContent, setOnlineContent] = useState('')
 
   const updateGroup = (groupName: string) => {
-    const nextGroup = departmentGroups.find(group => group.name === groupName) ?? departmentGroups[0]
+    const nextGroup = professorGroups.find(group => group.name === groupName) ?? professorGroups[0]
     const nextDivision = Object.keys(nextGroup.divisions)[0]
     const nextProfessor = nextGroup.divisions[nextDivision][0]
     setSelectedGroupName(nextGroup.name)
@@ -183,6 +109,11 @@ export default function ProfessorCounsel() {
   const handleConsentAgree = () => {
     setConsentOpen(false)
     if (consentMode === 'online') {
+      submitProfessorCounselRequest({
+        professorId: activeProfessor.id,
+        topic: `${onlineSubject}: ${onlineContent || onlineTopic}`,
+        method: '비대면',
+      })
       setNotice(`${activeProfessor.name} 교수님께 온라인 상담 신청이 접수되었습니다`)
       window.setTimeout(() => setNotice(''), 1800)
     } else {
@@ -191,13 +122,15 @@ export default function ProfessorCounsel() {
   }
 
   return (
-    <div className="cc-wrap pc-wrap">
+    <div className="cc-wrap cc-professor pc-wrap">
       {notice && (
         <div className="cc-toast" role="status">
           <i className="fa-solid fa-circle-check" />
           {notice}
         </div>
       )}
+
+      <CounselTabs />
 
       <section className="cc-hero">
         <div className="cc-breadcrumb">
@@ -209,6 +142,7 @@ export default function ProfessorCounsel() {
         </div>
         <h1>교수상담 신청</h1>
         <p>대학/부서와 학부를 선택한 뒤, 원하는 교수님께 온라인 또는 오프라인 상담을 신청하세요.</p>
+        <IapSummaryBanner note="상담 시 참고할 내 진단 요약 (자동 공유)" />
       </section>
 
       <div className="pc-layout">
@@ -216,7 +150,7 @@ export default function ProfessorCounsel() {
           <label className="pc-select">
             <span className="pc-select-label">대학/부서</span>
             <select value={selectedGroupName} onChange={e => updateGroup(e.target.value)}>
-              {departmentGroups.map(group => (
+              {professorGroups.map(group => (
                 <option key={group.name} value={group.name}>{group.name}</option>
               ))}
             </select>
@@ -273,11 +207,15 @@ export default function ProfessorCounsel() {
               <div className="pc-online-form">
                 <label>
                   상담 주제
-                  <input defaultValue="학업 및 진로 상담" />
+                  <input value={onlineSubject} onChange={event => setOnlineSubject(event.target.value)} />
                 </label>
                 <label>
                   상담 내용
-                  <textarea defaultValue={onlineTopic} />
+                  <textarea
+                    value={onlineContent}
+                    placeholder={onlineTopic}
+                    onChange={event => setOnlineContent(event.target.value)}
+                  />
                 </label>
                 <button className="cc-reserve-btn" onClick={submitOnline}>온라인 상담 신청하기</button>
               </div>
@@ -289,9 +227,9 @@ export default function ProfessorCounsel() {
                   </button>
                   <div className="cc-week-title">
                     <i className="fa-regular fa-calendar-days" />
-                    <strong>2026. 05. 18 (월)</strong>
+                    <strong>{days[0].date}</strong>
                     <span>~</span>
-                    <strong>2026. 05. 22 (금)</strong>
+                    <strong>{days[4].date}</strong>
                   </div>
                   <div className="cc-head-actions">
                     <button aria-label="다음 주">
@@ -365,7 +303,17 @@ export default function ProfessorCounsel() {
         time={selectedSlot?.time ?? ''}
         room={activeProfessor.room}
         phone="055-213-3500"
-        onSubmit={() => {
+        onSubmit={purpose => {
+          if (selectedSlot) {
+            submitProfessorCounselRequest({
+              professorId: activeProfessor.id,
+              topic: purpose,
+              method: '대면',
+              slotDate: selectedSlot.day.iso,
+              time: selectedSlot.time,
+              place: activeProfessor.room,
+            })
+          }
           setReserveOpen(false)
           setNotice('오프라인 상담 예약이 신청되었습니다')
           window.setTimeout(() => setNotice(''), 1800)

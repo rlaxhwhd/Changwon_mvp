@@ -1,0 +1,153 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   진단 상세 결과표 — 학생(src_v2) · 상담사(src_admin) 공용 컴포넌트 스타일.
+
+   두 SPA 의 index.css 토큰 이름이 서로 달라, 이 컴포넌트는 자기 토큰(--drr-*)만
+   쓰고 값은 아래 기본값으로 자립한다. 호스트가 색을 바꾸고 싶으면 --drr-accent
+   하나만 덮어쓰면 된다(예: 검사별 색). 새 팔레트를 만들지 않는다.
+   ───────────────────────────────────────────────────────────────────────── */
+.drr {
+  --drr-accent: #7C5CFC;
+  --drr-accent-soft: #F0EDFF;
+  --drr-text: #1D2433;
+  --drr-sub: #5F6B7A;
+  --drr-border: #E2E6EC;
+  --drr-card: #FFFFFF;
+  --drr-muted: #F7F8FB;
+
+  --drr-low: #C2332C;   --drr-low-bg: #FDE7E6;
+  --drr-mid: #92580A;   --drr-mid-bg: #FFF0DD;
+  --drr-high: #157A52;  --drr-high-bg: #DFF5EA;
+
+  color: var(--drr-text);
+  font-size: 13px;
+  word-break: keep-all;
+}
+
+/* ── 대표 결과 배너 ─────────────────────────────────────────────────────── */
+.drr-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 20px;
+  border-radius: 12px;
+  background: var(--drr-accent-soft);
+  margin-bottom: 16px;
+}
+.drr-banner-headline {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--drr-accent);
+  white-space: nowrap;
+}
+.drr-banner-copy { display: grid; gap: 3px; min-width: 0 }
+.drr-banner-copy b { font-size: 13px; font-weight: 700 }
+.drr-banner-copy small { font-size: 12px; color: var(--drr-sub) }
+
+/* ── 요인 결과표 ───────────────────────────────────────────────────────── */
+.drr-table-wrap {
+  border: 1px solid var(--drr-border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.drr-table { width: 100%; border-collapse: collapse; font-size: 13px }
+.drr-table th {
+  padding: 11px 16px;
+  background: var(--drr-accent-soft);
+  color: var(--drr-accent);
+  font-weight: 800;
+  font-size: 12px;
+  text-align: left;
+  white-space: nowrap;
+}
+.drr-table th.num,
+.drr-table td.num { text-align: right }
+.drr-table th.mid,
+.drr-table td.mid { text-align: center; width: 92px }
+.drr-table td {
+  padding: 13px 16px;
+  border-top: 1px solid var(--drr-border);
+  color: var(--drr-text);
+}
+.drr-table tbody tr:nth-child(even) { background: var(--drr-muted) }
+.drr-factor { font-weight: 700 }
+.drr-factor small {
+  display: block;
+  margin-top: 3px;
+  color: var(--drr-sub);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.6;
+}
+.drr-score {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: var(--drr-accent);
+  white-space: nowrap;
+  width: 86px;
+}
+
+/* 수준 배지 — 낮음/보통/높음 3단 */
+.drr-level {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+.drr-level.low  { color: var(--drr-low);  background: var(--drr-low-bg) }
+.drr-level.mid  { color: var(--drr-mid);  background: var(--drr-mid-bg) }
+.drr-level.high { color: var(--drr-high); background: var(--drr-high-bg) }
+
+/* ── AI 코멘트 ─────────────────────────────────────────────────────────── */
+.drr-comment {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+  padding: 16px;
+  border: 1px solid color-mix(in srgb, var(--drr-accent) 24%, var(--drr-border));
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--drr-accent-soft) 60%, var(--drr-card));
+}
+.drr-comment-icon {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: var(--drr-card);
+  color: var(--drr-accent);
+}
+.drr-comment-icon svg { width: 16px; height: 16px }
+.drr-comment-body b {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--drr-accent);
+  font-size: 13px;
+  font-weight: 800;
+}
+.drr-comment-body p {
+  margin: 0;
+  color: var(--drr-sub);
+  font-size: 13px;
+  line-height: 1.75;
+}
+
+/* ── 결과 없음 ─────────────────────────────────────────────────────────── */
+.drr-empty {
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--drr-sub);
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+@media (max-width: 640px) {
+  .drr-banner { flex-direction: column; align-items: flex-start; gap: 8px }
+  .drr-table th,
+  .drr-table td { padding: 10px 12px }
+  .drr-table th.mid,
+  .drr-table td.mid { width: auto }
+}

@@ -1,0 +1,105 @@
+[
+  {
+    "id": "grp_seed_1",
+    "kind": "집단상담",
+    "title": "3학년 진로설계 집단상담 1회차",
+    "topic": "목표 직무 좁히기 — 직무 탐색 결과 공유와 상호 피드백",
+    "date": "2026-07-08",
+    "start": "14:00",
+    "end": "16:00",
+    "place": "학생회관 3층 집단상담실",
+    "capacity": 8,
+    "counselorId": "career_kim",
+    "counselorName": "김진로",
+    "status": "완료",
+    "members": [
+      {
+        "studentId": "chaewon",
+        "studentNo": "20211304",
+        "name": "김채원",
+        "major": "컴퓨터공학과",
+        "grade": 3,
+        "attended": true,
+        "addedAt": "2026-07-01T02:00:00.000Z"
+      },
+      {
+        "studentId": "stu-003",
+        "studentNo": "20250003",
+        "name": "박주원",
+        "major": "음악과",
+        "grade": 2,
+        "attended": true,
+        "addedAt": "2026-07-01T02:05:00.000Z"
+      },
+      {
+        "studentId": "stu-007",
+        "studentNo": "20230007",
+        "name": "조민준",
+        "major": "건축학부 건축학전공",
+        "grade": 4,
+        "attended": false,
+        "addedAt": "2026-07-02T01:10:00.000Z"
+      }
+    ],
+    "summary": "직무 탐색 과제 결과를 공유하고 서로의 강점을 피드백했다. 참여 학생 2명은 목표 직무를 2개 이내로 좁혔고, 1명은 불참으로 개별 상담으로 전환한다.",
+    "comment": "각자 정리한 직무 2개에 대해 다음 회차까지 현직자 인터뷰 1건씩 준비해 오세요.",
+    "createdAt": "2026-07-01T01:30:00.000Z",
+    "updatedAt": "2026-07-08T08:20:00.000Z"
+  },
+  {
+    "id": "grp_seed_2",
+    "kind": "집단상담",
+    "title": "저학년 진로탐색 워크숍",
+    "topic": "전공 적합성 점검과 학습 습관 진단",
+    "date": "2026-08-12",
+    "start": "10:00",
+    "end": "12:00",
+    "place": "제1공학관 세미나실 202",
+    "capacity": 10,
+    "counselorId": "career_kim",
+    "counselorName": "김진로",
+    "status": "예정",
+    "members": [
+      {
+        "studentId": "stu-011",
+        "studentNo": "20230011",
+        "name": "한다은",
+        "major": "에너지화학과",
+        "grade": 4,
+        "addedAt": "2026-07-20T05:00:00.000Z"
+      }
+    ],
+    "createdAt": "2026-07-20T04:40:00.000Z",
+    "updatedAt": "2026-07-20T05:00:00.000Z"
+  },
+  {
+    "id": "grp_seed_3",
+    "kind": "집단심리검사",
+    "title": "신입생 성격유형 집단검사 2차",
+    "topic": "TCI 기질·성격검사 집단 실시 및 해석",
+    "date": "2026-07-15",
+    "start": "13:00",
+    "end": "15:30",
+    "place": "학생상담센터 집단검사실",
+    "capacity": 12,
+    "counselorId": "psych_lee",
+    "counselorName": "이마음",
+    "status": "완료",
+    "testCode": "TCI",
+    "members": [
+      {
+        "studentId": "stu-002",
+        "studentNo": "20230002",
+        "name": "이아윤",
+        "major": "스마트그린공학부 건설시스템공학전공",
+        "grade": 4,
+        "attended": true,
+        "addedAt": "2026-07-06T00:30:00.000Z"
+      }
+    ],
+    "summary": "TCI를 집단으로 실시하고 기질 4차원 결과를 공동 해석했다. 위험군 지표가 확인된 참여자는 개별 심리상담으로 연계한다.",
+    "comment": "개인 결과지는 마이페이지 상담 현황에서 확인할 수 있습니다.",
+    "createdAt": "2026-07-06T00:20:00.000Z",
+    "updatedAt": "2026-07-15T07:10:00.000Z"
+  }
+]

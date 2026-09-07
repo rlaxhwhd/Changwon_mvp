@@ -1,0 +1,296 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   채용공고 상세 (공용) — /v2/jobs/:id 와 /admin/jobs/:id 가 같은 화면을 쓴다.
+   레이아웃 출처: public_t/job.png (구조·밀도만. 시안은 파랑이지만 팔레트는 DESIGN.md 락)
+
+   [토큰]
+   두 SPA 의 토큰 이름이 달라(navy/text-sub vs text/text-secondary) 여기서 한 번만
+   별칭으로 잇는다 — JobBoard.css 와 같은 방식. 새 색을 만들지 않는다.
+   짙은 히어로는 src_v2 의 --deep-start/--deep-end 를 쓰고, 그 토큰이 없는 교직원
+   SPA 에는 같은 값을 폴백으로 준다(새 색이 아니라 같은 색을 잇는 것).
+
+   [구조]
+   .jd-hero  짙은 배너 (로고 · 회사/직무/칩 · 우측 3지표)
+   .jd-body  좌: A/B/C 섹션 · 우: 요약 카드 + CTA
+   .jd-kv    골든 컴포넌트 — 라벨/값 표. A·B·요약이 전부 이걸 쓴다.
+   ───────────────────────────────────────────────────────────────────────── */
+.jd-page {
+  --jd-ink: var(--color-navy, var(--color-text));
+  --jd-sub: var(--color-text-sub, var(--color-text-secondary));
+  --jd-muted: var(--color-text-muted, var(--color-text-secondary));
+  --jd-line: var(--color-border);
+  --jd-surface: var(--color-bg, #fff);
+  /* 중립 면 — --color-surface-alt 를 폴백에 끼우면 src_v2 에서 violet-soft 로 풀려
+     마감 공고가 강조된 것처럼 보라색으로 물든다. 반드시 --color-surface 로 잇는다. */
+  --jd-flat: var(--color-section-bg, var(--color-surface));
+  --jd-hero-1: var(--deep-start, #242a3b);
+  --jd-hero-2: var(--deep-end, #5042a8);
+  /* 지원 버튼 채움색. 학생 = 채용 갈래 초록(--apply-cta) / 교직원 = 자기 강조색. */
+  --jd-fill: var(--apply-cta, var(--color-primary));
+
+  padding: 20px 0 48px;
+  word-break: keep-all;
+}
+
+.jd-icon {
+  width: 15px; height: 15px; flex: none;
+  stroke: currentColor; stroke-width: 1.8; fill: none;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+
+/* ── 상단 바 ────────────────────────────────────────────────────────────── */
+.jd-topbar { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+.jd-back {
+  display: inline-flex; align-items: center; gap: 7px;
+  color: var(--jd-sub);
+  font-size: 13px; font-weight: 700; text-decoration: none;
+}
+.jd-back:hover { color: var(--color-primary); }
+.jd-recruit-tag {
+  margin-left: auto;
+  padding: 4px 11px; border-radius: 999px;
+  border: 1px solid var(--jd-line); background: var(--jd-surface);
+  color: var(--jd-sub); font-size: 12px; font-weight: 800;
+}
+.jd-recruit-tag.is-rec {
+  border-color: transparent;
+  background: var(--violet-soft, #f0edff); color: var(--violet, #7c5cfc);
+}
+
+/* ── 히어로 배너 ────────────────────────────────────────────────────────── */
+.jd-hero {
+  /* 우측 지표를 34% 로 고정한다 — 배경 이미지에 세로 구분선이 약 66% 지점에 새겨져 있어
+     지표 칸이 그 선에 맞아야 한다. 내용 길이에 따라 늘어나면 선과 어긋난다.
+     첫 칸은 로고다 — 로고가 있으면 112px, 이니셜만 있으면 72px 로 폭이 갈린다.
+     가운데(1fr)가 그 차이를 흡수하므로 34% 칸은 그대로 선에 맞는다. */
+  display: grid; grid-template-columns: auto minmax(0, 1fr) 34%; gap: 22px;
+  align-items: center;
+  padding: 26px 28px;
+  border-radius: var(--radius-lg, 12px);
+  /* 배너 이미지(public/job-temp.png). 이미지에 흰 여백과 둥근 모서리가 함께 들어 있어
+     106% 로 살짝 키워 좌우 흰 테두리를 화면 밖으로 밀어낸다.
+     아래 그라데이션은 폴백 — 이미지를 못 받아도 흰 글자 대비가 유지된다. */
+  background:
+    url('/job-temp.png') center / 106% auto no-repeat,
+    linear-gradient(118deg, var(--jd-hero-1), var(--jd-hero-2));
+  color: #fff;
+}
+/* 마감이어도 배너 색을 바꾸지 않는다 — 탁한 회보라가 되고, 상태는 우측 '마감' 배지가 이미 말한다. */
+
+.jd-logo {
+  display: grid; place-items: center;
+  width: 72px; height: 72px; border-radius: var(--radius-md, 10px);
+  background: rgba(255, 255, 255, .12);
+  border: 1px solid rgba(255, 255, 255, .18);
+  font-size: 20px; font-weight: 900; letter-spacing: -.02em;
+}
+/* 실제 로고는 배경이 비어 있거나 흰색이다 — 반투명 타일 위에 두면 짙은 배너에 묻힌다.
+
+   ★ 로고 칸은 112×72 고정이고, 이미지는 그 칸을 통째로 받아 contain 으로 담는다.
+     원본이 몇 픽셀이든 비율 그대로 줄어든다 — 등록 화면이 160px 로 줄여 저장하지만
+     그걸 믿고 그리지 않는다.
+     예전에는 칸이 width:auto 로 로고 모양을 따라갔는데, 칸 크기가 내용에서 나오면
+     img 의 max-height:100% 가 기준 삼을 값을 잃어 무시된다 — 975×886 로고가
+     170×154 로 그려져 배너 밖으로 93px 삐져나왔다.
+     세로를 못박아도 grid 로 두면 행 높이가 내용에서 나와 같은 일이 난다(로고가 세로로
+     길수록 행이 같이 자란다). 그래서 이미지가 있을 때는 block 으로 바꾼다 —
+     높이가 확정된 블록이라야 자식의 height:100% 가 값을 얻는다.
+     112×72 는 정사각 마크(50×50)와 가로 워드마크(90×18)가 둘 다 뭉개지지 않는 중간값이다. */
+.jd-logo.has-img {
+  display: block;
+  width: 112px; height: 72px; padding: 10px;
+  background: #fff; border-color: rgba(255, 255, 255, .55);
+}
+.jd-logo img { width: 100%; height: 100%; object-fit: contain; }
+
+.jd-hero-main { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.jd-hero-company { margin: 0; font-size: 14px; font-weight: 700; color: rgba(255, 255, 255, .78); }
+.jd-hero-title { margin: 0; font-size: 28px; font-weight: 800; line-height: 1.3; letter-spacing: -.025em; }
+.jd-hero-desc { margin: 0; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, .72); }
+
+.jd-hero-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 5px 0 0; padding: 0; list-style: none; }
+.jd-hero-chip {
+  padding: 4px 10px; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  color: rgba(255, 255, 255, .92);
+  font-size: 12px; font-weight: 700; white-space: nowrap;
+}
+.jd-hero-chip.is-rec { border-color: transparent; background: rgba(255, 255, 255, .92); color: var(--jd-hero-2); font-weight: 800; }
+.jd-hero-chip.is-urgent { border-color: transparent; background: var(--coral, #ff6b6b); color: #fff; font-weight: 800; }
+
+/* 우측 3지표 — 세로선으로 본문과 끊는다 */
+/* 구분선은 배경 이미지에 이미 있다 — CSS 로 또 그리면 두 줄이 된다. */
+.jd-hero-stats {
+  display: grid; gap: 14px; margin: 0;
+  padding-left: 24px;
+  white-space: nowrap;
+}
+.jd-hero-stats dt {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12px; font-weight: 700; color: rgba(255, 255, 255, .7);
+}
+.jd-hero-stats dd { margin: 3px 0 0 22px; font-size: 15px; font-weight: 800; }
+.jd-hero-stats dd em {
+  margin-left: 8px; padding: 1px 7px; border-radius: 999px;
+  background: rgba(255, 255, 255, .16);
+  font-style: normal; font-size: 11.5px; font-weight: 800;
+}
+
+/* ── 본문 2열 ───────────────────────────────────────────────────────────── */
+.jd-body {
+  display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px;
+  margin-top: 16px;
+  align-items: start;
+}
+.jd-main { display: grid; gap: 16px; min-width: 0; }
+.jd-side { display: grid; gap: 16px; position: sticky; top: 16px; }
+
+.jd-sec {
+  padding: 20px 22px;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-lg, 12px);
+  background: var(--jd-surface);
+}
+.jd-sec-head {
+  display: flex; align-items: center; gap: 9px;
+  margin: 0 0 14px;
+  font-size: 15px; font-weight: 800; letter-spacing: -.02em; color: var(--jd-ink);
+}
+
+/* ── 골든 컴포넌트: 라벨/값 표 ──────────────────────────────────────────── */
+.jd-kv {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-md, 10px);
+  overflow: hidden;
+}
+.jd-kv > div { display: grid; grid-template-columns: 118px minmax(0, 1fr); border-top: 1px solid var(--jd-line); }
+.jd-kv > div:nth-child(-n+2) { border-top: 0; }
+/* 홀수 개일 때 마지막 칸이 반만 차는 것을 막는다 */
+.jd-kv > div:last-child:nth-child(odd) { grid-column: 1 / -1; grid-template-columns: 118px minmax(0, 1fr); }
+.jd-kv dt {
+  display: flex; align-items: center;
+  padding: 12px 14px;
+  background: var(--jd-flat);
+  border-right: 1px solid var(--jd-line);
+  font-size: 12.5px; font-weight: 700; color: var(--jd-sub);
+}
+.jd-kv dd {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+  margin: 0; padding: 12px 14px;
+  font-size: 13px; font-weight: 700; color: var(--jd-ink);
+  word-break: break-all;
+}
+.jd-kv-chip {
+  padding: 2px 9px; border-radius: 999px;
+  background: var(--violet-soft, #f0edff); color: var(--violet, #7c5cfc);
+  font-size: 12px; font-weight: 800;
+}
+/* 요약 카드는 폭이 좁아 1열로 쌓는다 */
+.jd-kv.is-stack { grid-template-columns: minmax(0, 1fr); }
+.jd-kv.is-stack > div { grid-template-columns: 84px minmax(0, 1fr); border-top: 1px solid var(--jd-line); }
+.jd-kv.is-stack > div:first-child { border-top: 0; }
+.jd-kv.is-stack dd { font-size: 12.5px; }
+
+/* ── 모집요강 본문 (상담사가 입력한 HTML) ───────────────────────────────── */
+.jd-content { font-size: 14px; line-height: 1.75; color: var(--jd-sub); }
+.jd-content > :first-child { margin-top: 0; }
+.jd-content > :last-child { margin-bottom: 0; }
+.jd-content p { margin: 0 0 12px; }
+.jd-content ul, .jd-content ol { margin: 0 0 12px; padding-left: 20px; }
+.jd-content li { margin-bottom: 5px; }
+.jd-content strong, .jd-content b { color: var(--jd-ink); font-weight: 800; }
+/* 본문 이미지 — 편집기에서 정해진 크기를 따르되, 글 폭은 넘지 않는다.
+   억지로 width:100% 로 늘리지 않는다: 원본보다 크게 늘리면 늘린 배수만큼 뭉개진다.
+   편집기(summernote)가 넣을 때 width = min(편집기 폭, 원본 폭) 을 인라인으로 박아 주므로
+   충분히 큰 사진은 그것만으로 본문을 꽉 채우고, 원본이 작은 이미지는 제 크기로 남는다.
+   height 만 강제로 auto 다 — 폭이 줄 때 인라인 height 가 남아 있으면 비율이 깨진다. */
+.jd-content img {
+  display: block;
+  max-width: 100%;
+  height: auto !important;
+  /* 글 폭보다 좁은 이미지는 가운데로 — 왼쪽에 붙으면 오른쪽 여백이 잘린 것처럼 보인다.
+     아주 긴 포스터는 용량 한도에 맞추느라 글 폭보다 좁게 저장될 수 있다. */
+  margin: 14px auto;
+  border-radius: var(--radius-md, 10px);
+}
+.jd-content table { width: 100%; border-collapse: collapse; }
+.jd-content th, .jd-content td { padding: 8px 10px; border: 1px solid var(--jd-line); }
+
+.jd-empty { margin: 0; padding: 26px 0; text-align: center; font-size: 13.5px; font-weight: 600; color: var(--jd-muted); }
+
+/* ── 전형 절차 ──────────────────────────────────────────────────────────── */
+.jd-stages { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.jd-stages li {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 13px;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-md, 10px);
+  background: var(--jd-flat);
+}
+.jd-stage-no {
+  display: grid; place-items: center; flex: none;
+  width: 22px; height: 22px; border-radius: 7px;
+  background: var(--jd-fill); color: #fff;
+  font-size: 11.5px; font-weight: 800;
+}
+.jd-stage-name { font-size: 13.5px; font-weight: 700; color: var(--jd-ink); }
+
+/* ── CTA (관심공고 저장 · 지원하기) ─────────────────────────────────────── */
+.jd-cta { display: grid; gap: 8px; margin-top: 14px; }
+.jd-wish {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; height: 44px;
+  border: 1px solid var(--color-primary); border-radius: var(--radius-md, 10px);
+  background: var(--jd-surface); color: var(--color-primary);
+  font-family: inherit; font-size: 14px; font-weight: 800;
+  cursor: pointer;
+}
+.jd-wish:hover { background: var(--violet-soft, #f0edff); }
+.jd-wish.is-on { background: var(--violet-soft, #f0edff); }
+.jd-wish .jd-icon { width: 17px; height: 17px; }
+
+/* 호스트 페이지(학생 '지원하기' / 교직원 '공고 수정')가 이 클래스로 버튼을 넣는다. */
+.jd-apply-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; height: 46px;
+  border: 0; border-radius: var(--radius-md, 10px);
+  background: var(--jd-fill); color: #fff;
+  font-family: inherit; font-size: 14.5px; font-weight: 800; text-decoration: none;
+  cursor: pointer;
+}
+.jd-apply-btn:hover { filter: brightness(1.05); }
+.jd-apply-btn:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+.jd-apply-btn-ghost { background: var(--jd-surface); color: var(--jd-ink); border: 1px solid var(--jd-line); }
+.jd-apply-state {
+  display: flex; align-items: center; gap: 6px;
+  width: 100%; margin: 0;
+  font-size: 12.5px; font-weight: 700; line-height: 1.5; color: var(--jd-sub);
+}
+
+.jd-files { display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.jd-files li {
+  padding: 9px 11px;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-sm, 8px);
+  background: var(--jd-flat);
+  font-size: 12.5px; font-weight: 700; color: var(--jd-ink);
+  word-break: break-all;
+}
+
+/* ── 하단 안내 ──────────────────────────────────────────────────────────── */
+.jd-note {
+  display: flex; align-items: center; gap: 9px;
+  margin: 16px 0 0; padding: 13px 16px;
+  border: 1px solid var(--jd-line); border-radius: var(--radius-md, 10px);
+  background: var(--jd-flat);
+  font-size: 12.5px; font-weight: 600; color: var(--jd-sub);
+}
+.jd-note .jd-icon { color: var(--color-primary); }
+
+/* 데스크톱 전용이라 한 단계면 충분하다 — 사이드를 본문 아래로 내린다. */
+@media (max-width: 1180px) {
+  .jd-hero { grid-template-columns: 72px minmax(0, 1fr); }
+  .jd-hero-stats { grid-column: 1 / -1; grid-template-columns: repeat(3, auto); justify-content: start; gap: 22px; padding: 16px 0 0; border-top: 1px solid rgba(255, 255, 255, .2); }
+  .jd-body { grid-template-columns: minmax(0, 1fr); }
+  .jd-side { position: static; }
+  .jd-kv { grid-template-columns: minmax(0, 1fr); }
+  .jd-kv > div { border-top: 1px solid var(--jd-line); }
+  .jd-kv > div:first-child { border-top: 0; }
+}

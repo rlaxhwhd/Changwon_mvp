@@ -1,38 +1,31 @@
 /* ── Wrapper ──────────────────────────────────────────────────────── */
+/* 사이드바가 없어진 뒤 남은 껍데기 — 폭·여백·배경은 .v2-main 과 body 가 맡는다. */
 .gj-wrapper {
   display: flex;
-  min-height: calc(100vh - var(--gnb-height));
-  background: var(--color-bg);
 }
 
 /* ── Content Area ─────────────────────────────────────────────────── */
 .gj-content {
   flex: 1;
   min-width: 0;
-  max-width: var(--page-max);
   margin-left: auto;
   margin-right: auto;
   display: flex;
   flex-direction: column;
-  padding: 0 28px 60px;
+  padding: 0 0 60px;
   gap: 24px;
 }
 
 /* ── Page Header — 통일 hero spec ─────────────────────────────────── */
+/* 페이지 제목·설명은 공용 머리글(usePageHead)이 그린다. 이 띠에 있던 제목은 그때
+   지워졌고 배경·높이만 남아 빈 칸이 됐다 → 버튼 한 줄로 접는다.
+   그라데이션·테두리·min-height 를 되살리지 말 것. */
 .gj-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  min-height: 178px;
-  margin: 24px 0 24px;
-  padding: 34px 44px 32px;
-  background:
-    radial-gradient(circle at 74% 36%, rgba(46, 91, 255, 0.16), transparent 30%),
-    linear-gradient(108deg, #ffffff 0%, #f8faff 42%, var(--color-primary-bg) 100%);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
+  margin: 20px 0 16px;
 }
 .gj-page-title {
   display: flex;
@@ -46,7 +39,7 @@
 }
 .gj-page-title i {
   color: var(--color-primary);
-  font-size: 21px;
+  font-size: 20px;
 }
 .gj-page-desc {
   font-size: 18px;
@@ -87,7 +80,7 @@
   border: 1px solid #C7D4FF;
   border-radius: var(--radius-md);
   padding: 12px 16px;
-  font-size: 17px;
+  font-size: 16px;
   color: var(--color-text-sub);
 }
 .gj-tip i { color: var(--color-primary); font-size: 18px; }
@@ -143,7 +136,7 @@
   line-height: 1;
   letter-spacing: -0.02em;
 }
-.gj-stat-unit { font-size: 21px; font-weight: 400; color: var(--color-text-muted); }
+.gj-stat-unit { font-size: 20px; font-weight: 400; color: var(--color-text-muted); }
 
 /* ── Body (list + right) ──────────────────────────────────────────── */
 .gj-body {
@@ -168,7 +161,7 @@
 .gj-tabs { display: flex; gap: 3px; flex: 1; }
 .gj-tab {
   padding: 7px 15px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 500;
   color: var(--color-text-sub);
   border-radius: 999px;
@@ -178,12 +171,21 @@
   transition: all 0.15s;
   white-space: nowrap;
 }
-.gj-tab:hover { background: var(--color-surface); color: var(--color-text); }
+/* 필터 칩은 갈래마다 색이 다르다 — 아래 기록 카드의 왼쪽 띠·태그와 같은 색이라
+   칩을 고르면 어떤 카드가 걸리는지 색으로 먼저 읽힌다.
+   순서는 TABS 상수 그대로: 전체 · 아르바이트 · 팀프로젝트 · 기타 활동.
+   '전체'는 갈래가 아니라 해제라 중립(네이비)이다. */
+.gj-tab:nth-child(1) { --gj-tab-ink: var(--color-navy); }
+.gj-tab:nth-child(2) { --gj-tab-ink: #0284C7; }
+.gj-tab:nth-child(3) { --gj-tab-ink: var(--violet); }
+.gj-tab:nth-child(4) { --gj-tab-ink: #16A34A; }
+
+.gj-tab:hover { background: var(--color-surface); color: var(--gj-tab-ink); }
 .gj-tab.active {
-  background: var(--color-primary);
+  background: var(--gj-tab-ink);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(46, 91, 255, 0.22);
+  box-shadow: none;
 }
 .gj-search-wrap { position: relative; }
 .gj-search {
@@ -191,7 +193,7 @@
   border: 1.5px solid var(--color-border);
   border-radius: 999px;
   padding: 0 14px 0 32px;
-  font-size: 17px;
+  font-size: 16px;
   width: 188px;
   outline: none;
   color: var(--color-text);
@@ -216,7 +218,7 @@
   padding: 7px 14px;
   border: 1.5px solid var(--color-border);
   border-radius: 999px;
-  font-size: 17px;
+  font-size: 16px;
   color: var(--color-text-sub);
   background: none;
   cursor: pointer;
@@ -243,7 +245,7 @@
   text-align: center;
 }
 .gj-empty i { font-size: 44px; color: var(--color-text-muted); }
-.gj-empty p { font-size: 17px; font-weight: 700; color: var(--color-text-sub); }
+.gj-empty p { font-size: 16px; font-weight: 700; color: var(--color-text-sub); }
 
 .gj-entry {
   background: var(--color-bg);
@@ -292,7 +294,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  font-size: 19px;
+  font-size: 18px;
   color: var(--color-text-muted);
   background: none;
   border: none;
@@ -303,14 +305,14 @@
 .gj-act-btn.bookmarked { color: var(--color-primary); }
 
 .gj-entry-title {
-  font-size: 19px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 8px;
   line-height: 1.45;
 }
 .gj-entry-desc {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--color-text-sub);
   line-height: 1.65;
   margin-bottom: 12px;
@@ -356,7 +358,7 @@
 .gj-detail-wide { grid-column: 1 / -1; }
 .gj-detail-label {
   display: block;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
   color: var(--color-primary);
   margin-bottom: 7px;
@@ -366,7 +368,7 @@
 .gj-entry[data-cat="아르바이트"] .gj-detail-label { color: #0284C7; }
 .gj-entry[data-cat="기타 활동"] .gj-detail-label { color: #16A34A; }
 .gj-detail-block p {
-  font-size: 17px;
+  font-size: 16px;
   color: var(--color-text-sub);
   line-height: 1.7;
 }
@@ -392,7 +394,7 @@
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-sm);
-  font-size: 17px;
+  font-size: 16px;
   color: var(--color-text-sub);
   background: var(--color-bg);
   border: 1px solid var(--color-border);
@@ -406,11 +408,11 @@
   background: var(--color-primary-bg);
 }
 .gj-page-btn.on {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
+  background: var(--color-navy);
+  border-color: var(--color-navy);
   color: #fff;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(46,91,255,.25);
+  box-shadow: none;
 }
 .gj-page-btn:disabled { opacity: 0.38; cursor: not-allowed; }
 
@@ -500,8 +502,11 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
+  /* 도넛 정중앙으로 살짝 내려 정렬 */
+  transform: translateY(3px);
+  line-height: 1.1;
 }
-.gj-donut-val { font-size: 18px; font-weight: 900; color: var(--color-navy); }
+.gj-donut-val { font-size: 18px; font-weight: 700; color: var(--color-navy); }
 .gj-donut-pct { font-size: 16px; font-weight: 700; color: var(--color-primary); }
 .gj-usage-desc {
   font-size: 16px;
@@ -515,7 +520,7 @@
   padding: 9px;
   border: 1.5px solid var(--color-primary);
   border-radius: var(--radius-md);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-primary);
   background: none;
@@ -529,7 +534,7 @@
 .gj-guide-item { display: flex; gap: 10px; }
 .gj-guide-ico {
   color: var(--color-primary);
-  font-size: 19px;
+  font-size: 18px;
   margin-top: 2px;
   flex-shrink: 0;
   width: 18px;
@@ -555,8 +560,8 @@
   background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light), var(--color-primary));
 }
 .gj-cta-title {
-  font-size: 21px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 700;
   color: var(--color-navy);
   margin-bottom: 20px;
 }
@@ -571,7 +576,7 @@
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 21px;
+  font-size: 20px;
   flex-shrink: 0;
   box-shadow: 0 4px 12px rgba(46, 91, 255, 0.25);
 }
@@ -587,7 +592,7 @@
   background: linear-gradient(135deg, #7C3AED, #A78BFA);
   box-shadow: 0 4px 12px rgba(124, 58, 237, 0.25);
 }
-.gj-cta-step-name { font-size: 17px; font-weight: 700; color: var(--color-navy); margin-bottom: 4px; }
+.gj-cta-step-name { font-size: 16px; font-weight: 700; color: var(--color-navy); margin-bottom: 4px; }
 .gj-cta-step-desc { font-size: 16px; color: var(--color-text-sub); line-height: 1.55; }
 
 /* ── Floating Help ────────────────────────────────────────────────── */
@@ -612,7 +617,7 @@
 }
 .gj-float-label { font-size: 16px; color: rgba(255, 255, 255, 0.75); }
 .gj-float-btn {
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: #fff;
   background: none;
@@ -649,7 +654,7 @@
   align-items: center;
   gap: 6px;
   color: var(--color-primary);
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   margin-bottom: 14px;
   cursor: pointer;
@@ -690,11 +695,11 @@
   align-items: center;
   justify-content: center;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   flex-shrink: 0;
   box-shadow: 0 3px 8px rgba(46,91,255,.2);
 }
-.gj-section-head h2 { font-size: 21px; font-weight: 900; color: var(--color-navy); margin-bottom: 4px; }
+.gj-section-head h2 { font-size: 20px; font-weight: 700; color: var(--color-navy); margin-bottom: 4px; }
 .gj-section-head p { font-size: 16px; color: var(--color-text-sub); }
 .gj-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
 .gj-field {
@@ -714,7 +719,7 @@
   border-radius: var(--radius-sm);
   background: var(--color-bg);
   color: var(--color-text);
-  font-size: 17px;
+  font-size: 16px;
   line-height: 1.6;
   padding: 11px 12px;
   outline: none;
@@ -733,7 +738,7 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-text-sub);
   cursor: pointer;
@@ -773,7 +778,7 @@
 @media (max-width: 768px) {
   body { min-width: 0; }
   .gj-wrapper { flex-direction: column; }
-  .gj-content { padding: 16px 12px 48px; gap: 12px; }
+  .gj-content { padding: 16px 0 48px; gap: 12px; }
   .gj-page-header { flex-direction: column; align-items: stretch; gap: 12px; padding: 20px 18px; }
   .gj-page-title { font-size: 32px; }
   .gj-btn-primary { width: 100%; justify-content: center; }
@@ -807,6 +812,6 @@
     padding: 20px 18px 18px;
     border-radius: var(--radius-md);
   }
-  .gj-page-title { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .gj-page-title { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
   .gj-page-desc { font-size: 16px; line-height: 1.55; }
 }

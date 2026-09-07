@@ -1,0 +1,123 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   로드맵 수정요청 — 좌: 칸 고르기 / 우: 요청 작성
+   색·간격은 전부 기존 토큰. 새 팔레트를 만들지 않는다(DESIGN.md 락).
+   ───────────────────────────────────────────────────────────────────────── */
+.rr-page { padding: 20px 0 48px; word-break: keep-all; }
+
+.rr-note {
+  display: flex; align-items: center; gap: 9px;
+  margin-bottom: 16px; padding: 13px 16px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-md);
+  background: var(--color-section-bg, var(--color-surface));
+  font-size: 13px; font-weight: 600; color: var(--color-text-sub);
+}
+.rr-note i { color: var(--color-primary); }
+.rr-note strong { color: var(--color-navy); font-weight: 800; }
+
+.rr-body {
+  display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 16px;
+  align-items: start;
+}
+.rr-main { min-width: 0; }
+.rr-side { position: sticky; top: 16px; }
+
+.rr-sec {
+  padding: 20px 22px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+.rr-sec-head { margin-bottom: 14px; }
+.rr-sec-head h2 { margin: 0; font-size: 16px; font-weight: 800; letter-spacing: -.02em; color: var(--color-navy); }
+.rr-sec-head p { margin: 5px 0 0; font-size: 13px; font-weight: 600; color: var(--color-text-muted); }
+
+/* ── 축 탭 ── */
+.rr-axis-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.rr-axis-tab {
+  padding: 7px 14px; border-radius: 999px;
+  border: 1px solid var(--color-border); background: var(--color-bg);
+  font-family: inherit; font-size: 13px; font-weight: 700; color: var(--color-text-sub);
+  cursor: pointer;
+}
+.rr-axis-tab:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.rr-axis-tab.is-on { border-color: transparent; background: var(--color-primary); color: #fff; }
+
+/* 공용 보드는 3열 고정이다 — 다른 화면은 늘 축 3개를 함께 그리니까 그게 맞다.
+   여기만 탭으로 한 축을 걸러 볼 수 있어서, 그대로 두면 카드 하나가 1/3 폭에
+   쪼그라들고 오른쪽 2/3 가 빈다. 이 화면에서만 남은 축이 폭을 다 쓰게 한다. */
+.rr-main .rab { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+
+/* ── 요청 작성 ── */
+.rr-field { display: grid; gap: 6px; margin-bottom: 14px; }
+.rr-field > span { font-size: 13px; font-weight: 800; color: var(--color-navy); }
+.rr-field em { font-style: normal; color: var(--color-danger); }
+.rr-field input,
+.rr-field textarea {
+  width: 100%; padding: 11px 13px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  font-family: var(--font); font-size: 13.5px; color: var(--color-navy);
+  line-height: 1.6; resize: vertical;
+}
+.rr-field input:focus,
+.rr-field textarea:focus { outline: none; border-color: var(--color-primary); }
+.rr-field ::placeholder { color: var(--color-text-muted); }
+
+.rr-picked {
+  margin-bottom: 16px; padding: 12px 14px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+.rr-picked-label { font-size: 12.5px; font-weight: 800; color: var(--color-text-sub); }
+.rr-picked-empty { margin: 6px 0 0; font-size: 12.5px; font-weight: 600; color: var(--color-text-muted); }
+.rr-picked ul { display: grid; gap: 6px; margin: 8px 0 0; padding: 0; list-style: none; }
+.rr-picked li {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12.5px; font-weight: 700; color: var(--color-navy);
+}
+.rr-picked li button {
+  margin-left: auto; width: 20px; height: 20px; flex: none;
+  border: 0; border-radius: 6px; background: var(--color-bg);
+  color: var(--color-text-muted); font-size: 14px; line-height: 1; cursor: pointer;
+}
+.rr-picked li button:hover { color: var(--color-danger); }
+
+.rr-actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 8px; }
+.rr-btn-ghost,
+.rr-btn-primary {
+  display: inline-flex; align-items: center; justify-content: center;
+  height: 44px; border-radius: var(--radius-md);
+  font-family: inherit; font-size: 14px; font-weight: 800; text-decoration: none;
+  cursor: pointer;
+}
+.rr-btn-ghost { border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text-sub); }
+.rr-btn-ghost:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.rr-btn-primary { border: 0; background: var(--color-cta); color: #fff; }
+.rr-btn-primary:hover { filter: brightness(1.05); }
+.rr-btn-primary:disabled { opacity: .5; cursor: not-allowed; filter: none; }
+
+/* ── 완료 · 잠금 ── */
+.rr-done, .rr-locked {
+  display: grid; justify-items: center; gap: 12px;
+  padding: 56px 24px; text-align: center;
+  border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+  background: var(--color-bg);
+}
+.rr-done-mark {
+  display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%;
+  background: var(--mint-soft); color: var(--mint-ink); font-size: 28px;
+}
+.rr-locked i { font-size: 30px; color: var(--color-primary); }
+.rr-done h3, .rr-locked h3 { margin: 0; font-size: 21px; font-weight: 800; color: var(--color-navy); }
+.rr-done p, .rr-locked p { margin: 0; max-width: 430px; font-size: 14px; font-weight: 600; line-height: 1.75; color: var(--color-text-muted); }
+.rr-done-actions { display: flex; gap: 8px; margin-top: 8px; }
+.rr-done-actions .rr-btn-ghost,
+.rr-done-actions .rr-btn-primary { min-width: 150px; padding: 0 20px; }
+.rr-locked a {
+  margin-top: 6px; padding: 0 22px; height: 44px;
+  display: inline-flex; align-items: center; border-radius: var(--radius-md);
+  background: var(--color-cta); color: #fff; font-size: 14px; font-weight: 800; text-decoration: none;
+}
+
+@media (max-width: 1180px) {
+  .rr-body { grid-template-columns: minmax(0, 1fr); }
+  .rr-side { position: static; }
+}

@@ -1,0 +1,384 @@
+/* 학생 요약 지표 5장 — 학생 포털(/v2/lounge) · 교직원 포털(/admin/students/:id) 공용.
+   시안: stu_lounge 의 .stats 5장. 값은 시안 CSS 그대로 옮겼고 클래스만 ssc- 로 바꿨다.
+   두 SPA 에 같은 이름의 .stat-* 가 이미 있어(페이지 CSS) 네임스페이스가 필요하다.
+
+   ⚠ 새 색을 만들지 않는다. 아래 토큰 브리지가 각 SPA 가 이미 가진 토큰만 고른다
+     (v2 = --stat-N / --mint …, admin = --green·--teal·--blue·--orange·--purple).
+     admin 은 '텍스트는 --on-* 잉크' 규칙이 있어 아이콘 면색과 글자색을 나눈다. */
+
+/* 컨테이너 쿼리 기준점 — 뷰포트가 아니라 '카드가 놓인 폭'을 본다.
+   같은 1600px 화면에서도 학생정보 모달 안은 998px 이라 5열이 좁아진다. */
+.ssc-wrap { container-type: inline-size; }
+
+.ssc {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 16px;
+  margin: 0 0 16px;
+
+  /* 중립 — 학생 포털 값으로 고정한다.
+     호스트 토큰을 찾아가면 교직원 포털에서 글자색이 #1D2433/#5F6B7A 로 갈렸다.
+     공용 컴포넌트는 어디에 놓여도 같아야 하므로 호스트 팔레트를 따르지 않는다. */
+  --ssc-card:   #ffffff;
+  --ssc-text:   #181c25;
+  --ssc-sub:    #565e6d;
+  --ssc-border: #e2e6ec;
+  --ssc-muted:  #f1f3f6;
+  --ssc-radius: 12px;
+}
+
+/* 지표 5종 — 진단완료 · 상담현황 · 이행률 · 비교과이수 · 성장레벨
+   ★ 강조색은 학생 포털(stu_lounge 시안) 값을 이 파일에 고정한다.
+     예전에는 var(--stat-N, var(--green …)) 처럼 호스트 토큰을 찾아갔는데,
+     교직원 포털에는 --stat-N 이 없어 admin 팔레트(--green/--teal/--orange)로
+     폴백했다 → 같은 카드가 두 포털에서 다른 색으로 보였다.
+     공용 컴포넌트는 어디에 놓여도 같은 색이어야 하므로 호스트 색 규칙을
+     따르지 않는다. 색을 바꿀 일이 있으면 여기 한 곳만 고친다. */
+.ssc-card.is-diagnosis {
+  --stat-color: #20b486;  /* mint */
+  --stat-soft:  #e5f8f2;
+  --stat-alt:   #20b486;
+}
+.ssc-card.is-counsel {
+  --stat-color: #17a9e6;  /* sky */
+  --stat-soft:  #e7f7fd;
+  --stat-alt:   #17a9e6;
+}
+.ssc-card.is-roadmap {
+  --stat-color: #356dff;  /* blue */
+  --stat-soft:  #eaf0ff;
+  --stat-alt:   #356dff;
+}
+.ssc-card.is-program {
+  --stat-color: #e85aad;  /* pink */
+  --stat-soft:  #fdebf6;
+  --stat-alt:   #e85aad;
+}
+/* 필수교과(STAR 트랙) — 진단완료와 같은 형이고 색만 다르다.
+   amber 가 남아 있었지만 #f5a524 는 흰 배경 대비가 2:1 이라 막대 옆 % 숫자가 안 읽힌다.
+   violet 은 4.4:1 이라 안전하고, STAR 4장(mint·sky·violet·pink)에서 서로 구분된다. */
+.ssc-card.is-course {
+  --stat-color: #7c5cfc;  /* violet */
+  --stat-soft:  #f0edff;
+  --stat-alt:   #7c5cfc;
+}
+.ssc-card.is-level {
+  --stat-color: #7c5cfc;  /* violet */
+  --stat-soft:  #f0edff;
+  --stat-alt:   #356dff;  /* XP 막대 끝 — 시안의 violet→blue 그라데이션 */
+}
+
+/* ── 카드 ── */
+.ssc-card {
+  position: relative;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 144px;
+  border: 1px solid var(--ssc-border);
+  border-radius: var(--ssc-radius);
+  background: var(--ssc-card);
+  color: var(--ssc-text);
+}
+
+.ssc-body {
+  height: 100%;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ssc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* 머리글 + 라벨은 한 덩어리로 묶어 아이콘과 마주 보게 한다.
+   min-width:0 이 없으면 긴 라벨이 아이콘을 밀어낸다. */
+.ssc-heading { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+
+/* 지표가 어느 체계의 것인지 밝히는 작은 머리글 — 라벨보다 약하게 둔다. */
+.ssc-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: .08em;
+  line-height: 1;
+  color: var(--stat-color);
+}
+
+.ssc-label {
+  color: var(--ssc-text);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.ssc-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: var(--stat-color);
+  background: var(--stat-soft);
+}
+.ssc-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ssc-value {
+  margin: 18px 0 10px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 36px;
+}
+.ssc-value small {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--ssc-sub);
+  line-height: 20px;
+}
+
+.ssc-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  line-height: 18px;
+}
+.ssc-foot > span { color: var(--ssc-sub); }
+
+.ssc-badge {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid color-mix(in srgb, var(--stat-color) 28%, var(--ssc-border));
+  border-radius: var(--ssc-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--stat-color);
+  background: var(--stat-soft);
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+/* ── 막대 (진단·이행률·비교과) ── */
+.ssc-meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  /* 시안 캐스케이드: .stat-meter{margin:16px 0 0} → .stat-card .stat-meter{margin-top:auto} */
+  margin: 16px 0 0;
+  margin-top: auto;
+}
+.ssc-meter-track {
+  height: 10px;
+  border-radius: 6px;
+  background: repeating-linear-gradient(90deg, var(--ssc-muted) 0 12px, transparent 12px 16px);
+  overflow: visible;
+}
+.ssc-meter-track > i {
+  position: relative;
+  display: block;
+  width: var(--value);
+  height: 100%;
+  border-radius: 6px;
+  background: repeating-linear-gradient(90deg, var(--accent) 0 12px, transparent 12px 16px);
+  transition: width 700ms cubic-bezier(.2, .8, .2, 1);
+}
+.ssc-meter-track > i::after {
+  content: "";
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 6px;
+  height: 16px;
+  border: 2px solid var(--ssc-card);
+  border-radius: 4px;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 22%, transparent);
+  transform: translate(50%, -50%);
+}
+.ssc-meter b {
+  min-width: 34px;
+  color: var(--accent);
+  font-size: 12px;
+  line-height: 18px;
+  text-align: right;
+}
+
+/* ── 상담 현황 카드 ── */
+.ssc-counsel {
+  margin-top: 12px;
+  display: grid;
+  gap: 10px;
+}
+.ssc-counsel-total {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ssc-counsel-total strong { font-size: 28px; line-height: 36px; }
+.ssc-counsel-total strong small { margin-left: 2px; color: var(--ssc-sub); font-size: 14px; }
+.ssc-counsel-total > span { color: var(--ssc-sub); font-size: 12px; }
+
+.ssc-channels { display: grid; gap: 6px; }
+.ssc-channels > span {
+  min-height: 24px;
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  font-size: 13px;
+}
+/* 상담 3종 — 시안 순서(진로취업 · 심리 · 지도교수) 그대로 색을 매긴다.
+   ★ 여기도 학생 포털 값 고정이다. 호스트 --counsel-N 을 따라가면
+     학생 amber/violet/mint ↔ 교직원 green/purple/blue 로 점 색이 갈렸다. */
+.ssc-channels > span:nth-child(1) {
+  --type-color: #f5a524;  /* amber */
+  --type-ink:   #f5a524;
+}
+.ssc-channels > span:nth-child(2) {
+  --type-color: #7c5cfc;  /* violet */
+  --type-ink:   #7c5cfc;
+}
+.ssc-channels > span:nth-child(3) {
+  --type-color: #20b486;  /* mint */
+  --type-ink:   #20b486;
+}
+.ssc-channels i { width: 8px; height: 8px; border-radius: 50%; background: var(--type-color); }
+.ssc-channels em { color: var(--type-ink); font-style: normal; font-weight: 900; }
+
+/* ── 성장 레벨 카드 ── */
+.ssc-level {
+  margin: 14px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ssc-medallion {
+  width: 54px;
+  height: 54px;
+  border: 1px solid color-mix(in srgb, var(--stat-color) 32%, var(--ssc-border));
+  border-radius: 16px;
+  color: var(--stat-color);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  flex: 0 0 auto;
+}
+.ssc-medallion small { font-size: 10px; font-weight: 700; line-height: 1; }
+.ssc-medallion b { margin-top: 2px; font-size: 18px; line-height: 1; }
+
+.ssc-level-copy { min-width: 0; }
+.ssc-level-copy small { display: block; color: var(--ssc-sub); font-size: 12px; }
+.ssc-level-copy b {
+  display: block;
+  margin: 2px 0;
+  overflow: hidden;
+  color: var(--ssc-text);
+  font-size: 14px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ssc-xp { margin-top: auto; }
+.ssc-xp-copy {
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--ssc-sub);
+  font-size: 12px;
+}
+.ssc-xp-copy b { color: var(--ssc-text); }
+.ssc-xp-copy span { text-align: right; }
+
+.ssc-xp-track {
+  height: 10px;
+  border-radius: 6px;
+  background: var(--ssc-muted);
+  overflow: visible;
+}
+.ssc-xp-track i {
+  display: block;
+  position: relative;
+  width: var(--value);
+  height: 100%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--stat-alt), var(--stat-color));
+}
+.ssc-xp-track i::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  right: 0;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--ssc-card);
+  border-radius: 50%;
+  background: var(--stat-color);
+  box-shadow: 0 0 0 2px var(--stat-soft);
+  transform: translate(50%, -50%);
+}
+
+/* ── 좁은 폭 압축 (학생 상세 모달 998px 등) ────────────────────────────────
+   열을 줄이는 대신 카드를 줄여 5장을 한 줄로 유지한다.
+   3열로 접으면 5장이 3+2 로 갈라져 '한눈에 보는 요약 한 줄'이라는 뜻이 사라진다.
+   여기서는 치수만 줄인다 — 색·구조·문구는 위 정의 그대로다. */
+@container (max-width: 1120px) {
+  .ssc { gap: 10px; }
+  .ssc-card { min-height: 0; }
+  .ssc-body { padding: 14px; }
+
+  .ssc-label { font-size: 12px; line-height: 16px; }
+  .ssc-icon { width: 28px; height: 28px; border-radius: 8px; }
+  .ssc-icon svg { width: 15px; height: 15px; }
+
+  .ssc-value { margin: 12px 0 8px; font-size: 22px; line-height: 28px; }
+  .ssc-value small { font-size: 12px; line-height: 16px; }
+
+  .ssc-foot { gap: 6px; font-size: 11px; line-height: 16px; }
+  .ssc-badge { min-height: 20px; padding: 0 6px; border-radius: 8px; font-size: 11px; }
+
+  .ssc-meter { margin-top: auto; gap: 6px; }
+  .ssc-meter b { min-width: 26px; font-size: 11px; }
+
+  .ssc-counsel { margin-top: 10px; gap: 8px; }
+  .ssc-counsel-total strong { font-size: 22px; line-height: 28px; }
+  .ssc-counsel-total strong small { font-size: 12px; }
+  .ssc-counsel-total > span { font-size: 11px; }
+  .ssc-channels { gap: 4px; }
+  .ssc-channels > span { min-height: 20px; gap: 6px; font-size: 11px; }
+
+  .ssc-level { margin: 10px 0 12px; gap: 8px; }
+  .ssc-medallion { width: 42px; height: 42px; border-radius: 12px; }
+  .ssc-medallion small { font-size: 9px; }
+  .ssc-medallion b { font-size: 15px; }
+  .ssc-level-copy small { font-size: 11px; }
+  .ssc-level-copy b { font-size: 12px; }
+  .ssc-xp-copy { margin-bottom: 6px; font-size: 11px; }
+}
+
+/* 압축해도 5장이 안 들어가는 폭에서만 열을 줄인다. */
+@container (max-width: 860px) {
+  .ssc { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@container (max-width: 620px) {
+  .ssc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

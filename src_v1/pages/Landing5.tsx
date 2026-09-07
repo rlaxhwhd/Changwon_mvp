@@ -133,7 +133,7 @@ export default function Landing5({ onNavigate, onToast }: Landing5Props) {
                 }
               }}
             >
-              <div className="l5-card-icon">
+              <div className="l5-card-ic on">
                 <i className={r.icon} />
               </div>
               <h2 className="l5-card-title">{r.title}</h2>

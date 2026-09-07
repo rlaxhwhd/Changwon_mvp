@@ -1,0 +1,114 @@
+[
+  {
+    "id": "pcr_001",
+    "studentId": "stu-089",
+    "professorId": "cse-1",
+    "professorName": "박지훈",
+    "categoryCode": "01",
+    "method": "대면",
+    "date": "2026-03-12",
+    "createdAt": "2026-03-12T09:00:00.000Z",
+    "snapshot": {
+      "studentNo": "20230089",
+      "name": "남시은",
+      "major": "컴퓨터공학과",
+      "grade": 4
+    }
+  },
+  {
+    "id": "pcr_002",
+    "studentId": "stu-091",
+    "professorId": "cse-1",
+    "professorName": "박지훈",
+    "categoryCode": "02",
+    "method": "비대면",
+    "date": "2026-02-20",
+    "createdAt": "2026-02-20T09:00:00.000Z",
+    "snapshot": {
+      "studentNo": "20250091",
+      "name": "김지원",
+      "major": "컴퓨터공학과",
+      "grade": 2
+    }
+  },
+  {
+    "id": "pcr_003",
+    "studentId": "stu-091",
+    "professorId": "cse-1",
+    "professorName": "박지훈",
+    "categoryCode": "03",
+    "method": "대면",
+    "date": "2025-11-18",
+    "createdAt": "2025-11-18T09:00:00.000Z",
+    "snapshot": {
+      "studentNo": "20250091",
+      "name": "김지원",
+      "major": "컴퓨터공학과",
+      "grade": 2
+    }
+  },
+  {
+    "id": "pcr_004",
+    "studentId": "stu-101",
+    "professorId": "cse-1",
+    "professorName": "박지훈",
+    "categoryCode": "04",
+    "method": "비대면",
+    "date": "2025-10-15",
+    "createdAt": "2025-10-15T09:00:00.000Z",
+    "snapshot": {
+      "studentNo": "20250101",
+      "name": "이도윤",
+      "major": "컴퓨터공학과",
+      "grade": 1
+    }
+  },
+  {
+    "id": "pcr_005",
+    "studentId": "stu-104",
+    "professorId": "cse-2",
+    "professorName": "강민재",
+    "categoryCode": "05",
+    "method": "대면",
+    "date": "2026-01-27",
+    "createdAt": "2026-01-27T09:00:00.000Z",
+    "snapshot": {
+      "studentNo": "20240104",
+      "name": "정민석",
+      "major": "컴퓨터공학과",
+      "grade": 2
+    }
+  },
+  {
+    "id": "pcr_006",
+    "studentId": "stu-010",
+    "professorId": "biz-1",
+    "professorName": "김세환",
+    "categoryCode": "06",
+    "method": "대면",
+    "date": "2026-02-11",
+    "createdAt": "2026-02-11T09:00:00.000Z",
+    "snapshot": {
+      "studentNo": "20250010",
+      "name": "임주하",
+      "major": "경영학과",
+      "grade": 2
+    }
+  },
+  {
+    "id": "pcr_007",
+    "studentId": "stu-012",
+    "professorId": "biz-1",
+    "professorName": "김세환",
+    "categoryCode": "02",
+    "method": "비대면",
+    "date": "2025-12-03",
+    "createdAt": "2025-12-03T09:00:00.000Z",
+    "snapshot": {
+      "studentNo": "20240012",
+      "name": "오민재",
+      "major": "경영학과",
+      "grade": 3
+    }
+  }
+]

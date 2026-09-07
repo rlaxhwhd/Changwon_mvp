@@ -1,7 +1,17 @@
+import type { IconName } from './Icon'
+import type { Stage } from '../data/careerProcess'
+
 export interface NavChild {
   label: string
   path: string
   icon: string
+  minGrade?: number
+  /**
+   * 이 항목이 가리키는 카드가 열려 있어야 하는 단계.
+   * 라운지 하위메뉴는 화면이 아니라 **그 페이지의 카드**로 가는 앵커라, 카드가 감춰지면
+   * 메뉴도 같이 사라져야 한다 — 안 그러면 눌러도 아무 데도 안 가는 링크가 된다.
+   */
+  requiresStage?: Stage
   children?: NavChild[]
 }
 
@@ -10,7 +20,8 @@ export interface NavSection {
   label: string
   basePaths: string[]
   path?: string
-  icon: string
+  /** 상단바 아이콘 — SVG 스프라이트 심볼 이름 (components/Icon.tsx) */
+  icon: IconName
   children: NavChild[]
 }
 
@@ -20,71 +31,87 @@ export const NAV_SECTIONS: NavSection[] = [
     label: 'AI 커리어 라운지',
     basePaths: ['/lounge'],
     path: '/lounge',
-    icon: 'fa-comments',
+    icon: 'layout',
+    // 라운지는 한 페이지짜리 대시보드다 — 하위메뉴는 다른 화면이 아니라 이 페이지의 카드로 가는
+    // 앵커다. 라벨은 카드 제목과 같게 두고(다르면 눌러서 도착한 곳이 딴 이름이 된다),
+    // 순서도 화면에 보이는 순서를 따른다. 스크롤은 ScrollToTop 이 hash 를 보고 처리한다.
+    // requiresStage 는 AiLounge 의 카드 노출 조건과 1:1 이다 — 한쪽만 고치면 어긋난다.
     children: [
-      { label: '종합 분석 리포트', path: '/lounge#report', icon: 'fa-clipboard-list' },
-      { label: '역량 비교 분석', path: '/lounge#competency', icon: 'fa-chart-bar' },
-      { label: '진단검사 결과', path: '/lounge#tests', icon: 'fa-chart-pie' },
-      { label: '상담 내역', path: '/lounge#counsel', icon: 'fa-comments' },
-      { label: 'TOEIC 학습 분석', path: '/lounge#toeic', icon: 'fa-book' },
-      { label: 'AI 액션 로드맵', path: '/lounge#roadmap', icon: 'fa-wand-magic-sparkles' },
+      { label: '나의 진로 여정', path: '/lounge#journey', icon: 'fa-route' },
+      { label: '목표 달성 계획', path: '/lounge#goal', icon: 'fa-bullseye', requiresStage: 'roadmap' },
+      { label: '이번 주 할 일', path: '/lounge#todo', icon: 'fa-list-check', requiresStage: 'growth' },
+      { label: '성장 활동 기록', path: '/lounge#recommend', icon: 'fa-timeline', requiresStage: 'growth' },
+      { label: '5대 핵심역량', path: '/lounge#competency', icon: 'fa-chart-bar', requiresStage: 'roadmap' },
+      { label: '진단 결과', path: '/lounge#diagnosis', icon: 'fa-chart-pie' },
+      { label: '상담 현황', path: '/lounge#counseling-status', icon: 'fa-comments', requiresStage: 'roadmap' },
     ],
   },
   {
     id: 'diagnosis',
     label: '진단센터',
     basePaths: ['/diagnosis'],
-    icon: 'fa-clipboard-check',
+    icon: 'scan',
     children: [
-      { label: '취업지원 역량진단', path: '/diagnosis/employment', icon: 'fa-clipboard-check' },
-      { label: '진단검사 결과', path: '/diagnosis/result', icon: 'fa-chart-simple' },
+      { label: '진단검사 결과', path: '/diagnosis/employment', icon: 'fa-chart-simple' },
     ],
   },
   {
     id: 'counsel',
     label: '상담센터',
     basePaths: ['/counsel'],
-    icon: 'fa-headset',
+    icon: 'message',
     children: [
       { label: '진로취업상담', path: '/counsel/career', icon: 'fa-briefcase' },
       { label: '심리상담', path: '/counsel/psych', icon: 'fa-heart' },
       { label: '지도교수상담', path: '/counsel/professor', icon: 'fa-user-tie' },
+      { label: '상담 현황', path: '/counsel/record', icon: 'fa-clipboard-list' },
     ],
   },
   {
     id: 'roadmap',
     label: '진로취업 로드맵',
     basePaths: ['/roadmap'],
-    icon: 'fa-route',
+    icon: 'route',
     children: [
       { label: 'AI 진로로드맵', path: '/roadmap/ai', icon: 'fa-route' },
       { label: 'AI 직무 로드맵', path: '/roadmap/skill-tree', icon: 'fa-sitemap' },
+      { label: '로드맵 수정요청', path: '/roadmap/request', icon: 'fa-pen-to-square' },
       { label: '최종 로드맵', path: '/roadmap/final', icon: 'fa-bullseye' },
+    ],
+  },
+  {
+    id: 'program-apply',
+    label: '비교과 프로그램',
+    basePaths: ['/growth/program'],
+    path: '/growth/program',
+    icon: 'calendar',
+    children: [
+      { label: '비교과 프로그램', path: '/growth/program', icon: 'fa-clipboard-list' },
     ],
   },
   {
     id: 'growth',
     label: '내 성장',
     basePaths: ['/growth'],
-    icon: 'fa-seedling',
+    icon: 'target',
     children: [
       { label: '홈대시보드', path: '/growth', icon: 'fa-house' },
-      { label: '비교과프로그램신청', path: '/growth/program', icon: 'fa-clipboard-list' },
+      { label: '로드맵 진행 현황', path: '/growth/roadmap-status', icon: 'fa-route' },
       { label: '퀘스트보드', path: '/growth/quest', icon: 'fa-list-check' },
-      { label: '오늘의 성장미션', path: '/growth/mission', icon: 'fa-bullseye' },
-      { label: '일일미션 기록노트', path: '/growth/mission-log', icon: 'fa-calendar-check' },
+      { label: '오늘의 성장퀘스트', path: '/growth/mission', icon: 'fa-bullseye' },
+      { label: '일일퀘스트 기록노트', path: '/growth/mission-log', icon: 'fa-calendar-check' },
       { label: '성장경험일지', path: '/growth/journal', icon: 'fa-book-open' },
     ],
   },
   {
     id: 'jobs',
-    label: '취업지원',
+    label: '기업정보 플랫폼',
     basePaths: ['/jobs'],
     path: '/jobs',
-    icon: 'fa-building-user',
+    icon: 'briefcase',
     children: [
-      { label: '채용공고', path: '/jobs', icon: 'fa-building-user' },
-      { label: '취업예측분석', path: '/jobs/prediction', icon: 'fa-chart-line' },
+      { label: '교내 채용공고', path: '/jobs', icon: 'fa-building-user' },
+      { label: '외부 채용공고', path: '/jobs/external', icon: 'fa-globe' },
       { label: 'AI 맞춤채용', path: '/jobs/joblist', icon: 'fa-briefcase' },
       {
         label: 'AI 자소서/면접',
@@ -95,20 +122,40 @@ export const NAV_SECTIONS: NavSection[] = [
           { label: 'AI 컨설팅', path: '/jobs/home/consulting', icon: 'fa-magnifying-glass-chart' },
         ],
       },
+      { label: '공지사항', path: '/jobs/notices', icon: 'fa-bullhorn' },
     ],
   },
   {
     id: 'mypage',
     label: '마이페이지',
     basePaths: ['/mypage'],
-    icon: 'fa-user',
+    icon: 'user',
     children: [
-      { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open' },
+      { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open', minGrade: 4 },
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
-      { label: '상담 현황', path: '/mypage/counsel', icon: 'fa-headset' },
+      { label: '추천채용 지원 내역', path: '/mypage/applications', icon: 'fa-file-signature' },
+      { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check' },
     ],
   },
 ]
+
+/**
+ * @param access 단계별 개방 여부(careerProcess.getStageAccess). 넘기지 않으면 단계 필터를 걸지 않는다.
+ */
+export function getVisibleNavChildren(
+  children: NavChild[],
+  grade: number,
+  access?: Record<Stage, 'open' | 'locked'>,
+): NavChild[] {
+  return children
+    .filter(child => child.path !== '/roadmap/ai' && child.path !== '/roadmap/final')
+    .filter(child => child.minGrade === undefined || grade >= child.minGrade)
+    .filter(child => !access || !child.requiresStage || access[child.requiresStage] === 'open')
+    .map(child => ({
+      ...child,
+      children: child.children ? getVisibleNavChildren(child.children, grade, access) : undefined,
+    }))
+}
 
 export function matchesPath(pathname: string, targetPath: string) {
   if (targetPath === '/') return pathname === '/'
@@ -148,4 +195,46 @@ export function getActiveChildPath(pathname: string, section: NavSection, hash =
   }
 
   return matches.reduce((best, child) => (child.path.length > best.path.length ? child : best)).path
+}
+
+/** 경로 표시(빵부스러기) 한 칸. path 가 없으면 링크가 아니라 현재 위치다. */
+export interface CrumbItem {
+  label: string
+  path?: string
+}
+
+/**
+ * 현재 경로의 상위 계층을 상단바 구성(NAV_SECTIONS)에서 파생한다.
+ * 예: '/counsel/career' → [상담센터, 진로취업상담]
+ *
+ * ★ 라벨을 화면에 다시 적지 않는다 — 상단바 이름이 바뀌면 경로 표시도 같이 바뀌어야 한다.
+ *   중첩 children(예: 취업지원 > AI 자소서/면접 > AI 자소서 생성)도 조상까지 모두 담는다.
+ */
+export function getCrumbTrail(pathname: string): CrumbItem[] {
+  const section = getSectionForPath(pathname)
+  if (!section) return []
+
+  const trail: CrumbItem[] = [{ label: section.label, path: section.path }]
+
+  // 활성 child 를 찾은 뒤, 그 조상 체인을 되짚어 담는다.
+  const activePath = getActiveChildPath(pathname, section)
+  if (!activePath) return trail
+
+  const chain: NavChild[] = []
+  const walk = (items: NavChild[], ancestors: NavChild[]): boolean =>
+    items.some(child => {
+      if (child.path === activePath) {
+        chain.push(...ancestors, child)
+        return true
+      }
+      return child.children ? walk(child.children, [...ancestors, child]) : false
+    })
+  walk(section.children, [])
+
+  // 섹션과 첫 child 의 이름이 같으면(예: 비교과 프로그램) 같은 말을 두 번 쓰지 않는다.
+  for (const child of chain) {
+    if (trail.some(item => item.label === child.label)) continue
+    trail.push({ label: child.label, path: child.path.split('#')[0] })
+  }
+  return trail
 }

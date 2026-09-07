@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { loadJournalEntries, saveJournalEntries, type Category, type Entry } from './GrowthJournal'
+import { loadJournalEntries, saveJournalEntries, type Category, type Entry } from '../../data/growthJournal'
+import { getActiveStudentId } from '../../data/students'
 import './GrowthJournal.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 const EMPTY_ENTRY = {
   category: '팀프로젝트' as Category,
@@ -22,7 +24,9 @@ export default function GrowthJournalForm() {
   const navigate = useNavigate()
   const { entryId } = useParams()
   const isEdit = Boolean(entryId)
-  const entries = useMemo(() => loadJournalEntries(), [])
+  usePageHead(isEdit ? '일지 상세/수정' : '새 일지 작성', '아르바이트·팀프로젝트에서 겪은 일을 기록해 두면 자기소개서 작성에 쓸 수 있어요.')
+  const studentId = getActiveStudentId()
+  const entries = useMemo(() => loadJournalEntries(studentId), [studentId])
   const entry = useMemo(
     () => entries.find(item => String(item.id) === entryId),
     [entries, entryId],
@@ -68,7 +72,7 @@ export default function GrowthJournalForm() {
     const nextEntries = entry
       ? entries.map(item => item.id === entry.id ? nextEntry : item)
       : [nextEntry, ...entries]
-    saveJournalEntries(nextEntries)
+    saveJournalEntries(studentId, nextEntries)
     navigate('/growth/journal')
   }
 

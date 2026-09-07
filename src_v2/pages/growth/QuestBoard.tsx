@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import './QuestBoard.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type QuestTab = 'daily' | 'monthly' | 'semester'
 
@@ -93,32 +94,28 @@ const guideItems = [
 ]
 
 export default function QuestBoard() {
+  usePageHead('퀘스트 보드', '일일·주간·월간 퀘스트와 학과 랭킹을 확인합니다. 매일 성장하는 습관이 큰 변화를 만듭니다.')
   const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState<QuestTab>('daily')
   const activeQuests = questsByTab[activeTab]
 
   return (
     <main className="qb-page">
-      <header className="qb-header">
-        <h1>퀘스트 보드</h1>
-        <p>매일 성장하는 습관이 큰 변화를 만듭니다!</p>
-      </header>
-
       <section className="qb-summary-grid" aria-label="퀘스트 요약">
         <article className="qb-card qb-progress-card">
           <div>
-            <h2>오늘의 진행률</h2>
+            <h2>다음 레벨까지</h2>
             <div className="qb-progress-value">
-              <strong>3</strong>
-              <span>/ 3</span>
+              <strong>Lv. 23</strong>
+              <span>→ Lv. 24</span>
             </div>
             <div className="qb-progress-track" aria-hidden="true">
-              <span style={{ width: '100%' }} />
+              <span style={{ width: '62.5%' }} />
             </div>
-            <p>모든 일일 퀘스트를 완료했어요.</p>
+            <p>1,250 / 2,000 XP · 750 XP 남았어요</p>
           </div>
           <div className="qb-reward-wrap">
-            <button className="qb-primary-btn" type="button">보상 받기</button>
+            <button className="qb-primary-btn" type="button">보상 미리보기</button>
           </div>
         </article>
 

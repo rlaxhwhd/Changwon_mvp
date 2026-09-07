@@ -1,0 +1,12 @@
+{
+  "id": "psych_yoon",
+  "name": "윤하늘",
+  "role": "psych",
+  "roleLabel": "심리상담사",
+  "dept": "학생상담센터",
+  "scope": "정서조절·마음챙김 상담",
+  "departments": [],
+  "specialty": "정서조절 · 마음챙김",
+  "email": "psych.yoon@changwon.ac.kr",
+  "officeHours": "화·금 10:00~15:00"
+}

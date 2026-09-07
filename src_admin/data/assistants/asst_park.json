@@ -1,0 +1,10 @@
+{
+  "id": "asst_park",
+  "empNo": "80302",
+  "name": "박서연",
+  "role": "assistant",
+  "roleLabel": "조교",
+  "dept": "경영학과",
+  "departments": ["경영학과"],
+  "email": "asst.park@changwon.ac.kr"
+}

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import './TodayGrowthMission.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type MissionTab = 'word' | 'major' | 'ncs'
 type MissionPhase = 'study' | 'quiz' | 'result'
@@ -86,19 +87,19 @@ const ncsQuizzes: Quiz[] = [
 const missionTabs: Record<MissionTab, { label: string; title: string; description: string; icon: string }> = {
   word: {
     label: 'TOEIC 영단어',
-    title: 'TOEIC 영단어 일일미션',
+    title: 'TOEIC 영단어 일일퀘스트',
     description: `매일 10개의 핵심 단어를 학습하고 퀴즈를 통과해보세요. ${WORD_PASS}개 이상 맞히면 성공입니다.`,
     icon: 'fa-language',
   },
   major: {
     label: '전공 퀴즈',
-    title: '전공과목 퀴즈 미션',
+    title: '전공과목 퀴즈 퀘스트',
     description: '컴퓨터공학 핵심 개념 3문제를 풀어보세요. 2개 이상 맞히면 성공입니다.',
     icon: 'fa-graduation-cap',
   },
   ncs: {
     label: 'NCS/GSAT',
-    title: 'NCS/GSAT 일일미션',
+    title: 'NCS/GSAT 일일퀘스트',
     description: '기업 직무적성 유형 3문제를 실전처럼 풀어보세요. 2개 이상 맞히면 성공입니다.',
     icon: 'fa-building-columns',
   },
@@ -117,7 +118,7 @@ function MissionCalendar() {
   return (
     <aside className="tgm-calendar">
       <div className="tgm-calendar-head">
-        <h2>미션 현황</h2>
+        <h2>퀘스트 현황</h2>
         <span>2026년 5월</span>
       </div>
       <div className="tgm-calendar-stats">
@@ -145,6 +146,7 @@ export default function TodayGrowthMission() {
 
   const quizzes = tab === 'major' ? majorQuizzes : ncsQuizzes
   const tabInfo = missionTabs[tab]
+  usePageHead(tabInfo.title, tabInfo.description)
 
   const correctCount = useMemo(() => {
     if (!submitted) return 0
@@ -175,20 +177,16 @@ export default function TodayGrowthMission() {
   }
 
   return (
-    <main className="tgm-page">
+    // 활성 퀘스트를 클래스로 내보낸다 — 페이지 강조색이 퀘스트 종류를 따라간다.
+    <main className={`tgm-page is-${tab}`}>
       <header className="tgm-header">
-        <div>
-          <span className="tgm-kicker">오늘의 성장미션</span>
-          <h1>{tabInfo.title}</h1>
-          <p>{tabInfo.description}</p>
-        </div>
         <button className="tgm-log-btn" type="button" onClick={() => navigate('/growth/mission-log')}>
           기록노트 보기
           <i className="fa-solid fa-arrow-right" />
         </button>
       </header>
 
-      <section className="tgm-tabs" aria-label="미션 유형">
+      <section className="tgm-tabs" aria-label="퀘스트 유형">
         {(Object.keys(missionTabs) as MissionTab[]).map((item) => (
           <button
             className={tab === item ? 'active' : ''}
@@ -253,7 +251,7 @@ export default function TodayGrowthMission() {
               </div>
               <div className="tgm-action-row">
                 <button className="tgm-ghost-btn" type="button" onClick={() => setPhase('study')}>다시 학습하기</button>
-                <button className="tgm-primary-btn" type="button" onClick={submitMission}>미션 완료하기</button>
+                <button className="tgm-primary-btn" type="button" onClick={submitMission}>퀘스트 완료하기</button>
               </div>
             </>
           )}
@@ -285,7 +283,7 @@ export default function TodayGrowthMission() {
                 ))}
               </div>
               <div className="tgm-action-row">
-                <button className="tgm-primary-btn" type="button" onClick={submitMission}>미션 완료하기</button>
+                <button className="tgm-primary-btn" type="button" onClick={submitMission}>퀘스트 완료하기</button>
               </div>
             </>
           )}
@@ -293,9 +291,9 @@ export default function TodayGrowthMission() {
           {phase === 'result' && submitted && (
             <div className="tgm-result">
               <div className={`tgm-result-banner ${passed ? 'pass' : 'fail'}`}>
-                <strong>{passed ? '미션 성공' : '미션 재도전'}</strong>
+                <strong>{passed ? '퀘스트 성공' : '퀘스트 재도전'}</strong>
                 <p>{totalCount}문제 중 {correctCount}개 정답</p>
-                <span>{passed ? '오늘의 성장미션을 완료했습니다.' : `${passThreshold}개 이상 맞히면 미션 성공입니다.`}</span>
+                <span>{passed ? '오늘의 성장퀘스트을 완료했습니다.' : `${passThreshold}개 이상 맞히면 퀘스트 성공입니다.`}</span>
               </div>
 
               <div className="tgm-review-list">

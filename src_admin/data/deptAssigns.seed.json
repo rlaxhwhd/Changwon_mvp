@@ -1,0 +1,33 @@
+[
+  {
+    "id": "da-001",
+    "intgUid": "cse-1",
+    "role": "professor",
+    "deptCode": "C07-10",
+    "majorCode": null,
+    "status": "active",
+    "assignedAt": "2026-03-02",
+    "handledBy": "admin-1"
+  },
+  {
+    "id": "da-002",
+    "intgUid": "biz-1",
+    "role": "professor",
+    "deptCode": "C05-04",
+    "majorCode": null,
+    "status": "active",
+    "assignedAt": "2026-03-02",
+    "handledBy": "admin-1"
+  },
+  {
+    "id": "da-003",
+    "intgUid": "biz-1",
+    "role": "professor",
+    "deptCode": "C05-02",
+    "majorCode": null,
+    "status": "released",
+    "assignedAt": "2025-09-01",
+    "releasedAt": "2026-02-28",
+    "handledBy": "admin-1"
+  }
+]

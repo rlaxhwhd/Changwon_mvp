@@ -1,565 +1,239 @@
-import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
+import { Link } from 'react-router-dom'
+import CareerPopup from '../components/CareerPopup'
+import CareerJourneyCard from '../components/CareerJourneyCard'
+import NextStepBanner from '../components/NextStepBanner'
+import CompetencyRadarChart from '../components/CompetencyRadarChart'
+import { buildCareerJourney } from '../data/careerProcess'
+import { getCompetencyAxes } from '../data/competency'
+import { getTodayTasks } from '../data/todayTasks'
+import { getActiveStudent } from '../data/students'
+import { getPipelineState } from '../data/pipeline'
 import './Main.css'
 
-/* ── Mock Data ─────────────────────────────────────────────────── */
-const RANKING = [
-  { rank: 1, name: '박지민', xp: 2340 },
-  { rank: 2, name: '이서연', xp: 2210 },
-  { rank: 3, name: '최민수', xp: 2100 },
-  { rank: 4, name: '정하늘', xp: 1980 },
-  { rank: 5, name: '한도윤', xp: 1920 },
-]
-
-const MY_RANK = { rank: 12, total: 45, name: '김채원', xp: 1850 }
-
-const RECOMMENDED_PROGRAMS = [
-  { id: 1, title: '데이터 기초 프로그래밍 교육', category: '취업', dDay: 5, image: '/비교과프로그램1.png' },
-  { id: 4, title: '자기탐색으로 개인 역량 찾기', category: '진로', dDay: 3, image: '/비교과프로그램4.png' },
-  { id: 2, title: '데이터 직무역량 개발 교육', category: '취업', dDay: 12, image: '/비교과프로그램2.png' },
-  { id: 3, title: 'ChatGPT 서비스의 발전 방향', category: '진로', dDay: 20, image: '/비교과프로그램3.png' },
-]
-
-const CAT_COLORS: Record<string, string> = {
-  취업: '#2E5BFF',
-  진로: '#22C55E',
-  어학: '#F59E0B',
-  창업: '#EF4444',
-}
-
-const RECOMMENDED_JOBS = [
-  { id: 1, company: '네이버', initial: 'N', color: '#03C75A', role: '서비스기획/PM', match: 92, deadline: '상시채용' },
-  { id: 2, company: '카카오', initial: 'K', color: '#FEE500', textColor: '#1C2442', role: '데이터분석', match: 88, deadline: '05.30 마감' },
-  { id: 3, company: '넥슨', initial: 'NX', color: '#FF5C00', role: '백엔드개발', match: 80, deadline: '06.01 마감' },
-  { id: 4, company: '쿠팡', initial: 'C', color: '#EE2222', role: 'PM/기획', match: 75, deadline: '05.31 마감' },
-]
-
-const NOTICES = [
-  { label: '2024 하계 현장실습 참여자 모집', date: '05.20' },
-  { label: '직무 특강: "빅데이터 개발자 취업 준비"', date: '05.18' },
-  { label: 'AI 자소서 첨삭 이벤트 안내', date: '05.17' },
-]
-
-const RADAR_AXES = [
-  { label: '취업 역량', value: 1.00 },
-  { label: '실무 역량', value: 0.30 },
-  { label: '실행 역량', value: 0.68 },
-  { label: '성장 역량', value: 0.75 },
-  { label: '인성 역량', value: 0.88 },
-  { label: '진로 역량', value: 0.65 },
-]
-
-/* ── Hexagon Radar Chart ───────────────────────────────────────── */
-function RadarChart() {
-  const cx = 100, cy = 100, r = 72
-  const n = RADAR_AXES.length
-
-  const pt = (i: number, ratio: number) => {
-    const angle = (Math.PI * 2 * i) / n - Math.PI / 2
-    return {
-      x: cx + r * ratio * Math.cos(angle),
-      y: cy + r * ratio * Math.sin(angle),
-    }
-  }
-
-  const gridLevels = [0.25, 0.5, 0.75, 1.0]
-  const dataPoints = RADAR_AXES.map((ax, i) => pt(i, ax.value))
-  const dataPath = dataPoints.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
-  const outerPoints = RADAR_AXES.map((_, i) => pt(i, 1.0))
-  const outerPath = outerPoints.map(({ x, y }, i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ') + ' Z'
-
-  return (
-    <svg viewBox="-30 -10 260 220" className="mn-radar-svg">
-      <defs>
-        {/* 홀로그램 메인 그라데이션 */}
-        <linearGradient id="holo-main" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stopColor="#7B6EFF" stopOpacity="0.9" />
-          <stop offset="30%"  stopColor="#4A90FF" stopOpacity="0.85" />
-          <stop offset="60%"  stopColor="#00D4FF" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.9" />
-        </linearGradient>
-        {/* 광택 오버레이 그라데이션 */}
-        <linearGradient id="holo-sheen" x1="100%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.35" />
-          <stop offset="40%"  stopColor="#C4B5FD" stopOpacity="0.15" />
-          <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.25" />
-        </linearGradient>
-        {/* 방사형 내부 광원 */}
-        <radialGradient id="holo-glow" cx="50%" cy="50%" r="50%">
-          <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.4" />
-          <stop offset="60%"  stopColor="#818CF8" stopOpacity="0.1" />
-          <stop offset="100%" stopColor="#818CF8" stopOpacity="0" />
-        </radialGradient>
-        {/* 외곽 글로우 필터 */}
-        <filter id="glow-filter" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="3" result="blur" />
-          <feMerge>
-            <feMergeNode in="blur" />
-            <feMergeNode in="SourceGraphic" />
-          </feMerge>
-        </filter>
-        {/* 클리핑 마스크 */}
-        <clipPath id="data-clip">
-          <path d={dataPath} />
-        </clipPath>
-      </defs>
-
-      {/* 배경 육각형 (가장 바깥 그리드에 연한 틴트) */}
-      <path d={outerPath} fill="url(#holo-main)" fillOpacity="0.06" />
-
-      {/* Grid rings */}
-      {gridLevels.map((lv, li) => (
-        <polygon key={li}
-          points={RADAR_AXES.map((_, i) => { const p = pt(i, lv); return `${p.x},${p.y}` }).join(' ')}
-          fill="none"
-          stroke={lv === 1.0 ? '#A5B4FC' : '#C7D2FE'}
-          strokeWidth={lv === 1.0 ? 1.2 : 0.8}
-          strokeOpacity={lv === 1.0 ? 0.7 : 0.5}
-        />
-      ))}
-
-      {/* Axes */}
-      {RADAR_AXES.map((_, i) => {
-        const outer = pt(i, 1.0)
-        return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#C7D2FE" strokeWidth="0.8" strokeOpacity="0.6" />
-      })}
-
-      {/* 홀로그램 데이터 채우기 — 메인 */}
-      <path d={dataPath} fill="url(#holo-main)" fillOpacity="0.55" />
-      {/* 광택 오버레이 */}
-      <path d={dataPath} fill="url(#holo-sheen)" fillOpacity="1" />
-      {/* 내부 광원 */}
-      <path d={dataPath} fill="url(#holo-glow)" fillOpacity="1" />
-
-      {/* 외곽선 — 글로우 효과 */}
-      <path d={dataPath} fill="none" stroke="#818CF8" strokeWidth="3.5" strokeOpacity="0.3" filter="url(#glow-filter)" />
-      <path d={dataPath} fill="none" stroke="url(#holo-main)" strokeWidth="1.8" />
-
-      {/* 꼭짓점 도트 */}
-      {dataPoints.map(({ x, y }, i) => (
-        <g key={i}>
-          <circle cx={x} cy={y} r="5" fill="#7B6EFF" fillOpacity="0.25" />
-          <circle cx={x} cy={y} r="3" fill="url(#holo-main)" />
-        </g>
-      ))}
-
-      {/* Labels */}
-      {RADAR_AXES.map((ax, i) => {
-        const { x, y } = pt(i, 1.28)
-        const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
-        return (
-          <text key={i} x={x} y={y} textAnchor={anchor} fontSize="13" fill="#1C2442" fontFamily="Pretendard, sans-serif" fontWeight="700">
-            {ax.label}
-          </text>
-        )
-      })}
-    </svg>
-  )
-}
-
-/* ── Mini Sparkline ────────────────────────────────────────────── */
-function Sparkline({ points, color = '#2E5BFF' }: { points: number[]; color?: string }) {
-  const w = 90, h = 34
-  const min = Math.min(...points), max = Math.max(...points)
-  const span = max - min || 1
-  const stepX = w / (points.length - 1)
-  const toY = (v: number) => h - ((v - min) / span) * (h * 0.85) - h * 0.05
-  const poly = points.map((v, i) => `${i * stepX},${toY(v)}`).join(' ')
-  const area = `M0,${h} ` + points.map((v, i) => `L${i * stepX},${toY(v)}`).join(' ') + ` L${w},${h} Z`
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} style={{ overflow: 'visible' }}>
-      <defs>
-        <linearGradient id={`sg-${color.replace('#', '')}`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.18" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill={`url(#sg-${color.replace('#', '')})`} />
-      <polyline points={poly} fill="none" stroke={color} strokeWidth="1.8" strokeLinejoin="round" />
-    </svg>
-  )
-}
-
-/* ── Mission Donut (오늘의 미션) — 원호 따라 진해지는 그라데이션 ── */
-function MissionDonut({ value, total }: { value: number; total: number }) {
-  const pct = Math.min(value / total, 1)
-  const deg = pct * 360
-
-  // conic-gradient: 원호를 따라 시작점(연한 파랑) → 진행점(진한 파랑)
-  const ringStyle: React.CSSProperties = {
-    background: `conic-gradient(from 0deg,
-      #A6C0FF 0deg,
-      #4A78FF ${deg * 0.5}deg,
-      #1B3D9E ${deg}deg,
-      #E3E9F8 ${deg}deg,
-      #E3E9F8 360deg)`,
-    WebkitMask: 'radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 11px))',
-    mask: 'radial-gradient(farthest-side, transparent calc(100% - 11px), #000 calc(100% - 11px))',
-  }
-
-  return (
-    <div className="relative w-[108px] h-[108px]">
-      <div className="absolute inset-0 rounded-full" style={ringStyle} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <div className="flex items-baseline">
-          <span className="text-[26px] font-black text-[var(--color-navy)] leading-none">{value}</span>
-          <span className="text-xs font-bold text-[var(--color-text-muted)]">/{total}</span>
-        </div>
-        <span className="mt-1 text-[12px] font-bold tracking-wide text-[var(--color-primary)]">완료</span>
-      </div>
-    </div>
-  )
-}
-
-/* ── Growth Chart (역량 성장 그래프) — 우상향 차트 ──────────────── */
-function GrowthChart() {
-  const data = [34, 41, 38, 49, 55, 62, 72]
-  const w = 180, h = 78, pad = 6
-  const min = Math.min(...data), max = Math.max(...data)
-  const span = max - min || 1
-  const stepX = (w - pad * 2) / (data.length - 1)
-  const toX = (i: number) => pad + i * stepX
-  const toY = (v: number) => h - pad - ((v - min) / span) * (h - pad * 2 - 8)
-  const pts = data.map((v, i) => [toX(i), toY(v)] as const)
-  const line = pts.map(([x, y], i) => `${i === 0 ? 'M' : 'L'}${x},${y}`).join(' ')
-  const area = `M${pts[0][0]},${h} ` + pts.map(([x, y]) => `L${x},${y}`).join(' ') + ` L${pts[pts.length - 1][0]},${h} Z`
-  const last = pts[pts.length - 1]
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="block w-full overflow-visible">
-      <defs>
-        {/* 홀로그램 라인 그라데이션 */}
-        <linearGradient id="gc-holo" x1="0%" y1="0%" x2="100%" y2="0%">
-          <stop offset="0%"   stopColor="#7B6EFF" />
-          <stop offset="55%"  stopColor="#4A90FF" />
-          <stop offset="100%" stopColor="#00D4FF" />
-        </linearGradient>
-        {/* 면 그라데이션 */}
-        <linearGradient id="gc-area" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%"   stopColor="#4A90FF" stopOpacity="0.34" />
-          <stop offset="100%" stopColor="#4A90FF" stopOpacity="0" />
-        </linearGradient>
-        <filter id="gc-glow" x="-30%" y="-40%" width="160%" height="180%">
-          <feGaussianBlur stdDeviation="2.4" />
-        </filter>
-      </defs>
-      {/* 면 채우기 */}
-      <path d={area} fill="url(#gc-area)" />
-      {/* 글로우 라인 */}
-      <path d={line} fill="none" stroke="url(#gc-holo)" strokeWidth="4.2"
-        strokeLinecap="round" strokeLinejoin="round" filter="url(#gc-glow)" opacity="0.6" />
-      {/* 메인 라인 */}
-      <path d={line} fill="none" stroke="url(#gc-holo)" strokeWidth="2.6"
-        strokeLinecap="round" strokeLinejoin="round" />
-      {/* 끝점 도트 */}
-      <circle cx={last[0]} cy={last[1]} r="6" fill="#00D4FF" opacity="0.22" />
-      <circle cx={last[0]} cy={last[1]} r="3.2" fill="url(#gc-holo)" />
-    </svg>
-  )
-}
-
-/* ── Pass Donut (합격예측) ──────────────────────────────────────── */
-/* ── Main Page ─────────────────────────────────────────────────── */
+// ─────────────────────────────────────────────────────────────────────────
+// 메인 홈 — 시안 그대로: 창원디자인시안작업/main.html (= stu_v1.jsx)
+// ★ 마크업은 시안 HTML 을 기계 변환해 그대로 옮긴 것이다.
+//   클래스·구조를 손대면 시안 CSS 가 어긋난다. 수정은 시안 쪽에서 먼저 한다.
+//   내용(수치·문구)은 시안 값 그대로 — 데이터 배선은 디자인 확정 후 별도로 한다.
 export default function Main() {
-  const navigate = useNavigate()
-
-  const xp = 1250, xpMax = 2000
-  const xpPct = (xp / xpMax) * 100
+  // 출석 체크 — 누르면 다른 화면으로 가는 게 아니라 이 자리에서 '출석 완료'로 바뀐다.
+  // 아직 화면 안에서만 사는 상태다(새로고침하면 풀린다). 출석 이벤트를 남기려면
+  // CLAUDE.md 의 '이벤트 → JSON 반영' 표에 저장소를 먼저 정의해야 한다.
+  const [attended, setAttended] = useState(false)
+  const student = getActiveStudent()
+  // 5대 핵심역량 — 점수·목표선은 데이터층에서 온다(하드코딩된 6축을 대체).
+  const competencyAxes = getCompetencyAxes(student)
+  // 오늘 할 일 — 진단·상담 상태에서 파생한다. 신입생이면 「핵심진단 응시하기」 한 줄이다.
+  const todayTasks = getTodayTasks(student)
+  // 진로 여정 — 학생 상태에서 파생한다(전 학생 공용 상수가 아니다).
+  const journey = buildCareerJourney(getPipelineState(student))
+  // 퀘스트·출석은 아직 이벤트 저장소가 없다(CLAUDE.md 이벤트 표에 없음).
+  // 활동을 시작하지 않은 학생에게 시안 수치를 보여주지 않기 위한 판정만 둔다.
+  const hasActivity = (student.growth?.xp ?? 0) > 0
+  // 「오늘 할 일」 헤더의 날짜 — 시안 값(08.26)이 박혀 있어 언제 봐도 8월이었다.
+  const now = new Date()
+  const todayLabel = `${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${'일월화수목금토'[now.getDay()]}요일`
 
   return (
     <div className="mn-page">
+        {/* 로그인 직후 첫 인계 — 진단이 남았으면 여기서 바로 다음 걸음을 준다. */}
+        <NextStepBanner />
 
-      {/* ── Hero ─────────────────────────────────────────────── */}
-      <section className="mn-hero">
-        <div className="mn-hero-content">
-          <div className="mn-greeting">
-            <h1 className="mn-greeting-title">안녕하세요, 김채원님</h1>
-            <p className="mn-greeting-sub">오늘도 성장하는 당신을 응원해요!</p>
-          </div>
-
-          {/* Stat cards row */}
-          <div className="mn-stat-cards">
-
-            {/* 역량 성장 그래프 — 우상향 차트 */}
-            <div className="mn-stat-card mn-quest-card">
-              <p className="mn-sc-label">역량 성장 그래프</p>
-              <div className="mb-1 flex items-baseline gap-1">
-                <span className="text-[30px] font-black leading-none text-[var(--color-navy)]">72</span>
-                <span className="text-[13px] font-bold text-[var(--color-text-sub)]">점</span>
-                <span className="ml-auto flex items-center gap-1 rounded-full bg-[#22C55E]/12 px-2 py-0.5 text-[13px] font-extrabold text-[var(--color-success)]">
-                  <i className="fa-solid fa-arrow-trend-up text-[12px]" />
-                  +8
-                </span>
-              </div>
-              <div className="flex flex-1 items-end">
-                <GrowthChart />
-              </div>
+        <section className="career-hero reveal" aria-labelledby="welcomeTitle">
+          <div className="career-hero-left">
+            <div className="career-hero-copy">
+              <p className="career-hero-kicker">MY CAREER DASHBOARD</p>
+              <h1 id="welcomeTitle">한눈에 보는<span>오늘 나의 성장</span></h1>
+              <p>진단 결과부터 상담, 로드맵과 역량까지 연결된 나의 현재 위치를 확인하고 오늘의 행동을 시작해 보세요.</p>
             </div>
 
-            {/* Profile card */}
-            <div className="mn-stat-card mn-profile-card">
-              <div className="mn-avatar-wrap">
-                <img className="mn-avatar-photo" src="/student-profile.png" alt="김채원 프로필" />
-              </div>
-              <div className="mn-profile-body">
-                <span className="mn-level-badge">Lv. 23</span>
-                <div className="mn-xp-bar-track">
-                  <div className="mn-xp-bar-fill" style={{ width: `${xpPct}%` }} />
+          <CareerJourneyCard
+            journey={journey}
+            title="나의 진로 여정"
+            desc="내 CARE+7의 현재 위치입니다."
+            className="hero-roadmap"
+            id="journey"
+          />
+
+          </div>
+
+          <div className="career-hero-board">
+            <div className="career-hero-top">
+              <div className="career-hero-stack">
+
+          <section data-slot="card" className="hero-panel hero-todo" id="today" aria-labelledby="todoTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="todoTitle">오늘 할 일</h2></div>
+              <span data-slot="card-action" className="badge blue">{todayLabel}</span>
+            </header>
+            <div data-slot="card-content">
+              {/* 목록은 data/todayTasks 가 학생 상태에서 뽑는다 — 여기에 할 일을 적지 않는다. */}
+              {todayTasks.length === 0 ? (
+                <p className="todo-empty">지금 처리할 일이 없습니다.<br />새 일정이 잡히면 이곳에 표시됩니다.</p>
+              ) : (
+                <div className="todo-list">
+                  {todayTasks.map(t => (
+                    <Link key={t.id} className={`todo-item${t.done ? ' completed' : ''}`} to={t.to}>
+                      <span className="todo-check" aria-hidden="true"><svg className="icon"><use href="#i-check" /></svg></span>
+                      <span className="todo-copy"><b>{t.title}</b><small>{t.note}</small></span>
+                      <span className="todo-time">{t.when}</span>
+                    </Link>
+                  ))}
                 </div>
-                <p className="mn-xp-label">{xp.toLocaleString()} / {xpMax.toLocaleString()} XP</p>
+              )}
+            </div>
+            <footer data-slot="card-footer"><button className="button" type="button">전체 일정 보기 <svg className="icon"><use href="#i-arrow" /></svg></button></footer>
+          </section>
+
+          <section data-slot="card" className="hero-panel hero-quest" aria-labelledby="questTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="questTitle">오늘의 퀘스트</h2><p data-slot="card-description">작은 실행을 모아 성장 포인트를 쌓아보세요.</p></div>
+              <Link data-slot="card-action" className="hero-inline-action" to="/growth/quest">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
+            </header>
+            <div data-slot="card-content">
+              {/* 퀘스트 이벤트 저장소가 아직 없다 — 활동 이력이 없는 학생에게 시안 수치를 보이지 않는다. */}
+              {hasActivity ? (
+                <div className="quest-layout">
+                  <div className="quest-ring" role="img" aria-label="오늘의 퀘스트 달성률 72퍼센트"><span className="quest-value"><strong>72%</strong></span></div>
+                  <div className="quest-copy"><b>커리어 루틴 만들기</b><p>오늘 5개 중 3개 완료<br />2개만 더 달성해 보세요!</p><div className="quest-steps" aria-hidden="true"><i className="done"></i><i className="done"></i><i className="done"></i><i></i><i></i></div></div>
+                </div>
+              ) : (
+                <div className="quest-layout">
+                  <div className="quest-ring quest-ring--empty" role="img" aria-label="오늘의 퀘스트 달성률 0퍼센트"><span className="quest-value"><strong>0%</strong></span></div>
+                  <div className="quest-copy"><b>아직 시작한 퀘스트가 없어요</b><p>첫 퀘스트를 완료하면<br />성장 포인트가 쌓이기 시작합니다.</p></div>
+                </div>
+              )}
+            </div>
+            <footer data-slot="card-footer"><Link className="button" to="/growth/quest">전체 퀘스트 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link></footer>
+          </section>
+
               </div>
+
+          <section data-slot="card" className="hero-panel hero-attendance attendance-card" aria-labelledby="attendanceTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="attendanceTitle">출석체크</h2><p data-slot="card-description">매일 접속하고 성장 포인트를 받아요.</p></div>
+              {/* 연속 출석 역시 저장소가 없다 — 오늘 눌렀는지만 사실대로 말한다. */}
+              <span data-slot="card-action" className="badge amber">
+                {hasActivity ? '12일 연속' : attended ? '오늘 출석' : '첫 출석'}
+              </span>
+            </header>
+            <div data-slot="card-content">
+              <div className="attendance-center"><div className="attendance-streak"><span><strong>TODAY<br />CHECK</strong></span></div><div><p>매일 출석하고 성장 포인트를 모아보세요.</p><button
+                className={`button primary attendance-button${attended ? ' completed' : ''}`}
+                type="button"
+                aria-pressed={attended}
+                onClick={() => setAttended(true)}
+              >{attended ? '출석 완료 +10P' : '출석하기 +10P'}</button></div></div>
+            </div>
+          </section>
+
             </div>
 
-            {/* 오늘의 미션 — 홀로그램 원형 그래프 */}
-            <div className="mn-stat-card mn-mission-card">
-              <p className="mn-sc-label">오늘의 미션</p>
-              <div className="flex flex-1 items-center justify-center">
-                <MissionDonut value={1} total={5} />
-              </div>
-              <button className="mn-sc-btn" onClick={() => navigate('/growth/quest')}>
-                미션 확인하기
-              </button>
-            </div>
-
-            {/* 오늘의 성장미션 */}
-            <div className="mn-stat-card mn-daily-card">
-              <div className="mn-daily-icon">
-                <i className="fa-solid fa-bullseye" />
-              </div>
-              <p className="mn-sc-label" style={{ marginTop: 8 }}>오늘의 성장미션</p>
-              <p className="mn-daily-title">TOEIC 영단어 일일미션</p>
-              <p className="mn-daily-desc">오늘의 영단어 10개를 학습하고 퀴즈를 풀어보세요.</p>
-              <button className="mn-sc-btn mn-sc-btn--arrow" onClick={() => navigate('/growth/mission')}>
-                미션 시작하기 <i className="fa-solid fa-arrow-right" />
-              </button>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Hero image */}
-        <div className="mn-hero-img">
-          <img src="/v2_main.png" alt="AI Career Platform" />
-        </div>
-      </section>
-
-      {/* ── Body ─────────────────────────────────────────────── */}
-      <section className="mn-body">
-
-        {/* 종합 역량 */}
-        <div className="mn-body-card">
-          <div className="mn-body-card-head">
-            <h2 className="mn-body-card-title">종합 역량</h2>
-          </div>
-          <div className="mn-radar-wrap">
-            <div className="mn-radar-score">
-              <span className="mn-radar-num">72</span>
-              <span className="mn-radar-denom">/100</span>
-            </div>
-            <p className="mn-radar-sub">상위 28%</p>
-            <RadarChart />
-          </div>
-        </div>
-
-        {/* 학과 랭킹 TOP 5 */}
-        <div className="mn-body-card">
-          <div className="mn-body-card-head">
-            <h2 className="mn-body-card-title">학과 랭킹 TOP 5</h2>
-          </div>
-          <ul className="mn-rank-list">
-            {RANKING.map(r => (
-              <li key={r.rank} className="mn-rank-item">
-                <span className={`mn-rank-pos${r.rank <= 3 ? ' top' : ''}`}>{r.rank}</span>
-                <span className="mn-rank-name">{r.name}</span>
-                <span className="mn-rank-xp">{r.xp.toLocaleString()} XP</span>
-              </li>
-            ))}
-          </ul>
-          <div className="mn-rank-my">
-            <span className="mn-rank-pos me">{MY_RANK.rank}</span>
-            <span className="mn-rank-name">{MY_RANK.name} <small>(나)</small></span>
-            <span className="mn-rank-my-pos">{MY_RANK.rank} / {MY_RANK.total}위</span>
-          </div>
-          <button className="mn-more-btn" onClick={() => navigate('/growth/quest')}>더보기</button>
-        </div>
-
-        {/* 상담 현황 */}
-        <div className="mn-body-card">
-          <div className="mn-body-card-head">
-            <h2 className="mn-body-card-title">상담 현황</h2>
-          </div>
-          <div className="mn-counsel-wrap">
-            <div className="mn-counsel-icon">
-              <i className="fa-regular fa-user" />
-            </div>
-            <p className="mn-counsel-label">누적 상담 횟수</p>
-            <p className="mn-counsel-num">3 <span>회</span></p>
-            <div className="mn-counsel-divider" />
-            <p className="mn-counsel-date-label">최근 상담일</p>
-            <p className="mn-counsel-date">2024.05.18</p>
-          </div>
-          <button className="mn-more-btn" onClick={() => navigate('/mypage/counsel')}>상담 내역 보기</button>
-        </div>
-
-        {/* 추천 프로그램 + 공지사항 */}
-        <div className="mn-body-card">
-          <div className="mn-body-card-head">
-            <h2 className="mn-body-card-title">추천 프로그램</h2>
-          </div>
-
-          {/* Program card */}
-          <div className="mn-prog-card">
-            <p className="mn-prog-title">AI 면접 전략 특강</p>
-            <p className="mn-prog-date">2024.06.01 (토) 14:00</p>
-            <button className="mn-prog-btn" onClick={() => navigate('/growth/program')}>신청하기</button>
-            <div className="mn-prog-chart">
-              <Sparkline points={[10, 30, 20, 50, 40, 70, 60]} color="#ffffff" />
-            </div>
-          </div>
-
-          {/* 공지사항 */}
-          <div className="mn-notice-head">
-            <span className="mn-body-card-title">공지사항</span>
-            <button className="mn-text-btn">더보기 <i className="fa-solid fa-chevron-right" /></button>
-          </div>
-          <ul className="mn-notice-list">
-            {NOTICES.map((n, i) => (
-              <li key={i} className="mn-notice-item">
-                <i className="fa-solid fa-plus" />
-                <span>{n.label}</span>
-                <span className="mn-notice-date">{n.date}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-
-      </section>
-
-      {/* ── 추천 비교과 + AI 추천 채용공고 ───────────────────────── */}
-      <section className="mn-ai-section">
-        <div className="mn-recommend-grid">
-
-          {/* 추천 비교과 프로그램 */}
-          <div className="mn-rec-card">
-            <div className="mn-rec-head">
-              <h2 className="mn-rec-title">
-                <i className="fa-solid fa-clipboard-check" />
-                추천 비교과 프로그램
-              </h2>
-              <button className="mn-text-btn" onClick={() => navigate('/growth/program')}>
-                전체 보기 <i className="fa-solid fa-chevron-right" />
-              </button>
-            </div>
-            <ul className="mn-rec-prog-list">
-              {RECOMMENDED_PROGRAMS.map(p => (
-                <li
-                  key={p.id}
-                  className="mn-rec-prog-item"
-                  onClick={() => navigate(`/growth/program/${p.id}`)}
-                >
-                  <div className="mn-rec-prog-thumb">
-                    <img src={p.image} alt={p.title} />
-                  </div>
-                  <div className="mn-rec-prog-info">
-                    <div className="mn-rec-prog-tags">
-                      <span
-                        className="mn-rec-prog-cat"
-                        style={{
-                          background: (CAT_COLORS[p.category] ?? '#6B7280') + '18',
-                          color: CAT_COLORS[p.category] ?? '#6B7280',
-                        }}
-                      >
-                        {p.category}
-                      </span>
-                      <span className={`mn-rec-prog-dday${p.dDay <= 5 ? ' urgent' : ''}`}>
-                        D-{p.dDay}
-                      </span>
-                    </div>
-                    <p className="mn-rec-prog-name">{p.title}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* AI 추천 채용공고 */}
-          <div className="mn-rec-card">
-            <div className="mn-rec-head">
-              <h2 className="mn-rec-title">
-                <i className="fa-solid fa-briefcase" />
-                AI 추천 채용공고
-              </h2>
-              <button className="mn-text-btn" onClick={() => navigate('/jobs')}>
-                전체 보기 <i className="fa-solid fa-chevron-right" />
-              </button>
-            </div>
-            <ul className="mn-rec-job-list">
-              {RECOMMENDED_JOBS.map(j => (
-                <li
-                  key={j.id}
-                  className="mn-rec-job-item"
-                  onClick={() => navigate('/jobs')}
-                >
-                  <div
-                    className="mn-rec-job-logo"
-                    style={{ background: j.color, color: j.textColor ?? '#fff' }}
+          <section data-slot="card" className="hero-panel hero-competency" id="competency" aria-labelledby="competencyTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="competencyTitle">나의 5대 핵심역량</h2></div>
+            </header>
+            <div data-slot="card-content">
+              <div className="competency-layout">
+                <div className="radar-wrap">
+                  {/* 축·점수는 데이터층이 준다(data/competency). 좌표를 화면에 적지 않는다. */}
+                  <CompetencyRadarChart
+                    axes={competencyAxes}
+                    currentFill="main-competency-mine"
+                    classes={{
+                      svg: 'radar-chart', grid: 'radar-grid', axis: 'radar-axis',
+                      target: 'radar-target', current: 'radar-current', label: 'radar-label',
+                    }}
                   >
-                    {j.initial}
+                    {/* '나의 현재' 면색 — 옆 역량 막대(.axis-track i)와 같은 보라→하늘 축.
+                        SVG 는 CSS 그라데이션을 못 받으므로 여기 정의하고 fill 이 url(#…)로 참조한다. */}
+                    <defs>
+                      <linearGradient id="main-competency-mine" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%" stopColor="var(--competency-current)" />
+                        <stop offset="100%" stopColor="var(--competency-growth)" />
+                      </linearGradient>
+                    </defs>
+                  </CompetencyRadarChart>
+                </div>
+                <div className="competency-side">
+                  <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 수준</span></div>
+                  <div className="axis-list">
+                    {competencyAxes.map(axis => (
+                      <div key={axis.key} className="axis-item">
+                        <div className="axis-head"><b>{axis.label}</b><strong>{axis.score}</strong></div>
+                        <div className="axis-track"><i style={{ '--value': `${axis.score}%` } as React.CSSProperties}></i></div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="mn-rec-job-info">
-                    <p className="mn-rec-job-company">{j.company}</p>
-                    <p className="mn-rec-job-role">{j.role} · {j.deadline}</p>
-                  </div>
-                  <div className={`mn-rec-job-match${j.match >= 85 ? ' high' : ''}`}>
-                    <strong>{j.match}</strong>
-                    <span>%</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
+          </div>
+        </section>
+
+        <div className="dashboard-grid">
+
+          <section data-slot="card" className="program-card-shell span-12 reveal" id="programs" aria-labelledby="programTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="programTitle">진행 중인 진로·취업 프로그램</h2><p data-slot="card-description">나의 진로 유형과 관심 직무를 바탕으로 선별했어요.</p></div>
+              <Link data-slot="card-action" className="button" to="/growth/program">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
+            </header>
+            <div data-slot="card-content">
+              <div className="program-viewport">
+                <div className="program-track" tabIndex={0} aria-label="추천 프로그램 목록">
+                <a className="program-card" href="#"><img src="/thumb1.png" alt="인적성 NCS 역량검사 프로그램 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">공기업준비</span><span className="program-dday">D-04</span></div><h3>2026 하반기 공채 대비 인적성·NCS 역량검사 특강</h3></div></a>
+                <a className="program-card" href="#"><img src="/thumb2.png" alt="Career-Up 멘토링 스터디 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">멘토링</span><span className="program-dday">D-08</span></div><h3>2026 졸업생 특화 Career-Up 멘토링 스터디 참가자 모집</h3></div></a>
+                <a className="program-card" href="#"><img src="/thumb3.jpg" alt="취업 부스트업 트랙 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">직무역량</span><span className="program-dday">D-12</span></div><h3>재맞고 점프업 직무역량강화 취업 부스트업 트랙</h3></div></a>
+                <a className="program-card" href="#"><img src="/thumb4.png" alt="Career-Up 멘토링 프로그램 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">상담</span><span className="program-dday">D-16</span></div><h3>2026 졸업생 특화 Career-Up 멘토링 스터디</h3></div></a>
+                <a className="program-card" href="#"><img src="/thumb5.png" alt="취업콘텐츠 이러닝 포스터" /><div className="program-copy"><div className="program-meta"><span className="program-category">e-러닝</span><span className="program-dday">D-22</span></div><h3>경남형 AI-CES 취업콘텐츠 e-러닝 참여자 모집</h3></div></a>
+                </div>
+                <div className="program-nav program-nav-prev"><button className="carousel-button" type="button" aria-label="이전 프로그램"><svg className="icon"><use href="#i-chevron-left" /></svg></button></div>
+                <div className="program-nav program-nav-next"><button className="carousel-button" type="button" aria-label="다음 프로그램"><svg className="icon"><use href="#i-chevron-right" /></svg></button></div>
+              </div>
+            </div>
+          </section>
+
+          <section data-slot="card" className="jobs-card span-12 reveal" id="jobs" aria-labelledby="jobsTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="jobsTitle">AI 추천 채용공고</h2><p data-slot="card-description">진단 결과와 활동 데이터를 바탕으로 나와 잘 맞는 공고를 추천해요.</p></div>
+              <Link data-slot="card-action" className="button" to="/jobs/joblist">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
+            </header>
+            <div data-slot="card-content">
+              <div className="jobs-layout">
+                <article className="featured-job"><div className="featured-top"><span className="company-mark">DN</span><span className="match-badge">AI 매칭 92%</span></div><h3>DN솔루션즈<br />생산기술 신입사원</h3><p>공정개선 및 생산성 향상 업무를 담당하며 스마트 제조 환경 구축에 함께합니다.</p><div className="job-tags"><span>창원시</span><span>정규직</span><span>기계·산업공학</span></div><div className="featured-footer"><strong>2026.08.28 마감 · D-9</strong><a className="featured-link" href="#" aria-label="DN솔루션즈 공고 보기"><svg className="icon"><use href="#i-external" /></svg></a></div></article>
+                <div className="job-list">
+                  <a className="job-row" href="#"><span className="job-logo">LG</span><div className="job-copy"><span className="job-match">AI 매칭 88%</span><h3>LG전자 H&amp;A본부 R&amp;D 신입</h3><p>창원 · 정규직 · 기계/전기전자</p></div><div className="job-deadline"><b>D-7</b><span>08.26 마감</span></div></a>
+                  <a className="job-row" href="#"><span className="job-logo">HD</span><div className="job-copy"><span className="job-match">AI 매칭 84%</span><h3>HD현대중공업 생산관리</h3><p>울산 · 정규직 · 산업공학</p></div><div className="job-deadline"><b>D-12</b><span>08.31 마감</span></div></a>
+                  <a className="job-row" href="#"><span className="job-logo">HAN</span><div className="job-copy"><span className="job-match">AI 매칭 81%</span><h3>한화에어로스페이스 품질기술</h3><p>창원 · 채용연계형 인턴 · 공학계열</p></div><div className="job-deadline"><b>D-14</b><span>09.02 마감</span></div></a>
+                  <a className="job-row" href="#"><span className="job-logo">KAI</span><div className="job-copy"><span className="job-match">AI 매칭 77%</span><h3>한국항공우주산업 체험형 인턴</h3><p>사천 · 인턴 · 전공무관</p></div><div className="job-deadline"><b>D-18</b><span>09.06 마감</span></div></a>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section data-slot="card" className="span-12 reveal" id="notices" aria-labelledby="noticeTitle">
+            <header data-slot="card-header">
+              <div><h2 data-slot="card-title" id="noticeTitle">공지사항</h2><p data-slot="card-description">프로그램과 진로·취업 관련 새 소식을 확인하세요.</p></div>
+              <Link data-slot="card-action" className="button" to="/jobs/notices">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
+            </header>
+            <div data-slot="card-content">
+              <div className="section-toolbar notice-toolbar"><div className="notice-tabs" role="tablist" aria-label="공지사항 분류"><button className="notice-tab active" type="button" role="tab" aria-selected="true" data-notice-tab="all">전체</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="program">프로그램</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="career">진로·취업</button><button className="notice-tab" type="button" role="tab" aria-selected="false" data-notice-tab="system">시스템</button></div></div>
+              <div className="notice-list" role="tabpanel">
+                <a className="notice-row" data-category="program" href="#"><span className="notice-category">프로그램</span><span className="notice-copy"><b>2026학년도 하반기 비교과 프로그램 참여 안내</b><small>역량별 추천 프로그램과 신청 일정을 확인해 주세요.</small></span><time dateTime="2026-08-19">2026.08.19</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+                <a className="notice-row" data-category="career" href="#"><span className="notice-category">진로·취업</span><span className="notice-copy"><b>취업전략센터 1:1 맞춤 상담 예약 오픈</b><small>목표 직무별 전문 컨설턴트와 상담할 수 있습니다.</small></span><time dateTime="2026-08-18">2026.08.18</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+                <a className="notice-row" data-category="system" href="#"><span className="notice-category">시스템</span><span className="notice-copy"><b>AI 역량진단 결과 리포트 기능 업데이트</b><small>변화 추이와 추천 활동을 한 화면에서 확인하세요.</small></span><time dateTime="2026-08-14">2026.08.14</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+                <a className="notice-row" data-category="career" href="#"><span className="notice-category">진로·취업</span><span className="notice-copy"><b>지역 우수기업 온라인 채용설명회 개최</b><small>기업 담당자에게 직무와 채용 정보를 직접 들어보세요.</small></span><time dateTime="2026-08-12">2026.08.12</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+                <a className="notice-row" data-category="program" href="#"><span className="notice-category">프로그램</span><span className="notice-copy"><b>CARE+7 성장 포인트 운영 기준 안내</b><small>활동별 적립 기준과 활용 방법을 안내드립니다.</small></span><time dateTime="2026-08-08">2026.08.08</time><span className="notice-arrow"><svg className="icon"><use href="#i-chevron-right" /></svg></span></a>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
 
-      {/* ── Footer ─────────────────────────────────────────── */}
-      <footer className="mn-footer">
-        <div className="mn-footer-inner">
-          <div className="mn-footer-brand">
-            <div className="mn-footer-logo">CWNU</div>
-            <p className="mn-footer-school">국립창원대학교</p>
-          </div>
-
-          <div className="mn-footer-info">
-            <p className="mn-footer-line">
-              <span className="mn-footer-label">E-MAIL</span>
-              <span>:</span>
-              <a href="mailto:cwjob@changwon.ac.kr">cwjob@changwon.ac.kr</a>
-            </p>
-            <p className="mn-footer-line">
-              51140) 경상남도 창원시 의창구 창원대학로 20
-            </p>
-            <p className="mn-footer-line mn-footer-copy">
-              <span>COPYRIGHT</span>
-              <span>CHANGWON NATIONAL UNIVERSITY. ALL RIGHTS RESERVED.</span>
-            </p>
-            <ul className="mn-footer-links">
-              <li>
-                <a href="#privacy">
-                  개인정보처리방침
-                  <i className="fa-solid fa-arrow-up-right-from-square" />
-                </a>
-              </li>
-              <li>
-                <a href="#email-reject">
-                  이메일무단수집거부
-                  <i className="fa-solid fa-arrow-up-right-from-square" />
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      </footer>
-
+        {/* 시안의 #careerPopup + 「팝업 보기」 떠 있는 버튼 */}
+        <CareerPopup />
     </div>
   )
 }

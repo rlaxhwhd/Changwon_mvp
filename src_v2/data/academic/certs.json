@@ -1,0 +1,155 @@
+[
+  {
+    "certId": "ct_sqld",
+    "label": "SQLD",
+    "issuer": "한국데이터산업진흥원",
+    "kind": "국가공인민간",
+    "skillIds": [
+      "sk_db"
+    ],
+    "icon": "fa-database",
+    "active": true
+  },
+  {
+    "certId": "ct_info",
+    "label": "정보처리기사",
+    "issuer": "한국산업인력공단",
+    "kind": "국가기술",
+    "skillIds": [
+      "sk_se",
+      "sk_db",
+      "sk_net"
+    ],
+    "icon": "fa-laptop-code",
+    "active": true
+  },
+  {
+    "certId": "ct_linux",
+    "label": "리눅스마스터 2급",
+    "issuer": "KAIT",
+    "kind": "국가공인민간",
+    "skillIds": [
+      "sk_os"
+    ],
+    "icon": "fa-terminal",
+    "active": true
+  },
+  {
+    "certId": "ct_adsp",
+    "label": "ADsP",
+    "issuer": "한국데이터산업진흥원",
+    "kind": "국가공인민간",
+    "skillIds": [
+      "sk_data"
+    ],
+    "icon": "fa-chart-pie",
+    "active": true
+  },
+  {
+    "certId": "ct_bigdata",
+    "label": "빅데이터분석기사",
+    "issuer": "한국산업인력공단",
+    "kind": "국가기술",
+    "skillIds": [
+      "sk_bigdata",
+      "sk_data"
+    ],
+    "icon": "fa-chart-column",
+    "active": true
+  },
+  {
+    "certId": "ct_aws",
+    "label": "AWS SAA",
+    "issuer": "Amazon",
+    "kind": "민간",
+    "skillIds": [
+      "sk_cloud"
+    ],
+    "icon": "fa-cloud",
+    "active": true
+  },
+  {
+    "certId": "ct_sec",
+    "label": "정보보안기사",
+    "issuer": "한국산업인력공단",
+    "kind": "국가기술",
+    "skillIds": [
+      "sk_sec"
+    ],
+    "icon": "fa-shield-halved",
+    "active": true
+  },
+  {
+    "certId": "ct_comp",
+    "label": "컴퓨터활용능력 1급",
+    "issuer": "대한상공회의소",
+    "kind": "국가기술",
+    "skillIds": [],
+    "icon": "fa-computer",
+    "active": true
+  },
+  {
+    "certId": "ct_history",
+    "label": "한국사능력검정",
+    "issuer": "국사편찬위원회",
+    "kind": "국가공인",
+    "skillIds": [],
+    "icon": "fa-landmark",
+    "active": true
+  },
+  {
+    "certId": "ct_toeic",
+    "label": "TOEIC",
+    "issuer": "ETS",
+    "kind": "어학",
+    "skillIds": [
+      "sk_english"
+    ],
+    "icon": "fa-language",
+    "active": true
+  },
+  {
+    "certId": "ct_opic",
+    "label": "OPIc",
+    "issuer": "ACTFL",
+    "kind": "어학",
+    "skillIds": [
+      "sk_english"
+    ],
+    "icon": "fa-comments",
+    "active": true
+  },
+  {
+    "certId": "ct_socmkt",
+    "label": "소셜마케팅전문가",
+    "issuer": "한국소셜마케팅협회",
+    "kind": "민간",
+    "skillIds": [
+      "sk_digital"
+    ],
+    "icon": "fa-hashtag",
+    "active": true
+  },
+  {
+    "certId": "ct_distrib",
+    "label": "유통관리사 2급",
+    "issuer": "대한상공회의소",
+    "kind": "국가기술",
+    "skillIds": [
+      "sk_mkt"
+    ],
+    "icon": "fa-boxes-stacked",
+    "active": true
+  },
+  {
+    "certId": "ct_gtq",
+    "label": "GTQ 1급",
+    "issuer": "한국생산성본부",
+    "kind": "국가공인민간",
+    "skillIds": [
+      "sk_design"
+    ],
+    "icon": "fa-pen-nib",
+    "active": true
+  }
+]

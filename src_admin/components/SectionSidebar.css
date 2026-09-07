@@ -1,0 +1,192 @@
+.section-sidebar {
+  width: 210px;
+  flex: 0 0 210px;
+  min-height: calc(100vh - var(--gnb-height));
+  position: sticky;
+  top: var(--gnb-height);
+  align-self: flex-start;
+  background: var(--color-bg);
+  border-right: 1px solid var(--color-border);
+  padding: 20px 12px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 사이드바 하단 고정 브랜드 로고 — margin-top:auto 로 맨 아래로 밀어낸다 */
+.section-sidebar-logo {
+  margin-top: auto;
+  align-self: center;
+  width: 86%;
+  max-width: 158px;
+  height: auto;
+  padding-top: 22px;
+  opacity: 0.92;
+}
+
+.section-sidebar-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 6px 18px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.section-sidebar-mark {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, var(--color-section-bg) 0%, var(--color-primary-bg) 100%);
+  border: 1px solid var(--color-border);
+  color: var(--color-primary);
+  box-shadow: 0 8px 20px rgba(6, 83, 182, 0.08);
+}
+
+.section-sidebar-head h2 {
+  color: var(--color-text);
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: 0;
+}
+
+.section-sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.section-sidebar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-sidebar-item {
+  min-height: 46px;
+  display: grid;
+  grid-template-columns: 32px 1fr 10px;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 9px;
+  border-radius: 10px;
+  color: var(--color-text-secondary);
+  font-size: 17px;
+  font-weight: 700;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+
+.section-sidebar-item:hover {
+  background: var(--color-section-bg);
+  color: var(--color-text);
+}
+
+.section-sidebar-item.active {
+  background: var(--color-primary-bg);
+  color: var(--color-primary);
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}
+
+.section-sidebar-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-section-bg);
+  color: var(--color-text-secondary);
+  font-size: 17px;
+}
+
+.section-sidebar-item.active .section-sidebar-icon {
+  background: var(--color-primary);
+  color: #fff;
+  box-shadow: 0 6px 14px rgba(6, 83, 182, 0.22);
+}
+
+.section-sidebar-arrow {
+  color: var(--color-primary);
+  font-size: 15px;
+}
+
+.section-sidebar-summary {
+  margin-top: 20px;
+  padding: 16px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-section-bg);
+  font-family: 'GmarketSans', var(--font);
+}
+
+.section-sidebar-summary h3 {
+  color: var(--color-title);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.section-sidebar-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.summary-stat {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 10px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+}
+
+.summary-stat dt {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+  word-break: keep-all;
+}
+
+.summary-stat dd {
+  color: var(--color-title);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.summary-stat.is-accent dd { color: var(--color-primary); }
+
+/* 상담 진행 화면 — AI 추천 질문 (사이드바) */
+.section-sidebar-questions {
+  margin-top: 16px;
+  padding: 14px 12px;
+  border: 1px solid var(--color-primary-light);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-bg);
+}
+.section-sidebar-questions h3 {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; font-weight: 800; color: var(--color-primary); margin-bottom: 10px;
+}
+.section-sidebar-questions ol {
+  list-style: none; padding: 0; margin: 0;
+  display: flex; flex-direction: column; gap: 8px; counter-reset: sq;
+}
+.section-sidebar-questions li {
+  position: relative; padding: 8px 10px 8px 30px;
+  background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  font-size: 12px; line-height: 1.5; color: var(--color-text); counter-increment: sq;
+}
+.section-sidebar-questions li::before {
+  content: counter(sq); position: absolute; left: 9px; top: 8px;
+  width: 17px; height: 17px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 50%; background: var(--color-primary); color: #fff; font-size: 10px; font-weight: 800;
+}

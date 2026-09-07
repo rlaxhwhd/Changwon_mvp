@@ -1,0 +1,100 @@
+{
+  "period": "2025.05.01 ~ 2025.05.20",
+  "stats": [
+    {
+      "id": "diagnosis",
+      "label": "진단 참여 학생",
+      "value": 2315,
+      "unit": "명",
+      "deltaValue": 8.7,
+      "deltaUnit": "percent",
+      "deltaDir": "up",
+      "deltaLabel": "전주 대비",
+      "icon": "clipboard-check",
+      "tone": "primary",
+      "spark": [38, 41, 39, 46, 44, 52, 49, 58]
+    },
+    {
+      "id": "counsel",
+      "label": "상담 신청 건수",
+      "value": 368,
+      "unit": "건",
+      "deltaValue": 12.4,
+      "deltaUnit": "percent",
+      "deltaDir": "up",
+      "deltaLabel": "전주 대비",
+      "icon": "comments",
+      "tone": "info",
+      "spark": [22, 28, 25, 31, 27, 34, 30, 38]
+    },
+    {
+      "id": "programs",
+      "label": "비교과 프로그램",
+      "value": 42,
+      "unit": "개",
+      "deltaValue": 5.0,
+      "deltaUnit": "percent",
+      "deltaDir": "up",
+      "deltaLabel": "전주 대비",
+      "icon": "calendar",
+      "tone": "success",
+      "spark": [30, 34, 32, 36, 33, 38, 40, 42]
+    },
+    {
+      "id": "jobs",
+      "label": "채용공고",
+      "value": 186,
+      "unit": "건",
+      "deltaValue": 15.3,
+      "deltaUnit": "percent",
+      "deltaDir": "up",
+      "deltaLabel": "전주 대비",
+      "icon": "briefcase",
+      "tone": "accent",
+      "spark": [120, 132, 128, 145, 150, 162, 174, 186]
+    },
+    {
+      "id": "roadmap",
+      "label": "로드맵 생성 비율",
+      "value": 64.7,
+      "unit": "%",
+      "deltaValue": 6.2,
+      "deltaUnit": "point",
+      "deltaDir": "up",
+      "deltaLabel": "전주 대비",
+      "icon": "user-group",
+      "tone": "primary",
+      "spark": [51, 54, 53, 57, 59, 61, 63, 64.7]
+    }
+  ],
+  "traffic": {
+    "daily": {
+      "labels": ["05.15", "05.16", "05.17", "05.18", "05.19", "05.20"],
+      "requested": [12, 18, 15, 22, 19, 14],
+      "completed": [8, 11, 10, 15, 13, 9]
+    },
+    "weekly": {
+      "labels": ["04.14~04.20", "04.21~04.27", "04.28~05.04", "05.05~05.11", "05.12~05.18", "05.19~05.20"],
+      "requested": [78, 92, 101, 118, 126, 68],
+      "completed": [48, 56, 64, 78, 84, 46]
+    },
+    "monthly": {
+      "labels": ["2024.12", "2025.01", "2025.02", "2025.03", "2025.04", "2025.05"],
+      "requested": [280, 310, 295, 340, 368, 352],
+      "completed": [180, 205, 198, 228, 246, 240]
+    }
+  },
+  "diagnosis": {
+    "total": 3865,
+    "segments": [
+      { "label": "C-2 (진로설정)", "value": 1234 },
+      { "label": "C-3 (역량수준)", "value": 1102 },
+      { "label": "C-4 (구직역량)", "value": 984 },
+      { "label": "C-CORE (핵심진단)", "value": 545 }
+    ]
+  },
+  "notices": [
+    { "id": "n1", "tag": "전체", "title": "2025 하계 현장실습 참여자 모집 안내", "date": "2025.05.20" },
+    { "id": "n2", "tag": "채용", "title": "삼성전자 하반기 신입사원 채용 공고", "date": "2025.05.18" }
+  ]
+}

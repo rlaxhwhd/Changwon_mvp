@@ -1,0 +1,740 @@
+[
+  {
+    "jobId": "job_pm",
+    "label": "서비스 기획 · PM",
+    "category": "실무",
+    "icon": "fa-pen-ruler",
+    "summary": "서비스 기획과 프로젝트 리딩",
+    "whatToDo": [
+      "요구사항 정의 · 화면 기획과 정책 설계",
+      "개발·디자인과 일정 조율 및 릴리스 관리",
+      "지표 설계와 출시 후 개선 사이클 운영"
+    ],
+    "targetOrgs": [
+      "네이버",
+      "카카오",
+      "토스",
+      "배달의민족",
+      "IT 스타트업"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_design",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_data",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_mkt",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_comm",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_write",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_se",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_db",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_web",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_web",
+    "label": "웹 개발자",
+    "category": "개발",
+    "icon": "fa-globe",
+    "summary": "웹 서비스 프론트 · 백엔드 개발",
+    "whatToDo": [
+      "웹 서비스 UI · API 개발",
+      "브라우저 호환성 · 성능 최적화",
+      "서비스 배포와 운영 참여"
+    ],
+    "targetOrgs": [
+      "네이버",
+      "카카오",
+      "쿠팡",
+      "라인",
+      "IT 스타트업"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_web",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_backend",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_db",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_prog",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_oop",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_se",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_oss",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_net",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_fullstack",
+    "label": "풀스택 개발자",
+    "category": "개발",
+    "icon": "fa-layer-group",
+    "summary": "웹 개발 전 영역",
+    "whatToDo": [
+      "프론트엔드와 백엔드를 직접 설계하고 구현",
+      "REST API · 데이터베이스 스키마 설계 및 운영",
+      "배포 환경 구축과 운영 자동화 참여"
+    ],
+    "targetOrgs": [
+      "네이버",
+      "카카오",
+      "토스",
+      "우아한형제들",
+      "IT 스타트업"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_web",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_backend",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_db",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_cloud",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_se",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_prog",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_oss",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_os",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_dataeng",
+    "label": "데이터 엔지니어",
+    "category": "데이터",
+    "icon": "fa-cube",
+    "summary": "데이터 수집 · 처리 파이프라인",
+    "whatToDo": [
+      "대규모 데이터 수집 · ETL 파이프라인 설계",
+      "데이터 웨어하우스 · 레이크 운영",
+      "Spark · Airflow 등 분산 처리 운영"
+    ],
+    "targetOrgs": [
+      "쿠팡",
+      "배달의민족",
+      "당근마켓",
+      "라인",
+      "뱅크샐러드"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_data",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_bigdata",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_db",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_prog",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_cloud",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_stat",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_backend",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_cloud",
+    "label": "클라우드 엔지니어",
+    "category": "인프라",
+    "icon": "fa-cloud",
+    "summary": "클라우드 인프라 설계 및 운영",
+    "whatToDo": [
+      "AWS · GCP · Azure 인프라 설계 및 구축",
+      "CI/CD 자동화와 컨테이너 오케스트레이션",
+      "모니터링 · 로그 · 비용 최적화 운영"
+    ],
+    "targetOrgs": [
+      "AWS Korea",
+      "Microsoft Korea",
+      "메가존클라우드",
+      "NHN Cloud",
+      "GS네오텍"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_cloud",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_net",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_os",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_sec",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_backend",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_prog",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_se",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_security",
+    "label": "보안 엔지니어",
+    "category": "보안",
+    "icon": "fa-shield-halved",
+    "summary": "시스템 및 네트워크 보안",
+    "whatToDo": [
+      "보안 정책 수립 및 취약점 점검",
+      "침해 사고 대응 · 보안 솔루션 운영",
+      "네트워크 · 시스템 보안 아키텍처 설계"
+    ],
+    "targetOrgs": [
+      "안랩",
+      "시큐아이",
+      "KISA",
+      "금융보안원",
+      "대기업 보안팀"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_sec",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_net",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_os",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_backend",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_prog",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_cloud",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_app",
+    "label": "앱 개발자",
+    "category": "개발",
+    "icon": "fa-mobile-screen-button",
+    "summary": "iOS · Android 모바일 앱 개발",
+    "whatToDo": [
+      "iOS · Android 네이티브 앱 개발",
+      "크로스 플랫폼(Flutter/RN) 개발",
+      "앱 성능 · 스토어 배포 관리"
+    ],
+    "targetOrgs": [
+      "카카오뱅크",
+      "토스",
+      "쿠팡",
+      "라인",
+      "당근마켓"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_mobile",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_prog",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_oop",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_web",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_backend",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_se",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_ds",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_ai",
+    "label": "AI 엔지니어",
+    "category": "데이터",
+    "icon": "fa-robot",
+    "summary": "머신러닝 모델 개발 및 서비스화",
+    "whatToDo": [
+      "모델 학습 · 튜닝과 성능 평가",
+      "데이터 전처리 파이프라인 구축",
+      "모델 서빙 및 운영 모니터링"
+    ],
+    "targetOrgs": [
+      "네이버 클로바",
+      "카카오브레인",
+      "LG AI연구원",
+      "SK텔레콤",
+      "AI 스타트업"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_ai",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_data",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_stat",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_prog",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_bigdata",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_algo",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_ds",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_publicit",
+    "label": "공기업 전산직",
+    "category": "공공",
+    "icon": "fa-building-shield",
+    "summary": "공기업 IT · 전산 직무",
+    "whatToDo": [
+      "사내 시스템 운영 및 유지보수",
+      "전산 자원 관리 · 정보보호 운영",
+      "공공 SI 프로젝트 관리"
+    ],
+    "targetOrgs": [
+      "한국전력",
+      "한국수력원자력",
+      "한국공항공사",
+      "국민건강보험공단",
+      "IBK기업은행"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_prog",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_db",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_net",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_os",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_sec",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_se",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_brand",
+    "label": "브랜드 마케터",
+    "category": "마케팅",
+    "icon": "fa-star",
+    "summary": "브랜드 전략 수립과 캠페인 운영",
+    "whatToDo": [
+      "브랜드 포지셔닝과 아이덴티티 관리",
+      "통합 캠페인 기획 및 집행",
+      "브랜드 성과 측정과 개선"
+    ],
+    "targetOrgs": [
+      "아모레퍼시픽",
+      "CJ제일제당",
+      "LG생활건강",
+      "오뚜기",
+      "무신사"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_brand",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_mkt",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_consumer",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_ad",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_strategy",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_digital",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_comm",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_digitalmkt",
+    "label": "디지털 마케터",
+    "category": "마케팅",
+    "icon": "fa-hashtag",
+    "summary": "퍼포먼스 · 콘텐츠 마케팅",
+    "whatToDo": [
+      "검색 · SNS 광고 운영과 예산 배분",
+      "콘텐츠 기획 및 채널 운영",
+      "전환 지표 분석과 개선"
+    ],
+    "targetOrgs": [
+      "컬리",
+      "무신사",
+      "29CM",
+      "토스",
+      "디지털 에이전시"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_digital",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_mkt",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_data",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_ad",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_consumer",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_write",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_brand",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_comm",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_mktresearch",
+    "label": "마케팅 리서처",
+    "category": "마케팅",
+    "icon": "fa-magnifying-glass-chart",
+    "summary": "시장 · 소비자 조사 분석",
+    "whatToDo": [
+      "정량 · 정성 조사 설계와 실사 관리",
+      "데이터 분석과 인사이트 도출",
+      "조사 리포트 작성 및 보고"
+    ],
+    "targetOrgs": [
+      "닐슨코리아",
+      "칸타코리아",
+      "마크로밀엠브레인",
+      "오픈서베이",
+      "대기업 마케팅실"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_data",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_stat",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_consumer",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_mkt",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_write",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_comm",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_digital",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  },
+  {
+    "jobId": "job_hr",
+    "label": "인사 담당자",
+    "category": "경영",
+    "icon": "fa-users",
+    "summary": "채용 · 조직문화 · 인사운영",
+    "whatToDo": [
+      "채용 기획과 전형 운영",
+      "평가 · 보상 제도 운영",
+      "조직문화 개선 프로그램 기획"
+    ],
+    "targetOrgs": [
+      "삼성전자",
+      "LG전자",
+      "CJ",
+      "현대자동차",
+      "공공기관"
+    ],
+    "skills": [
+      {
+        "skillId": "sk_org",
+        "weight": 3,
+        "required": true
+      },
+      {
+        "skillId": "sk_comm",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_write",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_mgmt",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_data",
+        "weight": 2,
+        "required": false
+      },
+      {
+        "skillId": "sk_acct",
+        "weight": 1,
+        "required": false
+      },
+      {
+        "skillId": "sk_strategy",
+        "weight": 1,
+        "required": false
+      }
+    ]
+  }
+]

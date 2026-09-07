@@ -1,0 +1,228 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   블랙리스트 관리 — 표 레이아웃 (레퍼런스 test1.png 정합)
+   admin 디자인 토큰만 사용(새 팔레트 금지). .blk 스코프로 격리.
+   ───────────────────────────────────────────────────────────────────────── */
+
+/* 검색·필터 카드 */
+.blk .blk-filter {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 22px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 18px;
+}
+.blk .blk-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.blk .blk-field {
+  height: 46px;
+  min-width: 168px;
+  padding: 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.blk .blk-field-sm { min-width: 128px; }
+.blk .blk-label {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text-secondary);
+}
+.blk .blk-search {
+  position: relative;
+  flex: 1 1 240px;
+}
+.blk .blk-search input {
+  width: 100%;
+  height: 46px;
+  padding: 0 44px 0 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 14px;
+}
+.blk .blk-search > svg {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-caption);
+  font-size: 16px;
+}
+.blk .blk-field:focus,
+.blk .blk-search input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-bg);
+}
+.blk .blk-search-btn {
+  margin-left: auto;
+  height: 46px;
+  padding: 0 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 800;
+}
+.blk .blk-search-btn:hover { background: var(--color-primary-hover); }
+.blk .blk-search-btn:active { background: var(--color-primary-pressed); }
+
+/* 카운트 + 엑셀 다운로드 */
+.blk .blk-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.blk .blk-count {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+.blk .blk-count em {
+  font-style: normal;
+  font-weight: 900;
+  color: var(--color-primary);
+  margin: 0 2px;
+}
+.blk .blk-excel-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  background: var(--color-success);
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 800;
+}
+.blk .blk-excel-btn:hover { filter: brightness(0.95); }
+
+/* 표 */
+.blk .blk-card {
+  padding: 0;
+  overflow: hidden;
+}
+.blk .blk-thead,
+.blk .blk-row {
+  display: grid;
+  grid-template-columns: 84px 132px 152px minmax(160px, 1fr) minmax(160px, 1fr) 120px;
+  align-items: center;
+  text-align: center;
+}
+.blk .blk-thead {
+  height: 56px;
+  background: var(--color-section-bg);
+  border-bottom: 1px solid var(--color-border);
+}
+.blk .blk-thead span {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--color-text-secondary);
+}
+.blk .blk-row {
+  width: 100%;
+  min-height: 58px;
+  background: var(--color-bg);
+  border-bottom: 1px solid var(--color-divider);
+  font: inherit;
+  transition: background 0.12s ease;
+}
+.blk .blk-row:hover { background: var(--color-section-bg); }
+.blk .blk-row:last-child { border-bottom: none; }
+.blk .blk-row span {
+  padding: 13px 8px;
+  font-size: 14px;
+  color: var(--color-text-secondary);
+}
+.blk .blk-c-no { color: var(--color-caption); font-weight: 600; }
+.blk .blk-c-name { color: var(--color-text); font-weight: 700; }
+.blk .blk-c-mono { color: var(--color-text-secondary); font-variant-numeric: tabular-nums; }
+.blk .blk-c-pts em {
+  font-style: normal;
+  font-weight: 800;
+  color: var(--tint-danger-ink);
+  border-bottom: 1px dotted var(--tint-danger-ink);
+  padding-bottom: 1px;
+}
+
+/* 페이지네이션 */
+.blk .blk-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 22px 0 8px;
+}
+.blk .blk-pager button {
+  min-width: 38px;
+  height: 38px;
+  padding: 0 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  font-weight: 700;
+}
+.blk .blk-pager button:hover:not(:disabled):not(.active) {
+  border-color: var(--color-primary-light);
+  color: var(--color-primary);
+}
+.blk .blk-pager button.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #fff;
+}
+.blk .blk-pager button:disabled { opacity: 0.4; cursor: default; }
+
+/* 빈 상태일 때 카드 여백 복원 (표는 flush, 빈상태는 패딩) */
+.blk .blk-card > .admin-empty,
+.blk .blk-card > .empty-state { padding: 48px 24px; }
+
+/* 행 클릭 상세 모달 — 벌점 이력 + 차감·해제 */
+.blk .blk-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.blk .blk-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--color-border);
+}
+.blk .blk-detail-who {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.blk .blk-detail-who strong {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--color-text);
+}
+.blk .blk-detail-who small {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}

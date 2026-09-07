@@ -1,0 +1,68 @@
+/* 사이트 푸터 — 학생 포털(/v2) · 교직원 포털(/admin) 공용.
+   시안 main.html / stu_dash.html 의 .site-footer 그대로다.
+
+   ★ 색·글자 크기는 이 파일에 고정한다(학생 포털 값 기준).
+     호스트 토큰을 따라가면 두 포털이 갈린다 — --primary 가 학생은 violet #7C5CFC,
+     교직원은 green #157A52 고, --fs-label·--muted-foreground 는 교직원 쪽에 아예 없다.
+     StudentStatCards.css 와 같은 이유·같은 방식이다. 색을 바꿀 일이 있으면 여기 한 곳만 고친다.
+
+   폭·여백만 호스트를 따른다 — 본문과 같은 축에 서야 하므로 --page-max/--page-gutter 를
+   읽되, 없는 포털(교직원)에서는 기본값 1440/24 로 떨어진다. 두 값이 같아 결과도 같다. */
+.site-footer {
+  padding: 0 0 40px;
+  color: #5f6878;
+
+  /* 글자 기준선을 끊는다 — 상속하면 포털마다 갈린다
+     (학생 body 는 16px/400, 교직원 body 는 14px/500 이라 굵기·줄높이가 달라졌다). */
+  font-size: 12px;
+  font-weight: 400;
+}
+
+.site-footer-inner {
+  width: 100%;
+  max-width: var(--page-max, 1440px);
+  margin: 0 auto;
+  padding: 0 var(--page-gutter, 24px);
+}
+
+.footer-logo {
+  display: block;
+  width: auto;
+  max-width: 220px;
+  height: auto;
+  margin-bottom: 24px;
+}
+
+.footer-links {
+  margin-bottom: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.footer-links a {
+  color: #344054;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 18px;
+}
+
+.footer-links a:hover { color: #7c5cfc; }
+
+.footer-info {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 20px;
+  color: #565e6d;
+  font-size: 12px;
+  line-height: 20px;
+}
+
+.footer-info strong { color: #344054; }
+
+.footer-copyright {
+  margin: 8px 0 0;
+  color: #565e6d;
+  font-size: 12px;
+  line-height: 20px;
+}

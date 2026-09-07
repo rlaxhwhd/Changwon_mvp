@@ -1,0 +1,122 @@
+/* 공지사항 — /jobs/notices.
+   머리글(경로 표시·제목·설명)은 Layout 공용 컴포넌트가 그린다. 여기서 만들지 않는다.
+   색·간격은 학생 포털 토큰만 쓴다(새 색 만들지 않음). */
+
+.nt-page { gap: 14px; }
+
+/* ─── 분류 탭 ─── */
+.nt-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.nt-tab {
+  min-height: 36px;
+  padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: var(--fs-meta);
+  font-weight: 700;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.nt-tab:hover { color: var(--foreground); border-color: var(--violet-border); }
+.nt-tab.is-active {
+  border-color: var(--primary);
+  background: var(--violet-soft);
+  color: var(--primary);
+}
+.nt-tab em {
+  min-width: 20px;
+  padding: 0 5px;
+  border-radius: var(--radius-pill);
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-size: var(--fs-label);
+  font-style: normal;
+  font-weight: 800;
+}
+.nt-tab.is-active em { background: #fff; color: var(--primary); }
+
+/* ─── 목록 ─── */
+.nt-list { padding: 0; overflow: hidden; }
+.nt-item + .nt-item { border-top: 1px solid var(--border); }
+
+.nt-row {
+  width: 100%;
+  min-height: 72px;
+  padding: 16px 20px;
+  display: grid;
+  grid-template-columns: 82px minmax(0, 1fr) 92px 16px;
+  align-items: center;
+  gap: 14px;
+  text-align: left;
+}
+.nt-row:hover { background: var(--muted); }
+
+.nt-category {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-label);
+  font-weight: 800;
+  white-space: nowrap;
+}
+/* 분류 3종 — 색이 곧 의미다. 의미 별칭 토큰에서 고른다. */
+.nt-category.is-program { background: var(--program-accent-soft, var(--sky-soft)); color: var(--sky); }
+.nt-category.is-career  { background: var(--mint-soft); color: var(--mint-ink); }
+.nt-category.is-system  { background: var(--violet-soft); color: var(--primary); }
+
+.nt-copy { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.nt-copy b {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  color: var(--foreground);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.nt-copy small {
+  overflow: hidden;
+  color: var(--muted-foreground);
+  font-size: var(--fs-meta);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nt-pin {
+  flex: 0 0 auto;
+  padding: 1px 6px;
+  border-radius: var(--radius-xs);
+  background: var(--coral-soft);
+  color: var(--coral-ink);
+  font-size: var(--fs-label);
+  font-weight: 800;
+}
+
+.nt-row time { color: var(--muted-foreground); font-size: var(--fs-meta); font-weight: 600; }
+.nt-row > i { color: var(--muted-foreground); font-size: 12px; }
+
+.nt-item.is-open .nt-row { background: var(--muted); }
+
+.nt-body {
+  padding: 4px 20px 20px;
+  display: grid;
+  gap: 10px;
+  border-left: 3px solid var(--primary);
+  margin: 0 20px 16px;
+  background: var(--violet-wash);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+  padding-left: 16px;
+  padding-top: 14px;
+}
+.nt-body p { color: var(--muted-foreground); font-size: var(--fs-body); line-height: 1.7; }
+
+.nt-empty { padding: 48px 20px; color: var(--muted-foreground); font-size: var(--fs-body); text-align: center; }

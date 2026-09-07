@@ -32,12 +32,12 @@
   background: var(--color-primary);
   color: #fff;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .ccm-section-head h3 {
-  font-size: 19px;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 700;
   color: var(--color-navy);
 }
 
@@ -144,10 +144,10 @@
 }
 
 .ccm-answer label.on {
-  background: var(--color-primary);
+  background: var(--color-cta);
   border-color: var(--color-primary);
   color: #fff;
-  box-shadow: 0 6px 14px rgba(46, 91, 255, 0.2);
+  box-shadow: 0 6px 14px var(--cta-shadow);
 }
 
 /* ── 안내사항 ────────────────────────────────────────────────────── */
@@ -162,7 +162,7 @@
   margin-bottom: 8px;
   color: #b46a00;
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .ccm-info ol {
@@ -212,8 +212,8 @@
 
 .ccm-signature-name {
   color: var(--color-navy);
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .ccm-signature-input {
@@ -263,7 +263,7 @@
   padding: 0 22px;
   border-radius: var(--radius-sm);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   font-family: inherit;
   cursor: pointer;
   transition: all 0.15s;
@@ -281,10 +281,10 @@
 }
 
 .ccm-btn-primary {
-  background: var(--color-primary);
+  background: var(--color-cta);
   border: none;
   color: #fff;
-  box-shadow: 0 10px 22px rgba(46, 91, 255, 0.22);
+  box-shadow: 0 10px 22px var(--cta-shadow);
 }
 
 .ccm-btn-primary:hover:not(:disabled) {

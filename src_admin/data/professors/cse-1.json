@@ -1,0 +1,5 @@
+{
+  "id": "cse-1", "empNo": "70201", "name": "박지훈", "role": "professor",
+  "roleLabel": "교수", "dept": "컴퓨터공학과", "collegeName": "공과대학",
+  "email": "park.jh@changwon.ac.kr", "officeHours": "화·목 15:00~17:00"
+}

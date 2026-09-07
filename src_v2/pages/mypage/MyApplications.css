@@ -1,0 +1,99 @@
+/* 마이페이지 — 나의 추천채용 지원 내역.
+   ⚠ 페이지 루트는 .v2-page 다 — 폭·가운데정렬·좌우 여백을 여기서 다시 만들지 않는다.
+   .v2-main 이 --page-max(1440) · --page-gutter(24)로 이미 정했고, 페이지마다 컨테이너를
+   또 만들면 화면을 옮길 때 본문 폭과 여백이 튄다(index.css .v2-page 주석).
+   제목줄도 공용 .v2-page-head / -title / -desc 를 쓴다.
+   토큰은 src_v2/index.css 단일 소스만 쓴다. */
+
+/* ── 빈 상태 ─────────────────────────────────────────────── */
+/* 빈 상태도 공용 카드 위에 올린다 — 배경·테두리·라운드는 [data-slot="card"] 담당. */
+.ma-empty {
+  padding: 56px 24px; display: flex; flex-direction: column; align-items: center; gap: 10px;
+  text-align: center;
+}
+.ma-empty i { font-size: 30px; color: var(--color-text-muted); }
+.ma-empty strong { font-size: 16px; font-weight: 800; color: var(--color-navy); }
+.ma-empty p { font-size: 14px; color: var(--color-text-sub); }
+.ma-empty-btn {
+  margin-top: 6px; padding: 10px 18px; border-radius: 10px;
+  background: var(--color-cta); color: #fff; font-size: 14px; font-weight: 700;
+}
+
+/* ── 카드 ────────────────────────────────────────────────── */
+/* .v2-page 가 세로 gap 16px 를 주므로 margin-top 을 따로 두지 않는다. */
+.ma-list { display: flex; flex-direction: column; gap: 16px; }
+/* 테두리·라운드·배경은 공용 [data-slot="card"] 가 준다 — 여기선 안쪽 여백만. */
+.ma-card { padding: 20px 22px; }
+.ma-card-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+  padding-bottom: 16px; border-bottom: 1px solid var(--color-border);
+}
+.ma-card-title h2 { margin-top: 6px; font-size: 16px; font-weight: 800; color: var(--color-navy); }
+.ma-card-title p { margin-top: 4px; font-size: 13px; color: var(--color-text-sub); }
+.ma-tag {
+  display: inline-block; padding: 3px 8px; border-radius: 6px;
+  background: var(--color-primary-bg); color: var(--color-primary); font-size: 12px; font-weight: 800;
+}
+.ma-card-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.ma-link { font-size: 13px; font-weight: 700; color: var(--color-primary); }
+.ma-cancel {
+  padding: 6px 12px; border: 1px solid var(--color-border); border-radius: 8px;
+  background: transparent; color: var(--color-text-sub); font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.ma-cancel:hover { border-color: var(--color-danger); color: var(--color-danger); }
+
+/* ── 상태 배지 ───────────────────────────────────────────── */
+.ma-badge { padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 800; white-space: nowrap; }
+.ma-badge-applied { background: var(--color-surface-alt); color: var(--color-text-sub); }
+.ma-badge-progress { background: var(--color-primary-bg); color: var(--color-primary); }
+.ma-badge-pass { background: rgba(22, 163, 74, 0.12); color: var(--color-success); }
+.ma-badge-reject { background: rgba(220, 38, 38, 0.1); color: var(--color-danger); }
+.ma-badge-cancel { background: var(--color-surface-alt); color: var(--color-text-muted); }
+
+/* ── 진행 타임라인 ───────────────────────────────────────── */
+.ma-progress { padding-top: 18px; }
+.ma-progress h3 { font-size: 14px; font-weight: 800; color: var(--color-navy); }
+
+.ma-steps { margin-top: 16px; display: flex; align-items: flex-start; gap: 0; }
+.ma-step {
+  position: relative; flex: 1; min-width: 0;
+  display: flex; flex-direction: column; align-items: center; gap: 5px; text-align: center;
+}
+/* 칸 사이를 잇는 선 — 지나온 구간만 강조된다 */
+.ma-step::before {
+  content: ''; position: absolute; top: 7px; right: 50%; left: -50%; height: 2px;
+  background: var(--color-border);
+}
+.ma-step:first-child::before { display: none; }
+.ma-step.is-done::before, .ma-step.is-current::before { background: var(--color-primary); }
+
+.ma-step-dot {
+  position: relative; z-index: 1; width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid var(--color-border); background: var(--color-surface);
+}
+.ma-step.is-done .ma-step-dot { border-color: var(--color-primary); background: var(--color-primary); }
+.ma-step.is-current .ma-step-dot {
+  border-color: var(--color-primary); background: var(--color-surface);
+  box-shadow: 0 0 0 4px var(--color-primary-bg);
+}
+
+.ma-step-label { font-size: 13px; font-weight: 700; color: var(--color-text-sub); }
+.ma-step.is-done .ma-step-label, .ma-step.is-current .ma-step-label { color: var(--color-navy); font-weight: 800; }
+.ma-step-at { font-size: 11px; color: var(--color-text-muted); }
+/* 교내 절차(서류 검토·기업 전달) 표시 — 기업 전형과 담당이 다르다.
+   칸 자체의 색은 건드리지 않는다. 진행 색은 '지나왔나'만 뜻해야 한다. */
+.ma-step-who {
+  padding: 1px 6px; border-radius: 999px;
+  background: var(--color-surface-alt); color: var(--color-text-muted);
+  font-size: 10px; font-weight: 800;
+}
+.ma-step.is-done .ma-step-who, .ma-step.is-current .ma-step-who { color: var(--color-text-sub); }
+
+.ma-progress-desc { margin-top: 4px; font-size: 13px; font-weight: 600; color: var(--color-text-sub); }
+.ma-step-now {
+  padding: 2px 8px; border-radius: 999px;
+  background: var(--color-primary); color: #fff; font-size: 11px; font-weight: 800;
+}
+
+.ma-note { margin-top: 16px; font-size: 13px; font-weight: 700; color: var(--color-text-sub); }
+.ma-note-pass { color: var(--color-success); }

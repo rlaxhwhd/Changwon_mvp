@@ -1,0 +1,134 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   STAR 성장 로드맵 카드 — /v2/star 와 상담사 학생 상세가 공유한다.
+   원래 StarTrack.css 에 있던 규칙을 옮겨온 것이라 클래스·값은 그대로다.
+
+   ★ admin :root 에는 v2 토큰 대부분이 없다(--card·--foreground·--space-*·--fs-* ·
+     휴 색 전부). 그래서 이 파일의 var() 에는 전부 폴백을 단다 — 없으면 admin 에서
+     조용히 투명·unset 으로 그려진다.
+   ───────────────────────────────────────────────────────────────────────── */
+.st-roadmap {
+  padding: var(--space-5, 20px);
+  background: var(--card, #fff);
+  border: 1px solid var(--border, #e2e6ec);
+  border-radius: var(--radius, 12px);
+}
+.st-sec-head {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: var(--space-4, 16px);
+  font-size: var(--fs-card, 16px); font-weight: 900; color: var(--foreground, #181c25);
+}
+.st-sec-head i { color: var(--amber, #f5a524); }
+.st-sec-note {
+  margin-left: auto;
+  font-size: var(--fs-label, 12px); font-weight: 700; color: var(--muted-foreground, #565e6d);
+}
+
+.st-metrics {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3, 12px);
+  padding: var(--space-4, 16px); margin-bottom: var(--space-4, 16px);
+  border-radius: var(--radius-md, 10px); background: var(--background, #f7f8fb);
+}
+.st-metric { display: flex; align-items: center; gap: 12px; }
+.st-metric small { display: block; font-size: var(--fs-label, 12px); font-weight: 700; color: var(--muted-foreground, #565e6d); }
+.st-metric strong { font-size: var(--fs-metric, 24px); font-weight: 900; color: var(--foreground, #181c25); letter-spacing: -.02em; }
+.st-metric strong em { font-size: var(--fs-meta, 13px); font-style: normal; }
+.st-metric strong.is-text { font-size: var(--fs-body, 14px); }
+.st-metric-sub { display: block; margin-top: 1px; font-size: var(--fs-label, 12px); color: var(--muted-foreground, #565e6d); }
+.st-metric-badge {
+  flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%;
+  display: grid; place-items: center; font-size: var(--fs-card, 16px);
+}
+.st-metric-badge.is-mileage { background: var(--amber-soft, #fff6df); color: var(--amber, #f5a524); }
+.st-metric-badge.is-goal    { background: var(--blue-soft, #eaf0ff);  color: var(--blue, #356dff); }
+/* 도넛 가운데를 흰 원으로 뚫는다 — 링 두께는 inset 하나로 정한다. */
+.st-donut { position: relative; flex: 0 0 auto; width: 42px; height: 42px; border-radius: 50%; }
+.st-donut::after {
+  content: ''; position: absolute; inset: 6px;
+  border-radius: 50%; background: var(--background, #f7f8fb);
+}
+
+.st-blocker {
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 12px var(--space-4, 16px); margin-bottom: var(--space-4, 16px);
+  border: 1px solid var(--coral, #ff6b6b); border-radius: var(--radius-md, 10px);
+  background: var(--coral-soft, #fff0f0);
+  font-size: var(--fs-meta, 13px); line-height: 1.6; color: var(--foreground, #181c25);
+}
+.st-blocker i { margin-top: 2px; color: var(--coral, #ff6b6b); }
+
+/* ── 축 3열 ────────────────────────────────────────────────────────────── */
+.st-axes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-3, 12px); }
+.st-axis {
+  padding: var(--space-4, 16px);
+  border: 1px solid var(--border, #e2e6ec); border-radius: var(--radius-md, 10px);
+  background: var(--card, #fff);
+}
+/* 축마다 다른 휴 — 세 축이 다른 성격이라 머리글로 구분한다. */
+.st-axis-1 { border-top: 3px solid var(--mint, #20b486); }
+.st-axis-2 { border-top: 3px solid var(--blue, #356dff); }
+.st-axis-3 { border-top: 3px solid var(--amber, #f5a524); }
+/* 단계 목록 아래로 밀어 붙인다 — 축마다 단계 수가 달라 아래가 들쭉날쭉해진다. */
+.st-axis { display: flex; flex-direction: column; }
+.st-axis-more {
+  margin-top: auto; padding-top: var(--space-3, 12px);
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+  font-size: var(--fs-label, 12px); font-weight: 800; color: var(--muted-foreground, #565e6d);
+}
+.st-axis-more:hover { color: var(--primary, #7c5cfc); }
+.st-axis h3 {
+  display: flex; align-items: center; gap: 8px; margin-bottom: var(--space-3, 12px);
+  font-size: var(--fs-meta, 13px); font-weight: 900; color: var(--foreground, #181c25);
+}
+.st-axis h3 em {
+  margin-left: auto; padding: 2px 8px; border-radius: var(--radius-pill, 999px);
+  background: var(--muted, #f1f3f6); font-size: var(--fs-label, 12px); font-style: normal;
+  color: var(--muted-foreground, #565e6d);
+}
+.st-axis-1 h3 em { background: var(--mint-soft, #e5f8f2);  color: var(--mint-ink, #148262); }
+.st-axis-2 h3 em { background: var(--blue-soft, #eaf0ff);  color: var(--blue, #356dff); }
+.st-axis-3 h3 em { background: var(--amber-soft, #fff6df); color: var(--amber, #f5a524); }
+
+.st-steps { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+/* 라벨이 여러 줄이면 배점·상태 배지가 가운데 떠 보인다 — 첫 줄에 맞춰 위로 붙인다. */
+.st-steps li {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 9px 10px; border-radius: var(--radius-sm, 8px);
+  background: var(--background, #f7f8fb);
+  font-size: var(--fs-label, 12px); color: var(--foreground, #181c25);
+}
+.st-steps li.is-done { background: var(--mint-soft, #e5f8f2); }
+.st-steps li.is-ongoing { background: var(--amber-soft, #fff6df); }
+.st-step-no {
+  flex: 0 0 auto; width: 18px; height: 18px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--card, #fff); border: 1px solid var(--border, #e2e6ec);
+  font-size: var(--fs-label, 12px); font-weight: 800; color: var(--muted-foreground, #565e6d);
+}
+.st-steps li.is-done .st-step-no { background: var(--mint, #20b486); border-color: var(--mint, #20b486); color: #fff; }
+.st-step-label { flex: 1; min-width: 0; font-weight: 700; line-height: 1.4; }
+.st-step-req {
+  margin-left: 5px; padding: 1px 5px; border-radius: var(--radius-xs, 6px);
+  background: var(--coral-soft, #fff0f0); color: var(--coral, #ff6b6b);
+  font-size: var(--fs-label, 12px); font-weight: 800;
+}
+.st-step-note {
+  display: block; margin-top: 2px;
+  font-size: var(--fs-label, 12px); font-weight: 600; color: var(--muted-foreground, #565e6d);
+}
+.st-step-pt { flex: 0 0 auto; font-size: var(--fs-label, 12px); font-weight: 900; color: var(--amber, #f5a524); }
+
+/* 상태 배지 — 완료·진행중·대기. 배경만 다르고 글자색은 대비를 지킨다.
+   (/v2/star 우측 자격증 패널도 이 규칙을 쓴다 — 카드 밖이라 여기서 옮기지 않는다) */
+.st-state {
+  flex: 0 0 auto; padding: 2px 8px; border-radius: var(--radius-pill, 999px);
+  font-size: var(--fs-label, 12px); font-weight: 800; white-space: nowrap;
+}
+.st-state.is-done    { background: var(--mint-soft, #e5f8f2);  color: var(--mint-ink, #148262); }
+.st-state.is-ongoing { background: var(--amber-soft, #fff6df); color: var(--amber-ink, #9a6300); }
+.st-state.is-todo    { background: var(--muted, #f1f3f6);      color: var(--muted-foreground, #565e6d); }
+
+/* 좁은 칼럼(상담사 상세 탭 등)에서는 3열이 글자보다 여백이 많아진다. */
+@media (max-width: 1080px) {
+  .st-axes { grid-template-columns: 1fr; }
+  .st-metrics { grid-template-columns: 1fr; gap: var(--space-4, 16px); }
+}

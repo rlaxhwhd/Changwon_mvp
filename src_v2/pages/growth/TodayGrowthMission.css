@@ -1,24 +1,34 @@
+/* 퀘스트 3종에 색을 나눈다 — :root 의 --daily-1/2/3 이 바로 이 세 갈래 몫이다
+   (파랑·보라·앰버). 페이지 강조색은 지금 고른 퀘스트를 따라간다.
+   글자에는 잉크를 쓴다 — 앰버 본색은 흰 배경에서 1.9:1 이라 읽히지 않는다. */
 .tgm-page {
-  min-height: calc(100vh - var(--gnb-height));
-  max-width: var(--page-max);
-  margin: 0 auto;
-  padding: 0 28px 54px;
-  background: var(--color-bg);
+  --tgm-ink:  var(--daily-1);
+  --tgm-soft: var(--daily-1-soft);
+  --tgm-line: var(--blue-border);
+  /* 배경·min-height 를 두지 않는다 — 페이지가 제 흰 판을 칠하면 1440px 상자로 잘려 보인다. */
+  padding: 0 0 54px;
   color: var(--color-navy);
 }
 
+.tgm-page.is-major { --tgm-ink: var(--daily-2); --tgm-soft: var(--daily-2-soft); --tgm-line: var(--violet-border); }
+.tgm-page.is-ncs   { --tgm-ink: var(--amber-ink); --tgm-soft: var(--daily-3-soft); --tgm-line: var(--amber-border); }
+
+/* 탭은 고르기 전에도 각자 제 색을 보여 준다 — 어느 퀘스트가 무슨 색인지 먼저 읽힌다. */
+.tgm-tabs button:nth-child(1) { --tgm-tab: var(--daily-1); --tgm-tab-soft: var(--daily-1-soft); }
+.tgm-tabs button:nth-child(2) { --tgm-tab: var(--daily-2); --tgm-tab-soft: var(--daily-2-soft); }
+.tgm-tabs button:nth-child(3) { --tgm-tab: var(--amber-ink); --tgm-tab-soft: var(--daily-3-soft); }
+.tgm-tabs button i { color: var(--tgm-tab); }
+
+/* 페이지 제목·설명은 공용 머리글(usePageHead)이 그린다. 이 띠에 있던 제목은 그때
+   지워졌고 배경·높이만 남아 빈 칸이 됐다 → 버튼 한 줄로 접는다.
+   그라데이션·테두리·min-height 를 되살리지 말 것. */
 .tgm-header {
-  min-height: 178px;
-  margin: 24px 0 24px;
-  padding: 34px 44px 32px;
+  margin: 20px 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  background:
-    radial-gradient(circle at 74% 36%, rgba(46, 91, 255, 0.16), transparent 30%),
-    linear-gradient(108deg, #ffffff 0%, #f8faff 42%, var(--color-primary-bg) 100%);
-  border: 1px solid var(--color-border);
+  border: 0;
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
 }
@@ -26,9 +36,9 @@
 .tgm-kicker {
   display: inline-flex;
   margin-bottom: 10px;
-  color: var(--color-primary);
+  color: var(--tgm-ink);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .tgm-header h1 {
@@ -56,7 +66,7 @@
   gap: 8px;
   border-radius: var(--radius-sm);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -65,12 +75,12 @@
   min-width: 132px;
   border: 1px solid #cfe0ff;
   background: var(--color-bg);
-  color: var(--color-primary);
+  color: var(--tgm-ink);
 }
 
 .tgm-primary-btn {
   min-width: 140px;
-  background: var(--color-primary);
+  background: var(--color-cta);
   color: #ffffff;
   box-shadow: 0 12px 24px rgba(21, 92, 255, 0.18);
 }
@@ -92,15 +102,15 @@
   border-radius: 10px;
   background: var(--color-bg);
   color: var(--color-text-sub);
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 700;
   box-shadow: 0 12px 28px rgba(15, 45, 95, 0.045);
 }
 
 .tgm-tabs button.active {
-  border-color: #b9d0ff;
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
+  border-color: var(--tgm-tab);
+  background: var(--tgm-tab-soft);
+  color: var(--tgm-tab);
 }
 
 .tgm-layout {
@@ -138,12 +148,12 @@
   border-radius: var(--radius-sm);
   color: var(--color-text-sub);
   font-size: 16px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .tgm-phase-row button.active {
   background: var(--color-bg);
-  color: var(--color-primary);
+  color: var(--tgm-ink);
   box-shadow: 0 8px 18px rgba(15, 45, 95, 0.08);
 }
 
@@ -163,17 +173,17 @@
 }
 
 .tgm-word-card span {
-  color: var(--color-primary);
-  font-size: 15px;
-  font-weight: 900;
+  color: var(--tgm-ink);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .tgm-word-card strong {
   display: block;
   margin: 12px 0 8px;
   color: var(--color-navy);
-  font-size: 19px;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .tgm-word-card p,
@@ -199,7 +209,7 @@
 }
 
 .tgm-word-answer input:focus {
-  border-color: var(--color-primary);
+  border-color: var(--tgm-ink);
   box-shadow: 0 0 0 3px rgba(7, 92, 255, 0.08);
 }
 
@@ -228,16 +238,16 @@
 }
 
 .tgm-question-top span {
-  color: var(--color-primary);
-  font-size: 15px;
-  font-weight: 900;
+  color: var(--tgm-ink);
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .tgm-question-top strong,
 .tgm-review-card strong {
   color: var(--color-navy);
-  font-size: 17px;
-  font-weight: 900;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .tgm-question-card p,
@@ -271,9 +281,9 @@
 }
 
 .tgm-choice-list button.selected {
-  border-color: var(--color-primary);
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
+  border-color: var(--tgm-ink);
+  background: var(--tgm-soft);
+  color: var(--tgm-ink);
 }
 
 .tgm-choice-list span {
@@ -284,9 +294,9 @@
   align-items: center;
   justify-content: center;
   border-radius: 50%;
-  background: var(--color-primary-bg);
+  background: var(--tgm-soft);
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .tgm-action-row {
@@ -312,14 +322,14 @@
 
 .tgm-calendar-head h2 {
   color: var(--color-navy);
-  font-size: 19px;
-  font-weight: 900;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .tgm-calendar-head span,
 .tgm-calendar-stats span {
   color: var(--color-text-sub);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -331,7 +341,7 @@
 }
 
 .tgm-calendar-stats strong {
-  color: var(--color-primary);
+  color: var(--tgm-ink);
   font-size: 34px;
   font-weight: 900;
 }
@@ -350,14 +360,14 @@
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   color: #73809b;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .tgm-calendar-grid span.done {
   border-color: #b9d0ff;
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
+  background: var(--tgm-soft);
+  color: var(--tgm-ink);
 }
 
 .tgm-result-banner {
@@ -380,8 +390,8 @@
   display: block;
   margin-bottom: 8px;
   color: var(--color-navy);
-  font-size: 22px;
-  font-weight: 900;
+  font-size: 20px;
+  font-weight: 700;
 }
 
 .tgm-result-banner p,
@@ -396,7 +406,7 @@
   padding: 5px 10px;
   border-radius: 999px;
   font-size: 14px;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .tgm-review-card span.ok {
@@ -413,7 +423,7 @@
   display: block;
   margin-top: 8px;
   color: var(--color-text-sub);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.55;
 }
@@ -456,6 +466,6 @@
     padding: 20px 18px 18px;
     border-radius: var(--radius-md);
   }
-  .tgm-header h1 { font-size: 22px; line-height: 1.3; margin-bottom: 8px; }
+  .tgm-header h1 { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
   .tgm-header p { font-size: 16px; line-height: 1.55; }
 }

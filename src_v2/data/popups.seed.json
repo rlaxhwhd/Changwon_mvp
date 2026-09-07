@@ -1,0 +1,26 @@
+[
+  {
+    "id": "pop-2026-demand-survey",
+    "image": "/pop01.png",
+    "alt": "2026학년도 진로·취업지원 학생 통합수요조사 안내",
+    "href": "/jobs/notices"
+  },
+  {
+    "id": "pop-youth-cafe-aug",
+    "image": "/pop02.jpg",
+    "alt": "청년카페 창원 8월 프로그램 참여자 모집 안내",
+    "href": "/growth/program"
+  },
+  {
+    "id": "pop-mentor-track-sep",
+    "image": "/pop03.png",
+    "alt": "창대한 멘토단 트랙 9월 참가자 모집 안내",
+    "href": "/growth/program"
+  },
+  {
+    "id": "pop-career-up-mentoring",
+    "image": "/thumb4.png",
+    "alt": "Career-up 멘토링 스터디 7월 참가자 모집",
+    "href": "/growth/program"
+  }
+]

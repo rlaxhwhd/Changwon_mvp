@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { SAVED_RESUMES } from './resumeMock'
+import { getAllResumes } from './resumeMock'
 import './AiConsulting.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 interface Evaluation {
   score: number
@@ -28,12 +29,14 @@ const MOCK_EVALUATION: Evaluation = {
 const scoreColor = (s: number) => (s >= 85 ? '#16A34A' : s >= 75 ? 'var(--color-primary)' : 'var(--color-warning)')
 
 export default function AiConsulting() {
+  usePageHead('AI 컨설팅', '작성된 자소서를 AI가 항목별로 분석하고 평가합니다.')
   const navigate = useNavigate()
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [evaluating, setEvaluating] = useState(false)
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null)
 
-  const selected = SAVED_RESUMES.find(resume => resume.id === selectedId)
+  const resumes = useMemo(() => getAllResumes(), [])
+  const selected = resumes.find(resume => resume.id === selectedId)
 
   const startEval = () => {
     if (!selectedId) return
@@ -56,10 +59,6 @@ export default function AiConsulting() {
         <button className="ac-back-btn" onClick={() => navigate('/jobs/home')} aria-label="홈으로">
           <i className="fa-solid fa-arrow-left" />
         </button>
-        <div>
-          <h1><i className="fa-solid fa-magnifying-glass-chart" /> AI 컨설팅</h1>
-          <p>작성된 자소서를 AI가 항목별로 분석하고 평가합니다.</p>
-        </div>
       </header>
 
       {/* ── 자소서 선택 ── */}
@@ -69,7 +68,7 @@ export default function AiConsulting() {
           <p className="ac-card-desc">평가를 진행할 자소서를 하나 선택해 주세요.</p>
 
           <div className="ac-pick-list">
-            {SAVED_RESUMES.map(resume => {
+            {resumes.map(resume => {
               const active = selectedId === resume.id
               return (
                 <button

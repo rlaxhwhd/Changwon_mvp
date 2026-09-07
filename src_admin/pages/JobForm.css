@@ -1,0 +1,157 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   채용공고 등록(JobForm) — public_t/test2.png 기반. .jf 스코프 토큰(제약)으로
+   임의 색/여백을 금지하고 이미지의 라벨-좌측 테이블 폼을 구현한다.
+   ───────────────────────────────────────────────────────────────────────── */
+.jf {
+  /* 색 — 시맨틱 롤(hue 아님) */
+  --jf-primary: #3b5bdb;
+  --jf-primary-hover: #364fc7;
+  --jf-primary-soft: rgba(59, 91, 219, 0.12);
+  --jf-text: #212529;
+  --jf-label: #343a40;
+  --jf-muted: #868e96;
+  --jf-placeholder: #adb5bd;
+  --jf-req: #fa5252;
+  --jf-border: #e9ecef;
+  --jf-input-border: #ced4da;
+  --jf-label-bg: #f8f9fa;
+  --jf-card-bg: #ffffff;
+  /* 형태 */
+  --jf-r: 10px;
+  --jf-r-input: 6px;
+
+  min-height: calc(100vh - var(--gnb-height));
+  padding: 24px 24px 64px;
+  background: #fff;
+  color: var(--jf-text);
+  font-size: 14px;
+}
+.jf * { box-sizing: border-box; }
+/* 본문 축은 다른 서브페이지와 같아야 한다 — .admin-page 는 max-width 1440 안쪽에 좌우 24 를
+   두므로 실제 글 상자가 1392 다. 여기는 배경을 전폭으로 깔아야 해서 그 24 가 바깥(.jf)에
+   있으니, 안쪽 상자를 1392 로 잡아야 경로 표시·제목이 같은 세로선에서 시작한다.
+   고정값(1180)을 쓰면 화면이 넓을수록 이 화면만 좌우가 더 벌어졌다. */
+.jf-inner { max-width: calc(var(--page-max) - 48px); margin: 0 auto; }
+/* 경로 표시가 위를 이미 띄웠다 — 다른 서브페이지(.admin-crumb-bar + .admin-page)와 같은 값. */
+.admin-crumb-bar + .jf { padding-top: 14px; }
+
+/* ── 헤더 ── */
+.jf-page-title { font-size: 28px; font-weight: 700; letter-spacing: -0.03em; color: var(--jf-text); }
+.jf-crumbs { display: flex; align-items: center; gap: 7px; margin: 8px 0 22px; font-size: 13px; color: var(--jf-muted); }
+.jf-crumbs a { color: var(--jf-muted); }
+.jf-crumbs a:hover { color: var(--jf-primary); }
+.jf-crumb-sep { color: var(--jf-input-border); }
+.jf-crumbs .is-current { color: var(--jf-primary); font-weight: 600; }
+
+/* ── 섹션 카드 ── */
+.jf-section {
+  background: var(--jf-card-bg);
+  border: 1px solid var(--jf-border);
+  border-radius: var(--jf-r);
+  overflow: hidden;
+  margin-bottom: 22px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.03);
+}
+.jf-section-head {
+  display: flex; align-items: center; gap: 9px;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--jf-border);
+}
+.jf-section-head::before {
+  content: ''; width: 4px; height: 17px;
+  background: var(--jf-primary); border-radius: 2px;
+}
+.jf-section-head h2 { font-size: 16px; font-weight: 800; color: var(--jf-text); }
+
+/* ── 테이블 로우 (골든 컴포넌트) ── */
+.jf-row {
+  display: grid;
+  grid-template-columns: 150px 1fr;
+  align-items: stretch;
+  border-top: 1px solid var(--jf-border);
+}
+.jf-section-head + .jf-row { border-top: 0; }
+.jf-row-label {
+  display: flex; align-items: center; gap: 4px;
+  padding: 14px 20px;
+  background: var(--jf-label-bg);
+  font-size: 14px; font-weight: 600; color: var(--jf-label);
+}
+.jf-row-top .jf-row-label { align-items: flex-start; }
+.jf-req { color: var(--jf-req); font-weight: 700; }
+.jf-row-body { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 20px; }
+.jf-row-top .jf-row-body { align-items: flex-start; }
+
+/* ── 인풋 ── */
+.jf-input, .jf-select {
+  height: 40px; padding: 0 12px;
+  border: 1px solid var(--jf-input-border); border-radius: var(--jf-r-input);
+  font-size: 14px; color: var(--jf-text); background: #fff;
+  width: 100%;
+}
+.jf-input::placeholder { color: var(--jf-placeholder); }
+.jf-input:focus, .jf-select:focus {
+  border-color: var(--jf-primary); outline: none;
+  box-shadow: 0 0 0 3px var(--jf-primary-soft);
+}
+.jf-input:disabled, .jf-select:disabled { background: var(--jf-label-bg); color: var(--jf-muted); }
+.jf-select { cursor: pointer; appearance: auto; }
+
+/* ── 라디오/체크박스 ── */
+.jf-opts { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; }
+.jf-radio, .jf-check { display: inline-flex; align-items: center; gap: 7px; font-size: 14px; color: var(--jf-text); cursor: pointer; }
+.jf-radio input, .jf-check input { width: 16px; height: 16px; accent-color: var(--jf-primary); cursor: pointer; margin: 0; }
+
+/* 직종 5열 그리드 — 좌측 정렬 고정폭(이미지처럼 균등 컬럼) */
+.jf-grid5 { display: grid; grid-template-columns: repeat(5, 150px); gap: 14px 12px; justify-content: start; }
+
+/* ── 인라인 (인풋 + 옆 요소) ── */
+.jf-inline { display: flex; align-items: center; gap: 10px; width: 100%; }
+.jf-inline .jf-input { flex: 1; min-width: 0; }
+.jf-unit { color: var(--jf-text); font-size: 14px; white-space: nowrap; }
+.jf-hint { color: var(--jf-muted); font-size: 13px; white-space: nowrap; }
+.jf-w-narrow { max-width: 200px; }
+.jf-w-mid { max-width: 280px; }
+
+/* ── 기업 로고 (추천채용 전용) ──
+   미리보기는 카드에 실제로 그려지는 40px 타일이 아니라 64px 다 — 등록 화면에서는
+   무엇을 올렸는지 확인하는 게 목적이라 조금 크게 본다. */
+.jf-logo { display: flex; align-items: flex-start; gap: 14px; width: 100%; }
+.jf-logo-preview {
+  flex: 0 0 auto;
+  width: 64px; height: 64px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1px solid var(--jf-input-border); border-radius: var(--jf-r-input);
+  background: var(--jf-label-bg); overflow: hidden;
+}
+/* 로고 배경이 대개 흰색이라 이미지가 있을 때만 흰 바닥으로 바꾼다(회색 위 흰 로고 방지). */
+.jf-logo-preview.has-img { background: #fff; padding: 5px; }
+.jf-logo-preview img { width: 100%; height: 100%; object-fit: contain; }
+.jf-logo-preview em { font-style: normal; font-size: 15px; font-weight: 800; color: var(--jf-muted); }
+.jf-logo-side { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.jf-logo-btns { display: flex; align-items: center; gap: 8px; }
+/* label 이 버튼 노릇을 한다 — 안의 input[type=file] 은 기본 UI 를 숨기고 클릭만 받는다. */
+.jf-logo-pick { position: relative; overflow: hidden; }
+.jf-logo-pick input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+.jf-logo-side .jf-hint { white-space: normal; }
+.jf-logo-error { font-size: 13px; font-weight: 600; color: var(--jf-req); }
+
+/* 지역 2단 */
+.jf-region { display: flex; gap: 10px; width: 100%; }
+.jf-region .jf-scope { flex: 0 0 200px; }
+.jf-region .jf-multi { flex: 1; min-width: 0; }
+
+/* ── 하단 액션 ── */
+.jf-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
+/* 저장 결과 알림창 본문 — 실패 사유가 두 줄이라 읽히는 줄간격을 준다. */
+.jf-notice { margin: 0 0 20px; font-size: 14px; line-height: 1.65; color: var(--jf-label); }
+.jf-btn {
+  height: 42px; padding: 0 24px; border-radius: var(--jf-r-input);
+  font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;
+  cursor: pointer; border: 1px solid transparent; white-space: nowrap;
+}
+.jf-btn-primary { background: var(--jf-primary); color: #fff; }
+.jf-btn-primary:hover { background: var(--jf-primary-hover); }
+.jf-btn-primary:disabled { background: #adb5bd; cursor: not-allowed; }
+.jf-btn-outline { background: #fff; color: var(--jf-text); border-color: var(--jf-input-border); }
+.jf-btn-outline:hover { background: var(--jf-label-bg); }

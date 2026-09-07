@@ -1,0 +1,361 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   RoadmapStatus (rs-) — 3축 로드맵 이행 현황.
+
+   축 색은 공용 보드(RoadmapAxisBoard)와 같은 토큰을 쓴다 — 같은 축이 두 화면에서
+   다른 색이면 다른 것으로 읽힌다. 면에는 본색, 글자에는 잉크(민트 2.65:1 → mint-ink 4.85:1).
+
+   ⚠️ 빈 히어로 띠는 두지 않는다. 제목·설명은 usePageHead 가 그린다.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.rs-page {
+  flex: 1;
+  width: 100%;
+  /* 폭·좌우여백은 .v2-main 이 정한다 — 컨테이너를 다시 만들지 않는다. */
+  padding: 0 0 56px;
+  min-width: 0;
+}
+
+/* ─── 로드맵 미생성 ────────────────────────────────────────── */
+
+.rs-empty {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 56px 24px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-bg);
+  text-align: center;
+}
+
+.rs-empty > i {
+  color: var(--violet);
+  font-size: 28px;
+}
+
+.rs-empty strong {
+  color: var(--color-navy);
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.rs-empty p {
+  margin: 0;
+  color: var(--color-text-sub);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rs-empty-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  background: var(--violet-soft);
+  color: var(--violet-hover);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+/* ─── 이행률 카드 ──────────────────────────────────────────── */
+
+.rs-progress-card {
+  padding: 22px 24px;
+  margin-bottom: 16px;
+  background: var(--blue-soft);
+  border: 1px solid var(--blue-border);
+  border-radius: var(--radius-md);
+}
+
+.rs-progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.rs-progress-head h2 {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--color-navy);
+}
+
+.rs-progress-pct {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--blue);
+  letter-spacing: -0.5px;
+}
+
+.rs-progress-track {
+  height: 12px;
+  margin-bottom: 12px;
+  border-radius: var(--radius-pill);
+  background: var(--color-bg);
+  overflow: hidden;
+}
+
+.rs-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: linear-gradient(90deg, var(--blue), var(--violet));
+}
+
+.rs-progress-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-sub);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.rs-progress-meta strong {
+  margin: 0 2px;
+  color: var(--color-navy);
+  font-weight: 700;
+}
+
+.rs-divider {
+  color: var(--color-text-muted);
+}
+
+/* ─── 축별 이행률 ──────────────────────────────────────────── */
+
+.rs-axis-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+/* 축 색은 보드와 같은 토큰. 글자는 잉크로 — 본색은 흰 배경에서 못 읽는다. */
+.rs-axis-stat.is-IAP {
+  --rs-axis: var(--goal-1);
+  --rs-axis-ink: var(--mint-ink);
+  --rs-axis-soft: var(--goal-1-soft);
+}
+
+.rs-axis-stat.is-CORE {
+  --rs-axis: var(--goal-2);
+  --rs-axis-ink: var(--blue);
+  --rs-axis-soft: var(--goal-2-soft);
+}
+
+.rs-axis-stat.is-GROWTH {
+  --rs-axis: var(--goal-3);
+  --rs-axis-ink: var(--violet);
+  --rs-axis-soft: var(--goal-3-soft);
+}
+
+.rs-axis-stat {
+  padding: 14px 16px;
+  border: 1px solid var(--color-border);
+  border-top: 3px solid var(--rs-axis);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.rs-axis-stat-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.rs-axis-stat-name {
+  color: var(--color-navy);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.rs-axis-stat-pct {
+  color: var(--rs-axis-ink);
+  font-size: 20px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+}
+
+.rs-axis-stat-track {
+  height: 8px;
+  border-radius: var(--radius-pill);
+  background: var(--rs-axis-soft);
+  overflow: hidden;
+}
+
+.rs-axis-stat-fill {
+  height: 100%;
+  border-radius: var(--radius-pill);
+  background: var(--rs-axis);
+}
+
+.rs-axis-stat-meta {
+  margin: 8px 0 0;
+  color: var(--color-text-sub);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.rs-axis-stat-meta strong {
+  color: var(--rs-axis-ink);
+  font-weight: 700;
+}
+
+/* ─── 메타 카드 ────────────────────────────────────────────── */
+
+.rs-meta {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.rs-meta-item {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-height: 76px;
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+}
+
+.rs-meta-key {
+  color: var(--color-text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.rs-meta-val {
+  color: var(--color-navy);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.rs-meta-val--accent {
+  color: var(--violet);
+  font-size: 18px;
+}
+
+/* ─── 섹션 머리 ────────────────────────────────────────────── */
+
+.rs-section {
+  margin-bottom: 24px;
+}
+
+.rs-section-head {
+  margin-bottom: 14px;
+}
+
+.rs-section-head h2 {
+  margin-bottom: 4px;
+  color: var(--color-navy);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.rs-section-head p {
+  color: var(--color-text-sub);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ─── 하단 안내 ────────────────────────────────────────────── */
+
+.rs-footer-note {
+  margin-top: 22px;
+}
+
+.rs-footer-note-block {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 22px;
+  border: 1px dashed var(--blue-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.rs-footer-note-block > i {
+  flex-shrink: 0;
+  color: var(--blue);
+  font-size: 20px;
+}
+
+.rs-footer-note-block > div {
+  flex: 1;
+  min-width: 0;
+}
+
+.rs-footer-note-block strong {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--color-navy);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.rs-footer-note-block p {
+  margin: 0;
+  color: var(--color-text-sub);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.55;
+}
+
+.rs-footer-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.rs-footer-link {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  border-radius: var(--radius-md);
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 14px;
+  font-weight: 700;
+  transition: background 160ms, color 160ms;
+}
+
+.rs-footer-link:hover {
+  background: var(--blue);
+  color: #fff;
+}
+
+/* 변경 요청은 로드맵 갈래(보라)다 — 상담 예약(파랑)과 목적지가 다르다.
+   보라는 옅은 면 + 진한 잉크 꼴로 쓴다(수정.md §2-3): soft 면 위 --violet-hover = 4.87:1. */
+.rs-footer-link.is-request {
+  background: var(--violet-soft);
+  color: var(--violet-hover);
+}
+
+.rs-footer-link.is-request:hover {
+  background: var(--violet-hover);
+  color: #fff;
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  .rs-meta { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+
+@media (max-width: 768px) {
+  .rs-page { padding: 0 14px 32px; }
+  .rs-axis-stats { grid-template-columns: 1fr; }
+  .rs-meta { grid-template-columns: 1fr 1fr; }
+  .rs-footer-note-block { flex-direction: column; align-items: flex-start; }
+}

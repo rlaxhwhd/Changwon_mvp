@@ -1,489 +1,1364 @@
 @import "tailwindcss";
 
-/* ─── Design Tokens ─────────────────────────────────────────────── */
-:root {
-  --color-primary:       #2E5BFF;
-  --color-primary-light: #5A7FFF;
-  --color-primary-bg:    #EEF2FF;
-  --color-navy:          #1C2442;
-  --color-bg:            #FFFFFF;
-  --color-page-bg:       #FFFFFF;
-  --color-surface:       #F2F5FF;
-  --color-surface-alt:   #DCE3FD;
-  --color-text:          #1C2442;
-  --color-text-sub:      #637381;
-  --color-text-muted:    #99A1A9;
-  --color-border:        #E8ECF0;
-  --color-success:       #22C55E;
-  --color-warning:       #F59E0B;
-  --color-danger:        #EF4444;
+/* ═══════════════════════════════════════════════════════════════════
+   학생 포털 디자인 시스템
+   기준 시안: 창원디자인시안작업/main.html · stu_dash.html
+             (= stu_v1.jsx · stu_lounge.jsx 가 import 하는 page.css 원본)
+   규약 문서: DESIGN_STUDENT.md
 
-  --radius-xs:  4px;
-  --radius-sm:  8px;
-  --radius-md:  12px;
-  --radius-lg:  18px;
-  --radius-xl:  24px;
+   ★ 값은 시안에서 그대로 옮긴 것이다. 임의로 바꾸지 말 것.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ─── 1층: 기반 팔레트 — 시안 :root 전량 ──────────────────────────── */
+:root {
+  /* 표면 */
+  --background: #f7f8fb;
+  --foreground: #181c25;
+  --card: #ffffff;
+  --card-foreground: #181c25;
+  --muted: #f1f3f6;
+  --muted-foreground: #565e6d;
+  --border: #e2e6ec;
+  --input: #d8dde5;
+
+  /* 브랜드 */
+  --primary: #7c5cfc;
+  --primary-foreground: #ffffff;
+
+  /* 버튼 채움색 — 잉크(--primary)와 분리한다.
+     채움만 한 단계 연한 파스텔 보라로 낮추고, 글자·아이콘·테두리는 --primary 를 그대로 쓴다.
+     같이 낮추면 흰 배경 위 보라 텍스트 대비가 무너진다(4.4:1 → 3.5:1).
+     버튼은 19px/900 큰 글씨라 흰 글자 대비 3.4:1 로 큰 글씨 기준(3:1)을 넘긴다. */
+  --cta:        #8f74fd;
+  --cta-hover:  #7d5efb;
+  --cta-shadow: rgba(143, 116, 253, .22);
+
+  /* 휴 세트 — 본색 + soft 배경 쌍으로만 존재 */
+  --blue:   #356dff;  --blue-soft:   #eaf0ff;
+  --violet: #7c5cfc;  --violet-soft: #f0edff;
+  --mint:   #20b486;  --mint-soft:   #e5f8f2;
+  --coral:  #ff6b6b;  --coral-soft:  #fff0f0;
+  --amber:  #f5a524;  --amber-soft:  #fff6df;
+  --sky:    #17a9e6;  --sky-soft:    #e7f7fd;
+  --pink:   #e85aad;  --pink-soft:   #fdebf6;
+  --teal:   #14b8a6;  --teal-soft:   #e6faf7;
+
+  /* 보라 파생 — 테두리·호버는 이 둘만 쓴다 */
+  --violet-border: #d9d0ff;
+  --violet-hover:  #6848ec;
+
+  /* 짙은 면(목표 카드 등) · 차트 보조 */
+  --deep-start: #242a3b;
+  --deep-end:   #5042a8;
+  --deep-muted: #d8dbeb;
+  --chart-reference: #aeb7c5;
+  --scrollbar-accent: #d8d2f8;
+
+  /* ─── 2층: 의미 별칭 ──────────────────────────────────────────────
+     화면은 1층 휴를 직접 쓰지 않고 이 층을 경유한다. */
+  /* 진로 여정 색은 이제 「완료 초록 / 진행 보라」 두 색이 아니라 C1~C7 색 띠다 —
+     components/CareerJourneyCard.css 가 --mint/--blue/--violet 세 본색을 이어 만든다. */
+
+  --daily-1: var(--blue);   --daily-1-soft: var(--blue-soft);
+  --daily-2: var(--violet); --daily-2-soft: var(--violet-soft);
+  --daily-3: var(--amber);  --daily-3-soft: var(--amber-soft);
+
+  --competency-current: var(--violet);
+  --competency-target:  var(--coral);
+
+  --program-accent: var(--sky);
+  --job-accent:     var(--mint);
+  --notice-accent:  var(--pink);
+
+  /* 채용 지원 CTA — 「지원하기」는 앱 강조색(보라)이 아니라 채용 초록이다.
+     휴 본색(--mint)은 흰 글자 대비가 2.7:1 로 미달이라 잉크 계열을 채움색으로 쓴다(4.9:1).
+     지원하기 버튼을 그리는 화면은 전부 이 토큰 하나를 본다. */
+  --apply-cta: var(--mint-ink);
+
+  /* 지표 5종 — 진단완료 · 상담현황 · 이행률 · 비교과이수 · 성장레벨 */
+  --stat-1: var(--mint);   --stat-1-soft: var(--mint-soft);
+  --stat-2: var(--sky);    --stat-2-soft: var(--sky-soft);
+  --stat-3: var(--blue);   --stat-3-soft: var(--blue-soft);
+  --stat-4: var(--pink);   --stat-4-soft: var(--pink-soft);
+  --stat-5: var(--violet); --stat-5-soft: var(--violet-soft);
+
+  /* 상담 3종 — 진로취업 · 심리 · 지도교수 */
+  --counsel-1: var(--amber);  --counsel-1-soft: var(--amber-soft);
+  --counsel-2: var(--violet); --counsel-2-soft: var(--violet-soft);
+  --counsel-3: var(--mint);   --counsel-3-soft: var(--mint-soft);
+
+  /* 로드맵 3축 — PROCESS.md 축 순서와 1:1 */
+  --goal-1: var(--mint);   --goal-1-soft: var(--mint-soft);
+  --goal-2: var(--blue);   --goal-2-soft: var(--blue-soft);
+  --goal-3: var(--violet); --goal-3-soft: var(--violet-soft);
+  --goal-status-active:  var(--mint);
+  --goal-status-planned: var(--amber);
+
+  /* 진단 5종 — 라운지 진단 결과 카드 · 진단센터 검사 카드가 같은 색을 본다.
+     1~4 는 라운지의 C-CORE·C-2·C-3·C-4 순서 그대로다. 5 는 진단센터에만 나오는
+     집중관리(C-5) 몫으로, 이미 있는 pink 를 끌어 쓴다 — 새 색이 아니다. */
+  --diagnosis-1: var(--violet); --diagnosis-1-soft: var(--violet-soft);
+  --diagnosis-2: var(--blue);   --diagnosis-2-soft: var(--blue-soft);
+  --diagnosis-3: var(--mint);   --diagnosis-3-soft: var(--mint-soft);
+  --diagnosis-4: var(--amber);  --diagnosis-4-soft: var(--amber-soft);
+  --diagnosis-5: var(--pink);   --diagnosis-5-soft: var(--pink-soft);
+
+  /* AI 추천 카드 표면·순번 */
+  --recommend-surface:           var(--amber);
+  --recommend-surface-soft:      var(--amber-soft);
+  --recommend-surface-wash:      var(--amber-wash);
+  --recommend-surface-highlight: var(--amber-highlight);
+  --recommend-1: var(--violet); --recommend-1-soft: var(--violet-soft);
+  --recommend-2: var(--mint);   --recommend-2-soft: var(--mint-soft);
+
+  /* 휴별 테두리·진한 글자·연한 배경 — 시안이 칩·미터에 쓴다 */
+  --violet-border-strong: #cec3ff;
+  --violet-hover-soft:    #f7f5ff;
+  --violet-wash:          #f4f0ff;
+  --blue-border:  #cbd8ff;
+  --blue-wash:    #eef4ff;
+  --mint-border:  #bdebdc;
+  --mint-ink:     #148262;
+  --coral-border: #ffcfcf;
+  --coral-ink:    #dc4444;
+  --amber-border: #f4d99d;
+  --amber-ink:    #9a6300;
+  --amber-wash:      #fff6dc;
+  --amber-wash-alt:  #fff9e8;
+  --amber-highlight: #fff0c8;
+
+  --deep-subtle: #d8dbeb;
+  --stat-5-alt: var(--blue);
+  --competency-growth: var(--sky);
+  --ring: var(--primary);
+
+  /* ─── 형태 — 시안 실측 스케일 ─────────────────────────────────────
+     radius 5종이 전부다: 12(카드·배지) 10(버튼·입력) 8(칩) 6(미터) 50%(원)
+     그림자는 카드에 없다. 오버레이(팝오버·모달·드롭다운)에만 쓴다. */
+  --radius:    12px;
+  --radius-md: 10px;
+  --radius-sm: 8px;
+  --radius-xs: 6px;
+
+  --shadow-pop:   0 8px 28px rgba(24, 28, 37, .14);
+  --shadow-modal: 0 32px 80px rgba(15, 23, 42, .24);
+  --shadow-raise: 0 1px 4px rgba(16, 24, 40, .08);
+
+  /* ─── 타이포 스케일 — 시안 실측 9단 ───────────────────────────────
+     12 라벨·보조(최다) / 13 메타 / 14 본문·설명 / 16 카드제목
+     18·20 섹션제목 / 24·28 지표값 / 32 페이지 H1
+     ★ 소수점·홀수(13.5 · 14.5 · 16.5 · 17 · 19 · 21 · 22)는 시안에 없다. */
+  --fs-label: 12px;
+  --fs-meta:  13px;
+  --fs-body:  14px;
+  --fs-card:  16px;
+  --fs-sub:   18px;
+  --fs-lead:  20px;
+  --fs-metric: 24px;
+  --fs-stat:  28px;
+  --fs-h1:    32px;
+
+  --font: "Pretendard Variable", Pretendard, "SUIT Variable", SUIT, -apple-system,
+          BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Malgun Gothic",
+          Arial, sans-serif;
+
+  /* 골격 치수 — 시안 실측 */
+  --topbar-h:   80px;
+  --page-max:   1440px;
+  --page-gutter: 24px;
+
+  /* 학생 포털 공통 여백 단위 — stu_dash.html의 4px 기반 리듬을 고정한다. */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+
+  /* ─── 3층: 레거시 별칭 ───────────────────────────────────────────
+     기존 페이지 CSS 43개가 참조한다. 값만 시안 쪽으로 좁혀 일괄 전환한다.
+     ★ 새 코드에서는 쓰지 말 것 — 1·2층을 직접 참조한다. */
+  --color-primary:       var(--primary);
+  --color-cta:           var(--cta);
+  --color-primary-light: #a48dff;
+  --color-primary-bg:    var(--violet-soft);
+  --color-navy:          var(--foreground);
+  --color-bg:            var(--card);
+  --color-page-bg:       var(--background);
+  --color-surface:       var(--muted);
+  --color-surface-alt:   var(--violet-soft);
+  --color-text:          var(--foreground);
+  --color-text-sub:      var(--muted-foreground);
+  --color-text-muted:    #8a92a2;
+  --color-border:        var(--border);
+  --color-success:       var(--mint);
+  --color-warning:       var(--amber);
+  --color-danger:        var(--coral);
+
+  --radius-lg:   var(--radius);
+  --radius-xl:   var(--radius);
   --radius-pill: 999px;
 
-  --shadow-sm:  0 1px 3px rgba(46,91,255,.08), 0 1px 2px rgba(0,0,0,.04);
-  --shadow-md:  0 4px 16px rgba(46,91,255,.10), 0 2px 6px rgba(0,0,0,.06);
-  --shadow-lg:  0 8px 32px rgba(46,91,255,.12), 0 4px 12px rgba(0,0,0,.08);
+  /* 시안 카드엔 그림자가 없다 — 레거시 3단계를 전부 none 으로 좁힌다.
+     경계는 그림자가 아니라 1px solid var(--border) 가 만든다. */
+  --shadow:    none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: var(--shadow-pop);
 
-  --gnb-height: 80px;
-  --font: 'Pretendard', 'Noto Sans KR', sans-serif;
-
-  /* 콘텐츠 최대 폭 — 와이드 모니터에서 유동적으로 채우되 초대형에선 상한 */
-  --page-max: 1600px;
+  --gnb-height: var(--topbar-h);
 }
 
 /* ─── Reset ─────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-html { font-size: 16px; scroll-behavior: smooth; }
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  background: var(--background);
+}
 
 body {
   font-family: var(--font);
-  background: var(--color-bg);
-  color: var(--color-text);
+  background: var(--background);
+  color: var(--foreground);
   min-width: 1280px;
-  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
+  word-break: keep-all;
+  overflow-x: hidden;
 }
 
-a { text-decoration: none; color: inherit; }
-button { font-family: var(--font); cursor: pointer; border: none; background: none; }
-input, textarea, select { font-family: var(--font); }
+body.nav-open { overflow: hidden; }
 
-/* ─── Focus ring (keyboard a11y) ─────────────────────────────────── */
-:focus-visible {
-  outline: 2px solid var(--color-primary);
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { color: inherit; font: inherit; }
+button { cursor: pointer; border: none; background: none; }
+img, svg { display: block; }
+[hidden] { display: none !important; }
+
+/* 지표·코드가 세로로 흔들리지 않게 */
+strong, b, .tnum { font-variant-numeric: tabular-nums; }
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+button:focus-visible,
+a:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--primary);
   outline-offset: 2px;
-  border-radius: var(--radius-xs);
+  border-radius: var(--radius-md);
 }
-/* mouse/touch users don't get the ring; keyboard users always do */
 :focus:not(:focus-visible) { outline: none; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: .01ms !important;
+    transition-duration: .01ms !important;
     scroll-behavior: auto !important;
   }
+  .reveal { opacity: 1 !important; transform: none !important; }
 }
 
-/* ─── Layout ─────────────────────────────────────────────────────── */
+/* ─── Icon — SVG 스프라이트 공통 ───────────────────────────────────
+   stroke-width 는 여기 한 곳에서만 정한다. 심볼에 박지 않는다. */
+.icon {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ─── Shell ─────────────────────────────────────────────────────── */
 .v2-layout {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background: var(--color-bg);
+  min-height: 100dvh;
+  background: var(--background);
 }
 
+/* 시안 .main — 가운데 정렬 1440px, 사이드바 없음 */
 .v2-main {
-  margin-top: var(--gnb-height);
   flex: 1;
-  background: var(--color-page-bg);
-}
-
-.v2-main-shell {
-  display: flex;
-  align-items: stretch;
-  min-height: calc(100vh - var(--gnb-height));
-}
-
-.v2-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.v2-page {
+  width: 100%;
   max-width: var(--page-max);
   margin: 0 auto;
-  padding: 32px 40px;
+  padding: 32px var(--page-gutter) 60px;
 }
 
-/* ─── GNB ────────────────────────────────────────────────────────── */
-.gnb {
-  position: fixed;
+.v2-content { min-width: 0; }
+
+/* 페이지 루트 — .v2-main 이 이미 폭·여백을 준다. 중첩 컨테이너를 만들지 않는다. */
+.v2-page { display: flex; flex-direction: column; gap: 16px; }
+
+/* 상단바 하위메뉴가 #섹션 으로 스크롤할 때(ScrollToTop), sticky 상단바에 제목이 가리지 않게
+   착지 지점을 내린다. --topbar-h 는 화면 폭에 따라 바뀌므로 픽셀을 JS 로 계산하지 않고 여기서 참조한다.
+   합계 144px 은 기존 관례 그대로다(예전엔 .dashboard-grid > [id] 와 Main.css 에 각각 박혀 있었다). */
+.v2-main [id] { scroll-margin-top: calc(var(--topbar-h) + 64px); }
+
+/* ─── Student page typography baseline ─────────────────────────────
+   Tailwind preflight removes the browser's default heading weight.  The
+   reference dashboard relies on that 700 weight, so restore it once at the
+   portal boundary instead of fixing every page ad hoc.  Screen CSS with an
+   intentional 800/900 weight remains more specific and is preserved. */
+.v2-main :where(h1, h2, h3, h4, h5, h6) {
+  font-family: var(--font);
+  font-weight: 700;
+  letter-spacing: -.02em;
+  text-wrap: balance;
+}
+
+.v2-main :where(p, li, td, th, input, textarea, select, button) {
+  font-family: var(--font);
+  word-break: keep-all;
+}
+
+.v2-main :where(p, li) {
+  line-height: 1.6;
+}
+
+/* 외부 이미지가 인라인 배경으로 들어오더라도 디자인 시스템의 평면 표면을
+   유지한다. 콘텐츠 이미지와 차트 이미지는 대상이 아니다. */
+.v2-main [style*="background-image"],
+.v2-main [style*="background: url"],
+.v2-main [style*="background:url"] {
+  background-image: none !important;
+}
+
+/* ─── Section accents — 폐기 ────────────────────────────────────────
+   섹션마다 강조색을 바꾸던 오버라이드(진단=sky · 상담=mint · 로드맵=blue ·
+   성장=mint · 취업=sky · 마이페이지=pink)를 걷어냈다.
+   메인 강조색은 DESIGN.md 의 바이올렛(`--primary` #7c5cfc) 하나다 —
+   화면을 옮길 때마다 버튼·배지 색이 바뀌면 같은 사이트로 읽히지 않는다.
+   :root 기본값(--color-primary: var(--primary) 등)이 그대로 적용된다.
+   ⚠ 섹션별 색을 되살리지 말 것. 의미색(mint/sky/pink…)은 상태 표시에만 쓴다. */
+
+/* ─── Topbar (시안 .topbar) ───────────────────────────────────────── */
+.topbar {
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  height: var(--gnb-height);
-  background: rgba(255, 255, 255, 0.98);
-  border-bottom: 1px solid #dce5f5;
-  z-index: 1000;
+  z-index: 50;
+  min-height: var(--topbar-h);
+  background: rgba(255, 255, 255, .96);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.topbar-inner {
+  width: min(100%, 1488px);
+  margin: 0 auto;
+  padding: 0 var(--page-gutter);
   display: flex;
   align-items: center;
-  padding: 0 38px;
-  gap: 0;
-  box-shadow: 0 2px 14px rgba(15, 45, 95, 0.04);
+  gap: var(--page-gutter);
 }
 
-.gnb-logo {
+.brand { flex: 0 0 164px; }
+
+.brand img {
+  width: 164px;
+  height: 28px;
+  object-fit: contain;
+  object-position: left center;
+}
+
+.top-nav {
+  flex: 1 1 auto;
+  min-width: 0;
+  align-self: stretch;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-evenly;
+  gap: 8px;
+}
+
+.nav-group { position: relative; display: flex; }
+
+.nav-item {
+  min-width: 0;
+  height: var(--topbar-h);
+  padding: 0 8px;
+  border-bottom: 3px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #3f4653;
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: color 180ms ease, border-color 180ms ease;
+}
+
+/* 시안은 상단바에서 아이콘을 숨긴다 — 텍스트만 */
+.nav-item .icon { display: none; }
+
+.nav-item:hover,
+.nav-item.active { color: var(--primary); }
+
+.nav-item.active {
+  border-bottom-color: var(--primary);
+  font-weight: 700;
+}
+
+/* 하위 메뉴 — 시안엔 없으나 47개 라우트 진입 경로 보존을 위해 유지 */
+.nav-dropdown {
+  position: absolute;
+  top: calc(100% - 1px);
+  left: 50%;
+  transform: translate(-50%, -4px);
+  min-width: 208px;
+  padding: 6px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 180ms ease, transform 180ms ease, visibility 180ms ease;
+}
+
+.nav-group:hover .nav-dropdown,
+.nav-group:has(:focus-visible) .nav-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translate(-50%, 0);
+}
+
+/* 눌러서 이동한 직후에는 접어 둔다(GNB.collapsedNavId). 포인터가 그 그룹을 벗어나면 풀린다.
+   :focus-within 이 아니라 :has(:focus-visible) 인 것도 같은 이유다 —
+   마우스로 누른 링크가 포커스를 쥐고 있으면 메뉴가 계속 열려 있었다. */
+.top-nav .nav-group.is-collapsed .nav-dropdown {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate(-50%, -4px);
+}
+
+.nav-dropdown-link {
+  display: block;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--muted-foreground);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.nav-dropdown-link:hover { background: var(--muted); color: var(--foreground); }
+
+.nav-dropdown-link.active {
+  background: var(--violet-soft);
+  color: var(--primary);
+  font-weight: 800;
+}
+
+.nav-dropdown-link.depth-1 { padding-left: 26px; }
+
+/* 우측 액션 */
+.topbar-right {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* STAR Track 표식 — 정사각 원본이라 폭·높이를 같이 잡는다. 상단바가 80px 이라 48px 이면
+   아래 워드마크까지 뭉개지지 않고 들어간다. */
+.topbar-brandmark {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+}
+
+/* 이 표식이 STAR 트랙 대시보드 진입점이다 — 누를 수 있다는 것이 보여야 해서
+   호버에 바닥과 확대를 준다(다른 상단바 아이콘과 같은 반응). */
+.topbar-brandmark-link {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: background .15s, transform .15s;
+  /* 메뉴 줄의 마지막 칸 — .top-nav 가 align-items: stretch 라 그대로 두면 상단바 높이만큼 늘어난다. */
+  align-self: center;
+  /* 오른쪽(알림 벨)까지의 간격도 메뉴 사이 간격과 같게 맞춘다.
+     space-evenly 는 항목 사이에 gap(8px) + 남는 폭 한 칸을, 양 끝에는 남는 폭 한 칸만 준다.
+     즉 여기서 상단바까지가 (메뉴간격 − 8px), 거기에 topbar-inner 의 간격이 더 붙는다.
+     그 둘을 상쇄하면 화면 폭이 얼마든 정확히 메뉴 사이 간격만 남는다. */
+  margin-right: calc(8px - var(--page-gutter));
+}
+.topbar-brandmark-link:hover { background: var(--muted); transform: scale(1.05); }
+
+.icon-button {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: #f2f4f7;
+  color: #344054;
+  display: inline-grid;
+  place-items: center;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.icon-button:hover { background: var(--violet-soft); color: var(--primary); }
+
+/* 프로필 */
+.header-profile { position: relative; display: inline-flex; }
+
+.profile-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 8px 0 2px;
+  border-radius: 999px;
+  transition: background 160ms ease;
+}
+
+.profile-trigger:hover,
+.header-profile.is-open .profile-trigger { background: var(--muted); }
+.header-profile.is-open .profile-caret { transform: rotate(180deg); }
+
+.profile-avatar-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: var(--violet-soft);
+  color: var(--primary);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.profile-avatar-icon img { width: 100%; height: 100%; object-fit: cover; }
+
+.profile-caret {
+  width: 16px;
+  height: 16px;
+  color: var(--muted-foreground);
+  transition: transform 200ms ease;
+}
+
+.profile-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 296px;
+  padding: 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 60;
+}
+
+.profile-popover-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 6px 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.profile-popover-head .profile-avatar-icon { width: 42px; height: 42px; }
+
+.profile-popover-meta { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.profile-popover-meta strong { font-size: var(--fs-card); font-weight: 700; line-height: 22px; }
+.profile-popover-meta small { font-size: var(--fs-label); font-weight: 600; color: var(--muted-foreground); }
+
+.profile-action {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 19px;
-  font-weight: 800;
-  color: var(--color-primary);
-  letter-spacing: -0.5px;
-  margin-right: 64px;
-  white-space: nowrap;
-  text-decoration: none;
-}
-
-.gnb-logo img { height: 28px; }
-
-.gnb-logo-icon {
-  width: 34px;
-  height: 34px;
-  background: linear-gradient(135deg, var(--color-primary) 0%, #7b55ff 48%, #28d1ff 100%);
-  border-radius: 9px 4px 9px 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-size: 17px;
-  font-weight: 900;
-  flex-shrink: 0;
-}
-
-.gnb-logo-text {
-  font-size: 21px;
-  font-weight: 800;
-  color: #071638;
-  letter-spacing: 0;
-}
-
-.gnb-bell-wrap { position: relative; }
-
-.gnb-badge {
-  position: absolute;
-  top: -1px;
-  right: -1px;
-  min-width: 16px;
-  height: 16px;
-  background: var(--color-primary);
-  color: #fff;
-  font-size: 12px;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  color: var(--muted-foreground);
+  font-size: var(--fs-body);
   font-weight: 700;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 4px;
-  pointer-events: none;
+  transition: background 160ms ease, color 160ms ease;
 }
 
-.gnb-nav {
+.profile-action span { flex: 1; }
+.profile-action:hover { background: var(--violet-soft); color: var(--primary); }
+
+.profile-section {
   display: flex;
-  align-items: center;
-  flex: 1;
-  justify-content: space-evenly;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
 }
 
-.gnb-nav-item {
+.profile-section-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 6px;
+  color: var(--muted-foreground);
+  font-size: var(--fs-label);
+  font-weight: 800;
+  letter-spacing: .04em;
+}
+
+.profile-section-title .icon { width: 14px; height: 14px; }
+
+.profile-switch { display: flex; flex-direction: column; gap: 6px; }
+
+.profile-switch-btn {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 10px 34px 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  text-align: left;
+  transition: border-color 160ms ease, background 160ms ease;
 }
 
-.gnb-nav-link {
+.profile-switch-btn strong { font-size: var(--fs-meta); font-weight: 700; }
+.profile-switch-btn small { font-size: var(--fs-label); color: var(--muted-foreground); }
+.profile-switch-btn:hover { border-color: var(--violet-border); background: var(--violet-soft); }
+
+.profile-switch-btn.active { border-color: var(--primary); background: var(--violet-soft); }
+.profile-switch-btn.active strong { color: var(--primary); }
+
+.profile-switch-check {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  width: 16px;
+  height: 16px;
+  transform: translateY(-50%);
+  color: var(--primary);
+}
+
+/* 모바일 메뉴 */
+.mobile-menu-toggle { display: none; }
+
+.mobile-backdrop {
+  position: fixed;
+  inset: var(--topbar-h) 0 0;
+  background: rgba(24, 28, 37, .45);
+  z-index: 40;
+}
+
+.mobile-menu {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 0;
+  right: 0;
+  max-height: calc(100dvh - var(--topbar-h));
+  overflow-y: auto;
+  padding: 8px 0 20px;
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-pop);
+  z-index: 45;
+}
+
+.mobile-section + .mobile-section { border-top: 1px solid var(--border); }
+
+.mobile-section-link {
   display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 15px 20px;
+  font-size: var(--fs-card);
+  font-weight: 700;
+}
+
+.mobile-section-link .nav-arrow { margin-left: auto; color: var(--muted-foreground); }
+.mobile-section-link.active { color: var(--primary); background: var(--violet-soft); }
+
+.mobile-sublinks { display: flex; flex-direction: column; padding: 4px 12px 12px; background: var(--muted); }
+
+.mobile-sublink {
+  padding: 10px 16px;
+  border-radius: var(--radius-sm);
+  color: var(--muted-foreground);
+  font-size: var(--fs-body);
+  font-weight: 600;
+}
+
+.mobile-sublink.active { background: var(--card); color: var(--primary); font-weight: 800; }
+
+.mobile-profile {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.mobile-profile .profile-avatar-icon { width: 42px; height: 42px; }
+
+.mobile-profile-link {
+  display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 0;
-  height: var(--gnb-height);
-  font-size: 17px;
+  padding: 7px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--violet-soft);
+  color: var(--primary);
+  font-size: var(--fs-meta);
   font-weight: 800;
-  color: #071638;
-  cursor: pointer;
-  transition: color 0.15s;
-  white-space: nowrap;
-  text-decoration: none;
-  border-bottom: 3px solid transparent;
 }
 
-.gnb-nav-link:hover,
-.gnb-nav-link.active {
-  color: var(--color-primary);
+.mobile-switch {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 20px 4px;
+  border-top: 1px solid var(--border);
 }
 
-.gnb-nav-link.active {
-  border-bottom-color: var(--color-primary);
-  font-weight: 900;
+/* ─── 페이지 헤더 (플랫) ────────────────────────────────────────────
+   시안 2개는 대시보드뿐이라 내부 페이지 헤더가 없다.
+   .welcome 의 kicker/h1 위계를 그대로 쓰되 배경·테두리는 두지 않는다. */
+.v2-page-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px var(--page-gutter);
+  margin-bottom: 8px;
 }
 
-.gnb-nav-link i { font-size: 12px; }
-
-.gnb-dropdown {
-  position: absolute;
-  top: calc(var(--gnb-height) - 1px);
-  left: 0;
-  min-width: 210px;
-  background: #ffffff;
-  border: 1px solid #dce5f5;
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  box-shadow: 0 18px 44px rgba(15, 45, 95, 0.1);
-  overflow: hidden;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition: all 0.15s ease;
-}
-
-.gnb-nav-item:hover .gnb-dropdown {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-}
-
-.gnb-dropdown-link {
-  display: block;
-  padding: 10px 16px;
-  font-size: 16px;
-  font-weight: 400;
-  color: var(--color-text-sub);
-  transition: all 0.1s;
-  text-decoration: none;
-}
-
-.gnb-dropdown-link:hover {
-  background: var(--color-surface);
-  color: var(--color-primary);
-}
-
-.gnb-dropdown-link.active {
-  color: var(--color-primary);
+.v2-page-crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 6px;
+  color: var(--muted-foreground);
+  font-size: var(--fs-label);
   font-weight: 600;
-  background: var(--color-primary-bg);
 }
 
-.gnb-actions {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  margin-left: auto;
+.v2-page-crumb .icon { width: 14px; height: 14px; }
+.v2-page-crumb i { font-size: 10px; opacity: .7; }
+
+/* Layout 이 서브페이지 맨 위에 한 번 그리는 경로 표시 — 전 서브페이지 같은 자리·같은 규격.
+   기준 시안은 /counsel/career 다. 페이지 헤더 안에 다시 만들지 말 것. */
+.v2-crumb-bar { margin-bottom: 14px; flex-wrap: wrap; }
+.v2-crumb-item { display: inline-flex; align-items: center; gap: 6px; }
+.v2-crumb-bar > :last-child { color: var(--foreground); font-weight: 800; }
+.v2-page-crumb a:hover { color: var(--primary); }
+.v2-page-crumb > :last-child { color: var(--foreground); font-weight: 800; }
+
+.v2-page-kicker,
+.section-kicker {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--primary);
+  font-size: var(--fs-label);
+  font-weight: 800;
+  letter-spacing: .08em;
 }
 
-.gnb-icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #071638;
-  font-size: 22px;
-  transition: all 0.15s;
-  background: none;
-  cursor: pointer;
+.v2-page-title {
+  margin: 0;
+  font-size: var(--fs-h1);
+  font-weight: 700;
+  line-height: 1.38;
+  letter-spacing: -.03em;
 }
 
-.gnb-icon-btn:hover {
-  background: #f0f5ff;
-  color: var(--color-primary);
+.v2-page-title span { color: var(--primary); }
+
+.v2-page-desc {
+  margin-top: 6px;
+  color: var(--muted-foreground);
+  font-size: var(--fs-body);
+  line-height: 20px;
 }
 
-.gnb-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: #f8fbff;
+.v2-page-actions { display: flex; align-items: center; gap: 8px; }
+
+/* ─── Card — data-slot 슬롯 계약 ───────────────────────────────────
+   카드 골격은 이 셀렉터로만 쓴다. 도메인 클래스(.cj-card 등)는 변주 전용.
+   ★ 그림자 없음. 경계는 1px border 가 만든다. */
+[data-slot="card"] {
+  min-width: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--card-foreground);
   overflow: hidden;
-  border: 1.5px solid #fff;
-  box-shadow: 0 4px 10px rgba(15, 45, 95, 0.12);
-  display: block;
-  flex-shrink: 0;
-  cursor: pointer;
 }
 
-.gnb-avatar-photo {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
-  object-position: center;
+[data-slot="card-header"] {
+  min-height: 72px;
+  padding: 20px 20px 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 4px 16px;
 }
 
-.gnb-avatar-caret {
-  color: #071638;
-  font-size: 14px;
-  margin-left: -6px;
+[data-slot="card-title"] {
+  margin: 0;
+  font-size: var(--fs-card);
+  font-weight: 700;
+  line-height: 24px;
 }
 
-/* ─── Card ───────────────────────────────────────────────────────── */
+[data-slot="card-description"] {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: 20px;
+}
+
+[data-slot="card-action"] {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: start;
+}
+
+[data-slot="card-content"] { padding: 20px; }
+
+[data-slot="card-footer"] {
+  padding: 16px 20px;
+  border-top: 1px solid var(--border);
+  background: color-mix(in srgb, var(--muted) 48%, transparent);
+}
+
+/* 레거시 .card / .card-title — 43개 페이지가 광범위하게 쓴다. 시안 톤으로 좁힌다. */
 .card {
-  background: var(--color-bg);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  box-shadow: var(--shadow-sm);
-  padding: 24px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
 }
 
 .card-title {
-  font-size: 17px;
-  font-weight: 700;
-  color: var(--color-text);
   margin-bottom: 16px;
+  font-size: var(--fs-card);
+  font-weight: 700;
+  line-height: 24px;
 }
 
-/* ─── Page Stub (placeholder) ────────────────────────────────────── */
+/* ─── Dashboard grid — 12칼럼 ─────────────────────────────────────── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+
+.span-3  { grid-column: span 3; }
+.span-4  { grid-column: span 4; }
+.span-5  { grid-column: span 5; }
+.span-6  { grid-column: span 6; }
+.span-7  { grid-column: span 7; }
+.span-8  { grid-column: span 8; }
+.span-12 { grid-column: span 12; }
+
+/* ─── Button — 시안 변주가 전부다. 새 변주를 만들지 말 것. ────────── */
+.button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: var(--fs-body);
+  font-weight: 700;
+  white-space: nowrap;
+  transition: color 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+
+.button .icon { width: 16px; height: 16px; }
+
+.button:hover {
+  border-color: var(--violet-border);
+  color: var(--primary);
+  background: var(--violet-soft);
+}
+
+.button.primary {
+  border-color: var(--primary);
+  color: var(--primary-foreground);
+  background: var(--cta);
+}
+
+.button.primary:hover {
+  border-color: var(--cta-hover);
+  color: var(--primary-foreground);
+  background: var(--cta-hover);
+}
+
+.button:disabled,
+.button.is-disabled {
+  opacity: .5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.button.sm { min-height: 30px; padding: 0 10px; font-size: var(--fs-meta); }
+
+/* 캐러셀 이동 */
+.carousel-button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--foreground);
+  display: grid;
+  place-items: center;
+  transition: border-color 160ms ease, color 160ms ease, background 160ms ease;
+}
+
+.carousel-button:not(:disabled):hover {
+  border-color: var(--violet-border);
+  color: var(--primary);
+  background: var(--violet-soft);
+}
+
+.carousel-button:disabled { opacity: .4; cursor: not-allowed; }
+
+/* ─── Badge — radius 12px · 1px currentColor 테두리 ────────────────── */
+.badge {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid currentColor;
+  border-radius: var(--radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--primary);
+  background: var(--violet-soft);
+  font-size: var(--fs-label);
+  font-weight: 800;
+  line-height: 18px;
+  white-space: nowrap;
+}
+
+.badge .icon { width: 14px; height: 14px; }
+
+.badge.violet { color: var(--violet); background: var(--violet-soft); }
+.badge.mint   { color: var(--mint);   background: var(--mint-soft); }
+.badge.amber  { color: var(--amber);  background: var(--amber-soft); }
+.badge.coral  { color: var(--coral);  background: var(--coral-soft); }
+.badge.blue   { color: var(--blue);   background: var(--blue-soft); }
+.badge.sky    { color: var(--sky);    background: var(--sky-soft); }
+.badge.pink   { color: var(--pink);   background: var(--pink-soft); }
+.badge.teal   { color: var(--teal);   background: var(--teal-soft); }
+.badge.muted  { color: var(--muted-foreground); background: var(--muted); }
+
+/* ─── Tabs ───────────────────────────────────────────────────────── */
+.tabs-list {
+  display: inline-flex;
+  height: 38px;
+  padding: 4px;
+  gap: 4px;
+  border-radius: var(--radius-md);
+  background: var(--muted);
+}
+
+.tab-trigger {
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.tab-trigger:hover { color: var(--foreground); }
+
+.tab-trigger.active {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-raise);
+}
+
+/* ─── Table ──────────────────────────────────────────────────────── */
+.table-wrap {
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.table-wrap table { width: 100%; border-collapse: collapse; font-size: var(--fs-label); }
+
+.table-wrap th,
+.table-wrap td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.table-wrap th {
+  background: var(--muted);
+  color: var(--muted-foreground);
+  font-weight: 800;
+}
+
+.table-wrap tr:last-child td { border-bottom: 0; }
+
+/* ─── 행 리스트 ──────────────────────────────────────────────────── */
+.row-list { display: grid; gap: 8px; }
+
+.list-item {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  display: grid;
+  grid-template-columns: 36px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.list-item:hover { border-color: var(--input); background: var(--muted); }
+
+.item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  color: var(--accent, var(--primary));
+  background: var(--accent-soft, var(--violet-soft));
+}
+
+/* ─── 지표 카드 ──────────────────────────────────────────────────── */
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.stat-card { position: relative; overflow: hidden; min-height: 144px; }
+
+.stat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.stat-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  color: var(--stat-color, var(--primary));
+  background: var(--stat-soft, var(--violet-soft));
+}
+
+.stat-label {
+  color: var(--card-foreground);
+  font-size: var(--fs-body);
+  font-weight: 500;
+  line-height: 18px;
+}
+
+.stat-value {
+  margin: 18px 0 10px;
+  font-size: var(--fs-stat);
+  font-weight: 700;
+  line-height: 36px;
+}
+
+.stat-value small {
+  font-size: var(--fs-body);
+  font-weight: 700;
+  color: var(--muted-foreground);
+  line-height: 20px;
+}
+
+.stat-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: var(--fs-meta);
+  line-height: 18px;
+}
+
+.stat-foot span { color: var(--muted-foreground); }
+
+/* ─── 진행률 ─────────────────────────────────────────────────────── */
+.progress-track {
+  position: relative;
+  height: 8px;
+  border-radius: var(--radius-xs);
+  background: var(--muted);
+  overflow: hidden;
+}
+
+.progress-track > i {
+  display: block;
+  height: 100%;
+  width: var(--value, 0%);
+  border-radius: inherit;
+  background: var(--accent, var(--primary));
+  transform-origin: left center;
+  animation: fillIn 500ms cubic-bezier(.16, 1, .3, 1) both;
+}
+
+@keyframes fillIn { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+
+/* 역량 갭 트랙 — i = 나의 현재(채움), u = 목표(눈금) */
+.axis-track {
+  position: relative;
+  display: block;
+  height: 8px;
+  border-radius: var(--radius-xs);
+  background: var(--muted);
+}
+
+.axis-track > i {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: var(--value, 0%);
+  border-radius: inherit;
+  background: var(--competency-current);
+}
+
+.axis-track > u {
+  position: absolute;
+  top: -3px;
+  bottom: -3px;
+  left: var(--target, 0%);
+  width: 2px;
+  border-radius: 2px;
+  background: var(--competency-target);
+}
+
+.metric-list { display: grid; gap: 12px; }
+
+.metric-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 44px;
+  gap: 12px;
+  align-items: center;
+  font-size: var(--fs-label);
+}
+
+.metric-row strong { text-align: right; }
+
+/* ─── 빈 상태 ────────────────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 48px 20px;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.empty-state .icon { width: 32px; height: 32px; opacity: .5; }
+.empty-state b { color: var(--foreground); font-size: var(--fs-body); font-weight: 700; }
+.empty-state small { font-size: var(--fs-meta); }
+
+/* ─── 잠금 레이어 ────────────────────────────────────────────────────
+   내용을 숨기지 않고 그 위에 사유 + 해제 조건 + 다음 행동을 얹는다. */
+.lock-host { position: relative; }
+
+.lock-layer {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 18px;
+  border-radius: inherit;
+  background: rgba(255, 255, 255, .82);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  text-align: center;
+}
+
+.lock-message { display: flex; align-items: center; gap: 10px; }
+
+.lock-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+
+.lock-copy { display: flex; flex-direction: column; gap: 2px; text-align: left; }
+.lock-copy b { font-size: var(--fs-body); font-weight: 700; }
+.lock-copy small { font-size: var(--fs-label); color: var(--muted-foreground); }
+
+/* ─── 진입 모션 — transform/opacity 만 ─────────────────────────────── */
+.reveal {
+  opacity: 0;
+  transform: translateY(12px);
+  animation: revealUp 500ms cubic-bezier(.16, 1, .3, 1) both;
+  animation-delay: calc(var(--index, 0) * 60ms);
+}
+
+@keyframes revealUp { to { opacity: 1; transform: translateY(0); } }
+
+/* ─── Footer (시안 .site-footer) ──────────────────────────────────────
+   ★ 여기 두지 않는다 — src_v2/components/SiteFooter.css 로 옮겼다.
+     교직원 포털(src_admin)도 같은 푸터를 쓰는데 이 파일은 /v2 에만 로드되기 때문이다.
+     푸터 스타일을 이 파일에 되돌리지 말 것. */
+
+/* ─── Page stub ──────────────────────────────────────────────────── */
 .page-stub {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-height: calc(100vh - var(--gnb-height));
-  gap: 16px;
-  color: var(--color-text-muted);
+  min-height: 50vh;
+  gap: 14px;
+  color: var(--muted-foreground);
 }
 
-.page-stub-icon {
-  font-size: 48px;
-  color: var(--color-primary);
-  opacity: 0.3;
-}
-
-.page-stub-title {
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--color-text);
-}
+.page-stub-icon { width: 44px; height: 44px; color: var(--primary); opacity: .3; }
+.page-stub-title { font-size: var(--fs-metric); font-weight: 700; color: var(--foreground); }
 
 .page-stub-path {
-  font-size: 15px;
-  background: var(--color-surface);
   padding: 4px 12px;
-  border-radius: 20px;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--muted-foreground);
   font-family: monospace;
-  color: var(--color-text-sub);
+  font-size: var(--fs-meta);
 }
 
 /* ─── Landing ────────────────────────────────────────────────────── */
 .landing {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #F2F5FF 0%, #E8EDFF 50%, #DCE3FD 100%);
+  background: var(--background);
 }
 
 .landing-card {
-  background: var(--color-bg);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
-  padding: 48px 56px;
-  width: 440px;
+  width: 420px;
+  padding: 44px 48px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-pop);
   text-align: center;
 }
 
 .landing-logo {
-  font-size: 28px;
-  font-weight: 900;
-  color: var(--color-primary);
-  letter-spacing: -1px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  font-size: var(--fs-metric);
+  font-weight: 800;
+  letter-spacing: -.03em;
 }
 
-.landing-subtitle {
-  font-size: 15px;
-  color: var(--color-text-muted);
-  margin-bottom: 40px;
-}
+.landing-subtitle { margin-bottom: 32px; font-size: var(--fs-body); color: var(--muted-foreground); }
 
 .landing-input {
   width: 100%;
-  height: 48px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 0 16px;
-  font-size: 16px;
-  margin-bottom: 12px;
-  transition: border-color 0.15s;
+  height: 46px;
+  margin-bottom: 10px;
+  padding: 0 14px;
+  border: 1px solid var(--input);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-card);
   outline: none;
+  transition: border-color 160ms ease;
 }
 
-.landing-input:focus {
-  border-color: var(--color-primary);
-}
+.landing-input:focus { border-color: var(--primary); }
 
 .landing-btn {
   width: 100%;
-  height: 48px;
-  background: var(--color-primary);
-  color: #fff;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: opacity 0.15s;
-  border: none;
+  height: 46px;
   margin-top: 8px;
+  border-radius: var(--radius-md);
+  background: var(--cta);
+  color: var(--primary-foreground);
+  font-size: var(--fs-card);
+  font-weight: 700;
+  transition: background 160ms ease;
 }
 
-.landing-btn:hover { opacity: 0.88; }
+.landing-btn:hover { background: var(--cta-hover); }
 
 /* ─── Utilities ──────────────────────────────────────────────────── */
-.text-primary { color: var(--color-primary); }
-.text-sub     { color: var(--color-text-sub); }
+.text-primary { color: var(--primary); }
+.text-sub     { color: var(--muted-foreground); }
 .text-muted   { color: var(--color-text-muted); }
 .fw-700       { font-weight: 700; }
 .fw-600       { font-weight: 600; }
 
-/* ─── Responsive (Mobile / Tablet) ──────────────────────────────── */
-
-/* Tablet ≤ 1024px */
-@media (max-width: 1024px) {
+/* ─── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 1240px) {
   body { min-width: 0; }
-  :root { --gnb-height: 68px; }
-
-  .v2-page { padding: 20px 18px; }
-
-  /* GNB compact */
-  .gnb { padding: 0 18px; }
-  .gnb-logo { margin-right: 16px; }
-  .gnb-nav { gap: 0; }
-  .gnb-nav-link { font-size: 16px; }
+  :root { --page-gutter: 18px; }
+  .nav-item { padding: 0 6px; font-size: var(--fs-body); }
+  .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-grid > .span-3,
+  .dashboard-grid > .span-4,
+  .dashboard-grid > .span-5,
+  .dashboard-grid > .span-7,
+  .dashboard-grid > .span-8 { grid-column: span 6; }
 }
 
-/* Mobile ≤ 768px */
-@media (max-width: 768px) {
-  :root {
-    --gnb-height: 60px;
-    --radius-lg: 14px;
-  }
+@media (max-width: 900px) {
+  :root { --topbar-h: 60px; --page-gutter: 14px; }
 
-  /* GNB: hide nav (logo + actions only) */
-  .gnb {
-    padding: 0 14px;
-    gap: 10px;
-  }
-  .gnb-logo {
-    margin-right: 0;
-    gap: 8px;
-  }
-  .gnb-logo-icon { width: 30px; height: 30px; font-size: 16px; }
-  .gnb-logo-text { font-size: 18px; }
-  .gnb-nav { display: none; }
-  .gnb-actions {
-    margin-left: auto;
-    gap: 8px;
-  }
-  .gnb-icon-btn { width: 34px; height: 34px; font-size: 19px; }
-  .gnb-avatar { width: 32px; height: 32px; }
-  .gnb-avatar-caret { display: none; }
+  .top-nav { display: none; }
+  .mobile-menu-toggle { display: inline-grid; }
+  .topbar-right .icon-button:not(.mobile-menu-toggle) { display: none; }
+  .header-profile { display: none; }
 
-  /* Layout */
-  .v2-main-shell { flex-direction: column; }
-  .v2-page { padding: 16px 14px; }
+  .v2-main { padding: 20px var(--page-gutter) 40px; }
+  .v2-page-head { grid-template-columns: minmax(0, 1fr); }
+  .v2-page-title { font-size: var(--fs-stat); }
 
-  /* Card */
-  .card { padding: 16px; }
+  .stats { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-grid > [class*="span-"] { grid-column: span 12; }
 
-  /* Landing */
   .landing-card { width: calc(100% - 24px); padding: 32px 22px; }
-}
-
-/* Mobile small ≤ 480px */
-@media (max-width: 480px) {
-  .gnb-bell-wrap { display: none; }
 }

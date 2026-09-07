@@ -1,0 +1,215 @@
+/* ─────────────────────────────────────────────────────────────────────────
+   /v2 로그인 유형 선택 (rending.png) — 배경 미적용(흰 배경), src_v2 토큰 사용.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.v2lg {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: #ffffff;
+  font-family: var(--font);
+  color: var(--color-navy);
+}
+
+/* 상단바 */
+.v2lg-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 40px;
+  border-bottom: 1px solid var(--color-border);
+}
+.v2lg-logo { height: 44px; width: auto; display: block; }
+.v2lg-platform {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-primary);
+  padding-bottom: 4px;
+  border-bottom: 2px solid var(--color-primary);
+}
+
+/* 본문 */
+.v2lg-main {
+  flex: 1;
+  width: 100%;
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 48px 24px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* 히어로 */
+.v2lg-hero { text-align: center; }
+.v2lg-eyebrow {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--color-text-sub);
+  margin-bottom: 8px;
+}
+.v2lg-title {
+  font-size: 42px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  color: var(--color-navy);
+}
+.v2lg-sub {
+  margin-top: 18px;
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--color-text-sub);
+  font-weight: 500;
+}
+
+/* 유형 선택 구분 라벨 */
+.v2lg-select-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin: 48px 0 28px;
+}
+.v2lg-select-label::before,
+.v2lg-select-label::after {
+  content: '';
+  width: 80px;
+  height: 1px;
+  background: var(--color-border);
+}
+.v2lg-select-label span {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+
+/* 로그인 카드 3장 */
+.v2lg-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+.v2lg-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 40px 28px 32px;
+  background: #ffffff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.16s ease, box-shadow 0.16s ease;
+}
+.v2lg-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+.v2lg-card-icon {
+  width: 92px;
+  height: 92px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 40px;
+  margin-bottom: 22px;
+  background: linear-gradient(135deg, var(--accent-2), var(--accent));
+  box-shadow: 0 8px 20px var(--accent-glow);
+}
+.v2lg-card-title {
+  font-size: 23px;
+  font-weight: 800;
+  color: var(--color-navy);
+}
+.v2lg-card-desc {
+  margin-top: 8px;
+  font-size: 15px;
+  color: var(--color-text-sub);
+}
+.v2lg-card-btn {
+  margin-top: 28px;
+  width: 100%;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-pill);
+  background: var(--accent);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: filter 0.14s ease;
+}
+.v2lg-card-btn:hover { filter: brightness(1.06); }
+.v2lg-card-btn svg { font-size: 18px; }
+
+/* 유형별 색 (카테고리 컬러 — 시안 기준) */
+.v2lg-card.is-student { --accent: #1d4ed8; --accent-2: #5a7fff; --accent-glow: rgba(37, 99, 235, 0.28); }
+.v2lg-card.is-company { --accent: #0d9488; --accent-2: #2dd4bf; --accent-glow: rgba(13, 148, 136, 0.28); }
+.v2lg-card.is-youth   { --accent: #7c3aed; --accent-2: #a78bfa; --accent-glow: rgba(124, 58, 237, 0.28); }
+
+/* 서비스 특징 스트립 */
+.v2lg-features {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: 40px;
+  padding: 26px 24px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+}
+.v2lg-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 0 8px;
+}
+.v2lg-feature + .v2lg-feature { border-left: 1px solid var(--color-border); }
+.v2lg-feature-icon {
+  flex: 0 0 auto;
+  color: var(--color-primary);
+  font-size: 22px;
+  margin-top: 2px;
+}
+.v2lg-feature-text strong {
+  display: block;
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--color-navy);
+  margin-bottom: 4px;
+}
+.v2lg-feature-text p {
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--color-text-sub);
+}
+
+/* 푸터 */
+.v2lg-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 22px 40px;
+  background: var(--color-navy);
+  color: #cdd6ee;
+  font-size: 13px;
+}
+.v2lg-footer-title { font-weight: 700; }
+.v2lg-footer-links {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.v2lg-footer-links a { color: #cdd6ee; }
+.v2lg-footer-links a:hover { color: #fff; }
+.v2lg-footer-tel { color: #9fb0d6; }
+
+@media (max-width: 900px) {
+  .v2lg-cards { grid-template-columns: 1fr; }
+  .v2lg-features { grid-template-columns: 1fr 1fr; }
+  .v2lg-feature:nth-child(3) { border-left: none; }
+}

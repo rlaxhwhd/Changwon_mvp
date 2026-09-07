@@ -1,0 +1,12 @@
+{
+  "id": "psych_moon",
+  "name": "문지훈",
+  "role": "psych",
+  "roleLabel": "심리상담사",
+  "dept": "학생상담센터",
+  "scope": "학업동기·번아웃 회복 상담",
+  "departments": [],
+  "specialty": "학업동기 · 번아웃",
+  "email": "psych.moon@changwon.ac.kr",
+  "officeHours": "월·목 13:00~17:00"
+}

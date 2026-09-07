@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import Modal from '../../components/Modal'
 import './GrowthMissionLog.css'
+import { usePageHead } from '../../components/PageCrumb'
 
 type RecordTab = 'all' | 'word' | 'major' | 'ncs'
 type ResultFilter = 'all' | 'correct' | 'wrong'
@@ -39,6 +40,7 @@ const tabLabels: Record<RecordTab, string> = {
 const PAGE_SIZE = 10
 
 export default function GrowthMissionLog() {
+  usePageHead('일일퀘스트 기록노트', '매일 풀었던 퀘스트 결과를 유형별로 모아보고, 자주 틀리는 영역을 복습합니다.')
   const [tab, setTab] = useState<RecordTab>('all')
   const [filter, setFilter] = useState<ResultFilter>('all')
   const [page, setPage] = useState(1)
@@ -82,13 +84,7 @@ export default function GrowthMissionLog() {
 
   return (
     <main className="gml-page">
-      <header className="gml-header">
-        <span>일일미션 기록노트</span>
-        <h1>학습 기록과 오답을 한눈에 확인하세요</h1>
-        <p>매일 풀었던 미션 결과를 유형별로 모아보고, 자주 틀리는 영역을 복습할 수 있습니다.</p>
-      </header>
-
-      <section className="gml-stats" aria-label="미션 통계">
+      <section className="gml-stats" aria-label="퀘스트 통계">
         <article>
           <span>총 문제</span>
           <strong>{total}개</strong>
