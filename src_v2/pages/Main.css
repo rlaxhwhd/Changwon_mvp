@@ -1610,3 +1610,142 @@
 }
 
 .mn-page .quest-ring--empty .quest-value strong { color: var(--muted-foreground); }
+
+/* ── 모바일 반응형 ───────────────────────────────────────────────────────
+   셸(body min-width 해제 · GNB 햄버거 · --page-gutter · dashboard-grid 붕괴)은
+   index.css 가 1240 / 900 에서 이미 처리한다. 여기서는 이 화면 고유의
+   고정 폭·고정 높이만 푼다 — 시안 값은 데스크톱 폭에서 그대로 유지된다.
+
+   1024 히어로 2단 → 1단  ·  768 판때기 1열·캐러셀 스와이프  ·  560 줄 접기 */
+
+@media (max-width: 1024px) {
+  /* 히어로는 5:7 2단이었다. 좁아지면 왼쪽(카피+여정)이 먼저 눌린다 → 세로로 푼다. */
+  .mn-page .career-hero {
+    min-height: 0;
+    padding: 24px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mn-page .career-hero-left { gap: 24px; }
+
+  /* 히어로 칸에 맞춘 고정 높이 332px — 폭이 줄면 내용이 넘친다. 내용 높이로 되돌린다. */
+  .mn-page .hero-roadmap,
+  .mn-page .hero-competency {
+    height: auto;
+    min-height: 0;
+  }
+
+  /* 레이더 + 축 막대 2단도 세로로. 히어로 칸용 축약(.hero-competency 스코프, 0-3-0)이
+     따로 있으므로 같은 스코프로 풀어야 한다 — .mn-page .competency-layout(0-2-0)만으로는 진다. */
+  .mn-page .competency-layout,
+  .mn-page .hero-competency .competency-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  /* 히어로 칸에 맞춰 188px 로 줄여 둔 레이더 — 폭을 다 쓰게 되면 축 이름이 서로 겹친다. */
+  .mn-page .hero-competency .radar-chart { width: min(100%, 260px); }
+}
+
+@media (max-width: 768px) {
+  .mn-page .career-hero {
+    margin-bottom: 12px;
+    padding: 20px;
+  }
+
+  /* 배경 워터마크 "CAREER" — 112px 은 폰 폭에서 글자 하나만 보인다. */
+  .mn-page .career-hero::after {
+    right: 12px;
+    bottom: -18px;
+    font-size: 56px;
+  }
+
+  .mn-page .career-hero-copy h1 {
+    margin: 14px 0;
+    font-size: 32px;
+  }
+
+  .mn-page .career-hero-copy > p:last-child { font-size: 15px; }
+
+  /* 오늘할일·퀘스트 묶음 | 출석 → 한 열로 */
+  .mn-page .career-hero-top { grid-template-columns: minmax(0, 1fr); }
+
+  /* 캐러셀은 화살표 대신 스와이프로 넘긴다. 다음 카드가 살짝 걸치게 두어
+     가로로 더 있다는 걸 보이게 한다. */
+  .mn-page .program-nav { display: none; }
+  .mn-page .program-card { flex-basis: 82%; }
+
+  .mn-page .featured-job { padding: 20px; }
+  .mn-page .featured-job::after { font-size: 64px; }
+
+  .mn-page .featured-job h3 {
+    margin: 20px 0 10px;
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  /* 공지 분류 탭 — 줄바꿈 대신 가로 스크롤(탭 순서가 흐트러지지 않게). */
+  .mn-page .notice-tabs {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .mn-page .notice-tabs::-webkit-scrollbar { display: none; }
+
+  /* 공지 한 줄 = 분류 64 / 제목 / 날짜 100 / 화살표 28 → 폰에서 제목 칸이 사라진다.
+     분류·날짜를 윗줄로 올리고 제목이 폭을 다 쓰게 한다. */
+  .mn-page .notice-row {
+    min-height: 0;
+    padding: 14px 4px;
+    grid-template-columns: minmax(0, 1fr) 28px;
+    align-items: center;
+    gap: 6px 12px;
+  }
+
+  .mn-page .notice-category { grid-area: 1 / 1; }
+  .mn-page .notice-copy { grid-area: 2 / 1; }
+  .mn-page .notice-row time { grid-area: 1 / 1; justify-self: end; }
+  .mn-page .notice-arrow { grid-area: 1 / 2 / 3 / 3; }
+}
+
+@media (max-width: 560px) {
+  .mn-page .career-hero { padding: 18px 16px; }
+  .mn-page .career-hero-copy h1 { font-size: 28px; }
+
+  /* 링 + 설명 2단은 폰 폭에서 설명이 3~4 글자로 눌린다.
+     칸 나눔은 .hero-quest 스코프(0-3-0)가 쥐고 있어 같은 스코프로 푼다. */
+  .mn-page .quest-layout,
+  .mn-page .hero-quest .quest-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mn-page .quest-layout {
+    justify-items: center;
+    text-align: center;
+  }
+
+  .mn-page .quest-steps { justify-content: center; }
+
+  /* 채용 한 줄 = 로고 48 / 내용 / 마감 → 마감을 내용 아래로 내린다. */
+  .mn-page .job-row {
+    min-height: 0;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 6px 12px;
+  }
+
+  .mn-page .job-logo {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+  }
+
+  .mn-page .job-deadline {
+    grid-column: 2;
+    text-align: left;
+  }
+
+  .mn-page .job-deadline b,
+  .mn-page .job-deadline span { display: inline; }
+
+  .mn-page .job-deadline b { margin-right: 6px; }
+}
