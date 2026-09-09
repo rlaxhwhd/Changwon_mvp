@@ -7,6 +7,7 @@ export type IconName =
   | 'route' | 'calendar' | 'briefcase' | 'spark' | 'chevron-down' | 'chevron-left'
   | 'chevron-right' | 'arrow' | 'pause' | 'play' | 'check' | 'target' | 'flame'
   | 'chart' | 'clock' | 'external' | 'location' | 'moon' | 'lock' | 'award'
+  | 'users' | 'calendar-check' | 'download'
 
 export function Icon({ name, className }: { name: IconName; className?: string }) {
   return (
@@ -61,6 +62,25 @@ export function IconSprite() {
       <symbol id="i-calendar" viewBox="0 0 24 24">
         <rect x="3" y="5" width="18" height="16" rx="2" />
         <path d="M16 3v4M8 3v4M3 10h18" />
+      </symbol>
+      {/* 달력 + 체크 — 비교과 카드 「진행기간」. 위 달력과 같은 틀에 체크만 얹었다. */}
+      <symbol id="i-calendar-check" viewBox="0 0 24 24">
+        <rect x="3" y="5" width="18" height="16" rx="2" />
+        <path d="M16 3v4M8 3v4M3 10h18" />
+        <path d="m9 15.5 2 2 4-4" />
+      </symbol>
+      {/* 내려받기 — 수료증 다운로드 등. 화살표 + 받침. */}
+      <symbol id="i-download" viewBox="0 0 24 24">
+        <path d="M12 3v12" />
+        <path d="m7 10 5 5 5-5" />
+        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+      </symbol>
+      {/* 사람 둘 — 비교과 카드 「정원」. i-user 의 선 굵기·비율을 따른다. */}
+      <symbol id="i-users" viewBox="0 0 24 24">
+        <circle cx="9" cy="8" r="3.5" />
+        <path d="M2.5 20a6.5 6.5 0 0 1 13 0" />
+        <path d="M16 4.6a3.5 3.5 0 0 1 0 6.8" />
+        <path d="M17.5 13.6a6.5 6.5 0 0 1 4 6.4" />
       </symbol>
       <symbol id="i-briefcase" viewBox="0 0 24 24">
         <rect x="3" y="7" width="18" height="13" rx="2" />

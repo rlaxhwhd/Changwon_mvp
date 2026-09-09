@@ -7,6 +7,10 @@
   gap: 24px;
 }
 
+/* 제목은 공용 머리글(usePageHead)로 올라가 이 머리는 비어 있다 — 빈 채로 두면 flex gap 만큼
+   머리글 아래 여백이 늘어난다(24px). 비었을 때는 격자에서 뺀다. */
+.att-head:empty { display: none; }
+
 .att-head {
   display: flex;
   flex-direction: column;

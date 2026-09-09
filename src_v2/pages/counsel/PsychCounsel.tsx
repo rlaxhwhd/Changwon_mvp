@@ -3,6 +3,8 @@ import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import CounselTabs from '../../components/CounselTabs'
+import CounselSlotPicker from '../../components/CounselSlotPicker'
+import { useSlotPicker } from '../../hooks/useSlotPicker'
 import CounselWeekCard from '../../components/CounselWeekCard'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
 import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
@@ -49,6 +51,8 @@ function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
 export default function PsychCounsel() {
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
   usePageHead('상담 신청', '상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.')
+  // 640px 이하: 표 대신 「요일 칩 → 시간 칩」(components/CounselSlotPicker). 복구는 그 파일의 스위치.
+  const mobileSlots = useSlotPicker()
   // 진로취업 화면과 같은 순서로 고른다 — 시간 먼저, 그 시간에 가능한 상담사가 뒤따른다.
   const [selectedCounselor, setSelectedCounselor] = useState<CounselorId>('')
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null)
@@ -204,6 +208,9 @@ export default function PsychCounsel() {
             <span><i className="selected" />선택됨</span>
           </div>
 
+          {mobileSlots ? (
+            <CounselSlotPicker days={days} times={times} getStatus={getStatus} onSelect={selectSlot} selected={selectedSlot} />
+          ) : (
           <div className="cc-calendar-grid">
             <div className="cc-grid-head empty" />
             {days.map(day => (
@@ -229,10 +236,10 @@ export default function PsychCounsel() {
               </div>
             ))}
           </div>
+          )}
 
           <div className="cc-selected-bar">
             <div className="cc-selected-title">
-              <i className="fa-regular fa-clock" />
               <strong>선택한 일정</strong>
             </div>
             <div className="cc-selected-info">

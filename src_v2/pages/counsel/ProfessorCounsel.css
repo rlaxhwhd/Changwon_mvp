@@ -268,10 +268,8 @@
 }
 
 @media (max-width: 768px) {
-  .pc-mode-tabs {
-    grid-template-columns: 1fr;
-  }
-
+  /* 온라인/오프라인 두 칸은 폰 폭에서도 나란히 둔다(각 150px 남짓) — 갈래 선택은 한눈에 비교돼야 한다.
+     세로로 접는 건 360 이하에서만(아래). */
   .pc-professor-detail {
     flex-direction: column;
     align-items: flex-start;
@@ -280,5 +278,45 @@
 
   .pc-professor-detail-meta {
     gap: 8px 14px;
+  }
+}
+
+/* ── 반응형 ────────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  /* 오프라인 일정표 — 공통(.cc-calendar-grid 900 블록)과 같은 축소를 따른다.
+     760 고정 최소폭을 압축 열 합계(576)로 낮춘다. 0 으로 풀면 격자의 overflow:hidden 에 열이 잘린다. */
+  .pc-calendar-grid {
+    min-width: 576px;
+  }
+
+  .pc-offline-calendar {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scrollbar-accent, #d8d2f8) transparent;
+  }
+}
+
+@media (max-width: 768px) {
+  .pc-professor-panel {
+    padding: 16px;
+  }
+
+  .pc-professor-detail {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .pc-mode-card {
+    padding: 14px;
+  }
+
+  .pc-online-form textarea {
+    min-height: 120px;
+  }
+}
+
+@media (max-width: 360px) {
+  .pc-mode-tabs {
+    grid-template-columns: 1fr;
   }
 }

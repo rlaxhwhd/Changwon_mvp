@@ -1,446 +1,289 @@
-/* ── MyPrograms (mp-) ────────────────────────────────────────────── */
-.mp-wrap {
+/* ── 비교과프로그램 현황 (mp-) ────────────────────────────────────────────
+   공용 카드 슬롯([data-slot="card"]) · .badge · .button 위에 이 화면 고유 요소만.
+   색은 index.css 토큰(--blue · --amber · --mint · --primary 와 soft)만 쓴다.
+   상단 여백은 공용 머리글(28px)이 맡는다 — 루트에 padding-top 을 두지 않는다. */
+
+.mp-page {
+  --mp-ink:   var(--color-navy, var(--foreground));
+  --mp-sub:   var(--color-text-sub, var(--muted-foreground));
+  --mp-muted: var(--color-text-muted, var(--muted-foreground));
+  --mp-line:  var(--border);
+
+  display: grid;
+  gap: 16px;
   padding: 0 0 48px;
-  color: var(--color-text);
+  word-break: keep-all;
 }
 
-/* Hero — cc-hero spec */
-/* 페이지 제목·설명은 공용 머리글(usePageHead)이 그린다. 이 띠에 있던 제목은 그때
-   지워졌고 배경·높이만 남아 빈 칸이 됐다 → 버튼 한 줄로 접는다.
-   그라데이션·테두리·min-height 를 되살리지 말 것. */
-.mp-hero {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  margin: 20px 0 16px;
-  border: 0;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-}
-
-.mp-hero-copy { flex: 1; min-width: 0; }
-
-.mp-breadcrumb {
-  display: block;
-  margin-bottom: 8px;
-  color: var(--color-text-sub);
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.mp-hero h1 {
-  font-size: 32px;
-  line-height: 1.25;
-  font-weight: 900;
-  color: var(--color-navy);
-  margin-bottom: 12px;
-}
-
-.mp-hero p {
-  color: #32456d;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.mp-hero-cta {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 42px;
-  padding: 0 18px;
-  background: var(--color-cta);
-  color: #fff;
-  font-size: 16px;
-  font-weight: 700;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-md);
-  white-space: nowrap;
-}
-
-.mp-hero-cta:hover { background: #1b46e8; }
-
-/* Stats — 6-column */
+/* ── 요약 6장 ──────────────────────────────────────────────────────────── */
 .mp-stats {
   display: grid;
   grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 12px;
-  margin-bottom: 18px;
 }
 
 .mp-stat {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 16px 14px;
-  text-align: center;
-  box-shadow: var(--shadow-sm);
-}
-
-.mp-stat-num {
-  display: block;
-  font-size: 28px;
-  font-weight: 900;
-  color: var(--color-navy);
-  letter-spacing: -0.6px;
-  line-height: 1;
-}
-.mp-stat-num small { font-size: 16px; font-weight: 800; margin-left: 3px; color: var(--color-text-sub); }
-
-.mp-stat-lbl {
-  display: block;
-  margin-top: 8px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--color-text-sub);
-  letter-spacing: 0.02em;
-}
-
-/* 스탯 숫자는 navy 통일, 액센트는 XP 하나만 (단일 액센트 규칙) */
-/* 여섯 지표를 뜻대로 가른다 — 숫자가 전부 검정이면 무엇이 중요한지 안 보인다.
-   수료=민트 · 진행중=앰버 · 신청완료=파랑은 아래 상태 배지와 같은 뜻·같은 색이다.
-   글자에는 잉크를 쓴다(민트 본색 2.7:1 · 앰버 1.9:1). '전체 신청'은 합계라 중립. */
-.mp-stat--done .mp-stat-num     { color: var(--mint-ink); }
-.mp-stat--active .mp-stat-num   { color: var(--amber-ink); }
-.mp-stat--upcoming .mp-stat-num { color: var(--blue); }
-.mp-stat--hours .mp-stat-num    { color: var(--sky); }
-.mp-stat--xp .mp-stat-num { color: var(--color-primary); }
-
-/* Filter bar */
-.mp-filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.mp-filter-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 38px;
-  padding: 0 14px;
-  background: var(--color-bg);
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-pill);
-  color: var(--color-navy);
-  font-size: 16px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.mp-filter-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
-
-.mp-filter-btn.active {
-  background: var(--color-cta);
-  border-color: var(--color-primary);
-  color: #fff;
-}
-
-.mp-filter-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 22px;
-  height: 20px;
-  padding: 0 6px;
-  background: rgba(46, 91, 255, 0.1);
-  color: var(--color-primary);
-  border-radius: var(--radius-pill);
-  font-size: 13px;
-  font-weight: 900;
-}
-
-.mp-filter-btn.active .mp-filter-count {
-  background: rgba(255, 255, 255, 0.25);
-  color: #fff;
-}
-
-/* List */
-.mp-list {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.mp-card {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 18px 20px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-  cursor: pointer;
-  transition: transform 0.16s, box-shadow 0.16s, border-color 0.16s;
+  align-items: center;
+  gap: 4px;
+  padding: 16px 12px;
+  text-align: center;
 }
-
-.mp-card:hover {
-  border-color: var(--color-border);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-2px);
+.mp-stat strong {
+  font-size: 24px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -.02em;
+  color: var(--mp-ink);
 }
+.mp-stat strong small { margin-left: 2px; font-size: var(--fs-meta); font-weight: 800; color: var(--mp-sub); }
+.mp-stat span { font-size: var(--fs-label); font-weight: 700; color: var(--mp-sub); }
 
-.mp-card-top {
+/* 여섯 지표를 뜻대로 가른다 — 수료=민트 · 진행중=앰버 · 신청완료=파랑 · 시간=하늘 · XP=강조색. */
+.mp-stat.is-done strong     { color: var(--mint-ink, var(--mint)); }
+.mp-stat.is-active strong   { color: var(--amber-ink, var(--amber)); }
+.mp-stat.is-upcoming strong { color: var(--blue); }
+.mp-stat.is-hours strong    { color: var(--sky); }
+.mp-stat.is-xp strong       { color: var(--primary); }
+
+/* ── 툴바 — 상태 필터 칩 + 새 신청 ───────────────────────────────────── */
+.mp-toolbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 12px;
 }
 
-.mp-cat-badge {
+.mp-filters { display: flex; flex-wrap: wrap; gap: 6px; }
+
+.mp-filter {
+  min-height: 34px;
+  padding: 0 8px;
+  border: 1px solid var(--mp-line);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--card);
+  color: var(--mp-sub);
+  font-size: var(--fs-meta);
+  font-weight: 700;
   display: inline-flex;
   align-items: center;
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  font-size: 14px;
-  font-weight: 700;
-  background: var(--color-surface);
-  color: var(--color-text-sub);
+  gap: 6px;
+  cursor: pointer;
+  transition: background 140ms, border-color 140ms, color 140ms;
+}
+.mp-filter em {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 10px;
+  background: var(--muted);
+  color: var(--mp-sub);
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 800;
+  display: inline-grid;
+  place-items: center;
+}
+.mp-filter:hover { border-color: var(--violet-border); color: var(--primary); }
+.mp-filter.is-on { border-color: var(--primary); background: var(--violet-soft); color: var(--primary); }
+.mp-filter.is-on em { background: var(--primary); color: #fff; }
+.mp-filter:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.mp-new { flex: 0 0 auto; }
+
+/* ── 목록 ──────────────────────────────────────────────────────────────── */
+.mp-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
 }
 
+.mp-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 20px 16px;
+  transition: border-color 140ms, box-shadow 140ms;
+}
+.mp-card:hover { border-color: var(--violet-border); box-shadow: var(--shadow-raise); }
+.mp-card.is-cancel { opacity: .7; }
+
+/* 카드 전체가 상세 열기 — 버튼 하나를 카드 면에 깔고 위에 놓이는 수료증 버튼만 z-index 로 띄운다. */
+.mp-card-hit {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+.mp-card-hit:focus-visible { outline: 2px solid var(--primary); outline-offset: -2px; }
+.mp-card-foot .button { position: relative; z-index: 1; gap: 4px; } /* 아이콘·글자 간격 — 공용 .button(8px)보다 좁게, 이 화면만 */
+
+.mp-card-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* 분류 배지 — 채용공고 카드의 마감 배지(.jc-dday.is-closed)처럼 바탕 없이 회색 테두리·회색 글자.
+   모달은 포털로 그려져 .mp-page 밖이라 .mp-detail 도 같이 잡는다. */
+.mp-page .badge,
+.mp-detail .badge {
+  background: transparent;
+  border-color: var(--mp-line);
+  color: var(--mp-sub);
+}
+
+/* 상태 알약 — 색은 클래스로. */
 .mp-status {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
-  border-radius: var(--radius-pill);
-  font-size: 14px;
-  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: var(--fs-label);
+  font-weight: 800;
+  white-space: nowrap;
 }
-
-.mp-status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-}
+.mp-status.is-upcoming { background: var(--blue-soft);  color: var(--blue); }
+.mp-status.is-active   { background: var(--amber-soft); color: var(--amber-ink, var(--amber)); }
+.mp-status.is-done     { background: var(--mint-soft);  color: var(--mint-ink, var(--mint)); }
+.mp-status.is-cancel   { background: var(--muted);      color: var(--mp-muted); }
 
 .mp-card-title {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-navy);
+  margin: 2px 0 0;
+  font-size: var(--fs-card);
+  font-weight: 800;
   line-height: 1.4;
-  margin: 2px 0 2px;
+  color: var(--mp-ink);
 }
 
 .mp-card-host {
-  display: inline-flex;
+  margin: 0;
+  display: flex;
   align-items: center;
-  gap: 5px;
-  color: var(--color-text-sub);
-  font-size: 14px;
-  font-weight: 700;
+  gap: 6px;
+  font-size: var(--fs-meta);
+  color: var(--mp-sub);
 }
-
-.mp-card-host i { color: var(--color-text-muted); font-size: 14px; }
+.mp-card-host i { color: var(--mp-muted); font-size: 12px; }
 
 .mp-card-meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 14px;
-  margin-top: 4px;
-}
-
-.mp-card-meta span {
-  display: inline-flex;
   align-items: center;
-  gap: 5px;
-  color: var(--color-text-sub);
-  font-size: 14px;
-  font-weight: 600;
+  gap: 4px 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
+.mp-card-meta li { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-label); color: var(--mp-sub); }
+.mp-card-meta i { color: var(--mp-muted); font-size: 11px; }
+.mp-card-xp { font-weight: 800; color: var(--mint-ink, var(--mint)); }
 
-.mp-card-meta i {
-  color: var(--color-primary);
-  font-size: 13px;
-}
-
-.mp-card-xp {
-  color: var(--color-success) !important;
-  font-weight: 900;
-}
-
-.mp-card-actions {
+.mp-card-foot {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px dashed #e6edf8;
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--mp-line);
 }
-
-.mp-cert-btn {
+.mp-card-more {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  height: 32px;
-  padding: 0 12px;
-  background: #f5f9ff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-primary);
-  font-size: 14px;
+  gap: 4px;
+  font-size: var(--fs-label);
   font-weight: 700;
-  cursor: pointer;
+  color: var(--mp-sub);
 }
+.mp-card-more i { font-size: 10px; }
+.mp-card:hover .mp-card-more { color: var(--primary); }
 
-.mp-cert-btn:hover {
-  background: var(--color-cta);
-  color: #fff;
-}
-
-.mp-card-arrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  margin-left: auto;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--color-text-muted);
-}
-
-.mp-card-arrow i { font-size: 12px; }
-
-/* Empty */
 .mp-empty {
   grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  padding: 60px 20px;
-  background: var(--color-bg);
-  border: 1px dashed var(--color-border);
+  gap: 6px;
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--mp-muted);
+}
+.mp-empty i { font-size: 32px; }
+.mp-empty p { margin: 6px 0 0; font-size: var(--fs-body); font-weight: 700; color: var(--mp-sub); }
+
+/* ── 상세 모달 ─────────────────────────────────────────────────────────── */
+.mp-detail { display: grid; gap: 16px; }
+.mp-detail-tags { display: flex; align-items: center; gap: 8px; }
+
+/* 라벨/값 표 — 공고 상세의 .jd-kv 와 같은 골격 */
+.mp-kv {
+  display: grid;
+  margin: 0;
+  border: 1px solid var(--mp-line);
   border-radius: var(--radius-md);
+  overflow: hidden;
 }
-
-.mp-empty i { font-size: 40px; color: var(--color-text-muted); }
-.mp-empty p { color: var(--color-text-sub); font-weight: 700; }
-
-/* Detail Modal */
-.mp-detail {
+.mp-kv > div { display: grid; grid-template-columns: 104px minmax(0, 1fr); border-top: 1px solid var(--mp-line); }
+.mp-kv > div:first-child { border-top: 0; }
+.mp-kv dt {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
+  align-items: center;
+  padding: 10px 14px;
+  background: var(--muted);
+  border-right: 1px solid var(--mp-line);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  color: var(--mp-sub);
 }
-
-.mp-detail-tags {
-  display: flex;
-  gap: 8px;
-}
-
-.mp-detail-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 16px;
-}
-
-.mp-detail-table th,
-.mp-detail-table td {
-  border-top: 1px solid #e6edf8;
-  padding: 10px 12px;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.mp-detail-table th {
-  width: 110px;
-  background: #f7f9fc;
-  color: var(--color-text-sub);
-  font-weight: 800;
-}
-
-.mp-detail-table td { color: var(--color-navy); font-weight: 700; }
-.mp-detail-table .mp-xp-strong { color: var(--color-success); font-weight: 900; }
+.mp-kv dd { margin: 0; padding: 10px 14px; font-size: var(--fs-meta); font-weight: 700; color: var(--mp-ink); }
+.mp-kv-xp { color: var(--mint-ink, var(--mint)); font-weight: 800; }
 
 .mp-detail-section h4 {
-  display: inline-flex;
+  margin: 0 0 6px;
+  display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 6px;
-  color: var(--color-navy);
-  font-size: 16px;
-  font-weight: 700;
+  font-size: var(--fs-body);
+  font-weight: 800;
+  color: var(--mp-ink);
 }
-
-.mp-detail-section p {
-  font-size: 16px;
-  color: var(--color-text);
-  line-height: 1.65;
+.mp-detail-section p { margin: 0; font-size: var(--fs-body); line-height: 1.6; color: var(--mp-sub); }
+.mp-detail-section.is-reflect {
+  padding: 14px 16px;
+  border: 1px solid var(--violet-border);
+  border-radius: var(--radius-md);
+  background: var(--violet-soft);
 }
+.mp-detail-section.is-reflect h4 { color: var(--primary); }
+.mp-detail-section.is-reflect h4 i { font-size: 12px; }
 
-.mp-detail-section--reflect {
-  padding: 12px 14px;
-  background: #f5f9ff;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-}
+.mp-detail-actions { display: flex; justify-content: flex-end; gap: 8px; }
 
-.mp-detail-section--reflect h4 { color: var(--color-primary); }
-.mp-detail-section--reflect h4 i { font-size: 13px; }
-
-.mp-detail-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  padding-top: 6px;
-}
-
-.mp-btn {
-  height: 38px;
-  padding: 0 18px;
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.mp-btn--ghost {
-  background: var(--color-bg);
-  border: 1.5px solid var(--color-border);
-  color: var(--color-navy);
-}
-
-.mp-btn--ghost:hover { border-color: var(--color-primary); color: var(--color-primary); }
-
-.mp-btn--primary {
-  background: var(--color-cta);
-  border: none;
-  color: #fff;
-}
-
-/* Responsive */
+/* ── 반응형 ────────────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
   .mp-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 900px) {
-  .mp-list { grid-template-columns: 1fr; }
+  .mp-list { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .mp-wrap { padding: 0 14px 32px; }
-  .mp-hero {
-    flex-direction: column;
-    align-items: flex-start;
-    min-height: auto;
-    margin: 14px 0 16px;
-    padding: 20px 18px 18px;
-    border-radius: var(--radius-md);
-  }
-  .mp-hero h1 { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
-  .mp-hero p { font-size: 16px; line-height: 1.5; }
-  .mp-hero-cta { width: 100%; justify-content: center; }
-  .mp-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .mp-stat { padding: 12px 10px; }
-  .mp-stat-num { font-size: 20px; }
-  .mp-stat-lbl { font-size: 13px; }
-  .mp-card { padding: 14px 14px; }
-  .mp-card-title { font-size: 16px; }
-  .mp-filter-btn { font-size: 14px; min-height: 36px; padding: 0 12px; }
-  .mp-detail-table th { width: 90px; font-size: 14px; }
-  .mp-detail-table td { font-size: 14px; }
+  .mp-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .mp-stat { padding: 12px 8px; }
+  .mp-stat strong { font-size: 20px; }
+
+  /* 툴바 — 필터 줄 아래에 새 신청 버튼을 폭 채워 둔다. */
+  .mp-toolbar { flex-direction: column; align-items: stretch; }
+  .mp-new { width: 100%; }
+
+  .mp-card { padding: 16px; }
+  .mp-kv > div { grid-template-columns: 88px minmax(0, 1fr); }
+  .mp-detail-actions { flex-direction: column-reverse; }
+  .mp-detail-actions .button { width: 100%; }
+}
+
+@media (max-width: 400px) {
+  .mp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

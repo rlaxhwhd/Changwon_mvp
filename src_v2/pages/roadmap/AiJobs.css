@@ -1,640 +1,320 @@
-/* ── AiJobs (aj-) ──────────────────────────────────────────────── */
-.aj-wrap {
-  padding: 28px 0;
-}
+/* ── AI 맞춤채용 (aj-) ──────────────────────────────────────────────────
+   채용공고 보드·공고 상세와 같은 언어 — 공용 카드 슬롯([data-slot="card"]) 위에 이 화면 고유 요소만.
+   색은 index.css 토큰만 쓴다(--primary · --mint · --amber · --blue 와 그 soft). 새 색을 만들지 않는다.
+   상단 여백은 공용 머리글(28px)이 맡는다 — 루트에 padding-top 을 두지 않는다. */
 
-.aj-breadcrumb {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 16px;
-  color: var(--color-text-muted);
-  margin-bottom: 8px;
-}
+.aj-page {
+  --aj-ink:   var(--color-navy, var(--foreground));
+  --aj-sub:   var(--color-text-sub, var(--muted-foreground));
+  --aj-muted: var(--color-text-muted, var(--muted-foreground));
+  --aj-line:  var(--border);
+  --aj-apply: var(--apply-cta, var(--mint-ink));
 
-.aj-breadcrumb i { font-size: 14px; }
-.aj-breadcrumb .active { color: var(--color-navy); font-weight: 600; }
-
-.aj-page-title {
-  font-size: 32px;
-  font-weight: 900;
-  color: var(--color-navy);
-  margin-bottom: 6px;
-}
-
-.aj-page-desc {
-  font-size: 18px;
-  color: var(--color-text-sub);
-  margin-bottom: 24px;
-  line-height: 1.5;
-}
-
-/* ── Stats ─────────────────────────────────────────────────────── */
-.aj-stats {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  margin-bottom: 24px;
+  padding: 0 0 48px;
+  word-break: keep-all;
 }
 
-.aj-stat-card {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 18px;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  gap: 14px;
-  align-items: flex-start;
+/* 공용 카드 머리글의 min-height 72px 는 대시보드 카드 기준이다 — 이 화면의 필터·우측 카드는
+   제목 한 줄이라 아래가 비어 어색했다. 여기서는 내용 높이만큼만. */
+.aj-page [data-slot="card-header"] { min-height: 0; }
+
+/* ── 요약 3장 ──────────────────────────────────────────────────────────── */
+.aj-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
 }
 
-.aj-stat-icon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
+.aj-stat {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  flex-shrink: 0;
+  gap: 14px;
+  padding: 18px 20px;
 }
 
-.aj-stat-body {
-  flex: 1;
-  min-width: 0;
-}
-
-.aj-stat-label {
-  font-size: 16px;
-  color: var(--color-text-sub);
-  font-weight: 700;
-  letter-spacing: -0.1px;
-  margin-bottom: 6px;
-}
-
-.aj-stat-big {
-  font-size: 35px;
-  font-weight: 900;
-  color: var(--color-navy);
-  line-height: 1;
-  margin-bottom: 4px;
-}
-
-.aj-stat-big span {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--color-text-sub);
-}
-
-.aj-stat-num {
-  font-size: 20px;
-  font-weight: 800;
-  color: var(--color-navy);
-  margin-bottom: 4px;
-}
-
-.aj-stat-num span {
-  font-size: 16px;
-  color: var(--color-text-muted);
-}
-
-.aj-stat-sub {
-  font-size: 16px;
-  color: var(--color-text-muted);
-}
-
-.aj-stat-badge {
-  display: inline-block;
-  background: #F0FDF4;
-  color: var(--color-success);
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 16px;
-  margin-top: 4px;
-}
-
-/* ── Body 3-col ─────────────────────────────────────────────────── */
-.aj-body {
+.aj-stat-icon {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-md);
   display: grid;
-  grid-template-columns: 200px 1fr 240px;
+  place-items: center;
+  font-size: 18px;
+}
+.aj-stat-icon.is-mint { color: var(--mint-ink, var(--mint)); background: var(--mint-soft); }
+.aj-stat-icon.is-blue { color: var(--blue); background: var(--blue-soft); }
+
+.aj-stat-copy { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.aj-stat-label { font-size: var(--fs-label); font-weight: 700; color: var(--aj-sub); }
+.aj-stat-value { font-size: 24px; font-weight: 800; line-height: 1.2; color: var(--aj-ink); letter-spacing: -.02em; }
+.aj-stat-value small { margin-left: 4px; font-size: var(--fs-meta); font-weight: 700; color: var(--aj-muted); }
+.aj-stat-value.is-text { font-size: 20px; }
+.aj-stat-sub { font-size: var(--fs-label); color: var(--aj-muted); }
+
+/* ── 매칭률 링 — 요약 카드와 추천 카드가 같은 부품을 쓴다 ───────────────── */
+.aj-ring { flex: 0 0 auto; display: block; }
+.aj-ring-track { fill: none; stroke: var(--muted); }
+.aj-ring-fill { fill: none; stroke: var(--primary); transition: stroke-dashoffset 600ms cubic-bezier(.2, .8, .2, 1); }
+.aj-ring.is-mint  .aj-ring-fill { stroke: var(--mint); }
+.aj-ring.is-amber .aj-ring-fill { stroke: var(--amber); }
+.aj-ring-text { font-size: 12px; font-weight: 800; fill: var(--aj-ink); }
+
+/* ── 본문 2열 ───────────────────────────────────────────────────────────── */
+.aj-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: 16px;
   align-items: start;
 }
+.aj-main { min-width: 0; display: grid; gap: 16px; }
+.aj-side { display: grid; gap: 16px; position: sticky; top: calc(var(--topbar-h) + 16px); }
 
-/* ── Filter ─────────────────────────────────────────────────────── */
-.aj-filter {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 18px 16px;
-  box-shadow: var(--shadow-sm);
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  position: sticky;
-  top: 80px;
-}
+/* ── 필터 카드 — 칩 토글 ───────────────────────────────────────────────── */
+.aj-filter-groups { display: grid; gap: 14px; padding-top: 12px; }
+.aj-filter-group { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: start; }
+.aj-filter-label { padding-top: 7px; font-size: var(--fs-meta); font-weight: 800; color: var(--aj-sub); }
+.aj-chips { display: flex; flex-wrap: wrap; gap: 6px; }
 
-.aj-filter-title {
-  font-size: 18px;
+.aj-chip {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 1px solid var(--aj-line);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--card);
+  color: var(--aj-sub);
+  font-size: var(--fs-meta);
   font-weight: 700;
-  color: var(--color-navy);
-  margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.aj-filter-title i { color: var(--color-primary); }
-
-.aj-filter-section {
-  padding-bottom: 14px;
-  margin-bottom: 14px;
-  border-bottom: 1px solid var(--color-border);
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.aj-filter-section:last-of-type {
-  border-bottom: none;
-  margin-bottom: 16px;
-}
-
-.aj-filter-label {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-navy);
-  margin-bottom: 4px;
-}
-
-.aj-check-row {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  font-size: 16px;
-  color: var(--color-text-sub);
   cursor: pointer;
+  transition: background 140ms, border-color 140ms, color 140ms;
 }
+.aj-chip:hover { border-color: var(--violet-border); color: var(--primary); }
+.aj-chip.is-on { border-color: var(--primary); background: var(--violet-soft); color: var(--primary); }
+.aj-chip.is-all { border-style: dashed; }
+.aj-chip.is-all.is-on { border-style: solid; }
+.aj-chip:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-.aj-check-row input[type="checkbox"],
-.aj-check-row input[type="radio"] {
-  accent-color: var(--color-primary);
-  width: 14px;
-  height: 14px;
-  cursor: pointer;
-}
+/* ── 목록 ──────────────────────────────────────────────────────────────── */
+.aj-list { display: grid; gap: 12px; }
+.aj-list-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.aj-list-count { margin: 0; font-size: var(--fs-body); font-weight: 700; color: var(--aj-sub); }
+.aj-list-count strong { color: var(--primary); }
 
-.aj-check-all {
-  margin-bottom: 6px;
-  padding-bottom: 6px;
-  border-bottom: 1px dashed var(--color-border);
-  color: var(--color-navy);
-  font-weight: 700;
-}
-
-.aj-filter-apply {
-  width: 100%;
-  padding: 10px;
-  background: var(--color-cta);
-  color: var(--color-bg);
-  font-size: 16px;
-  font-weight: 700;
+/* 정렬 셀렉트 — 채용공고 보드(.jb-select)와 같은 칩 셀렉트. 라벨 대신 선택값이 이름이다. */
+.aj-sort select {
+  height: 36px;
+  padding: 0 32px 0 12px;
+  border: 1px solid var(--aj-line);
   border-radius: var(--radius-sm);
-  transition: opacity 0.15s;
-}
-
-.aj-filter-apply:hover { opacity: 0.85; }
-
-/* ── Job List ───────────────────────────────────────────────────── */
-.aj-job-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.aj-list-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 4px;
-}
-
-.aj-list-count {
-  font-size: 16px;
-  color: var(--color-text-sub);
-}
-
-.aj-list-count strong { color: var(--color-navy); font-weight: 700; }
-
-.aj-sort-sel {
-  font-size: 16px;
-  color: var(--color-text-sub);
-  border: 1px solid var(--color-border);
-  border-radius: 6px;
-  padding: 5px 10px;
-  font-family: var(--font);
-  background: var(--color-bg);
+  background:
+    url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23565e6d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='m6 9 6 6 6-6'/></svg>")
+    no-repeat right 10px center / 16px 16px,
+    var(--card);
+  color: var(--aj-ink);
+  font-size: var(--fs-meta);
+  font-weight: 700;
   cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
 }
+.aj-sort select:hover { border-color: var(--primary); }
+.aj-sort select:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
-/* Job card */
-.aj-job-card {
+/* 추천 카드 — [순위][로고][본문]. 매칭률은 회사명 옆 배지, 지원하기는 본문 맨 아래 동작 줄,
+   관심(하트)은 카드 우측 상단. */
+.aj-job {
+  position: relative;
   display: grid;
-  grid-template-columns: 24px 52px 1fr auto auto;
-  gap: 14px;
+  grid-template-columns: 22px 52px minmax(0, 1fr);
+  gap: 16px;
   align-items: center;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
   padding: 18px 20px;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.18s;
+  transition: border-color 140ms, box-shadow 140ms;
 }
+.aj-job:hover { border-color: var(--violet-border); box-shadow: var(--shadow-raise); }
 
-.aj-job-card:hover {
-  box-shadow: var(--shadow-md);
-  border-color: var(--color-surface-alt);
-}
-
-.aj-job-rank {
-  font-size: 16px;
-  font-weight: 800;
-  color: var(--color-text-muted);
-  text-align: center;
-}
+.aj-job-rank { font-size: var(--fs-meta); font-weight: 800; color: var(--aj-muted); text-align: center; }
 
 .aj-job-logo {
   width: 52px;
   height: 52px;
   border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 700;
-  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 900;
+  letter-spacing: -.02em;
 }
 
-.aj-job-info {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-}
-
-.aj-job-top {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.aj-job-company {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-navy);
-}
-
+.aj-job-body { min-width: 0; display: grid; gap: 6px; }
+/* 첫 줄(회사명·매칭률) 오른쪽 40px 은 우측 상단 하트 자리. */
+.aj-job-top { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding-right: 40px; }
+.aj-job-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.aj-job-company { font-size: var(--fs-card); font-weight: 700; color: var(--aj-ink); }
 .aj-job-tag {
-  font-size: 14px;
-  font-weight: 600;
-  padding: 2px 7px;
-  border-radius: 20px;
-  background: var(--color-surface);
-  color: var(--color-text-sub);
+  padding: 2px 8px;
+  border-radius: var(--radius-xs);
+  background: var(--muted);
+  color: var(--aj-sub);
+  font-size: var(--fs-label);
+  font-weight: 700;
+  white-space: nowrap;
 }
+.aj-job-tag.is-type { background: var(--blue-soft); color: var(--blue); }
 
 .aj-job-role {
-  font-size: 16px;
-  color: var(--color-text-sub);
-  font-weight: 500;
-}
-
-.aj-job-meta {
-  display: flex;
-  gap: 12px;
-  font-size: 16px;
-  color: var(--color-text-muted);
-  flex-wrap: wrap;
-}
-
-.aj-job-meta i {
-  margin-right: 3px;
-  color: var(--color-primary);
-}
-
-.aj-match-bar-wrap {
-  margin-top: 4px;
-}
-
-.aj-match-bar-track {
-  height: 5px;
-  background: var(--color-surface);
-  border-radius: 3px;
+  margin: 0;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--aj-ink);
   overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.aj-match-bar-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s ease;
-}
+.aj-job-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; margin: 0; padding: 0; list-style: none; }
+.aj-job-meta li { display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-label); color: var(--aj-sub); }
+.aj-job-meta i { width: 12px; color: var(--aj-muted); font-size: 11px; text-align: center; }
 
-/* Match score */
-.aj-job-score {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0;
-  padding: 0 8px;
+/* 매칭률 배지 — 채용공고 보드의 「추천」 배지와 같은 알약. 색은 링과 같은 기준(90 강조 · 80 민트 · 그 외 앰버). */
+.aj-job-match {
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: var(--fs-label);
+  font-weight: 800;
+  white-space: nowrap;
 }
+.aj-job-match.is-primary { background: var(--violet-soft); color: var(--primary); }
+.aj-job-match.is-mint    { background: var(--mint-soft);   color: var(--mint-ink, var(--mint)); }
+.aj-job-match.is-amber   { background: var(--amber-soft);  color: var(--amber-ink, var(--amber)); }
 
-.aj-job-score-num {
-  font-size: 30px;
-  font-weight: 900;
-  line-height: 1;
-}
+.aj-job-actions { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
 
-.aj-job-score-pct {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--color-text-sub);
-  margin-top: -2px;
-}
-
-.aj-job-score-label {
-  font-size: 16px;
-  color: var(--color-text-muted);
-  margin-top: 2px;
-}
-
-/* Job actions */
-.aj-job-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-/* 지원하기 = 채용 초록. 공고 상세와 같은 토큰을 본다(index.css --apply-cta). */
-.aj-apply-btn {
+/* 지원하기 = 채용 갈래 초록(--apply-cta). 공고 상세의 .jd-apply-btn 과 같은 토큰. */
+.aj-apply {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: var(--radius-md);
+  background: var(--aj-apply);
+  color: #fff;
+  font-family: inherit;
+  font-size: var(--fs-meta);
+  font-weight: 800;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 8px 16px;
-  background: var(--apply-cta);
-  color: var(--color-bg);
-  font-size: 16px;
-  font-weight: 700;
-  border-radius: var(--radius-sm);
+  gap: 6px;
+  cursor: pointer;
   white-space: nowrap;
-  transition: opacity 0.15s, transform 0.15s;
 }
+.aj-apply i { font-size: 11px; }
+.aj-apply:hover { filter: brightness(1.05); }
 
-.aj-apply-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+/* 관심 — 원래 디자인(32px 원형, 얇은 테두리, 호버 시 코랄). 카드 우측 상단 모서리에 띄운다. */
+.aj-wish {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border: 1.5px solid var(--aj-line);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--aj-muted);
+  display: inline-grid;
+  place-items: center;
+  font-size: 15px;
+  cursor: pointer;
+  transition: border-color 140ms, color 140ms;
+}
+.aj-wish:hover { border-color: var(--coral); color: var(--coral); }
+.aj-wish:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
 
 .aj-empty {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 56px 24px;
-  background: var(--color-bg);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-muted);
-  text-align: center;
-}
-.aj-empty i { font-size: 36px; color: #C8CFDC; }
-.aj-empty p { font-size: 16px; font-weight: 700; color: var(--color-navy); margin: 6px 0 0; }
-.aj-empty span { font-size: 14px; color: var(--color-text-muted); }
-
-.aj-wish-btn {
-  width: 32px;
-  height: 32px;
-  border: 1.5px solid var(--color-border);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 16px;
-  color: var(--color-text-muted);
-  background: var(--color-bg);
-  align-self: center;
-  transition: all 0.15s;
-}
-
-.aj-wish-btn:hover { border-color: var(--color-danger); color: var(--color-danger); }
-
-/* ── Right Panel ────────────────────────────────────────────────── */
-.aj-right {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  position: sticky;
-  top: 80px;
-}
-
-.aj-right-card {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 18px;
-  box-shadow: var(--shadow-sm);
-}
-
-.aj-right-title {
-  font-size: 16px;
-  font-weight: 700;
-  color: var(--color-navy);
-  margin-bottom: 14px;
-  display: flex;
-  align-items: center;
   gap: 6px;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--color-border);
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--aj-muted);
 }
+.aj-empty i { font-size: 32px; }
+.aj-empty p { margin: 6px 0 0; font-size: var(--fs-card); font-weight: 800; color: var(--aj-ink); }
+.aj-empty span { font-size: var(--fs-body); }
 
-.aj-right-title i { color: var(--color-primary); }
+/* ── 우측 — 기술 역량 ──────────────────────────────────────────────────── */
+.aj-skills { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.aj-skill { display: grid; gap: 6px; }
+.aj-skill-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.aj-skill-head span { font-size: var(--fs-meta); font-weight: 700; color: var(--aj-ink); }
+.aj-skill-head strong { font-size: var(--fs-meta); font-weight: 800; color: var(--aj-skill, var(--primary)); }
+.aj-skill-track { height: 6px; border-radius: 6px; background: var(--muted); overflow: hidden; }
+.aj-skill-track i { display: block; height: 100%; border-radius: inherit; background: var(--aj-skill, var(--primary)); }
 
-.aj-skill-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.aj-skill-item {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.aj-skill-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.aj-skill-label {
-  font-size: 16px;
-  color: var(--color-text-sub);
-}
-
-.aj-skill-score {
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.aj-skill-track {
-  height: 5px;
-  background: var(--color-surface);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.aj-skill-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s ease;
-}
-
-/* Tips */
-.aj-tip-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.aj-tip-item {
+/* ── 우측 — 추천 포인트 ────────────────────────────────────────────────── */
+.aj-tips { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.aj-tips li {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 16px;
-  color: var(--color-text-sub);
-  line-height: 1.5;
-}
-
-.aj-tip-item i { margin-top: 1px; flex-shrink: 0; }
-
-/* CTA card */
-.aj-right-cta {
-  background: linear-gradient(135deg, #2E5BFF14, #7B9FFF0A);
-  border-color: var(--color-surface-alt);
-}
-
-.aj-cta-desc {
-  font-size: 16px;
-  color: var(--color-text-sub);
-  margin-bottom: 12px;
-  line-height: 1.5;
-}
-
-.aj-cta-btn {
-  width: 100%;
-  padding: 10px;
-  background: var(--color-cta);
-  color: var(--color-bg);
-  font-size: 16px;
-  font-weight: 700;
+  padding: 10px 12px;
   border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: opacity 0.15s;
+  background: var(--muted);
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  line-height: 1.45;
+  color: var(--aj-ink);
 }
+.aj-tips li i { margin-top: 2px; font-size: 13px; }
+.aj-tips li.is-good i { color: var(--mint); }
+.aj-tips li.is-warn i { color: var(--amber); }
 
-.aj-cta-btn:hover { opacity: 0.85; }
+/* ── 우측 — 자소서 CTA ─────────────────────────────────────────────────── */
+.aj-cta { background: linear-gradient(145deg, var(--card) 30%, var(--violet-soft)); }
+.aj-cta [data-slot="card-content"] { display: grid; gap: 8px; justify-items: start; }
+.aj-cta-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  background: var(--primary);
+  color: #fff;
+  font-size: 16px;
+}
+.aj-cta-title { margin: 4px 0 0; font-size: var(--fs-card); font-weight: 800; color: var(--aj-ink); }
+.aj-cta-desc { margin: 0 0 6px; font-size: var(--fs-meta); line-height: 1.55; color: var(--aj-sub); }
+.aj-cta-btn { width: 100%; }
 
-/* ── Responsive ─────────────────────────────────────────────────── */
+/* ── 반응형 ────────────────────────────────────────────────────────────── */
 @media (max-width: 1100px) {
-  /* Two columns (filter + list) on the first row; right panel reflows
-     to a full-width block on the second row instead of being hidden. */
-  .aj-body {
-    grid-template-columns: 180px 1fr;
-  }
-
-  .aj-filter {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  .aj-job-list {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .aj-right {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    position: static;
-    flex-direction: row;
-    flex-wrap: wrap;
-  }
-
-  .aj-right .aj-right-card {
-    flex: 1 1 280px;
-  }
+  .aj-layout { grid-template-columns: minmax(0, 1fr); }
+  /* 우측 카드 셋은 목록 아래에서 나란히 — 폭이 되면 3열, 아니면 접힌다. */
+  .aj-side { position: static; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
 }
 
 @media (max-width: 768px) {
-  .aj-wrap { padding: 16px; }
+  .aj-summary { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+  .aj-stat { padding: 16px; }
 
-  .aj-stats {
-    grid-template-columns: 1fr 1fr;
+  .aj-filter-group { grid-template-columns: minmax(0, 1fr); gap: 6px; }
+  .aj-filter-label { padding-top: 0; }
+
+  /* 카드 — [로고][본문(동작 줄 포함)]. 순위 숫자는 접는다. */
+  .aj-job {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 12px;
+    padding: 16px;
   }
-
-  .aj-body {
-    grid-template-columns: 1fr;
-  }
-
-  /* Reset the 1100px placements so all three stack in one column. */
-  .aj-filter,
-  .aj-job-list,
-  .aj-right {
-    grid-column: auto;
-    grid-row: auto;
-  }
-
-  .aj-filter {
-    position: static;
-  }
-
-  .aj-right {
-    flex-direction: column;
-  }
-
-  .aj-job-card {
-    grid-template-columns: 40px 1fr auto;
-    grid-template-rows: auto auto;
-  }
-
   .aj-job-rank { display: none; }
-
-  .aj-job-score {
-    grid-row: 1;
-    grid-column: 3;
-  }
-
-  .aj-job-actions {
-    grid-column: 1 / -1;
-    flex-direction: row;
-    justify-content: flex-end;
-  }
+  .aj-job-logo { width: 48px; height: 48px; }
+  .aj-job-role { white-space: normal; }
 }
 
-/* RESPONSIVE-HERO-AUTO */
-@media (max-width: 768px) {
-  .aj-page-title {
-    min-height: auto;
-    margin: 14px 0 16px;
-    padding: 20px 18px 18px;
-    border-radius: var(--radius-md);
-  }
-  .aj-page-title { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
-  .aj-page-desc { font-size: 16px; line-height: 1.55; }
+@media (max-width: 480px) {
+  .aj-summary { grid-template-columns: minmax(0, 1fr); }
+  .aj-list-head { flex-wrap: wrap; }
 }

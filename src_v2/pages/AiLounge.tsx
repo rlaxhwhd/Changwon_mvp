@@ -318,7 +318,6 @@ export default function AiLounge() {
             <article className="gh-card gh-archive">
               <header className="gh-card-head">
                 <div>
-                  <span className="gh-section-kicker">GROWTH ARCHIVE</span>
                   <h2>성장 활동 기록</h2>
                   <p>진단, 비교과, 로드맵 이행이 하나의 성장 서사로 축적됩니다.</p>
                 </div>

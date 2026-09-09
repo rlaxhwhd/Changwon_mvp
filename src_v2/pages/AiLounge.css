@@ -1970,6 +1970,26 @@
   border-radius: 0;
   background: none;
   box-shadow: none;
+  /* 안쪽 여백은 이 대시보드의 카드 슬롯(header 20px 20px 0 · content 20px)과 같게 */
+  padding: 20px;
+}
+
+/* 카드 머리글은 「내 성장」 셸의 글꼴(850 · 12px)이 아니라 이 대시보드의
+   [data-slot="card-title"] · [data-slot="card-description"] 과 같은 위계를 쓴다 —
+   같은 격자 안의 다른 카드와 제목·설명이 어긋나 보였다. */
+.al-page .recommend-card .gh-card-head h2 {
+  font-size: var(--fs-card);
+  font-weight: 700;
+  line-height: 24px;
+  letter-spacing: -.02em;
+}
+
+.al-page .recommend-card .gh-card-head p {
+  margin: 4px 0 0;
+  color: var(--muted-foreground);
+  font-size: var(--fs-body);
+  font-weight: 400;
+  line-height: 20px;
 }
 
 /* ── 대시보드 격자 — 두 줄의 분할선을 맞춘다 ────────────────────────────────
@@ -1989,3 +2009,129 @@
 .al-page .recommend-card,
 .al-page .competency-card,
 .al-page .diagnosis-card { grid-column: span 1; }
+
+/* ── 반응형 — 시안(stu_dash.html) @media 블록 이식 ──────────────────────
+   시안 브레이크포인트(1120 · 760)와 값을 그대로 옮기고 .al-page 로 스코프만 씌웠다.
+   · 셸(상단바·검색·푸터·테마 리모컨·.main 여백)은 index.css 몫이라 제외.
+   · 요약 지표(.stats)는 공용 StudentStatCards 가 컨테이너 쿼리로, 진로 여정(.steps)은
+     공용 CareerJourneyCard 가 제 파일에서 각각 처리하므로 여기 다시 두지 않는다.
+   · 이 페이지 격자는 12열이 아니라 2칸(720:656)이다 — 시안의 span 12 는 1 / -1 로,
+     span 6 은 span 1 로 옮겨 적었다. 시안에만 있는 요소(.tabs-list · .area-grid ·
+     .level-card · .ai-recommend-item · 진단 모달)는 제외. */
+
+@media (max-width: 1120px) {
+  /* 시안: .journey-card · .next-card · .competency-card · .diagnosis-card → span 12 */
+  .al-page .competency-card,
+  .al-page .diagnosis-card {
+    grid-column: 1 / -1;
+  }
+
+  .al-page .chart-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .al-page .radar {
+    width: 232px;
+    height: 216px;
+  }
+
+  .al-page .goal-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .al-page .goal-core {
+    min-height: 210px;
+  }
+
+  .al-page .goal-plan-columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .al-page .counseling-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .al-page .welcome {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .al-page .welcome h1 {
+    font-size: 28px;
+  }
+
+  .al-page .student-type {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .al-page .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .al-page .cj-card,
+  .al-page .competency-card,
+  .al-page .diagnosis-card,
+  .al-page .goal-card,
+  .al-page .todo-card,
+  .al-page .recommend-card,
+  .al-page .counseling-card {
+    grid-column: auto;
+  }
+
+  .al-page .chart-layout,
+  .al-page .diagnosis-result-grid,
+  .al-page .counseling-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .al-page .radar {
+    width: 100%;
+    max-width: 232px;
+    height: auto;
+  }
+
+  .al-page .diagnosis-result-item {
+    min-height: 144px;
+  }
+
+  .al-page .diagnosis-result-item.locked {
+    min-height: 208px;
+  }
+
+  .al-page .goal-core {
+    min-height: 190px;
+  }
+
+  .al-page .goal-plan-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .al-page .goal-plan-column {
+    padding: 12px;
+  }
+
+  .al-page .goal-task-copy b,
+  .al-page .goal-task-copy small {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .al-page .goal-coach {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .al-page .goal-coach-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  /* 성장 활동 기록 타임라인 — 한 열이 되면 항목이 붙어 보여 6px 띄운다. */
+  .al-page .gh-timeline {
+    gap: 6px;
+  }
+}

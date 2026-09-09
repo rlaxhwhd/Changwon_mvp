@@ -3,6 +3,11 @@ import { Link } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import './MyPrograms.css'
 import { usePageHead } from '../../components/PageCrumb'
+import { Icon } from '../../components/Icon'
+
+/* ── 비교과프로그램 현황 (/mypage/programs) ─────────────────────────────────
+   화면 언어는 비교과 목록·채용공고 보드와 같다 — 공용 카드 슬롯([data-slot="card"]) · .badge · .button.
+   상태 색은 hex 대신 토큰(blue · amber · mint · muted)으로 클래스에 건다. */
 
 type Status = '신청완료' | '진행중' | '수료' | '취소'
 
@@ -135,15 +140,20 @@ const PROGRAMS: AppliedProgram[] = [
   },
 ]
 
-const STATUS_COLORS: Record<Status, string> = {
-  신청완료: '#2E5BFF',
-  진행중: '#F59E0B',
-  수료: '#22C55E',
-  취소: '#99A1A9',
+/* 상태 → 토큰 색 클래스. 신청완료=파랑 · 진행중=앰버 · 수료=민트 · 취소=회색 */
+const STATUS_TONE: Record<Status, string> = {
+  신청완료: 'is-upcoming',
+  진행중: 'is-active',
+  수료: 'is-done',
+  취소: 'is-cancel',
 }
 
 const FILTERS = ['전체', '진행중', '신청완료', '수료', '취소'] as const
 type Filter = (typeof FILTERS)[number]
+
+function StatusPill({ status }: { status: Status }) {
+  return <span className={`mp-status ${STATUS_TONE[status]}`}>{status}</span>
+}
 
 export default function MyPrograms() {
   usePageHead('비교과프로그램 현황', '지금까지 신청·수료한 비교과 프로그램과 누적 활동 시간을 확인합니다.')
@@ -165,96 +175,82 @@ export default function MyPrograms() {
     return PROGRAMS.filter(p => p.status === filter)
   }, [filter])
 
-  return (
-    <div className="mp-wrap">
-      <header className="mp-hero">
-        <Link to="/growth/program" className="mp-hero-cta">
-          <i className="fa-solid fa-plus" /> 새 프로그램 신청
-        </Link>
-      </header>
+  const countOf = (f: Filter) => (f === '전체' ? PROGRAMS.length : PROGRAMS.filter(p => p.status === f).length)
 
-      <section className="mp-stats">
-        <article className="mp-stat">
-          <span className="mp-stat-num">{stats.total}</span>
-          <span className="mp-stat-lbl">전체 신청</span>
+  return (
+    <div className="mp-page">
+      {/* ── 요약 6장 ─────────────────────────────────────────── */}
+      <section className="mp-stats" aria-label="신청 현황 요약">
+        <article data-slot="card" className="mp-stat">
+          <strong>{stats.total}</strong><span>전체 신청</span>
         </article>
-        <article className="mp-stat mp-stat--done">
-          <span className="mp-stat-num">{stats.done}</span>
-          <span className="mp-stat-lbl">수료</span>
+        <article data-slot="card" className="mp-stat is-done">
+          <strong>{stats.done}</strong><span>수료</span>
         </article>
-        <article className="mp-stat mp-stat--active">
-          <span className="mp-stat-num">{stats.active}</span>
-          <span className="mp-stat-lbl">진행중</span>
+        <article data-slot="card" className="mp-stat is-active">
+          <strong>{stats.active}</strong><span>진행중</span>
         </article>
-        <article className="mp-stat mp-stat--upcoming">
-          <span className="mp-stat-num">{stats.upcoming}</span>
-          <span className="mp-stat-lbl">신청완료</span>
+        <article data-slot="card" className="mp-stat is-upcoming">
+          <strong>{stats.upcoming}</strong><span>신청완료</span>
         </article>
-        <article className="mp-stat mp-stat--hours">
-          <span className="mp-stat-num">{stats.totalHours}<small>h</small></span>
-          <span className="mp-stat-lbl">누적 인정 시간</span>
+        <article data-slot="card" className="mp-stat is-hours">
+          <strong>{stats.totalHours}<small>h</small></strong><span>누적 인정 시간</span>
         </article>
-        <article className="mp-stat mp-stat--xp">
-          <span className="mp-stat-num">{stats.totalXp}<small>XP</small></span>
-          <span className="mp-stat-lbl">획득 XP</span>
+        <article data-slot="card" className="mp-stat is-xp">
+          <strong>{stats.totalXp}<small>XP</small></strong><span>획득 XP</span>
         </article>
       </section>
 
-      <div className="mp-filter-bar">
-        {FILTERS.map(f => (
-          <button
-            key={f}
-            className={`mp-filter-btn${filter === f ? ' active' : ''}`}
-            onClick={() => setFilter(f)}
-          >
-            {f}
-            <span className="mp-filter-count">
-              {f === '전체' ? PROGRAMS.length : PROGRAMS.filter(p => p.status === f).length}
-            </span>
-          </button>
-        ))}
+      {/* ── 필터 + 새 신청 ───────────────────────────────────── */}
+      <div className="mp-toolbar">
+        <div className="mp-filters" role="tablist" aria-label="상태별 보기">
+          {FILTERS.map(f => (
+            <button
+              key={f}
+              type="button"
+              role="tab"
+              aria-selected={filter === f}
+              className={`mp-filter${filter === f ? ' is-on' : ''}`}
+              onClick={() => setFilter(f)}
+            >
+              {f}<em>{countOf(f)}</em>
+            </button>
+          ))}
+        </div>
+        <Link to="/growth/program" className="button primary mp-new">
+          <i className="fa-solid fa-plus" aria-hidden="true" /> 새 프로그램 신청
+        </Link>
       </div>
 
+      {/* ── 목록 ─────────────────────────────────────────────── */}
       <div className="mp-list">
         {visible.length === 0 ? (
-          <div className="mp-empty">
-            <i className="fa-solid fa-box-open" />
+          <div data-slot="card" className="mp-empty">
+            <i className="fa-solid fa-box-open" aria-hidden="true" />
             <p>해당 조건의 신청 기록이 없습니다.</p>
           </div>
         ) : (
           visible.map(p => (
-            <article key={p.id} className="mp-card" onClick={() => setDetail(p)}>
+            <article key={p.id} data-slot="card" className={`mp-card${p.status === '취소' ? ' is-cancel' : ''}`}>
+              <button type="button" className="mp-card-hit" onClick={() => setDetail(p)} aria-label={`${p.title} 상세 보기`} />
               <div className="mp-card-top">
-                <span className="mp-cat-badge">
-                  {p.category}
-                </span>
-                <span className="mp-status" style={{ background: STATUS_COLORS[p.status] + '1a', color: STATUS_COLORS[p.status] }}>
-                  <span className="mp-status-dot" style={{ background: STATUS_COLORS[p.status] }} />
-                  {p.status}
-                </span>
+                <span className="badge">{p.category}</span>
+                <StatusPill status={p.status} />
               </div>
               <h2 className="mp-card-title">{p.title}</h2>
-              <p className="mp-card-host">
-                <i className="fa-solid fa-building" /> {p.hostDept}
-              </p>
-              <div className="mp-card-meta">
-                <span><i className="fa-regular fa-calendar" /> {p.startDate} ~ {p.endDate}</span>
-                <span><i className="fa-regular fa-clock" /> {p.hours}시간</span>
-                {p.status === '수료' && (
-                  <span className="mp-card-xp">+{p.rewardXp} XP</span>
-                )}
-              </div>
-              <div className="mp-card-actions">
-                {p.certUrl && (
-                  <button
-                    type="button"
-                    className="mp-cert-btn"
-                    onClick={event => { event.stopPropagation(); setDetail(p) }}
-                  >
-                    <i className="fa-solid fa-award" /> 수료증
+              <p className="mp-card-host"><i className="fa-regular fa-building" aria-hidden="true" />{p.hostDept}</p>
+              <ul className="mp-card-meta">
+                <li><i className="fa-regular fa-calendar" aria-hidden="true" />{p.startDate} ~ {p.endDate}</li>
+                <li><i className="fa-regular fa-clock" aria-hidden="true" />{p.hours}시간</li>
+                {p.status === '수료' && <li className="mp-card-xp">+{p.rewardXp} XP</li>}
+              </ul>
+              <div className="mp-card-foot">
+                {p.certUrl ? (
+                  <button type="button" className="button sm" onClick={() => setDetail(p)}>
+                    <Icon name="award" /> 수료증 확인
                   </button>
-                )}
-                <span className="mp-card-arrow">상세 보기 <i className="fa-solid fa-chevron-right" /></span>
+                ) : <span />}
+                <span className="mp-card-more">상세 보기 <i className="fa-solid fa-chevron-right" aria-hidden="true" /></span>
               </div>
             </article>
           ))
@@ -265,46 +261,37 @@ export default function MyPrograms() {
         {detail && (
           <div className="mp-detail">
             <div className="mp-detail-tags">
-              <span className="mp-cat-badge">
-                {detail.category}
-              </span>
-              <span className="mp-status" style={{ background: STATUS_COLORS[detail.status] + '1a', color: STATUS_COLORS[detail.status] }}>
-                <span className="mp-status-dot" style={{ background: STATUS_COLORS[detail.status] }} />
-                {detail.status}
-              </span>
+              <span className="badge">{detail.category}</span>
+              <StatusPill status={detail.status} />
             </div>
 
-            <table className="mp-detail-table">
-              <tbody>
-                <tr><th>주관 부서</th><td>{detail.hostDept}</td></tr>
-                <tr><th>신청일</th><td>{detail.appliedAt}</td></tr>
-                <tr><th>운영 기간</th><td>{detail.startDate} ~ {detail.endDate}</td></tr>
-                <tr><th>인정 시간</th><td>{detail.hours}시간</td></tr>
-                <tr><th>획득 XP</th><td className="mp-xp-strong">{detail.rewardXp} XP</td></tr>
-              </tbody>
-            </table>
+            <dl className="mp-kv">
+              <div><dt>주관 부서</dt><dd>{detail.hostDept}</dd></div>
+              <div><dt>신청일</dt><dd>{detail.appliedAt}</dd></div>
+              <div><dt>운영 기간</dt><dd>{detail.startDate} ~ {detail.endDate}</dd></div>
+              <div><dt>인정 시간</dt><dd>{detail.hours}시간</dd></div>
+              <div><dt>획득 XP</dt><dd className="mp-kv-xp">{detail.rewardXp} XP</dd></div>
+            </dl>
 
-            <div className="mp-detail-section">
+            <section className="mp-detail-section">
               <h4>프로그램 소개</h4>
               <p>{detail.description}</p>
-            </div>
+            </section>
 
             {detail.reflection && (
-              <div className="mp-detail-section mp-detail-section--reflect">
-                <h4><i className="fa-solid fa-quote-left" /> 나의 회고</h4>
+              <section className="mp-detail-section is-reflect">
+                <h4><i className="fa-solid fa-quote-left" aria-hidden="true" /> 나의 회고</h4>
                 <p>{detail.reflection}</p>
-              </div>
+              </section>
             )}
 
             <div className="mp-detail-actions">
               {detail.certUrl && (
-                <button type="button" className="mp-btn mp-btn--ghost">
-                  <i className="fa-solid fa-download" /> 수료증 다운로드
+                <button type="button" className="button">
+                  <Icon name="download" /> 수료증 다운로드
                 </button>
               )}
-              <button type="button" className="mp-btn mp-btn--primary" onClick={() => setDetail(null)}>
-                확인
-              </button>
+              <button type="button" className="button primary" onClick={() => setDetail(null)}>확인</button>
             </div>
           </div>
         )}

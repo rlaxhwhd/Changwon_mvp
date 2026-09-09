@@ -265,15 +265,15 @@ export default function JobBoard({
             aria-label="기업명, 공고명으로 검색"
           />
         </div>
+        {/* 라벨 글자 대신 선택값이 스스로 말한다 — 「상태 전체 / 게시 / 마감」, 「최신순 / 마감순」.
+            이름은 보조기술용 aria-label 로만 남긴다. */}
         <label className="jb-select">
-          <span>상태</span>
-          <select value={status} onChange={e => setStatus(e.target.value as JobStatus | typeof ALL)}>
-            {STATUS_FILTERS.map(s => <option key={s} value={s}>{s}</option>)}
+          <select aria-label="상태" value={status} onChange={e => setStatus(e.target.value as JobStatus | typeof ALL)}>
+            {STATUS_FILTERS.map(s => <option key={s} value={s}>{s === ALL ? '상태 전체' : s}</option>)}
           </select>
         </label>
         <label className="jb-select">
-          <span>정렬</span>
-          <select value={sort} onChange={e => setSort(e.target.value as JobSort)}>
+          <select aria-label="정렬" value={sort} onChange={e => setSort(e.target.value as JobSort)}>
             {JOB_SORTS.map(s => <option key={s} value={s}>{JOB_SORT_LABEL[s]}</option>)}
           </select>
         </label>

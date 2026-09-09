@@ -1,4 +1,5 @@
 import type { ProgramCategory } from '../../../src_admin/data/schema/program'
+import { Icon } from '../../components/Icon'
 import './ProgramCardGrid.css'
 
 export interface ProgramCardVM {
@@ -60,11 +61,11 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
                 <h2 className="pcg-title">{program.title}</h2>
                 <p className="pcg-desc">{program.desc}</p>
                 <div className="pcg-meta">
-                  <span><i className="fa-regular fa-calendar" aria-hidden="true" /> 모집기간 {program.startDate} ~ {program.endDate}</span>
+                  <span><Icon name="calendar" />모집기간 {program.startDate} ~ {program.endDate}</span>
                   {program.runStartDate && program.runEndDate && (
-                    <span><i className="fa-solid fa-calendar-check" aria-hidden="true" /> 진행기간 {program.runStartDate} ~ {program.runEndDate}</span>
+                    <span><Icon name="calendar-check" />진행기간 {program.runStartDate} ~ {program.runEndDate}</span>
                   )}
-                  <span><i className="fa-solid fa-users" aria-hidden="true" /> 정원 {program.capacity}명</span>
+                  <span><Icon name="users" />정원 {program.capacity}명</span>
                 </div>
               </div>
             </button>

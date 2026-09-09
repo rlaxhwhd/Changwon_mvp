@@ -1,0 +1,116 @@
+/* 모바일 시간 선택기(components/CounselSlotPicker) — 상담 신청 일정표의 640px 이하 대체 UI.
+   색은 .cc-wrap 이 갈래별로 정한 --cc-ink / --cc-soft / --cc-line / --cc-ok 를 그대로 물려받는다
+   (진로취업=파랑 · 심리=보라 · 교수=민트). 새 색을 만들지 않는다. */
+
+.csp {
+  display: grid;
+  gap: 14px;
+}
+
+/* ── 요일 칩 — 상단 「진로·취업 / 심리 / 교수」 탭과 같은 세그먼트 언어 ───────── */
+.csp-days {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.csp-day {
+  min-width: 0;
+  min-height: 56px;
+  padding: 6px 2px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-sub);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  line-height: 1.2;
+  transition: background 160ms, color 160ms;
+}
+
+.csp-day strong {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.csp-day span {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.csp-day small {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--cc-ok);
+}
+
+.csp-day.is-full small { color: var(--color-text-muted); }
+
+.csp-day.is-active {
+  background: var(--cc-soft);
+  color: var(--cc-ink);
+}
+
+.csp-day.is-active small { color: var(--cc-ink); }
+
+/* ── 시간 칩 — 3열, 터치 높이 44px ──────────────────────────────────────── */
+.csp-times {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.csp-slot {
+  min-width: 0;
+  min-height: 44px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--cc-line);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: 15px;
+  font-weight: 700;
+  transition: background 160ms, border-color 160ms, color 160ms;
+}
+
+.csp-slot:hover:not(:disabled) {
+  border-color: var(--cc-ink);
+}
+
+.csp-slot small {
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+/* 예약 완료 — 눌리지 않는 회색 칸. 글자를 지우지 않고 작은 꼬리표로 남긴다. */
+.csp-slot-reserved {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-sub);
+  cursor: not-allowed;
+}
+
+.csp-slot-selected {
+  border-color: var(--cc-ink);
+  background: var(--cc-ink);
+  color: #fff;
+}
+
+.csp-slot-selected i { font-size: 12px; }
+
+@media (max-width: 380px) {
+  .csp-times { gap: 6px; }
+  .csp-slot { font-size: 14px; }
+  .csp-day strong { font-size: 13px; }
+}

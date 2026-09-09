@@ -5,7 +5,7 @@
   /* 폭·좌우여백은 .v2-main 이 정한다 — 컨테이너를 다시 만들지 않는다. */
   /* 배경·min-height 는 두지 않는다 — body 배경이 그대로 흐르게 둔다. */
   width: 100%;
-  padding: 32px 0 60px; color: var(--gh-text);
+  padding: 0 0 60px; color: var(--gh-text); /* 상단은 공용 머리글 여백(28px)이 맡는다 */
   font-family: Pretendard, "Noto Sans KR", "Malgun Gothic", sans-serif; word-break: keep-all;
 }
 .gh-shell a { text-decoration: none; }
@@ -155,7 +155,7 @@
   .gh-project-list { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .gh-shell { padding: 20px 16px 40px; } .gh-cover { grid-template-columns: 1fr; padding: 22px; }
+  .gh-shell { padding: 0 16px 40px; } .gh-cover { grid-template-columns: 1fr; padding: 22px; }
   .gh-cover-copy { padding: 20px 0 0; border-left: 0; border-top: 1px solid var(--gh-border); } .gh-cover-actions { grid-column: auto; }
   .gh-projects, .gh-profile-card, .gh-skills, .gh-qualifications, .gh-archive, .gh-next { grid-column: 1 / -1; }
   .gh-skill-grid { grid-template-columns: 1fr; }

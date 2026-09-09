@@ -1,7 +1,7 @@
 /* ─── AI 자소서/인터뷰 홈 (jh- prefix) ───────────────────────────── */
 
 .jh-wrap {
-  padding: 32px 0 44px;
+  padding: 0 0 44px; /* 상단은 공용 머리글 여백(28px)이 맡는다 */
 }
 
 /* ── 헤더 ─────────────────────────────────────────────── */
@@ -325,7 +325,7 @@
 
 @media (max-width: 768px) {
   .jh-wrap {
-    padding: 24px 18px 32px;
+    padding: 0 18px 32px;
   }
   .jh-resume-grid,
   .jh-actions {

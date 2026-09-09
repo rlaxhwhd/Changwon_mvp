@@ -591,7 +591,7 @@
 
 @media (max-width: 900px) {
   .qb-page {
-    padding: 28px 18px 40px;
+    padding: 0 18px 40px;
   }
 
   .qb-header h1 {

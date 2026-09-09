@@ -1,5 +1,5 @@
 .job-page {
-  padding: 30px 0 48px;
+  padding: 0 0 48px; /* 상단은 공용 머리글 여백(28px)이 맡는다 */
 }
 
 .job-header {
@@ -217,7 +217,7 @@
 
 @media (max-width: 1024px) {
   .job-page {
-    padding: 22px 0 36px;
+    padding: 0 0 36px;
   }
 
   .job-header,

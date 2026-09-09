@@ -17,6 +17,9 @@
   --cj-ramp: linear-gradient(90deg,
     var(--cj-c1), var(--cj-c2), var(--cj-c3), var(--cj-c4),
     var(--cj-c5), var(--cj-c6), var(--cj-c7));
+
+  /* 마커 지름 — 연결선이 이 값의 절반 높이를 지난다. 축약(히어로 칸)은 이 변수만 줄인다. */
+  --cj-marker: 34px;
 }
 
 /* ── 현재 단계 요약 ──────────────────────────────────────────────────── */
@@ -95,17 +98,6 @@
   padding: 8px 0 0;
 }
 
-/* 연결선은 첫 칸·끝 칸의 마커 중심에서 시작하고 끝난다(= 반 칸 안쪽). */
-.cj-steps::before {
-  content: "";
-  position: absolute;
-  left: var(--cj-edge, 7%);
-  right: var(--cj-edge, 7%);
-  top: 24px;
-  height: 2px;
-  background: var(--border, #e2e6ec);
-}
-
 .cj-step {
   position: relative;
   z-index: 1;
@@ -113,11 +105,33 @@
   text-align: center;
 }
 
+/* 연결선(시안 .journey-step::before) — 칸마다 제 몫의 선을 긋는다.
+   첫 칸은 마커 중심에서 시작하고 끝 칸은 마커 중심에서 끝난다.
+   완료 칸은 제 색으로 칠해 진행 구간이 이어져 보이고, 좁은 화면의 가로 스크롤에서도
+   칸 단위라 그대로 따라온다. 세로 위치는 칸 안 마커의 중심(지름의 절반)이다. */
+.cj-step::before {
+  content: "";
+  position: absolute;
+  top: calc(var(--cj-marker) / 2 - 1px);
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border, #e2e6ec);
+}
+
+.cj-step:first-child::before { left: 50%; }
+.cj-step:last-child::before { right: 50%; }
+.cj-step.is-done::before { background: var(--cj-step); }
+
 /* 예정 칸도 제 색을 갖는다 — 띠 전체가 보이도록. 대신 채우지 않고 옅게 물들여
    「아직 안 한 칸」이 완료 칸처럼 보이지 않게 한다(글자는 같은 색의 짙은 쪽). */
+/* position·z-index 는 연결선(.cj-step::before) 위에 올리기 위한 것 —
+   절대 배치된 선은 배치 속성이 없는 형제보다 위에 칠해진다. */
 .cj-marker {
-  width: 34px;
-  height: 34px;
+  position: relative;
+  z-index: 1;
+  width: var(--cj-marker);
+  height: var(--cj-marker);
   margin: 0 auto 10px;
   border: 4px solid var(--card, #fff);
   border-radius: 50%;
@@ -168,13 +182,16 @@
 
   .cj-percent { text-align: left; }
 
+  /* 칸은 최소 72px 을 지키되 남는 폭은 나눠 채운다 — 카드가 넓어지면(960 이하 히어로 1단 등)
+     끝까지 펼쳐지고, 7칸 504px 보다 좁은 폰 폭에서만 가로 스크롤이 생긴다. */
   .cj-steps {
-    grid-template-columns: repeat(var(--cj-count, 7), 72px);
+    grid-template-columns: repeat(var(--cj-count, 7), minmax(72px, 1fr));
     overflow-x: auto;
+    /* overflow-x 만 주면 세로도 auto 가 된다 — 높이가 눌리는 칸(고정 높이 카드)에서
+       세로 스크롤바가 생기지 않게 세로는 잠근다. */
+    overflow-y: hidden;
     padding-bottom: 8px;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-accent, #d8d2f8) transparent;
   }
-
-  .cj-steps::before { display: none; }
 }

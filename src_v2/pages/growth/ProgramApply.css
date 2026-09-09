@@ -434,7 +434,7 @@
     flex-direction: column;
   }
 
-  .pa-wrap { padding: 16px 0; }
+  .pa-wrap { padding: 0 0 16px; }
 
   .pa-card {
     grid-template-columns: 100px 1fr;

@@ -179,9 +179,13 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 8px;
-  /* 시안 캐스케이드: .stat-meter{margin:16px 0 0} → .stat-card .stat-meter{margin-top:auto} */
-  margin: 16px 0 0;
+  /* 시안 캐스케이드: .stat-meter{margin:16px 0 0} → .stat-card .stat-meter{margin-top:auto}.
+     auto 는 카드에 남는 높이가 있을 때만 벌어진다 — 카드가 내용 높이에 딱 맞는 줄
+     (2열로 접혔을 때 둘째 줄)에서는 0 이 되어 위 .ssc-foot 과 붙었다.
+     바닥 밀기는 그대로 두고 최소 간격 16px 은 padding 으로 보장한다. */
+  margin: 0;
   margin-top: auto;
+  padding-top: 16px;
 }
 .ssc-meter-track {
   height: 10px;

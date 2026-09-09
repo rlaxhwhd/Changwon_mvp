@@ -172,7 +172,6 @@ export default function GNB() {
                 <span className="profile-avatar-icon">
                   <img src="/student-profile.png" alt="" />
                 </span>
-                <Icon name="chevron-down" className="profile-caret" />
               </button>
 
               {profileOpen && (

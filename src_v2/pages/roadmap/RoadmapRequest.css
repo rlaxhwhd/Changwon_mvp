@@ -2,7 +2,7 @@
    로드맵 수정요청 — 좌: 칸 고르기 / 우: 요청 작성
    색·간격은 전부 기존 토큰. 새 팔레트를 만들지 않는다(DESIGN.md 락).
    ───────────────────────────────────────────────────────────────────────── */
-.rr-page { padding: 20px 0 48px; word-break: keep-all; }
+.rr-page { padding: 0 0 48px; word-break: keep-all; } /* 상단은 공용 머리글 여백(28px)이 맡는다 */
 
 .rr-note {
   display: flex; align-items: center; gap: 9px;

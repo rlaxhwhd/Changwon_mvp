@@ -3,6 +3,8 @@ import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import CounselTabs from '../../components/CounselTabs'
+import CounselSlotPicker from '../../components/CounselSlotPicker'
+import { useSlotPicker } from '../../hooks/useSlotPicker'
 import { findDefaultSelection } from '../../data/professors'
 import { getCounselableProfessorGroups } from '../../data/professorProfilesRead'
 import { submitProfessorCounselRequest } from '../../data/counselRequestsWrite'
@@ -41,6 +43,8 @@ const reservedSlots = new Set([
 export default function ProfessorCounsel() {
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
   usePageHead('상담 신청', '교수님을 선택하고 온라인 또는 오프라인 상담을 신청하세요.')
+  // 640px 이하: 표 대신 「요일 칩 → 시간 칩」(components/CounselSlotPicker). 복구는 그 파일의 스위치.
+  const mobileSlots = useSlotPicker()
   const [selectedGroupName, setSelectedGroupName] = useState(defaultSelection.groupName)
   const selectedGroup = professorGroups.find(group => group.name === selectedGroupName) ?? professorGroups[0]
   const divisionNames = Object.keys(selectedGroup.divisions)
@@ -194,11 +198,9 @@ export default function ProfessorCounsel() {
           <div className="pc-mode-card">
             <div className="pc-mode-tabs">
               <button className={mode === 'online' ? 'active' : ''} onClick={() => setMode('online')}>
-                <i className="fa-solid fa-laptop" />
                 온라인 상담신청
               </button>
               <button className={mode === 'offline' ? 'active' : ''} onClick={() => setMode('offline')}>
-                <i className="fa-regular fa-calendar-days" />
                 오프라인 상담신청
               </button>
             </div>
@@ -245,6 +247,9 @@ export default function ProfessorCounsel() {
                   <span><i className="selected" />선택됨</span>
                 </div>
 
+                {mobileSlots ? (
+                  <CounselSlotPicker days={days} times={times} getStatus={getStatus} onSelect={selectSlot} selected={selectedSlot} />
+                ) : (
                 <div className="cc-calendar-grid pc-calendar-grid">
                   <div className="cc-grid-head empty" />
                   {days.map(day => (
@@ -269,10 +274,10 @@ export default function ProfessorCounsel() {
                     </div>
                   ))}
                 </div>
+                )}
 
                 <div className="cc-selected-bar pc-selected-bar">
                   <div className="cc-selected-title">
-                    <i className="fa-regular fa-clock" />
                     <strong>선택한 일정</strong>
                   </div>
                   <div className="cc-selected-info">
