@@ -8,6 +8,8 @@ import { ROADMAP_AXIS_MAP } from '../../data/schema/roadmap'
 // 로드맵 1개의 정본은 교직원 포털의 읽기 모델이다(base ⊕ 상담사 override ⊕ 프로그램 편입분).
 // 이행률도 거기서 계산해 온다 — 화면이 칸 배열을 세지 않는다(CLAUDE.md 규칙 10).
 import { getStudentRoadmap } from '../../../src_admin/data/roadmap'
+import { roadmapEnvelope } from '../../../shared/roadmapStore'
+import { useRoadmap } from '../../../shared/useRoadmapStore'
 import './RoadmapStatus.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -27,17 +29,32 @@ export default function RoadmapStatus() {
   usePageHead('로드맵 진행 현황', '상담사와 협의해 확정한 3축 로드맵의 이행률과 칸별 수행 현황을 확인합니다.')
   const student = getActiveStudent()
   const type = getStudentTypeMeta(student)
-  const roadmap = useMemo(() => getStudentRoadmap(student.id), [student.id])
+  const revision = useRoadmap(student.id)
+  const roadmap = useMemo(() => getStudentRoadmap(student.id), [student.id, revision])
 
+  // 잠긴 화면은 빈 화면이 아니다(PROCESS.md §2 구현규칙 1 · CLAUDE.md 13조).
+  // 사유와 다음 단계는 게이트가 준다 — 화면이 문구를 다시 만들지 않는다.
+  // 「아직 없다」와 「확정 대기 중」은 다른 사실이라 같은 문구로 뭉뚱그리지 않는다:
+  // 재생성 중인 학생에게 "아직 생성되지 않았습니다"라고 하면 거짓말이 된다.
   if (!roadmap) {
+    const envelope = roadmapEnvelope(student.id)
+    const gate = envelope?.gate.reasons[0]
+    const pending = envelope?.pending ?? false
     return (
       <div className="rs-page">
         <section className="rs-empty">
           <i className="fa-solid fa-route" aria-hidden="true" />
-          <strong>아직 로드맵이 생성되지 않았습니다.</strong>
-          <p>진단을 마치고 상담을 완료하면 상담사가 3축 로드맵을 확정합니다.</p>
-          <Link to="/counsel/career" className="rs-empty-link">
-            상담 신청 <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+          <strong>
+            {pending ? '로드맵을 다시 확정하는 중입니다.' : '아직 로드맵이 생성되지 않았습니다.'}
+          </strong>
+          <p>
+            {gate?.message
+              ?? '진단을 마치고 상담을 완료하면 상담사가 3축 로드맵을 확정합니다.'}
+          </p>
+          <Link to={pending ? '/counsel/career' : (gate?.nextRoute ?? '/counsel/career')}
+                className="rs-empty-link">
+            {pending ? '담당 상담사에게 문의' : '상담 신청'}
+            <i className="fa-solid fa-arrow-right" aria-hidden="true" />
           </Link>
         </section>
       </div>

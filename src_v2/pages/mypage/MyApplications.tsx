@@ -1,18 +1,22 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // 마이페이지 — 나의 추천채용 지원 내역
 //
-// 상담사가 전형 단계를 올리면 여기에 그대로 반영된다(같은 스토어를 구독).
-// 타임라인 조립은 데이터층(getProgressTimeline)이 하고 화면은 그리기만 한다.
+// 상담사가 전형 단계를 올리면 여기에 그대로 반영된다(같은 서버 정본을 읽는다).
+// 타임라인 조립은 데이터층(buildTimeline)이 하고 화면은 그리기만 한다.
+// 이력은 지원 건별로만 읽는다 — 전량 preload 하지 않는다.
 // ─────────────────────────────────────────────────────────────────────────────
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   APPLICATION_STATUS_LABEL,
   cancelApplication,
   currentStageLabel,
+  buildTimeline,
   getApplicationsByStudent,
-  getProgressTimeline,
 } from '../../../src_admin/data/jobApplications'
+import { getEventsByApplication } from '../../../src_admin/data/jobApplicationEvents'
+import type { JobApplicationEvent } from '../../../src_admin/data/schema/jobApplication'
+import { useJobStore } from '../../../shared/useJobStore'
 import { getJobById } from '../../../src_admin/data/jobsSource'
 import { getActiveStudent } from '../../data/students'
 import type { ApplicationStatus } from '../../../src_admin/data/schema/jobApplication'
@@ -42,18 +46,32 @@ export default function MyApplications() {
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
   usePageHead('나의 지원 내역', '교내 추천채용 공고에 지원한 내역과 전형 진행 상황입니다.')
   const me = getActiveStudent()
-  const [tick, setTick] = useState(0)
+  const tick = useJobStore()
   const applications = useMemo(() => getApplicationsByStudent(me.id), [me.id, tick])
+  const [events, setEvents] = useState<Record<string, JobApplicationEvent[]>>({})
+  const [error, setError] = useState('')
+
+  // 진행 칸의 도달 시각은 이력에만 있다 — 보이는 지원 건의 것만 읽는다.
+  useEffect(() => {
+    let live = true
+    void Promise.all(applications.map(async a => [a.id, await getEventsByApplication(a.id)] as const))
+      .then(pairs => { if (live) setEvents(Object.fromEntries(pairs)) })
+      .catch(() => { /* 이력을 못 읽어도 현재 상태는 보여 준다 */ })
+    return () => { live = false }
+  }, [applications])
 
   const onCancel = (id: string, title: string) => {
     if (!window.confirm(`«${title}» 지원을 취소합니다.\n취소 후에는 다시 지원할 수 있습니다.`)) return
-    cancelApplication(id)
-    setTick(t => t + 1)
+    setError('')
+    void cancelApplication(id).catch((cause: unknown) => {
+      setError(cause instanceof Error ? cause.message : '취소하지 못했습니다. 다시 시도해 주세요.')
+    })
   }
 
   return (
     // 폭·좌우 여백은 .v2-main 한 곳이 정한다 — 페이지가 자기 컨테이너를 만들지 않는다.
     <div className="v2-page">
+      {error && <p className="ma-note" role="alert">{error}</p>}
       {applications.length === 0 ? (
         <div data-slot="card" className="ma-empty">
           <i className="fa-regular fa-folder-open" />
@@ -65,7 +83,7 @@ export default function MyApplications() {
         <div className="ma-list">
           {applications.map(application => {
             const job = getJobById(application.jobId)
-            const steps = getProgressTimeline(application)
+            const steps = buildTimeline(application, events[application.id] ?? [])
             const open = application.status === 'APPLIED' || application.status === 'IN_PROGRESS'
             return (
               <article key={application.id} data-slot="card" className="ma-card">

@@ -1,12 +1,8 @@
 import { useState } from 'react'
 import Modal from './Modal'
 import { getActiveStudent } from '../data/students'
+import { collegeOf } from '../../src_admin/data/colleges'
 import './ProgramApplyModal.css'
-
-const COLLEGE_BY_MAJOR: Record<string, string> = {
-  컴퓨터공학과: '공과대학',
-  경영학과: '경영대학',
-}
 
 interface Props {
   open: boolean
@@ -25,14 +21,16 @@ interface Props {
 type YN = 'yes' | 'no' | ''
 
 export default function ProgramApplyModal({ open, onClose, programTitle, onSubmit }: Props) {
+  // 신청서에 뜨는 인적사항은 학사 데이터에서 온다. 없는 값을 지어내지 않는다
+  // (CLAUDE.md 규칙 1 — 학사 유래 데이터는 읽기 전용이다).
   const active = getActiveStudent()
   const STUDENT = {
     name: active.name,
-    studentId: '20250001',
+    studentId: active.studentNo,
     grade: String(active.grade),
-    phone: '010-1234-5678',
-    email: 'student@cwnu.ac.kr',
-    college: COLLEGE_BY_MAJOR[active.major] ?? '국립창원대학교',
+    phone: active.phone || '—',
+    email: '—',
+    college: collegeOf(active.major),
     dept: active.major,
   }
   const [path, setPath] = useState('')

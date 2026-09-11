@@ -1,13 +1,8 @@
 import { useRef, useState } from 'react'
 import Modal from './Modal'
-import ResumeSheet from './ResumeSheet'
-import { getActiveStudent } from '../data/students'
-// 포트폴리오는 데이터층 단일소스에서 읽는다 — 마이페이지·교직원 학생상세와 같은 값이다.
-import {
-  buildProfile,
-  INITIAL_SKILLS, INITIAL_CERTS, INITIAL_LANGS, INITIAL_AWARDS, INITIAL_PROJECTS, INITIAL_RESUMES,
-} from '../data/portfolio'
-import type { ApplyAttachment, ApplyAttachmentKind } from '../../src_admin/data/jobApplications'
+import { uploadJobFile } from '../../src_admin/data/jobsSource'
+import { jobCapability } from '../../shared/jobStore'
+import type { ApplyAttachmentKind } from '../../src_admin/data/schema/jobApplication'
 import './JobApplyModal.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -15,13 +10,12 @@ import './JobApplyModal.css'
 //
 // 현행 `ReAppD` 지원 프로세스 대응(SPEC.md §3-6 S16). 서류 없이 지원되던 것을
 // 두 갈래로 나눈다:
-//   ① 드림캐치 포트폴리오 — 「마이페이지 > 포트폴리오 > 이력서」를 그대로 제출.
-//      고르면 아래에 그 이력서가 펼쳐진다(읽기 전용 — 편집 콜백을 넘기지 않는다).
-//   ② 개별 이력서       — 학생이 따로 만든 파일. 파일명만 남는다(백엔드 없음).
+//   ① 드림캐치 포트폴리오 — 학생별 영속 저장소(DB.md §8-3 #4)가 아직 없다.
+//      **없는 제출을 성공한 것처럼 만들지 않는다** — 이유를 적고 비활성으로 둔다.
+//   ② 개별 이력서 — 실제 파일을 서버 볼륨에 올린다. 저장 이름은 서버가 부여하고
+//      다운로드는 권한을 확인하는 API 로만 나간다(DB.md #41).
 //
-// ⚠ 이력서 뷰를 여기서 다시 만들지 않는다. ResumeSheet 한 벌을 학생 마이페이지 ·
-//   교직원 학생상세 포트폴리오 탭 · 이 모달이 같이 쓴다(CLAUDE.md 12조).
-// ⚠ 첨부 성립 여부의 최종 판정은 로더(applyToJob)다. 여기 버튼 활성화는 편의일 뿐이다.
+// ⚠ 첨부 성립 여부의 최종 판정은 서버다. 여기 버튼 활성화는 편의일 뿐이다.
 // ─────────────────────────────────────────────────────────────────────────
 
 interface Props {
@@ -29,24 +23,39 @@ interface Props {
   onClose: () => void
   company: string
   role: string
-  onSubmit: (attachment: ApplyAttachment) => void
+  /** 업로드까지 마친 파일 id 를 넘긴다 — 지원 트랜잭션이 이 파일을 회차에 귀속시킨다. */
+  onSubmit: (fileId: string) => void | Promise<void>
 }
 
 export default function JobApplyModal({ open, onClose, company, role, onSubmit }: Props) {
-  const me = getActiveStudent()
+  const capability = jobCapability()
   const [kind, setKind] = useState<ApplyAttachmentKind | ''>('')
-  const [fileName, setFileName] = useState('')
+  const [file, setFile] = useState<File | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const reset = () => { setKind(''); setFileName('') }
+  const reset = () => { setKind(''); setFile(null); setError('') }
   const handleClose = () => { reset(); onClose() }
 
-  const canSubmit = kind === 'PORTFOLIO' || (kind === 'RESUME_FILE' && fileName !== '')
+  const portfolioReason = capability.unavailable
+    .find(u => u.code === 'PORTFOLIO_SERVICE_UNAVAILABLE')?.message
+    ?? '드림캐치 포트폴리오 제출은 아직 준비 중입니다.'
+  const canSubmit = kind === 'RESUME_FILE' && !!file && !busy
 
-  const handleSubmit = () => {
-    if (!canSubmit) return
-    onSubmit(kind === 'PORTFOLIO' ? { kind } : { kind: 'RESUME_FILE', fileName })
-    reset()
+  const handleSubmit = async () => {
+    if (!canSubmit || !file) return
+    setBusy(true)
+    setError('')
+    try {
+      const stored = await uploadJobFile('RESUME', file)
+      await onSubmit(stored.id)
+      reset()
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '지원하지 못했습니다. 다시 시도해 주세요.')
+    } finally {
+      setBusy(false)
+    }
   }
 
   return (
@@ -60,14 +69,16 @@ export default function JobApplyModal({ open, onClose, company, role, onSubmit }
         <button
           type="button"
           role="radio"
-          aria-checked={kind === 'PORTFOLIO'}
-          className={`jam-choice${kind === 'PORTFOLIO' ? ' is-on' : ''}`}
-          onClick={() => setKind('PORTFOLIO')}
+          aria-checked={false}
+          aria-disabled
+          disabled={!capability.canApplyWithPortfolio}
+          className="jam-choice"
+          onClick={() => { /* 준비 전이라 고를 수 없다 */ }}
         >
           <i className="fa-regular fa-id-card" />
           <span>
             <strong>드림캐치 포트폴리오 첨부</strong>
-            <small>마이페이지에 작성한 이력서를 그대로 제출합니다</small>
+            <small>{portfolioReason}</small>
           </span>
         </button>
 
@@ -81,51 +92,33 @@ export default function JobApplyModal({ open, onClose, company, role, onSubmit }
           <i className="fa-regular fa-file-lines" />
           <span>
             <strong>개별 이력서 첨부</strong>
-            <small>직접 작성한 이력서 파일을 올립니다</small>
+            <small>직접 작성한 이력서 파일을 올립니다 (pdf · doc · docx · hwp · hwpx)</small>
           </span>
         </button>
       </div>
 
-      {/* 파일 선택기는 ②를 고를 때만 열린다 — 펼침 영역은 ①에만 둔다. */}
       <input
         ref={fileRef}
         type="file"
         className="jam-file-input"
         accept=".pdf,.doc,.docx,.hwp,.hwpx"
-        onChange={e => setFileName(e.target.files?.[0]?.name ?? '')}
+        onChange={e => setFile(e.target.files?.[0] ?? null)}
       />
 
       {kind === 'RESUME_FILE' && (
         <p className="jam-file-picked">
-          {fileName
-            ? <><i className="fa-regular fa-circle-check" /> {fileName}</>
+          {file
+            ? <><i className="fa-regular fa-circle-check" /> {file.name}</>
             : <><i className="fa-regular fa-circle" /> 선택된 파일이 없습니다. 다시 눌러 파일을 고르세요.</>}
         </p>
       )}
 
-      {/* ── ①을 고르면 포트폴리오 이력서가 여기 펼쳐진다 ── */}
-      {kind === 'PORTFOLIO' && (
-        <section className="jam-portfolio" aria-label="제출할 드림캐치 포트폴리오">
-          <p className="jam-portfolio-note">
-            <i className="fa-solid fa-circle-info" />
-            아래 내용 그대로 제출됩니다. 고치려면 마이페이지 &gt; 포트폴리오에서 수정하세요.
-          </p>
-          <ResumeSheet
-            profile={buildProfile(me)}
-            skills={INITIAL_SKILLS}
-            certs={INITIAL_CERTS}
-            langs={INITIAL_LANGS}
-            awards={INITIAL_AWARDS}
-            projects={INITIAL_PROJECTS}
-            resumes={INITIAL_RESUMES}
-          />
-        </section>
-      )}
+      {error && <p className="jam-file-picked" role="alert">{error}</p>}
 
       <div className="jam-actions">
         <button type="button" className="jam-btn-ghost" onClick={handleClose}>닫기</button>
-        <button type="button" className="jam-btn-primary" onClick={handleSubmit} disabled={!canSubmit}>
-          지원하기
+        <button type="button" className="jam-btn-primary" onClick={() => void handleSubmit()} disabled={!canSubmit}>
+          {busy ? '제출 중…' : '지원하기'}
         </button>
       </div>
     </Modal>

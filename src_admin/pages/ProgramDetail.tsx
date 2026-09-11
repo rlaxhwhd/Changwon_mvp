@@ -16,7 +16,10 @@ import {
   pendingApplicants,
   selectedApplicants,
 } from '../data/programs'
-import { PROGRAM_STATUSES, SELECTION_STATUSES, SELECTED_ACTIONS } from '../data/schema/program'
+import {
+  PROGRAM_STATUSES, SELECTION_STATUSES, selectedActions,
+  outcomeLabel, programStatusLabel, selectionLabel,
+} from '../data/schema/program'
 import { ROADMAP_ENTRY_LABEL } from '../../src_v2/data/schema/roadmap'
 import type {
   ProgramStatus,
@@ -26,7 +29,6 @@ import type {
 import { studentLiteOf, collegeOf, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 // 6유형 표시명은 단일소스에서 받는다 — 한글 리터럴을 화면에 박지 않는다.
 import { typeLabel } from '../../src_v2/data/careerProcess'
-import { getPenaltyTotal } from '../data/penalties'
 import EmptyState from '../components/EmptyState'
 import StudentPicker from '../components/StudentPicker'
 
@@ -40,17 +42,18 @@ function fmtDateTime(iso: string): string {
 
 function selectionChipClass(status: SelectionStatus): string {
   switch (status) {
-    case '선발': return 'admin-chip-ok'
-    case '탈락': return 'admin-chip-cancel'
-    case '취소': return 'admin-chip-done'
+    case 'SELECTED': return 'admin-chip-ok'
+    case 'REJECTED': return 'admin-chip-cancel'
+    case 'CANCELLED': return 'admin-chip-done'
     default: return 'admin-chip-wait'
   }
 }
 
-function outcomeChipClass(status: string): string {
-  if (status === '수료' || status === '참석' || status === '선발') return 'admin-chip-ok'
-  if (status === '미수료') return 'admin-chip-done'
-  if (status.startsWith('불참')) return 'admin-chip-cancel'
+/** 결과가 아직 없는 선발자는 '선발'로 읽는다(코드가 아니라 표시 상태다). */
+function outcomeChipClass(outcome: string | undefined): string {
+  if (outcome === 'COMPLETED' || outcome === 'ATTENDED' || outcome === undefined) return 'admin-chip-ok'
+  if (outcome === 'NOT_COMPLETED') return 'admin-chip-done'
+  if (outcome === 'ABSENT') return 'admin-chip-cancel'
   return 'admin-chip-wait'
 }
 
@@ -63,7 +66,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
 
   const [status, setStatus] = useState<ProgramStatus | ''>(program.status)
   const [checked, setChecked] = useState<Set<string>>(new Set())
-  const [bulkValue, setBulkValue] = useState<string>('선발')
+  const [bulkValue, setBulkValue] = useState<string>('SELECTED')
   const [picking, setPicking] = useState(false)
 
   // 신청자/선발자 페이지 전환 시 선택 초기화
@@ -74,11 +77,14 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   // 선발되면 선발자 관리로 넘어간다 — 신청자 관리에는 남지 않는다.
   const currentList = mode === 'applicants' ? pendingApplicants(program) : selectedList
 
-  const waitingCount = applicants.filter(a => selectionOf(a) === '대기').length
-  const rejectedCount = applicants.filter(a => selectionOf(a) === '탈락').length
+  const waitingCount = applicants.filter(a => selectionOf(a) === 'PENDING').length
+  const rejectedCount = applicants.filter(a => selectionOf(a) === 'REJECTED').length
 
   const allChecked = currentList.length > 0 && currentList.every(a => checked.has(a.studentId))
-  const bulkOptions: readonly string[] = mode === 'applicants' ? SELECTION_STATUSES : SELECTED_ACTIONS
+  // 표시명은 metadata 에서 온다 — 관리자가 라벨을 고치면 이 select 가 따라간다.
+  const bulkOptions: { value: string; label: string }[] = mode === 'applicants'
+    ? SELECTION_STATUSES.map(value => ({ value, label: selectionLabel(value) }))
+    : selectedActions().map(a => ({ value: a.value, label: a.label }))
 
   const toggleCheck = (studentId: string) => {
     setChecked(prev => {
@@ -93,27 +99,34 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
     setChecked(allChecked ? new Set() : new Set(currentList.map(a => a.studentId)))
   }
 
+  /** 서버가 거절하면 사유를 그대로 띄운다 — 저장된 척 넘어가면 화면과 DB 가 어긋난다. */
+  const run = (work: Promise<unknown>, after?: () => void) => {
+    work.then(() => { refresh(); after?.() })
+      .catch((error: unknown) =>
+        window.alert(error instanceof Error ? error.message : '처리하지 못했습니다.'))
+  }
+
   const applyBulk = () => {
     if (checked.size === 0) return
-    if (mode === 'applicants') {
-      setApplicantsStatus(program.id, [...checked], bulkValue as SelectionStatus)
-    } else {
-      setApplicantsOutcome(program.id, [...checked], bulkValue as SelectedAction)
-    }
+    const ids = [...checked]
+    const work = mode === 'applicants'
+      ? setApplicantsStatus(program.id, ids, bulkValue as SelectionStatus)
+      : setApplicantsOutcome(program.id, ids, selectedActions().find(a => a.value === bulkValue) as SelectedAction)
     setChecked(new Set())
-    refresh()
+    run(work)
   }
 
   const handleStatusSave = () => {
     if (!status || status === program.status) return
-    updateProgram(program.id, { status })
-    refresh()
+    run(updateProgram(program.id, { status }))
   }
 
   const handleDeleteProgram = () => {
     if (!window.confirm(`'${program.title}' 프로그램을 삭제할까요? 신청자·출석 기록도 함께 사라집니다.`)) return
     removeProgram(program.id)
-    navigate('/programs/manage')
+      .then(() => navigate('/programs/manage'))
+      .catch((error: unknown) =>
+        window.alert(error instanceof Error ? error.message : '삭제하지 못했습니다.'))
   }
 
   return (
@@ -159,7 +172,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
             <span>모집 상태</span>
             <select value={status} onChange={e => setStatus(e.target.value as ProgramStatus)}>
               {PROGRAM_STATUSES.map(s => (
-                <option key={s} value={s}>{s}</option>
+                <option key={s} value={s}>{programStatusLabel(s)}</option>
               ))}
             </select>
           </label>
@@ -198,8 +211,8 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
               onChange={e => setBulkValue(e.target.value)}
               aria-label="변경할 상태"
             >
-              {bulkOptions.map(s => (
-                <option key={s} value={s}>{s}</option>
+              {bulkOptions.map(o => (
+                <option key={o.value} value={o.value}>{o.label}</option>
               ))}
             </select>
             <button type="button" className="admin-btn admin-btn-primary sm" onClick={applyBulk}>
@@ -248,10 +261,14 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
               const grade = lite?.grade
               const enroll = lite?.status
               const studentType = lite?.studentType
-              // 누적 벌점 — 블랙리스트 단일소스. 선발 판단에 쓰라고 표에 띄운다.
-              const penalty = getPenaltyTotal(a.studentId)
-              const label = mode === 'applicants' ? selectionOf(a) : (a.outcomeStatus ?? '선발')
-              const chipCls = mode === 'applicants' ? selectionChipClass(selectionOf(a)) : outcomeChipClass(label)
+              // 누적 벌점 — 선발 판단에 쓰라고 서버가 신청자 행에 실어 준다.
+              const penalty = a.penaltyTotal ?? 0
+              const label = mode === 'applicants'
+                ? selectionLabel(selectionOf(a))
+                : (a.outcomeStatus ? outcomeLabel(a.outcomeStatus) : selectionLabel('SELECTED'))
+              const chipCls = mode === 'applicants'
+                ? selectionChipClass(selectionOf(a))
+                : outcomeChipClass(a.outcomeStatus)
               return (
                 <div key={a.studentId} className="admin-roster-row admin-participant-row">
                   <span className="admin-roster-cell admin-check-cell">
@@ -322,8 +339,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
           excludeIds={applicants.map(a => a.studentId)}
           onClose={() => setPicking(false)}
           onPick={student => {
-            addApplicant(program.id, { id: student.id, name: student.name, major: student.major })
-            refresh()
+            run(addApplicant(program.id, { id: student.id, name: student.name, major: student.major }))
           }}
         />
       )}

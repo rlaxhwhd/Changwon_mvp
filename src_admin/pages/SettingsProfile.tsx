@@ -11,6 +11,8 @@ export default function SettingsProfile() {
   const [scope, setScope] = useState(counselor.scope)
   const [email, setEmail] = useState(counselor.email ?? '')
   const [officeHours, setOfficeHours] = useState(counselor.officeHours ?? '')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const dirty =
     name.trim() !== counselor.name ||
@@ -21,19 +23,22 @@ export default function SettingsProfile() {
 
   const canSave = dirty && name.trim() !== '' && dept.trim() !== ''
 
-  const handleSave = () => {
-    if (!canSave) return
-    updateCounselorProfile(counselor.id, {
+  const handleSave = async () => {
+    if (!canSave || saving) return
+    setSaving(true); setError('')
+    try { await updateCounselorProfile(counselor.id, {
       name: name.trim(),
       dept: dept.trim(),
       scope: scope.trim(),
       email: email.trim() || undefined,
       officeHours: officeHours.trim() || undefined,
-    })
+    }); window.location.reload() }
+    catch (e) { setError((e as Error).message); setSaving(false) }
   }
 
   return (
     <div className="admin-page">
+      {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">내 프로필</h1>
@@ -104,7 +109,7 @@ export default function SettingsProfile() {
         </div>
 
         <div className="admin-form-actions">
-          <button className="admin-btn admin-btn-primary" disabled={!canSave} onClick={handleSave}>
+          <button className="admin-btn admin-btn-primary" disabled={!canSave || saving} onClick={handleSave}>
             <LuSave /> 저장
           </button>
         </div>

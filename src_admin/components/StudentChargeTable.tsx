@@ -1,13 +1,13 @@
 import {
-  LuChevronLeft, LuChevronRight, LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuStar, LuTriangleAlert,
+  LuChevronLeft, LuChevronRight, LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuSparkles, LuStar, LuTriangleAlert,
 } from 'react-icons/lu'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { STUDENTS } from '../../src_v2/data/students'
 import {
   queryStudentRoster,
-  getRosterFilterOptions,
-  getRosterSummary,
+  fetchRosterMetadata,
+
+
   enrollStatusClass,
   isFocusFilter,
   studentTypeClass,
@@ -17,6 +17,7 @@ import { typeLabel } from '../../src_v2/data/careerProcess'
 import { totalPages } from '../data/query'
 import { useListData } from '../hooks/useListData'
 import EmptyState from './EmptyState'
+import { useMetadata } from '../../shared/useMetadata'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 상담사 학생 목록 표 (담당·전체 공유) — 번호·학생·학과·학년·진단 유형·학적·IAP 이행률.
@@ -32,7 +33,7 @@ import EmptyState from './EmptyState'
 const ALL = '전체'
 const PAGE_SIZE = 20
 
-type RosterSummary = ReturnType<typeof getRosterSummary>
+type RosterSummary = Awaited<ReturnType<typeof fetchRosterMetadata>>['summary']
 
 /**
  * 목록 필터 버튼 — 라벨·색만 갖는다. 누가 고위험군인지는 데이터층(studentRoster)이
@@ -51,11 +52,26 @@ interface StudentChargeTableProps {
   departments: string[]
   title: string
   scopeLabel: string
+  /**
+   * 마지막 칸이 무엇인가.
+   *   roster  — IAP 이행률 (기본). 행을 누르면 학생 상세 페이지로 간다.
+   *   roadmap — 로드맵이 없으면 「생성」 버튼, 있으면 이행률. 행/버튼은 onPickStudent 로 나간다.
+   * 표·필터·페이지네이션을 두 벌 만들지 않으려고 마지막 칸만 갈아 끼운다(CLAUDE.md 규칙 12).
+   */
+  mode?: 'roster' | 'roadmap'
+  /** roadmap 모드에서 행 또는 「생성」을 눌렀을 때. 지정하면 상세 페이지 이동 대신 이걸 부른다. */
+  onPickStudent?: (studentId: string) => void
+  /** 값이 바뀌면 로드맵 보유 여부를 다시 읽는다(생성 직후 목록 갱신용). */
+  refreshKey?: number
 }
 
-export default function StudentChargeTable({ departments, title, scopeLabel }: StudentChargeTableProps) {
+export default function StudentChargeTable({
+  departments, title, scopeLabel, mode = 'roster', onPickStudent, refreshKey = 0,
+}: StudentChargeTableProps) {
+  useMetadata()
   const navigate = useNavigate()
   const deptKey = departments.join(',')
+  const isRoadmap = mode === 'roadmap'
 
   // 집중관리 필터는 주소에 남긴다 — 홈 카드가 ?focus= 로 열고, 뒤로가기가 그대로 동작한다.
   const [searchParams, setSearchParams] = useSearchParams()
@@ -72,12 +88,25 @@ export default function StudentChargeTable({ departments, title, scopeLabel }: S
   const [page, setPage] = useState(1)
 
   // 필터 옵션·헤더 집계는 전체 집합에서(현재 페이지가 아니라). DB 전환 시 별도 집계 엔드포인트.
-  const options = useMemo(() => getRosterFilterOptions(departments), [deptKey]) // eslint-disable-line react-hooks/exhaustive-deps
-  const summary = useMemo(() => getRosterSummary(departments), [deptKey]) // eslint-disable-line react-hooks/exhaustive-deps
-  const detailedIds = useMemo(() => new Set(STUDENTS.map(s => s.id)), [])
+  const [metadata, setMetadata] = useState<Awaited<ReturnType<typeof fetchRosterMetadata>>>({
+    options: { majors: [], grades: [], types: [], tiers: [], statuses: [] },
+    summary: { total: 0, focusCount: 0, highRiskCount: 0, coreCareCount: 0, starCount: 0 },
+  })
+  const [metadataError, setMetadataError] = useState<Error | null>(null)
+  const [metadataRetry, setMetadataRetry] = useState(0)
+  useEffect(() => {
+    let cancelled = false
+    setMetadataError(null)
+    fetchRosterMetadata(departments).then(value => {
+      if (!cancelled) setMetadata(value)
+    }).catch((error: Error) => { if (!cancelled) setMetadataError(error) })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [deptKey, refreshKey, metadataRetry])
+  const { options, summary } = metadata
 
   // 서버(목업) 조회 — useListData가 useEffect+레이스 cleanup을 담당. DB 전환 시 훅 내부만 교체.
-  const { data: result, isLoading: loading } = useListData(queryStudentRoster, {
+  const { data: result, isLoading: loading, error, refetch } = useListData(queryStudentRoster, {
     page,
     pageSize: PAGE_SIZE,
     q: query,
@@ -114,6 +143,13 @@ export default function StudentChargeTable({ departments, title, scopeLabel }: S
   const items = result.items
   const totalCount = result.totalCount
   const pages = totalPages(result)
+
+  // 「생성해야 할 학생」 판정은 데이터층이 한다 — 로스터 학생과 상세 학생의 규칙이 다르다.
+  const pending = useMemo(
+    () => new Set(isRoadmap ? items.filter(s => !s.hasRoadmap).map(s => s.id) : []),
+    [items, isRoadmap, refreshKey],
+  )
+  const pick = (id: string) => (onPickStudent ? onPickStudent(id) : navigate(`/students/${id}`))
 
   return (
     <div className="admin-page">
@@ -220,7 +256,10 @@ export default function StudentChargeTable({ departments, title, scopeLabel }: S
       </div>
 
       <section className="admin-card">
-        {loading && items.length === 0 ? (
+        {error || metadataError ? (
+          <EmptyState icon={LuTriangleAlert} message={(error ?? metadataError)!.message}
+            action={{ label: '다시 시도', onClick: () => { refetch(); setMetadataRetry(n => n + 1) } }} />
+        ) : loading && items.length === 0 ? (
           <div className="admin-loading"><LuLoaderCircle className="admin-spin" /> 불러오는 중…</div>
         ) : items.length === 0 ? (
           <EmptyState icon={LuFrown} message="조건에 맞는 학생이 없습니다." />
@@ -234,38 +273,71 @@ export default function StudentChargeTable({ departments, title, scopeLabel }: S
                 <span>학년</span>
                 <span>진단 유형</span>
                 <span>학적</span>
-                <span>IAP 이행률</span>
+                <span>{isRoadmap ? '로드맵' : 'IAP 이행률'}</span>
               </div>
-              {items.map((s, i) => (
-                <button
-                  key={s.id}
-                  type="button"
-                  className="admin-roster-row"
-                  onClick={() => navigate(`/students/${s.id}`)}
-                >
-                  {/* 페이지가 넘어가도 이어지는 통 번호 (1페이지 20명이면 2페이지는 21부터) */}
-                  <span className="admin-roster-no">{(page - 1) * PAGE_SIZE + i + 1}</span>
-                  <span className="admin-roster-student">
-                    <strong>{s.name}</strong>
-                    {detailedIds.has(s.id) && <span className="admin-tag admin-tag-soft">상세</span>}
-                  </span>
-                  <span className="admin-roster-cell">{s.major}</span>
-                  <span className="admin-roster-cell">{s.grade}학년</span>
-                  <span className="admin-roster-cell">
-                    {/* 유형은 '코드 → 라벨' 순서로 읽는다 (T3 역량성장형) */}
-                    <span className={studentTypeClass(s.studentType)}><b>{s.studentType}</b>{typeLabel(s.studentType)}</span>
-                  </span>
-                  <span className="admin-roster-cell">
-                    <span className={enrollStatusClass(s.status)}>{s.status}</span>
-                  </span>
-                  <span className="admin-roster-progress">
-                    <span className="admin-progress-track">
-                      <span className="admin-progress-fill" style={{ width: `${s.progress}%` }} />
+              {items.map((s, i) => {
+                const needs = pending.has(s.id)
+                const cells = (
+                  <>
+                    {/* 페이지가 넘어가도 이어지는 통 번호 (1페이지 20명이면 2페이지는 21부터) */}
+                    <span className="admin-roster-no">{(page - 1) * PAGE_SIZE + i + 1}</span>
+                    <span className="admin-roster-student">
+                      <strong>{s.name}</strong>
+                      {s.hasDetail && <span className="admin-tag admin-tag-soft">상세</span>}
                     </span>
-                    <em>{s.progress}%</em>
-                  </span>
-                </button>
-              ))}
+                    <span className="admin-roster-cell">{s.major}</span>
+                    <span className="admin-roster-cell">{s.grade}학년</span>
+                    <span className="admin-roster-cell">
+                      {/* 유형은 '코드 → 라벨' 순서로 읽는다 (T3 역량성장형) */}
+                      <span className={studentTypeClass(s.studentType)}><b>{s.studentType}</b>{typeLabel(s.studentType)}</span>
+                    </span>
+                    <span className="admin-roster-cell">
+                      <span className={enrollStatusClass(s.status)}>{s.status}</span>
+                    </span>
+                    {needs ? (
+                      <span className="admin-roster-cell">
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-primary sm"
+                          onClick={e => { e.stopPropagation(); pick(s.id) }}
+                        >
+                          <LuSparkles /> 생성
+                        </button>
+                      </span>
+                    ) : (
+                      <span className="admin-roster-progress">
+                        <span className="admin-progress-track">
+                          <span className="admin-progress-fill" style={{ width: `${s.progress}%` }} />
+                        </span>
+                        <em>{s.progress}%</em>
+                      </span>
+                    )}
+                  </>
+                )
+
+                // roadmap 모드는 칸 안에 버튼이 들어가므로 행을 button 으로 둘 수 없다
+                // (버튼 안의 버튼은 잘못된 마크업이다). 클래스가 같아 보이는 것은 그대로다.
+                return isRoadmap ? (
+                  <div
+                    key={s.id}
+                    role="button"
+                    tabIndex={0}
+                    className="admin-roster-row"
+                    onClick={() => pick(s.id)}
+                    onKeyDown={e => {
+                      if (e.key !== 'Enter' && e.key !== ' ') return
+                      e.preventDefault()
+                      pick(s.id)
+                    }}
+                  >
+                    {cells}
+                  </div>
+                ) : (
+                  <button key={s.id} type="button" className="admin-roster-row" onClick={() => pick(s.id)}>
+                    {cells}
+                  </button>
+                )
+              })}
             </div>
 
             {pages > 1 && (

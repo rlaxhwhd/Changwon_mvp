@@ -1,48 +1,49 @@
-import { useEffect, useState, type FormEvent } from 'react'
+// ★ 이 화면에 있던 공통 초기 상수(SKILLS·PROJECTS·QUALIFICATIONS·GROWTH_RECORDS)를 걷었다.
+//   useStoredList 가 mount 직후 그 상수를 **학생별 키에 그대로 저장**해서, 아무도 쓴 적 없는
+//   실적이 모든 학생에게 자기 것처럼 보였다. 정본은 서버(dc.growth_entry)이고, 소유자가
+//   증명되지 않은 자료는 이관하지 않았다. 비어 있으면 비어 있는 것이 사실이다.
+import { useMemo, useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import { getActiveStudent } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
-// 기록 목록은 라운지(/v2/lounge)도 읽는다 — seed·저장소 키는 데이터 층 단일소스에 둔다.
-import { GROWTH_RECORDS, growthRecordsKey, type GrowthRecord } from '../../data/growthRecords'
+import { RECORD_CATEGORY_LABEL, createGrowthRecord, deleteGrowthRecord, getGrowthRecords,
+         updateGrowthRecord, type GrowthRecordCategory } from '../../data/growthRecords'
 // 스킬 후보·분류는 사전 단일소스에서 온다 — 여기에 스킬명·분류 리터럴을 두지 않는다.
 import { SKILL_CATEGORIES, SKILL_CUSTOM, SKILL_GROUPS, categoryOf } from '../../data/skillCatalog'
+import { createGrowthEntry, deleteGrowthEntry, growthEntries, updateGrowthEntry } from '../../../shared/growthStore'
+import type { GrowthEntry } from '../../../shared/growthStore'
+import { useGrowth } from '../../../shared/useRoadmapStore'
 import './GrowthHome.css'
 import { usePageHead } from '../../components/PageCrumb'
 
-const SKILLS = [
-  { name: 'Java', level: 4, category: '언어' },
-  { name: 'Python', level: 4, category: '언어' },
-  { name: 'TypeScript', level: 3, category: '언어' },
-  { name: 'React', level: 4, category: '프레임워크' },
-  { name: 'Spring Boot', level: 3, category: '프레임워크' },
-  { name: 'Git / GitHub', level: 4, category: '도구' },
-]
-
-const PROJECTS = [
-  {
-    title: 'CWNU 학사 챗봇 — Mate', role: '백엔드 · 프롬프트 설계', period: '2025.09 ~ 2025.11',
-    description: '학사 일정과 강의 정보를 자연어로 안내하는 챗봇을 설계하고 학생 250명을 대상으로 베타 운영했습니다.',
-    stack: ['Python', 'FastAPI', 'OpenAI API'], result: '캡스톤디자인 우수상',
-  },
-  {
-    title: '1인가구 식단 추천 — Soloplate', role: '풀스택 · 모델 튜닝', period: '2025.07 ~ 2025.08',
-    description: '예산과 알레르기 정보를 기반으로 식단을 추천하는 서비스를 구현해 해커톤 본선에 진출했습니다.',
-    stack: ['React', 'TypeScript', 'FastAPI'], result: 'SW중심대학 해커톤 본선',
-  },
-]
-
-const QUALIFICATIONS = [
-  { title: 'SQLD', detail: '한국데이터산업진흥원', date: '2025.06.20', icon: 'fa-database' },
-  { title: '정보처리기능사', detail: '한국산업인력공단', date: '2024.11.10', icon: 'fa-certificate' },
-  { title: 'TOEIC 765점', detail: '정기시험', date: '2026.02.10', icon: 'fa-language' },
-  { title: 'OPIc IM2', detail: '말하기', date: '2025.12.08', icon: 'fa-microphone-lines' },
-]
-
-type Project = (typeof PROJECTS)[number]
-type Skill = (typeof SKILLS)[number]
-type Qualification = (typeof QUALIFICATIONS)[number]
+interface Project { id: string; title: string; role: string; period: string; description: string
+                    stack: string[]; result: string }
+interface Skill { id: string; name: string; level: number; category: string }
+interface Qualification { id: string; title: string; detail: string; date: string; icon: string }
 type EditorKind = 'project' | 'skill' | 'qualification' | 'record'
+
+const text = (content: Record<string, unknown>, field: string): string =>
+  typeof content[field] === 'string' ? content[field] as string : ''
+
+const dateOf = (entry: GrowthEntry): string => entry.occurredOn ?? entry.dateText ?? ''
+
+function toProject(entry: GrowthEntry): Project {
+  return { id: entry.id, title: entry.title, role: text(entry.content, 'role'),
+           period: text(entry.content, 'periodText'), description: text(entry.content, 'description'),
+           stack: Array.isArray(entry.content.stack) ? entry.content.stack as string[] : [],
+           result: text(entry.content, 'result') }
+}
+
+function toSkill(entry: GrowthEntry): Skill {
+  return { id: entry.id, name: entry.title, level: Number(entry.content.level) || 1,
+           category: entry.categoryCode ?? SKILL_CATEGORIES[0] }
+}
+
+function toQualification(entry: GrowthEntry): Qualification {
+  return { id: entry.id, title: entry.title, detail: text(entry.content, 'issuer'),
+           date: dateOf(entry), icon: text(entry.content, 'icon') || 'fa-certificate' }
+}
 
 interface EditorState {
   kind: EditorKind
@@ -54,37 +55,21 @@ const EDITOR_LABEL: Record<EditorKind, string> = {
   project: '프로젝트', skill: '스킬', qualification: '자격·어학', record: '성장 활동',
 }
 
-function useStoredList<T>(key: string, initial: T[]) {
-  const [items, setItems] = useState<T[]>(() => {
-    try {
-      const saved = localStorage.getItem(key)
-      return saved ? JSON.parse(saved) as T[] : initial
-    } catch {
-      return initial
-    }
-  })
-
-  useEffect(() => {
-    try { localStorage.setItem(key, JSON.stringify(items)) } catch { /* 저장소 비활성 시 현재 세션만 유지 */ }
-  }, [items, key])
-
-  return [items, setItems] as const
-}
-
-function upsert<T>(items: T[], index: number | null, value: T): T[] {
-  if (index === null) return [value, ...items]
-  return items.map((item, itemIndex) => itemIndex === index ? value : item)
-}
-
 export default function GrowthHome() {
   usePageHead('홈대시보드', '퀘스트·레벨·성장 기록을 한 화면에서 확인합니다.')
   const student = getActiveStudent()
-  const storagePrefix = `dc_growth_portfolio_${student.id}`
-  const [projects, setProjects] = useStoredList<Project>(`${storagePrefix}_projects`, PROJECTS)
-  const [skills, setSkills] = useStoredList<Skill>(`${storagePrefix}_skills`, SKILLS)
-  const [qualifications, setQualifications] = useStoredList<Qualification>(`${storagePrefix}_qualifications`, QUALIFICATIONS)
-  const [growthRecords, setGrowthRecords] = useStoredList<GrowthRecord>(growthRecordsKey(student.id), GROWTH_RECORDS)
+  // 서버가 정본이다. 저장 뒤 스토어가 다시 읽어 발행하면 그때 갱신된다.
+  const revision = useGrowth(student.id)
+  const projectRows = useMemo(() => growthEntries(student.id, 'PROJECT'), [student.id, revision])
+  const skillRows = useMemo(() => growthEntries(student.id, 'SKILL'), [student.id, revision])
+  const certRows = useMemo(() => growthEntries(student.id, 'CERTIFICATE'), [student.id, revision])
+  const projects = useMemo(() => projectRows.map(toProject), [projectRows])
+  const skills = useMemo(() => skillRows.map(toSkill), [skillRows])
+  const qualifications = useMemo(() => certRows.map(toQualification), [certRows])
+  const growthRecords = useMemo(() => getGrowthRecords(student.id), [student.id, revision])
   const [editor, setEditor] = useState<EditorState | null>(null)
+  // 저장 실패는 사실대로 보여 준다 — 성공 토스트를 먼저 띄우거나 로컬로 되돌리지 않는다.
+  const [error, setError] = useState('')
   const isSenior = student.grade >= 4
   const strengths = student.strengthWeakness.filter(item => item.type === 'strength')
   const completedPhases = student.phases.filter(phase => phase.status === 'done').length
@@ -96,7 +81,7 @@ export default function GrowthHome() {
       project: { title: '', role: '', period: '', description: '', stack: '', result: '' },
       skill: { name: '', category: SKILL_CATEGORIES[0], level: '3', custom: '' },
       qualification: { title: '', detail: '', date: '', icon: 'fa-certificate' },
-      record: { date: '', type: '비교과', title: '', description: '', tone: 'violet' },
+      record: { date: '', category: 'PROGRAM', title: '', description: '' },
     }
     setEditor({ kind, index: null, fields: defaults[kind] })
   }
@@ -104,25 +89,38 @@ export default function GrowthHome() {
   const openEdit = (kind: EditorKind, index: number) => {
     if (kind === 'project') {
       const item = projects[index]
-      setEditor({ kind, index, fields: { ...item, stack: item.stack.join(', ') } })
+      setEditor({ kind, index, fields: { title: item.title, role: item.role, period: item.period,
+                                         description: item.description, stack: item.stack.join(', '),
+                                         result: item.result } })
     } else if (kind === 'skill') {
       const item = skills[index]
       // 사전에 없는 이름(직접 입력해 둔 스킬)이면 드롭다운으로 되돌리지 않는다 —
       // 목록에 없으니 고를 수가 없어 이름이 비어 보인다.
-      setEditor({ kind, index, fields: { ...item, level: String(item.level), custom: categoryOf(item.name) ? '' : '1' } })
+      setEditor({ kind, index, fields: { name: item.name, category: item.category,
+                                         level: String(item.level),
+                                         custom: categoryOf(item.name) ? '' : '1' } })
     } else if (kind === 'qualification') {
-      setEditor({ kind, index, fields: { ...qualifications[index] } })
+      const item = qualifications[index]
+      setEditor({ kind, index, fields: { title: item.title, detail: item.detail, date: item.date,
+                                         icon: item.icon } })
     } else {
-      setEditor({ kind, index, fields: { ...growthRecords[index] } })
+      const item = growthRecords[index]
+      setEditor({ kind, index, fields: { date: item.date, category: item.category, title: item.title,
+                                         description: item.description } })
     }
+  }
+
+  const run = (task: Promise<void>) => {
+    task.then(() => setError('')).catch(cause => setError(
+      cause instanceof Error ? cause.message : '저장하지 못했습니다. 다시 시도해 주세요.'))
   }
 
   const removeItem = (kind: EditorKind, index: number, label: string) => {
     if (!window.confirm(`'${label}' 기록을 삭제할까요?`)) return
-    if (kind === 'project') setProjects(items => items.filter((_, i) => i !== index))
-    if (kind === 'skill') setSkills(items => items.filter((_, i) => i !== index))
-    if (kind === 'qualification') setQualifications(items => items.filter((_, i) => i !== index))
-    if (kind === 'record') setGrowthRecords(items => items.filter((_, i) => i !== index))
+    if (kind === 'project') run(deleteGrowthEntry(student.id, projectRows[index]))
+    if (kind === 'skill') run(deleteGrowthEntry(student.id, skillRows[index]))
+    if (kind === 'qualification') run(deleteGrowthEntry(student.id, certRows[index]))
+    if (kind === 'record') run(deleteGrowthRecord(student.id, growthRecords[index].id))
   }
 
   const updateField = (name: string, value: string) => {
@@ -148,18 +146,31 @@ export default function GrowthHome() {
     event.preventDefault()
     if (!editor) return
     const { kind, index, fields } = editor
+    // 자기신고다(source_kind=SELF_REPORTED). 서버는 verified 같은 권한 필드를 받지 않는다.
+    const write = (input: Parameters<typeof createGrowthEntry>[1], rows: GrowthEntry[]) =>
+      index === null
+        ? createGrowthEntry(student.id, input)
+        : updateGrowthEntry(student.id, rows[index], input)
     if (kind === 'project') {
-      const value: Project = { title: fields.title.trim(), role: fields.role.trim(), period: fields.period.trim(), description: fields.description.trim(), stack: fields.stack.split(',').map(item => item.trim()).filter(Boolean), result: fields.result.trim() }
-      setProjects(items => upsert(items, index, value))
+      run(write({ kind: 'PROJECT', title: fields.title.trim(),
+                  content: { role: fields.role.trim(), periodText: fields.period.trim(),
+                             description: fields.description.trim(), result: fields.result.trim(),
+                             stack: fields.stack.split(',').map(item => item.trim()).filter(Boolean) } },
+                 projectRows))
     } else if (kind === 'skill') {
-      const value: Skill = { name: fields.name.trim(), category: fields.category, level: Math.min(5, Math.max(1, Number(fields.level))) }
-      setSkills(items => upsert(items, index, value))
+      run(write({ kind: 'SKILL', title: fields.name.trim(), categoryCode: fields.category,
+                  content: { level: Math.min(5, Math.max(1, Number(fields.level))) } }, skillRows))
     } else if (kind === 'qualification') {
-      const value: Qualification = { title: fields.title.trim(), detail: fields.detail.trim(), date: fields.date, icon: fields.icon || 'fa-certificate' }
-      setQualifications(items => upsert(items, index, value))
+      run(write({ kind: 'CERTIFICATE', title: fields.title.trim(), occurredOn: fields.date || null,
+                  datePrecision: fields.date ? 'DAY' : 'UNKNOWN',
+                  content: { issuer: fields.detail.trim(), icon: fields.icon || 'fa-certificate' } },
+                 certRows))
     } else {
-      const value: GrowthRecord = { date: fields.date, type: fields.type.trim(), title: fields.title.trim(), description: fields.description.trim(), tone: fields.tone || 'violet' }
-      setGrowthRecords(items => upsert(items, index, value))
+      const record = { date: fields.date, category: fields.category as GrowthRecordCategory,
+                       title: fields.title.trim(), description: fields.description.trim() }
+      run(index === null
+        ? createGrowthRecord(student.id, record)
+        : updateGrowthRecord(student.id, growthRecords[index].id, record))
     }
     setEditor(null)
   }
@@ -196,6 +207,8 @@ export default function GrowthHome() {
         </div>
       </section>
 
+      {error && <p className="gh-empty" role="alert">{error}</p>}
+
       <section className="gh-portfolio-grid" aria-label="개인 성장 기록">
         <article className="gh-card gh-projects">
           <header className="gh-card-head">
@@ -204,7 +217,7 @@ export default function GrowthHome() {
           </header>
           <div className="gh-project-list">
             {projects.map((project, index) => (
-              <section className="gh-project" key={project.title}>
+              <section className="gh-project" key={project.id}>
                 {/* 띠에는 제목이 들어간다. 그림 아이콘은 프로젝트마다 index 로 골라 박아 둔
                     것이라(등록한 세 번째 프로젝트부터는 고를 것도 없었다) 걷어냈다. */}
                 <div className={`gh-project-visual tone-${index + 1}`}><span>PROJECT 0{index + 1}</span><h3>{project.title}</h3></div>
@@ -234,7 +247,7 @@ export default function GrowthHome() {
         <article className="gh-card gh-skills">
           <header className="gh-card-head"><div><span className="gh-section-kicker">CAPABILITIES</span><h2>보유 스킬</h2><p>프로젝트와 학습 활동으로 확인된 기술 역량입니다.</p></div><button type="button" className="gh-add-btn" onClick={() => openCreate('skill')}><i className="fa-solid fa-plus" /> 스킬 등록</button></header>
           <div className="gh-skill-grid">
-            {skills.map((skill, index) => <div className="gh-skill" key={`${skill.name}-${index}`}><div><strong>{skill.name}</strong><span>{skill.category}</span></div><div className="gh-skill-controls"><div className="gh-level" aria-label={`${skill.name} 숙련도 ${skill.level}/5`}>{[1, 2, 3, 4, 5].map(level => <i className={level <= skill.level ? 'filled' : ''} key={level} />)}</div><div className="gh-item-actions"><button type="button" onClick={() => openEdit('skill', index)} aria-label={`${skill.name} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('skill', index, skill.name)} aria-label={`${skill.name} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div></div>)}
+            {skills.map((skill, index) => <div className="gh-skill" key={skill.id}><div><strong>{skill.name}</strong><span>{skill.category}</span></div><div className="gh-skill-controls"><div className="gh-level" aria-label={`${skill.name} 숙련도 ${skill.level}/5`}>{[1, 2, 3, 4, 5].map(level => <i className={level <= skill.level ? 'filled' : ''} key={level} />)}</div><div className="gh-item-actions"><button type="button" onClick={() => openEdit('skill', index)} aria-label={`${skill.name} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('skill', index, skill.name)} aria-label={`${skill.name} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div></div>)}
             {skills.length === 0 && <p className="gh-empty">등록된 스킬이 없습니다.</p>}
           </div>
         </article>
@@ -242,7 +255,7 @@ export default function GrowthHome() {
         <article className="gh-card gh-qualifications">
           <header className="gh-card-head"><div><span className="gh-section-kicker">CERTIFICATES</span><h2>자격·어학</h2><p>취득한 자격과 공인 어학 성적입니다.</p></div><button type="button" className="gh-add-btn" onClick={() => openCreate('qualification')}><i className="fa-solid fa-plus" /> 기록 등록</button></header>
           <div className="gh-qualification-list">
-            {qualifications.map((item, index) => <div key={`${item.title}-${index}`}><span className="gh-record-icon"><i className={`fa-solid ${item.icon}`} /></span><div><strong>{item.title}</strong><small>{item.detail}</small></div><time>{item.date}</time><div className="gh-item-actions"><button type="button" onClick={() => openEdit('qualification', index)} aria-label={`${item.title} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('qualification', index, item.title)} aria-label={`${item.title} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div>)}
+            {qualifications.map((item, index) => <div key={item.id}><span className="gh-record-icon"><i className={`fa-solid ${item.icon}`} /></span><div><strong>{item.title}</strong><small>{item.detail}</small></div><time>{item.date}</time><div className="gh-item-actions"><button type="button" onClick={() => openEdit('qualification', index)} aria-label={`${item.title} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('qualification', index, item.title)} aria-label={`${item.title} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div>)}
             {qualifications.length === 0 && <p className="gh-empty">등록된 자격·어학 기록이 없습니다.</p>}
           </div>
         </article>
@@ -250,7 +263,7 @@ export default function GrowthHome() {
         <article className="gh-card gh-archive">
           <header className="gh-card-head"><div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>진단, 비교과, 로드맵 이행이 하나의 성장 서사로 축적됩니다.</p></div><div className="gh-head-actions"><Link to="/mypage/programs">활동 전체 보기</Link><button type="button" className="gh-add-btn" onClick={() => openCreate('record')}><i className="fa-solid fa-plus" /> 활동 기록</button></div></header>
           <div className="gh-timeline">
-            {growthRecords.map((record, index) => <div className="gh-timeline-item" key={`${record.date}-${record.title}-${index}`}><time>{record.date}</time><span className={`gh-timeline-dot is-${record.tone}`} /><div><span>{record.type}</span><strong>{record.title}</strong><p>{record.description}</p></div><div className="gh-item-actions"><button type="button" onClick={() => openEdit('record', index)} aria-label={`${record.title} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('record', index, record.title)} aria-label={`${record.title} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div>)}
+            {growthRecords.map((record, index) => <div className="gh-timeline-item" key={record.id}><time>{record.date}</time><span className={`gh-timeline-dot is-${record.tone}`} /><div><span>{record.type}</span><strong>{record.title}</strong><p>{record.description}</p></div><div className="gh-item-actions"><button type="button" onClick={() => openEdit('record', index)} aria-label={`${record.title} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('record', index, record.title)} aria-label={`${record.title} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div>)}
             {growthRecords.length === 0 && <p className="gh-empty">아직 기록된 성장 활동이 없습니다.</p>}
           </div>
         </article>
@@ -315,7 +328,7 @@ export default function GrowthHome() {
             )}
             {editor.kind === 'record' && (
               <>
-                <div className="gh-form-row"><label><span>활동일</span><input required type="date" value={editor.fields.date} onChange={event => updateField('date', event.target.value)} /></label><label><span>활동 유형</span><select value={editor.fields.type} onChange={event => updateField('type', event.target.value)}><option>진단</option><option>상담</option><option>로드맵</option><option>비교과</option><option>프로젝트</option><option>성과</option></select></label></div>
+                <div className="gh-form-row"><label><span>활동일</span><input required type="date" value={editor.fields.date} onChange={event => updateField('date', event.target.value)} /></label><label><span>활동 유형</span><select value={editor.fields.category} onChange={event => updateField('category', event.target.value)}>{(Object.keys(RECORD_CATEGORY_LABEL) as GrowthRecordCategory[]).map(code => <option key={code} value={code}>{RECORD_CATEGORY_LABEL[code]}</option>)}</select></label></div>
                 <label><span>활동명</span><input required value={editor.fields.title} onChange={event => updateField('title', event.target.value)} /></label>
                 <label><span>성장 기록</span><textarea required rows={4} value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
               </>

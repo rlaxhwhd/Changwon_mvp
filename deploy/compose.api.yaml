@@ -1,0 +1,48 @@
+services:
+  api:
+    image: dreamcatch-api:dev
+    restart: unless-stopped
+    mem_limit: 384m
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    environment:
+      DC_DB_HOST: db
+      DC_DB_PORT: 5432
+      DC_DB_NAME: dreamcatch
+      DC_DB_USER: dc_app
+      DC_DB_PASSWORD_FILE: /run/secrets/api_db_password
+      DC_ENVIRONMENT: development
+      DC_DEVELOPMENT_IDENTITY: "true"
+      DC_DEVELOPMENT_TOKEN_FILE: /run/secrets/api_token
+      # 업로드 파일의 바이트 정본. 웹루트 밖이고 정적 서빙하지 않는다 — API 가
+      # 권한을 확인한 뒤 스트리밍한다(DB.md #41). read_only 컨테이너라 이 볼륨만 쓰기 가능하다.
+      DC_FILE_ROOT: /var/lib/dreamcatch/files
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - ./secrets/api_db_password:/run/secrets/api_db_password:ro
+      - ./secrets/api_token:/run/secrets/api_token:ro
+      - filedata:/var/lib/dreamcatch/files
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+volumes:
+  # pgdata 옆의 파일 전용 명명 볼륨. ⚠ DB 백업(pg_dump)에 포함되지 않는다 —
+  # 별도 백업을 잡고 서버를 옮길 때 함께 옮겨야 한다(DB.md §9 미결).
+  filedata:

@@ -131,7 +131,7 @@ export function getKpis(counselorId: string): KpiCard[] {
   const confirmed = requests.filter(r => r.status === '확정').length
 
   const roadmap = getRoadmapRequests()
-  const roadmapOpen = roadmap.filter(r => r.status === '대기').length
+  const roadmapOpen = roadmap.filter(r => r.status === 'REQ').length
 
   const done = requests.filter(r => r.status === '완료')
   const recorded = new Set(getCounselRecords().map(r => r.requestId))
@@ -420,7 +420,7 @@ export function getPerformance(counselorId: string): PerfRow[] {
   const written = done.filter(r => recorded.has(r.id)).length
 
   const roadmap = getRoadmapRequests()
-  const handled = roadmap.filter(r => r.status !== '대기').length
+  const handled = roadmap.filter(r => r.status !== 'REQ').length
 
   return [
     { key: 'progress', name: '상담 진행률', goal: 90, value: pct(done.length, closed.length), tint: 's-green', solid: 'b-green', ink: 'f-green' },

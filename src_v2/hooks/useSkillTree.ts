@@ -10,7 +10,7 @@ import {
   AcademicNotFoundError, type AcademicSnapshot,
 } from '../data/academic/repository'
 import { deriveSkillTree, availableCerts, availableJobs, type SkillTreeData } from '../data/academic'
-import { getActiveStudent } from '../data/students'
+import { getActiveStudent, getStudentCounselRequests } from '../data/students'
 
 export type SkillTreeStatus = 'loading' | 'ready' | 'empty' | 'error'
 
@@ -86,7 +86,9 @@ export function useSkillTree(): UseSkillTree {
 
   // 파생은 스냅샷이 바뀔 때만. 매 렌더 새 객체를 만들면 화면의
   // useEffect([data]) 가 매번 깨어난다.
-  const data = useMemo(() => (snap ? deriveSkillTree(snap, student) : null), [snap, student])
+  const data = useMemo(
+    () => (snap ? deriveSkillTree(snap, student, getStudentCounselRequests(student.id)) : null),
+    [snap, student])
   const jobOptions = useMemo(() => (snap ? availableJobs(snap) : []), [snap])
   const certOptions = useMemo(() => (snap ? availableCerts(snap) : []), [snap])
 

@@ -3,56 +3,15 @@ import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import { loadJournalEntries, type Entry } from '../../data/growthJournal'
 import { getActiveStudentId } from '../../data/students'
-import { deleteUserResume, getAllResumes, upsertUserResume, type SavedResume } from '../jobs/resumeMock'
+import {
+  deleteUserResume, getAllResumes, resumeCategoryOptions, upsertUserResume, type SavedResume,
+} from '../jobs/resumeMock'
+import { useMetadata } from '../../../shared/useMetadata'
 import './AiResume.css'
 import { usePageHead } from '../../components/PageCrumb'
 
-type ResumeCategory =
-  | '지원동기'
-  | '성장과정'
-  | '성격의 장단점'
-  | '학업 및 전문성'
-  | '경험 및 경력'
-  | '입사 후 포부'
-  | '직무역량'
-  | '프로젝트 경험'
-  | '팀워크 경험'
-  | '리더십 경험'
-  | '문제해결 경험'
-  | '갈등관리 경험'
-  | '도전 경험'
-  | '실패 극복 경험'
-  | '창의적 사고'
-  | '고객중심 경험'
-  | '데이터 활용 경험'
-  | '전공 선택 이유'
-  | '회사 선택 기준'
-  | '사회공헌 및 가치관'
-// 예전 mock(savedDocs) 관련 SavedDoc/DocStatus/statusClass는 저장된 자소서 sidebar가
-// getAllResumes() 기반 SavedResume로 교체되며 함께 제거됨.
-
-const resumeCategories: ResumeCategory[] = [
-  '지원동기',
-  '성장과정',
-  '성격의 장단점',
-  '학업 및 전문성',
-  '경험 및 경력',
-  '입사 후 포부',
-  '직무역량',
-  '프로젝트 경험',
-  '팀워크 경험',
-  '리더십 경험',
-  '문제해결 경험',
-  '갈등관리 경험',
-  '도전 경험',
-  '실패 극복 경험',
-  '창의적 사고',
-  '고객중심 경험',
-  '데이터 활용 경험',
-  '전공 선택 이유',
-  '회사 선택 기준',
-  '사회공헌 및 가치관',
-]
+// 자소서 분야 선택지는 여기 배열이 아니라 DB(dc.code_item JOB_RESUME_CATEGORY)가 정본이다.
+// 관리자가 항목을 더하면 배포 없이 나타난다(DB.md §8-5 · CLAUDE.md 규칙 4).
 
 function makeJournalSnippet(entry: Entry) {
   return [
@@ -80,58 +39,54 @@ type DraftState = 'idle' | 'loading' | 'done'
 export default function AiResume() {
   usePageHead('AI 자소서 생성', 'AI가 맞춤형 피드백과 예시를 제공해 효과적인 자기소개서 작성을 도와드립니다.')
   const navigate = useNavigate()
-  const [activeCategory, setActiveCategory] = useState<ResumeCategory>('지원동기')
+  useMetadata()
+  const categories = resumeCategoryOptions()
+  const [activeCategory, setActiveCategory] = useState<string>('MOTIVE')
   const [filterTab, setFilterTab] = useState('전체')
   const [title, setTitle] = useState('')
   const [text, setText] = useState('')
   const [showHelper, setShowHelper] = useState(true)
-  const [attachedIds, setAttachedIds] = useState<number[]>([])
+  // 일지 ID 는 서버가 발급한 문자열이다 — 학생마다 1,2,3… 이던 숫자는 학생 간에 겹쳤다.
+  const [attachedIds, setAttachedIds] = useState<string[]>([])
   const [draftState, setDraftState] = useState<DraftState>('idle')
-  const [savedList, setSavedList] = useState<SavedResume[]>(() => getAllResumes())
+  // 자소서 정본은 서버다 — 저장·삭제 뒤 스토어를 다시 읽어 목록을 만든다.
+  const [listVersion, bumpList] = useState(0)
+  const savedList = useMemo(() => getAllResumes(), [listVersion])
+  const [saveError, setSaveError] = useState('')
   const [openResume, setOpenResume] = useState<SavedResume | null>(null)
   const journalEntries = useMemo(() => loadJournalEntries(getActiveStudentId()), [])
   // 세션 내에서 자소서 id 유지 → 재생성 시 컨설팅 목록의 같은 항목을 덮어씀
-  const resumeIdRef = useRef<string>(`user-${Date.now()}`)
+  const resumeIdRef = useRef<string | null>(null)
 
   const charLimit = Math.max(1000, AI_DRAFT_SAMPLE.length + 200)
 
+  const categoryLabelOf = (code: string) => categories.find(c => c.code === code)?.label ?? code
+
+  // id·작성일은 서버가 부여한다. 같은 문서를 다시 저장하면 회차가 아니라 수정이다.
   const saveResume = (content: string) => {
-    const finalTitle = title.trim() || `${activeCategory} 자소서 초안`
-    const now = new Date()
-    const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-    const resume: SavedResume = {
-      id: resumeIdRef.current,
-      title: finalTitle,
+    setSaveError('')
+    void upsertUserResume({
+      id: resumeIdRef.current ?? undefined,
+      title: title.trim() || `${categoryLabelOf(activeCategory)} 자소서 초안`,
       company: '지원 예정',
       jobType: 'IT/SW',
       position: '미정',
-      categoryLabel: activeCategory,
+      categoryCode: activeCategory,
       content,
-      createdAt: dateStr,
-    }
-    upsertUserResume(resume)
-    setSavedList(prev => {
-      const idx = prev.findIndex(r => r.id === resume.id)
-      if (idx >= 0) {
-        const next = [...prev]
-        next[idx] = resume
-        return next
-      }
-      return [resume, ...prev]
+    }).then(saved => {
+      resumeIdRef.current = saved.id
+      bumpList(x => x + 1)
+    }).catch((cause: unknown) => {
+      setSaveError(cause instanceof Error ? cause.message : '저장하지 못했습니다.')
     })
   }
-
-  const isMockResume = (id: string) => /^r\d+$/.test(id)  // r1, r2, r3 → 기본 mock
 
   const handleEditResume = (resume: SavedResume) => {
     // editor로 자소서 로드 (수정 후 다시 저장 시 같은 id로 upsert)
     resumeIdRef.current = resume.id
     setTitle(resume.title)
     setText(resume.content)
-    // categoryLabel이 ResumeCategory와 정확히 일치하면 세팅, 아니면 그대로 유지
-    if (resumeCategories.includes(resume.categoryLabel as ResumeCategory)) {
-      setActiveCategory(resume.categoryLabel as ResumeCategory)
-    }
+    if (resume.categoryCode) setActiveCategory(resume.categoryCode)
     setDraftState('done')
     setOpenResume(null)
     // editor 카드로 스크롤
@@ -140,9 +95,13 @@ export default function AiResume() {
 
   const handleDeleteResume = (id: string) => {
     if (!window.confirm('이 자소서를 삭제하시겠습니까?')) return
-    deleteUserResume(id)
-    setSavedList(prev => prev.filter(r => r.id !== id))
-    setOpenResume(null)
+    void deleteUserResume(id).then(() => {
+      if (resumeIdRef.current === id) resumeIdRef.current = null
+      bumpList(x => x + 1)
+      setOpenResume(null)
+    }).catch((cause: unknown) => {
+      setSaveError(cause instanceof Error ? cause.message : '삭제하지 못했습니다.')
+    })
   }
 
   const handleGenerateDraft = () => {
@@ -163,10 +122,9 @@ export default function AiResume() {
   const attachedEntries = journalEntries.filter(entry => attachedIds.includes(entry.id))
 
   // 우측 사이드바에 노출할 자소서 목록 — 사용자 저장 + 기본 mock. filterTab은 카테고리별 필터.
-  const filteredResumes = savedList.filter(r => {
-    if (filterTab === '전체') return true
-    return r.categoryLabel === filterTab
-  })
+  const filteredResumes = savedList.filter(r => filterTab === '전체' || r.categoryLabel === filterTab)
+  // 탭은 실제로 가진 분야에서 만든다 — 고정 3종을 박아 두면 다른 분야가 숨는다.
+  const filterTabs = ['전체', ...Array.from(new Set(savedList.map(r => r.categoryLabel).filter(Boolean)))]
 
   const attachJournal = (entry: Entry) => {
     if (attachedIds.includes(entry.id)) return
@@ -178,7 +136,7 @@ export default function AiResume() {
     })
   }
 
-  const detachJournal = (entryId: number) => {
+  const detachJournal = (entryId: string) => {
     setAttachedIds(prev => prev.filter(id => id !== entryId))
   }
 
@@ -196,9 +154,9 @@ export default function AiResume() {
           <div className="rs-title-row">
             <label className="rs-category-select">
               <span>자소서 항목 카테고리</span>
-              <select value={activeCategory} onChange={event => setActiveCategory(event.target.value as ResumeCategory)}>
-                {resumeCategories.map(category => (
-                  <option key={category} value={category}>{category}</option>
+              <select value={activeCategory} onChange={event => setActiveCategory(event.target.value)}>
+                {categories.map(category => (
+                  <option key={category.code} value={category.code}>{category.label}</option>
                 ))}
               </select>
             </label>
@@ -346,8 +304,10 @@ export default function AiResume() {
           <button><i className="fa-solid fa-plus" /> 새 문서</button>
         </div>
 
+        {saveError && <p className="rs-doc-empty" role="alert">{saveError}</p>}
+
         <div className="rs-doc-tabs">
-          {['전체', '지원동기', '강점', '직무관련경험'].map(tab => (
+          {filterTabs.map(tab => (
             <button key={tab} className={filterTab === tab ? 'active' : ''} onClick={() => setFilterTab(tab)}>
               {tab}
             </button>
@@ -423,8 +383,7 @@ export default function AiResume() {
                 type="button"
                 className="rs-detail-danger"
                 onClick={() => handleDeleteResume(openResume.id)}
-                disabled={isMockResume(openResume.id)}
-                title={isMockResume(openResume.id) ? '기본 예시 자소서는 삭제할 수 없어요' : '삭제'}
+                title="삭제"
               >
                 <i className="fa-solid fa-trash-can" /> 삭제
               </button>

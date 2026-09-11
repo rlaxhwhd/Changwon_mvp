@@ -43,6 +43,21 @@
   line-height: 22px;
 }
 
+/* 보조 안내 — 주 액션(다음 단계)보다 한 급 눌러서, 진도가 아니라 곁가지로 읽히게 한다. */
+.nsb-secondary {
+  margin-top: 10px !important;
+  font-size: 13px !important;
+}
+
+.nsb-secondary a {
+  color: var(--violet, #7c5cfc);
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.nsb-secondary a i { font-size: 11px; }
+
 .nsb-side {
   display: flex;
   flex-direction: column;

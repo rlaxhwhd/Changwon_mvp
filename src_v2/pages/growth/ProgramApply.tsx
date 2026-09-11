@@ -2,8 +2,10 @@ import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getActiveStudent } from '../../data/students'
 import { getWishlist, toggleWish as toggleWishStore } from '../../data/wishlist'
+import { useStore } from '../../../shared/useRoadmapStore'
+import { GROWTH_EVENT } from '../../../shared/growthStore'
 import { getPrograms, sortByPriority } from '../../../src_admin/data/programs'
-import { PROGRAM_CATEGORIES } from '../../../src_admin/data/schema/program'
+import { PROGRAM_CATEGORIES, categoryLabel } from '../../../src_admin/data/schema/program'
 import type { ProgramCategory } from '../../../src_admin/data/schema/program'
 import ProgramCardGrid from './ProgramCardGrid'
 import type { ProgramCardVM } from './ProgramCardGrid'
@@ -37,7 +39,9 @@ export default function ProgramApply() {
     capacity: program.capacity,
     image: program.image,
   })), [])
-  const [wishlist, setWishlist] = useState<Set<string>>(() => new Set(getWishlist()))
+  // 찜은 서버가 정본이다(dc.program_wishlist) — 저장 뒤 스토어가 다시 읽어 발행한다.
+  const wishRevision = useStore(GROWTH_EVENT)
+  const wishlist = useMemo(() => new Set(getWishlist()), [wishRevision])
   const [showWishOnly, setShowWishOnly] = useState(false)
   const PAGE_SIZE = 8
 
@@ -48,9 +52,7 @@ export default function ProgramApply() {
     window.setTimeout(() => setRecoState('unlocked'), 1800)
   }
 
-  const toggleWish = (id: string) => {
-    setWishlist(new Set(toggleWishStore(id)))
-  }
+  const toggleWish = (id: string) => { void toggleWishStore(id) }
 
   const filtered = programs.filter(p => {
     if (showWishOnly && !wishlist.has(p.id)) return false
@@ -144,7 +146,7 @@ export default function ProgramApply() {
                   setPage(1)
                 }}
               >
-                {category}
+                {category === '전체' ? category : categoryLabel(category)}
               </button>
             ))}
           </div>

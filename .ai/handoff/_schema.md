@@ -1,90 +1,36 @@
-# .ai/handoff/_schema.md — 핸드오프 폴더 계약
+# UI 핸드오프 계약
 
-Claude와 Codex가 작업을 주고받는 **단위는 폴더 하나**다. 이 스키마가 그 폴더의 계약이다.
+새 UI 작업도 3역할 하네스를 사용한다.
 
-## 폴더명 규약
-
-```
+```text
 .ai/handoff/000X-{role}-{screen}/
-```
-- `000X` — 4자리 일련번호(0001, 0002 …). 순서·이력 추적용.
-- `{role}` — `stu`(학생) · `counsel`(상담사) · `prof`(교수) · `admin`(관리자). **폴더명이 곧 디자인 레이어를 지정**한다(`counsel-*` → `src_admin/index.css` 레이어).
-- `{screen}` — 화면 슬러그(`home`, `dashboard`, `roadmap-edit` …).
-
-예: `0001-stu-home/`, `0002-counsel-dashboard/`
-
-## 필수 파일 & 작성 주체
-
-| 파일 | 작성 | 의미 |
-|---|---|---|
-| `image.png` | 사용자 → team-lead | 참조 UI 이미지 |
-| `ui-spec.md` | **team-lead**(1단계) | "무엇을" — 프로젝트 맞춤 확정 기획 |
-| `component-map.md` | **team-lead**(재사용) → **Codex**(신규 추가) | 컴포넌트 매핑 |
-| `review.md` | **design-reviewer**(§4) + **content-reviewer**(§5) | 검수 판정 |
-
-## `ui-spec.md` 스키마
-
-```markdown
-# {screen} — UI 스펙 (역할: {role})
-
-## 라우트 / 진입
-- PageId · 네비 위치(navConfig 기준 카테고리→항목)
-
-## 내용 교정 (이미지 → 프로젝트)
-- 이미지 원문 → 프로젝트 정정 (예: "회원가입" → "학생 등록", "admin" → "상담사")
-- 이유
-
-## 네비게이션
-- 노출 항목 · 활성 상태 · 이동 경로
-
-## 페이지 내용
-- 섹션별 텍스트·버튼 라벨·카피 (프로젝트 확정본)
-
-## 데이터 스키마 (JSON 동적 — 하드코딩 금지)
-- interface 정의 + JSON 예시 + 로더/구독 방식(students.ts 패턴)
-
-## 디자인 레이어
-- base: DESIGN.md · 역할 레이어: {src_v2/DESIGN.md | src_admin/index.css}
-- 쓸 토큰(색·타이포·카드) — frontend-design은 craft만
+├── image.png          # 선택: 사용자 참조 이미지
+├── ui-spec.md         # 팀장(Opus) 확정 기획·데이터 연결·컴포넌트 재사용
+├── implementation.md  # Sol 구현 기록
+└── verification.md    # 팀장 최종 디자인·내용·동작 검증
 ```
 
-## `component-map.md` 스키마
+## 팀장 규칙
 
-```markdown
-# {screen} — 컴포넌트 맵
+- 학생은 `STU_README.md` + `src_v2/DESIGN.md`, 상담사는 `Counsel_README.md` + `src_admin/index.css`를 읽는다.
+- 디자인은 `DESIGN.md` 토큰을 적용하며 새 팔레트·폰트를 만들지 않는다.
+- `ui-spec.md`에 route, 문구, 동작, 재사용 컴포넌트, loader/selector를 명시한다.
+- 데이터 변화가 없으면 `NO_DB_CHANGE`를 쓴다.
+- 새 데이터나 API가 필요하면 `.ai/handoff-db/000X-{entity}/work-order.md`를 연결하고 DB 작업의 `PASS` 뒤 UI 구현을 시작한다.
 
-## 재사용 (team-lead 작성)
-| 화면 영역 | 기존 컴포넌트 | 경로 |
-|---|---|---|
-| 상단바 | TopHeader | src_v2/... |
+## Sol 규칙
 
-## 신규 (Codex 추가)
-| 컴포넌트 | 책임 | props(스키마) |
-|---|---|---|
-```
+- `ui-spec.md`와 연결된 READY 골든 패스를 따른다.
+- 화면에서 JSON/localStorage/API를 직접 읽지 않고 팀장이 지정한 loader/selector를 구독한다.
+- 기존 컴포넌트와 디자인 토큰을 우선 재사용한다.
+- `npm run build`를 통과하고 `implementation.md`에 결과를 남긴다.
 
-## `review.md` 스키마
+## 팀장 검증
 
-```markdown
-# {screen} — 리뷰
+- 기획·용어·네비게이션·버튼 동작
+- 디자인 토큰 drift와 하드코딩
+- 데이터 loader/selector 및 연결된 DB 계약
+- 접근성·오류·loading·empty 상태
+- 실제 화면 왕복과 build
 
-## 4단계: 디자인·유지보수 (design-reviewer)
-- [PASS/REJECT] 디자인 토큰 drift — 근거(파일:라인)
-- [PASS/REJECT] JSON 동적·하드코딩 — 근거
-- [PASS/REJECT] 단일 소스 — 근거
-- [PASS/REJECT] 컴포넌트 재사용 — 근거
-- [PASS/REJECT] 코드 품질(tsc) — 근거
-- 수정 지시:
-
-## 5단계: 내용 정합성 (content-reviewer)
-- [PASS/REJECT] 네비게이션 — 근거
-- [PASS/REJECT] 버튼·텍스트 — 근거
-- [PASS/REJECT] 용어 교정 반영 — 근거
-- [PASS/REJECT] JSON 값 매핑 — 근거
-- 수정 지시:
-```
-
-## 규칙
-
-- 최종 코드만 실제 경로(`src_v2/`·`src_admin/`)에. 핸드오프 폴더는 **감사 추적**용으로 보존한다.
-- 폴더는 지우지 않는다(부분 재실행·회귀 확인에 쓰인다).
+기존 폴더의 `data-contract.md`, `data-review.md`, `component-map.md`, `review.md`는 과거 이력으로 보존한다. 새 작업부터 위 네 파일 계약을 쓴다.

@@ -1,66 +1,42 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 추천채용 지원자 명단 내보내기(CSV) — 요청서 "모든 지원자 현황 포함 엑셀 필수".
+// 추천채용 지원자 명단 내보내기(CSV) — 정본은 서버다.
 //
-// 명단 조립은 여기 한 곳이다(CLAUDE.md 규칙 10) — 화면은 행 배열만 받아 파일로 만든다.
-// DB 전환 시 이 함수 하나가 export 엔드포인트 하나가 된다.
-// programExport.ts(비교과)와 같은 규약: 스냅샷 우선, 학생 단일소스가 있으면 최신으로 보강.
+// 예전에는 브라우저가 지원 배열 전체와 학생 명단을 조합해 행을 만들었다.
+// 그러면 ① 담당 범위 밖 학생이 섞이고 ② 「대학」이 학과명 Map 조회라
+// (단대코드,학과코드) 쌍을 쓰지 않으며(CLAUDE.md 규칙 7) ③ 다운로드 사실이 남지 않는다.
+//
+// 이제 목록·집계·CSV 가 같은 필터와 같은 범위 술어를 쓰고, 서버가 다운로드를
+// dc.job_access_event 에 감사한다. 공용 api() 헬퍼는 JSON 전용이라 여기서만
+// fetch 를 직접 쓴다.
 // ─────────────────────────────────────────────────────────────────────────────
-import { getJobById } from './jobsSource'
-import {
-  APPLICATION_STATUS_LABEL,
-  attachmentLabel,
-  currentStageLabel,
-  getApplicationsByJob,
-  getRecommendedJobs,
-} from './jobApplications'
-import { lastEventAt } from './jobApplicationEvents'
-import { studentLiteOf, collegeOf } from './studentRoster'
-import { typeLabel } from '../../src_v2/data/careerProcess'
-import type { JobApplication } from './schema/jobApplication'
 
-const HEADER = [
-  '공고명', '회사명', '이름', '학번', '대학', '학과',
-  '학년', '학적구분', '진단유형', '제출 서류', '현재 전형', '상태', '지원일', '최종 변경일',
-]
-
-/** 지원 시점 스냅샷을 먼저 쓰고, 학생 단일소스에 있으면 최신 프로필로 채운다. */
-function rowOf(application: JobApplication): string[] {
-  const job = getJobById(application.jobId)
-  const lite = studentLiteOf(application.studentId)
-  const major = lite?.major ?? application.snapMajor
-  const updated = lastEventAt(application.id)
-  return [
-    job?.role ?? '',
-    job?.company ?? '',
-    lite?.name ?? application.snapName,
-    lite?.studentNo ?? application.snapStudentNo,
-    collegeOf(major),
-    major,
-    `${lite?.grade ?? application.snapGrade}학년`,
-    lite?.status ?? application.snapEnrollStatus,
-    lite ? typeLabel(lite.studentType) : '',
-    attachmentLabel(application),
-    currentStageLabel(application),
-    APPLICATION_STATUS_LABEL[application.status],
-    application.appliedAt.slice(0, 10),
-    updated ? updated.slice(0, 10) : '',
-  ]
+export interface JobApplicantExportFilter {
+  postingId?: string
+  status?: string
+  stageId?: string
+  collegeCode?: string
+  deptCode?: string
+  grade?: number
+  q?: string
 }
 
-/**
- * 지원자 명단 행(헤더 제외).
- * jobIds 를 비우면 **추천채용 공고 전체**를 내보낸다 — 요청서의 "모든 지원자 현황".
- */
-export function getJobApplicantExportRows(jobIds?: string[]): string[][] {
-  const targets = jobIds?.length
-    ? getRecommendedJobs().filter(j => jobIds.includes(j.id))
-    : getRecommendedJobs()
-  return targets.flatMap(job => getApplicationsByJob(job.id).map(rowOf))
+function exportUrl(filter: JobApplicantExportFilter): string {
+  const query = new URLSearchParams()
+  for (const [name, value] of Object.entries(filter)) {
+    if (value !== undefined && value !== '') query.set(name, String(value))
+  }
+  return `/api/v1/job-applications/export?${query.toString()}`
 }
 
-/** CSV 문자열 (엑셀용 BOM 은 내려받는 쪽에서 붙인다) */
-export function toJobApplicantCsv(jobIds?: string[]): string {
-  return [HEADER, ...getJobApplicantExportRows(jobIds)]
-    .map(row => row.map(v => `"${String(v).replaceAll('"', '""')}"`).join(','))
-    .join('\n')
+/** CSV 본문(BOM 포함). 필터를 비우면 담당 범위의 전체 지원이 나온다. */
+export async function fetchJobApplicantCsv(filter: JobApplicantExportFilter = {}): Promise<string> {
+  const identity = localStorage.getItem('dc_active_staff')
+  const headers = new Headers()
+  if (identity) headers.set('X-DC-Identity', identity)
+  const response = await fetch(exportUrl(filter), { headers })
+  if (!response.ok) {
+    const error = await response.json().catch(() => null) as { detail?: string } | null
+    throw new Error(error?.detail ?? '명단을 내려받지 못했습니다.')
+  }
+  return response.text()
 }

@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import { isJobClosed, jobDdayLabel, jobHighlights } from '../../src_admin/data/jobsSource'
 import type { JobPosting } from '../../src_admin/data/jobsSource'
 import { isJobWished, toggleJobWish } from '../data/jobWishlist'
+import { JOB_CODE_GROUPS, RECRUIT_TYPE_LABEL, jobLabelOf, jobLabelsOf } from '../../src_admin/data/schema/job'
 import './JobDetailView.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -43,12 +44,18 @@ function salaryOf(job: JobPosting): string {
 }
 
 function deadlineOf(job: JobPosting): string {
-  if (job.deadlineOnHire) return '채용시 마감'
+  // 「채용시 마감」도 실제 날짜가 있다 — 등록 시점에 한 번 정해진 값이다.
+  if (job.deadlineMode === 'ON_HIRE') return job.deadline ? `채용시 마감 (~${job.deadline})` : '채용시 마감'
   return job.deadline || '상시 모집'
 }
 
 function regionOf(job: JobPosting): string {
-  return join((job.regions ?? []).filter(r => r !== '전체')) || job.location || '전국'
+  return join(jobLabelsOf(JOB_CODE_GROUPS.region, job.regions)) || job.location || '전국'
+}
+
+/** 코드 배열을 라벨로 — 비어 있으면 대표 경력 구분으로 폴백한다. */
+function labelsOr(group: string, codes: string[], fallback: string | null): string {
+  return join(jobLabelsOf(group, codes)) || jobLabelOf(JOB_CODE_GROUPS.careerType, fallback)
 }
 
 /** 값이 있는 줄만 남긴다. */
@@ -63,17 +70,17 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
   const [wished, setWished] = useState(() => isJobWished(job.id))
 
   const chips = [
-    ...(job.employmentTypes ?? [job.jobType]).filter(Boolean),
-    ...(job.jobCategories ?? []),
-    ...(job.careerTypes ?? []),
-    ...(job.regions ?? []).filter(r => r !== '전체'),
-  ]
+    ...jobLabelsOf(JOB_CODE_GROUPS.employmentType, job.employmentTypes),
+    ...jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories),
+    ...jobLabelsOf(JOB_CODE_GROUPS.careerType, job.careerTypes),
+    ...jobLabelsOf(JOB_CODE_GROUPS.region, job.regions),
+  ].filter(Boolean)
 
   // 기업 일반정보
   const companyRows = rows([
-    { label: '채용유형', value: job.recruitType ?? '일반공고' },
+    { label: '채용유형', value: RECRUIT_TYPE_LABEL[job.recruitType] },
     { label: '회사명', value: job.company },
-    { label: '기업구분', value: job.companyType ?? '' },
+    { label: '기업구분', value: jobLabelOf(JOB_CODE_GROUPS.companyType, job.companyType) },
     { label: '공고 출처', value: job.source === 'external' ? '외부 연동' : '교내 등록' },
     { label: 'URL', value: job.applyUrl ?? '' },
     { label: 'Email', value: job.email ?? '' },
@@ -82,10 +89,10 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
   // 모집 내용
   const postingRows = rows([
     { label: '모집제목', value: job.role },
-    { label: '근무형태', value: join(job.employmentTypes) || job.jobType, chip: true },
-    { label: '직종', value: join(job.jobCategories) },
-    { label: '경력', value: join(job.careerTypes) || job.jobType, chip: true },
-    { label: '성별', value: join(job.genders) },
+    { label: '근무형태', value: labelsOr(JOB_CODE_GROUPS.employmentType, job.employmentTypes, job.jobType), chip: true },
+    { label: '직종', value: join(jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories)) },
+    { label: '경력', value: labelsOr(JOB_CODE_GROUPS.careerType, job.careerTypes, job.jobType), chip: true },
+    { label: '성별', value: join(jobLabelsOf(JOB_CODE_GROUPS.gender, job.genders)) },
     { label: '지역', value: regionOf(job), chip: true },
     { label: '지원마감일', value: deadlineOf(job) },
     { label: '연봉', value: salaryOf(job) },
@@ -95,8 +102,8 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
   const summaryRows = rows([
     { label: '회사명', value: job.company },
     { label: '모집제목', value: job.role },
-    { label: '근무형태', value: join(job.employmentTypes) || job.jobType },
-    { label: '직종', value: join(job.jobCategories) },
+    { label: '근무형태', value: labelsOr(JOB_CODE_GROUPS.employmentType, job.employmentTypes, job.jobType) },
+    { label: '직종', value: join(jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories)) },
     { label: '지역', value: regionOf(job) },
     { label: '마감일', value: deadlineOf(job) },
   ])
@@ -108,8 +115,8 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
     <div className="jd-page">
       <div className="jd-topbar">
         {back}
-        <span className={`jd-recruit-tag${job.recruitType === '추천채용' ? ' is-rec' : ''}`}>
-          {job.recruitType ?? '일반공고'}
+        <span className={`jd-recruit-tag${job.recruitType === 'RECOMMENDATION' ? ' is-rec' : ''}`}>
+          {RECRUIT_TYPE_LABEL[job.recruitType]}
         </span>
       </div>
 
@@ -131,8 +138,10 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
             </p>
             {chips.length > 0 && (
               <ul className="jd-hero-chips">
-                {job.recruitType === '추천채용' && <li className="jd-hero-chip is-rec">추천채용</li>}
-                {job.companyType && <li className="jd-hero-chip">{job.companyType}</li>}
+                {job.recruitType === 'RECOMMENDATION' && <li className="jd-hero-chip is-rec">추천채용</li>}
+                {job.companyType && (
+                  <li className="jd-hero-chip">{jobLabelOf(JOB_CODE_GROUPS.companyType, job.companyType)}</li>
+                )}
                 {chips.map(c => <li key={c} className="jd-hero-chip">{c}</li>)}
                 {jobHighlights(job).map(h => (
                   <li key={h} className={`jd-hero-chip${h === '오늘마감' ? ' is-urgent' : ''}`}>{h}</li>
@@ -199,7 +208,12 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
                   type="button"
                   className={`jd-wish${wished ? ' is-on' : ''}`}
                   aria-pressed={wished}
-                  onClick={() => setWished(toggleJobWish(job.id).includes(job.id))}
+                  onClick={() => {
+                    // 찜은 서버가 정본이다 — 저장이 실패하면 눌린 상태로 두지 않는다.
+                    void toggleJobWish(job.id)
+                      .then(next => setWished(next.includes(job.id)))
+                      .catch(() => { /* 서버 상태 유지 */ })
+                  }}
                 >
                   <Icon name={wished ? 'heart-fill' : 'heart'} />
                   {wished ? '관심공고 저장됨' : '관심공고 저장'}
@@ -213,7 +227,12 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
             <section className="jd-sec">
               <h2 className="jd-sec-head"><span>첨부파일</span></h2>
               <ul className="jd-files">
-                {attachments.map(name => <li key={name}>{name}</li>)}
+                {/* 첨부는 정적 URL 이 아니라 권한을 확인하는 API 경로로 내려온다. */}
+                {attachments.map(file => (
+                  <li key={file.id}>
+                    <a href={file.downloadUrl} target="_blank" rel="noreferrer">{file.name}</a>
+                  </li>
+                ))}
               </ul>
             </section>
           )}

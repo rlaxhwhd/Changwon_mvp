@@ -15,6 +15,8 @@ export default function ProfessorProfile() {
   const [accept, setAccept] = useState(profile.accept)
   const [officeHours, setOfficeHours] = useState(profile.officeHours)
   const [intro, setIntro] = useState(profile.intro)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
   const dirty = accept !== profile.accept || officeHours !== profile.officeHours || intro !== profile.intro
 
   return (
@@ -58,11 +60,20 @@ export default function ProfessorProfile() {
           <button
             type="button"
             className="admin-btn admin-btn-primary"
-            disabled={!dirty}
-            onClick={() => updateProfessorCounselProfile(user.id, { accept, officeHours, intro })}
+            disabled={!dirty || saving}
+            onClick={async () => {
+              setSaving(true); setMessage('')
+              try {
+                await updateProfessorCounselProfile(user.id, { accept, officeHours, intro })
+                setMessage('저장했습니다.')
+              } catch (error) {
+                setMessage(error instanceof Error ? error.message : '저장하지 못했습니다.')
+              } finally { setSaving(false) }
+            }}
           >
-            <LuSave /> 저장
+            <LuSave /> {saving ? '저장 중…' : '저장'}
           </button>
+          {message && <span role="status">{message}</span>}
         </div>
       </section>
     </div>

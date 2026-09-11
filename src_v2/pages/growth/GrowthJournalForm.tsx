@@ -1,13 +1,15 @@
 import { useMemo, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { loadJournalEntries, saveJournalEntries, type Category, type Entry } from '../../data/growthJournal'
+import { CATEGORIES, CATEGORY_LABEL, createJournalEntry, loadJournalEntries,
+         updateJournalEntry, type Category } from '../../data/growthJournal'
 import { getActiveStudentId } from '../../data/students'
+import { useGrowth } from '../../../shared/useRoadmapStore'
 import './GrowthJournal.css'
 import { usePageHead } from '../../components/PageCrumb'
 
 const EMPTY_ENTRY = {
-  category: '팀프로젝트' as Category,
+  category: 'TEAM_PROJECT' as Category,
   title: '',
   date: new Date().toISOString().slice(0, 10),
   situation: '',
@@ -26,11 +28,11 @@ export default function GrowthJournalForm() {
   const isEdit = Boolean(entryId)
   usePageHead(isEdit ? '일지 상세/수정' : '새 일지 작성', '아르바이트·팀프로젝트에서 겪은 일을 기록해 두면 자기소개서 작성에 쓸 수 있어요.')
   const studentId = getActiveStudentId()
-  const entries = useMemo(() => loadJournalEntries(studentId), [studentId])
-  const entry = useMemo(
-    () => entries.find(item => String(item.id) === entryId),
-    [entries, entryId],
-  )
+  const revision = useGrowth(studentId)
+  const entries = useMemo(() => loadJournalEntries(studentId), [studentId, revision])
+  const entry = useMemo(() => entries.find(item => item.id === entryId), [entries, entryId])
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const [form, setForm] = useState(() => entry ? {
     category: entry.category,
@@ -52,9 +54,9 @@ export default function GrowthJournalForm() {
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault()
-    const tags = form.tagsText.split(',').map(tag => tag.trim()).filter(Boolean)
-    const nextEntry: Entry = {
-      id: entry?.id ?? Math.max(0, ...entries.map(item => item.id)) + 1,
+    if (saving) return
+    // ID 는 서버가 발급한다. max(id)+1 은 학생마다 1,2,3… 이 겹치던 원인이었다.
+    const body = {
       category: form.category,
       title: form.title || '제목 없는 성장경험일지',
       desc: form.situation,
@@ -64,16 +66,18 @@ export default function GrowthJournalForm() {
       result: form.result,
       learning: form.learning,
       resumeMemo: form.resumeMemo,
-      tags,
+      tags: form.tagsText.split(',').map(tag => tag.trim()).filter(Boolean),
       date: form.date,
       bookmarked: entry?.bookmarked ?? false,
       resumeUsed: form.resumeUsed,
     }
-    const nextEntries = entry
-      ? entries.map(item => item.id === entry.id ? nextEntry : item)
-      : [nextEntry, ...entries]
-    saveJournalEntries(studentId, nextEntries)
-    navigate('/growth/journal')
+    setSaving(true)
+    const task = entry
+      ? updateJournalEntry(studentId, { ...body, id: entry.id, version: entry.version })
+      : createJournalEntry(studentId, body)
+    task.then(() => navigate('/growth/journal'))
+      .catch(cause => setError(cause instanceof Error ? cause.message : '저장하지 못했습니다.'))
+      .finally(() => setSaving(false))
   }
 
   return (
@@ -91,6 +95,8 @@ export default function GrowthJournalForm() {
               </p>
             </div>
           </div>
+
+          {error && <p className="gj-empty" role="alert">{error}</p>}
 
           <form className="gj-edit-card" onSubmit={handleSubmit}>
             <section className="gj-form-section">
@@ -113,9 +119,9 @@ export default function GrowthJournalForm() {
                 <label className="gj-field">
                   <span>카테고리</span>
                   <select value={form.category} onChange={event => update('category', event.target.value)}>
-                    <option>아르바이트</option>
-                    <option>팀프로젝트</option>
-                    <option>기타 활동</option>
+                    {CATEGORIES.map(code => (
+                      <option key={code} value={code}>{CATEGORY_LABEL[code]}</option>
+                    ))}
                   </select>
                 </label>
                 <label className="gj-field">

@@ -12,6 +12,7 @@ import { mockLatency } from '../data/query'
 import EmptyState from '../components/EmptyState'
 import StudentDetailModal from '../components/StudentDetailModal'
 import './TestAdminHome.css'
+import { categoryLabel } from '../data/schema/program'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 상담사 홈 대시보드 — 시안(test_admin_react) 마크업을 JSX로 옮긴 것.
@@ -418,7 +419,7 @@ export default function Home() {
                     <Link key={p.id} to={`/programs/${p.id}`} className="prog">
                       <span className="id">
                         <span className="code">{p.code}</span>
-                        <span className={`badge ${p.tint}`}>{p.category}</span>
+                        <span className={`badge ${p.tint}`}>{categoryLabel(p.category)}</span>
                         <span className="today">오늘 <b>{p.todayCount}</b>명 신청</span>
                       </span>
                       <span className="nm">{p.title}</span>

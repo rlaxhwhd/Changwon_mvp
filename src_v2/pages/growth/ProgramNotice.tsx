@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -6,8 +6,11 @@ import {
 } from '../../../src_admin/data/programs'
 import type { Program } from '../../../src_admin/data/schema/program'
 import { ROADMAP_ENTRY_LABEL } from '../../data/schema/roadmap'
+import { categoryLabel, programStatusLabel } from '../../../src_admin/data/schema/program'
 import { typeLabel } from '../../data/careerProcess'
 import { isWished as isWishedStore, toggleWish as toggleWishStore } from '../../data/wishlist'
+import { useStore } from '../../../shared/useRoadmapStore'
+import { GROWTH_EVENT } from '../../../shared/growthStore'
 // 채용공고 상세와 같은 껍데기를 쓴다 — 학생이 보는 두 공고가 서로 다른 화면일 이유가 없다.
 // 클래스 접두사가 jd- 인 것은 그 파일이 먼저 생겼기 때문이고, 스타일은 공용이다.
 import '../../components/JobDetailView.css'
@@ -50,7 +53,9 @@ function periodOf(start?: string, end?: string): string {
 
 export default function ProgramNotice({ programId, backTo, action, showWish = false }: Props) {
   const program = getProgramById(programId)
-  const [wished, setWished] = useState(() => isWishedStore(programId))
+  // 찜은 서버가 정본이다 — 로컬 상태로 낙관적 표시를 하지 않는다.
+  const wishRevision = useStore(GROWTH_EVENT)
+  const wished = useMemo(() => isWishedStore(programId), [programId, wishRevision])
 
   if (!program) {
     return (
@@ -67,17 +72,18 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
   const closed = isProgramClosed(program)
   const dday = programDdayLabel(program)
   // 상단 태그·상태 줄은 저장값이 아니라 보정된 상태를 쓴다 — 한 화면이 두 말을 하면 안 된다.
-  const statusLabel = noticeStatusLabel(program)
+  const statusLabel = programStatusLabel(noticeStatusLabel(program))
+  const categoryText = categoryLabel(program.category)
   const applied = program.applicants.length
 
   const chips = [
-    program.category,
+    categoryText,
     ...(program.careTypes ?? []).map(typeLabel),
   ]
 
   // 프로그램 정보
   const infoRows = rows([
-    { label: '분류', value: program.category, chip: true },
+    { label: '분류', value: categoryText, chip: true },
     { label: '상태', value: statusLabel },
     { label: '담당자', value: program.manager },
     { label: '장소', value: program.location },
@@ -100,7 +106,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
   // 우측 요약 — 신청 판단에 필요한 것만 추린다(본문 표의 축약본).
   const summaryRows = rows([
     { label: '프로그램', value: program.title },
-    { label: '분류', value: program.category },
+    { label: '분류', value: categoryText },
     { label: '신청마감', value: program.endDate },
     { label: '운영기간', value: periodOf(program.runStartDate, program.runEndDate) },
     { label: '장소', value: program.location },
@@ -130,7 +136,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
           <header className="jd-hero">
             {/* 썸네일이 있으면 로고 자리에 담는다 — 없으면 분류 두 글자로 자리를 만든다. */}
             <span className={`jd-logo${program.image ? ' has-img' : ''}`} aria-hidden="true">
-              {program.image ? <img src={program.image} alt="" /> : program.category.slice(0, 2)}
+              {program.image ? <img src={program.image} alt="" /> : categoryText.slice(0, 2)}
             </span>
 
             <div className="jd-hero-main">
@@ -201,7 +207,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
                     type="button"
                     className={`jd-wish${wished ? ' is-on' : ''}`}
                     aria-pressed={wished}
-                    onClick={() => setWished(toggleWishStore(programId).includes(programId))}
+                    onClick={() => { void toggleWishStore(programId) }}
                   >
                     <Icon name={wished ? 'heart-fill' : 'heart'} />
                     {wished ? '관심 프로그램 담김' : '관심 프로그램 담기'}

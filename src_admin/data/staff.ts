@@ -7,17 +7,11 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { StaffUser, StaffRole } from './schema/staff'
 import { getActiveIdRaw, setActiveId, hasActiveSession, clearSession } from './session'
-import { COUNSELORS } from './counselors'
-import { PROFESSORS } from './professors'
-import { ASSISTANTS } from './assistants'
+import { staffProfiles } from '../../shared/staffStore'
 
 /** 전 교직원 통합 목록 — 세션 해석·데모 전환 UI가 구독.
  *  상담사를 먼저 두어 기본 활성 사용자(첫 항목)가 상담사로 유지된다. */
-export const STAFF_USERS: StaffUser[] = [
-  ...COUNSELORS,
-  ...PROFESSORS,
-  ...ASSISTANTS,
-]
+export const STAFF_USERS: StaffUser[] = staffProfiles
 
 /** 활성 사용자 id (미저장 시 첫 사용자). */
 export function getActiveUserId(): string {

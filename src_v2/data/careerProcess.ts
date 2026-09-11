@@ -174,7 +174,26 @@ export function getTopicsForType(type: StudentType): CounselTopic[] {
 }
 
 export function topicLabel(code: string): string {
-  return TOPIC_BY_CODE.get(code)?.label ?? code
+  return COUNSEL_TOPICS.find(topic => topic.code === code)?.label ?? TOPIC_BY_CODE.get(code)?.label ?? code
+}
+
+/** Operational display metadata comes from PostgreSQL; process keys stay typed. */
+export function applyProcessMetadata(rows: { group_code: string; code: string; label: string; is_active: boolean; payload: Record<string, unknown> }[]) {
+  for (const row of rows) {
+    if (row.group_code === 'STUDENT_TYPE' && row.code in STUDENT_TYPE_MAP) {
+      STUDENT_TYPE_MAP[row.code as StudentType].label = row.label
+    }
+    if (row.group_code === 'DIAGNOSIS_TEST') {
+      const module = DIAGNOSIS_MODULES.find(item => item.id === row.code)
+      if (module) module.name = row.label
+    }
+  }
+  const topics = rows.filter(row => row.group_code === 'COUNSEL_TOPIC').map(row => ({
+    code: row.code, label: row.label, type: row.payload.type as StudentType, goal: String(row.payload.goal ?? ''),
+  }))
+  for (const topic of topics) TOPIC_BY_CODE.set(topic.code, topic)
+  const active = new Set(rows.filter(row => row.group_code === 'COUNSEL_TOPIC' && row.is_active).map(row => row.code))
+  COUNSEL_TOPICS.splice(0, COUNSEL_TOPICS.length, ...topics.filter(topic => active.has(topic.code)))
 }
 
 // ── 진단 모듈 (CCORE + C1~C6) ────────────────────────────────────────────
@@ -184,6 +203,7 @@ export function topicLabel(code: string): string {
  * 이름·설명 표기는 검사 결과표(CRA 결과표)를 정본으로 한다.
  */
 export interface DiagnosisFactorDef {
+  code?: string
   name: string
   /** 요인 설명 — 결과표 '요인 설명' 표에 쓰인다. 확인된 검사만 보유. */
   desc?: string
@@ -259,7 +279,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C2',
     testId: 'c2',
     name: 'C-2 진로설정 진단검사',
-    factors: [{ name: '진로학습' }, { name: '목표' }, { name: '의사결정' }, { name: '탐색행동' }, { name: '설계수준' }],
+    factors: [{ name: '경험 지향형' }, { name: '반성적 관찰형' }, { name: '추상적 개념화형' }],
     stageLabel: '후속진단 · 진로설정형',
     decides: '진로 목표 구체성 · 설계 수준 파악',
     desc: '진로 목표의 구체성과 명확성을 진단해 진로 설계의 기준을 만듭니다.',
@@ -275,7 +295,13 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C3',
     testId: 'c3',
     name: 'C-3 역량수준 진단검사',
-    factors: [{ name: '진로몰입' }, { name: '문제해결' }, { name: '대인적합성' }, { name: '네트워킹' }],
+    factors: [
+      { name: '진로몰입 수준', desc: 'Direction' },
+      { name: '네트워킹 활용능력', desc: 'Enrichment' },
+      { name: '문제해결능력', desc: 'Foundation' },
+      { name: '대인상호작용능력' },
+      { name: '고용적합성 수준', desc: 'Target fitness' },
+    ],
     stageLabel: '후속진단 · 역량성장형',
     decides: '역량강화 프로그램 추천',
     desc: '핵심역량 보유 수준을 진단해 역량강화 프로그램과 개인 리포트를 설계합니다.',
@@ -293,10 +319,10 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     name: 'C-4 구직역량 진단검사',
     // PRIT 4요인 — 요인 설명은 CRA 결과표 '취업역량 준비도' 정본 표기.
     factors: [
-      { name: '개인 브랜딩', desc: '목표 직무에 맞는 나만의 정체성을 자기소개서로 표현하는 역량' },
-      { name: '정보탐색 및 분석', desc: '채용정보, 산업·직무·기업 정보를 탐색하여 취업의사결정을 내리는 역량' },
-      { name: '면접역량', desc: '언어 및 비언어를 활용하여 자신의 역량을 설득력 있게 표현하는 역량' },
-      { name: '구직전략', desc: '개인의 진로단계와 목표에 맞게 취업준비과정을 전략적으로 준비하는 실행역량' },
+      { name: 'Research & Analysis' },
+      { name: 'Employability branding' },
+      { name: 'Articulation for interview' },
+      { name: 'Design of Employment Strategy' },
     ],
     stageLabel: '후속진단 · 취업준비형',
     decides: '취업지원 프로그램 선발 · 단계 파악',
@@ -313,7 +339,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C5',
     testId: 'c5',
     name: 'C-5 취약요인 진단검사',
-    factors: [{ name: '참여동기' }, { name: '학업병행' }, { name: '지원요구' }, { name: '이탈위험' }],
+    factors: [], // 결과표 항목은 사용자 제공 예정.
     stageLabel: '후속진단 · 취약관리형',
     decides: '집중관리 상담 4주제(A17~A20) 설계',
     desc: '참여 동기와 이탈 위험 요인을 진단해 집중관리 상담의 우선순위를 정합니다.',
@@ -329,7 +355,7 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C6',
     testId: 'c6',
     name: 'C-6 우수인재 진단검사',
-    factors: [{ name: '성과관리' }, { name: '리더십' }, { name: '기업적합도' }, { name: '브랜딩' }],
+    factors: [], // 결과표 항목은 사용자 제공 예정.
     stageLabel: '후속진단 · 우수인재형',
     decides: '기업연계·인턴십 매칭 자료',
     desc: '성과 관리와 리더십 수준을 진단해 기업연계·인턴십 매칭 근거를 만듭니다.',
@@ -424,7 +450,11 @@ export function getStageAccess(state: PipelineState): Record<Stage, 'open' | 'lo
   const { counselDone, roadmapConfirmed } = state
   return {
     diagnosis: 'open',
-    counsel: diagnosisDone ? 'open' : 'locked',
+    // ★ 상담센터는 언제나 열린다. 일반 진로취업 상담·심리 상담·교수 상담은 CARE 7+
+    //   파이프라인 밖이라 진단을 요구하지 않는다(PROCESS.md §2). 진단 2종을 요구하는
+    //   것은 진로·취업 상담 화면 안의 「CARE 7+ 연계 상담」 카드 하나뿐이고, 그 잠금은
+    //   그 화면이 isDiagnosisDone 으로 직접 판정한다.
+    counsel: 'open',
     roadmap: diagnosisDone && counselDone ? 'open' : 'locked',
     growth: diagnosisDone && counselDone && roadmapConfirmed ? 'open' : 'locked',
     employment: diagnosisDone && counselDone && roadmapConfirmed ? 'open' : 'locked',
@@ -461,10 +491,23 @@ export interface NextAction {
   /** 전체 몇 걸음 중 몇 번째인가 — 안내 배너의 진행 표시 */
   step: number
   total: number
+  /**
+   * 주 액션과 별개로 **지금도 할 수 있는 일**. 진도(step/total)에는 들어가지 않는다.
+   * 진단 구간에서 「일반 진로·취업 상담」을 안내하는 자리다 — 필수가 아닌 것을
+   * 단계 카운터에 끼우면 "안 하면 진도가 안 나간다"는 잘못된 신호를 준다.
+   */
+  secondary?: { label: string; path: string; detail: string }
 }
 
 /** 인계 순서 — 진단(C-CORE) → 진단(후속) → 상담 → 로드맵. 끝나면 null. */
 export const HANDOFF_TOTAL = 4
+
+/** 진단 구간에서 함께 내보내는 보조 안내. 일반 상담은 게이트 밖이라 지금도 신청할 수 있다. */
+const GENERAL_COUNSEL_SECONDARY = {
+  label: '일반 상담 신청하기',
+  path: '/counsel/career',
+  detail: '진단 전에도 진로 고민은 상담할 수 있습니다.',
+}
 
 export function getNextAction(state: PipelineState): NextAction | null {
   const { coreDone, studentType, followUpDone, counselDone, roadmapConfirmed } = state
@@ -476,6 +519,7 @@ export function getNextAction(state: PipelineState): NextAction | null {
       detail: '모든 단계의 관문입니다. 이 진단으로 나의 유형이 정해지고, 그 유형이 다음 진단과 상담 주제를 결정합니다.',
       ctaLabel: '핵심진단 응시하기',
       ctaPath: `/diagnosis/employment/${MODULE_BY_ID.get('CCORE')!.testId}`,
+      secondary: GENERAL_COUNSEL_SECONDARY,
     }
   }
 
@@ -487,6 +531,7 @@ export function getNextAction(state: PipelineState): NextAction | null {
       detail: 'C-CORE 응시는 끝났습니다. 결과 유형이 확정되면 후속진단이 열립니다.',
       ctaLabel: '진단 결과 보기',
       ctaPath: '/diagnosis/employment',
+      secondary: GENERAL_COUNSEL_SECONDARY,
     }
   }
 
@@ -499,6 +544,7 @@ export function getNextAction(state: PipelineState): NextAction | null {
       detail: `${typeLabel(studentType)}으로 분류됐습니다. 이 유형에 맞춘 후속진단 1종을 마치면 상담을 신청할 수 있습니다.`,
       ctaLabel: '후속진단 응시하기',
       ctaPath: `/diagnosis/employment/${followUp.testId}`,
+      secondary: GENERAL_COUNSEL_SECONDARY,
     }
   }
 

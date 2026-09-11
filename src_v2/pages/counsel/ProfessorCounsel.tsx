@@ -1,3 +1,4 @@
+import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
@@ -30,13 +31,7 @@ const days: Day[] = getCounselWeek()
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
-const reservedSlots = new Set([
-  'phi-1-mon-10:00',
-  'phi-1-tue-13:00',
-  'phi-1-wed-09:00',
-  'phi-1-thu-15:00',
-  'phi-1-fri-11:00',
-])
+
 
 export default function ProfessorCounsel() {
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
@@ -78,7 +73,7 @@ export default function ProfessorCounsel() {
 
   const getStatus = (dayKey: string, time: string): SlotStatus => {
     if (selectedSlot?.day.key === dayKey && selectedSlot.time === time) return 'selected'
-    if (reservedSlots.has(`${activeProfessor.id}-${dayKey}-${time}`)) return 'reserved'
+    if (!slotAvailable(activeProfessor.id, days.find(d => d.key === dayKey)!.iso, time)) return 'reserved'
     return 'available'
   }
 
@@ -106,16 +101,20 @@ export default function ProfessorCounsel() {
     setConsentOpen(true)
   }
 
-  const handleConsentAgree = () => {
+  const handleConsentAgree = async () => {
     setConsentOpen(false)
     if (consentMode === 'online') {
-      submitProfessorCounselRequest({
+      try {
+      await submitProfessorCounselRequest({
         professorId: activeProfessor.id,
         topic: `${onlineSubject}: ${onlineContent || onlineTopic}`,
         method: '비대면',
       })
       setNotice(`${activeProfessor.name} 교수님께 온라인 상담 신청이 접수되었습니다`)
       window.setTimeout(() => setNotice(''), 1800)
+      } catch (error) {
+        setNotice(error instanceof Error ? error.message : '상담 신청을 저장하지 못했습니다.')
+      }
     } else {
       setReserveOpen(true)
     }
@@ -303,9 +302,9 @@ export default function ProfessorCounsel() {
         time={selectedSlot?.time ?? ''}
         room={activeProfessor.room}
         phone="055-213-3500"
-        onSubmit={purpose => {
+        onSubmit={async purpose => {
           if (selectedSlot) {
-            submitProfessorCounselRequest({
+            await submitProfessorCounselRequest({
               professorId: activeProfessor.id,
               topic: purpose,
               method: '대면',

@@ -4,8 +4,7 @@
 // 조교의 학생 접근 범위는 담당 학과(departments)로 파생한다(현행 FU_ASS_DEPT).
 // ─────────────────────────────────────────────────────────────────────────
 import type { StaffUser } from './schema/staff'
-import asstKim from './assistants/asst_kim.json'
-import asstPark from './assistants/asst_park.json'
+import { directoryStaff } from '../../shared/staffDirectoryStore'
 
 /** 조교 = 교직원 공통 신원 + 담당 학과 스코프 */
 export interface Assistant extends StaffUser {
@@ -15,11 +14,6 @@ export interface Assistant extends StaffUser {
   email?: string
 }
 
-export const ASSISTANTS: Assistant[] = [
-  asstKim as Assistant,
-  asstPark as Assistant,
-]
-
 export function getAssistantById(id: string | undefined): Assistant | undefined {
-  return id ? ASSISTANTS.find(a => a.id === id) : undefined
+  return id ? directoryStaff.find(a => a.role === 'assistant' && a.id === id) as Assistant | undefined : undefined
 }

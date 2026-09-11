@@ -2,6 +2,8 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { formatRelativeTime } from '../../src_admin/data/counselRequests'
 import './NotificationBell.css'
+import { COMMUNICATIONS_EVENT, loadNotifications, markNotificationRead, notificationRows, unreadCount } from '../../shared/communicationsStore'
+import { downloadApiFile } from '../../shared/api'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 알림 벨 — 학생 포털(src_v2) · 교직원 포털(src_admin) 공용.
@@ -11,8 +13,7 @@ import './NotificationBell.css'
 //   교직원 → src_admin/data/notifications.ts
 // 도메인 문구를 여기 박지 않는다 — 제목·본문·링크는 전부 주입받는다.
 //
-// 읽음 처리는 없다. 읽음 상태는 새 이벤트 스토어가 필요한데(CLAUDE.md 이벤트 표에 없다)
-// 지금 필요한 것은 "무슨 일이 있었나"를 보여주는 것이라 최근 순 목록만 준다.
+// 목록과 수신자별 읽음 시각은 서버에서 관리한다.
 // ─────────────────────────────────────────────────────────────────────────
 
 /** 알림 갈래 — 점 색만 정한다. 문구는 데이터 층이 만든다. */
@@ -29,6 +30,7 @@ export interface NotificationItem {
   at: string
   /** 누르면 갈 곳 (SPA 내부 경로) */
   to: string
+  readAt?: string | null
 }
 
 interface NotificationBellProps {
@@ -43,6 +45,17 @@ interface NotificationBellProps {
 // 진단·채용처럼 뒤에 오는 갈래가 통째로 사라진다 → 받은 만큼 그리고 넘치면 스크롤한다.
 export default function NotificationBell({ items, icon, triggerClassName }: NotificationBellProps) {
   const [open, setOpen] = useState(false)
+  const [revision, setRevision] = useState(0)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    const update = () => setRevision(n => n + 1)
+    const refresh = () => { void loadNotifications().catch(e => setError((e as Error).message)) }
+    window.addEventListener(COMMUNICATIONS_EVENT, update)
+    window.addEventListener('focus', refresh)
+    const timer = window.setInterval(refresh, 30000)
+    return () => { window.removeEventListener(COMMUNICATIONS_EVENT, update); window.removeEventListener('focus', refresh); window.clearInterval(timer) }
+  }, [])
+  const visibleItems = revision ? notificationRows : items
   const wrapRef = useRef<HTMLDivElement | null>(null)
 
   // 마우스를 벗어나면 닫히지만, 키보드·터치로 연 경우를 위해 ESC와 바깥 클릭도 받는다.
@@ -72,12 +85,12 @@ export default function NotificationBell({ items, icon, triggerClassName }: Noti
         className={triggerClassName}
         aria-haspopup="menu"
         aria-expanded={open}
-        aria-label={`알림 ${items.length}건`}
+        aria-label={`읽지 않은 알림 ${unreadCount}건`}
         onClick={() => setOpen(v => !v)}
       >
         {icon}
-        {items.length > 0 && (
-          <span className="nbell-count">{items.length > 99 ? '99+' : items.length}</span>
+        {unreadCount > 0 && (
+          <span className="nbell-count">{unreadCount > 99 ? '99+' : unreadCount}</span>
         )}
       </button>
 
@@ -85,25 +98,27 @@ export default function NotificationBell({ items, icon, triggerClassName }: Noti
         <div className="nbell-panel" role="menu" aria-label="알림">
           <div className="nbell-head">
             <strong>알림</strong>
-            <span>{items.length}건</span>
+            <span>읽지 않음 {unreadCount}건</span>
+            <button type="button" onClick={() => { void downloadApiFile('/notifications/export.csv', 'notifications.csv').catch(e => setError((e as Error).message)) }}>CSV</button>
           </div>
 
-          {items.length === 0 ? (
+          {error && <p role="alert">{error}</p>}
+          {visibleItems.length === 0 ? (
             <p className="nbell-empty">새 알림이 없습니다.</p>
           ) : (
             <ul className="nbell-list">
-              {items.map(item => (
+              {visibleItems.map(item => (
                 <li key={item.id}>
                   {/* 알림은 "가야 할 곳"이 본체다 — 누르면 그 화면으로 보내고 목록은 닫는다. */}
                   <Link
                     to={item.to}
                     className={`nbell-item is-${item.tone}`}
                     role="menuitem"
-                    onClick={() => setOpen(false)}
+                    onClick={() => { setOpen(false); void markNotificationRead(item.id).catch(e => setError((e as Error).message)) }}
                   >
                     <span className="nbell-dot" aria-hidden="true" />
                     <span className="nbell-text">
-                      <strong>{item.title}</strong>
+                      <strong>{item.readAt ? '' : '● '}{item.title}</strong>
                       {item.body && <small>{item.body}</small>}
                     </span>
                     <time dateTime={item.at}>{formatRelativeTime(item.at)}</time>

@@ -237,8 +237,8 @@ export function getStudentPrograms(studentId: string): StudentProgramSummary {
   return {
     rows,
     applied: rows.length,
-    completed: rows.filter(r => r.outcomeStatus === '수료').length,
-    attended: rows.filter(r => r.attendance === '출석').length,
+    completed: rows.filter(r => r.outcomeStatus === 'COMPLETED').length,
+    attended: rows.filter(r => r.attendance === 'PRESENT').length,
   }
 }
 
@@ -296,9 +296,11 @@ export function getGoalPlan(student: StudentData): GoalPlan | null {
   const roadmap = getStudentRoadmap(student.id)
   if (!roadmap) return null
 
+  // 목표 직무·기업은 학사 프로필이 아니라 상담에서 정해진다. 계획 자체가 그 값을 갖는다 —
+  // 로드맵 3축의 기준이 목표 직무이기 때문이다.
   return {
-    role: student.targetCompany.role,
-    company: student.targetCompany.name,
+    role: roadmap.targetRole || student.targetCompany.role || '목표 직무 미정',
+    company: student.targetCompany.name || '목표 기업 미정',
     progress: roadmap.progress.pct,
     done: roadmap.progress.done,
     total: roadmap.progress.total,

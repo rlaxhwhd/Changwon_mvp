@@ -12,8 +12,8 @@
 //
 // DB 전환 시 교체 지점은 ASSIGNS 한 줄뿐이다 — SELECT ... FROM DC_DEPT_ASSIGN.
 // ─────────────────────────────────────────────────────────────────────────────
-import seed from './deptAssigns.seed.json'
 import { deptNameOf } from './departments'
+import { activeStaffDetail } from '../../shared/staffDirectoryStore'
 
 /** 배정 대상 역할 — 조교·교수가 같은 표를 쓴다(dc_dept_assign.role) */
 export type DeptAssignRole = 'professor' | 'assistant'
@@ -35,11 +35,17 @@ export interface DeptAssign {
   handledBy: string
 }
 
-const ASSIGNS = seed as DeptAssign[]
+function assigns(): DeptAssign[] {
+  return (activeStaffDetail?.orgAssignments ?? []).map(row => ({
+    id: row.id, intgUid: activeStaffDetail!.id, role: row.roleCode as DeptAssignRole,
+    deptCode: row.deptCode, majorCode: null, status: row.isActive ? 'active' : 'released',
+    assignedAt: row.validFrom, ...(row.validTo ? { releasedAt: row.validTo } : {}), handledBy: '',
+  }))
+}
 
 /** 특정 교직원의 활성 배정 — 해제분(released)은 범위에서 빠진다. */
 export function getActiveAssigns(intgUid: string, role: DeptAssignRole): DeptAssign[] {
-  return ASSIGNS.filter(a => a.intgUid === intgUid && a.role === role && a.status === 'active')
+  return assigns().filter(a => a.intgUid === intgUid && a.role === role && a.status === 'active')
 }
 
 /**
@@ -55,5 +61,5 @@ export function getAssignedDeptNames(intgUid: string, role: DeptAssignRole): str
 
 /** 배정 이력 전체(해제분 포함) — 관리자 배정 화면이 붙을 때 쓴다. */
 export function getAssignHistory(intgUid: string, role: DeptAssignRole): DeptAssign[] {
-  return ASSIGNS.filter(a => a.intgUid === intgUid && a.role === role)
+  return assigns().filter(a => a.intgUid === intgUid && a.role === role)
 }

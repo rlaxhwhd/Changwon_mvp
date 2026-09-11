@@ -241,12 +241,9 @@ export default function AssistantAdvisorRecords() {
                         type="button"
                         className="admin-btn admin-btn-ghost sm"
                         onClick={() => {
-                          sendNudge({
-                            studentId: row.studentId,
-                            professorId: row.professorId,
-                            by: user.id,
-                          })
-                          refetch()
+                          sendNudge({ studentId: row.studentId, professorId: row.professorId, by: user.id })
+                            .then(() => refetch())
+                            .catch(e => window.alert(e instanceof Error ? e.message : '독려를 보내지 못했습니다.'))
                         }}
                       >
                         독려 발송

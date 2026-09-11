@@ -12,6 +12,7 @@ import type { RoadmapAxis } from '../../data/schema/roadmap'
 // 로드맵 1개의 정본은 교직원 포털의 읽기 모델이다(base ⊕ 상담사 override ⊕ 프로그램 편입분).
 // 학생 화면이 축·칸을 다시 조립하지 않는다 — DB 전환 시 이 import 하나가 쿼리로 바뀐다.
 import { getStudentRoadmap } from '../../../src_admin/data/roadmap'
+import { useRoadmap } from '../../../shared/useRoadmapStore'
 // 상담 코멘트도 같은 단일소스(상담 기록)에서 읽는다. comment 는 '학생에게 공개되는' 필드다.
 import { getRecordsByStudent } from '../../../src_admin/data/counselRecords'
 import type { CourseRow } from '../../data/academic'
@@ -76,7 +77,8 @@ export default function AiRoadmap() {
 
   const { status, data, jobOptions, addJob } = useSkillTree()
   const student = getActiveStudent()
-  const roadmap = useMemo(() => getStudentRoadmap(student.id), [student.id])
+  const revision = useRoadmap(student.id)
+  const roadmap = useMemo(() => getStudentRoadmap(student.id), [student.id, revision])
   // 기록은 최신순이다. 코멘트를 아직 안 쓴 회차가 섞이므로 '코멘트가 있는' 최신 1건을 고른다.
   const lastComment = useMemo(
     () => getRecordsByStudent(student.id).find(record => record.comment?.trim()),
@@ -91,7 +93,14 @@ export default function AiRoadmap() {
   const [jobInput, setJobInput] = useState('')
   const [jobInputError, setJobInputError] = useState('')
   const [generating, setGenerating] = useState(false)
-  const [generated, setGenerated] = useState(false)
+  // 이 화면에서 방금 눌러 만들었는가. 「로드맵이 있는가」와는 다른 물음이다.
+  const [justGenerated, setJustGenerated] = useState(false)
+  /**
+   * ★ 로드맵이 이미 있으면 결과를 보여준다 — 이 화면에서 눌렀는지와 무관하다.
+   *   로드맵은 상담사가 상담 자리에서 만든다(PROCESS.md §6-7). 로컬 플래그만 보면
+   *   상담사가 만들어 준 로드맵을 학생이 못 보고 생성 흐름을 다시 만난다.
+   */
+  const generated = justGenerated || Boolean(roadmap)
 
   const analyzeProgress = useProgressRun(
     pickerOpen && pickerPhase === 'loading', ANALYZE_MS,
@@ -99,14 +108,14 @@ export default function AiRoadmap() {
   )
   const generateProgress = useProgressRun(
     generating, GENERATE_MS,
-    () => { setGenerating(false); setGenerated(true) },
+    () => { setGenerating(false); setJustGenerated(true) },
   )
 
   // 학생이 바뀌면 목표 직무·생성 결과를 되돌린다.
   useEffect(() => {
     setTargetJobId(null)
     setTargetSetAt(null)
-    setGenerated(false)
+    setJustGenerated(false)
   }, [student.id])
 
   // 적합도가 높은 순으로 — 모달에서 학생이 위에서부터 고르게 한다.

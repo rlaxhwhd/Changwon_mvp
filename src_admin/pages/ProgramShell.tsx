@@ -3,6 +3,7 @@ import { LuFrown, LuGraduationCap, LuList, LuPencil, LuUserCheck, LuUsers, LuUse
 import { Link, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { getProgramById, pendingApplicants, selectedApplicants } from '../data/programs'
 import type { Program } from '../data/schema/program'
+import { categoryLabel } from '../data/schema/program'
 import EmptyState from '../components/EmptyState'
 
 /** 탭 자식이 받는 컨텍스트 — 프로그램 1건은 셸이 소유한다(자식이 따로 조회하지 않는다). */
@@ -55,7 +56,7 @@ export default function ProgramShell() {
             <LuGraduationCap /> {program.title}
           </h1>
           <p className="admin-page-desc">
-            <span className="admin-tag admin-tag-soft">{program.category}</span>{' '}
+            <span className="admin-tag admin-tag-soft">{categoryLabel(program.category)}</span>{' '}
             {program.startDate} ~ {program.endDate} · {program.location || '장소 미정'} · 정원 {program.capacity}명
           </p>
         </div>

@@ -9,7 +9,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 /** 벌점 변동 유형 — 부여(노쇼/기타) · 차감/해제 */
-export type PenaltyKind = 'noshow' | 'manual' | 'waive'
+export type PenaltyKind = 'NOSHOW' | 'MANUAL' | 'WAIVE'
 
 /** 벌점 이력 1건 (누적/차감/해제 각각 기록) */
 export interface PenaltyEntry {
@@ -35,6 +35,9 @@ export interface StudentPenalty {
   studentId: string
   studentName: string
   studentMajor: string
+  /** 학번·대학은 서버가 학사 데이터에서 조인해 준다(화면이 로스터를 다시 뒤지지 않는다). */
+  studentNo?: string
+  college?: string | null
   /** 누적 벌점 총점 (entries 합산, 0 이상으로 보정) */
   total: number
   /** 벌점 변동 이력 */

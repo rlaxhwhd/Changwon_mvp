@@ -2,6 +2,7 @@ import { createPortal } from 'react-dom'
 import type { StaffRole } from '../data/schema/staff'
 import AdminModal from './AdminModal'
 import StudentDetailView from './StudentDetailView'
+import type { TabKey } from './StudentDetailView'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 학생 상세 모달 (공용) — 어느 화면에서든 학생 1명의 상세를 같은 모양으로 띄운다.
@@ -16,13 +17,15 @@ interface StudentDetailModalProps {
   studentId: string
   /** 열람자 역할 — 탭 노출 범위와 편집 권한을 정한다 */
   role: StaffRole
+  /** 열 때 펼칠 탭. 생략하면 첫 탭. */
+  initialTab?: TabKey
   onClose: () => void
 }
 
-export default function StudentDetailModal({ studentId, role, onClose }: StudentDetailModalProps) {
+export default function StudentDetailModal({ studentId, role, initialTab, onClose }: StudentDetailModalProps) {
   return createPortal(
     <AdminModal title="학생 상세 정보" size="xl" onClose={onClose}>
-      <StudentDetailView studentId={studentId} role={role} />
+      <StudentDetailView studentId={studentId} role={role} initialTab={initialTab} />
     </AdminModal>,
     document.body,
   )

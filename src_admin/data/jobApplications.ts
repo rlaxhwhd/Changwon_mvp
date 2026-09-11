@@ -1,57 +1,55 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 추천채용 지원 로더 — localStorage 'dc_job_applications' + 'dc_job_stages'
+// 추천채용 지원 로더 — 정본은 서버(dc.job_application · attempt · event)다.
 //
-// 학생(/jobs/:id)이 지원하고 상담사(/admin/jobs/applicants)가 전형을 진행한다.
-// 양쪽이 같은 스토어를 구독하므로 상담사가 단계를 올리면 학생 마이페이지에 그대로
-// 반영된다 — jobsSource.ts 가 공고에서 하는 것과 같은 구조다.
+// 읽기는 부팅 때 적재한 스토어에서 동기로 꺼낸다(SPEC.md §5). 쓰기는 async 이고
+// 서버가 판정한다 — 대상 공고·중복·마감·게이트·전형 순서·권한을 여기서 막지 않고
+// 서버가 거절한다(CLAUDE.md 규칙 5: 정합성은 한 곳에서만 판정한다).
 //
-// ★ 대상은 **교내 추천채용 공고뿐**이다. canApplyTo() 가 유일한 판정 지점이고,
-//   화면은 이 함수만 부른다. 조건을 화면에 다시 쓰지 말 것.
+// 스토어에는 **요청자에게 인가된 지원만** 들어 있다 — 학생은 본인 것, 교직원은
+// dc.staff_student_scope 범위의 학생만 서버가 내려준다. 화면이 다시 거르지 않는다.
 //
-// ★ 정합성은 이 로더가 전담한다(CLAUDE.md 규칙 5 — FK 없는 DB 전제).
-//   중복 지원·마감 공고·대상 아닌 공고·단계 순서 위반을 여기서 거부한다.
-//
-// ★ 집계(단계별 인원)는 데이터층에서 끝낸다(규칙 10). 화면은 배열을 받아 세지 않는다.
+// ★ 집계(단계별 인원·상태별 인원)는 데이터층에서 끝낸다(규칙 10).
+//   여기서는 스토어에 든 인가된 행만 세고, 전체 모집단 기준 수는 서버 summary 를 쓴다.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { JobPosting } from './schema/job'
 import type {
   ApplicationStatus,
-  ApplyAttachment,
-  ApplyAttachmentKind,
   HiringStage,
   JobApplication,
+  JobApplicationAttempt,
 } from './schema/jobApplication'
 import {
   APPLICATION_OPEN_STATUSES,
   APPLICATION_STATUSES,
   APPLICATION_STATUS_LABEL,
   APPLY_ATTACHMENT_LABEL,
-  DEFAULT_STAGE_NAMES,
-  INTERNAL_STAGES,
   isInternalStage,
 } from './schema/jobApplication'
-import { getJobById, getInternalJobs, updateJob } from './jobsSource'
-import { appendJobApplicationEvent, getEventsByApplication } from './jobApplicationEvents'
-import { getActiveCounselor } from './counselors'
-
-const APPLICATIONS_KEY = 'dc_job_applications'
+import { api } from '../../shared/api'
+import {
+  applicationList,
+  loadApplications,
+  refreshApplication,
+  refreshPosting,
+} from '../../shared/jobStore'
+import { getJobById, getInternalJobs } from './jobsSource'
 
 // ── 지원 대상 판정 (단일 지점) ───────────────────────────────────────────────
 
-/**
- * 이 공고가 지원 관리 대상인가 — **교내(manual) + 추천채용**일 때만 참.
- * 일반공고·외부공고는 지원 경로가 없다(외부는 applyUrl 로 나간다).
- */
+/** 이 공고가 지원 관리 대상인가 — **교내(manual) + 추천채용**일 때만 참. */
 export function isRecommendedInternal(job: JobPosting | undefined): boolean {
-  return !!job && job.source === 'manual' && job.recruitType === '추천채용'
+  return !!job && job.source === 'manual' && job.recruitType === 'RECOMMENDATION'
 }
 
-/** 지원 관리 대상 공고 목록 — 상담사 '추천채용 지원자관리' 화면의 소스 */
+/** 지원 관리 대상 공고 목록 — '추천채용 지원자관리' 화면의 소스 */
 export function getRecommendedJobs(): JobPosting[] {
   return getInternalJobs().filter(isRecommendedInternal)
 }
 
-/** 학생이 지금 이 공고에 지원할 수 있는가. 불가 사유를 함께 준다(화면 안내용). */
+/**
+ * 학생이 지금 이 공고에 지원할 수 있는가 — 화면 버튼 상태용이다.
+ * ★ 최종 판정은 서버가 한다. 여기 결과가 ok 여도 서버가 게이트·마감으로 거절할 수 있다.
+ */
 export function canApplyTo(
   jobId: string,
   studentId: string,
@@ -59,7 +57,10 @@ export function canApplyTo(
   const job = getJobById(jobId)
   if (!job) return { ok: false, reason: '공고를 찾을 수 없습니다.' }
   if (!isRecommendedInternal(job)) return { ok: false, reason: '지원 접수를 받지 않는 공고입니다.' }
-  if (job.status === '마감') return { ok: false, reason: '마감된 공고입니다.' }
+  if (job.effectiveStatus !== 'POSTED') return { ok: false, reason: '마감된 공고입니다.' }
+  if (job.applyEligibility && !job.applyEligibility.eligible) {
+    return { ok: false, reason: job.applyEligibility.reasons[0]?.message ?? '아직 지원할 수 없습니다.' }
+  }
   const mine = getApplication(jobId, studentId)
   if (mine && mine.status !== 'CANCELED') return { ok: false, reason: '이미 지원한 공고입니다.' }
   return { ok: true }
@@ -67,109 +68,75 @@ export function canApplyTo(
 
 // ── 전형 단계 ────────────────────────────────────────────────────────────────
 
-function makeStageId(): string {
-  return `stg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`
-}
-
-/**
- * 공고의 전형 단계 (순서대로).
- * 아직 정의하지 않은 공고는 기본 3단계로 폴백한다 — 기존 공고가 지원자 관리에서
- * 빈 화면이 되지 않도록. 폴백은 **읽기 전용 파생값**이고 저장하지 않는다.
- */
-export function getStages(jobId: string): HiringStage[] {
-  const job = getJobById(jobId)
-  const defined = job?.stages
-  if (defined && defined.length) return [...defined].sort((a, b) => a.order - b.order)
-  return DEFAULT_STAGE_NAMES.map((name, i) => ({ id: `${jobId}__default_${i + 1}`, order: i + 1, name }))
-}
-
 /**
  * 실제 진행 순서 — 교내 절차(서류 검토·기업 전달) + 공고별 기업 전형.
- *
- * ★ 단계 이동·집계·타임라인은 전부 이 함수를 본다. getStages 는 **편집 대상**(기업 전형)
- *   만 돌려주므로 진행 판정에 쓰지 말 것 — 둘이 갈리면 학생 화면과 상담사 화면이 어긋난다.
+ * 서버가 이미 순서대로 실체화해 내려준다. 폴백 기본 3단계를 화면에서 지어내지 않는다.
  */
 export function getFlowStages(jobId: string): HiringStage[] {
-  return [...INTERNAL_STAGES, ...getStages(jobId)]
+  return getJobById(jobId)?.stages ?? []
+}
+
+/** 편집 대상(기업 전형)만 — 교내 절차는 빼고 돌려준다. */
+export function getStages(jobId: string): HiringStage[] {
+  return getFlowStages(jobId).filter(s => !isInternalStage(s))
 }
 
 /**
- * 단계 배열을 통째로 저장 — order 를 1..n 으로 재부여한다(순서변경·삭제 공용).
- * 교내 절차는 코드 상수라 저장 대상이 아니다 — 섞여 들어오면 걸러낸다.
+ * 기업 전형 전체 집합을 한 번에 저장한다(추가·이름변경·순서변경·삭제 공용).
+ * 진행 중인 지원자가 점유한 단계의 삭제는 서버가 409로 거절한다.
  */
-export function setStages(jobId: string, stages: HiringStage[]): void {
-  const normalized = stages
-    .filter(s => !isInternalStage(s.id))
-    .map((s, i) => ({ ...s, order: i + 1 }))
-  updateJob(jobId, { stages: normalized })
+export async function setStages(jobId: string, stages: { id?: string; name: string }[]): Promise<void> {
+  const job = getJobById(jobId)
+  if (!job) throw new Error('공고를 찾을 수 없습니다.')
+  await api(`/jobs/${encodeURIComponent(jobId)}/stages`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      expectedVersion: job.version,
+      stages: stages.map(s => (s.id ? { id: s.id, name: s.name } : { name: s.name })),
+    }),
+  })
+  await refreshPosting(jobId)
+}
+
+function editable(jobId: string): { id: string; name: string }[] {
+  return getStages(jobId).map(s => ({ id: s.id, name: s.name }))
 }
 
 /** 단계 추가 — 맨 뒤에 붙인다. */
-export function addStage(jobId: string, name: string): void {
+export async function addStage(jobId: string, name: string): Promise<void> {
   const trimmed = name.trim()
   if (!trimmed) return
-  setStages(jobId, [...getStages(jobId), { id: makeStageId(), order: 0, name: trimmed }])
+  await setStages(jobId, [...editable(jobId), { name: trimmed }])
 }
 
 /** 단계명 변경. */
-export function renameStage(jobId: string, stageId: string, name: string): void {
+export async function renameStage(jobId: string, stageId: string, name: string): Promise<void> {
   const trimmed = name.trim()
   if (!trimmed) return
-  setStages(jobId, getStages(jobId).map(s => (s.id === stageId ? { ...s, name: trimmed } : s)))
+  await setStages(jobId, editable(jobId).map(s => (s.id === stageId ? { ...s, name: trimmed } : s)))
 }
 
-/**
- * 단계 삭제.
- * ⚠ 그 단계에 **진행 중인** 지원자가 있으면 거부한다 — 지우면 갈 곳을 잃는다.
- * 판정 기준은 stageCounts 와 같은 IN_PROGRESS 다. 둘이 어긋나면 화면이
- * "현재 0명"이라고 표시하면서 삭제만 거부하는 모순이 생긴다.
- * 이미 끝난 지원자(합격·탈락)는 currentStageId 가 남아 있어도 막지 않는다 —
- * 그 값은 "어디서 끝났나"를 가리키는 기록이지 점유가 아니다.
- * 반환값 false 는 "진행 중인 지원자가 있어 못 지웠다"는 뜻이다(화면이 안내한다).
- */
-export function removeStage(jobId: string, stageId: string): boolean {
-  // 교내 절차는 모든 공고에 항상 있어야 한다 — 삭제 대상이 아니다.
-  if (isInternalStage(stageId)) return false
-  const occupied = getApplicationsByJob(jobId)
-    .some(a => a.status === 'IN_PROGRESS' && a.currentStageId === stageId)
-  if (occupied) return false
-  setStages(jobId, getStages(jobId).filter(s => s.id !== stageId))
-  return true
+/** 단계 삭제. 진행 중인 지원자가 점유하고 있으면 서버가 거절한다(예외가 올라온다). */
+export async function removeStage(jobId: string, stageId: string): Promise<void> {
+  await setStages(jobId, editable(jobId).filter(s => s.id !== stageId))
 }
 
 /** 단계 순서 이동 (-1 위 / +1 아래). 범위를 벗어나면 무시한다. */
-export function moveStage(jobId: string, stageId: string, delta: -1 | 1): void {
-  if (isInternalStage(stageId)) return
-  const stages = getStages(jobId)
+export async function moveStage(jobId: string, stageId: string, delta: -1 | 1): Promise<void> {
+  const stages = editable(jobId)
   const i = stages.findIndex(s => s.id === stageId)
   const j = i + delta
   if (i < 0 || j < 0 || j >= stages.length) return
   const next = [...stages]
   ;[next[i], next[j]] = [next[j], next[i]]
-  setStages(jobId, next)
+  await setStages(jobId, next)
 }
 
 // ── 지원 스토어 ──────────────────────────────────────────────────────────────
 
+/** 적재된 지원 전체(인가된 범위). */
 export function getApplications(): JobApplication[] {
-  try {
-    const raw = localStorage.getItem(APPLICATIONS_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed as JobApplication[]
-    }
-  } catch {
-    /* 지원 없음 */
-  }
-  return []
-}
-
-function persist(list: JobApplication[]): void {
-  try {
-    localStorage.setItem(APPLICATIONS_KEY, JSON.stringify(list))
-  } catch {
-    /* 데모 범위 — 저장 실패 무시 */
-  }
+  return applicationList()
 }
 
 /** 한 공고의 지원자 (지원 순) */
@@ -190,202 +157,86 @@ export function getApplicationById(id: string): JobApplication | undefined {
   return getApplications().find(a => a.id === id)
 }
 
-/** 학생 × 공고 1건 (없으면 undefined) — 중복 지원 판정과 학생 화면 버튼 상태에 쓴다. */
+/** 학생 × 공고 1건 (없으면 undefined) */
 export function getApplication(jobId: string, studentId: string): JobApplication | undefined {
   return getApplications().find(a => a.jobId === jobId && a.studentId === studentId)
 }
 
 // ── 상태 전이 ────────────────────────────────────────────────────────────────
 //
-// ★ 모든 전이는 처리 이력(dc_job_app_events)을 함께 남긴다(CLAUDE.md 규칙 11).
-//   지원 레코드는 현재 위치만 들고, 경로는 이력이 전담한다.
-
-/** 이력 기록자 — 상담사 화면에서 활성 상담사를 매번 넘기지 않도록 여기서 해석한다. */
-function actor(): { by: string; byName: string } {
-  const me = getActiveCounselor()
-  return { by: me.id, byName: me.name }
-}
-
-function patch(id: string, next: Partial<JobApplication>): void {
-  persist(getApplications().map(a => (a.id === id ? { ...a, ...next } : a)))
-}
-
-/** 학생이 지원할 때 넘기는 신원 — 신청 시점 스냅샷으로 그대로 저장된다. */
-export interface ApplicantIdentity {
-  id: string
-  studentNo: string
-  name: string
-  major: string
-  grade: number
-  enrollmentStatus: JobApplication['snapEnrollStatus']
-}
+// 모든 전이는 서버가 같은 트랜잭션에서 이력을 남긴다(CLAUDE.md 규칙 11).
+// 화면이 이력을 직접 append 하지 않는다 — 이제 그 경로는 없다.
 
 /**
- * 제출 서류가 성립하는가 — 개별 이력서는 파일명이 없으면 첨부가 아니다.
- * 정합성 판정은 전부 로더에 둔다(규칙 5) — 화면이 이 조건을 다시 쓰지 않는다.
+ * 학생 지원. 서류(개별 이력서 파일)를 먼저 올려 fileId 를 받은 뒤 부른다.
+ * 취소했던 건은 새 행을 만들지 않고 회차를 올린다 — 직전 회차는 그대로 보존된다.
  */
-function isValidAttachment(a: ApplyAttachment | undefined): a is ApplyAttachment {
-  if (!a) return false
-  if (a.kind === 'RESUME_FILE') return !!a.fileName?.trim()
-  return a.kind === 'PORTFOLIO'
-}
-
-/**
- * 학생 지원. 대상·중복·마감 판정은 canApplyTo 가 전담한다.
- * 거부되면 undefined 를 반환한다(화면이 사유를 다시 물어 안내).
- *
- * ★ 제출 서류는 필수다 — 드림캐치 포트폴리오 또는 개별 이력서 중 하나를 반드시 받는다.
- *   첨부 없는 지원은 여기서 거부한다(현행 `ReAppD` 지원 프로세스 계승 · SPEC.md §3-6 S16).
- *
- * 취소했던 건은 새 행을 만들지 않고 되살린다 — 학생 × 공고 1행 불변을 지킨다.
- * 되살릴 때 서류도 이번 지원의 것으로 덮는다(스냅샷은 마지막 지원 시점 기준).
- */
-export function applyToJob(
-  jobId: string,
-  student: ApplicantIdentity,
-  attachment: ApplyAttachment,
-): JobApplication | undefined {
-  if (!canApplyTo(jobId, student.id).ok) return undefined
-  if (!isValidAttachment(attachment)) return undefined
-
-  const revived = getApplication(jobId, student.id)
-  const now = new Date().toISOString()
-  const base = {
-    jobId,
-    studentId: student.id,
-    snapStudentNo: student.studentNo,
-    snapName: student.name,
-    snapMajor: student.major,
-    snapGrade: student.grade,
-    snapEnrollStatus: student.enrollmentStatus,
-    appliedAt: now,
-    status: 'APPLIED' as ApplicationStatus,
-    attachment,
-  }
-
-  const application: JobApplication = revived
-    ? { ...revived, ...base, currentStageId: undefined, canceledAt: undefined }
-    : { ...base, id: `japp_${Date.now()}_${Math.random().toString(36).slice(2, 7)}` }
-
-  persist(revived
-    ? getApplications().map(a => (a.id === application.id ? application : a))
-    : [...getApplications(), application])
-
-  appendJobApplicationEvent({
-    applicationId: application.id,
-    jobId,
-    studentId: student.id,
-    kind: '지원',
-    by: student.id,
-    byName: student.name,
+export async function applyToJob(jobId: string, fileId: string): Promise<JobApplication> {
+  const job = getJobById(jobId)
+  if (!job) throw new Error('공고를 찾을 수 없습니다.')
+  const mine = getApplications().find(a => a.jobId === jobId)
+  const created = await api<JobApplication>(`/jobs/${encodeURIComponent(jobId)}/applications`, {
+    method: 'POST',
+    headers: { 'Idempotency-Key': `apply:${jobId}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}` },
+    body: JSON.stringify({
+      expectedPostingVersion: job.version,
+      expectedVersion: mine?.status === 'CANCELED' ? mine.version : undefined,
+      attachment: { kind: 'RESUME_FILE', fileId },
+    }),
   })
-  return application
+  await refreshApplication(created.id)
+  return created
 }
 
-/** 학생 지원 취소. 이미 끝난 건(합격·탈락)은 취소하지 않는다. */
-export function cancelApplication(id: string, reason?: string): void {
+async function transition(id: string, intent: 'advance' | 'reject' | 'cancel', reason = ''): Promise<void> {
   const application = getApplicationById(id)
-  if (!application || !APPLICATION_OPEN_STATUSES.includes(application.status)) return
-
-  patch(id, { status: 'CANCELED', canceledAt: new Date().toISOString(), currentStageId: undefined })
-  appendJobApplicationEvent({
-    applicationId: id,
-    jobId: application.jobId,
-    studentId: application.studentId,
-    kind: '지원취소',
-    reason,
-    by: application.studentId,
-    byName: application.snapName,
+  if (!application) throw new Error('지원 내역을 찾을 수 없습니다.')
+  await api(`/job-applications/${encodeURIComponent(id)}/${intent}`, {
+    method: 'POST', body: JSON.stringify({ expectedVersion: application.version, reason }),
   })
+  await refreshApplication(id)
 }
 
-/**
- * 다음 전형 단계로 올린다.
- * APPLIED 면 1단계로, 진행 중이면 바로 다음 단계로 — **단계를 건너뛰지 않는다.**
- * 마지막 단계를 통과하면 최종 합격 처리한다.
- */
-export function advanceStage(id: string): void {
-  const application = getApplicationById(id)
-  if (!application || !APPLICATION_OPEN_STATUSES.includes(application.status)) return
+/** 학생 지원 취소. 이미 끝난 건(합격·탈락)은 서버가 거절한다. */
+export async function cancelApplication(id: string, reason = ''): Promise<void> {
+  await transition(id, 'cancel', reason)
+}
 
-  // 교내 절차 → 기업 전형 순서로 이어 붙인 전체 흐름 위에서 움직인다.
-  const stages = getFlowStages(application.jobId)
-  if (!stages.length) return
-
-  const currentIndex = application.currentStageId
-    ? stages.findIndex(s => s.id === application.currentStageId)
-    : -1
-  const from = currentIndex >= 0 ? stages[currentIndex] : undefined
-
-  // 마지막 단계에서 한 번 더 올리면 최종 합격이다.
-  if (currentIndex >= stages.length - 1 && currentIndex >= 0) {
-    patch(id, { status: 'PASSED' })
-    appendJobApplicationEvent({
-      applicationId: id,
-      jobId: application.jobId,
-      studentId: application.studentId,
-      kind: '최종합격',
-      fromStageId: from?.id,
-      fromStageName: from?.name,
-      ...actor(),
-    })
-    return
-  }
-
-  const to = stages[currentIndex + 1]
-  patch(id, { status: 'IN_PROGRESS', currentStageId: to.id })
-  appendJobApplicationEvent({
-    applicationId: id,
-    jobId: application.jobId,
-    studentId: application.studentId,
-    kind: '단계이동',
-    fromStageId: from?.id,
-    fromStageName: from?.name,
-    toStageId: to.id,
-    toStageName: to.name,
-    ...actor(),
-  })
+/** 다음 전형 단계로 올린다. 마지막 단계를 통과하면 최종 합격이 된다. */
+export async function advanceStage(id: string): Promise<void> {
+  await transition(id, 'advance')
 }
 
 /** 탈락 처리. 어느 단계에서든 여기서 끝난다. */
-export function rejectApplication(id: string, reason?: string): void {
-  const application = getApplicationById(id)
-  if (!application || !APPLICATION_OPEN_STATUSES.includes(application.status)) return
-
-  const from = getFlowStages(application.jobId).find(s => s.id === application.currentStageId)
-  patch(id, { status: 'REJECTED' })
-  appendJobApplicationEvent({
-    applicationId: id,
-    jobId: application.jobId,
-    studentId: application.studentId,
-    kind: '탈락',
-    fromStageId: from?.id,
-    fromStageName: from?.name,
-    reason,
-    ...actor(),
-  })
+export async function rejectApplication(id: string, reason = ''): Promise<void> {
+  await transition(id, 'reject', reason)
 }
 
 // ── 파생·집계 (화면은 세지 않는다 — 규칙 10) ─────────────────────────────────
 
 /** 지원 건의 현재 위치 라벨 — 단계에 올라가 있으면 단계명, 아니면 상태 라벨. */
 export function currentStageLabel(application: JobApplication): string {
-  if (application.status === 'IN_PROGRESS' && application.currentStageId) {
-    const stage = getFlowStages(application.jobId).find(s => s.id === application.currentStageId)
-    if (stage) return stage.name
+  if (application.status === 'IN_PROGRESS' && application.currentStageName) {
+    return application.currentStageName
   }
   return APPLICATION_STATUS_LABEL[application.status]
 }
 
-/**
- * 지원 건에 제출된 서류의 표시 문구.
- * 첨부 도입 전에 쌓인 건은 값이 없다 — 그때는 '미제출'로 읽는다(SPEC.md §5 #2 폴백).
- */
+/** 제출된 서류의 표시 문구. 이름만 남은 과거 행은 '확인 필요'로 읽는다. */
 export function attachmentLabel(application: JobApplication): string {
-  const a = application.attachment
-  if (!a) return '미제출'
-  if (a.kind === 'RESUME_FILE') return `${APPLY_ATTACHMENT_LABEL.RESUME_FILE} · ${a.fileName}`
-  return APPLY_ATTACHMENT_LABEL.PORTFOLIO
+  const attempt = application.currentAttempt
+  if (!attempt?.attachmentKind) return '미제출'
+  if (attempt.attachmentKind === 'PORTFOLIO') return APPLY_ATTACHMENT_LABEL.PORTFOLIO
+  const name = attempt.attachmentName ?? attempt.legacyFileName
+  const suffix = attempt.attachmentState === 'AVAILABLE' ? name : `${name ?? ''} (확인 필요)`
+  return `${APPLY_ATTACHMENT_LABEL.RESUME_FILE}${suffix ? ` · ${suffix}` : ''}`
+}
+
+/** 제출 서류 다운로드 경로 — 권한을 확인하는 API 경로다(정적 URL 이 아니다). */
+export function attachmentUrl(attempt: JobApplicationAttempt | null): string | null {
+  return attempt?.attachmentFileId && attempt.attachmentState === 'AVAILABLE'
+    ? `/api/v1/job-files/${attempt.attachmentFileId}`
+    : null
 }
 
 /** 단계별 현재 인원 — 전형 단계 관리 화면의 '(N명)' 표시 */
@@ -402,45 +253,37 @@ export function stageCounts(jobId: string): Record<string, number> {
 
 /** 진행 타임라인의 한 칸 */
 export interface ProgressStep {
-  /** 표시 이름 — '지원 완료' + 전형 단계명 */
   label: string
-  /** 지나온 칸 (완료) */
   done: boolean
-  /** 지금 있는 칸 */
   current: boolean
-  /** 그 칸에 도달한 일시 ISO (지나온 칸만) */
   at?: string
-  /** 교내 절차(상담사가 처리하는 칸)인가 — 기업 전형과 담당이 다르다는 표시용 */
+  /** 교내 절차(담당자가 처리하는 칸)인가 */
   internal: boolean
 }
 
 /**
- * 학생 마이페이지 진행 타임라인 (image10).
- * '지원 완료' + 교내 절차(서류 검토·기업 전달) + 공고의 기업 전형 전부를 칸으로 깔고,
- * 이력에서 도달 시각을 채운다.
+ * 학생 마이페이지 진행 타임라인.
+ * '지원 완료' + 교내 절차 + 기업 전형을 칸으로 깔고, **현재 회차의** 이력에서 도달
+ * 시각을 채운다. 회차를 섞으면 재지원 뒤에 예전 도달 시각이 남는다.
  * 탈락·취소는 그 자리에서 멈춘 것으로 그린다 — 뒤 칸은 done/current 둘 다 false.
  */
-export function getProgressTimeline(application: JobApplication): ProgressStep[] {
-  const stages = getFlowStages(application.jobId)
-  const events = getEventsByApplication(application.id)
-
-  // 칸별 도달 시각 — '지원'은 0번 칸, '단계이동'은 도착 단계 칸.
+export function buildTimeline(
+  application: JobApplication,
+  events: { attemptNo: number; action: string; toStageId: string | null; at: string }[],
+): ProgressStep[] {
+  const stages = application.stages ?? getFlowStages(application.jobId)
   const reachedAt = new Map<string, string>()
   for (const e of events) {
-    if (e.kind === '지원') reachedAt.set('__applied', e.at)
-    if (e.kind === '단계이동' && e.toStageId) reachedAt.set(e.toStageId, e.at)
+    if (e.attemptNo !== application.currentAttemptNo) continue
+    if (e.action === 'APPLY' || e.action === 'REAPPLY') reachedAt.set('__applied', e.at)
+    if (e.action === 'ADVANCE' && e.toStageId) reachedAt.set(e.toStageId, e.at)
   }
-
   const keys = ['__applied', ...stages.map(s => s.id)]
   const labels = ['지원 완료', ...stages.map(s => s.name)]
-
-  // 지금 몇 번째 칸인가 — 단계에 올라가 있으면 그 칸, 아니면 0번(지원 완료).
   const currentIndex = application.currentStageId
     ? Math.max(0, keys.indexOf(application.currentStageId))
     : 0
-  // 끝난 건(합격·탈락·취소)은 '현재' 표시를 하지 않는다.
-  const settled = application.status !== 'APPLIED' && application.status !== 'IN_PROGRESS'
-  // 최종 합격이면 마지막 칸까지 전부 지나온 것이다.
+  const settled = !APPLICATION_OPEN_STATUSES.includes(application.status)
   const doneThrough = application.status === 'PASSED' ? keys.length - 1 : currentIndex
 
   return keys.map((key, i) => ({
@@ -448,15 +291,13 @@ export function getProgressTimeline(application: JobApplication): ProgressStep[]
     done: i <= doneThrough && (i < currentIndex || settled || i === 0),
     current: !settled && i === currentIndex,
     at: reachedAt.get(key),
-    internal: isInternalStage(key),
+    internal: i > 0 && !!stages[i - 1]?.systemKey,
   }))
 }
 
 // ── 지원자 현황 필터 (단계·상태) ────────────────────────────────────────────
 //
 // 값 공간은 하나다: 'ALL' | 전형 단계 id | 상태 코드(APPLIED·PASSED·…).
-// 단계 id 는 stg_/sys_/`${jobId}__default_N` 이라 상태 코드와 겹치지 않는다.
-// 선택지와 인원은 여기서 완성해 넘긴다 — 화면이 배열을 받아 세지 않는다(규칙 10).
 
 export const APPLICANT_FILTER_ALL = 'ALL'
 
@@ -466,7 +307,7 @@ export interface ApplicantFilterOption {
   count: number
 }
 
-/** 「전형 단계」 필터 선택지 — 전체 · 지원 완료 · 단계별 · 최종 결과(합격/탈락/취소) */
+/** 「전형 단계」 필터 선택지 — 전체 · 지원 완료 · 단계별 · 최종 결과 */
 export function getApplicantFilterOptions(jobId: string): ApplicantFilterOption[] {
   const list = getApplicationsByJob(jobId)
   const onStage = (stageId: string) =>
@@ -491,22 +332,18 @@ function isApplicationStatus(value: string): value is ApplicationStatus {
   return (APPLICATION_STATUSES as string[]).includes(value)
 }
 
-/**
- * 필터를 적용한 지원자 목록 — 지원자 현황 표의 단일 조회 지점.
- * 화면에서 다시 거르지 않는다. DB 전환 시 이 함수가 WHERE 절이 된다.
- */
+/** 필터를 적용한 지원자 목록 — 지원자 현황 표의 단일 조회 지점. */
 export function queryJobApplicants(
   jobId: string,
   filter: string = APPLICANT_FILTER_ALL,
 ): JobApplication[] {
   const list = getApplicationsByJob(jobId)
   if (filter === APPLICANT_FILTER_ALL) return list
-  // 상태 코드면 상태로, 아니면 '그 단계에 올라가 있는 사람'으로 읽는다.
   if (isApplicationStatus(filter)) return list.filter(a => a.status === filter)
   return list.filter(a => a.status === 'IN_PROGRESS' && a.currentStageId === filter)
 }
 
-/** 공고 1건의 지원 현황 요약 — 목록 카드·헤더용 */
+/** 공고 1건의 지원 현황 요약 — 목록 카드·헤더용(적재된 인가 범위 기준) */
 export interface JobApplicationSummary {
   total: number
   /** 진행 중(지원완료 + 전형진행) */
@@ -527,5 +364,21 @@ export function summarizeJob(jobId: string): JobApplicationSummary {
   }
 }
 
-export type { JobApplication, HiringStage, ApplicationStatus, ApplyAttachment, ApplyAttachmentKind }
-export { APPLICATION_STATUS_LABEL, APPLY_ATTACHMENT_LABEL, INTERNAL_STAGES, isInternalStage }
+/** 서버 집계 — 전체 모집단(인가된 범위) 기준. 화면 배지가 스토어를 세지 않아야 할 때 쓴다. */
+export async function getApplicationStatistics(filters: {
+  postingId?: string; status?: string; stageId?: string
+  collegeCode?: string; deptCode?: string; grade?: number; q?: string
+} = {}): Promise<JobApplicationSummary & {
+  applied: number; inProgress: number
+  stages: { stageId: string; count: number }[]; scope: string
+}> {
+  const query = new URLSearchParams()
+  for (const [name, value] of Object.entries(filters)) {
+    if (value !== undefined && value !== '') query.set(name, String(value))
+  }
+  return api(`/job-applications/summary?${query.toString()}`)
+}
+
+export { loadApplications }
+export type { JobApplication, HiringStage, ApplicationStatus, JobApplicationAttempt }
+export { APPLICATION_STATUS_LABEL, APPLY_ATTACHMENT_LABEL, isInternalStage }

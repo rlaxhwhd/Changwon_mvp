@@ -47,7 +47,6 @@ export default function DiagnosisResult() {
   usePageHead('진단검사 결과', '1회차 진단은 학생이 자유롭게 실시할 수 있습니다. 재진단과 진단유형 변경은 상담사와 상담 후 진행됩니다.')
   const navigate = useNavigate()
   const [isGuideOpen, setIsGuideOpen] = useState(false)
-  const [hasRequestedTypeChange, setHasRequestedTypeChange] = useState(false)
 
   const student = getActiveStudent()
   // 유형은 시드가 아니라 파이프라인이 준다 — C-CORE 를 마치며 주입된 값이 여기로 들어온다.
@@ -61,6 +60,8 @@ export default function DiagnosisResult() {
 
   // 응시 확인 — 실제 검사 문항이 없으므로(판정식 미확정) "응시했다"는 사실만 기록한다.
   const [pendingTestId, setPendingTestId] = useState<string | null>(null)
+  const [saving,setSaving] = useState(false)
+  const [saveError,setSaveError] = useState('')
   const pendingModule = pendingTestId ? getModuleByTestId(pendingTestId) : undefined
 
   const handleCardAction = (testId: string, status: TestStatus) => {
@@ -69,12 +70,16 @@ export default function DiagnosisResult() {
     else setPendingTestId(testId)
   }
 
-  const confirmAttempt = () => {
-    if (!pendingTestId) return
-    completeDiagnosis(student, pendingTestId)
+  const confirmAttempt = async () => {
+    if (!pendingTestId || saving) return
+    setSaving(true); setSaveError('')
+    try {
+    await completeDiagnosis(student, pendingTestId)
     setPendingTestId(null)
     // 응시 결과가 유형·게이트를 바꾼다 — 화면 전체가 새 상태를 봐야 한다.
     navigate(0)
+    } catch(e) { setSaveError(e instanceof Error ? e.message : '저장에 실패했습니다.') }
+    finally { setSaving(false) }
   }
 
   return (
@@ -95,13 +100,13 @@ export default function DiagnosisResult() {
             <h2 id="diagnosis-access-title">내 진단 결과와 응시 권한</h2>
           </div>
           <button
-            className={`de-type-request-btn${hasRequestedTypeChange ? ' is-requested' : ''}`}
+            className="de-type-request-btn"
             type="button"
-            onClick={() => setHasRequestedTypeChange(true)}
-            disabled={hasRequestedTypeChange}
+            disabled
+            title="진단유형 변경 신청 절차를 연결 중입니다."
           >
-            <i className={`fa-solid ${hasRequestedTypeChange ? 'fa-circle-check' : 'fa-paper-plane'}`} />
-            {hasRequestedTypeChange ? '수정 신청 완료' : '진단유형 수정 신청'}
+            <i className="fa-solid fa-lock" />
+            진단유형 수정 신청 준비 중
           </button>
         </div>
 
@@ -110,7 +115,7 @@ export default function DiagnosisResult() {
             <span className="de-access-icon"><i className="fa-solid fa-check" /></span>
             <div>
               <small>1회차 진단</small>
-              <strong>완료</strong>
+              <strong>{doneCount === modulesWithStatus.length ? '완료' : '진행 필요'}</strong>
               <p>학생 본인이 자유롭게 실시할 수 있습니다.</p>
             </div>
           </article>
@@ -139,12 +144,6 @@ export default function DiagnosisResult() {
           <span>재진단 및 진단유형 변경은 상담사와 상담 및 논의 후 진행 가능합니다.</span>
         </div>
 
-        {hasRequestedTypeChange && (
-          <p className="de-request-feedback" role="status" aria-live="polite">
-            <i className="fa-solid fa-circle-check" />
-            진단유형 수정 요청을 상담사에게 전달했습니다.
-          </p>
-        )}
       </section>
 
       <section className="de-toolbar de-toolbar--status-only" aria-label="진단 상태 요약">
@@ -241,17 +240,18 @@ export default function DiagnosisResult() {
               <div><dt>진단 영역</dt><dd>{pendingModule.factors.map(f => f.name).join(' · ')}</dd></div>
             </dl>
             <p className="de-attempt-note">
-              검사 문항은 아직 준비 중입니다. 지금은 <b>응시를 완료한 것으로 기록</b>하고
-              다음 단계를 열어 드립니다.
+              검사 문항·채점 엔진은 아직 연결되지 않았습니다. 이 기능은 기존 검증용 결과를
+              <b> 개발 테스트 이력으로 저장</b>합니다. 실제 검사 결과가 아닙니다.
             </p>
             <div className="de-attempt-actions">
-              <button type="button" className="de-attempt-cancel" onClick={() => setPendingTestId(null)}>
+              <button type="button" disabled={saving} className="de-attempt-cancel" onClick={() => setPendingTestId(null)}>
                 취소
               </button>
-              <button type="button" className="de-attempt-submit" onClick={confirmAttempt}>
-                응시 완료 <i className="fa-solid fa-arrow-right" />
+              <button type="button" disabled={saving} className="de-attempt-submit" onClick={() => void confirmAttempt()}>
+                {saving ? '저장 중…' : '개발 테스트 기록'} <i className="fa-solid fa-arrow-right" />
               </button>
             </div>
+            {saveError && <p role="alert">{saveError}</p>}
           </div>
         )}
       </Modal>

@@ -1,15 +1,9 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 메인 팝업(POPUP 캐러셀) 단일소스.
-//
-// 시안(창원디자인시안작업/main.html)은 슬라이드 4장을 마크업에 직접 박아 두었다.
-// 여기서는 목록을 JSON 으로 빼서 화면이 리터럴을 갖지 않게 한다
-// (CLAUDE.md — 하드코딩 리터럴을 화면에 박지 말 것).
-//
-// 이미지는 public/ 에 둔다 — programs.seed.json 의 "image": "/파일명.png" 과 같은 규약이다.
-// 팝업 CRUD 화면은 아직 없다. 생기면 programs.ts 처럼 localStorage 오버레이를
-// 이 파일에 얹는다(원본 seed 는 불변).
+// 메인 팝업(POPUP 캐러셀) — 정본은 서버 dc.main_popup(GET /popups). 부팅 때 적재하고
+// 화면은 getMainPopups() 동기 셀렉터만 구독한다. 이미지는 public/ 절대 경로다.
+// 팝업 CRUD 화면은 아직 없다 — 생기면 /system 아래에 서버 쓰기 API 로 붙인다.
 // ─────────────────────────────────────────────────────────────────────────
-import seed from './popups.seed.json'
+import { api } from '../../shared/api'
 
 export interface MainPopup {
   id: string
@@ -21,11 +15,16 @@ export interface MainPopup {
   href: string
 }
 
-const SEED = seed as MainPopup[]
+let popups: MainPopup[] = []
+
+/** 부팅 적재 — 서버가 노출 기간·활성 여부를 걸러 순서대로 준다. */
+export async function loadMainPopups(): Promise<void> {
+  popups = (await api<{ items: MainPopup[] }>('/popups')).items
+}
 
 /** 노출할 팝업 목록. 순서가 곧 캐러셀 순서다. */
 export function getMainPopups(): MainPopup[] {
-  return SEED
+  return popups
 }
 
 // ── '오늘 하루 열지 않기' ──────────────────────────────────────────────

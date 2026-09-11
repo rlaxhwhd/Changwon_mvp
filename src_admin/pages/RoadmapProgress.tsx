@@ -1,13 +1,14 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   LuBuilding2, LuChartColumn, LuCircleAlert, LuGauge, LuGraduationCap,
   LuRoute, LuTarget, LuTrendingUp, LuTriangleAlert, LuUsers, LuX,
 } from 'react-icons/lu'
-import { getActiveCounselor } from '../data/counselors'
-import { PROGRESS_RULE, getRoadmapProgressStats } from '../data/roadmapProgressStats'
+import { PROGRESS_RULE, loadRoadmapProgressStats } from '../data/roadmapProgressStats'
 import type { GroupStat, RoadmapProgressStats } from '../data/roadmapProgressStats'
 import { studentTypeClass } from '../data/studentRoster'
+import { useStore } from '../../shared/useRoadmapStore'
+import { ROADMAP_EVENT } from '../../shared/roadmapStore'
 import './RoadmapProgress.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -23,15 +24,33 @@ import './RoadmapProgress.css'
 
 type Scope = 'mine' | 'all'
 
+const EMPTY: RoadmapProgressStats = {
+  count: 0, avg: 0, median: 0, onTrack: 0, stalled: 0,
+  bands: [], byType: [], byGrade: [], byCollege: [], laggards: [],
+}
+
 export default function RoadmapProgress() {
-  const counselor = getActiveCounselor()
   const [scope, setScope] = useState<Scope>('mine')
   // 펼친 단과대학. 범위를 바꾸면 그 단대가 없을 수도 있어 아래에서 유효성을 다시 본다.
   const [openCollege, setOpenCollege] = useState<string | null>(null)
 
-  const mine = useMemo(() => getRoadmapProgressStats(counselor.departments), [counselor.departments])
-  const all = useMemo(() => getRoadmapProgressStats([]), [])
-  const stats = scope === 'mine' ? mine : all
+  // 서버가 정본이다 — 로드맵이 저장·확정되면 다시 읽는다. 담당/전체 모수는 지금 서버가
+  // 같은 범위(staff_student_scope)로 주므로 한 번만 읽고 두 탭이 같이 본다.
+  const revision = useStore(ROADMAP_EVENT)
+  const [stats, setStats] = useState<RoadmapProgressStats>(EMPTY)
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let alive = true
+    setLoading(true)
+    loadRoadmapProgressStats()
+      .then(next => { if (alive) { setStats(next); setError('') } })
+      .catch(e => { if (alive) setError(e instanceof Error ? e.message : '이행률을 불러오지 못했습니다.') })
+      .finally(() => { if (alive) setLoading(false) })
+    return () => { alive = false }
+  }, [revision])
+  const mine = stats
+  const all = stats
 
   // 담당이 전체보다 몇 %p 높은가 — 같은 모수면 0 이다.
   const delta = mine.avg - all.avg
@@ -55,6 +74,8 @@ export default function RoadmapProgress() {
               (학과 배정이 들어오면 자동으로 갈립니다).
             </p>
           )}
+          {loading && <p className="admin-field-hint">이행률을 불러오는 중…</p>}
+          {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
         </div>
         <div className="rmp-scope" role="tablist" aria-label="조회 범위">
           <button

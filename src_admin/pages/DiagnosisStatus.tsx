@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useAsyncAction } from '../../shared/useAsyncAction'
 import {
   LuBellRing,
   LuChevronLeft,
@@ -15,7 +16,7 @@ import { getActiveCounselor } from '../data/counselors'
 import {
   addComment,
   getTestOptions,
-  getTestSummaries,
+  fetchTestSummaries,
   queryDiagnosisStatus,
   sendDiagnosisNudge,
 } from '../data/diagnosisAttempts'
@@ -46,10 +47,11 @@ function statusClass(status: DiagnosisStatusRow['status']): string {
 function CommentModal({ row, onClose, onSaved }: { row: DiagnosisStatusRow; onClose: () => void; onSaved: () => void }) {
   const counselor = getActiveCounselor()
   const [body, setBody] = useState('')
+  const {saving,error,run} = useAsyncAction()
 
-  const save = () => {
+  const save = () => run(async () => {
     if (!row.attemptId) return
-    addComment({
+    await addComment({
       attemptId: row.attemptId,
       studentId: row.studentId,
       body: body.trim(),
@@ -58,7 +60,7 @@ function CommentModal({ row, onClose, onSaved }: { row: DiagnosisStatusRow; onCl
     })
     onSaved()
     onClose()
-  }
+  })
 
   return (
     <AdminModal title="결과 코멘트 작성" size="md" onClose={onClose}>
@@ -89,8 +91,9 @@ function CommentModal({ row, onClose, onSaved }: { row: DiagnosisStatusRow; onCl
       </label>
 
       <div className="admin-form-actions">
+        {error && <p role="alert">{error}</p>}
         <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>취소</button>
-        <button type="button" className="admin-btn admin-btn-primary" disabled={body.trim() === ''} onClick={save}>저장</button>
+        <button type="button" className="admin-btn admin-btn-primary" disabled={saving || body.trim() === ''} onClick={() => void save()}>저장</button>
       </div>
     </AdminModal>
   )
@@ -107,9 +110,17 @@ export default function DiagnosisStatus() {
   const [page, setPage] = useState(1)
   const [target, setTarget] = useState<DiagnosisStatusRow | null>(null)
 
-  const summaries = getTestSummaries(departments)
+  const [summaries,setSummaries] = useState<Awaited<ReturnType<typeof fetchTestSummaries>>>([])
+  const [summaryError,setSummaryError] = useState('')
+  const {saving,error:writeError,run} = useAsyncAction()
+  const departmentKey=JSON.stringify(departments)
+  useEffect(() => {
+    let cancelled=false
+    fetchTestSummaries(departments).then(rows => { if (!cancelled) setSummaries(rows) }).catch(e => { if (!cancelled) setSummaryError(e.message) })
+    return () => { cancelled=true }
+  },[departmentKey])
   const tests = getTestOptions()
-  const { data: result, isLoading, refetch } = useListData(queryDiagnosisStatus, {
+  const { data: result, isLoading, refetch, error:readError } = useListData(queryDiagnosisStatus, {
     page,
     pageSize: PAGE_SIZE,
     q: query,
@@ -131,6 +142,7 @@ export default function DiagnosisStatus() {
 
   return (
     <div className="admin-page">
+      {(summaryError || readError || writeError) && <p role="alert">{summaryError || readError?.message || writeError}</p>}
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">검사 현황</h1>
@@ -253,10 +265,11 @@ export default function DiagnosisStatus() {
                         <button
                           type="button"
                           className="admin-btn admin-btn-ghost sm"
-                          onClick={() => {
-                            sendDiagnosisNudge({ studentId: row.studentId, testId: row.testId, by: counselor.id })
+                          disabled={saving}
+                          onClick={() => void run(async () => {
+                            await sendDiagnosisNudge({ studentId: row.studentId, testId: row.testId, by: counselor.id })
                             refetch()
-                          }}
+                          })}
                         >
                           <LuBellRing /> 검사 권유
                         </button>

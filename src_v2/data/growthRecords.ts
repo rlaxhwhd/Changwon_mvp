@@ -1,34 +1,85 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 성장 활동 기록 — 단일소스.
+// 성장 활동 기록 — 정본은 서버다(dc.growth_entry, kind=RECORD).
 //
-// 「내 성장 > 성장 활동 기록」(/v2/growth)이 쓰고 고치고, AI 커리어 라운지
-// (/v2/lounge)가 같은 값을 읽어 보여 준다. 두 화면이 각자 목록을 들고 있으면
-// 한쪽에서 기록을 더해도 다른 쪽이 모른다 — 그래서 seed 와 저장소 키를 여기 둔다.
+// 「내 성장 > 성장 활동 기록」(/v2/growth)이 쓰고 고치고, AI 커리어 라운지(/v2/lounge)가
+// 같은 값을 읽는다.
 //
-// 저장은 학생별 localStorage 오버레이다(CLAUDE.md 「런타임 반영 방식」).
+// ★ 예전 GROWTH_RECORDS 공통 상수 4건은 옮기지 않았다. 「진단 완료·비교과 수료」라고
+//   적혀 있었지만 원천 이벤트가 없는 화면 상수였고, useStoredList 가 mount 직후 학생별
+//   키에 그대로 저장해 **모든 학생에게 남의 실적처럼** 보였다. 소유자가 없는 자료는
+//   이관하지 않는다(채용에서 SAVED_RESUMES 를 뺀 것과 같은 판정).
 // ─────────────────────────────────────────────────────────────────────────
+import { createGrowthEntry, deleteGrowthEntry, growthEntries, updateGrowthEntry } from '../../shared/growthStore'
+import type { GrowthEntry } from '../../shared/growthStore'
 
-export const GROWTH_RECORDS = [
-  { date: '2026.05.21', type: '진단', title: 'C3 역량성장 후속진단 완료', description: '직무 역량 강화가 필요한 핵심 영역을 확인했습니다.', tone: 'violet' },
-  { date: '2026.04.22', type: '비교과', title: '데이터 분석 기초 참여', description: 'Python과 Pandas를 활용한 데이터 분석 실습을 진행 중입니다.', tone: 'mint' },
-  { date: '2026.04.08', type: '비교과', title: 'AI 활용 자소서 특강 수료', description: '총 3시간의 취업역량 프로그램을 이수했습니다.', tone: 'blue' },
-  { date: '2026.03.20', type: '성과', title: '취업역량강화 캠프 수료', description: '24시간 집중 과정의 모든 활동을 완료했습니다.', tone: 'amber' },
-]
+/** 기록 분류 — DB 코드다. 한글은 표시용 라벨이다(CLAUDE.md 4조). */
+export type GrowthRecordCategory = 'DIAGNOSIS' | 'PROGRAM' | 'ACHIEVEMENT' | 'ETC'
 
-export type GrowthRecord = (typeof GROWTH_RECORDS)[number]
-
-/** 학생별 저장소 키 — /v2/growth 의 포트폴리오 묶음과 같은 접두사를 쓴다. */
-export function growthRecordsKey(studentId: string): string {
-  return `dc_growth_portfolio_${studentId}_records`
+export const RECORD_CATEGORY_LABEL: Record<GrowthRecordCategory, string> = {
+  DIAGNOSIS: '진단', PROGRAM: '비교과', ACHIEVEMENT: '성과', ETC: '기타',
 }
 
-/** 지금 기록 목록 (오버레이가 있으면 그것, 없으면 seed). 읽기 전용 화면용. */
-export function getGrowthRecords(studentId: string): GrowthRecord[] {
-  try {
-    const saved = localStorage.getItem(growthRecordsKey(studentId))
-    if (saved) return JSON.parse(saved) as GrowthRecord[]
-  } catch {
-    /* 저장소 비활성 시 seed 로 */
+/** 표시 색 — 분류가 곧 색이다. 화면이 각자 정하지 않는다. */
+export const RECORD_CATEGORY_TONE: Record<GrowthRecordCategory, string> = {
+  DIAGNOSIS: 'violet', PROGRAM: 'mint', ACHIEVEMENT: 'amber', ETC: 'blue',
+}
+
+export interface GrowthRecord {
+  id: string
+  date: string
+  category: GrowthRecordCategory
+  type: string
+  title: string
+  description: string
+  tone: string
+  version: number
+}
+
+function toRecord(row: GrowthEntry): GrowthRecord {
+  const category = (row.categoryCode as GrowthRecordCategory) ?? 'ETC'
+  const description = row.content.description
+  return {
+    id: row.id,
+    date: row.occurredOn ?? row.dateText ?? '',
+    category,
+    type: RECORD_CATEGORY_LABEL[category],
+    title: row.title,
+    description: typeof description === 'string' ? description : '',
+    tone: RECORD_CATEGORY_TONE[category],
+    version: row.version,
   }
-  return GROWTH_RECORDS
+}
+
+function toInput(record: Pick<GrowthRecord, 'date' | 'category' | 'title' | 'description'>) {
+  return {
+    kind: 'RECORD' as const,
+    title: record.title,
+    categoryCode: record.category,
+    occurredOn: record.date || null,
+    datePrecision: (record.date ? 'DAY' : 'UNKNOWN') as 'DAY' | 'UNKNOWN',
+    content: { description: record.description },
+  }
+}
+
+/** 지금 기록 목록. 아직 안 읽었으면 빈 배열 — 가짜 샘플로 채우지 않는다. */
+export function getGrowthRecords(studentId: string): GrowthRecord[] {
+  return growthEntries(studentId, 'RECORD').map(toRecord)
+}
+
+export function createGrowthRecord(studentId: string,
+                                   record: Pick<GrowthRecord, 'date' | 'category' | 'title' | 'description'>): Promise<void> {
+  return createGrowthEntry(studentId, toInput(record))
+}
+
+export function updateGrowthRecord(studentId: string, id: string,
+                                   record: Pick<GrowthRecord, 'date' | 'category' | 'title' | 'description'>): Promise<void> {
+  const row = growthEntries(studentId, 'RECORD').find(item => item.id === id)
+  if (!row) throw new Error('수정할 기록을 찾을 수 없습니다.')
+  return updateGrowthEntry(studentId, row, toInput(record))
+}
+
+export function deleteGrowthRecord(studentId: string, id: string): Promise<void> {
+  const row = growthEntries(studentId, 'RECORD').find(item => item.id === id)
+  if (!row) throw new Error('삭제할 기록을 찾을 수 없습니다.')
+  return deleteGrowthEntry(studentId, row)
 }

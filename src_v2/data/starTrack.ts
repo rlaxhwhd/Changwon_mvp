@@ -7,12 +7,14 @@
 // 진단·상담·비교과는 기존 단일소스와 **연동**한다(students.ts · careerProcess.ts).
 // 여기에는 STAR 전용 상태(트랙·마일리지·교과·인증)만 둔다 — 같은 사실을 두 곳에 두지 않는다.
 //
-// 집계(마일리지 합계·이수율·인증 단계·장학금 구간)는 전부 이 파일에서 끝낸다.
-// 화면은 계산하지 않는다 → DB 전환 시 이 함수들이 집계 SQL 이 된다(CLAUDE.md §10).
+// 정본은 서버의 dc.star_track payload 다. **읽기 전용**이다(04-decisions Q3).
 //
-// ⚠️ 배점·인증단계 기준은 운영계획(안)에서 옮긴 것이고 **최종 확정 전**이다. → DB.md §9
+// ⚠️ 선발·마일리지 배점·인증 단계·장학금 구간은 **정책이 확정되지 않았다**(DB.md #29·#30).
+//   그래서 여기서 합격·장학을 판정하지 않는다. 이미 기록된 사실(단계 완료 수·적립 점수)만
+//   세고, 정책이 필요한 값은 null 로 두고 metricsStatus='POLICY_PENDING' 으로 밝힌다.
+//   화면은 null 을 0점이나 탈락으로 바꾸지 않는다(CLAUDE.md 14조).
 // ─────────────────────────────────────────────────────────────────────────
-import seed from './starTrack.seed.json'
+import { growthState } from '../../shared/growthStore'
 import { getStudentCounselRequests, type StudentData } from './students'
 import { STUDENT_TYPE_MAP, type StudentTypeMeta, type DiagnosisTestId } from './careerProcess'
 
@@ -99,25 +101,19 @@ export const CPASS_STAGES = [
   { id: 'ELITE', label: 'Elite', desc: '최고 구간 달성' },
 ] as const
 
-/** 마일리지 장학금 구간 — 운영계획 §3-2. 인증 단계 문턱도 이 값에서 파생시킨다. */
-export const MILEAGE_TIERS: Record<StarTrackId, { min: number; award: number }[]> = {
-  STAR_PRE: [{ min: 100, award: 20 }, { min: 150, award: 30 }],
-  STAR_CORE: [
-    { min: 100, award: 20 }, { min: 170, award: 30 },
-    { min: 250, award: 40 }, { min: 270, award: 50 },
-  ],
-}
-
-/** 이수 필수 마일리지 — 두 트랙 모두 100점. */
-export const MILEAGE_PASS_MARK = 100
+/**
+ * 이수 기준·장학 구간은 **아직 확정되지 않았다**(DB.md #29·#30).
+ * 운영계획(안)의 수치를 여기 고정하면 임시 판정 로직이 된다 — 실제 규칙이 오면 그
+ * 데이터를 버려야 한다. 그래서 값을 두지 않고 「미확정」으로 응답한다.
+ */
+export type StarMetricsStatus = 'POLICY_PENDING'
 
 // ── 로더 ─────────────────────────────────────────────────────────────────
 
-const RECORDS = (seed as { tracks: StarTrackRecord[] }).tracks
-
 /** 선발된 학생만 돌려준다. 미선발이면 undefined — 이것이 정상 상태다. */
 export function getStarTrack(studentId: string): StarTrackRecord | undefined {
-  return RECORDS.find(r => r.studentId === studentId)
+  const record = growthState(studentId)?.star
+  return record?.record ? (record.record as unknown as StarTrackRecord) : undefined
 }
 
 // ── 집계 ─────────────────────────────────────────────────────────────────
@@ -131,15 +127,18 @@ export interface StarSummary {
   rate: number
   doneSteps: number
   totalSteps: number
-  /** 지금 도달한 장학금 구간(없으면 null) */
-  currentTier: { min: number; award: number } | null
-  /** 다음 장학금 구간 · 남은 점수(최고 구간이면 null) */
-  nextTier: { min: number; award: number; gap: number } | null
-  /** 현재 인증 단계 index (0~3) */
-  stageIndex: number
-  /** 이수 기준 미달 항목 — 마일리지가 넘쳐도 이게 남으면 인증이 안 나온다. */
+  /** 아직 채우지 못한 필수 항목 — 기록된 사실이다(판정이 아니다). */
   blockers: StarStep[]
-  passed: boolean
+  /**
+   * 장학 구간·인증 단계·이수 여부는 정책이 확정될 때까지 계산하지 않는다.
+   * 화면은 이 값이 'POLICY_PENDING' 이면 「기준 미확정」으로 표시한다.
+   */
+  metricsStatus: StarMetricsStatus
+  /** 정책 확정 전에는 언제나 null 이다. 0 이나 false 로 바꾸지 않는다. */
+  currentTier: { min: number; award: number } | null
+  nextTier: { min: number; award: number; gap: number } | null
+  stageIndex: number | null
+  passed: boolean | null
 }
 
 const allSteps = (record: StarTrackRecord): StarStep[] => record.axes.flatMap(a => a.steps)
@@ -147,30 +146,17 @@ const allSteps = (record: StarTrackRecord): StarStep[] => record.axes.flatMap(a 
 export function getStarSummary(record: StarTrackRecord): StarSummary {
   const steps = allSteps(record)
   const done = steps.filter(s => s.status === 'done')
+  // 적립 점수와 이수율은 payload 에 기록된 사실의 합이다 — 새 판정이 아니다.
   const mileage = done.reduce((sum, s) => sum + (s.points ?? 0), 0)
   const mileageMax = steps.reduce((sum, s) => sum + (s.points ?? 0), 0)
-
-  const tiers = MILEAGE_TIERS[record.track]
-  const reached = tiers.filter(t => mileage >= t.min)
-  const currentTier = reached.length ? reached[reached.length - 1] : null
-  const upcoming = tiers.find(t => mileage < t.min)
-  const nextTier = upcoming ? { ...upcoming, gap: upcoming.min - mileage } : null
-
-  const blockers = steps.filter(s => s.required && s.status !== 'done')
-  const passed = mileage >= MILEAGE_PASS_MARK && blockers.length === 0
-
-  // 1 Basic(참여) → 2 Pre(착수) → 3 Pass(이수 기준) → 4 Elite(최고 구간)
-  const top = tiers[tiers.length - 1]
-  const stageIndex = mileage >= top.min && passed ? 3
-    : passed ? 2
-      : done.length > 0 ? 1
-        : 0
-
   return {
     mileage, mileageMax,
     rate: steps.length ? Math.round((done.length / steps.length) * 100) : 0,
     doneSteps: done.length, totalSteps: steps.length,
-    currentTier, nextTier, stageIndex, blockers, passed,
+    blockers: steps.filter(s => s.required && s.status !== 'done'),
+    // 장학 구간·인증 단계·이수 판정은 정책이 없다. 없는 규칙을 지어내지 않는다.
+    metricsStatus: 'POLICY_PENDING',
+    currentTier: null, nextTier: null, stageIndex: null, passed: null,
   }
 }
 

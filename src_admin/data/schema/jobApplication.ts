@@ -1,67 +1,47 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 추천채용 지원 스키마 (단일 소스)
+// 추천채용 지원 스키마 (단일 소스) — 정본은 서버(dc.job_application)다.
 //
-// 대상 — **교내 공고 중 recruitType='추천채용' 인 것만.** 일반공고·외부공고는
-// 지원 경로가 없다(외부는 applyUrl 로 나간다). 이 범위는 요청서 "교내 추천채용
-// 지원자 확인 및 관리" 문구를 그대로 따른 것이므로 임의로 넓히지 말 것.
-//
-// 왜 신설인가: 현행 `APPLICATIONMASTER` 1.7만 건이 이관 대상인데 우리 쪽에
-// 지원 경로 자체가 없었다(SPEC.md §6 ① · §3-6 S16).
+// 대상 — **교내 공고 중 recruitType='RECOMMENDATION' 인 것만.** 일반공고·외부공고는
+// 지원 경로가 없다(외부는 applyUrl 로 나간다). 판정은 서버가 한다.
 //
 // ★ 전형 단계를 고정 enum 으로 굳히지 않는다.
-//   비교과(`SelectionStatus` 대기/선발/탈락/취소)와 달리 채용 전형은 공고마다
-//   단계 수와 이름이 다르다 — 상담사가 공고별로 정의하고 추가·삭제·순서변경한다.
-//   그래서 단계는 **데이터**(HiringStage[])이고, 상태는 그 위의 위치값이다.
+//   비교과(대기/선발/탈락/취소)와 달리 채용 전형은 공고마다 단계 수와 이름이 다르다 —
+//   담당자가 공고별로 정의하고 추가·삭제·순서변경한다. 그래서 단계는 **데이터**
+//   (dc.job_stage)이고, 상태는 그 위의 위치값이다.
 //
-// 상태 이력은 append-only (CLAUDE.md 규칙 11). 지원 레코드는 **현재 위치만**
-// 들고, "무엇이 언제 왜 바뀌었나"는 JobApplicationEvent 가 전담한다.
-// 학생 마이페이지의 진행 타임라인이 이 이벤트를 그대로 그린다.
+// ★ 재지원은 새 행을 만들지 않고 **회차(attempt)** 를 올린다. 직전 제출 스냅샷·서류
+//   귀속·취소 이력을 덮어쓰지 않기 위해서다.
+//
+// 상태 이력은 append-only (CLAUDE.md 규칙 11). 지원 레코드는 **현재 위치만** 들고,
+// "무엇이 언제 왜 바뀌었나"는 JobApplicationEvent 가 전담한다.
 // ─────────────────────────────────────────────────────────────────────────────
-import type { EnrollmentStatus } from '../../../src_v2/data/students'
 
 // ── 전형 단계 ────────────────────────────────────────────────────────────────
 
 /**
- * 전형 단계 1개. 공고에 종속되며 상담사가 자유롭게 정의한다.
- * (예: '서류 전형' · '인적성 검사' · '1차 면접' · '최종 결과')
+ * 전형 단계 1개. 공고에 종속되며 담당자가 자유롭게 정의한다.
+ * systemKey 가 있는 두 단계(서류 검토·기업 전달)는 **교내 절차**다 —
+ * 모든 추천채용 공고에 항상 있고 이름·순서·삭제를 서버가 거부한다.
+ * 예전에는 이 둘을 전역 상수 ID(sys_review·sys_forward)로 뒀는데, 그러면 서로 다른
+ * 공고의 이력이 같은 단계를 가리킨다 — 지금은 공고마다 별개의 행이다.
  */
 export interface HiringStage {
-  /** 단계 id (stg_ prefix) */
   id: string
-  /** 표시 순서 — 1부터. 순서변경 시 재부여한다. */
+  /** 표시 순서 — 1부터 */
   order: number
-  /** 단계명 — 상담사 자유 입력 */
   name: string
+  /** 교내 절차 표시. 기업 전형이면 null */
+  systemKey: 'REVIEW' | 'FORWARD' | null
 }
 
-/** 공고에 단계가 아직 정의되지 않았을 때 쓰는 기본 3단계 (image8 기준) */
-export const DEFAULT_STAGE_NAMES = ['서류 전형', '면접 전형', '최종 결과'] as const
-
-/**
- * 교내 추천 절차 — 학생이 지원한 뒤, 기업 전형이 시작되기 전에 **상담사가** 처리하는 고정 2단계.
- *
- * 위의 HiringStage 와 성격이 다르다:
- *   - 기업 전형(HiringStage) = 공고마다 다르고 상담사가 정의·삭제한다. 수행 주체는 기업.
- *   - 교내 절차(여기)         = 모든 추천채용 공고에 항상 같다. 수행 주체는 상담사.
- * 그래서 공고 데이터(job.stages)에 넣지 않고 코드 상수로 둔다 — 지울 수 있으면 안 된다.
- *
- * 실제 진행 순서는 `getFlowStages()` 가 합쳐서 만든다:
- *   지원 완료 → 서류 검토 → 기업 전달 → (공고별 기업 전형…)
- */
-export const INTERNAL_STAGES: HiringStage[] = [
-  { id: 'sys_review', order: 1, name: '서류 검토' },
-  { id: 'sys_forward', order: 2, name: '기업 전달' },
-]
-
-/** 이 단계가 교내 절차인가(상담사 처리 · 삭제·순서변경 불가) */
-export function isInternalStage(stageId: string | undefined): boolean {
-  return !!stageId && INTERNAL_STAGES.some(s => s.id === stageId)
+/** 이 단계가 교내 절차인가(담당자 처리 · 삭제·순서변경 불가) */
+export function isInternalStage(stage: HiringStage | undefined): boolean {
+  return !!stage?.systemKey
 }
 
 // ── 상태 코드 ────────────────────────────────────────────────────────────────
 //
 // 코드값은 영문 상수, 표시는 라벨 맵으로 분리한다 (CLAUDE.md 규칙 4 · SPEC §7-0 규칙 4).
-// 한글을 값 자체로 쓰면 이관 매핑과 라벨 변경이 같이 묶여버린다.
 
 /** 지원 건 전체 상태 */
 export type ApplicationStatus =
@@ -87,7 +67,6 @@ export const APPLICATION_STATUS_LABEL: Record<ApplicationStatus, string> = {
  * 현행 이관 매핑 — `APPLICATIONMASTER` 의 상태 컬럼값.
  * ⚠️ 현행 값이 **미확인**이라 전부 null 이다. 확인 후 채울 것 —
  * 비어 있으면 이관 스크립트를 쓸 수 없다(SPEC.md §5 #1 · §7-0 규칙 2).
- * 같은 사유로 legacy 를 비워둔 선례: SPEC §3-1-⑩ `BASICSETTING.TRIALTYPE`.
  */
 export const APPLICATION_STATUS_LEGACY: Record<ApplicationStatus, string | null> = {
   APPLIED: null,
@@ -102,13 +81,12 @@ export const APPLICATION_OPEN_STATUSES: ApplicationStatus[] = ['APPLIED', 'IN_PR
 
 // ── 지원 서류 ────────────────────────────────────────────────────────────────
 //
-// 현행 `ReAppD`·`ReAgree` 지원 프로세스에 대응한다(SPEC.md §3-6 S16).
-// 학생은 둘 중 하나를 반드시 고른다 — 첨부 없는 지원은 로더가 거부한다(규칙 5).
+// 현행 `ReAppD` 지원 프로세스에 대응한다(SPEC.md §3-6 S16).
+// 학생은 지원 시 서류를 반드시 하나 낸다 — 서버가 강제한다(규칙 5).
 
-/** 지원 시 제출하는 서류의 종류 */
 export type ApplyAttachmentKind =
-  | 'PORTFOLIO'    // 드림캐치 포트폴리오 — 마이페이지 이력서(ResumeSheet)를 그대로 제출
-  | 'RESUME_FILE'  // 개별 이력서 — 학생이 따로 만든 파일
+  | 'PORTFOLIO'    // 드림캐치 포트폴리오 — 학생별 영속 provider 미착수(DB.md §8-3 #4)
+  | 'RESUME_FILE'  // 개별 이력서 파일 — 서버 볼륨에 보관, 권한 확인 후 스트리밍
 
 export const APPLY_ATTACHMENT_KINDS: ApplyAttachmentKind[] = ['PORTFOLIO', 'RESUME_FILE']
 
@@ -126,96 +104,100 @@ export const APPLY_ATTACHMENT_LEGACY: Record<ApplyAttachmentKind, string | null>
   RESUME_FILE: null,
 }
 
+/** 제출 서류가 실제로 열리는가. 이름만 남은 과거 행은 MISSING_BINARY 다. */
+export type AttachmentState = 'AVAILABLE' | 'MISSING_BINARY' | 'DEPENDENCY_UNAVAILABLE' | 'UNKNOWN'
+
+// ── 제출 회차 ────────────────────────────────────────────────────────────────
+
 /**
- * 지원에 붙은 서류 1건.
- *
- * ★ `PORTFOLIO` 는 파일이 아니라 **참조**다. 포트폴리오 본문을 여기 복사하지 않는다 —
- *   학생이 이력서를 고치면 상담사가 보는 것도 같이 바뀌어야 하고, 단일소스는
- *   `src_v2/data/portfolio` 하나다(CLAUDE.md 규칙 3 · 12조).
- * ★ `RESUME_FILE` 은 파일명만 남긴다. 백엔드가 없어 바이너리를 보관할 곳이 없다.
- *   실서비스 전환 시 `SY_FILE` 다형 참조(SPEC.md §7-11)로 `FileRef` 를 달면 된다.
+ * 한 번의 제출. 신청 시점 학적 스냅샷을 함께 저장한다(CLAUDE.md 규칙 2).
+ * 스냅샷은 **서버가** 현재 학사 데이터에서 만든다 — 화면이 준 신원은 쓰지 않는다.
+ * 대학·학과는 (단대코드, 학과코드) 쌍으로 해석한다 — 학과명 매칭 금지(규칙 7).
  */
-export interface ApplyAttachment {
-  kind: ApplyAttachmentKind
-  /** 파일명 스냅샷 — `RESUME_FILE` 일 때만 채운다. */
-  fileName?: string
+export interface JobApplicationAttempt {
+  attemptNo: number
+  submittedAt: string
+  studentNo: string | null
+  studentName: string | null
+  studentMajor: string | null
+  grade: number | null
+  enrollmentStatus: string | null
+  collegeCode: string | null
+  collegeLabel: string | null
+  deptCode: string | null
+  deptLabel: string | null
+  studentType: string | null
+  attachmentKind: ApplyAttachmentKind | null
+  attachmentState: AttachmentState
+  attachmentFileId: string | null
+  attachmentName: string | null
+  legacyFileName: string | null
 }
 
 // ── 지원 1건 ─────────────────────────────────────────────────────────────────
 
-/**
- * 지원 1건. 학생 1명 × 공고 1건 = 최대 1행(중복 지원 거부는 로더가 전담 — 규칙 5).
- *
- * 학생 신원은 **신청 시점 스냅샷**을 함께 저장한다(CLAUDE.md 규칙 2).
- * 현행 `EP_PRM_APP`·`CON_PROF_INFO` 가 같은 패턴이고, 학과 개편·학적 변동 뒤에도
- * 과거 지원 이력이 깨지지 않게 하는 근거다(DB.md §3-5 ⑦).
- */
+/** 지원 1건. 학생 1명 × 공고 1건 = 최대 1행(중복은 서버가 409로 거절한다). */
 export interface JobApplication {
-  /** 지원 id (japp_ prefix) */
   id: string
-  /** 대상 공고 id (JobPosting.id) — 교내 추천채용만 */
+  /** 대상 공고 id — 교내 추천채용만 */
   jobId: string
-  /** 학생 id (StudentData.id = INTG_UID) */
+  /** 학생 id (person.alias) */
   studentId: string
-  // ── 신청 시점 스냅샷 ──
-  snapStudentNo: string
-  snapName: string
-  snapMajor: string
-  snapGrade: number
-  snapEnrollStatus: EnrollmentStatus
-  /** 지원 일시 (ISO 8601) */
-  appliedAt: string
-  /**
-   * 현재 올라가 있는 전형 단계 id. APPLIED(첫 판정 전)면 없다.
-   * 이력이 아니라 **현재 위치**다 — 경로는 JobApplicationEvent 가 들고 있다.
-   */
-  currentStageId?: string
-  /** 지원 건 상태 */
+  studentName: string | null
   status: ApplicationStatus
-  /**
-   * 제출 서류 — 신청 시점 스냅샷(규칙 2).
-   * 신설 필드라 **선택**이다. 첨부 도입 전에 쌓인 지원 건은 값이 없으므로
-   * 화면은 반드시 폴백을 둔다(SPEC.md §5 #2). 새 지원은 로더가 강제한다.
-   */
-  attachment?: ApplyAttachment
-  /** 지원 취소 일시 (ISO 8601) — status='CANCELED' 일 때만 */
-  canceledAt?: string
+  /** 현재 올라가 있는 전형 단계 id. APPLIED(첫 판정 전)면 null */
+  currentStageId: string | null
+  currentStageName: string | null
+  currentAttemptNo: number
+  appliedAt: string
+  canceledAt: string | null
+  version: number
+  lastEventAt: string | null
+  /** 현재 회차의 제출 내용 */
+  currentAttempt: JobApplicationAttempt | null
+  /** 상세 조회에서만 실린다 */
+  posting?: { id: string; company: string; role: string; version: number }
+  stages?: HiringStage[]
 }
 
 // ── 처리 이력 (append-only) ──────────────────────────────────────────────────
 
-/** 지원 건에 일어난 변화의 종류 */
+/**
+ * 지원 건에 일어난 변화의 종류. 값은 코드다 — 한글을 값으로 쓰지 않는다.
+ * 현행 한글 kind 와의 대응: 지원→APPLY, 단계이동→ADVANCE, 탈락→REJECT,
+ * 최종합격→PASS, 지원취소→CANCEL. 재지원의 두 번째 '지원'은 REAPPLY 다.
+ */
 export type JobApplicationEventKind =
-  | '지원'       // 학생이 지원
-  | '단계이동'   // 다음 전형 단계로 올림
-  | '탈락'       // 해당 단계에서 탈락 처리
-  | '최종합격'   // 마지막 단계 통과
-  | '지원취소'   // 학생이 취소
+  'APPLY' | 'REAPPLY' | 'ADVANCE' | 'REJECT' | 'PASS' | 'CANCEL' | 'IMPORT'
+
+export const APPLICATION_EVENT_LABEL: Record<JobApplicationEventKind, string> = {
+  APPLY: '지원',
+  REAPPLY: '재지원',
+  ADVANCE: '단계이동',
+  REJECT: '탈락',
+  PASS: '최종합격',
+  CANCEL: '지원취소',
+  IMPORT: '이관',
+}
 
 export interface JobApplicationEvent {
-  /** 이벤트 id (jae_ prefix) */
   id: string
-  /** 대상 지원 id */
-  applicationId: string
-  jobId: string
-  studentId: string
-  kind: JobApplicationEventKind
-  /** 단계이동·탈락 — 이전 단계 id */
-  fromStageId?: string
-  /** 단계이동 — 이후 단계 id */
-  toStageId?: string
+  /** 지원 건 안에서 단조 증가하는 순번 */
+  seq: number
+  attemptNo: number
+  action: JobApplicationEventKind
+  fromStatus: ApplicationStatus | null
+  toStatus: ApplicationStatus | null
+  fromStageId: string | null
+  toStageId: string | null
   /**
-   * 단계명 스냅샷. 단계는 상담사가 나중에 이름을 바꾸거나 지울 수 있으므로
+   * 단계명 스냅샷. 단계는 나중에 이름이 바뀌거나 지워질 수 있으므로
    * id 만 남기면 과거 이력이 "알 수 없는 단계"가 된다.
    */
-  fromStageName?: string
-  toStageName?: string
-  /** 사유 — 탈락 시 권장, 그 외 선택 */
-  reason?: string
-  /** 처리자 id — 학생 지원/취소는 학생 본인 id */
-  by: string
+  fromStageName: string | null
+  toStageName: string | null
+  reason: string
   /** 처리자 이름 스냅샷 */
-  byName: string
-  /** 처리 일시 ISO */
+  byName: string | null
   at: string
 }

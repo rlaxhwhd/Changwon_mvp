@@ -1,3 +1,4 @@
+import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useMemo, useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
@@ -26,24 +27,8 @@ const days: Day[] = getCounselWeek()
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
-// 데모 예약 완료 슬롯 — 기본(첫) 상담사에 대해서만 표시(상담사 id는 단일소스에서 파생).
-const defaultCounselorId = counselors[0]?.id ?? ''
-const reservedSlots = new Set([
-  `${defaultCounselorId}-mon-10:00`,
-  `${defaultCounselorId}-mon-13:00`,
-  `${defaultCounselorId}-tue-09:00`,
-  `${defaultCounselorId}-tue-15:00`,
-  `${defaultCounselorId}-wed-12:00`,
-  `${defaultCounselorId}-wed-16:00`,
-  `${defaultCounselorId}-thu-11:00`,
-  `${defaultCounselorId}-thu-14:00`,
-  `${defaultCounselorId}-fri-12:00`,
-  `${defaultCounselorId}-fri-17:00`,
-])
-
 function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
-  const start = ((dayIndex * times.length + timeIndex) * 3) % counselors.length
-  return Array.from({ length: 3 }, (_, index) => counselors[(start + index) % counselors.length])
+  return counselors.filter(c => slotAvailable(c.id, days[dayIndex].iso, times[timeIndex]))
 }
 
 export default function PsychCounsel() {
@@ -72,7 +57,7 @@ export default function PsychCounsel() {
     const dayIndex = days.findIndex(day => day.key === selectedSlot.day.key)
     const timeIndex = times.indexOf(selectedSlot.time)
     return (slotCounselors[dayIndex]?.[timeIndex] ?? []).filter(counselor =>
-      !reservedSlots.has(`${counselor.id}-${selectedSlot.day.key}-${selectedSlot.time}`),
+      slotAvailable(counselor.id, selectedSlot.day.iso, selectedSlot.time),
     )
   }, [selectedSlot, slotCounselors])
 
@@ -93,7 +78,8 @@ export default function PsychCounsel() {
 
   const getStatus = (dayKey: string, time: string): SlotStatus => {
     if (selectedSlot?.day.key === dayKey && selectedSlot.time === time) return 'selected'
-    if (reservedSlots.has(`${selectedCounselor}-${dayKey}-${time}`)) return 'reserved'
+    const day = days.find(d => d.key === dayKey)!
+    if (!counselors.some(c => slotAvailable(c.id, day.iso, time))) return 'reserved'
     return 'available'
   }
 
@@ -259,8 +245,8 @@ export default function PsychCounsel() {
         time={selectedSlot?.time ?? ''}
         room="학생생활관 1층 심리상담센터"
         phone="055-213-2025"
-        onSubmit={purpose => {
-          submitCounselRequest({
+        onSubmit={async purpose => {
+          await submitCounselRequest({
             type: '심리',
             purpose,
             counselorId: activeCounselor.id,

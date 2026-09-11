@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { getStarSummary, getAxisProgress, STAR_STATUS_LABEL, MILEAGE_PASS_MARK } from '../data/starTrack'
+import { getStarSummary, getAxisProgress, STAR_STATUS_LABEL } from '../data/starTrack'
 import type { StarAxis, StarStep, StarTrackRecord } from '../data/starTrack'
 import './StarRoadmapCard.css'
 
@@ -23,15 +23,15 @@ export interface StarRoadmapCardProps {
 }
 
 /**
- * 「이수 기준까지」 — 마일리지와 필수 항목은 **둘 다** 채워야 인증이 난다.
- * 마일리지를 넘겨도 필수가 남으면 "0점"이 아니라 남은 필수를 말해야 한다.
+ * 「남은 필수 항목」 — 이수·장학 기준은 아직 확정되지 않았다(DB.md #29·#30).
+ * 그래서 합격 여부를 말하지 않고, 이미 기록된 사실(남은 필수 항목 수)만 말한다.
+ * 잠긴 값을 0점이나 탈락으로 바꾸지 않는다.
  */
 function passGoal(summary: ReturnType<typeof getStarSummary>): { value: string; sub: string } {
-  if (summary.passed) return { value: '기준 충족', sub: '인증 신청 가능' }
-  if (summary.mileage < MILEAGE_PASS_MARK) {
-    return { value: `마일리지 ${MILEAGE_PASS_MARK - summary.mileage}점`, sub: `필수 항목 ${summary.blockers.length}건 포함` }
+  if (summary.blockers.length === 0) {
+    return { value: '필수 항목 완료', sub: '이수 기준은 확정 후 안내됩니다' }
   }
-  return { value: `필수 ${summary.blockers.length}건`, sub: `마일리지 ${MILEAGE_PASS_MARK}점은 충족` }
+  return { value: `필수 ${summary.blockers.length}건`, sub: `누적 마일리지 ${summary.mileage}점` }
 }
 
 export default function StarRoadmapCard({ record, title, note, axisLinks }: StarRoadmapCardProps) {

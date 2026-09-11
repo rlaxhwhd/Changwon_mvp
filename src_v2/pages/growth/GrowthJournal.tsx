@@ -1,7 +1,9 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { loadJournalEntries, saveJournalEntries, type Category, type Entry } from '../../data/growthJournal'
+import { CATEGORIES, CATEGORY_LABEL, loadJournalEntries, setJournalBookmark,
+         type Category, type Entry } from '../../data/growthJournal'
 import { getActiveStudentId } from '../../data/students'
+import { useGrowth } from '../../../shared/useRoadmapStore'
 import './GrowthJournal.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -26,13 +28,18 @@ const CTA_STEPS = [
   { icon: 'fa-trophy',     label: '4. 나만의 스토리 완성!', desc: '진정성 있는 나만의 스토리로 면접에서 빛을 발해요' },
 ]
 
+// 분류는 코드다. 한글은 표시용 라벨이며 값 자체가 아니다(CLAUDE.md 4조).
 const CAT_STYLE: Record<Category, { bg: string; color: string }> = {
-  '아르바이트': { bg: '#F0F9FF', color: '#0284C7' },
-  '팀프로젝트': { bg: 'var(--color-primary-bg)', color: 'var(--color-primary)' },
-  '기타 활동':  { bg: '#F0FDF4', color: '#16A34A' },
+  PARTTIME: { bg: '#F0F9FF', color: '#0284C7' },
+  TEAM_PROJECT: { bg: 'var(--color-primary-bg)', color: 'var(--color-primary)' },
+  ETC: { bg: '#F0FDF4', color: '#16A34A' },
 }
 
-const TABS = ['전체', '아르바이트', '팀프로젝트', '기타 활동'] as const
+const ALL = 'ALL'
+const TABS: { key: string; label: string }[] = [
+  { key: ALL, label: '전체' },
+  ...CATEGORIES.map(code => ({ key: code as string, label: CATEGORY_LABEL[code] })),
+]
 
 const PAGE_SIZE = 5
 
@@ -69,14 +76,17 @@ export default function GrowthJournal() {
   usePageHead('성장경험일지', '아르바이트·팀프로젝트·동아리 활동에서 겪은 일을 기록해 두면 자기소개서 작성에 활용할 수 있어요.')
   const navigate = useNavigate()
   const studentId = getActiveStudentId()
-  const [entries, setEntries] = useState<Entry[]>(() => loadJournalEntries(studentId))
-  const [activeTab, setActiveTab] = useState<string>('전체')
+  // 서버가 정본이다 — 저장 뒤 스토어가 다시 읽어 발행하면 그때 갱신된다.
+  const revision = useGrowth(studentId)
+  const entries: Entry[] = useMemo(() => loadJournalEntries(studentId), [studentId, revision])
+  const [activeTab, setActiveTab] = useState<string>(ALL)
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
-  const [expandedId, setExpandedId] = useState<number | null>(null)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [error, setError] = useState('')
 
   const filtered = entries.filter(e => {
-    if (activeTab !== '전체' && e.category !== activeTab) return false
+    if (activeTab !== ALL && e.category !== activeTab) return false
     if (query && !e.title.includes(query) && !e.desc.includes(query)) return false
     return true
   })
@@ -90,14 +100,15 @@ export default function GrowthJournal() {
   const total = entries.length
   const resumePct = total > 0 ? Math.round(resumeUsed / total * 100) : 0
 
-  const toggleBookmark = (id: number) =>
-    setEntries(prev => {
-      const next = prev.map(e => e.id === id ? { ...e, bookmarked: !e.bookmarked } : e)
-      saveJournalEntries(studentId, next)
-      return next
-    })
+  const toggleBookmark = (id: string) => {
+    const entry = entries.find(e => e.id === id)
+    if (!entry) return
+    setJournalBookmark(studentId, id, !entry.bookmarked)
+      .then(() => setError(''))
+      .catch(() => setError('북마크를 저장하지 못했습니다. 다시 시도해 주세요.'))
+  }
 
-  const toggleExpanded = (id: number) =>
+  const toggleExpanded = (id: string) =>
     setExpandedId(prev => prev === id ? null : id)
 
   return (
@@ -131,21 +142,21 @@ export default function GrowthJournal() {
               <i className="fa-solid fa-bag-shopping" style={{ color: 'var(--color-warning)' }} />
               아르바이트
             </span>
-            <span className="gj-stat-val">{entries.filter(e => e.category === '아르바이트').length} <span className="gj-stat-unit">건</span></span>
+            <span className="gj-stat-val">{entries.filter(e => e.category === 'PARTTIME').length} <span className="gj-stat-unit">건</span></span>
           </div>
           <div className="gj-stat">
             <span className="gj-stat-label">
               <i className="fa-solid fa-people-group" style={{ color: 'var(--color-primary)' }} />
               팀프로젝트
             </span>
-            <span className="gj-stat-val">{entries.filter(e => e.category === '팀프로젝트').length} <span className="gj-stat-unit">건</span></span>
+            <span className="gj-stat-val">{entries.filter(e => e.category === 'TEAM_PROJECT').length} <span className="gj-stat-unit">건</span></span>
           </div>
           <div className="gj-stat">
             <span className="gj-stat-label">
               <i className="fa-solid fa-star" style={{ color: 'var(--color-warning)' }} />
               기타 활동
             </span>
-            <span className="gj-stat-val">{entries.filter(e => e.category === '기타 활동').length} <span className="gj-stat-unit">건</span></span>
+            <span className="gj-stat-val">{entries.filter(e => e.category === 'ETC').length} <span className="gj-stat-unit">건</span></span>
           </div>
           <div className="gj-stat">
             <span className="gj-stat-label">
@@ -162,16 +173,17 @@ export default function GrowthJournal() {
           {/* Journal List */}
           <div className="gj-main">
 
+            {error && <p className="gj-empty" role="alert">{error}</p>}
             {/* Filter Bar */}
             <div className="gj-filter-bar">
               <div className="gj-tabs">
                 {TABS.map(tab => (
                   <button
-                    key={tab}
-                    className={`gj-tab${activeTab === tab ? ' active' : ''}`}
-                    onClick={() => { setActiveTab(tab); setPage(1) }}
+                    key={tab.key}
+                    className={`gj-tab${activeTab === tab.key ? ' active' : ''}`}
+                    onClick={() => { setActiveTab(tab.key); setPage(1) }}
                   >
-                    {tab}
+                    {tab.label}
                   </button>
                 ))}
               </div>
@@ -209,7 +221,7 @@ export default function GrowthJournal() {
                   >
                     <div className="gj-entry-top">
                       <span className="gj-badge" style={{ background: cs.bg, color: cs.color }}>
-                        {entry.category}
+                        {CATEGORY_LABEL[entry.category]}
                       </span>
                       <div className="gj-entry-acts">
                         <button

@@ -6,7 +6,7 @@
 
 /** 포털 전체 역할 — 상담사(진로/심리) + 교수 + 조교.
  *  CounselorRole('career'|'psych')은 이 집합의 부분집합이다. */
-export type StaffRole = 'career' | 'psych' | 'professor' | 'assistant'
+export type StaffRole = 'career' | 'psych' | 'professor' | 'assistant' | 'admin'
 
 /** 포털 사용자 공통 신원 — 상담사·교수·조교가 모두 만족하는 최소 형태.
  *  레이아웃(GNB·SectionSidebar)은 이 형태만 알면 되고 역할별 도메인 필드는 각자 확장한다. */
@@ -29,11 +29,13 @@ export const STAFF_ROLE_LABEL: Record<StaffRole, string> = {
   psych: '심리상담사',
   professor: '교수',
   assistant: '조교',
+  admin: '시스템관리자',
 }
 
 /** 로그인·전환 UI 그룹핑 — 상담사 2종은 한 그룹으로 묶는다 */
-export type PortalGroup = 'counselor' | 'professor' | 'assistant'
+export type PortalGroup = 'counselor' | 'professor' | 'assistant' | 'admin'
 export function portalGroup(role: StaffRole): PortalGroup {
+  if (role === 'admin') return 'admin'
   if (role === 'professor') return 'professor'
   if (role === 'assistant') return 'assistant'
   return 'counselor'

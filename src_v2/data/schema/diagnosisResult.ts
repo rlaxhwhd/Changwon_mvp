@@ -30,14 +30,17 @@ export function levelOf(tScore: number): FactorLevel {
 
 /** 요인 1개의 응시 결과 */
 export interface FactorScore {
+  factorCode?: string
   /** 요인명 — DIAGNOSIS_MODULES[].factors[].name 과 일치해야 한다 */
   name: string
   /** T점수 (평균 50 · 표준편차 10). 소수 2자리. */
   tScore: number
+  level?: FactorLevel
 }
 
 /** 검사 1회 응시의 상세 결과 */
 export interface DiagnosisResult {
+  source?: string
   /** 학생 id */
   studentId: string
   /** 검사 키 — DIAGNOSIS_MODULES[].testId ('ccore' | 'c1'~'c6') */

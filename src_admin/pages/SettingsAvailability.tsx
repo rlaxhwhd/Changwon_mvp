@@ -18,22 +18,23 @@ export default function SettingsAvailability() {
   const [weekday, setWeekday] = useState<WeekdayKey>(1)
   const [start, setStart] = useState('14:00')
   const [end, setEnd] = useState('17:00')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
 
   const valid = start !== '' && end !== '' && start < end
 
-  const handleAdd = () => {
-    if (!valid) return
-    addSlot(counselorId, weekday, start, end)
-    window.location.reload()
+  const run = async (action: () => Promise<unknown>) => {
+    if (saving) return
+    setSaving(true); setError('')
+    try { await action(); window.location.reload() }
+    catch (e) { setError((e as Error).message); setSaving(false) }
   }
-
-  const handleRemove = (slotId: string) => {
-    removeSlot(counselorId, slotId)
-    window.location.reload()
-  }
+  const handleAdd = () => { if (valid) void run(() => addSlot(counselorId, weekday, start, end)) }
+  const handleRemove = (slotId: string) => { void run(() => removeSlot(counselorId, slotId)) }
 
   return (
     <div className="admin-page">
+      {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">가능 시간대</h1>
@@ -68,7 +69,7 @@ export default function SettingsAvailability() {
             <span>종료</span>
             <input type="time" value={end} onChange={e => setEnd(e.target.value)} />
           </label>
-          <button className="admin-btn admin-btn-primary" disabled={!valid} onClick={handleAdd}>
+          <button className="admin-btn admin-btn-primary" disabled={!valid || saving} onClick={handleAdd}>
             <LuPlus /> 추가
           </button>
         </div>
@@ -103,6 +104,7 @@ export default function SettingsAvailability() {
                           type="button"
                           className="admin-avail-slot-remove"
                           aria-label="삭제"
+                          disabled={saving}
                           onClick={() => handleRemove(s.id)}
                         >
                           <LuX />

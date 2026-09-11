@@ -1,54 +1,9 @@
-// ─────────────────────────────────────────────────────────────────────────
-// 상담사별 데이터(JSON) 로더 + 전역 활성 상담사 스토어
-// students.ts 패턴 미러: JSON import → 배열 노출 → 활성 선택자 + localStorage.
-// 상담사 전환은 localStorage에 저장 후 리로드해 모든 화면에 반영한다.
-// ─────────────────────────────────────────────────────────────────────────
 import type { Counselor, CounselorRole } from './schema/counselor'
 import { canEditRoadmap, canManageJobs, canConfirmIap, handledRequestTypes } from './schema/counselor'
 import { getActiveIdRaw, setActiveId, hasActiveSession as hasSession, clearSession } from './session'
-import careerKim from './counselors/career_kim.json'
-import careerPark from './counselors/career_park.json'
-import careerChoi from './counselors/career_choi.json'
-import careerKang from './counselors/career_kang.json'
-import psychLee from './counselors/psych_lee.json'
-import psychHan from './counselors/psych_han.json'
-import psychMoon from './counselors/psych_moon.json'
-import psychYoon from './counselors/psych_yoon.json'
-
-// 로그인(역할별 첫 상담사)·기본 배정 안정성을 위해 신규 상담사는 각 역할 뒤에 append 한다.
-const BASE_COUNSELORS: Counselor[] = [
-  careerKim as Counselor,
-  careerPark as Counselor,
-  careerChoi as Counselor,
-  careerKang as Counselor,
-  psychLee as Counselor,
-  psychHan as Counselor,
-  psychMoon as Counselor,
-  psychYoon as Counselor,
-]
-
-const OVERRIDE_KEY = 'dc_counselor_overrides'
-
-/** 프로필 수정분(override)을 읽어 base JSON에 병합. 원본 JSON은 건드리지 않는다. */
-function readOverrides(): Record<string, Partial<Counselor>> {
-  try {
-    const raw = localStorage.getItem(OVERRIDE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (parsed && typeof parsed === 'object') return parsed as Record<string, Partial<Counselor>>
-    }
-  } catch {
-    /* 폴백: override 없음 */
-  }
-  return {}
-}
-
-/** base JSON + localStorage override 병합 목록. 화면은 이 목록을 구독한다. */
-export const COUNSELORS: Counselor[] = (() => {
-  const overrides = readOverrides()
-  return BASE_COUNSELORS.map(c => ({ ...c, ...overrides[c.id] }))
-})()
-
+import { counselorProfiles, loadCounselorProfiles } from '../../shared/counselOperationsStore'
+import { api } from '../../shared/api'
+export const COUNSELORS: Counselor[] = counselorProfiles
 export function getActiveCounselorId(): string {
   return getActiveIdRaw() ?? COUNSELORS[0].id
 }
@@ -89,21 +44,16 @@ export function getCounselorById(id: string | undefined): Counselor | undefined 
   return id ? COUNSELORS.find(c => c.id === id) : undefined
 }
 
-/**
- * 활성 상담사 프로필 수정분을 저장한다(설정 > 내 프로필).
- * 원본 JSON은 유지하고 override 레이어만 갱신 후 리로드해 전 화면에 반영한다.
- */
-export function updateCounselorProfile(id: string, patch: Partial<Counselor>): void {
-  try {
-    const overrides = readOverrides()
-    overrides[id] = { ...overrides[id], ...patch }
-    localStorage.setItem(OVERRIDE_KEY, JSON.stringify(overrides))
-  } catch {
-    /* 데모 범위 — 저장 실패 무시 */
-  }
-  window.location.reload()
-}
 
-// 역할 권한 헬퍼 재노출 (화면이 스키마를 직접 import하지 않아도 되게)
+export async function updateCounselorProfile(id: string, patch: Partial<Counselor>): Promise<void> {
+  const current = counselorProfiles.find(c => c.id === id)
+  if (!current) throw new Error('프로필을 다시 조회해 주세요.')
+  await api(`/counselor-profiles/${encodeURIComponent(id)}`, {
+    method: 'PUT', body: JSON.stringify({ expectedVersion: current.version, name: patch.name ?? current.name,
+      dept: patch.dept ?? current.dept, scope: patch.scope ?? current.scope,
+      email: patch.email ?? '', officeHours: patch.officeHours ?? '' }),
+  })
+  await loadCounselorProfiles()
+}
 export { canEditRoadmap, canManageJobs, canConfirmIap, handledRequestTypes }
 export type { Counselor, CounselorRole }

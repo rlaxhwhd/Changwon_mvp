@@ -79,7 +79,7 @@ export default function StarTrack() {
       kind: 'program', label: '비교과 프로그램',
       value: String(linked.programDone), unit: `/ ${linked.programTotal}단계`,
       foot: `누적 마일리지 ${summary.mileage}점`,
-      badge: summary.nextTier ? `다음 ${summary.nextTier.gap}점` : '최고 구간',
+      badge: summary.metricsStatus === 'POLICY_PENDING' ? '기준 미확정' : undefined,
       pct: pct(linked.programDone, linked.programTotal),
     },
   ]
@@ -143,7 +143,10 @@ export default function StarTrack() {
           <h2>C-PASS 현황</h2>
           <ol className="st-stages">
             {CPASS_STAGES.map((stage, i) => {
-              const state = i < summary.stageIndex ? 'done' : i === summary.stageIndex ? 'current' : 'locked'
+              // 인증 단계 기준이 미확정이라 서버가 단계를 판정하지 않는다(DB.md #30).
+              // 임의 판정 대신 전부 '대기'로 두고 아래에 사유를 밝힌다.
+              const state = summary.stageIndex === null ? 'locked'
+                : i < summary.stageIndex ? 'done' : i === summary.stageIndex ? 'current' : 'locked'
               return (
                 <li key={stage.id} className={`is-${state}`}>
                   <span className="st-stage-dot">
@@ -158,9 +161,9 @@ export default function StarTrack() {
             })}
           </ol>
           <p className="st-stage-note">
-            {summary.nextTier
-              ? <>다음 구간 <b>{summary.nextTier.min}점</b> 도달 시 장학금 {summary.nextTier.award}만원</>
-              : <>최고 구간에 도달했습니다</>}
+            {summary.metricsStatus === 'POLICY_PENDING'
+              ? <>인증 단계·장학금 기준이 아직 확정되지 않았습니다. 확정되면 이 자리에 표시됩니다.</>
+              : <>다음 구간 정보를 불러오지 못했습니다</>}
           </p>
         </section>
 

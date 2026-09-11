@@ -50,22 +50,32 @@ function JournalForm({
   const [comment, setComment] = useState(record?.comment ?? '')
   const [followUp, setFollowUp] = useState(record?.followUp ?? '')
   const [justSaved, setJustSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   // 제출 조건은 상담 진행 화면(CounselSession)과 같다 — 소견과 공개 코멘트 둘 다 필요.
   const canSubmit = summary.trim() !== '' && comment.trim() !== ''
 
-  const save = (status: RecordStatus) => {
+  const save = async (status: RecordStatus) => {
+    if (saving) return
+    setSaving(true)
+    setSaveError('')
+    try {
     const next = buildRecord(source, { summary, comment, followUp }, status, current)
-    upsertRecord(next)
-    setCurrent(next)
+    const saved = await upsertRecord(next)
+    setCurrent(saved)
     onSaved()
     if (status === '완료') { onClose(); return }
     setJustSaved(true)
     window.setTimeout(() => setJustSaved(false), 2000)
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : '상담일지를 저장하지 못했습니다.')
+    } finally { setSaving(false) }
   }
 
   return (
     <AdminModal title={`상담일지 — ${row.studentName}`} size="lg" onClose={onClose}>
+      {saveError && <p role="alert">{saveError}</p>}
       <div className="admin-editor-hint">
         <LuInfo />
         <span>

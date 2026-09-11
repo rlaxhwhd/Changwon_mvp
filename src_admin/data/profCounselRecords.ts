@@ -1,10 +1,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 전담교수 상담기록 로더 — 현행 DB CON_PROF_INFO 대응 단일소스.
-// localStorage 'dc_prof_counsel_records'와 'dc_advisor_nudges'를 우선하고 seed를 폴백한다.
-// DB 전환 시 이 로더만 CON_PROF_INFO 및 독려 이력 API로 교체하며, 화면은 이 모듈만 사용한다.
-// 상담기록과 독려 이력은 append-only이며 기존 원본을 수정·삭제하지 말 것.
+// 전담교수 상담기록 로더 — 정본은 서버(dc.counsel_request type=PROF + dc.counsel_record).
+// 교수가 신청 없이 남기는 기록은 서버가 신청(DONE)+기록을 한 트랜잭션으로 만든다(0003 D3,
+// 현행 CON_PROF_INFO 1행 구조 계승). 독려는 기록이 아니라 알림(dc.notification)이다.
+// 읽기는 부팅 때 적재된 상담기록 스토어(shared/counselStore)를 교수상담만 투영한다.
 // ─────────────────────────────────────────────────────────────────────────────
-import seed from './profCounselRecords.seed.json'
+import { counselRecords, loadCounselRecords } from '../../shared/counselStore'
+import { api } from '../../shared/api'
 import { getActiveAssignByStudent } from './advisorAssigns'
 import { getFullRoster } from './studentRoster'
 import type { EnrollStatus } from './studentRoster'
@@ -18,84 +19,71 @@ import type {
   ProfCounselRecord,
 } from './schema/profCounselRecord'
 import type { CounselMethod } from './schema/counselRequest'
-import { getProfessorById } from './professors'
-import { studentLiteOf } from './studentRoster'
 
-const STORAGE_KEY = 'dc_prof_counsel_records'
-const NUDGE_KEY = 'dc_advisor_nudges'
-const SEED = seed as ProfCounselRecord[]
-
-function readList<T>(key: string, fallback: T[]): T[] {
-  try {
-    const raw = localStorage.getItem(key)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed as T[]
-    }
-  } catch { /* fallback */ }
-  return fallback
-}
-function persist<T>(key: string, list: T[]): void {
-  try { localStorage.setItem(key, JSON.stringify(list)) } catch { /* demo storage unavailable */ }
+/** 서버 상담기록 DTO 에 교수상담 라운드가 더한 필드. */
+interface ProfRecordDto {
+  id: string; requestId: string; studentId: string; studentName: string; studentMajor: string
+  studentNo?: string; studentGrade?: number; type: string; method: CounselMethod; date: string
+  counselorId: string; counselorName: string; summary: string; createdAt: string
+  categoryCode?: string | null; origin?: string
 }
 
+function toProfRecord(r: ProfRecordDto): ProfCounselRecord {
+  return {
+    id: r.id,
+    studentId: r.studentId,
+    professorId: r.counselorId,
+    professorName: r.counselorName,
+    categoryCode: (r.categoryCode ?? 'ETC') as ProfCounselCategoryCode,
+    method: r.method,
+    date: r.date,
+    summary: r.summary,
+    requestId: r.origin === 'PROF_RECORD' ? undefined : r.requestId,
+    createdAt: r.createdAt,
+    snapshot: { studentNo: r.studentNo ?? '', name: r.studentName, major: r.studentMajor, grade: r.studentGrade ?? 0 },
+  }
+}
+
+/** 교수상담 기록 전량(인가 범위) — 부팅 스토어 투영. */
 export function getProfCounselRecords(): ProfCounselRecord[] {
-  return readList(STORAGE_KEY, SEED)
+  return (counselRecords() as unknown as ProfRecordDto[]).filter(r => r.type === '교수').map(toProfRecord)
 }
-/** 발생 시점 학생 스냅샷을 보존하는 append-only 기록이다. */
-export function addProfCounselRecord(input: {
+
+/** 교수 발의 기록 — 서버가 신청(DONE)+기록을 함께 만든다. 저장 뒤 스토어를 다시 읽는다. */
+export async function addProfCounselRecord(input: {
   studentId: string
   professorId: string
   categoryCode: ProfCounselCategoryCode
-  /** 상담 채널 — 비대면=온라인 · 대면=오프라인. 연계 건은 신청 방식을 그대로 계승한다. */
   method: CounselMethod
   date: string
   summary: string
-  requestId?: string
-  snapshot?: { studentNo: string; name: string; major: string; grade: number }
-}): ProfCounselRecord {
-  const student = studentLiteOf(input.studentId)
-  const professor = getProfessorById(input.professorId)
-  if (!professor) throw new Error('교수 정보를 찾을 수 없습니다.')
-  const snapshot = student
-    ? {
-        studentNo: student.studentNo,
-        name: student.name,
-        major: student.major,
-        grade: student.grade,
-      }
-    : input.snapshot
-  // 로스터 밖 학생(신청 owner)은 호출부가 신청 행 스냅샷을 넘겨야 한다.
-  if (!snapshot) throw new Error('학생 정보를 찾을 수 없습니다.')
-  const record: ProfCounselRecord = {
-    id: `pcr_${Date.now()}`,
-    ...input,
-    professorName: professor.name,
-    createdAt: new Date().toISOString(),
-    snapshot,
-  }
-  persist(STORAGE_KEY, [...getProfCounselRecords(), record])
-  return record
+}): Promise<ProfCounselRecord> {
+  const saved = await api<ProfRecordDto>('/counsel-records/professor', {
+    method: 'POST',
+    headers: { 'Idempotency-Key': crypto.randomUUID() },
+    body: JSON.stringify({ studentId: input.studentId, categoryCode: input.categoryCode, method: input.method,
+                           date: input.date, summary: input.summary }),
+  })
+  await loadCounselRecords()
+  return toProfRecord(saved)
 }
+
+let nudges = new Map<string, AdvisorNudge>()
+
+/** 부팅 적재 — 담당 범위 학생별 최근 독려 시각. */
+export async function loadAdvisorNudges(): Promise<void> {
+  const result = await api<{ items: { studentId: string; sentAt: string }[] }>('/advisor-nudges')
+  nudges = new Map(result.items.map(n => [n.studentId, { id: n.studentId, studentId: n.studentId, professorId: '', by: '', sentAt: n.sentAt }]))
+}
+
 export function getNudgesByStudent(): Map<string, AdvisorNudge> {
-  const latest = new Map<string, AdvisorNudge>()
-  for (const nudge of readList<AdvisorNudge>(NUDGE_KEY, [])) {
-    if (!latest.get(nudge.studentId) || latest.get(nudge.studentId)!.sentAt < nudge.sentAt) {
-      latest.set(nudge.studentId, nudge)
-    }
-  }
-  return latest
+  return nudges
 }
-export function sendNudge(
-  input: { studentId: string; professorId: string; by: string },
-): AdvisorNudge {
-  const nudge: AdvisorNudge = {
-    id: `ndg_${Date.now()}`,
-    ...input,
-    sentAt: new Date().toISOString(),
-  }
-  persist(NUDGE_KEY, [...readList<AdvisorNudge>(NUDGE_KEY, []), nudge])
-  return nudge
+
+export async function sendNudge(input: { studentId: string; professorId: string; by: string }): Promise<AdvisorNudge> {
+  const saved = await api<AdvisorNudge>('/advisor-nudges', { method: 'POST', body: JSON.stringify({ studentId: input.studentId }) })
+  await loadAdvisorNudges()
+  return saved
 }
 
 function professorMajor(id: string): string {

@@ -7,15 +7,20 @@
 //    캘린더/접수함에 '대기'(예약신청)로 바로 뜨고, 상담사가 확정하면 확정으로 전이된다.
 // 화면(CareerCounsel/PsychCounsel)은 submitCounselRequest 만 호출한다. localStorage 직접 접근 금지.
 // ─────────────────────────────────────────────────────────────────────────
-import { addCounselRequest, getActiveStudent } from './students'
+import { api } from '../../shared/api'
+import { storeCounselRequest, type StoredCounselRequest } from '../../shared/counselStore'
 import type { CounselMethod, CounselRequestType } from './students'
 import type { CounselIntakeAnswer } from './counselIntake'
+import type { CareTrack } from './counselTrack'
 
 export interface SubmitCounselInput {
   /** 상담 유형 — 호출 페이지가 지정 (CareerCounsel → 진로취업 / PsychCounsel → 심리) */
   type: CounselRequestType
+  /** 진로취업 상담의 트랙. 심리 상담은 넘기지 않는다(트랙 축이 없는 상담이다). */
+  careTrack?: CareTrack
   /** 상담 목적 (CounselReserveModal 입력값) */
   purpose: string
+  topicCode?: string
   /** 학생이 고른 상담사 id (counselors 단일소스 Counselor.id) — 그 상담사에게 배정된다. */
   counselorId: string
   /** 학생이 고른 희망일 ISO (YYYY-MM-DD, Day.iso) — slot.date */
@@ -55,38 +60,35 @@ function oneHourLater(hhmm: string): string {
  * 학생이 고른 상담사(assignedCounselorId)와 슬롯(slot)을 그대로 기록해, 그 상담사
  * 캘린더·접수함에 '대기'(예약신청)로 노출되게 한다. 확정은 상담사가 수행한다.
  */
-export function submitCounselRequest(input: SubmitCounselInput): void {
-  const student = getActiveStudent()
+const pendingKeys = new Map<string, string>()
+async function createRequest(body: object): Promise<void> {
+  const payload = JSON.stringify(body)
+  const key = pendingKeys.get(payload) ?? crypto.randomUUID()
+  pendingKeys.set(payload, key)
+  const saved = await api<StoredCounselRequest>('/counsel-requests', {
+    method: 'POST', headers: { 'Idempotency-Key': key }, body: payload,
+  })
+  pendingKeys.delete(payload)
+  storeCounselRequest(saved)
+  const { loadPublicSlots } = await import('../../shared/counselOperationsStore')
+  await loadPublicSlots()
+}
 
-  addCounselRequest(student.id, {
-    id: `req_${Date.now()}`,
-    type: input.type,
-    status: '대기',
-    method: '대면',
-    topic: input.purpose,
-    requestedAt: new Date().toISOString(),
+export async function submitCounselRequest(input: SubmitCounselInput): Promise<void> {
+  await createRequest({
+    type: input.type, careTrack: input.careTrack, method: '대면', topic: input.purpose, topicCode: input.topicCode,
     assignedCounselorId: input.counselorId,
-    slot: input.slotDate
-      ? { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place }
-      : undefined,
-    // 답변이 없는 유형은 필드를 만들지 않는다 — 빈 배열을 남기면 '답했는데 비었다'와 구분이 안 된다.
-    intake: input.intake?.length ? input.intake : undefined,
+    slot: { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place ?? '' },
+    intake: input.intake ?? [],
   })
 }
 
-/** 활성 학생 owner 스토어에 교수상담 신청을 append한다. */
-export function submitProfessorCounselRequest(input: SubmitProfCounselInput): void {
-  const student = getActiveStudent()
-  addCounselRequest(student.id, {
-    id: `preq_${Date.now()}`,
-    type: '교수',
-    professorId: input.professorId,
-    status: '대기',
-    method: input.method,
-    topic: input.topic,
-    requestedAt: new Date().toISOString(),
+export async function submitProfessorCounselRequest(input: SubmitProfCounselInput): Promise<void> {
+  await createRequest({
+    type: '교수', typeCode: 'PROF', method: input.method, topic: input.topic,
+    assignedProfessorId: input.professorId,
     slot: input.slotDate && input.time
-      ? { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place }
-      : undefined,
+      ? { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place ?? '' }
+      : null,
   })
 }

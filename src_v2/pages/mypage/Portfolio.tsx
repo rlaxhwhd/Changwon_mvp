@@ -1,22 +1,36 @@
 import { useMemo, useState } from 'react'
 import Modal from '../../components/Modal'
 import ResumeSheet from '../../components/ResumeSheet'
-import { getActiveStudent } from '../../data/students'
-// 형과 seed 는 데이터층 단일소스다 — 교직원 학생 상세도 같은 값을 읽는다.
-import {
-  buildProfile, LEVEL_LABELS,
-  INITIAL_SKILLS, INITIAL_CERTS, INITIAL_LANGS, INITIAL_AWARDS, INITIAL_PROJECTS, INITIAL_RESUMES,
-} from '../../data/portfolio'
+import { getActiveStudentId } from '../../data/students'
+// 정본은 서버다 — 교직원 학생 상세도 **같은 projection** 을 읽는다.
+// 예전의 INITIAL_* 는 전 학생 공통 상수였고 buildProfile 은 연락처를 합성했다. 둘 다 걷었다.
+import { LEVEL_LABELS, toPortfolioView } from '../../data/portfolio'
 import type { ProfileData, Skill, Cert, Language, Award, Project, Resume } from '../../data/portfolio'
+import { createGrowthEntry, deleteGrowthEntry, growthEntries, loadPortfolio,
+         saveGrowthProfile } from '../../../shared/growthStore'
+import type { PortfolioDTO } from '../../../shared/growthStore'
+import { useGrowth } from '../../../shared/useRoadmapStore'
+import { useEffect } from 'react'
 import './Portfolio.css'
 import { usePageHead } from '../../components/PageCrumb'
 
 type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'resume'
 
+/** 아직 읽기 전이거나 아무것도 쓰지 않은 상태. 빈 값은 빈 값이다 — 합성하지 않는다. */
+const EMPTY_PROFILE: ProfileData = {
+  name: '', studentId: '', school: '국립창원대학교', dept: '', grade: '',
+  email: '', phone: '', gpa: '', major: '', intro: '',
+}
+
 interface TabDef {
   id: TabId
   label: string
   icon: string
+}
+
+/** 스킬 분류 — DB 코드다(GROWTH_SKILL_CATEGORY). 한글은 표시용 라벨이다. */
+const SKILL_CATEGORY_LABEL: Record<string, string> = {
+  LANGUAGE: '언어', FRAMEWORK: '프레임워크', TOOL: '도구', DATABASE: 'DB', DESIGN: '디자인',
 }
 
 const TABS: TabDef[] = [
@@ -32,19 +46,38 @@ const TABS: TabDef[] = [
 export default function Portfolio() {
   usePageHead('포트폴리오', '스킬·자격증·수상·자소서·이력서를 한 곳에서 관리하고 PDF로 내보낼 수 있어요.')
   const [tab, setTab] = useState<TabId>('profile')
-  const [profile, setProfile] = useState<ProfileData>(() => buildProfile(getActiveStudent()))
-  const [skills, setSkills] = useState<Skill[]>(INITIAL_SKILLS)
-  const [certs] = useState<Cert[]>(INITIAL_CERTS)
-  const [langs] = useState<Language[]>(INITIAL_LANGS)
-  const [awards] = useState<Award[]>(INITIAL_AWARDS)
-  const [projects] = useState<Project[]>(INITIAL_PROJECTS)
-  const [resumes, setResumes] = useState<Resume[]>(INITIAL_RESUMES)
+  const studentId = getActiveStudentId()
+  // 성장 자료를 고치면 스토어가 서버에서 다시 읽는다 — 그때 포트폴리오도 다시 읽는다.
+  const revision = useGrowth(studentId)
+  const [dto, setDto] = useState<PortfolioDTO | null>(null)
+  const [error, setError] = useState('')
+  useEffect(() => {
+    let alive = true
+    loadPortfolio(studentId)
+      .then(next => { if (alive) { setDto(next); setError('') } })
+      .catch(() => { if (alive) setError('포트폴리오를 불러오지 못했습니다.') })
+    return () => { alive = false }
+  }, [studentId, revision])
+  const view = useMemo(() => dto && toPortfolioView(dto), [dto])
+  const profile = view?.profile ?? EMPTY_PROFILE
+  const skills = view?.skills ?? []
+  const certs = view?.certs ?? []
+  const langs = view?.languages ?? []
+  const awards = view?.awards ?? []
+  const projects = view?.projects ?? []
+  const resumes = view?.resumes ?? []
   const [addSkillOpen, setAddSkillOpen] = useState(false)
-  const [skillForm, setSkillForm] = useState<{ name: string; level: Skill['level']; category: Skill['category'] }>({
+  const [skillForm, setSkillForm] = useState<{ name: string; level: Skill['level']; category: string }>({
     name: '',
     level: 3,
-    category: '언어',
+    category: 'LANGUAGE',
   })
+
+  const setProfile = (next: ProfileData) => {
+    // 학사 유래 값(이름·학과·학점)은 여기서 고치지 않는다(CLAUDE.md 1조).
+    saveGrowthProfile(studentId, { intro: next.intro, email: next.email, phone: next.phone })
+      .catch(() => setError('프로필을 저장하지 못했습니다.'))
+  }
   const [viewResume, setViewResume] = useState<Resume | null>(null)
   const [exportToast, setExportToast] = useState(false)
 
@@ -68,17 +101,26 @@ export default function Portfolio() {
   const addSkill = () => {
     const name = skillForm.name.trim()
     if (!name) return
-    const id = 's' + Date.now()
-    setSkills(prev => [...prev, { id, name, level: skillForm.level, category: skillForm.category }])
-    setSkillForm({ name: '', level: 3, category: '언어' })
+    // ID 는 서버가 발급한다. Date.now() 로 만든 ID 는 다른 브라우저에서 충돌한다.
+    createGrowthEntry(studentId, { kind: 'SKILL', title: name, categoryCode: skillForm.category,
+                                   content: { level: skillForm.level } })
+      .catch(() => setError('스킬을 저장하지 못했습니다.'))
+    setSkillForm({ name: '', level: 3, category: 'LANGUAGE' })
     setAddSkillOpen(false)
   }
 
-  const removeSkill = (id: string) => setSkills(prev => prev.filter(s => s.id !== id))
-  const removeResume = (id: string) => setResumes(prev => prev.filter(r => r.id !== id))
+  const removeSkill = (id: string) => {
+    const row = growthEntries(studentId, 'SKILL').find(entry => entry.id === id)
+    if (row) deleteGrowthEntry(studentId, row).catch(() => setError('스킬을 삭제하지 못했습니다.'))
+  }
+
+  // 자기소개서는 채용 도메인(dc.job_resume)이 정본이다 — 여기서 지우지 않는다.
+  const removeResume = (_id: string) => setError('자기소개서는 취업지원 > 자기소개서에서 관리합니다.')
 
   return (
     <div className="pf-wrap">
+      {error && <p className="pf-error" role="alert">{error}</p>}
+
       <header className="pf-hero">
         <div className="pf-hero-actions">
           <div className="pf-completeness">
@@ -158,13 +200,11 @@ export default function Portfolio() {
             <span>분류</span>
             <select
               value={skillForm.category}
-              onChange={e => setSkillForm({ ...skillForm, category: e.target.value as Skill['category'] })}
+              onChange={e => setSkillForm({ ...skillForm, category: e.target.value })}
             >
-              <option value="언어">언어</option>
-              <option value="프레임워크">프레임워크</option>
-              <option value="도구">도구</option>
-              <option value="DB">DB</option>
-              <option value="디자인">디자인</option>
+              {Object.entries(SKILL_CATEGORY_LABEL).map(([code, label]) => (
+                <option key={code} value={code}>{label}</option>
+              ))}
             </select>
           </label>
           <label>
@@ -331,9 +371,10 @@ interface SkillsSectionProps {
 function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: SkillsSectionProps) {
   const byCategory = useMemo(() => {
     const cats: Record<string, Skill[]> = {}
-    for (const s of skills) {
-      if (!cats[s.category]) cats[s.category] = []
-      cats[s.category].push(s)
+    for (const skill of skills) {
+      const key = skill.category ?? 'ETC'
+      if (!cats[key]) cats[key] = []
+      cats[key].push(skill)
     }
     return cats
   }, [skills])

@@ -1,4 +1,5 @@
-import type { CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties } from 'react'
+import { loadStudentDiagnoses } from '../../shared/diagnosisStore'
 import { getModuleByTestId, type DiagnosisModule } from '../data/careerProcess'
 import { getDiagnosisResult, getResultRows, type DiagnosisResult, type FactorLevel } from '../data/diagnosisResults'
 import './DiagnosisResultReport.css'
@@ -16,7 +17,7 @@ import './DiagnosisResultReport.css'
 //   상담사 : .diagnosis-modal 안에 넣어 쓴다
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LEVEL_CLASS: Record<FactorLevel, string> = { 낮음: 'low', 보통: 'mid', 높음: 'high' }
+const LEVEL_CLASS: Record<FactorLevel | '미등록', string> = { 낮음: 'low', 보통: 'mid', 높음: 'high', 미등록: '' }
 
 function SparkIcon() {
   return (
@@ -54,6 +55,18 @@ export default function DiagnosisResultReport({
   showFactorDesc = false,
   emptyMessage,
 }: DiagnosisResultReportProps) {
+  const [,setLoaded] = useState(0)
+  const [loadError,setLoadError] = useState('')
+  const [loading,setLoading] = useState(false)
+  useEffect(() => {
+    if (result || !studentId) return
+    let cancelled=false
+    setLoading(true); setLoadError('')
+    loadStudentDiagnoses(studentId).then(() => { if (!cancelled) setLoaded(x => x + 1) })
+      .catch(e => { if (!cancelled) setLoadError(e.message) })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled=true }
+  },[result,studentId])
   const found: DiagnosisResult | undefined =
     result ?? (studentId && testId ? getDiagnosisResult(studentId, testId, attemptNo) : undefined)
 
@@ -66,7 +79,7 @@ export default function DiagnosisResultReport({
     return (
       <div className="drr" style={style}>
         <p className="drr-empty">
-          {emptyMessage ?? '이 검사의 상세 결과가 아직 등록되지 않았습니다.'}
+          {loadError || (loading ? 'DB에서 결과를 조회 중입니다…' : emptyMessage ?? '이 검사의 상세 결과가 아직 등록되지 않았습니다.')}
           <br />
           검사를 완료하면 요인별 수준과 T점수가 이곳에 표시됩니다.
         </p>
@@ -76,13 +89,16 @@ export default function DiagnosisResultReport({
 
   const module: DiagnosisModule | undefined = getModuleByTestId(found.testId)
   const rows = getResultRows(found, module)
+  const missing = module?.factors.filter(factor => !rows.some(row => row.name === factor.name)) ?? []
 
   return (
     <div className="drr" style={style}>
+      {found.source?.includes('fixture') && <p className="drr-empty">기존 예시 데이터 기반의 개발 검증 결과입니다.</p>}
+      {module?.factors.length === 0 && <p className="drr-empty">결과표 항목은 추가 예정입니다.</p>}
       <div className="drr-banner">
-        <span className="drr-banner-headline">{found.headline}</span>
+        <span className="drr-banner-headline">{missing.length || module?.factors.length === 0 ? '결과 항목 확인 필요' : found.headline}</span>
         <span className="drr-banner-copy">
-          <b>{found.headlineCaption}</b>
+          <b>{missing.length ? '현재 항목 기준 점수 미등록' : found.headlineCaption}</b>
           <small>{found.testedAt} 실시{found.attemptNo > 1 && ` · ${found.attemptNo}회차`}</small>
         </span>
       </div>
@@ -101,7 +117,7 @@ export default function DiagnosisResultReport({
               <tr key={r.name}>
                 <td className="drr-factor">
                   {r.name}
-                  {showFactorDesc && r.desc && <small>{r.desc}</small>}
+                  {(showFactorDesc || found.testId === 'c3') && r.desc && <small>{r.desc}</small>}
                 </td>
                 <td className="mid">
                   <span className={`drr-level ${LEVEL_CLASS[r.level]}`}>{r.level}</span>
@@ -111,11 +127,16 @@ export default function DiagnosisResultReport({
                 </td>
               </tr>
             ))}
+            {missing.map(factor => <tr key={factor.name}>
+              <td className="drr-factor">{factor.name}{factor.desc && <small>{factor.desc}</small>}</td>
+              <td className="mid">미등록</td><td className="num">점수 미등록</td>
+            </tr>)}
           </tbody>
         </table>
       </div>
+      {missing.length > 0 && <p className="drr-empty">현재 항목에 대응하는 점수가 없습니다. 이전 예시 점수는 새 항목으로 환산하지 않습니다.</p>}
 
-      {found.comment && (
+      {found.comment && missing.length === 0 && rows.length > 0 && (
         <aside className="drr-comment">
           <span className="drr-comment-icon"><SparkIcon /></span>
           <div className="drr-comment-body">

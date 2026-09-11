@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
-import { getActiveStudent, getStudentType, getStudentTypeMeta } from '../data/students'
-import { buildCareerJourney, getStageAccess, typeLabel } from '../data/careerProcess'
+import { useMetadata } from '../../shared/useMetadata'
+import { getActiveStudent, getStudentCounselRequests, getStudentType, getStudentTypeMeta } from '../data/students'
+import { buildCareerJourney, getStageAccess, isDiagnosisDone, typeLabel } from '../data/careerProcess'
 import { getDiagnosisCardViews, getPipelineState } from '../data/pipeline'
 import StudentStatCards, { type StudentStat } from '../components/StudentStatCards'
 import CareerJourneyCard from '../components/CareerJourneyCard'
@@ -44,6 +45,7 @@ const LOUNGE_STATS: StudentStat[] = [
 //   클래스·구조를 손대면 시안 CSS 가 어긋난다. 수정은 시안 쪽에서 먼저 한다.
 //   내용(수치·문구)은 시안 값 그대로 — 데이터 배선은 디자인 확정 후 별도로 한다.
 export default function AiLounge() {
+  useMetadata()
   const student = getActiveStudent()
   // 5대 핵심역량 — 좌표·점수를 화면에 적지 않는다(data/competency).
   const competencyAxes = getCompetencyAxes(student)
@@ -63,12 +65,15 @@ export default function AiLounge() {
   // 진단 결과 카드 — 대상 검사·상태·결과를 데이터층이 합쳐 준다.
   const diagnosisCards = getDiagnosisCardViews(student)
   const show = {
-    counsel: access.counsel === 'open',   // 지표 5장
+    // 지표 5장 — 진단 결과에서 나오는 값이다. 상담 게이트가 아니라 진단 완료를 본다.
+    // (상담센터는 이제 언제나 열려 있어 access.counsel 이 「진단을 마쳤는가」의
+    //  대역이 되지 못한다 — 신입생에게 값이 전부 '-'인 카드가 뜬다.)
+    counsel: isDiagnosisDone(getPipelineState(student)),
     roadmap: access.roadmap === 'open',   // 목표 달성 계획 · 5대 핵심역량
     growth: access.growth === 'open',     // 이번 주 할 일 · 성장 활동 기록
     // 상담 현황 카드 안쪽은 아직 시안 리터럴이다 — 단계만 열렸다고 띄우면
     // 상담 0건인 학생에게 남의 상담 기록이 보인다. 실제 신청이 있을 때만 그린다.
-    counselRecords: student.counselRequests.length > 0,
+    counselRecords: getStudentCounselRequests(student.id).length > 0,
   }
 
   return (

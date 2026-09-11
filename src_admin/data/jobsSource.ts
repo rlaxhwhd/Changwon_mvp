@@ -1,53 +1,53 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 채용공고 소스 로더 — Counsel_README §6 jobsSource
+// 채용공고 로더 — 정본은 서버(dc.job_posting · dc.company)다.
 //
-// 공고는 출처(source)로 두 갈래이고, 갈래마다 저장소가 다르다.
-//   external : 외부 채용 API(잡코리아 등) 수집분. jobs.seed.json = 불변 원본.
-//              교직원도 수정·삭제할 수 없다(읽기 전용).
-//   manual   : 상담사·관리자가 직접 등록한 교내 공고. localStorage 'dc_jobs' 오버레이.
+// 읽기는 부팅 때 적재한 스토어에서 동기로 꺼낸다(SPEC.md §5). 쓰기는 async 이고
+// 서버가 판정한다 — 마감·중복·권한·전형 순서를 여기서 막지 않고 서버가 거절한다
+// (CLAUDE.md 규칙 5: 정합성은 한 곳에서만 판정한다).
 //
-// 학생(/jobs)과 교직원(/admin/jobs)은 같은 소스를 구독하고, 보는 목록만 scope 로 갈린다.
+// 예전에는 교내 공고를 localStorage 'dc_jobs' 배열에 통째로 저장했고, 저장 실패는
+// 조용히 false 가 됐다. 이제 실패는 예외로 올라온다 — 화면이 그 사유를 보여 준다.
 // ─────────────────────────────────────────────────────────────────────────
-import type { JobPosting, JobStatus, JobSource } from './schema/job'
+import type {
+  JobCompany,
+  JobEffectiveStatus,
+  JobPosting,
+  JobPostingInput,
+  JobStatus,
+} from './schema/job'
 import { JOB_HIGHLIGHT_TAGS } from './schema/job'
-import seed from './jobs.seed.json'
+import { api, queryString } from '../../shared/api'
+import {
+  dropPosting,
+  loadPostings,
+  postingList,
+  refreshPosting,
+} from '../../shared/jobStore'
+import type { ListParams, Paginated } from './query'
 
-const STORAGE_KEY = 'dc_jobs'
-
-/** 외부 API 수집 공고(불변 원본) */
-const EXTERNAL = seed as JobPosting[]
+export { JOB_EVENT } from '../../shared/jobStore'
 
 /** 목록 화면이 보는 갈래 */
 export type JobScope = 'internal' | 'external'
 
-/** 교내 공고 — 상담사가 직접 등록한 것만. 등록 전에는 빈 목록. */
-export function getInternalJobs(): JobPosting[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      // 오버레이에 외부 공고가 섞여 있던 구버전 데이터를 위해 manual 만 추린다.
-      if (Array.isArray(parsed)) return (parsed as JobPosting[]).filter(j => j.source === 'manual')
-    }
-  } catch {
-    /* localStorage 접근 실패 시 빈 목록 */
-  }
-  return []
+/** 전체 공고(교내 + 외부) — 상세 조회·전체 집계용. */
+export function getJobs(): JobPosting[] {
+  return postingList()
 }
 
-/** 외부 공고 — 읽기 전용. */
+/** 교내 공고 — 교직원이 직접 등록한 것만. */
+export function getInternalJobs(): JobPosting[] {
+  return getJobs().filter(j => j.source === 'manual')
+}
+
+/** 외부 수집 공고 — 읽기 전용(서버가 수정을 거절한다). */
 export function getExternalJobs(): JobPosting[] {
-  return EXTERNAL
+  return getJobs().filter(j => j.source === 'external')
 }
 
 /** scope 별 목록 */
 export function getJobsByScope(scope: JobScope): JobPosting[] {
   return scope === 'internal' ? getInternalJobs() : getExternalJobs()
-}
-
-/** 전체 공고(교내 + 외부) — 상세 조회·전체 집계용. */
-export function getJobs(): JobPosting[] {
-  return [...getInternalJobs(), ...EXTERNAL]
 }
 
 /** id 로 1건 조회 */
@@ -57,12 +57,12 @@ export function getJobById(id: string): JobPosting | undefined {
 
 /**
  * 마감 라벨 — 마감까지 남은 일수를 'D-N'으로 표현.
- * 채용시 마감이어도 마감일(+1개월 자동)이 있으면 D-N을 우선 표시한다.
- * 날짜가 없을 때만 「채용시 마감」/「상시」로 폴백. 지났거나 마감상태=「마감」.
+ * 판정 자체(effectiveStatus)는 서버가 KST 기준으로 한다. 여기서는 표시 문구만 만든다.
  */
 export function jobDdayLabel(job: JobPosting): string {
-  if (job.status === '마감') return '마감'
-  if (!job.deadline || job.deadline === '채용시') return job.deadlineOnHire ? '채용시 마감' : '상시'
+  if (job.effectiveStatus === 'CLOSED') return '마감'
+  if (job.effectiveStatus === 'UNKNOWN') return '확인 필요'
+  if (job.deadlineMode === 'ALWAYS' || !job.deadline) return '상시'
   // 마감일은 날짜만 있는 값이다. 'YYYY-MM-DD'를 그대로 Date 에 넣으면 UTC 자정으로
   // 읽혀 KST 에선 오늘 마감이 D-1 로 나온다 — 로컬 자정으로 고정해서 읽는다.
   const end = new Date(`${job.deadline.slice(0, 10)}T00:00:00`)
@@ -76,18 +76,22 @@ export function jobDdayLabel(job: JobPosting): string {
 }
 
 /**
+ * 마감 여부 — 목록과 상세가 같은 답을 내야 한다.
+ * 판정은 서버가 한 번에 한다(effectiveStatus). 화면마다 다시 판정하지 않는다.
+ */
+export function isJobClosed(job: JobPosting): boolean {
+  return job.effectiveStatus !== 'POSTED'
+}
+
+/** 학생 목록에 보이는 상태 — 저장 상태가 아니라 서버가 계산한 실효 상태다. */
+export function jobStatusOf(job: JobPosting): JobEffectiveStatus {
+  return job.effectiveStatus
+}
+
+/**
  * 카드 특이사항 배지 — 오늘 마감(마감일 파생) + 강조 태그(JOB_HIGHLIGHT_TAGS).
  * 화면이 태그 문자열을 직접 비교하지 않도록 여기서 만든다.
  */
-/**
- * 마감 여부 — 목록과 상세가 같은 답을 내야 한다.
- * 운영 상태(status='마감')와 마감일 경과를 둘 다 본다. 화면마다 다시 판정하지 않는다
- * (예전에 상세가 status 만 보다가 「접수중」인데 D-day 는 「마감」인 모순이 났다).
- */
-export function isJobClosed(job: JobPosting): boolean {
-  return jobDdayLabel(job) === '마감'
-}
-
 export function jobHighlights(job: JobPosting): string[] {
   const flags = jobDdayLabel(job) === 'D-day' ? ['오늘마감'] : []
   return [...flags, ...job.tags.filter(t => (JOB_HIGHLIGHT_TAGS as readonly string[]).includes(t))]
@@ -103,8 +107,7 @@ export const JOB_SORT_LABEL: Record<JobSort, string> = {
 
 /** 정렬 키 — 마감일 없는 공고(상시·채용시)는 맨 뒤로 보낸다. */
 function deadlineKey(job: JobPosting): string {
-  const d = job.deadline
-  return d && !Number.isNaN(new Date(d).getTime()) ? d : '9999-12-31'
+  return job.deadline ?? '9999-12-31'
 }
 
 /**
@@ -113,7 +116,7 @@ function deadlineKey(job: JobPosting): string {
  */
 export function sortJobs(list: JobPosting[], sort: JobSort): JobPosting[] {
   return [...list].sort((a, b) => {
-    const closed = Number(a.status === '마감') - Number(b.status === '마감')
+    const closed = Number(isJobClosed(a)) - Number(isJobClosed(b))
     if (closed !== 0) return closed
     return sort === 'deadline'
       ? deadlineKey(a).localeCompare(deadlineKey(b))
@@ -122,54 +125,100 @@ export function sortJobs(list: JobPosting[], sort: JobSort): JobPosting[] {
 }
 
 /** 상태별 카운트 집계 (필터 배지용). scope 생략 시 전체. */
-export function countJobs(scope?: JobScope): { total: number; 게시: number; 마감: number } {
+export function countJobs(scope?: JobScope): { total: number; POSTED: number; CLOSED: number } {
   const jobs = scope ? getJobsByScope(scope) : getJobs()
   return {
     total: jobs.length,
-    게시: jobs.filter(j => j.status === '게시').length,
-    마감: jobs.filter(j => j.status === '마감').length,
+    POSTED: jobs.filter(j => !isJobClosed(j)).length,
+    CLOSED: jobs.filter(j => isJobClosed(j)).length,
   }
+}
+
+/** 공고 목록 조회(서버 페이징). 수천 건이 되면 화면은 스토어가 아니라 이쪽을 써야 한다. */
+export async function queryJobs(params: ListParams = {}): Promise<Paginated<JobPosting>> {
+  const query = queryString({
+    page: params.page ?? 1, pageSize: params.pageSize ?? 20, q: params.q,
+    source: params.filters?.source, recruitType: params.filters?.recruitType,
+    status: params.filters?.status, companyId: params.filters?.companyId,
+  })
+  return api<Paginated<JobPosting>>(`/jobs?${query}`)
+}
+
+function requestKey(prefix: string): Record<string, string> {
+  return { 'Idempotency-Key': `${prefix}:${Date.now()}:${Math.random().toString(36).slice(2, 8)}` }
+}
+
+/** 새 공고 등록 — id·postedAt·마감(채용시) 은 서버가 부여한다. */
+export async function addJob(input: JobPostingInput): Promise<JobPosting> {
+  const job = await api<JobPosting>('/jobs', {
+    method: 'POST', headers: requestKey('job-create'), body: JSON.stringify(input),
+  })
+  await refreshPosting(job.id)
+  return job
 }
 
 /**
- * 오버레이 저장. 성공 여부를 반드시 돌려준다.
- *
- * localStorage 는 출처당 5MB 안팎이고, 넘으면 setItem 이 **목록 전체**를 거부한다.
- * 본문에 큰 이미지를 넣은 공고 한 건이 이미 저장돼 있던 공고까지 못 쓰게 만든다는 뜻이다.
- * 예전엔 이 실패를 삼켰다 — 등록 화면은 성공한 것처럼 목록으로 넘어가고, 그 목록에는
- * 방금 등록한 공고가 없었다. 원인을 화면에 알리려면 여기서부터 감추지 않아야 한다.
+ * 공고 수정. 다른 담당자가 먼저 고쳤으면 서버가 409로 거절한다.
+ * ★ 「채용시 마감」의 날짜는 여기서 다시 계산되지 않는다 — 등록 시점 값이 유지된다.
  */
-function persist(list: JobPosting[]): boolean {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
-    return true
-  } catch {
-    return false
+export async function updateJob(id: string, input: JobPostingInput, expectedVersion: number): Promise<void> {
+  await api(`/jobs/${encodeURIComponent(id)}`, {
+    method: 'PATCH', headers: requestKey('job-update'),
+    body: JSON.stringify({ ...input, expectedVersion }),
+  })
+  await refreshPosting(id)
+}
+
+/** 공고 삭제(논리삭제). 지원·회차·이력은 보존된다. */
+export async function removeJob(id: string, expectedVersion: number): Promise<void> {
+  await api(`/jobs/${encodeURIComponent(id)}?expectedVersion=${expectedVersion}`, { method: 'DELETE' })
+  dropPosting(id)
+}
+
+/** 게시 마감 / 재게시 — 저장 상태만 바꾼다(지난 마감일은 여전히 마감이다). */
+export async function setJobPosted(id: string, posted: boolean, expectedVersion: number): Promise<void> {
+  await api(`/jobs/${encodeURIComponent(id)}/${posted ? 'reopen' : 'close'}`, {
+    method: 'POST', body: JSON.stringify({ expectedVersion }),
+  })
+  await refreshPosting(id)
+}
+
+// ── 기업 사전 ────────────────────────────────────────────────────────────
+
+export async function queryCompanies(q = ''): Promise<JobCompany[]> {
+  return (await api<Paginated<JobCompany>>(`/job-companies?${queryString({ q, pageSize: 100 })}`)).items
+}
+
+export async function addCompany(input: {
+  displayName: string; companyTypeCode?: string | null; websiteUrl?: string | null
+}): Promise<JobCompany> {
+  return api<JobCompany>('/job-companies', { method: 'POST', body: JSON.stringify(input) })
+}
+
+// ── 파일 ────────────────────────────────────────────────────────────────
+
+/**
+ * 파일 업로드 — 바이트를 그대로 보낸다. 저장 이름은 서버가 부여하고, 다운로드는
+ * 권한을 확인하는 API 경로로만 나간다(정적 URL 이 아니다).
+ * 공용 api() 헬퍼는 JSON 전용이라 여기서만 fetch 를 직접 쓴다.
+ */
+export async function uploadJobFile(slot: 'LOGO' | 'ATTACHMENT' | 'RESUME', file: File): Promise<{
+  id: string; name: string; size: number; contentType: string; downloadUrl: string
+}> {
+  const identity = location.pathname.startsWith('/admin')
+    ? localStorage.getItem('dc_active_staff')
+    : localStorage.getItem('dc_active_student')
+  const headers = new Headers({ 'Content-Type': file.type || 'application/octet-stream' })
+  if (identity) headers.set('X-DC-Identity', identity)
+  const path = `/api/v1/job-files?slot=${slot}&name=${encodeURIComponent(file.name)}`
+  const response = await fetch(path, { method: 'POST', headers, body: file })
+  if (!response.ok) {
+    const error = await response.json().catch(() => null) as { detail?: string } | null
+    throw new Error(error?.detail ?? '파일을 올리지 못했습니다.')
   }
+  return response.json()
 }
 
-/** 새 공고 등록 — id·postedAt 자동 부여 후 교내 목록 맨 앞에 추가. 저장에 실패하면 null. */
-export function addJob(input: Omit<JobPosting, 'id' | 'postedAt'>): JobPosting | null {
-  const job: JobPosting = {
-    ...input,
-    source: 'manual',
-    id: `job_${Date.now()}`,
-    postedAt: new Date().toISOString(),
-  }
-  return persist([job, ...getInternalJobs()]) ? job : null
-}
-
-/** 공고 수정 — 교내 공고만. 외부 공고는 원본이 API라 수정하지 않는다. 저장 성공 여부를 돌려준다. */
-export function updateJob(id: string, patch: Partial<Omit<JobPosting, 'id'>>): boolean {
-  const internal = getInternalJobs()
-  if (!internal.some(j => j.id === id)) return false
-  return persist(internal.map(j => (j.id === id ? { ...j, ...patch, source: 'manual' } : j)))
-}
-
-/** 공고 삭제 — 교내 공고만. */
-export function removeJob(id: string): void {
-  persist(getInternalJobs().filter(j => j.id !== id))
-}
-
-export type { JobPosting, JobStatus, JobSource }
-export type { RecruitType } from './schema/job'
+export { loadPostings }
+export type { JobPosting, JobStatus, JobPostingInput, JobCompany }
+export type { RecruitType, JobSource } from './schema/job'

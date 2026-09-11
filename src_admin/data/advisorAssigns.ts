@@ -1,34 +1,37 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 전담교수 배정 로더 — 현행 DB CO_ADVISER(STU_NO + ADV_NO) 대응 단일소스.
-// localStorage 'dc_advisor_assign'를 우선하고, 없으면 append-only seed JSON을 쓴다.
-// DB 전환 시 이 로더의 읽기·저장만 CO_ADVISER API로 교체하며, 화면은 이 모듈만 사용한다.
-// 배정 이력을 수정·삭제하지 말 것: 학생당 active 1건 유일성은 배정 시점에 검증한다.
+// 전담교수 배정 로더 — 정본은 서버 dc.advisor_assignment(현행 CO_ADVISER 계승).
+// 부팅 때 인가 범위의 배정(해제분 포함 — 배정년도 필터용)을 적재하고, 화면은 아래
+// 동기 셀렉터만 구독한다. 배정 쓰기는 POST /advisor-assignments 이며 서버가
+// 학생당 active 1건·조교 담당 학과·교수 학과 일치를 검사한다(409/403/422).
 // ─────────────────────────────────────────────────────────────────────────────
-import seed from './advisorAssigns.seed.json'
 import { PROFESSOR_GROUPS } from '../../src_v2/data/professors'
 import type { Professor } from '../../src_v2/data/professors'
 import { getFullRoster } from './studentRoster'
 import type { RosterStudent } from './studentRoster'
+import { api, queryString } from '../../shared/api'
 import { mockLatency, paginate } from './query'
 import type { ListParams, Paginated } from './query'
 import type { AdvisorAssign } from './schema/advisorAssign'
 
-const STORAGE_KEY = 'dc_advisor_assign'
-const SEED = seed as AdvisorAssign[]
+export const ADVISOR_EVENT = 'dc:advisor-updated'
+let assigns: AdvisorAssign[] = []
 
-function persist(list: AdvisorAssign[]): void {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)) } catch { /* demo storage unavailable */ }
+/** 부팅 적재 — 서버가 staff_student_scope 로 거른 배정 전량(해제분 포함). */
+export async function loadAdvisorAssigns(): Promise<void> {
+  const result: AdvisorAssign[] = []
+  let page = 1
+  while (true) {
+    const response = await api<Paginated<AdvisorAssign>>(`/advisor-assignments?${queryString({ active: false, page, pageSize: 100 })}`)
+    result.push(...response.items)
+    if (result.length >= response.totalCount || response.items.length === 0) break
+    page += 1
+  }
+  assigns = result
+  window.dispatchEvent(new Event(ADVISOR_EVENT))
 }
 
 export function getAdvisorAssigns(): AdvisorAssign[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed as AdvisorAssign[]
-    }
-  } catch { /* seed fallback */ }
-  return SEED
+  return assigns
 }
 
 export function getActiveAssignByStudent(): Map<string, AdvisorAssign> {
@@ -48,32 +51,19 @@ export function getAdviseeRoster(professorId: string): RosterStudent[] {
   return getFullRoster().filter(student => studentIds.has(student.id))
 }
 
-function professorById(id: string): Professor | undefined {
-  return PROFESSOR_GROUPS.flatMap(group => Object.values(group.divisions).flat()).find(professor => professor.id === id)
-}
-
 export function professorsOfMajor(major: string): Professor[] {
   for (const group of PROFESSOR_GROUPS) if (group.divisions[major]) return group.divisions[major]
   return []
 }
 
-export function assignAdvisor(input: { studentId: string; professorId: string; assignedAt: string; by: string }): AdvisorAssign {
-  if (getActiveAssignByStudent().has(input.studentId)) throw new Error('이미 지도교수가 배정된 학생입니다.')
-  const student = getFullRoster().find(item => item.id === input.studentId)
-  const professor = professorById(input.professorId)
-  if (!student || !professor) throw new Error('배정에 필요한 학생 또는 교수 정보를 찾을 수 없습니다.')
-  if (!professorsOfMajor(student.major).some(item => item.id === professor.id)) throw new Error('학생 학과의 교수만 배정할 수 있습니다.')
-  const record: AdvisorAssign = {
-    id: `adv_${Date.now()}`,
-    studentId: student.id,
-    professorId: professor.id,
-    professorName: professor.name,
-    assignedAt: input.assignedAt,
-    status: 'active',
-    by: input.by,
-    snapshot: { studentNo: student.studentNo, name: student.name, major: student.major, grade: student.grade, status: student.status },
-  }
-  persist([...getAdvisorAssigns(), record])
+/** 배정 — 정합성(중복·학과·범위)은 서버가 판정하고 실패는 ApiError 로 온다. */
+export async function assignAdvisor(input: { studentId: string; professorId: string; assignedAt: string; by: string }): Promise<AdvisorAssign> {
+  const record = await api<AdvisorAssign>('/advisor-assignments', {
+    method: 'POST',
+    headers: { 'Idempotency-Key': crypto.randomUUID() },
+    body: JSON.stringify({ studentId: input.studentId, professorId: input.professorId, assignedAt: input.assignedAt }),
+  })
+  await loadAdvisorAssigns()
   return record
 }
 

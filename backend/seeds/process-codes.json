@@ -1,0 +1,105 @@
+{
+  "studentTypes": [
+    {
+      "code": "T1",
+      "label": "진로탐색형",
+      "tier": "MID",
+      "tierLabel": "중간",
+      "followUpTest": "C1",
+      "topicCodes": [
+        "A01",
+        "A02",
+        "A03",
+        "A04"
+      ],
+      "programScope": "CAREER_ONLY",
+      "goal": "진로 인식 및 탐색 확대",
+      "focus": "결정보다 탐색 중심, 단기·경험형 활동"
+    },
+    {
+      "code": "T2",
+      "label": "진로설정형",
+      "tier": "MID",
+      "tierLabel": "중간",
+      "followUpTest": "C2",
+      "topicCodes": [
+        "A05",
+        "A06",
+        "A07",
+        "A08"
+      ],
+      "programScope": "CAREER_ONLY",
+      "goal": "목표 직무 구체화, 경력 경로 설계",
+      "focus": "직무 선택 + 준비 방향 설정"
+    },
+    {
+      "code": "T3",
+      "label": "역량성장형",
+      "tier": "HIGH",
+      "tierLabel": "상위",
+      "followUpTest": "C3",
+      "topicCodes": [
+        "A09",
+        "A10",
+        "A11",
+        "A12"
+      ],
+      "programScope": "ALL",
+      "goal": "직무 역량 실질 강화, 현장 대응력",
+      "focus": "프로젝트·성과 중심"
+    },
+    {
+      "code": "T4",
+      "label": "취업준비형",
+      "tier": "HIGH",
+      "tierLabel": "상위",
+      "followUpTest": "C4",
+      "topicCodes": [
+        "A13",
+        "A14",
+        "A15",
+        "A16"
+      ],
+      "programScope": "ALL",
+      "goal": "취업 성공, 채용 경쟁력 확보",
+      "focus": "채용 일정·전략 중심"
+    },
+    {
+      "code": "T5",
+      "label": "취약관리형",
+      "tier": "LOW",
+      "tierLabel": "하위",
+      "followUpTest": "C5",
+      "topicCodes": [
+        "A17",
+        "A18",
+        "A19",
+        "A20"
+      ],
+      "programScope": "PENDING",
+      "goal": "참여 회복, 이탈 방지",
+      "focus": "관리·회복 중심, 단계 축소 운영"
+    },
+    {
+      "code": "T6",
+      "label": "우수인재형",
+      "tier": "HIGH",
+      "tierLabel": "상위",
+      "followUpTest": "C6",
+      "topicCodes": [
+        "A21",
+        "A22",
+        "A23",
+        "A24"
+      ],
+      "programScope": "ALL",
+      "goal": "성과 극대화, 대학 대표 인재 육성",
+      "focus": "고급·차별화 지원, 기업연계·멘토 조기진입"
+    }
+  ],
+  "tierLabels": {
+    "LOW": "하위",
+    "MID": "중간",
+    "HIGH": "상위"
+  }
+}

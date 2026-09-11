@@ -14,15 +14,7 @@
 //   dc_skill · dc_subject · dc_curriculum · dc_course_skill · dc_student_course
 //   dc_cert · dc_job_role(+dc_job_skill) · dc_student_cert · dc_student_job_interest
 // ─────────────────────────────────────────────────────────────────────────
-import departmentsSeed from '../../../src_admin/data/departments.seed.json'
-import skillsJson from './skills.json'
-import subjectsJson from './subjects.json'
-import curriculumJson from './curriculum.json'
-import courseSkillsJson from './courseSkills.json'
-import enrollmentsJson from './enrollments.json'
-import certsJson from './certs.json'
-import jobRolesJson from './jobRoles.json'
-import studentAcademicJson from './studentAcademic.json'
+import { api, ApiError } from '../../../shared/api'
 
 // ── 스키마 (DB 테이블 1:1) ───────────────────────────────────────────────
 
@@ -122,66 +114,8 @@ export interface AcademicSnapshot {
   programRecords: ProgramRecord[]
 }
 
-// ── 로컬 seed (이 파일 밖으로 나가지 않는다) ─────────────────────────────
-
-interface StudentAcademicSeed {
-  studentId: string
-  deptCode: string
-  entryYear: string
-  certs: { certId: string; acquiredDt: string; certNo: string; verified: boolean }[]
-  jobInterests: { jobId: string; pinned: boolean }[]
-  programRecords: ProgramRecord[]
-}
-
-const SKILLS = skillsJson as Skill[]
-const SUBJECTS = subjectsJson as Subject[]
-const CURRICULUM = curriculumJson as CurriculumRow[]
-const COURSE_SKILLS = courseSkillsJson as CourseSkill[]
-const ENROLLMENTS = enrollmentsJson as Enrollment[]
-const CERTS = certsJson as Cert[]
-const JOB_ROLES = jobRolesJson as JobRole[]
-const STUDENT_ACADEMIC = studentAcademicJson as StudentAcademicSeed[]
-const DEPARTMENTS = departmentsSeed as DeptRow[]
-
-// ── 런타임 오버레이 ──────────────────────────────────────────────────────
-// seed JSON은 불변. 학생이 담은 관심직무·자격증은 오버레이에만 쌓는다.
-// DB 전환 시 이 블록은 통째로 사라지고 saveXxx 가 POST/DELETE 가 된다.
-
-const JOB_INTEREST_KEY = 'dc_job_interests'
-const STUDENT_CERT_KEY = 'dc_student_certs'
-
-function readOverlay(key: string, studentId: string): string[] {
-  try {
-    const raw = localStorage.getItem(key)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    if (parsed && typeof parsed === 'object') {
-      const list = (parsed as Record<string, unknown>)[studentId]
-      if (Array.isArray(list)) return list as string[]
-    }
-  } catch {
-    /* 폴백: 오버레이 없음 */
-  }
-  return []
-}
-
-function writeOverlay(key: string, studentId: string, id: string, on: boolean): void {
-  try {
-    const raw = localStorage.getItem(key)
-    const all: Record<string, string[]> = raw ? JSON.parse(raw) : {}
-    const cur = Array.isArray(all[studentId]) ? all[studentId] : []
-    all[studentId] = on ? (cur.includes(id) ? cur : [...cur, id]) : cur.filter(x => x !== id)
-    localStorage.setItem(key, JSON.stringify(all))
-  } catch {
-    /* 데모 범위 — 저장 실패 무시 */
-  }
-}
-
-// ══ 공개 API — 여기만 갈아끼운다 ══════════════════════════════════════════
-
-/** 학사 데이터를 못 찾았을 때. 화면은 이 코드로 빈 상태를 구분한다. */
+/** A missing academic record is distinct from a network or authentication error. */
 export class AcademicNotFoundError extends Error {
-  // 파라미터 프로퍼티는 erasableSyntaxOnly 에서 금지 — 명시 필드로 둔다.
   studentId: string
   constructor(studentId: string) {
     super(`학사 데이터 없음: ${studentId}`)
@@ -190,57 +124,23 @@ export class AcademicNotFoundError extends Error {
   }
 }
 
-/**
- * 한 학생의 학사 스냅샷.
- * DB 후: `const res = await fetch(\`/api/academic/${studentId}\`)` 로 몸통만 교체.
- */
 export async function fetchAcademic(studentId: string): Promise<AcademicSnapshot> {
-  const seed = STUDENT_ACADEMIC.find(a => a.studentId === studentId)
-  if (!seed) throw new AcademicNotFoundError(studentId)
-
-  // 관심직무: 대표직무를 선두로, 오버레이 추가분을 뒤에.
-  const extraJobs = readOverlay(JOB_INTEREST_KEY, studentId)
-  const seedJobs = [...seed.jobInterests]
-    .sort((a, b) => Number(b.pinned) - Number(a.pinned))
-    .map(j => j.jobId)
-  const jobInterests: JobInterest[] = [
-    ...seedJobs.map(jobId => ({ jobId, added: false })),
-    ...extraJobs.filter(id => !seedJobs.includes(id)).map(jobId => ({ jobId, added: true })),
-  ]
-
-  // 자격증: seed 보유분(취득일 있음) + 오버레이 목표분(취득일 없음).
-  const extraCerts = readOverlay(STUDENT_CERT_KEY, studentId)
-  const studentCerts: StudentCert[] = [
-    ...seed.certs.map(c => ({ certId: c.certId, acquiredDt: c.acquiredDt, added: false })),
-    ...extraCerts
-      .filter(id => !seed.certs.some(c => c.certId === id))
-      .map(certId => ({ certId, added: true })),
-  ]
-
-  return {
-    skills: SKILLS,
-    subjects: SUBJECTS,
-    curriculum: CURRICULUM,
-    courseSkills: COURSE_SKILLS,
-    certs: CERTS,
-    jobRoles: JOB_ROLES,
-    departments: DEPARTMENTS,
-    studentId,
-    deptCode: seed.deptCode,
-    entryYear: seed.entryYear,
-    enrollments: ENROLLMENTS.filter(e => e.studentId === studentId),
-    jobInterests,
-    studentCerts,
-    programRecords: seed.programRecords,
+  try {
+    return await api<AcademicSnapshot>(`/academic/${encodeURIComponent(studentId)}`)
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) throw new AcademicNotFoundError(studentId)
+    throw error
   }
 }
 
-/** 관심직무 담기/빼기 — DB 후: POST · DELETE /api/students/{id}/job-interests */
 export async function saveJobInterest(studentId: string, jobId: string, on: boolean): Promise<void> {
-  writeOverlay(JOB_INTEREST_KEY, studentId, jobId, on)
+  await api(`/students/${encodeURIComponent(studentId)}/job-interests/${encodeURIComponent(jobId)}`, {
+    method: 'PUT', body: JSON.stringify({ on }),
+  })
 }
 
-/** 자격증 담기/빼기 — DB 후: POST · DELETE /api/students/{id}/certs */
 export async function saveStudentCert(studentId: string, certId: string, on: boolean): Promise<void> {
-  writeOverlay(STUDENT_CERT_KEY, studentId, certId, on)
+  await api(`/students/${encodeURIComponent(studentId)}/certs/${encodeURIComponent(certId)}`, {
+    method: 'PUT', body: JSON.stringify({ on }),
+  })
 }

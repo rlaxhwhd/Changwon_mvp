@@ -11,6 +11,7 @@ import type { CounselMethod } from '../data/schema/counselRequest'
 import { getActiveUser } from '../data/staff'
 import { totalPages } from '../data/query'
 import { useListData } from '../hooks/useListData'
+import { useAsyncAction } from '../../shared/useAsyncAction'
 
 const PAGE_SIZE = 10
 
@@ -36,37 +37,26 @@ export default function ProfessorCounselRecords() {
   })
   const pages = totalPages(data)
   const startIndex = (data.page - 1) * PAGE_SIZE
+  const { run, saving } = useAsyncAction()
 
   const save = () => {
     if (!studentId || !summary.trim()) {
       setError('학생과 상담 내용을 입력하세요.')
       return
     }
-    try {
-      addProfCounselRecord({
-        studentId,
-        professorId: user.id,
-        categoryCode,
-        method,
-        date,
-        summary: summary.trim(),
-        requestId: request?.id,
-        snapshot: request
-          ? {
-              studentNo: request.studentNo,
-              name: request.studentName,
-              major: request.studentMajor,
-              grade: request.studentGrade,
-            }
-          : undefined,
-      })
-      if (request) completeProfRequest(request.id)
-      setSummary('')
+    run(async () => {
       setError('')
-      refetch()
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : '상담 기록을 저장하지 못했습니다.')
-    }
+      try {
+        // 신청 연계 건은 완료 전이가 곧 기록이다(서버가 기록 저장+전이를 한 트랜잭션으로).
+        // 직접 작성 건은 서버가 신청(DONE)+기록을 함께 만든다. 둘 다 서버가 거절하면 아무것도 남지 않는다.
+        if (request) await completeProfRequest(request.id, { summary: summary.trim() })
+        else await addProfCounselRecord({ studentId, professorId: user.id, categoryCode, method, date, summary: summary.trim() })
+        setSummary('')
+        refetch()
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : '상담 기록을 저장하지 못했습니다.')
+      }
+    })
   }
 
   return (
@@ -131,7 +121,9 @@ export default function ProfessorCounselRecords() {
             </label>
             {error && <p className="admin-field-hint" role="alert">{error}</p>}
             <div className="admin-form-actions">
-              <button type="button" className="admin-btn admin-btn-primary" onClick={save}>저장</button>
+              <button type="button" className="admin-btn admin-btn-primary" disabled={saving} onClick={save}>
+                {saving ? '저장 중…' : '저장'}
+              </button>
             </div>
           </div>
         )}

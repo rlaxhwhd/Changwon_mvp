@@ -12,6 +12,8 @@ import {
   clearActiveUser,
 } from '../data/staff'
 import './GNB.css'
+import { useMetadata } from '../../shared/useMetadata'
+import { loadRetakeNotifications } from '../data/diagnosisAttempts'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 상단 네비게이션 — 시안(test_admin_react) 상단바 마크업 그대로.
@@ -21,6 +23,7 @@ import './GNB.css'
 // ─────────────────────────────────────────────────────────────────────────
 
 export default function GNB() {
+  useMetadata()
   const { pathname } = useLocation()
   const user = getActiveUser()
   const activeId = getActiveUserId()
@@ -33,6 +36,12 @@ export default function GNB() {
   // 메뉴가 계속 펼쳐져 있었다 → 누른 항목만 접어 두고, 포인터가 벗어나면 푼다.
   const [collapsedNavId, setCollapsedNavId] = useState<string | null>(null)
   const profileRef = useRef<HTMLDivElement | null>(null)
+  const [,setNotificationsLoaded] = useState(false)
+  useEffect(() => {
+    if (user.role === 'career' || user.role === 'psych') {
+      void loadRetakeNotifications().then(() => setNotificationsLoaded(true)).catch(() => { /* Other notification domains retain their own error handling. */ })
+    }
+  },[user.id,user.role])
 
   // 경로가 바뀌면 열려 있던 것들을 닫는다
   useEffect(() => {

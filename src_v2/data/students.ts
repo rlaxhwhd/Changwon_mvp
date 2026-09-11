@@ -1,3 +1,5 @@
+import { studentProfiles, counselOwnerProfiles, studentChoices } from '../../shared/profileStore'
+import { counselRequests } from '../../shared/counselStore'
 // ─────────────────────────────────────────────────────────────────────────
 // 학생별 데이터(JSON) 로더 + 전역 활성 학생 스토어
 // 학생 전환은 localStorage에 저장 후 페이지를 리로드해 모든 화면에 반영한다.
@@ -5,12 +7,9 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { STUDENT_TYPE_MAP, type StudentType, type StudentTypeMeta } from './careerProcess'
 import type { CounselIntakeAnswer } from './counselIntake'
+import type { CareTrack } from './counselTrack'
 import type { RoadmapPlan } from './schema/roadmap'
 import type { StudentInputs } from '../lib/scoring'
-import chaewon from './students/chaewon.json'
-import changwon from './students/changwon.json'
-import jiwoo from './students/jiwoo.json'
-import counselSeed from './students/counselSeedStudents.json'
 
 export interface PhaseTask { text: string; done: boolean }
 /** 파이프라인 6단계 — 로드맵(3축)과 다른 것이다. 이건 진단→상담→…→사후관리 진행 표시다. */
@@ -111,6 +110,11 @@ export interface CounselSlot { date: string; start: string; end: string; place?:
 export interface StudentCounselRequest {
   id: string
   type: CounselRequestType
+  /**
+   * 진로취업 상담의 트랙(일반 / CARE 7+ 연계). 심리·교수 상담에는 적용하지 않는다.
+   * 미지정은 care7 로 읽는다 — 판정은 counselTrack.isCare7 한 곳에서만 한다.
+   */
+  careTrack?: CareTrack
   status: CounselRequestStatus
   method: CounselMethod
   topic: string
@@ -154,6 +158,10 @@ export interface StudentData {
    * 이미 유형이 있는 학생(studentType 보유)에게는 필요 없다.
    */
   diagnosisOutcome?: { studentType: StudentType }
+  /** 서버가 센 로드맵 이행률(%). 계획이 없으면 0 이다 — 브라우저가 다시 세지 않는다. */
+  progress?: number
+  /** 계획 행이 있는가(초안 포함). 「확정됐다」와는 다른 사실이다. */
+  hasRoadmap?: boolean
   typeScores: { 진로명확도: string; 역량준비도: string; 취업준비도: string }
   targetRole: string
   targetCompany: TargetCompany
@@ -161,6 +169,14 @@ export interface StudentData {
   phases: RoadmapPhase[]
   /** 로드맵 본체 — 3축 × 5칸에서 시작한다. IAP 축만 이후에 늘어난다. → PROCESS.md §6 */
   roadmapAxes?: RoadmapPlan
+  /**
+   * ⚠ 데모 전용 — 「이 학생의 로드맵을 생성하면 무엇이 나오는가」.
+   * diagnosisOutcome 과 같은 패턴이다. 재료 3종을 읽어 15칸을 뽑는 AI 가 없으므로
+   * 주입할 결과를 시드에 미리 적어 두고, 상담사가 생성할 때 그대로 넣는다.
+   * **AI 가 붙으면 이 필드는 생성 결과로 대체된다.**
+   * 이미 로드맵이 있는 학생(roadmapAxes 보유)에게는 필요 없다.
+   */
+  roadmapOutcome?: { targetRole: string; targetCompany: string; axes: RoadmapPlan }
   gapItems: GapItem[]
   recommendations: Recommendations
   insight: string
@@ -177,24 +193,28 @@ export interface StudentData {
   counselorQuestions?: string[]
   /** 역량 점수(0~100) — 상담 접수함 위험 단계 트랙 분류 기준. */
   competencyScore: number
-  /** 이 학생이 낸 상담신청. JSON seed 초기값. 런타임 변경은 override 스토어로. */
-  counselRequests: StudentCounselRequest[]
+  /**
+   * 이 학생이 낸 상담신청 seed.
+   * ⚠ 서버는 이 필드를 프로필에 담지 않는다 — 상담은 별도 스코프 엔드포인트가 소유한다
+   * (backend/app/students.py 의 `data.pop('counselRequests')`). 읽을 때는 항상
+   * getStudentCounselRequests(id) 를 거친다. 직접 읽으면 undefined 다.
+   */
+  counselRequests?: StudentCounselRequest[]
 }
 
-export const STUDENTS: StudentData[] = [
-  chaewon as unknown as StudentData,
-  changwon as unknown as StudentData,
-  // 제로베이스 — 학사DB(학과·수강)만 있고 우리 기록은 0. 게이팅 화면의 기준 학생이다.
-  jiwoo as unknown as StudentData,
-]
+export const STUDENTS: StudentData[] = studentProfiles()
+export const DEVELOPMENT_STUDENTS = studentChoices()
+const counselSeed = counselOwnerProfiles()
 
 const STORAGE_KEY = 'dc_active_student'
 
 export function getActiveStudentId(): string {
   try {
-    return localStorage.getItem(STORAGE_KEY) || STUDENTS[0].id
+    const id = localStorage.getItem(STORAGE_KEY) || (STUDENTS[0]?.id ?? DEVELOPMENT_STUDENTS[0]?.id ?? '')
+    localStorage.setItem(STORAGE_KEY, id)
+    return id
   } catch {
-    return STUDENTS[0].id
+    return (STUDENTS[0]?.id ?? DEVELOPMENT_STUDENTS[0]?.id ?? '')
   }
 }
 
@@ -234,17 +254,7 @@ export const STUDENT_TYPE_EVENT_KEY = 'dc_student_type'
  * 정해진 유형을 놓친다** — 학생 포털은 「진로탐색형」인데 상담사 화면만 「유형 미정」이 된다.
  */
 export function getStudentType(student: StudentData): StudentType | null {
-  if (student.studentType) return student.studentType
-  try {
-    const raw = localStorage.getItem(STUDENT_TYPE_EVENT_KEY)
-    if (!raw) return null
-    const parsed = JSON.parse(raw)
-    if (!Array.isArray(parsed)) return null
-    const mine = (parsed as StudentTypeEvent[]).filter(e => e.studentId === student.id)
-    return mine.length > 0 ? mine[mine.length - 1].studentType : null
-  } catch {
-    return null // 데모 범위 — 파싱 실패는 "유형 없음"으로 다룬다
-  }
+  return student.studentType ?? null
 }
 
 // 학생 유형 코드 → 유형 메타(라벨·계층·후속진단·상담주제) — careerProcess 단일 소스 재사용
@@ -320,31 +330,9 @@ function deriveRoadmapSummary(phases: RoadmapPhase[]): string {
   return `진행 전 · 완료 ${doneCount}/${phases.length}단계`
 }
 
-const COUNSEL_OWNER_OVERRIDE_KEY = 'dc_counsel_owners'
-
-/** owner별 상담신청 override(런타임 변경분)를 읽는다. 파싱 실패·부재 시 {} 폴백. */
 function readOwnerOverrides(): Record<string, StudentCounselRequest[]> {
-  try {
-    const raw = localStorage.getItem(COUNSEL_OWNER_OVERRIDE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (parsed && typeof parsed === 'object') return parsed as Record<string, StudentCounselRequest[]>
-    }
-  } catch {
-    /* 폴백: override 없음 */
-  }
-  return {}
-}
-
-/** owner 1명의 상담신청 목록을 override에 저장한다(seed는 불변). */
-function saveOwnerRequests(ownerId: string, list: StudentCounselRequest[]): void {
-  try {
-    const overrides = readOwnerOverrides()
-    overrides[ownerId] = list
-    localStorage.setItem(COUNSEL_OWNER_OVERRIDE_KEY, JSON.stringify(overrides))
-  } catch {
-    /* 데모 범위 — 저장 실패 무시 */
-  }
+  const owners = [...STUDENTS, ...(counselSeed as { id: string }[])]
+  return Object.fromEntries(owners.map(owner => [owner.id, counselRequests().filter(r => r.studentId === owner.id)]))
 }
 
 /** 상담신청 소유자 병합 목록(seed 불변 + override). 투영·읽기·쓰기의 유일 소스. */
@@ -401,19 +389,4 @@ export function getStudentCounselRequests(id: string): StudentCounselRequest[] {
 /** 상담신청 id로 소속 owner를 역참조한다(상담사 전이 시 소유자 자동 판별). */
 export function findOwnerByRequestId(reqId: string): CounselOwner | undefined {
   return getCounselOwners().find(o => o.counselRequests.some(r => r.id === reqId))
-}
-
-/** 학생 이벤트: 신청 append. 배정 로직은 모름 — assignedCounselorId 미지정(투영에서 파생). */
-export function addCounselRequest(ownerId: string, req: StudentCounselRequest): void {
-  const cur = getStudentCounselRequests(ownerId)
-  let id = req.id
-  for (let n = 1; cur.some(r => r.id === id); n++) id = `${req.id}-${n}`
-  saveOwnerRequests(ownerId, [...cur, id === req.id ? req : { ...req, id }])
-}
-
-/** 상담사 이벤트: 신청 1건 patch. 소유 owner를 역참조해 그 override 배열만 갱신한다. */
-export function patchCounselRequest(reqId: string, patch: Partial<StudentCounselRequest>): void {
-  const owner = findOwnerByRequestId(reqId)
-  if (!owner) return
-  saveOwnerRequests(owner.id, owner.counselRequests.map(r => (r.id === reqId ? { ...r, ...patch } : r)))
 }

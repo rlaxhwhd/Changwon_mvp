@@ -1,67 +1,33 @@
-// ─────────────────────────────────────────────────────────────────────────
-// 순차 게이팅 런타임 (CLAUDE.md 13조 · PROCESS.md §2)
-//
-// "이 학생이 지금 어디까지 왔는가"를 판정하는 자리는 여기 하나뿐이다.
-// 판정 규칙 자체는 careerProcess(getStageAccess·getNextAction)가 갖고,
-// 이 모듈은 **그 규칙에 먹일 상태를 seed ⊕ localStorage 로 조립**한다.
-//
-// 단일 소스
-//   · 학생 seed        = data/students/*.json
-//   · 진단 응시 이벤트 = localStorage 'dc_diag_attempts'  (상담사 포털과 같은 키·같은 레코드)
-//   · 유형 확정 이벤트 = localStorage 'dc_student_type'   (append-only)
-//
-// ⚠ 유형을 계산하지 않는다. 검사 판정식이 미확정이라(PROCESS.md §9 · CLAUDE.md 14조)
-//   "C-CORE 를 마치면 무슨 유형이 나오는가"는 학생 seed 의 diagnosisOutcome 에
-//   미리 적혀 있고, 응시 완료 시 그 값을 그대로 주입할 뿐이다.
-//   판정식이 확정되면 이 주입 지점만 검사 결과로 갈아끼우면 된다.
-// ─────────────────────────────────────────────────────────────────────────
+// 진단 완료 여부는 PostgreSQL 응시 이력으로 판정한다.
+// 채점 엔진 없이 유형·점수를 만들지 않는다. 개발 검증 기록은 별도 API를 사용한다.
 import {
-  DIAGNOSIS_MODULES, STUDENT_TYPE_MAP, getModuleByTestId, getRequiredTests,
+  DIAGNOSIS_MODULES, STUDENT_TYPE_MAP, getRequiredTests,
   type DiagnosisModule, type PipelineState, type TestStatus,
 } from './careerProcess'
+import { isCare7 } from './counselTrack'
 import { getDiagnosisResult } from './diagnosisResults'
-import { getStudentType, STUDENT_TYPE_EVENT_KEY } from './students'
+import { getStudentCounselRequests, getStudentType } from './students'
+import { diagnosisAttempts, loadStudentDiagnoses } from '../../shared/diagnosisStore'
+import { api } from '../../shared/api'
+import { loadProfiles } from '../../shared/profileStore'
 import type { StudentData, StudentTypeEvent } from './students'
 // 진단 응시 레코드는 상담사 포털이 이미 정의해 둔 것을 그대로 쓴다 — 같은 이벤트다.
 // (타입만 빌려오므로 런타임 의존은 없다. cross-SPA 비계는 DB 전환 시 함께 걷힌다.)
 import type { DiagnosisAttempt } from '../../src_admin/data/schema/diagnosisAttempt'
-
-const ATTEMPT_KEY = 'dc_diag_attempts'
-const TYPE_KEY = STUDENT_TYPE_EVENT_KEY
+// 로드맵 존재 판정은 교직원 포털의 생성 스토어가 정본이다 — 상담사가 만든 것을
+// 학생 화면이 그대로 봐야 하므로 여기서 다시 판단하지 않는다(같은 비계, DB 전환 시 제거).
+import { hasConfirmedRoadmap } from '../../src_admin/data/roadmapGenerated'
 
 // 유형 조회·이벤트 타입은 students.ts 가 갖는다 — 두 포털이 같은 답을 봐야 하기 때문이다.
 // 여기서 다시 정의하지 않고 그대로 다시 내보낸다.
 export { getStudentType }
 export type { StudentTypeEvent }
 
-function readList<T>(key: string): T[] {
-  try {
-    const raw = localStorage.getItem(key)
-    if (!raw) return []
-    const parsed = JSON.parse(raw)
-    return Array.isArray(parsed) ? (parsed as T[]) : []
-  } catch {
-    return [] // 데모 범위 — 파싱 실패는 "기록 없음"으로 다룬다
-  }
-}
-
-function persist<T>(key: string, list: T[]): void {
-  try {
-    localStorage.setItem(key, JSON.stringify(list))
-  } catch {
-    /* 데모 범위 — 저장 실패 무시 */
-  }
-}
-
-function today(): string {
-  return new Date().toISOString().slice(0, 10)
-}
-
 // ── 읽기 ────────────────────────────────────────────────────────────────
 
 /** 이 학생의 진단 응시 이력(런타임 적재분). seed 응시분은 상담사 로더가 따로 병합한다. */
 export function getAttempts(studentId: string): DiagnosisAttempt[] {
-  return readList<DiagnosisAttempt>(ATTEMPT_KEY).filter(a => a.studentId === studentId)
+  return diagnosisAttempts.filter(a => a.studentId === studentId)
 }
 
 /** 해당 검사를 완료했는가. */
@@ -78,7 +44,7 @@ export function isTestDone(studentId: string, testId: string): boolean {
  */
 export function getModuleStatusFor(student: StudentData, module: DiagnosisModule): TestStatus {
   const isDone = (m: DiagnosisModule) =>
-    isTestDone(student.id, m.testId) || (student.studentType !== null && Boolean(m.recentAt))
+    isTestDone(student.id, m.testId)
 
   if (isDone(module)) return 'done'
   const ready = module.requires.every(id => {
@@ -92,24 +58,35 @@ export function getModuleStatusFor(student: StudentData, module: DiagnosisModule
 export function getPipelineState(student: StudentData): PipelineState {
   const studentType = getStudentType(student)
 
-  /**
-   * ★ 시드에 유형이 박힌 학생은 **진단을 마치고 들어온 것**이다.
-   *   유형은 C-CORE 가 낳는 값이므로, 유형이 있다는 건 진단 2종을 끝냈다는 뜻이다.
-   *   이 줄이 없으면 기존 데모 학생(김채원·김창원)이 응시 이력이 없다는 이유로
-   *   상담·로드맵·취업지원에서 통째로 잠긴다 — 게이팅 도입 전과 같아야 한다.
-   */
-  const seededDone = student.studentType !== null
+  // Completion is determined by persisted attempts, never by the existence of a type.
 
   const followUp = studentType ? STUDENT_TYPE_MAP[studentType].followUpTest : null
   const followUpModule = followUp ? DIAGNOSIS_MODULES.find(m => m.id === followUp) : undefined
 
   return {
-    coreDone: seededDone || isTestDone(student.id, 'ccore'),
+    coreDone: isTestDone(student.id, 'ccore'),
     studentType,
-    followUpDone: seededDone || (followUpModule ? isTestDone(student.id, followUpModule.testId) : false),
-    // 상담·로드맵은 아직 학생 seed 가 사실상의 원천이다. 신입생은 둘 다 비어 있다.
-    counselDone: (student.counselRequests ?? []).some(r => r.status === '완료'),
-    roadmapConfirmed: Boolean(student.roadmapAxes),
+    followUpDone: (followUpModule ? isTestDone(student.id, followUpModule.testId) : false),
+    // ★ 시드가 아니라 **병합 스토어**를 읽는다. 상담 신청도, 상담사의 확정·완료
+    //   전이도 전부 dc_counsel_owners 오버레이에 쌓이고 학생 JSON 은 불변이다.
+    //   시드만 보면 상담사가 일지를 쓰고 완료해도 학생 화면은 영영 "상담을 신청하세요"에
+    //   머문다(신입생은 시드가 빈 배열이라 특히 그렇다).
+    //
+    // ★ 로드맵을 여는 상담은 「진로취업 × CARE 7+ 연계」 하나뿐이다.
+    //   · 일반 진로취업 상담은 파이프라인 밖이라 몇 번을 받아도 열지 않는다.
+    //   · 심리·교수 상담도 마찬가지다(전에는 종류를 안 가려서 심리 상담 1건이
+    //     로드맵을 열고 있었다 — 유형 확정도 로드맵 생성도 없는 상담이다).
+    counselDone: getStudentCounselRequests(student.id).some(
+      r => r.status === '완료' && r.type === '진로취업' && isCare7(r.careTrack),
+    ),
+    // 시드 로드맵을 받고 들어온 학생과, 상담사가 방금 만들어 준 학생 둘 다 열려야 한다.
+    // 시드만 보면 생성 직후에도 로드맵·역량강화·취업지원이 잠긴 채로 남는다.
+    //
+    // ★ 「있다」가 아니라 「확정됐다」를 본다(04-decisions Q1). 초안은 열지 않는다 —
+    //   재생성 중에는 계획이 행으로는 있어도 학생에게 열린 계획이 아니다.
+    //   존재로 판정하면 서버(gates.py)는 거절하는데 화면만 열려, 학생이 잠긴 줄
+    //   모르고 신청까지 갔다가 마지막에 막힌다. 술어는 서버와 한 벌이어야 한다.
+    roadmapConfirmed: hasConfirmedRoadmap(student.id),
   }
 }
 
@@ -121,45 +98,15 @@ export function getPipelineState(student: StudentData): PipelineState {
  * 응시 시점 스냅샷(학번·이름·학과·학년)을 같이 저장한다 — 현행 EP_PRM_APP 패턴
  * 계승(CLAUDE.md 2조). 학적이 바뀌어도 "응시 당시" 소속으로 집계가 재현돼야 한다.
  */
-export function completeDiagnosis(student: StudentData, testId: string): void {
-  const module = getModuleByTestId(testId)
-  if (!module) return
-
-  const attempts = readList<DiagnosisAttempt>(ATTEMPT_KEY)
-  const prior = attempts.filter(a => a.studentId === student.id && a.testId === testId)
-  const now = today()
-
-  attempts.push({
-    id: `dga_${student.id}_${testId}_${prior.length + 1}`,
-    studentId: student.id,
-    studentNo: student.studentNo,
-    studentName: student.name,
-    studentMajor: student.major,
-    studentGrade: student.grade,
-    testId,
-    status: '완료',
-    attemptNo: prior.length + 1,
-    startedAt: now,
-    completedAt: now,
-    resultSummary: module.decides,
+const pendingDiagnosisKeys = new Map<string,string>()
+export async function completeDiagnosis(student: StudentData, testId: string): Promise<void> {
+  const key = pendingDiagnosisKeys.get(testId) ?? crypto.randomUUID()
+  pendingDiagnosisKeys.set(testId,key)
+  await api('/development/diagnosis/'+encodeURIComponent(testId)+'/complete', {
+    method:'POST',headers:{'Idempotency-Key':key},
   })
-  persist(ATTEMPT_KEY, attempts)
-
-  // C-CORE 가 유형을 정한다. 판정식이 없으니 seed 에 적힌 결과를 주입한다.
-  if (module.id === 'CCORE') {
-    const outcome = student.diagnosisOutcome?.studentType
-    if (outcome && !getStudentType(student)) {
-      const events = readList<StudentTypeEvent>(TYPE_KEY)
-      events.push({
-        id: `dst_${student.id}_${events.length + 1}`,
-        studentId: student.id,
-        studentType: outcome,
-        source: 'diagnosis',
-        decidedAt: new Date().toISOString(),
-      })
-      persist(TYPE_KEY, events)
-    }
-  }
+  await Promise.all([loadStudentDiagnoses(student.id),loadProfiles()])
+  pendingDiagnosisKeys.delete(testId)
 }
 
 // ── 진단 결과 카드 (라운지) ──────────────────────────────────────────────
@@ -192,10 +139,4 @@ export function getDiagnosisCardViews(student: StudentData): DiagnosisCardView[]
       tags: result ? result.factors.map(f => f.name) : [],
     }
   })
-}
-
-/** 데모 되돌리기 — 이 학생의 진행분만 지운다(제로베이스로 복귀). */
-export function resetPipeline(studentId: string): void {
-  persist(ATTEMPT_KEY, readList<DiagnosisAttempt>(ATTEMPT_KEY).filter(a => a.studentId !== studentId))
-  persist(TYPE_KEY, readList<StudentTypeEvent>(TYPE_KEY).filter(e => e.studentId !== studentId))
 }

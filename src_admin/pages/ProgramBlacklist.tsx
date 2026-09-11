@@ -14,31 +14,37 @@ import {
   LuUserCheck,
   LuUserX,
 } from 'react-icons/lu'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   waivePenalty,
   clearPenalty,
   queryPenaltyList,
   getPenaltyRowsForExport,
-  getPenaltyFilterOptions,
   getPenaltySummary,
+  getStudentPenalty,
 } from '../data/penalties'
 import type { StudentPenalty, PenaltyEntry } from '../data/penalties'
 import { penaltyLevel } from '../data/schema/penalty'
 import { collegeOf } from '../data/colleges'
+import { getCollegeOptions, majorsOfCollege } from '../data/departments'
 import { studentNoOf } from '../data/studentRoster'
 import { totalPages } from '../data/query'
 import { useListData } from '../hooks/useListData'
+import { useAsyncAction } from '../../shared/useAsyncAction'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
 import './ProgramBlacklist.css'
 
 const KIND_LABEL: Record<PenaltyEntry['kind'], { label: string; icon: IconType }> = {
-  noshow: { label: '노쇼 벌점', icon: LuUserX },
-  manual: { label: '수동 부여', icon: LuHand },
-  waive: { label: '차감·해제', icon: LuRotateCcw },
+  NOSHOW: { label: '노쇼 벌점', icon: LuUserX },
+  MANUAL: { label: '수동 부여', icon: LuHand },
+  WAIVE: { label: '차감·해제', icon: LuRotateCcw },
 }
+
+/** 서버가 새 종류를 보내도 화면이 죽지 않게 한다 — 표시가 빠지는 편이 낫다. */
+const kindOf = (kind: PenaltyEntry['kind']) =>
+  KIND_LABEL[kind] ?? { label: kind, icon: LuHand }
 
 const ALL = '전체'
 const PER_PAGE = 10
@@ -65,19 +71,18 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
   const level = penaltyLevel(record.total)
   const [waivePts, setWaivePts] = useState('')
   const [waiveReason, setWaiveReason] = useState('')
+  const { run, saving, error } = useAsyncAction()
 
   const canWaive = Number(waivePts) > 0 && waiveReason.trim() !== ''
 
   const handleWaive = () => {
     if (!canWaive) return
-    waivePenalty(record.studentId, Number(waivePts), waiveReason.trim())
-    onDone()
+    run(async () => { await waivePenalty(record.studentId, Number(waivePts), waiveReason.trim()); onDone() })
   }
 
   const handleClear = () => {
     if (!window.confirm(`${record.studentName} 학생의 벌점 이력을 전부 해제할까요?`)) return
-    clearPenalty(record.studentId)
-    onDone()
+    run(async () => { await clearPenalty(record.studentId); onDone() })
   }
 
   return (
@@ -85,7 +90,7 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
       <div className="blk-detail-head">
         <div className="blk-detail-who">
           <strong>{record.studentName}</strong>
-          <small>{collegeOf(record.studentMajor)} · {record.studentMajor} · {studentNoOf(record.studentId)}</small>
+          <small>{record.college ?? collegeOf(record.studentMajor)} · {record.studentMajor} · {record.studentNo ?? studentNoOf(record.studentId)}</small>
         </div>
         <span className="admin-blacklist-total"><em>{record.total}</em>점</span>
         <span className={`admin-chip ${toneChip(level.tone)}`}>{level.label}</span>
@@ -95,7 +100,7 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
         {[...record.entries].reverse().map(e => (
           <li key={e.id} className={`admin-penalty-entry${e.points < 0 ? ' is-waive' : ''}`}>
             <span className="admin-penalty-entry-kind">
-              {(() => { const Icon = KIND_LABEL[e.kind].icon; return <Icon /> })()} {KIND_LABEL[e.kind].label}
+              {(() => { const Icon = kindOf(e.kind).icon; return <Icon /> })()} {kindOf(e.kind).label}
             </span>
             <span className="admin-penalty-entry-reason">{e.reason}</span>
             <span className={`admin-penalty-entry-points${e.points < 0 ? ' minus' : ''}`}>
@@ -115,13 +120,14 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
           <span>차감·해제 사유</span>
           <input type="text" value={waiveReason} onChange={e => setWaiveReason(e.target.value)} placeholder="예: 소명 인정 — 병결 확인" />
         </label>
-        <button className="admin-btn admin-btn-ghost sm" disabled={!canWaive} onClick={handleWaive}>
+        <button className="admin-btn admin-btn-ghost sm" disabled={!canWaive || saving} onClick={handleWaive}>
           <LuRotateCcw /> 차감
         </button>
-        <button className="admin-btn admin-btn-danger-ghost sm" onClick={handleClear}>
+        <button className="admin-btn admin-btn-danger-ghost sm" disabled={saving} onClick={handleClear}>
           <LuTrash2 /> 전체 해제
         </button>
       </div>
+      {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
     </div>
   )
 }
@@ -136,17 +142,29 @@ export default function ProgramBlacklist() {
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<StudentPenalty | null>(null)
 
-  // 옵션·집계는 전체 집합에서(현재 페이지 아님). 뮤테이션(refreshKey) 후 재계산.
-  const options = useMemo(() => getPenaltyFilterOptions(), [refreshKey])
-  const summary = useMemo(() => getPenaltySummary(), [refreshKey])
+  // 집계·옵션은 현재 페이지가 아니라 전체 집합에서 나온다 — 서버가 계산한다.
+  // 뮤테이션(refreshKey) 후 다시 읽는다.
+  const [summary, setSummary] = useState({ total: 0, totalPoints: 0, majors: [] as string[] })
+  useEffect(() => {
+    let alive = true
+    void getPenaltySummary().then(next => { if (alive) setSummary(next) })
+    return () => { alive = false }
+  }, [refreshKey])
+  // 단대는 학사 조직 트리에서 만든다 — 벌점 대상 학생들의 학과가 속한 단대만 노출한다.
+  const options = useMemo(() => ({
+    colleges: getCollegeOptions(summary.majors).map(c => c.name),
+    majors: summary.majors,
+  }), [summary.majors])
+
+  // 단대를 고르면 그 단대의 학과 목록으로 펼쳐 보낸다(서버는 학과로만 거른다).
+  const majors = major !== ALL ? [major] : college !== ALL ? majorsOfCollege(college) : undefined
 
   const params = {
     page,
     pageSize: PER_PAGE,
     q: query,
+    majors,
     filters: {
-      college: college === ALL ? undefined : college,
-      major: major === ALL ? undefined : major,
       ptsMin: ptsMin === ALL ? undefined : ptsMin,
       scope: scope === ALL ? undefined : scope,
     },
@@ -172,16 +190,16 @@ export default function ProgramBlacklist() {
     return out
   }, [page, pages])
 
-  const downloadCsv = () => {
-    const rows = getPenaltyRowsForExport(params)
+  const downloadCsv = async () => {
+    const rows = await getPenaltyRowsForExport(params)
     const header = ['번호', '이름', '학번', '대학', '학과', '벌점점수']
     const body = rows.map((r, idx) => [
       String(rows.length - idx),
-      r.record.studentName,
+      r.studentName,
       r.studentNo,
-      r.college,
-      r.record.studentMajor,
-      String(r.record.total),
+      r.college ?? collegeOf(r.studentMajor),
+      r.studentMajor,
+      String(r.total),
     ])
     const csv = [header, ...body]
       .map(row => row.map(v => `"${String(v).replaceAll('"', '""')}"`).join(','))
@@ -289,15 +307,15 @@ export default function ProgramBlacklist() {
                     type="button"
                     className="blk-row"
                     role="row"
-                    key={r.record.studentId}
-                    onClick={() => setSelected(r.record)}
+                    key={r.studentId}
+                    onClick={() => { void getStudentPenalty(r.studentId).then(setSelected) }}
                   >
                     <span className="blk-c-no">{no}</span>
-                    <span className="blk-c-name">{r.record.studentName}</span>
+                    <span className="blk-c-name">{r.studentName}</span>
                     <span className="blk-c-mono">{r.studentNo}</span>
-                    <span>{r.college}</span>
-                    <span>{r.record.studentMajor}</span>
-                    <span className="blk-c-pts"><em>{r.record.total}</em></span>
+                    <span>{r.college ?? collegeOf(r.studentMajor)}</span>
+                    <span>{r.studentMajor}</span>
+                    <span className="blk-c-pts"><em>{r.total}</em></span>
                   </button>
                 )
               })}

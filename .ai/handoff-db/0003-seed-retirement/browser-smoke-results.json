@@ -1,0 +1,154 @@
+[
+  {
+    "id": "career_kim",
+    "route": "/admin",
+    "url": "http://127.0.0.1:5183/admin",
+    "errors": [],
+    "bodyLength": 1020,
+    "excerpt": "진단 관리\n상담 관리\n학생 관리\n로드맵 관리\n비교과 운영\n채용공고\n설정\n39\n김진로 상담사님,\n오늘 상담 1건입니다\n진로취업지원센터\n담당 학생 115명\n2026. 10. 12 (월)\n담당 학생\n115명\n상담기록\n5건\n집중관리 현황\n1학년 제외 88명 대비\n고위험군\n7명\n8%\n핵심관리대상\n4명\n4.5%\n오늘 상담\n1건\n1 "
+  },
+  {
+    "id": "career_kim",
+    "route": "/admin/students",
+    "url": "http://127.0.0.1:5183/admin/students",
+    "errors": [],
+    "bodyLength": 1378,
+    "excerpt": "진단 관리\n상담 관리\n학생 관리\n로드맵 관리\n비교과 운영\n채용공고\n설정\n39\n학생 관리\n담당 학생 목록\n담당 학생 목록\n\n진로취업지원센터 · 전 학과 진로·취업 상담 및 로드맵 관리 · 총 120명 · \n하위 계층 20명\n\n집중관리\n전체\n120\n고위험군\n16\n핵심관리대상\n0\nSTAR 트랙\n1\n1학년은 집중관리 판정 대상에"
+  },
+  {
+    "id": "career_kim",
+    "route": "/admin/settings",
+    "url": "http://127.0.0.1:5183/admin/settings",
+    "errors": [],
+    "bodyLength": 329,
+    "excerpt": "진단 관리\n상담 관리\n학생 관리\n로드맵 관리\n비교과 운영\n채용공고\n설정\n39\n설정\n내 프로필\n내 프로필\n\n상담사 프로필 정보를 조회·수정합니다.\n\n김진로\n진로취업상담사\n진로취업지원센터\n이름 *\n역할\n역할은 로그인 시 결정되며 변경할 수 없습니다.\n소속 *\n이메일\n담당 범위\n가능 시간대 요약\n상세 요일·시간대는 가능 시간대"
+  },
+  {
+    "id": "psych_lee",
+    "route": "/admin",
+    "url": "http://127.0.0.1:5183/admin",
+    "errors": [],
+    "bodyLength": 750,
+    "excerpt": "진단 관리\n상담 관리\n학생 관리\n설정\n17\n이마음 상담사님,\n오늘 상담 0건입니다\n학생상담센터\n담당 학생 115명\n2026. 09. 10 (목)\n담당 학생\n115명\n상담기록\n1건\n집중관리 현황\n1학년 제외 88명 대비\n고위험군\n7명\n8%\n핵심관리대상\n4명\n4.5%\n오늘 상담\n0건\n0 / 0 완료\n접수 대기\n0건\n0 / 0"
+  },
+  {
+    "id": "cse-1",
+    "route": "/admin",
+    "url": "http://127.0.0.1:5183/admin/professor/advisees",
+    "errors": [],
+    "bodyLength": 454,
+    "excerpt": "지도학생\n학생 검색\n상담 관리\n상담 설정\n설정\n지도학생\n지도학생 목록\n\n박지훈의 지도학생 · 총 5명\n\n학과\n전체\n컴퓨터공학과\n학년\n전체\n1학년\n2학년\n4학년\n학적\n전체\n재학\n검색 결과 5명\n번호\n이름\n학번\n학년\n대학\n학과\n상태\n학생정보\n1\n김지원\n20250091\n2\n코드 미확인\n컴퓨터공학과\n재학\n보기\n2\n남시은\n2023"
+  },
+  {
+    "id": "cse-1",
+    "route": "/admin/professor/advisees",
+    "url": "http://127.0.0.1:5183/admin/professor/advisees",
+    "errors": [],
+    "bodyLength": 454,
+    "excerpt": "지도학생\n학생 검색\n상담 관리\n상담 설정\n설정\n지도학생\n지도학생 목록\n\n박지훈의 지도학생 · 총 5명\n\n학과\n전체\n컴퓨터공학과\n학년\n전체\n1학년\n2학년\n4학년\n학적\n전체\n재학\n검색 결과 5명\n번호\n이름\n학번\n학년\n대학\n학과\n상태\n학생정보\n1\n김지원\n20250091\n2\n코드 미확인\n컴퓨터공학과\n재학\n보기\n2\n남시은\n2023"
+  },
+  {
+    "id": "cse-1",
+    "route": "/admin/professor/counsel/records",
+    "url": "http://127.0.0.1:5183/admin/professor/counsel/records",
+    "errors": [],
+    "bodyLength": 638,
+    "excerpt": "지도학생\n학생 검색\n상담 관리\n상담 설정\n설정\n상담 관리\n상담 기록\n상담 기록\n\n박지훈 · 상담 결과를 기록하면 조교 실적 집계에 반영됩니다.\n\n기록 작성\n학생\n남시은 (20230089)\n김지원 (20250091)\n이도윤 (20250101)\n박지호 (20250102)\n최유나 (20240103)\n상담구분\n전공 및 학업\n진로"
+  },
+  {
+    "id": "cse-1",
+    "route": "/admin/professor/profile",
+    "url": "http://127.0.0.1:5183/admin/professor/profile",
+    "errors": [],
+    "bodyLength": 301,
+    "excerpt": "지도학생\n학생 검색\n상담 관리\n상담 설정\n설정\n상담 설정\n상담 노출 설정\n상담 노출 설정\n\n박지훈 교수님의 학생 상담 신청 화면 노출을 설정합니다.\n\n박지훈\n교수\n컴퓨터공학과\n상담 신청 허락\n신청 받음\n받지 않음\n받지 않음으로 전환하면 학생 교수 목록에서 제외됩니다.\n오피스아워\n상담 소개\n저장\n개인정보처리방침\n이메일무단수"
+  },
+  {
+    "id": "asst_kim",
+    "route": "/admin",
+    "url": "http://127.0.0.1:5183/admin/assistant/students",
+    "errors": [],
+    "bodyLength": 249,
+    "excerpt": "학생 현황\n전담교수\n학과추천기업관리\n학생 현황\n담당 학과 학생 현황\n\n현재 유효한 학과 배정에 따른 학생 · 총 0명\n\n학과\n전체\n학년\n전체\n학적\n전체\n검색 결과 0명\n\n조건에 맞는 학생이 없습니다.\n\n개인정보처리방침\n이메일무단수집거부\nE-MAIL cwjob@changwon.ac.kr\n51140 경상남도 창원시 의창구 창"
+  },
+  {
+    "id": "asst_kim",
+    "route": "/admin/assistant/advisor",
+    "url": "http://127.0.0.1:5183/admin/assistant/advisor",
+    "errors": [],
+    "bodyLength": 941,
+    "excerpt": "학생 현황\n전담교수\n학과추천기업관리\n전담교수\n배정 현황\n전담교수 배정 현황\n\n컴퓨터공학과 · 경영학과 · 담당 학과 학생 22명\n\n초기화\n엑셀 다운로드\n전체\n22\n미배정\n8\n배정\n14\n학과\n전체\n경영학과\n컴퓨터공학과\n학년\n전체\n1학년\n2학년\n3학년\n4학년\n학적\n전체\n재학\n휴학\n졸업\n배정년도\n전체\n2026\n2025\n2024"
+  },
+  {
+    "id": "asst_kim",
+    "route": "/admin/assistant/advisor/records",
+    "url": "http://127.0.0.1:5183/admin/assistant/advisor/records",
+    "errors": [],
+    "bodyLength": 1034,
+    "excerpt": "학생 현황\n전담교수\n학과추천기업관리\n전담교수\n상담 실적\n전담교수 상담 실적\n\n컴퓨터공학과 · 경영학과 · 배정 학생 14명 기준\n\n미배정 8명은 배정 현황에서 관리합니다.\n\n교수상담 통계\n학과\n전체\n컴퓨터공학과\n경영학과\n교수\n전체\n강민재\n김세환\n박지훈\n신유라\n이나경\n교수\n단과대학\n학과\n배정 학생 수\n온라인\n오프라인\n계\n미"
+  },
+  {
+    "id": "system-admin",
+    "route": "/admin",
+    "url": "http://127.0.0.1:5183/admin/system/menus",
+    "errors": [],
+    "bodyLength": 5080,
+    "excerpt": "취업예측분석시스템\n회원관리\n진단관리\n상담관리\n로드맵관리\n비교과프로그램관리\n기업정보플랫폼\n공지사항\n시스템 관리\n시스템 관리\n메뉴관리\n메뉴관리\n\n배포된 메뉴의 명칭·순서·노출을 수정합니다. 메뉴 노출과 별도로 API에서 데이터 접근 권한을 검사합니다.\n\nadm-members.0 · /members/assignments\n명칭\n"
+  },
+  {
+    "id": "system-admin",
+    "route": "/admin/notices",
+    "url": "http://127.0.0.1:5183/admin/notices",
+    "errors": [],
+    "bodyLength": 547,
+    "excerpt": "취업예측분석시스템\n회원관리\n진단관리\n상담관리\n로드맵관리\n비교과프로그램관리\n기업정보플랫폼\n공지사항\n시스템 관리\n공지사항\n공지 관리\n\n학생·교직원 포털에 게시할 공지를 관리합니다.\n\n공지 작성\n게시일\t분류\t제목\t관리\n2026-08-19\t프로그램\t2026학년도 하반기 비교과 프로그램 참여 안내\t수정 게시 중단\n2026-09-1"
+  },
+  {
+    "id": "chaewon",
+    "route": "/v2/main",
+    "url": "http://127.0.0.1:5183/v2/main",
+    "errors": [],
+    "bodyLength": 1833,
+    "excerpt": "AI 커리어 라운지\n진단센터\n상담센터\n진로취업 로드맵\n비교과 프로그램\n내 성장\n기업정보 플랫폼\n마이페이지\n17\n\nMY CAREER DASHBOARD\n\n한눈에 보는\n오늘 나의 성장\n\n진단 결과부터 상담, 로드맵과 역량까지 연결된 나의 현재 위치를 확인하고 오늘의 행동을 시작해 보세요.\n\n나의 진로 여정\n\n내 CARE+7의 "
+  },
+  {
+    "id": "chaewon",
+    "route": "/v2/counsel/professor",
+    "url": "http://127.0.0.1:5183/v2/counsel/professor",
+    "errors": [],
+    "bodyLength": 435,
+    "excerpt": "AI 커리어 라운지\n진단센터\n상담센터\n진로취업 로드맵\n비교과 프로그램\n내 성장\n기업정보 플랫폼\n마이페이지\n17\n상담센터\n지도교수상담\n상담 신청\n상담 신청\n\n교수님을 선택하고 온라인 또는 오프라인 상담을 신청하세요.\n\n진로·취업 상담\n심리 상담\n교수 상담\n대학/부서\n경영대학\n공과대학\n인문대학\n사회과학대학\n자연과학대학\n학부/"
+  },
+  {
+    "id": "changwon",
+    "route": "/v2/main",
+    "url": "http://127.0.0.1:5183/v2/main",
+    "errors": [],
+    "bodyLength": 1857,
+    "excerpt": "AI 커리어 라운지\n진단센터\n상담센터\n진로취업 로드맵\n비교과 프로그램\n내 성장\n기업정보 플랫폼\n마이페이지\n1\n\nMY CAREER DASHBOARD\n\n한눈에 보는\n오늘 나의 성장\n\n진단 결과부터 상담, 로드맵과 역량까지 연결된 나의 현재 위치를 확인하고 오늘의 행동을 시작해 보세요.\n\n나의 진로 여정\n\n내 CARE+7의 현"
+  },
+  {
+    "id": "changwon",
+    "route": "/v2/counsel/professor",
+    "url": "http://127.0.0.1:5183/v2/counsel/professor",
+    "errors": [],
+    "bodyLength": 429,
+    "excerpt": "AI 커리어 라운지\n진단센터\n상담센터\n진로취업 로드맵\n비교과 프로그램\n내 성장\n기업정보 플랫폼\n마이페이지\n1\n상담센터\n지도교수상담\n상담 신청\n상담 신청\n\n교수님을 선택하고 온라인 또는 오프라인 상담을 신청하세요.\n\n진로·취업 상담\n심리 상담\n교수 상담\n대학/부서\n경영대학\n공과대학\n인문대학\n사회과학대학\n자연과학대학\n학부/학"
+  },
+  {
+    "id": "jiwoo",
+    "route": "/v2/main",
+    "url": "http://127.0.0.1:5183/v2/main",
+    "errors": [],
+    "bodyLength": 2023,
+    "excerpt": "AI 커리어 라운지\n진단센터\n상담센터\n진로취업 로드맵\n비교과 프로그램\n내 성장\n기업정보 플랫폼\n마이페이지\n4\n다음 단계 2 / 4\nC-1 진로탐색 진단검사 응시가 남았습니다\n\n검증용 유형 명칭으로 분류됐습니다. 이 유형에 맞춘 후속진단 1종을 마치면 상담을 신청할 수 있습니다.\n\n진단 전에도 진로 고민은 상담할 수 있습니"
+  },
+  {
+    "id": "jiwoo",
+    "route": "/v2/counsel/professor",
+    "url": "http://127.0.0.1:5183/v2/counsel/professor",
+    "errors": [],
+    "bodyLength": 434,
+    "excerpt": "AI 커리어 라운지\n진단센터\n상담센터\n진로취업 로드맵\n비교과 프로그램\n내 성장\n기업정보 플랫폼\n마이페이지\n4\n상담센터\n지도교수상담\n상담 신청\n상담 신청\n\n교수님을 선택하고 온라인 또는 오프라인 상담을 신청하세요.\n\n진로·취업 상담\n심리 상담\n교수 상담\n대학/부서\n경영대학\n공과대학\n인문대학\n사회과학대학\n자연과학대학\n학부/학"
+  }
+]

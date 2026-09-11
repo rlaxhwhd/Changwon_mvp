@@ -4,13 +4,14 @@
 // DB 전환 시 이 투영 로더만 CON_PROF_INFO 조회로 교체한다.
 // 관리자 쪽에 별도 신청 스토어를 만들지 말 것 — 학생이 쓰고 교수가 읽는 한 방향이다.
 // ─────────────────────────────────────────────────────────────────────────────
-import { getCounselOwners, patchCounselRequest } from '../../src_v2/data/students'
+import { getCounselOwners } from '../../src_v2/data/students'
 import type {
   CounselMethod,
   CounselRequestStatus,
   CounselSlot,
   EnrollmentStatus,
 } from '../../src_v2/data/students'
+import { performCounselAction } from '../../shared/counselStore'
 import { getActiveAssignByStudent } from './advisorAssigns'
 import { mockLatency, paginate } from './query'
 import type { ListParams, Paginated } from './query'
@@ -111,17 +112,22 @@ export function getProfRequestById(
   return allRows(professorId).find(row => row.id === id)
 }
 
-/** [DB-ready] 대기 신청을 확정 상태와 교수 확정 슬롯으로 전이한다. */
-export function confirmProfRequest(id: string, slot: CounselSlot): void {
-  patchCounselRequest(id, { status: '확정', slot })
+/** 대기 신청을 확정 상태와 교수 확정 슬롯으로 전이한다. 서버가 정본이다. */
+export async function confirmProfRequest(id: string, slot: CounselSlot): Promise<void> {
+  await performCounselAction(id, 'confirm', { slot })
 }
 
-/** [DB-ready] 대기 신청을 취소 상태로 전이한다. */
-export function cancelProfRequest(id: string): void {
-  patchCounselRequest(id, { status: '취소' })
+/** 대기 신청을 취소 상태로 전이한다. 취소 사유는 서버가 필수로 요구한다. */
+export async function cancelProfRequest(id: string, reason: string): Promise<void> {
+  await performCounselAction(id, 'cancel', { reason })
 }
 
-/** [DB-ready] 기록이 저장된 신청을 완료 상태로 전이한다. */
-export function completeProfRequest(id: string): void {
-  patchCounselRequest(id, { status: '완료', completedAt: new Date().toISOString() })
+/** 확정된 신청을 상담 기록과 함께 완료 상태로 전이한다(서버가 한 트랜잭션으로 기록+전이를 처리). */
+export async function completeProfRequest(
+  id: string,
+  record: { summary: string; comment?: string; followUp?: string },
+): Promise<void> {
+  await performCounselAction(id, 'complete', {
+    summary: record.summary, comment: record.comment ?? '', followUp: record.followUp ?? '',
+  })
 }

@@ -1,5 +1,5 @@
 import type { IconType } from 'react-icons'
-import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardCheck, LuClock, LuContact, LuFileText, LuGlobe, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSearch, LuSettings, LuTable, LuUsers, LuUsersRound, LuUserX } from 'react-icons/lu'
+import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardCheck, LuClock, LuContact, LuFileText, LuGlobe, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSearch, LuSettings, LuSparkles, LuTable, LuUsers, LuUsersRound, LuUserX } from 'react-icons/lu'
 // ─────────────────────────────────────────────────────────────────────────
 // 교직원(백오피스) 포털 네비 단일 소스 — 상담사·교수·조교 공용.
 // 역할(StaffRole)로 섹션과 하위 항목을 필터한다 = 현행 SY_MENU_AUTH(역할↔메뉴) 계승.
@@ -8,6 +8,7 @@ import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardC
 // [career] 표시 섹션은 진로상담사 전용. 설정의 "가능 시간대"는 상담사 전용(child roles).
 // ─────────────────────────────────────────────────────────────────────────
 import type { StaffRole } from '../data/schema/staff'
+import { menuItems } from '../../shared/metadataStore'
 
 export interface NavChild {
   label: string
@@ -34,6 +35,45 @@ export interface NavSection {
 const COUNSELOR: StaffRole[] = ['career', 'psych']
 
 const ALL_SECTIONS: NavSection[] = [
+  // ── 시스템관리자 ─────────────────────────────────────────────────────
+  // 현행 관리자 메뉴 트리(CURRENT.md §1-3)를 상단바로 옮긴 것. 시스템 관리 외에는 자리만 있고 화면은 아직 없다.
+  // ★ child 순서 = DB menu_code 의 인덱스(system.0 …)다 — 순서를 바꾸면 041 마이그레이션과 어긋난다.
+  { id: 'adm-forecast', label: '취업예측분석시스템', roles: ['admin'], basePaths: ['/forecast'], path: '/forecast', icon: LuChartNoAxesColumn, children: [] },
+  {
+    id: 'adm-members', label: '회원관리', roles: ['admin'], basePaths: ['/members'], icon: LuUsers,
+    children: [
+      { label: '학과 담당 배정', path: '/members/assignments', icon: LuContact },
+    ],
+  },
+  { id: 'adm-diagnosis', label: '진단관리', roles: ['admin'], basePaths: ['/diagnosis'], path: '/diagnosis', icon: LuClipboardCheck, children: [] },
+  { id: 'adm-counsel', label: '상담관리', roles: ['admin'], basePaths: ['/counsel'], path: '/counsel', icon: LuHeadset, children: [] },
+  { id: 'adm-roadmap', label: '로드맵관리', roles: ['admin'], basePaths: ['/roadmap'], path: '/roadmap', icon: LuRoute, children: [] },
+  { id: 'adm-programs', label: '비교과프로그램관리', roles: ['admin'], basePaths: ['/extracurricular'], path: '/extracurricular', icon: LuGraduationCap, children: [] },
+  { id: 'adm-companies', label: '기업정보플랫폼', roles: ['admin'], basePaths: ['/companies'], path: '/companies', icon: LuBuilding2, children: [] },
+  { id: 'adm-notices', label: '공지사항', roles: ['admin'], basePaths: ['/notices'], path: '/notices', icon: LuFileText, children: [] },
+  {
+    id: 'system', label: '시스템 관리', roles: ['admin'], basePaths: ['/system'], icon: LuSettings,
+    // 현행 시스템관리 좌측 메뉴 15개 그대로 + 우리가 더한 2개(변경 이력·이관 확인 사항).
+    children: [
+      { label: '메뉴관리', path: '/system/menus', icon: LuList },
+      { label: '그룹관리', path: '/system/groups', icon: LuUsersRound },
+      { label: '권한관리', path: '/system/auth', icon: LuIdCard },
+      { label: '코드관리', path: '/system/codes', icon: LuTable },
+      { label: '게시판관리', path: '/system/boards', icon: LuFileText },
+      { label: '배너관리', path: '/system/banners', icon: LuFileText },
+      { label: '팝업관리', path: '/system/popups', icon: LuFileText },
+      { label: '설문조사 관리', path: '/system/surveys', icon: LuClipboardCheck },
+      { label: '사용자 접속이력', path: '/system/access-log', icon: LuClock },
+      { label: '업무접근 현황', path: '/system/work-access', icon: LuChartNoAxesColumn },
+      { label: '접속통계', path: '/system/access-stats', icon: LuChartNoAxesColumn },
+      { label: '접근경로', path: '/system/access-path', icon: LuRoute },
+      { label: '관리자 IP관리', path: '/system/admin-ip', icon: LuGlobe },
+      { label: '권한변경이력', path: '/system/auth-events', icon: LuFileText },
+      { label: 'SMS 관리', path: '/system/sms', icon: LuInbox },
+      { label: '변경 이력', path: '/system/events', icon: LuFileText },
+      { label: '이관 확인 사항', path: '/system/issues', icon: LuSearch },
+    ],
+  },
   // ── 상담사 (진로 + 심리) ────────────────────────────────────────────
   {
     id: 'home',
@@ -89,6 +129,8 @@ const ALL_SECTIONS: NavSection[] = [
     icon: LuRoute,
     roles: ['career'],
     children: [
+      // 생성이 먼저다 — 로드맵이 없으면 요청도 이행률도 있을 수 없다.
+      { label: '로드맵 생성', path: '/roadmap/create', icon: LuSparkles },
       { label: '변경 요청함', path: '/roadmap/requests', icon: LuInbox },
       { label: '로드맵 이행률 현황', path: '/roadmap/progress', icon: LuChartNoAxesColumn },
     ],
@@ -213,9 +255,18 @@ const ALL_SECTIONS: NavSection[] = [
 
 /** 역할에 노출되는 섹션 + 그 하위 항목만 반환 (섹션·child 모두 roles 필터) */
 export function getNavSections(role: StaffRole): NavSection[] {
+  function children(items: NavChild[], parent: string): NavChild[] {
+    return items.map((item,index) => ({item,meta:menuItems.find(row => row.menu_code === `${parent}.${index}`),key:`${parent}.${index}`}))
+      .filter(({item,meta}) => meta?.is_active && (!item.roles || item.roles.includes(role)))
+      .sort((a,b) => a.meta!.sort_order - b.meta!.sort_order)
+      .map(({item,meta,key}) => ({...item,label:meta!.label,children:item.children ? children(item.children,key) : undefined}))
+  }
   return ALL_SECTIONS
     .filter(s => !s.roles || s.roles.includes(role))
-    .map(s => ({ ...s, children: s.children.filter(c => !c.roles || c.roles.includes(role)) }))
+    .map(s => ({section:s,meta:menuItems.find(row => row.menu_code === s.id)}))
+    .filter(({meta}) => meta?.is_active)
+    .sort((a,b) => a.meta!.sort_order - b.meta!.sort_order)
+    .map(({section:s,meta}) => ({ ...s, label:meta!.label, children:children(s.children,s.id) }))
 }
 
 export function matchesPath(pathname: string, targetPath: string) {

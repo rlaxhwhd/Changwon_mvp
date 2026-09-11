@@ -10,8 +10,8 @@ import {
   getApplication,
   isRecommendedInternal,
 } from '../../../src_admin/data/jobApplications'
-import type { ApplyAttachment } from '../../../src_admin/data/jobApplications'
 import { getActiveStudent } from '../../data/students'
+import { useJobStore } from '../../../shared/useJobStore'
 import JobApplyModal from '../../components/JobApplyModal'
 import JobDetailView from '../../components/JobDetailView'
 import { usePageHead } from '../../components/PageCrumb'
@@ -20,8 +20,8 @@ import { usePageHead } from '../../components/PageCrumb'
 export default function JobDetail() {
   const { id } = useParams()
   const navigate = useNavigate()
-  // 지원 직후 화면을 다시 읽기 위한 트리거 (스토어가 localStorage 라 재조회로 끝난다)
-  const [tick, setTick] = useState(0)
+  // 지원 직후 스토어가 서버에서 다시 읽어 발행하면 여기서 갱신된다.
+  const tick = useJobStore()
   // 제출 서류를 고르는 모달 — 서류 없이 지원되던 것을 여기서 막는다.
   const [applyOpen, setApplyOpen] = useState(false)
   const job = id ? getJobById(id) : undefined
@@ -37,21 +37,11 @@ export default function JobDetail() {
   const applied = !!mine && mine.status !== 'CANCELED'
   const gate = acceptsApply ? canApplyTo(job.id, me.id) : undefined
 
-  const submitApply = (attachment: ApplyAttachment) => {
-    const created = applyToJob(job.id, {
-      id: me.id,
-      studentNo: me.studentNo,
-      name: me.name,
-      major: me.major,
-      grade: me.grade,
-      enrollmentStatus: me.enrollmentStatus,
-    }, attachment)
-    if (!created) {
-      window.alert('지원할 수 없는 공고입니다. 잠시 후 다시 확인해 주세요.')
-      return
-    }
+  // 신원 스냅샷은 서버가 만든다 — 화면이 학번·학과를 실어 보내지 않는다(CLAUDE.md 규칙 2).
+  // 실패 사유(게이트 미충족·마감·중복)는 서버가 주고 모달이 그대로 보여 준다.
+  const submitApply = async (fileId: string) => {
+    await applyToJob(job.id, fileId)
     setApplyOpen(false)
-    setTick(t => t + 1)
   }
   void tick
 

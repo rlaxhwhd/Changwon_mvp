@@ -34,7 +34,7 @@ export default function JobList({ scope }: { scope: JobScope }) {
         <div>
           <h1 className="admin-page-title">{copy.title}</h1>
           <p className="admin-page-desc">
-            등록 {counts.total}건 · 게시 {counts.게시} · 마감 {counts.마감}
+            등록 {counts.total}건 · 게시 {counts.POSTED} · 마감 {counts.CLOSED}
           </p>
         </div>
         {scope === 'internal' && (

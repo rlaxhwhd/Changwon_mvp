@@ -5,6 +5,7 @@ import type { StaffRole } from '../data/schema/staff'
 import { getStaffByRole, setActiveUser, hasActiveSession } from '../data/staff'
 
 const ROLE_CARDS: { role: StaffRole; icon: IconType; desc: string }[] = [
+  { role: 'admin', icon: LuClipboardCheck, desc: '공통코드·메뉴·학과 담당 배정과 변경 이력을 관리합니다.' },
   {
     role: 'career',
     icon: LuBriefcase,

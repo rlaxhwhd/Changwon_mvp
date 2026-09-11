@@ -8,6 +8,7 @@ import type { RoadmapAxis } from '../../data/schema/roadmap'
 import RoadmapAxisBoard from '../../components/RoadmapAxisBoard'
 // 로드맵 정본은 교직원 포털의 읽기 모델이다(base ⊕ 상담사 override ⊕ 프로그램 편입분).
 import { getStudentRoadmap } from '../../../src_admin/data/roadmap'
+import { useRoadmap } from '../../../shared/useRoadmapStore'
 // 요청은 상담사 「변경 요청함」이 읽는 그 스토어에 그대로 쌓는다 — 새 저장소를 만들지 않는다.
 import { addRoadmapRequest } from '../../../src_admin/data/roadmapRequests'
 import './RoadmapRequest.css'
@@ -30,13 +31,16 @@ export default function RoadmapRequest() {
   usePageHead('로드맵 수정요청', '생성된 로드맵에서 바꾸고 싶은 부분을 상담사에게 요청합니다.')
   const navigate = useNavigate()
   const student = getActiveStudent()
-  const roadmap = useMemo(() => getStudentRoadmap(student.id), [student.id])
+  const revision = useRoadmap(student.id)
+  const roadmap = useMemo(() => getStudentRoadmap(student.id), [student.id, revision])
 
   const [axis, setAxis] = useState<RoadmapAxis | typeof ALL_AXIS>(ALL_AXIS)
   const [picked, setPicked] = useState<Set<string>>(new Set())
   const [title, setTitle] = useState('')
   const [reason, setReason] = useState('')
   const [done, setDone] = useState(false)
+  // 실패는 사실대로 보여 준다 — 성공 화면을 먼저 띄우지 않는다.
+  const [error, setError] = useState('')
 
   const togglePick = (cellId: string) =>
     setPicked(prev => {
@@ -70,19 +74,18 @@ export default function RoadmapRequest() {
 
   const submit = () => {
     if (!canSubmit) return
-    addRoadmapRequest({
-      studentId: student.id,
-      studentNo: student.studentNo,
-      studentName: student.name,
-      studentMajor: student.major,
+    // 학번·이름·학과 스냅샷은 서버가 확인해 붙인다. 클라이언트가 신원을 만들지 않는다.
+    addRoadmapRequest(student.id, {
       axis: axis === ALL_AXIS ? undefined : axis,
       title: title.trim(),
       // 고른 칸을 사유에 함께 남긴다 — 상담사가 어느 칸 얘기인지 알아야 편집기에서 찾는다.
       reason: pickedCells.length > 0
-        ? `${reason.trim()}\n\n[대상 칸] ${pickedCells.map(c => c.title).join(' / ')}`
+        ? `${reason.trim()}
+
+[대상 칸] ${pickedCells.map(c => c.title).join(' / ')}`
         : reason.trim(),
-    })
-    setDone(true)
+    }).then(() => setDone(true)).catch(cause => setError(
+      cause instanceof Error ? cause.message : '요청을 보내지 못했습니다. 다시 시도해 주세요.'))
   }
 
   if (done) {
@@ -191,6 +194,8 @@ export default function RoadmapRequest() {
                   </ul>
                 )}
             </div>
+
+            {error && <p className="rr-error" role="alert">{error}</p>}
 
             <div className="rr-actions">
               <Link to="/roadmap/skill-tree" className="rr-btn-ghost">취소</Link>

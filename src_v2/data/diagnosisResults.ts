@@ -1,17 +1,6 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// 진단 상세 결과 로더 (단일 소스) — 학생(src_v2)·상담사(src_admin) 공용.
-//
-// seed JSON 이 "검사가 내놓은 값"을 그대로 담고, 여기서는 조회만 한다.
-// ⚠ 점수를 계산하지 않는다. 수준(낮음/보통/높음)만 T점수 밴드에서 파생한다(levelOf).
-// DB 전환 시: SEED 를 API 응답으로 바꾸면 화면은 그대로 나간다.
-//
-// ⚠ 아직 응시하지 않은 학생의 결과가 seed 에 미리 들어 있을 수 있다(예: jiwoo).
-//   채점 엔진이 없어서(PROCESS.md §9) "응시하면 나올 값"을 미리 적어 두는 것이며,
-//   students.diagnosisOutcome 과 같은 이유·같은 성격의 임시 장치다.
-//   결과 화면은 응시 완료(dc_diag_attempts) 전에는 열리지 않으므로 새어 나가지 않는다.
-//   채점이 붙으면 이 선적재분을 지우고 응시 결과가 그 자리를 대신한다.
-// ─────────────────────────────────────────────────────────────────────────────
-import seed from './diagnosisResults.seed.json'
+// PostgreSQL에서 조회한 완료 진단 결과의 공유 셀렉터.
+// 항목 정의와 점수는 고정 코드로 연결하며 예시 숫자를 새 항목으로 환산하지 않는다.
+import { diagnosisResults } from '../../shared/diagnosisStore'
 import type { DiagnosisResult, FactorScore } from './schema/diagnosisResult'
 import { levelOf, type FactorLevel } from './schema/diagnosisResult'
 import { getModuleByTestId, type DiagnosisFactorDef, type DiagnosisModule } from './careerProcess'
@@ -19,7 +8,7 @@ import { getModuleByTestId, type DiagnosisFactorDef, type DiagnosisModule } from
 export type { DiagnosisResult, FactorScore, FactorLevel }
 export { levelOf }
 
-export const DIAGNOSIS_RESULTS: DiagnosisResult[] = seed as DiagnosisResult[]
+export const DIAGNOSIS_RESULTS: DiagnosisResult[] = diagnosisResults
 
 /** (학생 · 검사 · 회차) → 상세 결과. 회차를 생략하면 최신 회차. */
 export function getDiagnosisResult(
@@ -45,7 +34,7 @@ export interface ResultRow {
   name: string
   desc?: string
   tScore: number
-  level: FactorLevel
+  level: FactorLevel | '미등록'
 }
 
 /**
@@ -55,13 +44,14 @@ export interface ResultRow {
  */
 export function getResultRows(result: DiagnosisResult, module?: DiagnosisModule): ResultRow[] {
   const mod = module ?? getModuleByTestId(result.testId)
-  const scoreOf = new Map(result.factors.map(f => [f.name, f.tScore]))
+  const scoreOf = new Map(result.factors.map(f => [f.factorCode ?? f.name, f.tScore]))
   const defs: DiagnosisFactorDef[] = mod?.factors ?? result.factors.map(f => ({ name: f.name }))
 
   return defs
-    .filter(d => scoreOf.has(d.name))
+    .filter(d => scoreOf.has(d.code ?? d.name) || scoreOf.has(d.name))
     .map(d => {
-      const tScore = scoreOf.get(d.name)!
-      return { name: d.name, desc: d.desc, tScore, level: levelOf(tScore) }
+      const tScore = (scoreOf.get(d.code ?? d.name) ?? scoreOf.get(d.name))!
+      const supplied = result.factors.find(f => (d.code && f.factorCode === d.code) || f.name === d.name)?.level
+      return { name: d.name, desc: d.desc, tScore, level: supplied ?? (['c2','c3','c4'].includes(result.testId) ? '미등록' : levelOf(tScore)) }
     })
 }

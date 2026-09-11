@@ -3,7 +3,7 @@ import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getPrograms, countPrograms, sortByPriority } from '../data/programs'
 import type { ProgramStatus } from '../data/programs'
-import { PROGRAM_CATEGORIES } from '../data/schema/program'
+import { PROGRAM_CATEGORIES, PROGRAM_STATUSES, categoryLabel, programStatusLabel } from '../data/schema/program'
 import type { ProgramCategory } from '../data/schema/program'
 import EmptyState from '../components/EmptyState'
 import ProgramCardGrid from '../../src_v2/pages/growth/ProgramCardGrid'
@@ -36,7 +36,7 @@ export default function ProgramList() {
         <div>
           <h1 className="admin-page-title">비교과 프로그램</h1>
           <p className="admin-page-desc">
-            등록 {counts.total}건 · 모집중 {counts.모집중} — 학생 비교과 신청의 공급 측. 신청자·출석을 관리합니다.
+            등록 {counts.total}건 · {programStatusLabel('RECRUITING')} {counts.RECRUITING} — 학생 비교과 신청의 공급 측. 신청자·출석을 관리합니다.
           </p>
         </div>
         <div className="admin-head-actions">
@@ -64,7 +64,7 @@ export default function ProgramList() {
           <select value={category} onChange={e => setCategory(e.target.value as ProgramCategory | typeof ALL)}>
             <option value={ALL}>{ALL}</option>
             {PROGRAM_CATEGORIES.map(c => (
-              <option key={c} value={c}>{c}</option>
+              <option key={c} value={c}>{categoryLabel(c)}</option>
             ))}
           </select>
         </label>
@@ -72,9 +72,9 @@ export default function ProgramList() {
           <span>상태</span>
           <select value={status} onChange={e => setStatus(e.target.value as ProgramStatus | typeof ALL)}>
             <option value={ALL}>{ALL}</option>
-            <option value="모집중">모집중</option>
-            <option value="모집마감">모집마감</option>
-            <option value="종료">종료</option>
+            {PROGRAM_STATUSES.map(s => (
+              <option key={s} value={s}>{programStatusLabel(s)}</option>
+            ))}
           </select>
         </label>
       </div>

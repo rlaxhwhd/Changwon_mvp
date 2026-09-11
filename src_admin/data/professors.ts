@@ -6,8 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { StaffUser } from './schema/staff'
 import { getAssignedDeptNames } from './deptAssigns'
-import profLee from './professors/cse-1.json'
-import profJung from './professors/biz-1.json'
+import { activeStaffDetail, directoryStaff } from '../../shared/staffDirectoryStore'
 
 /** 교수 = 교직원 공통 신원 + 교수 도메인 필드 */
 export interface Professor extends StaffUser {
@@ -18,13 +17,9 @@ export interface Professor extends StaffUser {
   officeHours?: string
 }
 
-export const PROFESSORS: Professor[] = [
-  profLee as Professor,
-  profJung as Professor,
-]
-
 export function getProfessorById(id: string | undefined): Professor | undefined {
-  return id ? PROFESSORS.find(p => p.id === id) : undefined
+  if (!id) return undefined
+  return (activeStaffDetail?.id === id ? activeStaffDetail : directoryStaff.find(p => p.role === 'professor' && p.id === id)) as Professor | undefined
 }
 
 /**

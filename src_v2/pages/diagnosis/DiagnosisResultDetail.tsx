@@ -23,7 +23,7 @@ import { usePageHead } from '../../components/PageCrumb'
 const T_MAX = 100
 
 /** 수준 → 색 클래스. 결과표(DiagnosisResultReport)와 같은 이름·같은 뜻을 쓴다. */
-const LEVEL_CLASS: Record<FactorLevel, string> = { 낮음: 'low', 보통: 'mid', 높음: 'high' }
+const LEVEL_CLASS: Record<FactorLevel | '미등록', string> = { 낮음: 'low', 보통: 'mid', 높음: 'high', 미등록: '' }
 
 /* ── 홀로그램 레이더 차트 (Main 스타일 SVG) ──────────────────────── */
 function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
@@ -182,7 +182,7 @@ export default function DiagnosisResultDetail() {
     `${testName} 결과`,
     rows.length > 0
       ? `${rows.length}개 요인의 T점수입니다 · 만점 ${T_MAX}점 (평균 50)`
-      : '아직 응시 결과가 등록되지 않았습니다',
+      : result ? '현재 결과표 항목에 대응하는 점수가 아직 등록되지 않았습니다' : '아직 응시 결과가 등록되지 않았습니다',
   )
 
   return (

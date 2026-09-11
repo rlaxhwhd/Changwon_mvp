@@ -2,7 +2,9 @@ import { useMemo, useState } from 'react'
 import {
   jobDdayLabel, jobHighlights, isJobClosed, sortJobs, JOB_SORTS, JOB_SORT_LABEL,
 } from '../../src_admin/data/jobsSource'
-import type { JobPosting, JobSort, JobStatus } from '../../src_admin/data/jobsSource'
+import type { JobPosting, JobSort } from '../../src_admin/data/jobsSource'
+import { JOB_CODE_GROUPS, jobLabelOf, jobLabelsOf } from '../../src_admin/data/schema/job'
+import type { JobEffectiveStatus } from '../../src_admin/data/schema/job'
 import { getJobWishlist, toggleJobWish } from '../data/jobWishlist'
 import './JobBoard.css'
 
@@ -16,7 +18,9 @@ import './JobBoard.css'
 // ─────────────────────────────────────────────────────────────────────────
 
 const ALL = '전체'
-const STATUS_FILTERS: (JobStatus | typeof ALL)[] = [ALL, '게시', '마감']
+// 상태는 코드로 거르고 라벨로 보인다(CLAUDE.md 규칙 4). 판정은 서버의 effectiveStatus 다.
+const STATUS_FILTERS: (JobEffectiveStatus | typeof ALL)[] = [ALL, 'POSTED', 'CLOSED']
+const STATUS_FILTER_LABEL: Record<string, string> = { [ALL]: '전체', POSTED: '게시', CLOSED: '마감' }
 
 interface JobBoardProps {
   /** scope 로 이미 고른 목록 (교내/외부) */
@@ -42,19 +46,19 @@ interface JobBoardProps {
 }
 
 function regionLabel(job: JobPosting): string {
-  const regions = (job.regions ?? []).filter(r => r !== ALL)
+  const regions = jobLabelsOf(JOB_CODE_GROUPS.region, job.regions)
   if (regions.length) return regions.join(', ')
   return job.location || '전국'
 }
 
 function careerLabel(job: JobPosting): string {
-  const careers = job.careerTypes ?? []
-  return careers.length ? careers.join('·') : job.jobType
+  const careers = jobLabelsOf(JOB_CODE_GROUPS.careerType, job.careerTypes)
+  return careers.length ? careers.join('·') : jobLabelOf(JOB_CODE_GROUPS.careerType, job.jobType)
 }
 
 /** 직무(직종) — 표의 한 열이라 여러 개여도 첫 값만 쓴다. */
 function jobCategoryLabel(job: JobPosting): string {
-  return (job.jobCategories ?? [])[0] ?? '-'
+  return jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories)[0] ?? '-'
 }
 
 function salaryLabel(job: JobPosting): string {
@@ -93,7 +97,7 @@ export default function JobBoard({
   jobs, onOpen, showWish = false, split = true, cardAction, applicantCountOf, emptyMain, emptyHint,
 }: JobBoardProps) {
   const [query, setQuery] = useState('')
-  const [status, setStatus] = useState<JobStatus | typeof ALL>(ALL)
+  const [status, setStatus] = useState<JobEffectiveStatus | typeof ALL>(ALL)
   const [sort, setSort] = useState<JobSort>('latest')
   // 관심공고는 상세 화면과 같은 저장소를 본다 — 예전엔 화면 안에서만 살아 새로고침하면 풀렸다.
   const [wished, setWished] = useState<Set<string>>(() => new Set(getJobWishlist()))
@@ -101,7 +105,7 @@ export default function JobBoard({
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
     const filtered = jobs.filter(job => {
-      if (status !== ALL && job.status !== status) return false
+      if (status !== ALL && job.effectiveStatus !== status) return false
       if (q) {
         const hay = `${job.company} ${job.role} ${job.tags.join(' ')} ${job.location}`.toLowerCase()
         if (!hay.includes(q)) return false
@@ -111,10 +115,13 @@ export default function JobBoard({
     return sortJobs(filtered, sort)
   }, [jobs, query, status, sort])
 
-  const recommended = split ? list.filter(j => j.recruitType === '추천채용') : []
-  const general = split ? list.filter(j => j.recruitType !== '추천채용') : list
+  const recommended = split ? list.filter(j => j.recruitType === 'RECOMMENDATION') : []
+  const general = split ? list.filter(j => j.recruitType !== 'RECOMMENDATION') : list
 
-  const toggleWish = (id: string) => setWished(new Set(toggleJobWish(id)))
+  // 찜은 서버가 정본이다 — 저장이 실패하면 별을 켜 두지 않는다.
+  const toggleWish = (id: string) => {
+    void toggleJobWish(id).then(next => setWished(new Set(next))).catch(() => { /* 서버 상태 유지 */ })
+  }
 
   // 클릭 대상이 없으면 button 이 아니라 정적 블록으로 그린다 — 눌러도 되는 것처럼 보이지 않게.
   const Tag = onOpen ? 'button' : 'div'
@@ -135,14 +142,14 @@ export default function JobBoard({
             로고가 없으면(일반공고) 오른쪽 칸이 카드 폭을 그대로 쓴다. */}
         <div className="jc-head">
           {/* 기업 로고 — 추천채용만 등록한다(등록 화면도 이때만 묻는다). */}
-          {job.recruitType === '추천채용' && job.logo && (
+          {job.recruitType === 'RECOMMENDATION' && job.logo && (
             <span className="jc-logo"><img src={job.logo} alt={`${job.company} 로고`} /></span>
           )}
 
           <div className="jc-headmain">
             <div className="jc-top">
               <span className="jc-company">{job.company}</span>
-              {job.recruitType === '추천채용' && <span className="jc-badge-rec">추천</span>}
+              {job.recruitType === 'RECOMMENDATION' && <span className="jc-badge-rec">추천</span>}
               {/* 마감까지 며칠인가 — 이 카드에서 가장 결정적인 값이라 눈에 먼저 걸리게 위로 올린다. */}
               <span className={`jc-dday${closed ? ' is-closed' : ''}`}>{dday}</span>
               {showWish && (
@@ -169,7 +176,9 @@ export default function JobBoard({
                 회사명이 여섯 글자쯤에서 잘렸다. 지역도 아래 메타줄에서 올라왔다.
                 둘 다 자리만 옮긴 것이고, 같은 값을 두 번 쓰지 않는다. */}
             <div className="jc-tags">
-              {job.companyType && <span className="jc-companytype">{job.companyType}</span>}
+              {job.companyType && (
+                <span className="jc-companytype">{jobLabelOf(JOB_CODE_GROUPS.companyType, job.companyType)}</span>
+              )}
               {tagsOf(job).map(t => (
                 <span key={t.label} className={`jc-tag jc-tag-${t.kind}`}>{t.label}</span>
               ))}
@@ -267,8 +276,8 @@ export default function JobBoard({
         </div>
         <label className="jb-select">
           <span>상태</span>
-          <select value={status} onChange={e => setStatus(e.target.value as JobStatus | typeof ALL)}>
-            {STATUS_FILTERS.map(s => <option key={s} value={s}>{s}</option>)}
+          <select value={status} onChange={e => setStatus(e.target.value as JobEffectiveStatus | typeof ALL)}>
+            {STATUS_FILTERS.map(s => <option key={s} value={s}>{STATUS_FILTER_LABEL[s] ?? s}</option>)}
           </select>
         </label>
         <label className="jb-select">

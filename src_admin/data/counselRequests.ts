@@ -14,12 +14,11 @@ import type {
   CounselSlot,
 } from './schema/counselRequest'
 import { handledRequestTypes } from './schema/counselor'
-import { getActiveCounselor, getCounselorByRole } from './counselors'
-import { appendCounselEvent } from './counselEvents'
+import { getCounselorByRole } from './counselors'
+import { performCounselAction } from '../../shared/counselStore'
 import {
   getCounselOwners,
   getCounselOwnerById,
-  patchCounselRequest,
   getStudentTrack,
   STUDENTS,
 } from '../../src_v2/data/students'
@@ -56,6 +55,7 @@ export function getCounselRequests(): CounselRequest[] {
           studentTrack: getStudentTrack(owner.competencyScore, owner.grade),
           studentType: owner.studentType,
           type,
+          careTrack: r.careTrack,
           status: r.status,
           method: r.method,
           topic: r.topic,
@@ -271,55 +271,22 @@ export function getCounselStudentProfile(studentId: string): CounselStudentProfi
 // ★ 모든 전이는 처리 이력(dc_counsel_events)을 함께 남긴다.
 //   현행은 최종값만 들고 있어 "누가 언제 왜 바꿨는지"가 사라진다(schema/counselEvent.ts 참조).
 
-/** 이력 기록자 — 화면에서 활성 상담사를 매번 넘기지 않도록 여기서 해석한다. */
-function actor(): { by: string; byName: string } {
-  const me = getActiveCounselor()
-  return { by: me.id, byName: me.name }
+export async function confirmRequest(id: string, slot: CounselSlot): Promise<void> {
+  await performCounselAction(id, 'confirm', { slot })
 }
-
-/** 전이 대상 신청의 학생 id (이력 조회 축). 없으면 빈 문자열. */
-function studentIdOf(id: string): string {
-  return getRequestById(id)?.studentId ?? ''
+export async function rejectRequest(id: string, reason: string): Promise<void> {
+  await performCounselAction(id, 'cancel', { reason })
 }
-
-/** 대기 → 확정: 슬롯을 배정하고 상태를 확정으로 전이 */
-export function confirmRequest(id: string, slot: CounselSlot): void {
-  patchCounselRequest(id, { status: '확정', slot })
-  appendCounselEvent({ requestId: id, studentId: studentIdOf(id), kind: '확정', toSlot: slot, ...actor() })
+export async function rescheduleRequest(id: string, slot: CounselSlot): Promise<void> {
+  await performCounselAction(id, 'reschedule', { slot })
 }
-
-/** 대기·확정 → 취소. **사유 필수** (SPEC §3-1-②) */
-export function rejectRequest(id: string, reason: string): void {
-  patchCounselRequest(id, { status: '취소' })
-  appendCounselEvent({ requestId: id, studentId: studentIdOf(id), kind: '취소', reason, ...actor() })
+export async function completeRequest(
+  id: string, record: { summary: string; comment: string; followUp?: string }, finalType?: StudentType | null,
+): Promise<void> {
+  await performCounselAction(id, 'complete', { ...record, followUp: record.followUp ?? '', finalType })
 }
-
-/** 확정 건의 일정(슬롯) 변경 */
-export function rescheduleRequest(id: string, slot: CounselSlot): void {
-  const before = getRequestById(id)?.slot
-  patchCounselRequest(id, { status: '확정', slot })
-  appendCounselEvent({ requestId: id, studentId: studentIdOf(id), kind: '일정변경', fromSlot: before, toSlot: slot, ...actor() })
-}
-
-/** 확정 → 완료: 상담 진행 완료 처리 */
-export function completeRequest(id: string): void {
-  patchCounselRequest(id, { status: '완료', completedAt: new Date().toISOString() })
-  appendCounselEvent({ requestId: id, studentId: studentIdOf(id), kind: '완료', ...actor() })
-}
-
-/** 담당 상담사 재배정 — 상태·슬롯은 유지하고 담당자만 변경. 사유는 선택. */
-export function reassignRequest(id: string, counselorId: string, reason?: string): void {
-  const before = getRequestById(id)?.assignedCounselorId
-  patchCounselRequest(id, { assignedCounselorId: counselorId })
-  appendCounselEvent({
-    requestId: id,
-    studentId: studentIdOf(id),
-    kind: '재배정',
-    fromCounselorId: before,
-    toCounselorId: counselorId,
-    reason: reason?.trim() || undefined,
-    ...actor(),
-  })
+export async function reassignRequest(id: string, counselorId: string, reason?: string): Promise<void> {
+  await performCounselAction(id, 'reassign', { assigneeId: counselorId, reason: reason ?? '' })
 }
 
 export type {

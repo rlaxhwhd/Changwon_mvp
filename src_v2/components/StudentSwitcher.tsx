@@ -1,4 +1,4 @@
-import { STUDENTS, getActiveStudentId, setActiveStudent } from '../data/students'
+import { DEVELOPMENT_STUDENTS, getActiveStudentId, setActiveStudent } from '../data/students'
 import './StudentSwitcher.css'
 
 /**
@@ -12,7 +12,7 @@ export default function StudentSwitcher() {
     <div className="ss-switcher" role="group" aria-label="학생 전환 (데모)">
       <span className="ss-title"><i className="fa-solid fa-user-group" /> 데모 학생 전환</span>
       <div className="ss-options">
-        {STUDENTS.map(s => (
+        {DEVELOPMENT_STUDENTS.map(s => (
           <button
             key={s.id}
             className={`ss-btn${s.id === activeId ? ' active' : ''}`}

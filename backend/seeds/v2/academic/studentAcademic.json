@@ -1,0 +1,166 @@
+[
+  {
+    "studentId": "chaewon",
+    "deptCode": "C05-05",
+    "entryYear": "2021",
+    "certs": [
+      {
+        "certId": "ct_sqld",
+        "acquiredDt": "2023-06-16",
+        "certNo": "SQLD-23-0413",
+        "verified": true
+      },
+      {
+        "certId": "ct_history",
+        "acquiredDt": "2022-09-24",
+        "certNo": "한국사-3급",
+        "verified": true
+      },
+      {
+        "certId": "ct_comp",
+        "acquiredDt": "2021-11-05",
+        "certNo": "컴활-1급-2021",
+        "verified": true
+      },
+      {
+        "certId": "ct_toeic",
+        "acquiredDt": "2023-04-09",
+        "certNo": "TOEIC 815",
+        "verified": true
+      }
+    ],
+    "jobInterests": [
+      {
+        "jobId": "job_pm",
+        "pinned": true
+      },
+      {
+        "jobId": "job_web",
+        "pinned": false
+      },
+      {
+        "jobId": "job_dataeng",
+        "pinned": false
+      },
+      {
+        "jobId": "job_fullstack",
+        "pinned": false
+      }
+    ],
+    "programRecords": [
+      {
+        "programId": "pg_resume",
+        "title": "이력서 클리닉",
+        "appliedAt": "2023-04-12",
+        "completed": true
+      },
+      {
+        "programId": "pg_capstone",
+        "title": "SW 캡스톤 사전캠프",
+        "appliedAt": "2023-07-03",
+        "completed": true
+      },
+      {
+        "programId": "pg_pm",
+        "title": "IT 서비스 기획 부트캠프",
+        "appliedAt": "2023-09-18",
+        "completed": false
+      }
+    ]
+  },
+  {
+    "studentId": "changwon",
+    "deptCode": "C03-01",
+    "entryYear": "2019",
+    "certs": [
+      {
+        "certId": "ct_adsp",
+        "acquiredDt": "2021-09-17",
+        "certNo": "ADsP-21-1180",
+        "verified": true
+      },
+      {
+        "certId": "ct_comp",
+        "acquiredDt": "2020-05-22",
+        "certNo": "컴활-1급-2020",
+        "verified": true
+      },
+      {
+        "certId": "ct_socmkt",
+        "acquiredDt": "2022-03-11",
+        "certNo": "SMP-2022-334",
+        "verified": true
+      },
+      {
+        "certId": "ct_history",
+        "acquiredDt": "2019-12-06",
+        "certNo": "한국사-2급",
+        "verified": true
+      },
+      {
+        "certId": "ct_distrib",
+        "acquiredDt": "2022-11-13",
+        "certNo": "유통2급-22-0917",
+        "verified": true
+      }
+    ],
+    "jobInterests": [
+      {
+        "jobId": "job_brand",
+        "pinned": true
+      },
+      {
+        "jobId": "job_digitalmkt",
+        "pinned": false
+      },
+      {
+        "jobId": "job_mktresearch",
+        "pinned": false
+      },
+      {
+        "jobId": "job_hr",
+        "pinned": false
+      }
+    ],
+    "programRecords": [
+      {
+        "programId": "pg_resume",
+        "title": "이력서 클리닉",
+        "appliedAt": "2021-04-08",
+        "completed": true
+      },
+      {
+        "programId": "pg_brand",
+        "title": "브랜드 마케팅 실무",
+        "appliedAt": "2021-10-15",
+        "completed": true
+      },
+      {
+        "programId": "pg_intern",
+        "title": "기업연계 인턴십",
+        "appliedAt": "2022-01-10",
+        "completed": true
+      },
+      {
+        "programId": "pg_interview",
+        "title": "모의면접 캠프",
+        "appliedAt": "2022-09-06",
+        "completed": true
+      },
+      {
+        "programId": "pg_portfolio",
+        "title": "포트폴리오 워크숍",
+        "appliedAt": "2022-11-21",
+        "completed": false
+      }
+    ]
+  },
+  {
+    "studentId": "jiwoo",
+    "deptCode": "C05-05",
+    "entryYear": "2026",
+    "certs": [],
+    "jobInterests": [],
+    "programRecords": []
+  }
+]

@@ -1,11 +1,9 @@
 import { LuChevronLeft, LuChevronRight, LuFrown, LuLoaderCircle, LuSearch } from 'react-icons/lu'
-import { useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { StaffRole } from '../data/schema/staff'
 import {
   queryStudentRoster,
-  getRosterFilterOptions,
-  getRosterSummary,
-  collegeOf,
+  fetchRosterMetadata,
   enrollStatusClass,
 } from '../data/studentRoster'
 import type { RosterStudent } from '../data/studentRoster'
@@ -41,11 +39,22 @@ export default function StudentRosterTable({ departments, studentIds, title, sub
   const [selected, setSelected] = useState<RosterStudent | null>(null)
 
   // 필터 옵션·집계는 전체 담당 집합에서 파생(현재 페이지가 아니라)
-  const options = useMemo(() => getRosterFilterOptions(departments, studentIds), [departments, studentIds])
-  const summary = useMemo(() => getRosterSummary(departments, studentIds), [departments, studentIds])
+  const [metadata,setMetadata] = useState<Awaited<ReturnType<typeof fetchRosterMetadata>> | null>(null)
+  const [metadataError,setMetadataError] = useState('')
+  const [metadataRetry,setMetadataRetry] = useState(0)
+  const scopeKey = JSON.stringify([departments,studentIds])
+  useEffect(() => {
+    let cancelled=false
+    setMetadataError('')
+    fetchRosterMetadata(departments,studentIds).then(value => { if (!cancelled) setMetadata(value) })
+      .catch(e => { if (!cancelled) setMetadataError(e.message) })
+    return () => { cancelled=true }
+  },[scopeKey,metadataRetry])
+  const options = metadata?.options ?? {majors:[],grades:[],types:[],tiers:[],statuses:[]}
+  const summary = metadata?.summary
 
   // 서버(목업) 조회 — useListData가 useEffect+레이스 cleanup 담당. DB 전환 시 훅 내부만 교체.
-  const { data: result, isLoading: loading } = useListData(queryStudentRoster, {
+  const { data: result, isLoading: loading, error, refetch } = useListData(queryStudentRoster, {
     page,
     pageSize: PAGE_SIZE,
     q: query,
@@ -63,6 +72,12 @@ export default function StudentRosterTable({ departments, studentIds, title, sub
     setPage(1)
   }
 
+  useEffect(() => {
+    const refresh = () => { refetch(); setMetadataRetry(x => x + 1) }
+    window.addEventListener('focus',refresh)
+    return () => window.removeEventListener('focus',refresh)
+  },[refetch])
+
   const items = result.items
   const totalCount = result.totalCount
   const pages = totalPages(result)
@@ -73,7 +88,7 @@ export default function StudentRosterTable({ departments, studentIds, title, sub
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">{title}</h1>
-          <p className="admin-page-desc">{subtitle} · 총 {summary.total}명</p>
+          <p className="admin-page-desc">{subtitle} · 총 {summary?.total ?? '…'}명</p>
         </div>
       </header>
 
@@ -118,7 +133,7 @@ export default function StudentRosterTable({ departments, studentIds, title, sub
       </div>
 
       <section className="admin-card">
-        {loading && items.length === 0 ? (
+        {error || metadataError ? <div role="alert">{error?.message ?? metadataError} <button onClick={() => { refetch(); setMetadataRetry(x => x + 1) }}>다시 조회</button></div> : loading && items.length === 0 ? (
           <div className="admin-loading"><LuLoaderCircle className="admin-spin" /> 불러오는 중…</div>
         ) : items.length === 0 ? (
           <EmptyState icon={LuFrown} message="조건에 맞는 학생이 없습니다." />
@@ -141,7 +156,7 @@ export default function StudentRosterTable({ departments, studentIds, title, sub
                   <span className="admin-roster-cell"><strong>{s.name}</strong></span>
                   <span className="admin-roster-cell">{s.studentNo}</span>
                   <span className="admin-roster-cell">{s.grade}</span>
-                  <span className="admin-roster-cell">{collegeOf(s.major)}</span>
+                  <span className="admin-roster-cell">{s.collegeName ?? '코드 미확인'}</span>
                   <span className="admin-roster-cell">{s.major}</span>
                   <span className="admin-roster-cell">
                     <span className={enrollStatusClass(s.status)}>{s.status}</span>

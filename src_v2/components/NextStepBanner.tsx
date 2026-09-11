@@ -25,6 +25,16 @@ export default function NextStepBanner() {
         </span>
         <h2 id="nsbTitle">{next.title}</h2>
         <p>{next.detail}</p>
+        {/* 보조 안내 — 진도(step/total)에 들어가지 않는, 지금도 할 수 있는 일.
+            진단 구간에서 「일반 진로·취업 상담」이 여기로 나온다. */}
+        {next.secondary && (
+          <p className="nsb-secondary">
+            {next.secondary.detail}{' '}
+            <Link to={next.secondary.path}>
+              {next.secondary.label} <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+            </Link>
+          </p>
+        )}
       </div>
 
       <div className="nsb-side">

@@ -7,13 +7,14 @@ import {
   LuStar, LuTrophy, LuWorkflow, LuX,
 } from 'react-icons/lu'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { loadStudentDiagnoses } from '../../shared/diagnosisStore'
 import type { StaffRole } from '../data/schema/staff'
+import { attendanceLabel, categoryLabel, outcomeLabel, selectionLabel } from '../data/schema/program'
 import { STUDENTS, getCounselOwnerById, getStudentType, getStudentTypeMeta } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
 import { STUDENT_TYPE_MAP, areaOf, typeLabel } from '../../src_v2/data/careerProcess'
 import { loadJournalEntries } from '../../src_v2/data/growthJournal'
-import { STUDENT_ROSTER, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
+import { getFullRoster, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 import type { RosterStudent } from '../data/studentRoster'
 import {
   getCareerJourney, getCompetencyRadar, getCounselOverview, getStudentStatCards, getDiagnosisCards,
@@ -29,13 +30,18 @@ import CareerJourneyCard from '../../src_v2/components/CareerJourneyCard'
 import CompetencyRadarChart from '../../src_v2/components/CompetencyRadarChart'
 // 포트폴리오 탭은 학생 이력서 화면을 그대로 쓴다 — 값도 같은 단일소스에서 읽는다.
 import ResumeSheet from '../../src_v2/components/ResumeSheet'
-import {
-  buildProfile,
-  INITIAL_SKILLS, INITIAL_CERTS, INITIAL_LANGS, INITIAL_AWARDS, INITIAL_PROJECTS, INITIAL_RESUMES,
-} from '../../src_v2/data/portfolio'
+import { toPortfolioView } from '../../src_v2/data/portfolio'
+import { loadPortfolio } from '../../shared/growthStore'
+import type { PortfolioDTO } from '../../shared/growthStore'
+import { useGrowth } from '../../shared/useRoadmapStore'
 import StarRoadmapCard from '../../src_v2/components/StarRoadmapCard'
 import StudentStatCards from '../../src_v2/components/StudentStatCards'
 import EmptyState from './EmptyState'
+// 로드맵 생성은 상담사 전용 작업 화면이라 학생 포털과 코드를 공유하지 않는다.
+import RoadmapCreatePanel from './RoadmapCreatePanel'
+// 편집은 편집 페이지와 같은 본문을 쓴다 — 상담 중에 상세를 열어 둔 채로 고친다.
+import RoadmapEditorPanel from './RoadmapEditorPanel'
+import { getActiveCounselor } from '../data/counselors'
 import './StudentDetailView.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -59,7 +65,7 @@ const PHASE_ICONS: Record<string, IconType> = {
   'fa-rotate': LuRotateCw,
 }
 
-type TabKey = 'diagnosis' | 'counsel' | 'roadmap' | 'program' | 'gap' | 'growth' | 'portfolio' | 'star'
+export type TabKey = 'diagnosis' | 'counsel' | 'roadmap' | 'program' | 'gap' | 'growth' | 'portfolio' | 'star'
 
 interface TabDef {
   key: TabKey
@@ -293,8 +299,15 @@ function CounselTab({ studentId }: { studentId: string }) {
 // ── 탭 ③: 로드맵 진행 ──────────────────────────────────────────────────────
 
 function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boolean }) {
-  const plan = useMemo(() => getGoalPlan(student), [student])
+  // 생성 직후 로드맵을 다시 읽기 위한 트리거. 스토어가 localStorage라 구독이 없다 —
+  // 생성이 끝나면 이 수를 올려 getGoalPlan 을 다시 부른다.
+  const [reloadKey, setReloadKey] = useState(0)
+  // 카드 하나가 세 얼굴을 갖는다 — 보기 / 편집 / (재)생성. 상담 중에 화면을 옮기지
+  // 않고 여기서 다 끝내야 한다.
+  const [mode, setMode] = useState<'view' | 'edit' | 'create'>('view')
+  const plan = useMemo(() => getGoalPlan(student), [student, reloadKey])
   const journey = useMemo(() => getCareerJourney(student), [student])
+  const refresh = () => { setReloadKey(n => n + 1); setMode('view') }
 
   return (
     <div className="dashboard-grid">
@@ -309,6 +322,25 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
         }}
       />
 
+      {/* 로드맵이 없는 학생은 같은 카드 자리에서 바로 만든다 — 상담 중에 생성 화면을
+          따로 찾아가지 않게 한다. 생성은 진로취업 상담사만 할 수 있다. */}
+      {!plan && (
+        <section data-slot="card" className="goal-card">
+          <CardHead title="목표 달성 계획" desc="로드맵이 아직 생성되지 않았습니다." />
+          <div data-slot="card-content">
+            {canEdit ? (
+              <RoadmapCreatePanel
+                student={student}
+                counselorName={getActiveCounselor().name}
+                onGenerated={() => setReloadKey(n => n + 1)}
+              />
+            ) : (
+              <p className="sdv-empty">로드맵 생성은 진로취업 상담사만 할 수 있습니다.</p>
+            )}
+          </div>
+        </section>
+      )}
+
       {plan && (
         <section data-slot="card" className="goal-card">
           {/* 「로드맵 편집」은 고칠 대상(3축·칸) 바로 옆에 둔다 — 여정 카드는 위치 표시일 뿐이다. */}
@@ -318,8 +350,19 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
             action={
               <div className="sdv-goal-actions">
                 {plan.confirmed ? <span className="badge mint">확정 v{plan.version}</span> : <span className="badge">초안</span>}
-                {canEdit && (
-                  <Link to={`/roadmap/${student.id}`} className="admin-btn admin-btn-primary sm"><LuPencilRuler /> 로드맵 편집</Link>
+                {canEdit && mode === 'view' && (
+                  <>
+                    {/* 편집은 페이지로 나가지 않는다 — 같은 편집기를 이 자리에서 연다. */}
+                    <button type="button" className="admin-btn admin-btn-primary sm" onClick={() => setMode('edit')}>
+                      <LuPencilRuler /> 로드맵 편집
+                    </button>
+                    <button type="button" className="admin-btn sm" onClick={() => setMode('create')}>
+                      <LuRotateCw /> 재생성
+                    </button>
+                  </>
+                )}
+                {canEdit && mode === 'edit' && (
+                  <button type="button" className="admin-btn sm" onClick={() => setMode('view')}>편집 닫기</button>
                 )}
               </div>
             }
@@ -331,8 +374,22 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
               <p>{plan.company} 기준 · IAP 실행 · 핵심역량 수행 · 내 성장 활동 3축을 하나의 로드맵으로 관리합니다.</p>
               <div className="goal-number">{plan.progress}<span>% 이행률 · {plan.done}/{plan.total}칸</span></div>
             </article>
-            {/* 3축 렌더는 학생 화면과 같은 공용 컴포넌트 — 수정은 RoadmapAxisBoard 한 곳에서만 */}
-            <RoadmapAxisBoard axes={plan.axes} origin={plan.origin} />
+
+            {mode === 'create' ? (
+              <RoadmapCreatePanel
+                student={student}
+                counselorName={getActiveCounselor().name}
+                regenerate
+                onCancel={() => setMode('view')}
+                onGenerated={refresh}
+              />
+            ) : mode === 'edit' ? (
+              // 편집 페이지(/roadmap/:studentId)와 같은 본문이다 — 로직을 두 벌로 두지 않는다.
+              <RoadmapEditorPanel studentId={student.id} showGoalSummary={false} onSaved={refresh} />
+            ) : (
+              /* 3축 렌더는 학생 화면과 같은 공용 컴포넌트 — 수정은 RoadmapAxisBoard 한 곳에서만 */
+              <RoadmapAxisBoard axes={plan.axes} origin={plan.origin} />
+            )}
           </div>
         </section>
       )}
@@ -368,12 +425,12 @@ function ProgramTab({ studentId }: { studentId: string }) {
                   {summary.rows.map(r => (
                     <tr key={r.programId}>
                       <td className="wrap"><b>{r.title}</b></td>
-                      <td>{r.category}</td>
+                      <td>{categoryLabel(r.category)}</td>
                       <td>{r.period}</td>
                       <td>{r.appliedAt}</td>
-                      <td><span className="badge">{r.selectionStatus}</span></td>
-                      <td><span className={`badge${r.attendance === '출석' ? ' mint' : r.attendance === '노쇼' ? ' coral' : ''}`}>{r.attendance}</span></td>
-                      <td><span className={`badge${r.outcomeStatus === '수료' ? ' mint' : ''}`}>{r.outcomeStatus}</span></td>
+                      <td><span className="badge">{selectionLabel(r.selectionStatus ?? 'PENDING')}</span></td>
+                      <td><span className={`badge${r.attendance === 'PRESENT' ? ' mint' : r.attendance === 'NO_SHOW' ? ' coral' : ''}`}>{attendanceLabel(r.attendance)}</span></td>
+                      <td><span className={`badge${r.outcomeStatus === 'COMPLETED' ? ' mint' : ''}`}>{r.outcomeStatus ? outcomeLabel(r.outcomeStatus) : ''}</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -457,7 +514,9 @@ function GrowthTab({ student }: { student: StudentData }) {
     { label: '프로젝트', value: `${s.projects}건`, icon: LuWorkflow, tint: 'violet' },
     { label: '공모전', value: `${s.contests}회`, icon: LuTrophy, tint: 'coral' },
   ]
-  const journal = loadJournalEntries(student.id)
+  // 성장일지는 서버가 정본이다 — 학생이 쓴 것과 같은 행을 읽는다.
+  const journalRevision = useGrowth(student.id)
+  const journal = useMemo(() => loadJournalEntries(student.id), [student.id, journalRevision])
 
   return (
     <>
@@ -566,15 +625,31 @@ function GrowthTab({ student }: { student: StudentData }) {
 // 「탭에서 편집」 링크도 v2 라우트라 넘기지 않는다(admin 에서는 죽은 링크가 된다).
 
 function PortfolioTab({ student }: { student: StudentData }) {
+  // 학생이 고친 내용을 그대로 본다 — 예전에는 전 학생 공통 상수(INITIAL_*)를 읽어서
+  // 학생이 무엇을 써도 상담사 화면이 바뀌지 않았다. 자기입력 연락처는 본인 전용이라
+  // 서버가 내려주지 않는다(D06 — 현행 열람 범위를 넓히지 않는다).
+  const revision = useGrowth(student.id)
+  const [dto, setDto] = useState<PortfolioDTO | null>(null)
+  const [failed, setFailed] = useState(false)
+  useEffect(() => {
+    let alive = true
+    loadPortfolio(student.id)
+      .then((next: PortfolioDTO) => { if (alive) { setDto(next); setFailed(false) } })
+      .catch(() => { if (alive) setFailed(true) })
+    return () => { alive = false }
+  }, [student.id, revision])
+  if (failed) return <EmptyState title="포트폴리오를 불러오지 못했습니다" message="잠시 후 다시 시도해 주세요." />
+  if (!dto) return <EmptyState title="불러오는 중입니다" message="학생의 포트폴리오를 읽고 있습니다." />
+  const view = toPortfolioView(dto)
   return (
     <ResumeSheet
-      profile={buildProfile(student)}
-      skills={INITIAL_SKILLS}
-      certs={INITIAL_CERTS}
-      langs={INITIAL_LANGS}
-      awards={INITIAL_AWARDS}
-      projects={INITIAL_PROJECTS}
-      resumes={INITIAL_RESUMES}
+      profile={view.profile}
+      skills={view.skills}
+      certs={view.certs}
+      langs={view.languages}
+      awards={view.awards}
+      projects={view.projects}
+      resumes={view.resumes}
     />
   )
 }
@@ -623,6 +698,8 @@ interface StudentDetailViewProps {
   role: StaffRole
   /** 헤더 우측 액션 (예: 목록 버튼). 모달에서는 생략. */
   headerAction?: ReactNode
+  /** 열 때 펼칠 탭. 로드맵 생성 목록처럼 목적이 정해진 진입점이 쓴다. */
+  initialTab?: TabKey
 }
 
 /**
@@ -656,7 +733,16 @@ function counselOwnerAsRoster(studentId: string): RosterStudent | undefined {
   }
 }
 
-export default function StudentDetailView({ studentId, role, headerAction }: StudentDetailViewProps) {
+export default function StudentDetailView({ studentId, role, headerAction, initialTab }: StudentDetailViewProps) {
+  const [diagnosisLoading,setDiagnosisLoading] = useState(true)
+  const [diagnosisError,setDiagnosisError] = useState('')
+  useEffect(() => {
+    let cancelled=false
+    setDiagnosisLoading(true); setDiagnosisError('')
+    loadStudentDiagnoses(studentId).catch(e => { if (!cancelled) setDiagnosisError(e.message) })
+      .finally(() => { if (!cancelled) setDiagnosisLoading(false) })
+    return () => { cancelled=true }
+  },[studentId])
   const canEdit = role === 'career' // 로드맵 편집은 진로상담사 전용
   const isPsych = role === 'psych'
 
@@ -666,14 +752,16 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
     () => (isPsych ? TABS.filter(t => t.psychAllowed) : TABS),
     [isPsych],
   )
-  const [tab, setTab] = useState<TabKey>(visibleTabs[0]?.key ?? 'diagnosis')
+  const [tab, setTab] = useState<TabKey>(initialTab ?? visibleTabs[0]?.key ?? 'diagnosis')
+  if (diagnosisLoading) return <p role="status">DB에서 학생 진단 이력을 조회 중입니다…</p>
+  if (diagnosisError) return <p role="alert">{diagnosisError}</p>
 
   if (!student) {
     // 상세 데이터가 없는 학생 → 경량 플레이스홀더 (graceful).
     // 학생 id 체계가 세 갈래다 — STUDENTS(상세) · STUDENT_ROSTER(stu-NNN) ·
     // 상담 시드(학번). 상담 신청은 studentId 에 학번을 쓰므로 세 번째까지 봐야
     // 접수함·홈에서 연 상세가 "찾을 수 없습니다"로 떨어지지 않는다.
-    const roster = STUDENT_ROSTER.find(s => s.id === studentId) ?? counselOwnerAsRoster(studentId)
+    const roster = getFullRoster().find(s => s.id === studentId) ?? counselOwnerAsRoster(studentId)
     if (roster) {
       return (
         <div className="sdv">

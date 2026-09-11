@@ -1,6 +1,8 @@
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import Layout from './components/Layout'
 import Login from './pages/Login'
+import SystemManagement from './pages/SystemManagement'
+import { hasActiveSession } from './data/session'
 import Home from './pages/Home'
 import CounselRequests from './pages/CounselRequests'
 import CounselSchedule from './pages/CounselSchedule'
@@ -17,6 +19,7 @@ import StudentDetail from './pages/StudentDetail'
 import RoadmapRequests from './pages/RoadmapRequests'
 import RoadmapProgress from './pages/RoadmapProgress'
 import RoadmapEditor from './pages/RoadmapEditor'
+import RoadmapCreate from './pages/RoadmapCreate'
 import JobList from './pages/JobList'
 import JobForm from './pages/JobForm'
 import JobView from './pages/JobView'
@@ -52,7 +55,7 @@ import type { StaffRole } from './data/schema/staff'
  *  /login 라우트는 남겨 둔다 — 역할 전환 화면으로 여전히 쓴다.
  *  ★ 되살릴 때는 아래 한 줄의 주석만 풀면 된다. */
 function RequireLogin() {
-  // if (!hasActiveSession()) return <Navigate to="/login" replace />
+  if (!hasActiveSession()) return <Navigate to="/login" replace />
   return <Outlet />
 }
 
@@ -66,6 +69,7 @@ function RequireRole({ roles }: { roles: StaffRole[] }) {
 /** '/' 진입 — 역할별 랜딩. 상담사는 대시보드, 교수·조교는 각자 첫 화면으로. */
 function RoleHome() {
   const role = getActiveUser().role
+  if (role === 'admin') return <Navigate to="/system" replace />
   if (role === 'professor') return <Navigate to="/professor/advisees" replace />
   if (role === 'assistant') return <Navigate to="/assistant/students" replace />
   return <Home />
@@ -93,6 +97,30 @@ const router = createBrowserRouter(
           children: [
             // 역할별 홈 진입
             { path: '/', element: <RoleHome /> },
+            // ── 시스템관리자 — 상단바 항목은 navConfig 의 admin 섹션과 짝이다.
+            //    시스템 관리 외 항목과 현행 시스템관리 메뉴 대부분은 자리만 있다(NotReady).
+            //    key 로 탭마다 상태(페이지·편집 폼)를 새로 시작한다.
+            {
+              element: <RequireRole roles={['admin']} />,
+              children: [
+                { path: '/system', element: <Navigate to="/system/menus" replace /> },
+                { path: '/system/menus', element: <SystemManagement key="menus" tab="menus" /> },
+                { path: '/system/codes', element: <SystemManagement key="codes" tab="codes" /> },
+                { path: '/system/events', element: <SystemManagement key="events" tab="events" /> },
+                { path: '/system/issues', element: <SystemManagement key="issues" tab="issues" /> },
+                { path: '/members', element: <Navigate to="/members/assignments" replace /> },
+                { path: '/members/assignments', element: <SystemManagement key="assignments" tab="assignments" /> },
+                { path: '/notices', element: <SystemManagement key="notices" tab="notices" /> },
+                ...[
+                  ['/forecast', '취업예측분석시스템'], ['/diagnosis', '진단관리'], ['/counsel', '상담관리'], ['/roadmap', '로드맵관리'],
+                  ['/extracurricular', '비교과프로그램관리'], ['/companies', '기업정보플랫폼'],
+                  ['/system/groups', '그룹관리'], ['/system/auth', '권한관리'], ['/system/boards', '게시판관리'], ['/system/banners', '배너관리'],
+                  ['/system/popups', '팝업관리'], ['/system/surveys', '설문조사 관리'], ['/system/access-log', '사용자 접속이력'],
+                  ['/system/work-access', '업무접근 현황'], ['/system/access-stats', '접속통계'], ['/system/access-path', '접근경로'],
+                  ['/system/admin-ip', '관리자 IP관리'], ['/system/auth-events', '권한변경이력'], ['/system/sms', 'SMS 관리'],
+                ].map(([path, title]) => ({ path, element: <NotReady title={title} /> })),
+              ],
+            },
 
             // ── 상담사 (career + psych) ──
             {
@@ -129,6 +157,9 @@ const router = createBrowserRouter(
               children: [
                 { path: '/roadmap/requests', element: <RoadmapRequests /> },
                 { path: '/roadmap/progress', element: <RoadmapProgress /> },
+                // ⚠ '/roadmap/create' 는 반드시 ':studentId' 보다 위에 — 아래로 내려가면
+                //   studentId='create' 인 학생을 찾다가 「찾을 수 없습니다」로 떨어진다.
+                { path: '/roadmap/create', element: <RoadmapCreate /> },
                 { path: '/roadmap/:studentId', element: <RoadmapEditor /> },
                 { path: '/jobs', element: <JobList scope="internal" /> },
                 { path: '/jobs/external', element: <JobList scope="external" /> },

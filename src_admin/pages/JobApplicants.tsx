@@ -2,12 +2,12 @@
 // 추천채용 지원자관리 — 공고 1건
 //
 // 위: 기업 전형 단계 정의·관리 (공고마다 다르다 — 추가·이름변경·순서변경·삭제)
-//     교내 절차 2단계(서류 검토·기업 전달)는 코드 상수(INTERNAL_STAGES)라 여기 나오지 않는다.
+//     교내 절차 2단계(서류 검토·기업 전달)는 공고마다 실체가 있고 서버가 편집을 거부한다.
 //     실제 진행 순서에는 앞에 붙는다 — 지원자 필터·현재 전형은 getFlowStages 를 본다.
 // 아래: 지원자 목록 + 상태 변경 (다음 단계로 / 탈락)
 //
-// 상태 전이·정합성·집계는 전부 jobApplications 로더가 한다 — 이 화면은 부르고 그린다.
-// 전이 결과는 학생 마이페이지 진행 타임라인에 그대로 반영된다(같은 스토어 구독).
+// 상태 전이·정합성·집계는 전부 서버가 한다 — 이 화면은 부르고 그린다.
+// 쓰기는 async 이고 실패하면 사유가 화면에 남는다(조용히 삼키지 않는다).
 // ─────────────────────────────────────────────────────────────────────────────
 import { useMemo, useState } from 'react'
 import { Link, Navigate, useParams } from 'react-router-dom'
@@ -35,9 +35,13 @@ import {
   stageCounts,
   summarizeJob,
 } from '../data/jobApplications'
-import { toJobApplicantCsv } from '../data/jobApplicationExport'
-import { lastEventAt } from '../data/jobApplicationEvents'
+import { attachmentUrl } from '../data/jobApplications'
+import { fetchJobApplicantCsv } from '../data/jobApplicationExport'
+import { JOB_CODE_GROUPS, jobLabelOf } from '../data/schema/job'
 import { enrollStatusClass } from '../data/studentRoster'
+import type { EnrollStatus } from '../data/studentRoster'
+import { useAsyncAction } from '../../shared/useAsyncAction'
+import { useJobStore } from '../../shared/useJobStore'
 import type { ApplicationStatus } from '../data/schema/jobApplication'
 
 /** 상태 배지 클래스 — index.css 의 admin-chip 토큰을 재사용한다. */
@@ -58,8 +62,9 @@ function statusChipClass(status: ApplicationStatus): string {
 
 export default function JobApplicants() {
   const { jobId } = useParams()
-  // 전이 후 재조회 트리거 — 스토어가 localStorage 라 화면이 스스로 다시 읽는다.
-  const [tick, setTick] = useState(0)
+  // 저장 뒤 스토어가 서버에서 다시 읽어 발행하면 여기서 갱신된다.
+  const tick = useJobStore()
+  const { run, saving, error } = useAsyncAction()
   const [newStage, setNewStage] = useState('')
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null)
   // 전형 단계 필터 — 'ALL' | 단계 id | 상태 코드. 판정은 데이터층(queryJobApplicants)이 한다.
@@ -78,50 +83,43 @@ export default function JobApplicants() {
   // 지원 접수 대상이 아닌 공고는 이 화면에 들어올 이유가 없다.
   if (!job || !isRecommendedInternal(job)) return <Navigate to="/jobs/applicants" replace />
 
-  const refresh = () => setTick(t => t + 1)
-
   const submitNewStage = () => {
     if (!newStage.trim() || !jobId) return
-    addStage(jobId, newStage)
-    setNewStage('')
-    refresh()
+    void run(async () => { await addStage(jobId, newStage); setNewStage('') })
   }
 
   const commitRename = () => {
     if (!editing || !jobId) return
-    renameStage(jobId, editing.id, editing.name)
+    const target = editing
     setEditing(null)
-    refresh()
+    void run(() => renameStage(jobId, target.id, target.name))
   }
 
-  const onRemoveStage = (stageId: string, name: string) => {
+  const onRemoveStage = (stageId: string) => {
     if (!jobId) return
-    // 로더가 "지원자가 올라가 있으면 거부"를 판정한다 — 화면은 사유만 전한다.
-    if (!removeStage(jobId, stageId)) {
-      window.alert(`«${name}» 단계에 지원자가 올라가 있어 삭제할 수 없습니다.\n먼저 해당 지원자를 다음 단계로 보내거나 탈락 처리해 주세요.`)
-      return
-    }
-    refresh()
+    // "진행 중인 지원자가 올라가 있으면 거부"는 서버가 판정한다 — 화면은 사유를 보여 준다.
+    void run(() => removeStage(jobId, stageId))
   }
 
   const onReject = (id: string, name: string) => {
     const reason = window.prompt(`${name} 지원자를 탈락 처리합니다.\n사유를 남겨 주세요(선택).`)
     if (reason === null) return
-    rejectApplication(id, reason.trim() || undefined)
-    refresh()
+    void run(() => rejectApplication(id, reason.trim()))
   }
 
   const downloadCsv = () => {
     if (!jobId) return
-    const today = new Date().toISOString().slice(0, 10).replaceAll('-', '')
-    const url = URL.createObjectURL(
-      new Blob([`﻿${toJobApplicantCsv([jobId])}`], { type: 'text/csv;charset=utf-8' }),
-    )
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `${job.company}_지원자현황_${today}.csv`
-    anchor.click()
-    URL.revokeObjectURL(url)
+    void run(async () => {
+      // 명단은 서버가 만든다 — 목록·집계와 같은 필터와 범위를 쓰고 다운로드가 감사된다.
+      const body = await fetchJobApplicantCsv({ postingId: jobId })
+      const today = new Date().toISOString().slice(0, 10).replaceAll('-', '')
+      const url = URL.createObjectURL(new Blob([body], { type: 'text/csv;charset=utf-8' }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `${job.company}_지원자현황_${today}.csv`
+      anchor.click()
+      URL.revokeObjectURL(url)
+    })
   }
 
   return (
@@ -134,7 +132,7 @@ export default function JobApplicants() {
         <div>
           <h1 className="admin-page-title">[추천채용] {job.company} — {job.role}</h1>
           <p className="admin-page-desc">
-            {job.companyType && `${job.companyType} · `}마감 {jobDdayLabel(job)}
+            {job.companyType && `${jobLabelOf(JOB_CODE_GROUPS.companyType, job.companyType)} · `}마감 {jobDdayLabel(job)}
             {summary && ` · 지원 ${summary.total}명 (진행중 ${summary.open} · 합격 ${summary.passed} · 탈락 ${summary.rejected})`}
           </p>
         </div>
@@ -143,12 +141,14 @@ export default function JobApplicants() {
             type="button"
             className="admin-btn admin-btn-primary"
             onClick={downloadCsv}
-            disabled={!summary || summary.total === 0}
+            disabled={!summary || summary.total === 0 || saving}
           >
-            <LuDownload /> 엑셀 다운로드
+            <LuDownload /> {saving ? '처리 중…' : '엑셀 다운로드'}
           </button>
         </div>
       </header>
+
+      {error && <p className="admin-form-error" role="alert">{error}</p>}
 
       {/* ── 전형 단계 정의 및 관리 ─────────────────────────────────── */}
       <section className="admin-card">
@@ -191,8 +191,8 @@ export default function JobApplicants() {
                   type="button"
                   className="admin-icon-btn"
                   aria-label="위로"
-                  disabled={i === 0}
-                  onClick={() => { moveStage(job.id, stage.id, -1); refresh() }}
+                  disabled={i === 0 || saving}
+                  onClick={() => void run(() => moveStage(job.id, stage.id, -1))}
                 >
                   <LuChevronUp />
                 </button>
@@ -200,8 +200,8 @@ export default function JobApplicants() {
                   type="button"
                   className="admin-icon-btn"
                   aria-label="아래로"
-                  disabled={i === stages.length - 1}
-                  onClick={() => { moveStage(job.id, stage.id, 1); refresh() }}
+                  disabled={i === stages.length - 1 || saving}
+                  onClick={() => void run(() => moveStage(job.id, stage.id, 1))}
                 >
                   <LuChevronDown />
                 </button>
@@ -209,7 +209,8 @@ export default function JobApplicants() {
                   type="button"
                   className="admin-icon-btn"
                   aria-label="단계 삭제"
-                  onClick={() => onRemoveStage(stage.id, stage.name)}
+                  disabled={saving}
+                  onClick={() => onRemoveStage(stage.id)}
                 >
                   <LuTrash2 />
                 </button>
@@ -231,7 +232,7 @@ export default function JobApplicants() {
             type="button"
             className="admin-btn admin-btn-ghost"
             onClick={submitNewStage}
-            disabled={!newStage.trim()}
+            disabled={!newStage.trim() || saving}
           >
             <LuPlus /> 단계 추가
           </button>
@@ -291,21 +292,25 @@ export default function JobApplicants() {
             </div>
             {applications.map(a => {
               const open = a.status === 'APPLIED' || a.status === 'IN_PROGRESS'
-              const updated = lastEventAt(a.id)
+              // 표시는 신청 시점 스냅샷을 쓴다(CLAUDE.md 규칙 2).
+              const snap = a.currentAttempt
+              const name = snap?.studentName ?? a.studentName ?? a.studentId
+              const enrollment = snap?.enrollmentStatus ?? ''
+              const document = attachmentUrl(snap)
               return (
                 <div key={a.id} className="admin-roster-row">
-                  <span className="admin-roster-student"><strong>{a.snapName}</strong></span>
-                  <span className="admin-roster-cell">{a.snapStudentNo}</span>
+                  <span className="admin-roster-student"><strong>{name}</strong></span>
+                  <span className="admin-roster-cell">{snap?.studentNo ?? ''}</span>
                   <span className="admin-roster-cell">
-                    {a.snapMajor}
-                    <small>{a.snapGrade}학년</small>
+                    {snap?.deptLabel ?? snap?.studentMajor ?? ''}
+                    <small>{snap?.grade ? `${snap.grade}학년` : ''}</small>
                   </span>
                   <span className="admin-roster-cell">
-                    <span className={enrollStatusClass(a.snapEnrollStatus)}>{a.snapEnrollStatus}</span>
+                    <span className={enrollStatusClass(enrollment as EnrollStatus)}>{enrollment}</span>
                   </span>
                   <span className="admin-roster-cell">
                     {a.appliedAt.slice(0, 10)}
-                    {updated && <small>변경 {updated.slice(0, 10)}</small>}
+                    {a.lastEventAt && <small>변경 {a.lastEventAt.slice(0, 10)}</small>}
                   </span>
                   {/* 라벨은 데이터층이 만든다 — 첨부 도입 전 지원 건은 '미제출'로 온다(규칙 10). */}
                   <span className="admin-roster-cell admin-jobapp-attach" title={attachmentLabel(a)}>
@@ -321,14 +326,16 @@ export default function JobApplicants() {
                         <button
                           type="button"
                           className="admin-btn admin-btn-primary sm"
-                          onClick={() => { advanceStage(a.id); refresh() }}
+                          disabled={saving}
+                          onClick={() => void run(() => advanceStage(a.id))}
                         >
                           다음 단계
                         </button>
                         <button
                           type="button"
                           className="admin-btn admin-btn-danger-ghost sm"
-                          onClick={() => onReject(a.id, a.snapName)}
+                          disabled={saving}
+                          onClick={() => onReject(a.id, name)}
                         >
                           탈락
                         </button>
@@ -338,10 +345,15 @@ export default function JobApplicants() {
                     )}
                   </span>
                   <span className="admin-request-actions">
-                    {/* 첨부 포트폴리오 열람 — 뷰어는 아직 붙이지 않았다(버튼만). */}
-                    <button type="button" className="admin-btn admin-btn-ghost sm">
-                      <LuFileText /> 지원서 보기
-                    </button>
+                    {/* 서류는 정적 URL 이 아니라 권한을 확인하는 API 경로로 내려온다.
+                        열람 사실은 dc.job_access_event 에 남는다. */}
+                    {document ? (
+                      <a className="admin-btn admin-btn-ghost sm" href={document} target="_blank" rel="noreferrer">
+                        <LuFileText /> 지원서 받기
+                      </a>
+                    ) : (
+                      <span className="admin-field-hint">서류 없음</span>
+                    )}
                   </span>
                 </div>
               )

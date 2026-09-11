@@ -1,19 +1,17 @@
 // ─────────────────────────────────────────────────────────────────────────────
 // 전담교수 상담 스키마 — 현행 DB CON_PROF_INFO와 SY_CODE GRP 0131 코드 대응 단일소스.
 // snapshot은 EP_PRM_APP 패턴으로 기록 시점 학생 정보를 보존한다.
-// DB 전환 시 실코드가 확인되면 01~06 잠정값과 DTO 매핑을 이 경계에서 치환한다.
 // 상담기록·독려 이력을 수정·삭제하지 말 것.
 // ─────────────────────────────────────────────────────────────────────────────
 import type { CounselMethod } from './counselRequest'
-/** 상담구분 — 현행 SY_CODE GRP '0131' 미러 (코드+라벨 분리: 한글 리터럴을 값으로 쓰지 않는다).
- *  실코드 미확인으로 잠정 '01'~'06' 부여 — DB 전환 시 SY_CODE 실값으로 치환한다. */
+/** 상담구분 — 서버 코드 그룹 PROF_COUNSEL_TYPE(dc.code_item) 과 같은 코드. 라벨은 표시용이다. */
 export const PROF_COUNSEL_CATEGORIES = [
-  { code: '01', label: '전공 및 학업' },
-  { code: '02', label: '진로' },
-  { code: '03', label: '취업' },
-  { code: '04', label: '봉사 및 실습' },
-  { code: '05', label: '사제동행프로그램' },
-  { code: '06', label: '기타' },
+  { code: 'MAJOR_STUDY', label: '전공 및 학업' },
+  { code: 'CAREER', label: '진로' },
+  { code: 'JOB', label: '취업' },
+  { code: 'SERVICE_PRACTICE', label: '봉사 및 실습' },
+  { code: 'MENTORING_PROGRAM', label: '사제동행프로그램' },
+  { code: 'ETC', label: '기타' },
 ] as const
 
 export type ProfCounselCategoryCode = (typeof PROF_COUNSEL_CATEGORIES)[number]['code']

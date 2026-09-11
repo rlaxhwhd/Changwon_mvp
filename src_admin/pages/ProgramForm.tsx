@@ -34,8 +34,9 @@ const EXTRA_SUBLINK: Record<string, string> = {
   '개인정보 동의서': '동의서 내용 설정',
   '첨부파일': '파일 형식/개수 설정',
 }
+// 등록 화면의 사업 구분 라벨 → 비교과 분류 코드.
 const CATEGORY_MAP: Record<string, ProgramCategory> = {
-  '진로': '진로', '취업': '취업', 'STAR트랙': '진로', 'FJT트랙': '진로',
+  '진로': 'CAREER', '취업': 'EMPLOY', 'STAR트랙': 'CAREER', 'FJT트랙': 'CAREER',
 }
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -201,7 +202,7 @@ export default function ProgramForm() {
       manager: managerName,
       capacity: Number(limitCount) || Number(selectCount) || 20,
       location: place.trim(),
-      status: existing?.status ?? '모집중',
+      status: existing?.status ?? 'RECRUITING',
       pinned,
       satisfactionSurvey: satisfaction,
       // 미실시면 질문지 선택은 의미가 없다 — 값이 남지 않게 정리한다.
@@ -212,13 +213,14 @@ export default function ProgramForm() {
       // 안 고르면 필드를 만들지 않는다 — 빈 문자열이 남으면 공고가 '이미지 있음'으로 읽는다.
       image: thumb || undefined,
     }
-    if (editing && id) {
-      updateProgram(id, payload)
-    } else {
-      addProgram(payload)
-    }
-    setSaved(true)
-    window.setTimeout(() => navigate(editing ? '/programs/manage' : '/programs'), 400)
+    const saving = editing && id ? updateProgram(id, payload) : addProgram(payload).then(() => undefined)
+    saving.then(() => {
+      setSaved(true)
+      window.setTimeout(() => navigate(editing ? '/programs/manage' : '/programs'), 400)
+    }).catch((error: unknown) => {
+      // 서버가 거절한 이유를 그대로 보여 준다 — 저장된 척하고 넘어가지 않는다.
+      window.alert(error instanceof Error ? error.message : '저장하지 못했습니다.')
+    })
   }
 
   /** 유형 체크 토글 — 저장 순서는 항상 T1~T6를 유지한다. */

@@ -10,6 +10,7 @@ import { getPrograms, selectionOf, selectedApplicants } from './programs'
 import { studentLiteOf, collegeOf } from './studentRoster'
 import { typeLabel } from '../../src_v2/data/careerProcess'
 import type { Program, ProgramApplicant } from './schema/program'
+import { outcomeLabel, selectionLabel } from './schema/program'
 
 /** 내보낼 대상 — 신청한 학생 전체 vs 선발된 학생만 */
 export type ExportTarget = 'applicants' | 'selected'
@@ -41,7 +42,7 @@ function rowOf(program: Program, applicant: ProgramApplicant): string[] {
     lite ? `${lite.grade}학년` : '',
     lite?.status ?? '',
     lite ? typeLabel(lite.studentType) : '',
-    applicant.outcomeStatus ?? selectionOf(applicant),
+    applicant.outcomeStatus ? outcomeLabel(applicant.outcomeStatus) : selectionLabel(selectionOf(applicant)),
     applicant.appliedAt.slice(0, 10),
   ]
 }

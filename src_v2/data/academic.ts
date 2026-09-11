@@ -7,7 +7,7 @@
 //
 // 집계·파생은 전부 여기서 한다 (CLAUDE.md 원칙 10). 화면은 계산하지 않는다.
 // ─────────────────────────────────────────────────────────────────────────
-import type { StudentData } from './students'
+import type { StudentData, StudentCounselRequest } from './students'
 import { typeLabel } from './careerProcess'
 import type {
   AcademicSnapshot, Cert, CourseClass, JobRole,
@@ -149,8 +149,15 @@ function computeSkillScores(
  *   타학과   = 과목 주관학과 ≠ 본인 학과
  * 합집합이므로 아직 안 들은 학과 과목도 미이수로 뜨고, 교육과정에 없는
  * 타학과 수강분도 빠지지 않는다.
+ *
+ * `counselRequests` 는 호출부가 주입한다 — 상담은 학생 프로필이 아니라 상담 스토어가
+ * 소유한다(서버가 프로필 응답에서 떼어 낸다). 이 계층이 스토어를 직접 읽지 않게 한다.
  */
-export function deriveSkillTree(snap: AcademicSnapshot, student: StudentData): SkillTreeData {
+export function deriveSkillTree(
+  snap: AcademicSnapshot,
+  student: StudentData,
+  counselRequests: StudentCounselRequest[],
+): SkillTreeData {
   const { deptCode, entryYear } = snap
 
   const skillById = new Map(snap.skills.map(s => [s.skillId, s]))
@@ -161,10 +168,19 @@ export function deriveSkillTree(snap: AcademicSnapshot, student: StudentData): S
   const enrollByCode = new Map(snap.enrollments.map(e => [e.curiNum, e]))
   const doneCodes = new Set(snap.enrollments.filter(e => e.finishYn === 'Y').map(e => e.curiNum))
 
+  // 입학년도 교육과정이 아직 적재되지 않은 학번이 있다(신입생이 대표적이다 —
+  // 교육과정은 2021년치만 들어와 있는데 학번은 2026이다). 그대로 두면 본인 학과
+  // 전공과목이 전부 '타학과'로 찍히므로, 그 학과에 있는 가장 최근 연도로 대신한다.
+  // 학과 자체가 교육과정에 없으면 그때는 '타학과'가 맞는 판정이다.
+  const deptYears = [...new Set(snap.curriculum.filter(c => c.deptCode === deptCode).map(c => c.curriYear))]
+  const curriYear = deptYears.includes(entryYear)
+    ? entryYear
+    : (deptYears.sort((a, b) => b.localeCompare(a))[0] ?? entryYear)
+
   /** 본인 학과 교육과정에서 이 과목을 찾는다(없으면 타학과). */
   const ownRowOf = (code: string) =>
     snap.curriculum.find(
-      c => c.deptCode === deptCode && c.curriYear === entryYear && c.curiNum === code)
+      c => c.deptCode === deptCode && c.curriYear === curriYear && c.curiNum === code)
 
   /** 권장학년 — 본인 학과 우선, 없으면(타학과) 그 과목 주관학과 교육과정에서. */
   const recGradeOf = (code: string) =>
@@ -173,7 +189,7 @@ export function deriveSkillTree(snap: AcademicSnapshot, student: StudentData): S
   // 대상 과목 = 본인 학과 전공 교육과정 ∪ 실제 수강분
   // (교양은 제외 — 기초역량 열에서 따로 집계한다)
   const ownMajor = snap.curriculum
-    .filter(c => c.deptCode === deptCode && c.curriYear === entryYear && c.courseCls.startsWith('전공'))
+    .filter(c => c.deptCode === deptCode && c.curriYear === curriYear && c.courseCls.startsWith('전공'))
     .map(c => c.curiNum)
   const takenNonGe = snap.enrollments
     .filter(e => !e.courseCls.startsWith('교양'))
@@ -221,7 +237,7 @@ export function deriveSkillTree(snap: AcademicSnapshot, student: StudentData): S
     c => c.deptCode === deptCode && c.curriYear === entryYear && c.courseCls === '교양필수')
   const geDone = geRequired.filter(c => doneCodes.has(c.curiNum)).length
   const programDone = snap.programRecords.filter(p => p.completed).length
-  const counselDone = student.counselRequests.filter(r => r.status === '완료').length
+  const counselDone = counselRequests.filter(r => r.status === '완료').length
   const diagDone = Object.keys(student.typeScores ?? {}).length > 0
 
   const foundation: FoundationItem[] = [

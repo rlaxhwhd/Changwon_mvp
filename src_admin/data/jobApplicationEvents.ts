@@ -1,68 +1,28 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 추천채용 지원 처리 이력 로더 — localStorage 'dc_job_app_events' (append-only)
+// 추천채용 지원 처리 이력 — 정본은 서버(dc.job_application_event)다.
 //
-// jobApplications.ts 의 상태 전이 함수(apply/advance/reject/pass/cancel)가 전이
-// 직후 이 스토어에 이벤트 1건을 추가한다. 화면은 getEventsByApplication 으로 읽는다.
-// 학생 마이페이지의 진행 타임라인이 이 이력을 그대로 그린다.
-// DB 전환 시 이 모듈만 이력 테이블 API로 교체한다.
+// 이력은 append-only 이고 **서버가 상태 전이와 같은 트랜잭션에서** 쌓는다
+// (CLAUDE.md 규칙 11). 예전에는 화면이 전이 직후 localStorage 배열에 직접
+// append 했는데, 그러면 상태 저장은 성공하고 이력만 사라지는 경우가 생긴다.
+// 그 공개 append 경로는 이제 없다 — 여기는 읽기 전용이다.
 //
-// ⚠ 기존 이벤트를 수정·삭제하지 말 것. 이력이 곧 감사 근거다(CLAUDE.md 규칙 11).
+// 목록에 싣기에는 큰 값이라 필요한 지원 건만 골라 읽는다(전량 preload 금지).
 // ─────────────────────────────────────────────────────────────────────────────
 import type { JobApplicationEvent, JobApplicationEventKind } from './schema/jobApplication'
+import { APPLICATION_EVENT_LABEL } from './schema/jobApplication'
+import { loadApplicationEvents } from '../../shared/jobStore'
 
-const STORAGE_KEY = 'dc_job_app_events'
-
-export function getJobApplicationEvents(): JobApplicationEvent[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed as JobApplicationEvent[]
-    }
-  } catch {
-    /* 이력 없음 */
-  }
-  return []
+/** 한 지원 건의 처리 이력 (오래된 순). 서버가 seq 순으로 내려준다. */
+export async function getEventsByApplication(applicationId: string): Promise<JobApplicationEvent[]> {
+  return loadApplicationEvents(applicationId)
 }
 
-function persist(list: JobApplicationEvent[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
-  } catch {
-    /* 데모 범위 — 저장 실패 무시 */
-  }
+/** 이력 1건의 표시 문구 — 화면이 코드로 분기하지 않도록 여기서 만든다. */
+export function eventLabel(event: JobApplicationEvent): string {
+  const base = APPLICATION_EVENT_LABEL[event.action] ?? event.action
+  if (event.action === 'ADVANCE' && event.toStageName) return `${base} · ${event.toStageName}`
+  return base
 }
 
-/** 이벤트 1건 추가. 호출부는 상태 전이 직후에 부른다. */
-export function appendJobApplicationEvent(
-  input: Omit<JobApplicationEvent, 'id' | 'at'>,
-): JobApplicationEvent {
-  const event: JobApplicationEvent = {
-    id: `jae_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    ...input,
-    at: new Date().toISOString(),
-  }
-  persist([...getJobApplicationEvents(), event])
-  return event
-}
-
-/** 한 지원 건의 처리 이력 (오래된 순) — 학생 진행 타임라인의 소스 */
-export function getEventsByApplication(applicationId: string): JobApplicationEvent[] {
-  return getJobApplicationEvents()
-    .filter(event => event.applicationId === applicationId)
-    .sort((a, b) => a.at.localeCompare(b.at))
-}
-
-/** 한 공고의 전체 처리 이력 (최신 순) — 상담사 지원자 관리의 활동 로그 */
-export function getEventsByJob(jobId: string): JobApplicationEvent[] {
-  return getJobApplicationEvents()
-    .filter(event => event.jobId === jobId)
-    .sort((a, b) => b.at.localeCompare(a.at))
-}
-
-/** 마지막 처리 일시 — 목록의 '최종 업데이트' 표시용. 이력이 없으면 undefined. */
-export function lastEventAt(applicationId: string): string | undefined {
-  return getEventsByApplication(applicationId).at(-1)?.at
-}
-
+export { APPLICATION_EVENT_LABEL }
 export type { JobApplicationEvent, JobApplicationEventKind }

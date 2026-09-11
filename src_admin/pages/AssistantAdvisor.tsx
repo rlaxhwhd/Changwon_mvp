@@ -112,10 +112,10 @@ export default function AssistantAdvisor() {
     link.click()
     URL.revokeObjectURL(link.href)
   }
-  const confirmAssign = (professorId: string, assignedAt: string) => {
+  const confirmAssign = async (professorId: string, assignedAt: string) => {
     if (!selected) return
     try {
-      assignAdvisor({
+      await assignAdvisor({
         studentId: selected.id,
         professorId,
         assignedAt,

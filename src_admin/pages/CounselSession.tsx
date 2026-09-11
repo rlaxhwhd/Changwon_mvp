@@ -10,7 +10,7 @@ import {
 import type { CounselRequest } from '../data/counselRequests'
 import { buildRecord, getRecordByRequest, upsertRecord } from '../data/counselRecords'
 import type { CounselRecord } from '../data/counselRecords'
-import { STUDENTS } from '../../src_v2/data/students'
+import { STUDENTS, getStudentType } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
 import EmptyState from '../components/EmptyState'
 import StudentDetailView from '../components/StudentDetailView'
@@ -35,6 +35,8 @@ function RecordForm({
   const [comment, setComment] = useState(existing?.comment ?? '')
   const [followUp, setFollowUp] = useState(existing?.followUp ?? '')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
 
   const canComplete = summary.trim() !== '' && comment.trim() !== ''
 
@@ -58,18 +60,29 @@ function RecordForm({
       existing,
     )
 
-  const handleSaveDraft = () => {
-    upsertRecord(draft('작성중'))
-    setSaved(true)
-    window.setTimeout(() => setSaved(false), 2000)
+  const handleSaveDraft = async () => {
+    if (saving) return
+    setSaving(true)
+    setSaveError('')
+    try {
+      await upsertRecord(draft('작성중'))
+      setSaved(true)
+      window.setTimeout(() => setSaved(false), 2000)
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : '기록을 저장하지 못했습니다.')
+    } finally { setSaving(false) }
   }
 
-  const handleComplete = () => {
-    if (!canComplete) return
-    upsertRecord(draft('완료'))
-    completeRequest(request.id)
-    // 완료 후 상담일지 대장으로 이동 — 방금 쓴 일지가 '완료'로 올라온다
-    window.location.href = '/admin/counsel/journals'
+  const handleComplete = async () => {
+    if (!canComplete || saving) return
+    setSaving(true)
+    setSaveError('')
+    try {
+      await completeRequest(request.id, { summary, comment, followUp }, getStudentType(student))
+      window.location.href = '/admin/counsel/journals'
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : '완료 처리하지 못했습니다.')
+    } finally { setSaving(false) }
   }
 
   return (
@@ -125,14 +138,15 @@ function RecordForm({
       </label>
 
       <div className="admin-form-actions">
+        {saveError && <p role="alert">{saveError}</p>}
         {saved && <span className="admin-save-hint"><LuCheck /> 임시 저장됨</span>}
-        <button type="button" className="admin-btn admin-btn-ghost" onClick={handleSaveDraft}>
+        <button type="button" className="admin-btn admin-btn-ghost" onClick={handleSaveDraft} disabled={saving}>
           임시 저장
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-primary"
-          disabled={!canComplete}
+          disabled={!canComplete || saving}
           onClick={handleComplete}
         >
           <LuClipboardCheck /> 저장 후 완료 처리

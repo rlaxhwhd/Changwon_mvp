@@ -17,16 +17,21 @@ export default function ProfessorSchedule() {
   const [weekday, setWeekday] = useState<WeekdayKey>(1)
   const [start, setStart] = useState('14:00')
   const [end, setEnd] = useState('17:00')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
   const valid = start < end
 
-  const add = () => {
-    if (!valid) return
-    addExcludedSlot(user.id, weekday, start, end)
-    window.location.reload()
+  const run = async (action: () => Promise<unknown>) => {
+    if (saving) return
+    setSaving(true); setError('')
+    try { await action(); window.location.reload() }
+    catch (e) { setError((e as Error).message); setSaving(false) }
   }
+  const add = () => { if (valid) void run(() => addExcludedSlot(user.id, weekday, start, end)) }
 
   return (
     <div className="admin-page">
+      {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">상담 제한일정</h1>
@@ -52,7 +57,7 @@ export default function ProfessorSchedule() {
             <span>종료</span>
             <input type="time" value={end} onChange={event => setEnd(event.target.value)} />
           </label>
-          <button type="button" className="admin-btn admin-btn-primary" disabled={!valid} onClick={add}>
+          <button type="button" className="admin-btn admin-btn-primary" disabled={!valid || saving} onClick={add}>
             <LuPlus /> 추가
           </button>
         </div>
@@ -78,7 +83,8 @@ export default function ProfessorSchedule() {
                       <button
                         type="button"
                         className="admin-avail-slot-remove"
-                        onClick={() => { removeExcludedSlot(user.id, slot.id); window.location.reload() }}
+                        disabled={saving}
+                        onClick={() => { void run(() => removeExcludedSlot(user.id, slot.id)) }}
                       >
                         <LuX />
                       </button>

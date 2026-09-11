@@ -10,11 +10,13 @@ import { useNavigate } from 'react-router-dom'
 import { LuBriefcase, LuDownload, LuInfo } from 'react-icons/lu'
 import EmptyState from '../components/EmptyState'
 import { getRecommendedJobs, summarizeJob } from '../data/jobApplications'
-import { getJobApplicantExportRows, toJobApplicantCsv } from '../data/jobApplicationExport'
+import { fetchJobApplicantCsv } from '../data/jobApplicationExport'
 import { jobDdayLabel } from '../data/jobsSource'
+import { useAsyncAction } from '../../shared/useAsyncAction'
 
 export default function JobApplicantsList() {
   const navigate = useNavigate()
+  const { run, saving, error } = useAsyncAction()
   const [checked, setChecked] = useState<Set<string>>(new Set())
 
   const jobs = useMemo(() => getRecommendedJobs(), [])
@@ -38,21 +40,32 @@ export default function JobApplicantsList() {
     setChecked(allChecked ? new Set() : new Set(jobs.map(j => j.id)))
   }
 
-  // 선택이 없으면 전체 공고를 내려받는다 — "모든 지원자 현황"이 기본값이다.
-  const targetIds = checked.size ? [...checked] : undefined
-  // 명단 조립은 데이터층(jobApplicationExport)이 하고, 여기서는 파일로만 만든다.
-  const exportCount = getJobApplicantExportRows(targetIds).length
+  // 선택이 없으면 담당 범위의 전체 지원을 내려받는다 — "모든 지원자 현황"이 기본값이다.
+  // 서버가 한 공고씩만 필터를 받으므로 여러 공고를 고르면 나눠 받아 잇는다.
+  const targetIds = checked.size ? [...checked] : []
+  const exportCount = targetIds.length
+    ? rows.filter(r => targetIds.includes(r.job.id)).reduce((sum, r) => sum + r.summary.total, 0)
+    : rows.reduce((sum, r) => sum + r.summary.total, 0)
 
   const downloadCsv = () => {
-    const today = new Date().toISOString().slice(0, 10).replaceAll('-', '')
-    const url = URL.createObjectURL(
-      new Blob([`﻿${toJobApplicantCsv(targetIds)}`], { type: 'text/csv;charset=utf-8' }),
-    )
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `추천채용_지원자현황_${today}.csv`
-    anchor.click()
-    URL.revokeObjectURL(url)
+    void run(async () => {
+      // 명단은 서버가 만든다 — 목록·집계와 같은 필터, 같은 범위 술어를 쓰고
+      // 다운로드 사실이 dc.job_access_event 에 남는다.
+      const parts = targetIds.length
+        ? await Promise.all(targetIds.map(postingId => fetchJobApplicantCsv({ postingId })))
+        : [await fetchJobApplicantCsv()]
+      // 두 번째 파일부터는 머리글 줄을 뺀다(BOM 도 첫 파일 것만 남긴다).
+      const dropHeader = (part: string) => part.split('\n').slice(1).join('\n')
+      const [first, ...rest] = parts
+      const body = [first, ...rest.map(dropHeader)].join('\n')
+      const today = new Date().toISOString().slice(0, 10).replaceAll('-', '')
+      const url = URL.createObjectURL(new Blob([body], { type: 'text/csv;charset=utf-8' }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `추천채용_지원자현황_${today}.csv`
+      anchor.click()
+      URL.revokeObjectURL(url)
+    })
   }
 
   const totalApplicants = rows.reduce((sum, r) => sum + r.summary.total, 0)
@@ -71,12 +84,14 @@ export default function JobApplicantsList() {
             type="button"
             className="admin-btn admin-btn-primary"
             onClick={downloadCsv}
-            disabled={exportCount === 0}
+            disabled={exportCount === 0 || saving}
           >
-            <LuDownload /> 엑셀 다운로드 ({exportCount}명)
+            <LuDownload /> {saving ? '만드는 중…' : `엑셀 다운로드 (${exportCount}명)`}
           </button>
         </div>
       </header>
+
+      {error && <p className="admin-form-error" role="alert">{error}</p>}
 
       <div className="admin-editor-hint">
         <LuInfo />

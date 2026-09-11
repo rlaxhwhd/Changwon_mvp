@@ -93,11 +93,13 @@ const router = createBrowserRouter(
         { path: '/diagnosis/result',               element: <Navigate to="/diagnosis/employment" replace /> },
         { path: '/diagnosis/result/:testId',       element: <Navigate to="/diagnosis/employment" replace /> },
 
-        // 전문상담 — 진단 2종(C-CORE + 후속)을 마쳐야 열린다.
+        // 전문상담 — 라우트에 게이트를 두지 않는다. 일반 진로취업·심리·교수 상담은
+        // CARE 7+ 파이프라인 밖이라 진단 없이 신청한다(PROCESS.md §2). 진단 2종을
+        // 요구하는 것은 CareerCounsel 안의 「CARE 7+ 연계 상담」 카드 하나뿐이다.
         { path: '/counsel',           element: <Navigate to="/counsel/career" replace /> },
-        { path: '/counsel/career',    element: <StageGate stage="counsel" title="진로취업상담"><CareerCounsel /></StageGate> },
-        { path: '/counsel/psych',     element: <StageGate stage="counsel" title="심리상담"><PsychCounsel /></StageGate> },
-        { path: '/counsel/professor', element: <StageGate stage="counsel" title="교수상담"><ProfessorCounsel /></StageGate> },
+        { path: '/counsel/career',    element: <CareerCounsel /> },
+        { path: '/counsel/psych',     element: <PsychCounsel /> },
+        { path: '/counsel/professor', element: <ProfessorCounsel /> },
 
         // 경력개발 로드맵 — 상담에서 만들어진다. 상담 전에는 볼 것이 없다.
         { path: '/roadmap',             element: <Navigate to="/roadmap/skill-tree" replace /> },
@@ -120,7 +122,8 @@ const router = createBrowserRouter(
         // 공지사항: /mypage/notices 에서 취업지원 하위로 옮겼다(기존 경로는 하위 호환용 리다이렉트).
         // ⚠ '/jobs/:id' 보다 위에 둔다 — 정적 세그먼트가 먼저 읽히게 해 공고 상세로 새지 않게 한다.
         { path: '/jobs/notices',         element: <Notices /> },
-        { path: '/jobs/:id',             element: <JobDetail /> },
+        // 목록과 같은 게이트를 건다 — 상세 직접 URL 로 순서를 우회할 수 없어야 한다(CLAUDE.md 13조).
+        { path: '/jobs/:id',             element: <StageGate stage="employment" title="채용공고 상세"><JobDetail /></StageGate> },
 
         // 마이페이지
         { path: '/mypage',           element: <Navigate to={getActiveStudent().grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'} replace /> },
@@ -129,7 +132,9 @@ const router = createBrowserRouter(
         { path: '/mypage/applications', element: <MyApplications /> },
         { path: '/mypage/notices',    element: <Navigate to="/jobs/notices" replace /> },
         // 상담 현황: 라우팅을 /counsel/record로 이동 (기존 /mypage/counsel은 하위 호환용 리다이렉트)
-        { path: '/counsel/record',    element: <StageGate stage="counsel" title="상담 현황"><CounselStatus /></StageGate> },
+        // 신청이 가능하면 그 조회도 가능해야 한다 — 일반 상담을 낸 신입생이 자기
+        // 신청 결과를 못 보면 신청 완료 안내가 잠긴 화면을 가리키게 된다.
+        { path: '/counsel/record',    element: <CounselStatus /> },
         { path: '/mypage/counsel',    element: <Navigate to="/counsel/record" replace /> },
         { path: '/mypage/attendance', element: <Attendance /> },
         { path: '/mypage/mission',    element: <Navigate to="/growth/mission-log" replace /> },

@@ -27,7 +27,7 @@ export default function JobSupport({ scope }: { scope: JobScope }) {
   const navigate = useNavigate()
   const copy = SCOPE_COPY[scope]
 
-  // 단일소스: 교내=상담사 등록분(dc_jobs) · 외부=수집분(seed). 학생 화면은 이 소스를 구독한다.
+  // 단일소스: 서버(dc.job_posting). 교내=교직원 등록분 · 외부=수집분. 학생 화면은 같은 스토어를 읽는다.
   const all = useMemo(() => getJobsByScope(scope), [scope])
 
   return (

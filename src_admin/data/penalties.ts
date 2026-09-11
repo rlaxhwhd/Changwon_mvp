@@ -1,294 +1,94 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 블랙리스트 벌점 로더 — 단일 소스 = A 로스터(studentsRoster.json)의 벌점 key.
+// 블랙리스트 벌점 로더 — 정본은 서버(dc.penalty_entry)다.
 //
-// 정체(이름·학과·학번)는 언제나 json 에서 온다. localStorage('dc_penalty_v2')는
-// 런타임 노쇼/차감의 "수치 override" 만 담는다(base ⊕ override). 그래서 화면엔
-// 항상 json 값이 뜨고, 옛 localStorage 로 이름이 어긋나는 일이 없다.
-// students.ts 패턴 미러: base(json) + override(localStorage) 병합 셀렉터 + 변동 헬퍼.
+// 총점을 저장하지 않는다. 부여·회수를 각각 행으로 쌓고 합으로 읽는다
+// (CLAUDE.md 규칙 11 append-only). 그래서 '해제'도 삭제가 아니라 음수 행이며,
+// 누가 언제 왜 되돌렸는지가 남는다 — CURRENT.md #2 「변경 이력이 없다」의 교정.
+//
+// 노쇼·불참 벌점은 여기서 부르지 않는다. 출석·이수 결과를 저장하는 같은
+// 트랜잭션에서 서버가 매긴다(programs.ts 주석 참고).
 // ─────────────────────────────────────────────────────────────────────────
-import type { ProgramApplicant, Program } from './schema/program'
 import type { StudentPenalty, PenaltyEntry } from './schema/penalty'
-import { NOSHOW_PENALTY_POINTS } from './schema/penalty'
-import { getActiveCounselorId } from './counselors'
-import { STUDENT_ROSTER, studentNoOf } from './studentRoster'
-import { collegeOf } from './colleges'
-import { paginate, mockLatency } from './query'
+import { api, queryString } from '../../shared/api'
 import type { ListParams, Paginated } from './query'
 
-// v2: 정체는 json, localStorage 는 override 만. 구 'dc_penalty'(정체까지 저장하던 방식)는 폐기.
-const STORAGE_KEY = 'dc_penalty_v2'
+/** 블랙리스트 조회 파라미터 — 단대 선택은 학과 목록으로 펼쳐 보낸다. */
+export type PenaltyParams = ListParams & { majors?: string[] }
 
-/**
- * 벌점 base = A 로스터(studentsRoster.json)의 penaltyTotal/penaltyEntries key.
- * 학생 레코드에 박힌 벌점을 블랙리스트 맵으로 환원한다. (정체 단일 소스)
- */
-function seedFromRoster(): Record<string, StudentPenalty> {
-  const map: Record<string, StudentPenalty> = {}
-  for (const s of STUDENT_ROSTER) {
-    if (s.penaltyEntries && s.penaltyEntries.length > 0) {
-      map[s.id] = {
-        studentId: s.id,
-        studentName: s.name,
-        studentMajor: s.major,
-        total: s.penaltyTotal ?? 0,
-        entries: s.penaltyEntries,
-      }
-    }
-  }
-  return map
+/** 블랙리스트 표 행 — 학번·대학까지 서버가 조인해 준다. */
+export interface BlacklistRow {
+  studentId: string
+  studentName: string
+  studentMajor: string
+  studentNo: string
+  college: string | null
+  total: number
+  entryCount: number
+  lastAt: string
 }
 
-/** localStorage 의 override 맵(런타임 노쇼/차감). 없으면 빈 맵. */
-function readOverrides(): Record<string, StudentPenalty> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (parsed && typeof parsed === 'object') return parsed as Record<string, StudentPenalty>
-    }
-  } catch {
-    /* 무시 — override 없음 */
-  }
-  return {}
-}
-
-function writeOverrides(map: Record<string, StudentPenalty>): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
-  } catch {
-    /* 데모 범위 — 저장 실패 무시 */
-  }
-}
-
-/**
- * 표시용 벌점 맵 = json base ⊕ localStorage override.
- * 정체(이름·학과)는 json base 에서, 벌점 수치(total·entries)는 override 가 있으면 우선.
- * json 로스터에 없는 학생(런타임 노쇼)만 override 그대로 포함한다.
- */
-function resolved(): Record<string, StudentPenalty> {
-  const base = seedFromRoster()
-  const ov = readOverrides()
-  const out: Record<string, StudentPenalty> = {}
-  for (const id of Object.keys(base)) {
-    const b = base[id]
-    const o = ov[id]
-    out[id] = o ? { ...b, total: o.total, entries: o.entries } : b
-  }
-  for (const id of Object.keys(ov)) {
-    if (!out[id]) out[id] = ov[id]
-  }
-  return out
-}
-
-/** total 을 entries 합산으로 재계산 (0 이상 보정) */
-function recalc(record: StudentPenalty): StudentPenalty {
-  const total = Math.max(0, record.entries.reduce((sum, e) => sum + e.points, 0))
-  return { ...record, total }
-}
-
-// ── 조회 셀렉터 ────────────────────────────────────────────────────────────
-
-/** 벌점이 부여된 학생 레코드 전체 (블랙리스트 목록). total 내림차순. */
-export function getPenaltyList(): StudentPenalty[] {
-  return Object.values(resolved())
-    .filter(r => r.entries.length > 0)
-    .sort((a, b) => b.total - a.total)
-}
-
-/** 특정 학생의 벌점 레코드 (없으면 null) */
-export function getStudentPenalty(studentId: string): StudentPenalty | null {
-  return resolved()[studentId] ?? null
-}
-
-/** 특정 학생의 누적 벌점 총점 (없으면 0) */
-export function getPenaltyTotal(studentId: string): number {
-  return resolved()[studentId]?.total ?? 0
-}
-
-// ── 변동 헬퍼 (override 레이어에만 기록) ─────────────────────────────────────
-
-function pushEntry(
-  applicant: Pick<ProgramApplicant, 'studentId' | 'studentName' | 'studentMajor'>,
-  entry: Omit<PenaltyEntry, 'id' | 'at' | 'by'>,
-): void {
-  const ov = readOverrides()
-  const record: StudentPenalty = resolved()[applicant.studentId] ?? {
-    studentId: applicant.studentId,
-    studentName: applicant.studentName,
-    studentMajor: applicant.studentMajor,
-    total: 0,
-    entries: [],
-  }
-  const full: PenaltyEntry = {
-    ...entry,
-    id: `pen_${Date.now()}`,
-    at: new Date().toISOString(),
-    by: getActiveCounselorId(),
-  }
-  ov[applicant.studentId] = recalc({ ...record, entries: [...record.entries, full] })
-  writeOverrides(ov)
-}
-
-/** 출석 '노쇼' → 자동 벌점 부여 (programs.setAttendance 에서 호출) */
-export function applyNoShowPenalty(applicant: ProgramApplicant, program: Program): void {
-  pushEntry(applicant, {
-    kind: 'noshow',
-    points: NOSHOW_PENALTY_POINTS,
-    reason: `${program.title} 노쇼 (신청 후 미참여)`,
-    programId: program.id,
-    programTitle: program.title,
+function params(list: PenaltyParams) {
+  const f = list.filters ?? {}
+  return queryString({
+    page: list.page ?? 1, pageSize: list.pageSize ?? 20, q: list.q,
+    // 단대는 서버가 모른다(학생 대부분이 조직 코드를 갖고 있지 않다).
+    // 화면이 학사 조직 트리로 단대를 학과 목록으로 펼쳐 보낸다.
+    major: list.majors, minPoints: f.ptsMin, searchScope: f.scope,
   })
 }
 
-/**
- * 선발자 '불참' 결과 → 벌점 부여(1점/3점 tier). tier 재변경 시 중복 방지를 위해
- * 이 프로그램의 기존 불참 벌점을 먼저 회수한 뒤 새 tier로 재부여한다.
- */
-export function applyAbsencePenalty(applicant: ProgramApplicant, program: Program, points: number): void {
-  revertNoShowPenalty(applicant.studentId, program.id)
-  pushEntry(applicant, {
-    kind: 'noshow',
-    points,
-    reason: `${program.title} 불참 (벌점 ${points}점)`,
-    programId: program.id,
-    programTitle: program.title,
-  })
+/** 블랙리스트 목록(서버 페이징·검색). */
+export async function queryPenaltyList(list: PenaltyParams = {}): Promise<Paginated<BlacklistRow>> {
+  return api<Paginated<BlacklistRow>>(`/penalties?${params(list)}`)
 }
 
 /**
- * '노쇼' 해제 → 해당 프로그램 노쇼 벌점을 상쇄(음수 이력 추가).
- * 이력은 남기고 total 만 되돌린다(감사 추적).
+ * CSV 내보내기용 — 현재 필터의 전체 행.
+ * 페이지를 넘겨 가며 모은다. 서버가 페이지 상한을 강제하므로 한 번에 못 받는다.
  */
-export function revertNoShowPenalty(studentId: string, programId: string): void {
-  const record = resolved()[studentId]
-  if (!record) return
-  const noshowPoints = record.entries
-    .filter(e => e.kind === 'noshow' && e.programId === programId)
-    .reduce((sum, e) => sum + e.points, 0)
-  const waivedPoints = record.entries
-    .filter(e => e.kind === 'waive' && e.programId === programId)
-    .reduce((sum, e) => sum + Math.abs(e.points), 0)
-  const outstanding = noshowPoints - waivedPoints
-  if (outstanding <= 0) return
-
-  const title = record.entries.find(e => e.programId === programId)?.programTitle
-  const entry: PenaltyEntry = {
-    id: `pen_${Date.now()}`,
-    kind: 'waive',
-    points: -outstanding,
-    reason: `${title ?? '프로그램'} 출석 정정 — 노쇼 벌점 회수`,
-    programId,
-    programTitle: title,
-    at: new Date().toISOString(),
-    by: getActiveCounselorId(),
+export async function getPenaltyRowsForExport(list: PenaltyParams = {}): Promise<BlacklistRow[]> {
+  const rows: BlacklistRow[] = []
+  let page = 1
+  while (true) {
+    const response = await queryPenaltyList({ ...list, page, pageSize: 100 })
+    rows.push(...response.items)
+    if (rows.length >= response.totalCount || response.items.length === 0) break
+    page += 1
   }
-  const ov = readOverrides()
-  ov[studentId] = recalc({ ...record, entries: [...record.entries, entry] })
-  writeOverrides(ov)
+  return rows
+}
+
+/** 헤더 집계와 학과 목록 — 집계는 서버가 한다. 단대는 화면이 조직 트리로 만든다. */
+export async function getPenaltySummary(): Promise<{
+  total: number; totalPoints: number; majors: string[]
+}> {
+  return api('/penalties/summary')
+}
+
+/** 특정 학생의 벌점 레코드(이력 포함). */
+export async function getStudentPenalty(studentId: string): Promise<StudentPenalty> {
+  return api<StudentPenalty>(`/penalties/${encodeURIComponent(studentId)}`)
 }
 
 /** 수동 벌점 부여 (블랙리스트 화면) */
-export function addManualPenalty(
-  applicant: Pick<ProgramApplicant, 'studentId' | 'studentName' | 'studentMajor'>,
-  points: number,
-  reason: string,
-): void {
-  pushEntry(applicant, { kind: 'manual', points: Math.abs(points), reason })
-}
-
-/** 벌점 차감/해제 (음수 이력 추가). points 는 차감할 양수값. */
-export function waivePenalty(studentId: string, points: number, reason: string): void {
-  const record = resolved()[studentId]
-  if (!record) return
-  const entry: PenaltyEntry = {
-    id: `pen_${Date.now()}`,
-    kind: 'waive',
-    points: -Math.abs(points),
-    reason,
-    at: new Date().toISOString(),
-    by: getActiveCounselorId(),
-  }
-  const ov = readOverrides()
-  ov[studentId] = recalc({ ...record, entries: [...record.entries, entry] })
-  writeOverrides(ov)
-}
-
-/** 학생 벌점 전체 초기화(해제) — override 로 비워 목록에서 제외 (json base 는 보존) */
-export function clearPenalty(studentId: string): void {
-  const record = resolved()[studentId]
-  if (!record) return
-  const ov = readOverrides()
-  ov[studentId] = { ...record, total: 0, entries: [] }
-  writeOverrides(ov)
-}
-
-// ─────────────────────────────────────────────────────────────────────────
-// [DB-ready] 블랙리스트 목록 조회 — 서버 페이징 계약(DATA_CONTRACT.md).
-// 화면(ProgramBlacklist)은 전체가 아니라 현재 페이지만 받는다. 필터/검색은 파라미터로.
-// ─────────────────────────────────────────────────────────────────────────
-
-/** 블랙리스트 표 행 뷰모델 (학번·대학 파생 포함) */
-export interface BlacklistRow {
-  record: StudentPenalty
-  studentNo: string
-  college: string
-}
-
-function blacklistRows(): BlacklistRow[] {
-  return getPenaltyList().map(record => ({
-    record,
-    studentNo: studentNoOf(record.studentId),
-    college: collegeOf(record.studentMajor),
-  }))
-}
-
-function filterBlacklist(params: ListParams): BlacklistRow[] {
-  const q = (params.q ?? '').trim().toLowerCase()
-  const f = params.filters ?? {}
-  const minPts = f.ptsMin ? Number(f.ptsMin) : 0
-  const scope = f.scope
-  return blacklistRows().filter(r => {
-    if (f.college && r.college !== f.college) return false
-    if (f.major && r.record.studentMajor !== f.major) return false
-    if (r.record.total < minPts) return false
-    if (q) {
-      const name = r.record.studentName.toLowerCase()
-      const no = r.studentNo.toLowerCase()
-      const maj = r.record.studentMajor.toLowerCase()
-      const hay = scope === '이름' ? name : scope === '학번' ? no : scope === '학과' ? maj : `${name} ${no} ${maj}`
-      if (!hay.includes(q)) return false
-    }
-    return true
+export async function addManualPenalty(studentId: string, points: number, reason: string): Promise<void> {
+  await api(`/penalties/${encodeURIComponent(studentId)}/entries`, {
+    method: 'POST', body: JSON.stringify({ kind: 'MANUAL', points: Math.abs(points), reason }),
   })
 }
 
-/** 블랙리스트 목록(페이징). DB 전환 시 본문만 fetch로 교체. */
-export async function queryPenaltyList(params: ListParams = {}): Promise<Paginated<BlacklistRow>> {
-  await mockLatency()
-  return paginate(filterBlacklist(params), params)
+/** 벌점 차감/해제 — 음수 이력을 쌓는다. 남은 점수보다 많이 차감하면 서버가 거절한다. */
+export async function waivePenalty(studentId: string, points: number, reason: string): Promise<void> {
+  await api(`/penalties/${encodeURIComponent(studentId)}/entries`, {
+    method: 'POST', body: JSON.stringify({ kind: 'WAIVE', points: Math.abs(points), reason }),
+  })
 }
 
-/** CSV 내보내기용 — 현재 필터 전체 행(페이지 무시). DB에선 export 엔드포인트. */
-export function getPenaltyRowsForExport(params: ListParams = {}): BlacklistRow[] {
-  return filterBlacklist(params)
-}
-
-/** 필터 옵션(대학·학과) — 전체 집합에서. DB에선 집계 엔드포인트. */
-export function getPenaltyFilterOptions() {
-  const rows = blacklistRows()
-  return {
-    colleges: [...new Set(rows.map(r => r.college))].sort(),
-    majors: [...new Set(rows.map(r => r.record.studentMajor))].sort(),
-  }
-}
-
-/** 헤더 집계(대상 인원·누적 점수). DB에선 COUNT/SUM. */
-export function getPenaltySummary() {
-  const rows = blacklistRows()
-  return {
-    total: rows.length,
-    totalPoints: rows.reduce((sum, r) => sum + r.record.total, 0),
-  }
+/** 학생 벌점 전체 해제 — 남은 총점만큼 회수 이력을 남긴다(이력은 지우지 않는다). */
+export async function clearPenalty(studentId: string, reason = '벌점 전체 해제'): Promise<void> {
+  const record = await getStudentPenalty(studentId)
+  if (record.total <= 0) return
+  await waivePenalty(studentId, record.total, reason)
 }
 
 export type { StudentPenalty, PenaltyEntry }

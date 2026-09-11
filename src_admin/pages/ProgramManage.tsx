@@ -6,11 +6,15 @@ import { getPrograms, sortByPriority, updateProgram } from '../data/programs'
 import { EXPORT_TARGETS, EXPORT_TARGET_LABEL, getApplicantExportRows, toApplicantCsv } from '../data/programExport'
 import type { ExportTarget } from '../data/programExport'
 import type { Program } from '../data/schema/program'
+import { programStatusLabel } from '../data/schema/program'
 
-type OperationStatus = '운영전' | '운영중' | '운영완료' | Program['status'] | '상태 미정'
+// 운영 상태는 운영기간에서 파생한다. 기간이 없으면 모집 상태의 표시명으로 대신한다.
+type OperationStatus = string
 
 function getOperationStatus(program: Program, today: string): OperationStatus {
-  if (!program.runStartDate || !program.runEndDate) return program.status || '상태 미정'
+  if (!program.runStartDate || !program.runEndDate) {
+    return program.status ? programStatusLabel(program.status) : '상태 미정'
+  }
   if (today < program.runStartDate) return '운영전'
   if (today > program.runEndDate) return '운영완료'
   return '운영중'
@@ -37,7 +41,9 @@ export default function ProgramManage() {
 
   const togglePin = (id: string, pinned: boolean) => {
     updateProgram(id, { pinned })
-    setPrograms(sortByPriority(getPrograms()))
+      .then(() => setPrograms(sortByPriority(getPrograms())))
+      .catch((error: unknown) =>
+        window.alert(error instanceof Error ? error.message : '고정 상태를 바꾸지 못했습니다.'))
   }
 
   const allChecked = programs.length > 0 && programs.every(p => checked.has(p.id))

@@ -22,6 +22,7 @@ import { totalPages } from '../data/query'
 import { getActiveUser } from '../data/staff'
 import { enrollStatusClass } from '../data/studentRoster'
 import { useListData } from '../hooks/useListData'
+import { useAsyncAction } from '../../shared/useAsyncAction'
 
 const PAGE_SIZE = 10
 const tabs: ProfReqTab[] = ['전체', '대기', '확정', '완료', '취소']
@@ -44,22 +45,22 @@ function ConfirmScheduleModal({
   const [end, setEnd] = useState(request.slot?.end ?? '10:00')
   const [place, setPlace] = useState(request.slot?.place ?? '')
   const [error, setError] = useState('')
+  const { run, saving } = useAsyncAction()
   const confirm = () => {
     if (!date || !start || !end || start >= end) {
       setError('종료 시각은 시작 시각보다 늦어야 합니다.')
       return
     }
-    try {
-      confirmProfRequest(request.id, {
-        date,
-        start,
-        end,
-        place: place.trim() || undefined,
-      })
-      onConfirmed()
-    } catch (caught) {
-      setError(caught instanceof Error ? caught.message : '일정을 확정하지 못했습니다.')
-    }
+    // 전이는 서버가 한다 — 응답을 기다리지 않고 닫으면 실패가 화면에 남지 않는다.
+    run(async () => {
+      setError('')
+      try {
+        await confirmProfRequest(request.id, { date, start, end, place: place.trim() || undefined })
+        onConfirmed()
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : '일정을 확정하지 못했습니다.')
+      }
+    })
   }
   return (
     <AdminModal title="상담 일정 확정" size="md" onClose={onClose}>
@@ -101,8 +102,8 @@ function ConfirmScheduleModal({
           <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>
             취소
           </button>
-          <button type="button" className="admin-btn admin-btn-primary" onClick={confirm}>
-            일정 확정
+          <button type="button" className="admin-btn admin-btn-primary" disabled={saving} onClick={confirm}>
+            {saving ? '확정 중…' : '일정 확정'}
           </button>
         </div>
       </div>
@@ -132,11 +133,18 @@ export default function ProfessorCounselRequests() {
   })
   const pages = totalPages(data)
   const startIndex = (data.page - 1) * PAGE_SIZE
+  const { run, saving, error } = useAsyncAction()
   const reset = () => {
     setTab('전체')
     setQ('')
     setMethod('')
     setPage(1)
+  }
+  // 취소 사유는 서버가 필수로 요구한다 — 사유 없이 보내면 422 로 거절된다.
+  const reject = (row: ProfCounselRequestRow) => {
+    const reason = window.prompt(`${row.studentName} 학생의 상담 신청을 거절합니다.\n사유를 입력해 주세요.`)
+    if (!reason?.trim()) return
+    run(async () => { await cancelProfRequest(row.id, reason.trim()); refetch() })
   }
   return (
     <div className="admin-page">
@@ -149,6 +157,7 @@ export default function ProfessorCounselRequests() {
           <button type="button" className="admin-btn admin-btn-ghost" onClick={reset}>초기화</button>
         </div>
       </header>
+      {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
       <div className="admin-tabs" role="tablist" aria-label="상담 신청 상태">
         {tabs.map(item => (
           <button
@@ -242,7 +251,8 @@ export default function ProfessorCounselRequests() {
                       <button
                         type="button"
                         className="admin-btn admin-btn-ghost sm"
-                        onClick={() => { cancelProfRequest(row.id); refetch() }}
+                        disabled={saving}
+                        onClick={() => reject(row)}
                       >
                         거절
                       </button>

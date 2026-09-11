@@ -39,6 +39,8 @@
 /* 목표 달성 계획 헤더 우측 — 상태 배지와 「로드맵 편집」을 한 줄에 세운다. */
 .sdv-goal-actions { display: flex; align-items: center; gap: 8px; }
 
+/* 로드맵 생성 패널의 스타일은 RoadmapCreatePanel.css 가 갖는다(.rcp 스코프). */
+
 /* ── STAR 트랙 탭 ─────────────────────────────────────────────────────── */
 .sdv-star { display: flex; flex-direction: column; gap: 12px; }
 .sdv-star-meta {

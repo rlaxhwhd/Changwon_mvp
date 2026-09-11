@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
-import { SAVED_RESUMES, type SavedResume } from './resumeMock'
+import { deleteUserResume, getAllResumes, type SavedResume } from './resumeMock'
+import { useJobStore } from '../../../shared/useJobStore'
 import './JobsHome.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -9,11 +10,14 @@ import { usePageHead } from '../../components/PageCrumb'
 export default function JobsHome() {
   usePageHead('AI 자소서/면접', 'AI가 작성을 도와주고, 완성된 자소서를 평가해드립니다.')
   const navigate = useNavigate()
-  const [resumes, setResumes] = useState<SavedResume[]>(SAVED_RESUMES)
+  // 자소서 정본은 서버다 — 삭제하면 AI 자소서 화면에서도 같이 사라진다.
+  useJobStore()
+  const [, refresh] = useState(0)
+  const resumes = getAllResumes()
   const [viewResume, setViewResume] = useState<SavedResume | null>(null)
 
   const removeResume = (id: string) => {
-    setResumes(prev => prev.filter(resume => resume.id !== id))
+    void deleteUserResume(id).then(() => refresh(x => x + 1)).catch(() => { /* 서버 상태 유지 */ })
   }
 
   return (
@@ -56,7 +60,7 @@ export default function JobsHome() {
               </div>
               <p className="jh-resume-preview">{resume.content}</p>
               <div className="jh-resume-foot">
-                <span><i className="fa-solid fa-calendar" /> {resume.createdAt}</span>
+                <span><i className="fa-solid fa-calendar" /> {resume.createdAt.slice(0, 10)}</span>
                 <span>{resume.content.length}자</span>
               </div>
             </article>
@@ -101,7 +105,7 @@ export default function JobsHome() {
             <div className="jh-view-tags">
               <span className="jh-resume-badge">{viewResume.categoryLabel}</span>
               <span className="jh-view-date">
-                <i className="fa-solid fa-calendar" /> {viewResume.createdAt}
+                <i className="fa-solid fa-calendar" /> {viewResume.createdAt.slice(0, 10)}
               </span>
             </div>
             <div className="jh-view-info">

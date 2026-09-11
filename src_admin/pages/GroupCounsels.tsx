@@ -28,14 +28,17 @@ function statusClass(status: GroupCounselStatus) {
 function CreateModal({ onClose }: { onClose: () => void }) {
   const counselor = getActiveCounselor()
   const kind = groupKindOf(counselor.role)
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
   const [form, setForm] = useState({ title: '', topic: '', date: today(), start: '14:00', end: '16:00', place: '', capacity: 8, testCode: PSYCH_TEST_TYPES[0].code })
   const set = (patch: Partial<typeof form>) => setForm(prev => ({ ...prev, ...patch }))
   const valid = form.title.trim() !== '' && form.topic.trim() !== '' && form.place.trim() !== '' && form.start < form.end && form.capacity > 0
 
-  const save = () => {
-    if (!valid) return
+  const save = async () => {
+    if (!valid || saving) return
+    setSaving(true); setError('')
     const now = new Date().toISOString()
-    upsertGroupCounsel({
+    try { await upsertGroupCounsel({
       id: `grp_${Date.now()}`,
       kind,
       title: form.title.trim(),
@@ -53,11 +56,13 @@ function CreateModal({ onClose }: { onClose: () => void }) {
       createdAt: now,
       updatedAt: now,
     })
-    window.location.reload()
+    window.location.reload() }
+    catch (e) { setError((e as Error).message); setSaving(false) }
   }
 
   return (
     <AdminModal title={`${kind} 회차 개설`} size="md" onClose={onClose}>
+      {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
       <div className="counsel-request-detail-grid">
         <label className="is-wide"><span>회차명</span><input value={form.title} onChange={e => set({ title: e.target.value })} placeholder="예) 3학년 진로설계 집단상담 1회차" /></label>
         <label className="is-wide"><span>주제 · 목표</span><textarea rows={2} value={form.topic} onChange={e => set({ topic: e.target.value })} /></label>
@@ -77,7 +82,7 @@ function CreateModal({ onClose }: { onClose: () => void }) {
       </div>
       <div className="admin-form-actions">
         <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>닫기</button>
-        <button type="button" className="admin-btn admin-btn-primary" disabled={!valid} onClick={save}>개설</button>
+        <button type="button" className="admin-btn admin-btn-primary" disabled={!valid || saving} onClick={save}>개설</button>
       </div>
     </AdminModal>
   )
@@ -92,9 +97,15 @@ function DetailModal({ session, onClose }: { session: GroupCounsel; onClose: () 
   const [comment, setComment] = useState(session.comment ?? '')
   const [cancelling, setCancelling] = useState(false)
   const [cancelReason, setCancelReason] = useState('')
+  const [saving, setSaving] = useState(false)
 
-  const editable = session.status === '예정'
-  const run = (action: () => void) => { try { action(); window.location.reload() } catch (e) { setError((e as Error).message) } }
+  const editable = session.status === '예정' && !saving
+  const run = async (action: () => Promise<unknown>) => {
+    if (saving) return
+    setSaving(true)
+    try { await action(); window.location.reload() }
+    catch (e) { setError((e as Error).message); setSaving(false) }
+  }
 
   return (
     <>

@@ -4,7 +4,7 @@ import { NAV_SECTIONS, getSectionForPath, getActiveChildPath, getVisibleNavChild
 import { Icon } from './Icon'
 import NotificationBell from './NotificationBell'
 import { getStudentNotifications } from '../data/notifications'
-import { STUDENTS, getActiveStudent, getActiveStudentId, setActiveStudent } from '../data/students'
+import { DEVELOPMENT_STUDENTS, getActiveStudent, getActiveStudentId, setActiveStudent } from '../data/students'
 import { getStageAccess } from '../data/careerProcess'
 import { getPipelineState } from '../data/pipeline'
 
@@ -203,7 +203,7 @@ export default function GNB() {
                       <Icon name="user" /> 데모 학생 전환
                     </span>
                     <div className="profile-switch">
-                      {STUDENTS.map(s => (
+                      {DEVELOPMENT_STUDENTS.map(s => (
                         <button
                           key={s.id}
                           type="button"
@@ -295,7 +295,7 @@ export default function GNB() {
                 <Icon name="user" /> 데모 학생 전환
               </span>
               <div className="profile-switch">
-                {STUDENTS.map(s => (
+                {DEVELOPMENT_STUDENTS.map(s => (
                   <button
                     key={s.id}
                     type="button"

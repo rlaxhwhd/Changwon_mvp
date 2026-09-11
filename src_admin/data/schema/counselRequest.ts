@@ -8,6 +8,8 @@ import type { EnrollmentStatus, StudentTrack } from '../../../src_v2/data/studen
 // 6유형(T1~T6)은 careerProcess 가 단일 원천.
 import type { StudentType } from '../../../src_v2/data/careerProcess'
 import type { CounselIntakeAnswer } from '../../../src_v2/data/counselIntake'
+// 진로취업 상담의 트랙(일반 / CARE 7+ 연계)은 counselTrack 이 단일 원천.
+import type { CareTrack } from '../../../src_v2/data/counselTrack'
 
 /** 상담 유형 — 진로취업상담사는 '진로취업', 심리상담사는 '심리' 접수 */
 export type CounselRequestType = '진로취업' | '심리'
@@ -36,6 +38,11 @@ export interface CounselRequest {
   /** 진단 전 학생은 유형이 없다(null) — typeLabel()이 「유형 미정」으로 표시한다. */
   studentType: StudentType | null
   type: CounselRequestType
+  /**
+   * 진로취업 상담의 트랙. 심리 상담에는 적용하지 않는다.
+   * 미지정은 CARE 7+ 연계로 읽는다(counselTrack.isCare7) — 신설 필드라 옛 레코드에 없다.
+   */
+  careTrack?: CareTrack
   status: CounselRequestStatus
   method: CounselMethod
   /** 신청 사유/주제 */

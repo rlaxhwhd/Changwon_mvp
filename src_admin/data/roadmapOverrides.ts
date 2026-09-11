@@ -1,150 +1,100 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 로드맵 override 로더 (localStorage 공유 스토어) — students.ts 패턴 미러
+// 계획 편집 — 정본은 서버다.
 //
-// Counsel_README §7: 학생 base 로드맵(students roadmapAxes 3축)은 불변.
-// 상담사 수정분을 dc_roadmap_overrides[studentId] 에 저장하고, base ⊕ override
-// 를 병합해 편집기/미리보기/학생 화면이 동일한 결과를 본다.
+// 예전에는 상담사 수정분을 dc_roadmap_overrides(축 단위 통째 교체)에 쌓고 base 와
+// 병합해 렌더했다. 그 방식에는 세 가지 문제가 있었다.
+//   · 축을 통째로 바꾸므로 두 상담사가 같은 축을 고치면 뒤에 저장한 쪽이 조용히 이긴다.
+//   · reset 이 수정 이력까지 지웠다.
+//   · 프로그램 칸을 UI 로만 잠갔고 서버 제약이 없었다.
+// 지금은 칸 단위 op + 낙관적 잠금이고, 되돌리기도 이력을 지우지 않는 새 사건이다.
 //
-// ★ 원본 students JSON 은 절대 수정하지 않는다. override 레이어만 갱신.
+// 이름은 유지하되 로컬 병합은 없다 — 화면은 서버의 현재 계획만 본다.
 // ─────────────────────────────────────────────────────────────────────────
-import { STUDENTS } from '../../src_v2/data/students'
+import { editPlan, roadmapEnvelope, transitionPlan } from '../../shared/roadmapStore'
+import type { EditOperation } from '../../shared/roadmapStore'
 import { ROADMAP_AXES } from '../../src_v2/data/schema/roadmap'
 import type { RoadmapAxis, RoadmapAxisPlan } from '../../src_v2/data/schema/roadmap'
-import type {
-  RoadmapOverride,
-  MergedRoadmap,
-  AxisOrigin,
-  RoadmapHistoryEntry,
-} from './schema/roadmapEdit'
+import type { AxisOrigin, MergedRoadmap } from './schema/roadmapEdit'
+import { getStudentRoadmap } from './roadmap'
 
-const STORAGE_KEY = 'dc_roadmap_overrides'
-
-// ── override 맵 읽기/쓰기 ───────────────────────────────────────────────────
-
-/** localStorage 의 override 맵 전체 읽기. 실패 시 빈 맵. */
-function readOverrideMap(): Record<string, RoadmapOverride> {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (parsed && typeof parsed === 'object') return parsed as Record<string, RoadmapOverride>
-    }
-  } catch {
-    /* 폴백: override 없음 */
-  }
-  return {}
-}
-
-function writeOverrideMap(map: Record<string, RoadmapOverride>): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
-  } catch {
-    /* 데모 범위 — 저장 실패 무시 */
-  }
-}
-
-/** 특정 학생의 override 1건 (없으면 null) */
-export function getRoadmapOverride(studentId: string): RoadmapOverride | null {
-  return readOverrideMap()[studentId] ?? null
-}
-
-// ── base 로드맵 조회 ────────────────────────────────────────────────────────
-
-/** 학생 base 로드맵 3축 (원본, override 미반영). 없으면 null. */
+/** 서버의 현재 계획 3축. 없으면 null. */
 export function getBaseRoadmapAxes(studentId: string): RoadmapAxisPlan[] | null {
-  const student = STUDENTS.find(s => s.id === studentId)
-  return student?.roadmapAxes ?? null
+  return roadmapEnvelope(studentId)?.roadmap?.axes ?? null
 }
-
-// ── 병합 (base ⊕ override) ─────────────────────────────────────────────────
 
 /**
- * base 3축에 override.axes 를 축 단위로 얹어 병합.
- * override 에 존재하는 축은 통째로 교체, 없는 축은 base 유지.
- * 학생 화면·편집기·미리보기가 모두 이 함수를 통해 동일 결과를 본다.
+ * 편집기·미리보기·학생 화면이 같은 결과를 본다. 로컬 오버레이 병합은 없다 —
+ * 서버의 현재 계획과 상담사 메모(editorNote)를 그대로 표시한다.
  */
 export function getMergedRoadmap(studentId: string): MergedRoadmap | null {
-  const base = getBaseRoadmapAxes(studentId)
-  if (!base) return null
-
-  const override = getRoadmapOverride(studentId)
-  const overrideAxes = override?.axes ?? {}
-
+  const plan = getStudentRoadmap(studentId)
+  if (!plan) return null
   const axes: RoadmapAxisPlan[] = []
   const origin = {} as Record<RoadmapAxis, AxisOrigin>
-
-  // 표시 순서는 항상 ROADMAP_AXES — JSON 순서에 의존하지 않는다.
+  // 표시 순서는 항상 ROADMAP_AXES — 응답 순서에 의존하지 않는다.
   for (const meta of ROADMAP_AXES) {
-    const fromOverride = overrideAxes[meta.code]
-    const fromBase = base.find(a => a.axis === meta.code)
-    if (fromOverride) {
-      axes.push(fromOverride)
-      origin[meta.code] = 'override'
-    } else if (fromBase) {
-      axes.push(fromBase)
-      origin[meta.code] = 'base'
-    } else {
-      origin[meta.code] = 'base'
+    const found = plan.axes.find(axis => axis.axis === meta.code)
+    if (found) axes.push(found)
+    origin[meta.code] = plan.origin[meta.code] ?? 'base'
+  }
+  return { axes, origin, meta: plan.meta }
+}
+
+/**
+ * 편집된 축을 서버에 반영한다. 축을 통째로 보내지 않고 **바뀐 것만** op 로 보낸다 —
+ * 그래야 다른 상담사가 만진 칸을 조용히 되돌리지 않는다.
+ */
+export async function saveRoadmapOverride(studentId: string,
+                                          axes: Partial<Record<RoadmapAxis, RoadmapAxisPlan>>,
+                                          _updatedBy: string, note: string): Promise<void> {
+  const current = getStudentRoadmap(studentId)
+  if (!current) throw new Error('로드맵을 먼저 불러와야 합니다.')
+  const operations: EditOperation[] = []
+  for (const meta of ROADMAP_AXES) {
+    const next = axes[meta.code]
+    if (!next) continue
+    const before = current.axes.find(axis => axis.axis === meta.code)
+    if (!before) throw new Error('축을 새로 만들 수 없습니다. 재생성을 사용하세요.')
+    if (before.headline !== next.headline || (before.editorNote ?? '') !== (next.editorNote ?? '')) {
+      operations.push({ op: 'setAxis', axis: meta.code, headline: next.headline,
+                        editorNote: next.editorNote ?? '' })
+    }
+    for (const cell of next.cells) {
+      const previous = before.cells.find(item => item.id === cell.id)
+      // 새 칸 추가·삭제는 재생성에서만 일어난다. 프로그램 칸은 비교과가 정본이다.
+      if (!previous || previous.origin === 'AUTO_PROGRAM') continue
+      if (previous.title === cell.title && previous.priority === cell.priority
+          && previous.importance === cell.importance
+          && (previous.editorNote ?? '') === (cell.editorNote ?? '')) continue
+      operations.push({ op: 'editItem', itemId: cell.id, expectedItemVersion: previous.version ?? 1,
+                        title: cell.title, priority: cell.priority, importance: cell.importance,
+                        editorNote: cell.editorNote ?? '' })
+    }
+    const order = next.cells.filter(cell => cell.origin !== 'AUTO_PROGRAM').map(cell => cell.id)
+    const baseOrder = before.cells.filter(cell => cell.origin !== 'AUTO_PROGRAM').map(cell => cell.id)
+    if (order.length === baseOrder.length && order.some((id, index) => id !== baseOrder[index])) {
+      operations.push({ op: 'reorderItems', axis: meta.code, itemIds: order })
     }
   }
-
-  const meta = override
-    ? {
-        version: override.version,
-        updatedAt: override.updatedAt,
-        updatedBy: override.updatedBy,
-        confirmed: override.confirmed,
-        history: override.history,
-      }
-    : null
-
-  return { axes, origin, meta }
+  await editPlan(studentId, operations, note)
 }
 
-// ── 저장 (확정) ────────────────────────────────────────────────────────────
+/** 확정 — 학생 화면은 이때 열린다(04-decisions Q1). */
+export function confirmRoadmap(studentId: string, reason = ''): Promise<void> {
+  return transitionPlan(studentId, 'confirm', reason)
+}
 
-/**
- * 편집된 3축을 override 로 저장·확정한다. 원본 students JSON 불변.
- * 버전을 1 올리고 이력 1건을 쌓는다. 확정(confirmed=true) 시 학생 화면에 반영.
- */
-export function saveRoadmapOverride(
-  studentId: string,
-  axes: Partial<Record<RoadmapAxis, RoadmapAxisPlan>>,
-  updatedBy: string,
-  note: string,
-): RoadmapOverride {
-  const map = readOverrideMap()
-  const prev = map[studentId]
-  const nextVersion = (prev?.version ?? 0) + 1
-  const at = new Date().toISOString()
-
-  const historyEntry: RoadmapHistoryEntry = { version: nextVersion, at, by: updatedBy, note }
-  const history: RoadmapHistoryEntry[] = [...(prev?.history ?? []), historyEntry]
-
-  const next: RoadmapOverride = {
-    studentId,
-    axes,
-    version: nextVersion,
-    updatedAt: at,
-    updatedBy,
-    confirmed: true,
-    history,
-  }
-  map[studentId] = next
-  writeOverrideMap(map)
-  return next
+/** 검토중으로 올린다. */
+export function reviewRoadmap(studentId: string, reason = ''): Promise<void> {
+  return transitionPlan(studentId, 'review', reason)
 }
 
 /**
- * override 를 base 로 되돌린다(초기화). 해당 학생 override 를 제거해 학생 화면이
- * 원본 로드맵을 다시 보게 한다.
+ * 확정을 풀어 다시 초안으로 돌린다. 예전 resetRoadmapOverride 처럼 수정 이력을 지우지
+ * 않는다 — 상태 전이도 사건으로 남는다. 되돌리는 동안 학생의 비교과·취업지원은 잠긴다.
  */
-export function resetRoadmapOverride(studentId: string): void {
-  const map = readOverrideMap()
-  if (map[studentId]) {
-    delete map[studentId]
-    writeOverrideMap(map)
-  }
+export function resetRoadmapOverride(studentId: string, reason = ''): Promise<void> {
+  return transitionPlan(studentId, 'reopen', reason)
 }
 
-export type { RoadmapOverride, MergedRoadmap }
+export type { MergedRoadmap }

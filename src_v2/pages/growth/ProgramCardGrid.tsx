@@ -1,4 +1,5 @@
 import type { ProgramCategory } from '../../../src_admin/data/schema/program'
+import { categoryLabel } from '../../../src_admin/data/schema/program'
 import './ProgramCardGrid.css'
 
 export interface ProgramCardVM {
@@ -54,7 +55,7 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
               </div>
               <div className="pcg-body">
                 <div className="pcg-badges">
-                  <span className="pcg-category">{program.category}</span>
+                  <span className="pcg-category">{categoryLabel(program.category)}</span>
                   <span className={`pcg-dday${isUrgent ? ' pcg-dday--urgent' : ''}`}>{dDay}</span>
                 </div>
                 <h2 className="pcg-title">{program.title}</h2>

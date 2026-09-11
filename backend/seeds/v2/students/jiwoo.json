@@ -1,0 +1,239 @@
+{
+  "_comment": [
+    "제로베이스 학생 — 2026학번 컴퓨터공학과 1학년 신입생.",
+    "우리 시스템(진단·상담·로드맵·비교과·포트폴리오)에 아무 기록이 없는 상태다.",
+    "",
+    "★ 채워져 있는 것은 학사DB에서 오는 것뿐이다 — 학과·학년·학적·수강 강의.",
+    "  수강 강의는 여기 두지 않는다. academic/enrollments.json 이 studentId 로 갖는다",
+    "  (학사 유래 데이터는 읽기 전용으로 다룬다 — CLAUDE.md 1조).",
+    "",
+    "★ studentType 은 null 이다. C-CORE 를 봐야 유형이 나온다.",
+    "  diagnosisOutcome 은 '응시를 마치면 주입할 값'이고 판정 결과가 아니다 —",
+    "  검사 판정식이 미확정이라(PROCESS.md §9) 계산할 수 없어서 시드에 적어 둔다.",
+    "",
+    "★ 나머지 배열·객체는 전부 비어 있다. 진단→상담→로드맵을 거치며 채워진다.",
+    "  비어 있다고 화면이 깨지면 그건 화면이 게이팅을 안 본 것이다(CLAUDE.md 13조)."
+  ],
+
+  "id": "jiwoo",
+  "studentNo": "20261137",
+  "name": "이지우",
+  "major": "컴퓨터공학과",
+  "grade": 1,
+  "phone": "010-0447-2251",
+  "enrollmentStatus": "재학",
+  "gpa": "-",
+  "language": "-",
+
+  "studentType": null,
+  "diagnosisOutcome": { "studentType": "T1" },
+
+  "competencyScore": 0,
+  "typeScores": { "진로명확도": "-", "역량준비도": "-", "취업준비도": "-" },
+
+  "targetRole": "",
+  "targetCompany": {
+    "name": "",
+    "industry": "",
+    "role": "",
+    "matchScore": 0,
+    "requirements": []
+  },
+
+  "strengthWeakness": [],
+  "phases": [],
+  "gapItems": [],
+  "recommendations": { "programs": [], "activities": [], "certs": [] },
+  "insight": "",
+  "counselorQuestions": [],
+  "priority": { "high": 0, "medium": 0, "low": 0 },
+
+  "jobField": "",
+  "jobSkills": [],
+  "jobs": [],
+
+  "finalRoadmap": {
+    "semester": "2026-1학기",
+    "graduation": "2030.02",
+    "matchNow": 0,
+    "matchGoal": 0,
+    "topFitJob": { "name": "", "fit": 0 },
+    "studentGoal": { "company": "", "role": "" },
+    "insights": []
+  },
+
+  "roadmapOutcome": {
+    "_comment": [
+      "★ 데모 전용 — 상담사가 로드맵을 생성하면 주입될 값이다. 생성 결과가 아니다.",
+      "  재료 3종(진단·상담 / 수강강의 / 스펙)을 읽어 15칸을 뽑는 AI 가 아직 없어서",
+      "  diagnosisOutcome 과 같은 방식으로 미리 적어 둔다. AI 가 붙으면 이 값이 대체된다.",
+      "  축 2(CORE)는 컴퓨터공학과 개설 강의(subjects.json)의 실제 과목코드를 쓴다.",
+      "  전 칸 TODO — 신입생이라 이행률 0% 에서 시작한다."
+    ],
+    "targetRole": "백엔드 개발자",
+    "targetCompany": "IT 서비스 기업 (탐색 중)",
+    "axes": [
+      {
+        "axis": "IAP",
+        "headline": "후속진단과 4주제 상담을 닫고 진로탐색 비교과로 직업군을 좁힌다",
+        "rationale": "진로탐색형(T1)은 아직 목표 직무가 잠정적이다. 후속진단 C-1 과 A01~A04 상담을 먼저 닫아 유형을 확정하고, 탐색형 비교과와 선배 멘토링으로 관심 직업군을 3개 내외로 압축하는 것이 이 축의 목적이다.",
+        "cells": [
+          {
+            "id": "iap-c1",
+            "title": "C-1 진로탐색 진단검사 응시",
+            "priority": "P0",
+            "importance": "필수",
+            "why": "진로탐색형(T1)의 후속진단이다. 상담 전에 응시해야 유형이 최종 확정된다.",
+            "status": "TODO"
+          },
+          {
+            "id": "iap-counsel4",
+            "title": "진로탐색형 4주제 상담 이수 (A01~A04)",
+            "priority": "P0",
+            "importance": "필수",
+            "why": "자기이해·강점탐색·전공기반 진출분야·직업군 탐색 4주제를 마쳐야 로드맵이 확정된다.",
+            "status": "TODO"
+          },
+          {
+            "id": "iap-prog-explore",
+            "title": "진로탐색 비교과 프로그램 1건 수료",
+            "priority": "P1",
+            "importance": "중요",
+            "why": "진로탐색형은 진로탐색·진로설정 카테고리만 신청할 수 있다. 수료해야 칸이 체크된다.",
+            "status": "TODO"
+          },
+          {
+            "id": "iap-mentor",
+            "title": "학과 선배 멘토링 참여",
+            "priority": "P1",
+            "importance": "권장",
+            "why": "1학년에게 가장 빠른 직무 현실 검증 경로다. 관심 직업군을 좁히는 데 쓴다.",
+            "status": "TODO"
+          },
+          {
+            "id": "iap-recounsel",
+            "title": "2학기 진로 재점검 상담 신청",
+            "priority": "P2",
+            "importance": "권장",
+            "why": "한 학기 탐색 결과를 놓고 목표 직무를 다시 본다. 바뀌면 로드맵을 재생성한다.",
+            "status": "TODO"
+          }
+        ]
+      },
+      {
+        "axis": "CORE",
+        "headline": "백엔드 개발자의 기초 전공 5과목을 학년 순서대로 밟는다",
+        "rationale": "컴퓨터공학과 개설 강의 중 목표 직무(백엔드 개발자)의 기초에 해당하는 과목만 좁혔다. 1학년이 이미 수강 중인 과목 다음 순서로 이어지도록 배치했다.",
+        "cells": [
+          {
+            "id": "core-cse2001",
+            "title": "자료구조 (CSE2001)",
+            "priority": "P0",
+            "importance": "필수",
+            "why": "백엔드 직무 채용에서 가장 먼저 검증되는 기초다. 알고리즘의 선수과목이기도 하다.",
+            "status": "TODO"
+          },
+          {
+            "id": "core-cse2002",
+            "title": "알고리즘 (CSE2002)",
+            "priority": "P0",
+            "importance": "필수",
+            "why": "코딩테스트 전형의 직접 근거 과목이다.",
+            "status": "TODO"
+          },
+          {
+            "id": "core-cse2003",
+            "title": "객체지향프로그래밍 (CSE2003)",
+            "priority": "P0",
+            "importance": "필수",
+            "why": "백엔드 프레임워크 대부분이 객체지향 설계 위에 있다.",
+            "status": "TODO"
+          },
+          {
+            "id": "core-cse3001",
+            "title": "운영체제 (CSE3001)",
+            "priority": "P1",
+            "importance": "중요",
+            "why": "서버 동작을 설명할 수 있어야 하는 직무다. 면접 단골 주제이기도 하다.",
+            "status": "TODO"
+          },
+          {
+            "id": "core-cse3002",
+            "title": "컴퓨터네트워크 (CSE3002)",
+            "priority": "P1",
+            "importance": "중요",
+            "why": "API·프로토콜 이해의 근거 과목이다.",
+            "status": "TODO"
+          }
+        ]
+      },
+      {
+        "axis": "GROWTH",
+        "headline": "1학년이 지금 시작할 수 있는 스펙부터 쌓는다",
+        "rationale": "현재 스펙이 전무하다(자격증·어학·프로젝트 0건). 학년 제한이 없는 항목만 골랐다 — 정보처리기사는 응시 자격(4학기 이상)이 안 되므로 넣지 않았다.",
+        "cells": [
+          {
+            "id": "growth-git",
+            "title": "GitHub 개인 프로젝트 1건 공개",
+            "priority": "P0",
+            "importance": "필수",
+            "why": "백엔드 직무는 산출물로 증명한다. 1학년부터 쌓아야 3학년에 포트폴리오가 된다.",
+            "status": "TODO"
+          },
+          {
+            "id": "growth-toeic",
+            "title": "TOEIC 700점 달성",
+            "priority": "P1",
+            "importance": "중요",
+            "why": "대부분의 공채 지원 자격선이다. 저학년에 확보해 두면 고학년 부담이 준다.",
+            "status": "TODO"
+          },
+          {
+            "id": "growth-contest",
+            "title": "교내 프로그래밍 경진대회 참가",
+            "priority": "P1",
+            "importance": "권장",
+            "why": "학년 제한 없이 참가할 수 있고, 알고리즘 학습의 목표점이 된다.",
+            "status": "TODO"
+          },
+          {
+            "id": "growth-cert",
+            "title": "컴퓨터활용능력 2급 취득",
+            "priority": "P2",
+            "importance": "권장",
+            "why": "응시 자격 제한이 없는 첫 자격증이다. 자격 취득 경험 자체가 목적이다.",
+            "status": "TODO"
+          },
+          {
+            "id": "growth-resume",
+            "title": "AI 자소서 초안 작성",
+            "priority": "P2",
+            "importance": "권장",
+            "why": "지금 쓸 것이 없다는 사실을 확인하는 것이 목적이다. 무엇을 채워야 할지가 드러난다.",
+            "status": "TODO"
+          }
+        ]
+      }
+    ]
+  },
+
+  "scoreInputs": {
+    "grade": 1,
+    "certifications": 0,
+    "toeic": 0,
+    "programs": 0,
+    "counsel": 0,
+    "kvct": 0,
+    "projects": 0,
+    "contests": 0,
+    "xpLevel": 1,
+    "m2Score": 0,
+    "m1Score": 0,
+    "majorGpa": 0,
+    "totalGpa": 0
+  },
+
+  "growth": { "level": 1, "tier": "Newcomer", "xp": 0, "xpNext": 100 },
+
+  "counselRequests": []
+}

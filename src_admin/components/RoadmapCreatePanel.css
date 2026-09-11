@@ -1,0 +1,266 @@
+/* =========================================================
+   로드맵 생성 패널 — /v2/roadmap/skill-tree 「01 AI 현재역량현황」 이식.
+
+   원본: src_v2/pages/roadmap/AiRoadmap.css (.air 스코프)
+   생성 화면은 학생 포털과 공유하지 않기로 했으므로(사용자 확정) 규칙을 복사해
+   .rcp 로 스코프했다. 원본을 고쳐도 이쪽은 따라가지 않는다 — 의도된 분리다.
+
+   ⚠ 새 색을 만들지 않는다. admin 은 v2 와 토큰 이름이 다르므로 아래 브리지에서
+     index.css 정본 토큰으로 별칭 처리한다(StudentDetailView.css .sdv 와 같은 규약).
+     모든 var() 에 폴백을 둔다 — admin 에 없는 이름이면 조용히 투명해진다.
+   ========================================================= */
+
+/* ── 토큰 브리지 — v2 변수명 → admin 정본 토큰 ───────────────────────────── */
+.rcp {
+  --card:             var(--bg-card, #fff);
+  --foreground:       var(--text, #1f2937);
+  --muted-foreground: var(--text-sub, #6b7280);
+  --border:           var(--color-border, #e5e7eb);
+  --muted:            var(--color-section-bg, #f7f8fb);
+
+  --mint:   var(--green, #16a34a);   --mint-soft: var(--green-bg, #e8f7ee);   --mint-ink: var(--on-green, #15803d);
+  --violet: var(--purple, #7c5cfc);  --violet-soft: var(--purple-bg, #f0ecff);
+  --violet-border: color-mix(in srgb, var(--purple, #7c5cfc) 26%, var(--card));
+  --amber-soft: var(--yellow-bg, #fef7e6);  --amber-ink: var(--on-yellow, #b45309);
+  --coral-ink: var(--on-red, #b91c1c);
+  /* --blue 계열은 admin :root 에 이미 있다. soft 짝만 이름을 맞춘다. */
+  --blue-soft: var(--blue-bg, #e8f1ff);
+
+  /* 시안이 쓴 파생 값 — 전부 위 토큰에서 만든다 */
+  --air-mint-line: color-mix(in srgb, var(--mint) 26%, var(--card));
+  --air-blue-line: color-mix(in srgb, var(--blue) 22%, var(--card));
+  --air-violet-line: var(--violet-border);
+  --air-subtle: color-mix(in srgb, var(--muted) 52%, var(--card));
+  --air-dot: color-mix(in srgb, var(--muted-foreground) 38%, var(--card));
+  --air-orb-glow: 0 10px 26px color-mix(in srgb, var(--violet) 34%, transparent);
+
+  word-break: keep-all;
+}
+
+/* ---------- 공용 ---------- */
+.rcp .air-icon {
+  width: 18px; height: 18px; flex: none;
+  stroke: currentColor; stroke-width: 1.8; fill: none;
+  stroke-linecap: round; stroke-linejoin: round;
+}
+.rcp .air-icon.sm { width: 15px; height: 15px; }
+.rcp .air-icon.xs { width: 13px; height: 13px; stroke-width: 2.2; }
+
+.rcp .air-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 24px; padding: 0 9px;
+  border: 1px solid var(--border); border-radius: 12px;
+  background: var(--card);
+  font-size: 12px; font-weight: 800; white-space: nowrap;
+}
+.rcp .air-badge.is-mint { border-color: var(--air-mint-line); color: var(--mint-ink); background: var(--mint-soft); }
+
+/* 강의 분류 태그 */
+.rcp .air-tag {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-width: 56px; height: 21px; padding: 0 8px; border-radius: 6px;
+  font-size: 11px; font-weight: 800; letter-spacing: -.02em; white-space: nowrap;
+}
+.rcp .air-tag.is-req { background: var(--blue-soft); color: var(--blue); }
+.rcp .air-tag.is-sel { background: color-mix(in srgb, var(--blue-soft) 60%, var(--card)); color: color-mix(in srgb, var(--blue) 74%, var(--muted-foreground)); }
+.rcp .air-tag.is-etc { background: var(--amber-soft); color: var(--amber-ink); }
+.rcp .air-tag.is-lib { background: var(--violet-soft); color: var(--violet); }
+
+/* 섹션 머리 */
+.rcp .air-sec-head { display: flex; align-items: center; gap: 10px; }
+.rcp .air-sec-no {
+  display: grid; place-items: center;
+  width: 28px; height: 23px; border-radius: 7px;
+  background: linear-gradient(135deg, var(--mint-ink), var(--blue));
+  color: #fff; font-size: 12px; font-weight: 800; letter-spacing: .02em;
+}
+.rcp .air-sec-title { font-size: 19px; font-weight: 800; letter-spacing: -.02em; }
+.rcp .air-sec-desc { margin: 8px 0 0; font-size: 13px; line-height: 1.6; color: var(--muted-foreground); }
+
+/* ---------- 재료 3종 ---------- */
+.rcp .air-sources { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 18px; }
+.rcp .air-src { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: var(--radius-lg, 12px); background: var(--card); overflow: hidden; }
+.rcp .air-src-head {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--air-sc-soft);
+}
+.rcp .air-src-ico {
+  display: grid; place-items: center;
+  width: 28px; height: 28px; border-radius: var(--radius-md, 10px);
+  color: var(--air-sc); background: color-mix(in srgb, var(--air-sc-soft) 60%, var(--card));
+}
+.rcp .air-src-title { font-size: 15px; font-weight: 800; letter-spacing: -.02em; }
+.rcp .air-src-body { display: flex; flex-direction: column; flex: 1; padding: 16px; }
+
+.rcp .air-src.is-mint   { --air-sc: var(--mint);   --air-sc-soft: var(--mint-soft);   border-color: var(--air-mint-line); }
+.rcp .air-src.is-blue   { --air-sc: var(--blue);   --air-sc-soft: var(--blue-soft);   border-color: var(--air-blue-line); }
+.rcp .air-src.is-violet { --air-sc: var(--violet); --air-sc-soft: var(--violet-soft); border-color: var(--air-violet-line); }
+
+/* 재료 1 — 진단유형 / 상담 */
+.rcp .air-kv { border: 1px solid var(--border); border-radius: var(--radius-md, 10px); overflow: hidden; }
+.rcp .air-kv-row { display: grid; grid-template-columns: 96px 1fr; border-top: 1px solid var(--border); }
+.rcp .air-kv-row:first-child { border-top: 0; }
+.rcp .air-kv dt {
+  display: flex; align-items: center;
+  padding: 15px 12px;
+  background: var(--air-subtle);
+  border-right: 1px solid var(--border);
+  font-size: 12.5px; font-weight: 700;
+}
+.rcp .air-kv dd { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin: 0; padding: 15px 14px; font-size: 12.5px; font-weight: 600; line-height: 1.7; }
+.rcp .air-kv dd p { margin: 0; color: var(--muted-foreground); font-weight: 500; }
+.rcp .air-kv-by { display: block; margin-top: 5px; font-style: normal; font-size: 11.5px; font-weight: 700; color: color-mix(in srgb, var(--mint-ink) 82%, var(--muted-foreground)); }
+
+.rcp .air-analysis { margin-top: 12px; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md, 10px); }
+.rcp .air-analysis h4 { margin: 0 0 8px; display: flex; align-items: center; gap: 7px; font-size: 12.5px; font-weight: 700; color: var(--mint-ink); }
+.rcp .air-analysis h4::before { content: ''; width: 3px; height: 12px; border-radius: 2px; background: var(--mint); }
+.rcp .air-analysis > p { margin: 0; font-size: 12.5px; font-weight: 500; line-height: 1.7; color: var(--muted-foreground); }
+
+.rcp .air-checks { margin: 12px 0 0; padding: 12px 0 0; border-top: 1px solid var(--border); display: grid; gap: 11px; list-style: none; }
+.rcp .air-checks li { display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600; color: color-mix(in srgb, var(--foreground) 78%, var(--muted-foreground)); }
+.rcp .air-check-mark { display: grid; place-items: center; width: 16px; height: 16px; flex: none; border-radius: 50%; background: var(--mint); color: #fff; }
+.rcp .air-check-mark .air-icon { width: 10px; height: 10px; stroke-width: 3; }
+.rcp .air-checks li.is-weak .air-check-mark { background: var(--coral-ink); }
+
+/* 재료 2 — 수강강의 / 학과 */
+.rcp .air-courses { border: 1px solid var(--border); border-radius: var(--radius-md, 10px); padding: 14px; }
+.rcp .air-courses h4 { margin: 0 0 8px; font-size: 13px; font-weight: 800; color: var(--blue); letter-spacing: -.02em; }
+.rcp .air-course { display: grid; grid-template-columns: 64px 1fr auto auto; align-items: center; gap: 10px; padding: 4px 0; }
+.rcp .air-course-code { font-size: 11.5px; font-weight: 600; color: var(--muted-foreground); }
+.rcp .air-course-name { font-size: 13px; font-weight: 700; letter-spacing: -.02em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rcp .air-course-cr { font-size: 12px; font-weight: 600; color: var(--muted-foreground); width: 38px; text-align: right; }
+.rcp .air-course-empty { padding: 4px 0; font-size: 12px; font-weight: 600; color: var(--muted-foreground); }
+
+/* 재료 3 — 학생 스펙 */
+.rcp .air-specs { display: grid; align-content: start; gap: 8px; margin: 0; }
+.rcp .air-spec { display: grid; grid-template-columns: 28px 66px 1fr; align-items: start; gap: 10px; border: 1px solid var(--border); border-radius: var(--radius-md, 10px); padding: 10px 13px; }
+.rcp .air-spec-ico { display: grid; place-items: center; width: 28px; height: 28px; border-radius: var(--radius-sm, 8px); color: var(--violet); background: var(--violet-soft); }
+.rcp .air-spec dt { font-size: 12.5px; font-weight: 800; padding-top: 4px; }
+.rcp .air-spec dd { display: grid; gap: 3px; margin: 0; padding-top: 4px; font-size: 12px; font-weight: 600; line-height: 1.45; letter-spacing: -.02em; color: var(--muted-foreground); }
+
+/* 커넥터 (재료 3종 → AI 오브) */
+.rcp .air-connector { position: relative; height: 40px; margin-top: 8px; }
+.rcp .air-connector span { position: absolute; }
+.rcp .air-connector .air-drop { top: 0; height: 22px; border-left: 1.5px dashed var(--air-dot); }
+.rcp .air-connector .air-drop::before { content: ""; position: absolute; left: -3.5px; top: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--air-dot); }
+.rcp .air-connector .air-bus { top: 22px; height: 0; border-top: 1.5px dashed var(--air-dot); }
+.rcp .air-connector .air-tail { top: 22px; height: 18px; border-left: 1.5px dashed var(--air-dot); }
+.rcp .air-connector .air-tail::after { content: ""; position: absolute; left: -3.5px; bottom: -3px; width: 6px; height: 6px; border-radius: 50%; background: var(--air-dot); }
+
+/* ---------- AI 플로우 ---------- */
+.rcp .air-flow { display: grid; grid-template-columns: 1.08fr auto auto auto 1.02fr auto 1fr; align-items: center; gap: 12px; }
+.rcp .air-flow-card { border: 1px solid var(--border); border-radius: var(--radius-lg, 12px); background: var(--card); padding: 14px 16px; }
+.rcp .air-flow-card h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 11px; font-size: 14px; font-weight: 800; letter-spacing: -.02em; }
+.rcp .air-flow-card h4 .air-icon { color: var(--blue); }
+.rcp .air-flow-card ul { margin: 0; padding: 0; list-style: none; }
+.rcp .air-flow-card li { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12.5px; font-weight: 600; color: color-mix(in srgb, var(--foreground) 76%, var(--muted-foreground)); }
+.rcp .air-flow-card li .air-icon { width: 14px; height: 14px; color: var(--muted-foreground); }
+
+.rcp .air-chev { display: flex; align-items: center; color: color-mix(in srgb, var(--violet) 55%, var(--card)); }
+.rcp .air-chev .air-icon { width: 16px; height: 16px; stroke-width: 2.6; margin-right: -6px; }
+
+/* AI 오브 — 직무 분석을 여는 버튼 */
+.rcp .air-orb {
+  display: grid; place-items: center; align-content: center; gap: 0;
+  width: 108px; height: 108px; border-radius: 50%;
+  border: 0; padding: 0;
+  background:
+    radial-gradient(circle at 33% 27%, rgba(255, 255, 255, .45), transparent 46%),
+    linear-gradient(140deg, var(--blue), var(--violet));
+  box-shadow: var(--air-orb-glow);
+  color: #fff;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease;
+}
+.rcp .air-orb:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 14px 30px color-mix(in srgb, var(--violet) 42%, transparent); }
+.rcp .air-orb:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; }
+.rcp .air-orb:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+.rcp .air-orb-label { font-size: 16px; font-weight: 800; line-height: 1; letter-spacing: -.03em; white-space: nowrap; }
+.rcp .air-orb-star { width: 16px; height: 16px; stroke-width: 2.2; opacity: .92; }
+
+.rcp .air-job-box { margin-top: 2px; border: 1px solid var(--border); border-radius: var(--radius-md, 10px); padding: 12px 14px; }
+.rcp .air-job-name { margin: 0; font-size: 17px; font-weight: 800; color: var(--blue); letter-spacing: -.02em; }
+.rcp .air-job-name.is-empty { color: var(--muted-foreground); font-weight: 700; }
+.rcp .air-job-meta { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 6px 16px; margin: 10px 0 0; }
+.rcp .air-job-meta dt { justify-self: start; padding: 2px 7px; border-radius: 5px; background: var(--muted); color: var(--muted-foreground); font-size: 11px; font-weight: 700; }
+.rcp .air-job-meta dd { grid-row: 2; margin: 0; font-size: 12.5px; font-weight: 700; }
+
+/* 생성 버튼 */
+.rcp .air-gen {
+  display: grid; place-items: center; gap: 3px;
+  width: 100%; min-height: 82px; padding: 14px 16px;
+  border: 0; border-radius: var(--radius-lg, 12px);
+  background: linear-gradient(115deg, var(--blue), var(--violet));
+  color: #fff; text-align: center;
+  font-family: inherit;
+  cursor: pointer;
+  transition: filter .16s ease, transform .16s ease;
+}
+.rcp .air-gen b { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 800; }
+.rcp .air-gen small { font-size: 11.5px; font-weight: 600; opacity: .9; }
+.rcp .air-gen:hover:not(:disabled) { filter: brightness(1.06); transform: translateY(-1px); }
+.rcp .air-gen:focus-visible { outline: 2px solid var(--violet); outline-offset: 3px; }
+.rcp .air-gen:disabled { background: var(--muted); color: var(--muted-foreground); cursor: not-allowed; }
+
+/* ---------- 직무 분석 (오브 클릭 → 카드 안에서 펼쳐진다) ------------------
+   원본은 모달로 띄우지만 여기는 이미 학생 상세 모달 안이다 — 모달 위에 모달을
+   얹지 않고 플로우 자리를 그대로 바꿔 끼운다. */
+.rcp .air-pick { border: 1px solid var(--border); border-radius: var(--radius-lg, 12px); padding: 16px; }
+.rcp .air-pick-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.rcp .air-pick-head h4 { margin: 0; font-size: 14px; font-weight: 800; }
+.rcp .air-pick-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.rcp .air-pick-item {
+  display: grid; gap: 4px;
+  padding: 12px 14px; text-align: left;
+  border: 1px solid var(--border); border-radius: var(--radius-md, 10px);
+  background: var(--card); font-family: inherit; cursor: pointer;
+}
+.rcp .air-pick-item:hover { border-color: var(--violet); }
+.rcp .air-pick-item.is-on { border-color: var(--violet); background: var(--violet-soft); }
+.rcp .air-pick-item strong { font-size: 14px; font-weight: 800; }
+.rcp .air-pick-item small { font-size: 11.5px; font-weight: 600; color: var(--muted-foreground); }
+.rcp .air-pick-fit { font-size: 12.5px; font-weight: 800; color: var(--blue); }
+.rcp .air-pick-empty { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--muted-foreground); }
+
+/* 목록에 없는 직무 담기 — 관심직무가 0건인 학생(신입생)의 유일한 진입 경로다. */
+.rcp .air-pick-add { display: flex; gap: 8px; margin-top: 12px; }
+.rcp .air-pick-add input {
+  flex: 1; min-width: 0; height: 36px; padding: 0 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-md, 10px);
+  background: var(--card); color: var(--foreground);
+  font-family: inherit; font-size: 13px; font-weight: 600;
+}
+.rcp .air-pick-add input:focus-visible { outline: 2px solid var(--violet); outline-offset: 1px; }
+.rcp .air-pick-error { margin: 8px 0 0; font-size: 12px; font-weight: 700; color: var(--coral-ink); }
+
+/* 진행 표시 — 분석·생성이 같이 쓴다 */
+.rcp .air-run { display: grid; justify-items: center; gap: 10px; padding: 28px 16px; border: 1px solid var(--border); border-radius: var(--radius-lg, 12px); }
+.rcp .air-run h4 { margin: 0; font-size: 15px; font-weight: 800; }
+.rcp .air-run p { margin: 0; font-size: 12.5px; font-weight: 600; color: var(--muted-foreground); }
+.rcp .air-run-bar { width: min(420px, 100%); height: 6px; border-radius: 999px; background: var(--muted); overflow: hidden; }
+.rcp .air-run-bar i { display: block; height: 100%; background: linear-gradient(115deg, var(--blue), var(--violet)); transition: width .1s linear; }
+.rcp .air-run-pct { font-size: 12px; font-weight: 800; color: var(--violet); }
+
+/* 접힘 — 카드 가운데 생성 버튼 하나 */
+.rcp-empty { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 40px 24px; text-align: center; }
+.rcp-empty-ico { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--color-primary-bg); color: var(--color-primary); font-size: 20px; }
+.rcp-empty strong { font-size: 15px; font-weight: 800; color: var(--color-text); }
+.rcp-empty p { margin: 0 0 6px; color: var(--color-text-secondary); font-size: 13px; line-height: 1.7; }
+
+.rcp-actions { display: flex; justify-content: flex-end; margin-top: 14px; }
+
+/* 재생성 경고 — 완료 칸이 사라지는 일이라 눌러 쓰지 않는다. */
+.rcp-warn {
+  margin: 0 0 16px;
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--coral-ink) 30%, var(--card));
+  border-radius: var(--radius-md, 10px);
+  background: color-mix(in srgb, var(--coral-ink) 7%, var(--card));
+  color: var(--coral-ink);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.7;
+}

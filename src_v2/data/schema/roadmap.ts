@@ -80,7 +80,18 @@ export const ROADMAP_ENTRY_DESC: Record<RoadmapEntry, string> = {
 export type CellStatus = 'TODO' | 'DONE'
 
 export type CellPriority = 'P0' | 'P1' | 'P2'
-export type CellImportance = '필수' | '중요' | '권장'
+/** 중요도는 코드다. 한글은 표시용 라벨이며 값 자체가 아니다(CLAUDE.md 4조). */
+export type CellImportance = 'REQUIRED' | 'IMPORTANT' | 'RECOMMENDED'
+
+export const CELL_IMPORTANCE_LABEL: Record<CellImportance, string> = {
+  REQUIRED: '필수', IMPORTANT: '중요', RECOMMENDED: '권장',
+}
+
+/** 칸이 어떻게 생겼는가 — 생성 기본 칸인가, 비교과 개설로 붙은 칸인가. */
+export type CellOrigin = 'BASE' | 'AUTO_PROGRAM'
+
+/** 표시 중인 이유의 출처. AI 원문과 사람이 채택한 문구를 구분한다. */
+export type CellReasonOrigin = 'AI' | 'EDITOR' | 'LEGACY'
 
 export interface RoadmapCell {
   id: string
@@ -97,6 +108,18 @@ export interface RoadmapCell {
   entry?: RoadmapEntry
   /** '추천' 칸의 유효기간 = 프로그램 신청 마감일시 (ISO 또는 YYYY-MM-DD) */
   expiresAt?: string
+  /** 상담사가 남긴 설명. AI 원문(why)을 덮어쓰지 않고 따로 쌓는다. */
+  editorNote?: string
+  reasonOrigin?: CellReasonOrigin
+  aiSuggestionId?: number | null
+  origin?: CellOrigin
+  axis?: RoadmapAxis
+  position?: number
+  completedAt?: string | null
+  completionSource?: string | null
+  /** 낙관적 잠금 토큰. 칸 하나를 고칠 때 서버가 검사한다. */
+  version?: number
+  alive?: boolean
 }
 
 export interface RoadmapAxisPlan {
@@ -105,6 +128,9 @@ export interface RoadmapAxisPlan {
   headline: string
   /** 이 축을 이렇게 짠 이유 (AI 근거) */
   rationale: string
+  /** 상담사가 남긴 설명 */
+  editorNote?: string
+  aiSuggestionId?: number | null
   cells: RoadmapCell[]
 }
 

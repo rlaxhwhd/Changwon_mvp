@@ -2289,9 +2289,11 @@ input, textarea, select { font-family: var(--font); }
 .counsel-request-row {
   display: grid;
   /* 한 칸 = 두 줄(윗줄 주값 / 아랫줄 보조값). 기준은 신청 시간의 「11:00 / 2일 전 신청」이다.
-     신청시간 · 학생/학번 · 학과/재학 · 유형 · 상담유형/상태 · 상담주제 · 상세보기/상담처리.
+     신청시간 · 학생/학번 · 학과/재학 · 유형/상태 · 상담유형 · 상담주제 · 상세보기/상담처리.
+     「유형/상태」는 학생 6유형 위에 신청 상태를, 「상담 유형」은 상담 배지 아래에
+     트랙(일반 / CARE 7+ 연계)을 쌓는다 — 트랙 라벨이 길어 5번째 칸을 넓혔다.
      상담 주제만 1fr 로 남는 폭을 전부 먹고 두 줄까지 줄바꿈한다(넘치면 「더보기」). */
-  grid-template-columns: 72px 96px 152px 104px 100px minmax(100px, 1fr) 128px;
+  grid-template-columns: 72px 96px 148px 108px 112px minmax(96px, 1fr) 128px;
   column-gap: 10px;
   align-items: center;
   text-align: center;
@@ -2377,6 +2379,25 @@ input, textarea, select { font-family: var(--font); }
 .counsel-status-badge.is-confirmed { background: var(--state-fixed-bg); color: var(--state-fixed-ink); }
 .counsel-status-badge.is-complete { background: var(--state-done-bg); color: var(--state-done-ink); }
 .counsel-status-badge.is-cancelled { background: var(--state-cancel-bg); color: var(--state-cancel-ink); }
+
+/* 진로취업 상담의 트랙 — 「상담 유형」 배지 아래 둘째 줄.
+   유형 배지보다 눌러서 상담 유형이 주값, 트랙이 보조값으로 읽히게 한다. */
+.counsel-care-track {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  font-size: 11px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+/* 일반 = 파이프라인 밖. 색을 주지 않는다 — 로드맵이 나오지 않는 상담이다. */
+.counsel-care-track.is-general { border: 1px solid var(--color-border); background: var(--color-section-bg); color: var(--color-text-secondary); }
+/* CARE 7+ 연계 = 이 자리에서 유형이 확정되고 로드맵이 난다. 눈에 걸려야 한다.
+   파랑을 쓴다 — 바로 위 「진로취업 상담」 배지가 초록(--counsel-1)이라, 같은 칸에서
+   두 배지가 같은 색이면 트랙이 유형의 일부처럼 읽힌다. */
+.counsel-care-track.is-care7 { background: var(--blue-bg); color: var(--on-blue); }
 
 /* ── 상담 주제 — 넘치는 글은 자르지 않고 줄바꿈한다(넘치면 「더보기」).
    정렬은 나머지 6칸과 같이 가운데다. 왼쪽 정렬로 두면 1fr 이 남긴 여백이 전부

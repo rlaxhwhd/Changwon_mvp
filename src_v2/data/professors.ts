@@ -1,10 +1,10 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 학과별 교수 데이터(JSON) 단일 소스 + 로더.
+// 학과별 교수 디렉터리의 동기 selector.
 // 교수상담(지도교수) 화면은 이 소스를 구독해 단과대 → 학과 → 교수를 렌더한다.
 // 학생 major(학과)로 기본 선택을 파생해 "본인 학과"가 먼저 열리게 한다.
-// (프로토타입 — 백엔드 연동 시 seed import만 API 조회로 교체)
+// 부팅 시 공개 /staff?role=professor&groupBy=college 응답이 공유 배열에 제자리 적재된다.
 // ─────────────────────────────────────────────────────────────────────────
-import seed from './professors.seed.json'
+import { professorGroups } from '../../shared/staffDirectoryStore'
 
 export interface Professor {
   id: string
@@ -12,6 +12,7 @@ export interface Professor {
   title: string
   major: string
   room: string
+  accept: boolean
 }
 
 export interface DepartmentGroup {
@@ -19,7 +20,7 @@ export interface DepartmentGroup {
   divisions: Record<string, Professor[]>
 }
 
-export const PROFESSOR_GROUPS: DepartmentGroup[] = seed as unknown as DepartmentGroup[]
+export const PROFESSOR_GROUPS: DepartmentGroup[] = professorGroups
 
 /**
  * 학생 학과(major)로 기본 선택(단과대·학과)을 파생한다.
@@ -33,5 +34,5 @@ export function findDefaultSelection(
     if (major in group.divisions) return { groupName: group.name, division: major }
   }
   const first = groups[0] ?? PROFESSOR_GROUPS[0]
-  return { groupName: first.name, division: Object.keys(first.divisions)[0] }
+  return first ? { groupName: first.name, division: Object.keys(first.divisions)[0] ?? '' } : { groupName: '', division: '' }
 }

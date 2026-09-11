@@ -8,50 +8,79 @@
 
 import type { StudentType } from '../../../src_v2/data/careerProcess'
 import type { RoadmapEntry } from '../../../src_v2/data/schema/roadmap'
-
-/** 프로그램 카테고리 — 학생 ProgramApply 카테고리와 정합 */
-export type ProgramCategory = '진로' | '취업' | '어학' | '창업' | '자격증' | '기타'
-
-export const PROGRAM_CATEGORIES: ProgramCategory[] = [
-  '진로', '취업', '어학', '창업', '자격증', '기타',
-]
-
-/** 프로그램 모집/운영 상태 */
-export type ProgramStatus = '모집중' | '모집마감' | '종료'
-
-export const PROGRAM_STATUSES: ProgramStatus[] = ['모집중', '모집마감', '종료']
-
-/** 신청자 선발 상태 — 신청자 관리에서 상태변경으로 전이한다. '선발'만 선발자 관리에 노출. */
-export type SelectionStatus = '대기' | '선발' | '탈락' | '취소'
-
-/** 신청자 관리 상태변경 select box 순서 */
-export const SELECTION_STATUSES: SelectionStatus[] = ['선발', '대기', '탈락', '취소']
-
-/** 선발 후 결과 상태 — 선발자 관리에서 상태변경으로 설정(수료/미수료/참석/불참). '불참'은 벌점 tier 포함. */
-export type OutcomeStatus =
-  | '수료' | '미수료' | '참석'
-  | '불참(벌점1점)' | '불참(벌점2점)' | '불참(벌점3점)'
+import { codeLabel } from '../../../shared/metadataStore'
 
 /**
- * 선발자 관리 상태변경 select box 값.
- * '선발'=결과만 해제(선발 상태 유지), '대기'=선발 취소(신청자 관리로 복귀),
- * '삭제'=신청 삭제(행 제거).
+ * 프로그램 분류 — **DB 가 정본인 운영 코드**다(DB.md §8-5). 관리자 화면에서
+ * 항목을 더할 수 있고, 표시명은 metadata 의 code_item 에서 온다.
+ * 여기 배열은 화면 select 의 기본 순서일 뿐이며 값의 정의가 아니다.
  */
-export const SELECTED_ACTIONS = [
-  '선발', '대기', '수료', '미수료', '참석',
-  '불참(벌점1점)', '불참(벌점2점)', '불참(벌점3점)', '삭제',
-] as const
-export type SelectedAction = (typeof SELECTED_ACTIONS)[number]
+export type ProgramCategory = 'CAREER' | 'EMPLOY' | 'LANGUAGE' | 'STARTUP' | 'CERT' | 'ETC'
 
-/** 불참 tier → 부과 벌점. 2점은 현행에 없는 신설 tier다(SPEC.md §7-8 `NOSHOW_2`). */
-export const ABSENCE_PENALTY: Record<string, number> = {
-  '불참(벌점1점)': 1,
-  '불참(벌점2점)': 2,
-  '불참(벌점3점)': 3,
+export const PROGRAM_CATEGORIES: ProgramCategory[] = [
+  'CAREER', 'EMPLOY', 'LANGUAGE', 'STARTUP', 'CERT', 'ETC',
+]
+
+/** 프로그램 모집/운영 상태 — 앱이 값으로 분기하는 **구조 코드**다. */
+export type ProgramStatus = 'RECRUITING' | 'CLOSED' | 'ENDED'
+
+export const PROGRAM_STATUSES: ProgramStatus[] = ['RECRUITING', 'CLOSED', 'ENDED']
+
+/** 신청자 선발 상태. 'SELECTED' 만 선발자 관리에 노출된다. */
+export type SelectionStatus = 'PENDING' | 'SELECTED' | 'REJECTED' | 'CANCELLED'
+
+/** 신청자 관리 상태변경 select box 순서 */
+export const SELECTION_STATUSES: SelectionStatus[] = ['SELECTED', 'PENDING', 'REJECTED', 'CANCELLED']
+
+/** 선발 후 이수 결과. 불참 벌점 tier 는 값이 아니라 별도 점수로 다룬다. */
+export type OutcomeStatus = 'COMPLETED' | 'NOT_COMPLETED' | 'ATTENDED' | 'ABSENT'
+
+/** 신청자별 출석 상태 — 'NO_SHOW' 가 블랙리스트 벌점 대상 */
+export type AttendanceStatus = 'UNKNOWN' | 'PRESENT' | 'NO_SHOW'
+
+// ── 표시명 ────────────────────────────────────────────────────────────────
+// 라벨은 코드에 박지 않는다. DB 의 code_item 이 정본이고 metadata 로 실려 온다.
+// 관리자가 분류 명칭을 고치면 배포 없이 화면이 따라간다.
+
+export const categoryLabel = (code: string): string => codeLabel('PROGRAM_CATEGORY', code)
+export const programStatusLabel = (code: string): string => codeLabel('PROGRAM_STATUS', code)
+export const selectionLabel = (code: string): string => codeLabel('PROGRAM_SELECTION', code)
+export const attendanceLabel = (code: string): string => codeLabel('PROGRAM_ATTENDANCE', code)
+export const outcomeLabel = (code: string): string => codeLabel('PROGRAM_OUTCOME', code)
+
+/**
+ * 선발자 관리 상태변경 select 의 항목.
+ * 'SELECTED'=결과만 해제(선발 유지), 'PENDING'=선발 취소(신청자 관리로 복귀),
+ * 'REMOVE'=신청 삭제. 불참은 벌점 tier 만큼 항목이 나뉜다
+ * (2점은 현행에 없는 신설 tier다 — SPEC.md §7-8 `NOSHOW_2`).
+ */
+export interface SelectedAction {
+  value: string
+  label: string
+  /** 남길 이수 결과. null 이면 결과를 지운다. */
+  outcome: OutcomeStatus | null
+  /** 불참 벌점 — 0 이면 벌점을 부과하지 않는다. */
+  points: number
+  /** 선발 상태를 함께 바꾸는 항목(결과 변경이 아니다). */
+  selection: SelectionStatus | null
+  remove: boolean
 }
 
-/** 신청자별 출석 상태 — '노쇼'가 블랙리스트 벌점 대상 */
-export type AttendanceStatus = '미확인' | '출석' | '노쇼'
+export function selectedActions(): SelectedAction[] {
+  const absence = (points: number): SelectedAction => ({
+    value: `ABSENT_${points}`, label: `${outcomeLabel('ABSENT')}(벌점${points}점)`,
+    outcome: 'ABSENT', points, selection: null, remove: false,
+  })
+  return [
+    { value: 'SELECTED', label: selectionLabel('SELECTED'), outcome: null, points: 0, selection: null, remove: false },
+    { value: 'PENDING', label: selectionLabel('PENDING'), outcome: null, points: 0, selection: 'PENDING', remove: false },
+    { value: 'COMPLETED', label: outcomeLabel('COMPLETED'), outcome: 'COMPLETED', points: 0, selection: null, remove: false },
+    { value: 'NOT_COMPLETED', label: outcomeLabel('NOT_COMPLETED'), outcome: 'NOT_COMPLETED', points: 0, selection: null, remove: false },
+    { value: 'ATTENDED', label: outcomeLabel('ATTENDED'), outcome: 'ATTENDED', points: 0, selection: null, remove: false },
+    absence(1), absence(2), absence(3),
+    { value: 'REMOVE', label: '삭제', outcome: null, points: 0, selection: null, remove: true },
+  ]
+}
 
 // ── 조사 설정 (프로그램 개설 시 지정) ─────────────────────────────────────
 
@@ -118,6 +147,12 @@ export interface ProgramApplicant {
   selectedAt?: string
   /** 선발 후 결과 상태 — 선발자 관리에서 설정(수료/미수료/참석/불참). */
   outcomeStatus?: OutcomeStatus
+  /** 불참 결과에 부과된 벌점 tier(0~3). */
+  absencePoints?: number
+  /** 이 학생의 누적 벌점 — 선발 판단용으로 서버가 함께 실어 준다. */
+  penaltyTotal?: number
+  /** 낙관적 잠금용 버전 */
+  version?: number
 }
 
 /** 비교과 프로그램 1건 */
@@ -177,6 +212,8 @@ export interface Program {
   applicants: ProgramApplicant[]
   /** 등록 일시 (ISO 8601) */
   createdAt: string
+  /** 낙관적 잠금용 버전 — 저장 시 서버가 대조한다. */
+  version?: number
 }
 
 /** 새 프로그램 폼 초기값 */
@@ -185,7 +222,7 @@ export function blankProgram(): Omit<Program, 'id' | 'applicants' | 'createdAt'>
     title: '',
     desc: '',
     detail: '',
-    category: '진로',
+    category: 'CAREER',
     careTypes: [],
     roadmapEntry: 'NONE',
     startDate: '',
@@ -197,7 +234,7 @@ export function blankProgram(): Omit<Program, 'id' | 'applicants' | 'createdAt'>
     fiscalYear: String(new Date().getFullYear()),
     capacity: 20,
     location: '',
-    status: '모집중',
+    status: 'RECRUITING',
     pinned: false,
     satisfactionSurvey: true,
     satisfactionFormId: SATISFACTION_FORMS[0].id,

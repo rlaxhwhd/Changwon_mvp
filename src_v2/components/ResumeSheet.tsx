@@ -29,7 +29,13 @@ export interface ResumeSheetProps {
   onExportPdf?: () => void
 }
 
-const SKILL_ORDER: Skill['category'][] = ['언어', '프레임워크', '도구', 'DB', '디자인']
+// 분류는 코드다(GROWTH_SKILL_CATEGORY). 표시 순서만 여기서 정하고 한글 라벨은 메타에서 온다.
+const SKILL_ORDER = ['LANGUAGE', 'FRAMEWORK', 'TOOL', 'DATABASE', 'DESIGN'] as const
+const SKILL_LABEL: Record<string, string> = {
+  LANGUAGE: '언어', FRAMEWORK: '프레임워크', TOOL: '도구', DATABASE: 'DB', DESIGN: '디자인',
+}
+/** 분류가 비어 있는 자기입력 스킬도 잃지 않는다. */
+const UNCLASSIFIED = 'ETC'
 
 export default function ResumeSheet({
   profile,
@@ -66,9 +72,10 @@ export default function ResumeSheet({
 
   const skillsByCat = useMemo(() => {
     const out: Record<string, Skill[]> = {}
-    for (const s of skills) {
-      if (!out[s.category]) out[s.category] = []
-      out[s.category].push(s)
+    for (const skill of skills) {
+      const key = skill.category ?? UNCLASSIFIED
+      if (!out[key]) out[key] = []
+      out[key].push(skill)
     }
     return out
   }, [skills])
@@ -209,11 +216,11 @@ export default function ResumeSheet({
         <ResumeBlock title="보유 스킬" onJump={onJumpTab && (() => onJumpTab('skills'))}>
           <table className="pf-resume-skill-table">
             <tbody>
-              {SKILL_ORDER.filter(cat => skillsByCat[cat]?.length).map(cat => (
+              {[...SKILL_ORDER, UNCLASSIFIED].filter(cat => skillsByCat[cat]?.length).map(cat => (
                 <tr key={cat}>
-                  <th>{cat}</th>
+                  <th>{SKILL_LABEL[cat] ?? '기타'}</th>
                   <td>
-                    {skillsByCat[cat].map(s => (
+                    {skillsByCat[cat].map((s: Skill) => (
                       <span key={s.id} className="pf-resume-skill">
                         {s.name}
                         <small>({s.level}/5)</small>

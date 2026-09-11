@@ -17,7 +17,17 @@
     <title>DREAMCATCH 상담사 포털</title>
   </head>
   <body>
-    <div id="root"></div>
+    <!-- 부팅 대기면. API 적재가 끝날 때까지 이 자리가 그대로 남아 있다가 앱으로 교체된다.
+         예전에는 main.tsx 가 「데이터를 불러오는 중입니다…」 를 페이지 전체로 렌더해서
+         화면이 한 번 텍스트로 넘어갔다 돌아왔다 — 그 깜빡임을 없애려고 셸에 둔다.
+         index.css 는 main.tsx 가 불러오므로 아직 없다. 그래서 스타일을 여기 인라인으로 둔다. -->
+    <div id="root">
+      <div id="boot-splash" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#F7F8FB">
+        <div style="width:36px;height:36px;border:3px solid #E6E8EF;border-top-color:#7C5CFC;border-radius:50%;animation:boot-spin .8s linear infinite"></div>
+      </div>
+      <style>@keyframes boot-spin{to{transform:rotate(360deg)}}
+        @media (prefers-reduced-motion:reduce){#boot-splash div{animation:none}}</style>
+    </div>
     <script type="module" src="/src_admin/main.tsx"></script>
   </body>
 </html>
