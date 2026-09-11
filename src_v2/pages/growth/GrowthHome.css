@@ -155,7 +155,7 @@
   .gh-project-list { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
-  .gh-shell { padding: 20px 16px 40px; } .gh-cover { grid-template-columns: 1fr; padding: 22px; }
+  .gh-shell { padding: 0 16px 40px; } .gh-cover { grid-template-columns: 1fr; padding: 22px; }
   .gh-cover-copy { padding: 20px 0 0; border-left: 0; border-top: 1px solid var(--gh-border); } .gh-cover-actions { grid-column: auto; }
   .gh-projects, .gh-profile-card, .gh-skills, .gh-qualifications, .gh-archive, .gh-next { grid-column: 1 / -1; }
   .gh-skill-grid { grid-template-columns: 1fr; }

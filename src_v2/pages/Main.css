@@ -1611,141 +1611,395 @@
 
 .mn-page .quest-ring--empty .quest-value strong { color: var(--muted-foreground); }
 
-/* ── 모바일 반응형 ───────────────────────────────────────────────────────
-   셸(body min-width 해제 · GNB 햄버거 · --page-gutter · dashboard-grid 붕괴)은
-   index.css 가 1240 / 900 에서 이미 처리한다. 여기서는 이 화면 고유의
-   고정 폭·고정 높이만 푼다 — 시안 값은 데스크톱 폭에서 그대로 유지된다.
+/* design 반응형 이식: 960px 히어로 1단, 760px 카드·캐러셀 재배치,
+   420px 작은 화면 정렬. 데이터·카드 구조는 dev 기준이며 상단 메뉴는 index.css가 담당한다. */
 
-   1024 히어로 2단 → 1단  ·  768 판때기 1열·캐러셀 스와이프  ·  560 줄 접기 */
+@media (max-width: 880px) {
+  .mn-page .competency-layout {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
 
-@media (max-width: 1024px) {
-  /* 히어로는 5:7 2단이었다. 좁아지면 왼쪽(카피+여정)이 먼저 눌린다 → 세로로 푼다. */
-  .mn-page .career-hero {
-    min-height: 0;
-    padding: 24px;
+  .mn-page .radar-chart {
+    width: min(100%, 300px);
+  }
+}
+
+@media (max-width: 760px) {
+  .mn-page .welcome {
+    margin-bottom: 20px;
+    gap: 16px;
+  }
+
+  .mn-page .welcome h1 {
+    font-size: 28px;
+    line-height: 1.42;
+  }
+
+  .mn-page .welcome-tools {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .mn-page .student-type {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .mn-page .quick-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .mn-page .quick-action {
+    min-width: 0;
+    height: 44px;
+    padding: 0 8px;
+    justify-content: center;
+    font-size: 12px;
+  }
+
+  .mn-page .dashboard-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .mn-page .career-hero-left { gap: 24px; }
+  .mn-page .dashboard-grid > [id] {
+    scroll-margin-top: 80px;
+  }
 
-  /* 히어로 칸에 맞춘 고정 높이 332px — 폭이 줄면 내용이 넘친다. 내용 높이로 되돌린다. */
+  .mn-page .span-12,
+  .mn-page .span-8,
+  .mn-page .span-5,
+  .mn-page .span-4,
+  .mn-page .span-3,
+  .mn-page .daily-card.span-5,
+  .mn-page .daily-card.span-4,
+  .mn-page .daily-card.span-3 {
+    grid-column: 1;
+  }
+
+  .mn-page [data-slot="card-header"] {
+    min-height: 68px;
+    padding: 16px 16px 0;
+  }
+
+  .mn-page [data-slot="card-content"] {
+    padding: 16px;
+  }
+
+  .mn-page [data-slot="card-footer"] {
+    padding: 16px;
+  }
+
+  .mn-page .journey-summary {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .mn-page .journey-stage-title {
+    font-size: 20px;
+    line-height: 28px;
+  }
+
+  .mn-page .journey-scroll {
+    margin-top: 24px;
+  }
+
+  .mn-page .journey-steps {
+    min-width: 700px;
+  }
+
+  .mn-page .daily-card {
+    min-height: 0;
+  }
+
+  .mn-page .quest-layout {
+    grid-template-columns: 116px minmax(0, 1fr);
+    gap: 16px;
+  }
+
+  .mn-page .quest-ring {
+    width: 112px;
+    height: 112px;
+  }
+
+  .mn-page .quest-ring::before {
+    width: 80px;
+    height: 80px;
+  }
+
+  .mn-page .attendance-center {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .mn-page .competency-summary {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .mn-page .axis-list {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .mn-page .program-card {
+    flex-basis: calc(100% - 40px);
+    height: 300px;
+  }
+
+  .mn-page .program-nav {
+    display: none;
+  }
+
+  .mn-page .program-track {
+    padding-right: 24px;
+    touch-action: pan-x;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mn-page .program-copy {
+    padding: 16px;
+  }
+
+  .mn-page .program-copy h3 {
+    font-size: 16px;
+    line-height: 24px;
+  }
+
+  .mn-page .featured-job {
+    min-height: 360px;
+    padding: 20px;
+  }
+
+  .mn-page .job-row {
+    padding: 14px 12px;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: 10px;
+  }
+
+  .mn-page .job-logo {
+    width: 44px;
+    height: 44px;
+  }
+
+  .mn-page .job-deadline {
+    grid-column: 2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+  }
+
+  .mn-page .notice-tabs {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .mn-page .notice-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mn-page .notice-row {
+    min-height: 92px;
+    padding: 12px 0;
+    grid-template-columns: minmax(0, 1fr) 24px;
+    gap: 6px 10px;
+  }
+
+  .mn-page .notice-category {
+    grid-column: 1;
+  }
+
+  .mn-page .notice-copy {
+    grid-column: 1;
+  }
+
+  .mn-page .notice-row time {
+    display: none;
+  }
+
+  .mn-page .notice-arrow {
+    grid-column: 2;
+    grid-row: 1 / span 2;
+  }
+}
+
+@media (max-width: 420px) {
+  .mn-page .quest-layout {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .mn-page .quest-steps {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 960px) {
   .mn-page .hero-roadmap,
   .mn-page .hero-competency {
     height: auto;
     min-height: 0;
   }
 
-  /* 레이더 + 축 막대 2단도 세로로. 히어로 칸용 축약(.hero-competency 스코프, 0-3-0)이
-     따로 있으므로 같은 스코프로 풀어야 한다 — .mn-page .competency-layout(0-2-0)만으로는 진다. */
-  .mn-page .competency-layout,
-  .mn-page .hero-competency .competency-layout {
+  .mn-page .career-hero {
+    min-height: 0;
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .mn-page .career-hero-left {
+    min-height: 560px;
+  }
+
+  .mn-page .career-hero-copy > p:last-child {
+    max-width: 560px;
+  }
+}
+
+@media (max-width: 760px) {
+  .mn-page .career-hero {
+    padding: 20px;
+    border-radius: var(--radius);
     gap: 24px;
   }
 
-  /* 히어로 칸에 맞춰 188px 로 줄여 둔 레이더 — 폭을 다 쓰게 되면 축 이름이 서로 겹친다. */
-  .mn-page .hero-competency .radar-chart { width: min(100%, 260px); }
-}
-
-@media (max-width: 768px) {
-  .mn-page .career-hero {
-    margin-bottom: 12px;
-    padding: 20px;
+  .mn-page .career-hero::before {
+    top: -220px;
+    right: auto;
+    left: -220px;
   }
 
-  /* 배경 워터마크 "CAREER" — 112px 은 폰 폭에서 글자 하나만 보인다. */
   .mn-page .career-hero::after {
     right: 12px;
-    bottom: -18px;
-    font-size: 56px;
+    left: auto;
+    bottom: -14px;
+    font-size: 72px;
+  }
+
+  .mn-page .career-hero-left {
+    min-height: 0;
+    gap: 28px;
+  }
+
+  .mn-page .career-hero-copy {
+    padding-top: 0;
   }
 
   .mn-page .career-hero-copy h1 {
-    margin: 14px 0;
-    font-size: 32px;
+    margin: 16px 0 16px;
+    font-size: 36px;
+    line-height: 1.16;
   }
 
-  .mn-page .career-hero-copy > p:last-child { font-size: 15px; }
-
-  /* 오늘할일·퀘스트 묶음 | 출석 → 한 열로 */
-  .mn-page .career-hero-top { grid-template-columns: minmax(0, 1fr); }
-
-  /* 캐러셀은 화살표 대신 스와이프로 넘긴다. 다음 카드가 살짝 걸치게 두어
-     가로로 더 있다는 걸 보이게 한다. */
-  .mn-page .program-nav { display: none; }
-  .mn-page .program-card { flex-basis: 82%; }
-
-  .mn-page .featured-job { padding: 20px; }
-  .mn-page .featured-job::after { font-size: 64px; }
-
-  .mn-page .featured-job h3 {
-    margin: 20px 0 10px;
-    font-size: 20px;
-    line-height: 28px;
+  .mn-page .career-hero-copy > p:last-child {
+    font-size: 14px;
+    line-height: 1.7;
   }
 
-  /* 공지 분류 탭 — 줄바꿈 대신 가로 스크롤(탭 순서가 흐트러지지 않게). */
-  .mn-page .notice-tabs {
-    overflow-x: auto;
+  .mn-page .career-hero [id] {
+    scroll-margin-top: 80px;
+  }
+
+  .mn-page .hero-progress-meta strong {
+    font-size: 24px;
+    line-height: normal;
+  }
+
+  .mn-page .hero-roadmap .journey-scroll {
+    padding-top: 20px;
+    margin-right: -16px;
+    padding-right: 16px;
     scrollbar-width: none;
+    -ms-overflow-style: none;
   }
 
-  .mn-page .notice-tabs::-webkit-scrollbar { display: none; }
-
-  /* 공지 한 줄 = 분류 64 / 제목 / 날짜 100 / 화살표 28 → 폰에서 제목 칸이 사라진다.
-     분류·날짜를 윗줄로 올리고 제목이 폭을 다 쓰게 한다. */
-  .mn-page .notice-row {
-    min-height: 0;
-    padding: 14px 4px;
-    grid-template-columns: minmax(0, 1fr) 28px;
-    align-items: center;
-    gap: 6px 12px;
+  .mn-page .hero-roadmap .journey-scroll::-webkit-scrollbar {
+    display: none;
   }
 
-  .mn-page .notice-category { grid-area: 1 / 1; }
-  .mn-page .notice-copy { grid-area: 2 / 1; }
-  .mn-page .notice-row time { grid-area: 1 / 1; justify-self: end; }
-  .mn-page .notice-arrow { grid-area: 1 / 2 / 3 / 3; }
-}
+  .mn-page .hero-roadmap .journey-steps {
+    min-width: 560px;
+  }
 
-@media (max-width: 560px) {
-  .mn-page .career-hero { padding: 18px 16px; }
-  .mn-page .career-hero-copy h1 { font-size: 28px; }
+  .mn-page .career-hero-board {
+    border-radius: var(--radius);
+  }
 
-  /* 링 + 설명 2단은 폰 폭에서 설명이 3~4 글자로 눌린다.
-     칸 나눔은 .hero-quest 스코프(0-3-0)가 쥐고 있어 같은 스코프로 푼다. */
-  .mn-page .quest-layout,
-  .mn-page .hero-quest .quest-layout {
+  .mn-page .career-hero-top {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .mn-page .quest-layout {
-    justify-items: center;
-    text-align: center;
+  .mn-page .hero-panel [data-slot="card-header"] {
+    padding: 16px 16px 0;
   }
 
-  .mn-page .quest-steps { justify-content: center; }
-
-  /* 채용 한 줄 = 로고 48 / 내용 / 마감 → 마감을 내용 아래로 내린다. */
-  .mn-page .job-row {
-    min-height: 0;
-    grid-template-columns: 40px minmax(0, 1fr);
-    gap: 6px 12px;
+  .mn-page .hero-panel [data-slot="card-content"] {
+    padding: 12px 16px 16px;
   }
 
-  .mn-page .job-logo {
-    width: 40px;
-    height: 40px;
-    border-radius: 10px;
+  .mn-page .hero-todo .todo-item {
+    min-height: 48px;
   }
 
-  .mn-page .job-deadline {
-    grid-column: 2;
-    text-align: left;
+  .mn-page .hero-quest .quest-layout {
+    grid-template-columns: 96px minmax(0, 1fr);
   }
 
-  .mn-page .job-deadline b,
-  .mn-page .job-deadline span { display: inline; }
+  .mn-page .hero-quest .quest-ring {
+    width: 92px;
+    height: 92px;
+  }
 
-  .mn-page .job-deadline b { margin-right: 6px; }
+  .mn-page .hero-quest .quest-ring::before {
+    width: 70px;
+    height: 70px;
+  }
+
+  .mn-page .hero-attendance {
+    min-height: 320px;
+  }
+
+  .mn-page .hero-competency .competency-layout {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 20px;
+  }
+
+  .mn-page .hero-competency .radar-chart {
+    width: min(100%, 260px);
+  }
+
+  .mn-page .hero-competency .radar-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 420px) {
+  /* 시안은 여기서 좌우 -8px 마진으로 컨테이너 여백(20px) 안쪽까지 넓힌다.
+     개발 셸의 여백은 14px(index.css --page-gutter)이라 같은 값을 쓰면 히어로가
+     컨테이너 밖으로 튀어나온다 → 마진을 두지 않고 dashboard-grid 와 같은 폭으로 맞춘다. */
+  .mn-page .career-hero {
+    margin-right: 0;
+    margin-left: 0;
+    padding: 16px;
+  }
+
+  .mn-page .career-hero-copy h1 {
+    font-size: 32px;
+  }
+
+  .mn-page .hero-roadmap [data-slot="card-action"] {
+    grid-column: 1;
+    grid-row: 3;
+    margin-top: 8px;
+    justify-self: start;
+  }
+
+  .mn-page .hero-quest .quest-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }

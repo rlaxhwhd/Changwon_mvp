@@ -236,9 +236,16 @@
 .jb-empty span { font-size: 14px; color: var(--jb-muted); }
 
 @media (max-width: 1024px) {
-  .jb-toolbar { align-items: stretch; flex-direction: column; }
-  .jb-search { max-width: none; }
-  .jb-count { margin-left: 0; }
+  /* 툴바 — 검색창 한 줄, 그 아래 「상태 | 정렬 | 총 N건」 한 줄.
+     세로 flex 로 두면 검색창의 flex:1 이 세로 기준 높이 0 으로 작동해 38px 이 23px 로 눌렸다 → 격자로. */
+  .jb-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    gap: 10px;
+  }
+  .jb-search { grid-column: 1 / -1; flex: none; max-width: none; }
+  .jb-select select { width: 100%; min-width: 0; }
+  .jb-count { margin-left: 0; justify-content: center; }
   /* 열이 접히면 머리글이 가리키는 칸이 사라진다 — 어긋난 머리글보다 없는 편이 낫다. */
   .jb-head { display: none; }
   .jb-row { grid-template-columns: 1fr auto; gap: 6px 12px; }
@@ -250,4 +257,13 @@
   .jb-row-no { text-align: left; }
   .jb-row-title { align-items: flex-start; flex-direction: column; }
   .jb-row-title strong { white-space: normal; }
+}
+
+@media (max-width: 640px) {
+  .jc-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .jc-card { padding: 16px; min-height: 0; }
+  .jb-row { padding: 12px 14px; }
+  /* dev의 접근 가능한 상태·정렬 라벨을 유지한 채 폭을 나눈다. */
+  .jb-select { min-width: 0; flex-direction: column; align-items: stretch; gap: 4px; }
+  .jb-count { align-self: end; padding-inline: 4px; }
 }

@@ -1348,10 +1348,7 @@ select:focus-visible {
 @media (max-width: 900px) {
   :root { --topbar-h: 60px; --page-gutter: 14px; }
 
-  .top-nav { display: none; }
-  .mobile-menu-toggle { display: inline-grid; }
-  .topbar-right .icon-button:not(.mobile-menu-toggle) { display: none; }
-  .header-profile { display: none; }
+  /* GNB 의 메뉴 숨김·햄버거 전환은 시안 시점(760)으로 옮겼다 — 아래 GNB 반응형 블록. */
 
   .v2-main { padding: 20px var(--page-gutter) 40px; }
   .v2-page-head { grid-template-columns: minmax(0, 1fr); }
@@ -1361,4 +1358,173 @@ select:focus-visible {
   .dashboard-grid > [class*="span-"] { grid-column: span 12; }
 
   .landing-card { width: calc(100% - 24px); padding: 32px 22px; }
+}
+
+@media (max-width: 1360px) and (min-width: 761px) {
+  .topbar-inner {
+    padding: 8px var(--page-gutter) 0;
+    flex-wrap: wrap;
+    align-content: center;
+    gap: 0 var(--page-gutter);
+  }
+
+  .brand { order: 1; }
+
+  .topbar-right {
+    order: 2;
+    margin-left: auto;
+  }
+
+  /* 시안은 둘째 줄을 overflow-x:auto 로 가로 스크롤시켰지만, 그러면 세로도 auto 가 되어
+     하위 메뉴(.nav-dropdown, 시안에는 없는 요소)가 48px 줄 안에서 잘린다.
+     스크롤 대신 줄바꿈으로 받는다 — 안 들어가는 폭(≈900 이하)에서는 메뉴가 두 줄이 된다.
+     가로는 clip 으로 자른다: 숨은 드롭다운(visibility:hidden)도 폭을 차지해 오른쪽 메뉴의 것이
+     화면 밖으로 나가 가로 스크롤을 만들었다. clip 은 hidden 과 달리 반대 축(세로)을 visible 로 남긴다. */
+  .top-nav {
+    padding: 8px 0 8px;
+    order: 3;
+    flex: 0 0 100%;
+    align-self: auto;
+    flex-wrap: wrap;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  /* 맨 오른쪽 메뉴의 드롭다운은 가운데 정렬이면 clip 에 잘린다 — 항목의 오른쪽 끝에 맞춘다. */
+  .top-nav .nav-group:last-of-type .nav-dropdown {
+    left: auto;
+    right: 0;
+    transform: translate(0, -4px);
+  }
+  .top-nav .nav-group:last-of-type:hover .nav-dropdown,
+  .top-nav .nav-group:last-of-type:has(:focus-visible) .nav-dropdown {
+    transform: translate(0, 0);
+  }
+
+  .nav-item {
+    height: 48px;
+    flex: 0 0 auto;
+  }
+
+  /* STAR 표식 — 메뉴 줄의 마지막 flex 항목이라 메뉴 7개가 줄을 거의 채우면 혼자 둘째 줄로
+     떨어져 가운데 놓였다. 둘째 줄 메뉴 구간에서는 첫 줄(로고 · 벨 · 프로필)의 벨 왼쪽에 절대 배치한다.
+     right = 여백 + 벨 36 + 간격 10 + 프로필 44 + 8. 한 줄 상단바용 음수 margin-right 도 푼다. */
+  .topbar-inner { position: relative; }
+
+  .topbar-brandmark-link {
+    position: absolute;
+    top: 2px; /* 첫 줄(위여백 8 + 벨·프로필 36px) 가운데 = 26px. 48px 표식이라 2px 에서 시작한다. */
+    right: calc(var(--page-gutter) + 98px);
+    margin: 0;
+  }
+
+  .topbar-brandmark {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 760px) {
+  /* 시안 .topbar min-height 64px — .mobile-menu / .mobile-backdrop 의 top 이 이 토큰을 따른다. */
+  :root { --topbar-h: 64px; }
+
+  .topbar { min-height: 64px; }
+
+  .topbar-inner {
+    position: relative;
+    min-height: 64px;
+    padding: 0 var(--page-gutter);
+    gap: 8px;
+  }
+
+  .brand {
+    flex: 0 0 auto;
+    margin-right: auto;
+  }
+
+  .brand img {
+    width: 148px;
+    height: auto;
+  }
+
+  .top-nav { display: none; }
+  .mobile-menu-toggle { display: inline-grid; }
+  .topbar-right .icon-button:not(.mobile-menu-toggle) { display: none; }
+  .header-profile { display: none; }
+
+  .topbar .icon-button,
+  .profile-trigger {
+    width: 40px;
+    height: 40px;
+  }
+
+  .profile-trigger { padding: 2px; }
+
+  .topbar .profile-avatar-icon {
+    width: 36px;
+    height: 36px;
+  }
+
+  .profile-popover { right: -44px; }
+}
+
+@media (max-width: 420px) {
+  .brand img { width: 136px; }
+
+  .topbar-right { gap: 4px; }
+}
+
+/* design 모바일 하위 메뉴의 줄 높이와 들여쓰기만 이식한다. */
+@media (max-width: 760px) {
+.mobile-sublinks {
+  display: grid;
+  gap: 2px;
+  margin: 0 20px 14px;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--muted);
+}
+.mobile-sublinks > div { display: contents; }
+
+.mobile-sublink {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius-sm);
+  color: var(--muted-foreground);
+  font-size: var(--fs-body);
+  font-weight: 600;
+  line-height: 20px;
+  transition: background 160ms ease, color 160ms ease;
+}
+
+.mobile-sublink:hover { background: var(--card); color: var(--foreground); }
+
+.mobile-sublink.active {
+  background: var(--card);
+  color: var(--primary);
+  font-weight: 800;
+  box-shadow: var(--shadow-raise);
+}
+.mobile-sublink.depth-1 {
+  min-height: 36px;
+  padding-left: 30px;
+  font-size: var(--fs-meta);
+}
+
+.mobile-sublink.depth-1::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  width: 10px;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--muted-foreground);
+  opacity: .35;
+  transform: translateY(-50%);
+}
 }

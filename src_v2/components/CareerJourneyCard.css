@@ -168,13 +168,16 @@
 
   .cj-percent { text-align: left; }
 
+  /* 칸은 최소 72px 을 지키되 남는 폭은 나눠 채운다 — 카드가 넓어지면(960 이하 히어로 1단 등)
+     끝까지 펼쳐지고, 7칸 504px 보다 좁은 폰 폭에서만 가로 스크롤이 생긴다. */
   .cj-steps {
-    grid-template-columns: repeat(var(--cj-count, 7), 72px);
+    grid-template-columns: repeat(var(--cj-count, 7), minmax(72px, 1fr));
     overflow-x: auto;
+    /* overflow-x 만 주면 세로도 auto 가 된다 — 높이가 눌리는 칸(고정 높이 카드)에서
+       세로 스크롤바가 생기지 않게 세로는 잠근다. */
+    overflow-y: hidden;
     padding-bottom: 8px;
     scrollbar-width: thin;
     scrollbar-color: var(--scrollbar-accent, #d8d2f8) transparent;
   }
-
-  .cj-steps::before { display: none; }
 }

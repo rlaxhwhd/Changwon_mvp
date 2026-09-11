@@ -2010,3 +2010,120 @@
   .al-page .dashboard-grid > section { min-width: 0; }
   .al-page .al-locked p { overflow-wrap: anywhere; }
 }
+
+@media (max-width: 1120px) {
+  /* 시안: .journey-card · .next-card · .competency-card · .diagnosis-card → span 12 */
+  .al-page .competency-card,
+  .al-page .diagnosis-card {
+    grid-column: 1 / -1;
+  }
+
+  .al-page .chart-layout {
+    grid-template-columns: 240px minmax(0, 1fr);
+    gap: 24px;
+  }
+
+  .al-page .radar {
+    width: 232px;
+    height: 216px;
+  }
+
+  .al-page .goal-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .al-page .goal-core {
+    min-height: 210px;
+  }
+
+  .al-page .goal-plan-columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .al-page .counseling-detail-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 760px) {
+  .al-page .welcome {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .al-page .welcome h1 {
+    font-size: 28px;
+  }
+
+  .al-page .student-type {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .al-page .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .al-page .cj-card,
+  .al-page .competency-card,
+  .al-page .diagnosis-card,
+  .al-page .goal-card,
+  .al-page .todo-card,
+  .al-page .recommend-card,
+  .al-page .counseling-card {
+    grid-column: auto;
+  }
+
+  .al-page .chart-layout,
+  .al-page .diagnosis-result-grid,
+  .al-page .counseling-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .al-page .radar {
+    width: 100%;
+    max-width: 232px;
+    height: auto;
+  }
+
+  .al-page .diagnosis-result-item {
+    min-height: 144px;
+  }
+
+  .al-page .diagnosis-result-item.locked {
+    min-height: 208px;
+  }
+
+  .al-page .goal-core {
+    min-height: 190px;
+  }
+
+  .al-page .goal-plan-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .al-page .goal-plan-column {
+    padding: 12px;
+  }
+
+  .al-page .goal-task-copy b,
+  .al-page .goal-task-copy small {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+
+  .al-page .goal-coach {
+    grid-template-columns: 40px minmax(0, 1fr);
+  }
+
+  .al-page .goal-coach-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
+  /* 성장 활동 기록 타임라인 — 한 열이 되면 항목이 붙어 보여 6px 띄운다. */
+  .al-page .gh-timeline {
+    gap: 6px;
+  }
+}

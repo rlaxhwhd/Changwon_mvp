@@ -1,3 +1,5 @@
+import CounselSlotPicker from '../../components/CounselSlotPicker'
+import { useSlotPicker } from '../../hooks/useSlotPicker'
 import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
@@ -45,6 +47,7 @@ export default function ProfessorCounsel() {
 }
 
 function ProfessorCounselForm({ professorGroups }: { professorGroups: DepartmentGroup[] }) {
+  const mobileSlots = useSlotPicker()
   const defaultSelection = findDefaultSelection(getActiveStudent().major, professorGroups)
   const [selectedGroupName, setSelectedGroupName] = useState(defaultSelection.groupName)
   const selectedGroup = professorGroups.find(group => group.name === selectedGroupName) ?? professorGroups[0]
@@ -254,30 +257,34 @@ function ProfessorCounselForm({ professorGroups }: { professorGroups: Department
                   <span><i className="selected" />선택됨</span>
                 </div>
 
-                <div className="cc-calendar-grid pc-calendar-grid">
-                  <div className="cc-grid-head empty" />
-                  {days.map(day => (
-                    <div key={day.key} className="cc-grid-head">{day.label}</div>
-                  ))}
-                  {times.map(time => (
-                    <div className="cc-time-row" key={time}>
-                      <div className="cc-time-cell">{time}</div>
-                      {days.map(day => {
-                        const status = getStatus(day.key, time)
-                        return (
-                          <button
-                            key={`${day.key}-${time}`}
-                            className={`cc-slot cc-slot-${status}`}
-                            onClick={() => selectSlot(day, time)}
-                          >
-                            {status === 'selected' && <i className="fa-solid fa-check" />}
-                            {status === 'selected' ? '선택됨' : status === 'reserved' ? '예약 완료' : '예약 가능'}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  ))}
-                </div>
+                {mobileSlots ? (
+                  <CounselSlotPicker days={days} times={times} getStatus={getStatus} onSelect={selectSlot} selected={selectedSlot} />
+                ) : (
+                  <div className="cc-calendar-grid pc-calendar-grid">
+                    <div className="cc-grid-head empty" />
+                    {days.map(day => (
+                      <div key={day.key} className="cc-grid-head">{day.label}</div>
+                    ))}
+                    {times.map(time => (
+                      <div className="cc-time-row" key={time}>
+                        <div className="cc-time-cell">{time}</div>
+                        {days.map(day => {
+                          const status = getStatus(day.key, time)
+                          return (
+                            <button
+                              key={`${day.key}-${time}`}
+                              className={`cc-slot cc-slot-${status}`}
+                              onClick={() => selectSlot(day, time)}
+                            >
+                              {status === 'selected' && <i className="fa-solid fa-check" />}
+                              {status === 'selected' ? '선택됨' : status === 'reserved' ? '예약 완료' : '예약 가능'}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="cc-selected-bar pc-selected-bar">
                   <div className="cc-selected-title">

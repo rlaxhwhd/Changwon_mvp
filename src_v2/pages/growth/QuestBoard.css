@@ -591,7 +591,7 @@
 
 @media (max-width: 900px) {
   .qb-page {
-    padding: 28px 18px 40px;
+    padding: 0 18px 40px;
   }
 
   .qb-header h1 {
@@ -651,4 +651,15 @@
   }
   .qb-header h1 { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
   .qb-header p { font-size: 16px; line-height: 1.55; }
+}
+
+@media (max-width: 900px) {
+  .qb-page { padding-inline: 0; }
+  .qb-content-grid,
+  .qb-summary-grid,
+  .qb-bottom-grid { grid-template-columns: minmax(0, 1fr); }
+  .qb-left-stack,
+  .qb-right-stack,
+  .qb-card { min-width: 0; }
+  .qb-card-tabs { min-width: 0; max-width: 100%; }
 }

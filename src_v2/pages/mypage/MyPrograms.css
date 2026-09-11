@@ -444,3 +444,18 @@
   .mp-detail-table th { width: 90px; font-size: 14px; }
   .mp-detail-table td { font-size: 14px; }
 }
+
+/* design의 반응형 의도만 적용하고 기존 요약 값·상태 필터·상세 표를 유지한다. */
+@media (max-width: 768px) {
+  .mp-wrap { padding-inline: 0; }
+  .mp-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .mp-list { grid-template-columns: minmax(0, 1fr); }
+  .mp-detail-actions { flex-direction: column-reverse; }
+  .mp-detail-actions .mp-btn { width: 100%; height: auto; min-height: 38px; }
+  .mp-detail-table { table-layout: fixed; }
+  .mp-detail-table td { overflow-wrap: anywhere; }
+}
+
+@media (max-width: 400px) {
+  .mp-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

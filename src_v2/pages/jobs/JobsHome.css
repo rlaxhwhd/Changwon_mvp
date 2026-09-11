@@ -325,7 +325,7 @@
 
 @media (max-width: 768px) {
   .jh-wrap {
-    padding: 24px 18px 32px;
+    padding: 0 18px 32px;
   }
   .jh-resume-grid,
   .jh-actions {

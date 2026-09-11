@@ -778,8 +778,8 @@
 @media (max-width: 768px) {
   body { min-width: 0; }
   .gj-wrapper { flex-direction: column; }
-  .gj-content { padding: 16px 0 48px; gap: 12px; }
-  .gj-page-header { flex-direction: column; align-items: stretch; gap: 12px; padding: 20px 18px; }
+  .gj-content { padding: 0 0 48px; gap: 12px; }
+  .gj-page-header { flex-direction: column; align-items: stretch; gap: 12px; padding: 0 18px 20px; }
   .gj-page-title { font-size: 32px; }
   .gj-btn-primary { width: 100%; justify-content: center; }
   .gj-stats { grid-template-columns: repeat(2, 1fr); gap: 8px; }
@@ -808,10 +808,17 @@
 @media (max-width: 768px) {
   .gj-page-header {
     min-height: auto;
-    margin: 14px 0 16px;
-    padding: 20px 18px 18px;
+    margin: 0 0 16px;
+    padding: 0 18px 18px;
     border-radius: var(--radius-md);
   }
   .gj-page-title { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
   .gj-page-desc { font-size: 16px; line-height: 1.55; }
+}
+
+@media (max-width: 768px) {
+  .gj-content,
+  .gj-main { width: 100%; min-width: 0; }
+  .gj-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .gj-tabs { min-width: 0; max-width: 100%; }
 }

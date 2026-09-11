@@ -1,3 +1,5 @@
+import CounselSlotPicker from '../../components/CounselSlotPicker'
+import { useSlotPicker } from '../../hooks/useSlotPicker'
 import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -39,6 +41,7 @@ function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
 }
 
 export default function CareerCounsel() {
+  const mobileSlots = useSlotPicker()
   useMetadata()
   const currentType = getStudentType(getActiveStudent())
   // 진로·취업 상담은 성격이 다른 두 가지다(counselTrack). 무엇을 신청하는지 고르기
@@ -310,48 +313,52 @@ export default function CareerCounsel() {
             <span><i className="selected" />선택됨</span>
           </div>
 
-          <div className="cc-calendar-grid">
-            <div className="cc-grid-head empty" />
-            {days.map(day => (
-              <div key={day.key} className="cc-grid-head">{day.label}</div>
-            ))}
+          {mobileSlots ? (
+            <CounselSlotPicker days={days} times={times} getStatus={getStatus} onSelect={selectSlot} selected={selectedSlot} />
+          ) : (
+            <div className="cc-calendar-grid">
+              <div className="cc-grid-head empty" />
+              {days.map(day => (
+                <div key={day.key} className="cc-grid-head">{day.label}</div>
+              ))}
 
-            {times.map(time => (
-              <div className="cc-time-row" key={time}>
-                <div className="cc-time-cell">{time}</div>
-                {days.map((day, dayIndex) => {
-                  if (isAllMode) {
-                    const timeIndex = times.indexOf(time)
-                    const group = slotCounselors[dayIndex]?.[timeIndex] ?? []
+              {times.map(time => (
+                <div className="cc-time-row" key={time}>
+                  <div className="cc-time-cell">{time}</div>
+                  {days.map((day, dayIndex) => {
+                    if (isAllMode) {
+                      const timeIndex = times.indexOf(time)
+                      const group = slotCounselors[dayIndex]?.[timeIndex] ?? []
+                      return (
+                        <div key={`${day.key}-${time}`} className="cc-slot cc-slot-counselors">
+                          {group.length > 0 ? group.map(counselor => (
+                            <button
+                              key={counselor.id}
+                              onClick={() => selectCounselorFromCalendar(counselor, day, time)}
+                            >
+                              {counselor.name}
+                            </button>
+                          )) : <span>예약 가능</span>}
+                        </div>
+                      )
+                    }
+
+                    const status = getStatus(day.key, time)
                     return (
-                      <div key={`${day.key}-${time}`} className="cc-slot cc-slot-counselors">
-                        {group.length > 0 ? group.map(counselor => (
-                          <button
-                            key={counselor.id}
-                            onClick={() => selectCounselorFromCalendar(counselor, day, time)}
-                          >
-                            {counselor.name}
-                          </button>
-                        )) : <span>예약 가능</span>}
-                      </div>
+                      <button
+                        key={`${day.key}-${time}`}
+                        className={`cc-slot cc-slot-${status}`}
+                        onClick={() => selectSlot(day, time)}
+                      >
+                        {status === 'selected' && <i className="fa-solid fa-check" />}
+                        {status === 'selected' ? '선택됨' : status === 'reserved' ? '예약 완료' : '예약 가능'}
+                      </button>
                     )
-                  }
-
-                  const status = getStatus(day.key, time)
-                  return (
-                    <button
-                      key={`${day.key}-${time}`}
-                      className={`cc-slot cc-slot-${status}`}
-                      onClick={() => selectSlot(day, time)}
-                    >
-                      {status === 'selected' && <i className="fa-solid fa-check" />}
-                      {status === 'selected' ? '선택됨' : status === 'reserved' ? '예약 완료' : '예약 가능'}
-                    </button>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="cc-selected-bar">
             <div className="cc-selected-title">

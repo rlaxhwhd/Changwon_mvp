@@ -1,3 +1,5 @@
+import CounselSlotPicker from '../../components/CounselSlotPicker'
+import { useSlotPicker } from '../../hooks/useSlotPicker'
 import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useMemo, useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
@@ -32,6 +34,7 @@ function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
 }
 
 export default function PsychCounsel() {
+  const mobileSlots = useSlotPicker()
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
   usePageHead('상담 신청', '상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.')
   // 진로취업 화면과 같은 순서로 고른다 — 시간 먼저, 그 시간에 가능한 상담사가 뒤따른다.
@@ -190,31 +193,35 @@ export default function PsychCounsel() {
             <span><i className="selected" />선택됨</span>
           </div>
 
-          <div className="cc-calendar-grid">
-            <div className="cc-grid-head empty" />
-            {days.map(day => (
-              <div key={day.key} className="cc-grid-head">{day.label}</div>
-            ))}
+          {mobileSlots ? (
+            <CounselSlotPicker days={days} times={times} getStatus={getStatus} onSelect={selectSlot} selected={selectedSlot} />
+          ) : (
+            <div className="cc-calendar-grid">
+              <div className="cc-grid-head empty" />
+              {days.map(day => (
+                <div key={day.key} className="cc-grid-head">{day.label}</div>
+              ))}
 
-            {times.map(time => (
-              <div className="cc-time-row" key={time}>
-                <div className="cc-time-cell">{time}</div>
-                {days.map(day => {
-                  const status = getStatus(day.key, time)
-                  return (
-                    <button
-                      key={`${day.key}-${time}`}
-                      className={`cc-slot cc-slot-${status}`}
-                      onClick={() => selectSlot(day, time)}
-                    >
-                      {status === 'selected' && <i className="fa-solid fa-check" />}
-                      {status === 'selected' ? '선택됨' : status === 'reserved' ? '예약 완료' : '예약 가능'}
-                    </button>
-                  )
-                })}
-              </div>
-            ))}
-          </div>
+              {times.map(time => (
+                <div className="cc-time-row" key={time}>
+                  <div className="cc-time-cell">{time}</div>
+                  {days.map(day => {
+                    const status = getStatus(day.key, time)
+                    return (
+                      <button
+                        key={`${day.key}-${time}`}
+                        className={`cc-slot cc-slot-${status}`}
+                        onClick={() => selectSlot(day, time)}
+                      >
+                        {status === 'selected' && <i className="fa-solid fa-check" />}
+                        {status === 'selected' ? '선택됨' : status === 'reserved' ? '예약 완료' : '예약 가능'}
+                      </button>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className="cc-selected-bar">
             <div className="cc-selected-title">

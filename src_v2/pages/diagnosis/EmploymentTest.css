@@ -396,8 +396,10 @@
 }
 
 @media (max-width: 768px) {
+  /* 좌우 여백은 셸(.v2-main 의 --page-gutter)이 준다. 예전에 .de-wrap 이 자기 여백
+     (0 40px)을 쥐던 시절의 18px 축소값이 남아 셸 여백 위에 겹쳤다 — 하단만 줄인다. */
   .de-wrap {
-    padding: 0 18px 32px;
+    padding: 0 0 32px;
   }
 
   .de-hero {

@@ -286,11 +286,50 @@
 
 /* 데스크톱 전용이라 한 단계면 충분하다 — 사이드를 본문 아래로 내린다. */
 @media (max-width: 1180px) {
-  .jd-hero { grid-template-columns: 72px minmax(0, 1fr); }
+  /* 로고 칸은 내용 폭 — 72px 트랙에 112px 로고(has-img)가 오면 글 칸을 덮쳤다.
+     배너 사진(job-temp.png)은 106% auto 라 세로로 길어진 배너를 못 덮고 사진에 박힌 흰 테두리가
+     위아래로 드러났다. 사진은 장식이고 세로 구분선도 지표가 아래로 내려간 뒤엔 뜻이 없다 →
+     폴백으로 두었던 그라데이션만 깐다(흰 글자 대비는 그라데이션 기준으로 잡혀 있다). */
+  .jd-hero {
+    grid-template-columns: auto minmax(0, 1fr);
+    background: linear-gradient(118deg, var(--jd-hero-1), var(--jd-hero-2));
+  }
   .jd-hero-stats { grid-column: 1 / -1; grid-template-columns: repeat(3, auto); justify-content: start; gap: 22px; padding: 16px 0 0; border-top: 1px solid rgba(255, 255, 255, .2); }
   .jd-body { grid-template-columns: minmax(0, 1fr); }
   .jd-side { position: static; }
   .jd-kv { grid-template-columns: minmax(0, 1fr); }
   .jd-kv > div { border-top: 1px solid var(--jd-line); }
   .jd-kv > div:first-child { border-top: 0; }
+}
+@media (max-width: 640px) {
+  .jd-hero {
+    gap: 16px;
+    padding: 20px 18px;
+  }
+
+  .jd-hero-title { font-size: 22px; }
+
+  /* 1180 블록의 3열(auto)은 390px 에서 449px 로 넘친다 — 들어가는 만큼만 열을 두고 줄바꿈을 허용한다. */
+  .jd-hero-stats {
+    grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+    gap: 12px 16px;
+    white-space: normal;
+  }
+
+  .jd-hero-stats dd { word-break: keep-all; }
+
+  .jd-sec { padding: 16px; }
+
+  .jd-kv > div,
+  .jd-kv > div:last-child:nth-child(odd) {
+    grid-template-columns: 96px minmax(0, 1fr);
+  }
+
+  .jd-kv dt,
+  .jd-kv dd { padding: 10px 12px; }
+
+  .jd-note { align-items: flex-start; }
+}
+@media (max-width: 480px) {
+  .jd-hero { grid-template-columns: minmax(0, 1fr); }
 }
