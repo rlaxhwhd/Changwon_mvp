@@ -9,4 +9,8 @@ pool = ConnectionPool(kwargs={**settings.connection_kwargs(), 'row_factory': dic
 
 def connection():
     with pool.connection() as conn:
+        # These scoped roster/metadata queries are short OLTP requests. Compiling the
+        # expanded views costs ~2s even for 120 students; execution takes milliseconds.
+        # Keep the setting transaction-local so maintenance/analytical sessions differ.
+        conn.execute('SET LOCAL jit = off')
         yield conn

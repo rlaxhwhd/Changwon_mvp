@@ -55,6 +55,8 @@ def applicant_dto(row):
     return {
         'studentId': row['alias'], 'studentName': snapshot.get('studentName') or row['name'],
         'studentMajor': snapshot.get('studentMajor') or row['major_label'],
+        'studentNo':row.get('student_no'), 'studentGrade':row.get('grade'),
+        'studentStatus':row.get('student_status'), 'studentType':row.get('student_type'),
         'appliedAt': row['applied_at'], 'canceledAt': row['cancelled_at'],
         'attendance': row['attendance_code'], 'round': row['round_no'],
         'selectionStatus': row['selection_code'], 'selectedAt': row['selected_at'],
@@ -76,7 +78,10 @@ def applicants_of(conn, user, program_ids):
     if not program_ids:
         return {}
     condition, values = applicant_scope(user)
-    rows = conn.execute(f'''SELECT a.*,p.alias,p.name,s.major_label,t.total AS penalty_total
+    rows = conn.execute(f'''SELECT a.*,p.alias,p.name,s.major_label,s.student_no,s.grade,
+      COALESCE(s.detail->>'enrollmentStatus','재학') AS student_status,
+      (SELECT e.student_type FROM dc.student_type_event e WHERE e.student_uid=s.intg_uid ORDER BY e.decided_at DESC,e.id DESC LIMIT 1) AS student_type,
+      t.total AS penalty_total
       FROM dc.program_apply a JOIN dc.person p ON p.intg_uid=a.student_uid
       JOIN dc.student s ON s.intg_uid=a.student_uid
       LEFT JOIN dc.penalty_total t ON t.student_uid=a.student_uid

@@ -56,6 +56,7 @@ def assignments(professorId:str|None=None,studentId:str|None=None,active:bool=Tr
 
 @router.get('/roster')
 def advisor_roster(request:Request,tab:str='all',professorId:str|None=None,year:int|None=None,
+                   q:str=Query('',max_length=200),
                    page:int=Query(1,ge=1),pageSize:int=Query(20,ge=1,le=100),
                    user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
     role=staff_role(conn,user)
@@ -67,12 +68,19 @@ def advisor_roster(request:Request,tab:str='all',professorId:str|None=None,year:
     if tab=='assigned': where.append('a.id IS NOT NULL')
     elif tab=='unassigned': where.append('a.id IS NULL')
     elif tab!='all': fail(400,'INVALID_TAB','지원하지 않는 탭입니다.')
-    if year: where.append('extract(year from a.assigned_on)=%s'); values.append(year)
+    year_filter=request.query_params.get('filters.year') or year
+    if year_filter: where.append('extract(year from a.assigned_on)::text=%s'); values.append(str(year_filter))
+    for field,column in {'major':'v.major_label','grade':'v.grade::text','status':'v.status'}.items():
+        value=request.query_params.get(f'filters.{field}')
+        if value: where.append(f'{column}=%s'); values.append(value)
+    if q.strip():
+        where.append("concat_ws(' ',v.name,v.student_no) ILIKE %s")
+        values.append('%'+q.strip().replace('%','\\%').replace('_','\\_')+'%')
     condition=' AND '.join(f'({x})' for x in where)
     count=conn.execute(f'SELECT count(*) n FROM dc.student_list v {join} WHERE {condition}',values).fetchone()['n']
     rows=conn.execute(f'''SELECT v.*,a.assigned_on,pp.alias professor_alias,pp.name professor_name
       FROM dc.student_list v {join} WHERE {condition}
-      ORDER BY (a.id IS NOT NULL) DESC,a.assigned_on DESC NULLS LAST,v.student_no LIMIT %s OFFSET %s''',values+[pageSize,(page-1)*pageSize]).fetchall()
+      ORDER BY (a.id IS NOT NULL),a.assigned_on DESC NULLS LAST,v.student_no LIMIT %s OFFSET %s''',values+[pageSize,(page-1)*pageSize]).fetchall()
     items=[]
     for row in rows:
         item=roster(row); item['advisor']=({'professorId':row['professor_alias'],'professorName':row['professor_name'],
@@ -95,6 +103,72 @@ def advisor_summary(request:Request,professorId:str|None=None,user=Depends(princ
       WHERE {condition} AND a.id IS NOT NULL GROUP BY pp.alias,pp.name ORDER BY pp.name''',values).fetchall()
     return {'all':row['all'],'assigned':row['assigned'],'unassigned':row['unassigned'],
             'years':sorted(row['years'] or [],reverse=True),'professors':[dict(x) for x in professors]}
+
+
+def counsel_base(request,user,conn):
+    role=staff_role(conn,user)
+    if role not in ('assistant','professor'):
+        fail(403,'OUT_OF_SCOPE','교수·조교만 지도학생 상담 현황을 조회할 수 있습니다.')
+    where,values=scope(request,user)
+    if role=='professor':
+        where.append('a.professor_uid=%s'); values.append(user['intg_uid'])
+    condition=' AND '.join(f'({part})' for part in where)
+    return f'''WITH assigned AS (
+      SELECT v.intg_uid,v.alias,v.student_no,v.name,v.major_label,v.grade,v.status,v.college_name,
+        a.professor_uid,pp.alias professor_id,pp.name professor_name
+      FROM dc.student_list v JOIN dc.advisor_assignment a ON a.student_uid=v.intg_uid AND a.released_at IS NULL
+      JOIN dc.person pp ON pp.intg_uid=a.professor_uid WHERE {condition}
+    ), records AS (
+      SELECT r.student_uid,c.counselor_uid,count(*) record_count,
+        count(*) FILTER(WHERE r.method_code='ONLINE') online_count,
+        max(COALESCE(r.slot_date,c.created_at::date)) last_date,
+        (array_agg(r.topic_code ORDER BY COALESCE(r.slot_date,c.created_at::date) DESC,c.created_at DESC,c.id DESC))[1] category
+      FROM dc.counsel_record c JOIN dc.counsel_request r ON r.id=c.request_id
+      JOIN assigned a ON a.intg_uid=r.student_uid AND a.professor_uid=c.counselor_uid
+      WHERE r.legacy_type='교수' GROUP BY r.student_uid,c.counselor_uid
+    ), status AS (
+      SELECT a.*,COALESCE(r.record_count,0) record_count,COALESCE(r.online_count,0) online_count,r.last_date,r.category
+      FROM assigned a LEFT JOIN records r ON r.student_uid=a.intg_uid AND r.counselor_uid=a.professor_uid
+    ) ''',values
+
+
+@router.get('/counsel-summary')
+def counsel_summary(request:Request,user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
+    base,values=counsel_base(request,user,conn)
+    rows=conn.execute(base+'''SELECT professor_id AS "professorId",professor_name AS "professorName",
+      string_agg(DISTINCT major_label,' · ' ORDER BY major_label) AS "professorMajor",
+      string_agg(DISTINCT major_label,' · ' ORDER BY major_label) AS dept,
+      COALESCE(string_agg(DISTINCT college_name,' · ' ORDER BY college_name),'—') AS college,
+      count(*) AS "adviseeCount",sum(online_count)::int AS "onlineCount",
+      sum(record_count-online_count)::int AS "offlineCount",sum(record_count)::int AS "recordCount",
+      count(*) FILTER(WHERE record_count=0) AS "noneCount",max(last_date) AS "lastDate"
+      FROM status GROUP BY professor_id,professor_name ORDER BY professor_name,professor_id''',values).fetchall()
+    return {'professors':[dict(row) for row in rows]}
+
+
+@router.get('/counsel-status')
+def counsel_status(request:Request,tab:str='all',q:str=Query('',max_length=200),
+                   page:int=Query(1,ge=1),pageSize:int=Query(20,ge=1,le=100),
+                   user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
+    base,values=counsel_base(request,user,conn)
+    where=['true']
+    if tab=='none': where.append('record_count=0')
+    elif tab!='all': fail(400,'INVALID_TAB','지원하지 않는 탭입니다.')
+    for field,column in {'professorId':'professor_id','status':'status'}.items():
+        value=request.query_params.get(f'filters.{field}')
+        if value: where.append(f'{column}=%s'); values.append(value)
+    if q.strip():
+        where.append("concat_ws(' ',name,student_no) ILIKE %s")
+        values.append('%'+q.strip().replace('%','\\%').replace('_','\\_')+'%')
+    condition=' AND '.join(where)
+    total=conn.execute(base+f'SELECT count(*) n FROM status WHERE {condition}',values).fetchone()['n']
+    rows=conn.execute(base+f'''SELECT alias AS "studentId",student_no AS "studentNo",name,major_label AS major,
+      grade,status,professor_id AS "professorId",professor_name AS "professorName",
+      record_count AS "recordCount",last_date AS "lastDate",category AS "lastCategoryCode",
+      (SELECT max(occurred_at) FROM dc.notification n WHERE n.recipient_uid=s.intg_uid AND n.source_kind='ADVISOR_NUDGE') AS "nudgedAt"
+      FROM status s WHERE {condition} ORDER BY (record_count>0),last_date NULLS FIRST,student_no
+      LIMIT %s OFFSET %s''',values+[pageSize,(page-1)*pageSize]).fetchall()
+    return {'items':[dict(row) for row in rows],'totalCount':total,'page':page,'pageSize':pageSize}
 
 
 class AssignBody(BaseModel):

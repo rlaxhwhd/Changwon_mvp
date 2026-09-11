@@ -1,54 +1,43 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 심리검사 결과 로더 (SPEC C7)
+// 심리검사 결과 로더 (SPEC C7) — 정본은 dc.psych_test_result 다.
 //
 // 단일 소스
 //   · 검사 대상  = 심리상담 신청(확정·완료) — 심리검사는 상담 신청 절차 안에서만 이뤄진다
-//   · 결과       = localStorage 'dc_psych_tests'
+//   · 결과       = GET /psych-tests (부팅 때 적재) · PUT /psych-tests/{requestId} (upsert)
 //
 // 목록의 행은 "심리상담 건"이고, 결과 작성 여부가 그 행의 상태다.
-// 별도 seed를 두지 않는다 — 대상이 상담 신청에서 파생되므로 신청이 늘면 자동으로 따라온다.
+// 심리검사는 CARE 7+ 진단과 별개 도메인이다 — 유형·로드맵과 연결하지 않는다.
 // ─────────────────────────────────────────────────────────────────────────────
+import { api } from '../../shared/api'
 import { getRequestsByAssignee } from './counselRequests'
 import type { CounselRequest } from './schema/counselRequest'
 import type { PsychTestResult } from './schema/psychTest'
-import { studentLiteOf } from './studentRoster'
 
-const STORAGE_KEY = 'dc_psych_tests'
+let results: PsychTestResult[] = []
 
-export function getPsychTests(): PsychTestResult[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed)) return parsed as PsychTestResult[]
-    }
-  } catch {
-    /* 결과 없음 */
-  }
-  return []
+/** 부팅 로더 — 심리상담사만 부른다(다른 역할은 서버가 403). */
+export async function loadPsychTests(): Promise<void> {
+  const data = await api<{ items: PsychTestResult[] }>('/psych-tests')
+  results = data.items
 }
 
-function persist(list: PsychTestResult[]): void {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
-  } catch {
-    /* 데모 범위 — 저장 실패 무시 */
-  }
+export function getPsychTests(): PsychTestResult[] {
+  return results
 }
 
 /** 상담 건 1건의 검사 결과 (없으면 undefined) */
 export function getPsychTestByRequest(requestId: string): PsychTestResult | undefined {
-  return getPsychTests().find(item => item.requestId === requestId)
+  return results.find(item => item.requestId === requestId)
 }
 
-/** 결과 upsert. id가 있으면 갱신, 없으면 추가. `updatedAt`은 항상 갱신된다. */
-export function upsertPsychTest(result: PsychTestResult): PsychTestResult {
-  const now = new Date().toISOString()
-  const next: PsychTestResult = { ...result, updatedAt: now }
-  const list = getPsychTests()
-  const idx = list.findIndex(item => item.id === result.id)
-  persist(idx >= 0 ? list.map(item => (item.id === result.id ? next : item)) : [...list, next])
-  return next
+/** 결과 upsert — 서버가 신청 1건당 결과 1건을 보장한다. 저장 후 목록을 다시 읽는다. */
+export async function upsertPsychTest(
+  requestId: string,
+  body: Pick<PsychTestResult, 'testCode' | 'testNameEtc' | 'testedAt' | 'scales' | 'interpretation' | 'opinion' | 'openToStudent' | 'status'>,
+): Promise<PsychTestResult> {
+  const saved = await api<PsychTestResult>(`/psych-tests/${requestId}`, { method: 'PUT', body: JSON.stringify(body) })
+  await loadPsychTests()
+  return saved
 }
 
 /** 목록 1행 = 심리상담 건 + 결과 작성 여부 */
@@ -63,13 +52,13 @@ export interface PsychTestRow {
  * 대상 = 본인 배정 심리상담 중 **확정·완료** 건(대기·취소는 아직 검사 대상이 아니다).
  */
 export function getPsychTestRows(counselorId: string): PsychTestRow[] {
-  const results = new Map(getPsychTests().map(item => [item.requestId, item]))
+  const byRequest = new Map(results.map(item => [item.requestId, item]))
   return getRequestsByAssignee(counselorId)
     .filter(request => request.type === '심리' && (request.status === '확정' || request.status === '완료'))
     .map(request => ({
       request,
-      studentGrade: studentLiteOf(request.studentId)?.grade ?? 0,
-      result: results.get(request.id),
+      studentGrade: request.studentGrade ?? 0,
+      result: byRequest.get(request.id),
     }))
     .sort((a, b) => {
       // 미작성 건을 위로, 그다음 최근 상담일 순

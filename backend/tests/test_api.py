@@ -31,9 +31,10 @@ def test_storage_and_scope(client):
 
 
 def test_server_pagination_and_aggregates(client):
-    first=client.get('/api/v1/students?pageSize=7',headers=headers('career_kim')).json()
-    second=client.get('/api/v1/students?page=2&pageSize=7',headers=headers('career_kim')).json()
-    assert first['totalCount']==120 and len(first['items'])==7
+    # 학생 fixture 는 상세 3명뿐이다(062 로스터 더미 퇴역) — 페이징은 2+1 로 검증한다.
+    first=client.get('/api/v1/students?pageSize=2',headers=headers('career_kim')).json()
+    second=client.get('/api/v1/students?page=2&pageSize=2',headers=headers('career_kim')).json()
+    assert first['totalCount']==3 and len(first['items'])==2 and len(second['items'])==1
     assert not {r['id'] for r in first['items']} & {r['id'] for r in second['items']}
     meta=client.get('/api/v1/students/metadata',headers=headers('career_kim')).json()
     assert meta['summary']['total']==first['totalCount']

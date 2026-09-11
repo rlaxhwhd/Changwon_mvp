@@ -1,5 +1,7 @@
 from pathlib import Path
+from typing import Literal
 
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -19,6 +21,12 @@ class Settings(BaseSettings):
     # ⚠ DB 백업에 포함되지 않는다 — 별도 백업이 필요하다.
     file_root: str = "var/files"
     file_max_bytes: int = 10 * 1024 * 1024
+    roadmap_provider: Literal['disabled', 'openai-compatible', 'fixture'] = 'disabled'
+    roadmap_api_url: str = 'https://api.openai.com/v1/chat/completions'
+    roadmap_model: str = ''
+    roadmap_api_key: SecretStr = SecretStr('')
+    roadmap_api_key_file: str | None = None
+    roadmap_timeout_seconds: float = Field(default=45, ge=1, le=60)
 
     def connection_kwargs(self) -> dict:
         password = self.db_password

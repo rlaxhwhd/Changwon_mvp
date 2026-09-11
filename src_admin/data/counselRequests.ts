@@ -1,13 +1,15 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 상담 신청 로더 (학생 스토어 투영 — 읽기 전용 소스)
-// 원천 = 학생 레코드에 내장된 상담신청(src_v2/data/students 의 CounselOwner 스토어).
-// 이 모듈은 그 스토어를 기존 CounselRequest 형태로 투영해 상담사 화면에 공급한다.
-//  · 소스: getCounselOwners() (seed 불변 + dc_counsel_owners override — 단일 DB 스왑 seam)
-//  · 배정(assignedCounselorId): 학생측 미지정분은 투영 시점에 유형별 기본배정을 파생 주입
-//  · 상태 전이: patchCounselRequest(students.ts)로 소유 owner override를 갱신
+// 상담 신청 로더 — 원천은 서버(GET /counsel-requests)가 채운 shared/counselStore 다.
+// 서버가 열람 범위(visibility)와 학생 스냅샷(학번·이름·학과·학년·유형·학적)을 함께 내려주므로
+// 여기서는 그 DTO 를 CounselRequest 형태로 투영만 한다.
+//  ★ 학생 owner(STUDENTS·counselSeed) 를 거치지 않는다 — 거치면 로스터 120명 중 상세 프로필이
+//    없는 학생의 신청이 접수함·일지·통계에서 조용히 사라진다(2026-09-11 추가 심리상담신청에서 발견).
+//  · 배정(assignedCounselorId): 미지정분은 투영 시점에 유형별 기본배정을 파생 주입
+//  · 상태 전이: performCounselAction 이 서버를 부르고 스토어를 갱신한다
 // 화면은 이 로더의 셀렉터만 구독하고 리터럴을 박지 않는다.
 // ─────────────────────────────────────────────────────────────────────────
 import type {
+  CounselMethod,
   CounselRequest,
   CounselRequestStatus,
   CounselRequestType,
@@ -15,14 +17,12 @@ import type {
 } from './schema/counselRequest'
 import { handledRequestTypes } from './schema/counselor'
 import { getCounselorByRole } from './counselors'
-import { performCounselAction } from '../../shared/counselStore'
-import {
-  getCounselOwners,
-  getCounselOwnerById,
-  getStudentTrack,
-  STUDENTS,
-} from '../../src_v2/data/students'
+import { api } from '../../shared/api'
+import { loadCounselEvents } from '../../shared/communicationsStore'
+import { counselRequests, loadCounselRecords, loadCounselRequests, performCounselAction } from '../../shared/counselStore'
+import { getCounselOwnerById, STUDENTS } from '../../src_v2/data/students'
 import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
+import { studentLiteOf } from './studentRoster'
 import { STUDENT_TYPE_MAP } from '../../src_v2/data/careerProcess'
 import type { StudentType, StudentTypeMeta } from '../../src_v2/data/careerProcess'
 
@@ -36,36 +36,34 @@ function defaultAssigneeFor(type: CounselRequestType): string | undefined {
 }
 
 /**
- * 전체 상담 신청을 반환. 학생 owner의 상담신청을 평탄화 + 학생 id/name/major JOIN 후
- * 기존 CounselRequest 형태로 투영한다. 배정 미지정분은 유형별 기본배정을 파생 주입.
+ * 전체 상담 신청을 반환 — 서버 스토어의 신청을 CounselRequest 형태로 투영한다.
+ * 학생 스냅샷은 신청 행이 들고 있다(서버 dto). 배정 미지정분은 유형별 기본배정을 파생 주입.
  */
 export function getCounselRequests(): CounselRequest[] {
-  return getCounselOwners().flatMap(owner =>
-    owner.counselRequests
-      .filter(r => (ADMIN_TYPES as string[]).includes(r.type))
-      .map(r => {
-        const type = r.type as CounselRequestType
-        return {
-          id: r.id,
-          studentId: owner.id,
-          studentNo: owner.studentNo,
-          studentName: owner.name,
-          studentMajor: owner.major,
-          studentEnrollmentStatus: owner.enrollmentStatus,
-          studentTrack: getStudentTrack(owner.competencyScore, owner.grade),
-          studentType: owner.studentType,
-          type,
-          careTrack: r.careTrack,
-          status: r.status,
-          method: r.method,
-          topic: r.topic,
-          requestedAt: r.requestedAt,
-          slot: r.slot,
-          assignedCounselorId: r.assignedCounselorId ?? defaultAssigneeFor(type),
-          intake: r.intake,
-        }
-      }),
-  )
+  return counselRequests()
+    .filter(r => (ADMIN_TYPES as string[]).includes(r.type))
+    .map(r => {
+      const type = r.type as CounselRequestType
+      return {
+        id: r.id,
+        studentId: r.studentId,
+        studentNo: r.studentNo,
+        studentGrade: r.studentGrade,
+        studentName: r.studentName,
+        studentMajor: r.studentMajor,
+        studentEnrollmentStatus: r.studentStatus ?? '재학',
+        studentType: r.studentType ?? null,
+        type,
+        careTrack: r.careTrack,
+        status: r.status,
+        method: r.method,
+        topic: r.topic,
+        requestedAt: r.requestedAt,
+        slot: r.slot,
+        assignedCounselorId: r.assignedCounselorId ?? defaultAssigneeFor(type),
+        intake: r.intake,
+      }
+    })
 }
 
 /** 특정 상담 유형(진로취업/심리)만 필터 — 상담사 역할별 접수함에 사용 */
@@ -219,6 +217,7 @@ export function buildDaySchedule(
 
 /** 상세 보기 모달이 구독하는 학생 프로필 투영 */
 export interface CounselStudentProfile {
+  progress?: number
   id: string
   studentNo: string
   name: string
@@ -240,13 +239,24 @@ export interface CounselStudentProfile {
   detailed?: StudentData
 }
 
-/** 학생 id로 상세 보기 모달용 프로필을 투영한다. owner 없으면 undefined. */
+/** 학생 id로 상세 보기 모달용 프로필을 투영한다.
+ *  상세 프로필(owner)이 없는 로스터 학생은 로스터 경량 행으로 채운다 — 신청이 있는데 모달이 비면 안 된다. */
 export function getCounselStudentProfile(studentId: string): CounselStudentProfile | undefined {
   const owner = getCounselOwnerById(studentId)
-  if (!owner) return undefined
+  if (!owner) {
+    const lite = studentLiteOf(studentId)
+    if (!lite) return undefined
+    return {
+      id: studentId, studentNo: lite.studentNo, name: lite.name, major: lite.major, grade: lite.grade,
+      phone: '—', enrollmentStatus: lite.status, studentType: lite.studentType,
+      typeMeta: lite.studentType ? STUDENT_TYPE_MAP[lite.studentType] : null,
+      gpa: '—', language: '—', targetCompanySummary: '—', roadmapSummary: '로드맵 없음', counselorQuestions: [],
+    }
+  }
   const detailed = STUDENTS.find(s => s.id === studentId)
   return {
     id: owner.id,
+    progress: owner.progress,
     studentNo: owner.studentNo,
     name: owner.name,
     major: owner.major,
@@ -287,6 +297,15 @@ export async function completeRequest(
 }
 export async function reassignRequest(id: string, counselorId: string, reason?: string): Promise<void> {
   await performCounselAction(id, 'reassign', { assigneeId: counselorId, reason: reason ?? '' })
+}
+/** 추가 심리상담신청 — 학생 신청 없이 상담사가 남기는 심리상담 기록. 서버가 신청(완료)+기록을 한 트랜잭션으로 만든다(교수 발의 기록과 같은 방식). */
+export async function addPsychCounselRecord(
+  input: { studentId: string; topic: string; method: CounselMethod; date: string; summary: string },
+): Promise<void> {
+  await api('/counsel-records/psych', {
+    method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify(input),
+  })
+  await Promise.all([loadCounselRequests(), loadCounselRecords(), loadCounselEvents()])
 }
 
 export type {

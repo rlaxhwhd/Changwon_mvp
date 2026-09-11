@@ -7,7 +7,6 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { getRequestsByAssignee, splitMajorGrade } from './counselRequests'
 import { getCounselRecords } from './counselRecords'
-import { studentLiteOf } from './studentRoster'
 import type { EnrollStatus } from './studentRoster'
 import type { CounselRecord } from './schema/counselRecord'
 import type { CounselMethod, CounselRequestType } from './schema/counselRequest'
@@ -64,7 +63,6 @@ export function getJournalRows(counselorId: string): JournalRow[] {
     .filter(r => r.status === '완료')
     .map(r => {
       const record = byRequest.get(r.id)
-      const lite = studentLiteOf(r.studentId)
       // 상담 시드의 studentMajor 에는 학년이 붙어 있다("컴퓨터공학과 4학년").
       // 그대로 두면 학과 필터가 같은 학과를 둘로 갈라 놓는다 — 쪼개는 규칙은 counselRequests 가 갖고 있다.
       const snap = splitMajorGrade(r.studentMajor)
@@ -74,8 +72,8 @@ export function getJournalRows(counselorId: string): JournalRow[] {
         studentNo: r.studentNo,
         studentName: r.studentName,
         studentMajor: snap.major,
-        studentGrade: lite?.grade ?? (snap.grade ? parseInt(snap.grade, 10) : undefined),
-        studentStatus: lite?.status ?? r.studentEnrollmentStatus,
+        studentGrade: r.studentGrade ?? (snap.grade ? parseInt(snap.grade, 10) : undefined),
+        studentStatus: r.studentEnrollmentStatus,
         studentType: r.studentType,
         type: r.type,
         method: r.method,

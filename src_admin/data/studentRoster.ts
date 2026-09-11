@@ -1,10 +1,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 // 학생 로스터(관리자 전용) 로더 — 정본은 서버 `dc.student_list`(GET /students).
-// 부팅 때 인가된 범위(staff_student_scope)의 학생을 전부 적재하고, 화면·집계는
-// 아래 동기 셀렉터만 구독한다. 예전 studentsRoster.json 의 더미 유형·이행률은 없다 —
-// 유형은 student_type_event, 이행률은 roadmap_progress 에서만 온다.
-// ⚠ 전량 적재는 fixture 규모(120명)의 이음새다. 6천명이 오면 집계 셀렉터를
-//   /students/summary·/students/metadata 로 옮긴다(0003 Astra 교정 5).
+// 부팅에는 서버 집계와 필터 메타데이터만 적재한다. 학생 행은 페이지·상세 조회 때만
+// 캐시하며, 이 부분 캐시로 총원·분포·담당 범위를 계산하지 않는다.
 // ⚠ 화면 컴포넌트에 로스터 리터럴을 박지 않는다 — 반드시 이 로더에서 구독.
 // ─────────────────────────────────────────────────────────────────────────
 import type { EnrollmentStatus } from '../../src_v2/data/students'
@@ -63,23 +60,47 @@ export interface RosterStudent {
 
 export const ROSTER_EVENT = 'dc:roster-updated'
 
-let rows: RosterStudent[] = []
-let byId = new Map<string, RosterStudent>()
-
-/** 부팅 적재 — 서버가 인가 범위로 거른 학생 전량. 페이지 상한(100)만큼 반복해서 받는다. */
-export async function loadStudentRoster(): Promise<void> {
-  const result: RosterStudent[] = []
-  let page = 1
-  while (true) {
-    const response = await api<Paginated<RosterStudent>>(`/students?${queryString({ page, pageSize: 100 })}`)
-    result.push(...response.items)
-    if (result.length >= response.totalCount || response.items.length === 0) break
-    page += 1
-  }
-  rows = result
-  byId = new Map(rows.map(s => [s.id, s]))
+const byId = new Map<string, RosterStudent>()
+export interface RosterMetadata {
+  options: { majors: string[]; grades: number[]; types: StudentType[]; tiers: RosterTier[]; statuses: EnrollStatus[] }
+  summary: { total: number; focusCount: number; highRiskCount: number; coreCareCount: number; starCount: number }
+}
+export interface RosterDistribution {
+  total: number
+  groups: { key: string | null; label: string; count: number; avgProgress: number }[]
+  risk: { base: number; high: number; core: number; star: number }
+}
+const emptyMetadata: RosterMetadata = {
+  options: { majors: [], grades: [], types: [], tiers: [], statuses: [] },
+  summary: { total: 0, focusCount: 0, highRiskCount: 0, coreCareCount: 0, starCount: 0 },
+}
+const metadataCache = new Map<string, RosterMetadata>()
+const distributionCache = new Map<string, RosterDistribution>()
+export const rosterScopeKey = (departments: string[] = [], studentIds?: string[]) =>
+  JSON.stringify([[...departments].sort(), studentIds === undefined ? null : [...studentIds].sort()])
+export function rosterScopes(departments: string[]): string[][] {
+  return [...new Map([[], departments, ...departments.map(d => [d])].map(scope => [rosterScopeKey(scope), scope])).values()]
+}
+export async function loadStudentRoster(departments: string[] = []): Promise<void> {
+  byId.clear(); metadataCache.clear(); distributionCache.clear()
+  await Promise.all(rosterScopes(departments).map(async scope => {
+    const [metadata, distribution] = await Promise.all([
+      fetchRosterMetadata(scope),
+      api<RosterDistribution>(`/students/summary?${queryString({ departments: scope, groupBy: 'type' })}`),
+    ])
+    metadataCache.set(rosterScopeKey(scope), metadata)
+    distributionCache.set(rosterScopeKey(scope), distribution)
+  }))
   window.dispatchEvent(new Event(ROSTER_EVENT))
 }
+export function getRosterDistribution(departments: string[]): RosterDistribution {
+  return distributionCache.get(rosterScopeKey(departments)) ?? { total: 0, groups: [], risk: { base: 0, high: 0, core: 0, star: 0 } }
+}
+export async function loadRosterStudent(studentId: string): Promise<RosterStudent | undefined> {
+  const result = await queryStudentRoster({ studentIds: [studentId], pageSize: 1 })
+  return result.items[0]
+}
+export function rosterStudentOf(studentId: string): RosterStudent | undefined { return byId.get(studentId) }
 
 /** 학생 id → 학번. 미등록 id 는 id 그대로 반환(폴백). */
 export function studentNoOf(id: string): string {
@@ -109,7 +130,7 @@ export { collegeOf } from './departments'
 
 /** 전체 학생 수 — 대시보드 '전체 학생' 카드/목록 카운트 단일 소스 */
 export function getRosterTotal(): number {
-  return rows.length
+  return getRosterSummary().total
 }
 
 /** 학적 상태 배지 CSS 클래스 (index.css 토큰) */
@@ -176,9 +197,6 @@ export function rosterTierClass(tier: RosterTier | null): string {
 }
 
 /** 적재된 로스터(담당 학과 필터) — 조회·필터·집계의 단일 소스. 서버가 이미 인가 범위로 걸렀다. */
-export function getFullRoster(departments: string[] = []): RosterStudent[] {
-  return departments.length === 0 ? rows : rows.filter(s => departments.includes(s.major))
-}
 
 // ── 집중관리 분류 (고위험군 · 핵심관리대상) ────────────────────────────────
 //
@@ -256,41 +274,30 @@ export function isFocusFilter(value: string | null | undefined): value is FocusF
 
 /** [DB-ready] 로스터 목록 조회 — async + 페이징. 6천건이 와도 화면은 현재 페이지만 받는다. */
 export async function queryStudentRoster(
-  params: ListParams & { departments?: string[]; studentIds?: string[] } = {},
+  params: ListParams & { departments?: string[]; studentIds?: string[]; professorId?: string } = {},
 ): Promise<Paginated<RosterStudent>> {
-  return api<Paginated<RosterStudent>>(`/students?${queryString(params)}`)
+  const result = await api<Paginated<RosterStudent>>(`/students?${queryString(params)}`)
+  for (const student of result.items) {
+    byId.delete(student.id)
+    byId.set(student.id, student)
+  }
+  // Bounded detail cache, never a substitute for the server's complete result set.
+  while (byId.size > 300) byId.delete(byId.keys().next().value!)
+  return result
 }
 
 /** 필터 드롭다운 옵션 — 전체 집합에서 파생. DB 전환 시 별도 집계 엔드포인트. */
-export function getRosterFilterOptions(departments: string[] = [], studentIds?: string[]) {
-  const ids = studentIds === undefined ? undefined : new Set(studentIds)
-  const base = getFullRoster(departments).filter(student => !ids || ids.has(student.id))
-  return {
-    majors: [...new Set(base.map(s => s.major))].sort(),
-    grades: [...new Set(base.map(s => s.grade))].sort((a, b) => a - b),
-    types: [...new Set(base.map(s => s.studentType))].filter((t): t is StudentType => t !== null),
-    tiers: [...new Set(base.map(s => s.tier))],
-    statuses: [...new Set(base.map(s => s.status))],
-  }
+export function getRosterFilterOptions(departments: string[] = [], studentIds?: string[]): RosterMetadata['options'] {
+  return (metadataCache.get(rosterScopeKey(departments, studentIds)) ?? emptyMetadata).options
 }
 
 /** 헤더 집계(총원·집중관리) — 전체 집합에서. DB 전환 시 COUNT 쿼리. */
-export function getRosterSummary(departments: string[] = [], studentIds?: string[]) {
-  const ids = studentIds === undefined ? undefined : new Set(studentIds)
-  const base = getFullRoster(departments).filter(student => !ids || ids.has(student.id))
-  return {
-    total: base.length,
-    focusCount: base.filter(s => s.tier === '하위').length,
-    // 집중관리 2분류 — 홈 카드와 같은 판정 함수를 쓴다(수치가 갈리지 않게).
-    highRiskCount: base.filter(isHighRisk).length,
-    coreCareCount: base.filter(isCoreCare).length,
-    starCount: base.filter(isStarTrack).length,
-  }
+export function getRosterSummary(departments: string[] = [], studentIds?: string[]): RosterMetadata['summary'] {
+  return (metadataCache.get(rosterScopeKey(departments, studentIds)) ?? emptyMetadata).summary
 }
 
-export async function fetchRosterMetadata(departments: string[] = [], studentIds?: string[]): Promise<{
-  options: ReturnType<typeof getRosterFilterOptions>
-  summary: ReturnType<typeof getRosterSummary>
-}> {
-  return api(`/students/metadata?${queryString({ departments, studentIds })}`)
+export async function fetchRosterMetadata(departments: string[] = [], studentIds?: string[], professorId?: string): Promise<RosterMetadata> {
+  const result = await api<RosterMetadata>(`/students/metadata?${queryString({ departments, studentIds, professorId })}`)
+  if (!professorId) metadataCache.set(rosterScopeKey(departments, studentIds), result)
+  return result
 }

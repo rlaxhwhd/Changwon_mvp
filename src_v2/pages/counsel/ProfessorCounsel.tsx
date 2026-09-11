@@ -4,7 +4,7 @@ import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import CounselTabs from '../../components/CounselTabs'
-import { findDefaultSelection } from '../../data/professors'
+import { findDefaultSelection, type DepartmentGroup } from '../../data/professors'
 import { getCounselableProfessorGroups } from '../../data/professorProfilesRead'
 import { submitProfessorCounselRequest } from '../../data/counselRequestsWrite'
 import { getActiveStudent } from '../../data/students'
@@ -23,8 +23,6 @@ interface SelectedSlot {
 
 // 학과별 교수 = 단일소스(professors.ts) 투영. 화면에 하드코딩하지 않는다.
 // 기본 선택은 활성 학생의 학과(major)로 파생한다(본인 학과가 먼저 열림).
-const professorGroups = getCounselableProfessorGroups()
-const defaultSelection = findDefaultSelection(getActiveStudent().major, professorGroups)
 
 // 이번 주 월~금 (공용 유틸 — 화면에 날짜 하드코딩 금지)
 const days: Day[] = getCounselWeek()
@@ -36,6 +34,18 @@ const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '1
 export default function ProfessorCounsel() {
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
   usePageHead('상담 신청', '교수님을 선택하고 온라인 또는 오프라인 상담을 신청하세요.')
+  const professorGroups = getCounselableProfessorGroups()
+  if (!professorGroups.length) return (
+    <div className="cc-wrap cc-professor pc-wrap">
+      <CounselTabs />
+      <section className="cc-hero"><h1>교수상담 신청</h1><p>현재 상담 가능한 교수가 없습니다.</p></section>
+    </div>
+  )
+  return <ProfessorCounselForm professorGroups={professorGroups} />
+}
+
+function ProfessorCounselForm({ professorGroups }: { professorGroups: DepartmentGroup[] }) {
+  const defaultSelection = findDefaultSelection(getActiveStudent().major, professorGroups)
   const [selectedGroupName, setSelectedGroupName] = useState(defaultSelection.groupName)
   const selectedGroup = professorGroups.find(group => group.name === selectedGroupName) ?? professorGroups[0]
   const divisionNames = Object.keys(selectedGroup.divisions)

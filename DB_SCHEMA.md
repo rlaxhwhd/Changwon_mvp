@@ -129,6 +129,18 @@ ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration �
 | 048 | `048_main_popup_seed.sql` | 0003 E5a — 팝업 시드 (시드 후 재실행) |
 | 049 | `049_counsel_topic_group_by_type.sql` | 0003 E4 — `counsel_request.topic_group` 생성식을 `type_code`로 분기(PROF→`PROF_COUNSEL_TYPE`). 교수상담 분류가 기존 코드 그룹으로 FK 검사됨 |
 | 050 | `050_prof_counsel_record_backfill.sql` | 0003 E4 — 교수 발의 상담 fixture 7건 → `counsel_request(DONE)`+`counsel_record`+이벤트 (시드 후 재실행) |
+| 051 | `051_professor_organization.sql` | 교수 소속의 유일한 대학·학과 일치만 코드 배정으로 이관. 미해결 소속은 import_issue 기록 |
+| 052 | `052_gpa_policy.sql` | 명시적 GPA 정책·학기 순서, 수강학점 가중평균 함수와 학생 목록 연결. 정책 자동 활성화 없음 |
+| 053 | `053_academic_mirror.sql` | 별도 `academic` 스키마에 학사 원본 9개 테이블·174개 컬럼과 검증 이력 `sync_run`. 원본 PK를 추정하지 않으며 중복 행도 보존. `dc` 업무 데이터 변경 없음 |
+| 054 | `054_academic_staff_mirror.sql` | 상담사 등록·담당 단대·조교 담당 학과 원본 3개 테이블, 59컬럼 보관 |
+| 055 | `055_academic_directory.sql` | 관리자 인원·조직·상담사·조교 배정·겸직 읽기 뷰. 원본 스키마와 비밀번호 노출 차단 |
+| 056 | `056_academic_directory_menu.sql` | 회원관리의 학사 인원·조직 조회 메뉴 등록 |
+| 057 | `057_psych_test_result.sql` | 0004 — `dc.psych_test_result`: 심리상담 신청 1건당 결과 1건(`request_id` UNIQUE), 척도 jsonb, DRAFT/DONE. 마지막 localStorage 업무 데이터(`dc_psych_tests`) 퇴역 |
+| 058 | `058_psych_menu.sql` | 0004 — 심리상담사 `menu_auth`에서 진단 관리·집단상담 제거(CARE 7+ 소속), `counsel.6` 추가 심리상담신청 등록 |
+| 062 | `062_retire_roster_dummies.sql` | 로스터 더미 학생(`studentsRoster.json` 112 + `counselSeedStudents.json` 5) 및 종속 행 전부 삭제. `person.source='fixture'` 이고 상세 3명이 아닌 학생만. append-only 가드는 이 마이그레이션 안에서만 내린다. 시드도 더 이상 더미를 만들지 않는다(`seed.py`) |
+| 059 | `059_student_login.sql` | 학사 학생 로그인 조회 뷰·로컬 정보 재정의·8시간 세션 |
+| 060 | `060_requested_student.sql` | 요청 학생 20180001 홍길동을 로컬 서비스 DB에 등록. 원본 변경 없음 |
+| 061 | `061_student_login_enrollment_permissions.sql` | 확인된 학사 학생의 최초 로그인 등록 권한 |
 
 다음 migration 번호는 작업 시작 시 `backend/migrations/`를 다시 조회해 결정한다. 이미 사용된 번호나 파일은 수정하지 않는다.
 

@@ -382,3 +382,9 @@
 @container (max-width: 620px) {
   .ssc { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+.ssc-locked { position: relative; min-height: 150px; display: grid; place-items: center; }
+.ssc-lock-placeholder { position: absolute; inset: 20px 0; filter: blur(6px); opacity: .4; }
+.ssc-lock-placeholder i { display: block; background: var(--stat-color, #d7dee8); height: 18px; width: 80%; margin: 16px auto; border-radius: 6px; }
+.ssc-locked p { position: relative; display: grid; gap: 8px; text-align: center; font-size: 12px; line-height: 1.6; margin: 0; }
+.ssc-locked p > span:first-child { font-size: 24px; }

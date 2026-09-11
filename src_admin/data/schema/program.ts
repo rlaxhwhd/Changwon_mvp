@@ -127,6 +127,10 @@ export const COMPETENCY_SURVEY_ATTACHMENT = '역량향상률조사_설문지(한
 
 /** 프로그램 신청자 1명 */
 export interface ProgramApplicant {
+  studentNo?: string | null
+  studentGrade?: number | null
+  studentStatus?: import('../../../src_v2/data/students').EnrollmentStatus | null
+  studentType?: StudentType | null
   /** 학생 id (StudentData.id) */
   studentId: string
   studentName: string

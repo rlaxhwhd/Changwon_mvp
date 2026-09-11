@@ -1,6 +1,7 @@
 import { api } from './api'
 import { loadCounselEvents, loadNotifications } from './communicationsStore'
-import type { StudentCounselRequest } from '../src_v2/data/students'
+import type { EnrollmentStatus, StudentCounselRequest } from '../src_v2/data/students'
+import type { StudentType } from '../src_v2/data/careerProcess'
 import type { CounselRecord } from '../src_admin/data/schema/counselRecord'
 
 export type StoredCounselRequest = StudentCounselRequest & {
@@ -8,6 +9,10 @@ export type StoredCounselRequest = StudentCounselRequest & {
   studentNo: string
   studentName: string
   studentMajor: string
+  // 신청 시점 스냅샷 — 서버 dto(counsel.py dto)가 내려준다. 교직원 화면은 학생 owner 대신 이것을 읽는다.
+  studentGrade?: number
+  studentType?: StudentType | null
+  studentStatus?: EnrollmentStatus | null
   version: number
 }
 

@@ -43,6 +43,7 @@ const ALL_SECTIONS: NavSection[] = [
     id: 'adm-members', label: '회원관리', roles: ['admin'], basePaths: ['/members'], icon: LuUsers,
     children: [
       { label: '학과 담당 배정', path: '/members/assignments', icon: LuContact },
+      { label: '학사 인원·조직 조회', path: '/members/academic', icon: LuUsers },
     ],
   },
   { id: 'adm-diagnosis', label: '진단관리', roles: ['admin'], basePaths: ['/diagnosis'], path: '/diagnosis', icon: LuClipboardCheck, children: [] },
@@ -87,7 +88,8 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'diagnosis',
     label: '진단 관리',
-    roles: COUNSELOR,
+    // CARE 7+ 진단은 진로 경로다 — 심리상담사는 보지 않는다(058).
+    roles: ['career'],
     basePaths: ['/diagnosis'],
     icon: LuClipboardCheck,
     children: [
@@ -104,9 +106,11 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '신청 접수함', path: '/counsel/requests', icon: LuInbox },
       { label: '일정·예약', path: '/counsel/schedule', icon: LuCalendarDays },
       { label: '상담일지', path: '/counsel/journals', icon: LuFileText },
-      { label: '집단상담', path: '/counsel/groups', icon: LuUsersRound },
+      { label: '집단상담', path: '/counsel/groups', icon: LuUsersRound, roles: ['career'] },
       { label: '심리검사 결과', path: '/counsel/psych-tests', icon: LuBrain, roles: ['psych'] },
       { label: '상담 통계', path: '/counsel/stats', icon: LuChartNoAxesColumn },
+      // 학생 신청 없이 남기는 심리상담 기록 — 교수 발의 기록과 같은 방식(counsel.6).
+      { label: '추가 심리상담신청', path: '/counsel/psych-records/new', icon: LuPlus, roles: ['psych'] },
     ],
   },
   {

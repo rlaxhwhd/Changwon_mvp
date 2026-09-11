@@ -4,7 +4,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 
 // 학적 상태는 학생 JSON(students.ts)이 단일 원천 — 타입만 데이터 seam 채널로 재사용.
-import type { EnrollmentStatus, StudentTrack } from '../../../src_v2/data/students'
+import type { EnrollmentStatus } from '../../../src_v2/data/students'
 // 6유형(T1~T6)은 careerProcess 가 단일 원천.
 import type { StudentType } from '../../../src_v2/data/careerProcess'
 import type { CounselIntakeAnswer } from '../../../src_v2/data/counselIntake'
@@ -21,6 +21,7 @@ export type CounselRequestStatus = '대기' | '확정' | '완료' | '취소'
 export type CounselMethod = '대면' | '비대면'
 
 export interface CounselRequest {
+  studentGrade?: number
   id: string
   /** 신청 학생 id (src_v2/data/students 의 StudentData.id 와 연결) */
   studentId: string
@@ -32,8 +33,6 @@ export interface CounselRequest {
   studentMajor: string
   /** 신청 시점 학적 상태 스냅샷 (목록 배지용) — owner에서 투영 */
   studentEnrollmentStatus: EnrollmentStatus
-  /** 역량 점수 기반 위험 단계 트랙 (학년 보정) — owner에서 투영 */
-  studentTrack: StudentTrack
   /** 신청 시점 6유형 스냅샷 (목록 배지용) — owner에서 투영. 표시명은 typeLabel()로 파생. */
   /** 진단 전 학생은 유형이 없다(null) — typeLabel()이 「유형 미정」으로 표시한다. */
   studentType: StudentType | null

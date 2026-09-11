@@ -1,19 +1,19 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { LuBrain, LuEye, LuEyeOff, LuPlus, LuTrash2 } from 'react-icons/lu'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
-import { getActiveCounselor } from '../data/counselors'
 import { getPsychTestRows, getPsychTestSummary, upsertPsychTest } from '../data/psychTests'
 import type { PsychTestRow } from '../data/psychTests'
 import { PSYCH_TEST_TYPES, psychTestLabel } from '../data/schema/psychTest'
-import type { PsychTestResult, PsychTestScale, PsychTestStatus } from '../data/schema/psychTest'
+import type { PsychTestScale, PsychTestStatus } from '../data/schema/psychTest'
+import { getActiveUser } from '../data/staff'
 import { enrollStatusClass } from '../data/studentRoster'
+import { useAsyncAction } from '../../shared/useAsyncAction'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
 /** 결과 작성 모달 — 척도 구성은 검사도구마다 달라 자유 배열로 받는다(우리가 채점하지 않는다). */
-function ResultModal({ row, onClose }: { row: PsychTestRow; onClose: () => void }) {
-  const counselor = getActiveCounselor()
+function ResultModal({ row, onClose, onSaved }: { row: PsychTestRow; onClose: () => void; onSaved: () => void }) {
   const prev = row.result
   const [testCode, setTestCode] = useState(prev?.testCode ?? PSYCH_TEST_TYPES[0].code)
   const [testNameEtc, setTestNameEtc] = useState(prev?.testNameEtc ?? '')
@@ -29,32 +29,23 @@ function ResultModal({ row, onClose }: { row: PsychTestRow; onClose: () => void 
   const updateScale = (index: number, patch: Partial<PsychTestScale>) =>
     setScales(list => list.map((item, i) => (i === index ? { ...item, ...patch } : item)))
 
+  const { run, saving, error } = useAsyncAction()
+  // 서버가 정본이다 — 응답을 기다린 뒤에만 닫는다. 실패는 모달 안에 남긴다.
   const save = (status: PsychTestStatus) => {
     if (status === '완료' && !valid) return
-    const now = new Date().toISOString()
-    const result: PsychTestResult = {
-      id: prev?.id ?? `pst_${Date.now()}`,
-      requestId: row.request.id,
-      studentId: row.request.studentId,
-      studentNo: row.request.studentNo,
-      studentName: row.request.studentName,
-      studentMajor: row.request.studentMajor,
-      studentGrade: row.studentGrade,
-      testCode,
-      testNameEtc: testCode === 'ETC' ? testNameEtc.trim() : undefined,
-      testedAt,
-      scales: scales.filter(item => item.label.trim() !== ''),
-      interpretation: interpretation.trim(),
-      opinion: opinion.trim(),
-      openToStudent,
-      status,
-      by: counselor.id,
-      byName: counselor.name,
-      createdAt: prev?.createdAt ?? now,
-      updatedAt: now,
-    }
-    upsertPsychTest(result)
-    window.location.reload()
+    run(async () => {
+      await upsertPsychTest(row.request.id, {
+        testCode,
+        testNameEtc: testCode === 'ETC' ? testNameEtc.trim() : undefined,
+        testedAt,
+        scales: scales.filter(item => item.label.trim() !== ''),
+        interpretation: interpretation.trim(),
+        opinion: opinion.trim(),
+        openToStudent,
+        status,
+      })
+      onSaved()
+    })
   }
 
   return (
@@ -126,19 +117,22 @@ function ResultModal({ row, onClose }: { row: PsychTestRow; onClose: () => void 
         <span>학생에게 결과 공개</span>
       </label>
 
+      {error && <p className="admin-field-hint" role="alert">{error}</p>}
       <div className="admin-form-actions">
         <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>닫기</button>
-        <button type="button" className="admin-btn admin-btn-ghost" onClick={() => save('작성중')}>임시 저장</button>
-        <button type="button" className="admin-btn admin-btn-primary" disabled={!valid} onClick={() => save('완료')}>작성 완료</button>
+        <button type="button" className="admin-btn admin-btn-ghost" disabled={saving} onClick={() => save('작성중')}>임시 저장</button>
+        <button type="button" className="admin-btn admin-btn-primary" disabled={!valid || saving} onClick={() => save('완료')}>{saving ? '저장 중…' : '작성 완료'}</button>
       </div>
     </AdminModal>
   )
 }
 
 export default function PsychTests() {
-  const counselor = getActiveCounselor()
-  const rows = getPsychTestRows(counselor.id)
-  const summary = getPsychTestSummary(counselor.id)
+  const user = getActiveUser()
+  // 저장 뒤 스토어가 바뀌면 다시 읽는다 — 화면은 동기 셀렉터만 구독한다.
+  const [revision, setRevision] = useState(0)
+  const rows = useMemo(() => getPsychTestRows(user.id), [user.id, revision])
+  const summary = useMemo(() => getPsychTestSummary(user.id), [user.id, revision])
   const [target, setTarget] = useState<PsychTestRow | null>(null)
 
   return (
@@ -148,7 +142,7 @@ export default function PsychTests() {
           <h1 className="admin-page-title">심리검사 결과</h1>
           <p className="admin-page-desc">확정·완료된 심리상담 건의 검사 결과를 작성하고 열람합니다.</p>
           <p className="admin-field-hint">
-            심리검사는 <strong>상담 신청 절차 안에서만</strong> 이루어집니다. 학생이 단독 응시하는 진단 4종(C-2~C-CORE)은 <strong>검사 현황</strong> 화면에 있습니다.
+            심리검사는 <strong>상담 신청 절차 안에서만</strong> 이루어집니다. 이 시스템은 채점하지 않으며, CARE 7+ 진단·유형과는 무관합니다.
           </p>
         </div>
       </header>
@@ -207,7 +201,7 @@ export default function PsychTests() {
         )}
       </section>
 
-      {target && <ResultModal row={target} onClose={() => setTarget(null)} />}
+      {target && <ResultModal row={target} onClose={() => setTarget(null)} onSaved={() => { setTarget(null); setRevision(n => n + 1) }} />}
     </div>
   )
 }

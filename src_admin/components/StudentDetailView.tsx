@@ -14,7 +14,7 @@ import { STUDENTS, getCounselOwnerById, getStudentType, getStudentTypeMeta } fro
 import type { StudentData } from '../../src_v2/data/students'
 import { STUDENT_TYPE_MAP, areaOf, typeLabel } from '../../src_v2/data/careerProcess'
 import { loadJournalEntries } from '../../src_v2/data/growthJournal'
-import { getFullRoster, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
+import { loadRosterStudent, rosterStudentOf, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 import type { RosterStudent } from '../data/studentRoster'
 import {
   getCareerJourney, getCompetencyRadar, getCounselOverview, getStudentStatCards, getDiagnosisCards,
@@ -739,7 +739,7 @@ export default function StudentDetailView({ studentId, role, headerAction, initi
   useEffect(() => {
     let cancelled=false
     setDiagnosisLoading(true); setDiagnosisError('')
-    loadStudentDiagnoses(studentId).catch(e => { if (!cancelled) setDiagnosisError(e.message) })
+    Promise.all([loadStudentDiagnoses(studentId), loadRosterStudent(studentId)]).catch(e => { if (!cancelled) setDiagnosisError(e.message) })
       .finally(() => { if (!cancelled) setDiagnosisLoading(false) })
     return () => { cancelled=true }
   },[studentId])
@@ -761,7 +761,7 @@ export default function StudentDetailView({ studentId, role, headerAction, initi
     // 학생 id 체계가 세 갈래다 — STUDENTS(상세) · STUDENT_ROSTER(stu-NNN) ·
     // 상담 시드(학번). 상담 신청은 studentId 에 학번을 쓰므로 세 번째까지 봐야
     // 접수함·홈에서 연 상세가 "찾을 수 없습니다"로 떨어지지 않는다.
-    const roster = getFullRoster().find(s => s.id === studentId) ?? counselOwnerAsRoster(studentId)
+    const roster = rosterStudentOf(studentId) ?? counselOwnerAsRoster(studentId)
     if (roster) {
       return (
         <div className="sdv">

@@ -4,9 +4,10 @@ import { NAV_SECTIONS, getSectionForPath, getActiveChildPath, getVisibleNavChild
 import { Icon } from './Icon'
 import NotificationBell from './NotificationBell'
 import { getStudentNotifications } from '../data/notifications'
-import { DEVELOPMENT_STUDENTS, getActiveStudent, getActiveStudentId, setActiveStudent } from '../data/students'
+import { getActiveStudent } from '../data/students'
 import { getStageAccess } from '../data/careerProcess'
 import { getPipelineState } from '../data/pipeline'
+import { api } from '../../shared/api'
 
 /** 드롭다운/모바일 하위 링크 — 중첩(depth 1)까지 평탄화해 렌더한다. */
 function SubLinks({
@@ -51,12 +52,20 @@ export default function GNB() {
   const { pathname, hash } = useLocation()
   const currentSection = getSectionForPath(pathname)
   const activeStudent = getActiveStudent()
+  const activeId = activeStudent.id
   // 라운지 하위메뉴는 그 페이지의 카드로 가는 앵커다 — 카드가 감춰지면 메뉴도 같이 빠져야 한다.
   const stageAccess = getStageAccess(getPipelineState(activeStudent))
-  const activeId = getActiveStudentId()
   const myPagePath = activeStudent.grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'
 
   const [profileOpen, setProfileOpen] = useState(false)
+  const [logoutError, setLogoutError] = useState('')
+  async function logout() {
+    try {
+      await api('/auth/student/logout', {method:'POST'})
+      localStorage.removeItem('dc_active_student')
+      location.assign('/login')
+    } catch { setLogoutError('로그아웃에 실패했습니다. 다시 시도해 주세요.') }
+  }
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   // 하위 메뉴는 CSS :hover 로 열린다. 항목을 눌러 이동해도 포인터가 그 자리에 남아
   // 메뉴가 계속 펼쳐져 있었다 → 누른 그룹만 접어 두고, 포인터가 그 그룹을 벗어나면 푼다.
@@ -183,7 +192,7 @@ export default function GNB() {
                     </span>
                     <div className="profile-popover-meta">
                       <strong>{activeStudent.name}</strong>
-                      <small>{activeStudent.grade}학년 · {activeStudent.major}</small>
+                      <small>{activeStudent.grade ? `${activeStudent.grade}학년 · ` : ''}{activeStudent.collegeName ? `${activeStudent.collegeName} / ` : ''}{activeStudent.major}</small>
                     </div>
                   </div>
 
@@ -200,25 +209,14 @@ export default function GNB() {
 
                   <div className="profile-section">
                     <span className="profile-section-title">
-                      <Icon name="user" /> 데모 학생 전환
+                      <Icon name="user" /> 학번
                     </span>
                     <div className="profile-switch">
-                      {DEVELOPMENT_STUDENTS.map(s => (
-                        <button
-                          key={s.id}
-                          type="button"
-                          className={`profile-switch-btn${s.id === activeId ? ' active' : ''}`}
-                          onClick={() => s.id !== activeId && setActiveStudent(s.id)}
-                          role="menuitemradio"
-                          aria-checked={s.id === activeId}
-                        >
-                          <strong>{s.name}</strong>
-                          <small>{s.grade}학년 · {s.major}</small>
-                          {s.id === activeId && <Icon name="check" className="profile-switch-check" />}
-                        </button>
-                      ))}
+                      <strong>{activeStudent.studentNo}</strong>
                     </div>
                   </div>
+                  <button type="button" className="profile-action" onClick={() => void logout()}>로그아웃</button>
+                  {logoutError && <p role="alert">{logoutError}</p>}
                 </div>
               )}
             </div>
@@ -255,7 +253,7 @@ export default function GNB() {
               </span>
               <div className="profile-popover-meta">
                 <strong>{activeStudent.name}</strong>
-                <small>{activeStudent.grade}학년 · {activeStudent.major}</small>
+                <small>{activeStudent.grade ? `${activeStudent.grade}학년 · ` : ''}{activeStudent.collegeName ? `${activeStudent.collegeName} / ` : ''}{activeStudent.major}</small>
               </div>
               <Link to={myPagePath} className="mobile-profile-link">
                 마이페이지 <Icon name="chevron-right" />
@@ -291,22 +289,13 @@ export default function GNB() {
             </nav>
 
             <div className="mobile-switch">
+              <button type="button" className="profile-action" onClick={() => void logout()}>로그아웃</button>
+              {logoutError && <p role="alert">{logoutError}</p>}
               <span className="profile-section-title">
-                <Icon name="user" /> 데모 학생 전환
+                <Icon name="user" /> 학번
               </span>
               <div className="profile-switch">
-                {DEVELOPMENT_STUDENTS.map(s => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    className={`profile-switch-btn${s.id === activeId ? ' active' : ''}`}
-                    onClick={() => s.id !== activeId && setActiveStudent(s.id)}
-                  >
-                    <strong>{s.name}</strong>
-                    <small>{s.grade}학년 · {s.major}</small>
-                    {s.id === activeId && <Icon name="check" className="profile-switch-check" />}
-                  </button>
-                ))}
+                <strong>{activeStudent.studentNo}</strong>
               </div>
             </div>
           </div>

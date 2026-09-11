@@ -1,0 +1,3 @@
+# Offline/local academic importer only; not needed by the API image.
+JPype1==1.7.1
+psycopg[binary]==3.3.5

@@ -68,7 +68,7 @@ export interface LevelStat {
   pct: number
 }
 
-export type StudentStat = MetricStat | CounselStat | LevelStat
+export type StudentStat = (MetricStat | CounselStat | LevelStat) & { lockedReason?: string }
 
 function meterVars(pct: number): CSSProperties {
   return { '--value': `${pct}%`, '--accent': 'var(--stat-color)' } as CSSProperties
@@ -90,7 +90,7 @@ export default function StudentStatCards({ stats }: { stats: StudentStat[] }) {
               </span>
               <span className="ssc-icon" aria-hidden="true"><svg viewBox="0 0 24 24">{ICON[stat.kind]}</svg></span>
             </div>
-            {stat.kind === 'counsel' ? <CounselBody stat={stat} />
+            {stat.lockedReason ? <div className="ssc-locked"><div className="ssc-lock-placeholder" aria-hidden="true"><i /><i /><i /></div><p><span aria-hidden="true">🔒</span><span>{stat.lockedReason}</span></p></div> : stat.kind === 'counsel' ? <CounselBody stat={stat} />
               : stat.kind === 'level' ? <LevelBody stat={stat} />
               : <MetricBody stat={stat} />}
           </div>

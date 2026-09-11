@@ -15,6 +15,7 @@
   ⑤ 프로그램 칸은 비교과가 정본이다. 상태·프로그램·편입·만료는 편집 DTO 에서 받지 않는다.
 """
 import hashlib
+import json
 from datetime import datetime, time, timedelta
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -26,6 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import principal, require_staff
 from .db import connection
+from .roadmap_generator import available, provider_name, generate_outcome, unavailable
 from .gates import is_care7_request, program_gate
 # 멱등 저장과 메뉴 권한 술어는 채용에서 이미 확정된 것을 그대로 쓴다(CLAUDE.md 12조).
 from .jobs import MENU_PREDICATE, idempotent, remember
@@ -179,20 +181,15 @@ def plan_dto(conn, uid, row, moment, capabilities):
     }
 
 
-def generation_source(student):
-    """생성 provider 의 재고. 승인된 산출물이 시드에 있는 학생만 생성할 수 있다."""
-    return (student['detail'] or {}).get('roadmapOutcome')
-
-
 def capabilities_for(conn, user, student, row):
     manage = user['kind'] == 'STAFF' and has_menu(conn, user, PLAN_MENU)
     return {
         'canEdit': bool(manage and row),
         'canConfirm': bool(manage and row and row['status_code'] != 'CONFIRMED'),
-        'canGenerate': bool(manage and not row and generation_source(student)),
-        'canRegenerate': bool(manage and row),
+        'canGenerate': bool(manage and not row and available(student)),
+        'canRegenerate': bool(manage and row and available(student)),
         'canRequestChange': user['kind'] == 'STUDENT',
-        'providerSource': 'fixture' if generation_source(student) else None,
+        'providerSource': provider_name() if available(student) else None,
     }
 
 
@@ -272,11 +269,11 @@ def list_roadmaps(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le
       s.major_label AS "studentMajor",s.grade,s.college_code AS "collegeCode",s.dept_code AS "deptCode",
       t.student_type AS "studentType",r.status_code AS status,r.confirmed,r.version AS "roadmapVersion",
       r.lock_version AS version,r.target_role AS "targetRole",r.updated_at AS "updatedAt",
-      (r.student_uid IS NOT NULL) AS "hasRoadmap",(s.detail ? 'roadmapOutcome') AS "canGenerate",
+      (r.student_uid IS NOT NULL) AS "hasRoadmap",(%s AND (%s OR s.detail ? 'roadmapOutcome')) AS "canGenerate",
       g.done,g.total,g.pct {LIST_FROM}
       LEFT JOIN LATERAL dc.roadmap_progress(s.intg_uid,%s) g ON true
       WHERE {condition} ORDER BY p.name,s.student_no LIMIT %s OFFSET %s''',
-      [moment, *values, pageSize, (page - 1) * pageSize]).fetchall()
+      [bool(provider_name()), provider_name() != 'fixture', moment, *values, pageSize, (page - 1) * pageSize]).fetchall()
     items = [{**{k: v for k, v in row.items() if k not in ('done', 'total', 'pct')},
               'progress': {'done': row['done'], 'total': row['total'], 'pct': row['pct']}} for row in rows]
     return dict(items=items, totalCount=total, page=page, pageSize=pageSize, asOf=moment)
@@ -296,14 +293,14 @@ def roadmap_summary(status: str | None = None, hasRoadmap: str | None = None,
       count(*) FILTER(WHERE r.status_code='DRAFT')::int AS draft,
       count(*) FILTER(WHERE r.status_code='REVIEW')::int AS review,
       count(*) FILTER(WHERE r.confirmed)::int AS confirmed,
-      count(*) FILTER(WHERE r.student_uid IS NULL AND s.detail ? 'roadmapOutcome')::int AS "generatable",
+      count(*) FILTER(WHERE r.student_uid IS NULL AND %s AND (%s OR s.detail ? 'roadmapOutcome'))::int AS "generatable",
       COALESCE(round(avg(g.pct) FILTER(WHERE r.student_uid IS NOT NULL))::int,0) AS "averageProgress",
       count(*) FILTER(WHERE r.student_uid IS NOT NULL AND g.pct<30)::int AS "band0",
       count(*) FILTER(WHERE r.student_uid IS NOT NULL AND g.pct>=30 AND g.pct<60)::int AS "band30",
       count(*) FILTER(WHERE r.student_uid IS NOT NULL AND g.pct>=60 AND g.pct<80)::int AS "band60",
       count(*) FILTER(WHERE r.student_uid IS NOT NULL AND g.pct>=80)::int AS "band80"
       {LIST_FROM} LEFT JOIN LATERAL dc.roadmap_progress(s.intg_uid,%s) g ON true
-      WHERE {condition}''', [moment, *values]).fetchone()
+      WHERE {condition}''', [bool(provider_name()), provider_name() != 'fixture', moment, *values]).fetchone()
     return {'summary': {k: row[k] for k in ('total', 'withRoadmap', 'draft', 'review', 'confirmed',
                                             'generatable', 'averageProgress')},
             'bands': [{'from': 0, 'to': 29, 'count': row['band0']}, {'from': 30, 'to': 59, 'count': row['band30']},
@@ -315,14 +312,14 @@ def roadmap_summary(status: str | None = None, hasRoadmap: str | None = None,
 def generation_capability(identity: str, user=Depends(principal, scope='function'),
                           conn=Depends(connection, scope='function')):
     student = resolve_student(conn, user, identity)
-    source = generation_source(student)
+    source = available(student)
     row = lock_plan(conn, student['intg_uid'], lock=False)
     if not source:
         return {'canGenerate': False, 'providerSource': None, 'targetRole': None,
                 'reasonCode': 'ROADMAP_GENERATOR_UNAVAILABLE',
-                'message': '이 학생에게 사용할 수 있는 생성 결과가 없습니다.'}
+                'message': '로드맵 생성 서비스 설정이 필요합니다.'}
     # 산출물 본문(15칸·이유)은 여기서 내려보내지 않는다 — 생성 트랜잭션이 서버에서 채택한다.
-    return {'canGenerate': True, 'providerSource': 'fixture', 'targetRole': source.get('targetRole'),
+    return {'canGenerate': True, 'providerSource': provider_name(), 'targetRole': (student['detail'] or {}).get('targetRole'),
             'currentStatus': row['status_code'] if row else None, 'reasonCode': None, 'message': None}
 
 
@@ -365,10 +362,10 @@ class Generate(BaseModel):
     reason: str = Field(default='', max_length=2000)
 
 
-def check_counsel_basis(conn, uid, request_id):
+def check_counsel_basis(conn, uid, request_id, lock=True):
     """생성 근거가 되는 상담. 학생·트랙·상태·취소 여부를 전부 서버가 확인한다.
     상담 완료를 선행 요구하지 않는다 — 완료가 확정 계획을 요구하므로 순환한다(spec_v1 §7.1)."""
-    row = conn.execute('''SELECT * FROM dc.counsel_request WHERE id=%s AND student_uid=%s FOR SHARE''',
+    row = conn.execute('''SELECT * FROM dc.counsel_request WHERE id=%s AND student_uid=%s''' + (' FOR SHARE' if lock else ''),
                        (request_id, uid)).fetchone()
     if not row:
         fail(422, 'INVALID_COUNSEL_BASIS', '이 학생의 상담이 아닙니다.')
@@ -380,26 +377,24 @@ def check_counsel_basis(conn, uid, request_id):
 
 
 def adopt_run(conn, user, student, counsel, source, target_role, generation):
-    """provider 산출물을 이번 세대에 채택한다. 점수·문구를 만들지 않고 받은 것을 그대로 쓴다.
-
-    원본 fixture 와 「이번 세대의 채택」은 다른 사실이다. 채택할 때마다 새 불변 run 을 쌓고
-    source_ref 에 원본을 남긴다 — model='fixture' 그대로이며 실제 LLM 호출로 기록하지 않는다.
-    """
+    """검증된 산출물을 채택하고 모델·입력 스냅샷·생성 출처를 불변 이력으로 남긴다."""
     payload = {'studentUid': student['intg_uid'], 'counselRequestId': counsel['id'],
                'targetRole': target_role, 'roadmapVersion': generation,
                'axes': [a['axis'] for a in source['axes']]}
-    digest = hashlib.sha256(str(sorted(payload.items())).encode()).hexdigest()
+    payload = source.get('_input', payload)
     type_row = conn.execute('''SELECT id,student_type FROM dc.student_type_event WHERE student_uid=%s
       ORDER BY decided_at DESC,id DESC LIMIT 1''', (student['intg_uid'],)).fetchone()
+    payload.setdefault('typeContext', {'source': 'STUDENT_TYPE_EVENT',
+        'baseTypeEventId': str(type_row['id']) if type_row else None,
+        'code': type_row['student_type'] if type_row else None})
+    digest = hashlib.sha256(json.dumps(payload, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
     run_id = 'ai_roadmap_' + student['intg_uid'] + '_v' + str(generation) + '_' + uuid4().hex[:8]
     conn.execute('''INSERT INTO dc.ai_run(id,kind_code,student_uid,subject_kind,subject_id,model,requested_by,
       schema_version,input_hash,input_snapshot,source_ref) VALUES(%s,'ROADMAP_GENERATION',%s,'ROADMAP',%s,
-      'fixture',%s,1,%s,%s,%s)''',
-      (run_id, student['intg_uid'], student['intg_uid'] + ':' + str(generation), user['intg_uid'], digest,
-       Jsonb({**payload, 'typeContext': {'source': 'STUDENT_TYPE_EVENT',
-                                         'baseTypeEventId': str(type_row['id']) if type_row else None,
-                                         'code': type_row['student_type'] if type_row else None}}),
-       Jsonb({'kind': 'SEED_ROADMAP_OUTCOME', 'studentUid': student['intg_uid']})))
+      %s,%s,1,%s,%s,%s)''',
+      (run_id, student['intg_uid'], student['intg_uid'] + ':' + str(generation), source.get('_model', 'fixture'), user['intg_uid'], digest,
+       Jsonb(payload),
+       Jsonb(source.get('_source', {'kind': 'SEED_ROADMAP_OUTCOME', 'studentUid': student['intg_uid']}))))
     suggestions = {}
     position = 0
     for axis in source['axes']:
@@ -504,17 +499,21 @@ def generate(identity: str, body: Generate, idempotency_key: str = Header(min_le
     digest, saved = idempotent(conn, user, route, idempotency_key, identity + body.model_dump_json())
     if saved:
         return saved
-    lifecycle_lock(conn, exclusive=False)
     student = resolve_student(conn, user, identity)
     require_plan_staff(conn, user)
     uid = student['intg_uid']
-    source = generation_source(student)
-    if not source:
-        fail(503, 'ROADMAP_GENERATOR_UNAVAILABLE', '이 학생에게 사용할 수 있는 생성 결과가 없습니다.')
-    if lock_plan(conn, uid) is not None:
+    if not available(student):
+        unavailable()
+    if lock_plan(conn, uid, lock=False) is not None:
         fail(409, 'INVALID_TRANSITION', '이미 계획이 있습니다. 재생성을 사용하세요.')
     if body.expectedRoadmapVersion or body.expectedVersion:
         fail(409, 'VERSION_CONFLICT', '아직 계획이 없습니다.', currentRoadmapVersion=0, currentVersion=0)
+    counsel = check_counsel_basis(conn, uid, body.counselRequestId, lock=False)
+    source = generate_outcome(conn, student, counsel, body.targetRole)
+    # Network I/O never holds the global lifecycle lock. Recheck after acquiring it.
+    lifecycle_lock(conn, exclusive=False)
+    if lock_plan(conn, uid) is not None:
+        fail(409, 'INVALID_TRANSITION', '이미 계획이 있습니다. 새로 조회해 주세요.')
     counsel = check_counsel_basis(conn, uid, body.counselRequestId)
     target_role = body.targetRole or source['targetRole']
     run_id, suggestions = adopt_run(conn, user, student, counsel, source, target_role, 1)
@@ -543,13 +542,18 @@ def regenerate(identity: str, body: Regenerate, idempotency_key: str = Header(mi
     digest, saved = idempotent(conn, user, route, idempotency_key, identity + body.model_dump_json())
     if saved:
         return saved
-    lifecycle_lock(conn, exclusive=False)
     student = resolve_student(conn, user, identity)
     require_plan_staff(conn, user)
     uid = student['intg_uid']
-    source = generation_source(student)
-    if not source:
-        fail(503, 'ROADMAP_GENERATOR_UNAVAILABLE', '이 학생에게 사용할 수 있는 생성 결과가 없습니다.')
+    if not available(student):
+        unavailable()
+    row = lock_plan(conn, uid, lock=False)
+    if not row:
+        fail(404, 'NOT_FOUND', '계획이 없습니다.')
+    check_versions(row, body.expectedRoadmapVersion, body.expectedVersion)
+    counsel = check_counsel_basis(conn, uid, body.counselRequestId, lock=False)
+    source = generate_outcome(conn, student, counsel, body.targetRole)
+    lifecycle_lock(conn, exclusive=False)
     row = lock_plan(conn, uid)
     if not row:
         fail(404, 'NOT_FOUND', '계획이 없습니다.')

@@ -9,12 +9,21 @@ CORE="grade<>1 AND student_type<>'T5' AND gpa ~ '^[0-9]+([.][0-9]+)?$' AND gpa::
 
 
 def profile(conn,row):
-    data={**(row['detail'] or {}),'id':row['alias'],'studentNo':row['student_no'],'name':row['name'],
+    # First academic login has no diagnosis, plan or activity history. Supply empty
+    # collections required by the portal, never another student's fixture results.
+    initial = dict(phone='', language='', enrollmentStatus='', phases=[], strengthWeakness=[],
+                   typeScores={}, targetCompany={}, gapItems=[],
+                   recommendations=dict(programs=[],activities=[],certs=[]), insight='',
+                   priority=dict(high=0,medium=0,low=0), jobField='', jobSkills=[], jobs=[],
+                   finalRoadmap=None, scoreInputs={})
+    data={**(initial if row['detail'] is None else row['detail']),'id':row['alias'],'studentNo':row['student_no'],'name':row['name'],
           'major':row['major_label'],'grade':row['grade']}
     data.pop('counselRequests',None)
     current=conn.execute('SELECT student_type FROM dc.student_type_event WHERE student_uid=%s ORDER BY decided_at DESC,id DESC LIMIT 1',(row['intg_uid'],)).fetchone()
-    if current:
-        data['studentType']=current['student_type']
+    data['studentType']=current['student_type'] if current else None
+    gpa=conn.execute('SELECT * FROM dc.student_gpa(%s)',(row['intg_uid'],)).fetchone()
+    data['gpa']=gpa['gpa']
+    data['gpaSource']=gpa['source']
     # 계획의 축·칸은 전용 API(/students/{id}/roadmap)만 내려준다. 여기서 함께 실으면
     # 초안·검토중 계획과 AI 근거가 권한 검사 없이 새어 나가고 정본이 두 벌이 된다.
     # roadmapOutcome 은 생성 provider 의 입력이라 화면에 내려보내지 않는다.
@@ -32,6 +41,10 @@ def profile(conn,row):
     data.setdefault('targetRole','')
     data.setdefault('targetCompany',{})
     data['hasRoadmap']=bool(roadmap)
+    if row['detail'] is None:
+        organization = conn.execute('''SELECT college_name,dept_name FROM dc.department
+          WHERE college_code=%s AND dept_code=%s''', (row['college_code'],row['dept_code'])).fetchone()
+        data['collegeName'] = organization['college_name'] if organization else ''
     # 이행률은 목록 뷰·상세 API 와 같은 SQL 함수가 센다. 화면이 칸 배열을 받아 세지 않는다.
     data['progress']=conn.execute('SELECT pct FROM dc.roadmap_progress(%s,now())',(row['intg_uid'],)).fetchone()['pct']
     return data
@@ -45,12 +58,12 @@ def profiles(user=Depends(principal,scope='function'),conn=Depends(connection,sc
     else:
         condition='EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=s.intg_uid)'
         values=[user['intg_uid']]
-    rows=conn.execute('SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid) WHERE s.detail IS NOT NULL AND '+condition+' ORDER BY p.alias',values).fetchall()
+    rows=conn.execute('SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid) WHERE (s.detail IS NOT NULL OR p.source IN (\'academic\',\'local\')) AND '+condition+' ORDER BY p.alias',values).fetchall()
     students=[]
     owners=[]
     for row in rows:
         data=profile(conn,row)
-        if 'phases' in data:
+        if 'phases' in (row['detail'] or {}) or row['detail'] is None:
             students.append(data)
         else:
             owners.append(data)
@@ -71,6 +84,11 @@ def scope(request,user):
         values.extend([ids,ids])
     if request.query_params.get('emptyStudentIds')=='true':
         where.append('false')
+    professor=request.query_params.get('professorId')
+    if professor:
+        where.append('''EXISTS(SELECT 1 FROM dc.advisor_assignment aa JOIN dc.person ap ON ap.intg_uid=aa.professor_uid
+          WHERE aa.student_uid=v.intg_uid AND aa.released_at IS NULL AND (ap.alias=%s OR aa.professor_uid=%s))''')
+        values.extend([professor,professor])
     return where,values
 
 
@@ -154,10 +172,7 @@ def summary(request:Request,groupBy:str,user=Depends(principal,scope='function')
 @router.get('/students/{identity}')
 def student(identity:str,user=Depends(principal, scope='function'),conn=Depends(connection, scope='function')):
     row=student_access(conn,user,identity)
-    data={**(row['detail'] or {}),'id':row['alias'],'studentNo':row['student_no'],
-          'name':row['name'],'major':row['major_label'],'grade':row['grade']}
-    current=conn.execute('SELECT student_type FROM dc.student_type_event WHERE student_uid=%s ORDER BY decided_at DESC,id DESC LIMIT 1',(row['intg_uid'],)).fetchone()
-    data['studentType']=current['student_type'] if current else None
+    data=profile(conn,row)
     data['enrollmentStatus']=data.get('enrollmentStatus') or '재학'
     # Counselor notes and intake are retrieved through their separately scoped endpoints.
     data.pop('counselRequests',None)

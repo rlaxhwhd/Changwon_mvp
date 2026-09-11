@@ -7,6 +7,13 @@ from .gates import COUNSEL_TYPE_CODE
 def import_domains(conn, sources, aliases, details):
     def read(name):
         return sources[name]
+    # 학생 fixture 는 상세 3명뿐이다(062 로스터 더미 퇴역). 다른 학생을 가리키는 시드 행은 조용히 건너뛰지 않고 센다.
+    skipped = {}
+    def uid_of(student_id, source):
+        uid = aliases.get(str(student_id))
+        if uid is None:
+            skipped[source] = skipped.get(source, 0) + 1
+        return uid
     staff = {}
     for college in read('src_v2/data/professors.seed.json'):
         for dept, professors in college['divisions'].items():
@@ -30,14 +37,16 @@ def import_domains(conn, sources, aliases, details):
             for uid in set(aliases.values()):
                 insert(conn,'fixture_student_scope',dict(staff_uid=staff_ids[alias],student_uid=uid,source='fixture:center-wide'))
     for assignment in read('src_admin/data/advisorAssigns.seed.json'):
-        if assignment['status']=='active' and assignment['professorId'] in staff_ids:
+        uid = uid_of(assignment['studentId'], 'advisorAssigns')
+        if uid and assignment['status']=='active' and assignment['professorId'] in staff_ids:
             insert(conn,'fixture_student_scope',dict(staff_uid=staff_ids[assignment['professorId']],
-                   student_uid=aliases[assignment['studentId']],source='fixture:advisor-assignment'))
+                   student_uid=uid,source='fixture:advisor-assignment'))
     statuses = {'대기':'REQ','확정':'CONFIRMED','완료':'DONE','취소':'CANCEL_UNKNOWN'}
-    owners = details + read('src_v2/data/students/counselSeedStudents.json')
-    for student in owners:
+    request_ids = set()
+    for student in details:
         uid = aliases[student['id']]
         for req in student.get('counselRequests', []):
+            request_ids.add(req['id'])
             slot = req.get('slot') or {}
             assignee = req.get('assignedCounselorId') or req.get('assignedProfessorId') or req.get('professorId')
             if assignee:
@@ -54,14 +63,21 @@ def import_domains(conn, sources, aliases, details):
         if student.get('studentType'):
             insert(conn, 'student_type_event', dict(student_uid=uid, student_type=student['studentType'], source='fixture'))
     for row in read('src_admin/data/counselRecords.seed.json'):
+        if row['requestId'] not in request_ids:
+            skipped['counselRecords'] = skipped.get('counselRecords', 0) + 1
+            continue
         insert(conn, 'counsel_record', dict(id=row['id'], request_id=row['requestId'], counselor_uid=staff_ids[row['counselorId']],
                summary=row['summary'], comment=row['comment'], follow_up=row['followUp'],
                status_code='DONE' if row['status']=='완료' else 'DRAFT', created_at=row['createdAt'], updated_at=row['updatedAt'], snapshot=row))
     for row in read('src_admin/data/diagnosisAttempts.seed.json'):
+        if not uid_of(row['studentId'], 'diagnosisAttempts'):
+            continue
         insert(conn, 'diagnosis_attempt', dict(id=row['id'], student_uid=aliases[row['studentId']],
                test_id=row['testId'], attempt_no=row['attemptNo'], status_code='DONE' if row['status']=='완료' else 'STARTED',
                started_at=row['startedAt'], completed_at=row.get('completedAt'), payload=row))
     for row in read('src_v2/data/diagnosisResults.seed.json'):
+        if not uid_of(row['studentId'], 'diagnosisResults'):
+            continue
         key=(aliases[row['studentId']],row['testId'],row['attemptNo'])
         if not conn.execute('SELECT 1 FROM dc.diagnosis_attempt WHERE student_uid=%s AND test_id=%s AND attempt_no=%s',key).fetchone():
             # diagnosisResults.ts explicitly describes precomputed outcomes.
@@ -98,6 +114,8 @@ def import_domains(conn, sources, aliases, details):
                competency_areas=Array(row.get('competencyAreas') or []),
                include_in_stats=row.get('includeInStats', True), created_at=row['createdAt']))
         for applicant in row.get('applicants', []):
+            if not uid_of(applicant['studentId'], 'programs.applicants'):
+                continue
             selection = selection_code[applicant.get('selectionStatus', '대기')]
             insert(conn, 'program_apply', dict(program_id=row['id'], student_uid=aliases[applicant['studentId']],
                    applied_at=applicant['appliedAt'], snapshot=applicant,
@@ -105,10 +123,10 @@ def import_domains(conn, sources, aliases, details):
                    selected_at=applicant.get('selectedAt') or (applicant['appliedAt'] if selection == 'SELECTED' else None),
                    attendance_code=attendance_code[applicant.get('attendance', '미확인')],
                    cancelled_at=applicant.get('canceledAt') or None))
-    # Penalties recorded on the roster become history rows; the migration backfills
+    # Penalties recorded on the fixture become history rows; the migration backfills
     # an already-imported database, this covers a fresh one.
     penalty_kind = {'noshow':'NOSHOW','waive':'WAIVE','manual':'MANUAL'}
-    for student in read('src_v2/data/studentsRoster.json'):
+    for student in details:
         for entry in student.get('penaltyEntries') or []:
             if not entry.get('points'):
                 continue
@@ -141,8 +159,11 @@ def import_domains(conn, sources, aliases, details):
     # 화면의 '반영완료' 와 옛 '승인' 을 같은 코드로 모은다 — DB 는 코드만 저장한다.
     request_status = {'대기':'REQ','승인':'APPLIED','반영완료':'APPLIED','반려':'REJECTED'}
     for row in read('src_admin/data/roadmapRequests.seed.json'):
+        if not uid_of(row['studentId'], 'roadmapRequests'):
+            continue
         status = request_status.get(row['status'], row['status'])
         insert(conn, 'roadmap_request', dict(id=row['id'], student_uid=aliases[row['studentId']], axis=row['axis'],
                title=row['title'], reason=row['reason'], status_code=status,
                requested_at=row['requestedAt'], payload=row,
                handled_at=(row.get('handledAt') or row['requestedAt']) if status != 'REQ' else None))
+    return skipped

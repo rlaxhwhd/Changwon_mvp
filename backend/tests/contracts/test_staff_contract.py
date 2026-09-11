@@ -29,7 +29,7 @@ def test_professor_directory_contract_and_minimal_exposure(client):
     assert flat_response.status_code == 200, flat_response.text
     flat = next(professor for professor in flat_response.json() if professor['id'] == expected_professor['id'])
     assert flat['role'] == 'professor'
-    assert flat['dept'] == flat['major']
+    assert flat['dept'] == next(iter(fixture[0]['divisions']))
     assert 'email' not in flat and 'empNo' not in flat
 
 

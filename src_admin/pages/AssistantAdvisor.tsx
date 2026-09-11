@@ -78,8 +78,9 @@ export default function AssistantAdvisor() {
     setYear(ALL)
     setPage(1)
   }
-  const download = () => {
-    const rows = getAdvisorRosterForExport({
+  const download = async () => {
+    try {
+    const rows = await getAdvisorRosterForExport({
       ...params,
       page: undefined,
       pageSize: undefined,
@@ -111,6 +112,7 @@ export default function AssistantAdvisor() {
       .replaceAll('-', '')}.csv`
     link.click()
     URL.revokeObjectURL(link.href)
+    } catch (caught) { setError(caught instanceof Error ? caught.message : '명단을 내려받지 못했습니다.') }
   }
   const confirmAssign = async (professorId: string, assignedAt: string) => {
     if (!selected) return

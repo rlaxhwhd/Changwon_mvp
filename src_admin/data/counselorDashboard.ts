@@ -19,7 +19,7 @@ import {
 } from './counselRequests'
 import type { CounselRequest } from './schema/counselRequest'
 import {
-  getFullRoster, getRosterSummary, isCoreCare, isHighRisk, RISK_RULE,
+  getRosterDistribution, getRosterSummary,
   TYPE_TINT, typeColorVar, typeSwatchClass,
 } from './studentRoster'
 import type { FocusFilter } from './studentRoster'
@@ -92,10 +92,7 @@ export interface RiskSummary {
 
 /** 집중관리 현황 2분류. 모집단은 1학년을 뺀 담당 학생이다. */
 export function getRiskSummary(departments: string[]): RiskSummary {
-  const target = getFullRoster(departments).filter(s => s.grade !== RISK_RULE.excludeGrade)
-  const total = target.length
-  const high = target.filter(isHighRisk).length
-  const core = target.filter(isCoreCare).length
+  const { base: total, high, core } = getRosterDistribution(departments).risk
   return {
     total,
     rows: [
@@ -182,18 +179,19 @@ export interface TypeDistribution {
 }
 
 export function getTypeDistribution(departments: string[]): TypeDistribution {
-  const roster = getFullRoster(departments)
-  const total = roster.length
+  const distribution = getRosterDistribution(departments)
+  const total = distribution.total
   let cursor = 0
   const slices = STUDENT_TYPES.map(meta => {
-    const count = roster.filter(s => s.studentType === meta.code).length
+    const count = distribution.groups.find(s => s.key === meta.code)?.count ?? 0
     const ratio = pct(count, total)
     const from = cursor
     cursor += ratio
     return { code: meta.code, label: meta.label, count, ratio, swatch: typeSwatchClass(meta.code), from, to: cursor }
   })
   // 유틸 클래스는 CSS라 gradient에는 값이 필요하다 — 같은 단일 소스에서 var()로 뽑는다
-  const stops = slices.map(s => `${typeColorVar(s.code)} ${s.from}% ${s.to}%`).join(', ')
+  const stops = [...slices.map(s => `${typeColorVar(s.code)} ${s.from}% ${s.to}%`),
+    `${typeColorVar(null)} ${Math.min(cursor, 100)}% 100%`].join(', ')
   return { total, slices, gradient: `conic-gradient(${stops})` }
 }
 
@@ -212,16 +210,15 @@ export interface TimelineItem {
   status: CounselRequest['status']
 }
 
-export function getTodayTimeline(counselorId: string, departments: string[]): TimelineItem[] {
+export function getTodayTimeline(counselorId: string, _departments: string[]): TimelineItem[] {
   const requests = getRequestsByAssignee(counselorId)
   const refDate = pickReferenceDate(requests.map(dateOf))
-  const typeOf = new Map(getFullRoster(departments).map(s => [s.id, s.studentType]))
 
   return requests
     .filter(r => r.slot?.date === refDate && (r.status === '확정' || r.status === '완료'))
     .sort((a, b) => (a.slot!.start ?? '').localeCompare(b.slot!.start ?? ''))
     .map(r => {
-      const code = typeOf.get(r.studentId)
+      const code = r.studentType
       const meta = code ? STUDENT_TYPES.find(t => t.code === code) : undefined
       return {
         requestId: r.id,
@@ -295,7 +292,7 @@ export function getBriefing(
   }
 
   // 시안 .scores 3지표 — 전부 기존 단일소스에서 파생한다(하드코딩 금지)
-  const progress = getFullRoster(departments).find(s => s.id === studentId)?.progress ?? 0
+  const progress = profile.progress ?? 0
   const myDone = getRequestsByAssignee(counselorId)
     .filter(r => r.studentId === studentId && r.status === '완료').length
   const attempts = getAttemptsByStudent(studentId)
@@ -341,15 +338,14 @@ export interface IntakeItem {
   tint: string
 }
 
-export function getIntake(counselorId: string, departments: string[], limit = 3): IntakeItem[] {
-  const typeOf = new Map(getFullRoster(departments).map(s => [s.id, s.studentType]))
+export function getIntake(counselorId: string, _departments: string[], limit = 3): IntakeItem[] {
   const AVA = ['s-teal', 's-blue', 's-purple', 's-green', 's-orange']
   return getRequestsByAssignee(counselorId)
     .filter(r => r.status === '대기')
     .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
     .slice(0, limit)
     .map((r, i) => {
-      const code = typeOf.get(r.studentId)
+      const code = r.studentType
       const label = code ? STUDENT_TYPES.find(t => t.code === code)?.label : undefined
       return {
         requestId: r.id,

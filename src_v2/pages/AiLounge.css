@@ -2,6 +2,18 @@
    공용 프리미티브(:root 토큰 · topbar · card 슬롯 · button · badge · table · footer)는 index.css.
    이 파일은 시안 CSS 중 이 화면 고유 블록만 옮긴 것이다 — 값 임의 변경 금지. */
 
+.al-locked { position: relative; display: grid; place-items: center; min-height: 180px; padding: 24px; }
+.al-placeholder { position: absolute; inset: 24px; filter: blur(7px); opacity: .45; }
+.al-placeholder i { display: block; height: 26px; margin: 16px 0; border-radius: 8px; background: var(--border); }
+.al-placeholder i:nth-child(2) { width: 70%; }
+.al-locked p { position: relative; display: grid; gap: 12px; text-align: center; line-height: 1.6; }
+.al-locked p > span:first-child { font-size: 28px; }
+.al-plan-axes { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 20px; margin: 20px 0; }
+.al-plan-axes ul, .al-record-list { list-style: none; margin: 0; padding: 0; }
+.al-plan-axes li, .al-record-list li { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.al-record-list strong, .al-record-list small { display: block; }
+@media(max-width: 700px) { .al-plan-axes { grid-template-columns: 1fr; } }
+
 .al-page .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
@@ -1989,3 +2001,12 @@
 .al-page .recommend-card,
 .al-page .competency-card,
 .al-page .diagnosis-card { grid-column: span 1; }
+
+@media (max-width: 700px) {
+  .al-page .welcome { flex-direction: column; align-items: stretch; }
+  .al-page .student-type { min-width: 0; width: 100%; }
+  .al-page .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
+  .al-page .diagnosis-result-grid { grid-template-columns: minmax(0, 1fr); }
+  .al-page .dashboard-grid > section { min-width: 0; }
+  .al-page .al-locked p { overflow-wrap: anywhere; }
+}

@@ -308,16 +308,17 @@ def test_students_cannot_write_plans_and_other_roles_are_refused(client):
 
 def test_listing_and_summary_are_scoped_sql_with_code_pair_filters(client):
     """집계는 SQL 이고 학과 필터는 코드 쌍이다(CLAUDE.md 7조·10조)."""
-    listing = client.get('/api/v1/roadmaps?pageSize=5', headers=headers('career_kim')).json()
-    assert listing['totalCount'] > 5 and len(listing['items']) == 5
+    # 학생 fixture 는 3명이다(062) — 한 페이지보다 많은지만 본다.
+    listing = client.get('/api/v1/roadmaps?pageSize=2', headers=headers('career_kim')).json()
+    assert listing['totalCount'] > 2 and len(listing['items']) == 2
     assert all('progress' in row for row in listing['items'])
     summary = client.get('/api/v1/roadmaps/summary', headers=headers('career_kim')).json()
     assert summary['summary']['total'] == listing['totalCount']
     assert summary['summary']['confirmed'] >= 1
     assert sum(band['count'] for band in summary['bands']) == summary['summary']['withRoadmap']
     with pool.connection() as conn:
-        org = conn.execute('''SELECT college_code,dept_code FROM dc.student
-          WHERE college_code IS NOT NULL LIMIT 1''').fetchone()
+        org = conn.execute('''SELECT s.college_code,s.dept_code FROM dc.student s JOIN dc.roadmap r ON r.student_uid=s.intg_uid
+          WHERE s.college_code IS NOT NULL LIMIT 1''').fetchone()
     scoped = client.get(f"/api/v1/roadmaps?collegeCode={org['college_code']}&deptCode={org['dept_code']}",
                         headers=headers('career_kim')).json()
     assert 0 < scoped['totalCount'] <= listing['totalCount']

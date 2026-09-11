@@ -2,6 +2,7 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import SystemManagement from './pages/SystemManagement'
+import AcademicDirectory from './pages/AcademicDirectory'
 import { hasActiveSession } from './data/session'
 import Home from './pages/Home'
 import CounselRequests from './pages/CounselRequests'
@@ -13,6 +14,7 @@ import CounselStats from './pages/CounselStats'
 import DiagnosisStatus from './pages/DiagnosisStatus'
 import GroupCounsels from './pages/GroupCounsels'
 import PsychTests from './pages/PsychTests'
+import PsychCounselRecordNew from './pages/PsychCounselRecordNew'
 import StudentList from './pages/StudentList'
 import StudentAll from './pages/StudentAll'
 import StudentDetail from './pages/StudentDetail'
@@ -110,6 +112,7 @@ const router = createBrowserRouter(
                 { path: '/system/issues', element: <SystemManagement key="issues" tab="issues" /> },
                 { path: '/members', element: <Navigate to="/members/assignments" replace /> },
                 { path: '/members/assignments', element: <SystemManagement key="assignments" tab="assignments" /> },
+                { path: '/members/academic', element: <AcademicDirectory /> },
                 { path: '/notices', element: <SystemManagement key="notices" tab="notices" /> },
                 ...[
                   ['/forecast', '취업예측분석시스템'], ['/diagnosis', '진단관리'], ['/counsel', '상담관리'], ['/roadmap', '로드맵관리'],
@@ -148,6 +151,7 @@ const router = createBrowserRouter(
               element: <RequireRole roles={['psych']} />,
               children: [
                 { path: '/counsel/psych-tests', element: <PsychTests /> },
+                { path: '/counsel/psych-records/new', element: <PsychCounselRecordNew /> },
               ],
             },
 

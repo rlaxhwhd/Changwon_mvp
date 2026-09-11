@@ -15,6 +15,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     ? localStorage.getItem('dc_active_staff')
     : localStorage.getItem('dc_active_student')
   const headers = new Headers(init.headers)
+  headers.set('X-DC-Portal', location.pathname.startsWith('/admin') ? 'admin' : 'student')
   headers.set('Content-Type', 'application/json')
   if (identity) headers.set('X-DC-Identity', identity)
   const response = await fetch(`/api/v1${path}`, { ...init, headers })
@@ -23,6 +24,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     throw new ApiError(response.status,
       typeof error?.detail === 'string' ? error.detail : error?.message ?? `요청에 실패했습니다. (${response.status})`)
   }
+  if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }
 
@@ -44,7 +46,7 @@ export function queryString(params: object): string {
 
 export async function downloadApiFile(path: string, filename: string): Promise<void> {
   const identity = localStorage.getItem(location.pathname.startsWith('/admin') ? 'dc_active_staff' : 'dc_active_student')
-  const response = await fetch(`/api/v1${path}`, { headers: identity ? { 'X-DC-Identity': identity } : {} })
+  const response = await fetch(`/api/v1${path}`, { headers: { 'X-DC-Portal': location.pathname.startsWith('/admin') ? 'admin' : 'student', ...(identity ? { 'X-DC-Identity': identity } : {}) } })
   if (!response.ok) throw new ApiError(response.status, '내보내기에 실패했습니다. 다시 시도해 주세요.')
   const url = URL.createObjectURL(await response.blob())
   const link = document.createElement('a')

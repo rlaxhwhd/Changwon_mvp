@@ -4,9 +4,12 @@ from pathlib import Path
 from fastapi import Depends, FastAPI, Header
 
 from .academic import router as academic_router
+from .student_login import router as student_login_router
+from .academic_directory import router as academic_directory_router
 from .students import router as students_router
 from .counsel import router as counsel_router
 from .counsel_records import router as record_router
+from .psych_tests import router as psych_tests_router
 from .administration import router as administration_router
 from .metadata import router as metadata_router
 from .diagnosis import router as diagnosis_router
@@ -39,9 +42,12 @@ async def lifespan(app):
 
 app = FastAPI(title='DREAMCATCH API', version='1.0.0', lifespan=lifespan)
 app.include_router(academic_router, prefix='/api/v1')
+app.include_router(student_login_router, prefix='/api/v1')
+app.include_router(academic_directory_router, prefix='/api/v1')
 app.include_router(students_router, prefix='/api/v1')
 app.include_router(counsel_router, prefix='/api/v1')
 app.include_router(record_router, prefix='/api/v1')
+app.include_router(psych_tests_router, prefix='/api/v1')
 app.include_router(administration_router, prefix='/api/v1')
 app.include_router(metadata_router, prefix='/api/v1')
 app.include_router(diagnosis_router, prefix='/api/v1')
@@ -65,6 +71,6 @@ def health():
 @app.get('/api/v1/development/identities')
 def development_identities(x_dc_token:str=Header(default=''),conn=Depends(connection,scope='function')):
     validate_development_token(x_dc_token)
-    students=conn.execute("SELECT p.alias AS id,p.name,s.major_label AS major,s.grade FROM dc.person p JOIN dc.student s USING(intg_uid) WHERE s.detail ? 'phases' ORDER BY p.alias").fetchall()
+    students=conn.execute("SELECT p.alias AS id,p.name,s.major_label AS major,s.grade FROM dc.person p JOIN dc.student s USING(intg_uid) WHERE p.source='fixture' AND s.detail ? 'phases' ORDER BY p.alias").fetchall()
     staff=conn.execute("SELECT p.alias AS id,p.name,s.role_code AS role,s.profile FROM dc.staff s JOIN dc.person p USING(intg_uid) WHERE s.profile ? 'roleLabel' ORDER BY s.profile->>'empNo' NULLS LAST,p.alias").fetchall()
     return {'students':students,'staff':[{**x['profile'],'id':x['id'],'name':x['name'],'role':x['role']} for x in staff]}

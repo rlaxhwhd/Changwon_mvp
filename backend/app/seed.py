@@ -66,23 +66,18 @@ def seed(root: Path) -> dict:
         for d in departments:
             insert(conn, 'department', dict(college_code=d['collegeCode'], dept_code=d['deptCode'],
                    college_name=d['collegeName'], dept_name=d['deptName'], course=d['course']))
-        roster = {str(s['studentNo']): s for s in read('src_v2/data/studentsRoster.json')}
+        # 학생 fixture 는 상세 프로필 3명뿐이다. 로스터 더미(studentsRoster.json·counselSeedStudents.json)는
+        # 2026-09-11 퇴역했다(062) — 실제 학생은 학사 미러(academic.*)에서 들어온다. 더미를 다시 만들지 않는다.
         details = [read(f'src_v2/data/students/{name}.json') for name in ('chaewon', 'changwon', 'jiwoo')]
-        counsel = read('src_v2/data/students/counselSeedStudents.json')
-        detail_by_no = {str(s.get('studentNo', s['id'])): s for s in details + counsel}
         aliases = {}
-        for number in sorted(set(roster) | set(detail_by_no)):
-            base = roster.get(number, {})
-            detail = detail_by_no.get(number)
-            merged = {**base, **(detail or {})}
-            alias = str(merged['id'])
+        for detail in sorted(details, key=lambda s: str(s['studentNo'])):
+            number = str(detail['studentNo'])
+            alias = str(detail['id'])
             aliases[alias] = number
             aliases[number] = number
-            if base:
-                aliases[str(base['id'])] = number
-            insert(conn, 'person', dict(intg_uid=number, alias=alias, name=merged['name'], kind='STUDENT', source='fixture', profile={}))
-            insert(conn, 'student', dict(intg_uid=number, student_no=number, major_label=merged['major'],
-                   grade=merged.get('grade'), roster=base or merged, detail=detail))
+            insert(conn, 'person', dict(intg_uid=number, alias=alias, name=detail['name'], kind='STUDENT', source='fixture', profile={}))
+            insert(conn, 'student', dict(intg_uid=number, student_no=number, major_label=detail['major'],
+                   grade=detail.get('grade'), roster=detail, detail=detail))
         for name, table, mapping in (
             ('skills', 'skill', {'skillId':'skill_id','label':'label','category':'category','icon':'icon'}),
             ('subjects', 'subject', {'curiNum':'curi_num','curiNm':'curi_nm','cdtNum':'cdt_num','openDeptCd':'open_dept_cd','gradDiv':'grad_div','active':'active'}),
@@ -119,7 +114,7 @@ def seed(root: Path) -> dict:
                 insert(conn, 'student_program_history', dict(intg_uid=uid, program_id=program['programId'], title=program['title'],
                        applied_at=program['appliedAt'], completed=program['completed']))
         from .seed_domains import import_domains
-        import_domains(conn, sources, aliases, details)
+        skipped = import_domains(conn, sources, aliases, details)
         codes=json.loads((root/'backend/seeds/process-codes.json').read_text(encoding='utf8'))
         for row in codes['studentTypes']:
             insert(conn,'student_type_rule',dict(code=row['code'],label=row['label'],tier=row['tier'],tier_label=row['tierLabel'],
@@ -134,11 +129,11 @@ def seed(root: Path) -> dict:
                         '026_roadmap_growth_backfill.sql', '028_followup_diagnosis_scores.sql'):
             conn.execute((Path(__file__).resolve().parents[1] / 'migrations' / derived).read_text(encoding='utf-8'))
         for derived in ('034_diagnosis_factor_backfill.sql','038_counsel_fixture_backfill.sql',
-                        '043_student_department_backfill.sql','046_advisor_assignment_backfill.sql','048_main_popup_seed.sql','050_prof_counsel_record_backfill.sql'):
+                        '043_student_department_backfill.sql','046_advisor_assignment_backfill.sql','048_main_popup_seed.sql','050_prof_counsel_record_backfill.sql','051_professor_organization.sql'):
             conn.execute((Path(__file__).resolve().parents[1] / 'migrations' / derived).read_text(encoding='utf-8'))
         from .seed_operations import seed_notices
         seed_notices(conn)
-        return {'status': 'imported', 'sourceFiles': len(sources), 'students': len(set(aliases.values()))}
+        return {'status': 'imported', 'sourceFiles': len(sources), 'students': len(set(aliases.values())), 'skippedRows': skipped}
 
 
 if __name__ == '__main__':

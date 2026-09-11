@@ -3,7 +3,8 @@ import { LuChevronLeft, LuChevronRight, LuSearch } from 'react-icons/lu'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
-import { getAdviseeRoster } from '../data/advisorAssigns'
+import StudentPicker from '../components/StudentPicker'
+import type { RosterStudent } from '../data/studentRoster'
 import { addProfCounselRecord, queryProfRecords } from '../data/profCounselRecords'
 import { completeProfRequest, getProfRequestById } from '../data/profCounselRequests'
 import { PROF_COUNSEL_CATEGORIES, PROF_COUNSEL_CHANNEL_LABEL } from '../data/schema/profCounselRecord'
@@ -20,8 +21,9 @@ export default function ProfessorCounselRecords() {
   const [params] = useSearchParams()
   const requestId = params.get('requestId')
   const request = requestId ? getProfRequestById(user.id, requestId) : undefined
-  const advisees = getAdviseeRoster(user.id)
-  const [studentId, setStudentId] = useState(request?.studentId ?? advisees[0]?.id ?? '')
+  const [selectedStudent, setSelectedStudent] = useState<RosterStudent | null>(null)
+  const [pickingStudent, setPickingStudent] = useState(false)
+  const studentId = request?.studentId ?? selectedStudent?.id ?? ''
   const [categoryCode, setCategoryCode] = useState(PROF_COUNSEL_CATEGORIES[0].code)
   // 연계 건은 학생이 신청한 방식을 그대로 계승한다(온라인=비대면 · 오프라인=대면).
   const [method, setMethod] = useState<CounselMethod>(request?.method ?? '대면')
@@ -69,7 +71,7 @@ export default function ProfessorCounselRecords() {
       </header>
       <section className="admin-card">
         <div className="admin-card-head"><h2>기록 작성</h2></div>
-        {!request && advisees.length === 0 ? <EmptyState message="배정된 지도학생이 없습니다." /> : (
+        {(
           <div className="admin-form-grid">
             {request ? <>
               <div className="admin-kv">
@@ -80,14 +82,12 @@ export default function ProfessorCounselRecords() {
               </div>
               <p className="admin-field-hint">저장 시 해당 상담 신청이 완료 처리됩니다.</p>
             </> : (
-              <label className="admin-field">
+              <div className="admin-field">
                 <span>학생</span>
-                <select value={studentId} onChange={event => setStudentId(event.target.value)}>
-                  {advisees.map(student => (
-                    <option key={student.id} value={student.id}>{student.name} ({student.studentNo})</option>
-                  ))}
-                </select>
-              </label>
+                <button type="button" className="admin-btn" onClick={() => setPickingStudent(true)}>
+                  {selectedStudent ? `${selectedStudent.name} (${selectedStudent.studentNo})` : '지도학생 검색'}
+                </button>
+              </div>
             )}
             <label className="admin-field">
               <span>상담구분</span>
@@ -128,6 +128,8 @@ export default function ProfessorCounselRecords() {
           </div>
         )}
       </section>
+      {pickingStudent && <StudentPicker title="지도학생 검색" professorId={user.id}
+        onPick={student => { setSelectedStudent(student); setPickingStudent(false) }} onClose={() => setPickingStudent(false)} />}
       <section className="admin-card">
         <div className="admin-card-head"><h2>내 상담 기록</h2></div>
         <div className="admin-filterbar">

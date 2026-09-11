@@ -14,4 +14,5 @@ export async function loadStudentDiagnoses(studentId: string) {
   replace(diagnosisAttempts,data.attempts)
   replace(diagnosisResults,data.results)
   replace(diagnosisComments,data.comments)
+  window.dispatchEvent(new Event('dc:diagnosis-updated'))
 }

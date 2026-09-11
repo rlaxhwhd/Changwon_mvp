@@ -24,12 +24,13 @@ const PAGE_SIZE = 10
 interface StudentRosterTableProps {
   departments: string[]
   studentIds?: string[]
+  professorId?: string
   title: string
   subtitle: string
   viewerRole: StaffRole
 }
 
-export default function StudentRosterTable({ departments, studentIds, title, subtitle, viewerRole }: StudentRosterTableProps) {
+export default function StudentRosterTable({ departments, studentIds, professorId, title, subtitle, viewerRole }: StudentRosterTableProps) {
 
   const [query, setQuery] = useState('')
   const [major, setMajor] = useState(ALL)
@@ -42,11 +43,11 @@ export default function StudentRosterTable({ departments, studentIds, title, sub
   const [metadata,setMetadata] = useState<Awaited<ReturnType<typeof fetchRosterMetadata>> | null>(null)
   const [metadataError,setMetadataError] = useState('')
   const [metadataRetry,setMetadataRetry] = useState(0)
-  const scopeKey = JSON.stringify([departments,studentIds])
+  const scopeKey = JSON.stringify([departments,studentIds,professorId])
   useEffect(() => {
     let cancelled=false
     setMetadataError('')
-    fetchRosterMetadata(departments,studentIds).then(value => { if (!cancelled) setMetadata(value) })
+    fetchRosterMetadata(departments,studentIds,professorId).then(value => { if (!cancelled) setMetadata(value) })
       .catch(e => { if (!cancelled) setMetadataError(e.message) })
     return () => { cancelled=true }
   },[scopeKey,metadataRetry])
@@ -60,6 +61,7 @@ export default function StudentRosterTable({ departments, studentIds, title, sub
     q: query,
     departments,
     studentIds,
+    professorId,
     filters: {
       major: major === ALL ? undefined : major,
       grade: grade === ALL ? undefined : grade,

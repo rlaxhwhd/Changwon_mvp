@@ -101,11 +101,12 @@ def test_gate_blocks_incomplete_diagnosis_and_opens_for_completed(client):
     # 막히는 쪽은 진단을 안 본 학생으로 잡는다. changwon 은 후속진단(C4) 결과가
     # 들어오면서(028) 게이트가 열렸다 — 시드에 값이 채워질수록 「미완료 예시」로
     # 쓰던 학생이 하나씩 사라지므로, 대상을 이름이 아니라 조건으로 고른다.
-    blocked_alias = '20198765'  # 박민준 T4 — ccore·후속 둘 다 미응시
+    # 로스터 더미 퇴역(062) 뒤 남은 fixture 중 후속진단 미응시는 jiwoo(리셋 학생)다.
+    blocked_alias = 'jiwoo'
     blocked = client.get('/api/v1/jobs/eligibility', headers=headers(blocked_alias)).json()
     assert blocked['eligible'] is False
     codes = {r['code'] for r in blocked['reasons']}
-    assert {'CORE_REQUIRED', 'FOLLOWUP_REQUIRED'} <= codes, blocked
+    assert 'FOLLOWUP_REQUIRED' in codes, blocked
     # 잠긴 화면이 빈 화면이 되지 않도록 다음 단계 경로를 함께 준다(PROCESS.md §2 구현규칙 1).
     assert all(r['nextRoute'] and r['message'] for r in blocked['reasons'])
     posting = new_posting(client)

@@ -1,18 +1,16 @@
 // ─────────────────────────────────────────────────────────────────────────────
-// 교수상담 신청 투영 로더 — 단일소스는 학생 JSON(src_v2 students 의 상담신청 배열)이다.
-// 현행 DB 대응: CON_PROF_INFO(신청+결과 한 행, 18.4만건).
-// DB 전환 시 이 투영 로더만 CON_PROF_INFO 조회로 교체한다.
-// 관리자 쪽에 별도 신청 스토어를 만들지 말 것 — 학생이 쓰고 교수가 읽는 한 방향이다.
+// 교수상담 신청 투영 로더 — 원천은 서버(GET /counsel-requests)가 채운 shared/counselStore 다.
+// 현행 DB 대응: CON_PROF_INFO(신청+결과 한 행, 18.4만건) → dc.counsel_request(type=PROF).
+// ★ 학생 owner(STUDENTS·counselSeed)를 거치지 않는다 — 거치면 상세 프로필이 없는 지도학생의
+//   신청이 접수·기록·실적에서 사라진다. 관리자 쪽에 별도 신청 스토어를 만들지 말 것.
 // ─────────────────────────────────────────────────────────────────────────────
-import { getCounselOwners } from '../../src_v2/data/students'
 import type {
   CounselMethod,
   CounselRequestStatus,
   CounselSlot,
   EnrollmentStatus,
 } from '../../src_v2/data/students'
-import { performCounselAction } from '../../shared/counselStore'
-import { getActiveAssignByStudent } from './advisorAssigns'
+import { counselRequests, performCounselAction } from '../../shared/counselStore'
 import { mockLatency, paginate } from './query'
 import type { ListParams, Paginated } from './query'
 
@@ -56,24 +54,23 @@ function majorOnly(major: string): string {
 }
 
 function allRows(professorId: string): ProfCounselRequestRow[] {
-  const assigns = getActiveAssignByStudent()
-  return getCounselOwners().flatMap(owner => owner.counselRequests
+  return counselRequests()
     .filter(request => request.type === '교수' && request.professorId === professorId)
     .map(request => ({
       id: request.id,
-      studentId: owner.id,
-      studentNo: owner.studentNo,
-      studentName: owner.name,
-      studentMajor: majorOnly(owner.major),
-      studentGrade: owner.grade,
-      enrollmentStatus: owner.enrollmentStatus,
+      studentId: request.studentId,
+      studentNo: request.studentNo,
+      studentName: request.studentName,
+      studentMajor: majorOnly(request.studentMajor),
+      studentGrade: request.studentGrade ?? 0,
+      enrollmentStatus: request.studentStatus ?? '재학',
       method: request.method,
       topic: request.topic,
       requestedAt: request.requestedAt,
       status: request.status,
       slot: request.slot,
-      isAdvisee: assigns.get(owner.id)?.professorId === professorId,
-    })))
+      isAdvisee: request.isAdvisee ?? false,
+    }))
 }
 /** [DB-ready] 교수 소유 type=교수 신청 투영이며 페이징 전에 범위를 좁힌다. */
 export async function queryProfCounselRequests(

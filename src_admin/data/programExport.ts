@@ -7,7 +7,7 @@
 // programs → studentRoster → roadmap → programs 순환이 생긴다.
 // ─────────────────────────────────────────────────────────────────────────
 import { getPrograms, selectionOf, selectedApplicants } from './programs'
-import { studentLiteOf, collegeOf } from './studentRoster'
+import { collegeOf } from './studentRoster'
 import { typeLabel } from '../../src_v2/data/careerProcess'
 import type { Program, ProgramApplicant } from './schema/program'
 import { outcomeLabel, selectionLabel } from './schema/program'
@@ -29,19 +29,18 @@ const HEADER = [
 
 /** 신청 시점 스냅샷을 먼저 쓰고, 학생 단일소스에 있으면 최신 프로필로 채운다. */
 function rowOf(program: Program, applicant: ProgramApplicant): string[] {
-  const lite = studentLiteOf(applicant.studentId)
-  const major = lite?.major ?? applicant.studentMajor
+  const major = applicant.studentMajor
   return [
     program.title,
     program.fiscalYear,
     `${applicant.round ?? 1}차`,
-    lite?.name ?? applicant.studentName,
-    lite?.studentNo ?? applicant.studentId,
+    applicant.studentName,
+    applicant.studentNo ?? applicant.studentId,
     collegeOf(major),
     major,
-    lite ? `${lite.grade}학년` : '',
-    lite?.status ?? '',
-    lite ? typeLabel(lite.studentType) : '',
+    applicant.studentGrade == null ? '' : `${applicant.studentGrade}학년`,
+    applicant.studentStatus ?? '',
+    typeLabel(applicant.studentType ?? null),
     applicant.outcomeStatus ? outcomeLabel(applicant.outcomeStatus) : selectionLabel(selectionOf(applicant)),
     applicant.appliedAt.slice(0, 10),
   ]

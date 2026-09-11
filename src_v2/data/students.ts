@@ -108,6 +108,7 @@ export type CounselMethod = '대면' | '비대면'
 export interface CounselSlot { date: string; start: string; end: string; place?: string }
 
 export interface StudentCounselRequest {
+  isAdvisee?: boolean
   id: string
   type: CounselRequestType
   /**
@@ -136,6 +137,7 @@ export interface StudentCounselRequest {
 export type EnrollmentStatus = '재학' | '휴학' | '졸업' | '수료'
 
 export interface StudentData {
+  collegeName?: string
   id: string
   studentNo: string
   name: string
@@ -276,7 +278,7 @@ export function getHeadlineCompetency(student: StudentData, limit = 2): SWItem[]
 // ─────────────────────────────────────────────────────────────────────────
 // 상담신청 스토어 (단일 DB 스왑 seam)
 // 상담신청의 소유 주체를 CounselOwner로 통일한다. 상세 학생(STUDENTS, counselRequests 내장)과
-// 데모 학생(counselSeedStudents.json)이 한 배열로 평탄화된다.
+// 서버가 내려준 상담 owner 가 한 배열로 평탄화된다(로스터 더미·counselSeedStudents 는 062 에서 퇴역).
 // seed(원본 JSON)는 불변, 런타임 변경은 override 스토어 'dc_counsel_owners' 한 곳에만 쌓인다.
 // 이 스토어(getCounselOwners/add/patch)만 API 호출로 교체하면 DB 연동이 된다.
 //  · 학생 이벤트(신청) → addCounselRequest → override 갱신
@@ -287,6 +289,7 @@ export function getHeadlineCompetency(student: StudentData, limit = 2): SWItem[]
 /** 상담신청 소유 주체 — StudentData(상세)와 데모 학생(경량)이 공통으로 만족하는 코어 프로필 구조.
  *  상세학생은 StudentData에서 파생, 데모학생은 counselSeed JSON에서 passthrough. */
 export interface CounselOwner {
+  progress?: number
   id: string
   studentNo: string
   name: string
@@ -341,6 +344,7 @@ export function getCounselOwners(): CounselOwner[] {
   // 상세학생: 코어 프로필을 StudentData에서 파생(요약 문자열은 스토어 층에서 생성).
   const detailed: CounselOwner[] = STUDENTS.map(s => ({
     id: s.id,
+    progress: s.progress,
     studentNo: s.studentNo,
     name: s.name,
     major: s.major,
@@ -360,6 +364,7 @@ export function getCounselOwners(): CounselOwner[] {
   // 데모학생: 코어 프로필을 counselSeed JSON에서 passthrough(무거운 로드맵 없음).
   const demo: CounselOwner[] = (counselSeed as Omit<CounselOwner, 'studentNo'>[]).map(o => ({
     id: o.id,
+    progress: o.progress,
     studentNo: o.id,
     name: o.name,
     major: o.major,

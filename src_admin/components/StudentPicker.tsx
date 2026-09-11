@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { LuFrown, LuLoaderCircle, LuSearch } from 'react-icons/lu'
 import AdminModal from './AdminModal'
 import EmptyState from './EmptyState'
 import { totalPages } from '../data/query'
-import { enrollStatusClass, getRosterFilterOptions, queryStudentRoster } from '../data/studentRoster'
+import { enrollStatusClass, fetchRosterMetadata, queryStudentRoster } from '../data/studentRoster'
+import type { RosterMetadata } from '../data/studentRoster'
 import type { RosterStudent } from '../data/studentRoster'
 import { useListData } from '../hooks/useListData'
 
@@ -14,6 +15,7 @@ interface StudentPickerProps {
   title?: string
   /** 담당 학과 범위. 빈 배열이면 전체. */
   departments?: string[]
+  professorId?: string
   /** 이미 선택된 학생 id — 목록에서 '추가됨'으로 표시하고 재선택을 막는다. */
   excludeIds?: string[]
   onPick: (student: RosterStudent) => void
@@ -25,19 +27,28 @@ interface StudentPickerProps {
  * 단독 화면인 학생 목록(`/students`)과 달리 **다른 화면에서 학생을 고를 때** 쓰는 모달이다.
  * 조회는 학생 로스터 단일소스(queryStudentRoster)를 그대로 쓴다.
  */
-export default function StudentPicker({ title = '학생 검색', departments = [], excludeIds = [], onPick, onClose }: StudentPickerProps) {
+export default function StudentPicker({ title = '학생 검색', departments = [], professorId, excludeIds = [], onPick, onClose }: StudentPickerProps) {
   const [query, setQuery] = useState('')
   const [major, setMajor] = useState(ALL)
   const [grade, setGrade] = useState(ALL)
   const [page, setPage] = useState(1)
-  const options = getRosterFilterOptions(departments)
+  const [options, setOptions] = useState<RosterMetadata['options']>({ majors: [], grades: [], types: [], tiers: [], statuses: [] })
+  const [metadataError, setMetadataError] = useState('')
+  const scopeKey = JSON.stringify([departments, professorId])
+  useEffect(() => {
+    let cancelled = false
+    fetchRosterMetadata(departments, undefined, professorId).then(data => { if (!cancelled) setOptions(data.options) })
+      .catch(e => { if (!cancelled) setMetadataError(e.message) })
+    return () => { cancelled = true }
+  }, [scopeKey])
   const picked = new Set(excludeIds)
 
-  const { data: result, isLoading } = useListData(queryStudentRoster, {
+  const { data: result, isLoading, error } = useListData(queryStudentRoster, {
     page,
     pageSize: PAGE_SIZE,
     q: query,
     departments,
+    professorId,
     filters: {
       major: major === ALL ? undefined : major,
       grade: grade === ALL ? undefined : grade,
@@ -48,6 +59,7 @@ export default function StudentPicker({ title = '학생 검색', departments = [
 
   return (
     <AdminModal title={title} size="lg" onClose={onClose}>
+      {(metadataError || error) && <p role="alert">{metadataError || error?.message}</p>}
       <p className="admin-field-hint">재학생만 조회됩니다.</p>
       <div className="admin-filterbar">
         <div className="admin-search">

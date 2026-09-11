@@ -29,21 +29,20 @@ def public_professors(conn):
         AND (a.valid_to IS NULL OR a.valid_to>=CURRENT_DATE)
     )
       SELECT s.intg_uid,p.alias,p.name,s.profile,
-      COALESCE(o.college_name,s.profile->>'collegeName') AS college_name,
-      COALESCE(o.dept_name,s.profile->>'dept') AS dept_name
+      o.college_name AS college_name,o.dept_name AS dept_name
       FROM dc.staff s JOIN dc.person p USING(intg_uid)
       LEFT JOIN active_org o ON o.staff_uid=s.intg_uid WHERE s.role_code='professor'
       ORDER BY college_name,dept_name,p.alias''').fetchall()
     grouped = {}
     for row in rows:
-        college = row['college_name'] or ''
-        dept = row['dept_name'] or row['profile'].get('major', '')
+        college = row['college_name'] or '소속 미등록'
+        dept = row['dept_name'] or '소속 미등록'
         group = grouped.setdefault(college, {'name': college, 'divisions': {}})
         profile = row['profile']
         group['divisions'].setdefault(dept, []).append(dict(
             id=row['alias'], name=row['name'], title=profile.get('title', ''),
             major=profile.get('major', dept), room=profile.get('room', ''),
-            accept=profile.get('counselAccept', True)))
+            accept=bool(row['dept_name']) and profile.get('counselAccept', True)))
     return list(grouped.values())
 
 
@@ -54,8 +53,8 @@ def staff_list(role: Literal['professor', 'assistant', 'career', 'psych'], group
         return public_professors(conn)
     if role == 'professor':
         groups = public_professors(conn)
-        return [{**professor, 'role': 'professor', 'roleLabel': '교수', 'dept': professor['major']}
-                for group in groups for professors in group['divisions'].values() for professor in professors]
+        return [{**professor, 'role': 'professor', 'roleLabel': '교수', 'dept': dept}
+                for group in groups for dept, professors in group['divisions'].items() for professor in professors]
     if groupBy is not None:
         raise HTTPException(400, detail={'code': 'INVALID_STAFF_QUERY', 'message': '지원하지 않는 교직원 조회입니다.'})
     require_staff(user)
@@ -76,6 +75,9 @@ def staff_detail(conn, row):
       JOIN dc.department d USING(college_code,dept_code) WHERE a.staff_uid=%s
       ORDER BY a.valid_from DESC,a.id''', (row['intg_uid'],)).fetchall()
     item = {**profile, 'id': row['alias'], 'name': row['name'], 'role': row['role_code'], 'version': row['version']}
+    # The editable counseling fields have one stable envelope, including after saves.
+    item.pop('counselAccept', None)
+    item.pop('intro', None)
     item['orgAssignments'] = [dict(id=str(a['id']), collegeCode=a['college_code'], deptCode=a['dept_code'],
         collegeName=a['college_name'], deptName=a['dept_name'], roleCode=a['role_code'], validFrom=a['valid_from'],
         validTo=a['valid_to'], isActive=a['is_active']) for a in assignments]

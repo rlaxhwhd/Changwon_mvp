@@ -26,7 +26,7 @@ import type {
   SelectionStatus,
   SelectedAction,
 } from '../data/schema/program'
-import { studentLiteOf, collegeOf, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
+import { collegeOf, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 // 6유형 표시명은 단일소스에서 받는다 — 한글 리터럴을 화면에 박지 않는다.
 import { typeLabel } from '../../src_v2/data/careerProcess'
 import EmptyState from '../components/EmptyState'
@@ -254,13 +254,12 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
               <span>벌점</span>
             </div>
             {currentList.map((a, index) => {
-              const lite = studentLiteOf(a.studentId)
-              const name = lite?.name ?? a.studentName
-              const studentNo = lite?.studentNo ?? a.studentId
-              const major = lite?.major ?? a.studentMajor
-              const grade = lite?.grade
-              const enroll = lite?.status
-              const studentType = lite?.studentType
+              const name = a.studentName
+              const studentNo = a.studentNo ?? a.studentId
+              const major = a.studentMajor
+              const grade = a.studentGrade
+              const enroll = a.studentStatus
+              const studentType = a.studentType
               // 누적 벌점 — 선발 판단에 쓰라고 서버가 신청자 행에 실어 준다.
               const penalty = a.penaltyTotal ?? 0
               const label = mode === 'applicants'

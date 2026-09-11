@@ -8,8 +8,9 @@ import { loadStudentDiagnoses } from './diagnosisStore'
 import { loadCounselRequests, loadCounselRecords } from './counselStore'
 import { loadStudentRoster } from '../src_admin/data/studentRoster'
 import { loadAdvisorAssigns } from '../src_admin/data/advisorAssigns'
+import { loadPsychTests } from '../src_admin/data/psychTests'
 import { loadMainPopups } from '../src_v2/data/popups'
-import { loadAdvisorNudges } from '../src_admin/data/profCounselRecords'
+import { loadProfessorCounselStats } from '../src_admin/data/profCounselRecords'
 import { loadPrograms } from './programStore'
 import { jobCapability, loadApplications, loadCapability, loadPostings, loadWishlist } from './jobStore'
 import { loadResumes } from '../src_v2/pages/jobs/resumeMock'
@@ -31,10 +32,23 @@ export async function initializeData(): Promise<void> {
   }
   window.addEventListener(METADATA_EVENT, applyMetadata)
   const admin = location.pathname.startsWith('/admin')
+  if (!admin) {
+    try {
+      const current = await api<StudentChoice>('/auth/student/me')
+      localStorage.setItem('dc_active_student', current.id)
+      setStudentChoices([current])
+    } catch (error) {
+      if (error instanceof Error && 'status' in error && error.status === 401) {
+        localStorage.removeItem('dc_active_student')
+        location.replace('/login')
+      }
+      throw error
+    }
+  }
   const identities = await api<{ students: StudentChoice[]; staff: StaffUser[] }>('/development/identities')
   setStaffProfiles(identities.staff)
   counselorProfiles.splice(0, counselorProfiles.length, ...identities.staff.filter(s => s.role === 'career' || s.role === 'psych').map(s => ({ ...s, version: 1 } as Counselor & { version: number })))
-  setStudentChoices(identities.students)
+  if (admin) setStudentChoices(identities.students)
   if (!admin && !localStorage.getItem('dc_active_student')) {
     const first = identities.students[0]
     if (!first) throw new Error('등록된 학생 계정이 없습니다.')
@@ -42,10 +56,15 @@ export async function initializeData(): Promise<void> {
   }
   if (!admin || localStorage.getItem('dc_active_staff')) {
     const activeStaff = admin ? localStorage.getItem('dc_active_staff') ?? undefined : undefined
+    const staff = identities.staff.find(s => s.id === activeStaff)
+    const departments: string[] = staff && 'departments' in staff && Array.isArray(staff.departments)
+      ? staff.departments.filter((item): item is string => typeof item === 'string') : []
     await Promise.all([loadProfiles(), loadCounselRequests(), loadCounselRecords(), loadMetadata(),
                        loadPrograms(), loadPostings(), loadCapability(), loadRoadmapCapability(),
                        loadCounselorProfiles(), loadNotices(), loadNotifications(), loadCounselEvents(),
-                       loadDepartments(), loadProfessorGroups(), ...(admin ? [loadStaffDirectory(activeStaff), loadStudentRoster(), loadAdvisorAssigns(), loadAdvisorNudges()] : [loadMainPopups()])])
+                       loadDepartments(), loadProfessorGroups(), ...(admin ? [loadStaffDirectory(activeStaff), loadStudentRoster(departments),
+                         ...(staff && ['assistant', 'professor'].includes(staff.role)
+                           ? [loadAdvisorAssigns(departments), loadProfessorCounselStats(departments)] : [])] : [loadMainPopups()])])
     applyMetadata()
     // 채용의 개인 자료(지원·찜·자소서)는 학생 본인 것만 서버가 내려준다.
     // 교직원은 담당 범위의 지원만 받는다 — 관리 권한이 없으면 그 목록도 없다.
@@ -54,6 +73,8 @@ export async function initializeData(): Promise<void> {
       const staff = identities.staff.find(s => s.id === staffId)
       if (staff && ['career', 'psych', 'professor'].includes(staff.role)) await loadSchedule(staffId)
       if (staff && ['career', 'psych'].includes(staff.role)) await loadGroups()
+      // 심리검사 결과는 심리상담사 전용이다(다른 역할은 서버가 403).
+      if (staff?.role === 'psych') await loadPsychTests()
       if (jobCapability().canManageApplicants) await loadApplications('managed')
       // 변경 요청함은 진로상담사 전용이다(menu roadmap.1). 가드 없이 부르면 교수·조교·
       // 심리상담사·시스템관리자의 부팅이 403 으로 끊긴다 — 화면 전체가 사용 불가가 된다.

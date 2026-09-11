@@ -15,7 +15,6 @@
 import { getCounselRecords } from './counselRecords'
 import { getCounselRequests } from './counselRequests'
 import type { CounselRequest, CounselMethod, CounselRequestType } from './schema/counselRequest'
-import { studentLiteOf } from './studentRoster'
 
 /** 기간 프리셋 — 값은 개월 수, 'all'은 전체 */
 export type PeriodPreset = '3' | '6' | '12' | 'all'
@@ -171,7 +170,7 @@ export function getCounselStats(params: StatsParams): CounselStats {
     byMethod: tally(requests.map(r => r.method as CounselMethod as string)),
     byMajor: tally(requests.map(r => r.studentMajor)),
     byGrade: tally(requests.map(r => {
-      const grade = studentLiteOf(r.studentId)?.grade
+      const grade = r.studentGrade
       return grade ? `${grade}학년` : '미상'
     })).sort((a, b) => a.label.localeCompare(b.label)),
   }
