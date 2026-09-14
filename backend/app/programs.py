@@ -96,8 +96,17 @@ def applicants_of(conn, user, program_ids):
 @router.get('/programs')
 def programs(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100),
              q: str = Query('', max_length=200), category: str | None = None, status: str | None = None,
+             recommended: bool = False,
              user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
     where, values = ['true'], []
+    if recommended:
+        if user['kind'] != 'STUDENT':
+            raise HTTPException(403, '본인의 맞춤 프로그램만 조회할 수 있습니다.')
+        where.append('''(SELECT student_type FROM dc.student_type_event WHERE student_uid=%s
+          ORDER BY decided_at DESC,id DESC LIMIT 1)=ANY(care_types)''')
+        values.append(user['intg_uid'])
+        where.append("status_code='RECRUITING' AND (apply_end IS NULL OR apply_end >= %s)")
+        values.append(today())
     if category:
         where.append('category_code=%s')
         values.append(category)
@@ -109,8 +118,9 @@ def programs(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100)
         values.append('%' + q.strip().replace('%', '\\%').replace('_', '\\_') + '%')
     condition = ' AND '.join(f'({x})' for x in where)
     total = conn.execute('SELECT count(*) AS n FROM dc.program WHERE ' + condition, values).fetchone()['n']
+    ordering = 'apply_end ASC NULLS LAST,id' if recommended else 'pinned DESC,created_at DESC,id'
     rows = conn.execute(f'''SELECT {PROGRAM_COLUMNS} FROM dc.program WHERE {condition}
-      ORDER BY pinned DESC,created_at DESC,id LIMIT %s OFFSET %s''',
+      ORDER BY {ordering} LIMIT %s OFFSET %s''',
       [*values, pageSize, (page - 1) * pageSize]).fetchall()
     grouped = applicants_of(conn, user, [r['id'] for r in rows])
     return dict(items=[program_dto(r, grouped[r['id']]) for r in rows],

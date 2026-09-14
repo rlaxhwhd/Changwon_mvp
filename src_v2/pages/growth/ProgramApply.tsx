@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
+import { loadProgramRecommendations, type RecommendedProgram } from '../../data/programRecommendations'
 import { getActiveStudent } from '../../data/students'
 import { getWishlist, toggleWish as toggleWishStore } from '../../data/wishlist'
 import { useStore } from '../../../shared/useRoadmapStore'
@@ -21,10 +22,6 @@ export default function ProgramApply() {
   usePageHead('비교과 프로그램 신청', 'CWNU 학생을 위한 진로·취업 역량 강화 프로그램을 신청하고 XP와 수료증을 획득하세요.')
   const navigate = useNavigate()
   const profile = getActiveStudent()
-  // 자격증·어학은 별도 페이지, 외부활동·인턴은 이 화면에서 뺐다 — 비교과 프로그램만 추천한다.
-  const recoGroups = [
-    { key: 'programs', label: '비교과 프로그램', icon: 'fa-graduation-cap', items: profile.recommendations.programs },
-  ]
   const [activeTab, setActiveTab] = useState<Category>('전체')
   const [page, setPage] = useState(1)
   const programs = useMemo<ProgramCardVM[]>(() => sortByPriority(getPrograms()).map(program => ({
@@ -47,9 +44,19 @@ export default function ProgramApply() {
 
   // ── AI 맞춤 추천 잠금 상태 (locked → loading → unlocked) ───────
   const [recoState, setRecoState] = useState<'locked' | 'loading' | 'unlocked'>('locked')
-  const handleUnlock = () => {
+  const [recommendations, setRecommendations] = useState<RecommendedProgram[]>([])
+  const [recoError, setRecoError] = useState('')
+  const handleUnlock = async () => {
+    if (recoState === 'loading') return
     setRecoState('loading')
-    window.setTimeout(() => setRecoState('unlocked'), 1800)
+    setRecoError('')
+    try {
+      setRecommendations(await loadProgramRecommendations())
+      setRecoState('unlocked')
+    } catch (error) {
+      setRecoError(error instanceof Error ? error.message : '추천 프로그램을 불러오지 못했습니다.')
+      setRecoState('locked')
+    }
   }
 
   const toggleWish = (id: string) => { void toggleWishStore(id) }
@@ -76,8 +83,7 @@ export default function ProgramApply() {
             </span>
             <h2>{profile.name}님께 추천</h2>
             <p>
-              진단 결과 · 역량 점수 · 로드맵 GAP을 종합해 학생에게 가장 적합한
-              비교과 프로그램을 AI가 자동으로 선별합니다.
+              나의 CARE 7+ 진단유형에 맞는 비교과 프로그램을 신청 마감일이 가까운 순서로 보여드립니다.
             </p>
           </div>
 
@@ -87,9 +93,9 @@ export default function ProgramApply() {
                 <i className="fa-solid fa-wand-magic-sparkles" />
                 <span className="pr-reco-spinner-ring" />
               </div>
-              <p className="pr-reco-loading-title">AI가 {profile.name}님의 데이터를 분석하고 있어요</p>
+              <p className="pr-reco-loading-title">{profile.name}님에게 맞는 프로그램을 찾고 있어요</p>
               <p className="pr-reco-loading-sub">
-                진단·역량 점수·로드맵·관심 직무를 종합 중입니다…
+                CARE 7+ 진단유형에 맞는 프로그램을 조회 중입니다…
               </p>
               <div className="pr-reco-loading-bar">
                 <div className="pr-reco-loading-fill" />
@@ -98,22 +104,24 @@ export default function ProgramApply() {
           ) : (
             <div className={`pr-reco-stage${recoState === 'locked' ? ' pr-reco-stage--locked' : ''}`}>
               <div className="pr-reco-cols">
-                {recoGroups.map(group => (
-                  <div key={group.key} className="pr-reco-col">
-                    <h3><i className={`fa-solid ${group.icon}`} />{group.label}</h3>
+                <div className="pr-reco-col">
+                  <h3><i className="fa-solid fa-graduation-cap" />비교과 프로그램</h3>
+                  {recoState === 'unlocked' && recommendations.length === 0 ? (
+                    <p role="status">현재 추천 가능한 프로그램이 없습니다</p>
+                  ) : (
                     <ul>
-                      {group.items.map(item => (
-                        <li key={item.title}>
+                      {recommendations.map(item => (
+                        <li key={item.id}>
                           <div className="pr-reco-item-top">
-                            <strong>{item.title}</strong>
-                            <span className={`pr-reco-tag pr-reco-tag-${item.tag}`}>{item.tag}</span>
+                            <strong><Link to={`/growth/program/${item.id}`}>{item.title}</Link></strong>
+                            <span className="pr-reco-tag">{item.endDate ? `마감 ${item.endDate}` : '마감일 미정'}</span>
                           </div>
-                          <p>{item.reason}</p>
+                          <p>{item.desc}</p>
                         </li>
                       ))}
                     </ul>
-                  </div>
-                ))}
+                  )}
+                </div>
               </div>
 
               {recoState === 'locked' && (
@@ -123,7 +131,7 @@ export default function ProgramApply() {
                       <i className="fa-solid fa-lock" />
                     </span>
                     <h4>AI 맞춤 추천이 잠겨 있어요</h4>
-                    <p>버튼을 누르면 AI가 학생 데이터를 분석해 맞춤 비교과 프로그램을 추천해 드립니다.</p>
+                    <p>나의 CARE 7+ 진단유형에 맞는 비교과 프로그램을 확인해 보세요.</p>
                     <button type="button" className="pr-reco-cta" onClick={handleUnlock}>
                       <i className="fa-solid fa-wand-magic-sparkles" />
                       나에게 맞는 비교과 프로그램 보기
@@ -133,6 +141,7 @@ export default function ProgramApply() {
               )}
             </div>
           )}
+          {recoError && <p role="alert">{recoError} 다시 시도해 주세요.</p>}
         </section>
 
         <div className="pa-filter-bar">
