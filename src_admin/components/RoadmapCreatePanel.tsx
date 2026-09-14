@@ -10,6 +10,7 @@ import type { CourseRow } from '../../src_v2/data/academic'
 import { getRecordsByStudent } from '../data/counselRecords'
 import { generateRoadmap } from '../data/roadmap'
 import { isCare7 } from '../../src_v2/data/counselTrack'
+import { roadmapEnvelope } from '../../shared/roadmapStore'
 import './RoadmapCreatePanel.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -41,11 +42,10 @@ function courseTagClass(courseCls: string): string {
 function useProgressRun(active: boolean, duration: number, onDone: () => void) {
   const [progress, setProgress] = useState(0)
   const done = useRef(onDone)
-  done.current = onDone
+  useEffect(() => { done.current = onDone }, [onDone])
 
   useEffect(() => {
     if (!active) return
-    setProgress(0)
     const start = performance.now()
     let rafId = 0
     const tick = (now: number) => {
@@ -155,7 +155,8 @@ export default function RoadmapCreatePanel({
     () => getRecordsByStudent(student.id).find(r => r.comment?.trim()),
     [student.id],
   )
-  const outcome = student.roadmapOutcome
+  const capability = roadmapEnvelope(student.id)?.capabilities
+  const canGenerate = regenerate ? capability?.canRegenerate : capability?.canGenerate
   // 로드맵은 CARE 7+ 진로·취업 상담 자리에서 난다(PROCESS.md §6-7). 서버는 그 상담을
   // 근거로 요구하므로 여기서 어느 상담인지 고른다 — 근거 없이는 생성할 수 없다.
   const basisRequest = useMemo(
@@ -166,18 +167,22 @@ export default function RoadmapCreatePanel({
     [student.id],
   )
   const [generateError, setGenerateError] = useState('')
+  const temporary = roadmapEnvelope(student.id)?.capabilities.providerSource === 'development-template'
 
   const analyzeProgress = useProgressRun(phase === 'analyzing', ANALYZE_MS, () => setPhase('picking'))
   const generateProgress = useProgressRun(phase === 'generating', GENERATE_MS, () => {
     // 목표 직무는 상담에서 고른 것이 정본이다 — 시드 값보다 우선한다.
     if (!basisRequest) {
       setGenerateError('확정된 CARE 7+ 진로·취업 상담이 있어야 로드맵을 만들 수 있습니다.')
+      setPhase('flow')
       return
     }
     generateRoadmap(student.id, basisRequest.id, target?.name, `상담 ${counselorName}`)
       .then(() => { setGenerateError(''); onGenerated() })
-      .catch(cause => setGenerateError(
-        cause instanceof Error ? cause.message : '로드맵을 만들지 못했습니다. 다시 시도해 주세요.'))
+      .catch(cause => {
+        setGenerateError(cause instanceof Error ? cause.message : '로드맵을 만들지 못했습니다. 다시 시도해 주세요.')
+        setPhase('flow')
+      })
   })
 
   const pickJob = (jobId: string) => {
@@ -206,7 +211,7 @@ export default function RoadmapCreatePanel({
         setJobInput('')
         pickJob(candidate.jobId)
       })
-      .catch(() => setJobInputError('직무를 담지 못했습니다. 다시 시도해 주세요.'))
+      .catch(cause => setJobInputError(cause instanceof Error ? cause.message : '직무를 담지 못했습니다. 다시 시도해 주세요.'))
   }
 
   // 재료 2 — 수강했거나 수강 중인 과목만 재료로 쓴다.
@@ -233,6 +238,8 @@ export default function RoadmapCreatePanel({
 
   return (
     <div className="rcp">
+      {temporary && <p className="rcp-warn">현재는 <b>개발용 임시 로드맵</b>을 생성합니다. 선택한 직무의 예시이며 RAG·LLM 분석 결과가 아닙니다.</p>}
+      {generateError && <p className="air-run-error" role="alert">{generateError}</p>}
       {/* 재생성은 지금 로드맵을 버리는 일이다 — 무엇이 어떻게 되는지 먼저 말한다. */}
       {regenerate && (
         <p className="rcp-warn">
@@ -368,7 +375,7 @@ export default function RoadmapCreatePanel({
           이미 학생 상세 모달 안이라 모달을 한 겹 더 얹지 않는다. */}
       {phase === 'analyzing' || phase === 'generating' ? (
         <div className="air-run" aria-live="polite">
-          <h4>{phase === 'analyzing' ? 'AI가 직무 적합도를 분석중입니다' : 'AI가 맞춤형 로드맵을 생성중입니다'}</h4>
+          <h4>{temporary ? (phase === 'analyzing' ? '목표 직무 목록을 준비하고 있습니다' : '임시 로드맵을 생성하고 있습니다') : (phase === 'analyzing' ? 'AI가 직무 적합도를 분석중입니다' : 'AI가 맞춤형 로드맵을 생성중입니다')}</h4>
           <p>
             {phase === 'analyzing'
               ? '수강 이력과 스펙을 직무 요구역량과 대조합니다'
@@ -379,7 +386,6 @@ export default function RoadmapCreatePanel({
           </div>
           <span className="air-run-pct">{phase === 'analyzing' ? analyzeProgress : generateProgress}%</span>
           {/* 서버가 거절하면 사실대로 보여 준다 — 진행률만 채우고 성공한 척하지 않는다. */}
-          {generateError && <p className="air-run-error" role="alert">{generateError}</p>}
         </div>
       ) : phase === 'picking' ? (
         <div className="air-pick">
@@ -447,7 +453,7 @@ export default function RoadmapCreatePanel({
             disabled={!loaded}
           >
             <AirIcon name="spark" className="air-orb-star" />
-            <span className="air-orb-label">AI 직무분석</span>
+            <span className="air-orb-label">{temporary ? '목표 직무 선택' : 'AI 직무분석'}</span>
           </button>
 
           <span className="air-chev" aria-hidden="true"><AirIcon name="chev" /></span>
@@ -472,13 +478,14 @@ export default function RoadmapCreatePanel({
           <button
             type="button"
             className="air-gen"
-            onClick={() => setPhase('generating')}
-            disabled={!target || !outcome}
+            onClick={() => { setGenerateError(''); setPhase('generating') }}
+            disabled={!target || !canGenerate || !basisRequest}
           >
-            <b><AirIcon name="spark" />AI분석 / 로드맵 생성</b>
+            <b><AirIcon name="spark" />{temporary ? '임시 로드맵 생성' : 'AI분석 / 로드맵 생성'}</b>
             <small>
-              {!outcome ? '이 학생은 생성할 재료가 없습니다'
-                : target ? '맞춤형 로드맵 1개 생성' : '목표 직무를 먼저 설정하세요'}
+              {!canGenerate ? '로드맵 생성 서비스 설정을 확인하세요'
+                : !basisRequest ? '확정된 CARE 7+ 상담이 필요합니다'
+                : target ? '선택한 직무의 로드맵 1개 생성' : '목표 직무를 먼저 설정하세요'}
             </small>
           </button>
         </div>

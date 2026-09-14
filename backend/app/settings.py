@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     # ⚠ DB 백업에 포함되지 않는다 — 별도 백업이 필요하다.
     file_root: str = "var/files"
     file_max_bytes: int = 10 * 1024 * 1024
-    roadmap_provider: Literal['disabled', 'openai-compatible', 'fixture'] = 'disabled'
+    roadmap_provider: Literal['disabled', 'openai-compatible', 'fixture', 'development-template'] = 'disabled'
     roadmap_api_url: str = 'https://api.openai.com/v1/chat/completions'
     roadmap_model: str = ''
     roadmap_api_key: SecretStr = SecretStr('')

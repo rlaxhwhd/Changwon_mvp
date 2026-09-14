@@ -39,6 +39,7 @@ import StudentStatCards from '../../src_v2/components/StudentStatCards'
 import EmptyState from './EmptyState'
 // 로드맵 생성은 상담사 전용 작업 화면이라 학생 포털과 코드를 공유하지 않는다.
 import RoadmapCreatePanel from './RoadmapCreatePanel'
+import { useRoadmap } from '../../shared/useRoadmapStore'
 // 편집은 편집 페이지와 같은 본문을 쓴다 — 상담 중에 상세를 열어 둔 채로 고친다.
 import RoadmapEditorPanel from './RoadmapEditorPanel'
 import { getActiveCounselor } from '../data/counselors'
@@ -299,13 +300,13 @@ function CounselTab({ studentId }: { studentId: string }) {
 // ── 탭 ③: 로드맵 진행 ──────────────────────────────────────────────────────
 
 function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boolean }) {
-  // 생성 직후 로드맵을 다시 읽기 위한 트리거. 스토어가 localStorage라 구독이 없다 —
-  // 생성이 끝나면 이 수를 올려 getGoalPlan 을 다시 부른다.
-  const [reloadKey, setReloadKey] = useState(0)
+  // 상세 탭도 서버 로드맵을 적재·구독한다. 캐시가 없다는 이유로 미생성으로 판단하지 않는다.
+  useRoadmap(student.id)
+  const [, setReloadKey] = useState(0)
   // 카드 하나가 세 얼굴을 갖는다 — 보기 / 편집 / (재)생성. 상담 중에 화면을 옮기지
   // 않고 여기서 다 끝내야 한다.
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>('view')
-  const plan = useMemo(() => getGoalPlan(student), [student, reloadKey])
+  const plan = getGoalPlan(student)
   const journey = useMemo(() => getCareerJourney(student), [student])
   const refresh = () => { setReloadKey(n => n + 1); setMode('view') }
 
@@ -733,12 +734,15 @@ function counselOwnerAsRoster(studentId: string): RosterStudent | undefined {
   }
 }
 
-export default function StudentDetailView({ studentId, role, headerAction, initialTab }: StudentDetailViewProps) {
+export default function StudentDetailView(props: StudentDetailViewProps) {
+  return <StudentDetailContent key={`${props.studentId}:${props.role}`} {...props} />
+}
+
+function StudentDetailContent({ studentId, role, headerAction, initialTab }: StudentDetailViewProps) {
   const [diagnosisLoading,setDiagnosisLoading] = useState(true)
   const [diagnosisError,setDiagnosisError] = useState('')
   useEffect(() => {
     let cancelled=false
-    setDiagnosisLoading(true); setDiagnosisError('')
     Promise.all([loadStudentDiagnoses(studentId), loadRosterStudent(studentId)]).catch(e => { if (!cancelled) setDiagnosisError(e.message) })
       .finally(() => { if (!cancelled) setDiagnosisLoading(false) })
     return () => { cancelled=true }

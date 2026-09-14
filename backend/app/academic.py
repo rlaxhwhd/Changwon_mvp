@@ -37,9 +37,14 @@ class Selection(BaseModel):
 
 @router.put('/students/{identity}/job-interests/{job_id}')
 def job_interest(identity: str, job_id: str, body: Selection, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    student = student_access(conn,user,identity)
-    if user['intg_uid']!=student['intg_uid']:
-        raise HTTPException(403, '학생 본인만 변경할 수 있습니다.')
+    if user['kind'] == 'STAFF':
+        from .roadmap import resolve_student
+        staff = conn.execute('SELECT role_code FROM dc.staff WHERE intg_uid=%s', (user['intg_uid'],)).fetchone()
+        if not staff or staff['role_code'] != 'career':
+            raise HTTPException(403, '진로취업상담사만 담당 학생의 관심 직무를 변경할 수 있습니다.')
+        student = resolve_student(conn, user, identity)
+    else:
+        student = student_access(conn, user, identity)
     if not conn.execute('SELECT 1 FROM dc.job_role WHERE job_id=%s',(job_id,)).fetchone():
         raise HTTPException(404,'직무를 찾을 수 없습니다.')
     if body.on:

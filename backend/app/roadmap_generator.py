@@ -51,6 +51,8 @@ class Outcome(BaseModel):
 
 
 def provider_name():
+    if settings.roadmap_provider == 'development-template' and settings.environment != 'production':
+        return 'development-template'
     if settings.roadmap_provider == 'fixture' and settings.environment != 'production':
         return 'fixture'
     if settings.roadmap_provider != 'openai-compatible' or not settings.roadmap_model.strip():
@@ -126,6 +128,21 @@ def generate_outcome(conn, student, counsel, target_role):
     if provider_name() == 'fixture':
         return {**student['detail']['roadmapOutcome'], '_model': 'fixture'}
     snapshot = generation_input(conn, student, counsel, target_role)
+    if provider_name() == 'development-template':
+        template = conn.execute('''SELECT t.* FROM dc.development_roadmap_template t
+          JOIN dc.job_role j USING(job_id) WHERE j.label=%s ORDER BY t.job_id''', (snapshot['targetRole'],)).fetchall()
+        if len(template) != 1:
+            raise HTTPException(422, '선택한 직무의 임시 로드맵이 없습니다. 등록된 목표직무를 선택해 주세요.')
+        source = template[0]
+        try:
+            outcome = Outcome.model_validate(source['outcome']).model_dump()
+            if outcome['targetRole'] != snapshot['targetRole']:
+                raise ValueError('Target mismatch')
+        except (ValueError, ValidationError):
+            raise HTTPException(422, '임시 로드맵 형식을 확인해 주세요.') from None
+        return {**outcome, '_input': snapshot, '_model': 'development-template:'+source['revision'],
+                '_source': {'kind': 'DEVELOPMENT_TEMPLATE', 'jobId': source['job_id'],
+                            'revision': source['revision'], 'ragUsed': False, 'llmUsed': False}}
     encoded = json.dumps(snapshot, ensure_ascii=False)
     if len(encoded.encode('utf-8')) > 250_000:
         raise HTTPException(422, {'code': 'ROADMAP_INPUT_TOO_LARGE', 'message': '생성 근거 자료가 너무 큽니다.'})
