@@ -164,8 +164,11 @@
 
   /* 골격 치수 — 시안 실측 */
   --topbar-h:   80px;
-  --page-max:   1440px;
+  /* ★ 본문 폭은 --page-content 하나로 정한다 — 경로 표시·제목·카드·푸터가 전부 이 값을 따른다.
+     넓히려면 이 숫자만 바꾼다(예: 1500px). --page-max 는 여기서 파생되므로 직접 쓰지 않는다. */
+  --page-content: 1392px;
   --page-gutter: 24px;
+  --page-max:   calc(var(--page-content) + var(--page-gutter) * 2);
 
   /* 학생 포털 공통 여백 단위 — stu_dash.html의 4px 기반 리듬을 고정한다. */
   --space-1: 4px;
@@ -218,6 +221,8 @@ html {
   font-size: 16px;
   scroll-behavior: smooth;
   background: var(--background);
+  /* 스크롤바 유무와 무관하게 자리를 고정 — 짧은 페이지로 이동할 때 가운데 정렬된 .topbar-inner 가 스크롤바 폭의 절반만큼 밀리던 것을 막는다. */
+  scrollbar-gutter: stable;
 }
 
 body {
@@ -741,11 +746,12 @@ select:focus-visible {
 /* ─── 페이지 헤더 (플랫) ────────────────────────────────────────────
    시안 2개는 대시보드뿐이라 내부 페이지 헤더가 없다.
    .welcome 의 kicker/h1 위계를 그대로 쓰되 배경·테두리는 두지 않는다. */
+/* 머리글은 한 칸이다 — 두 칸 grid 였을 때 빈 둘째 칸의 gap(24px)만큼 경로 표시가
+   본문(카드)보다 좁았다(1368 vs 1392). 폭은 --page-content 를 그대로 따른다. */
 .v2-page-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
   align-items: end;
-  gap: 16px var(--page-gutter);
   margin-bottom: 8px;
 }
 
@@ -1351,7 +1357,6 @@ select:focus-visible {
   /* GNB 의 메뉴 숨김·햄버거 전환은 시안 시점(760)으로 옮겼다 — 아래 GNB 반응형 블록. */
 
   .v2-main { padding: 20px var(--page-gutter) 40px; }
-  .v2-page-head { grid-template-columns: minmax(0, 1fr); }
   .v2-page-title { font-size: var(--fs-stat); }
 
   .stats { grid-template-columns: minmax(0, 1fr); }
