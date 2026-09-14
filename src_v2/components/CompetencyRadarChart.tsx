@@ -53,7 +53,7 @@ interface Props {
 export default function CompetencyRadarChart({ axes, classes, currentFill, children }: Props) {
   const c = { ...DEFAULT_CLASSES, ...classes }
   const n = axes.length
-  if (n === 0) return null
+  if (n === 0) return <p role="status">표시할 핵심역량 점수가 없습니다.</p>
 
   const label = `${n}대 핵심역량 — ${axes.map(a => `${a.label} ${a.score}`).join(', ')}`
 

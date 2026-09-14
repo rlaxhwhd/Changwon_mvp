@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
 from .auth import principal, require_staff, student_access
 from .db import connection
+from .settings import settings
 
 router=APIRouter()
 HIGH="grade<>1 AND gpa ~ '^[0-9]+([.][0-9]+)?$' AND gpa::numeric<2.5 AND program_count=0 AND counsel_count=0"
@@ -47,6 +48,19 @@ def profile(conn,row):
         data['collegeName'] = organization['college_name'] if organization else ''
     # 이행률은 목록 뷰·상세 API 와 같은 SQL 함수가 센다. 화면이 칸 배열을 받아 세지 않는다.
     data['progress']=conn.execute('SELECT pct FROM dc.roadmap_progress(%s,now())',(row['intg_uid'],)).fetchone()['pct']
+    # Raw accumulated points are not a general 100-point scoring policy.
+    # Only the explicitly supplied development fixture uses them as graph scores.
+    scores=conn.execute('''SELECT competency_code,accumulated_points
+      FROM dc.student_core_competency_points WHERE student_uid=%s''',(row['intg_uid'],)).fetchall()
+    fixture=conn.execute('''SELECT bool_and(a.source_system='DEVELOPMENT_CARE7_TEST') AS yes
+      FROM dc.student_core_competency_activity c
+      LEFT JOIN dc.core_competency_allocation a ON a.id=c.allocation_id
+      WHERE c.student_uid=%s''',(row['intg_uid'],)).fetchone()['yes']
+    data['coreCompetencyScores']=None
+    data['coreCompetencySource']=None
+    if settings.environment=='development' and fixture and len(scores)==5 and all(0<=s['accumulated_points']<=100 for s in scores):
+        data['coreCompetencyScores']={s['competency_code']:s['accumulated_points'] for s in scores}
+        data['coreCompetencySource']='DEVELOPMENT_CARE7_TEST'
     return data
 
 

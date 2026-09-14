@@ -137,6 +137,8 @@ export interface StudentCounselRequest {
 export type EnrollmentStatus = '재학' | '휴학' | '졸업' | '수료'
 
 export interface StudentData {
+  coreCompetencyScores?: Record<string, number> | null
+  coreCompetencySource?: string | null
   collegeName?: string
   id: string
   studentNo: string

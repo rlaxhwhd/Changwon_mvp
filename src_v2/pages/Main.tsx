@@ -135,6 +135,7 @@ export default function Main() {
               <div><h2 data-slot="card-title" id="competencyTitle">나의 5대 핵심역량</h2></div>
             </header>
             <div data-slot="card-content">
+              {student.coreCompetencySource === 'DEVELOPMENT_CARE7_TEST' && <p>개발 테스트용 예시 점수입니다.</p>}
               <div className="competency-layout">
                 <div className="radar-wrap">
                   {/* 축·점수는 데이터층이 준다(data/competency). 좌표를 화면에 적지 않는다. */}

@@ -455,7 +455,7 @@ function GapTab({ student, radar }: { student: StudentData; radar: CompetencyRad
     <>
       <div className="dashboard-grid">
         <section data-slot="card" className="competency-card col-7">
-          <CardHead title={`${radar.axes.length}대 핵심역량`} desc="현재 수준과 목표 도달선을 비교합니다. 점수는 이수한 교과·비교과에 내포된 역량 배점에서 산출됩니다." />
+          <CardHead title="5대 핵심역량" desc="현재 수준과 목표 도달선을 비교합니다. 점수는 이수한 교과·비교과에 내포된 역량 배점에서 산출됩니다." />
           <div data-slot="card-content">
             <div className="chart-layout">
               <div>
