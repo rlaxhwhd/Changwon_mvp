@@ -142,6 +142,8 @@
      포스터는 글·지표 두 행을 세로로 차지해 배너 높이를 그대로 받는다. */
   .pn-page .jd-hero:has(.jd-logo.has-img) .jd-hero-stats { grid-column: 2; }
   .pn-page .jd-hero:has(.jd-logo.has-img) .jd-logo.has-img { grid-row: 1 / span 2; }
+  /* 200px 칸에서는 포스터가 칸 폭을 꽉 채우므로 데스크톱의 14px 왼쪽 당김이 곧 잘림이다 — 가운데로. */
+  .pn-page .jd-logo.has-img img { object-position: center; }
 }
 
 @media (max-width: 900px) {
@@ -153,26 +155,65 @@
 }
 
 @media (max-width: 640px) {
+  /* ── 폰 폭: 포스터가 먼저다 ──────────────────────────────────────────────
+     채용공고와 갈리는 지점. 거기서는 로고가 장식이지만 여기서는 포스터 한 장이 곧 안내문이라
+     180px 띠에 가두지 않는다 — 배너 폭 전체에 원본 비율로 놓고(세로 상한 70vh), 흰 면이 사진
+     높이를 따라간다. 그래서 데스크톱의 「그라데이션 정지점 = 흰 띠」방식을 버리고 배너는 파랑,
+     포스터 칸은 흰 면으로 각자 칠한다. */
   .pn-page .jd-hero:has(.jd-logo.has-img) {
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
-    background: linear-gradient(
-      to bottom,
-      #fff 0, #fff 200px,
-      var(--blue, #356dff) 200px,
-      var(--blue, #356dff) 100%
-    );
-  }
-
-  .pn-page .jd-logo.has-img {
-    height: 180px;
-    align-self: auto;
+    background: var(--blue, #356dff);
+    /* 포스터가 배너 모서리까지 나가므로 배너 자체가 잘라 준다. */
+    overflow: hidden;
   }
 
   /* 한 칸 세로 쌓기 — 위 1180 블록의 2열·2행 지정을 같은 명시도로 되돌린다. */
   .pn-page .jd-hero:has(.jd-logo.has-img) .jd-logo.has-img { grid-row: auto; }
   .pn-page .jd-hero:has(.jd-logo.has-img) .jd-hero-stats { grid-column: 1; }
 
-  /* 흰 띠가 배너 전체 폭이라 칸 중심 = 띠 중심. 데스크톱의 14px 보정을 푼다. */
-  .pn-page .jd-logo.has-img img { object-position: center; }
+  /* 포스터 칸 — 배너 안여백(20px 18px)을 음수 margin 으로 되물려 좌·우·위 모서리까지 흰 면이 닿는다.
+     칸 높이는 사진에서 나온다(데스크톱과 반대). */
+  .pn-page .jd-logo.has-img {
+    position: static;
+    width: auto; height: auto;
+    margin: -20px -18px 0;
+    padding: 12px;
+    background: #fff;
+    align-self: auto;
+  }
+  .pn-page .jd-logo.has-img img {
+    position: static;
+    display: block;
+    width: 100%; height: auto;
+    max-height: 70vh;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  /* ── 신청·관심 버튼을 화면 아래에 고정한다 ──────────────────────────────
+     요약 카드가 본문 맨 끝(≈2,000px 아래)이라 폰에서는 신청 버튼을 찾으려면 끝까지 내려야 했다.
+     GNB(z 1000)보다 아래, 신청 모달(z 2000)보다 아래. 홈 인디케이터 여백은 safe-area 로 받는다. */
+  .pn-page .jd-cta {
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    z-index: 900;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 10px var(--page-gutter, 16px) calc(10px + env(safe-area-inset-bottom, 0px));
+    background: var(--card, #fff);
+    border-top: 1px solid var(--border, #e6e8ef);
+    box-shadow: 0 -6px 18px rgba(28, 36, 66, .06);
+  }
+  .pn-page .jd-cta .jd-wish,
+  .pn-page .jd-cta .jd-apply-btn { height: 44px; font-size: 14px; }
+  .pn-page .jd-cta .pn-applied-toast { grid-column: 1 / -1; margin: 0; }
+  /* 고정 바가 푸터 마지막 줄을 덮지 않게 문서 아래를 그만큼 비운다 — 푸터는 이 페이지 밖(Layout)에
+     있으므로 페이지가 아니라 body 에 준다. */
+  body:has(.pn-page .jd-cta) { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+
+  /* 지표 값 옆의 칩(마감·신청 n)이 값을 두 줄로 쪼개지 않게 — 칩만 다음 줄로 떨어진다. */
+  .pn-page .jd-hero-stats dd { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+  .pn-page .jd-hero-stats dd em { margin-left: 0; }
 }
