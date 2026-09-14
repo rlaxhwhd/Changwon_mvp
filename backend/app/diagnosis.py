@@ -34,15 +34,21 @@ def student_diagnoses(identity: str,user=Depends(principal,scope='function'),con
     comments=conn.execute('''SELECT c.id,c.attempt_id AS "attemptId",p.alias AS "studentId",c.body,a.alias AS "by",
       c.actor_name AS "byName",c.created_at AS "createdAt" FROM dc.diagnosis_comment c JOIN dc.person p ON p.intg_uid=c.student_uid
       JOIN dc.person a ON a.intg_uid=c.actor_uid WHERE c.student_uid=%s ORDER BY c.created_at''',(student['intg_uid'],)).fetchall()
-    bindings=conn.execute('SELECT * FROM dc.diagnosis_result_factor WHERE student_uid=%s',(student['intg_uid'],)).fetchall()
-    indexed={(b['test_id'],b['attempt_no'],b['position']):b for b in bindings}
+    scores=conn.execute('SELECT * FROM dc.diagnosis_factor_score WHERE student_uid=%s ORDER BY test_id,attempt_no,position',(student['intg_uid'],)).fetchall()
+    indexed={}
+    for score in scores:
+        factor={k:v for k,v in score['raw_factor'].items() if k not in ('rawScore','tScore','percentile','level')}
+        for field,column in (('rawScore','raw_score'),('tScore','t_score'),('percentile','percentile'),('level','level')):
+            if field in score['raw_factor'] or score[column] is not None:
+                factor[field]=score[column]
+        if score['factor_code']:
+            factor.update(factorCode=score['factor_code'],definitionVersion=score['definition_version'])
+        if score['validation_issues']:
+            factor['validationIssues']=score['validation_issues']
+        indexed.setdefault((score['test_id'],score['attempt_no']),[]).append(factor)
     for result in results:
         result['payload']=dict(result['payload'])
-        factors=[]
-        for position,factor in enumerate(result['payload'].get('factors',[])):
-            binding=indexed.get((result['test_id'],result['attempt_no'],position))
-            factors.append({**factor, **({'factorCode':binding['factor_code'],'definitionVersion':binding['definition_version']} if binding else {})})
-        result['payload']['factors']=factors
+        result['payload']['factors']=indexed.get((result['test_id'],result['attempt_no']),[])
     return {'studentId':student['alias'],'attempts':[attempt_dto(r) for r in rows],
             'results':[{**r['payload'],'source':r['source']} for r in results],'comments':comments}
 
