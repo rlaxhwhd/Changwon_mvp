@@ -1379,3 +1379,12 @@
   animation:tadmin-spin .7s linear infinite;
 }
 @keyframes tadmin-spin{to{transform:rotate(360deg)}}
+/* DB 조회 상태: 실패를 빈 집계로 표현하지 않는다. */
+.tadmin .dashboard-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 0;
+  color: var(--text-cap);
+}

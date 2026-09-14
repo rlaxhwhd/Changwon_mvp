@@ -1,427 +1,178 @@
-// ─────────────────────────────────────────────────────────────────────────
-// 상담사 홈 대시보드 집계 로더 (시안 test_admin.html 기준)
-//
-// CLAUDE.md 규칙 10 — 집계는 데이터 층에서 한다. 화면은 전체 배열을 받아
-// 계산하지 않는다. DB 전환 시 이 파일의 각 함수가 집계 SQL 한 개가 된다.
-//
-// 단일 소스
-//   · 상담 신청·슬롯 = counselRequests.ts
-//   · 담당 학생      = studentRoster.ts
-//   · 유형·계층      = src_v2/data/careerProcess.ts (6유형 단일소스)
-//   · 비교과         = programs.ts
-//   · 로드맵 변경요청 = roadmapRequests.ts
-//   · 상담 기록      = counselRecords.ts
-// ─────────────────────────────────────────────────────────────────────────
-import {
-  getRequestsByAssignee,
-  pickReferenceDate,
-  getCounselStudentProfile,
-} from './counselRequests'
-import type { CounselRequest } from './schema/counselRequest'
-import {
-  getRosterDistribution, getRosterSummary,
-  TYPE_TINT, typeColorVar, typeSwatchClass,
-} from './studentRoster'
-import type { FocusFilter } from './studentRoster'
-import { getPrograms } from './programs'
-import { getRoadmapRequests } from './roadmapRequests'
-import { getCounselRecords } from './counselRecords'
-import { getAttemptsByStudent } from './diagnosisAttempts'
+// 홈의 운영 숫자와 목록은 전용 API가 집계한다. 이 모듈은 표시 형식만 변환한다.
+import { useCallback, useEffect, useState } from 'react'
+import { api } from '../../shared/api'
+import type { StoredCounselRequest } from '../../shared/counselStore'
+import type { CounselIntakeAnswer } from '../../src_v2/data/counselIntake'
 import { STUDENT_TYPES, type StudentType } from '../../src_v2/data/careerProcess'
+import { TYPE_TINT, typeColorVar, typeSwatchClass } from './studentRoster'
 
-/** 유형별 도넛·범례 색 — DESIGN.md 7색 solid 유틸 클래스명. 새 색을 만들지 않는다. */
-// 유형 색은 studentRoster(TYPE_HUE)가 단일 소스다 — 여기서 다시 정의하지 않는다.
-
-function pct(part: number, total: number): number {
-  return total === 0 ? 0 : Math.round((part / total) * 1000) / 10
-}
-
-function dateOf(request: CounselRequest): string {
-  return request.slot?.date ?? request.requestedAt.slice(0, 10)
-}
-
-// ── 인사 · 담당 요약 ──────────────────────────────────────────────────────
-
-export interface HelloSummary {
-  /** 기준일 (YYYY-MM-DD) — 시드 데이터가 오늘이 아닐 수 있어 최다 신청일로 보정 */
+export interface Dashboard {
   refDate: string
-  /** 기준일 확정·완료 상담 건수 */
-  todayCount: number
-  /** 기준일 중 완료된 건수 */
-  todayDone: number
-  studentCount: number
-  recordCount: number
-}
-
-export function getHelloSummary(counselorId: string, departments: string[]): HelloSummary {
-  const requests = getRequestsByAssignee(counselorId)
-  const refDate = pickReferenceDate(requests.map(dateOf))
-  const today = requests.filter(r => r.slot?.date === refDate && (r.status === '확정' || r.status === '완료'))
-  return {
-    refDate,
-    todayCount: today.length,
-    todayDone: today.filter(r => r.status === '완료').length,
-    studentCount: getRosterSummary(departments).total,
-    recordCount: getCounselRecords().length,
+  role: 'career' | 'psych'
+  counts: { today: number; todayDone: number; pending: number; confirmed: number; done: number; active: number; recorded: number; recordCount: number }
+  distribution: {
+    total: number
+    groups: { key: StudentType | null; label: string; count: number }[]
+    risk: { base: number; high: number; core: number }
   }
+  timeline: StoredCounselRequest[]
+  intake: StoredCounselRequest[]
+  programs: { id: string; title: string; category: string; capacity: number; applied: number; todayCount: number }[]
+  programCount: number
+  roadmap: { total: number; pending: number } | null
 }
 
-// ── 집중관리 현황 ────────────────────────────────────────────────────────
-
-export interface RiskRow {
-  label: string
-  /** 유형 코드 배지 (있으면 표시) */
-  code?: StudentType
-  /** 전체 학생 목록에서 이 분류만 거르는 필터 값 — 링크(?focus=)에 그대로 쓴다. */
-  focus: FocusFilter
-  count: number
-  ratio: number
-  /** solid 유틸 클래스 (막대용) */
-  solid: string
-  /** 잉크 유틸 클래스 (퍼센트 텍스트용) */
-  ink: string
+interface BriefingData {
+  request: StoredCounselRequest
+  doneCount: number
+  roadmap: { targetRole: string; targetCompany: { name?: string }; status: string; progress: number } | null
+  diagnoses: { total: number; done: number } | null
+  intake: CounselIntakeAnswer[]
 }
 
-export interface RiskSummary {
-  total: number
-  rows: RiskRow[]
+/** Re-fetch on entry, focus, visible-tab polling and in-app counseling changes.
+ * Identity/path keys and AbortController prevent stale cross-account responses.
+ * Failed refreshes retain data with an explicit stale/error banner, never zeroes.
+ */
+function useResource<T>(path: string | null, identity: string) {
+  const key = `${identity}:${path}`
+  const [state, setState] = useState<{ key: string; data: T | null; error: string }>({ key: '', data: null, error: '' })
+  const [revision, setRevision] = useState(0)
+  const refresh = useCallback(() => setRevision(v => v + 1), [])
+  useEffect(() => {
+    if (!path) return
+    const controller = new AbortController()
+    let running = false
+    const load = async () => {
+      if (running || controller.signal.aborted) return
+      running = true
+      try {
+        const data = await api<T>(path, { signal: controller.signal })
+        if (!controller.signal.aborted) setState({ key, data, error: '' })
+      } catch (error) {
+        if (!controller.signal.aborted) setState(previous => ({
+          key, data: previous.key === key ? previous.data : null,
+          error: error instanceof Error ? error.message : '조회하지 못했습니다.',
+        }))
+      } finally { running = false }
+    }
+    const visible = () => { if (document.visibilityState === 'visible') void load() }
+    void load()
+    const timer = window.setInterval(visible, 30_000)
+    window.addEventListener('focus', visible)
+    window.addEventListener('dc:counsel-updated', visible)
+    document.addEventListener('visibilitychange', visible)
+    return () => {
+      controller.abort()
+      window.clearInterval(timer)
+      window.removeEventListener('focus', visible)
+      window.removeEventListener('dc:counsel-updated', visible)
+      document.removeEventListener('visibilitychange', visible)
+    }
+  }, [path, identity, key, revision])
+  const current = state.key === key ? state : { data: null, error: '' }
+  return { ...current, refresh }
 }
 
-// 분류 기준·판정 함수는 studentRoster.ts 가 단일 소스다 — 목록 필터가 같은 것을 본다.
-// 여기서 다시 정의하면 카드 인원과 목록 인원이 갈린다.
-
-/** 집중관리 현황 2분류. 모집단은 1학년을 뺀 담당 학생이다. */
-export function getRiskSummary(departments: string[]): RiskSummary {
-  const { base: total, high, core } = getRosterDistribution(departments).risk
-  return {
-    total,
-    rows: [
-      { label: '고위험군', focus: 'high', count: high, ratio: pct(high, total), solid: 'b-red', ink: 'f-red' },
-      { label: '핵심관리대상', focus: 'core', count: core, ratio: pct(core, total), solid: 'b-green', ink: 'f-green' },
-    ],
-  }
+export function useCounselDashboard(identity: string) {
+  return useResource<Dashboard>('/counsel-dashboard', identity)
 }
 
-// ── KPI 4종 ─────────────────────────────────────────────────────────────
-
-export interface KpiCard {
-  key: string
-  name: string
-  value: number
-  unit: string
-  /** 진행 막대 % */
-  ratio: number
-  /** "3 / 8 작성" 형태 */
-  detail: string
-  tint: string
-  solid: string
+export function useCounselBriefing(requestId: string | null, identity: string) {
+  const resource = useResource<BriefingData>(requestId ? `/counsel-dashboard/requests/${encodeURIComponent(requestId)}` : null, identity)
+  return { ...resource, data: resource.data ? getBriefing(resource.data) : null }
 }
 
-export function getKpis(counselorId: string): KpiCard[] {
-  const requests = getRequestsByAssignee(counselorId)
-  const refDate = pickReferenceDate(requests.map(dateOf))
+function pct(part: number, total: number) {
+  return total === 0 ? 0 : Math.round(part / total * 1000) / 10
+}
 
-  const today = requests.filter(r => r.slot?.date === refDate && (r.status === '확정' || r.status === '완료'))
-  const todayDone = today.filter(r => r.status === '완료').length
+export function getHelloSummary(data: Dashboard) {
+  return { refDate: data.refDate, todayCount: data.counts.today, todayDone: data.counts.todayDone,
+    studentCount: data.distribution.total, recordCount: data.counts.recordCount }
+}
 
-  const pending = requests.filter(r => r.status === '대기').length
-  const confirmed = requests.filter(r => r.status === '확정').length
+export function getRiskSummary(data: Dashboard) {
+  const { base: total, high, core } = data.distribution.risk
+  return { total, rows: [
+    { label: '고위험군', code: undefined, focus: 'high', count: high, ratio: pct(high, total), solid: 'b-red', ink: 'f-red' },
+    { label: '핵심관리대상', code: undefined, focus: 'core', count: core, ratio: pct(core, total), solid: 'b-green', ink: 'f-green' },
+  ] }
+}
 
-  const roadmap = getRoadmapRequests()
-  const roadmapOpen = roadmap.filter(r => r.status === 'REQ').length
-
-  const done = requests.filter(r => r.status === '완료')
-  const recorded = new Set(getCounselRecords().map(r => r.requestId))
-  const missing = done.filter(r => !recorded.has(r.id)).length
-
-  return [
-    {
-      key: 'today', name: '오늘 상담', value: today.length, unit: '건',
-      ratio: pct(todayDone, today.length), detail: `${todayDone} / ${today.length} 완료`,
-      tint: 's-green', solid: 'b-green',
-    },
-    {
-      key: 'intake', name: '접수 대기', value: pending, unit: '건',
-      ratio: pct(confirmed, pending + confirmed), detail: `${confirmed} / ${pending + confirmed} 확정`,
-      tint: 's-orange', solid: 'b-orange',
-    },
-    {
-      key: 'roadmap', name: '로드맵 변경요청', value: roadmapOpen, unit: '건',
-      ratio: pct(roadmap.length - roadmapOpen, roadmap.length), detail: `${roadmap.length - roadmapOpen} / ${roadmap.length} 처리`,
-      tint: 's-red', solid: 'b-red',
-    },
-    {
-      key: 'record', name: '상담일지 미작성', value: missing, unit: '건',
-      ratio: pct(done.length - missing, done.length), detail: `${done.length - missing} / ${done.length} 작성`,
-      tint: 's-purple', solid: 'b-purple',
-    },
+export function getKpis(data: Dashboard) {
+  const c = data.counts
+  const cards = [
+    { key: 'today', name: '오늘 상담', value: c.today, unit: '건', ratio: pct(c.todayDone, c.today), detail: `${c.todayDone} / ${c.today} 완료`, tint: 's-green', solid: 'b-green' },
+    { key: 'intake', name: '접수 대기', value: c.pending, unit: '건', ratio: pct(c.confirmed, c.pending + c.confirmed), detail: `${c.confirmed} / ${c.pending + c.confirmed} 확정`, tint: 's-orange', solid: 'b-orange' },
+    { key: 'record', name: '상담일지 미작성', value: c.done - c.recorded, unit: '건', ratio: pct(c.recorded, c.done), detail: `${c.recorded} / ${c.done} 작성`, tint: 's-purple', solid: 'b-purple' },
   ]
+  if (data.roadmap) {
+    const { total, pending } = data.roadmap
+    cards.splice(2, 0, { key: 'roadmap', name: '로드맵 변경요청', value: pending, unit: '건', ratio: pct(total - pending, total), detail: `${total - pending} / ${total} 처리`, tint: 's-red', solid: 'b-red' })
+  }
+  return cards
 }
 
-// ── 유형 분포 (도넛 + 범례) ───────────────────────────────────────────────
-
-export interface TypeSlice {
-  code: StudentType
-  label: string
-  count: number
-  ratio: number
-  swatch: string
-  /** 도넛 conic-gradient 누적 시작 % */
-  from: number
-  to: number
-}
-
-export interface TypeDistribution {
-  total: number
-  slices: TypeSlice[]
-  /** conic-gradient(...) 문자열 — CSS 변수로 주입한다 */
-  gradient: string
-}
-
-export function getTypeDistribution(departments: string[]): TypeDistribution {
-  const distribution = getRosterDistribution(departments)
-  const total = distribution.total
+export function getTypeDistribution(data: Dashboard) {
+  const { total, groups } = data.distribution
   let cursor = 0
-  const slices = STUDENT_TYPES.map(meta => {
-    const count = distribution.groups.find(s => s.key === meta.code)?.count ?? 0
-    const ratio = pct(count, total)
+  const slices = groups.map(group => {
+    const ratio = pct(group.count, total)
     const from = cursor
-    cursor += ratio
-    return { code: meta.code, label: meta.label, count, ratio, swatch: typeSwatchClass(meta.code), from, to: cursor }
+    cursor += total ? group.count / total * 100 : 0
+    return { code: group.key, label: group.label, count: group.count, ratio,
+      swatch: group.key ? typeSwatchClass(group.key) : '', from, to: cursor }
   })
-  // 유틸 클래스는 CSS라 gradient에는 값이 필요하다 — 같은 단일 소스에서 var()로 뽑는다
   const stops = [...slices.map(s => `${typeColorVar(s.code)} ${s.from}% ${s.to}%`),
     `${typeColorVar(null)} ${Math.min(cursor, 100)}% 100%`].join(', ')
   return { total, slices, gradient: `conic-gradient(${stops})` }
 }
 
-// ── 오늘의 상담 (타임라인) ────────────────────────────────────────────────
-
-export interface TimelineItem {
-  requestId: string
-  studentId: string
-  time: string
-  name: string
-  meta: string
-  typeCode?: StudentType | null
-  typeLabel?: string
-  typeTint?: string
-  topic: string
-  status: CounselRequest['status']
+function timelineItem(r: StoredCounselRequest) {
+  const meta = r.studentType ? STUDENT_TYPES.find(t => t.code === r.studentType) : undefined
+  return { requestId: r.id, studentId: r.studentId, time: r.slot?.start ?? '시간 미정',
+    name: r.studentName, meta: `${r.studentMajor} · ${r.method}`, typeCode: r.studentType,
+    typeLabel: meta?.label, typeTint: r.studentType ? TYPE_TINT[r.studentType] : undefined,
+    topic: r.topic, status: r.status }
 }
 
-export function getTodayTimeline(counselorId: string, _departments: string[]): TimelineItem[] {
-  const requests = getRequestsByAssignee(counselorId)
-  const refDate = pickReferenceDate(requests.map(dateOf))
+export function getTodayTimeline(data: Dashboard) { return data.timeline.map(timelineItem) }
 
-  return requests
-    .filter(r => r.slot?.date === refDate && (r.status === '확정' || r.status === '완료'))
-    .sort((a, b) => (a.slot!.start ?? '').localeCompare(b.slot!.start ?? ''))
-    .map(r => {
-      const code = r.studentType
-      const meta = code ? STUDENT_TYPES.find(t => t.code === code) : undefined
-      return {
-        requestId: r.id,
-        studentId: r.studentId,
-        time: r.slot?.start ?? '',
-        name: r.studentName,
-        meta: `${r.studentMajor} · ${r.method}`,
-        typeCode: code,
-        typeLabel: meta?.label,
-        typeTint: code ? TYPE_TINT[code] : undefined,
-        topic: r.topic,
-        status: r.status,
-      }
-    })
-}
-
-// ── 상담 전 브리핑 (다음 상담 1건) ────────────────────────────────────────
-
-export interface BriefingRow {
-  label: string
-  /** 한 줄 값 또는 목록 */
-  value?: string
-  items?: string[]
-  tint: string
-}
-
-/** 브리핑 상단 3지표 — 시안 .scores */
-export interface BriefingScore {
-  label: string
-  value: string
-  /** 값 뒤 첨자 ("%", "회", "/2") */
-  unit: string
-  ink: string
-}
-
-export interface Briefing {
-  studentId: string
-  name: string
-  meta: string
-  typeCode?: StudentType | null
-  typeLabel?: string
-  typeTint?: string
-  time: string
-  /** 상담 방식 (개인상담·화상상담 등) */
-  mode: string
-  scores: BriefingScore[]
-  rows: BriefingRow[]
-  /** 주의 문구 (없으면 표시 안 함) */
-  alert?: string
-}
-
-/** 학생 1명의 상담 전 브리핑. 타임라인 항목을 펼칠 때 조회한다. */
-export function getBriefing(
-  studentId: string,
-  counselorId: string,
-  departments: string[],
-): Briefing | null {
-  const next = getTodayTimeline(counselorId, departments).find(t => t.studentId === studentId)
-  if (!next) return null
-
-  const profile = getCounselStudentProfile(next.studentId)
-  if (!profile) return null
-
-  const rows: BriefingRow[] = [
-    { label: '상담 주제', value: next.topic, tint: 's-blue' },
-    { label: '목표', value: profile.targetCompanySummary, tint: 's-teal' },
-    { label: '로드맵', value: profile.roadmapSummary, tint: 's-purple' },
-  ]
-  if (profile.counselorQuestions.length > 0) {
-    rows.push({ label: 'AI 추천 질문', items: profile.counselorQuestions.slice(0, 3), tint: 's-green' })
+function getBriefing(data: BriefingData) {
+  const r = data.request
+  const item = timelineItem(r)
+  const scores = [{ label: '상담 횟수', value: String(data.doneCount), unit: '회', ink: 'f-orange' }]
+  const rows = [{ label: '상담 주제', value: r.topic, tint: 's-blue' }]
+  if (data.roadmap) {
+    scores.unshift({ label: '로드맵 이행률', value: String(data.roadmap.progress), unit: '%', ink: 'f-green' })
+    rows.push({ label: '목표', value: [data.roadmap.targetRole, data.roadmap.targetCompany?.name].filter(Boolean).join(' · ') || '등록된 목표가 없습니다.', tint: 's-teal' })
+    rows.push({ label: '로드맵', value: data.roadmap.status === 'CONFIRMED' ? '확정' : data.roadmap.status === 'REVIEW' ? '검토중' : '초안', tint: 's-purple' })
   }
-
-  // 시안 .scores 3지표 — 전부 기존 단일소스에서 파생한다(하드코딩 금지)
-  const progress = profile.progress ?? 0
-  const myDone = getRequestsByAssignee(counselorId)
-    .filter(r => r.studentId === studentId && r.status === '완료').length
-  const attempts = getAttemptsByStudent(studentId)
-  const attemptsDone = attempts.filter(a => a.completedAt).length
-
-  const tier = profile.typeMeta?.tier ?? null
-  return {
-    studentId: next.studentId,
-    name: profile.name,
-    meta: `${profile.major} ${profile.grade}학년 · ${profile.gpa} · ${profile.language}`,
-    typeCode: next.typeCode,
-    typeLabel: next.typeLabel,
-    typeTint: next.typeTint,
-    time: next.time,
-    mode: next.meta.split(' · ').at(-1) ?? '개인상담',
-    scores: [
-      { label: '로드맵 이행률', value: String(progress), unit: '%', ink: 'f-green' },
-      { label: '상담 횟수', value: String(myDone), unit: '회', ink: 'f-orange' },
-      { label: '진단 완료', value: String(attemptsDone), unit: `/${attempts.length}`, ink: 'f-blue' },
-    ],
-    rows,
-    alert: tier === 'LOW'
-      ? '취약관리형 학생입니다. 참여 동기 회복과 이탈 방지를 먼저 확인하세요.'
-      : undefined,
-  }
+  if (data.diagnoses) scores.push({ label: '진단 완료', value: String(data.diagnoses.done), unit: `/${data.diagnoses.total}`, ink: 'f-blue' })
+  return { ...item, mode: r.method, scores, rows, intake: data.intake }
 }
 
-/** 기본으로 펼쳐 둘 상담 — 가장 이른 미완료 건. 없으면 null. */
-export function getDefaultOpenStudentId(counselorId: string, departments: string[]): string | null {
-  return getTodayTimeline(counselorId, departments).find(t => t.status !== '완료')?.studentId ?? null
+export function getIntake(data: Dashboard) {
+  const colors = ['s-teal', 's-blue', 's-purple', 's-green', 's-orange']
+  return data.intake.map((r, i) => ({ requestId: r.id, studentId: r.studentId,
+    initial: r.studentName.slice(0, 1), name: r.studentName, meta: r.studentMajor,
+    sub: `${r.type} · ${r.slot?.date ?? '일정 미정'}${r.slot ? ` ${r.slot.start}` : ''}`,
+    status: r.status, tint: colors[i % colors.length] }))
 }
 
-// ── 상담접수함 ───────────────────────────────────────────────────────────
-
-export interface IntakeItem {
-  requestId: string
-  studentId: string
-  initial: string
-  name: string
-  meta: string
-  sub: string
-  status: CounselRequest['status']
-  tint: string
+export function getMyPrograms(data: Dashboard) {
+  return data.programs.map((p, i) => ({ ...p, code: p.id.toUpperCase(), ratio: pct(p.applied, p.capacity),
+    solid: ['b-teal', 'b-blue', 'b-purple'][i % 3], tint: ['s-teal', 's-blue', 's-purple'][i % 3] }))
 }
 
-export function getIntake(counselorId: string, _departments: string[], limit = 3): IntakeItem[] {
-  const AVA = ['s-teal', 's-blue', 's-purple', 's-green', 's-orange']
-  return getRequestsByAssignee(counselorId)
-    .filter(r => r.status === '대기')
-    .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))
-    .slice(0, limit)
-    .map((r, i) => {
-      const code = r.studentType
-      const label = code ? STUDENT_TYPES.find(t => t.code === code)?.label : undefined
-      return {
-        requestId: r.id,
-        studentId: r.studentId,
-        initial: r.studentName.slice(0, 1),
-        name: r.studentName,
-        meta: r.studentMajor,
-        sub: [r.type, label ? `${code} ${label}` : null, r.requestedAt.slice(0, 10).replace(/-/g, '.')]
-          .filter(Boolean).join(' · '),
-        status: r.status,
-        tint: AVA[i % AVA.length],
-      }
-    })
-}
-
-// ── 내가 등록한 비교과 ───────────────────────────────────────────────────
-
-export interface ProgramRow {
-  id: string
-  code: string
-  title: string
-  applied: number
-  capacity: number
-  ratio: number
-  solid: string
-  tint: string
-  category: string
-  /** 기준일 신청 인원 — 시안 "오늘 N명 신청" */
-  todayCount: number
-}
-
-export function getMyPrograms(managerName: string, refDate: string, limit = 3): ProgramRow[] {
-  const SOLID = ['b-teal', 'b-blue', 'b-purple']
-  const TINT = ['s-teal', 's-blue', 's-purple']
-  const mine = getPrograms().filter(p => p.manager === managerName)
-  const list = mine.length > 0 ? mine : getPrograms()
-  return list.slice(0, limit).map((p, i) => ({
-    id: p.id,
-    code: p.id.toUpperCase(),
-    title: p.title,
-    applied: p.applicants.length,
-    capacity: p.capacity,
-    ratio: pct(p.applicants.length, p.capacity),
-    solid: SOLID[i % SOLID.length],
-    tint: TINT[i % TINT.length],
-    category: p.category,
-    todayCount: p.applicants.filter(a => a.appliedAt.slice(0, 10) === refDate).length,
-  }))
-}
-
-// ── 나의 성과 지표 ───────────────────────────────────────────────────────
-
-export interface PerfRow {
-  key: string
-  name: string
-  goal: number
-  value: number
-  tint: string
-  solid: string
-  ink: string
-}
-
-export function getPerformance(counselorId: string): PerfRow[] {
-  const requests = getRequestsByAssignee(counselorId)
-  const done = requests.filter(r => r.status === '완료')
-  const closed = requests.filter(r => r.status !== '대기')
-  const recorded = new Set(getCounselRecords().map(r => r.requestId))
-  const written = done.filter(r => recorded.has(r.id)).length
-
-  const roadmap = getRoadmapRequests()
-  const handled = roadmap.filter(r => r.status !== 'REQ').length
-
-  return [
-    { key: 'progress', name: '상담 진행률', goal: 90, value: pct(done.length, closed.length), tint: 's-green', solid: 'b-green', ink: 'f-green' },
-    { key: 'record', name: '상담일지 완성률', goal: 95, value: pct(written, done.length), tint: 's-teal', solid: 'b-teal', ink: 'f-teal' },
-    { key: 'confirm', name: '신청 확정률', goal: 90, value: pct(closed.length, requests.length), tint: 's-orange', solid: 'b-orange', ink: 'f-orange' },
-    { key: 'roadmap', name: '로드맵 요청 반영률', goal: 85, value: pct(handled, roadmap.length), tint: 's-red', solid: 'b-red', ink: 'f-red' },
+export function getPerformance(data: Dashboard) {
+  const c = data.counts
+  const rows = [
+    { key: 'progress', name: '상담 진행률', value: pct(c.done, c.confirmed + c.done), tint: 's-green', solid: 'b-green', ink: 'f-green' },
+    { key: 'record', name: '상담일지 완성률', value: pct(c.recorded, c.done), tint: 's-teal', solid: 'b-teal', ink: 'f-teal' },
+    { key: 'confirm', name: '신청 확정률', value: pct(c.confirmed + c.done, c.active), tint: 's-orange', solid: 'b-orange', ink: 'f-orange' },
   ]
+  if (data.roadmap) rows.push({ key: 'roadmap', name: '로드맵 요청 처리율', value: pct(data.roadmap.total - data.roadmap.pending, data.roadmap.total), tint: 's-red', solid: 'b-red', ink: 'f-red' })
+  return rows
 }

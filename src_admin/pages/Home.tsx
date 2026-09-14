@@ -6,21 +6,17 @@ import { getActiveCounselor } from '../data/counselors'
 import {
   getHelloSummary, getRiskSummary, getKpis, getTypeDistribution,
   getTodayTimeline, getIntake, getMyPrograms, getPerformance,
-  getBriefing, getDefaultOpenStudentId,
+  useCounselDashboard, useCounselBriefing, type Dashboard,
 } from '../data/counselorDashboard'
-import { mockLatency } from '../data/query'
 import EmptyState from '../components/EmptyState'
 import StudentDetailModal from '../components/StudentDetailModal'
 import './TestAdminHome.css'
 import { categoryLabel } from '../data/schema/program'
 
 // ─────────────────────────────────────────────────────────────────────────
-// 상담사 홈 대시보드 — 시안(test_admin_react) 마크업을 JSX로 옮긴 것.
-//
-// 클래스명·구조·아이콘은 시안 그대로다. 값은 전부 counselorDashboard.ts 에서
-// 받는다(CLAUDE.md 규칙 10 — 집계는 데이터 층). 리터럴을 화면에 박지 않는다.
-// 막대 길이는 CSS가 아니라 데이터다 — 인라인 --v 만 바꾼다.
-// CSS 는 시안 styles.css 를 .tadmin 하위로 기계 스코핑한 TestAdminHome.css.
+// 상담사 홈: 운영 수치·목록·브리핑은 counsel-dashboard API의 DB 조회 결과다.
+// counselorDashboard.ts는 조회 갱신과 표시 형식을 담당한다.
+// 기존 반응형 레이아웃은 TestAdminHome.css의 .tadmin 스타일을 사용한다.
 // ─────────────────────────────────────────────────────────────────────────
 
 /** 시안 스프라이트 아이콘 */
@@ -35,9 +31,6 @@ const KPI_META: Record<string, { icon: string; to: string }> = {
   roadmap: { icon: 'route', to: '/roadmap/requests' },
   record: { icon: 'pen', to: '/counsel/journals' },
 }
-
-/** AI 추천 질문 생성에 걸리는 시간(모의). 실제 생성 API가 붙으면 이 상수는 사라진다. */
-const AI_QUESTION_MS = 900
 
 /** 성과 지표 4행의 아이콘 — key 는 getPerformance() 가 정한다 */
 const PERF_ICON: Record<string, string> = {
@@ -69,35 +62,41 @@ function Sprig() {
 
 export default function Home() {
   const me = getActiveCounselor()
-  const depts = me.departments
+  const { data, error, refresh } = useCounselDashboard(me.id)
+  if (!data) return (
+    <div className="tadmin"><div className="page">
+      {error ? <div role="alert" className="dashboard-status">
+        <p>상담사 홈을 조회하지 못했습니다. {error}</p>
+        <button type="button" className="btn" onClick={refresh}>다시 조회</button>
+      </div> : <p role="status" className="dashboard-status">상담 현황을 불러오는 중입니다.</p>}
+    </div></div>
+  )
+  return <HomeContent key={me.id} data={data} error={error} onRefresh={refresh} />
+}
+
+function HomeContent({ data, error, onRefresh }: { data: Dashboard; error: string; onRefresh: () => void }) {
+  const me = getActiveCounselor()
   const isCareer = me.role === 'career'
 
-  const hello = getHelloSummary(me.id, depts)
-  const risk = getRiskSummary(depts)
-  const kpis = getKpis(me.id)
-  const dist = getTypeDistribution(depts)
-  const timeline = getTodayTimeline(me.id, depts)
-  const intake = getIntake(me.id, depts)
-  const programs = isCareer ? getMyPrograms(me.name, hello.refDate) : []
-  const perf = getPerformance(me.id)
+  const hello = getHelloSummary(data)
+  const risk = getRiskSummary(data)
+  const kpis = getKpis(data)
+  const dist = getTypeDistribution(data)
+  const timeline = getTodayTimeline(data)
+  const intake = getIntake(data)
+  const programs = getMyPrograms(data)
+  const perf = getPerformance(data)
 
-  // 시안 동작: 항목을 누르면 그 아래로 브리핑이 펼쳐진다(하나만 열림)
-  const [openId, setOpenId] = useState<string | null>(() => getDefaultOpenStudentId(me.id, depts))
-  const briefing = openId ? getBriefing(openId, me.id, depts) : null
+  // 신청 ID로 구분한다. 같은 학생의 서로 다른 상담·문진표를 섞지 않는다.
+  const [openId, setOpenId] = useState<string | null | undefined>(undefined)
+  const activeRequestId = openId === undefined
+    ? timeline.find(t => t.status !== '완료')?.requestId ?? null
+    : timeline.some(t => t.requestId === openId) ? openId : null
+  const briefingResource = useCounselBriefing(activeRequestId, me.id)
+  const briefing = briefingResource.data
 
   // 학생정보 모달 — 상담사 학생관리 상세와 같은 화면(StudentDetailModal 공용)
   const [infoId, setInfoId] = useState<string | null>(null)
-
-  // AI 추천 질문은 '생성'이다 — 브리핑을 펼치자마자 보여주지 않고 버튼을 눌러야 만들어진다.
-  // 한 번 생성한 학생은 다시 펼쳐도 재생성하지 않는다.
-  const [askedIds, setAskedIds] = useState<string[]>([])
-  const [askingId, setAskingId] = useState<string | null>(null)
-  const generateQuestions = async (studentId: string) => {
-    setAskingId(studentId)
-    await mockLatency(AI_QUESTION_MS)
-    setAskingId(null)
-    setAskedIds(prev => (prev.includes(studentId) ? prev : [...prev, studentId]))
-  }
 
   // 사전 문진표 모달
   const [sheetOpen, setSheetOpen] = useState(false)
@@ -112,7 +111,7 @@ export default function Home() {
     }
   }, [sheetOpen])
 
-  const questions = briefing?.rows.find(r => r.items)?.items ?? []
+  const questions = briefing?.intake ?? []
 
   return (
     <div className="tadmin">
@@ -125,6 +124,11 @@ export default function Home() {
       />
 
       <div className="page">
+        <div className="dashboard-status">
+          {error ? <p role="alert">최신 조회에 실패해 이전 결과를 표시합니다. {error}</p>
+            : <span>한국 시간 {hello.refDate} 기준 · 자동 갱신</span>}
+          <button type="button" className="btn sm" onClick={onRefresh}>새로고침</button>
+        </div>
         <div className="grid">
 
           {/* ========== 좌측 ========== */}
@@ -157,7 +161,7 @@ export default function Home() {
               <span className="go"><Ico id="chev" /></span>
             </Link>
 
-            {/* 집중관리 현황 — 1학년을 뺀 담당 학생 대비 비율(분류 기준은 counselorDashboard.RISK_RULE) */}
+            {/* 집중관리 현황 — 학생 목록 API와 같은 DB 분류·담당 범위 사용 */}
             <div className="card sm risk">
               <div className="risk-hd">
                 <span className="rounded s-red"><Ico id="alert" /></span>
@@ -206,8 +210,8 @@ export default function Home() {
                 </div>
                 <div className="legend">
                   {dist.slices.map(s => (
-                    <div key={s.code} className="lg">
-                      <span className={`sw ${s.swatch}`} />
+                    <div key={s.code ?? 'unassigned'} className="lg">
+                      <span className={`sw ${s.swatch}`} style={!s.code ? { background: 'var(--text-cap)' } : undefined} />
                       <span className="cd">{s.code}</span>
                       <span className="nm">{s.label}</span>
                       <span className="n">{s.count}명</span>
@@ -229,14 +233,14 @@ export default function Home() {
                 <h2>오늘의 상담</h2>
                 <div className="right"><span className="badge s-teal">{timeline.length}건</span></div>
               </div>
-              <p className="consultation-guide">학생을 선택하면 상담 전 브리핑을 바로 확인할 수 있어요.</p>
+              <p className="consultation-guide">오늘 예정된 접수 대기·확정·완료 상담입니다. 다른 날짜의 신청은 상담접수함에서 확인하세요.</p>
 
               {timeline.length === 0 ? (
-                <EmptyState message="오늘 확정된 상담이 없습니다." />
+                <EmptyState message="오늘 예정된 상담이 없습니다." />
               ) : (
                 <div className="tl">
                   {timeline.map(item => {
-                    const on = openId === item.studentId
+                    const on = activeRequestId === item.requestId
                     return (
                       <div
                         key={item.requestId}
@@ -246,12 +250,12 @@ export default function Home() {
                           className="tl-row"
                           role="button"
                           tabIndex={0}
-                          aria-selected={on}
-                          onClick={() => setOpenId(on ? null : item.studentId)}
+                          aria-expanded={on}
+                          onClick={() => setOpenId(on ? null : item.requestId)}
                           onKeyDown={e => {
                             if (e.key === 'Enter' || e.key === ' ') {
                               e.preventDefault()
-                              setOpenId(on ? null : item.studentId)
+                              setOpenId(on ? null : item.requestId)
                             }
                           }}
                         >
@@ -266,7 +270,7 @@ export default function Home() {
                             </div>
                             <div className="tl-desc">{item.topic}</div>
                             <div className="tl-tags">
-                              <span className={`badge ${item.status === '완료' ? 's-green' : 's-blue'}`}>
+                              <span className={`badge ${item.status === '완료' ? 's-green' : item.status === '대기' ? 's-orange' : 's-blue'}`}>
                                 {item.status}
                               </span>
                             </div>
@@ -290,12 +294,15 @@ export default function Home() {
                           </div>
                         </div>
 
-                        {on && briefing && (
+                        {on && briefingResource.error && <div role="alert" className="dashboard-status">
+                          <p>{briefingResource.error}</p><button type="button" className="btn sm" onClick={briefingResource.refresh}>다시 조회</button>
+                        </div>}
+                        {on && !briefing && !briefingResource.error && <p role="status">브리핑을 불러오는 중입니다.</p>}
+                        {on && briefing && !briefingResource.error && (
                           <section className="inline-briefing" aria-label={`${briefing.name} 상담 전 브리핑`}>
                             <div className="inline-briefing-head">
                               <div className="inline-briefing-title">
                                 <h3>{briefing.name} 상담 전 브리핑</h3>
-                                <span className="pill s-blue">AI</span>
                               </div>
                               <div className="inline-briefing-meta">
                                 <span><Ico id="user" />{briefing.mode}</span>
@@ -318,33 +325,10 @@ export default function Home() {
                               {briefing.rows.map(row => (
                                 <div key={row.label} className="brow">
                                   <div className="lab">{row.label}</div>
-                                  <div className="val">
-                                    {/* 목록형 행(AI 추천 질문)은 버튼을 눌러 생성한 뒤에 나온다 */}
-                                    {!row.items ? row.value
-                                      : askedIds.includes(briefing.studentId)
-                                        ? <ul>{row.items.map(q => <li key={q}>{q}</li>)}</ul>
-                                        : (
-                                          <button
-                                            type="button"
-                                            className="btn sm ai-question-btn"
-                                            disabled={askingId === briefing.studentId}
-                                            onClick={() => generateQuestions(briefing.studentId)}
-                                          >
-                                            {askingId === briefing.studentId ? (
-                                              <><span className="ai-question-spin" aria-hidden="true" />질문 생성 중…</>
-                                            ) : (
-                                              <><Ico id="help" />AI추천질문</>
-                                            )}
-                                          </button>
-                                        )}
-                                  </div>
+                                  <div className="val">{row.value}</div>
                                 </div>
                               ))}
                             </div>
-
-                            {briefing.alert && (
-                              <div className="alert"><Ico id="alert" /><p>{briefing.alert}</p></div>
-                            )}
 
                             <div className="actions">
                               <button
@@ -355,8 +339,8 @@ export default function Home() {
                               >
                                 <Ico id="doc" />사전 문진표 보기
                               </button>
-                              <Link to={`/counsel/session/${briefing.studentId}`} className="btn primary">
-                                <Ico id="route" />상담 진행
+                              <Link to={item.status === '대기' ? '/counsel/requests' : `/counsel/session/${briefing.studentId}`} className="btn primary">
+                                <Ico id="route" />{item.status === '대기' ? '접수 확인' : '상담 진행'}
                               </Link>
                             </div>
                           </section>
@@ -380,7 +364,7 @@ export default function Home() {
             <div className="card">
               <div className="card-hd">
                 <h2>상담접수함</h2>
-                <div className="right"><span className="badge s-purple">{intake.length}건</span></div>
+                <div className="right"><span className="badge s-purple">{data.counts.pending}건</span></div>
               </div>
               {intake.length === 0 ? (
                 <EmptyState message="대기 중인 신청이 없습니다." />
@@ -401,7 +385,7 @@ export default function Home() {
                 ))
               )}
               <div className="foot-link">
-                <Link to="/students" className="link">전체 보기<Ico id="chev" /></Link>
+                <Link to="/counsel/requests" className="link">전체 보기<Ico id="chev" /></Link>
               </div>
             </div>
 
@@ -410,7 +394,7 @@ export default function Home() {
               <div className="card">
                 <div className="card-hd">
                   <h2>내가 등록한 비교과 프로그램</h2>
-                  <div className="right"><span className="badge s-green">{programs.length}개</span></div>
+                  <div className="right"><span className="badge s-green">{data.programCount}개</span></div>
                 </div>
                 {programs.length === 0 ? (
                   <EmptyState message="등록한 프로그램이 없습니다." />
@@ -445,7 +429,6 @@ export default function Home() {
                   <div className="row">
                     <span className={`ico ${row.tint}`}><Ico id={PERF_ICON[row.key]} /></span>
                     <span className="nm">{row.name}</span>
-                    <span className="goal">목표 {row.goal}%</span>
                     <span className={`v ${row.ink}`}>{row.value}<u>%</u></span>
                   </div>
                   <div className="bar"><i className={row.solid} style={bar(row.value)} /></div>
@@ -465,7 +448,7 @@ export default function Home() {
         <StudentDetailModal studentId={infoId} role={me.role} onClose={() => setInfoId(null)} />
       )}
 
-      {/* 사전 문진표 — 브리핑의 AI 추천 질문을 문항으로 보여준다 */}
+      {/* 해당 상담 신청에 저장된 실제 문항·응답 */}
       {sheetOpen && briefing && (
         <div className="modal-backdrop" role="presentation" onClick={() => setSheetOpen(false)}>
           <section
@@ -492,10 +475,10 @@ export default function Home() {
               </button>
             </div>
             <dl className="questionnaire">
-              {questions.map(q => (
-                <div key={q} className="questionnaire-row">
-                  <dt>{q}</dt>
-                  <dd>상담 전 학생 응답이 아직 등록되지 않았습니다.</dd>
+              {questions.map((q, i) => (
+                <div key={i} className="questionnaire-row">
+                  <dt>{q.question}</dt>
+                  <dd>{q.answer || '등록된 응답이 없습니다.'}</dd>
                 </div>
               ))}
             </dl>

@@ -8,6 +8,7 @@ from .student_login import router as student_login_router
 from .academic_directory import router as academic_directory_router
 from .students import router as students_router
 from .counsel import router as counsel_router
+from .counsel_dashboard import router as counsel_dashboard_router
 from .counsel_records import router as record_router
 from .psych_tests import router as psych_tests_router
 from .administration import router as administration_router
@@ -46,6 +47,7 @@ app.include_router(student_login_router, prefix='/api/v1')
 app.include_router(academic_directory_router, prefix='/api/v1')
 app.include_router(students_router, prefix='/api/v1')
 app.include_router(counsel_router, prefix='/api/v1')
+app.include_router(counsel_dashboard_router, prefix='/api/v1')
 app.include_router(record_router, prefix='/api/v1')
 app.include_router(psych_tests_router, prefix='/api/v1')
 app.include_router(administration_router, prefix='/api/v1')
