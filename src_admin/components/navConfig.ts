@@ -111,6 +111,7 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '상담 통계', path: '/counsel/stats', icon: LuChartNoAxesColumn },
       // 학생 신청 없이 남기는 심리상담 기록 — 교수 발의 기록과 같은 방식(counsel.6).
       { label: '추가 심리상담신청', path: '/counsel/psych-records/new', icon: LuPlus, roles: ['psych'] },
+      { label: '심리상담센터 연계', path: '/counsel/psych-referrals', icon: LuBrain },
     ],
   },
   {

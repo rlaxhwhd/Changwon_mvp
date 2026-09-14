@@ -14,6 +14,7 @@ import CounselStats from './pages/CounselStats'
 import DiagnosisStatus from './pages/DiagnosisStatus'
 import GroupCounsels from './pages/GroupCounsels'
 import PsychTests from './pages/PsychTests'
+import PsychReferrals from './pages/PsychReferrals'
 import PsychCounselRecordNew from './pages/PsychCounselRecordNew'
 import StudentList from './pages/StudentList'
 import StudentAll from './pages/StudentAll'
@@ -130,6 +131,7 @@ const router = createBrowserRouter(
               element: <RequireRole roles={['career', 'psych']} />,
               children: [
                 { path: '/counsel/requests', element: <CounselRequests /> },
+                { path: '/counsel/psych-referrals', element: <PsychReferrals /> },
                 { path: '/counsel/schedule', element: <CounselSchedule /> },
                 { path: '/counsel/session/:studentId', element: <CounselSession /> },
                 { path: '/counsel/journals', element: <CounselJournals /> },

@@ -1,0 +1,13 @@
+.psych-referrals .referral-form { padding: 24px; }
+.psych-referrals .admin-form-field { display: flex; flex-direction: column; gap: 8px; font-size: 13px; font-weight: 600; }
+.psych-referrals .admin-form-field input,
+.psych-referrals .admin-form-field select { min-height: 38px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg); color: var(--color-text); font: inherit; }
+.psych-referrals .admin-filterbar { margin: 16px 0; }
+.psych-referrals .referral-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+.psych-referrals .referral-table-wrap { overflow-x: auto; }
+.psych-referrals .referral-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
+.psych-referrals .referral-table th { background: var(--color-section-bg); font-weight: 600; }
+.psych-referrals .referral-table th,
+.psych-referrals .referral-table td { padding: 16px; border-bottom: 1px solid var(--color-border); }
+.psych-referrals .referral-table small { display: block; margin-top: 5px; color: var(--color-text-secondary); line-height: 1.6; }
+.psych-referrals .referral-pagination { display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 16px; font-size: 13px; }
