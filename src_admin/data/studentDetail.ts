@@ -14,9 +14,10 @@ import type { StudentStat } from '../../src_v2/components/StudentStatCards'
 import { getCompetencyAxes, getCompetencyOverall } from '../../src_v2/data/competency'
 import type { CompetencyAxisView } from '../../src_v2/data/competency'
 import {
-  DIAGNOSIS_MODULES, getRequiredTests, journeyProgress,
+  DIAGNOSIS_MODULES, getRequiredTests, buildCareerJourney,
   type CareerJourney, type DiagnosisModule, type StudentType,
 } from '../../src_v2/data/careerProcess'
+import { getPipelineState } from '../../src_v2/data/pipeline'
 import { getAttemptsByStudent } from './diagnosisAttempts'
 import type { DiagnosisAttempt } from './schema/diagnosisAttempt'
 import { getRecordsByStudent } from './counselRecords'
@@ -264,32 +265,21 @@ export interface GoalPlan {
 /** 로드맵 이행률 % — 단일 소스는 data/roadmap.ts. 재구현하지 않는다. */
 export { getRoadmapProgress }
 
-/**
- * 진로 여정 카드(공용 CareerJourneyCard)가 구독하는 투영.
- * 칸은 학생 JSON 의 phases(파이프라인 단계)를 옮긴다.
- * 화면에서 phases 를 훑어 현재 단계를 고르지 않는다 — 그 판단이 여기 한 곳에 있다.
- *
- * ⚠ 진행률은 로드맵 이행률(3축 15칸)이 아니라 칸에서 뽑는다. 둘은 다른 수라서
- *   섞으면 막대 끝이 칸 위치와 어긋난다(4칸째가 진행 중인데 막대는 3칸째 앞에서 끊겼다).
- *   로드맵 이행률은 목표 달성 계획 카드가 제 자리에서 보여준다.
- */
+/** 학생 포털과 동일한 DB 진단·상담·로드맵 상태를 사용한다. */
 export function getCareerJourney(student: StudentData): CareerJourney {
-  const current = student.phases.find(p => p.status === 'active') ?? student.phases[student.phases.length - 1]
-  const steps: CareerJourney['steps'] = student.phases.map(p => ({
-    code: String(p.num),
-    label: p.title,
-    status: p.status === 'done' ? 'done' : p.status === 'active' ? 'current' : 'upcoming',
-    note: p.status === 'done' ? '완료' : p.status === 'active' ? '진행 중' : p.period,
-    icon: p.icon,
-  }))
-
-  return {
-    kicker: 'CAREER ROADMAP',
-    stage: current?.title ?? '단계 미정',
-    summary: current?.recommendation ?? '로드맵이 아직 생성되지 않았습니다.',
-    percent: journeyProgress(steps),
-    steps,
+  const journey = buildCareerJourney(getPipelineState(student))
+  if (journey.steps[1]?.status === 'current') {
+    const requests = getCounselRequests().filter(r => r.studentId === student.id
+      && r.type === '진로취업' && (r.status === '대기' || r.status === '확정'))
+    const confirmed = requests.some(r => r.status === '확정')
+    if (requests.length) {
+      journey.steps[1].note = confirmed ? '상담 예약 확정' : '상담 신청 · 접수 대기'
+      journey.summary = confirmed
+        ? '진단을 완료했고 상담 예약이 확정되었습니다. 상담 후 로드맵을 확정 저장합니다.'
+        : '진단을 완료하고 상담을 신청했습니다. 담당자의 접수·예약 확정을 기다리고 있습니다.'
+    }
   }
+  return journey
 }
 
 export function getGoalPlan(student: StudentData): GoalPlan | null {
@@ -306,7 +296,7 @@ export function getGoalPlan(student: StudentData): GoalPlan | null {
     total: roadmap.progress.total,
     axes: roadmap.axes,
     origin: roadmap.origin,
-    version: roadmap.meta?.version ?? null,
+    version: roadmap.generation,
     confirmed: roadmap.meta?.confirmed ?? false,
   }
 }

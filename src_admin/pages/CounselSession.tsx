@@ -10,8 +10,11 @@ import {
 import type { CounselRequest } from '../data/counselRequests'
 import { buildRecord, getRecordByRequest, upsertRecord } from '../data/counselRecords'
 import type { CounselRecord } from '../data/counselRecords'
-import { STUDENTS, getStudentType } from '../../src_v2/data/students'
+import { STUDENTS } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
+import { roadmapEnvelope } from '../../shared/roadmapStore'
+import { useRoadmap } from '../../shared/useRoadmapStore'
+import { isCare7 } from '../../src_v2/data/counselTrack'
 import EmptyState from '../components/EmptyState'
 import StudentDetailView from '../components/StudentDetailView'
 
@@ -29,6 +32,7 @@ function RecordForm({
 }) {
   const counselor = getActiveCounselor()
   const counselorId = getActiveCounselorId()
+  useRoadmap(student.id)
   const existing = getRecordByRequest(request.id)
 
   const [summary, setSummary] = useState(existing?.summary ?? '')
@@ -78,7 +82,11 @@ function RecordForm({
     setSaving(true)
     setSaveError('')
     try {
-      await completeRequest(request.id, { summary, comment, followUp }, getStudentType(student))
+      const plan = roadmapEnvelope(student.id)?.roadmap
+      const care7 = request.type === '진로취업' && isCare7(request.careTrack)
+      if (care7 && !plan) throw new Error('현재 상담에서 로드맵을 먼저 생성해 주세요.')
+      await completeRequest(request.id, { summary, comment, followUp }, undefined,
+        care7 && plan ? { expectedRoadmapVersion: plan.roadmapVersion, expectedRoadmapLockVersion: plan.version } : undefined)
       window.location.href = '/admin/counsel/journals'
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : '완료 처리하지 못했습니다.')
@@ -137,6 +145,7 @@ function RecordForm({
         />
       </label>
 
+      <p className="admin-form-hint">CARE 7+ 상담은 기록과 생성한 로드맵을 함께 확정 저장합니다.</p>
       <div className="admin-form-actions">
         {saveError && <p role="alert">{saveError}</p>}
         {saved && <span className="admin-save-hint"><LuCheck /> 임시 저장됨</span>}
@@ -219,6 +228,7 @@ export default function CounselSession() {
           <StudentDetailView
             studentId={student.id}
             role={counselor.role}
+            counselRequestId={targetRequest?.id}
             headerAction={
               <Link to={`/students/${student.id}`} className="admin-btn admin-btn-ghost">
                 학생 상세 <LuChevronRight />

@@ -39,7 +39,7 @@ import StudentStatCards from '../../src_v2/components/StudentStatCards'
 import EmptyState from './EmptyState'
 // 로드맵 생성은 상담사 전용 작업 화면이라 학생 포털과 코드를 공유하지 않는다.
 import RoadmapCreatePanel from './RoadmapCreatePanel'
-import { useRoadmap } from '../../shared/useRoadmapStore'
+import { useRoadmap, useStore } from '../../shared/useRoadmapStore'
 // 편집은 편집 페이지와 같은 본문을 쓴다 — 상담 중에 상세를 열어 둔 채로 고친다.
 import RoadmapEditorPanel from './RoadmapEditorPanel'
 import { getActiveCounselor } from '../data/counselors'
@@ -299,7 +299,9 @@ function CounselTab({ studentId }: { studentId: string }) {
 
 // ── 탭 ③: 로드맵 진행 ──────────────────────────────────────────────────────
 
-function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boolean }) {
+function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentData; canEdit: boolean; counselRequestId?: string }) {
+  useStore('dc:counsel-updated')
+  useStore('dc:diagnosis-updated')
   // 상세 탭도 서버 로드맵을 적재·구독한다. 캐시가 없다는 이유로 미생성으로 판단하지 않는다.
   useRoadmap(student.id)
   const [, setReloadKey] = useState(0)
@@ -307,7 +309,7 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
   // 않고 여기서 다 끝내야 한다.
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>('view')
   const plan = getGoalPlan(student)
-  const journey = useMemo(() => getCareerJourney(student), [student])
+  const journey = getCareerJourney(student)
   const refresh = () => { setReloadKey(n => n + 1); setMode('view') }
 
   return (
@@ -332,6 +334,7 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
             {canEdit ? (
               <RoadmapCreatePanel
                 student={student}
+                counselRequestId={counselRequestId}
                 counselorName={getActiveCounselor().name}
                 onGenerated={() => setReloadKey(n => n + 1)}
               />
@@ -379,6 +382,7 @@ function RoadmapTab({ student, canEdit }: { student: StudentData; canEdit: boole
             {mode === 'create' ? (
               <RoadmapCreatePanel
                 student={student}
+                counselRequestId={counselRequestId}
                 counselorName={getActiveCounselor().name}
                 regenerate
                 onCancel={() => setMode('view')}
@@ -700,6 +704,7 @@ interface StudentDetailViewProps {
   /** 헤더 우측 액션 (예: 목록 버튼). 모달에서는 생략. */
   headerAction?: ReactNode
   /** 열 때 펼칠 탭. 로드맵 생성 목록처럼 목적이 정해진 진입점이 쓴다. */
+  counselRequestId?: string
   initialTab?: TabKey
 }
 
@@ -738,7 +743,10 @@ export default function StudentDetailView(props: StudentDetailViewProps) {
   return <StudentDetailContent key={`${props.studentId}:${props.role}`} {...props} />
 }
 
-function StudentDetailContent({ studentId, role, headerAction, initialTab }: StudentDetailViewProps) {
+function StudentDetailContent({ studentId, role, headerAction, initialTab, counselRequestId }: StudentDetailViewProps) {
+  useStore('dc_roadmap_changed')
+  useStore('dc:counsel-updated')
+  useStore('dc:diagnosis-updated')
   const [diagnosisLoading,setDiagnosisLoading] = useState(true)
   const [diagnosisError,setDiagnosisError] = useState('')
   useEffect(() => {
@@ -882,7 +890,7 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab }: Stu
 
       {activeTab === 'diagnosis' && <DiagnosisTab student={student} />}
       {activeTab === 'counsel' && <CounselTab studentId={student.id} />}
-      {activeTab === 'roadmap' && <RoadmapTab student={student} canEdit={canEdit} />}
+      {activeTab === 'roadmap' && <RoadmapTab student={student} canEdit={canEdit} counselRequestId={counselRequestId} />}
       {activeTab === 'program' && <ProgramTab studentId={student.id} />}
       {activeTab === 'gap' && <GapTab student={student} radar={radar} />}
       {activeTab === 'growth' && <GrowthTab student={student} />}

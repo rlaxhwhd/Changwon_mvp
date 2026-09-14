@@ -61,6 +61,8 @@ class Action(BaseModel):
     comment: str=Field('',max_length=20000)
     followUp: str=Field('',max_length=10000)
     finalType: Literal['T1','T2','T3','T4','T5','T6'] | None=None
+    expectedRoadmapVersion: int | None=Field(default=None,ge=1)
+    expectedRoadmapLockVersion: int | None=Field(default=None,ge=1)
 
 
 def visibility(user):
@@ -233,6 +235,13 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
 @router.post('/counsel-requests/{request_id}/{action}')
 def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign','complete'],body:Action,
         user=Depends(principal, scope='function'),conn=Depends(connection, scope='function')):
+    # Match generation's lifecycle -> plan -> counsel lock order.
+    plan=None
+    if action=='complete':
+        from . import roadmap
+        lifecycle_row=get_request(conn,user,request_id)
+        roadmap.lifecycle_lock(conn,exclusive=False)
+        plan=roadmap.lock_plan(conn,lifecycle_row['student_uid'])
     row=get_request(conn,user,request_id,lock=True)
     if row['version']!=body.expectedVersion:
         raise HTTPException(409,'다른 사용자가 수정했습니다. 새로 조회한 뒤 다시 시도해 주세요.')
@@ -271,9 +280,25 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
         # 트랙 판정은 gates 한 곳에서 한다(PROCESS.md §2-1 구현규칙 4). 여기서 care_track 을
         # 직접 비교하면 트랙이 NULL 인 진로취업 상담이 로드맵 없이 완료된 뒤 게이트에서는
         # CARE7 충족으로 계산된다 — 같은 학생이 상담은 열리고 취업은 잠긴다.
+        if body.expectedRoadmapVersion is not None:
+            if not plan or body.expectedRoadmapLockVersion is None:
+                raise HTTPException(409,'생성한 로드맵을 다시 조회해 주세요.')
+            roadmap.check_versions(plan,body.expectedRoadmapVersion,body.expectedRoadmapLockVersion)
+            if plan['counsel_request_id']!=request_id:
+                raise HTTPException(409,'다른 상담에서 생성된 로드맵입니다. 현재 상담에서 로드맵을 재생성해 주세요.')
+            if not is_care7_request(row):
+                raise HTTPException(409,'로드맵 확정은 CARE 7+ 상담에서 처리해 주세요.')
+            if not plan['confirmed']:
+                roadmap.transition(row['student_uid'],'confirm',roadmap.Transition(
+                    expectedRoadmapVersion=body.expectedRoadmapVersion,
+                    expectedVersion=body.expectedRoadmapLockVersion,
+                    reason='상담 기록 저장 후 완료 처리'),uuid4().hex,user,conn)
         if is_care7_request(row):
-            if not body.finalType or not roadmap_basis_ok(conn,request_id,row['student_uid']):
-                raise HTTPException(409,'최종 유형과 이 상담으로 확정된 로드맵이 필요합니다.')
+            if not roadmap_basis_ok(conn,request_id,row['student_uid']):
+                raise HTTPException(409,'현재 상담에서 로드맵을 생성한 뒤 저장 후 완료 처리해 주세요.')
+        # An external diagnosis already supplies the type. Completing a record
+        # must not require a second type decision or invent one.
+        if is_care7_request(row) and body.finalType:
             conn.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source,actor_uid) VALUES (%s,%s,'counsel',%s)",
                          (row['student_uid'],body.finalType,user['intg_uid']))
         conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot)

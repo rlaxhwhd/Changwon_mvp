@@ -7,6 +7,7 @@ import type { StudentData } from '../../src_v2/data/students'
 import { fetchAcademic, saveJobInterest, type AcademicSnapshot } from '../../src_v2/data/academic/repository'
 import { availableJobs, deriveSkillTree } from '../../src_v2/data/academic'
 import type { CourseRow } from '../../src_v2/data/academic'
+import { getActiveCounselorId } from '../data/counselors'
 import { getRecordsByStudent } from '../data/counselRecords'
 import { generateRoadmap } from '../data/roadmap'
 import { isCare7 } from '../../src_v2/data/counselTrack'
@@ -101,6 +102,8 @@ function CourseLine({ row }: { row: CourseRow }) {
 
 export interface RoadmapCreatePanelProps {
   student: StudentData
+  /** 상담 진행 화면에서 선택한 신청. 생성과 완료가 같은 상담을 참조한다. */
+  counselRequestId?: string
   /** 생성 상담사 이름 — 생성 이력에 남는다. */
   counselorName: string
   /** 생성이 끝났다. 부모가 로드맵을 다시 읽어 3축 보드를 그린다. */
@@ -117,7 +120,7 @@ export interface RoadmapCreatePanelProps {
 type Phase = 'flow' | 'analyzing' | 'picking' | 'generating'
 
 export default function RoadmapCreatePanel({
-  student, counselorName, onGenerated, regenerate = false, onCancel,
+  student, counselorName, counselRequestId, onGenerated, regenerate = false, onCancel,
 }: RoadmapCreatePanelProps) {
   const [open, setOpen] = useState(regenerate)
   const [phase, setPhase] = useState<Phase>('flow')
@@ -161,10 +164,11 @@ export default function RoadmapCreatePanel({
   // 근거로 요구하므로 여기서 어느 상담인지 고른다 — 근거 없이는 생성할 수 없다.
   const basisRequest = useMemo(
     () => getStudentCounselRequests(student.id)
-      .filter(request => request.type === '진로취업' && isCare7(request.careTrack)
+      .filter(request => (counselRequestId ? request.id === counselRequestId : request.assignedCounselorId === getActiveCounselorId())
+        && request.type === '진로취업' && isCare7(request.careTrack)
         && (request.status === '확정' || request.status === '완료'))
-      .sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))[0],
-    [student.id],
+      .sort((a, b) => Number(b.status === '확정') - Number(a.status === '확정') || b.requestedAt.localeCompare(a.requestedAt))[0],
+    [student.id, counselRequestId],
   )
   const [generateError, setGenerateError] = useState('')
   const temporary = roadmapEnvelope(student.id)?.capabilities.providerSource === 'development-template'

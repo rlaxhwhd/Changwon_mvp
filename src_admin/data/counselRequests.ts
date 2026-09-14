@@ -292,8 +292,9 @@ export async function rescheduleRequest(id: string, slot: CounselSlot): Promise<
 }
 export async function completeRequest(
   id: string, record: { summary: string; comment: string; followUp?: string }, finalType?: StudentType | null,
+  roadmap?: { expectedRoadmapVersion: number; expectedRoadmapLockVersion: number },
 ): Promise<void> {
-  await performCounselAction(id, 'complete', { ...record, followUp: record.followUp ?? '', finalType })
+  await performCounselAction(id, 'complete', { ...record, followUp: record.followUp ?? '', finalType, ...roadmap })
 }
 export async function reassignRequest(id: string, counselorId: string, reason?: string): Promise<void> {
   await performCounselAction(id, 'reassign', { assigneeId: counselorId, reason: reason ?? '' })
