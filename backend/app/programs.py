@@ -25,7 +25,8 @@ NOSHOW_POINTS = 10
 SEOUL = ZoneInfo('Asia/Seoul')
 WRITABLE = ('title,summary,detail,category_code,status_code,apply_start,apply_end,run_start,run_end,sessions,'
             'manager,fiscal_year,location,image,capacity,pinned,roadmap_entry,care_types,satisfaction_survey,'
-            'satisfaction_form_id,competency_survey,competency_areas,include_in_stats')
+            'satisfaction_form_id,competency_survey,competency_areas,include_in_stats,'
+            'middle_category_code,target_statuses,target_grades')
 PROGRAM_COLUMNS = 'id,' + WRITABLE + ',created_at,version'
 
 
@@ -37,6 +38,8 @@ def program_dto(row, applicants):
     return {
         'id': row['id'], 'title': row['title'], 'desc': row['summary'], 'detail': row['detail'],
         'category': row['category_code'], 'status': row['status_code'],
+        'middleCategory': row['middle_category_code'],
+        'targetStatuses': row['target_statuses'], 'targetGrades': row['target_grades'],
         'careTypes': row['care_types'], 'roadmapEntry': row['roadmap_entry'],
         'startDate': row['apply_start'], 'endDate': row['apply_end'],
         'runStartDate': row['run_start'], 'runEndDate': row['run_end'],
@@ -168,6 +171,9 @@ class ProgramBody(BaseModel):
     desc: str = Field(default='', max_length=2000)
     detail: str | None = Field(default=None, max_length=2000000)
     category: str = Field(min_length=1, max_length=64)
+    middleCategory: str | None = Field(default=None, max_length=64)
+    targetStatuses: list[str] = Field(default_factory=list, max_length=30)
+    targetGrades: list[str] = Field(default_factory=list, max_length=30)
     status: str = Field(default='RECRUITING', pattern='^(RECRUITING|CLOSED|ENDED)$')
     careTypes: list[str] = Field(default_factory=list, max_length=6)
     roadmapEntry: str = Field(default='NONE', pattern='^(NONE|RECOMMEND|REQUIRED)$')
@@ -209,7 +215,8 @@ def program_values(body: ProgramBody):
     return (body.title, body.desc, body.detail, body.category, body.status, body.startDate, body.endDate,
             body.runStartDate, body.runEndDate, body.sessions, body.manager, body.fiscalYear, body.location,
             body.image, body.capacity, body.pinned, body.roadmapEntry, body.careTypes, body.satisfactionSurvey,
-            body.satisfactionFormId, body.competencySurvey, body.competencyAreas, body.includeInStats)
+            body.satisfactionFormId, body.competencySurvey, body.competencyAreas, body.includeInStats,
+            body.middleCategory, body.targetStatuses, body.targetGrades)
 
 
 def check_category(conn, code):
@@ -218,11 +225,29 @@ def check_category(conn, code):
         raise HTTPException(422, '사용 가능한 비교과 분류를 선택해 주세요.')
 
 
+def check_program_options(conn, body, before=None):
+    for field, column, group, label in (
+        ('category', 'category_code', 'PROGRAM_CATEGORY', '대분류'),
+        ('middleCategory', 'middle_category_code', 'PROGRAM_MIDDLE_CATEGORY', '중분류'),
+        ('targetStatuses', 'target_statuses', 'PROGRAM_TARGET_STATUS', '참가대상 구분'),
+        ('targetGrades', 'target_grades', 'PROGRAM_TARGET_GRADE', '참가대상 학년'),
+    ):
+        value = getattr(body, field)
+        codes = value if isinstance(value, list) else [value] if value else []
+        old = before[column] if before else []
+        old_codes = old if isinstance(old, list) else [old] if old else []
+        for code in codes:
+            row = conn.execute('SELECT is_active FROM dc.code_item WHERE group_code=%s AND code=%s',
+                               (group, code)).fetchone()
+            if not row or (not row['is_active'] and code not in old_codes):
+                raise HTTPException(422, f'사용 가능한 {label} 코드를 선택해 주세요.')
+
+
 @router.post('/programs', status_code=201)
 def create_program(body: ProgramBody, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
     require_staff(user)
-    check_category(conn, body.category)
+    check_program_options(conn, body)
     # 개설은 여러 학생의 계획을 한 번에 건드린다 → lifecycle 을 exclusive 로 먼저 잡는다.
     # sync_roadmap 안에서 뒤늦게 잡으면 기존 호출부의 program 락과 역전된다.
     lifecycle_lock(conn, exclusive=True)
@@ -239,9 +264,9 @@ def create_program(body: ProgramBody, user=Depends(principal, scope='function'),
 def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
     require_staff(user)
-    check_category(conn, body.category)
     lifecycle_lock(conn, exclusive=True)
     before = get_program(conn, program_id, lock=True)
+    check_program_options(conn, body, before)
     if before['version'] != body.expectedVersion:
         raise HTTPException(409, '다른 담당자가 변경했습니다. 새로 조회한 뒤 수정하세요.')
     # 이미 학생 계획에 붙어 있는 프로그램의 **편입 조건**은 바꾸지 않는다. 소급 삭제·소급 완료·

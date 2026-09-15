@@ -1,0 +1,8 @@
+.company-account { min-height: 100vh; padding: 48px 20px; height: auto; }
+.company-account .cwlogin-inner { width: 100%; max-width: 540px; }
+.company-account .cwlogin-field { margin-top: 18px; }
+.company-account .cwlogin-input input { padding-left: 14px; }
+.company-account-link { display: block; text-align: center; margin-top: 20px; color: #00694b; text-decoration: underline; }
+.company-account dl > div { margin: 18px 0; }
+.company-account dt { color: #657287; font-size: 13px; }
+.company-account dd { margin: 6px 0 0; overflow-wrap: anywhere; }

@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from .auth import principal, require_staff
 from .counsel_operations import audit, staff_row
 from .db import connection
+from .department_assignments import ACTIVE_PROFESSOR_ORGS
 
 router = APIRouter()
 
@@ -22,12 +23,7 @@ def departments(user=Depends(principal, scope='function'), conn=Depends(connecti
 
 
 def public_professors(conn):
-    rows = conn.execute('''WITH active_org AS (
-      SELECT DISTINCT a.staff_uid,d.college_name,d.dept_name FROM dc.org_assignment a
-      JOIN dc.department d USING(college_code,dept_code)
-      WHERE a.role_code='professor' AND a.is_active AND a.valid_from<=CURRENT_DATE
-        AND (a.valid_to IS NULL OR a.valid_to>=CURRENT_DATE)
-    )
+    rows = conn.execute(f'''WITH active_org AS ({ACTIVE_PROFESSOR_ORGS})
       SELECT s.intg_uid,p.alias,p.name,s.profile,
       o.college_name AS college_name,o.dept_name AS dept_name
       FROM dc.staff s JOIN dc.person p USING(intg_uid)

@@ -1,7 +1,9 @@
 .gh-shell {
   --gh-bg: #f7f8fb; --gh-card: #fff; --gh-text: #181c25; --gh-sub: #565e6d;
-  --gh-border: #e2e6ec; --gh-muted: #f1f3f6; --gh-violet: #7c5cfc;
-  --gh-violet-soft: #f0edff; --gh-blue: #356dff; --gh-mint: #20b486; --gh-amber: #f5a524;
+  --gh-border: #e2e6ec; --gh-muted: #f1f3f6;
+  --gh-blue: var(--blue); --gh-mint: var(--mint); --gh-amber: var(--amber);
+  /* 2026-09-15 사용자 요청 — 이 화면은 보라 파스텔을 쓰지 않는다. 파랑·하늘·민트·틸 네 휴로 카드를 나눈다(잉크·테두리는 :root). */
+  --gh-accent: var(--blue); --gh-accent-soft: var(--blue-soft); --gh-accent-border: var(--blue-border);
   /* 폭·좌우여백은 .v2-main 이 정한다 — 컨테이너를 다시 만들지 않는다. */
   /* 배경·min-height 는 두지 않는다 — body 배경이 그대로 흐르게 둔다. */
   width: 100%;
@@ -12,13 +14,13 @@
 .gh-cover {
   position: relative; overflow: hidden; min-height: 280px; margin-bottom: 16px; padding: 32px;
   display: grid; grid-template-columns: minmax(260px, 4fr) minmax(380px, 5fr) minmax(220px, 3fr);
-  gap: 32px; align-items: center; border: 1px solid #d9d0ff; border-radius: 16px;
-  background: linear-gradient(125deg, #fff 0%, #fbfaff 62%, var(--gh-violet-soft) 100%);
+  gap: 32px; align-items: center; border: 1px solid var(--blue-border); border-radius: 16px;
+  background: linear-gradient(125deg, #fff 0%, var(--sky-soft) 62%, var(--blue-soft) 100%);
 }
-.gh-cover::after { content: ""; position: absolute; width: 260px; height: 260px; right: -90px; top: -120px; border: 52px solid rgba(124, 92, 252, .07); border-radius: 50%; pointer-events: none; }
+.gh-cover::after { content: ""; position: absolute; width: 260px; height: 260px; right: -90px; top: -120px; border: 52px solid color-mix(in srgb, var(--sky) 9%, transparent); border-radius: 50%; pointer-events: none; }
 .gh-cover-profile { display: flex; align-items: center; gap: 18px; min-width: 0; }
-.gh-avatar { width: 76px; height: 76px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 22px; color: #fff; background: linear-gradient(135deg, var(--gh-violet), #a891ff); font-size: 20px; font-weight: 700; box-shadow: 0 12px 28px rgba(124, 92, 252, .2); }
-.gh-eyebrow, .gh-section-kicker { display: block; margin-bottom: 6px; color: var(--gh-violet); font-size: 12px; line-height: 1.4; letter-spacing: .1em; font-weight: 900; }
+.gh-avatar { width: 76px; height: 76px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 22px; color: #fff; background: linear-gradient(135deg, var(--blue), var(--sky)); font-size: 20px; font-weight: 700; box-shadow: 0 12px 28px color-mix(in srgb, var(--blue) 22%, transparent); }
+.gh-eyebrow, .gh-section-kicker { display: block; margin-bottom: 6px; color: var(--gh-accent); font-size: 12px; line-height: 1.4; letter-spacing: .1em; font-weight: 900; }
 .gh-card .gh-section-kicker { color: var(--gh-ink); }
 .gh-cover h1 { margin: 0; font-size: 28px; line-height: 1.35; letter-spacing: -.03em; font-weight: 900; }
 .gh-cover-profile p { margin: 8px 0 0; color: var(--gh-sub); font-size: 12px; }
@@ -26,11 +28,11 @@
 .gh-cover-copy > strong { display: block; font-size: 16px; line-height: 1.45; font-weight: 850; }
 .gh-cover-copy > p { margin: 9px 0 16px; color: var(--gh-sub); font-size: 12px; line-height: 1.7; }
 .gh-cover-tags { display: flex; flex-wrap: wrap; gap: 7px; }
-.gh-cover-tags span, .gh-tag-list span { padding: 6px 9px; border-radius: 999px; background: var(--gh-violet-soft); color: var(--gh-violet); font-size: 12px; font-weight: 800; }
+.gh-cover-tags span, .gh-tag-list span { padding: 6px 9px; border-radius: 999px; background: var(--sky-soft); color: var(--sky-ink); font-size: 12px; font-weight: 800; }
 .gh-cover-actions { position: relative; z-index: 1; }
-.gh-primary-action { min-height: 42px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border-radius: 10px; background: var(--gh-violet); color: #fff; font-size: 12px; font-weight: 850; }
-.gh-grade-policy { padding: 15px; display: flex; align-items: flex-start; gap: 11px; border: 1px solid #d9d0ff; border-radius: 12px; background: rgba(255, 255, 255, .78); }
-.gh-grade-policy > i { margin-top: 2px; color: var(--gh-violet); }
+.gh-primary-action { min-height: 42px; padding: 0 16px; display: inline-flex; align-items: center; justify-content: center; gap: 9px; border-radius: 10px; background: var(--gh-accent); color: #fff; font-size: 12px; font-weight: 850; }
+.gh-grade-policy { padding: 15px; display: flex; align-items: flex-start; gap: 11px; border: 1px solid var(--mint-border); border-radius: 12px; background: rgba(255, 255, 255, .78); }
+.gh-grade-policy > i { margin-top: 2px; color: var(--mint-ink); }
 .gh-grade-policy strong, .gh-grade-policy span { display: block; }
 .gh-grade-policy strong { font-size: 14px; }
 .gh-grade-policy span { margin-top: 5px; color: var(--gh-sub); font-size: 12px; line-height: 1.55; }
@@ -51,17 +53,18 @@
 .gh-skills { grid-column: span 8; } .gh-qualifications { grid-column: span 4; }
 .gh-archive { grid-column: span 8; } .gh-next { grid-column: span 4; }
 
-/* 카드마다 강조색을 나눈다 — 여섯 장이 전부 보라면 무엇이 무엇인지 구분되지 않는다.
+/* 카드마다 강조색을 나눈다 — 여섯 장이 전부 한 색이면 무엇이 무엇인지 구분되지 않는다.
    ink = 글자·아이콘(대비가 필요한 자리) / soft = 옅은 면 / line = 옅은 테두리.
-   휴 본색은 흰 배경 대비가 모자라 글자에는 잉크를 쓴다(민트 2.7:1 · 앰버 1.9:1).
-   시안 팔레트(:root)에 있는 값만 쓴다 — 새 색을 만들지 않는다. */
-.gh-card { --gh-ink: var(--gh-violet); --gh-soft: var(--gh-violet-soft); --gh-line: var(--violet-border); }
-.gh-profile-card   { --gh-ink: var(--blue);      --gh-soft: var(--blue-soft);  --gh-line: var(--blue-border); }
-.gh-skills         { --gh-ink: var(--mint-ink);  --gh-soft: var(--mint-soft);  --gh-line: var(--mint-border); }
-.gh-qualifications { --gh-ink: var(--amber-ink); --gh-soft: var(--amber-soft); --gh-line: var(--amber-border); }
-/* 성장 활동 기록은 기본(보라)을 쓴다 — 항목 색은 아래에서 기록 종류(dot tone)가 정한다.
+   휴 본색은 흰 배경 대비가 모자라 글자에는 잉크를 쓴다(민트 2.7:1 · 하늘 2.6:1).
+   줄마다 파랑 계열 ↔ 초록 계열이 엇갈리게 놓는다:
+     1행 대표 프로젝트(파랑) · 프로필(하늘) / 2행 스킬(민트) · 자격(틸) / 3행 활동 기록(파랑) · 다음 기록(민트). */
+.gh-card { --gh-ink: var(--gh-accent); --gh-soft: var(--gh-accent-soft); --gh-line: var(--gh-accent-border); }
+.gh-profile-card   { --gh-ink: var(--sky-ink);  --gh-soft: var(--sky-soft);   --gh-line: var(--sky-border); }
+.gh-skills         { --gh-ink: var(--mint-ink);    --gh-soft: var(--mint-soft);  --gh-line: var(--mint-border); }
+.gh-qualifications { --gh-ink: var(--teal-ink); --gh-soft: var(--teal-soft);  --gh-line: var(--teal-border); }
+/* 성장 활동 기록은 기본(파랑)을 쓴다 — 항목 색은 아래에서 기록 종류(dot tone)가 정한다.
    다음에 채울 기록은 앞으로 할 일이라 민트. */
-.gh-next           { --gh-ink: var(--mint-ink);  --gh-soft: var(--mint-soft);  --gh-line: var(--mint-border); }
+.gh-next           { --gh-ink: var(--mint-ink);    --gh-soft: var(--mint-soft);  --gh-line: var(--mint-border); }
 .gh-project-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .gh-project { overflow: hidden; border: 1px solid var(--gh-border); border-radius: 12px; background: #fff; }
 /* 띠는 번호(위) + 제목(아래) 두 줄이다 — 제목이 띠 안으로 올라오면서 가로 배치가 아니게 됐다. */
@@ -110,18 +113,18 @@
 .gh-timeline { display: flex; flex-direction: column; }
 .gh-timeline-item { min-height: 78px; display: grid; grid-template-columns: 80px 18px 1fr auto; gap: 12px; align-items: flex-start; }
 .gh-timeline-item time { padding-top: 2px; color: var(--gh-sub); font-size: 12px; }
-.gh-timeline-dot { position: relative; width: 10px; height: 10px; margin: 3px auto 0; border-radius: 50%; background: var(--gh-violet); }
+.gh-timeline-dot { position: relative; width: 10px; height: 10px; margin: 3px auto 0; border-radius: 50%; background: var(--gh-accent); }
 .gh-timeline-dot::after { content: ""; position: absolute; top: 14px; left: 4px; width: 2px; height: 54px; background: var(--gh-border); }
 .gh-timeline-item:last-child .gh-timeline-dot::after { display: none; }
 .gh-shell .gh-timeline-dot.is-mint { background: var(--gh-mint); } .gh-shell .gh-timeline-dot.is-blue { background: var(--gh-blue); } .gh-shell .gh-timeline-dot.is-amber { background: var(--gh-amber); }
 /* 항목 라벨(진단·비교과·성과)은 옆의 점과 같은 색이어야 한다 — 점만 색이 달라
    라벨이 전부 한 색이면 둘이 따로 논다. 점 색은 tone 클래스가 정한다. */
-.gh-timeline-item > div > span { display: block; margin-bottom: 3px; color: var(--gh-violet); font-size: 12px; font-weight: 850; }
+.gh-timeline-item > div > span { display: block; margin-bottom: 3px; color: var(--gh-accent); font-size: 12px; font-weight: 850; }
 .gh-timeline-item:has(.gh-timeline-dot.is-mint) > div > span  { color: var(--mint-ink); }
 .gh-timeline-item:has(.gh-timeline-dot.is-blue) > div > span  { color: var(--blue); }
 .gh-timeline-item:has(.gh-timeline-dot.is-amber) > div > span { color: var(--amber-ink); }
 .gh-timeline-item strong { display: block; font-size: 14px; } .gh-timeline-item p { margin: 5px 0 0; color: var(--gh-sub); font-size: 12px; line-height: 1.5; }
-.gh-next { border-color: #d9d0ff; background: linear-gradient(145deg, #fff 0%, #faf8ff 100%); }
+.gh-next { border-color: var(--mint-border); background: linear-gradient(145deg, #fff 0%, var(--mint-soft) 100%); }
 .gh-current-phase { padding: 16px; border-radius: 11px; background: var(--gh-soft); }
 .gh-current-phase small, .gh-current-phase strong, .gh-current-phase span { display: block; }
 .gh-current-phase small { color: var(--gh-ink); font-size: 12px; font-weight: 850; }
@@ -130,25 +133,29 @@
 .gh-next-action h3 { margin: 7px 0 6px; font-size: 14px; line-height: 1.45; }
 .gh-next-action p { margin: 0 0 14px; color: var(--gh-sub); font-size: 12px; line-height: 1.6; }
 .gh-next-action a { display: inline-flex; align-items: center; gap: 7px; color: var(--gh-ink); font-size: 12px; font-weight: 850; }
-.gh-document-policy { margin-top: 18px; padding: 13px; display: flex; gap: 10px; align-items: flex-start; border-top: 1px solid #d9d0ff; color: var(--gh-sub); }
+.gh-document-policy { margin-top: 18px; padding: 13px; display: flex; gap: 10px; align-items: flex-start; border-top: 1px solid var(--mint-border); color: var(--gh-sub); }
 .gh-document-policy > i { margin-top: 3px; color: var(--gh-ink); } .gh-document-policy p { margin: 0; }
 .gh-document-policy strong, .gh-document-policy span { display: block; }
 .gh-document-policy strong { color: var(--gh-text); font-size: 14px; line-height: 1.5; } .gh-document-policy span { margin-top: 4px; font-size: 12px; line-height: 1.5; }
 .gh-editor-form { display: flex; flex-direction: column; gap: 16px; }
+.gh-editor-fields { display: flex; flex-direction: column; gap: 16px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.gh-catalog-picker { display: grid; gap: 10px; padding: 14px; border: 1px solid var(--gh-border); border-radius: 9px; background: var(--gh-accent-soft); }
+.gh-catalog-picker > small { font-size: 12px; color: var(--gh-sub); line-height: 1.6; }
+.gh-form-actions button:disabled { opacity: .55; cursor: wait; }
 .gh-editor-form label { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
 .gh-editor-form label > span { color: var(--gh-text); font-size: 12px; font-weight: 800; }
 .gh-editor-form label > small { color: var(--gh-sub); font-size: 12px; }
 .gh-editor-form input, .gh-editor-form select, .gh-editor-form textarea { width: 100%; border: 1px solid var(--gh-border); border-radius: 9px; background: #fff; color: var(--gh-text); font: inherit; font-size: 12px; outline: none; }
 .gh-editor-form input, .gh-editor-form select { height: 42px; padding: 0 12px; }
 .gh-editor-form textarea { padding: 11px 12px; resize: vertical; line-height: 1.6; }
-.gh-editor-form input:focus, .gh-editor-form select:focus, .gh-editor-form textarea:focus { border-color: var(--gh-violet); box-shadow: 0 0 0 3px var(--gh-violet-soft); }
+.gh-editor-form input:focus, .gh-editor-form select:focus, .gh-editor-form textarea:focus { border-color: var(--gh-accent); box-shadow: 0 0 0 3px var(--gh-accent-soft); }
 /* 「직접 입력」에서 목록으로 되돌아가는 글자 버튼 — 칸 아래 안내문 자리에 앉는다. */
-.gh-link-btn { padding: 0; border: 0; background: none; color: var(--gh-violet); font: inherit; font-size: 12px; font-weight: 800; text-decoration: underline; cursor: pointer; }
+.gh-link-btn { padding: 0; border: 0; background: none; color: var(--gh-accent); font: inherit; font-size: 12px; font-weight: 800; text-decoration: underline; cursor: pointer; }
 .gh-form-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .gh-form-row:has(> label:nth-child(3)) { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .gh-form-actions { padding-top: 16px; display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--gh-border); }
 .gh-form-actions button { min-height: 38px; padding: 0 15px; border: 1px solid var(--gh-border); border-radius: 9px; background: #fff; color: var(--gh-sub); font-size: 12px; font-weight: 800; cursor: pointer; }
-.gh-form-actions button[type="submit"] { border-color: var(--gh-violet); background: var(--gh-violet); color: #fff; }
+.gh-form-actions button[type="submit"] { border-color: var(--gh-accent); background: var(--gh-accent); color: #fff; }
 @media (max-width: 1120px) {
   .gh-cover { grid-template-columns: 1fr 1fr; } .gh-cover-actions { grid-column: 1 / -1; }
   .gh-projects, .gh-profile-card, .gh-skills, .gh-qualifications, .gh-archive, .gh-next { grid-column: span 6; }

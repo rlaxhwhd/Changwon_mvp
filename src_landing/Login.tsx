@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { LuUser, LuLock, LuEye, LuEyeOff } from 'react-icons/lu'
 import { STAFF_USERS } from '../src_admin/data/staff'
 import { api } from '../shared/api'
@@ -53,10 +53,15 @@ export default function Login() {
     }
     setPending(true); setError('')
     try {
+      if (tab === 'external') {
+        await api('/auth/company/login', { method: 'POST', body: JSON.stringify({ businessNo: id, password: pw }) })
+        window.location.href = '/company'
+        return
+      }
       if (await tryLogin(id, pw)) return
       setError('아이디 또는 비밀번호가 올바르지 않습니다.')
-    } catch {
-      setError('로그인 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.')
+    } catch (error) {
+      setError(tab === 'external' && error instanceof Error ? error.message : '로그인 서버에 연결할 수 없습니다. 잠시 후 다시 시도해 주세요.')
     } finally { setPending(false) }
   }
 
@@ -79,7 +84,8 @@ export default function Login() {
               role="tab"
               aria-selected={tab === 'internal'}
               className={`cwlogin-tab ${tab === 'internal' ? 'active' : ''}`}
-              onClick={() => setTab('internal')}
+              disabled={pending}
+              onClick={() => { setTab('internal'); setError(''); setId(''); setPw('') }}
             >
               내부사용자
             </button>
@@ -88,21 +94,22 @@ export default function Login() {
               role="tab"
               aria-selected={tab === 'external'}
               className={`cwlogin-tab ${tab === 'external' ? 'active' : ''}`}
-              onClick={() => setTab('external')}
+              disabled={pending}
+              onClick={() => { setTab('external'); setError(''); setId(''); setPw('') }}
             >
-              외부사용자
+              기업회원
             </button>
           </div>
 
           <label className="cwlogin-field cwlogin-field--first">
-            <span className="cwlogin-label">아이디</span>
+            <span className="cwlogin-label">{tab === 'external' ? '사업자등록번호 (아이디)' : '아이디'}</span>
             <span className="cwlogin-input">
               <LuUser className="cwlogin-input-icon" aria-hidden="true" />
               <input
                 type="text"
                 value={id}
                 onChange={(e) => { setId(e.target.value); setError('') }}
-                placeholder="아이디를 입력하세요"
+                placeholder={tab === 'external' ? '사업자등록번호 10자리' : '아이디를 입력하세요'}
                 autoComplete="username"
               />
             </span>
@@ -133,6 +140,7 @@ export default function Login() {
           {error && <p role="alert" className="cwlogin-error">{error}</p>}
 
           <button type="submit" className="cwlogin-submit" disabled={pending}>{pending ? '로그인 중…' : '로그인'}</button>
+          {tab === 'external' && <p style={{ textAlign: 'center', marginTop: 20 }}><Link to="/company/register">기업회원 가입 신청</Link></p>}
         </form>
       </div>
     </div>

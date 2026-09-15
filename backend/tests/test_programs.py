@@ -22,6 +22,38 @@ def new_program(client, **overrides):
     return response.json()
 
 
+def test_classification_and_targets_roundtrip(client):
+    program = new_program(client, category='EMPLOY', middleCategory='UNIV_PLUS_GRAD',
+                          targetStatuses=['ENROLLED', 'GRADUATED_COMPLETED'], targetGrades=['1', '4'])
+    assert program['middleCategory'] == 'UNIV_PLUS_GRAD'
+    assert program['targetStatuses'] == ['ENROLLED', 'GRADUATED_COMPLETED']
+    assert program['targetGrades'] == ['1', '4']
+    body = {key: value for key, value in program.items() if key not in ('id', 'version', 'createdAt', 'applicants')}
+    body.update(expectedVersion=program['version'], middleCategory='GLOCAL', targetGrades=['2'])
+    response = client.put(f"/api/v1/programs/{program['id']}", headers=headers('career_kim'), json=body)
+    assert response.status_code == 200, response.text
+    assert response.json()['middleCategory'] == 'GLOCAL'
+    assert response.json()['targetGrades'] == ['2']
+    body['expectedVersion'] = response.json()['version']
+    for field, invalid in [('middleCategory', 'UNKNOWN'), ('targetStatuses', ['STAFF']), ('targetGrades', ['5'])]:
+        response = client.put(f"/api/v1/programs/{program['id']}", headers=headers('career_kim'),
+                              json={**body, field: invalid})
+        assert response.status_code == 422, response.text
+
+
+def test_legacy_category_can_be_preserved_but_not_newly_selected(client):
+    program = new_program(client)
+    with pool.connection() as conn:
+        conn.execute("UPDATE dc.program SET category_code='LANGUAGE' WHERE id=%s", (program['id'],))
+    body = {key: value for key, value in program.items() if key not in ('id', 'version', 'createdAt', 'applicants')}
+    body.update(category='LANGUAGE', expectedVersion=program['version'])
+    response = client.put(f"/api/v1/programs/{program['id']}", headers=headers('career_kim'), json=body)
+    assert response.status_code == 200, response.text
+    assert response.json()['category'] == 'LANGUAGE'
+    body.pop('expectedVersion')
+    assert client.post('/api/v1/programs', headers=headers('career_kim'), json=body).status_code == 422
+
+
 def apply_as(client, identity, program_id, **body):
     return client.post(f'/api/v1/programs/{program_id}/applications',
                        headers={**headers(identity), 'Idempotency-Key': uuid4().hex},

@@ -7,6 +7,8 @@ import { JOB_CODE_GROUPS, jobLabelOf, jobLabelsOf } from '../../src_admin/data/s
 import type { JobEffectiveStatus } from '../../src_admin/data/schema/job'
 import { getJobWishlist, toggleJobWish } from '../data/jobWishlist'
 import './JobBoard.css'
+import JobLogo from '../../shared/JobLogo'
+import { useMetadata } from '../../shared/useMetadata'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 채용공고 보드 (공용) — 학생 /v2/jobs 와 교직원 /admin/jobs 가 같은 화면을 본다.
@@ -56,9 +58,9 @@ function careerLabel(job: JobPosting): string {
   return careers.length ? careers.join('·') : jobLabelOf(JOB_CODE_GROUPS.careerType, job.jobType)
 }
 
-/** 직무(직종) — 표의 한 열이라 여러 개여도 첫 값만 쓴다. */
+/** 선택한 직무를 모두 표시한다. */
 function jobCategoryLabel(job: JobPosting): string {
-  return jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories)[0] ?? '-'
+  return jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories).join(', ') || '-'
 }
 
 function salaryLabel(job: JobPosting): string {
@@ -81,11 +83,11 @@ function deadlineLabel(job: JobPosting): string {
 
 /** 카드 태그줄 — 근무형태 · 직종 + 특이사항(오늘마감·서류면제) */
 function tagsOf(job: JobPosting): { label: string; kind: 'emp' | 'cat' | 'flag' | 'urgent' }[] {
-  const employment = (job.employmentTypes ?? [])[0] ?? job.jobType
-  const category = (job.jobCategories ?? [])[0]
+  const employment = jobLabelsOf(JOB_CODE_GROUPS.employmentType, job.employmentTypes)
+  const categories = jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories)
   return [
-    { label: employment, kind: 'emp' as const },
-    ...(category ? [{ label: category, kind: 'cat' as const }] : []),
+    ...employment.map(label => ({ label, kind: 'emp' as const })),
+    ...categories.map(label => ({ label, kind: 'cat' as const })),
     ...jobHighlights(job).map(f => ({
       label: f,
       kind: (f === '오늘마감' ? 'urgent' : 'flag') as 'urgent' | 'flag',
@@ -96,6 +98,7 @@ function tagsOf(job: JobPosting): { label: string; kind: 'emp' | 'cat' | 'flag' 
 export default function JobBoard({
   jobs, onOpen, showWish = false, split = true, cardAction, applicantCountOf, emptyMain, emptyHint,
 }: JobBoardProps) {
+  useMetadata()
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<JobEffectiveStatus | typeof ALL>(ALL)
   const [sort, setSort] = useState<JobSort>('latest')
@@ -143,7 +146,7 @@ export default function JobBoard({
         <div className="jc-head">
           {/* 기업 로고 — 추천채용만 등록한다(등록 화면도 이때만 묻는다). */}
           {job.recruitType === 'RECOMMENDATION' && job.logo && (
-            <span className="jc-logo"><img src={job.logo} alt={`${job.company} 로고`} /></span>
+            <span className="jc-logo"><JobLogo src={job.logo} alt={`${job.company} 로고`} /></span>
           )}
 
           <div className="jc-headmain">
@@ -172,9 +175,7 @@ export default function JobBoard({
 
             <h3 className="jc-title">{job.role}</h3>
 
-            {/* 기업구분은 회사명 줄에서 여기로 내려왔다 — 로고가 들어온 만큼 그 줄이 좁아져
-                회사명이 여섯 글자쯤에서 잘렸다. 지역도 아래 메타줄에서 올라왔다.
-                둘 다 자리만 옮긴 것이고, 같은 값을 두 번 쓰지 않는다. */}
+            {/* 기업구분·근무형태·직무는 태그로, 지역은 아래 요약줄에 표시한다. */}
             <div className="jc-tags">
               {job.companyType && (
                 <span className="jc-companytype">{jobLabelOf(JOB_CODE_GROUPS.companyType, job.companyType)}</span>
@@ -182,14 +183,14 @@ export default function JobBoard({
               {tagsOf(job).map(t => (
                 <span key={t.label} className={`jc-tag jc-tag-${t.kind}`}>{t.label}</span>
               ))}
-              <span className="jc-tag">{regionLabel(job)}</span>
             </div>
           </div>
         </div>
 
         <div className="jc-meta">
-          <span><i className="fa-solid fa-briefcase" /> {careerLabel(job)}</span>
-          <span><i className="fa-solid fa-won-sign" /> {salaryLabel(job)}</span>
+          <span>{careerLabel(job)}</span>
+          <span>{salaryLabel(job)}</span>
+          <span>{regionLabel(job)}</span>
         </div>
 
         {/* 매칭도는 계산된 값이 있을 때만 — 0% 를 모든 카드에 찍으면 정보가 아니라 잡음이다. */}

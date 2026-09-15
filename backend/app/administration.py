@@ -78,6 +78,16 @@ def save_item(group: str, code: str, data: CodeChange,
             raise HTTPException(422, '상담 주제에는 유효한 학생 유형과 목표만 설정할 수 있습니다.')
         if not isinstance(data.payload.get('goal',''),str) or len(data.payload.get('goal',''))>2000:
             raise HTTPException(422, '상담 목표를 확인하세요.')
+    elif group in ('GROWTH_SKILL_OPTION','GROWTH_CERT_OPTION','GROWTH_LANGUAGE_OPTION','GROWTH_ACTIVITY_EXAMPLE'):
+        field = {'GROWTH_SKILL_OPTION':'categoryCode','GROWTH_CERT_OPTION':'category',
+                 'GROWTH_LANGUAGE_OPTION':'language','GROWTH_ACTIVITY_EXAMPLE':'categoryCode'}[group]
+        value = data.payload.get(field)
+        if set(data.payload) != {field} or not isinstance(value,str) or not value.strip() or len(value)>100:
+            raise HTTPException(422, '후보의 분류 또는 언어를 입력해 주세요.')
+        parent = {'GROWTH_SKILL_OPTION':'GROWTH_SKILL_CATEGORY','GROWTH_ACTIVITY_EXAMPLE':'GROWTH_RECORD_CATEGORY'}.get(group)
+        if parent and data.isActive and not conn.execute(
+                'SELECT 1 FROM dc.code_item WHERE group_code=%s AND code=%s AND is_active', (parent,value)).fetchone():
+            raise HTTPException(422, '사용 중인 분류를 선택해 주세요.')
     elif data.payload != (before['payload'] if before else {}):
         raise HTTPException(422, '이 그룹의 프로세스 속성은 배포로 관리합니다.')
     if len(json.dumps(data.payload,ensure_ascii=False))>10000:

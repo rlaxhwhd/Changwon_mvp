@@ -21,8 +21,17 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await fetch(`/api/v1${path}`, { ...init, headers })
   if (!response.ok) {
     const error = await response.json().catch(() => null) as { detail?: unknown; message?: string } | null
+    const validationMessages = Array.isArray(error?.detail)
+      ? error.detail.flatMap((item: unknown) => {
+        if (!item || typeof item !== 'object' || !('msg' in item) || typeof item.msg !== 'string') return []
+        const field = 'loc' in item && Array.isArray(item.loc)
+          ? item.loc.filter(part => part !== 'body').join('.') : ''
+        const message = item.msg.replace(/^Value error, /, '')
+        return [field ? `${field}: ${message}` : message]
+      }).join('\n') : ''
     throw new ApiError(response.status,
-      typeof error?.detail === 'string' ? error.detail : error?.message ?? `요청에 실패했습니다. (${response.status})`)
+      typeof error?.detail === 'string' ? error.detail
+        : validationMessages || error?.message || `요청에 실패했습니다. (${response.status})`)
   }
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>

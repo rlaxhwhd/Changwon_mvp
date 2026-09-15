@@ -1,0 +1,17 @@
+**
+!package.json
+!package-lock.json
+!tsconfig*.json
+!vite.config.ts
+!index.html
+!v2.html
+!admin.html
+!src_landing/**
+!src_v2/**
+!src_admin/**
+!shared/**
+!public/**
+!font/**
+!deploy/
+!deploy/frontend/
+!deploy/frontend/**

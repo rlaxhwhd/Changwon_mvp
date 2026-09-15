@@ -308,6 +308,28 @@ def list_companies(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, l
     return dict(items=[company_dto(r) for r in rows], totalCount=total, page=page, pageSize=pageSize)
 
 
+@router.get('/job-company-history')
+def list_company_history(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100),
+                         q: str = Query('', max_length=200),
+                         user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    require_manage(conn, user)
+    # 외부 공고는 기업 ID 없이 회사명만 보유한다. 이름이 같아도 서로 다른 기업 ID는 유지한다.
+    history = '''SELECT DISTINCT c.id AS company_id,
+                   COALESCE(c.display_name, j.company_name_snapshot) AS display_name
+                 FROM dc.job_posting j
+                 LEFT JOIN dc.company c ON c.id=j.company_id AND c.deleted_at IS NULL
+                 WHERE j.deleted_at IS NULL'''
+    pattern = '%' + q.strip().replace('\\', '\\\\').replace('%', '\\%').replace('_', '\\_') + '%'
+    condition = 'display_name ILIKE %s'
+    total = conn.execute(f'SELECT count(*) AS n FROM ({history}) h WHERE {condition}',
+                         (pattern,)).fetchone()['n']
+    rows = conn.execute(f'''SELECT * FROM ({history}) h WHERE {condition}
+                           ORDER BY display_name, company_id NULLS LAST LIMIT %s OFFSET %s''',
+                        (pattern, pageSize, (page - 1) * pageSize)).fetchall()
+    return dict(items=[{'companyId': r['company_id'], 'displayName': r['display_name']} for r in rows],
+                totalCount=total, page=page, pageSize=pageSize)
+
+
 @router.post('/job-companies', status_code=201)
 def create_company(body: CompanyBody, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
@@ -352,6 +374,10 @@ def delete_company(company_id: str, user=Depends(principal, scope='function'),
     return {'id': company_id, 'deleted': True}
 
 
+# 본문에 포함된 이미지 data URL도 문자 수에 포함된다. 포스터 여러 장을 허용한다.
+JOB_CONTENT_MAX_CHARS = 20_000_000
+
+
 class PostingBody(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     companyId: str | None = None
@@ -372,7 +398,7 @@ class PostingBody(BaseModel):
     email: str = Field(default='', max_length=200)
     emailApply: bool = False
     salaryNegotiable: bool = False
-    content: str = Field(default='', max_length=100000)
+    content: str = Field(default='', max_length=JOB_CONTENT_MAX_CHARS)
     contentFormat: str = Field(default='HTML', pattern='^(HTML|TEXT)$')
     logoFileId: str | None = None
     attachmentFileIds: list[str] = Field(default_factory=list, max_length=20)
@@ -439,10 +465,17 @@ def write_options(conn, posting_id, body):
 def bind_files(conn, user, posting_id, body):
     """로고·첨부를 이 공고에 귀속시키고, 목록에서 빠진 파일은 논리삭제한다."""
     keep = set(body.attachmentFileIds) | ({body.logoFileId} if body.logoFileId else set())
+    def bind(file_id, slot):
+        row = files.get_file(conn, file_id, lock=True)
+        # 관리 권한을 확인한 공고의 기존 파일은 다른 담당자도 유지할 수 있다.
+        if (row['owner_kind'], row['owner_id'], row['slot']) == ('JOB_POSTING', posting_id, slot):
+            return
+        files.claim(conn, user, file_id, 'JOB_POSTING', posting_id, slot)
+
     if body.logoFileId:
-        files.claim(conn, user, body.logoFileId, 'JOB_POSTING', posting_id, 'LOGO')
+        bind(body.logoFileId, 'LOGO')
     for file_id in body.attachmentFileIds:
-        files.claim(conn, user, file_id, 'JOB_POSTING', posting_id, 'ATTACHMENT')
+        bind(file_id, 'ATTACHMENT')
     for row in conn.execute('''SELECT id FROM dc.file_object WHERE owner_kind='JOB_POSTING' AND owner_id=%s
       AND state='READY' ''', (posting_id,)).fetchall():
         if row['id'] not in keep:

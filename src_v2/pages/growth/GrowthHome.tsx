@@ -2,7 +2,7 @@
 //   useStoredList 가 mount 직후 그 상수를 **학생별 키에 그대로 저장**해서, 아무도 쓴 적 없는
 //   실적이 모든 학생에게 자기 것처럼 보였다. 정본은 서버(dc.growth_entry)이고, 소유자가
 //   증명되지 않은 자료는 이관하지 않았다. 비어 있으면 비어 있는 것이 사실이다.
-import { useMemo, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 import { Link } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import { getActiveStudent } from '../../data/students'
@@ -10,7 +10,10 @@ import { typeLabel } from '../../data/careerProcess'
 import { RECORD_CATEGORY_LABEL, createGrowthRecord, deleteGrowthRecord, getGrowthRecords,
          updateGrowthRecord, type GrowthRecordCategory } from '../../data/growthRecords'
 // 스킬 후보·분류는 사전 단일소스에서 온다 — 여기에 스킬명·분류 리터럴을 두지 않는다.
-import { SKILL_CATEGORIES, SKILL_CUSTOM, SKILL_GROUPS, categoryOf } from '../../data/skillCatalog'
+import { catalogOptions, catalogText } from '../../data/growthInputCatalog'
+import GrowthCatalogPicker from '../../components/GrowthCatalogPicker'
+import { codeLabel } from '../../../shared/metadataStore'
+import { useMetadata } from '../../../shared/useMetadata'
 import { createGrowthEntry, deleteGrowthEntry, growthEntries, updateGrowthEntry } from '../../../shared/growthStore'
 import type { GrowthEntry } from '../../../shared/growthStore'
 import { useGrowth } from '../../../shared/useRoadmapStore'
@@ -37,11 +40,11 @@ function toProject(entry: GrowthEntry): Project {
 
 function toSkill(entry: GrowthEntry): Skill {
   return { id: entry.id, name: entry.title, level: Number(entry.content.level) || 1,
-           category: entry.categoryCode ?? SKILL_CATEGORIES[0] }
+           category: entry.categoryCode ?? 'LANGUAGE' }
 }
 
 function toQualification(entry: GrowthEntry): Qualification {
-  return { id: entry.id, title: entry.title, detail: text(entry.content, 'issuer'),
+  return { id: entry.id, title: entry.title, detail: [text(entry.content, 'language'), text(entry.content, 'issuer'), text(entry.content, 'scoreText')].filter(Boolean).join(' · '),
            date: dateOf(entry), icon: text(entry.content, 'icon') || 'fa-certificate' }
 }
 
@@ -56,20 +59,24 @@ const EDITOR_LABEL: Record<EditorKind, string> = {
 }
 
 export default function GrowthHome() {
-  usePageHead('홈대시보드', '퀘스트·레벨·성장 기록을 한 화면에서 확인합니다.')
+  usePageHead('나의 성장 기록', '프로젝트, 보유 기술, 자격·어학과 활동 경험을 기록해 포트폴리오를 준비합니다.')
+  useMetadata()
+  const skillCategories = catalogOptions('GROWTH_SKILL_CATEGORY')
+  const skillOptions = catalogOptions('GROWTH_SKILL_OPTION').filter(item => skillCategories.some(category => category.code === catalogText(item, 'categoryCode')))
   const student = getActiveStudent()
   // 서버가 정본이다. 저장 뒤 스토어가 다시 읽어 발행하면 그때 갱신된다.
-  const revision = useGrowth(student.id)
-  const projectRows = useMemo(() => growthEntries(student.id, 'PROJECT'), [student.id, revision])
-  const skillRows = useMemo(() => growthEntries(student.id, 'SKILL'), [student.id, revision])
-  const certRows = useMemo(() => growthEntries(student.id, 'CERTIFICATE'), [student.id, revision])
-  const projects = useMemo(() => projectRows.map(toProject), [projectRows])
-  const skills = useMemo(() => skillRows.map(toSkill), [skillRows])
-  const qualifications = useMemo(() => certRows.map(toQualification), [certRows])
-  const growthRecords = useMemo(() => getGrowthRecords(student.id), [student.id, revision])
+  useGrowth(student.id)
+  const projectRows = growthEntries(student.id, 'PROJECT')
+  const skillRows = growthEntries(student.id, 'SKILL')
+  const certRows = [...growthEntries(student.id, 'CERTIFICATE'), ...growthEntries(student.id, 'LANGUAGE')]
+  const projects = projectRows.map(toProject)
+  const skills = skillRows.map(toSkill)
+  const qualifications = certRows.map(toQualification)
+  const growthRecords = getGrowthRecords(student.id)
   const [editor, setEditor] = useState<EditorState | null>(null)
   // 저장 실패는 사실대로 보여 준다 — 성공 토스트를 먼저 띄우거나 로컬로 되돌리지 않는다.
   const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
   const isSenior = student.grade >= 4
   const strengths = student.strengthWeakness.filter(item => item.type === 'strength')
   const completedPhases = student.phases.filter(phase => phase.status === 'done').length
@@ -79,10 +86,11 @@ export default function GrowthHome() {
   const openCreate = (kind: EditorKind) => {
     const defaults: Record<EditorKind, Record<string, string>> = {
       project: { title: '', role: '', period: '', description: '', stack: '', result: '' },
-      skill: { name: '', category: SKILL_CATEGORIES[0], level: '3', custom: '' },
-      qualification: { title: '', detail: '', date: '', icon: 'fa-certificate' },
+      skill: { name: '', category: skillCategories[0]?.code ?? '', level: '3' },
+      qualification: { qualificationKind: 'CERTIFICATE', title: '', detail: '', date: '', scoreText: '', language: '', certificateNumber: '', description: '' },
       record: { date: '', category: 'PROGRAM', title: '', description: '' },
     }
+    setError('')
     setEditor({ kind, index: null, fields: defaults[kind] })
   }
 
@@ -94,15 +102,12 @@ export default function GrowthHome() {
                                          result: item.result } })
     } else if (kind === 'skill') {
       const item = skills[index]
-      // 사전에 없는 이름(직접 입력해 둔 스킬)이면 드롭다운으로 되돌리지 않는다 —
-      // 목록에 없으니 고를 수가 없어 이름이 비어 보인다.
       setEditor({ kind, index, fields: { name: item.name, category: item.category,
-                                         level: String(item.level),
-                                         custom: categoryOf(item.name) ? '' : '1' } })
+                                         level: String(item.level) } })
     } else if (kind === 'qualification') {
-      const item = qualifications[index]
-      setEditor({ kind, index, fields: { title: item.title, detail: item.detail, date: item.date,
-                                         icon: item.icon } })
+      const row = certRows[index]
+      setEditor({ kind, index, fields: { qualificationKind: row.kind, title: row.title, detail: text(row.content, 'issuer'), date: dateOf(row),
+        scoreText: text(row.content, 'scoreText'), language: text(row.content, 'language'), certificateNumber: text(row.content, 'certificateNumber'), description: text(row.content, 'description') } })
     } else {
       const item = growthRecords[index]
       setEditor({ kind, index, fields: { date: item.date, category: item.category, title: item.title,
@@ -127,52 +132,44 @@ export default function GrowthHome() {
     setEditor(current => current ? { ...current, fields: { ...current.fields, [name]: value } } : current)
   }
 
-  /**
-   * 드롭다운에서 스킬을 고른다 — 분류는 사전이 알고 있으니 같이 채운다.
-   * 「직접 입력」을 고르면 이름칸을 비우고 자유 입력으로 바꾼다(분류는 학생이 고른 값을 둔다).
-   */
-  const pickSkillName = (value: string) => {
-    if (value === SKILL_CUSTOM) {
-      setEditor(current => current ? { ...current, fields: { ...current.fields, name: '', custom: '1' } } : current)
-      return
-    }
-    const category = categoryOf(value)
-    setEditor(current => current
-      ? { ...current, fields: { ...current.fields, name: value, ...(category ? { category } : {}) } }
-      : current)
-  }
-
-  const saveEditor = (event: FormEvent) => {
+  const saveEditor = async (event: FormEvent) => {
     event.preventDefault()
-    if (!editor) return
+    if (!editor || saving) return
     const { kind, index, fields } = editor
+    setSaving(true); setError('')
     // 자기신고다(source_kind=SELF_REPORTED). 서버는 verified 같은 권한 필드를 받지 않는다.
     const write = (input: Parameters<typeof createGrowthEntry>[1], rows: GrowthEntry[]) =>
       index === null
         ? createGrowthEntry(student.id, input)
-        : updateGrowthEntry(student.id, rows[index], input)
-    if (kind === 'project') {
-      run(write({ kind: 'PROJECT', title: fields.title.trim(),
-                  content: { role: fields.role.trim(), periodText: fields.period.trim(),
-                             description: fields.description.trim(), result: fields.result.trim(),
-                             stack: fields.stack.split(',').map(item => item.trim()).filter(Boolean) } },
-                 projectRows))
-    } else if (kind === 'skill') {
-      run(write({ kind: 'SKILL', title: fields.name.trim(), categoryCode: fields.category,
-                  content: { level: Math.min(5, Math.max(1, Number(fields.level))) } }, skillRows))
-    } else if (kind === 'qualification') {
-      run(write({ kind: 'CERTIFICATE', title: fields.title.trim(), occurredOn: fields.date || null,
-                  datePrecision: fields.date ? 'DAY' : 'UNKNOWN',
-                  content: { issuer: fields.detail.trim(), icon: fields.icon || 'fa-certificate' } },
-                 certRows))
-    } else {
-      const record = { date: fields.date, category: fields.category as GrowthRecordCategory,
-                       title: fields.title.trim(), description: fields.description.trim() }
-      run(index === null
-        ? createGrowthRecord(student.id, record)
-        : updateGrowthRecord(student.id, growthRecords[index].id, record))
-    }
-    setEditor(null)
+        : updateGrowthEntry(student.id, rows[index], { ...input, content: { ...rows[index].content, ...input.content } })
+    try {
+      if (kind === 'project') {
+        await write({ kind: 'PROJECT', title: fields.title.trim(),
+                    content: { role: fields.role.trim(), periodText: fields.period.trim(),
+                               description: fields.description.trim(), result: fields.result.trim(),
+                               stack: fields.stack.split(',').map(item => item.trim()).filter(Boolean) } },
+                   projectRows)
+      } else if (kind === 'skill') {
+        await write({ kind: 'SKILL', title: fields.name.trim(), categoryCode: fields.category,
+                    content: { level: Math.min(5, Math.max(1, Number(fields.level))) } }, skillRows)
+      } else if (kind === 'qualification') {
+        const qualificationKind = fields.qualificationKind === 'LANGUAGE' ? 'LANGUAGE' : 'CERTIFICATE'
+        await write({ kind: qualificationKind, title: fields.title.trim(), occurredOn: fields.date || null,
+          datePrecision: fields.date ? 'DAY' : 'UNKNOWN',
+          content: qualificationKind === 'LANGUAGE'
+            ? { language: fields.language.trim(), testName: fields.title.trim(), scoreText: fields.scoreText.trim(), issuer: fields.detail.trim(), description: fields.description.trim() }
+            : { issuer: fields.detail.trim(), scoreText: fields.scoreText.trim(), certificateNumber: fields.certificateNumber.trim(), description: fields.description.trim() } }, certRows)
+      } else {
+        const record = { date: fields.date, category: fields.category as GrowthRecordCategory,
+                         title: fields.title.trim(), description: fields.description.trim() }
+        await (index === null
+          ? createGrowthRecord(student.id, record)
+          : updateGrowthRecord(student.id, growthRecords[index].id, record))
+      }
+      setEditor(null)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '저장하지 못했습니다. 입력 내용을 확인해 주세요.')
+    } finally { setSaving(false) }
   }
 
   return (
@@ -247,7 +244,7 @@ export default function GrowthHome() {
         <article className="gh-card gh-skills">
           <header className="gh-card-head"><div><span className="gh-section-kicker">CAPABILITIES</span><h2>보유 스킬</h2><p>프로젝트와 학습 활동으로 확인된 기술 역량입니다.</p></div><button type="button" className="gh-add-btn" onClick={() => openCreate('skill')}><i className="fa-solid fa-plus" /> 스킬 등록</button></header>
           <div className="gh-skill-grid">
-            {skills.map((skill, index) => <div className="gh-skill" key={skill.id}><div><strong>{skill.name}</strong><span>{skill.category}</span></div><div className="gh-skill-controls"><div className="gh-level" aria-label={`${skill.name} 숙련도 ${skill.level}/5`}>{[1, 2, 3, 4, 5].map(level => <i className={level <= skill.level ? 'filled' : ''} key={level} />)}</div><div className="gh-item-actions"><button type="button" onClick={() => openEdit('skill', index)} aria-label={`${skill.name} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('skill', index, skill.name)} aria-label={`${skill.name} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div></div>)}
+            {skills.map((skill, index) => <div className="gh-skill" key={skill.id}><div><strong>{skill.name}</strong><span>{codeLabel('GROWTH_SKILL_CATEGORY', skill.category)}</span></div><div className="gh-skill-controls"><div className="gh-level" aria-label={`${skill.name} 숙련도 ${skill.level}/5`}>{[1, 2, 3, 4, 5].map(level => <i className={level <= skill.level ? 'filled' : ''} key={level} />)}</div><div className="gh-item-actions"><button type="button" onClick={() => openEdit('skill', index)} aria-label={`${skill.name} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('skill', index, skill.name)} aria-label={`${skill.name} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div></div>)}
             {skills.length === 0 && <p className="gh-empty">등록된 스킬이 없습니다.</p>}
           </div>
         </article>
@@ -278,62 +275,59 @@ export default function GrowthHome() {
 
       <Modal
         open={editor !== null}
-        onClose={() => setEditor(null)}
+        onClose={() => { if (!saving) setEditor(null) }}
         title={editor ? `${EDITOR_LABEL[editor.kind]} ${editor.index === null ? '등록' : '수정'}` : undefined}
         size="md"
       >
         {editor && (
-          <form className="gh-editor-form" onSubmit={saveEditor}>
+          <form className="gh-editor-form" onSubmit={event => void saveEditor(event)}>
+            {error && <p role="alert" className="gh-empty">{error} (입력한 내용은 그대로 있습니다)</p>}
+            <fieldset disabled={saving} className="gh-editor-fields">
             {editor.kind === 'project' && (
               <>
-                <label><span>프로젝트명</span><input required value={editor.fields.title} onChange={event => updateField('title', event.target.value)} /></label>
-                <div className="gh-form-row"><label><span>담당 역할</span><input required value={editor.fields.role} onChange={event => updateField('role', event.target.value)} /></label><label><span>활동 기간</span><input required placeholder="2026.03 ~ 2026.06" value={editor.fields.period} onChange={event => updateField('period', event.target.value)} /></label></div>
+                <GrowthCatalogPicker label="프로젝트 예시" options={catalogOptions('GROWTH_PROJECT_EXAMPLE')} onPick={item => updateField('title', item.label)} />
+                <label><span>프로젝트명</span><input required maxLength={200} placeholder="예: 지역 상권 매출 분석 프로젝트" value={editor.fields.title} onChange={event => updateField('title', event.target.value)} /></label>
+                <div className="gh-form-row"><label><span>담당 역할</span><input required maxLength={200} placeholder="예: 팀장, 데이터 분석, 기구 설계" value={editor.fields.role} onChange={event => updateField('role', event.target.value)} /></label><label><span>활동 기간</span><input required placeholder="2026.03 ~ 2026.06" value={editor.fields.period} onChange={event => updateField('period', event.target.value)} /></label></div>
                 <label><span>성과</span><input required placeholder="수상, 배포, 사용자 수 등" value={editor.fields.result} onChange={event => updateField('result', event.target.value)} /></label>
                 <label><span>사용 기술</span><input required placeholder="React, TypeScript, Figma" value={editor.fields.stack} onChange={event => updateField('stack', event.target.value)} /><small>쉼표로 구분해 주세요.</small></label>
-                <label><span>프로젝트 설명</span><textarea required rows={4} value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
+                <label><span>프로젝트 설명</span><textarea required maxLength={10000} placeholder="목표·문제 → 내가 맡은 역할과 행동 → 결과 → 배운 점 순서로 작성해 보세요." rows={4} value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
               </>
             )}
             {editor.kind === 'skill' && (
-              <div className="gh-form-row">
-                <label><span>스킬명</span>
-                  {/* 사전은 드롭다운으로 고른다. 자유 입력이 필요하면 「직접 입력」으로 칸이 바뀐다 —
-                      datalist 는 브라우저 네이티브 팝업이라 모달 밖으로 뚫고 나와 쓰지 않는다. */}
-                  {editor.fields.custom === '1' ? (
-                    <>
-                      <input required autoFocus placeholder="예: 포토샵, 전산회계" value={editor.fields.name} onChange={event => updateField('name', event.target.value)} />
-                      <small><button type="button" className="gh-link-btn" onClick={() => updateField('custom', '')}>목록에서 고르기</button></small>
-                    </>
-                  ) : (
-                    <select required value={editor.fields.name} onChange={event => pickSkillName(event.target.value)}>
-                      <option value="" disabled>스킬을 선택하세요</option>
-                      {SKILL_GROUPS.map(group => (
-                        <optgroup key={group.category} label={group.category}>
-                          {group.names.map(name => <option key={name} value={name}>{name}</option>)}
-                        </optgroup>
-                      ))}
-                      <option value={SKILL_CUSTOM}>직접 입력…</option>
-                    </select>
-                  )}
-                </label>
-                <label><span>분류</span><select value={editor.fields.category} onChange={event => updateField('category', event.target.value)}>{SKILL_CATEGORIES.map(category => <option key={category}>{category}</option>)}</select></label>
-                <label><span>숙련도</span><select value={editor.fields.level} onChange={event => updateField('level', event.target.value)}>{[1, 2, 3, 4, 5].map(level => <option value={level} key={level}>{level}단계</option>)}</select></label>
-              </div>
+              <>
+                <GrowthCatalogPicker label="스킬" options={skillOptions} onPick={item => setEditor(current => current ? { ...current, fields: { ...current.fields, name: item.label, category: catalogText(item, 'categoryCode') } } : current)} />
+                <div className="gh-form-row">
+                  <label><span>스킬명</span><input required maxLength={200} placeholder="예: Python, 엑셀 피벗테이블, AutoCAD" value={editor.fields.name} onChange={event => updateField('name', event.target.value)} /></label>
+                  <label><span>분류</span><select required value={editor.fields.category} onChange={event => updateField('category', event.target.value)}><option value="" disabled>분류 선택</option>{skillCategories.map(category => <option key={category.code} value={category.code}>{category.label}</option>)}</select></label>
+                  <label><span>숙련도 · 자기평가</span><select value={editor.fields.level} onChange={event => updateField('level', event.target.value)}>{['1단계 · 기초 학습', '2단계 · 도움을 받아 활용', '3단계 · 독립적으로 활용', '4단계 · 복잡한 문제 해결', '5단계 · 설계·지도 가능'].map((label, index) => <option value={index + 1} key={label}>{label}</option>)}</select></label>
+                </div>
+              </>
             )}
             {editor.kind === 'qualification' && (
               <>
-                <label><span>자격·시험명</span><input required value={editor.fields.title} onChange={event => updateField('title', event.target.value)} /></label>
-                <label><span>발급기관·시험 구분</span><input required value={editor.fields.detail} onChange={event => updateField('detail', event.target.value)} /></label>
-                <label><span>취득일</span><input required type="date" value={editor.fields.date} onChange={event => updateField('date', event.target.value)} /></label>
+                <label><span>구분</span><select disabled={editor.index !== null} value={editor.fields.qualificationKind} onChange={event => setEditor(current => current ? { ...current, fields: { ...current.fields, qualificationKind: event.target.value, title: '', detail: '', scoreText: '', language: '', certificateNumber: '', description: '' } } : current)}><option value="CERTIFICATE">자격증</option><option value="LANGUAGE">어학시험</option></select></label>
+                <GrowthCatalogPicker key={editor.fields.qualificationKind} label={editor.fields.qualificationKind === 'LANGUAGE' ? '어학시험' : '자격증'} options={catalogOptions(editor.fields.qualificationKind === 'LANGUAGE' ? 'GROWTH_LANGUAGE_OPTION' : 'GROWTH_CERT_OPTION')} onPick={item => setEditor(current => current ? { ...current, fields: { ...current.fields, title: item.label, language: catalogText(item, 'language') } } : current)} />
+                <label><span>자격·시험명</span><input required maxLength={100} placeholder="추천 항목을 선택하거나 직접 입력" value={editor.fields.title} onChange={event => updateField('title', event.target.value)} /></label>
+                {editor.fields.qualificationKind === 'LANGUAGE' && <label><span>언어</span><input required maxLength={100} placeholder="예: 영어, 일본어, 중국어" value={editor.fields.language} onChange={event => updateField('language', event.target.value)} /></label>}
+                <div className="gh-form-row">
+                  <label><span>발급·시행기관</span><input maxLength={200} placeholder="증명서에 기재된 기관명" value={editor.fields.detail} onChange={event => updateField('detail', event.target.value)} /></label>
+                  <label><span>점수·등급</span><input required={editor.fields.qualificationKind === 'LANGUAGE'} maxLength={100} placeholder={editor.fields.qualificationKind === 'LANGUAGE' ? '예: 850점, IH, N2, 6.5' : '예: 1급, 최종 합격'} value={editor.fields.scoreText} onChange={event => updateField('scoreText', event.target.value)} /></label>
+                </div>
+                <label><span>취득일·응시일</span><input required type="date" value={editor.fields.date} onChange={event => updateField('date', event.target.value)} /></label>
+                {editor.fields.qualificationKind === 'CERTIFICATE' && <label><span>자격번호 · 선택</span><input maxLength={100} value={editor.fields.certificateNumber} onChange={event => updateField('certificateNumber', event.target.value)} /></label>}
+                <label><span>추가 설명 · 선택</span><textarea maxLength={10000} rows={2} placeholder="세부 분야나 활용 경험을 적어주세요." value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
               </>
             )}
             {editor.kind === 'record' && (
               <>
                 <div className="gh-form-row"><label><span>활동일</span><input required type="date" value={editor.fields.date} onChange={event => updateField('date', event.target.value)} /></label><label><span>활동 유형</span><select value={editor.fields.category} onChange={event => updateField('category', event.target.value)}>{(Object.keys(RECORD_CATEGORY_LABEL) as GrowthRecordCategory[]).map(code => <option key={code} value={code}>{RECORD_CATEGORY_LABEL[code]}</option>)}</select></label></div>
+                <GrowthCatalogPicker label="활동 예시" options={catalogOptions('GROWTH_ACTIVITY_EXAMPLE')} onPick={item => setEditor(current => current ? { ...current, fields: { ...current.fields, title: item.label, category: catalogText(item, 'categoryCode') || 'ETC' } } : current)} />
                 <label><span>활동명</span><input required value={editor.fields.title} onChange={event => updateField('title', event.target.value)} /></label>
-                <label><span>성장 기록</span><textarea required rows={4} value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
+                <label><span>성장 기록</span><textarea required maxLength={10000} placeholder="목표·문제 → 내가 맡은 역할과 행동 → 결과 → 배운 점 순서로 작성해 보세요." rows={4} value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
               </>
             )}
-            <div className="gh-form-actions"><button type="button" onClick={() => setEditor(null)}>취소</button><button type="submit">{editor.index === null ? '등록하기' : '수정 완료'}</button></div>
+            </fieldset>
+            <div className="gh-form-actions"><button type="button" disabled={saving} onClick={() => setEditor(null)}>취소</button><button type="submit" disabled={saving}>{saving ? '저장 중…' : editor.index === null ? '등록하기' : '수정 완료'}</button></div>
           </form>
         )}
       </Modal>

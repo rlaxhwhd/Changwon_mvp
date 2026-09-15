@@ -144,7 +144,7 @@
 /* ── 하단 액션 ── */
 .jf-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 6px; }
 /* 저장 결과 알림창 본문 — 실패 사유가 두 줄이라 읽히는 줄간격을 준다. */
-.jf-notice { margin: 0 0 20px; font-size: 14px; line-height: 1.65; color: var(--jf-label); }
+.jf-notice { margin: 0 0 20px; font-size: 14px; line-height: 1.65; color: var(--jf-label); white-space: pre-line; }
 .jf-btn {
   height: 42px; padding: 0 24px; border-radius: var(--jf-r-input);
   font-size: 14px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;
@@ -155,3 +155,13 @@
 .jf-btn-primary:disabled { background: #adb5bd; cursor: not-allowed; }
 .jf-btn-outline { background: #fff; color: var(--jf-text); border-color: var(--jf-input-border); }
 .jf-btn-outline:hover { background: var(--jf-label-bg); }
+.jf-btn:disabled { cursor: not-allowed; opacity: .6; }
+.jf-company-hint { color: var(--jf-muted); font-size: 13px; }
+.jf-company-search { display: grid; gap: 14px; }
+.jf-company-search .jf-notice { margin: 0; }
+.jf-company-results { list-style: none; padding: 0; margin: 0; max-height: 360px; overflow-y: auto; }
+.jf-company-result { display: flex; justify-content: space-between; align-items: center; gap: 16px; width: 100%; padding: 14px 12px; border: 0; border-bottom: 1px solid var(--jf-border); background: #fff; color: var(--jf-text); text-align: left; cursor: pointer; }
+.jf-company-result:hover { background: var(--jf-label-bg); }
+.jf-company-result:focus-visible { outline: 2px solid var(--jf-primary); outline-offset: -2px; }
+.jf-company-result small { display: block; margin-top: 5px; color: var(--jf-muted); overflow-wrap: anywhere; }
+.jf-company-search .jf-actions { align-items: center; }

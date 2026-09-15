@@ -15,7 +15,8 @@ import pytest
 from fastapi import HTTPException
 
 from app.db import pool
-from app.jobs import plus_one_month
+from app.jobs import JOB_CONTENT_MAX_CHARS, PostingBody, PostingUpdate, plus_one_month
+from pydantic import ValidationError
 from test_api import headers
 
 
@@ -445,6 +446,99 @@ def test_unknown_codes_and_invalid_input_are_refused(client):
                                          deadline=None)).status_code == 422
     assert client.post('/api/v1/jobs', headers={**headers('career_kim'), **key()},
                        json=posting_body(companyId='cmp_nope')).status_code == 422
+
+
+def test_posting_logo_preview_replace_and_preserve_by_another_manager(client):
+    from app.jobs import bind_files
+    import base64
+
+    image = base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9uoAAAAASUVORK5CYII=')
+    head = headers('career_kim')
+
+    def upload_logo():
+        response = client.post('/api/v1/job-files?slot=LOGO&name=logo.png',
+                               headers={**head, 'Content-Type': 'image/png'}, content=image)
+        assert response.status_code == 201, response.text
+        return response.json()
+
+    logo = upload_logo()
+    assert client.get(logo['downloadUrl'], headers=head).content == image
+    assert client.get(logo['downloadUrl'], headers=headers('chaewon')).status_code == 404
+    posting = new_posting(client, logoFileId=logo['id'])
+    assert client.get(posting['logo'], headers=headers('chaewon')).content == image
+    # 관리 권한은 호출자가 확인한다. 기존 귀속 파일은 업로더가 달라도 유지한다.
+    with pool.connection() as conn:
+        bind_files(conn, {'intg_uid': 'another-manager'}, posting['id'],
+                   PostingBody(**posting_body(logoFileId=logo['id'])))
+        with pytest.raises(HTTPException) as denied:
+            bind_files(conn, {'intg_uid': 'another-manager'}, 'another-posting',
+                       PostingBody(**posting_body(logoFileId=logo['id'])))
+        assert denied.value.status_code == 403
+    replacement = upload_logo()
+    response = client.patch(f"/api/v1/jobs/{posting['id']}", headers={**head, **key()},
+                            json=posting_body(companyId=posting['companyId'], logoFileId=replacement['id'],
+                                              expectedVersion=posting['version']))
+    assert response.status_code == 200, response.text
+    stored = client.get(f"/api/v1/jobs/{posting['id']}", headers=head).json()
+    assert stored['logoFileId'] == replacement['id']
+    assert client.get(stored['logo'], headers=headers('chaewon')).content == image
+    assert client.get(logo['downloadUrl'], headers=head).status_code == 404
+
+
+def test_image_heavy_posting_content_can_be_created_and_updated(client):
+    content = '<p>채용 안내</p><img src="data:image/png;base64,' + 'A' * 1_500_000 + '">'
+    posting = new_posting(client, content=content)
+    assert posting['content'] == content
+    changed = content + '<p>추가 안내</p>'
+    response = client.patch(f"/api/v1/jobs/{posting['id']}",
+                            headers={**headers('career_kim'), **key()},
+                            json=posting_body(companyId=posting['companyId'], content=changed,
+                                              expectedVersion=posting['version']))
+    assert response.status_code == 200, response.text
+    stored = client.get(f"/api/v1/jobs/{posting['id']}", headers=headers('career_kim')).json()
+    assert stored['content'] == changed
+
+
+@pytest.mark.parametrize('model', [PostingBody, PostingUpdate])
+def test_posting_content_limit(model):
+    body = posting_body(content='A' * JOB_CONTENT_MAX_CHARS)
+    if model is PostingUpdate:
+        body['expectedVersion'] = 1
+    assert len(model(**body).content) == JOB_CONTENT_MAX_CHARS
+    body['content'] += 'A'
+    with pytest.raises(ValidationError) as error:
+        model(**body)
+    assert error.value.errors()[0]['loc'] == ('content',)
+    assert error.value.errors()[0]['type'] == 'string_too_long'
+
+
+def test_company_history_search_and_reuse(client):
+    name = '기업검색_%' + uuid4().hex[:8]
+    first = new_posting(client, createCompany={'displayName': name})
+    # 같은 기업의 공고는 하나로, 이름만 같은 별도 기업은 각각 표시한다.
+    new_posting(client, companyId=first['companyId'])
+    second = new_posting(client, createCompany={'displayName': name}, status='CLOSED')
+    new_company(client, name + '미사용')
+    new_posting(client, createCompany={'displayName': name.replace('_%', 'AB')})
+    head = headers('career_kim')
+    response = client.get('/api/v1/job-company-history', headers=head,
+                          params={'q': name, 'pageSize': 1})
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result['totalCount'] == 2
+    other = client.get('/api/v1/job-company-history', headers=head,
+                       params={'q': name, 'pageSize': 1, 'page': 2}).json()
+    assert {result['items'][0]['companyId'], other['items'][0]['companyId']} == {
+        first['companyId'], second['companyId']}
+    assert client.delete(f"/api/v1/jobs/{second['id']}?expectedVersion={second['version']}",
+                         headers=head).status_code == 200
+    assert client.get('/api/v1/job-company-history', headers=head,
+                      params={'q': name}).json()['totalCount'] == 1
+    assert client.get('/api/v1/job-company-history', headers=headers('chaewon')).status_code == 403
+    external = client.get('/api/v1/job-company-history', headers=head,
+                          params={'q': '넥슨코리아'}).json()['items']
+    assert {'companyId': None, 'displayName': '넥슨코리아'} in external
+    assert new_posting(client, createCompany={'displayName': '넥슨코리아'})['companyId'] is not None
 
 
 def test_company_in_use_cannot_be_deleted(client):

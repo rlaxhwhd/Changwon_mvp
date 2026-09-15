@@ -15,18 +15,16 @@ import {
   COMPETENCY_SURVEY_GROUPS,
   SATISFACTION_FORMS,
 } from '../data/schema/program'
-import type { ProgramCategory } from '../data/schema/program'
+import { codeItems, codeLabel } from '../../shared/metadataStore'
+import { useMetadata } from '../../shared/useMetadata'
 import { STUDENT_TYPES, typeLabel } from '../../src_v2/data/careerProcess'
 import type { StudentType } from '../../src_v2/data/careerProcess'
 import { ROADMAP_ENTRIES, ROADMAP_ENTRY_DESC, ROADMAP_ENTRY_LABEL } from '../../src_v2/data/schema/roadmap'
 import type { RoadmapEntry } from '../../src_v2/data/schema/roadmap'
 import './ProgramForm.css'
 
-const MAJOR_CATS = ['진로', '취업', 'STAR트랙', 'FJT트랙']
-const MINOR_CATS = ['S(진로탐색)', 'M(진로설정)', 'A(역량강화)', 'R(취업촉진)', 'T(우수인재)', '기타']
 const FISCAL_YEARS = ['2026', '2027']
-const GRADE_OPTIONS = ['1학년', '2학년', '3학년', '4학년']
-const TARGET_KEYS = ['학부생', '대학원생', '교직원'] as const
+const optionsOf = (group: string) => codeItems.filter(item => item.group_code === group && item.is_active).sort((a, b) => a.sort_order - b.sort_order)
 const EXTRA_TYPES = ['객관식(설문 선택형)', '객관식(설문 중복 선택형)', '주관식(설문 서술형, MAX500)', '개인정보 동의서', '첨부파일']
 const EXTRA_SUBLINK: Record<string, string> = {
   '객관식(설문 선택형)': '보기/선택지 설정',
@@ -34,13 +32,8 @@ const EXTRA_SUBLINK: Record<string, string> = {
   '개인정보 동의서': '동의서 내용 설정',
   '첨부파일': '파일 형식/개수 설정',
 }
-// 등록 화면의 사업 구분 라벨 → 비교과 분류 코드.
-const CATEGORY_MAP: Record<string, ProgramCategory> = {
-  '진로': 'CAREER', '취업': 'EMPLOY', 'STAR트랙': 'CAREER', 'FJT트랙': 'CAREER',
-}
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
-type TargetKey = (typeof TARGET_KEYS)[number]
 type ExtraItem = { id: string; type: string; question: string }
 
 let seq = 0
@@ -100,14 +93,21 @@ function fmtDate(date: string, time: string) {
 }
 
 export default function ProgramForm() {
+  useMetadata()
+  const majorOptions = optionsOf('PROGRAM_CATEGORY')
+  const middleOptions = optionsOf('PROGRAM_MIDDLE_CATEGORY')
+  const targetOptions = optionsOf('PROGRAM_TARGET_STATUS')
+  const gradeOptions = optionsOf('PROGRAM_TARGET_GRADE')
   const navigate = useNavigate()
   const { id } = useParams<{ id: string }>()
   const editing = Boolean(id)
   const existing = useMemo(() => (id ? getProgramById(id) : undefined), [id])
   const today = todayISO()
 
-  const [majorCat, setMajorCat] = useState<string>(existing && MAJOR_CATS.includes(existing.category) ? existing.category : MAJOR_CATS[0])
-  const [minorCat, setMinorCat] = useState(MINOR_CATS[0])
+  const [majorChoice, setMajorCat] = useState(existing?.category ?? '')
+  const [minorChoice, setMinorCat] = useState(existing?.middleCategory ?? '')
+  const majorCat = majorChoice || majorOptions[0]?.code || ''
+  const minorCat = minorChoice || middleOptions[0]?.code || ''
   // CARE 7+ 분류 — 6유형 중복 선택. 코드(T1~T6)만 담고 라벨은 typeLabel()로 그린다.
   const [careTypes, setCareTypes] = useState<StudentType[]>(existing?.careTypes ?? [])
   // 로드맵 편입 — 선택한 유형 학생의 IAP 실행 축에 칸을 만든다(PROCESS.md §6-4)
@@ -130,8 +130,8 @@ export default function ProgramForm() {
   const [place, setPlace] = useState(existing?.location ?? '')
   const [sessions, setSessions] = useState(existing ? String(existing.sessions) : '1')
   const [managerName, setManagerName] = useState(existing?.manager ?? (COUNSELORS[0]?.name ?? ''))
-  const [targets, setTargets] = useState<Record<TargetKey, boolean>>({ 학부생: true, 대학원생: false, 교직원: false })
-  const [grades, setGrades] = useState<Record<string, boolean>>({ '1학년': true, '2학년': true, '3학년': true, '4학년': true })
+  const [targets, setTargets] = useState<string[]>(existing?.targetStatuses ?? [])
+  const [grades, setGrades] = useState<string[]>(existing?.targetGrades ?? [])
   const [manager, setManager] = useState<{ name: string; role: string } | null>(() => {
     const counselor = existing
       ? COUNSELORS.find(c => c.name === existing.manager) ?? COUNSELORS[0]
@@ -164,23 +164,11 @@ export default function ProgramForm() {
   const [includeInStats, setIncludeInStats] = useState(existing?.includeInStats ?? true)
   const [saved, setSaved] = useState(false)
 
-  const onlyGradeDisabled = targets.대학원생 || targets.교직원
-  const checkedTargets = TARGET_KEYS.filter(k => targets[k])
-  const selectedGrades = GRADE_OPTIONS.filter(g => grades[g])
-  const gradeLabel = selectedGrades.length === 0
-    ? '학년 미선택'
-    : selectedGrades.length === GRADE_OPTIONS.length
-      ? '학부전체'
-      : selectedGrades.join(', ')
-  const targetSummary = (() => {
-    if (checkedTargets.length === 0) return ''
-    const first = checkedTargets[0]
-    const base = first === '학부생' ? `학부생 (${gradeLabel})` : first
-    return checkedTargets.length > 1 ? `${base} 외 ${checkedTargets.length - 1}개` : base
-  })()
+  const targetSummary = targets.map(code => codeLabel('PROGRAM_TARGET_STATUS', code)).join(', ')
+    + (grades.length ? ` (${grades.map(code => codeLabel('PROGRAM_TARGET_GRADE', code)).join(', ')})` : '')
   const capacityLabel = `${selectCount || '-'}명 / ${limitCount || '-'}명 (${selectMethod === '선착순' ? '선착순 선발' : '심사 후 선발'})`
 
-  const canSave = title.trim() !== '' && applyStartDate !== '' && applyEndDate !== '' && managerName !== '' && !saved
+  const canSave = title.trim() !== '' && applyStartDate !== '' && applyEndDate !== '' && managerName !== '' && majorCat !== '' && minorCat !== '' && targets.length > 0 && grades.length > 0 && !saved
 
   const handleSave = () => {
     if (!canSave) return
@@ -189,7 +177,10 @@ export default function ProgramForm() {
       // 두 칸은 서로 다른 것이다 — 한 칸에 합치면 상세 내용이 프로그램 내용을 덮어썼다.
       desc: purpose.trim(),
       detail: detail.trim() || undefined,
-      category: CATEGORY_MAP[majorCat] ?? '기타',
+      category: majorCat,
+      middleCategory: minorCat,
+      targetStatuses: targets,
+      targetGrades: grades,
       careTypes,
       // 유형을 아무것도 안 골랐으면 편입할 대상이 없다 — 값이 남지 않게 정리한다.
       roadmapEntry: careTypes.length === 0 ? ('NONE' as RoadmapEntry) : roadmapEntry,
@@ -290,13 +281,15 @@ export default function ProgramForm() {
                   <div className="pf-field" style={{ gap: 6 }}>
                     <span className="pf-sub">대분류</span>
                     <select className="pf-select" value={majorCat} onChange={e => setMajorCat(e.target.value)}>
-                      {MAJOR_CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                      {majorChoice && !majorOptions.some(c => c.code === majorChoice) && <option value={majorChoice}>{codeLabel('PROGRAM_CATEGORY', majorChoice)} (기존 분류)</option>}
+                      {majorOptions.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
                     </select>
                   </div>
                   <div className="pf-field" style={{ gap: 6 }}>
-                    <span className="pf-sub">소분류</span>
+                    <span className="pf-sub">중분류</span>
                     <select className="pf-select" value={minorCat} onChange={e => setMinorCat(e.target.value)}>
-                      {MINOR_CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                      {minorChoice && !middleOptions.some(c => c.code === minorChoice) && <option value={minorChoice}>{codeLabel('PROGRAM_MIDDLE_CATEGORY', minorChoice)} (기존 분류)</option>}
+                      {middleOptions.map(c => <option key={c.code} value={c.code}>{c.label}</option>)}
                     </select>
                   </div>
                 </div>
@@ -434,10 +427,10 @@ export default function ProgramForm() {
                 <div className="pf-field-inline">
                   <span className="pf-sub">구분</span>
                   <div className="pf-inline">
-                    {TARGET_KEYS.map(k => (
-                      <label key={k} className="pf-check">
-                        <input type="checkbox" checked={targets[k]} onChange={e => setTargets(prev => ({ ...prev, [k]: e.target.checked }))} />
-                        {k}
+                    {targetOptions.map(k => (
+                      <label key={k.code} className="pf-check">
+                        <input type="checkbox" checked={targets.includes(k.code)} onChange={e => setTargets(prev => e.target.checked ? [...prev, k.code] : prev.filter(code => code !== k.code))} />
+                        {k.label}
                       </label>
                     ))}
                   </div>
@@ -445,15 +438,15 @@ export default function ProgramForm() {
                 <div className="pf-field-inline">
                   <span className="pf-sub">학년</span>
                   <div className="pf-inline">
-                    {GRADE_OPTIONS.map(g => (
-                      <label key={g} className="pf-check">
-                        <input type="checkbox" checked={!!grades[g]} disabled={onlyGradeDisabled} onChange={e => setGrades(prev => ({ ...prev, [g]: e.target.checked }))} />
-                        {g}
+                    {gradeOptions.map(g => (
+                      <label key={g.code} className="pf-check">
+                        <input type="checkbox" checked={grades.includes(g.code)} onChange={e => setGrades(prev => e.target.checked ? [...prev, g.code] : prev.filter(code => code !== g.code))} />
+                        {g.label}
                       </label>
                     ))}
                   </div>
                 </div>
-                <span className="pf-help">대학원생, 교직원 선택 시 학년 선택은 비활성화됩니다.</span>
+                <span className="pf-help">참가대상 구분과 학년을 각각 선택해 주세요.</span>
               </div>
 
               {/* 담당자 */}
@@ -721,8 +714,8 @@ export default function ProgramForm() {
               <div className="pf-preview-img"><LuImage /></div>
               <div className="pf-preview-title">{title.trim() || '프로그램명이 표시됩니다'}</div>
               <div className="pf-badges">
-                <span className="pf-badge">{majorCat}</span>
-                <span className="pf-badge is-alt">{minorCat}</span>
+                <span className="pf-badge">{codeLabel('PROGRAM_CATEGORY', majorCat)}</span>
+                <span className="pf-badge is-alt">{codeLabel('PROGRAM_MIDDLE_CATEGORY', minorCat)}</span>
               </div>
               <div className="pf-preview-meta">
                 <div className="pf-meta-row"><LuCalendar /><span className="pf-meta-label">공고일시</span><span className="pf-meta-value">{fmtDate(noticeDate, noticeTime) || '—'}</span></div>

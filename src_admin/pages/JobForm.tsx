@@ -5,8 +5,8 @@
 //   ① 선택지(기업구분·근무형태·직종·경력·성별·지역)를 여기 배열로 두지 않는다.
 //      운영 코드는 DB 가 정본이고 화면은 metadataStore 에서 읽는다 — 관리자가
 //      항목을 추가하면 배포 없이 나타난다(DB.md §8-5).
-//   ② 기업은 사전(dc.company)에서 **고른다.** 이름만 같은 두 회사를 자동으로 합치지
-//      않기 위해서다. 사전에 없으면 새로 등록하겠다고 명시한다.
+//   ② 회사명을 직접 입력하거나 과거 공고에서 기업을 고른다. 이름이 같다는 이유로
+//      기업을 자동 병합하지 않고, 검색에서 선택한 기업 ID로만 연결한다.
 //   ③ 로고·첨부는 data URL 이 아니라 서버 볼륨의 파일이다. 저장 이름은 서버가
 //      부여하고 다운로드는 권한을 확인하는 API 경로로만 나간다(DB.md #41).
 //   ④ 「채용시 마감」은 **등록할 때 한 번만** 계산된다. 예전에는 저장할 때마다
@@ -17,19 +17,75 @@ import { LuFrown } from 'react-icons/lu'
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import {
-  addJob, getJobById, queryCompanies, removeJob, updateJob, uploadJobFile,
+  addJob, getJobById, queryCompanyHistory, removeJob, updateJob, uploadJobFile,
 } from '../data/jobsSource'
+import type { JobCompanyHistory } from '../data/jobsSource'
 import { blankJob, JOB_CODE_GROUPS, jobLabelsOf, jobOptions } from '../data/schema/job'
-import type { JobCompany, JobFile, JobPostingInput, RecruitType } from '../data/schema/job'
+import type { JobFile, JobPostingInput, RecruitType } from '../data/schema/job'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
 import RichEditor from '../components/RichEditor'
 import { useMetadata } from '../../shared/useMetadata'
 import './JobForm.css'
+import JobLogo from '../../shared/JobLogo'
 
 type ArrayKey = 'employmentTypes' | 'jobCategories' | 'careerTypes' | 'genders' | 'regions'
 
 const NEW_COMPANY = '__new__'
+
+function CompanySearch({ onSelect, onClose }: {
+  onSelect: (company: JobCompanyHistory) => void; onClose: () => void
+}) {
+  const [query, setQuery] = useState('')
+  const [page, setPage] = useState(1)
+  const [result, setResult] = useState<{ items: JobCompanyHistory[]; totalCount: number } | null>(null)
+  const [error, setError] = useState('')
+  const [retry, setRetry] = useState(0)
+  useEffect(() => {
+    let active = true
+    const timer = window.setTimeout(() => {
+      void queryCompanyHistory(query, page).then(data => {
+        if (active) setResult(data)
+      }).catch(cause => {
+        if (active) setError(cause instanceof Error ? cause.message : '기업 목록을 불러오지 못했습니다.')
+      })
+    }, 250)
+    return () => { active = false; window.clearTimeout(timer) }
+  }, [query, page, retry])
+  const changePage = (next: number) => { setResult(null); setError(''); setPage(next) }
+  return (
+    <AdminModal title="기존 기업 등록" size="md" onClose={onClose}>
+      <div className="jf-company-search">
+        <p className="jf-notice">이전 채용공고의 회사명을 검색해 선택해 주세요. 마감된 공고와 외부 공고도 포함됩니다.</p>
+        <input className="jf-input" aria-label="기존 채용공고 회사명 검색" autoFocus maxLength={200}
+          placeholder="회사명을 검색해주세요." value={query}
+          onChange={e => { setQuery(e.target.value); setPage(1); setResult(null); setError('') }} />
+        {error ? <div role="alert">
+          <p>{error}</p>
+          <button type="button" className="jf-btn jf-btn-outline"
+            onClick={() => { setError(''); setRetry(value => value + 1) }}>다시 시도</button>
+        </div> : !result ? <p role="status">검색 중입니다…</p> : <>
+          <p role="status">{result.totalCount ? `검색 결과 ${result.totalCount}개` : '검색 결과가 없습니다. 회사명을 직접 입력해 등록해 주세요.'}</p>
+          <ul className="jf-company-results">
+            {result.items.map(company => (
+              <li key={JSON.stringify([company.companyId, company.displayName])}>
+                <button type="button" className="jf-company-result" onClick={() => onSelect(company)}>
+                  <span>{company.displayName}<small>{company.companyId ? `기업 ID: ${company.companyId}` : '외부 공고 · 선택 후 저장 시 새 기업으로 등록'}</small></span>
+                  <span>선택</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {result.totalCount > 20 && <div className="jf-actions">
+            <button type="button" className="jf-btn jf-btn-outline" disabled={page === 1} onClick={() => changePage(page - 1)}>이전</button>
+            <span>{page} / {Math.ceil(result.totalCount / 20)}</span>
+            <button type="button" className="jf-btn jf-btn-outline" disabled={page * 20 >= result.totalCount} onClick={() => changePage(page + 1)}>다음</button>
+          </div>}
+        </>}
+      </div>
+    </AdminModal>
+  )
+}
 
 function Row({ label, required, top, children }: { label: string; required?: boolean; top?: boolean; children: ReactNode }) {
   return (
@@ -65,9 +121,9 @@ export default function JobForm() {
       careerTypes: existing.careerTypes, genders: existing.genders, regions: existing.regions,
     }
     : blankJob()))
-  const [companies, setCompanies] = useState<JobCompany[]>([])
+  const [companySearchOpen, setCompanySearchOpen] = useState(false)
   const [companyChoice, setCompanyChoice] = useState<string>(existing?.companyId ?? NEW_COMPANY)
-  const [companyName, setCompanyName] = useState(existing?.companyId ? '' : existing?.company ?? '')
+  const [companyName, setCompanyName] = useState(existing?.company ?? '')
   const [logo, setLogo] = useState<JobFile | null>(
     existing?.logoFileId && existing.logo
       ? { id: existing.logoFileId, name: '기업 로고', size: 0, contentType: '', downloadUrl: existing.logo }
@@ -77,10 +133,6 @@ export default function JobForm() {
   const [saved, setSaved] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<{ ok: boolean; title: string; text: string } | null>(null)
-
-  useEffect(() => {
-    void queryCompanies().then(setCompanies).catch(() => { /* 사전 조회 실패는 새 기업 등록으로 진행 */ })
-  }, [])
 
   if (notFound || readOnly) {
     return (
@@ -132,14 +184,17 @@ export default function JobForm() {
     }
   }
 
-  const displayName = companyChoice === NEW_COMPANY
-    ? companyName.trim()
-    : companies.find(c => c.id === companyChoice)?.displayName ?? ''
+  const displayName = companyName.trim()
   const regions = arr('regions')
   const canSave = displayName !== '' && draft.role.trim() !== '' && !saved && !busy
 
   const handleSave = async (goList: boolean) => {
     if (!canSave) return
+    if (draft.deadlineMode === 'DATE' && !draft.deadline) {
+      setNotice({ ok: false, title: '지원마감일을 확인해 주세요.',
+        text: '마감일을 입력하거나 채용시를 선택해 주세요.' })
+      return
+    }
     const careers = arr('careerTypes')
     const payload: JobPostingInput = {
       ...draft,
@@ -221,28 +276,17 @@ export default function JobForm() {
             </div>
           </Row>
 
-          {/* 기업은 사전에서 고른다 — 이름이 같다고 두 회사를 자동으로 합치지 않는다. */}
+          {/* 직접 입력은 새 기업, 검색에서 선택한 기업은 ID로 연결한다. */}
           <Row label="회사명" required>
             <div className="jf-inline">
-              <select
-                className="jf-select jf-multi"
-                value={companyChoice}
-                onChange={e => setCompanyChoice(e.target.value)}
-              >
-                <option value={NEW_COMPANY}>새 기업으로 등록</option>
-                {companies.map(c => (
-                  <option key={c.id} value={c.id}>{c.displayName}</option>
-                ))}
-              </select>
-              {companyChoice === NEW_COMPANY && (
-                <input
-                  className="jf-input"
-                  value={companyName}
-                  onChange={e => setCompanyName(e.target.value)}
-                  placeholder="회사명을 입력해주세요."
-                />
-              )}
+              <input className="jf-input" aria-label="회사명" maxLength={200} value={companyName}
+                onChange={e => { setCompanyName(e.target.value); setCompanyChoice(NEW_COMPANY) }}
+                placeholder="회사명을 입력해주세요." />
+              <button type="button" className="jf-btn jf-btn-outline" onClick={() => setCompanySearchOpen(true)}>기존 기업 등록</button>
             </div>
+            <span className="jf-company-hint">{companyChoice === NEW_COMPANY
+              ? '직접 입력한 회사명은 새 기업으로 등록됩니다.'
+              : '기존 기업이 선택되었습니다. 회사명을 변경하면 새 기업으로 등록됩니다.'}</span>
           </Row>
 
           {/* 로고는 추천채용 카드에만 나온다 — 유형이 추천채용일 때만 묻는다. */}
@@ -251,7 +295,7 @@ export default function JobForm() {
               <div className="jf-logo">
                 <span className={`jf-logo-preview${logo ? ' has-img' : ''}`}>
                   {logo
-                    ? <img src={logo.downloadUrl} alt="등록한 기업 로고 미리보기" />
+                    ? <JobLogo src={logo.downloadUrl} alt="등록한 기업 로고 미리보기" />
                     : <em>{displayName.slice(0, 2) || '로고'}</em>}
                 </span>
                 <div className="jf-logo-side">
@@ -463,6 +507,14 @@ export default function JobForm() {
           <button type="button" className="jf-btn jf-btn-outline" onClick={() => navigate('/jobs')}>목록</button>
         </div>
       </div>
+
+      {companySearchOpen && <CompanySearch
+        onClose={() => setCompanySearchOpen(false)}
+        onSelect={company => {
+          setCompanyName(company.displayName)
+          setCompanyChoice(company.companyId ?? NEW_COMPANY)
+          setCompanySearchOpen(false)
+        }} />}
 
       {notice && (
         <AdminModal

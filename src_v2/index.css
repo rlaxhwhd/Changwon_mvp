@@ -119,6 +119,11 @@
   --blue-wash:    #eef4ff;
   --mint-border:  #bdebdc;
   --mint-ink:     #148262;
+  /* 하늘·틸 잉크·테두리 — 본색을 어둡게/옅게 섞은 파생값(새 휴 아님). 내 성장·퀘스트 보드가 쓴다. */
+  --sky-ink:      color-mix(in srgb, var(--sky) 72%, #0b2b4a);
+  --sky-border:   color-mix(in srgb, var(--sky) 28%, #fff);
+  --teal-ink:     color-mix(in srgb, var(--teal) 72%, #073b36);
+  --teal-border:  color-mix(in srgb, var(--teal) 28%, #fff);
   --coral-border: #ffcfcf;
   --coral-ink:    #dc4444;
   --amber-border: #f4d99d;

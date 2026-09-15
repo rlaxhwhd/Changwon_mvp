@@ -4,6 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "docker:up": "docker compose --env-file .env.docker.local up -d --build --wait",
+    "docker:down": "docker compose --env-file .env.docker.local down",
+    "docker:logs": "docker compose --env-file .env.docker.local logs --tail 100 -f",
+    "docker:ps": "docker compose --env-file .env.docker.local ps",
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "rtk": ".\\.tools\\rtk\\rtk.exe",

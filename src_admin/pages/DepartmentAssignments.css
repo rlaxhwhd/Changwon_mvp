@@ -1,0 +1,44 @@
+.da-page { color: var(--color-text); min-width: 0; }
+/* Page width, gutters, heading and section spacing come from the shared admin shell. */
+.da-toolbar { display: flex; align-items: flex-end; gap: 12px; padding: var(--pad); background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg); flex-wrap: wrap; }
+.da-toolbar label, .da-search-label { display: flex; flex-direction: column; gap: 5px; font-size: 12px; font-weight: 800; color: var(--color-text-secondary); }
+.da-toolbar select, .da-page input { min-height: 40px; min-width: 0; max-width: 100%; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: var(--color-bg); padding: 9px 12px; color: var(--color-text); font-size: 14px; font-weight: 500; }
+.da-toolbar select { min-width: 200px; }
+.da-query { flex: 1; min-width: 220px; }
+.da-count { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); margin: 0; }
+.da-count strong { color: var(--color-primary); }
+.da-table-wrap { min-width: 0; max-width: 100%; overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-bg); }
+.da-page table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1080px; }
+.da-page th { background: var(--color-section-bg); color: var(--color-text-secondary); font-weight: 700; padding: 16px 12px; white-space: nowrap; }
+.da-page td { padding: 16px 12px; text-align: center; line-height: 1.6; }
+.da-page td, .da-page th { border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+.da-page td[rowspan] { background: var(--color-bg); }
+.da-page tbody tr:last-child td { border-bottom: 0; }
+.da-phone { white-space: nowrap; font-variant-numeric: tabular-nums; }
+.da-action, .da-remove { background: none; border: 0; cursor: pointer; color: var(--color-primary); padding: 5px 7px; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; font: inherit; }
+.da-remove { display: block; margin: 2px auto 0; font-size: 12px; }
+.da-action:disabled { color: var(--color-caption); cursor: default; text-decoration: none; }
+.da-page button:focus-visible, .da-page input:focus-visible, .da-page select:focus-visible, .da-page textarea:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.da-unassigned { color: var(--color-caption); }
+.da-page .da-empty { padding: 60px 20px; color: var(--color-text-secondary); }
+.da-pagination { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0; font-size: 13px; }
+.da-search .da-pagination { margin-top: 20px; }
+.da-notice { color: var(--color-primary); background: var(--primary-soft); padding: 12px 16px; border-radius: var(--radius-sm); }
+.da-error { color: #a42c32; background: #fff1f1; padding: 12px 16px; }
+.da-target { margin: 0 0 20px; line-height: 1.6; }
+.da-search table { min-width: 630px; }
+.da-search-label { margin-bottom: 20px; }
+.da-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+.da-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.da-search-label select, .da-search-label textarea { min-height: 40px; max-width: 100%; padding: 10px; font: inherit; color: var(--color-text); background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-sm); }
+.da-search-label textarea { min-height: 90px; resize: vertical; }
+.da-member-details { margin: 0 0 24px; font-size: 14px; }
+.da-member-details > div { display: grid; grid-template-columns: 150px 1fr; gap: 12px; margin-bottom: 12px; }
+.da-member-details dt { color: var(--color-text-secondary); }
+.da-member-details dd { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; }
+@media (max-width: 640px) {
+  .da-toolbar { padding: var(--pad-sm); }
+  .da-toolbar label { width: 100%; min-width: 0; }
+  .da-toolbar select { min-width: 0; width: 100%; }
+  .da-member-details > div { grid-template-columns: 1fr; gap: 4px; }
+}

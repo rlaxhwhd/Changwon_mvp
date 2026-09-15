@@ -115,15 +115,14 @@ def get_request(conn,user,request_id,lock=False):
 
 
 def resolve_assignee(conn,alias,kind):
+    from .department_assignments import ACTIVE_PROFESSOR_ORGS
     if not alias:
         raise HTTPException(422,'담당자를 선택해 주세요.')
     row=conn.execute('SELECT s.*,p.alias FROM dc.staff s JOIN dc.person p USING(intg_uid) WHERE p.alias=%s OR p.intg_uid=%s',(alias,alias)).fetchone()
     if not row or row['role_code']!={'진로취업':'career','심리':'psych','교수':'professor'}[kind]:
         raise HTTPException(422,'상담 종류에 맞는 담당자를 선택해 주세요.')
-    if kind == '교수' and (row['profile'].get('counselAccept') is False or not conn.execute('''
-        SELECT 1 FROM dc.org_assignment WHERE staff_uid=%s AND role_code='professor'
-        AND is_active AND valid_from<=CURRENT_DATE AND (valid_to IS NULL OR valid_to>=CURRENT_DATE)
-        LIMIT 1''', (row['intg_uid'],)).fetchone()):
+    if kind == '교수' and (row['profile'].get('counselAccept') is False or not conn.execute(f'''
+        SELECT 1 FROM ({ACTIVE_PROFESSOR_ORGS}) a WHERE staff_uid=%s LIMIT 1''', (row['intg_uid'],)).fetchone()):
         raise HTTPException(422, '현재 상담을 신청할 수 없는 교수입니다.')
     return row
 

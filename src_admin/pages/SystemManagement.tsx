@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { api } from '../../shared/api'
-import { loadMetadata } from '../../shared/metadataStore'
+import { codeItems, loadMetadata } from '../../shared/metadataStore'
 import './SystemManagement.css'
 import NoticeManagement from '../components/NoticeManagement'
 import type { Notice } from '../../src_v2/data/notices'
@@ -79,7 +79,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
       {tab === 'codes' && <>
         <label>코드 그룹 <select value={group} onChange={e => { setGroup(e.target.value); setPage(1) }}>{groups.map(g => <option key={g.group_code} value={g.group_code}>{g.label} ({g.group_code})</option>)}</select></label>
         <p>{definition?.managed_by === 'STRUCTURAL' ? '상태 전이에 사용하는 구조 코드입니다. 조회만 가능합니다.' : definition?.fixed_codes ? '코드값은 고정입니다. 명칭과 정렬을 수정할 수 있습니다.' : '항목을 추가하거나 수정할 수 있습니다. 폐지한 항목은 이력 보존을 위해 비활성 상태로 남습니다.'}</p>
-        {definition?.managed_by === 'OPERATIONAL' && !definition.fixed_codes && <button className="btn btn-primary" onClick={() => edit({ group_code: group, code: '', label: '', sort_order: 0, is_active: true, payload: {type:'T1',goal:''}, version: 0 })}>항목 추가</button>}
+        {definition?.managed_by === 'OPERATIONAL' && !definition.fixed_codes && <button className="btn btn-primary" onClick={() => edit({ group_code: group, code: '', label: '', sort_order: 0, is_active: true, payload: group === 'COUNSEL_TOPIC' ? {type:'T1',goal:''} : {}, version: 0 })}>항목 추가</button>}
         <table className="data-table"><thead><tr><th>코드</th><th>명칭</th><th>정렬</th><th>사용</th><th>관리</th></tr></thead><tbody>
           {(data.items as Item[]).map(item => <tr key={item.code}><td>{item.code}</td><td>{item.label}</td><td>{item.sort_order}</td><td>{item.is_active ? '사용' : '비활성'}</td><td>
             <button className="btn btn-secondary" disabled={definition?.managed_by === 'STRUCTURAL'} onClick={() => edit(item)}>수정</button>{' '}
@@ -95,7 +95,12 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
             <label>명칭 <input required value={label} maxLength={200} onChange={e => setLabel(e.target.value)} /></label>{' '}
             <label>정렬 <input type="number" min={0} max={100000} value={order} onChange={e => setOrder(Number(e.target.value))} /></label>{' '}
             <label><input type="checkbox" checked={active} disabled={definition?.fixed_codes} onChange={e => setActive(e.target.checked)} /> 사용</label>
-            {group === 'COUNSEL_TOPIC' && <>
+              {['GROWTH_SKILL_OPTION', 'GROWTH_ACTIVITY_EXAMPLE'].includes(group) && <label>분류 <select required value={String(JSON.parse(payload).categoryCode ?? '')} onChange={e => setPayload(JSON.stringify({categoryCode:e.target.value}))}>
+                <option value="">선택</option>{codeItems.filter(item => item.group_code === (group === 'GROWTH_SKILL_OPTION' ? 'GROWTH_SKILL_CATEGORY' : 'GROWTH_RECORD_CATEGORY') && item.is_active).map(item => <option key={item.code} value={item.code}>{item.label}</option>)}
+              </select></label>}
+              {group === 'GROWTH_CERT_OPTION' && <label>분야 <input required maxLength={100} placeholder="예: IT·데이터, 사무·회계·금융" value={String(JSON.parse(payload).category ?? '')} onChange={e => setPayload(JSON.stringify({category:e.target.value}))} /></label>}
+              {group === 'GROWTH_LANGUAGE_OPTION' && <label>언어 <input required maxLength={100} placeholder="예: 영어, 일본어" value={String(JSON.parse(payload).language ?? '')} onChange={e => setPayload(JSON.stringify({language:e.target.value}))} /></label>}
+              {group === 'COUNSEL_TOPIC' && <>
               <label>학생 유형 <select value={String(JSON.parse(payload).type ?? 'T1')} onChange={e => setPayload(JSON.stringify({...JSON.parse(payload),type:e.target.value}))}>{['T1','T2','T3','T4','T5','T6'].map(type => <option key={type}>{type}</option>)}</select></label>
               <label>상담 목표 <input value={String(JSON.parse(payload).goal ?? '')} onChange={e => setPayload(JSON.stringify({...JSON.parse(payload),goal:e.target.value}))} /></label>
             </>}

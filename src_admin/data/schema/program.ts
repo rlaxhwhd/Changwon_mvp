@@ -8,18 +8,19 @@
 
 import type { StudentType } from '../../../src_v2/data/careerProcess'
 import type { RoadmapEntry } from '../../../src_v2/data/schema/roadmap'
-import { codeLabel } from '../../../shared/metadataStore'
+import { codeItems, codeLabel } from '../../../shared/metadataStore'
 
 /**
  * 프로그램 분류 — **DB 가 정본인 운영 코드**다(DB.md §8-5). 관리자 화면에서
  * 항목을 더할 수 있고, 표시명은 metadata 의 code_item 에서 온다.
- * 여기 배열은 화면 select 의 기본 순서일 뿐이며 값의 정의가 아니다.
+ * 선택지는 활성 코드와 정렬 순서를 조회해 구성한다.
  */
-export type ProgramCategory = 'CAREER' | 'EMPLOY' | 'LANGUAGE' | 'STARTUP' | 'CERT' | 'ETC'
+export type ProgramCategory = string
 
-export const PROGRAM_CATEGORIES: ProgramCategory[] = [
-  'CAREER', 'EMPLOY', 'LANGUAGE', 'STARTUP', 'CERT', 'ETC',
-]
+export const programCategories = (): ProgramCategory[] => codeItems
+  .filter(item => item.group_code === 'PROGRAM_CATEGORY' && item.is_active)
+  .sort((a, b) => a.sort_order - b.sort_order)
+  .map(item => item.code)
 
 /** 프로그램 모집/운영 상태 — 앱이 값으로 분기하는 **구조 코드**다. */
 export type ProgramStatus = 'RECRUITING' | 'CLOSED' | 'ENDED'
@@ -172,6 +173,9 @@ export interface Program {
    */
   detail?: string
   category: ProgramCategory
+  middleCategory?: string | null
+  targetStatuses?: string[]
+  targetGrades?: string[]
   /** CARE 7+ 분류 — 이 프로그램이 겨냥하는 6유형(T1~T6). 중복 선택 가능.
    *  유형 정의는 careerProcess(STUDENT_TYPE_MAP)가 단일 소스이므로 코드만 저장하고
    *  표시는 typeLabel()로 한다(한글 라벨을 값으로 쓰지 않는다). */

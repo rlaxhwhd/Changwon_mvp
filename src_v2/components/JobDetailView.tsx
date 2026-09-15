@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import JobLogo from '../../shared/JobLogo'
 import type { ReactNode } from 'react'
 import { isJobClosed, jobDdayLabel, jobHighlights } from '../../src_admin/data/jobsSource'
 import type { JobPosting } from '../../src_admin/data/jobsSource'
@@ -127,7 +128,7 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
         <header className={`jd-hero${closed ? ' is-closed' : ''}`}>
           {/* 로고는 추천채용 등록 화면에서만 올린다 — 없으면 회사명 이니셜로 자리를 만든다(목록 카드와 같은 규약). */}
           <span className={`jd-logo${job.logo ? ' has-img' : ''}`} aria-hidden="true">
-            {job.logo ? <img src={job.logo} alt="" /> : job.company.slice(0, 2)}
+            {job.logo ? <JobLogo src={job.logo} alt="" /> : job.company.slice(0, 2)}
           </span>
 
           <div className="jd-hero-main">

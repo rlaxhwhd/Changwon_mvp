@@ -42,8 +42,9 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'adm-members', label: '회원관리', roles: ['admin'], basePaths: ['/members'], icon: LuUsers,
     children: [
-      { label: '학과 담당 배정', path: '/members/assignments', icon: LuContact },
-      { label: '학사 인원·조직 조회', path: '/members/academic', icon: LuUsers },
+      { label: '조교학과배정', path: '/members/assistants', icon: LuContact },
+      { label: '교수학과배정', path: '/members/professors', icon: LuGraduationCap },
+      { label: '기업회원관리', path: '/members/companies', icon: LuBuilding2 },
     ],
   },
   { id: 'adm-diagnosis', label: '진단관리', roles: ['admin'], basePaths: ['/diagnosis'], path: '/diagnosis', icon: LuClipboardCheck, children: [] },

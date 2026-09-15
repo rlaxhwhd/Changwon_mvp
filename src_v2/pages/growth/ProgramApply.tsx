@@ -1,3 +1,4 @@
+import { useMetadata } from '../../../shared/useMetadata'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { loadProgramRecommendations, type RecommendedProgram } from '../../data/programRecommendations'
@@ -6,7 +7,7 @@ import { getWishlist, toggleWish as toggleWishStore } from '../../data/wishlist'
 import { useStore } from '../../../shared/useRoadmapStore'
 import { GROWTH_EVENT } from '../../../shared/growthStore'
 import { getPrograms, sortByPriority } from '../../../src_admin/data/programs'
-import { PROGRAM_CATEGORIES, categoryLabel } from '../../../src_admin/data/schema/program'
+import { programCategories, categoryLabel } from '../../../src_admin/data/schema/program'
 import type { ProgramCategory } from '../../../src_admin/data/schema/program'
 import ProgramCardGrid from './ProgramCardGrid'
 import type { ProgramCardVM } from './ProgramCardGrid'
@@ -16,9 +17,11 @@ import { usePageHead } from '../../components/PageCrumb'
 
 type Category = '전체' | ProgramCategory
 
-const CATEGORIES: Category[] = ['전체', ...PROGRAM_CATEGORIES]
+
 
 export default function ProgramApply() {
+  useMetadata()
+  const CATEGORIES: Category[] = ['전체', ...programCategories()]
   usePageHead('비교과 프로그램 신청', 'CWNU 학생을 위한 진로·취업 역량 강화 프로그램을 신청하고 XP와 수료증을 획득하세요.')
   const navigate = useNavigate()
   const profile = getActiveStudent()

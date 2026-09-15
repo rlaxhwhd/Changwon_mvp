@@ -1,11 +1,16 @@
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, Header
+from fastapi import Depends, FastAPI, Header, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.exception_handlers import request_validation_exception_handler
+from fastapi.responses import JSONResponse
 
 from .academic import router as academic_router
 from .student_login import router as student_login_router
 from .academic_directory import router as academic_directory_router
+from .department_assignments import router as department_assignments_router
+from .company_members import router as company_members_router
 from .students import router as students_router
 from .counsel import router as counsel_router
 from .counsel_dashboard import router as counsel_dashboard_router
@@ -43,9 +48,22 @@ async def lifespan(app):
 
 
 app = FastAPI(title='DREAMCATCH API', version='1.0.0', lifespan=lifespan)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(request: Request, exc: RequestValidationError):
+    if request.url.path.startswith('/api/v1/auth/company/'):
+        # Never echo submitted passwords in validation responses.
+        return JSONResponse(status_code=422,content={'detail':[
+            {key:error[key] for key in ('type','loc','msg')} for error in exc.errors()
+        ]})
+    return await request_validation_exception_handler(request,exc)
+
 app.include_router(academic_router, prefix='/api/v1')
 app.include_router(student_login_router, prefix='/api/v1')
 app.include_router(academic_directory_router, prefix='/api/v1')
+app.include_router(department_assignments_router, prefix='/api/v1')
+app.include_router(company_members_router, prefix='/api/v1')
 app.include_router(students_router, prefix='/api/v1')
 app.include_router(counsel_router, prefix='/api/v1')
 app.include_router(counsel_dashboard_router, prefix='/api/v1')

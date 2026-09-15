@@ -1,9 +1,10 @@
+import { useMetadata } from '../../shared/useMetadata'
 import { LuFrown, LuGraduationCap, LuPlus, LuSearch, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getPrograms, countPrograms, sortByPriority } from '../data/programs'
 import type { ProgramStatus } from '../data/programs'
-import { PROGRAM_CATEGORIES, PROGRAM_STATUSES, categoryLabel, programStatusLabel } from '../data/schema/program'
+import { programCategories, PROGRAM_STATUSES, categoryLabel, programStatusLabel } from '../data/schema/program'
 import type { ProgramCategory } from '../data/schema/program'
 import EmptyState from '../components/EmptyState'
 import ProgramCardGrid from '../../src_v2/pages/growth/ProgramCardGrid'
@@ -11,6 +12,7 @@ import ProgramCardGrid from '../../src_v2/pages/growth/ProgramCardGrid'
 const ALL = '전체'
 
 export default function ProgramList() {
+  useMetadata()
   const navigate = useNavigate()
   const all = useMemo(() => getPrograms(), [])
   const counts = useMemo(() => countPrograms(), [])
@@ -63,7 +65,7 @@ export default function ProgramList() {
           <span>분류</span>
           <select value={category} onChange={e => setCategory(e.target.value as ProgramCategory | typeof ALL)}>
             <option value={ALL}>{ALL}</option>
-            {PROGRAM_CATEGORIES.map(c => (
+            {programCategories().map(c => (
               <option key={c} value={c}>{categoryLabel(c)}</option>
             ))}
           </select>

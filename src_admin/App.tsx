@@ -2,7 +2,8 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import SystemManagement from './pages/SystemManagement'
-import AcademicDirectory from './pages/AcademicDirectory'
+import DepartmentAssignments from './pages/DepartmentAssignments'
+import CompanyMembers from './pages/CompanyMembers'
 import { hasActiveSession } from './data/session'
 import Home from './pages/Home'
 import CounselRequests from './pages/CounselRequests'
@@ -111,9 +112,12 @@ const router = createBrowserRouter(
                 { path: '/system/codes', element: <SystemManagement key="codes" tab="codes" /> },
                 { path: '/system/events', element: <SystemManagement key="events" tab="events" /> },
                 { path: '/system/issues', element: <SystemManagement key="issues" tab="issues" /> },
-                { path: '/members', element: <Navigate to="/members/assignments" replace /> },
-                { path: '/members/assignments', element: <SystemManagement key="assignments" tab="assignments" /> },
-                { path: '/members/academic', element: <AcademicDirectory /> },
+                { path: '/members', element: <Navigate to="/members/assistants" replace /> },
+                { path: '/members/assignments', element: <Navigate to="/members/assistants" replace /> },
+                { path: '/members/academic', element: <Navigate to="/members/assistants" replace /> },
+                { path: '/members/assistants', element: <DepartmentAssignments key="assistant" role="assistant" /> },
+                { path: '/members/professors', element: <DepartmentAssignments key="professor" role="professor" /> },
+                { path: '/members/companies', element: <CompanyMembers /> },
                 { path: '/notices', element: <SystemManagement key="notices" tab="notices" /> },
                 ...[
                   ['/forecast', '취업예측분석시스템'], ['/diagnosis', '진단관리'], ['/counsel', '상담관리'], ['/roadmap', '로드맵관리'],

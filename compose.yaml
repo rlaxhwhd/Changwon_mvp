@@ -1,0 +1,91 @@
+name: dreamcatch-local
+services:
+  db:
+    image: postgres@sha256:051f7b7b3abdd564d5d1bd1e8c4b9c1b6e77087d1dd22020ede611c096a272e0
+    container_name: dreamcatch-dev-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dreamcatch
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      TZ: Asia/Seoul
+    command: [postgres, -c, timezone=UTC]
+    ports:
+      - "127.0.0.1:15432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    secrets:
+      - postgres_password
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d dreamcatch"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+
+  api:
+    image: dreamcatch-api:local
+    build: ./backend
+    restart: unless-stopped
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      DC_DB_HOST: db
+      DC_DB_PORT: 5432
+      DC_DB_NAME: dreamcatch
+      DC_DB_USER: dc_app
+      DC_DB_PASSWORD_FILE: /run/secrets/api_db_password
+      DC_ENVIRONMENT: development
+      DC_DEVELOPMENT_IDENTITY: "true"
+      DC_DEVELOPMENT_TOKEN_FILE: /run/secrets/api_token
+      DC_FILE_ROOT: /var/lib/dreamcatch/files
+    ports:
+      - "127.0.0.1:18101:8000"
+    secrets:
+      - api_db_password
+      - api_token
+    volumes:
+      - ./backend/var/files:/var/lib/dreamcatch/files
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  web:
+    image: dreamcatch-web:local
+    build:
+      context: .
+      dockerfile: deploy/frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"
+    secrets:
+      - api_token
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, -fsS, http://127.0.0.1/healthz]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+
+secrets:
+  postgres_password:
+    file: ./deploy/secrets/postgres_password_local
+  api_db_password:
+    file: ./deploy/secrets/api_db_password_local
+  api_token:
+    file: ./deploy/secrets/api_token
+
+volumes:
+  pgdata:
+    external: true
+    name: ${DC_LOCAL_PG_VOLUME:?Set the existing PostgreSQL volume in .env.docker.local}

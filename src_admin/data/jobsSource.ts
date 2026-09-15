@@ -189,6 +189,15 @@ export async function queryCompanies(q = ''): Promise<JobCompany[]> {
   return (await api<Paginated<JobCompany>>(`/job-companies?${queryString({ q, pageSize: 100 })}`)).items
 }
 
+export interface JobCompanyHistory {
+  companyId: string | null
+  displayName: string
+}
+
+export async function queryCompanyHistory(q = '', page = 1): Promise<Paginated<JobCompanyHistory>> {
+  return api<Paginated<JobCompanyHistory>>(`/job-company-history?${queryString({ q, page, pageSize: 20 })}`)
+}
+
 export async function addCompany(input: {
   displayName: string; companyTypeCode?: string | null; websiteUrl?: string | null
 }): Promise<JobCompany> {
