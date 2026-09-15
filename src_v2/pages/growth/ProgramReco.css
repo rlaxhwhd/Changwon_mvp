@@ -181,9 +181,10 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  max-width: 460px;
-  padding: 28px 28px 24px;
+  gap: 9px;
+  /* 2026-09-14 사용자 요청 — 카드 전체를 10% 줄였다(460→414, 여백·아이콘·글자도 같은 비율). */
+  max-width: 414px;
+  padding: 25px 25px 22px;
   background: var(--color-bg);
   border: 1px solid var(--blue-border);
   border-radius: var(--radius-lg);
@@ -195,8 +196,8 @@
    안쪽 면은 카드와 같은 흰색이라 링만 남는다(padding-box/border-box 2단 배경).
    같은 링이 로딩 스피너로 그대로 돌기 시작한다 — 잠금이 풀리는 것을 색으로 잇는다. */
 .pr-reco-lock-icon {
-  width: 56px;
-  height: 56px;
+  width: 50px;
+  height: 50px;
   border-radius: 50%;
   display: inline-flex;
   align-items: center;
@@ -206,21 +207,21 @@
     linear-gradient(var(--color-bg), var(--color-bg)) padding-box,
     conic-gradient(from 210deg, var(--violet), var(--blue) 40%, var(--mint) 72%, var(--violet)) border-box;
   color: var(--violet);
-  font-size: 20px;
+  font-size: 18px;
   box-shadow: 0 8px 18px color-mix(in srgb, var(--violet) 18%, transparent);
 }
 
 .pr-reco-lock-card h4 {
   margin: 4px 0 2px;
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--color-navy);
   letter-spacing: -0.2px;
 }
 
 .pr-reco-lock-card p {
-  margin: 0 0 6px;
-  font-size: 14px;
+  margin: 0 0 5px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--color-text-sub);
   line-height: 1.6;
@@ -234,13 +235,13 @@
   margin-top: 6px;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 12px 22px;
+  gap: 7px;
+  padding: 11px 20px;
   border: none;
   border-radius: var(--radius-md);
   background: var(--blue);
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 12px 24px color-mix(in srgb, var(--blue) 28%, transparent);

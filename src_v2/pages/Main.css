@@ -983,7 +983,9 @@
     radial-gradient(circle at 8% 10%, color-mix(in srgb, var(--sky) 14%, transparent) 0%, color-mix(in srgb, var(--sky) 6%, transparent) 22%, transparent 42%),
     linear-gradient(135deg, color-mix(in srgb, var(--sky-soft) 72%, var(--card)), color-mix(in srgb, var(--blue-soft) 66%, var(--card)));
   display: grid;
-  grid-template-columns: minmax(320px, 5fr) minmax(0, 7fr);
+  /* 2026-09-15 사용자 요청 — 진로여정(좌) 칸을 10% 넓히고(5fr→5.5fr) 그만큼 우측 보드를 줄였다.
+     960px 이하에서는 한 열로 접히므로 모바일에는 영향이 없다. */
+  grid-template-columns: minmax(320px, 5.5fr) minmax(0, 6.5fr);
   gap: 12px;
   overflow: hidden;
   isolation: isolate;
