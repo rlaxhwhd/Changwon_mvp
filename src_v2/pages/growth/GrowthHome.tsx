@@ -16,7 +16,9 @@ import { codeLabel } from '../../../shared/metadataStore'
 import { useMetadata } from '../../../shared/useMetadata'
 import { createGrowthEntry, deleteGrowthEntry, growthEntries, updateGrowthEntry } from '../../../shared/growthStore'
 import type { GrowthEntry } from '../../../shared/growthStore'
-import { useGrowth } from '../../../shared/useRoadmapStore'
+import { useGrowth, useRoadmap } from '../../../shared/useRoadmapStore'
+// 「이번 주 실행」은 라운지와 같은 셀렉터에서 읽는다 — 확정 로드맵의 미완료 칸이 여기서 나온다.
+import { getWeeklyTodos } from '../../data/lounge'
 import './GrowthHome.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -66,6 +68,7 @@ export default function GrowthHome() {
   const student = getActiveStudent()
   // 서버가 정본이다. 저장 뒤 스토어가 다시 읽어 발행하면 그때 갱신된다.
   useGrowth(student.id)
+  useRoadmap(student.id)
   const projectRows = growthEntries(student.id, 'PROJECT')
   const skillRows = growthEntries(student.id, 'SKILL')
   const certRows = [...growthEntries(student.id, 'CERTIFICATE'), ...growthEntries(student.id, 'LANGUAGE')]
@@ -81,7 +84,10 @@ export default function GrowthHome() {
   const strengths = student.strengthWeakness.filter(item => item.type === 'strength')
   const completedPhases = student.phases.filter(phase => phase.status === 'done').length
   const activePhase = student.phases.find(phase => phase.status === 'active')
-  const nextAction = student.finalRoadmap.thisWeek[0]
+  // 목표는 확정 로드맵이 덮어쓴 값(targetRole·targetCompany)이 정본이다 — 시드 전용 finalRoadmap 을 읽지 않는다.
+  const goalRole = student.targetRole || '미정'
+  const goalCompany = student.targetCompany?.name || '미정'
+  const nextAction = getWeeklyTodos(student)[0]
 
   const openCreate = (kind: EditorKind) => {
     const defaults: Record<EditorKind, Record<string, string>> = {
@@ -188,8 +194,8 @@ export default function GrowthHome() {
           <p>{student.insight}</p>
           <div className="gh-cover-tags">
             <span>{typeLabel(student.studentType)}</span>
-            <span>목표 직무 · {student.finalRoadmap.studentGoal.role}</span>
-            <span>관심 기업 · {student.finalRoadmap.studentGoal.company}</span>
+            <span>목표 직무 · {goalRole}</span>
+            <span>관심 기업 · {goalCompany}</span>
           </div>
         </div>
         <div className="gh-cover-actions">
@@ -233,8 +239,8 @@ export default function GrowthHome() {
         <aside className="gh-card gh-profile-card">
           <header className="gh-card-head"><div><span className="gh-section-kicker">PROFILE</span><h2>나를 설명하는 정보</h2></div></header>
           <dl className="gh-profile-list">
-            <div><dt>목표 직무</dt><dd>{student.finalRoadmap.studentGoal.role}</dd></div>
-            <div><dt>관심 기업</dt><dd>{student.finalRoadmap.studentGoal.company}</dd></div>
+            <div><dt>목표 직무</dt><dd>{goalRole}</dd></div>
+            <div><dt>관심 기업</dt><dd>{goalCompany}</dd></div>
             <div><dt>현재 유형</dt><dd>{typeLabel(student.studentType)}</dd></div>
             <div><dt>로드맵</dt><dd>{completedPhases}/{student.phases.length}단계 이행</dd></div>
           </dl>
@@ -268,7 +274,7 @@ export default function GrowthHome() {
         <aside className="gh-card gh-next">
           <header className="gh-card-head"><div><span className="gh-section-kicker">NEXT CHAPTER</span><h2>다음에 채울 기록</h2></div></header>
           <div className="gh-current-phase"><small>현재 로드맵 단계</small><strong>{activePhase?.title ?? '역량개발'}</strong><span>{activePhase?.period ?? '이번 학기'}</span></div>
-          <div className="gh-next-action"><span>이번 주 실행</span><h3>{nextAction?.title ?? '비교과 활동을 시작해 보세요'}</h3><p>{nextAction?.why ?? '새로운 경험은 성장 기록의 다음 근거가 됩니다.'}</p><Link to={nextAction?.linkPath ?? '/growth/program'}>실행 항목 보기 <i className="fa-solid fa-arrow-right" /></Link></div>
+          <div className="gh-next-action"><span>이번 주 실행</span><h3>{nextAction?.title ?? '비교과 활동을 시작해 보세요'}</h3><p>{nextAction?.sub ?? '새로운 경험은 성장 기록의 다음 근거가 됩니다.'}</p><Link to={nextAction?.to ?? '/growth/program'}>실행 항목 보기 <i className="fa-solid fa-arrow-right" /></Link></div>
           {!isSenior && <div className="gh-document-policy"><i className="fa-solid fa-lock" /><p><strong>이력서·취업 포트폴리오는 4학년부터 제공됩니다.</strong><span>1~3학년은 진단, 비교과 활동, 로드맵 이행 기록에 집중합니다.</span></p></div>}
         </aside>
       </section>

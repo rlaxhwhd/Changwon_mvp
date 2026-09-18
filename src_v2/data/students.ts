@@ -188,7 +188,9 @@ export interface StudentData {
   jobField: string
   jobSkills: JobSkill[]
   jobs: Job[]
-  finalRoadmap: FinalRoadmap
+  /** 시드 상세 학생만 갖는 목업 구조. 학사 로그인 학생은 null — 목표는 targetRole·targetCompany,
+   *  이번 주 할 일은 getWeeklyTodos(확정 로드맵 칸)에서 읽는다. */
+  finalRoadmap: FinalRoadmap | null
   /** 점수 계산식(lib/scoring.ts)이 사용하는 9개 raw 입력값. JSON에서 직접 주입. */
   scoreInputs: StudentInputs
   /** 성장 레벨(XP) — 요약 지표 5번째 카드. 레벨 산식·단계명 체계가 아직 없어 시드 값을 그대로 읽는다. */
