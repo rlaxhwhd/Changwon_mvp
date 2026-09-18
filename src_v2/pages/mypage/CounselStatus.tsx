@@ -4,6 +4,8 @@ import { getActiveStudentId, getStudentCounselRequests } from '../../data/studen
 import { getCounselorLabel } from '../../data/counselorsRead'
 import { PROFESSOR_GROUPS } from '../../data/professors'
 import { counselRecords } from '../../../shared/counselStore'
+import { useAsyncAction } from '../../../shared/useAsyncAction'
+import { cancelCounselRequest } from '../../data/counselRequestsWrite'
 import { COUNSEL_TYPE_LABEL, counselTypeDistribution } from '../../data/counsel'
 import type { CounselTypeKey } from '../../data/counsel'
 import './CounselStatus.css'
@@ -66,6 +68,16 @@ export default function CounselStatus() {
   // 카드를 다시 누르면 해제된다(전체 보기).
   const [typeFilter, setTypeFilter] = useState<CounselTypeKey | null>(null)
   const shownItems = typeFilter ? counselItems.filter(i => i.typeKey === typeFilter) : counselItems
+
+  // 대기 중 신청 취소 — 사유를 받아 서버에 보내고, 스토어가 갱신되면 목록은 다시 그려진다.
+  const [cancelId, setCancelId] = useState<string | null>(null)
+  const [cancelReason, setCancelReason] = useState('')
+  const cancelAction = useAsyncAction()
+  const closeCancel = () => { setCancelId(null); setCancelReason('') }
+  const confirmCancel = (id: string) => cancelAction.run(async () => {
+    await cancelCounselRequest(id, cancelReason.trim())
+    closeCancel()
+  })
 
   const total = counselItems.length
   const doneCount = counselItems.filter(i => i.statusTone === 'done').length
@@ -143,7 +155,7 @@ export default function CounselStatus() {
 
         <div className="cs-list">
           {shownItems.map((item) => (
-            <button className="cs-row" type="button" key={item.id}>
+            <article className="cs-row" key={item.id}>
               <div className="cs-row-main">
                 <div className="cs-row-title">
                   <strong>{COUNSEL_TYPE_LABEL[item.typeKey]}</strong>
@@ -157,12 +169,27 @@ export default function CounselStatus() {
                     <span key={tag}>#{tag}</span>
                   ))}
                 </div>
+                {cancelId === item.id && (
+                  <div className="cs-cancel-form">
+                    <textarea rows={2} value={cancelReason} onChange={e => setCancelReason(e.target.value)} placeholder="취소 사유를 입력하세요. 상담사에게 전달됩니다." />
+                    {cancelAction.error && <p className="cs-cancel-error" role="alert">{cancelAction.error}</p>}
+                    <div className="cs-cancel-actions">
+                      <button type="button" className="cs-filter-reset" onClick={closeCancel}>닫기</button>
+                      <button type="button" className="cs-cancel-btn is-confirm" disabled={!cancelReason.trim() || cancelAction.saving} onClick={() => confirmCancel(item.id)}>{cancelAction.saving ? '취소 중…' : '취소 확정'}</button>
+                    </div>
+                  </div>
+                )}
               </div>
-              <time className="cs-date">
-                <strong>{item.date}</strong>
-                <span>{item.time}</span>
-              </time>
-            </button>
+              <div className="cs-row-side">
+                <time className="cs-date">
+                  <strong>{item.date}</strong>
+                  <span>{item.time}</span>
+                </time>
+                {item.status === '대기' && cancelId !== item.id && (
+                  <button type="button" className="cs-cancel-btn" onClick={() => { setCancelId(item.id); setCancelReason('') }}>상담 취소</button>
+                )}
+              </div>
+            </article>
           ))}
           {shownItems.length === 0 && (
             <p className="cs-list-empty">

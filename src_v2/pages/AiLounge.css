@@ -3,13 +3,6 @@
    이 파일은 시안 CSS 중 이 화면 고유 블록만 옮긴 것이다 — 값 임의 변경 금지. */
 
 /* 잠금 안내 — 부모가 flex(5대 핵심역량)든 grid 든 폭을 다 차지해야 블러·자물쇠가 가운데 온다. */
-.al-locked { position: relative; display: grid; place-items: center; width: 100%; flex: 1; min-height: 180px; padding: 24px; }
-.al-placeholder { position: absolute; inset: 24px; filter: blur(7px); opacity: .45; }
-.al-placeholder i { display: block; height: 26px; margin: 16px 0; border-radius: 8px; background: var(--border); }
-.al-placeholder i:nth-child(2) { width: 70%; }
-.al-locked p { position: relative; display: grid; gap: 12px; text-align: center; line-height: 1.6; font-weight: 700; }
-.al-locked p > span:first-child { font-size: 28px; }
-
 .al-page .sidebar {
   position: fixed;
   inset: 0 auto 0 0;
@@ -2009,7 +2002,7 @@
   .al-page .dashboard-grid { grid-template-columns: minmax(0, 1fr); }
   .al-page .diagnosis-result-grid { grid-template-columns: minmax(0, 1fr); }
   .al-page .dashboard-grid > section { min-width: 0; }
-  .al-page .al-locked p { overflow-wrap: anywhere; }
+  .al-page .locked-content-message { overflow-wrap: anywhere; }
 }
 
 @media (max-width: 1120px) {
@@ -2128,3 +2121,6 @@
     gap: 6px;
   }
 }
+
+.al-page .competency-chart { display: grid; justify-items: center; width: 100%; min-width: 0; }
+.al-page .competency-chart .radar { max-width: 100%; height: auto; }

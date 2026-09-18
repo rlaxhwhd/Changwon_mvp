@@ -7,6 +7,9 @@ import { getPipelineState } from '../data/pipeline'
 import StudentStatCards from '../components/StudentStatCards'
 import CareerJourneyCard from '../components/CareerJourneyCard'
 import NextStepBanner from '../components/NextStepBanner'
+import { LockedContent } from '../components/LockedContent'
+import CompetencyRadarChart from '../components/CompetencyRadarChart'
+import { getCompetencyAxes } from '../data/competency'
 import { getGrowthRecords } from '../data/growthRecords'
 import { getLoungeData, getWeeklyTodos } from '../data/lounge'
 import { ROADMAP_AXIS_MAP, type RoadmapAxis } from '../data/schema/roadmap'
@@ -38,16 +41,12 @@ function Icon({ id }: { id: string }) {
   return <svg className="icon"><use href={`#${id}`} /></svg>
 }
 
-function Locked({ text, bars = 3 }: { text: string; bars?: number }) {
-  return <div className="al-locked"><div className="al-placeholder" aria-hidden="true">{Array.from({ length: bars }, (_, i) => <i key={i} />)}</div><p><span aria-hidden="true">🔒</span><span>{text}</span></p></div>
-}
-
 function Card({ id, className, title, description, locked, action, children }: {
   id: string; className: string; title: string; description: string; locked?: string; action?: ReactNode; children?: ReactNode
 }) {
   return <section data-slot="card" id={id} className={`${className} reveal`}>
     <div data-slot="card-header"><div><h2 data-slot="card-title">{title}</h2><p data-slot="card-description">{description}</p></div>{action && !locked && <div data-slot="card-action">{action}</div>}</div>
-    <div data-slot="card-content">{locked ? <Locked text={locked} /> : children}</div>
+    <div data-slot="card-content">{locked ? <LockedContent text={locked} /> : children}</div>
   </section>
 }
 
@@ -79,8 +78,17 @@ export default function AiLounge() {
     <div className="dashboard-grid">
       <CareerJourneyCard journey={buildCareerJourney(getPipelineState(student))} title="나의 진로 여정" desc="내 CARE 7+의 현재 위치입니다." className="reveal" id="journey" />
 
-      {/* 채점은 외부 검사 사이트가 한다(CLAUDE.md 규칙 14) — 연계 전까지 잠금이다. */}
-      <Card id="competency" className="competency-card" title="5대 핵심역량" description="연계된 역량 결과를 확인합니다." locked="역량 결과가 연계되면 확인할 수 있습니다." />
+      <Card id="competency" className="competency-card" title="5대 핵심역량" description="비교과 프로그램과 수강 강의활동으로 쌓은 역량입니다.">
+        <div className="competency-chart">
+          {student.coreCompetencySource === 'DEVELOPMENT_CARE7_TEST' && <p>개발 테스트용 예시 점수입니다.</p>}
+          <CompetencyRadarChart axes={getCompetencyAxes(student)} currentFill="competency-mine">
+            <defs><linearGradient id="competency-mine" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="var(--competency-current)" />
+              <stop offset="100%" stopColor="var(--competency-growth)" />
+            </linearGradient></defs>
+          </CompetencyRadarChart>
+        </div>
+      </Card>
 
       <Card id="diagnosis" className="diagnosis-card" title="진단 결과" description="대상 진단의 진행 상태와 결과입니다.">
         <div className="diagnosis-result-grid">
@@ -158,7 +166,7 @@ export default function AiLounge() {
             <div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>내 성장에 저장한 활동 기록입니다.</p></div>
             <div className="gh-head-actions"><Link to="/growth/journal">성장 기록 보기</Link></div>
           </header>
-          {access.growth !== 'open' && growth.length === 0 ? <Locked text="CARE 7+ 진행 후 쌓인 성장 활동을 확인할 수 있습니다." />
+          {access.growth !== 'open' && growth.length === 0 ? <LockedContent text="CARE 7+ 진행 후 쌓인 성장 활동을 확인할 수 있습니다." />
             : <div className="gh-timeline">
               {growth.map((r, i) => <div className="gh-timeline-item" key={`${r.date}-${r.title}-${i}`}>
                 <time>{r.date}</time><span className={`gh-timeline-dot is-${r.tone}`} />

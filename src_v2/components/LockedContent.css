@@ -1,0 +1,11 @@
+.locked-content { position: relative; display: grid; place-items: center; width: 100%; min-width: 0; flex: 1; min-height: 180px; padding: 24px; }
+.locked-content-background { grid-area: 1 / 1; width: 100%; min-width: 0; display: grid; place-items: center; filter: blur(7px); opacity: .45; pointer-events: none; user-select: none; }
+.locked-content-bars { width: 100%; }
+.locked-content-bars i { display: block; height: 26px; margin: 16px 0; border-radius: 8px; background: var(--border); }
+.locked-content-bars i:nth-child(2) { width: 70%; }
+.locked-content .locked-content-message { grid-area: 1 / 1; position: relative; display: grid; gap: 12px; text-align: center; line-height: 1.6; font-weight: 700; margin: 0; overflow-wrap: anywhere; }
+.locked-content-message > span:first-child { font-size: 28px; }
+.locked-content--competency { padding: 0; }
+.locked-content--competency svg { max-width: 100%; }
+.locked-content--competency .locked-content-background { filter: blur(3px); opacity: .65; }
+.locked-content--competency svg polygon { stroke: var(--competency-current); stroke-width: 2; fill: none; }

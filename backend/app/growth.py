@@ -11,6 +11,7 @@
 없는 정책을 임시 판정 로직으로 채우지 않는다(CLAUDE.md 14조).
 """
 from uuid import uuid4
+from datetime import date
 
 from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from fastapi.encoders import jsonable_encoder
@@ -255,6 +256,12 @@ def entry_values(conn, body):
         fail(422, 'INVALID_FIELD', '자격 사전 연결은 자격증 항목에만 붙습니다.')
     if body.datePrecision == 'DAY' and not body.occurredOn:
         fail(422, 'INVALID_FIELD', '날짜를 입력해 주세요.')
+    if body.occurredOn:
+        try:
+            if date.fromisoformat(body.occurredOn).isoformat() != body.occurredOn:
+                raise ValueError('Non-canonical date')
+        except ValueError:
+            fail(422, 'INVALID_FIELD', '날짜는 유효한 YYYY-MM-DD 형식이어야 합니다.')
     return (body.kind, body.categoryCode, body.title, body.occurredOn or None, body.dateText,
             body.datePrecision, body.tags, Jsonb(parsed_content(body.kind, body.content)),
             body.bookmarked, body.resumeUsed, body.certId)

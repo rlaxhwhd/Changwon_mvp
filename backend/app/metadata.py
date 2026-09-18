@@ -16,12 +16,17 @@ def metadata(user=Depends(principal,scope='function'),conn=Depends(connection,sc
     global _revision,_items
     # A cheap revision read keeps multiple API workers coherent. Catalog rows are cached.
     revision=conn.execute('SELECT revision FROM dc.metadata_revision').fetchone()['revision']
-    menus=conn.execute('''SELECT m.* FROM dc.menu m WHERE EXISTS (
-      SELECT 1 FROM dc.menu_auth a WHERE a.menu_code=m.menu_code AND (
-      a.role_code=(SELECT role_code FROM dc.staff WHERE intg_uid=%s) OR
-      a.role_code IN (SELECT u.role_code FROM dc.auth_user u JOIN dc.auth_role r USING(role_code)
-       WHERE u.person_uid=%s AND r.is_active AND u.valid_from<=now() AND (u.valid_to IS NULL OR u.valid_to>now()))))
-      ORDER BY m.sort_order,m.menu_code''',(user['intg_uid'],user['intg_uid'])).fetchall()
+    # 학생은 신분으로 자동 부여되는 역할 'student'(auth_role.base_group) 하나다. 교직원은 신분 역할 + 명시 부여 역할.
+    if user['kind']=='STUDENT':
+        menus=conn.execute('''SELECT m.* FROM dc.menu m JOIN dc.menu_auth a USING(menu_code)
+          WHERE a.role_code='student' ORDER BY m.sort_order,m.menu_code''').fetchall()
+    else:
+        menus=conn.execute('''SELECT m.* FROM dc.menu m WHERE EXISTS (
+          SELECT 1 FROM dc.menu_auth a WHERE a.menu_code=m.menu_code AND (
+          a.role_code=(SELECT role_code FROM dc.staff WHERE intg_uid=%s) OR
+          a.role_code IN (SELECT u.role_code FROM dc.auth_user u JOIN dc.auth_role r USING(role_code)
+           WHERE u.person_uid=%s AND r.is_active AND u.valid_from<=now() AND (u.valid_to IS NULL OR u.valid_to>now()))))
+          ORDER BY m.sort_order,m.menu_code''',(user['intg_uid'],user['intg_uid'])).fetchall()
     with _lock:
         if revision!=_revision:
             _items=conn.execute('SELECT group_code,code,label,sort_order,is_active,payload FROM dc.code_item ORDER BY sort_order,code').fetchall()

@@ -1,18 +1,13 @@
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CATEGORIES, CATEGORY_LABEL, loadJournalEntries, setJournalBookmark,
-         type Category, type Entry } from '../../data/growthJournal'
+         type Entry } from '../../data/growthJournal'
 import { getActiveStudentId } from '../../data/students'
 import { useGrowth } from '../../../shared/useRoadmapStore'
 import './GrowthJournal.css'
+import GrowthLoadNotice from '../../../shared/GrowthLoadNotice'
+import { growthState } from '../../../shared/growthStore'
 import { usePageHead } from '../../components/PageCrumb'
-
-const KEYWORDS = [
-  { tag: '고객응대', cnt: 3 }, { tag: '문제해결', cnt: 3 },
-  { tag: '협업', cnt: 3 },    { tag: '커뮤니케이션', cnt: 3 },
-  { tag: '기획력', cnt: 2 },  { tag: '분석력', cnt: 2 },
-  { tag: '책임감', cnt: 2 },  { tag: '개선', cnt: 2 },
-]
 
 const GUIDE = [
   { title: '구체적인 상황을 작성해요', desc: '언제, 어디서, 누구와, 무엇을 했는지 자세히 작성해보세요.' },
@@ -27,13 +22,6 @@ const CTA_STEPS = [
   { icon: 'fa-file-lines', label: '3. 자소서에 활용하기', desc: '기록된 경험을 자소서 항목에 맞게 활용해요' },
   { icon: 'fa-trophy',     label: '4. 나만의 스토리 완성!', desc: '진정성 있는 나만의 스토리로 면접에서 빛을 발해요' },
 ]
-
-// 분류는 코드다. 한글은 표시용 라벨이며 값 자체가 아니다(CLAUDE.md 4조).
-const CAT_STYLE: Record<Category, { bg: string; color: string }> = {
-  PARTTIME: { bg: '#F0F9FF', color: '#0284C7' },
-  TEAM_PROJECT: { bg: 'var(--color-primary-bg)', color: 'var(--color-primary)' },
-  ETC: { bg: '#F0FDF4', color: '#16A34A' },
-}
 
 const ALL = 'ALL'
 const TABS: { key: string; label: string }[] = [
@@ -56,7 +44,7 @@ function DonutChart({ value, total }: { value: number; total: number }) {
         <circle
           cx={cx} cy={cy} r={r}
           fill="none"
-          stroke="var(--color-primary)"
+          stroke="var(--gj-teal)"
           strokeWidth="13"
           strokeDasharray={`${filled} ${circ}`}
           strokeLinecap="round"
@@ -77,17 +65,21 @@ export default function GrowthJournal() {
   const navigate = useNavigate()
   const studentId = getActiveStudentId()
   // 서버가 정본이다 — 저장 뒤 스토어가 다시 읽어 발행하면 그때 갱신된다.
-  const revision = useGrowth(studentId)
-  const entries: Entry[] = useMemo(() => loadJournalEntries(studentId), [studentId, revision])
+  useGrowth(studentId)
+  const entries: Entry[] = loadJournalEntries(studentId)
   const [activeTab, setActiveTab] = useState<string>(ALL)
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [busy, setBusy] = useState(false)
+  const counts = new Map<string, number>()
+  entries.forEach(entry => new Set(entry.tags).forEach(tag => counts.set(tag, (counts.get(tag) ?? 0) + 1)))
+  const keywords = [...counts].map(([tag, cnt]) => ({ tag, cnt })).sort((a, b) => b.cnt - a.cnt).slice(0, 8)
 
   const filtered = entries.filter(e => {
     if (activeTab !== ALL && e.category !== activeTab) return false
-    if (query && !e.title.includes(query) && !e.desc.includes(query)) return false
+    if (query && ![e.title, e.desc, ...e.tags].some(value => value.includes(query))) return false
     return true
   })
 
@@ -101,11 +93,14 @@ export default function GrowthJournal() {
   const resumePct = total > 0 ? Math.round(resumeUsed / total * 100) : 0
 
   const toggleBookmark = (id: string) => {
+    if (busy) return
     const entry = entries.find(e => e.id === id)
     if (!entry) return
+    setBusy(true)
     setJournalBookmark(studentId, id, !entry.bookmarked)
       .then(() => setError(''))
       .catch(() => setError('북마크를 저장하지 못했습니다. 다시 시도해 주세요.'))
+      .finally(() => setBusy(false))
   }
 
   const toggleExpanded = (id: string) =>
@@ -126,7 +121,7 @@ export default function GrowthJournal() {
 
         {/* TIP */}
         <div className="gj-tip">
-          <i className="fa-solid fa-location-dot" style={{ color: 'var(--color-primary)' }} />
+          <i className="fa-solid fa-location-dot" />
           <span className="tip-label">TIP</span>
           구체적으로 기록할수록 더 좋은 스토리가 됩니다!
         </div>
@@ -139,28 +134,28 @@ export default function GrowthJournal() {
           </div>
           <div className="gj-stat">
             <span className="gj-stat-label">
-              <i className="fa-solid fa-bag-shopping" style={{ color: 'var(--color-warning)' }} />
+              <i className="fa-solid fa-bag-shopping" />
               아르바이트
             </span>
             <span className="gj-stat-val">{entries.filter(e => e.category === 'PARTTIME').length} <span className="gj-stat-unit">건</span></span>
           </div>
           <div className="gj-stat">
             <span className="gj-stat-label">
-              <i className="fa-solid fa-people-group" style={{ color: 'var(--color-primary)' }} />
+              <i className="fa-solid fa-people-group" />
               팀프로젝트
             </span>
             <span className="gj-stat-val">{entries.filter(e => e.category === 'TEAM_PROJECT').length} <span className="gj-stat-unit">건</span></span>
           </div>
           <div className="gj-stat">
             <span className="gj-stat-label">
-              <i className="fa-solid fa-star" style={{ color: 'var(--color-warning)' }} />
+              <i className="fa-solid fa-star" />
               기타 활동
             </span>
             <span className="gj-stat-val">{entries.filter(e => e.category === 'ETC').length} <span className="gj-stat-unit">건</span></span>
           </div>
           <div className="gj-stat">
             <span className="gj-stat-label">
-              <i className="fa-regular fa-file-lines" style={{ color: 'var(--color-primary)' }} />
+              <i className="fa-regular fa-file-lines" />
               자소서 활용
             </span>
             <span className="gj-stat-val">{resumeUsed} <span className="gj-stat-unit">건</span></span>
@@ -173,6 +168,7 @@ export default function GrowthJournal() {
           {/* Journal List */}
           <div className="gj-main">
 
+            <GrowthLoadNotice studentId={studentId} />
             {error && <p className="gj-empty" role="alert">{error}</p>}
             {/* Filter Bar */}
             <div className="gj-filter-bar">
@@ -204,14 +200,13 @@ export default function GrowthJournal() {
 
             {/* Entries */}
             <div className="gj-list">
-              {filtered.length === 0 && (
+              {growthState(studentId) && filtered.length === 0 && (
                 <div className="gj-empty">
                   <i className="fa-solid fa-inbox" />
                   <p>기록이 없습니다</p>
                 </div>
               )}
               {pagedEntries.map(entry => {
-                const cs = CAT_STYLE[entry.category]
                 return (
                   <div
                     key={entry.id}
@@ -220,14 +215,15 @@ export default function GrowthJournal() {
                     onClick={() => toggleExpanded(entry.id)}
                   >
                     <div className="gj-entry-top">
-                      <span className="gj-badge" style={{ background: cs.bg, color: cs.color }}>
+                      {/* 갈래 색은 카드의 data-cat 이 CSS 에서 정한다 — 인라인 색을 두지 않는다. */}
+                      <span className="gj-badge">
                         {CATEGORY_LABEL[entry.category]}
                       </span>
                       <div className="gj-entry-acts">
                         <button
                           className={`gj-act-btn${entry.bookmarked ? ' bookmarked' : ''}`}
                           onClick={(event) => { event.stopPropagation(); toggleBookmark(entry.id) }}
-                          title="북마크"
+                          title="북마크" disabled={busy}
                         >
                           <i className={`fa-${entry.bookmarked ? 'solid' : 'regular'} fa-bookmark`} />
                         </button>
@@ -315,7 +311,7 @@ export default function GrowthJournal() {
                   전체 보기 <i className="fa-solid fa-chevron-right" />
                 </button>
               </div>
-              {KEYWORDS.map(kw => (
+              {keywords.map(kw => (
                 <div key={kw.tag} className="gj-kw-row">
                   <span className="gj-kw-name">#{kw.tag}</span>
                   <span className="gj-kw-cnt">{kw.cnt}</span>

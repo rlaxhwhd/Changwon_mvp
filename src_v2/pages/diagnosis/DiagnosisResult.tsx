@@ -239,9 +239,11 @@ export default function DiagnosisResult() {
               <div><dt>문항 수</dt><dd>{pendingModule.questions}</dd></div>
               <div><dt>진단 영역</dt><dd>{pendingModule.factors.map(f => f.name).join(' · ')}</dd></div>
             </dl>
+            {/* 실제 검사는 외부 진단 사이트의 개별 링크에서 진행하고 결과를 API 로 받아온다(연결 전).
+                그때까지는 이 버튼이 임의 결과를 DB 에 남겨 유형·후속진단·게이트를 돌려 볼 수 있게 한다. */}
             <p className="de-attempt-note">
-              검사 문항·채점 엔진은 아직 연결되지 않았습니다. 이 기능은 기존 검증용 결과를
-              <b> 개발 테스트 이력으로 저장</b>합니다. 실제 검사 결과가 아닙니다.
+              검사 문항·채점 엔진은 아직 연결되지 않았습니다. 이 버튼은 <b>임의의 결과를 개발 테스트 이력으로 DB에 저장</b>합니다.
+              실제 검사 결과가 아니며, 실제 검사는 외부 진단 링크에서 진행한 뒤 결과를 API로 받아옵니다.
             </p>
             <div className="de-attempt-actions">
               <button type="button" disabled={saving} className="de-attempt-cancel" onClick={() => setPendingTestId(null)}>

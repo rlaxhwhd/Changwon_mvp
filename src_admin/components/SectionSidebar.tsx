@@ -25,7 +25,7 @@ function SidebarItem({ item, activeChildPath }: { item: NavChild; activeChildPat
 export default function SectionSidebar() {
   const { pathname } = useLocation()
   const user = getActiveUser()
-  const sections = getNavSections(user.role)
+  const sections = getNavSections()
   const section = getSectionForPath(pathname, sections)
 
   if (!section || section.children.length === 0) return null

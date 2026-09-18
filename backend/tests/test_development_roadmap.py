@@ -53,20 +53,21 @@ def test_out_of_scope_student_denied(client, db, template):
     assert save(client, identity, 'career_kim', template['job_id']).status_code == 404
 
 
-def basis(db):
+def basis(db, status='CONFIRMED'):
     request_id = 'template-' + uuid4().hex
     db.execute('''INSERT INTO dc.counsel_request(id,student_uid,counselor_uid,type_code,legacy_type,care_track,
-      status_code,method_code,topic,requested_at,snapshot,source_payload)
+      status_code,method_code,topic,requested_at,completed_at,snapshot,source_payload)
       SELECT %s,p.intg_uid,(SELECT intg_uid FROM dc.person WHERE alias='career_kim'),
-      'CAREER','진로취업','care7','CONFIRMED','OFFLINE','Temporary roadmap test',now(),'{}','{}'
-      FROM dc.person p WHERE p.alias='chaewon' ''', (request_id,))
+      'CAREER','진로취업','care7',%s,'OFFLINE','Temporary roadmap test',now(),CASE WHEN %s='DONE' THEN now() END,'{}','{}'
+      FROM dc.person p WHERE p.alias='chaewon' ''', (request_id, status, status))
     return request_id
 
 
 def generate(client, db, target):
     old = client.get('/api/v1/students/chaewon/roadmap', headers=headers('career_kim')).json()['roadmap']
     path = '/api/v1/students/chaewon/roadmap/' + ('regenerate' if old else 'generate')
-    body = {'counselRequestId': basis(db), 'targetRole': target,
+    # 첫 로드맵은 완료된 상담에서만 난다. 재생성은 확정된 재상담에서도 미리 만들 수 있다.
+    body = {'counselRequestId': basis(db, 'CONFIRMED' if old else 'DONE'), 'targetRole': target,
             'expectedRoadmapVersion': old['roadmapVersion'] if old else 0,
             'expectedVersion': old['version'] if old else 0}
     request_headers = {**headers('career_kim'), 'Idempotency-Key': uuid4().hex}

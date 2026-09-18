@@ -72,4 +72,5 @@ export interface PsychTestResult {
   byName: string
   createdAt: string
   updatedAt: string
+  version: number
 }

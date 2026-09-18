@@ -93,7 +93,7 @@ export function createJournalEntry(studentId: string, entry: Omit<Entry, 'id' | 
 export function updateJournalEntry(studentId: string, entry: Entry): Promise<void> {
   const row = growthEntries(studentId, 'JOURNAL').find(item => item.id === entry.id)
   if (!row) throw new Error('수정할 일지를 찾을 수 없습니다.')
-  return updateGrowthEntry(studentId, row, toInput(entry))
+  return updateGrowthEntry(studentId, { ...row, version: entry.version }, toInput(entry))
 }
 
 /** 논리삭제다 — 제출·AI 입력에 쓰인 과거 본문은 서버 이력에 남는다. */

@@ -1,5 +1,5 @@
 import { api } from './api'
-import { loadCounselEvents, loadNotifications } from './communicationsStore'
+import { loadCounselEvents, loadNotificationSummary } from './communicationsStore'
 import type { EnrollmentStatus, StudentCounselRequest } from '../src_v2/data/students'
 import type { StudentType } from '../src_v2/data/careerProcess'
 import type { CounselRecord } from '../src_admin/data/schema/counselRecord'
@@ -34,7 +34,7 @@ export async function performCounselAction(id: string, action: string, fields: o
     method: 'POST', body: JSON.stringify({ ...fields, expectedVersion: current.version }),
   })
   storeCounselRequest(saved)
-  await Promise.all([loadCounselEvents(), loadNotifications()])
+  await Promise.all([loadCounselEvents(id), loadNotificationSummary()])
 }
 
 export async function loadCounselRecords(): Promise<void> {
@@ -71,4 +71,6 @@ export async function loadCounselRequests(): Promise<void> {
     page += 1
   }
   requests = result
+  // 다른 사용자(학생)의 신청은 여기서만 들어온다 — 구독 화면이 재계산하도록 알린다.
+  window.dispatchEvent(new Event('dc:counsel-updated'))
 }

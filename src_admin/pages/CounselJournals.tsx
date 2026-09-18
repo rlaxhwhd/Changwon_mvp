@@ -18,6 +18,12 @@ import type { RecordStatus } from '../data/schema/counselRecord'
 import { toJournalCsv } from '../data/counselExport'
 import { studentTypeClass } from '../data/studentRoster'
 import type { EnrollStatus } from '../data/studentRoster'
+import CounselRecordFields from '../components/CounselRecordFields'
+import CounselRecordPreview from '../components/CounselRecordPreview'
+import CounselTemplateSummary from '../components/CounselTemplateSummary'
+import CounselRecordContext, { type RecordContext } from '../components/CounselRecordContext'
+import { counselContent, counselTemplateErrors, emptyCounselTemplate } from '../data/schema/counselTemplate'
+import { isCare7 } from '../../src_v2/data/counselTrack'
 import { typeLabel } from '../../src_v2/data/careerProcess'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -35,14 +41,18 @@ const ALL = '전체'
 
 /** 일지 작성 패널 — 임시저장(작성중) · 제출(완료) 둘 다 dc_counsel_records 에 쓴다. */
 function JournalForm({
-  row, source, onClose, onSaved,
+  row, source, onClose, onSaved, context,
 }: {
   row: JournalRow
+  context: RecordContext
   source: RecordSource
   onClose: () => void
   onSaved: () => void
 }) {
-  const record = row.record
+  const record = context.record ?? undefined
+  const career = row.type === '진로취업'
+  const care7 = career && isCare7(row.careTrack)
+  const [template, setTemplate] = useState(() => record?.template ?? emptyCounselTemplate(row.method, row.date, row.time.split('~')[0]))
   // 방금 저장한 기록을 들고 있어야 한다 — 부모의 row 는 모달이 열린 시점 것이라
   // 이걸 안 잇고 두 번 저장하면 같은 상담에 기록이 두 벌 생긴다(id 가 새로 발급된다).
   const [current, setCurrent] = useState(record)
@@ -54,16 +64,19 @@ function JournalForm({
   const [saveError, setSaveError] = useState('')
 
   // 제출 조건은 상담 진행 화면(CounselSession)과 같다 — 소견과 공개 코멘트 둘 다 필요.
-  const canSubmit = summary.trim() !== '' && comment.trim() !== ''
+  const recordSummary = career ? counselContent(template) : summary
+  const formErrors = career ? counselTemplateErrors(template, care7, context.typeLocked, comment) : []
+  const canSubmit = formErrors.length === 0 && recordSummary.trim() !== '' && comment.trim() !== ''
 
   const save = async (status: RecordStatus) => {
     if (saving) return
     setSaving(true)
     setSaveError('')
     try {
-    const next = buildRecord(source, { summary, comment, followUp }, status, current)
+    const next = buildRecord(source, { summary: recordSummary, comment, followUp, template: career ? template : undefined }, status, current)
     const saved = await upsertRecord(next)
     setCurrent(saved)
+    if (saved.template) setTemplate(value => ({ ...value, legacySummary: saved.template?.legacySummary }))
     onSaved()
     if (status === '완료') { onClose(); return }
     setJustSaved(true)
@@ -79,7 +92,7 @@ function JournalForm({
       <div className="admin-editor-hint">
         <LuInfo />
         <span>
-          <strong>소견은 내부 기록, 공개 코멘트는 학생에게 보여줄 문구</strong>입니다 — 나누어 작성하세요.
+          <strong>상담내용·AI 일지는 내부 기록, 공개 코멘트는 학생에게 보여줄 문구</strong>입니다 — 나누어 작성하세요.
           제출하면 작성상태가 「완료」로 바뀝니다. 첨부파일은 아직 연결되지 않았습니다.
         </span>
       </div>
@@ -93,6 +106,11 @@ function JournalForm({
         <div><dt>상담 주제</dt><dd>{row.topic}</dd></div>
       </dl>
 
+      {career ? <>
+        {record?.summary && !record.template && <details className="admin-editor-hint"><summary>기존 상담내용 확인</summary><p style={{ whiteSpace: 'pre-wrap' }}>{record.summary}</p><p>기존 기록을 참고해 아래 항목으로 나누어 작성해 주세요.</p></details>}
+        <CounselRecordFields value={template} onChange={setTemplate} comment={comment} onCommentChange={setComment}
+          diagnosisType={context.diagnosisType} care7={care7} disabled={saving} typeLocked={context.typeLocked} required />
+      </> : <>
       <label className="admin-field">
         <span>상담 내용 (소견)</span>
         <textarea
@@ -114,11 +132,14 @@ function JournalForm({
         <small className="admin-field-hint">학생이 읽는 문구입니다. 소견과 분리해 작성하세요.</small>
       </label>
 
+      </>}
+
       <label className="admin-field">
         <span>후속 조치</span>
         <input
           type="text"
           value={followUp}
+          disabled={saving}
           onChange={e => setFollowUp(e.target.value)}
           placeholder="예: 이력서 첨삭 재상담 권고"
         />
@@ -133,17 +154,19 @@ function JournalForm({
         </div>
       </div>
 
+      {formErrors.length > 0 && <p className="admin-form-hint">{formErrors.join(' ')}</p>}
       <div className="admin-form-actions">
         {justSaved && <span className="admin-save-hint"><LuCheck /> 임시 저장됨</span>}
+        <CounselRecordPreview template={career ? template : undefined} summary={recordSummary} comment={comment} followUp={followUp} disabled={saving} />
         <button type="button" className="admin-btn admin-btn-ghost sm" onClick={onClose}>닫기</button>
-        <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => save('작성중')}>
+        <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => save('작성중')} disabled={saving}>
           임시저장
         </button>
         <button
           type="button"
           className="admin-btn admin-btn-primary sm"
-          disabled={!canSubmit}
-          title={canSubmit ? undefined : '소견과 학생 공개 코멘트를 모두 작성해야 제출할 수 있습니다'}
+          disabled={!canSubmit || saving}
+          title={canSubmit ? undefined : '필수 상담내용을 입력해 주세요'}
           onClick={() => save('완료')}
         >
           일지 제출
@@ -157,8 +180,8 @@ export default function CounselJournals() {
   const me = getActiveCounselor()
   const meId = getActiveCounselorId()
   // 저장하면 rev 를 올려 대장을 다시 읽는다 — 새로고침 없이 작성상태·요약이 따라온다.
-  const [rev, setRev] = useState(0)
-  const rows = useMemo(() => getJournalRows(me.id), [me.id, rev])
+  const [, setRev] = useState(0)
+  const rows = getJournalRows(me.id)
   const summary = useMemo(() => getJournalSummary(rows), [rows])
   // 드롭다운에 넣을 값은 데이터층이 고른다 — 학과·학년 목록을 화면에 적어 두지 않는다.
   const options = useMemo(() => getJournalFilterOptions(rows), [rows])
@@ -237,7 +260,7 @@ export default function CounselJournals() {
   const downloadCsv = () => {
     if (targetRows.length === 0) return
     const url = URL.createObjectURL(
-      new Blob([`﻿${toJournalCsv(targetRows)}`], { type: 'text/csv;charset=utf-8' }),
+      new Blob([`\uFEFF${toJournalCsv(targetRows)}`], { type: 'text/csv;charset=utf-8' }),
     )
     const anchor = document.createElement('a')
     anchor.href = url
@@ -406,7 +429,7 @@ export default function CounselJournals() {
                     <span className="admin-roster-cell">
                       <span className={studentTypeClass(r.studentType)}>{typeLabel(r.studentType)}</span>
                     </span>
-                    <span className="admin-roster-cell">{r.type}<small>{r.method}</small></span>
+                    <span className="admin-roster-cell">{r.type}<small>{r.record?.template?.channel ?? r.method}</small></span>
                     {/* 작성된 일지가 있는 행만 펼침 — 미작성은 펼칠 내용이 없다 */}
                     <span className="admin-roster-cell admin-journal-topic">
                       {r.record ? (
@@ -442,8 +465,9 @@ export default function CounselJournals() {
 
                   {open && r.record && (
                     <div className="admin-journal-body">
+                      <CounselTemplateSummary template={r.record.template} />
                       <div className="admin-record-item-summary">
-                        <span className="admin-record-label">상담 소견</span>
+                        <span className="admin-record-label">상담내용</span>
                         <p>{r.record.summary || '아직 작성되지 않았습니다.'}</p>
                       </div>
                       <div className="admin-record-item-comment">
@@ -468,12 +492,15 @@ export default function CounselJournals() {
       </section>
 
       {writing && (
-        <JournalForm
+        <CounselRecordContext key={writing.requestId} requestId={writing.requestId}>
+        {context => <JournalForm
+          context={context}
           row={writing}
           source={sourceOf(writing)}
           onClose={() => setWriting(null)}
           onSaved={() => setRev(v => v + 1)}
-        />
+        />}
+        </CounselRecordContext>
       )}
       {infoId && <StudentDetailModal studentId={infoId} role={me.role} onClose={() => setInfoId(null)} />}
     </div>

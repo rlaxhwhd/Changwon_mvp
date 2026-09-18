@@ -34,9 +34,11 @@ def test_label_change_history_cache_and_stale_write(client):
         assert conn.execute('SELECT label FROM dc.student_type_code WHERE code=%s',(before['code'],)).fetchone()['label']==body['label']
     with pytest.raises(psycopg.Error):
         with pool.connection() as conn:
+            conn.execute('SET LOCAL ROLE dc_app')
             conn.execute('DELETE FROM dc.code_item_event')
     with pytest.raises(psycopg.Error):
         with pool.connection() as conn:
+            conn.execute('SET LOCAL ROLE dc_app')
             conn.execute('CREATE TABLE dc.unauthorized_ddl(id integer)')
 
 
@@ -101,3 +103,44 @@ def test_request_uses_topic_fk_and_keeps_original_label(client):
     assert client.put('/api/v1/system/code-groups/COUNSEL_TOPIC/items/A01',headers=headers('system-admin'),json=change).status_code==200
     with pool.connection() as conn:
         assert conn.execute('SELECT snapshot FROM dc.counsel_request WHERE id=%s',(row['id'],)).fetchone()['snapshot']['topicLabel']==original
+
+
+def test_role_menu_visibility_is_replaced_per_role(client):
+    head=headers('system-admin')
+    roles={r['role_code']:r for r in client.get('/api/v1/system/auth-roles',headers=head).json()}
+    assert {'student','professor','company','external'}<=set(roles) and 'AUTH0006' not in roles
+    assert roles['company']['portal'] is None and roles['student']['portal']=='student'
+    assert client.get('/api/v1/system/auth-roles',headers=headers('career_kim')).status_code==403
+    menus={m['menu_code']:m for m in client.get('/api/v1/system/menus',headers=head).json()}
+    professor=sorted(code for code,m in menus.items() if 'professor' in m['roles'])
+    assert 'jobs' not in professor
+    path='/api/v1/system/auth-roles/professor/menus'
+    body=dict(expectedVersion=roles['professor']['version'],menuCodes=professor+['jobs','jobs.0'],reason='menu grant test')
+    assert client.put(path,headers=head,json={**body,'menuCodes':professor+['jobs.0']}).status_code==422
+    assert client.put(path,headers=head,json={**body,'menuCodes':professor+['stu-jobs']}).status_code==422
+    assert client.put('/api/v1/system/auth-roles/company/menus',headers=head,json={**body,'expectedVersion':roles['company']['version'],'menuCodes':[]}).status_code==422
+    assert client.put('/api/v1/system/auth-roles/AUTH0006/menus',headers=head,json=body).status_code==404
+    response=client.put(path,headers=head,json=body)
+    assert response.status_code==200,response.text
+    assert client.put(path,headers=head,json=body).status_code==409
+    visible={m['menu_code'] for m in client.get('/api/v1/metadata',headers=headers('cse-1')).json()['menus']}
+    assert {'jobs','jobs.0'}<=visible and 'jobs.1' not in visible
+    body.update(expectedVersion=response.json()['version'],menuCodes=professor)
+    assert client.put(path,headers=head,json=body).status_code==200
+    visible={m['menu_code'] for m in client.get('/api/v1/metadata',headers=headers('cse-1')).json()['menus']}
+    assert 'jobs' not in visible and 'prof-advisees' in visible
+    events=client.get('/api/v1/system/events',headers=head).json()['items']
+    assert events[0]['entity']=='menu_auth' and events[0]['entity_id']=='professor' and 'jobs' in events[1]['after_value']['menuCodes']
+
+
+def test_student_metadata_follows_student_role_menus(client):
+    head=headers('system-admin')
+    student=next(r for r in client.get('/api/v1/system/auth-roles',headers=head).json() if r['role_code']=='student')
+    visible={m['menu_code'] for m in client.get('/api/v1/metadata',headers=headers('chaewon')).json()['menus']}
+    assert {'stu-lounge','stu-jobs.3.0','stu-mypage.3'}<=visible and 'counsel' not in visible
+    granted=[m['menu_code'] for m in client.get('/api/v1/system/menus',headers=head).json() if 'student' in m['roles'] and m['menu_code']!='stu-jobs.4']
+    body=dict(expectedVersion=student['version'],menuCodes=granted,reason='hide notices for students')
+    assert client.put('/api/v1/system/auth-roles/student/menus',headers=head,json=body).status_code==200
+    visible={m['menu_code'] for m in client.get('/api/v1/metadata',headers=headers('chaewon')).json()['menus']}
+    assert 'stu-jobs.4' not in visible and 'stu-jobs.3' in visible
+    assert not {m['menu_code'] for m in client.get('/api/v1/metadata',headers=headers('career_kim')).json()['menus']}&{'stu-lounge'}

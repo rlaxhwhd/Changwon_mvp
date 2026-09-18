@@ -13,7 +13,9 @@ import { attendanceLabel, categoryLabel, outcomeLabel, selectionLabel } from '..
 import { STUDENTS, getCounselOwnerById, getStudentType, getStudentTypeMeta } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
 import { STUDENT_TYPE_MAP, areaOf, typeLabel } from '../../src_v2/data/careerProcess'
-import { loadJournalEntries } from '../../src_v2/data/growthJournal'
+import GrowthLoadNotice from '../../shared/GrowthLoadNotice'
+import { growthState } from '../../shared/growthStore'
+import { CATEGORY_LABEL, loadJournalEntries } from '../../src_v2/data/growthJournal'
 import { loadRosterStudent, rosterStudentOf, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 import type { RosterStudent } from '../data/studentRoster'
 import {
@@ -31,8 +33,9 @@ import CompetencyRadarChart from '../../src_v2/components/CompetencyRadarChart'
 // 포트폴리오 탭은 학생 이력서 화면을 그대로 쓴다 — 값도 같은 단일소스에서 읽는다.
 import ResumeSheet from '../../src_v2/components/ResumeSheet'
 import { toPortfolioView } from '../../src_v2/data/portfolio'
-import { loadPortfolio } from '../../shared/growthStore'
+import { ensurePortfolio } from '../../shared/growthStore'
 import type { PortfolioDTO } from '../../shared/growthStore'
+import { hasStudentCache, revalidateStudent } from '../../shared/studentCache'
 import { useGrowth } from '../../shared/useRoadmapStore'
 import StarRoadmapCard from '../../src_v2/components/StarRoadmapCard'
 import StudentStatCards from '../../src_v2/components/StudentStatCards'
@@ -40,6 +43,9 @@ import EmptyState from './EmptyState'
 // 로드맵 생성은 상담사 전용 작업 화면이라 학생 포털과 코드를 공유하지 않는다.
 import RoadmapCreatePanel from './RoadmapCreatePanel'
 import { useRoadmap, useStore } from '../../shared/useRoadmapStore'
+import { roadmapEnvelope } from '../../shared/roadmapStore'
+import { useAsyncAction } from '../../shared/useAsyncAction'
+import { confirmRoadmap } from '../data/roadmapOverrides'
 // 편집은 편집 페이지와 같은 본문을 쓴다 — 상담 중에 상세를 열어 둔 채로 고친다.
 import RoadmapEditorPanel from './RoadmapEditorPanel'
 import { getActiveCounselor } from '../data/counselors'
@@ -311,6 +317,11 @@ function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentDa
   const plan = getGoalPlan(student)
   const journey = getCareerJourney(student)
   const refresh = () => { setReloadKey(n => n + 1); setMode('view') }
+  // 확정은 생성 결과(3축 보드)를 보면서 이 자리에서 한다 — 학생의 비교과·취업 게이트가 이때 열린다.
+  // 확정 뒤 편집은 확정을 유지한다(되돌리기는 별도 reopen).
+  const canConfirm = canEdit && !plan?.confirmed && (roadmapEnvelope(student.id)?.capabilities.canConfirm ?? false)
+  const confirmAction = useAsyncAction()
+  const handleConfirm = () => confirmAction.run(() => confirmRoadmap(student.id, '생성 결과 검토 후 확정'))
 
   return (
     <div className="dashboard-grid">
@@ -356,8 +367,13 @@ function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentDa
                 {plan.confirmed ? <span className="badge mint">확정 v{plan.version}</span> : <span className="badge">초안</span>}
                 {canEdit && mode === 'view' && (
                   <>
+                    {canConfirm && (
+                      <button type="button" className="admin-btn admin-btn-primary sm" disabled={confirmAction.saving} onClick={handleConfirm}>
+                        <LuClipboardCheck /> {confirmAction.saving ? '확정 중…' : '로드맵 확정'}
+                      </button>
+                    )}
                     {/* 편집은 페이지로 나가지 않는다 — 같은 편집기를 이 자리에서 연다. */}
-                    <button type="button" className="admin-btn admin-btn-primary sm" onClick={() => setMode('edit')}>
+                    <button type="button" className={`admin-btn ${canConfirm ? '' : 'admin-btn-primary '}sm`} onClick={() => setMode('edit')}>
                       <LuPencilRuler /> 로드맵 편집
                     </button>
                     <button type="button" className="admin-btn sm" onClick={() => setMode('create')}>
@@ -372,6 +388,10 @@ function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentDa
             }
           />
           <div data-slot="card-content">
+            {confirmAction.error && <p className="sdv-goal-error" role="alert">{confirmAction.error}</p>}
+            {canConfirm && mode === 'view' && (
+              <p className="sdv-goal-note">초안입니다. 내용을 확인한 뒤 「로드맵 확정」을 누르면 학생에게 공개되고 비교과·취업지원이 열립니다.</p>
+            )}
             <article className="goal-core" style={{ marginBottom: 16 }}>
               <small>목표 직무</small>
               <h3>{plan.role}</h3>
@@ -509,19 +529,19 @@ function GapTab({ student, radar }: { student: StudentData; radar: CompetencyRad
 
 function GrowthTab({ student }: { student: StudentData }) {
   const s = student.scoreInputs
+  useGrowth(student.id)
+  const journal = loadJournalEntries(student.id)
   const stats: { label: string; value: string; icon: IconType; tint: string }[] = [
     { label: '레벨(XP)', value: `Lv.${s.xpLevel}`, icon: LuStar, tint: 'violet' },
     { label: '비교과 이수', value: `${s.programs}건`, icon: LuBoxes, tint: 'mint' },
     { label: '상담 누적', value: `${s.counsel}회`, icon: LuMessagesSquare, tint: 'sky' },
     { label: '출석일', value: `${s.attendanceDays}일`, icon: LuCalendarCheck, tint: 'blue' },
-    { label: '성장일지', value: `${s.journalCount}편`, icon: LuBook, tint: 'amber' },
+    { label: '성장일지', value: growthState(student.id) ? `${journal.length}편` : '—', icon: LuBook, tint: 'amber' },
     { label: '일일미션 출석률', value: `${s.lectureAttendanceRate}%`, icon: LuListChecks, tint: 'mint' },
     { label: '프로젝트', value: `${s.projects}건`, icon: LuWorkflow, tint: 'violet' },
     { label: '공모전', value: `${s.contests}회`, icon: LuTrophy, tint: 'coral' },
   ]
-  // 성장일지는 서버가 정본이다 — 학생이 쓴 것과 같은 행을 읽는다.
-  const journalRevision = useGrowth(student.id)
-  const journal = useMemo(() => loadJournalEntries(student.id), [student.id, journalRevision])
+
 
   return (
     <>
@@ -593,7 +613,8 @@ function GrowthTab({ student }: { student: StudentData }) {
         <section data-slot="card">
           <CardHead title="성장경험일지" desc="학생이 직접 기록한 경험입니다. 상담 시 자소서 소재로 활용합니다." action={<span className="badge">{journal.length}편</span>} />
           <div data-slot="card-content">
-            {journal.length === 0 ? (
+            <GrowthLoadNotice studentId={student.id} />
+            {!growthState(student.id) ? null : journal.length === 0 ? (
               <p className="sdv-empty">작성된 성장경험일지가 없습니다.<br />학생이 작성하면 이곳에 표시됩니다.</p>
             ) : (
               <div className="row-list">
@@ -603,9 +624,16 @@ function GrowthTab({ student }: { student: StudentData }) {
                       <b>{e.title}</b>
                       <span>{e.situation}</span>
                       <span>배운 점 · {e.learning}</span>
+                      <details><summary>경험 상세 보기</summary>
+                        <p>나의 역할 · {e.role || '미작성'}</p>
+                        <p>행동 · {e.action || '미작성'}</p>
+                        <p>결과 · {e.result || '미작성'}</p>
+                        <p>자소서 활용 메모 · {e.resumeMemo || '미작성'}</p>
+                        <p>키워드 · {e.tags.join(', ') || '없음'}</p>
+                      </details>
                     </span>
                     <span className="item-action">
-                      <span className="badge">{e.category}</span>
+                      <span className="badge">{CATEGORY_LABEL[e.category] ?? e.category}</span>
                       {e.resumeUsed && <span className="badge mint">자소서 활용</span>}
                       <small>{e.date}</small>
                     </span>
@@ -638,7 +666,7 @@ function PortfolioTab({ student }: { student: StudentData }) {
   const [failed, setFailed] = useState(false)
   useEffect(() => {
     let alive = true
-    loadPortfolio(student.id)
+    ensurePortfolio(student.id)
       .then((next: PortfolioDTO) => { if (alive) { setDto(next); setFailed(false) } })
       .catch(() => { if (alive) setFailed(true) })
     return () => { alive = false }
@@ -747,11 +775,17 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
   useStore('dc_roadmap_changed')
   useStore('dc:counsel-updated')
   useStore('dc:diagnosis-updated')
-  const [diagnosisLoading,setDiagnosisLoading] = useState(true)
+  // 같은 학생을 다시 열면 캐시로 즉시 그린다 — 오래됐으면 studentCache 가 뒤에서 다시 읽고 이벤트로 알린다.
+  const [diagnosisLoading,setDiagnosisLoading] = useState(
+    () => !(hasStudentCache('diagnosis', studentId) && hasStudentCache('roster', studentId)),
+  )
   const [diagnosisError,setDiagnosisError] = useState('')
   useEffect(() => {
     let cancelled=false
-    Promise.all([loadStudentDiagnoses(studentId), loadRosterStudent(studentId)]).catch(e => { if (!cancelled) setDiagnosisError(e.message) })
+    Promise.all([
+      revalidateStudent('diagnosis', studentId, () => loadStudentDiagnoses(studentId)),
+      revalidateStudent('roster', studentId, () => loadRosterStudent(studentId)),
+    ]).catch(e => { if (!cancelled) setDiagnosisError(e.message) })
       .finally(() => { if (!cancelled) setDiagnosisLoading(false) })
     return () => { cancelled=true }
   },[studentId])
@@ -765,6 +799,8 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
     [isPsych],
   )
   const [tab, setTab] = useState<TabKey>(initialTab ?? visibleTabs[0]?.key ?? 'diagnosis')
+  // 부모가 진입 탭을 바꾸면 따라간다 — 상담 완료 직후 로드맵 진행 탭으로 옮기는 데 쓴다.
+  useEffect(() => { if (initialTab) setTab(initialTab) }, [initialTab])
   if (diagnosisLoading) return <p role="status">DB에서 학생 진단 이력을 조회 중입니다…</p>
   if (diagnosisError) return <p role="alert">{diagnosisError}</p>
 

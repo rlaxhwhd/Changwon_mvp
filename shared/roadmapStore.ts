@@ -11,6 +11,7 @@
 //   식별자별로 캐시한다 — 목록·통계는 서버 페이징/집계 API(queryRoadmaps)를 쓴다.
 // ─────────────────────────────────────────────────────────────────────────
 import { api, queryString } from './api'
+import { beginStudentFetch, invalidateStudent, isStudentFresh, touchStudentCache } from './studentCache'
 import type { RoadmapAxis, RoadmapAxisPlan, RoadmapProgress } from '../src_v2/data/schema/roadmap'
 
 export const ROADMAP_EVENT = 'dc_roadmap_changed'
@@ -88,6 +89,7 @@ export function roadmapEnvelope(studentId: string): RoadmapEnvelope | undefined 
 }
 
 export async function loadRoadmap(studentId: string): Promise<void> {
+  const token = beginStudentFetch('roadmap', studentId)
   const base = `/students/${encodeURIComponent(studentId)}/roadmap`
   const envelope = await api<Omit<RoadmapEnvelope, 'events'>>(base)
   let events: RoadmapEventRow[] = []
@@ -95,12 +97,15 @@ export async function loadRoadmap(studentId: string): Promise<void> {
     events = (await api<{ items: RoadmapEventRow[] }>(`${base}/events?pageSize=20`)).items
   }
   plans.set(studentId, { ...envelope, events })
+  touchStudentCache('roadmap', studentId, token)
   publish()
 }
 
-/** 화면 진입·식별자 변경마다 한 번만 읽는다. 같은 학생을 동시에 여러 번 부르지 않는다. */
+/** 신선한 캐시는 그대로 쓰고, 오래됐으면 기존 값을 보여주며 뒤에서 다시 읽는다.
+ *  같은 학생을 동시에 여러 번 부르지 않는다(studentCache 재검증 규칙). */
 export function ensureRoadmap(studentId: string): void {
-  if (!studentId || plans.has(studentId) || pending.has(studentId)) return
+  if (!studentId || pending.has(studentId)) return
+  if (plans.has(studentId) && isStudentFresh('roadmap', studentId)) return
   const task = loadRoadmap(studentId)
     .catch(() => { /* 실패는 화면의 로드 상태가 표시한다 — 가짜 데이터로 대체하지 않는다 */ })
     .finally(() => { pending.delete(studentId) })
@@ -111,6 +116,7 @@ export function ensureRoadmap(studentId: string): void {
 export function clearRoadmapCache(): void {
   plans.clear()
   pending.clear()
+  invalidateStudent('roadmap')
   publish()
 }
 

@@ -4,6 +4,7 @@ import { api } from '../../shared/api'
 import type { StoredCounselRequest } from '../../shared/counselStore'
 import type { CounselIntakeAnswer } from '../../src_v2/data/counselIntake'
 import { STUDENT_TYPES, type StudentType } from '../../src_v2/data/careerProcess'
+import { isCare7 } from '../../src_v2/data/counselTrack'
 import { TYPE_TINT, typeColorVar, typeSwatchClass } from './studentRoster'
 
 export interface Dashboard {
@@ -134,6 +135,8 @@ function timelineItem(r: StoredCounselRequest) {
   return { requestId: r.id, studentId: r.studentId, time: r.slot?.start ?? '시간 미정',
     name: r.studentName, meta: `${r.studentMajor} · ${r.method}`, typeCode: r.studentType,
     typeLabel: meta?.label, typeTint: r.studentType ? TYPE_TINT[r.studentType] : undefined,
+    // 일반 진로취업 상담과 CARE 7+ 연계 상담을 카드에서 가른다 — 판정은 counselTrack 단일 소스.
+    care7: r.type === '진로취업' && isCare7(r.careTrack),
     topic: r.topic, status: r.status }
 }
 
@@ -142,10 +145,15 @@ export function getTodayTimeline(data: Dashboard) { return data.timeline.map(tim
 function getBriefing(data: BriefingData) {
   const r = data.request
   const item = timelineItem(r)
-  const scores = [{ label: '상담 횟수', value: String(data.doneCount), unit: '회', ink: 'f-orange' }]
+  // 로드맵 카드는 항상 첫 자리 — 생성 전 학생도 "없음"이 아니라 '생성 전'으로 읽히게 한다.
+  const scores = [
+    data.roadmap
+      ? { label: '로드맵 이행률', value: String(data.roadmap.progress), unit: '%', ink: 'f-green' }
+      : { label: '로드맵 이행률', value: '생성 전', unit: '', ink: 'f-purple' },
+    { label: '상담 횟수', value: String(data.doneCount), unit: '회', ink: 'f-orange' },
+  ]
   const rows = [{ label: '상담 주제', value: r.topic, tint: 's-blue' }]
   if (data.roadmap) {
-    scores.unshift({ label: '로드맵 이행률', value: String(data.roadmap.progress), unit: '%', ink: 'f-green' })
     rows.push({ label: '목표', value: [data.roadmap.targetRole, data.roadmap.targetCompany?.name].filter(Boolean).join(' · ') || '등록된 목표가 없습니다.', tint: 's-teal' })
     rows.push({ label: '로드맵', value: data.roadmap.status === 'CONFIRMED' ? '확정' : data.roadmap.status === 'REVIEW' ? '검토중' : '초안', tint: 's-purple' })
   }

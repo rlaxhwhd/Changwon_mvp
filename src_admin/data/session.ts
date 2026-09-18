@@ -5,6 +5,9 @@
 // (데이터 import가 없어야 counselors.ts ↔ staff.ts 순환을 피한다)
 // ─────────────────────────────────────────────────────────────────────────
 
+// studentCache 는 데이터 import 가 없는 leaf 라 여기서 불러도 순환이 생기지 않는다.
+import { clearStudentCache } from '../../shared/studentCache'
+
 /** 활성 교직원 id 저장 키. 역할 무관(상담사·교수·조교 공용). */
 const STORAGE_KEY = 'dc_active_staff'
 
@@ -26,13 +29,16 @@ export function hasActiveSession(): boolean {
   }
 }
 
-/** 활성 사용자 설정 후 리로드 — 모든 화면에 반영 */
+/** 활성 사용자 설정 후 리로드 — 모든 화면에 반영.
+ *  리로드가 모듈 스토어를 다 비우지만, 사용자 전환 시 이전 사용자가 연 학생 캐시를
+ *  남기지 않는다는 뜻은 여기 명시한다(리로드를 없애도 성립해야 한다). */
 export function setActiveId(id: string): void {
   try {
     localStorage.setItem(STORAGE_KEY, id)
   } catch {
     /* ignore */
   }
+  clearStudentCache()
   window.location.reload()
 }
 
@@ -46,5 +52,6 @@ export function clearSession(): void {
   } catch {
     /* ignore */
   }
+  clearStudentCache()
   window.location.assign('/admin/login')
 }

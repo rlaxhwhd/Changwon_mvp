@@ -24,6 +24,7 @@ import { getCounselOwnerById, STUDENTS } from '../../src_v2/data/students'
 import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
 import { studentLiteOf } from './studentRoster'
 import { STUDENT_TYPE_MAP } from '../../src_v2/data/careerProcess'
+import type { CounselTemplate } from './schema/counselTemplate'
 import type { StudentType, StudentTypeMeta } from '../../src_v2/data/careerProcess'
 
 /** 접수함에 표시하는 상담 유형 — '교수'(예약)는 제외 */
@@ -69,6 +70,11 @@ export function getCounselRequests(): CounselRequest[] {
 /** 특정 상담 유형(진로취업/심리)만 필터 — 상담사 역할별 접수함에 사용 */
 export function getRequestsByType(type: CounselRequestType): CounselRequest[] {
   return getCounselRequests().filter(r => r.type === type)
+}
+
+/** 접수함 진입 시 서버 재조회 — 부팅 캐시에는 그 뒤 학생이 넣은 신청이 없다. 완료되면 dc:counsel-updated 가 발행된다. */
+export async function refreshCounselRequests(): Promise<void> {
+  await loadCounselRequests()
 }
 
 /** 특정 상담사에게 배정된 신청만 (담당자 기준 접수함) */
@@ -276,7 +282,7 @@ export function getCounselStudentProfile(studentId: string): CounselStudentProfi
 
 // ── 쓰기 (상태 전이) ───────────────────────────────────────────────────────
 // 소속 학생 owner의 override를 patchCounselRequest로 갱신한다(dc_counsel_owners).
-// 화면은 전이 후 reload로 반영한다(현행 동작 유지).
+// 서버 응답으로 공용 스토어와 구독 화면을 갱신한다. 전체 페이지를 다시 로드하지 않는다.
 //
 // ★ 모든 전이는 처리 이력(dc_counsel_events)을 함께 남긴다.
 //   현행은 최종값만 들고 있어 "누가 언제 왜 바꿨는지"가 사라진다(schema/counselEvent.ts 참조).
@@ -291,7 +297,7 @@ export async function rescheduleRequest(id: string, slot: CounselSlot): Promise<
   await performCounselAction(id, 'reschedule', { slot })
 }
 export async function completeRequest(
-  id: string, record: { summary: string; comment: string; followUp?: string }, finalType?: StudentType | null,
+  id: string, record: { summary: string; comment: string; followUp?: string; template?: CounselTemplate; expectedRecordVersion?: number }, finalType?: StudentType | null,
   roadmap?: { expectedRoadmapVersion: number; expectedRoadmapLockVersion: number },
 ): Promise<void> {
   await performCounselAction(id, 'complete', { ...record, followUp: record.followUp ?? '', finalType, ...roadmap })

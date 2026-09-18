@@ -40,3 +40,32 @@ export const CARE_TRACK_LABEL: Record<CareTrack, { staff: string; student: strin
 export function isCare7(track: CareTrack | undefined): boolean {
   return track !== 'general'
 }
+
+// ── 상담 현황 요약 카드의 3갈래 ──────────────────────────────────────────
+// 학생 라운지(/v2/lounge)와 교직원 학생 상세가 같은 공용 카드(StudentStatCards)를 쓴다.
+// 세는 기준이 두 곳에서 갈리면 같은 학생의 숫자가 달라진다(2026-09-17: 라운지 1건 · 상세 3건).
+// 갈래 판정과 라벨은 여기 한 곳에서만 정하고, 취소 건은 두 곳 모두 제외한다.
+
+export type CounselBucket = 'general' | 'care7' | 'etc'
+
+/** 카드 표시 순서가 곧 점 색 순서다(StudentStatCards.css nth-child). */
+export const COUNSEL_BUCKET_ORDER: CounselBucket[] = ['general', 'care7', 'etc']
+export const COUNSEL_BUCKET_LABEL: Record<CounselBucket, string> = {
+  general: '진로취업 - 일반',
+  care7: '진로취업 - CARE 7+',
+  etc: '기타(심리·지도교수상담)',
+}
+
+/** 진로취업만 트랙으로 가르고, 심리·교수 상담은 기타로 묶는다. */
+export function counselBucket(r: { type: string; careTrack?: CareTrack }): CounselBucket {
+  if (r.type !== '진로취업') return 'etc'
+  return isCare7(r.careTrack) ? 'care7' : 'general'
+}
+
+/** 요약 카드 channels 행 — 호출자가 취소 건을 뺀 목록을 넘긴다. */
+export function counselBucketChannels(rows: { type: string; careTrack?: CareTrack }[]): { label: string; count: string }[] {
+  return COUNSEL_BUCKET_ORDER.map(b => ({
+    label: COUNSEL_BUCKET_LABEL[b],
+    count: `${rows.filter(r => counselBucket(r) === b).length}건`,
+  }))
+}

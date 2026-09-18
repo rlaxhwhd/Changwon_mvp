@@ -220,12 +220,10 @@ def test_demo_seed_refuses_outside_development(monkeypatch):
 
 
 def test_student_type_is_one_answer_for_screen_and_server():
-    # dc.student_list 는 roster JSON 까지 COALESCE 로 폴백하지만 gates·roadmap·jobs 는
-    # dc.student_type_event 를 직접 읽는다. 두 술어가 갈리면 **명단에 T3 으로 보이는
-    # 학생이 상담·로드맵에서는 유형 미확정으로 막힌다** — 화면과 서버가 다른 답을 한다.
-    # 서버 쪽 조회가 여전히 이벤트를 본다는 사실을 고정해, 뷰만 고치고 끝내지 않게 한다.
+    # The event-backed projection applies counsel priority consistently. Reading
+    # raw latest events would incorrectly replace a counseling type after retest.
     from pathlib import Path
     app_dir = Path(__file__).resolve().parents[1] / 'app'
     for module in ('gates.py', 'roadmap.py', 'jobs.py'):
-        assert 'student_type_event' in (app_dir / module).read_text(encoding='utf-8'), \
-            f'{module} 이 유형을 이벤트가 아닌 곳에서 읽는다'
+        assert 'current_student_type' in (app_dir / module).read_text(encoding='utf-8'), \
+            f'{module} 이 상담 우선 유형 조회를 사용하지 않는다'

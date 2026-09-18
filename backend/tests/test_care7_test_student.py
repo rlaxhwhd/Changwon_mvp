@@ -22,6 +22,8 @@ def test_fixture_is_idempotent_and_scores_come_from_completion(db):
 
 
 def test_login_uses_local_override_without_modifying_academic_source(client, db):
+    db.execute('''INSERT INTO academic.v_usr_inf(intg_uid,login_id,user_ty_cd,usr_nm,orgz_nm,stu_schgr)
+      VALUES(%s,%s,'1101','Original academic name','전자공학과','3')''', (UID, UID))
     original = db.execute('SELECT to_jsonb(a) AS raw FROM academic.v_usr_inf a WHERE intg_uid=%s',(UID,)).fetchone()['raw']
     seed(db)
     response=client.post('/api/v1/auth/student/login',headers=headers(UID),json={'studentNo':UID,'password':'!'})

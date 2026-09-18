@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { formatRelativeTime } from '../../src_admin/data/counselRequests'
 import './NotificationBell.css'
-import { COMMUNICATIONS_EVENT, loadNotifications, markNotificationRead, notificationRows, unreadCount } from '../../shared/communicationsStore'
+import { COMMUNICATIONS_EVENT, hasMoreNotifications, loadMoreNotifications, loadNotificationSummary, markNotificationRead, notificationRows, openNotifications, unreadCount } from '../../shared/communicationsStore'
 import { downloadApiFile } from '../../shared/api'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -14,7 +14,11 @@ import { downloadApiFile } from '../../shared/api'
 // 도메인 문구를 여기 박지 않는다 — 제목·본문·링크는 전부 주입받는다.
 //
 // 목록과 수신자별 읽음 시각은 서버에서 관리한다.
+// 폴링은 60초마다 summary(미읽음 수)만, 탭이 숨겨져 있으면 쉰다. 목록은 열 때 받는다
+// (23시간 캐시 + delta). 스크롤 끝에서 옛 알림을 서버 페이지로 이어 받는다.
+// 배선은 shared/communicationsStore 가 갖는다 — 여기서는 그리기만 한다.
 // ─────────────────────────────────────────────────────────────────────────
+const SUMMARY_POLL_MS = 60000
 
 /** 알림 갈래 — 점 색만 정한다. 문구는 데이터 층이 만든다. */
 export type NotificationTone = 'counsel' | 'roadmap' | 'diagnosis' | 'job' | 'program'
@@ -41,20 +45,34 @@ interface NotificationBellProps {
   triggerClassName: string
 }
 
-// 건수 상한은 데이터 층이 이미 걸어 둔다(갈래당 4건 · 총 12건). 여기서 또 자르면
-// 진단·채용처럼 뒤에 오는 갈래가 통째로 사라진다 → 받은 만큼 그리고 넘치면 스크롤한다.
+// 목록은 10건 높이만 보이고(CSS) 그 아래는 스크롤 — 끝에 닿으면 다음 페이지를 받는다.
 export default function NotificationBell({ items, icon, triggerClassName }: NotificationBellProps) {
   const [open, setOpen] = useState(false)
   const [revision, setRevision] = useState(0)
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
   useEffect(() => {
     const update = () => setRevision(n => n + 1)
-    const refresh = () => { void loadNotifications().catch(e => setError((e as Error).message)) }
+    // 숨긴 탭은 묻지 않는다 — 3,000명이 동시에 열어 두는 서비스라 폴링 수가 곧 부하다.
+    const poll = () => { if (document.visibilityState === 'hidden') return; void loadNotificationSummary().catch(e => setError((e as Error).message)) }
+    const onVisible = () => { if (document.visibilityState === 'visible') poll() }
     window.addEventListener(COMMUNICATIONS_EVENT, update)
-    window.addEventListener('focus', refresh)
-    const timer = window.setInterval(refresh, 30000)
-    return () => { window.removeEventListener(COMMUNICATIONS_EVENT, update); window.removeEventListener('focus', refresh); window.clearInterval(timer) }
+    document.addEventListener('visibilitychange', onVisible)
+    const timer = window.setInterval(poll, SUMMARY_POLL_MS)
+    return () => { window.removeEventListener(COMMUNICATIONS_EVENT, update); document.removeEventListener('visibilitychange', onVisible); window.clearInterval(timer) }
   }, [])
+  // 열 때만 목록을 받는다 — 캐시가 있으면 즉시 그려지고 신규분만 뒤따라 온다.
+  useEffect(() => {
+    if (!open) return
+    setLoading(true)
+    void openNotifications().catch(e => setError((e as Error).message)).finally(() => setLoading(false))
+  }, [open])
+  const loadMore = (el: HTMLUListElement) => {
+    if (loading || !hasMoreNotifications) return
+    if (el.scrollTop + el.clientHeight < el.scrollHeight - 24) return
+    setLoading(true)
+    void loadMoreNotifications().catch(e => setError((e as Error).message)).finally(() => setLoading(false))
+  }
   const visibleItems = revision ? notificationRows : items
   const wrapRef = useRef<HTMLDivElement | null>(null)
 
@@ -104,15 +122,15 @@ export default function NotificationBell({ items, icon, triggerClassName }: Noti
 
           {error && <p role="alert">{error}</p>}
           {visibleItems.length === 0 ? (
-            <p className="nbell-empty">새 알림이 없습니다.</p>
+            <p className="nbell-empty">{loading ? '알림을 불러오는 중…' : '새 알림이 없습니다.'}</p>
           ) : (
-            <ul className="nbell-list">
+            <ul className="nbell-list" onScroll={e => loadMore(e.currentTarget)}>
               {visibleItems.map(item => (
                 <li key={item.id}>
-                  {/* 알림은 "가야 할 곳"이 본체다 — 누르면 그 화면으로 보내고 목록은 닫는다. */}
+                  {/* 알림은 "가야 할 곳"이 본체다 — 누르면 그 화면으로 보내고 목록은 닫는다. 읽은 건 회색. */}
                   <Link
                     to={item.to}
-                    className={`nbell-item is-${item.tone}`}
+                    className={`nbell-item is-${item.tone}${item.readAt ? ' is-read' : ''}`}
                     role="menuitem"
                     onClick={() => { setOpen(false); void markNotificationRead(item.id).catch(e => setError((e as Error).message)) }}
                   >
@@ -125,6 +143,7 @@ export default function NotificationBell({ items, icon, triggerClassName }: Noti
                   </Link>
                 </li>
               ))}
+              {loading && <li className="nbell-more">불러오는 중…</li>}
             </ul>
           )}
         </div>

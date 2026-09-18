@@ -1,0 +1,5 @@
+.sms-candidates { display: grid; gap: 12px; margin-block: 12px; }
+.sms-candidate { display: flex; align-items: center; gap: 12px; min-height: 44px; cursor: pointer; }
+.sms-candidate small { display: block; margin-top: 6px; }
+.sms-history { list-style: none; padding: 0; display: grid; gap: 18px; max-height: 240px; overflow-y: auto; }
+.sms-history p { margin-block: 6px; overflow-wrap: anywhere; }

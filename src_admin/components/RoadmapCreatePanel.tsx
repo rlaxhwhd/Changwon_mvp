@@ -12,6 +12,7 @@ import { getRecordsByStudent } from '../data/counselRecords'
 import { generateRoadmap } from '../data/roadmap'
 import { isCare7 } from '../../src_v2/data/counselTrack'
 import { roadmapEnvelope } from '../../shared/roadmapStore'
+import { useStore } from '../../shared/useRoadmapStore'
 import './RoadmapCreatePanel.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -162,13 +163,17 @@ export default function RoadmapCreatePanel({
   const canGenerate = regenerate ? capability?.canRegenerate : capability?.canGenerate
   // 로드맵은 CARE 7+ 진로·취업 상담 자리에서 난다(PROCESS.md §6-7). 서버는 그 상담을
   // 근거로 요구하므로 여기서 어느 상담인지 고른다 — 근거 없이는 생성할 수 없다.
+  // 첫 로드맵은 **완료된** 상담에서만 난다(상담 완료 → 생성 → 확정). 재생성은 확정된
+  // 재상담에서도 미리 만들 수 있고, 그 상담의 완료가 초안을 함께 확정한다.
+  const counselRevision = useStore('dc:counsel-updated')
   const basisRequest = useMemo(
     () => getStudentCounselRequests(student.id)
       .filter(request => (counselRequestId ? request.id === counselRequestId : request.assignedCounselorId === getActiveCounselorId())
         && request.type === '진로취업' && isCare7(request.careTrack)
-        && (request.status === '확정' || request.status === '완료'))
+        && (request.status === '완료' || (regenerate && request.status === '확정')))
       .sort((a, b) => Number(b.status === '확정') - Number(a.status === '확정') || b.requestedAt.localeCompare(a.requestedAt))[0],
-    [student.id, counselRequestId],
+    // counselRevision 은 스토어 갱신 신호다 — 완료 처리 직후 같은 화면에서 근거가 생긴다.
+    [student.id, counselRequestId, regenerate, counselRevision],
   )
   const [generateError, setGenerateError] = useState('')
   const temporary = roadmapEnvelope(student.id)?.capabilities.providerSource === 'development-template'
@@ -177,7 +182,9 @@ export default function RoadmapCreatePanel({
   const generateProgress = useProgressRun(phase === 'generating', GENERATE_MS, () => {
     // 목표 직무는 상담에서 고른 것이 정본이다 — 시드 값보다 우선한다.
     if (!basisRequest) {
-      setGenerateError('확정된 CARE 7+ 진로·취업 상담이 있어야 로드맵을 만들 수 있습니다.')
+      setGenerateError(regenerate
+        ? '확정되거나 완료된 CARE 7+ 진로·취업 상담이 있어야 로드맵을 다시 만들 수 있습니다.'
+        : '완료된 CARE 7+ 진로·취업 상담이 있어야 로드맵을 만들 수 있습니다.')
       setPhase('flow')
       return
     }
@@ -230,10 +237,13 @@ export default function RoadmapCreatePanel({
         <span className="rcp-empty-ico"><LuTarget /></span>
         <strong>아직 로드맵이 없습니다</strong>
         <p>
-          진단·상담 결과와 수강 정보, 학생 스펙을 재료로 3축 15칸 로드맵 1개를 만듭니다.
-          <br />상담을 진행하면서 이 자리에서 바로 생성하세요.
+          상담일지·수강 정보·학생 성장 데이터를 종합해 3축 15칸 로드맵 1개를 만듭니다.
+          <br />{basisRequest
+            ? '상담이 완료되었습니다. 이 자리에서 바로 생성하세요.'
+            : '상담일지를 저장 후 완료 처리하면 여기서 생성할 수 있습니다.'}
         </p>
-        <button type="button" className="admin-btn admin-btn-primary" onClick={() => setOpen(true)}>
+        {/* 잠긴 자리는 빈 화면이 아니다 — 비활성 버튼 + 위 안내(PROCESS.md §2 구현규칙 1). */}
+        <button type="button" className="admin-btn admin-btn-primary" disabled={!basisRequest} onClick={() => setOpen(true)}>
           로드맵 생성
         </button>
       </div>

@@ -761,7 +761,7 @@ def snapshot_values(conn, student):
     org = conn.execute('SELECT college_name,dept_name FROM dc.department WHERE (college_code,dept_code)=(%s,%s)',
                        (student['college_code'], student['dept_code'])).fetchone()
     detail = student['detail'] or {}
-    student_type = conn.execute('''SELECT student_type FROM dc.student_type_event WHERE student_uid=%s
+    student_type = conn.execute('''SELECT student_type FROM dc.current_student_type WHERE student_uid=%s
       ORDER BY decided_at DESC,id DESC LIMIT 1''', (student['intg_uid'],)).fetchone()
     return {'snap_student_no': student['student_no'], 'snap_name': student['name'],
             'snap_major_label': student['major_label'], 'snap_grade': student['grade'],

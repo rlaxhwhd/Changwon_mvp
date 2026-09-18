@@ -80,6 +80,27 @@ def test_notice_authorization_and_notification_ownership(client):
     assert exported.status_code==200 and "'=CSV formula" in exported.text
 
 
+def test_notification_summary_delta_and_paging(client):
+    """GNB 폴링 계약 — summary 는 미읽음·최신시각만, 목록은 since(delta) 또는 hasMore 페이지네이션."""
+    head=headers('jiwoo')
+    with pool.connection() as conn:
+        uid=conn.execute("SELECT intg_uid FROM dc.person WHERE alias='jiwoo'").fetchone()['intg_uid']
+        for n in range(3):
+            conn.execute("INSERT INTO dc.notification(recipient_uid,source_kind,source_id,tone,title,route,occurred_at) VALUES(%s,'test',%s,'counsel',%s,'/counsel/record',now()-make_interval(mins=>%s))",(uid,str(uuid4()),'폴링 '+str(n),n))
+    summary=client.get('/api/v1/notifications/summary',headers=head).json()
+    assert summary['unreadCount']>=3 and summary['unreadRecentCount']>=3 and summary['latestAt']
+    assert 'totalCount' not in summary
+    first=client.get('/api/v1/notifications?pageSize=2',headers=head).json()
+    assert len(first['items'])==2 and first['hasMore'] is True
+    second=client.get('/api/v1/notifications?pageSize=2&page=2',headers=head).json()
+    assert second['items'] and second['items'][0]['id']!=first['items'][0]['id']
+    delta=client.get('/api/v1/notifications?since='+first['items'][1]['at'].replace('+00:00','Z'),headers=head).json()
+    assert {i['id'] for i in first['items']}<= {i['id'] for i in delta['items']} and delta['hasMore'] is False
+    read=client.post('/api/v1/notifications/'+first['items'][0]['id']+'/read',headers=head)
+    assert read.status_code==200
+    assert client.get('/api/v1/notifications/summary',headers=head).json()['unreadCount']==summary['unreadCount']-1
+
+
 def test_counsel_event_dto_never_exposes_record_payload(client):
     result=client.get('/api/v1/counsel-events',headers=headers('chaewon'))
     assert result.status_code==200,result.text

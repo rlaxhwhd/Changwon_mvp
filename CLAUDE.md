@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+> **모든 세션 공통 작업 원칙:** 작업 전에 루트 [AGENTS.md](AGENTS.md)를 읽고 적용한다. 불확실한 사항·분기 질문, Chrome MCP 네트워크·콘솔 검증, DB 스킬·성능 리뷰에 대한 사용자 확정 지침의 정본이다.
+
+> **코드 탐색·재사용:** `graft-changwon` MCP와 [Graft 스킬](.claude/skills/graft/SKILL.md)로 기존 공통 구현·호출 관계를 확인한다. [설치 및 CLI 대체 경로](docs/GRAFT_SETUP.md)를 참고한다.
+
 국립창원대학교 역량개발관리시스템 **드림캐치(DREAMCATCH)** — 현행 운영 시스템의 **고도화** 프로젝트.
 React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 **뷰포트 — `src_v2/`(학생) 모바일 반응형 · `src_admin/`(교직원) 데스크톱 전용(min-width 1280px)** <span>(2026-09-08)</span>
@@ -116,6 +120,7 @@ React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 | 상담사가 공고 CRUD | ✅ DB | `dc.job_posting` (+ `job_posting_event`) |
 | **학생이 채용 지원** | ✅ DB | `dc.job_application` (+ `job_application_event`) |
 | **첨부파일 업로드** | ✅ DB+볼륨 | `dc.file_object` — 웹루트 밖 보관, API 가 권한 확인 후 스트리밍 |
+| **관리자가 역할별 메뉴 노출 변경**(/admin/system/menus) | ✅ DB | `PUT /system/auth-roles/{role}/menus` → `dc.menu_auth` 집합 치환 + `admin_event(entity=menu_auth)`. **GNB 노출은 두 SPA 모두 `/metadata` 메뉴만 본다** — navConfig 에 역할 필터를 다시 넣지 않는다(학생 메뉴는 `stu-*`, 089) |
 
 ### 런타임 반영 방식
 
@@ -125,6 +130,7 @@ React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 부팅 로더가 API 로 스토어를 채우고 화면은 동기 셀렉터를 구독한다. 쓰기는 API 를 부른 뒤 해당 스토어를 다시 읽고 이벤트(`dc:*-updated`)를 발행한다.
 **쓰기 호출은 반드시 `await` + 실패 표시** — `shared/useAsyncAction` 의 `run()` 또는 `.catch(setError)`. 응답을 기다리지 않고 "저장됨"을 띄우면 실패가 화면에 남지 않는다(2026-09-10 로드맵 편집기·교수상담에서 실제로 발생).
 다른 사용자가 쓴 변경은 새로고침·다음 화면 이동에서 보인다(실시간 푸시 없음).
+**학생 단위 조회는 `shared/studentCache` 를 거친다** — `dc:*` 이벤트는 같은 브라우저 변경만 즉시 잡는다. 다른 사용자의 변경은 staleTime·화면 이동 시 재검증으로 보완한다. 같은 학생 재오픈은 캐시로 즉시 그리고, 동시 요청은 하나를 공유한다 <span>(2026-09-18)</span>.
 
 ---
 

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { NAV_SECTIONS, getSectionForPath, getActiveChildPath, getVisibleNavChildren, type NavChild } from './navConfig'
+import { getNavSections, getSectionForPath, getActiveChildPath, getVisibleNavChildren, type NavChild } from './navConfig'
 import { Icon } from './Icon'
 import NotificationBell from './NotificationBell'
 import { getStudentNotifications } from '../data/notifications'
@@ -8,6 +8,7 @@ import { getActiveStudent } from '../data/students'
 import { getStageAccess } from '../data/careerProcess'
 import { getPipelineState } from '../data/pipeline'
 import { api } from '../../shared/api'
+import { clearNotificationCache } from '../../shared/communicationsStore'
 
 /** 드롭다운/모바일 하위 링크 — 중첩(depth 1)까지 평탄화해 렌더한다. */
 function SubLinks({
@@ -51,6 +52,8 @@ function SubLinks({
 export default function GNB() {
   const { pathname, hash } = useLocation()
   const currentSection = getSectionForPath(pathname)
+  // 노출 여부·라벨·순서는 DB 메뉴(역할 student)가 정한다.
+  const navSections = getNavSections()
   const activeStudent = getActiveStudent()
   const activeId = activeStudent.id
   // 라운지 하위메뉴는 그 페이지의 카드로 가는 앵커다 — 카드가 감춰지면 메뉴도 같이 빠져야 한다.
@@ -62,6 +65,7 @@ export default function GNB() {
   async function logout() {
     try {
       await api('/auth/student/logout', {method:'POST'})
+      clearNotificationCache()
       localStorage.removeItem('dc_active_student')
       location.assign('/login')
     } catch { setLogoutError('로그아웃에 실패했습니다. 다시 시도해 주세요.') }
@@ -122,7 +126,7 @@ export default function GNB() {
           </Link>
 
           <nav className="top-nav" id="topNavigation" aria-label="주 메뉴">
-            {NAV_SECTIONS.map(section => {
+            {navSections.map(section => {
               const active = currentSection?.id === section.id
               const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade, stageAccess)
               const firstPath = section.path ?? visibleChildren[0]?.path ?? '/'
@@ -261,7 +265,7 @@ export default function GNB() {
             </div>
 
             <nav aria-label="모바일 주 메뉴">
-              {NAV_SECTIONS.map(section => {
+              {navSections.map(section => {
                 const active = currentSection?.id === section.id
                 const visibleChildren = getVisibleNavChildren(section.children, activeStudent.grade, stageAccess)
                 const firstPath = section.path ?? visibleChildren[0]?.path ?? '/'

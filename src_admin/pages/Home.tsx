@@ -71,10 +71,10 @@ export default function Home() {
       </div> : <p role="status" className="dashboard-status">상담 현황을 불러오는 중입니다.</p>}
     </div></div>
   )
-  return <HomeContent key={me.id} data={data} error={error} onRefresh={refresh} />
+  return <HomeContent key={me.id} data={data} error={error} />
 }
 
-function HomeContent({ data, error, onRefresh }: { data: Dashboard; error: string; onRefresh: () => void }) {
+function HomeContent({ data, error }: { data: Dashboard; error: string }) {
   const me = getActiveCounselor()
   const isCareer = me.role === 'career'
 
@@ -124,11 +124,8 @@ function HomeContent({ data, error, onRefresh }: { data: Dashboard; error: strin
       />
 
       <div className="page">
-        <div className="dashboard-status">
-          {error ? <p role="alert">최신 조회에 실패해 이전 결과를 표시합니다. {error}</p>
-            : <span>한국 시간 {hello.refDate} 기준 · 자동 갱신</span>}
-          <button type="button" className="btn sm" onClick={onRefresh}>새로고침</button>
-        </div>
+        {/* 상태 줄·새로고침 버튼은 뺐다(2026-09-17). 갱신은 진입·포커스·30초 폴링이 알아서 한다 — 실패했을 때만 알린다. */}
+        {error && <div className="dashboard-status"><p role="alert">최신 조회에 실패해 이전 결과를 표시합니다. {error}</p></div>}
         <div className="grid">
 
           {/* ========== 좌측 ========== */}
@@ -267,6 +264,7 @@ function HomeContent({ data, error, onRefresh }: { data: Dashboard; error: strin
                               {item.typeCode && (
                                 <span className={`badge ${item.typeTint}`}>{item.typeCode} {item.typeLabel}</span>
                               )}
+                              {item.care7 && <small className="tl-care">CARE 7+</small>}
                             </div>
                             <div className="tl-desc">{item.topic}</div>
                             <div className="tl-tags">

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import { loadJournalEntries, type Entry } from '../../data/growthJournal'
@@ -8,6 +8,8 @@ import {
 } from '../jobs/resumeMock'
 import { useMetadata } from '../../../shared/useMetadata'
 import './AiResume.css'
+import { useGrowth } from '../../../shared/useRoadmapStore'
+import GrowthLoadNotice from '../../../shared/GrowthLoadNotice'
 import { usePageHead } from '../../components/PageCrumb'
 
 // 자소서 분야 선택지는 여기 배열이 아니라 DB(dc.code_item JOB_RESUME_CATEGORY)가 정본이다.
@@ -50,11 +52,13 @@ export default function AiResume() {
   const [attachedIds, setAttachedIds] = useState<string[]>([])
   const [draftState, setDraftState] = useState<DraftState>('idle')
   // 자소서 정본은 서버다 — 저장·삭제 뒤 스토어를 다시 읽어 목록을 만든다.
-  const [listVersion, bumpList] = useState(0)
-  const savedList = useMemo(() => getAllResumes(), [listVersion])
+  const [, bumpList] = useState(0)
+  const savedList = getAllResumes()
   const [saveError, setSaveError] = useState('')
   const [openResume, setOpenResume] = useState<SavedResume | null>(null)
-  const journalEntries = useMemo(() => loadJournalEntries(getActiveStudentId()), [])
+  const studentId = getActiveStudentId()
+  useGrowth(studentId)
+  const journalEntries = loadJournalEntries(studentId)
   // 세션 내에서 자소서 id 유지 → 재생성 시 컨설팅 목록의 같은 항목을 덮어씀
   const resumeIdRef = useRef<string | null>(null)
 
@@ -255,7 +259,8 @@ export default function AiResume() {
           )}
 
           <div className="rs-journal-list">
-            {journalEntries.slice(0, 5).map(entry => (
+            <GrowthLoadNotice studentId={studentId} />
+            {journalEntries.map(entry => (
               <article key={entry.id} className="rs-journal-item">
                 <div>
                   <strong>{entry.title}</strong>

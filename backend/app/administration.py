@@ -78,6 +78,25 @@ def save_item(group: str, code: str, data: CodeChange,
             raise HTTPException(422, '상담 주제에는 유효한 학생 유형과 목표만 설정할 수 있습니다.')
         if not isinstance(data.payload.get('goal',''),str) or len(data.payload.get('goal',''))>2000:
             raise HTTPException(422, '상담 목표를 확인하세요.')
+    elif group=='QUEST_SEMESTER':
+        try:
+            start = date.fromisoformat(data.payload['startDate'])
+            end = date.fromisoformat(data.payload['endDate'])
+            if (set(data.payload) != {'startDate','endDate'} or start > end
+                    or data.payload['startDate'] != start.isoformat() or data.payload['endDate'] != end.isoformat()):
+                raise ValueError()
+        except (KeyError,TypeError,ValueError):
+            raise HTTPException(422, '학기 시작일과 종료일을 YYYY-MM-DD 형식으로 입력하세요.')
+        if data.isActive and conn.execute('''SELECT 1 FROM dc.code_item WHERE group_code=%s
+          AND code<>%s AND is_active AND payload->>'startDate'<=%s AND payload->>'endDate'>=%s''',
+          (group,code,end.isoformat(),start.isoformat())).fetchone():
+            raise HTTPException(422, '사용 중인 다른 학기와 운영 기간이 겹칩니다.')
+    elif group=='QUEST_XP_REWARD':
+        xp = data.payload.get('xp')
+        if (not before or set(data.payload) != {'xp','quota','cyclesPerSemester'}
+                or type(xp) is not int or not 0 <= xp <= 100000
+                or any(data.payload.get(key) != before['payload'].get(key) for key in ('quota','cyclesPerSemester'))):
+            raise HTTPException(422, 'XP는 0~100,000 사이 정수로 입력하세요. 퀘스트 개수와 운영 횟수는 변경할 수 없습니다.')
     elif group in ('GROWTH_SKILL_OPTION','GROWTH_CERT_OPTION','GROWTH_LANGUAGE_OPTION','GROWTH_ACTIVITY_EXAMPLE'):
         field = {'GROWTH_SKILL_OPTION':'categoryCode','GROWTH_CERT_OPTION':'category',
                  'GROWTH_LANGUAGE_OPTION':'language','GROWTH_ACTIVITY_EXAMPLE':'categoryCode'}[group]
@@ -204,6 +223,42 @@ def save_menu(menu_code: str,data: MenuChange,user=Depends(administrator,scope='
                        (data.label,data.sortOrder,data.isActive,menu_code)).fetchone()
     audit(conn,user,'menu',menu_code,before,after,data.reason)
     return after
+
+
+@router.get('/system/auth-roles')
+def auth_roles(user=Depends(administrator,scope='function'),conn=Depends(connection,scope='function')):
+    # 시스템관리자(AUTH0006)는 관리 대상이 아니다 — 자기 자신의 진입 메뉴를 끄는 길을 만들지 않는다.
+    return conn.execute('''SELECT role_code,label,portal,base_group,version,description FROM dc.auth_role
+      WHERE is_active AND role_code<>'AUTH0006' ORDER BY sort_order,role_code''').fetchall()
+
+
+class MenuGrant(Change):
+    menuCodes: list[str]=Field(max_length=500)
+
+
+@router.put('/system/auth-roles/{role_code}/menus')
+def save_role_menus(role_code: str,data: MenuGrant,user=Depends(administrator,scope='function'),conn=Depends(connection,scope='function')):
+    # 역할 한 건의 menu_auth 집합을 통째로 치환한다. 역할 행 잠금이 동시 저장을 직렬화한다.
+    role=conn.execute('SELECT * FROM dc.auth_role WHERE role_code=%s AND is_active FOR UPDATE',(role_code,)).fetchone()
+    if not role or role_code=='AUTH0006':
+        raise HTTPException(404,'관리할 수 있는 역할이 아닙니다.')
+    if role['version']!=data.expectedVersion:
+        raise HTTPException(409,'다른 관리자가 이 역할의 메뉴를 변경했습니다. 새로 조회하세요.')
+    if not role['portal']:
+        raise HTTPException(422,'이 역할의 포털이 아직 없어 노출할 메뉴가 없습니다.')
+    wanted=set(data.menuCodes)
+    tree={r['menu_code']:r['parent_code'] for r in conn.execute('SELECT menu_code,parent_code FROM dc.menu WHERE portal=%s',(role['portal'],)).fetchall()}
+    if wanted-set(tree):
+        raise HTTPException(422,'이 역할의 포털에 없는 메뉴입니다.')
+    if any(tree[code] and tree[code] not in wanted for code in wanted):
+        raise HTTPException(422,'하위 메뉴를 허용하려면 상위 메뉴도 허용해야 합니다.')
+    before=sorted(r['menu_code'] for r in conn.execute('SELECT menu_code FROM dc.menu_auth WHERE role_code=%s',(role_code,)).fetchall())
+    conn.execute('DELETE FROM dc.menu_auth WHERE role_code=%s AND menu_code<>ALL(%s)',(role_code,list(wanted)))
+    conn.execute('''INSERT INTO dc.menu_auth(menu_code,role_code) SELECT unnest(%s::text[]),%s
+      ON CONFLICT DO NOTHING''',(list(wanted),role_code))
+    after=conn.execute('UPDATE dc.auth_role SET version=version+1 WHERE role_code=%s RETURNING version',(role_code,)).fetchone()
+    audit(conn,user,'menu_auth',role_code,dict(menuCodes=before),dict(menuCodes=sorted(wanted)),data.reason)
+    return dict(role_code=role_code,version=after['version'],menuCodes=sorted(wanted))
 
 
 @router.get('/system/events')

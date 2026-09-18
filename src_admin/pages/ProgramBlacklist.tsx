@@ -6,7 +6,6 @@ import {
   LuDownload,
   LuHand,
   LuInfo,
-  LuList,
   LuLoaderCircle,
   LuRotateCcw,
   LuSearch,
@@ -15,7 +14,6 @@ import {
   LuUserX,
 } from 'react-icons/lu'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   waivePenalty,
   clearPenalty,
@@ -216,15 +214,10 @@ export default function ProgramBlacklist() {
     <div className="admin-page blk">
       <header className="admin-page-head">
         <div>
-          <h1 className="admin-page-title">블랙리스트 관리</h1>
+          <h1 className="admin-page-title">비교과 블랙리스트</h1>
           <p className="admin-page-desc">
             비교과 프로그램 신청 후 미참여(노쇼)한 학생의 누적 벌점을 관리합니다. 대상 {summary.total}명 · 누적 {summary.totalPoints}점
           </p>
-        </div>
-        <div className="admin-head-actions">
-          <Link to="/programs" className="admin-btn admin-btn-ghost">
-            <LuList /> 프로그램 목록
-          </Link>
         </div>
       </header>
 
@@ -256,9 +249,9 @@ export default function ProgramBlacklist() {
           <span className="blk-label">검색조건</span>
           <select className="blk-field blk-field-sm" value={scope} onChange={e => onFilter(setScope)(e.target.value)} aria-label="검색조건">
             <option value={ALL}>전체</option>
-            <option value="이름">이름</option>
-            <option value="학번">학번</option>
-            <option value="학과">학과</option>
+            <option value="name">이름</option>
+            <option value="studentNo">학번</option>
+            <option value="major">학과</option>
           </select>
           <div className="blk-search">
             <input type="text" value={query} onChange={e => { setQuery(e.target.value); setPage(1) }} placeholder="검색어를 입력하세요" aria-label="검색어" />

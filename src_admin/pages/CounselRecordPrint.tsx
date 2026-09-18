@@ -6,6 +6,8 @@ import { getCounselRecords } from '../data/counselRecords'
 import { getCounselStudentProfile, getRequestById } from '../data/counselRequests'
 import { getCounselorById } from '../data/counselors'
 import type { CounselRecord } from '../data/schema/counselRecord'
+import CounselTemplateSummary from '../components/CounselTemplateSummary'
+import '../components/CounselRecordFields.css'
 
 /**
  * 상담일지 인쇄 (SPEC C10 · 현행 `CoMs010Print`·`pop_adminConsultingInfoPrint` 대응)
@@ -86,11 +88,11 @@ function RecordSheet({ record }: { record: CounselRecord }) {
           </tr>
           <tr>
             <th>연락처</th><td>{profile?.phone ?? '—'}</td>
-            <th>상담 유형</th><td>{record.type} · {record.method}</td>
+            <th>상담 유형</th><td>{record.type} · {record.template?.channel ?? record.method}</td>
           </tr>
           <tr>
-            <th>상담 일자</th><td>{record.date}</td>
-            <th>상담 시간</th><td>{slot ? `${slot.start}–${slot.end}` : '—'}</td>
+            <th>상담 일자</th><td>{record.template?.conductedAt.slice(0, 10) || record.date}</td>
+            <th>상담 시간</th><td>{record.template?.conductedAt.slice(11, 16) || (slot ? `${slot.start}–${slot.end}` : '—')}</td>
           </tr>
           <tr>
             <th>장소 · 방식</th><td>{slot?.place ?? '—'}</td>
@@ -103,7 +105,8 @@ function RecordSheet({ record }: { record: CounselRecord }) {
       </table>
 
       <section className="print-block">
-        <h2>상담 소견</h2>
+        <CounselTemplateSummary template={record.template} />
+        <h2>상담내용</h2>
         <p>{record.summary}</p>
       </section>
 

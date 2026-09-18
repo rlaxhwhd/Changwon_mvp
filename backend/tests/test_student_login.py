@@ -3,6 +3,7 @@ import hashlib
 from pathlib import Path
 
 import psycopg
+import pytest
 
 from app.settings import settings
 from test_api import headers
@@ -22,6 +23,15 @@ def owner():
     root = Path(__file__).resolve().parents[2]
     return psycopg.connect(host='127.0.0.1', port=15432, dbname=settings.db_name,
                           user='postgres', password=(root/'deploy/secrets/postgres_password_local').read_text().strip())
+
+
+@pytest.fixture(scope='module', autouse=True)
+def academic_login_student():
+    # Synthetic mirror input, not a dependency on a developer's imported data.
+    with owner() as conn:
+        conn.execute('''INSERT INTO academic.v_usr_inf
+          (intg_uid,login_id,user_ty_cd,usr_nm,orgz_nm,stu_schgr)
+          VALUES('20180001','20180001','1101','홍길동','전자공학과','2')''')
 
 
 def test_invalid_login_and_header_bypass(client):

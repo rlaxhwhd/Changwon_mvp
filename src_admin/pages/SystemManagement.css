@@ -19,3 +19,36 @@
 .system-management details { border-bottom: 1px solid var(--border); padding: var(--sp-3); background: var(--bg-card); }
 .system-management summary { cursor: pointer; }
 .system-management pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--sp-3); background: var(--muted); font-size: 12px; }
+
+/* 메뉴관리 — 역할별 노출 (MenuVisibility) */
+.menu-visibility .mv-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4); padding: var(--pad-sm) var(--pad); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: var(--gap-set); }
+.menu-visibility .mv-toolbar select { min-width: 220px; }
+.menu-visibility .mv-portal { color: var(--text-sub); }
+.menu-visibility .mv-count { color: var(--text-sub); }
+.menu-visibility .mv-count b { color: var(--text); }
+.menu-visibility .mv-bulk { margin-left: auto; display: flex; gap: var(--sp-2); }
+.menu-visibility .mv-empty { padding: var(--pad); background: var(--bg-card); border: 1px dashed var(--border); border-radius: var(--radius-md); }
+.menu-visibility .mv-table { table-layout: fixed; }
+.menu-visibility .mv-table :is(th,td) { vertical-align: middle; padding: var(--sp-2) var(--sp-3); }
+.menu-visibility .mv-col-allow { width: 64px; text-align: center; }
+.menu-visibility .mv-table th:nth-child(3) { width: 30%; }
+.menu-visibility .mv-table th:nth-child(4) { width: 160px; }
+.menu-visibility .mv-table th:nth-child(5) { width: 120px; }
+.menu-visibility .mv-row.depth-0 > td { background: var(--muted); }
+.menu-visibility .mv-row.depth-0 .mv-label { font-weight: 700; }
+.menu-visibility .mv-row.is-inactive .mv-label { color: var(--text-cap); }
+.menu-visibility .mv-row.is-changed > td { background: var(--yellow-bg); }
+.menu-visibility .mv-label { display: inline-flex; align-items: baseline; gap: var(--sp-2); margin: 0; cursor: pointer; }
+.menu-visibility .mv-label small { color: var(--text-cap); font-weight: 400; font-size: 12px; }
+.menu-visibility .mv-branch { color: var(--text-cap); }
+.menu-visibility .mv-route { color: var(--text-sub); font-size: 13px; overflow-wrap: anywhere; }
+.menu-visibility .mv-badge-off { background: var(--red-bg); color: var(--on-red); }
+.menu-visibility .mv-badge-changed { background: var(--yellow-bg); color: var(--on-yellow); border: 1px solid var(--yellow); margin-left: var(--sp-1); }
+.menu-visibility .btn-sm { min-height: 32px; padding: var(--sp-1) var(--sp-3); font-size: 13px; }
+.menu-visibility .mv-edit-row > td { background: var(--bg-page); }
+.menu-visibility .mv-save { position: sticky; bottom: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-3); padding: var(--pad-sm) var(--pad); margin-top: var(--gap-set); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); }
+.menu-visibility .mv-save .mv-dirty { color: var(--text-sub); min-width: 200px; }
+.menu-visibility .mv-save .mv-dirty b { color: var(--on-yellow); }
+.menu-visibility .mv-save label { flex: 1; }
+.menu-visibility .mv-save label input { flex: 1; }
+.menu-visibility .mv-filter { margin: 0; }

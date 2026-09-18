@@ -11,6 +11,7 @@ from typing import Literal
 from .auth import principal, require_staff
 from .counsel import get_request, visibility
 from .db import connection
+from .counsel_template import CounselTemplate, validate_template_scope, validate_completed_template, template_storage
 
 router=APIRouter()
 
@@ -23,6 +24,7 @@ def record_dto(row,student=False):
             'topic':row['topic'],'date':row['slot_date'] or row['created_at'].date(),
             'counselorId':row['counselor_alias'],'counselorName':row['counselor_name'],
             'summary':'' if student else row['summary'],'comment':row['comment'],
+            'template':None if student else row.get('template'),
             'followUp':'' if student else row['follow_up'],'status':'완료' if row['status_code']=='DONE' else '작성중',
             'createdAt':row['created_at'],'updatedAt':row['updated_at'],'version':row['version'],
             # 교수상담 분류(PROF_COUNSEL_TYPE)는 신청의 topic_code 다. 학생 발의 건은 없을 수 있다.
@@ -35,6 +37,19 @@ SELECT='''SELECT c.*,r.legacy_type,r.method_code,r.topic,r.topic_code,r.slot_dat
  FROM dc.counsel_record c JOIN dc.counsel_request r ON r.id=c.request_id
  JOIN dc.person p ON p.intg_uid=r.student_uid JOIN dc.student s ON s.intg_uid=r.student_uid
  JOIN dc.person a ON a.intg_uid=c.counselor_uid'''
+
+
+@router.get('/counsel-requests/{request_id}/record-context')
+def record_context(request_id:str,user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
+    require_staff(user)
+    request=get_request(conn,user,request_id)
+    latest=conn.execute('''SELECT student_type FROM dc.student_type_event
+      WHERE student_uid=%s AND source<>'counsel' ORDER BY decided_at DESC,id DESC LIMIT 1''',
+      (request['student_uid'],)).fetchone()
+    record=conn.execute(SELECT+' WHERE c.request_id=%s',(request_id,)).fetchone()
+    return {'diagnosisType':latest['student_type'] if latest else None,
+            'typeLocked':request['status_code']=='DONE',
+            'record':record_dto(record) if record else None}
 
 
 @router.get('/counsel-records')
@@ -174,6 +189,7 @@ class RecordWrite(BaseModel):
     comment:str=Field(max_length=20000)
     followUp:str=Field('',max_length=10000)
     status:Literal['작성중','완료']
+    template:CounselTemplate | None=None
 
 
 @router.put('/counsel-requests/{request_id}/record')
@@ -185,15 +201,25 @@ def save_record(request_id:str,body:RecordWrite,user=Depends(principal,scope='fu
         raise HTTPException(403,'담당자만 상담 기록을 작성할 수 있습니다.')
     if (existing['version'] if existing else 0)!=body.expectedVersion:
         raise HTTPException(409,'다른 사용자가 기록을 변경했습니다. 다시 조회해 주세요.')
-    if body.status=='완료' and not (body.summary.strip() and body.comment.strip()):
-        raise HTTPException(422,'상담 소견과 공개 코멘트를 입력해 주세요.')
-    conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot)
-      VALUES (%s,%s,%s,%s,%s,%s,%s,now(),now(),%s) ON CONFLICT(request_id) DO UPDATE SET
+    validate_template_scope(request,body.template)
+    if existing and existing.get('template') and not body.template:
+        raise HTTPException(422,'저장된 상담 템플릿을 함께 제출해 주세요.')
+    if request['status_code']=='DONE' and body.template:
+        fixed_type=(existing.get('template') or {}).get('finalType') if existing else None
+        if body.template.finalType != fixed_type:
+            raise HTTPException(409,'완료된 상담의 최종 유형은 변경할 수 없습니다. 재진단 후 새 CARE 7+ 상담에서 확정해 주세요.')
+    summary=body.template.content() if body.template else body.summary.strip()
+    if body.status=='완료':
+        validate_completed_template(request,body.template,comment=body.comment,type_locked=request['status_code']=='DONE')
+    if body.status=='완료' and not (summary and body.comment.strip()):
+        raise HTTPException(422,'상담내용과 공개 코멘트를 입력해 주세요.')
+    conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot,template)
+      VALUES (%s,%s,%s,%s,%s,%s,%s,now(),now(),%s,%s) ON CONFLICT(request_id) DO UPDATE SET
       summary=excluded.summary,comment=excluded.comment,follow_up=excluded.follow_up,status_code=excluded.status_code,
-      updated_at=now(),version=dc.counsel_record.version+1''',
-      (str(uuid4()),request_id,user['intg_uid'],body.summary.strip(),body.comment.strip(),body.followUp.strip(),
-       'DONE' if body.status=='완료' else 'DRAFT',Jsonb(request['snapshot'])))
+      template=COALESCE(excluded.template,dc.counsel_record.template),updated_at=now(),version=dc.counsel_record.version+1''',
+      (str(uuid4()),request_id,user['intg_uid'],summary,body.comment.strip(),body.followUp.strip(),
+       'DONE' if body.status=='완료' else 'DRAFT',Jsonb(request['snapshot']),Jsonb(template_storage(body.template,existing)) if body.template else None))
     conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',
-                 (request_id,user['intg_uid'],'RECORD_UPDATED',Jsonb({'before':{k:existing[k] for k in ('summary','comment','follow_up','version')} if existing else None,
+                 (request_id,user['intg_uid'],'RECORD_UPDATED',Jsonb({'before':{k:existing[k] for k in ('summary','comment','follow_up','version','template')} if existing else None,
                   'after':body.model_dump()})))
     return record_dto(conn.execute(SELECT+' WHERE c.request_id=%s',(request_id,)).fetchone())

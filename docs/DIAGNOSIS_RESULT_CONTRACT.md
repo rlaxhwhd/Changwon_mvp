@@ -26,7 +26,7 @@ C3의 대인상호작용능력은 독립된 다섯 항목 중 하나로 해석�
 - C2·C3·C4 수준은 제공된 `level`을 표시한다. 이번 예시만으로 낮음·보통·높음 경계값이나 채점식을 확정하지 않는다.
 - 기존 JSON 결과 원본은 DB에 보존한다. 기존 요인과 새 요인의 대응이 확인되지 않은 점수는 이름 유사성이나 배열 순서로 매핑하지 않는다.
 - `PRECOMPUTED`는 응시 전 준비한 예시 결과다. 실제 완료 이력 및 학생 결과 조회에서 제외한다.
-- `/development/diagnosis/{test_id}/complete`는 SSH 개발 환경의 검증용 기능이다. 기존 결과를 사용한 기록에는 `source=development:fixture`를 남긴다. 실제 검사·채점으로 표시하지 않는다. C5·C6는 이 기능으로도 생성하지 않는다.
+- `/development/diagnosis/{test_id}/complete`는 SSH 개발 환경의 검증용 기능이다. 시드 fixture 가 있는 학생은 그 결과를 쓰고 `source=development:fixture`를 남긴다. fixture 가 없는 학생(학사 미러 실학생)은 결과표 항목(C2~C4 는 `diagnosis_factor_definition`, CCORE·C1 은 fixture 요인명)에 T점수 30~70 임의값을 채우고 `source=development:random`을 남긴다 — C-CORE 유형은 후속진단 결과표가 있는 T1~T4 중 무작위(이미 유형이 있으면 유지). 채점·판정 엔진이 아니며 외부 진단 결과를 API 로 받으면 대체된다(2026-09-17). 실제 검사·채점으로 표시하지 않는다. C5·C6는 이 기능으로도 생성하지 않는다.
 - C2·C3·C4 예시 결과가 현재 항목에 대응하지 않으면 개발 테스트 기록도 거부한다. 점수표 항목 추가만으로 진단 완료 상태를 만들지 않는다.
 - 학생 화면의 완료 판정은 DB의 응시 이력으로만 결정한다. 유형 존재 및 모듈의 공통 `recentAt`으로 완료를 추정하지 않는다.
 - 검사 현황·요약·코멘트·권유는 `/api/v1/diagnosis/*`를 사용한다. 코멘트와 권유는 append-only이며 외부 SMS/메일 전송은 하지 않는다.

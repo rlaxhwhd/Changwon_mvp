@@ -1,5 +1,6 @@
 import type { IconName } from './Icon'
 import type { Stage } from '../data/careerProcess'
+import { menuItems } from '../../shared/metadataStore'
 
 export interface NavChild {
   label: string
@@ -25,6 +26,9 @@ export interface NavSection {
   children: NavChild[]
 }
 
+// ★ 어느 항목이 학생에게 보이는지는 DB `dc.menu_auth`(역할 student)가 정본이다 — 관리자가 /admin/system/menus 에서 켜고 끈다.
+//   menu_code = 'stu-' + 섹션 id (+ '.' + child 인덱스, 089 마이그레이션). 배열 순서를 바꾸면 라벨이 어긋난다.
+//   여기 배열은 경로·아이콘·단계 조건만 들고, 라벨·순서·노출은 getNavSections() 가 DB 메뉴로 덮는다.
 export const NAV_SECTIONS: NavSection[] = [
   {
     id: 'lounge',
@@ -138,6 +142,21 @@ export const NAV_SECTIONS: NavSection[] = [
     ],
   },
 ]
+
+/** 학생 역할에 허용된(`/metadata` 메뉴에 있고 is_active 인) 섹션 + 하위 항목. 라벨·순서도 DB 를 따른다. */
+export function getNavSections(): NavSection[] {
+  function children(items: NavChild[], parent: string): NavChild[] {
+    return items.map((item, index) => ({ item, meta: menuItems.find(row => row.menu_code === `${parent}.${index}`), key: `${parent}.${index}` }))
+      .filter(({ meta }) => meta?.is_active)
+      .sort((a, b) => a.meta!.sort_order - b.meta!.sort_order)
+      .map(({ item, meta, key }) => ({ ...item, label: meta!.label, children: item.children ? children(item.children, key) : undefined }))
+  }
+  return NAV_SECTIONS
+    .map(section => ({ section, meta: menuItems.find(row => row.menu_code === `stu-${section.id}`) }))
+    .filter(({ meta }) => meta?.is_active)
+    .sort((a, b) => a.meta!.sort_order - b.meta!.sort_order)
+    .map(({ section, meta }) => ({ ...section, label: meta!.label, children: children(section.children, `stu-${section.id}`) }))
+}
 
 /**
  * @param access 단계별 개방 여부(careerProcess.getStageAccess). 넘기지 않으면 단계 필터를 걸지 않는다.

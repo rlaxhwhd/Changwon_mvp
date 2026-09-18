@@ -23,7 +23,7 @@ MESSAGES = {
     'CORE_REQUIRED': '핵심 진단(CCORE)을 완료해야 합니다.',
     'FOLLOWUP_REQUIRED': '유형별 후속 진단을 완료해야 합니다.',
     'CARE7_REQUIRED': '완료된 CARE 7+ 진로·취업 상담이 필요합니다.',
-    'ROADMAP_CONFIRMATION_REQUIRED': '상담사가 로드맵을 확정해야 합니다. 재생성 중에는 확정 전까지 잠깁니다.',
+    'ROADMAP_CONFIRMATION_REQUIRED': '상담사가 로드맵을 생성·확정하면 열립니다.',
 }
 
 # 상담 종류 → 코드. 시드와 API 가 같은 표를 본다.
@@ -65,26 +65,13 @@ def confirmed_roadmap(conn, uid):
     return conn.execute('SELECT * FROM dc.roadmap WHERE student_uid=%s AND confirmed', (uid,)).fetchone()
 
 
-def roadmap_basis_ok(conn, request_id, student_uid) -> bool:
-    """CARE 7+ 상담을 완료할 수 있는 확정 계획이 있는가.
-
-    신규 계획은 그 상담을 근거로 만들어져야 한다. 근거가 아예 없는 이관분(LEGACY_IMPORT)은
-    조회·게이트를 그대로 유지하되(D03) 새 상담의 근거로 자동 승격하지 않는다 —
-    다만 이관분만 갖고 있는 학생의 기존 상담 완료 경로를 막지 않기 위해 인정한다.
-    """
-    row = confirmed_roadmap(conn, student_uid)
-    if not row:
-        return False
-    return row['counsel_request_id'] in (None, request_id) or row['basis_kind'] == 'LEGACY_IMPORT'
-
-
 def diagnosis_gate(conn, uid):
     """확정 유형과 진단 완료 여부. (유형 행|None, 미충족 사유) 를 돌려준다.
 
     완료 판정은 completed_at IS NOT NULL 하나로 통일한다. status_code='DONE' 과
     두 벌로 두면 상담 게이트와 취업 게이트가 어긋난다.
     """
-    row = conn.execute('''SELECT c.* FROM dc.student_type_event t
+    row = conn.execute('''SELECT c.* FROM dc.current_student_type t
       JOIN dc.student_type_code c ON c.code=t.student_type
       WHERE t.student_uid=%s ORDER BY t.decided_at DESC,t.id DESC LIMIT 1''', (uid,)).fetchone()
     if not row:

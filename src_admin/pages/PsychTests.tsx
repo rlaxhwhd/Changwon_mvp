@@ -2,18 +2,19 @@ import { useMemo, useState } from 'react'
 import { LuBrain, LuEye, LuEyeOff, LuPlus, LuTrash2 } from 'react-icons/lu'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
-import { getPsychTestRows, getPsychTestSummary, upsertPsychTest } from '../data/psychTests'
+import { getPsychTestRows, getPsychTestSummary, loadPsychTests, upsertPsychTest } from '../data/psychTests'
 import type { PsychTestRow } from '../data/psychTests'
 import { PSYCH_TEST_TYPES, psychTestLabel } from '../data/schema/psychTest'
 import type { PsychTestScale, PsychTestStatus } from '../data/schema/psychTest'
 import { getActiveUser } from '../data/staff'
 import { enrollStatusClass } from '../data/studentRoster'
 import { useAsyncAction } from '../../shared/useAsyncAction'
+import { ApiError } from '../../shared/api'
 
 const today = () => new Date().toISOString().slice(0, 10)
 
 /** 결과 작성 모달 — 척도 구성은 검사도구마다 달라 자유 배열로 받는다(우리가 채점하지 않는다). */
-function ResultModal({ row, onClose, onSaved }: { row: PsychTestRow; onClose: () => void; onSaved: () => void }) {
+function ResultModal({ row, onClose, onSaved, onReload }: { row: PsychTestRow; onClose: () => void; onSaved: () => void; onReload: () => void }) {
   const prev = row.result
   const [testCode, setTestCode] = useState(prev?.testCode ?? PSYCH_TEST_TYPES[0].code)
   const [testNameEtc, setTestNameEtc] = useState(prev?.testNameEtc ?? '')
@@ -22,6 +23,7 @@ function ResultModal({ row, onClose, onSaved }: { row: PsychTestRow; onClose: ()
   const [interpretation, setInterpretation] = useState(prev?.interpretation ?? '')
   const [opinion, setOpinion] = useState(prev?.opinion ?? '')
   const [openToStudent, setOpenToStudent] = useState(prev?.openToStudent ?? false)
+  const [conflict, setConflict] = useState(false)
 
   const etcNeeded = testCode === 'ETC' && testNameEtc.trim() === ''
   const valid = testedAt !== '' && interpretation.trim() !== '' && opinion.trim() !== '' && !etcNeeded
@@ -34,17 +36,23 @@ function ResultModal({ row, onClose, onSaved }: { row: PsychTestRow; onClose: ()
   const save = (status: PsychTestStatus) => {
     if (status === '완료' && !valid) return
     run(async () => {
-      await upsertPsychTest(row.request.id, {
-        testCode,
-        testNameEtc: testCode === 'ETC' ? testNameEtc.trim() : undefined,
-        testedAt,
-        scales: scales.filter(item => item.label.trim() !== ''),
-        interpretation: interpretation.trim(),
-        opinion: opinion.trim(),
-        openToStudent,
-        status,
-      })
-      onSaved()
+      try {
+        await upsertPsychTest(row.request.id, {
+          expectedVersion: prev?.version ?? 0,
+          testCode,
+          testNameEtc: testCode === 'ETC' ? testNameEtc.trim() : undefined,
+          testedAt,
+          scales: scales.filter(item => item.label.trim() !== ''),
+          interpretation: interpretation.trim(),
+          opinion: opinion.trim(),
+          openToStudent,
+          status,
+        })
+        onSaved()
+      } catch (cause) {
+        if (cause instanceof ApiError && cause.status === 409) setConflict(true)
+        throw cause
+      }
     })
   }
 
@@ -118,10 +126,17 @@ function ResultModal({ row, onClose, onSaved }: { row: PsychTestRow; onClose: ()
       </label>
 
       {error && <p className="admin-field-hint" role="alert">{error}</p>}
+      {conflict && <div>
+        <p className="admin-field-hint">작성한 내용은 아직 저장되지 않았습니다. 아래 버튼을 누르면 현재 입력 내용이 최신 저장 결과로 바뀝니다.</p>
+        <button type="button" className="admin-btn admin-btn-ghost" disabled={saving}
+          onClick={() => run(async () => { await loadPsychTests(); onReload() })}>
+          {saving ? '처리 중…' : '최신 결과 불러오기'}
+        </button>
+      </div>}
       <div className="admin-form-actions">
         <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>닫기</button>
-        <button type="button" className="admin-btn admin-btn-ghost" disabled={saving} onClick={() => save('작성중')}>임시 저장</button>
-        <button type="button" className="admin-btn admin-btn-primary" disabled={!valid || saving} onClick={() => save('완료')}>{saving ? '저장 중…' : '작성 완료'}</button>
+        <button type="button" className="admin-btn admin-btn-ghost" disabled={saving || conflict} onClick={() => save('작성중')}>임시 저장</button>
+        <button type="button" className="admin-btn admin-btn-primary" disabled={!valid || saving || conflict} onClick={() => save('완료')}>{saving ? '저장 중…' : '작성 완료'}</button>
       </div>
     </AdminModal>
   )
@@ -201,7 +216,12 @@ export default function PsychTests() {
         )}
       </section>
 
-      {target && <ResultModal row={target} onClose={() => setTarget(null)} onSaved={() => { setTarget(null); setRevision(n => n + 1) }} />}
+      {target && <ResultModal key={`${target.request.id}:${revision}`} row={target} onClose={() => setTarget(null)}
+        onSaved={() => { setTarget(null); setRevision(n => n + 1) }}
+        onReload={() => {
+          setTarget(getPsychTestRows(user.id).find(row => row.request.id === target.request.id) ?? null)
+          setRevision(n => n + 1)
+        }} />}
     </div>
   )
 }

@@ -85,7 +85,8 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
-  max-height: 380px;
+  /* 10건 높이(행 ~58px)만 보이고 나머지는 스크롤 — 끝에 닿으면 옛 알림을 이어 받는다. */
+  max-height: 580px;
   overflow-y: auto;
   margin: 0;
   padding: 0;
@@ -105,6 +106,29 @@
 
 .nbell-item:hover {
   background: var(--muted, #f1f3f6);
+}
+
+/* 읽은 알림 — 회색 바탕에 글자를 눌러 "지난 것"으로 보이게 한다. */
+.nbell-item.is-read {
+  background: var(--muted, var(--color-section-bg, #f1f3f6));
+}
+.nbell-item.is-read .nbell-text strong {
+  font-weight: 500;
+  color: var(--muted-foreground, var(--text-sub, #565e6d));
+}
+.nbell-item.is-read .nbell-dot {
+  opacity: .45;
+}
+.nbell-item.is-read:hover {
+  background: var(--border, #E2E6EC);
+}
+
+.nbell-more {
+  padding: 10px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--muted-foreground, var(--text-sub, #565e6d));
 }
 
 .nbell-dot {

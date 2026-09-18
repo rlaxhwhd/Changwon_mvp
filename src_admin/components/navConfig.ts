@@ -1,13 +1,13 @@
 import type { IconType } from 'react-icons'
 import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardCheck, LuClock, LuContact, LuFileText, LuGlobe, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSearch, LuSettings, LuSparkles, LuTable, LuUsers, LuUsersRound, LuUserX } from 'react-icons/lu'
 // ─────────────────────────────────────────────────────────────────────────
-// 교직원(백오피스) 포털 네비 단일 소스 — 상담사·교수·조교 공용.
-// 역할(StaffRole)로 섹션과 하위 항목을 필터한다 = 현행 SY_MENU_AUTH(역할↔메뉴) 계승.
-//   상담사(career/psych): 홈 → 진단 관리 → 상담 관리 → 학생 관리 → 로드맵/채용/비교과[career] → 설정
+// 교직원(백오피스) 포털 네비 단일 소스 — 상담사·교수·조교·시스템관리자 공용.
+// ★ 어느 역할에 보이는지는 여기서 정하지 않는다 — DB `dc.menu_auth`(현행 SY_MENU_AUTH 계승)가 정본이고
+//   `/metadata` 가 로그인 사용자의 역할에 허용된 메뉴만 내려준다. 관리자는 /admin/system/menus 에서 역할별로 켜고 끈다.
+//   여기 배열은 경로·아이콘·계층(menu_code = 섹션 id + '.' + child 인덱스)만 든다.
+//   상담사(career/psych): 홈 → 진단 관리 → 상담 관리 → 학생 관리 → 로드맵/채용/비교과 → 설정
 //   교수(professor): SPEC §3-5   조교(assistant): SPEC §3-2
-// [career] 표시 섹션은 진로상담사 전용. 설정의 "가능 시간대"는 상담사 전용(child roles).
 // ─────────────────────────────────────────────────────────────────────────
-import type { StaffRole } from '../data/schema/staff'
 import { menuItems } from '../../shared/metadataStore'
 
 export interface NavChild {
@@ -15,8 +15,6 @@ export interface NavChild {
   path: string
   icon: IconType
   children?: NavChild[]
-  /** 이 항목을 볼 수 있는 역할. 없으면 상위 섹션이 노출되는 모든 역할에 노출. */
-  roles?: StaffRole[]
 }
 
 export interface NavSection {
@@ -26,35 +24,33 @@ export interface NavSection {
   /** 섹션 대표 경로 (없으면 첫 child) */
   path?: string
   icon: IconType
-  /** 이 섹션을 볼 수 있는 역할. 없으면 모든 역할에 노출. */
-  roles?: StaffRole[]
   children: NavChild[]
 }
-
-/** 상담사 2종(진로+심리) 공통 노출 */
-const COUNSELOR: StaffRole[] = ['career', 'psych']
 
 const ALL_SECTIONS: NavSection[] = [
   // ── 시스템관리자 ─────────────────────────────────────────────────────
   // 현행 관리자 메뉴 트리(CURRENT.md §1-3)를 상단바로 옮긴 것. 시스템 관리 외에는 자리만 있고 화면은 아직 없다.
   // ★ child 순서 = DB menu_code 의 인덱스(system.0 …)다 — 순서를 바꾸면 041 마이그레이션과 어긋난다.
-  { id: 'adm-forecast', label: '취업예측분석시스템', roles: ['admin'], basePaths: ['/forecast'], path: '/forecast', icon: LuChartNoAxesColumn, children: [] },
+  { id: 'adm-forecast', label: '취업예측분석시스템', basePaths: ['/forecast'], path: '/forecast', icon: LuChartNoAxesColumn, children: [] },
   {
-    id: 'adm-members', label: '회원관리', roles: ['admin'], basePaths: ['/members'], icon: LuUsers,
+    id: 'adm-members', label: '회원관리', basePaths: ['/members'], icon: LuUsers,
     children: [
       { label: '조교학과배정', path: '/members/assistants', icon: LuContact },
       { label: '교수학과배정', path: '/members/professors', icon: LuGraduationCap },
       { label: '기업회원관리', path: '/members/companies', icon: LuBuilding2 },
     ],
   },
-  { id: 'adm-diagnosis', label: '진단관리', roles: ['admin'], basePaths: ['/diagnosis'], path: '/diagnosis', icon: LuClipboardCheck, children: [] },
-  { id: 'adm-counsel', label: '상담관리', roles: ['admin'], basePaths: ['/counsel'], path: '/counsel', icon: LuHeadset, children: [] },
-  { id: 'adm-roadmap', label: '로드맵관리', roles: ['admin'], basePaths: ['/roadmap'], path: '/roadmap', icon: LuRoute, children: [] },
-  { id: 'adm-programs', label: '비교과프로그램관리', roles: ['admin'], basePaths: ['/extracurricular'], path: '/extracurricular', icon: LuGraduationCap, children: [] },
-  { id: 'adm-companies', label: '기업정보플랫폼', roles: ['admin'], basePaths: ['/companies'], path: '/companies', icon: LuBuilding2, children: [] },
-  { id: 'adm-notices', label: '공지사항', roles: ['admin'], basePaths: ['/notices'], path: '/notices', icon: LuFileText, children: [] },
+  { id: 'adm-diagnosis', label: '진단관리', basePaths: ['/diagnosis'], path: '/diagnosis', icon: LuClipboardCheck, children: [] },
+  { id: 'adm-counsel', label: '상담관리', basePaths: ['/counsel'], path: '/counsel', icon: LuHeadset, children: [] },
+  { id: 'adm-programs', label: '비교과프로그램관리', basePaths: ['/extracurricular'], path: '/extracurricular', icon: LuGraduationCap, children: [] },
+  { id: 'adm-companies', label: '기업정보플랫폼', basePaths: ['/companies'], path: '/companies', icon: LuBuilding2, children: [] },
+  { id: 'adm-notices', label: '공지사항', basePaths: ['/notices'], path: '/notices', icon: LuFileText, children: [] },
   {
-    id: 'system', label: '시스템 관리', roles: ['admin'], basePaths: ['/system'], icon: LuSettings,
+    id: 'adm-quests', label: '퀘스트 관리', basePaths: ['/quests'], path: '/quests/missions', icon: LuClipboardCheck,
+    children: [{ label: '미션 관리', path: '/quests/missions', icon: LuList }],
+  },
+  {
+    id: 'system', label: '시스템 관리', basePaths: ['/system'], icon: LuSettings,
     // 현행 시스템관리 좌측 메뉴 15개 그대로 + 우리가 더한 2개(변경 이력·이관 확인 사항).
     children: [
       { label: '메뉴관리', path: '/system/menus', icon: LuList },
@@ -76,11 +72,17 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '이관 확인 사항', path: '/system/issues', icon: LuSearch },
     ],
   },
+  {
+    id: 'adm-blacklists', label: '블랙리스트 관리', basePaths: ['/blacklists'], icon: LuUserX,
+    children: [
+      { label: '비교과 블랙리스트', path: '/blacklists/programs', icon: LuUserX },
+      { label: 'SMS 블랙리스트', path: '/blacklists/sms', icon: LuInbox },
+    ],
+  },
   // ── 상담사 (진로 + 심리) ────────────────────────────────────────────
   {
     id: 'home',
     label: '홈',
-    roles: COUNSELOR,
     basePaths: ['/'],
     path: '/',
     icon: LuHouse,
@@ -90,7 +92,6 @@ const ALL_SECTIONS: NavSection[] = [
     id: 'diagnosis',
     label: '진단 관리',
     // CARE 7+ 진단은 진로 경로다 — 심리상담사는 보지 않는다(058).
-    roles: ['career'],
     basePaths: ['/diagnosis'],
     icon: LuClipboardCheck,
     children: [
@@ -100,25 +101,23 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'counsel',
     label: '상담 관리',
-    roles: COUNSELOR,
     basePaths: ['/counsel'],
     icon: LuHeadset,
     children: [
       { label: '신청 접수함', path: '/counsel/requests', icon: LuInbox },
       { label: '일정·예약', path: '/counsel/schedule', icon: LuCalendarDays },
       { label: '상담일지', path: '/counsel/journals', icon: LuFileText },
-      { label: '집단상담', path: '/counsel/groups', icon: LuUsersRound, roles: ['career'] },
-      { label: '심리검사 결과', path: '/counsel/psych-tests', icon: LuBrain, roles: ['psych'] },
+      { label: '집단상담', path: '/counsel/groups', icon: LuUsersRound },
+      { label: '심리검사 결과', path: '/counsel/psych-tests', icon: LuBrain },
       { label: '상담 통계', path: '/counsel/stats', icon: LuChartNoAxesColumn },
       // 학생 신청 없이 남기는 심리상담 기록 — 교수 발의 기록과 같은 방식(counsel.6).
-      { label: '추가 심리상담신청', path: '/counsel/psych-records/new', icon: LuPlus, roles: ['psych'] },
+      { label: '추가 심리상담신청', path: '/counsel/psych-records/new', icon: LuPlus },
       { label: '심리상담센터 연계', path: '/counsel/psych-referrals', icon: LuBrain },
     ],
   },
   {
     id: 'students',
     label: '학생 관리',
-    roles: COUNSELOR,
     basePaths: ['/students'],
     path: '/students',
     icon: LuUsers,
@@ -133,7 +132,6 @@ const ALL_SECTIONS: NavSection[] = [
     label: '로드맵 관리',
     basePaths: ['/roadmap'],
     icon: LuRoute,
-    roles: ['career'],
     children: [
       // 생성이 먼저다 — 로드맵이 없으면 요청도 이행률도 있을 수 없다.
       { label: '로드맵 생성', path: '/roadmap/create', icon: LuSparkles },
@@ -146,12 +144,10 @@ const ALL_SECTIONS: NavSection[] = [
     label: '비교과 운영',
     basePaths: ['/programs'],
     icon: LuGraduationCap,
-    roles: ['career'],
     children: [
       { label: '프로그램 목록', path: '/programs', icon: LuList },
       { label: '프로그램 관리', path: '/programs/manage', icon: LuTable },
       { label: '프로그램 등록', path: '/programs/new', icon: LuPlus },
-      { label: '블랙리스트', path: '/programs/blacklist', icon: LuUserX },
     ],
   },
   {
@@ -160,7 +156,6 @@ const ALL_SECTIONS: NavSection[] = [
     basePaths: ['/jobs'],
     path: '/jobs',
     icon: LuBuilding2,
-    roles: ['career'],
     children: [
       { label: '교내 공고 목록', path: '/jobs', icon: LuList },
       // 목록은 학생이 보는 카드 그대로 '보기', 수정·삭제는 관리 화면에서 — 비교과와 같은 갈래다.
@@ -175,7 +170,6 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'prof-advisees',
     label: '지도학생',
-    roles: ['professor'],
     basePaths: ['/professor/advisees'],
     path: '/professor/advisees',
     icon: LuUsers,
@@ -184,7 +178,6 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'prof-students',
     label: '학생 검색',
-    roles: ['professor'],
     basePaths: ['/professor/students'],
     path: '/professor/students',
     icon: LuSearch,
@@ -193,7 +186,6 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'prof-counsel',
     label: '상담 관리',
-    roles: ['professor'],
     basePaths: ['/professor/counsel'],
     icon: LuHeadset,
     children: [
@@ -204,7 +196,6 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'prof-setup',
     label: '상담 설정',
-    roles: ['professor'],
     basePaths: ['/professor/schedule', '/professor/profile'],
     icon: LuSettings,
     children: [
@@ -217,7 +208,6 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'asst-students',
     label: '학생 현황',
-    roles: ['assistant'],
     basePaths: ['/assistant/students'],
     path: '/assistant/students',
     icon: LuUsers,
@@ -226,7 +216,6 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'asst-advisor',
     label: '전담교수',
-    roles: ['assistant'],
     basePaths: ['/assistant/advisor'],
     icon: LuContact,
     children: [
@@ -237,7 +226,6 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'asst-companies',
     label: '학과추천기업관리',
-    roles: ['assistant'],
     basePaths: ['/assistant/companies'],
     path: '/assistant/companies',
     icon: LuBuilding2,
@@ -248,27 +236,25 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'settings',
     label: '설정',
-    roles: ['career', 'psych', 'professor'],
     basePaths: ['/settings'],
     path: '/settings',
     icon: LuSettings,
     children: [
       { label: '내 프로필', path: '/settings', icon: LuIdCard },
-      { label: '가능 시간대', path: '/settings/availability', icon: LuClock, roles: COUNSELOR },
+      { label: '가능 시간대', path: '/settings/availability', icon: LuClock },
     ],
   },
 ]
 
-/** 역할에 노출되는 섹션 + 그 하위 항목만 반환 (섹션·child 모두 roles 필터) */
-export function getNavSections(role: StaffRole): NavSection[] {
+/** 로그인 사용자에게 허용된(=`/metadata` 메뉴에 있고 is_active 인) 섹션 + 하위 항목만 반환. 라벨·순서도 DB 를 따른다. */
+export function getNavSections(): NavSection[] {
   function children(items: NavChild[], parent: string): NavChild[] {
     return items.map((item,index) => ({item,meta:menuItems.find(row => row.menu_code === `${parent}.${index}`),key:`${parent}.${index}`}))
-      .filter(({item,meta}) => meta?.is_active && (!item.roles || item.roles.includes(role)))
+      .filter(({meta}) => meta?.is_active)
       .sort((a,b) => a.meta!.sort_order - b.meta!.sort_order)
       .map(({item,meta,key}) => ({...item,label:meta!.label,children:item.children ? children(item.children,key) : undefined}))
   }
   return ALL_SECTIONS
-    .filter(s => !s.roles || s.roles.includes(role))
     .map(s => ({section:s,meta:menuItems.find(row => row.menu_code === s.id)}))
     .filter(({meta}) => meta?.is_active)
     .sort((a,b) => a.meta!.sort_order - b.meta!.sort_order)

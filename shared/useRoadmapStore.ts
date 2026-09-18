@@ -27,7 +27,7 @@ export function useRoadmap(studentId: string): number {
 /** 이 학생의 성장 자료를 적재하고 구독한다. */
 export function useGrowth(studentId: string): number {
   const revision = useStore(GROWTH_EVENT)
-  useEffect(() => { ensureGrowth(studentId) }, [studentId])
+  useEffect(() => { ensureGrowth(studentId, true) }, [studentId])
   return revision
 }
 

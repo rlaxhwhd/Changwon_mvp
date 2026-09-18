@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from random import SystemRandom
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
@@ -147,6 +148,48 @@ def nudge(identity: str,test_id: str,user=Depends(principal,scope='function'),co
     return dict(id=row['id'],studentId=student['alias'],testId=test_id,by=user['alias'],sentAt=row['created_at'])
 
 
+def factor_catalog(conn,test_id):
+    """개발 임의 결과가 채울 결과표 항목 [(factor_code|None, 요인명)].
+    C2~C4 는 dc.diagnosis_factor_definition 이 정본(정렬은 코드 라벨 순서 = /metadata 와 동일).
+    CCORE·C1 은 정의 테이블이 없어 시드 fixture 결과의 요인명을 빌린다. 둘 다 없으면(C5·C6) None —
+    결과표가 정해지지 않은 검사에 임의값을 만들지 않는다."""
+    rows=conn.execute("""SELECT d.factor_code,c.label FROM dc.diagnosis_factor_definition d
+      JOIN dc.code_item c ON (c.group_code,c.code)=(d.label_group,d.label_code) WHERE d.test_code=%s ORDER BY c.sort_order""",(test_id.upper(),)).fetchall()
+    if rows: return [(r['factor_code'],r['label']) for r in rows]
+    template=conn.execute("SELECT payload FROM dc.diagnosis_result WHERE test_id=%s AND source LIKE 'fixture%%' ORDER BY tested_at LIMIT 1",(test_id,)).fetchone()
+    names=[f['name'] for f in (template['payload'].get('factors',[]) if template else []) if isinstance(f,dict) and f.get('name')]
+    return [(None,n) for n in names] or None
+
+
+def random_result(conn,student,test_id,attempt_no,now):
+    """fixture 가 없는 학생(학사 미러에서 온 실제 학생)용 임의 결과. 채점·판정 엔진이 아니다 —
+    외부 진단 사이트가 결과를 API 로 넘겨 주기 전까지 화면·게이트를 돌려 보기 위한 개발 자료다.
+    반환: (결과 payload, C-CORE 면 확정할 유형 코드 else None)"""
+    catalog=factor_catalog(conn,test_id)
+    if not catalog: raise HTTPException(409,'결과표 항목이 아직 없는 검사입니다. 임의 결과를 생성할 수 없습니다.')
+    rng=SystemRandom()
+    factors=[]
+    for code,name in catalog:
+        t=round(rng.uniform(30,70),2)
+        # 구간 라벨은 임의값을 읽기 좋게 붙인 것일 뿐 채점 규칙이 아니다(CLAUDE.md 코드 규칙 14).
+        factor={'name':name,'tScore':t,'level':'낮음' if t<45 else '높음' if t>=55 else '보통'}
+        if code: factor['factorCode']=code
+        factors.append(factor)
+    outcome=None
+    if test_id=='ccore':
+        # 이미 유형이 있는 학생은 그대로 둔다(상담사가 확정한 유형을 임의값이 덮지 않는다).
+        current=conn.execute('SELECT student_type FROM dc.student_list WHERE intg_uid=%s',(student['intg_uid'],)).fetchone()
+        rules=conn.execute('SELECT code,label,lower(follow_up_test) AS follow_up FROM dc.student_type_rule ORDER BY code').fetchall()
+        candidates=[r for r in rules if factor_catalog(conn,r['follow_up'])]  # 후속진단 결과표가 있는 유형만 — 막다른 길을 만들지 않는다
+        chosen=next((r for r in rules if current and r['code']==current['student_type']),None) or rng.choice(candidates)
+        outcome=chosen['code']; headline=chosen['label']; caption='핵심진단 검사 결과 유형'
+    else:
+        headline=max(factors,key=lambda f: f['tScore'])['name']; caption='강점 요인'
+    result=dict(testId=test_id,studentId=student['alias'],attemptNo=attempt_no,testedAt=now,headline=headline,headlineCaption=caption,
+                comment='개발 테스트용 임의 결과입니다. 실제 검사 결과가 아니며, 외부 진단 결과를 API 로 받으면 대체됩니다.',factors=factors)
+    return result,outcome
+
+
 @router.post('/development/diagnosis/{test_id}/complete')
 def simulate(test_id: str,idempotency_key: str=Header(min_length=8,max_length=200),
              user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
@@ -164,27 +207,33 @@ def simulate(test_id: str,idempotency_key: str=Header(min_length=8,max_length=20
         raise HTTPException(409,'현재 응시할 수 있는 첫 회차 검사만 검증할 수 있습니다.')
     if test_id!='ccore' and not conn.execute("SELECT 1 FROM dc.diagnosis_attempt WHERE student_uid=%s AND test_id='ccore' AND status_code='DONE'",(student['intg_uid'],)).fetchone():
         raise HTTPException(409,'핵심 진단을 먼저 완료해야 합니다.')
-    template=conn.execute('SELECT payload FROM dc.diagnosis_result WHERE student_uid=%s AND test_id=%s ORDER BY attempt_no LIMIT 1',(student['intg_uid'],test_id)).fetchone()
-    if not template: raise HTTPException(409,'이 학생의 개발 검증용 결과가 없습니다. 실제 채점 엔진 연결이 필요합니다.')
-    definitions=conn.execute('SELECT factor_code,label FROM dc.diagnosis_factor_definition WHERE test_code=%s',(test_id.upper(),)).fetchall()
-    if definitions:
-        scores=template['payload'].get('factors',[])
-        if any(not any(f.get('factorCode')==d['factor_code'] or f.get('name')==d['label'] for f in scores) for d in definitions):
-            raise HTTPException(409,'현재 결과표 항목에 맞는 검증용 점수가 없습니다. 기존 예시 점수를 새 항목으로 환산하지 않습니다.')
     attempt_no=conn.execute('SELECT COALESCE(max(attempt_no),0)+1 AS n FROM dc.diagnosis_attempt WHERE student_uid=%s AND test_id=%s',(student['intg_uid'],test_id)).fetchone()['n']
-    now=datetime.now(timezone.utc).isoformat()
-    result={**template['payload'],'studentId':student['alias'],'attemptNo':attempt_no,'testedAt':now,'source':'development:fixture'}
+    now=datetime.now(timezone.utc).date().isoformat()  # 결과표의 testedAt 은 fixture 와 같은 YYYY-MM-DD(화면이 그대로 찍는다)
+    # 시드 fixture 가 있는 데모 학생은 그 결과를 이력으로 남기고, 없는 학생(학사 미러 실학생)은 임의 결과를 만든다.
+    template=conn.execute('SELECT payload FROM dc.diagnosis_result WHERE student_uid=%s AND test_id=%s ORDER BY attempt_no LIMIT 1',(student['intg_uid'],test_id)).fetchone()
+    if template:
+        source='development:fixture'
+        definitions=conn.execute('SELECT factor_code,label FROM dc.diagnosis_factor_definition WHERE test_code=%s',(test_id.upper(),)).fetchall()
+        if definitions:
+            scores=template['payload'].get('factors',[])
+            if any(not any(f.get('factorCode')==d['factor_code'] or f.get('name')==d['label'] for f in scores) for d in definitions):
+                raise HTTPException(409,'현재 결과표 항목에 맞는 검증용 점수가 없습니다. 기존 예시 점수를 새 항목으로 환산하지 않습니다.')
+        result={**template['payload'],'studentId':student['alias'],'attemptNo':attempt_no,'testedAt':now}
+        outcome=(student['detail'] or {}).get('diagnosisOutcome',{}).get('studentType') if test_id=='ccore' else None
+        if test_id=='ccore' and not outcome: raise HTTPException(409,'유형 판정 결과가 정의되어 있지 않습니다.')
+    else:
+        source='development:random'
+        result,outcome=random_result(conn,student,test_id,attempt_no,now)
+    result['source']=source
     payload=dict(studentName=student['name'],studentNo=student['student_no'],studentMajor=student['major_label'],studentGrade=student['grade'],resultSummary=result.get('headline',''))
     attempt_id=str(uuid4())
     conn.execute('''INSERT INTO dc.diagnosis_attempt(id,student_uid,test_id,attempt_no,status_code,started_at,completed_at,payload,source)
-      VALUES(%s,%s,%s,%s,'DONE',now(),now(),%s,'development:fixture')''',(attempt_id,student['intg_uid'],test_id,attempt_no,Jsonb(payload)))
-    conn.execute("INSERT INTO dc.diagnosis_result(student_uid,test_id,attempt_no,tested_at,payload,source) VALUES(%s,%s,%s,now(),%s,'development:fixture')",
-                 (student['intg_uid'],test_id,attempt_no,Jsonb(result)))
-    if test_id=='ccore':
-        outcome=(student['detail'] or {}).get('diagnosisOutcome',{}).get('studentType')
-        if not outcome: raise HTTPException(409,'유형 판정 결과가 정의되어 있지 않습니다.')
-        conn.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source,actor_uid) VALUES(%s,%s,'development:fixture',%s)",(student['intg_uid'],outcome,user['intg_uid']))
-    response={'id':attempt_id,'source':'development:fixture'}
+      VALUES(%s,%s,%s,%s,'DONE',now(),now(),%s,%s)''',(attempt_id,student['intg_uid'],test_id,attempt_no,Jsonb(payload),source))
+    conn.execute("INSERT INTO dc.diagnosis_result(student_uid,test_id,attempt_no,tested_at,payload,source) VALUES(%s,%s,%s,now(),%s,%s)",
+                 (student['intg_uid'],test_id,attempt_no,Jsonb(result),source))
+    if outcome:
+        conn.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source,actor_uid) VALUES(%s,%s,%s,%s)",(student['intg_uid'],outcome,source,user['intg_uid']))
+    response={'id':attempt_id,'source':source}
     conn.execute('INSERT INTO dc.idempotency(actor_uid,route,key,request_hash,response) VALUES(%s,%s,%s,%s,%s)',
                  (user['intg_uid'],route,idempotency_key,test_id,Jsonb(response)))
     return response

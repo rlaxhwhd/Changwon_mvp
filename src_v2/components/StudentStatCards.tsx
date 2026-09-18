@@ -48,7 +48,7 @@ export interface CounselStat {
   total: string
   unit: string
   foot: string
-  /** 유형별 건수. 색은 순서로 정해진다 — 시안 순서(진로취업 · 심리 · 지도교수)를 지킬 것. */
+  /** 갈래별 건수. 색은 순서로 정해진다 — 순서·라벨은 counselTrack.COUNSEL_BUCKET_ORDER(일반 · CARE 7+ · 기타)가 정본. */
   channels: { label: string; count: string }[]
 }
 

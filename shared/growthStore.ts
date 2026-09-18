@@ -9,6 +9,7 @@
 // 오늘 미션·퀘스트·XP·레벨·랭킹. 화면 상수를 서버 값으로 승격하지 않는다.
 // ─────────────────────────────────────────────────────────────────────────
 import { api, queryString } from './api'
+import { beginStudentFetch, invalidateStudent, isStudentFresh, revalidateStudent, touchStudentCache } from './studentCache'
 
 export const GROWTH_EVENT = 'dc_growth_changed'
 
@@ -77,6 +78,8 @@ export interface GrowthState {
 
 const states = new Map<string, GrowthState>()
 const pending = new Map<string, Promise<void>>()
+const errors = new Map<string, string>()
+let cacheEpoch = 0
 let wishlist: { programId: string; wished: boolean; version: number }[] = []
 
 function publish(): void {
@@ -92,35 +95,63 @@ export function growthEntries(studentId: string, kind?: GrowthKind): GrowthEntry
   return kind ? rows.filter(row => row.kind === kind) : rows
 }
 
+export function growthLoadError(studentId: string): string | undefined {
+  return errors.get(studentId)
+}
+
+async function allEntries(base: string): Promise<GrowthEntry[]> {
+  const result: GrowthEntry[] = []
+  for (let page = 1; ; page += 1) {
+    const batch = await api<{ items: GrowthEntry[]; totalCount: number }>(`${base}/entries?pageSize=100&page=${page}`)
+    result.push(...batch.items)
+    if (!batch.items.length || result.length >= batch.totalCount) return result
+  }
+}
+
 export async function loadGrowth(studentId: string): Promise<void> {
+  const epoch = cacheEpoch
+  const token = beginStudentFetch('growth', studentId)
   const base = `/students/${encodeURIComponent(studentId)}/growth`
   const [profile, entries, summary, star] = await Promise.all([
     api<GrowthProfile>(`${base}/profile`),
-    api<{ items: GrowthEntry[] }>(`${base}/entries?pageSize=100`),
+    allEntries(base),
     api<GrowthSummary>(`${base}/summary`),
     api<StarTrackEnvelope>(`/students/${encodeURIComponent(studentId)}/star-track`),
   ])
-  states.set(studentId, { profile, entries: entries.items, summary, star })
+  if (epoch !== cacheEpoch) return
+  errors.delete(studentId)
+  states.set(studentId, { profile, entries, summary, star })
+  touchStudentCache('growth', studentId, token)
   publish()
 }
 
-export function ensureGrowth(studentId: string): void {
-  if (!studentId || states.has(studentId) || pending.has(studentId)) return
+/** reload 는 「오래됐으면 다시 읽는다」다 — 신선한 캐시는 그대로 쓴다(studentCache 재검증 규칙). */
+export function ensureGrowth(studentId: string, reload = false): void {
+  if (!studentId || pending.has(studentId)) return
+  if (states.has(studentId) && (!reload || isStudentFresh('growth', studentId))) return
+  const epoch = cacheEpoch
   const task = loadGrowth(studentId)
-    .catch(() => { /* 실패는 화면의 로드 상태가 표시한다 */ })
-    .finally(() => { pending.delete(studentId) })
+    .catch(() => { if (epoch !== cacheEpoch) return; errors.set(studentId, '성장 기록을 불러오지 못했습니다. 다시 시도해 주세요.'); publish() })
+    .finally(() => { if (epoch === cacheEpoch) pending.delete(studentId) })
   pending.set(studentId, task)
 }
 
 export function clearGrowthCache(): void {
+  cacheEpoch += 1
   states.clear()
+  errors.clear()
   pending.clear()
+  portfolios.clear()
+  invalidateStudent('growth')
+  invalidateStudent('portfolio')
   wishlist = []
   publish()
 }
 
 async function refresh(studentId: string): Promise<void> {
   states.delete(studentId)
+  // 포트폴리오는 성장 항목에서 파생된다 — 같은 쓰기가 둘 다 바꾼다.
+  invalidateStudent('portfolio', studentId)
   await loadGrowth(studentId)
 }
 
@@ -209,6 +240,19 @@ export interface PortfolioDTO {
 
 export function loadPortfolio(studentId: string): Promise<PortfolioDTO> {
   return api<PortfolioDTO>(`/students/${encodeURIComponent(studentId)}/portfolio`)
+}
+
+const portfolios = new Map<string, PortfolioDTO>()
+
+/** 같은 학생 재오픈은 캐시로 즉시, 오래됐으면 뒤에서 다시 읽는다. 갱신은 GROWTH_EVENT 로 알린다. */
+export async function ensurePortfolio(studentId: string): Promise<PortfolioDTO> {
+  await revalidateStudent('portfolio', studentId, async () => {
+    const next = await loadPortfolio(studentId)
+    const prev = portfolios.get(studentId)
+    portfolios.set(studentId, next)
+    if (prev && prev.version !== next.version) publish()
+  })
+  return portfolios.get(studentId)!
 }
 
 export interface Recommendation { category: string | null; title: string; reason: string | null

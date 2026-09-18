@@ -2005,3 +2005,5 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+.mn-page .hero-competency .competency-layout--empty { grid-template-columns: minmax(0, 1fr); }

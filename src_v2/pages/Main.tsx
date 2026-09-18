@@ -136,7 +136,7 @@ export default function Main() {
             </header>
             <div data-slot="card-content">
               {student.coreCompetencySource === 'DEVELOPMENT_CARE7_TEST' && <p>개발 테스트용 예시 점수입니다.</p>}
-              <div className="competency-layout">
+              <div className={`competency-layout${competencyAxes.length ? '' : ' competency-layout--empty'}`}>
                 <div className="radar-wrap">
                   {/* 축·점수는 데이터층이 준다(data/competency). 좌표를 화면에 적지 않는다. */}
                   <CompetencyRadarChart
@@ -157,7 +157,7 @@ export default function Main() {
                     </defs>
                   </CompetencyRadarChart>
                 </div>
-                <div className="competency-side">
+                {competencyAxes.length > 0 && <div className="competency-side">
                   <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 수준</span></div>
                   <div className="axis-list">
                     {competencyAxes.map(axis => (
@@ -167,7 +167,7 @@ export default function Main() {
                       </div>
                     ))}
                   </div>
-                </div>
+                </div>}
               </div>
             </div>
           </section>

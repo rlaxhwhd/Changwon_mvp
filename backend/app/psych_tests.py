@@ -24,6 +24,7 @@ class Scale(BaseModel):
 
 class PsychTestWrite(BaseModel):
     model_config=ConfigDict(extra='forbid')
+    expectedVersion:int=Field(ge=0)
     testCode:str=Field(min_length=1,max_length=40)
     testNameEtc:str|None=Field(None,max_length=200)
     testedAt:date
@@ -75,7 +76,11 @@ def save_psych_test(request_id:str,body:PsychTestWrite,user=Depends(principal,sc
         raise HTTPException(422,'작성 완료에는 결과 해석과 상담사 소견이 필요합니다.')
     scales=Jsonb([s.model_dump(exclude_none=True) for s in body.scales])
     status='DONE' if body.status=='완료' else 'DRAFT'
-    existing=conn.execute('SELECT id FROM dc.psych_test_result WHERE request_id=%s FOR UPDATE',(request_id,)).fetchone()
+    existing=conn.execute('SELECT id,version FROM dc.psych_test_result WHERE request_id=%s FOR UPDATE',(request_id,)).fetchone()
+    # The parent request lock serializes both first creation and later edits.
+    # Zero means the editor observed no result, not permission to overwrite one.
+    if body.expectedVersion != (existing['version'] if existing else 0):
+        raise HTTPException(409,'다른 상담사가 결과를 변경했습니다. 입력 내용을 확인한 뒤 최신 결과를 불러와 다시 수정해 주세요.')
     if existing:
         conn.execute('''UPDATE dc.psych_test_result SET test_code=%s,test_name_etc=%s,tested_at=%s,scales=%s,interpretation=%s,opinion=%s,
           open_to_student=%s,status_code=%s,counselor_uid=%s,updated_at=now(),version=version+1 WHERE id=%s''',

@@ -28,7 +28,8 @@ import { PROF_COUNSEL_CATEGORIES, type ProfCounselCategoryCode } from './schema/
 import { getPrograms } from './programs'
 import type { ProgramApplicant } from './schema/program'
 import { getStudentRoadmap, getRoadmapProgress } from './roadmap'
-import { getRoadmapRequests } from './roadmapRequests'
+import { counselRequests } from '../../shared/counselStore'
+import { counselBucketChannels } from '../../src_v2/data/counselTrack'
 
 // ── ① 역량 레이더 (5대 핵심역량 카드) ──────────────────────────────────────
 // 축·점수는 학생 포털과 같은 곳에서 온다(src_v2/data/competency).
@@ -76,6 +77,9 @@ export interface DiagnosisCard {
   tint: string
 }
 
+/** ISO 시각 → 한국 날짜 `YYYY-MM-DD` (sv-SE 로케일이 그 형식을 준다) */
+const kstDate = (iso: string) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date(iso))
+
 /** 검사별 색 — DESIGN.md 7색 안에서만 고른다. 새 색을 만들지 않는다. */
 const TEST_TINT: Record<string, string> = {
   CCORE: 'purple', C1: 'green', C2: 'blue', C3: 'teal', C4: 'yellow', C5: 'orange', C6: 'red',
@@ -103,7 +107,8 @@ export function getDiagnosisCards(studentId: string, type: StudentType | null): 
       module,
       state,
       resultSummary: a?.resultSummary,
-      completedAt: a?.completedAt,
+      // 카드에는 날짜만 — 서버 ISO(시각·오프셋 포함)를 그대로 보이면 너무 세세하다. 한국 날짜 기준.
+      completedAt: a?.completedAt ? kstDate(a.completedAt) : undefined,
       attemptNo: a?.attemptNo,
       tags: a?.resultSummary ? a.resultSummary.split('·').map(s => s.trim()).filter(Boolean) : [],
       tint: TEST_TINT[module.id] ?? 'blue',
@@ -311,18 +316,13 @@ export function getGoalPlan(student: StudentData): GoalPlan | null {
 export function getStudentStatCards(student: StudentData, type: StudentType | null): StudentStat[] {
   const cards = getDiagnosisCards(student.id, type)
   const diagDone = cards.filter(c => c.state === '완료').length
-  const counsel = getCounselOverview(student.id)
-  const counselTotal = counsel.reduce((n, c) => n + c.total, 0)
-  const counselDone = counsel.reduce((n, c) => n + c.done, 0)
-  // 요약 카드의 갈래는 「누가 상담했나」(진로취업·심리·지도교수)가 아니라
-  // 「어떤 경로로 들어왔나」다. 진로취업을 일반 신청과 로드맵 변경 요청으로 가르고,
-  // 나머지(심리·지도교수)는 기타로 묶는다.
-  // ★ 라벨만 바꾸면 숫자가 거짓말이 된다 — 세는 대상을 함께 바꾼다.
-  const careerCount = counsel.find(c => c.channel === '진로취업')?.total ?? 0
-  const roadmapReqCount = getRoadmapRequests().filter(r => r.studentId === student.id).length
-  const etcCount = counsel
-    .filter(c => c.channel !== '진로취업')
-    .reduce((n, c) => n + c.total, 0)
+  // 상담 현황 카드는 학생 라운지(src_v2/data/lounge)와 같은 기준으로 센다 —
+  // 서버 DTO(shared/counselStore)에서 이 학생의 신청을 읽고 취소 건을 뺀 뒤,
+  // 갈래(일반 · CARE 7+ · 기타)는 counselTrack 한 곳의 판정을 쓴다.
+  // 예전처럼 getCounselOverview 총계를 쓰면 취소 건이 섞여 라운지와 숫자가 어긋난다.
+  const counselRows = counselRequests().filter(r => r.studentId === student.id && r.status !== '취소')
+  const counselTotal = counselRows.length
+  const counselDone = counselRows.filter(r => r.status === '완료').length
   const roadmap = getStudentRoadmap(student.id)
   const progress = roadmap?.progress.pct ?? 0
   const programs = getStudentPrograms(student.id)
@@ -373,16 +373,10 @@ export function getStudentStatCards(student: StudentData, type: StudentType | nu
       kind: 'counsel',
       kicker: CARE,
       label: '상담 현황',
-      // 총계는 상담 건수 그대로 둔다 — 로드맵 요청은 상담이 아니라 요청이라 합계에 섞지 않는다.
       total: String(counselTotal),
       unit: '건',
       foot: counselTotal > 0 ? `완료 ${counselDone} · 예정 ${counselTotal - counselDone}` : '이력 없음',
-      // 순서가 색을 정한다 — 아래 순서를 바꾸면 카드의 점 색이 함께 바뀐다.
-      channels: [
-        { label: '진로취업-일반', count: `${careerCount}건` },
-        { label: '진로취업 - 로드맵요청', count: `${roadmapReqCount}건` },
-        { label: '기타', count: `${etcCount}건` },
-      ],
+      channels: counselBucketChannels(counselRows),
     },
     {
       kind: 'roadmap',
@@ -406,20 +400,29 @@ export function getStudentStatCards(student: StudentData, type: StudentType | nu
     },
   ]
 
-  // 성장 레벨은 시드에 growth 블록이 있는 학생만 (승급 산식 미확정 — PROCESS.md §9)
-  if (growth) {
-    stats.push({
-      kind: 'level',
-      label: '성장 레벨',
-      levelUnit: 'LV',
-      level: String(growth.level),
-      tierLabel: '현재 성장 단계',
-      tier: growth.tier,
-      xp: `${growth.xp.toLocaleString('ko-KR')} XP`,
-      xpFoot: `다음 레벨까지 ${(growth.xpNext - growth.xp).toLocaleString('ko-KR')} XP`,
-      pct: growth.xpNext > 0 ? Math.round((growth.xp / growth.xpNext) * 100) : 0,
-    })
-  }
+  // 성장 레벨 — growth 블록이 없는 학생(퀘스트 이력 없음)도 카드를 비우지 않고 LV 0 으로 남긴다.
+  // (승급 산식 미확정 — PROCESS.md §9)
+  stats.push(growth ? {
+    kind: 'level',
+    label: '성장 레벨',
+    levelUnit: 'LV',
+    level: String(growth.level),
+    tierLabel: '현재 성장 단계',
+    tier: growth.tier,
+    xp: `${growth.xp.toLocaleString('ko-KR')} XP`,
+    xpFoot: `다음 레벨까지 ${(growth.xpNext - growth.xp).toLocaleString('ko-KR')} XP`,
+    pct: growth.xpNext > 0 ? Math.round((growth.xp / growth.xpNext) * 100) : 0,
+  } : {
+    kind: 'level',
+    label: '성장 레벨',
+    levelUnit: 'LV',
+    level: '0',
+    tierLabel: '현재 성장 단계',
+    tier: '신청 이력 없음',
+    xp: '0 XP',
+    xpFoot: '획득한 XP 가 없습니다',
+    pct: 0,
+  })
 
   return stats
 }

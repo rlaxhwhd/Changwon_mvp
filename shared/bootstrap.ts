@@ -19,7 +19,7 @@ import { loadRoadmap, loadRoadmapCapability, loadRoadmapRequests, roadmapCapabil
 import { loadGrowth, loadWishlist as loadProgramWishlist } from './growthStore'
 import { counselorProfiles, loadCounselorProfiles, loadSchedule, loadGroups, loadPublicSlots } from './counselOperationsStore'
 import type { Counselor } from '../src_admin/data/schema/counselor'
-import { loadNotices, loadNotifications, loadCounselEvents } from './communicationsStore'
+import { loadNotices, loadNotificationSummary, loadCounselEvents } from './communicationsStore'
 import { loadDepartments } from './departmentStore'
 import { loadProfessorGroups, loadStaffDirectory } from './staffDirectoryStore'
 
@@ -61,7 +61,7 @@ export async function initializeData(): Promise<void> {
       ? staff.departments.filter((item): item is string => typeof item === 'string') : []
     await Promise.all([loadProfiles(), loadCounselRequests(), loadCounselRecords(), loadMetadata(),
                        loadPrograms(), loadPostings(), loadCapability(), loadRoadmapCapability(),
-                       loadCounselorProfiles(), loadNotices(), loadNotifications(), loadCounselEvents(),
+                       loadCounselorProfiles(), loadNotices(), loadNotificationSummary(), loadCounselEvents(),
                        loadDepartments(), loadProfessorGroups(), ...(admin ? [loadStaffDirectory(activeStaff), loadStudentRoster(departments),
                          ...(staff && ['assistant', 'professor'].includes(staff.role)
                            ? [loadAdvisorAssigns(departments), loadProfessorCounselStats(departments)] : [])] : [loadMainPopups()])])

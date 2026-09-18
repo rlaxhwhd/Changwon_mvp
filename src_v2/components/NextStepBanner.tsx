@@ -3,6 +3,7 @@ import { HANDOFF_TOTAL, getNextAction } from '../data/careerProcess'
 import { getPipelineState } from '../data/pipeline'
 import { getActiveStudent } from '../data/students'
 import './NextStepBanner.css'
+import GradientButton from './ui/button-1'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 다음 할 일 인계 배너 — 로그인 직후 학생이 처음 만나는 안내다.
@@ -44,9 +45,9 @@ export default function NextStepBanner() {
             <li key={i} className={i + 1 < next.step ? 'is-done' : i + 1 === next.step ? 'is-now' : ''} />
           ))}
         </ol>
-        <Link className="nsb-cta" to={next.ctaPath}>
+        {next.step === 1 && next.ctaPath.endsWith('/ccore') ? <GradientButton to={next.ctaPath}>{next.ctaLabel}</GradientButton> : <Link className="nsb-cta" to={next.ctaPath}>
           {next.ctaLabel} <i className="fa-solid fa-arrow-right" aria-hidden="true" />
-        </Link>
+        </Link>}
       </div>
     </section>
   )

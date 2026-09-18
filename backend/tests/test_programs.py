@@ -211,7 +211,7 @@ def test_absence_tier_change_does_not_stack(client):
 
 
 def test_penalty_history_is_append_only_and_waive_is_bounded(client):
-    head = headers('career_kim')
+    head = headers('system-admin')
     detail = client.get('/api/v1/penalties/chaewon', headers=head)
     assert detail.status_code == 200, detail.text
     current = detail.json()['total']

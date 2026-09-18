@@ -38,6 +38,13 @@
 
 /* 목표 달성 계획 헤더 우측 — 상태 배지와 「로드맵 편집」을 한 줄에 세운다. */
 .sdv-goal-actions { display: flex; align-items: center; gap: 8px; }
+/* 초안 안내·확정 실패 — 확정 버튼이 무엇을 여는지 카드 안에서 말한다. */
+.sdv-goal-note, .sdv-goal-error {
+  margin: 0 0 14px; padding: 10px 14px; border-radius: var(--radius-md, 10px);
+  font-size: 12.5px; font-weight: 600; line-height: 1.7;
+}
+.sdv-goal-note { background: var(--color-section-bg, #f7f8fb); color: var(--color-text-secondary, #5a6478); }
+.sdv-goal-error { background: color-mix(in srgb, var(--color-danger, #dc2626) 8%, #fff); color: var(--color-danger, #dc2626); }
 
 /* 로드맵 생성 패널의 스타일은 RoadmapCreatePanel.css 가 갖는다(.rcp 스코프). */
 

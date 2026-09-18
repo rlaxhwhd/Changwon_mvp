@@ -5,11 +5,14 @@
 // 상담사가 상담 진행 화면에서 기록지를 작성·저장하면 완료 처리된다.
 // ─────────────────────────────────────────────────────────────────────────
 import type { CounselRequestType, CounselMethod } from './counselRequest'
+import type { CounselTemplate } from './counselTemplate'
 
 /** 상담 진행 상태 — 기록지 자체의 저장 단계 */
 export type RecordStatus = '작성중' | '완료'
 
 export interface CounselRecord {
+  version?: number
+  template?: CounselTemplate | null
   /** 기록 id */
   id: string
   /** 연결된 상담 신청 id (CounselRequest.id) */

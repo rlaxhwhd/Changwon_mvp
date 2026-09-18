@@ -30,13 +30,13 @@ export function getPsychTestByRequest(requestId: string): PsychTestResult | unde
   return results.find(item => item.requestId === requestId)
 }
 
-/** 결과 upsert — 서버가 신청 1건당 결과 1건을 보장한다. 저장 후 목록을 다시 읽는다. */
+/** 편집을 시작할 때 읽은 버전으로 저장하고 서버 응답으로 캐시를 갱신한다. */
 export async function upsertPsychTest(
   requestId: string,
-  body: Pick<PsychTestResult, 'testCode' | 'testNameEtc' | 'testedAt' | 'scales' | 'interpretation' | 'opinion' | 'openToStudent' | 'status'>,
+  body: Pick<PsychTestResult, 'testCode' | 'testNameEtc' | 'testedAt' | 'scales' | 'interpretation' | 'opinion' | 'openToStudent' | 'status'> & { expectedVersion: number },
 ): Promise<PsychTestResult> {
   const saved = await api<PsychTestResult>(`/psych-tests/${requestId}`, { method: 'PUT', body: JSON.stringify(body) })
-  await loadPsychTests()
+  results = [...results.filter(item => item.requestId !== requestId), saved]
   return saved
 }
 

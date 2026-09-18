@@ -96,7 +96,7 @@ def generation_input(conn, student, counsel, target_role):
         return [dict(row) for row in conn.execute(sql, (uid,)).fetchall()]
     # No identity/contact fields, psychological records, other counselors' private notes,
     # fixture outcomes or certificate numbers are sent to the provider.
-    type_row = conn.execute('''SELECT id,student_type FROM dc.student_type_event WHERE student_uid=%s
+    type_row = conn.execute('''SELECT id,student_type FROM dc.current_student_type WHERE student_uid=%s
       ORDER BY decided_at DESC,id DESC LIMIT 1''', (uid,)).fetchone()
     record = conn.execute('''SELECT summary,follow_up FROM dc.counsel_record
       WHERE request_id=%s AND status_code='DONE' ''', (counsel['id'],)).fetchone()

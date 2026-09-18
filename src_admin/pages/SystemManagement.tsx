@@ -3,6 +3,7 @@ import { api } from '../../shared/api'
 import { codeItems, loadMetadata } from '../../shared/metadataStore'
 import './SystemManagement.css'
 import NoticeManagement from '../components/NoticeManagement'
+import MenuVisibility from './MenuVisibility'
 import type { Notice } from '../../src_v2/data/notices'
 
 type Page<T> = { items: T[]; totalCount: number; page: number; pageSize: number }
@@ -11,14 +12,13 @@ type Item = { group_code: string; code: string; label: string; sort_order: numbe
 type Assignment = { id: string; staff_uid: string; college_code: string; dept_code: string; role_code: string; valid_from: string; valid_to: string | null; is_active: boolean; version: number }
 type Department = { college_code: string; dept_code: string; college_name: string; dept_name: string; course: string }
 type Staff = { intg_uid: string; name: string; role_code: string }
-type Menu = { menu_code: string; label: string; route: string; sort_order: number; is_active: boolean; version: number; roles: string[] }
 const EMPTY_PAGE = { items: [], totalCount: 0, page: 1, pageSize: 20 }
 
 export type SystemTab = 'codes' | 'assignments' | 'menus' | 'events' | 'issues' | 'notices'
 /** 화면 제목·설명 — 어느 탭이 어느 상단바 항목 밑에 있는지는 navConfig 가 정한다. */
 const HEAD: Record<SystemTab, [string, string]> = {
   codes: ['코드관리', '운영 코드의 명칭·정렬·사용 여부를 관리합니다. 변경 사유와 이전 값은 이력에 보관됩니다.'],
-  menus: ['메뉴관리', '배포된 메뉴의 명칭·순서·노출을 수정합니다. 메뉴 노출과 별도로 API에서 데이터 접근 권한을 검사합니다.'],
+  menus: ['메뉴관리', '역할을 고르고 그 역할에 보일 상단바 메뉴·페이지를 켜고 끕니다. 메뉴 노출과 별도로 API에서 데이터 접근 권한을 검사합니다.'],
   assignments: ['학과 담당 배정', '조교·교수·상담사의 학과 담당 기간을 관리합니다. 담당 학생 범위가 여기서 파생됩니다.'],
   events: ['변경 이력', '코드·메뉴·배정 변경의 이전/이후 값과 사유입니다.'],
   issues: ['이관 확인 사항', '시드 적재 중 자동으로 판정하지 못한 항목입니다.'],
@@ -31,7 +31,6 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
   const [group, setGroup] = useState('STUDENT_TYPE')
   const [page, setPage] = useState(1)
   const [data, setData] = useState<Page<Item | Assignment | Record<string, unknown>>>(EMPTY_PAGE)
-  const [menus, setMenus] = useState<Menu[]>([])
   const [editing, setEditing] = useState<Item | null>(null)
   const [label, setLabel] = useState('')
   const [code, setCode] = useState('')
@@ -50,10 +49,12 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
   useEffect(() => {
     let cancelled = false
     setLoading(true); setError(''); setEditing(null); setHistory(null)
+    // 메뉴 탭은 MenuVisibility 가 역할·메뉴를 직접 조회한다.
+    if (tab === 'menus') { setLoading(false); return }
     const path = tab === 'notices' ? `/system/notices?page=${page}` : tab === 'codes' ? `/system/code-groups/${group}/items?page=${page}`
       : `/system/${tab === 'assignments' ? 'org-assignments' : tab === 'issues' ? 'import-issues' : 'events'}?page=${page}`
-    Promise.all([api<Group[]>('/system/code-groups'), tab === 'menus' ? api<Menu[]>('/system/menus') : api<Page<Item | Assignment | Record<string, unknown>>>(path)])
-      .then(([definitions, result]) => { if (!cancelled) { setGroups(definitions); if (Array.isArray(result)) setMenus(result); else setData(result) } })
+    Promise.all([api<Group[]>('/system/code-groups'), api<Page<Item | Assignment | Record<string, unknown>>>(path)])
+      .then(([definitions, result]) => { if (!cancelled) { setGroups(definitions); setData(result) } })
       .catch(e => { if (!cancelled) setError(e.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
@@ -78,7 +79,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
       {tab === 'notices' && <NoticeManagement rows={data.items as unknown as (Notice & { version: number })[]} saved={() => setReload(n => n + 1)} />}
       {tab === 'codes' && <>
         <label>코드 그룹 <select value={group} onChange={e => { setGroup(e.target.value); setPage(1) }}>{groups.map(g => <option key={g.group_code} value={g.group_code}>{g.label} ({g.group_code})</option>)}</select></label>
-        <p>{definition?.managed_by === 'STRUCTURAL' ? '상태 전이에 사용하는 구조 코드입니다. 조회만 가능합니다.' : definition?.fixed_codes ? '코드값은 고정입니다. 명칭과 정렬을 수정할 수 있습니다.' : '항목을 추가하거나 수정할 수 있습니다. 폐지한 항목은 이력 보존을 위해 비활성 상태로 남습니다.'}</p>
+        <p>{group === 'QUEST_XP_REWARD' ? '일일·월간·학기 퀘스트의 지급 XP를 수정할 수 있습니다. 변경 전 지급 이력은 유지됩니다.' : definition?.managed_by === 'STRUCTURAL' ? '상태 전이에 사용하는 구조 코드입니다. 조회만 가능합니다.' : definition?.fixed_codes ? '코드값은 고정입니다. 명칭과 정렬을 수정할 수 있습니다.' : '항목을 추가하거나 수정할 수 있습니다. 폐지한 항목은 이력 보존을 위해 비활성 상태로 남습니다.'}</p>
         {definition?.managed_by === 'OPERATIONAL' && !definition.fixed_codes && <button className="btn btn-primary" onClick={() => edit({ group_code: group, code: '', label: '', sort_order: 0, is_active: true, payload: group === 'COUNSEL_TOPIC' ? {type:'T1',goal:''} : {}, version: 0 })}>항목 추가</button>}
         <table className="data-table"><thead><tr><th>코드</th><th>명칭</th><th>정렬</th><th>사용</th><th>관리</th></tr></thead><tbody>
           {(data.items as Item[]).map(item => <tr key={item.code}><td>{item.code}</td><td>{item.label}</td><td>{item.sort_order}</td><td>{item.is_active ? '사용' : '비활성'}</td><td>
@@ -100,6 +101,8 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
               </select></label>}
               {group === 'GROWTH_CERT_OPTION' && <label>분야 <input required maxLength={100} placeholder="예: IT·데이터, 사무·회계·금융" value={String(JSON.parse(payload).category ?? '')} onChange={e => setPayload(JSON.stringify({category:e.target.value}))} /></label>}
               {group === 'GROWTH_LANGUAGE_OPTION' && <label>언어 <input required maxLength={100} placeholder="예: 영어, 일본어" value={String(JSON.parse(payload).language ?? '')} onChange={e => setPayload(JSON.stringify({language:e.target.value}))} /></label>}
+              {group === 'QUEST_XP_REWARD' && <label>완료 시 지급 XP <input type="number" required min={0} max={100000} step={1} value={Number(JSON.parse(payload).xp ?? 0)} onChange={e => setPayload(JSON.stringify({...JSON.parse(payload),xp:Number(e.target.value)}))} /><small>변경 후 완료한 활동에 적용됩니다. 기존 지급 XP는 유지됩니다.</small></label>}
+              {group === 'QUEST_SEMESTER' && <><label>학기 시작일 <input type="date" required value={String(JSON.parse(payload).startDate ?? '')} onChange={e => setPayload(JSON.stringify({...JSON.parse(payload),startDate:e.target.value}))} /></label><label>학기 종료일 <input type="date" required value={String(JSON.parse(payload).endDate ?? '')} onChange={e => setPayload(JSON.stringify({...JSON.parse(payload),endDate:e.target.value}))} /></label></>}
               {group === 'COUNSEL_TOPIC' && <>
               <label>학생 유형 <select value={String(JSON.parse(payload).type ?? 'T1')} onChange={e => setPayload(JSON.stringify({...JSON.parse(payload),type:e.target.value}))}>{['T1','T2','T3','T4','T5','T6'].map(type => <option key={type}>{type}</option>)}</select></label>
               <label>상담 목표 <input value={String(JSON.parse(payload).goal ?? '')} onChange={e => setPayload(JSON.stringify({...JSON.parse(payload),goal:e.target.value}))} /></label>
@@ -113,7 +116,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
       {tab === 'assignments' && <><AssignmentForm saving={saving} run={run} />
         <table className="data-table"><thead><tr><th>교직원 ID</th><th>단대 / 학과 코드</th><th>역할</th><th>기간</th><th>상태</th><th>관리</th></tr></thead><tbody>{(data.items as Assignment[]).map(row => <tr key={row.id}><td>{row.staff_uid}</td><td>{row.college_code} / {row.dept_code}</td><td>{row.role_code}</td><td>{row.valid_from} ~ {row.valid_to ?? '종료일 없음'}</td><td>{row.is_active ? '활성' : '비활성'}</td><td><AssignmentEnd row={row} saving={saving} run={run} /></td></tr>)}</tbody></table>
       </>}
-      {tab === 'menus' && <>{menus.map(menu => <MenuForm key={`${menu.menu_code}-${menu.version}`} menu={menu} saving={saving} run={run} />)}</>}
+      {tab === 'menus' && <MenuVisibility />}
       {(tab === 'events' || tab === 'issues') && (data.items as Record<string, unknown>[]).map((row, i) => <details key={String(row.id ?? i)}><summary>{String(row.changed_at ?? row.code)} · {String(row.reason ?? row.detail)}</summary><pre>{JSON.stringify(row,null,2)}</pre></details>)}
       {tab !== 'menus' && <div className="pagination"><button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>이전</button> {page}페이지 · 총 {data.totalCount}건 <button className="btn btn-secondary" disabled={page * 20 >= data.totalCount} onClick={() => setPage(p => p + 1)}>다음</button></div>}
     </>}
@@ -167,21 +170,5 @@ function AssignmentEnd({row,saving,run}: Runner & {row: Assignment}) {
     <label>종료일 <input type="date" required min={row.valid_from} value={end} onChange={e => setEnd(e.target.value)} /></label>{' '}
     <label>변경 사유 <input required value={reason} onChange={e => setReason(e.target.value)} /></label>{' '}
     <button className="btn btn-secondary" disabled={saving}>종료일 저장</button>
-  </form>
-}
-function MenuForm({menu,saving,run}: Runner & {menu: Menu}) {
-  const [label,setLabel] = useState(menu.label)
-  const [order,setOrder] = useState(menu.sort_order)
-  const [active,setActive] = useState(menu.is_active)
-  const [reason,setReason] = useState('')
-  return <form onSubmit={e => { e.preventDefault(); void run(async () => { await api(`/system/menus/${encodeURIComponent(menu.menu_code)}`,{method:'PUT',body:JSON.stringify({expectedVersion:menu.version,label,sortOrder:order,isActive:active,reason})}) }) }}>
-    <fieldset disabled={saving}><legend>{menu.menu_code} · {menu.route}</legend>
-      <label>명칭 <input required maxLength={200} value={label} onChange={e => setLabel(e.target.value)} /></label>{' '}
-      <label>정렬 <input type="number" min={0} max={100000} value={order} onChange={e => setOrder(Number(e.target.value))} /></label>{' '}
-      <label><input type="checkbox" checked={active} disabled={menu.menu_code === 'system'} onChange={e => setActive(e.target.checked)} /> 노출</label>{' '}
-      <span>허용 역할: {menu.roles.join(', ')}</span>{' '}
-      <label>변경 사유 <input required maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} /></label>{' '}
-      <button className="btn btn-primary">저장</button>
-    </fieldset>
   </form>
 }

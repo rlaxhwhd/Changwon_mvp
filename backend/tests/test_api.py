@@ -60,7 +60,7 @@ def test_idempotency_conflict_version_and_completion(client):
     assert confirmed.status_code==200,confirmed.text
     assert confirmed.json()['version']==2
     assert client.post(path+'/cancel',headers=headers('career_kim'),json={'expectedVersion':1,'reason':'stale'}).status_code==409
-    completed=client.post(path+'/complete',headers=headers('career_kim'),json={'expectedVersion':2,'summary':'Verified transaction'})
+    completed=client.post(path+'/complete',headers=headers('career_kim'),json={'expectedVersion':2,'summary':'Verified transaction','comment':'Public comment'})
     assert completed.status_code==200,completed.text
     assert completed.json()['status']=='완료'
     assert client.post(path+'/cancel',headers=headers('career_kim'),json={'expectedVersion':3,'reason':'closed'}).status_code==409

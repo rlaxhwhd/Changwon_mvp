@@ -144,9 +144,39 @@ ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration �
 
 다음 migration 번호는 작업 시작 시 `backend/migrations/`를 다시 조회해 결정한다. 이미 사용된 번호나 파일은 수정하지 않는다.
 
+### 2026-09-16 추가분
+
+| 번호 | 소유 영역 |
+|---|---|
+| 063–064 | 개발 학생 로그인·학번 fixture |
+| 065–066 | 핵심역량 배점·집계·통계 |
+| 067 | 심리상담센터 연계·상태 이벤트 |
+| 068 | 개발용 직무별 로드맵 템플릿 |
+| 069 | 진단 원문 보존 + 숫자 점수 projection |
+| 070 | 비교과 분류·참가 대상 |
+| 071–074 | 학과 교직원 배정·기업회원·학사 소속과 상담 배정 분리 |
+| 075 | 성장 입력용 분류·자격·직무 카탈로그 |
+| 076–078 | 학습 문항·주간 게시·학생 풀이·메뉴·초기 단어 |
+| 079–082 | TOEIC 단어 정규 컬럼·게시 관계·단어 카탈로그·선택 수 |
+| 083 | 심리검사 결과 `(request_id,student_uid)` 소유권 FK, 척도 배열·스냅샷 객체 CHECK |
+| 084 | 상담 이력 `(request_id,created_at,id)` 조회 인덱스 |
+| 085 | 상담 예약의 시작·종료 시각 쌍 및 날짜 CHECK. 날짜만 있는 상담 기록은 허용 |
+| 086 | SMS 학생별 차단 현재 상태·버전 및 변경 불가 등록/해제 이력 |
+| 087 | 관리자 로드맵 메뉴 비활성화, 비교과/SMS 블랙리스트 메뉴 및 관리자 권한 |
+| 088 | `auth_role.portal`(admin/student/NULL)·`version`(역할별 `menu_auth` 집합 낙관적 잠금), `menu_auth` INSERT/DELETE 권한 — 메뉴관리 역할별 노출(0006) |
+| 089 | 역할 `student`·`company`·`external` 등록, 기존 역할 포털, 학생 포털 메뉴 `stu-*` 42건 시드(+`menu_auth` student) |
+
+전체 구조·정규화 판단 및 적용 범위는 [2026-09-16 DB 리뷰](docs/DB_REVIEW_2026-09-16.md),
+테이블별 모든 컬럼·제약·인덱스·트리거·앱 권한과 뷰 정의는
+[전체 명세](docs/dbmeta/SCHEMA_INVENTORY_2026-09-16.md)를 본다.
+심리검사 결과 저장은 편집 시작 시점의 `expectedVersion`을 필수로 받으며,
+신규 작성은 0, 기존 결과는 조회 버전과 일치할 때만 저장한다(불일치 409).
+
 2026-09-10 로컬 `dreamcatch` 읽기 전용 실측: migration 28개(029~032 적용 후 32개), 테이블 77개, view 5개, index 144개(PK/UNIQUE 포함), FK 172개, CHECK 139개. 운영 서버 실측값은 아니다. 구조 평가·미해결 사항은 [.ai/db/SCHEMA_REVIEW_2026-09-10.md](.ai/db/SCHEMA_REVIEW_2026-09-10.md)에 기록한다. 이 수치는 migration 추가 시 달라진다.
 
 ## 5. 변경 체크리스트
+
+2026-09-16 퀘스트 성장 추가(090/091): `quest_growth_account`(학생별 XP 누계), `quest_attendance`(학생+출석일 PK), `growth_xp_event`(출처별 지급 원장). 운영 코드 `QUEST_XP_REWARD`, `QUEST_SEMESTER`. 관계·인덱스·권한·API·확정 정책은 [퀘스트 성장 명세](docs/QUEST_GROWTH.md)를 따른다. 관리자 퀘스트 등록 및 비교과 보상 화면은 후속 범위다.
 
 - [ ] ERD 관계 반영
 - [ ] 새 table/column/index/constraint 이름 표준 확인
@@ -154,3 +184,7 @@ ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration �
 - [ ] seed/backfill/rollback 또는 roll-forward 복구 절차가 있음
 - [ ] mock JSON → API response 계약 테스트가 있음
 - [ ] `DB.md` §8-3 이관 상태 갱신
+
+2026-09-16 경험일지 보완(092): 기존 `growth_entry(kind_code=JOURNAL)`·`growth_event`를 학생/상담사/자소서가 공유한다. 학생별/종류별 정렬 인덱스를 추가했다. 권한·API·검증·복구는 [경험일지 연결 명세](docs/GROWTH_JOURNAL.md)를 따른다.
+
+2026-09-17 상담일지 공용 템플릿(093/094, 로컬 적용 완료): `counsel_record.template`에 구조화된 내부 기록을 저장한다. `current_student_type`은 `student_type_event`의 상담 확정 유형을 재진단 결과보다 우선하는 공통 조회 뷰다. 학생 목록·상세·상담·로드맵·취업·비교과의 유형 조회를 통일했다. 권한, 검증, 복구와 확정 입력 정책은 [상담일지 템플릿 명세](docs/COUNSEL_TEMPLATE.md)를 따른다.

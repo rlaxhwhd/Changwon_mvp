@@ -251,7 +251,7 @@ def list_filters(user, status, hasRoadmap, collegeCode, deptCode, studentType, q
 
 LIST_FROM = '''FROM dc.student s JOIN dc.person p USING(intg_uid)
  LEFT JOIN dc.roadmap r ON r.student_uid=s.intg_uid
- LEFT JOIN LATERAL (SELECT student_type FROM dc.student_type_event e WHERE e.student_uid=s.intg_uid
+ LEFT JOIN LATERAL (SELECT student_type FROM dc.current_student_type e WHERE e.student_uid=s.intg_uid
                      ORDER BY decided_at DESC,id DESC LIMIT 1) t ON true'''
 
 
@@ -362,9 +362,10 @@ class Generate(BaseModel):
     reason: str = Field(default='', max_length=2000)
 
 
-def check_counsel_basis(conn, uid, request_id, lock=True):
+def check_counsel_basis(conn, uid, request_id, lock=True, initial=False):
     """생성 근거가 되는 상담. 학생·트랙·상태·취소 여부를 전부 서버가 확인한다.
-    상담 완료를 선행 요구하지 않는다 — 완료가 확정 계획을 요구하므로 순환한다(spec_v1 §7.1)."""
+    첫 로드맵은 완료된 상담에서만 난다(상담 완료 → 생성 → 확정, 2026-09-18). 재생성은
+    확정된 다음 상담(재상담)에서도 미리 만들 수 있고, 그 상담의 완료가 계획을 함께 확정한다."""
     row = conn.execute('''SELECT * FROM dc.counsel_request WHERE id=%s AND student_uid=%s''' + (' FOR SHARE' if lock else ''),
                        (request_id, uid)).fetchone()
     if not row:
@@ -373,6 +374,8 @@ def check_counsel_basis(conn, uid, request_id, lock=True):
         fail(422, 'INVALID_COUNSEL_BASIS', 'CARE 7+ 진로·취업 상담에서만 로드맵을 만듭니다.')
     if row['status_code'] not in ('CONFIRMED', 'DONE'):
         fail(422, 'INVALID_COUNSEL_BASIS', '확정된 상담 예약에서만 로드맵을 만듭니다.')
+    if initial and row['status_code'] != 'DONE':
+        fail(422, 'INVALID_COUNSEL_BASIS', '상담일지를 저장 후 완료 처리한 뒤 로드맵을 만들 수 있습니다.')
     return row
 
 
@@ -382,7 +385,7 @@ def adopt_run(conn, user, student, counsel, source, target_role, generation):
                'targetRole': target_role, 'roadmapVersion': generation,
                'axes': [a['axis'] for a in source['axes']]}
     payload = source.get('_input', payload)
-    type_row = conn.execute('''SELECT id,student_type FROM dc.student_type_event WHERE student_uid=%s
+    type_row = conn.execute('''SELECT id,student_type FROM dc.current_student_type WHERE student_uid=%s
       ORDER BY decided_at DESC,id DESC LIMIT 1''', (student['intg_uid'],)).fetchone()
     payload.setdefault('typeContext', {'source': 'STUDENT_TYPE_EVENT',
         'baseTypeEventId': str(type_row['id']) if type_row else None,
@@ -443,7 +446,7 @@ def snapshot_plan(conn, user, uid, row, moment, transaction_id):
     items = conn.execute('''SELECT *,dc.roadmap_item_alive(status,entry,expires_at,%s) AS alive
       FROM dc.roadmap_item WHERE student_uid=%s ORDER BY axis,position,id''', (moment, uid)).fetchall()
     axes = conn.execute('SELECT * FROM dc.roadmap_axis WHERE student_uid=%s ORDER BY axis', (uid,)).fetchall()
-    type_row = conn.execute('''SELECT e.id,e.student_type,c.label FROM dc.student_type_event e
+    type_row = conn.execute('''SELECT e.id,e.student_type,c.label FROM dc.current_student_type e
       LEFT JOIN dc.student_type_code c ON c.code=e.student_type WHERE e.student_uid=%s
       ORDER BY e.decided_at DESC,e.id DESC LIMIT 1''', (uid,)).fetchone()
     payload = {
@@ -508,13 +511,13 @@ def generate(identity: str, body: Generate, idempotency_key: str = Header(min_le
         fail(409, 'INVALID_TRANSITION', '이미 계획이 있습니다. 재생성을 사용하세요.')
     if body.expectedRoadmapVersion or body.expectedVersion:
         fail(409, 'VERSION_CONFLICT', '아직 계획이 없습니다.', currentRoadmapVersion=0, currentVersion=0)
-    counsel = check_counsel_basis(conn, uid, body.counselRequestId, lock=False)
+    counsel = check_counsel_basis(conn, uid, body.counselRequestId, lock=False, initial=True)
     source = generate_outcome(conn, student, counsel, body.targetRole)
     # Network I/O never holds the global lifecycle lock. Recheck after acquiring it.
     lifecycle_lock(conn, exclusive=False)
     if lock_plan(conn, uid) is not None:
         fail(409, 'INVALID_TRANSITION', '이미 계획이 있습니다. 새로 조회해 주세요.')
-    counsel = check_counsel_basis(conn, uid, body.counselRequestId)
+    counsel = check_counsel_basis(conn, uid, body.counselRequestId, initial=True)
     target_role = body.targetRole or source['targetRole']
     run_id, suggestions = adopt_run(conn, user, student, counsel, source, target_role, 1)
     row = conn.execute('''INSERT INTO dc.roadmap(student_uid,target_role,target_company,version,status_code,
@@ -1087,7 +1090,7 @@ def enroll_program(conn, user, program):
     expires = program_expiry(program)
     transaction_id = uuid4()
     targets = conn.execute('''SELECT r.student_uid,r.version FROM dc.roadmap r
-      JOIN LATERAL (SELECT student_type FROM dc.student_type_event t WHERE t.student_uid=r.student_uid
+      JOIN LATERAL (SELECT student_type FROM dc.current_student_type t WHERE t.student_uid=r.student_uid
                      ORDER BY decided_at DESC,id DESC LIMIT 1) t ON true
       WHERE t.student_type=ANY(%s) AND EXISTS(SELECT 1 FROM dc.roadmap_axis a
             WHERE a.student_uid=r.student_uid AND a.axis='IAP')

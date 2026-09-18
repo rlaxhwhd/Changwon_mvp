@@ -81,7 +81,7 @@
 }
 
 .nsb-dots .is-done { background: var(--mint, #20b486); }
-.nsb-dots .is-now { background: var(--violet, #7c5cfc); }
+.nsb-dots .is-now { background: var(--teal, #14b8a6); }
 
 .nsb-cta {
   display: inline-flex;

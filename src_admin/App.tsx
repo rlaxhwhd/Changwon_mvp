@@ -1,3 +1,4 @@
+import MissionManagement from './pages/MissionManagement'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -15,6 +16,7 @@ import CounselStats from './pages/CounselStats'
 import DiagnosisStatus from './pages/DiagnosisStatus'
 import GroupCounsels from './pages/GroupCounsels'
 import PsychTests from './pages/PsychTests'
+import SmsBlacklist from './pages/SmsBlacklist'
 import PsychReferrals from './pages/PsychReferrals'
 import PsychCounselRecordNew from './pages/PsychCounselRecordNew'
 import StudentList from './pages/StudentList'
@@ -107,6 +109,13 @@ const router = createBrowserRouter(
             {
               element: <RequireRole roles={['admin']} />,
               children: [
+                { path: '/systems', element: <Navigate to="/system" replace /> },
+                { path: '/blacklists', element: <Navigate to="/blacklists/programs" replace /> },
+                { path: '/blacklists/programs', element: <ProgramBlacklist /> },
+                { path: '/blacklists/sms', element: <SmsBlacklist /> },
+                { path: '/programs/blacklist', element: <Navigate to="/blacklists/programs" replace /> },
+                { path: '/quests/missions', element: <MissionManagement /> },
+                { path: '/quests', element: <Navigate to="/quests/missions" replace /> },
                 { path: '/system', element: <Navigate to="/system/menus" replace /> },
                 { path: '/system/menus', element: <SystemManagement key="menus" tab="menus" /> },
                 { path: '/system/codes', element: <SystemManagement key="codes" tab="codes" /> },
@@ -120,7 +129,7 @@ const router = createBrowserRouter(
                 { path: '/members/companies', element: <CompanyMembers /> },
                 { path: '/notices', element: <SystemManagement key="notices" tab="notices" /> },
                 ...[
-                  ['/forecast', '취업예측분석시스템'], ['/diagnosis', '진단관리'], ['/counsel', '상담관리'], ['/roadmap', '로드맵관리'],
+                  ['/forecast', '취업예측분석시스템'], ['/diagnosis', '진단관리'], ['/counsel', '상담관리'],
                   ['/extracurricular', '비교과프로그램관리'], ['/companies', '기업정보플랫폼'],
                   ['/system/groups', '그룹관리'], ['/system/auth', '권한관리'], ['/system/boards', '게시판관리'], ['/system/banners', '배너관리'],
                   ['/system/popups', '팝업관리'], ['/system/surveys', '설문조사 관리'], ['/system/access-log', '사용자 접속이력'],
@@ -184,7 +193,6 @@ const router = createBrowserRouter(
                 { path: '/programs', element: <ProgramList /> },
                 { path: '/programs/manage', element: <ProgramManage /> },
                 { path: '/programs/new', element: <ProgramForm /> },
-                { path: '/programs/blacklist', element: <ProgramBlacklist /> },
                 { path: '/programs/:id/notice', element: <ProgramNoticeView /> },
                 {
                   path: '/programs/:id',

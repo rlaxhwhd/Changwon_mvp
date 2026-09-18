@@ -20,7 +20,7 @@ def profile(conn,row):
     data={**(initial if row['detail'] is None else row['detail']),'id':row['alias'],'studentNo':row['student_no'],'name':row['name'],
           'major':row['major_label'],'grade':row['grade']}
     data.pop('counselRequests',None)
-    current=conn.execute('SELECT student_type FROM dc.student_type_event WHERE student_uid=%s ORDER BY decided_at DESC,id DESC LIMIT 1',(row['intg_uid'],)).fetchone()
+    current=conn.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s ORDER BY decided_at DESC,id DESC LIMIT 1',(row['intg_uid'],)).fetchone()
     data['studentType']=current['student_type'] if current else None
     gpa=conn.execute('SELECT * FROM dc.student_gpa(%s)',(row['intg_uid'],)).fetchone()
     data['gpa']=gpa['gpa']

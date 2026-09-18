@@ -27,7 +27,7 @@ export default function GNB() {
   const { pathname } = useLocation()
   const user = getActiveUser()
   const activeId = getActiveUserId()
-  const sections = getNavSections(user.role)
+  const sections = getNavSections()
   const currentSection = getSectionForPath(pathname, sections)
 
   const [profileOpen, setProfileOpen] = useState(false)

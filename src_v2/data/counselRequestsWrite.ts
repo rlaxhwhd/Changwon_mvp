@@ -8,7 +8,7 @@
 // 화면(CareerCounsel/PsychCounsel)은 submitCounselRequest 만 호출한다. localStorage 직접 접근 금지.
 // ─────────────────────────────────────────────────────────────────────────
 import { api } from '../../shared/api'
-import { storeCounselRequest, type StoredCounselRequest } from '../../shared/counselStore'
+import { performCounselAction, storeCounselRequest, type StoredCounselRequest } from '../../shared/counselStore'
 import type { CounselMethod, CounselRequestType } from './students'
 import type { CounselIntakeAnswer } from './counselIntake'
 import type { CareTrack } from './counselTrack'
@@ -91,4 +91,12 @@ export async function submitProfessorCounselRequest(input: SubmitProfCounselInpu
       ? { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place ?? '' }
       : null,
   })
+}
+
+/**
+ * 학생 본인의 대기 중 신청 취소 — POST /counsel-requests/{id}/cancel (교직원 접수함과 같은 전이).
+ * 사유는 서버가 필수로 받아 처리 이력(counsel_event)에 남긴다. 상담 3일 전 이후는 서버가 거부한다.
+ */
+export async function cancelCounselRequest(id: string, reason: string): Promise<void> {
+  await performCounselAction(id, 'cancel', { reason })
 }

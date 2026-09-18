@@ -8,6 +8,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import { typeLabel } from '../../src_v2/data/careerProcess'
 import type { JournalRow } from './counselJournals'
+import { QUALITATIVE_ITEMS } from './schema/counselTemplate'
 
 /** 엑셀이 UTF-8 로 읽도록 BOM 은 내려받는 쪽에서 붙인다. */
 function toCsvText(rows: string[][]): string {
@@ -17,7 +18,8 @@ function toCsvText(rows: string[][]): string {
 const JOURNAL_HEADER = [
   '상담일', '시간', '이름', '학번', '학과', '진단유형',
   '상담유형', '방식', '장소', '상담 주제', '작성상태',
-  '상담 소견', '학생 공개 코멘트', '후속 조치', '담당 상담사',
+  '상담내용', '학생 공개 코멘트', '후속 조치', '담당 상담사',
+  '상담 확정 유형', ...QUALITATIVE_ITEMS.map(([, label]) => label),
 ]
 
 /**
@@ -36,7 +38,7 @@ export function toJournalCsv(rows: JournalRow[]): string {
     r.studentMajor,
     typeLabel(r.studentType),
     r.type,
-    r.method,
+    r.record?.template?.channel ?? r.method,
     r.place,
     r.topic,
     r.status,
@@ -44,6 +46,8 @@ export function toJournalCsv(rows: JournalRow[]): string {
     r.record?.comment ?? '',
     r.record?.followUp ?? '',
     r.record?.counselorName ?? '',
+    r.record?.template?.finalType ? typeLabel(r.record.template.finalType) : '',
+    ...QUALITATIVE_ITEMS.map(([key]) => r.record?.template?.qualitative[key] ?? ''),
   ])
   return toCsvText([JOURNAL_HEADER, ...body])
 }

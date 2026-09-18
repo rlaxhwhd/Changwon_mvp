@@ -92,3 +92,44 @@ def test_status_list_shows_the_latest_comment_on_the_right_attempt(client):
     assert all(item['comment'] is None for item in items if item['attemptId']!=attempt['id']
                and item['attemptId'] not in {c['attemptId'] for c in
                    (i['comment'] for i in items) if c})
+
+
+def test_random_results_for_student_without_fixture(client):
+    """fixture 가 없는 학사 미러 학생: C-CORE 임의 결과 → 유형 확정 → 그 유형의 후속진단도 임의 결과."""
+    from test_student_login import login, owner, student_headers
+    with owner() as conn:
+        conn.execute('''INSERT INTO academic.v_usr_inf(intg_uid,login_id,user_ty_cd,usr_nm,orgz_nm,stu_schgr)
+          VALUES('20180777','20180777','1101','임의결과','전자공학과','2')''')
+    assert login(client, number='20180777').status_code == 200
+    head = student_headers()
+    before = client.get('/api/v1/diagnosis/students/20180777', headers=head).json()
+    assert before['attempts'] == [] and before['results'] == []
+
+    core = client.post('/api/v1/development/diagnosis/ccore/complete', headers={**head, 'Idempotency-Key': str(uuid4())})
+    assert core.status_code == 200, core.text
+    assert core.json()['source'] == 'development:random'
+    with pool.connection() as conn:
+        student_type = conn.execute("SELECT student_type FROM dc.student_list WHERE intg_uid='20180777'").fetchone()['student_type']
+        rule = conn.execute('SELECT label,lower(follow_up_test) AS follow_up FROM dc.student_type_rule WHERE code=%s', (student_type,)).fetchone()
+        scores = conn.execute("SELECT count(*) AS n FROM dc.diagnosis_factor_score WHERE student_uid='20180777' AND test_id='ccore'").fetchone()['n']
+    assert student_type in ('T1', 'T2', 'T3', 'T4')  # C5·C6 는 결과표가 없어 임의 유형에서 제외
+    assert scores == 4
+    after_core = client.get('/api/v1/diagnosis/students/20180777', headers=head).json()
+    assert after_core['results'][0]['headline'] == rule['label']
+    assert all(30 <= f['tScore'] <= 70 for f in after_core['results'][0]['factors'])
+
+    # 다른 유형의 후속진단은 이 학생의 응시 대상이 아니다.
+    other = next(t for t in ('c1', 'c2', 'c3', 'c4') if t != rule['follow_up'])
+    assert client.post(f'/api/v1/development/diagnosis/{other}/complete', headers={**head, 'Idempotency-Key': str(uuid4())}).status_code == 409
+
+    follow = client.post(f"/api/v1/development/diagnosis/{rule['follow_up']}/complete", headers={**head, 'Idempotency-Key': str(uuid4())})
+    assert follow.status_code == 200, follow.text
+    rows = client.get('/api/v1/diagnosis/students/20180777', headers=head).json()
+    result = next(r for r in rows['results'] if r['testId'] == rule['follow_up'])
+    assert result['source'] == 'development:random'
+    assert result['headline'] == max(result['factors'], key=lambda f: f['tScore'])['name']
+    if rule['follow_up'] in ('c2', 'c3', 'c4'):
+        assert all(f.get('factorCode') for f in result['factors'])  # 정의 테이블과 매핑돼 UNMAPPED 가 없다
+        assert not any(f.get('validationIssues') for f in result['factors'])
+    # 같은 회차를 두 번 만들 수 없다.
+    assert client.post(f"/api/v1/development/diagnosis/{rule['follow_up']}/complete", headers={**head, 'Idempotency-Key': str(uuid4())}).status_code == 409

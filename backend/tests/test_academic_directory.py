@@ -35,7 +35,9 @@ class AcademicDirectoryTest(unittest.TestCase):
         with pool.connection() as conn:
             conn.execute('SET TRANSACTION READ ONLY')
             cls.admin = conn.execute("SELECT p.alias FROM dc.person p JOIN dc.auth_user u ON u.person_uid=p.intg_uid WHERE u.role_code='AUTH0006' LIMIT 1").fetchone()['alias']
-            cls.student = conn.execute("SELECT alias FROM dc.person WHERE kind='STUDENT' LIMIT 1").fetchone()['alias']
+            # Header authentication is intentionally limited to fixture students.
+            # A real/local student requires a cookie and would test 401, not 403.
+            cls.student = conn.execute("SELECT alias FROM dc.person WHERE kind='STUDENT' AND source='fixture' ORDER BY intg_uid LIMIT 1").fetchone()['alias']
         cls.token = Path(settings.development_token_file).read_text().strip()
 
     @classmethod

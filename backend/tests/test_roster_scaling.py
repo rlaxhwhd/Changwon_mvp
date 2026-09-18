@@ -4,6 +4,7 @@ from app.db import connection, pool
 from app.main import app
 from app.staff import public_professors
 from test_api import headers
+from test_psych_referrals import db  # noqa: F401
 
 
 def test_six_thousand_students_are_counted_but_only_one_page_is_returned(client):
@@ -40,7 +41,12 @@ def test_six_thousand_students_are_counted_but_only_one_page_is_returned(client)
             app.dependency_overrides.pop(connection, None)
 
 
-def test_advisor_server_filters_and_counsel_counts(client):
+def test_advisor_server_filters_and_counsel_counts(client, db):
+    # Explicit scope fixture; other modules may have released assignments.
+    db.execute('''INSERT INTO dc.fixture_student_scope(staff_uid,student_uid,source)
+      SELECT (SELECT intg_uid FROM dc.person WHERE alias='asst_kim'),intg_uid,'test:advisor-roster'
+      FROM dc.person WHERE alias='chaewon'
+      ON CONFLICT DO NOTHING''')
     head = headers('asst_kim')
     all_rows = client.get('/api/v1/advisor-assignments/roster', headers=head, params={'pageSize': 1})
     assert all_rows.status_code == 200, all_rows.text

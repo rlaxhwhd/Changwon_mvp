@@ -11,7 +11,8 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import principal, require_staff, student_access
 from .db import connection
-from .gates import COUNSEL_TYPE_CODE, diagnosis_gate, is_care7_request, roadmap_basis_ok
+from .gates import COUNSEL_TYPE_CODE, diagnosis_gate, is_care7_request
+from .counsel_template import CounselTemplate, validate_template_scope, validate_completed_template, template_storage
 
 router=APIRouter()
 LABELS={'REQ':'대기','CONFIRMED':'확정','DONE':'완료','CANCEL_UNKNOWN':'취소','CANCEL_STU':'취소','CANCEL_CNS':'취소'}
@@ -61,6 +62,8 @@ class Action(BaseModel):
     comment: str=Field('',max_length=20000)
     followUp: str=Field('',max_length=10000)
     finalType: Literal['T1','T2','T3','T4','T5','T6'] | None=None
+    template: CounselTemplate | None=None
+    expectedRecordVersion: int | None=Field(default=None,ge=0)
     expectedRoadmapVersion: int | None=Field(default=None,ge=1)
     expectedRoadmapLockVersion: int | None=Field(default=None,ge=1)
 
@@ -209,7 +212,7 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
     elif body.type!='교수' or body.method!='비대면':
         raise HTTPException(422,'상담 예약 시간이 필요합니다.')
     detail=student['detail'] or {}
-    current=conn.execute('SELECT student_type FROM dc.student_type_event WHERE student_uid=%s ORDER BY decided_at DESC,id DESC LIMIT 1',(student['intg_uid'],)).fetchone()
+    current=conn.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s ORDER BY decided_at DESC,id DESC LIMIT 1',(student['intg_uid'],)).fetchone()
     snapshot={'name':student['name'],'studentNo':student['student_no'],'major':student['major_label'],
               'grade':student['grade'],'studentType':current['student_type'] if current else None,
               'enrollmentStatus':detail.get('enrollmentStatus') or '재학'}
@@ -274,6 +277,20 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
             check_slot(conn,assignee['intg_uid'],row['student_uid'],existing,request_id)
         conn.execute('UPDATE dc.counsel_request SET counselor_uid=%s WHERE id=%s',(assignee['intg_uid'],request_id))
     elif action=='complete':
+        validate_template_scope(row,body.template)
+        validate_completed_template(row,body.template,comment=body.comment)
+        existing_record=conn.execute('SELECT * FROM dc.counsel_record WHERE request_id=%s FOR UPDATE',(request_id,)).fetchone()
+        if existing_record and existing_record.get('template') and not body.template:
+            raise HTTPException(422,'저장된 상담 템플릿을 함께 제출해 주세요.')
+        if body.expectedRecordVersion is not None and body.expectedRecordVersion != (existing_record['version'] if existing_record else 0):
+            raise HTTPException(409,'상담 기록이 변경되었습니다. 다시 조회해 주세요.')
+        if body.template:
+            if body.expectedRecordVersion is None:
+                raise HTTPException(422,'상담 기록 버전이 필요합니다.')
+            if body.finalType and body.finalType != body.template.finalType:
+                raise HTTPException(422,'최종 유형이 일치하지 않습니다.')
+            body.summary=body.template.content()
+            body.finalType=body.template.finalType
         if row['status_code']!='CONFIRMED' or not body.summary.strip():
             raise HTTPException(409,'확정된 상담과 상담 기록이 필요합니다.')
         # 트랙 판정은 gates 한 곳에서 한다(PROCESS.md §2-1 구현규칙 4). 여기서 care_track 을
@@ -292,18 +309,22 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
                     expectedRoadmapVersion=body.expectedRoadmapVersion,
                     expectedVersion=body.expectedRoadmapLockVersion,
                     reason='상담 기록 저장 후 완료 처리'),uuid4().hex,user,conn)
-        if is_care7_request(row):
-            if not roadmap_basis_ok(conn,request_id,row['student_uid']):
-                raise HTTPException(409,'현재 상담에서 로드맵을 생성한 뒤 저장 후 완료 처리해 주세요.')
-        # An external diagnosis already supplies the type. Completing a record
-        # must not require a second type decision or invent one.
+        # 로드맵은 완료의 선행조건이 아니다(2026-09-18 프로세스 변경) — 완료 뒤 같은 화면의
+        # 목표 달성 계획 카드에서 이 상담을 근거로 생성·확정한다. 게이트는 로드맵 확정을 따로 본다.
+        # Only completing a new CARE 7+ consultation publishes a final type.
+        # Draft saves and later journal edits must never alter this decision.
         if is_care7_request(row) and body.finalType:
-            conn.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source,actor_uid) VALUES (%s,%s,'counsel',%s)",
+            previous=conn.execute("SELECT decided_at FROM dc.current_student_type WHERE student_uid=%s AND source='counsel'",(row['student_uid'],)).fetchone()
+            if previous and not conn.execute('''SELECT 1 FROM dc.student_type_event
+              WHERE student_uid=%s AND source<>'counsel' AND decided_at>%s LIMIT 1''',
+              (row['student_uid'],previous['decided_at'])).fetchone():
+                raise HTTPException(409,'기존 상담 유형을 다시 확정하려면 재진단을 먼저 완료해 주세요.')
+            conn.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source,actor_uid,decided_at) VALUES (%s,%s,'counsel',%s,clock_timestamp())",
                          (row['student_uid'],body.finalType,user['intg_uid']))
-        conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot)
-          VALUES (%s,%s,%s,%s,%s,%s,'DONE',now(),now(),%s) ON CONFLICT(request_id) DO UPDATE
-          SET summary=excluded.summary,comment=excluded.comment,follow_up=excluded.follow_up,status_code='DONE',updated_at=now(),version=dc.counsel_record.version+1''',
-          (str(uuid4()),request_id,user['intg_uid'],body.summary,body.comment,body.followUp,Jsonb(row['snapshot'])))
+        conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot,template)
+          VALUES (%s,%s,%s,%s,%s,%s,'DONE',now(),now(),%s,%s) ON CONFLICT(request_id) DO UPDATE
+          SET summary=excluded.summary,comment=excluded.comment,follow_up=excluded.follow_up,template=COALESCE(excluded.template,dc.counsel_record.template),status_code='DONE',updated_at=now(),version=dc.counsel_record.version+1''',
+          (str(uuid4()),request_id,user['intg_uid'],body.summary,body.comment,body.followUp,Jsonb(row['snapshot']),Jsonb(template_storage(body.template,existing_record)) if body.template else None))
         conn.execute("UPDATE dc.counsel_request SET status_code='DONE',completed_at=now() WHERE id=%s",(request_id,))
     conn.execute('UPDATE dc.counsel_request SET version=version+1 WHERE id=%s',(request_id,))
     conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',

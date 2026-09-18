@@ -1,3 +1,4 @@
+from counsel_test_support import counsel_form
 """로드맵 통합 테스트 — 실제 PostgreSQL *_test DB 에서만 돌린다.
 
 검증 대상은 04-decisions 의 승인 범위다: 3상태와 학생 공개, 재생성의 원자성과 비이월,
@@ -9,10 +10,18 @@ import psycopg
 import pytest
 
 from app.db import pool
+from app.settings import settings
 from test_api import headers
 from test_programs import apply_as, new_program
 
 KEY = lambda identity: {**headers(identity), 'Idempotency-Key': uuid4().hex}
+
+
+@pytest.fixture(autouse=True)
+def fixture_provider(monkeypatch):
+    # This module verifies saved fixture outcomes, independently of local .env.
+    monkeypatch.setattr(settings, 'environment', 'development')
+    monkeypatch.setattr(settings, 'roadmap_provider', 'fixture')
 
 
 def uid_of(alias):
@@ -32,19 +41,20 @@ def ensure_type(alias, code):
           SELECT intg_uid,%s,'fixture:test' FROM dc.person WHERE alias=%s''', (code, alias))
 
 
-def care7_request(alias):
-    """CARE 7+ 확정 예약을 만든다.
+def care7_request(alias, status='DONE'):
+    """CARE 7+ 상담 1행을 만든다. 기본은 완료(DONE) — 첫 로드맵은 완료된 상담에서만 난다.
 
     상담 API 로 만들려면 진단 2종을 먼저 통과해야 하는데 그건 다른 도메인의 계약이다.
-    여기서는 로드맵의 상담 근거만 검증하므로 예약 1행을 직접 만든다.
+    여기서는 로드맵의 상담 근거만 검증하므로 행을 직접 만든다.
     """
     request_id = 'ct_' + uuid4().hex[:12]
     with pool.connection() as conn:
         conn.execute('''INSERT INTO dc.counsel_request(id,student_uid,counselor_uid,type_code,legacy_type,care_track,
-          status_code,method_code,topic,requested_at,slot_date,slot_start,slot_end,snapshot,source_payload)
+          status_code,method_code,topic,requested_at,slot_date,slot_start,slot_end,completed_at,snapshot,source_payload)
           VALUES(%s,(SELECT intg_uid FROM dc.person WHERE alias=%s),
-          (SELECT intg_uid FROM dc.person WHERE alias='career_kim'),'CAREER','진로취업','care7','CONFIRMED','OFFLINE',
-          '로드맵 생성',now(),'2099-01-02','10:00','11:00','{}','{}')''', (request_id, alias))
+          (SELECT intg_uid FROM dc.person WHERE alias='career_kim'),'CAREER','진로취업','care7',%s,'OFFLINE',
+          '로드맵 생성',now(),'2099-01-02','10:00','11:00',CASE WHEN %s='DONE' THEN now() END,'{}','{}')''',
+          (request_id, alias, status, status))
     return request_id
 
 
@@ -72,6 +82,11 @@ def test_counsel_basis_is_verified_against_the_student_and_track(client):
         conn.execute("UPDATE dc.counsel_request SET care_track='general' WHERE id=%s", (general,))
     response = client.post('/api/v1/students/jiwoo/roadmap/generate', headers=KEY('career_kim'),
                            json={'counselRequestId': general, 'expectedRoadmapVersion': 0, 'expectedVersion': 0})
+    assert response.status_code == 422 and response.json()['detail']['code'] == 'INVALID_COUNSEL_BASIS'
+    # 첫 로드맵은 완료된 상담에서만 난다 — 확정 예약은 아직 근거가 아니다(2026-09-18).
+    pending = care7_request('jiwoo', status='CONFIRMED')
+    response = client.post('/api/v1/students/jiwoo/roadmap/generate', headers=KEY('career_kim'),
+                           json={'counselRequestId': pending, 'expectedRoadmapVersion': 0, 'expectedVersion': 0})
     assert response.status_code == 422 and response.json()['detail']['code'] == 'INVALID_COUNSEL_BASIS'
 
 
@@ -331,36 +346,39 @@ def test_profile_no_longer_carries_the_plan(client):
     assert profile['hasRoadmap'] is True
 
 
-def test_career_counsel_cannot_lose_its_track_and_still_needs_the_plan(client):
-    """트랙 없는 진로·취업 상담은 이제 DB 가 거부한다 + 완료에는 확정 계획이 필요하다.
+def test_career_counsel_cannot_lose_its_track_and_completes_without_a_plan(client):
+    """트랙 없는 진로·취업 상담은 DB 가 거부한다 + 완료는 로드맵을 요구하지 않는다.
 
     예전에는 트랙이 NULL 일 수 있어서 서버가 `COALESCE(care_track,'care7')` 로 감쌌다.
-    NULL 을 일반으로 떨어뜨리면 로드맵 없이 완료돼 버리기 때문이다(E11). 마이그레이션
-    027 이 그 상태를 제약으로 막았으므로, 폴백으로 견디는 대신 **불가능한지**를 건다.
+    마이그레이션 027 이 그 상태를 제약으로 막았으므로 **불가능한지**를 건다.
+    로드맵은 완료의 선행조건이 아니다(2026-09-18) — 완료 뒤 그 상담을 근거로 생성·확정한다.
+    로드맵을 보내지 않은 완료는 계획 상태를 건드리지 않는다.
     """
-    request_id = care7_request('changwon')
+    request_id = care7_request('changwon', status='CONFIRMED')
     with pool.connection() as conn:
         with pytest.raises(psycopg.errors.CheckViolation):
             conn.execute('UPDATE dc.counsel_request SET care_track=NULL WHERE id=%s', (request_id,))
     with pool.connection() as conn:
         conn.execute("UPDATE dc.roadmap SET status_code='DRAFT' WHERE student_uid=%s", (uid_of('changwon'),))
     path = '/api/v1/counsel-requests/' + request_id + '/complete'
-    refused = client.post(path, headers=headers('career_kim'),
-                          json={'expectedVersion': 1, 'summary': '검증', 'finalType': 'T4'})
-    assert refused.status_code == 409, refused.text
+    done = client.post(path, headers=headers('career_kim'),
+                       json={'expectedVersion': 1, 'expectedRecordVersion': 0, 'summary': '검증', 'comment': '공개 코멘트', 'template': counsel_form('T4')})
+    assert done.status_code == 200, done.text
     with pool.connection() as conn:
-        conn.execute("UPDATE dc.roadmap SET status_code='CONFIRMED' WHERE student_uid=%s", (uid_of('changwon'),))
-    assert client.post(path, headers=headers('career_kim'),
-                       json={'expectedVersion': 1, 'summary': '검증', 'finalType': 'T4'}).status_code == 200
+        plan = conn.execute('SELECT status_code FROM dc.roadmap WHERE student_uid=%s', (uid_of('changwon'),)).fetchone()
+    assert plan is None or plan['status_code'] == 'DRAFT'
 
 
 def test_plan_history_is_append_only(client):
     with pytest.raises(psycopg.Error):
         with pool.connection() as conn:
+            conn.execute('SET LOCAL ROLE dc_app')
             conn.execute("UPDATE dc.roadmap_event SET reason='tampered'")
     with pytest.raises(psycopg.Error):
         with pool.connection() as conn:
+            conn.execute('SET LOCAL ROLE dc_app')
             conn.execute('DELETE FROM dc.roadmap_snapshot')
     with pytest.raises(psycopg.Error):
         with pool.connection() as conn:
+            conn.execute('SET LOCAL ROLE dc_app')
             conn.execute("UPDATE dc.roadmap_request_event SET reason='tampered'")

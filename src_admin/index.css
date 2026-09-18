@@ -1023,6 +1023,10 @@ input, textarea, select { font-family: var(--font); }
 /* ─── Session (상담 진행) ────────────────────────────────────────────── */
 .admin-session-split { display: grid; grid-template-columns: 1fr 380px; gap: 18px; align-items: start; }
 .admin-session-right { position: sticky; top: calc(var(--gnb-height) + 24px); }
+/* 380px 열 — 버튼 3개를 줄여서 폭 안에 맞추고, 넘치면 다음 줄로 */
+.admin-session-right .admin-form-actions { flex-wrap: wrap; gap: 8px; }
+.admin-session-right .admin-form-actions .admin-btn { flex: 1 1 auto; justify-content: center; padding: 8px 12px; font-size: 13px; }
+.admin-session-right .admin-form-actions > p, .admin-session-right .admin-form-actions .admin-save-hint { flex-basis: 100%; }
 .admin-session-student { display: flex; flex-direction: column; gap: 16px; }
 .admin-session-student-head { display: flex; align-items: center; gap: 14px; }
 .admin-session-student-head strong { display: block; font-size: 17px; font-weight: 800; color: var(--color-text); }

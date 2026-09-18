@@ -53,3 +53,7 @@ docs/_analysis/06_findings.md
 
 # 업로드 파일의 로컬 저장 위치(DC_FILE_ROOT 기본값). 운영은 컨테이너 볼륨이다.
 backend/var/
+
+# Graft: regenerable local code graph and runtime state
+/graft/
+/.graft/

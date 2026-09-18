@@ -2,7 +2,6 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from '
 import { Link, useLocation } from 'react-router-dom'
 import { LuChevronRight } from 'react-icons/lu'
 import { getCrumbTrail, getNavSections } from './navConfig'
-import { getActiveUser } from '../data/staff'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 경로 표시(빵부스러기) — 교직원 포털 전 서브페이지 공통.
@@ -36,7 +35,7 @@ export function PageCrumbProvider({ children }: { children: ReactNode }) {
 
 function PageCrumb({ leaf }: { leaf?: string }) {
   const { pathname } = useLocation()
-  const sections = getNavSections(getActiveUser().role)
+  const sections = getNavSections()
   const trail = getCrumbTrail(pathname, sections)
   // 홈(/)은 서브페이지가 아니다 — 경로 표시를 두지 않는다.
   if (trail.length === 0 || pathname === '/') return null

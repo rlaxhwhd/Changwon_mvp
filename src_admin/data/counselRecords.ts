@@ -9,6 +9,7 @@ import type { CounselRecord, RecordStatus } from './schema/counselRecord'
 import type { CounselMethod, CounselRequestType } from './schema/counselRequest'
 import { api } from '../../shared/api'
 import { counselRecords, storeCounselRecord } from '../../shared/counselStore'
+import type { CounselTemplate } from './schema/counselTemplate'
 
 export function getCounselRecords(): CounselRecord[] {
   return [...counselRecords()]
@@ -32,12 +33,12 @@ export function getRecordByRequest(requestId: string): CounselRecord | undefined
 }
 
 export async function upsertRecord(record: CounselRecord): Promise<CounselRecord> {
-  const current = counselRecords().find(item => item.requestId === record.requestId)
   const saved = await api<CounselRecord & { version: number }>(
     `/counsel-requests/${encodeURIComponent(record.requestId)}/record`,
     { method: 'PUT', body: JSON.stringify({
-      expectedVersion: current?.version ?? 0, summary: record.summary, comment: record.comment,
+      expectedVersion: record.version ?? 0, summary: record.summary, comment: record.comment,
       followUp: record.followUp ?? '', status: record.status,
+      template: record.template,
     }) },
   )
   storeCounselRecord(saved)
@@ -67,13 +68,15 @@ export interface RecordSource {
  */
 export function buildRecord(
   source: RecordSource,
-  fields: { summary: string; comment: string; followUp: string },
+  fields: { summary: string; comment: string; followUp: string; template?: CounselTemplate | null },
   status: RecordStatus,
   existing?: CounselRecord,
 ): CounselRecord {
   const now = new Date().toISOString()
   return {
     ...source,
+    version: existing?.version,
+    template: fields.template ?? existing?.template,
     id: existing?.id ?? `rec_${source.requestId}_${Date.now().toString(36)}`,
     summary: fields.summary.trim(),
     comment: fields.comment.trim(),

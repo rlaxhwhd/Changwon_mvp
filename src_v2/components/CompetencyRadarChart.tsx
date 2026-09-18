@@ -1,4 +1,6 @@
 import type { CompetencyAxisView } from '../data/competency'
+import { COMPETENCY_ORDER, COMPETENCY_LABELS } from '../lib/scoring'
+import { LockedContent } from './LockedContent'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 핵심역량 레이더 (공용) — 축 개수를 데이터에서 받는다.
@@ -52,18 +54,20 @@ interface Props {
 
 export default function CompetencyRadarChart({ axes, classes, currentFill, children }: Props) {
   const c = { ...DEFAULT_CLASSES, ...classes }
-  const n = axes.length
-  if (n === 0) return <p role="status">표시할 핵심역량 점수가 없습니다.</p>
+  const empty = axes.length === 0
+  const n = empty ? COMPETENCY_ORDER.length : axes.length
+  const labels = empty ? COMPETENCY_ORDER.map(key => ({ key, label: COMPETENCY_LABELS[key] })) : axes
 
   const label = `${n}대 핵심역량 — ${axes.map(a => `${a.label} ${a.score}`).join(', ')}`
 
-  return (
+  const chart = (
     <svg className={c.svg} viewBox="0 0 300 280" role="img" aria-label={label}>
       {children}
       {[100, 66, 33].map(pct => (
         <polygon
           key={pct}
           className={c.grid}
+          style={empty ? { stroke: 'var(--competency-current)', strokeWidth: 2 } : undefined}
           points={Array.from({ length: n }, (_, i) => {
             const p = point(i, n, (pct / 100) * R)
             return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
@@ -74,13 +78,13 @@ export default function CompetencyRadarChart({ axes, classes, currentFill, child
         const p = point(i, n, R)
         return <line key={i} className={c.axis} x1={CX} y1={CY} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)} />
       })}
-      <polygon className={c.target} points={polygon(axes.map(a => a.target), n)} />
-      <polygon
+      {!empty && <polygon className={c.target} points={polygon(axes.map(a => a.target), n)} />}
+      {!empty && <polygon
         className={c.current}
         points={polygon(axes.map(a => a.score), n)}
         fill={currentFill ? `url(#${currentFill})` : undefined}
-      />
-      {axes.map((a, i) => {
+      />}
+      {labels.map((a, i) => {
         const p = point(i, n, R + 22)
         const dx = p.x - CX
         // 12시·6시 축은 가운데 정렬, 좌우는 바깥쪽으로 밀어 라벨이 도형을 덮지 않게.
@@ -100,4 +104,5 @@ export default function CompetencyRadarChart({ axes, classes, currentFill, child
       })}
     </svg>
   )
+  return empty ? <LockedContent className="locked-content--competency" text="핵심역량 점수가 등록되면 확인할 수 있어요.">{chart}</LockedContent> : chart
 }

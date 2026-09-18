@@ -10,6 +10,7 @@ import { getCounselRecords } from './counselRecords'
 import type { EnrollStatus } from './studentRoster'
 import type { CounselRecord } from './schema/counselRecord'
 import type { CounselMethod, CounselRequestType } from './schema/counselRequest'
+import type { CareTrack } from '../../src_v2/data/counselTrack'
 import type { StudentType } from '../../src_v2/data/careerProcess'
 
 /** 일지 작성 단계 — 기록지 저장 상태(RecordStatus)에서 파생한다 */
@@ -39,6 +40,7 @@ export interface JournalRow {
   studentStatus: EnrollStatus
   studentType: StudentType | null
   type: CounselRequestType
+  careTrack?: CareTrack
   method: CounselMethod
   topic: string
   /** 상담일 YYYY-MM-DD */
@@ -76,10 +78,11 @@ export function getJournalRows(counselorId: string): JournalRow[] {
         studentStatus: r.studentEnrollmentStatus,
         studentType: r.studentType,
         type: r.type,
+        careTrack: r.careTrack,
         method: r.method,
         topic: r.topic,
-        date: r.slot?.date ?? r.requestedAt.slice(0, 10),
-        time: r.slot ? `${r.slot.start}~${r.slot.end}` : '',
+        date: record?.template?.conductedAt.slice(0, 10) || r.slot?.date || r.requestedAt.slice(0, 10),
+        time: record?.template?.conductedAt.slice(11, 16) || (r.slot ? `${r.slot.start}~${r.slot.end}` : ''),
         place: r.slot?.place ?? '',
         status: statusOf(record),
         record,

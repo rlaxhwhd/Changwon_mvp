@@ -14,6 +14,8 @@ from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import principal, require_staff, student_access
+from .administration import administrator
+from .blacklists import managed_student
 from .db import connection
 from .gates import program_gate
 # 로드맵 쓰기는 전부 roadmap.py 가 한다 — 칸을 두 모듈에서 만들면 규칙이 갈린다.
@@ -83,7 +85,7 @@ def applicants_of(conn, user, program_ids):
     condition, values = applicant_scope(user)
     rows = conn.execute(f'''SELECT a.*,p.alias,p.name,s.major_label,s.student_no,s.grade,
       COALESCE(s.detail->>'enrollmentStatus','재학') AS student_status,
-      (SELECT e.student_type FROM dc.student_type_event e WHERE e.student_uid=s.intg_uid ORDER BY e.decided_at DESC,e.id DESC LIMIT 1) AS student_type,
+      (SELECT e.student_type FROM dc.current_student_type e WHERE e.student_uid=s.intg_uid ORDER BY e.decided_at DESC,e.id DESC LIMIT 1) AS student_type,
       t.total AS penalty_total
       FROM dc.program_apply a JOIN dc.person p ON p.intg_uid=a.student_uid
       JOIN dc.student s ON s.intg_uid=a.student_uid
@@ -105,7 +107,7 @@ def programs(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100)
     if recommended:
         if user['kind'] != 'STUDENT':
             raise HTTPException(403, '본인의 맞춤 프로그램만 조회할 수 있습니다.')
-        where.append('''(SELECT student_type FROM dc.student_type_event WHERE student_uid=%s
+        where.append('''(SELECT student_type FROM dc.current_student_type WHERE student_uid=%s
           ORDER BY decided_at DESC,id DESC LIMIT 1)=ANY(care_types)''')
         values.append(user['intg_uid'])
         where.append("status_code='RECRUITING' AND (apply_end IS NULL OR apply_end >= %s)")
@@ -599,8 +601,8 @@ SEARCH_SCOPE = {'name': 'p.name', 'studentNo': 's.student_no', 'major': 's.major
 
 
 def penalty_filter(user, majors, minPoints, q, scope=None):
-    where = ['t.total>0', 'EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=t.student_uid)']
-    values = [user['intg_uid']]
+    where = ['t.total>0']
+    values = []
     if majors:
         where.append('s.major_label=ANY(%s)')
         values.append(list(majors))
@@ -618,8 +620,7 @@ def penalty_filter(user, majors, minPoints, q, scope=None):
 def penalties(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100),
               q: str = Query('', max_length=200), major: list[str] = Query(default=[]),
               minPoints: int = Query(0, ge=0), searchScope: str | None = None,
-              user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    require_staff(user)
+              user=Depends(administrator, scope='function'), conn=Depends(connection, scope='function')):
     if searchScope and searchScope not in SEARCH_SCOPE:
         raise HTTPException(422, '검색 범위를 확인해 주세요.')
     condition, values = penalty_filter(user, major, minPoints, q, searchScope)
@@ -631,8 +632,7 @@ def penalties(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100
 
 
 @router.get('/penalties/summary')
-def penalty_summary(user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    require_staff(user)
+def penalty_summary(user=Depends(administrator, scope='function'), conn=Depends(connection, scope='function')):
     condition, values = penalty_filter(user, [], 0, '')
     row = conn.execute(f'''SELECT count(*)::int AS total,COALESCE(sum(v.total),0)::int AS "totalPoints"
       FROM ({PENALTY_SELECT} WHERE {condition}) v''', values).fetchone()
@@ -646,7 +646,11 @@ def penalty_summary(user=Depends(principal, scope='function'), conn=Depends(conn
 @router.get('/penalties/{identity}')
 def penalty_detail(identity: str, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
-    student = student_access(conn, user, identity)
+    if user['kind'] == 'STUDENT':
+        student = student_access(conn, user, identity)
+    else:
+        administrator(user, conn)
+        student = managed_student(conn, identity)
     entries = conn.execute('''SELECT id,kind,points,reason,program_id AS "programId",program_title AS "programTitle",
       created_at AS at,created_by AS by FROM dc.penalty_entry WHERE student_uid=%s ORDER BY created_at,id''',
       (student['intg_uid'],)).fetchall()
@@ -666,10 +670,9 @@ class PenaltyBody(BaseModel):
 
 
 @router.post('/penalties/{identity}/entries', status_code=201)
-def add_penalty(identity: str, body: PenaltyBody, user=Depends(principal, scope='function'),
+def add_penalty(identity: str, body: PenaltyBody, user=Depends(administrator, scope='function'),
                 conn=Depends(connection, scope='function')):
-    require_staff(user)
-    student = student_access(conn, user, identity)
+    student = managed_student(conn, identity)
     conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))', ('penalty:' + student['intg_uid'],))
     total = conn.execute('SELECT COALESCE(sum(points),0)::int AS n FROM dc.penalty_entry WHERE student_uid=%s',
                          (student['intg_uid'],)).fetchone()['n']
