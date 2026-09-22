@@ -4,17 +4,23 @@
 영역·문항은 코드관리(SURVEY_AREA·SURVEY_ITEM)가 정본이고, 응답은 학생×프로그램×phase 1건이다.
 향상률 = (사후 평균 - 사전 평균) / 사전 평균 × 100 — 사전·사후가 모두 있는 학생만 센다.
 """
+import re
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import StreamingResponse
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import principal, require_staff, student_access
 from .db import connection
-from .programs import get_program, today
+from .programs import SEOUL, get_program, today
+from .xlsx_export import workbook_sheets
 
 router = APIRouter()
 
 PHASES = ('PRE', 'POST', 'SATISFACTION')
+EXPORT_SHEETS = (('만족도', 'SATISFACTION'), ('역량향상률-사전', 'PRE'), ('역량향상률-사후', 'POST'))
 
 
 def phase_or_404(phase):
@@ -115,6 +121,53 @@ def survey_stats(program_id: str, user=Depends(principal, scope='function'),
     return {'programId': program_id, 'competencySurvey': program['competency_survey'],
             'participation': {**counts, 'paired': len(paired)},
             'total': summarize(all_pairs), 'areas': areas}
+
+
+@router.get('/programs/{program_id}/survey/export.xlsx')
+def survey_export(program_id: str, user=Depends(principal, scope='function'),
+                  conn=Depends(connection, scope='function')):
+    """응답 원자료 엑셀 — 시트 3장(만족도·사전·사후), 학생 1행, 문항 1열. 집계는 stats 가 하고 여기는 값만 준다."""
+    require_staff(user)
+    program = get_program(conn, program_id)
+    output = workbook_sheets([(name, *export_sheet(conn, program, phase)) for name, phase in EXPORT_SHEETS])
+
+    def chunks():
+        try:
+            while chunk := output.read(64*1024):
+                yield chunk
+        finally:
+            output.close()
+    filename = re.sub(r'[\\/:*?"<>|]', '_', program['title']) + '_조사결과.xlsx'
+    return StreamingResponse(chunks(), media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': "attachment; filename*=UTF-8''"+quote(filename), 'Cache-Control': 'no-store'})
+
+
+def export_sheet(conn, program, phase):
+    """(헤더, 행들). 열은 현재 문항 + 응답에만 남은 옛 문항(코드관리에서 뺀 것) — 제출된 값은 버리지 않는다."""
+    items = [(r['code'], f"[{r['area_label']}] {r['label']}") for r in items_for(conn, program, phase)]
+    known = {code for code, _ in items}
+    items += [(r['code'], f"[{r['area_label']}] {r['label']}") for r in conn.execute('''SELECT DISTINCT i.code,i.label,
+      a.label AS area_label,a.sort_order AS area_order,i.sort_order
+      FROM dc.survey_response r JOIN dc.survey_answer s ON s.response_id=r.id
+      JOIN dc.code_item i ON i.group_code='SURVEY_ITEM' AND i.code=s.item_code
+      JOIN dc.code_item a ON a.group_code='SURVEY_AREA' AND a.code=i.payload->>'areaKey'
+      WHERE r.program_id=%s AND r.phase=%s AND NOT i.code=ANY(%s)
+      ORDER BY a.sort_order,i.sort_order,i.code''', (program['id'], phase, list(known))).fetchall()]
+    responses = conn.execute('''SELECT r.id,r.submitted_at,r.snapshot,
+      (SELECT jsonb_object_agg(s.item_code,s.value) FROM dc.survey_answer s WHERE s.response_id=r.id) AS answers
+      FROM dc.survey_response r WHERE r.program_id=%s AND r.phase=%s ORDER BY r.submitted_at,r.id''',
+      (program['id'], phase)).fetchall()
+    headers = ['학번', '이름', '학과', '학년', '진단 유형', '제출일시'] + [label for _, label in items] + ['평균']
+
+    def rows():
+        for r in responses:
+            snap, answers = r['snapshot'] or {}, r['answers'] or {}
+            values = [answers.get(code) for code, _ in items]
+            scored = [v for v in values if v is not None]
+            yield [snap.get('studentNo'), snap.get('studentName'), snap.get('studentMajor'), snap.get('grade'),
+                   snap.get('studentType'), r['submitted_at'].astimezone(SEOUL).strftime('%Y-%m-%d %H:%M'),
+                   *values, round(sum(scored) / len(scored), 2) if scored else None]
+    return headers, rows()
 
 
 def summarize(pairs):

@@ -1729,6 +1729,9 @@ input, textarea, select { font-family: var(--font); }
   display: flex; align-items: flex-end; gap: 12px; margin-top: 18px; flex-wrap: wrap;
 }
 .admin-program-delete { margin-left: auto; }
+/* 조사 결과 엑셀은 삭제 버튼 바로 왼쪽 — 둘 다 auto 면 가운데로 흩어지므로 앞 버튼만 민다. */
+.admin-program-export { margin-left: auto; }
+.admin-program-export + .admin-program-delete { margin-left: 0; }
 
 /* ── 신청자 · 출석 로스터 (5열, 클릭 불가 행) ─────────────────────────── */
 .admin-applicant-roster .admin-roster-head,
