@@ -25,3 +25,22 @@ table td {
   align-self: center !important;
   text-align: center !important;
 }
+
+/* 예외 — 학생 이름 칸은 왼쪽 정렬한다. ⭐ 표식이 붙어도 첫 글자가 같은 선에 서야 한다.
+   grid 로스터는 .admin-name-cell, <table> 은 td.cs-name-cell 로 표시한다. */
+.admin-roster-row > .admin-name-cell,
+.admin-roster-head > .admin-name-cell {
+  justify-content: flex-start !important;
+  align-items: flex-start !important;
+  text-align: left !important;
+  padding-left: 20px;
+}
+.admin-roster-row > .admin-name-cell > *,
+.admin-roster-row > .admin-name-cell > * > * {
+  align-self: flex-start !important;
+  text-align: left !important;
+}
+table td.cs-name-cell, table th.cs-name-cell {
+  text-align: left !important;
+  padding-left: 20px !important;
+}

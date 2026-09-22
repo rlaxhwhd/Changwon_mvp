@@ -1,3 +1,5 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
+import { useExportSelection } from '../../shared/useExportSelection'
 import PageNumbers from '../../shared/components/PageNumbers'
 import {
   LuChevronLeft, LuChevronRight, LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuSparkles, LuStar, LuTriangleAlert,
@@ -142,9 +144,11 @@ export default function StudentChargeTable({
     },
   }
   const { data: result, isLoading: loading, error, refetch } = useListData(academic ? queryAcademicStudents : queryStudentRoster, listParams)
+  const selection = useExportSelection(JSON.stringify([query, listParams.filters, deptKey]), result.items, row => row.id, loading)
   const exportExcel = async () => {
+    if (!selection.count) return
     setExporting(true); setExportError('')
-    try { await downloadAcademicStudents(listParams) }
+    try { await downloadAcademicStudents(listParams, selection.ids) }
     catch (e) { setExportError(e instanceof Error ? e.message : '다운로드에 실패했습니다.') }
     finally { setExporting(false) }
   }
@@ -319,8 +323,8 @@ export default function StudentChargeTable({
           </span>}
           {loading && <LuLoaderCircle className="admin-spin" />}
         </span>
-        {academic && <button type="button" className="admin-btn admin-btn-primary" disabled={exporting || loading || !!error || totalCount===0} onClick={exportExcel}>
-          {exporting ? '엑셀 생성 중…' : '엑셀 다운로드'}
+        {academic && <button type="button" className="admin-btn admin-btn-primary" disabled={exporting || loading || !!error || selection.count===0} onClick={exportExcel}>
+          {exporting ? '엑셀 생성 중…' : `엑셀 다운로드 (${selection.count})`}
         </button>}
       </div>
       {exportError && <p role="alert">{exportError}</p>}
@@ -335,9 +339,9 @@ export default function StudentChargeTable({
           <EmptyState icon={LuFrown} message="조건에 맞는 학생이 없습니다." />
         ) : (
           <>
-            <div className="admin-roster admin-charge-roster">
+            <div className={`admin-roster admin-charge-roster${academic ? " has-export-selection" : ""}`}>
               <div className="admin-roster-head">
-                <span>번호</span>
+                {academic && <span>{selection.header}</span>}<span>번호</span>
                 <span>학생</span>
                 <span>학과</span>
                 <span>학년</span>
@@ -350,9 +354,9 @@ export default function StudentChargeTable({
                 const cells = (
                   <>
                     {/* 페이지가 넘어가도 이어지는 통 번호 (1페이지 20명이면 2페이지는 21부터) */}
-                    <span className="admin-roster-no">{(page - 1) * pageSize + i + 1}</span>
-                    <span className="admin-roster-student">
-                      <span><strong>{s.name}</strong>
+                    {academic && <span>{selection.checkbox(s, s.name)}</span>}<span className="admin-roster-no">{(page - 1) * pageSize + i + 1}</span>
+                    <span className="admin-roster-student admin-name-cell">
+                      <span><strong>{studentDisplayName(s.name, s.id, s.star)}</strong>
                         {academic && <small style={{ display: 'block' }}>{s.studentNo} · {s.academicLevel}</small>}
                       </span>
                       {s.hasDetail && <span className="admin-tag admin-tag-soft">상세</span>}
@@ -389,7 +393,7 @@ export default function StudentChargeTable({
 
                 // roadmap 모드는 칸 안에 버튼이 들어가므로 행을 button 으로 둘 수 없다
                 // (버튼 안의 버튼은 잘못된 마크업이다). 클래스가 같아 보이는 것은 그대로다.
-                return isRoadmap ? (
+                return isRoadmap || academic ? (
                   <div
                     key={s.id}
                     role="button"
@@ -397,6 +401,7 @@ export default function StudentChargeTable({
                     className="admin-roster-row"
                     onClick={() => pick(s.id)}
                     onKeyDown={e => {
+                      if (e.target !== e.currentTarget) return
                       if (e.key !== 'Enter' && e.key !== ' ') return
                       e.preventDefault()
                       pick(s.id)

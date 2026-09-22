@@ -1,8 +1,9 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import {
   LuCheck, LuChevronDown, LuDownload, LuFileText, LuFolderOpen, LuInfo,
   LuPen, LuPrinter, LuSearch,
 } from 'react-icons/lu'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
@@ -87,7 +88,7 @@ function JournalForm({
   }
 
   return (
-    <AdminModal title={`상담일지 — ${row.studentName}`} size="lg" onClose={onClose}>
+    <AdminModal title={`상담일지 — ${studentDisplayName(row.studentName, row.studentId)}`} size="lg" onClose={onClose}>
       {saveError && <p role="alert">{saveError}</p>}
       <div className="admin-editor-hint">
         <LuInfo />
@@ -98,7 +99,7 @@ function JournalForm({
       </div>
 
       <dl className="admin-journal-brief">
-        <div><dt>학생</dt><dd>{row.studentName} · {row.studentNo}</dd></div>
+        <div><dt>학생</dt><dd>{studentDisplayName(row.studentName, row.studentId)} · {row.studentNo}</dd></div>
         <div><dt>학과</dt><dd>{row.studentMajor}</dd></div>
         <div><dt>상담일시</dt><dd>{row.date} {row.time}</dd></div>
         <div><dt>유형 · 방식</dt><dd>{row.type} · {row.method}</dd></div>
@@ -161,11 +162,12 @@ export default function CounselJournals() {
       if (grade !== ALL && String(r.studentGrade ?? '') !== grade) return false
       if (enroll !== ALL && r.studentStatus !== enroll) return false
       // 학과는 드롭다운이 맡았다 — 검색어까지 학과를 훑으면 두 조건이 서로를 덮는다.
-      if (q && !`${r.studentName} ${r.studentNo} ${r.topic}`.toLowerCase().includes(q)) return false
+      if (q && !`${studentDisplayName(r.studentName, r.studentId)} ${r.studentNo} ${r.topic}`.toLowerCase().includes(q)) return false
       return true
     })
   }, [rows, query, status, major, grade, enroll])
 
+  useEffect(() => { setChecked(new Set()) }, [query, status, major, grade, enroll])
   const allChecked = list.length > 0 && list.every(r => checked.has(r.requestId))
 
   const toggle = (requestId: string) => {
@@ -208,11 +210,10 @@ export default function CounselJournals() {
     counselorName: me.name,
   })
 
-  // 대상 = 선택분, 선택이 없으면 화면에 보이는 목록 전체.
-  // 필터로 가려진 선택은 제외한다 — 버튼에 적힌 건수와 실제 대상이 어긋나면 안 된다.
-  const targetRows = checked.size > 0 ? list.filter(r => checked.has(r.requestId)) : list
+  // Excel includes only explicitly selected rows.
+  const targetRows = list.filter(r => checked.has(r.requestId))
   // 인쇄는 작성된 일지만 — 미작성 행은 인쇄할 서식이 없다.
-  const printIds = targetRows.flatMap(r => (r.record ? [r.record.id] : []))
+  const printIds = (checked.size ? targetRows : list).flatMap(r => (r.record ? [r.record.id] : []))
 
   const downloadCsv = () => {
     if (targetRows.length === 0) return
@@ -327,7 +328,7 @@ export default function CounselJournals() {
             >
               <LuPrinter /> 선택 인쇄 ({printIds.length})
             </Link>
-            <button type="button" className="admin-btn admin-btn-primary sm" onClick={downloadCsv}>
+            <button type="button" className="admin-btn admin-btn-primary sm" onClick={downloadCsv} disabled={!targetRows.length}>
               <LuDownload /> 엑셀 다운로드 ({targetRows.length})
             </button>
           </div>
@@ -367,15 +368,15 @@ export default function CounselJournals() {
                         type="checkbox"
                         checked={checked.has(r.requestId)}
                         onChange={() => toggle(r.requestId)}
-                        aria-label={`${r.studentName} 상담일지 선택`}
+                        aria-label={`${studentDisplayName(r.studentName, r.studentId)} 상담일지 선택`}
                       />
                     </span>
                     <span className="admin-roster-cell">{list.length - index}</span>
                     <span className="admin-roster-cell">{r.date}</span>
                     <span className="admin-roster-cell"><small>{r.time || '—'}</small></span>
-                    <span className="admin-roster-cell">
+                    <span className="admin-roster-cell admin-name-cell">
                       <button type="button" className="admin-inline-link" onClick={() => setInfoId(r.studentId)}>
-                        {r.studentName}
+                        {studentDisplayName(r.studentName, r.studentId)}
                       </button>
                       <small>{r.studentNo}</small>
                     </span>

@@ -1,3 +1,5 @@
+import { studentDisplayName } from '../studentDisplayName'
+import { useExportSelection } from '../useExportSelection'
 import { pageNumbers as getPageNumbers } from '../pagination'
 import HistoryCalendar, { type HistoryDayMark } from './HistoryCalendar'
 import { useEffect, useState, type ReactNode } from 'react'
@@ -78,6 +80,8 @@ export default function CounselHistory({ rows, showStudent = false, onCancel, de
   const currentPage = Math.min(page, pages)
   const pageNumbers = getPageNumbers(currentPage, pages)
   const pageRows = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+  const selection = useExportSelection(JSON.stringify([selectedDate, tab, query, status, type, from, until]), pageRows, row => row.id)
+  const exportRows = filtered.filter(row => selection.ids.includes(row.id))
   const upcoming = rows.filter(r => isScheduled(r) && r.date && new Date(`${r.date}T${r.time || '23:59'}:00+09:00`).getTime() >= now)
     .sort((a, b) => `${a.date}${a.time}`.localeCompare(`${b.date}${b.time}`)).slice(0, 3)
   const detail = rows.find(r => r.id === detailId)
@@ -109,14 +113,14 @@ export default function CounselHistory({ rows, showStudent = false, onCancel, de
             <select aria-label="상담 유형 필터" value={type} onChange={e => { setType(e.target.value as CounselTypeKey | ''); setPage(1) }}><option value="">상담유형 전체</option>{COUNSEL_TYPE_ORDER.map(t => <option key={t} value={t}>{COUNSEL_TYPE_LABEL[t]}</option>)}</select>
             <div className="cs-date-range"><input type="date" aria-label="상담 시작일" value={from} max={until || undefined} onChange={e => { setFrom(e.target.value); setSelectedDate(''); setPage(1) }} /><span>~</span><input type="date" aria-label="상담 종료일" value={until} min={from || undefined} onChange={e => { setUntil(e.target.value); setSelectedDate(''); setPage(1) }} /></div>
             <select aria-label="상담 정렬" value={order} onChange={e => { setOrder(e.target.value); setPage(1) }}><option value="desc">최신순</option><option value="asc">오래된순</option></select>
-            {onExport && <button type="button" className="cs-button" disabled={!filtered.length} onClick={() => onExport(filtered)}><Icon name="download" /> 엑셀 CSV</button>}
+            {onExport && <button type="button" className="cs-button" disabled={!exportRows.length} onClick={() => onExport(exportRows)}><Icon name="download" /> 엑셀 CSV ({exportRows.length})</button>}
           </div>
           {(selectedDate || query || status || type || from || until) && <div className="cs-filter-note"><span>{selectedDate ? `${prettyDate(selectedDate)} 상담 내역` : `검색 결과 ${filtered.length}건`}</span><button type="button" onClick={reset}>필터 초기화 <Icon name="x" /></button></div>}
           {invalidRange && <p className="cs-error" role="alert">종료일을 시작일 이후로 선택해 주세요.</p>}
           <div className="cs-table-scroll" tabIndex={0} role="region" aria-label="상담 내역 표">
-            <table className="cs-table"><thead><tr>{['No.', ...(showStudent ? ['학생'] : []), '상담유형', '상담사', '상담 주제', '상태', '상담일시', '진행 방식', '공개 코멘트', '상세'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
+            <table className="cs-table"><thead><tr>{onExport && <th>{selection.header}</th>}{['No.', ...(showStudent ? ['학생'] : []), '상담유형', '상담사', '상담 주제', '상태', '상담일시', '진행 방식', '공개 코멘트', '상세'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
               <tbody>{pageRows.map((r, i) => <tr key={r.id}>
-                <td>{filtered.length - (currentPage - 1) * pageSize - i}</td>{showStudent && <td><strong>{r.studentName}</strong><small className="cs-student-no">{r.studentNo}</small></td>}<td>{COUNSEL_TYPE_LABEL[r.type]}</td><td>{r.counselor}</td>
+                <>{onExport && <td>{selection.checkbox(r, r.studentName ?? r.topic)}</td>}</><td>{filtered.length - (currentPage - 1) * pageSize - i}</td>{showStudent && <td className="cs-name-cell"><strong>{studentDisplayName(r.studentName, r.studentNo)}</strong><small className="cs-student-no">{r.studentNo}</small></td>}<td>{COUNSEL_TYPE_LABEL[r.type]}</td><td>{r.counselor}</td>
                 <td><span className="cs-cell-text" title={r.topic}>{r.topic}</span></td><td><span className={`cs-status cs-status--${tone(r)}`}>{r.status}</span></td>
                 <td className="cs-table-date">{prettyDate(r.date)}{r.time && <small>{r.time}</small>}</td><td>{r.method}</td>
                 <td><span className="cs-cell-text cs-comment" title={r.comment}>{r.comment || '—'}</span></td>
@@ -136,7 +140,7 @@ export default function CounselHistory({ rows, showStudent = false, onCancel, de
         <section className="cs-panel cs-upcoming"><div className="cs-panel-head"><h2>다가오는 상담 일정</h2><button type="button" className="cs-text-button" onClick={() => { reset(); setTab('예정') }}>전체 보기 <Icon name="chevron-right" /></button></div>
           {upcoming.length ? <ul>{upcoming.map(r => {
             const days = Math.round((Date.parse(`${r.date}T00:00:00+09:00`) - Date.parse(`${today}T00:00:00+09:00`)) / 86400000)
-            return <li key={r.id}><button type="button" onClick={() => openDetail(r.id)}><span className="cs-upcoming-date">{prettyDate(r.date)} {r.time}<em>{days === 0 ? 'D-DAY' : `D-${days}`}</em></span><strong>{r.topic}</strong><small>{showStudent ? r.studentName : r.counselor} · {r.method} · {r.status}</small></button></li>
+            return <li key={r.id}><button type="button" onClick={() => openDetail(r.id)}><span className="cs-upcoming-date">{prettyDate(r.date)} {r.time}<em>{days === 0 ? 'D-DAY' : `D-${days}`}</em></span><strong>{r.topic}</strong><small>{showStudent ? studentDisplayName(r.studentName, r.studentNo) : r.counselor} · {r.method} · {r.status}</small></button></li>
           })}</ul> : <p className="cs-side-empty">예정된 상담 일정이 없습니다.<br />일정이 정해지면 여기에 표시됩니다.</p>}
         </section>
         {sidebarFooter}
@@ -144,7 +148,7 @@ export default function CounselHistory({ rows, showStudent = false, onCancel, de
     </div>
     <Modal open={!!detail} onClose={() => setDetailId(null)} title="상담 상세정보" size="md">{detail && <div className="cs-detail">
       <span className={`cs-status cs-status--${tone(detail)}`}>{detail.status}</span><h3>{detail.topic}</h3>
-      <dl>{showStudent && <div><dt>학생</dt><dd>{detail.studentName} · {detail.studentNo}</dd></div>}<div><dt>상담유형</dt><dd>{COUNSEL_TYPE_LABEL[detail.type]}</dd></div><div><dt>상담사</dt><dd>{detail.counselor}</dd></div><div><dt>상담일시</dt><dd>{prettyDate(detail.date)} {detail.time}</dd></div><div><dt>진행 방식</dt><dd>{detail.method}</dd></div><div><dt>장소 / 안내</dt><dd>{detail.place || '별도 안내'}</dd></div><div><dt>신청일</dt><dd>{prettyDate(dayKey(new Date(detail.requestedAt)))}</dd></div></dl>
+      <dl>{showStudent && <div><dt>학생</dt><dd>{studentDisplayName(detail.studentName, detail.studentNo)} · {detail.studentNo}</dd></div>}<div><dt>상담유형</dt><dd>{COUNSEL_TYPE_LABEL[detail.type]}</dd></div><div><dt>상담사</dt><dd>{detail.counselor}</dd></div><div><dt>상담일시</dt><dd>{prettyDate(detail.date)} {detail.time}</dd></div><div><dt>진행 방식</dt><dd>{detail.method}</dd></div><div><dt>장소 / 안내</dt><dd>{detail.place || '별도 안내'}</dd></div><div><dt>신청일</dt><dd>{prettyDate(dayKey(new Date(detail.requestedAt)))}</dd></div></dl>
       {detail.status === '완료' && <section className="cs-public-comment"><h4>상담사 코멘트</h4><p>{detail.comment || '등록된 공개 코멘트가 없습니다.'}</p></section>}
       {onCancel && detail.status === '대기' && (!cancelling ? <button type="button" className="cs-button cs-cancel-button" onClick={() => setCancelling(true)}>상담 신청 취소</button> : <div className="cs-cancel-form"><label htmlFor="cs-cancel-reason">취소 사유</label><textarea id="cs-cancel-reason" rows={3} placeholder="상담사에게 전달할 취소 사유를 입력해 주세요." value={reason} onChange={e => setReason(e.target.value)} />{action.error && <p role="alert" className="cs-error">{action.error}</p>}<div><button type="button" className="cs-button" onClick={() => setCancelling(false)}>돌아가기</button><button type="button" className="cs-button cs-cancel-button" disabled={!reason.trim() || action.saving} onClick={() => action.run(async () => { await onCancel(detail.id, reason.trim()); setCancelling(false) })}>{action.saving ? '취소 중…' : '취소 확정'}</button></div></div>)}
       {detailActions?.(detail)}

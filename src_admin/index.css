@@ -1812,10 +1812,7 @@ input, textarea, select { font-family: var(--font); }
   min-width: 1370px;
   grid-template-columns: 28px 36px 40px 84px 96px 88px 1fr 96px 56px 78px 74px 132px 60px 60px 72px 48px 48px;
 }
-/* 이름 칸은 왼쪽 정렬 — ⭐ 표식이 있어도 첫 글자가 같은 선에 선다.
-   shared/tableAlignment.css 의 center !important(.admin-roster-cell > *) 보다 우선하도록 선택자를 길게 둔다. */
-.admin-applicant-mgmt-roster .admin-roster-row .admin-roster-cell.admin-name-cell { justify-content: flex-start !important; text-align: left !important; padding-left: 20px; }
-.admin-applicant-mgmt-roster .admin-roster-row .admin-roster-cell.admin-name-cell > .admin-name-fixed { text-align: left !important; align-self: flex-start !important; }
+/* 이름 칸 왼쪽 정렬은 shared/tableAlignment.css 의 .admin-name-cell 예외가 맡는다 */
 .admin-ox { font-style: normal; font-weight: 800; font-size: 13px; color: var(--color-text-tertiary, var(--color-text-secondary)); }
 .admin-ox.on { color: var(--on-blue); }
 /* 헤더 텍스트와 값(배지 포함)이 같은 중심선에 놓이도록 셀 전체를 중앙 정렬 */
