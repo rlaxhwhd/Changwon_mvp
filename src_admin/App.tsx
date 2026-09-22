@@ -37,6 +37,7 @@ import ProgramForm from './pages/ProgramForm'
 import ProgramShell from './pages/ProgramShell'
 import ProgramDetail from './pages/ProgramDetail'
 import ProgramSurveyStats from './pages/ProgramSurveyStats'
+import ProgramSatisfaction from './pages/ProgramSatisfaction'
 import ProgramNoticeView from './pages/ProgramNoticeView'
 import ProgramBlacklist from './pages/ProgramBlacklist'
 import SettingsProfile from './pages/SettingsProfile'
@@ -200,6 +201,7 @@ const router = createBrowserRouter(
                     { path: 'edit', element: <ProgramForm /> },
                     { path: 'applicants', element: <ProgramDetail mode="applicants" /> },
                     { path: 'selected', element: <ProgramDetail mode="selected" /> },
+                    { path: 'satisfaction', element: <ProgramSatisfaction /> },
                     { path: 'survey', element: <ProgramSurveyStats /> },
                   ],
                 },

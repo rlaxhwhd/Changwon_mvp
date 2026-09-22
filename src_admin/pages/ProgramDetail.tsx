@@ -234,7 +234,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
             }
           />
         ) : (
-          <div className={`admin-roster admin-participant-roster admin-applicant-mgmt-roster${mode === 'applicants' ? ' has-cancel-col' : ''}`}>
+          <div className={`admin-roster admin-participant-roster admin-applicant-mgmt-roster${mode === 'applicants' ? ' has-cancel-col' : ' has-survey-cols'}`}>
             <div className="admin-roster-head">
               <span className="admin-check-cell">
                 <input type="checkbox" checked={allChecked} onChange={toggleAll} aria-label="전체 선택" />
@@ -253,6 +253,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
               {mode === 'applicants' && <span>취소일</span>}
               <span>첨부파일</span>
               <span>벌점</span>
+              {mode === 'selected' && <><span>만족도조사</span><span>사전</span><span>사후</span></>}
             </div>
             {currentList.map((a, index) => {
               const name = a.studentName
@@ -281,7 +282,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                   </span>
                   <span className="admin-roster-cell">{index + 1}</span>
                   <span className="admin-roster-cell">{a.round ?? 1}차</span>
-                  <span className="admin-roster-cell"><strong>{studentDisplayName(name, a.studentId)}</strong></span>
+                  <span className="admin-roster-cell"><strong className="admin-name-fixed">{studentDisplayName(name, a.studentId)}</strong></span>
                   <span className="admin-roster-cell">{studentNo}</span>
                   <span className="admin-roster-cell">{collegeOf(major)}</span>
                   <span className="admin-roster-cell">{major}</span>
@@ -294,16 +295,8 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                   <span className="admin-roster-cell">
                     {enroll ? <span className={enrollStatusClass(enroll)}>{enroll}</span> : <small>—</small>}
                   </span>
-                  <span className="admin-roster-cell admin-status-cell">
+                  <span className="admin-roster-cell">
                     <span className={`admin-chip ${chipCls}`}>{label}</span>
-                    {/* 조사 제출 O/X — 컬럼을 늘리지 않고 상태 칸 안에 둔다. 선발자에게만 의미가 있다. */}
-                    {mode === 'selected' && (program.competencySurvey || program.satisfactionSurvey) && (
-                      <span className="admin-survey-marks" title="조사 제출 여부">
-                        {program.competencySurvey && <em className={a.surveyPre ? 'on' : ''}>사전 {a.surveyPre ? 'O' : 'X'}</em>}
-                        {program.competencySurvey && <em className={a.surveyPost ? 'on' : ''}>사후 {a.surveyPost ? 'O' : 'X'}</em>}
-                        {program.satisfactionSurvey && <em className={a.surveySatisfaction ? 'on' : ''}>만족도 {a.surveySatisfaction ? 'O' : 'X'}</em>}
-                      </span>
-                    )}
                   </span>
                   <span className="admin-roster-cell"><small>{fmtDateTime(a.appliedAt)}</small></span>
                   {mode === 'applicants' && (
@@ -317,6 +310,16 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                       ? <span className="admin-chip admin-chip-penalty">{penalty}점</span>
                       : <small>—</small>}
                   </span>
+                  {/* 조사 제출 O/X — 실시하지 않는 조사는 '—' */}
+                  {mode === 'selected' && ([
+                    [program.satisfactionSurvey, a.surveySatisfaction],
+                    [program.competencySurvey, a.surveyPre],
+                    [program.competencySurvey, a.surveyPost],
+                  ] as const).map(([enabled, done], k) => (
+                    <span key={k} className="admin-roster-cell">
+                      {enabled ? <em className={`admin-ox${done ? ' on' : ''}`}>{done ? 'O' : 'X'}</em> : <small>—</small>}
+                    </span>
+                  ))}
                 </div>
               )
             })}
