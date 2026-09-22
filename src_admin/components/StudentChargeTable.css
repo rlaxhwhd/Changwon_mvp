@@ -1,0 +1,17 @@
+.academic-student-filters input[type='month'] {
+  min-height: 40px;
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface, white);
+  color: var(--color-text);
+  font: inherit;
+}
+.academic-student-filters input[type='month']:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+.academic-sex-filter { border: 0; padding: 0; margin: 0; min-width: 0; }
+.academic-sex-filter legend { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
+.academic-sex-filter label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding-inline-end: 12px; cursor: pointer; }
+.academic-sex-filter input { accent-color: var(--color-primary); }

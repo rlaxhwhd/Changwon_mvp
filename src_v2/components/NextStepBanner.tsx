@@ -45,9 +45,9 @@ export default function NextStepBanner() {
             <li key={i} className={i + 1 < next.step ? 'is-done' : i + 1 === next.step ? 'is-now' : ''} />
           ))}
         </ol>
-        {next.step === 1 && next.ctaPath.endsWith('/ccore') ? <GradientButton to={next.ctaPath}>{next.ctaLabel}</GradientButton> : <Link className="nsb-cta" to={next.ctaPath}>
-          {next.ctaLabel} <i className="fa-solid fa-arrow-right" aria-hidden="true" />
-        </Link>}
+        <GradientButton to={next.ctaPath} className={`gradient-button-step-${next.step}`}>
+          {next.ctaLabel}
+        </GradientButton>
       </div>
     </section>
   )

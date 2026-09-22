@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="1600" viewBox="0 0 1440 1600" role="img" aria-labelledby="title desc">
+<title id="title">CARE 7+ 진단부터 이어지는 상담까지</title>
+<desc id="desc">C-CORE, 6유형별 후속진단, CARE 7+ 상담, 상담일지 저장 후 완료, 로드맵 생성, 이어서 상담, 로드맵 확정 순서의 플로우 차트.</desc>
+<defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="8" refY="4.5" orient="auto"><path d="M0,0 L9,4.5 L0,9" fill="none" stroke="#737b71" stroke-width="1.3"/></marker></defs>
+<rect width="1440" height="1600" fill="#f7f6f3"/>
+<g font-family="Malgun Gothic, Apple SD Gothic Neo, sans-serif" fill="#2f3437">
+<text x="60" y="55" font-size="15" text-anchor="start" fill="#60695b" font-weight="600">DREAMCATCH / CARE 7+</text>
+<text x="60" y="103" font-size="34" text-anchor="start" fill="#2f3437" font-weight="700">진단부터 로드맵을 활용한 상담까지</text>
+<text x="60" y="138" font-size="18" text-anchor="start" fill="#2f3437" font-weight="400">상담일지를 저장·완료한 뒤 로드맵을 만들고, 생성된 계획을 보며 바로 이어서 상담합니다.</text>
+<rect x="450" y="180" width="540" height="80" rx="8" fill="#edf3ec" stroke="#c9cec6"/>
+<text x="720.0" y="215.0" font-size="21" text-anchor="middle" fill="#2f3437" font-weight="600">01  C-CORE 핵심진단</text>
+<text x="720.0" y="244.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">학생 · 진단 결과에 따라 6유형 중 하나로 분류</text>
+<polyline points="720,260 720,290" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="540" y="290" width="360" height="55" rx="8" fill="#fbf3db" stroke="#c9cec6"/>
+<text x="720.0" y="324.5" font-size="18" text-anchor="middle" fill="#2f3437" font-weight="600">결과 유형에 맞는 후속진단 1종</text>
+<polyline points="720,345 720,365" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<polyline points="155,365 1285,365" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<polyline points="155,365 155,393" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="50" y="393" width="210" height="92" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="155.0" y="434.0" font-size="19" text-anchor="middle" fill="#2f3437" font-weight="600">T1 진로탐색형</text>
+<text x="155.0" y="463.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">C1 진로탐색 진단</text>
+<polyline points="155,485 155,516" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<polyline points="381,365 381,393" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="276" y="393" width="210" height="92" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="381.0" y="434.0" font-size="19" text-anchor="middle" fill="#2f3437" font-weight="600">T2 진로설정형</text>
+<text x="381.0" y="463.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">C2 진로설정 진단</text>
+<polyline points="381,485 381,516" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<polyline points="607,365 607,393" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="502" y="393" width="210" height="92" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="607.0" y="434.0" font-size="19" text-anchor="middle" fill="#2f3437" font-weight="600">T3 역량성장형</text>
+<text x="607.0" y="463.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">C3 역량수준 진단</text>
+<polyline points="607,485 607,516" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<polyline points="833,365 833,393" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="728" y="393" width="210" height="92" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="833.0" y="434.0" font-size="19" text-anchor="middle" fill="#2f3437" font-weight="600">T4 취업준비형</text>
+<text x="833.0" y="463.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">C4 구직역량 진단</text>
+<polyline points="833,485 833,516" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<polyline points="1059,365 1059,393" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="954" y="393" width="210" height="92" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="1059.0" y="434.0" font-size="19" text-anchor="middle" fill="#2f3437" font-weight="600">T5 취약관리형</text>
+<text x="1059.0" y="463.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">C5 취약요인 진단</text>
+<polyline points="1059,485 1059,516" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<polyline points="1285,365 1285,393" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="1180" y="393" width="210" height="92" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="1285.0" y="434.0" font-size="19" text-anchor="middle" fill="#2f3437" font-weight="600">T6 우수인재형</text>
+<text x="1285.0" y="463.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">C6 우수인재 진단</text>
+<polyline points="1285,485 1285,516" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<polyline points="155,516 1285,516" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<polyline points="720,516 720,548" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="450" y="548" width="540" height="64" rx="8" fill="#fbf3db" stroke="#c9cec6"/>
+<text x="720.0" y="587.0" font-size="21" text-anchor="middle" fill="#2f3437" font-weight="600">C-CORE + 해당 후속진단 완료?</text>
+<polyline points="990,580 1128,580" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="1055" y="565" font-size="15" text-anchor="middle" fill="#2f3437" font-weight="400">아니오</text>
+<rect x="1130" y="548" width="260" height="64" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="1260.0" y="587.0" font-size="18" text-anchor="middle" fill="#2f3437" font-weight="600">미완료 진단 진행</text>
+<polyline points="1260,612 1260,643 960,643 960,612" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<polyline points="720,612 720,662" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<text x="740" y="642" font-size="15" text-anchor="start" fill="#2f3437" font-weight="400">예</text>
+<rect x="360" y="662" width="720" height="90" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="720.0" y="702.0" font-size="21" text-anchor="middle" fill="#2f3437" font-weight="600">02  CARE 7+ 상담 신청 · 예약 확정</text>
+<text x="720.0" y="731.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">학생 신청 → 상담사 예약 확정</text>
+<polyline points="720,752 720,792" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="360" y="792" width="720" height="90" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="720.0" y="832.0" font-size="21" text-anchor="middle" fill="#2f3437" font-weight="600">03  CARE 7+ 상담 진행</text>
+<text x="720.0" y="861.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">진단 결과와 유형별 상담 주제를 활용</text>
+<polyline points="720,882 720,922" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="360" y="922" width="720" height="90" rx="8" fill="#edf3ec" stroke="#c9cec6"/>
+<text x="720.0" y="962.0" font-size="21" text-anchor="middle" fill="#2f3437" font-weight="600">04  상담일지 작성 · 저장 후 완료 처리</text>
+<text x="720.0" y="991.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">최종 유형 · 정성진단 5개 · 상담내용 · 학생 공개 코멘트</text>
+<polyline points="720,1012 720,1052" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="360" y="1052" width="720" height="90" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="720.0" y="1092.0" font-size="21" text-anchor="middle" fill="#2f3437" font-weight="600">05  첫 로드맵 생성 · 초안 저장</text>
+<text x="720.0" y="1121.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">IAP 실행 / CORE 역량 / GROWTH 성장 · 3축</text>
+<polyline points="720,1142 720,1182" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="360" y="1182" width="720" height="90" rx="8" fill="#edf3ec" stroke="#c9cec6"/>
+<text x="720.0" y="1222.0" font-size="21" text-anchor="middle" fill="#2f3437" font-weight="600">06  로드맵을 보며 바로 이어서 상담</text>
+<text x="720.0" y="1251.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">생성된 계획을 학생과 함께 검토</text>
+<polyline points="720,1272 720,1312" fill="none" stroke="#737b71" stroke-width="1.7" marker-end="url(#arrow)"/>
+<rect x="360" y="1312" width="720" height="90" rx="8" fill="#ffffff" stroke="#c9cec6"/>
+<text x="720.0" y="1352.0" font-size="21" text-anchor="middle" fill="#2f3437" font-weight="600">07  로드맵 확정</text>
+<text x="720.0" y="1381.0" font-size="16" text-anchor="middle" fill="#555e53" font-weight="400">상담사가 확정하면 학생에게 공개</text>
+<text x="1110" y="958" font-size="16" text-anchor="start" fill="#7c6632" font-weight="400">임시저장만으로는</text>
+<text x="1110" y="982" font-size="16" text-anchor="start" fill="#7c6632" font-weight="400">첫 로드맵 생성 불가</text>
+<polyline points="60,1440 1380,1440" fill="none" stroke="#737b71" stroke-width="1.7"/>
+<text x="60" y="1474" font-size="17" text-anchor="start" fill="#2f3437" font-weight="600">읽는 기준</text>
+<text x="60" y="1505" font-size="16" text-anchor="start" fill="#2f3437" font-weight="400">• 이어서 상담: 2026-09-21 사용자 확인. 별도 예약이나 새로운 상담 건을 자동 생성한다는 뜻은 아닙니다.</text>
+<text x="60" y="1532" font-size="16" text-anchor="start" fill="#2f3437" font-weight="400">• C5·C6는 유형 매핑에 포함되지만 결과표 항목은 미정입니다. 이 차트는 운영 진단 연동 완료를 뜻하지 않습니다.</text>
+<text x="60" y="1565" font-size="14" text-anchor="start" fill="#60695b" font-weight="400">근거: PROCESS.md · careerProcess.ts · CounselSession.tsx · roadmap.py / Graphify 코드 관계 확인</text>
+</g></svg>

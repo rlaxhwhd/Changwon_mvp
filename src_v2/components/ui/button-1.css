@@ -5,6 +5,8 @@
 }
 .gradient-button {
   --gradient-button-ink: #123c78;
+  --gradient-button-stops: #1d5bd7, #73caff, #e5f4ff, #3c91f5, #1d5bd7;
+  --gradient-button-surface: #f5faff;
   position: relative;
   isolation: isolate;
   display: inline-flex;
@@ -15,7 +17,7 @@
   border-radius: 50px;
   cursor: pointer;
   color: var(--gradient-button-ink);
-  background: conic-gradient(from var(--diagnosis-button-angle), #1d5bd7, #73caff, #e5f4ff, #3c91f5, #1d5bd7);
+  background: conic-gradient(from var(--diagnosis-button-angle), var(--gradient-button-stops));
   animation: diagnosis-button-gradient 4s linear infinite;
   text-decoration: none;
   text-align: center;
@@ -29,10 +31,25 @@
   position: absolute;
   inset: 3px;
   border-radius: 45px;
-  background: #f5faff;
+  background: var(--gradient-button-surface);
   z-index: 1;
   transition: opacity .3s linear;
   pointer-events: none;
+}
+.gradient-button-step-1 {
+  --gradient-button-ink: #166534;
+  --gradient-button-stops: #16a34a, #86efac, #ecfdf5, #4ade80, #16a34a;
+  --gradient-button-surface: #f5fff8;
+}
+.gradient-button-step-2 {
+  --gradient-button-ink: #115e59;
+  --gradient-button-stops: #0d9488, #5eead4, #e6fffa, #2dd4bf, #0d9488;
+  --gradient-button-surface: #f3fffc;
+}
+.gradient-button-step-4 {
+  --gradient-button-ink: #43308a;
+  --gradient-button-stops: #4f46e5, #a78bfa, #eef2ff, #60a5fa, #4f46e5;
+  --gradient-button-surface: #f8f7ff;
 }
 .gradient-button-label { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; }
 .gradient-button:focus-visible { outline: 3px solid var(--gradient-button-ink); outline-offset: 4px; }

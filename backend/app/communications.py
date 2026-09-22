@@ -91,27 +91,41 @@ def notification_dto(r):
 
 @router.get('/notifications/summary')
 def notifications_summary(user=Depends(principal,scope='function'), conn=Depends(connection,scope='function')):
-    '''GNB 배지용 폴링(60초). 미읽음 수와 최신 발생 시각만 — 전체 건수는 세지 않는다(수신자 행 전체 스캔).
-    목록은 드롭다운을 열 때 /notifications 로 받는다.'''
+    '''GNB 배지용 폴링(60초). 목록과 동일한 최근 23시간 범위만 집계한다.'''
     row = conn.execute('''SELECT count(*) FILTER(WHERE r.notification_id IS NULL) AS unread,
-      count(*) FILTER(WHERE r.notification_id IS NULL AND n.occurred_at>=now()-interval '23 hours') AS unread_recent,max(n.occurred_at) AS latest
-      FROM dc.notification n LEFT JOIN dc.notification_read r ON r.notification_id=n.id WHERE recipient_uid=%s''',(user['intg_uid'],)).fetchone()
-    # unreadRecentCount 는 클라이언트 23시간 캐시와 비교하는 값 — 캐시 밖(옛) 미읽음 때문에 매번 전체를 다시 받지 않게.
-    return {'unreadCount':row['unread'],'unreadRecentCount':row['unread_recent'],'latestAt':row['latest']}
+      max(n.occurred_at) AS latest
+      FROM dc.notification n LEFT JOIN dc.notification_read r ON r.notification_id=n.id
+      WHERE recipient_uid=%s AND n.occurred_at>=now()-interval '23 hours' AND n.occurred_at<=now()''',(user['intg_uid'],)).fetchone()
+    # Retain the existing response field for clients using the former cache contract.
+    return {'unreadCount':row['unread'],'unreadRecentCount':row['unread'],'latestAt':row['latest']}
 
 
 @router.get('/notifications')
 def notifications(page: int = Query(1,ge=1), pageSize: int = Query(20,ge=1,le=100), since: datetime | None = Query(None),
                   user=Depends(principal,scope='function'), conn=Depends(connection,scope='function')):
-    '''since 가 있으면 그 시각 이후(포함) 신규분만(delta) — 같은 초의 중복은 클라이언트가 id 로 거른다.
-    없으면 최신순 페이지네이션. hasMore 는 한 건 더 읽어 판정한다(count(*) 없음).'''
+    '''최근 23시간 내 최신순 페이지네이션. since도 표시 기간을 넓힐 수 없다.
+    hasMore는 한 건 더 읽어 판정한다(count(*) 없음).'''
     base = '''SELECT n.*,r.read_at FROM dc.notification n LEFT JOIN dc.notification_read r ON r.notification_id=n.id
-      WHERE recipient_uid=%s'''
+      WHERE recipient_uid=%s AND n.occurred_at>=now()-interval '23 hours' AND n.occurred_at<=now()'''
     if since is not None:
-        rows = conn.execute(base+' AND n.occurred_at>=%s ORDER BY occurred_at DESC,n.id LIMIT 100',(user['intg_uid'],since)).fetchall()
-        return dict(items=[notification_dto(r) for r in rows],hasMore=False,page=1,pageSize=len(rows))
+        rows = conn.execute(base+' AND n.occurred_at>=%s ORDER BY occurred_at DESC,n.id LIMIT %s OFFSET %s',
+                            (user['intg_uid'],since,pageSize+1,(page-1)*pageSize)).fetchall()
+        return dict(items=[notification_dto(r) for r in rows[:pageSize]],hasMore=len(rows)>pageSize,page=page,pageSize=pageSize)
     rows = conn.execute(base+' ORDER BY occurred_at DESC,n.id LIMIT %s OFFSET %s',(user['intg_uid'],pageSize+1,(page-1)*pageSize)).fetchall()
     return dict(items=[notification_dto(r) for r in rows[:pageSize]],hasMore=len(rows)>pageSize,page=page,pageSize=pageSize)
+
+
+@router.post('/notifications/read-all')
+def read_all_notifications(user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
+    # One recipient-scoped, idempotent write, including rows not loaded in the dropdown.
+    # Notifications arriving after this transaction's snapshot remain unread.
+    read_at = conn.execute('SELECT now() AS at').fetchone()['at']
+    conn.execute('''INSERT INTO dc.notification_read(notification_id,read_at)
+      SELECT n.id,%s FROM dc.notification n
+      WHERE n.recipient_uid=%s AND n.occurred_at<=%s
+        AND NOT EXISTS (SELECT 1 FROM dc.notification_read r WHERE r.notification_id=n.id)
+      ORDER BY n.id ON CONFLICT DO NOTHING''',(read_at,user['intg_uid'],read_at))
+    return {'readAt':read_at}
 
 
 @router.post('/notifications/{notification_id}/read')

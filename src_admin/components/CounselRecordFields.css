@@ -35,6 +35,10 @@
 .counsel-template-ai-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; font-size: 11px; color: #708097; }
 .counsel-template-public { border-top: 3px solid #243e68; }
 .counsel-template:disabled { opacity: .7; }
+.counsel-journal-fields { border: 0; padding: 0; margin: 0; min-width: 0; }
+.counsel-journal-fields:disabled .counsel-template { opacity: 1; }
+.counsel-journal-fields:disabled .counsel-template-segments label,
+.counsel-journal-fields:disabled .counsel-template-checks label { cursor: default; }
 .counsel-template-summary dl { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px 20px; padding: 16px; border: 1px solid #dfe5ee; border-radius: 8px; font-size: 13px; }
 .counsel-template-summary dl > div { display: flex; gap: 10px; }
 .counsel-template-summary dt { color: #708097; }

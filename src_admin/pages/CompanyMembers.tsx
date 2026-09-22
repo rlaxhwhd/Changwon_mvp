@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useState } from 'react'
 import { api, queryString } from '../../shared/api'
 import AdminModal from '../components/AdminModal'
@@ -55,7 +56,7 @@ export default function CompanyMembers() {
     <div className="da-table-wrap"><table><thead><tr>{['회사명', '사업자등록번호', '담당자', '이메일', '연락처', '신청일', '상태', '관리'].map(label => <th key={label}>{label}</th>)}</tr></thead><tbody>
       {loading ? <tr><td colSpan={8} className="da-empty">가입 신청을 불러오는 중입니다…</td></tr> : data?.items.map(member => <tr key={member.id}><td>{member.company_name}</td><td className="da-phone">{businessNumber(member.business_no)}</td><td>{member.contact_name}</td><td>{member.contact_email}</td><td className="da-phone">{member.contact_phone}</td><td>{new Date(member.created_at).toLocaleDateString('ko-KR')}</td><td>{labels[member.status]}</td><td><button className="da-action" onClick={() => setSelected(member)}>{member.status === 'PENDING' ? '신청 검토' : '상세'}</button></td></tr>)}
       {!loading && !data?.items.length && <tr><td colSpan={8} className="da-empty">조건에 맞는 가입 신청이 없습니다.</td></tr>}
-    </tbody></table></div><div className="da-pagination"><button className="admin-btn admin-btn-ghost" disabled={loading || page === 1} onClick={() => { setPage(n => n - 1); setLoading(true) }}>이전</button><span>{page} / {Math.max(1, Math.ceil((data?.totalCount ?? 0) / 20))} 페이지</span><button className="admin-btn admin-btn-ghost" disabled={loading || page * 20 >= (data?.totalCount ?? 0)} onClick={() => { setPage(n => n + 1); setLoading(true) }}>다음</button></div>
+    </tbody></table></div><div className="da-pagination"><button className="admin-btn admin-btn-ghost" disabled={loading || page === 1} onClick={() => { setPage(n => n - 1); setLoading(true) }}>이전</button><PageNumbers page={page} pages={Math.ceil((data?.totalCount ?? 0) / 20)} onChange={n => { setPage(n); setLoading(true) }} disabled={loading} /><span>{page} / {Math.max(1, Math.ceil((data?.totalCount ?? 0) / 20))} 페이지</span><button className="admin-btn admin-btn-ghost" disabled={loading || page * 20 >= (data?.totalCount ?? 0)} onClick={() => { setPage(n => n + 1); setLoading(true) }}>다음</button></div>
     {selected && <MemberReview member={selected} onClose={() => setSelected(null)} onSaved={() => { setSelected(null); setNotice('가입 신청을 처리했습니다.'); setLoading(true); setPage(1); setRevision(n => n + 1) }} />}
   </div>
 }

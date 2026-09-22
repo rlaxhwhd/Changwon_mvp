@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 // ─────────────────────────────────────────────────────────────────────────────
 // 채용공고 등록·수정 — 정본은 서버(dc.job_posting)다.
 //
@@ -78,7 +79,7 @@ function CompanySearch({ onSelect, onClose }: {
           </ul>
           {result.totalCount > 20 && <div className="jf-actions">
             <button type="button" className="jf-btn jf-btn-outline" disabled={page === 1} onClick={() => changePage(page - 1)}>이전</button>
-            <span>{page} / {Math.ceil(result.totalCount / 20)}</span>
+            <PageNumbers page={page} pages={Math.ceil(result.totalCount / 20)} onChange={changePage} /><span>{page} / {Math.ceil(result.totalCount / 20)}</span>
             <button type="button" className="jf-btn jf-btn-outline" disabled={page * 20 >= result.totalCount} onClick={() => changePage(page + 1)}>다음</button>
           </div>}
         </>}

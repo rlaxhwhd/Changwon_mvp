@@ -1,6 +1,6 @@
 import {
-  LuCalendarCheck, LuCheck, LuChevronDown, LuDownload, LuFileText, LuFolderOpen, LuInfo,
-  LuMessageSquareMore, LuPaperclip, LuPen, LuPrinter, LuSearch,
+  LuCheck, LuChevronDown, LuDownload, LuFileText, LuFolderOpen, LuInfo,
+  LuPen, LuPrinter, LuSearch,
 } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -18,9 +18,9 @@ import type { RecordStatus } from '../data/schema/counselRecord'
 import { toJournalCsv } from '../data/counselExport'
 import { studentTypeClass } from '../data/studentRoster'
 import type { EnrollStatus } from '../data/studentRoster'
-import CounselRecordFields from '../components/CounselRecordFields'
+import CounselJournalFields from '../components/CounselJournalFields'
 import CounselRecordPreview from '../components/CounselRecordPreview'
-import CounselTemplateSummary from '../components/CounselTemplateSummary'
+import CounselJournalBody from '../components/CounselJournalBody'
 import CounselRecordContext, { type RecordContext } from '../components/CounselRecordContext'
 import { counselContent, counselTemplateErrors, emptyCounselTemplate } from '../data/schema/counselTemplate'
 import { isCare7 } from '../../src_v2/data/counselTrack'
@@ -106,53 +106,10 @@ function JournalForm({
         <div><dt>상담 주제</dt><dd>{row.topic}</dd></div>
       </dl>
 
-      {career ? <>
-        {record?.summary && !record.template && <details className="admin-editor-hint"><summary>기존 상담내용 확인</summary><p style={{ whiteSpace: 'pre-wrap' }}>{record.summary}</p><p>기존 기록을 참고해 아래 항목으로 나누어 작성해 주세요.</p></details>}
-        <CounselRecordFields value={template} onChange={setTemplate} comment={comment} onCommentChange={setComment}
-          diagnosisType={context.diagnosisType} care7={care7} disabled={saving} typeLocked={context.typeLocked} required />
-      </> : <>
-      <label className="admin-field">
-        <span>상담 내용 (소견)</span>
-        <textarea
-          rows={5}
-          value={summary}
-          onChange={e => setSummary(e.target.value)}
-          placeholder="상담에서 다룬 내용과 상담사 소견을 기록합니다."
-        />
-      </label>
-
-      <label className="admin-field">
-        <span>학생 공개 코멘트</span>
-        <textarea
-          rows={3}
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          placeholder="학생 화면 '상담 현황'에 그대로 노출됩니다."
-        />
-        <small className="admin-field-hint">학생이 읽는 문구입니다. 소견과 분리해 작성하세요.</small>
-      </label>
-
-      </>}
-
-      <label className="admin-field">
-        <span>후속 조치</span>
-        <input
-          type="text"
-          value={followUp}
-          disabled={saving}
-          onChange={e => setFollowUp(e.target.value)}
-          placeholder="예: 이력서 첨삭 재상담 권고"
-        />
-      </label>
-
-      <div className="admin-field">
-        <span>첨부파일</span>
-        <div className="admin-journal-attach">
-          <LuPaperclip />
-          <span>진단 결과지·이력서 등 상담 근거 자료를 첨부합니다.</span>
-          <button type="button" className="admin-btn admin-btn-ghost sm" disabled>파일 선택</button>
-        </div>
-      </div>
+      <CounselJournalFields record={record} career={career} care7={care7}
+        template={template} setTemplate={setTemplate} summary={summary} setSummary={setSummary}
+        comment={comment} setComment={setComment} followUp={followUp} setFollowUp={setFollowUp}
+        diagnosisType={context.diagnosisType} typeLocked={context.typeLocked} saving={saving} />
 
       {formErrors.length > 0 && <p className="admin-form-hint">{formErrors.join(' ')}</p>}
       <div className="admin-form-actions">
@@ -278,9 +235,6 @@ export default function CounselJournals() {
             완료된 상담의 일지 작성 현황과 내역입니다. 작성률 {summary.rate}% · 미작성 {summary.미작성}건
           </p>
         </div>
-        <Link to="/counsel/schedule" className="admin-btn admin-btn-ghost">
-          <LuCalendarCheck /> 일정 보기
-        </Link>
       </header>
 
       <div className="admin-editor-hint">
@@ -464,25 +418,7 @@ export default function CounselJournals() {
                   </div>
 
                   {open && r.record && (
-                    <div className="admin-journal-body">
-                      <CounselTemplateSummary template={r.record.template} />
-                      <div className="admin-record-item-summary">
-                        <span className="admin-record-label">상담내용</span>
-                        <p>{r.record.summary || '아직 작성되지 않았습니다.'}</p>
-                      </div>
-                      <div className="admin-record-item-comment">
-                        <span className="admin-record-label">
-                          <LuMessageSquareMore /> 학생 공개 코멘트
-                        </span>
-                        <p>{r.record.comment || '아직 작성되지 않았습니다.'}</p>
-                      </div>
-                      {r.record.followUp && (
-                        <div className="admin-record-item-followup">
-                          <span className="admin-record-label">후속 조치</span>
-                          <p>{r.record.followUp}</p>
-                        </div>
-                      )}
-                    </div>
+                    <CounselJournalBody record={r.record} />
                   )}
                 </div>
               )

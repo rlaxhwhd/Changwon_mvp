@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
   LuBuilding2, LuChartColumn, LuCircleAlert, LuGauge, LuGraduationCap,
-  LuRoute, LuTarget, LuTrendingUp, LuTriangleAlert, LuUsers, LuX,
+  LuRoute, LuTarget, LuTrendingUp, LuTriangleAlert, LuX,
 } from 'react-icons/lu'
 import { PROGRESS_RULE, loadRoadmapProgressStats } from '../data/roadmapProgressStats'
 import type { GroupStat, RoadmapProgressStats } from '../data/roadmapProgressStats'
@@ -22,7 +22,6 @@ import './RoadmapProgress.css'
 // 이행률은 '정도'가 아니라 '단계'라 단색 농담이 아니라 red→green 의미색으로 나눈다.
 // ─────────────────────────────────────────────────────────────────────────
 
-type Scope = 'mine' | 'all'
 
 const EMPTY: RoadmapProgressStats = {
   count: 0, avg: 0, median: 0, onTrack: 0, stalled: 0,
@@ -30,7 +29,6 @@ const EMPTY: RoadmapProgressStats = {
 }
 
 export default function RoadmapProgress() {
-  const [scope, setScope] = useState<Scope>('mine')
   // 펼친 단과대학. 범위를 바꾸면 그 단대가 없을 수도 있어 아래에서 유효성을 다시 본다.
   const [openCollege, setOpenCollege] = useState<string | null>(null)
 
@@ -49,12 +47,6 @@ export default function RoadmapProgress() {
       .finally(() => { if (alive) setLoading(false) })
     return () => { alive = false }
   }, [revision])
-  const mine = stats
-  const all = stats
-
-  // 담당이 전체보다 몇 %p 높은가 — 같은 모수면 0 이다.
-  const delta = mine.avg - all.avg
-  const sameScope = mine.count === all.count
 
   // 펼친 단대를 현재 범위에서 찾는다. 못 찾으면(범위 전환으로 사라진 단대) 닫힌 것으로 본다 —
   // 별도 useEffect 로 상태를 되돌리지 않는다(렌더 한 번을 더 쓰지 않으려고).
@@ -66,32 +58,10 @@ export default function RoadmapProgress() {
         <div>
           <h1 className="admin-page-title">로드맵 이행률 현황</h1>
           <p className="admin-page-desc">
-            담당 학생과 전체 학생의 로드맵 이행률을 구간·유형·학년·단과대학별로 비교합니다.
+            전체 학생의 로드맵 이행률을 구간·유형·학년·단과대학별로 확인합니다.
           </p>
-          {sameScope && (
-            <p className="admin-field-hint">
-              현재 모든 상담사의 담당 범위가 전 학과라 담당·전체 모수가 같습니다
-              (학과 배정이 들어오면 자동으로 갈립니다).
-            </p>
-          )}
           {loading && <p className="admin-field-hint">이행률을 불러오는 중…</p>}
           {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
-        </div>
-        <div className="rmp-scope" role="tablist" aria-label="조회 범위">
-          <button
-            type="button" role="tab" aria-selected={scope === 'mine'}
-            className={scope === 'mine' ? 'is-active' : ''}
-            onClick={() => setScope('mine')}
-          >
-            <LuUsers /> 담당 학생 <em>{mine.count}</em>
-          </button>
-          <button
-            type="button" role="tab" aria-selected={scope === 'all'}
-            className={scope === 'all' ? 'is-active' : ''}
-            onClick={() => setScope('all')}
-          >
-            <LuBuilding2 /> 전체 학생 <em>{all.count}</em>
-          </button>
         </div>
       </header>
 
@@ -100,7 +70,7 @@ export default function RoadmapProgress() {
         <SumCard
           hue="blue" icon={<LuGauge />} label="평균 이행률"
           value={`${stats.avg}%`}
-          note={sameScope ? '담당·전체 동일' : `전체 대비 ${delta >= 0 ? '+' : ''}${delta}%p`}
+          note="전체 학생 기준"
         />
         <SumCard
           hue="purple" icon={<LuChartColumn />} label="중앙값"
@@ -116,7 +86,7 @@ export default function RoadmapProgress() {
         />
         <SumCard
           hue="teal" icon={<LuRoute />} label="로드맵 보유"
-          value={`${stats.count}명`} note={scope === 'mine' ? '담당 학생 기준' : '재학생 전량'}
+          value={`${stats.count}명`} note="전체 학생 기준"
         />
       </div>
 

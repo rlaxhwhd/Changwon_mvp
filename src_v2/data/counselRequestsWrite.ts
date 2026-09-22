@@ -10,7 +10,6 @@
 import { api } from '../../shared/api'
 import { performCounselAction, storeCounselRequest, type StoredCounselRequest } from '../../shared/counselStore'
 import type { CounselMethod, CounselRequestType } from './students'
-import type { CounselIntakeAnswer } from './counselIntake'
 import type { CareTrack } from './counselTrack'
 
 export interface SubmitCounselInput {
@@ -29,8 +28,6 @@ export interface SubmitCounselInput {
   time: string
   /** 대면 장소 (slot.place) */
   place?: string
-  /** 신청 단계 문진표 답변. 템플릿이 있는 유형만 채워진다(현재 진로취업). */
-  intake?: CounselIntakeAnswer[]
 }
 
 export interface SubmitProfCounselInput {
@@ -79,7 +76,6 @@ export async function submitCounselRequest(input: SubmitCounselInput): Promise<v
     type: input.type, careTrack: input.careTrack, method: '대면', topic: input.purpose, topicCode: input.topicCode,
     assignedCounselorId: input.counselorId,
     slot: { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place ?? '' },
-    intake: input.intake ?? [],
   })
 }
 

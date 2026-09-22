@@ -72,6 +72,8 @@ def visibility(user):
     if user['kind']=='STUDENT':
         return 'r.student_uid=%s',[user['intg_uid']]
     kind=user['profile'].get('role')
+    if kind in ('career', 'psych'):
+        return 'true', []
     if kind=='assistant':
         # 조교는 담당 학과 학생의 교수상담(실적 통계)만 본다 — SPEC §3-4 전담교수 상담 실적.
         return "r.legacy_type='교수' AND EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=r.student_uid)",[user['intg_uid']]
@@ -251,7 +253,7 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
         raise HTTPException(409,'이미 종료된 상담입니다.')
     if action!='cancel':
         require_staff(user)
-    if user['kind']=='STAFF' and row['counselor_uid'] not in (None,user['intg_uid']):
+    if user['kind']=='STAFF' and user['profile'].get('role') not in ('career','psych') and row['counselor_uid'] not in (None,user['intg_uid']):
         raise HTTPException(403,'배정된 담당자만 상담을 처리할 수 있습니다.')
     slot=body.slot
     staff_uid=row['counselor_uid']

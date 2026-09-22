@@ -1,0 +1,29 @@
+flowchart TB
+    A["학생 · C-CORE 핵심진단"] --> B{"결과 유형 분류"}
+    B --> T1["T1 진로탐색형<br/>C1 진로탐색 진단검사"]
+    B --> T2["T2 진로설정형<br/>C2 진로설정 진단검사"]
+    B --> T3["T3 역량성장형<br/>C3 역량수준 진단검사"]
+    B --> T4["T4 취업준비형<br/>C4 구직역량 진단검사"]
+    B --> T5["T5 취약관리형<br/>C5 취약요인 진단검사"]
+    B --> T6["T6 우수인재형<br/>C6 우수인재 진단검사"]
+    T1 --> G
+    T2 --> G
+    T3 --> G
+    T4 --> G
+    T5 --> G
+    T6 --> G
+    G{"C-CORE + 해당 후속진단 완료?"}
+    G -->|아니오| W["미완료 진단 진행"]
+    W --> G
+    G -->|예| C["CARE 7+ 상담 신청 · 예약 확정"]
+    C --> D["상담사 · CARE 7+ 상담 진행<br/>진단 결과와 유형별 상담 주제 활용"]
+    D --> J["상담일지 작성 · 저장 후 완료 처리<br/>최종 유형 · 정성진단 5개 · 상담내용 · 공개 코멘트"]
+    J --> R["첫 로드맵 생성 · 초안 저장<br/>IAP · CORE · GROWTH 3축"]
+    R --> S["로드맵을 보며 바로 이어서 상담<br/>생성된 계획을 함께 검토"]
+    S --> F["상담사 · 로드맵 확정<br/>학생에게 확정 로드맵 공개"]
+    classDef main fill:#edf3ec,stroke:#7b9077,color:#2f3437;
+    classDef branch fill:#ffffff,stroke:#d2d4d0,color:#2f3437;
+    classDef decision fill:#fbf3db,stroke:#b8a773,color:#2f3437;
+    class A,C,D,J,R,S,F main;
+    class T1,T2,T3,T4,T5,T6,W branch;
+    class B,G decision;

@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { useState } from 'react'
 import {
   LuChevronLeft,
@@ -263,6 +264,7 @@ export default function AssistantAdvisorRecords() {
                 >
                   <LuChevronLeft />
                 </button>
+                <PageNumbers page={result.page} pages={pages} onChange={setPage} />
                 <span className="admin-page-info">
                   {result.page} / {pages} 페이지 · 총 {result.totalCount}명
                 </span>

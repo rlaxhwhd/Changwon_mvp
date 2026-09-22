@@ -518,7 +518,7 @@ export function getNextAction(state: PipelineState): NextAction | null {
       title: 'C-CORE 핵심진단부터 시작하세요',
       detail: '모든 단계의 관문입니다. 이 진단으로 나의 유형이 정해지고, 그 유형이 다음 진단과 상담 주제를 결정합니다.',
       ctaLabel: '핵심진단 응시하기',
-      ctaPath: `/diagnosis/employment/${MODULE_BY_ID.get('CCORE')!.testId}`,
+      ctaPath: '/diagnosis/employment',
       secondary: GENERAL_COUNSEL_SECONDARY,
     }
   }

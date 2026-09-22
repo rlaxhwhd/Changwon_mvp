@@ -112,6 +112,28 @@ def test_briefing_is_request_specific_and_returns_real_intake(client, db):
     assert client.get('/api/v1/counsel-dashboard/requests/'+one, headers=headers('career_park')).status_code == 404
 
 
+def test_briefing_diagnoses_for_own_request_without_roster_scope(client, db):
+    student_uid = 'briefing-' + str(uuid4())
+    db.execute("INSERT INTO dc.person(intg_uid,alias,name,kind,source) VALUES(%s,%s,'Briefing student','STUDENT','local')",
+               (student_uid, student_uid))
+    db.execute("INSERT INTO dc.student(intg_uid,student_no,major_label,grade) VALUES(%s,%s,'Regression',1)",
+               (student_uid, student_uid))
+    db.execute("INSERT INTO dc.diagnosis_attempt VALUES(%s,%s,'ccore',1,'DONE',now(),now(),'{}','fixture')",
+               (uuid4().hex, student_uid))
+    request_id = request_row(db, student=student_uid)
+    assert db.execute('SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
+                      (uid(db, 'career_kim'), student_uid)).fetchone() is None
+    expected = db.execute('''SELECT count(*) AS total,
+      count(*) FILTER(WHERE completed_at IS NOT NULL) AS done
+      FROM dc.diagnosis_attempt WHERE student_uid=%s''', (student_uid,)).fetchone()
+    response = client.get('/api/v1/counsel-dashboard/requests/'+request_id, headers=headers('career_kim'))
+    assert response.status_code == 200
+    assert response.json()['diagnoses'] == dict(expected)
+    assert response.json()['diagnoses'] == {'total': 1, 'done': 1}
+    assert response.json()['roadmap'] is None
+    assert client.get('/api/v1/counsel-dashboard/requests/'+request_id, headers=headers('career_park')).status_code == 404
+
+
 def test_pending_total_is_not_preview_length(client, db):
     before = home(client)['counts']['pending']
     for _ in range(7):

@@ -197,7 +197,7 @@ def save_record(request_id:str,body:RecordWrite,user=Depends(principal,scope='fu
     require_staff(user)
     request=get_request(conn,user,request_id,lock=True)
     existing=conn.execute('SELECT * FROM dc.counsel_record WHERE request_id=%s FOR UPDATE',(request_id,)).fetchone()
-    if request['counselor_uid']!=user['intg_uid'] and (not existing or existing['counselor_uid']!=user['intg_uid']):
+    if user['profile'].get('role') not in ('career','psych') and request['counselor_uid']!=user['intg_uid'] and (not existing or existing['counselor_uid']!=user['intg_uid']):
         raise HTTPException(403,'담당자만 상담 기록을 작성할 수 있습니다.')
     if (existing['version'] if existing else 0)!=body.expectedVersion:
         raise HTTPException(409,'다른 사용자가 기록을 변경했습니다. 다시 조회해 주세요.')

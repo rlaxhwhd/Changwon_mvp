@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 /** 교수 상담 신청 접수 화면 — 교수에게 지정된 신청만 일정 확정 또는 취소한다. */
 import {
   LuChevronLeft,
@@ -285,6 +286,7 @@ export default function ProfessorCounselRequests() {
                 >
                   <LuChevronLeft />
                 </button>
+                <PageNumbers page={page} pages={pages} onChange={setPage} />
                 <span className="admin-page-info">{page} / {pages} 페이지 · 총 {data.totalCount}건</span>
                 <button
                   type="button"

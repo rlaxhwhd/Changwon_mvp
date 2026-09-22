@@ -11,6 +11,7 @@ import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardC
 import { menuItems } from '../../shared/metadataStore'
 
 export interface NavChild {
+  menuCode?: string
   label: string
   path: string
   icon: IconType
@@ -105,6 +106,7 @@ const ALL_SECTIONS: NavSection[] = [
     icon: LuHeadset,
     children: [
       { label: '신청 접수함', path: '/counsel/requests', icon: LuInbox },
+      // Retired counsel.1 slot: preserve array indices used by DB menu codes. Hidden by migration 096.
       { label: '일정·예약', path: '/counsel/schedule', icon: LuCalendarDays },
       { label: '상담일지', path: '/counsel/journals', icon: LuFileText },
       { label: '집단상담', path: '/counsel/groups', icon: LuUsersRound },
@@ -113,18 +115,17 @@ const ALL_SECTIONS: NavSection[] = [
       // 학생 신청 없이 남기는 심리상담 기록 — 교수 발의 기록과 같은 방식(counsel.6).
       { label: '추가 심리상담신청', path: '/counsel/psych-records/new', icon: LuPlus },
       { label: '심리상담센터 연계', path: '/counsel/psych-referrals', icon: LuBrain },
+      { label: '상담기록', path: '/counsel/records', icon: LuClipboardCheck },
     ],
   },
   {
     id: 'students',
     label: '학생 관리',
     basePaths: ['/students'],
-    path: '/students',
+    path: '/students/all',
     icon: LuUsers,
     children: [
-      // 표·데이터 항목은 같다(StudentChargeTable 공유). 다른 것은 조회 범위뿐이다.
-      { label: '담당 학생 목록', path: '/students', icon: LuUsers },
-      { label: '전체 학생 목록', path: '/students/all', icon: LuTable },
+      { menuCode: 'students.1', label: '전체 학생 목록', path: '/students/all', icon: LuTable },
     ],
   },
   {
@@ -249,7 +250,10 @@ const ALL_SECTIONS: NavSection[] = [
 /** 로그인 사용자에게 허용된(=`/metadata` 메뉴에 있고 is_active 인) 섹션 + 하위 항목만 반환. 라벨·순서도 DB 를 따른다. */
 export function getNavSections(): NavSection[] {
   function children(items: NavChild[], parent: string): NavChild[] {
-    return items.map((item,index) => ({item,meta:menuItems.find(row => row.menu_code === `${parent}.${index}`),key:`${parent}.${index}`}))
+    return items.map((item,index) => {
+      const key = item.menuCode ?? `${parent}.${index}`
+      return { item, meta: menuItems.find(row => row.menu_code === key), key }
+    })
       .filter(({meta}) => meta?.is_active)
       .sort((a,b) => a.meta!.sort_order - b.meta!.sort_order)
       .map(({item,meta,key}) => ({...item,label:meta!.label,children:item.children ? children(item.children,key) : undefined}))

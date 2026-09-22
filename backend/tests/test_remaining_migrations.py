@@ -101,6 +101,42 @@ def test_notification_summary_delta_and_paging(client):
     assert client.get('/api/v1/notifications/summary',headers=head).json()['unreadCount']==summary['unreadCount']-1
 
 
+def test_notification_window_and_bulk_read(client):
+    head = headers('chaewon')
+    with pool.connection() as conn:
+        uid = conn.execute("SELECT intg_uid FROM dc.person WHERE alias='chaewon'").fetchone()['intg_uid']
+        other = conn.execute("SELECT intg_uid FROM dc.person WHERE alias='jiwoo'").fetchone()['intg_uid']
+        ids = []
+        # 23h boundary, 3-day-old, future, another recipient, and more than one page.
+        for recipient, minutes in [(uid, 1379), (uid, 1381), (uid, 4320), (uid, -60), (other, 0)] + [(uid, 0)] * 25:
+            row = conn.execute("""INSERT INTO dc.notification(recipient_uid,source_kind,source_id,tone,title,route,occurred_at)
+              VALUES(%s,'test',%s,'counsel','window test','/counsel/record',now()-make_interval(mins=>%s)) RETURNING id""",
+              (recipient,str(uuid4()),minutes)).fetchone()
+            ids.append(str(row['id']))
+    listed = client.get('/api/v1/notifications?pageSize=100', headers=head).json()
+    visible = {item['id'] for item in listed['items']}
+    assert ids[0] in visible and set(ids[5:]) <= visible
+    assert not set(ids[1:5]) & visible
+    # A deliberately old since value cannot bypass the window restriction.
+    delta = client.get('/api/v1/notifications?since=2000-01-01T00:00:00Z&pageSize=100', headers=head).json()
+    assert not set(ids[1:5]) & {item['id'] for item in delta['items']}
+    first = client.post('/api/v1/notifications/read-all', headers=head)
+    assert first.status_code == 200, first.text
+    summary = client.get('/api/v1/notifications/summary', headers=head).json()
+    assert summary['unreadCount'] == summary['unreadRecentCount'] == 0
+    assert client.post('/api/v1/notifications/read-all', headers=head).status_code == 200
+    with pool.connection() as conn:
+        read_ids = {str(row['notification_id']) for row in conn.execute(
+            'SELECT notification_id FROM dc.notification_read WHERE notification_id=ANY(%s::uuid[])', (ids,)).fetchall()}
+        assert set(ids[:3] + ids[5:]) <= read_ids  # Includes unloaded and older rows.
+        assert not set(ids[3:5]) & read_ids  # Future and other recipient are untouched.
+        row = conn.execute("""INSERT INTO dc.notification(recipient_uid,source_kind,source_id,tone,title,route)
+          VALUES(%s,'test',%s,'counsel','after click','/counsel/record') RETURNING id""", (uid,str(uuid4()))).fetchone()
+    assert client.get('/api/v1/notifications/summary', headers=head).json()['unreadCount'] == 1
+    newest = client.get('/api/v1/notifications', headers=head).json()['items']
+    assert next(item for item in newest if item['id'] == str(row['id']))['readAt'] is None
+
+
 def test_counsel_event_dto_never_exposes_record_payload(client):
     result=client.get('/api/v1/counsel-events',headers=headers('chaewon'))
     assert result.status_code==200,result.text

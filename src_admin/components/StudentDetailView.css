@@ -1553,3 +1553,13 @@
   color: var(--pink);
   background: var(--pink-soft);
 }
+
+.sdv .sdv-idbar.sdv-academic-idbar { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.sdv .sdv-idbar.sdv-academic-idbar > div { border-left: 1px solid var(--border); border-top: 0; }
+.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(4n + 1) { border-left: 0; }
+.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(n + 5) { border-top: 1px solid var(--border); }
+@media (max-width: 600px) {
+  .sdv .sdv-idbar.sdv-academic-idbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(2n + 1) { border-left: 0; }
+  .sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(n + 3) { border-top: 1px solid var(--border); }
+}

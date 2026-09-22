@@ -1,0 +1,6 @@
+.page-number-group { display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; }
+.page-number-ellipsis { padding: 0 6px; color: inherit; }
+.page-number-group .page-number-button { display: inline-grid; place-items: center; min-width: 32px; height: 32px; padding: 0 6px; border: 1px solid var(--admin-border, var(--border, #dfe5ee)); border-radius: 6px; background: var(--admin-card, var(--card, #fff)); color: inherit; font: inherit; cursor: pointer; }
+.page-number-group .page-number-button[aria-current="page"] { background: var(--admin-primary, #147d64); border-color: var(--admin-primary, #147d64); color: #fff; font-weight: 700; }
+.page-number-group .page-number-button:focus-visible { outline: 2px solid currentColor; outline-offset: 2px; }
+.page-number-group .page-number-button:disabled { cursor: default; opacity: .5; }

@@ -1,12 +1,11 @@
 import { useState } from 'react'
 import Modal from './Modal'
 import { getActiveStudent } from '../data/students'
-import type { CounselIntakeAnswer } from '../data/counselIntake'
 import './CounselReserveModal.css'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 상담 예약 신청서 — 두 포털이 같이 쓴다(공용).
-//   · 학생 포털(/v2/counsel/*) : 입력 모드 — 목적·문진표를 적어 신청한다.
+//   · 학생 포털(/v2/counsel/*) : 입력 모드 — 상담 목적을 적어 신청한다.
 //   · 교직원 포털(/admin)      : 읽기 모드 — 학생이 낸 신청서를 그대로 확인한다.
 // 같은 서식을 두 벌로 만들면 학생이 본 화면과 상담사가 읽는 화면이 갈린다.
 //
@@ -36,9 +35,6 @@ interface Props {
   time: string
   room: string
   phone: string
-  /** 문진표 질문 — 넘기면 「상담 목적」 아래에 답변칸이 붙는다(진로취업 전용).
-   *  없으면 이 모달은 지금까지와 똑같이 동작한다. */
-  questions?: string[]
   topicOptions?: { code: string; label: string }[]
   /** 신청 완료 안내 — 넘기면 제출 후 이 모달이 완료 화면으로 바뀐다.
    *  이때 부모는 모달을 닫지 않는다(닫으면 완료 화면이 안 보인다). */
@@ -47,11 +43,9 @@ interface Props {
   student?: ReserveStudent
   /**
    * 읽기 모드 — 제출된 신청서를 그대로 보여 준다(상담사가 상담 전에 읽는 화면).
-   * 질문 문구는 답변에 함께 저장돼 있어 템플릿을 다시 참조하지 않는다 —
-   * 템플릿이 바뀌어도 그때 무엇을 물었는지가 남아야 한다(CLAUDE.md 규칙 2).
    */
-  submitted?: { purpose: string; intake: CounselIntakeAnswer[] }
-  onSubmit?: (purpose: string, answers: string[], topicCode?: string) => void | Promise<void>
+  submitted?: { purpose: string }
+  onSubmit?: (purpose: string, topicCode?: string) => void | Promise<void>
 }
 
 export default function CounselReserveModal({
@@ -63,7 +57,6 @@ export default function CounselReserveModal({
   time,
   room,
   phone,
-  questions,
   topicOptions,
   completion,
   student,
@@ -84,27 +77,20 @@ export default function CounselReserveModal({
   const readOnly = Boolean(submitted)
   const [purpose, setPurpose] = useState('')
   const [topicCode, setTopicCode] = useState('')
-  const [answers, setAnswers] = useState<string[]>([])
   const [done, setDone] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
-  const ask = questions ?? []
-  const answerAt = (index: number) => answers[index] ?? ''
-  const setAnswerAt = (index: number, value: string) =>
-    setAnswers(prev => { const next = [...prev]; next[index] = value; return next })
+  const canSubmit = purpose.trim().length > 0 && (!topicOptions || topicOptions.some(topic => topic.code === topicCode))
 
-  // 문진표가 있으면 모든 문항이 채워져야 신청할 수 있다.
-  const canSubmit = purpose.trim().length > 0 && (!topicOptions || topicOptions.some(topic => topic.code === topicCode)) && ask.every((_, i) => answerAt(i).trim().length > 0)
-
-  const reset = () => { setPurpose(''); setTopicCode(''); setAnswers([]); setDone(false) }
+  const reset = () => { setPurpose(''); setTopicCode(''); setDone(false) }
 
   const handleSubmit = async () => {
     if (!canSubmit || !onSubmit || saving) return
     setSaving(true)
     setSaveError('')
     try {
-      await onSubmit(purpose.trim(), ask.map((_, i) => answerAt(i).trim()), topicCode || undefined)
+      await onSubmit(purpose.trim(), topicCode || undefined)
       if (completion) setDone(true)
       else reset()
     } catch (error) {
@@ -135,7 +121,7 @@ export default function CounselReserveModal({
   }
 
   return (
-    <Modal open={open} onClose={handleClose} title={readOnly ? '상담 문진표' : '상담 예약 신청'} size="md">
+    <Modal open={open} onClose={handleClose} title={readOnly ? '상담 신청 정보' : '상담 예약 신청'} size="md">
       {/* 학생 기본정보 */}
       <div className="crm-section">
         <div className="crm-section-title">
@@ -207,54 +193,6 @@ export default function CounselReserveModal({
           {topicOptions.map(topic => <option key={topic.code} value={topic.code}>{topic.label}</option>)}
         </select>
       </div>}
-      {/* 상담 문진표 — 질문은 입력 모드에선 data/counselIntake.ts, 읽기 모드에선 답변에 붙어 온다. */}
-      {readOnly ? (
-        <div className="crm-section">
-          <div className="crm-section-title">
-            <i className="fa-regular fa-clipboard" /> 상담 문진표
-          </div>
-          {submitted!.intake.length === 0 ? (
-            <p className="crm-value is-empty">
-              이 신청에는 문진표가 없습니다. 문진표는 진로취업 상담 신청에서만 받습니다.
-            </p>
-          ) : (
-            <ol className="crm-intake">
-              {submitted!.intake.map((row, index) => (
-                <li key={row.question}>
-                  <p className="crm-intake-q">
-                    <span className="crm-intake-no">{index + 1}</span>{row.question}
-                  </p>
-                  <p className="crm-value">{row.answer || '답변 없음'}</p>
-                </li>
-              ))}
-            </ol>
-          )}
-        </div>
-      ) : ask.length > 0 && (
-        <div className="crm-section">
-          <div className="crm-section-title">
-            <i className="fa-regular fa-clipboard" /> 상담 문진표 <span className="crm-req">*</span>
-          </div>
-          <p className="crm-intake-hint">상담사가 미리 읽고 준비합니다. 편하게 적어 주세요.</p>
-          <ol className="crm-intake">
-            {ask.map((question, index) => (
-              <li key={question}>
-                <label htmlFor={`crm-intake-${index}`}>
-                  <span className="crm-intake-no">{index + 1}</span>{question}
-                </label>
-                <textarea
-                  id={`crm-intake-${index}`}
-                  className="crm-textarea crm-intake-answer"
-                  value={answerAt(index)}
-                  onChange={event => setAnswerAt(index, event.target.value)}
-                  placeholder="답변을 입력해 주세요."
-                />
-              </li>
-            ))}
-          </ol>
-        </div>
-      )}
-
       <div className="crm-actions">
         {readOnly ? (
           <button className="crm-btn-primary" onClick={handleClose}>닫기</button>
@@ -263,7 +201,7 @@ export default function CounselReserveModal({
             <button className="crm-btn-ghost" onClick={handleClose}>취소</button>
             {saveError && <p role="alert">{saveError}</p>}
             <button className="crm-btn-primary" onClick={handleSubmit} disabled={!canSubmit || saving} aria-busy={saving}>
-              {ask.length > 0 ? '상담 신청' : '예약 신청하기'}
+              예약 신청하기
             </button>
           </>
         )}

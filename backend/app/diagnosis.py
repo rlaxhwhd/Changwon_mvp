@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field
 
-from .auth import principal, require_staff, student_access
+from .auth import principal, require_staff, student_access, is_counselor
 from .db import connection
 from .settings import settings
 
@@ -56,8 +56,13 @@ def student_diagnoses(identity: str,user=Depends(principal,scope='function'),con
 
 def conditions(request,user):
     require_staff(user)
-    where=['EXISTS(SELECT 1 FROM dc.staff_student_scope s WHERE s.staff_uid=%s AND s.student_uid=v.intg_uid)']
-    values=[user['intg_uid']]
+    # Match student_access: counselors can also read their own applicants before
+    # a separate roster assignment exists. Keep other counselors' records private.
+    where=['''(EXISTS(SELECT 1 FROM dc.staff_student_scope s WHERE s.staff_uid=%s AND s.student_uid=v.intg_uid)
+      OR EXISTS(SELECT 1 FROM dc.counsel_request c WHERE c.counselor_uid=%s AND c.student_uid=v.intg_uid))''']
+    values=[user['intg_uid'],user['intg_uid']]
+    if is_counselor(user):
+        where, values = ['true'], []
     departments=request.query_params.getlist('departments')
     if departments:
         where.append('v.major_label=ANY(%s)'); values.append(departments)

@@ -58,6 +58,8 @@ def fail(status: int, code: str, message: str, **extra):
 def has_menu(conn, user, menu_code) -> bool:
     if user['kind'] != 'STAFF':
         return False
+    if user['profile'].get('role') in ('career','psych') and menu_code in (PLAN_MENU, REQUEST_MENU, 'students.1'):
+        return True
     return conn.execute(MENU_PREDICATE, (menu_code, user['intg_uid'], user['intg_uid'])).fetchone()['ok']
 
 
@@ -74,7 +76,7 @@ def resolve_student(conn, user, identity, menu_code=PLAN_MENU):
         return student
     if not has_menu(conn, user, menu_code):
         fail(403, 'MENU_DENIED', '로드맵 업무 권한이 없습니다.')
-    if not conn.execute('SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
+    if user['profile'].get('role') not in ('career','psych') and not conn.execute('SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
                         (user['intg_uid'], student['intg_uid'])).fetchone():
         fail(404, 'NOT_FOUND', '학생을 찾을 수 없습니다.')
     return student
@@ -89,6 +91,8 @@ def require_plan_staff(conn, user, menu_code=PLAN_MENU):
 def scope_condition(user, column):
     if user['kind'] == 'STUDENT':
         return f'{column}=%s', [user['intg_uid']]
+    if user['profile'].get('role') in ('career','psych'):
+        return 'true', []
     return (f'EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid={column})',
             [user['intg_uid']])
 
@@ -1039,8 +1043,8 @@ def reject_requests(body: Reject, idempotency_key: str = Header(min_length=8, ma
     results = []
     for entry in sorted(body.requests, key=lambda x: x.id):
         row = conn.execute('SELECT * FROM dc.roadmap_request WHERE id=%s FOR UPDATE', (entry.id,)).fetchone()
-        if not row or not conn.execute('''SELECT 1 FROM dc.staff_student_scope
-          WHERE staff_uid=%s AND student_uid=%s''', (user['intg_uid'], row['student_uid'])).fetchone():
+        if not row or (user['profile'].get('role') not in ('career','psych') and not conn.execute('''SELECT 1 FROM dc.staff_student_scope
+          WHERE staff_uid=%s AND student_uid=%s''', (user['intg_uid'], row['student_uid'])).fetchone()):
             fail(404, 'NOT_FOUND', '변경 요청을 찾을 수 없습니다.')
         if row['version'] != entry.expectedVersion:
             fail(409, 'VERSION_CONFLICT', '변경 요청이 이미 처리됐습니다.', currentVersion=row['version'])

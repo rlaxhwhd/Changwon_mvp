@@ -40,21 +40,21 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
           <small className="admin-field-hint">한국 시간 기준</small>
         </label>
       </div>
-      {care7 && <section className="counsel-template-card">
+      <section className="counsel-template-card">
         <div className="counsel-template-heading"><h3>상담유형</h3><span>CARE 7+ 분류</span></div>
         <div className="counsel-template-type">
           <div><span className="counsel-template-caption">최근 진단 결과</span><strong>{diagnosisType ? `${diagnosisType} · ${typeLabel(diagnosisType)}` : '진단 결과 없음'}</strong></div>
-          <label className="admin-field"><span>상담 후 최종 유형 {required && <em className="admin-req-mark">*</em>}</span>
+          {care7 && <label className="admin-field"><span>상담 후 최종 유형 {required && <em className="admin-req-mark">*</em>}</span>
             <select disabled={typeLocked} value={value.finalType ?? ''} onChange={e => patch({ finalType: (e.target.value || null) as StudentType | null })}>
               <option value="">{typeLocked ? '기존 일지에 저장된 유형 없음' : '최종 유형 선택'}</option>
               {Object.values(STUDENT_TYPE_MAP).map(type => <option key={type.code} value={type.code}>{type.code} · {type.label}</option>)}
             </select>
-          </label>
+          </label>}
         </div>
-        <p className="admin-field-hint">{typeLocked ? '완료된 상담의 유형입니다. 재진단 후 새 CARE 7+ 상담에서 다시 확정할 수 있습니다.' : '진단 결과를 참고해 선택해 주세요. 상담으로 확정한 유형이 최종 유형으로 적용됩니다.'}</p>
+        <p className="admin-field-hint">{!care7 ? '일반 진로취업상담에서는 유형을 조회만 할 수 있습니다.' : typeLocked ? '완료된 상담의 유형입니다. 재진단 후 새 CARE 7+ 상담에서 다시 확정할 수 있습니다.' : '진단 결과를 참고해 선택해 주세요. 상담으로 확정한 유형이 최종 유형으로 적용됩니다.'}</p>
         {value.finalType && value.finalType !== diagnosisType && <p className="admin-field-hint">유형이 변경되면 {typeLabel(value.finalType)}의 후속진단도 완료해야 취업지원을 이용할 수 있습니다.</p>}
-      </section>}
-      {care7 && <section className="counsel-template-card">
+      </section>
+      <section className="counsel-template-card">
         <div className="counsel-template-heading"><h3>정성진단 <em className="admin-req-mark">*</em></h3><span>5개 항목 모두 필수 · 상·중·하 선택</span></div>
         <div className="counsel-template-ratings">
           {QUALITATIVE_ITEMS.map(([key, label]) => <fieldset key={key} className="counsel-template-rating">
@@ -67,7 +67,7 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
             </div>
           </fieldset>)}
         </div>
-      </section>}
+      </section>
       <section className="counsel-template-card">
         <div className="counsel-template-heading"><h3>상담내용</h3><span>하나 또는 두 항목 모두 선택</span></div>
         <div className="counsel-template-checks">

@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useState } from 'react'
 import { api } from '../../shared/api'
 import './SystemManagement.css'
@@ -55,7 +56,7 @@ export default function AcademicDirectory() {
       <div style={{ overflowX: 'auto' }}><table className="data-table"><thead><tr>{columns[dataset].map(([key, label]) => <th key={key}>{label}</th>)}<th>상세</th></tr></thead>
         <tbody>{data.items.map((row, index) => <tr key={index}>{columns[dataset].map(([key]) => <td key={key}>{key === 'category' ? labels[String(row[key])] : display(row[key])}</td>)}<td><button className="btn btn-secondary" onClick={() => setSelected(row)}>보기</button></td></tr>)}</tbody></table></div>
       {data.items.length === 0 && <p>조건에 맞는 데이터가 없습니다.</p>}
-      <div className="pagination"><button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(n => n - 1)}>이전</button> {page} / {Math.max(1, Math.ceil(data.totalCount / 30))}페이지 <button className="btn btn-secondary" disabled={page * 30 >= data.totalCount} onClick={() => setPage(n => n + 1)}>다음</button></div>
+      <div className="pagination"><PageNumbers page={page} pages={Math.ceil(data.totalCount / 30)} onChange={setPage} /><button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(n => n - 1)}>이전</button> {page} / {Math.max(1, Math.ceil(data.totalCount / 30))}페이지 <button className="btn btn-secondary" disabled={page * 30 >= data.totalCount} onClick={() => setPage(n => n + 1)}>다음</button></div>
       {selected && <section aria-label="선택한 항목 상세"><h2>상세 정보</h2><button className="btn btn-secondary" onClick={() => setSelected(null)}>닫기</button><dl>{Object.entries(selected).map(([key, value]) => <div key={key}><dt>{columns[dataset].find(([k]) => k === key)?.[1] ?? key}</dt><dd>{display(value)}</dd></div>)}</dl></section>}
     </>}
   </div>

@@ -134,7 +134,7 @@ export interface StudentCounselRequest {
 }
 
 /** 학적 상태 — 단일 원천 타입. 상담사측 studentRoster.EnrollStatus는 이 타입의 alias로 전환. */
-export type EnrollmentStatus = '재학' | '휴학' | '졸업' | '수료'
+export type EnrollmentStatus = '재학' | '휴학' | '졸업' | '수료' | '제적' | '미상'
 
 export interface StudentData {
   coreCompetencyScores?: Record<string, number> | null

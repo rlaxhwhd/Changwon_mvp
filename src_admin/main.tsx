@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { initializeData } from '../shared/bootstrap'
 import './index.css'
+import '../shared/tableAlignment.css'
 
 const root = createRoot(document.getElementById('root')!)
 // 적재가 끝날 때까지 아무것도 렌더하지 않는다. createRoot 는 첫 render 가 커밋될 때까지

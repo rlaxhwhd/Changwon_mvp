@@ -76,8 +76,8 @@ def validate_template_scope(request, template):
         return
     if request['legacy_type'] != '진로취업':
         raise HTTPException(422, '이 템플릿은 진로취업상담에서 사용합니다.')
-    if not is_care7_request(request) and (template.finalType or template.qualitative.model_dump(exclude_none=True)):
-        raise HTTPException(422, '상담유형과 정성진단은 CARE 7+ 상담에서만 입력할 수 있습니다.')
+    if not is_care7_request(request) and template.finalType:
+        raise HTTPException(422, '상담유형은 CARE 7+ 상담에서만 변경할 수 있습니다.')
 
 
 def validate_completed_template(request, template, *, comment, type_locked=False):
@@ -87,7 +87,7 @@ def validate_completed_template(request, template, *, comment, type_locked=False
         if is_care7_request(request):
             raise HTTPException(422, '정성진단을 포함한 상담 템플릿을 작성해 주세요.')
         return
-    if is_care7_request(request) and any(value is None for value in template.qualitative.model_dump().values()):
+    if any(value is None for value in template.qualitative.model_dump().values()):
         raise HTTPException(422, '정성진단 5개 항목을 모두 선택해 주세요.')
     if is_care7_request(request) and not type_locked and not template.finalType:
         raise HTTPException(422, '상담 후 최종 유형을 선택해 주세요.')

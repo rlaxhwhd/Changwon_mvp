@@ -1,5 +1,7 @@
 # SPEC.md — 화면·기능 명세 <span>(무엇을 만들 것인가 + 지금 어디까지 됐나)</span>
 
+> **2026-09-22 확정 변경:** [학생 접근·미접촉자 정책](docs/STUDENT_CONTACT_POLICY.md)이 이전 담당학생·고위험군·핵심관리대상 및 상담사별 학생/일지 접근 제한을 대체한다. 모든 상담사는 전체 학생 조회·수정 가능. 홈은 재학생 대상 진단/상담/로드맵 미접촉자 현황을 제공한다. CARE 7+와 일반 진로취업은 동일 일지 양식이며 유형 변경만 CARE 7+에 허용한다.
+
 > **이 문서가 답하는 것**
 >
 > | 질문 | 절 |
@@ -162,8 +164,8 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 
 | 항목 | 내용 |
 |---|---|
-| 목적 | 오늘 할 일과 담당 학생 요약을 한 화면에 |
-| 표시 | 오늘 상담 일정 · 대기 중 신청 건수 · 담당 학생 수 · 트랙별 분포(집중관리/위험/표준/우수) · 미작성 기록지 수 |
+| 목적 | 오늘 할 일과 전체 학생의 참여 현황을 한 화면에 |
+| 표시 | 오늘 상담 일정 · 대기 중 신청 건수 · CARE 7+ 참여학생 · 재학생 미접촉자 현황(진단/상담/로드맵) · 미작성 기록지 수 |
 | 액션 | 각 카드 → 해당 목록으로 이동 |
 | 소스 | `counselRequests` · `counselRecords` · `queryStudents(scope)` 집계 |
 
@@ -199,7 +201,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 
 | 항목 | 내용 |
 |---|---|
-| 목적 | 담당 학생의 진단검사 응시 현황과 결과를 상담 준비용으로 열람 |
+| 목적 | 전체 학생의 진단검사 응시 현황과 결과를 상담 준비용으로 열람. 응시일은 YYYY/MM/DD로 표시 |
 | 표시 | C-CORE·유형별 후속진단 응시율 카드 + 학생×검사 표(학번·이름·학과·학년·유형·검사·상태·응시일·결과 요약·재검사) |
 | 액션 | 미응시 → **검사 권유 발송** · 완료 → **결과 코멘트 작성**(append-only) |
 | 소스 | 검사 목록 `careerProcess.DIAGNOSIS_MODULES` + `dc_diag_attempts` · `dc_diag_comments` · `dc_diag_nudges` |

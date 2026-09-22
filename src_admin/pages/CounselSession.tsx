@@ -4,7 +4,7 @@ import { Link, useParams } from 'react-router-dom'
 import { getActiveCounselor, getActiveCounselorId } from '../data/counselors'
 import { handledRequestTypes } from '../data/schema/counselor'
 import {
-  getRequestsByAssignee,
+  getCounselRequests,
   completeRequest,
 } from '../data/counselRequests'
 import type { CounselRequest } from '../data/counselRequests'
@@ -204,7 +204,7 @@ export default function CounselSession() {
   // 대상은 페이지를 연 시점에 한 번 고정한다 — 완료 처리 뒤 다른 대기 건으로 넘어가 버리면
   // 로드맵 생성 근거(counselRequestId)와 기록지가 방금 끝낸 상담을 잃는다.
   useStore('dc:counsel-updated')
-  const mine = getRequestsByAssignee(counselor.id).filter(r => r.studentId === studentId)
+  const mine = getCounselRequests().filter(r => r.studentId === studentId)
   const [targetId] = useState(() => (
     mine.find(r => r.status === '확정') ??
     mine.find(r => r.status === '대기') ??
@@ -246,7 +246,7 @@ export default function CounselSession() {
         <div>
           <h1 className="admin-page-title">상담 진행</h1>
           <p className="admin-page-desc">
-            {student.name} · {myType} 상담 · 좌측 진단결과를 참고해 기록지를 작성합니다.
+            {student.name} · {targetRequest?.type ?? myType} 상담 · 좌측 진단결과를 참고해 기록지를 작성합니다.
           </p>
         </div>
         <Link to="/counsel/requests" className="admin-btn admin-btn-ghost">

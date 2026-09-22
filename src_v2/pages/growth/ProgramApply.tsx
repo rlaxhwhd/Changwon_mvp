@@ -1,3 +1,4 @@
+import { pageNumbers } from '../../../shared/pagination'
 import { useMetadata } from '../../../shared/useMetadata'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -207,7 +208,7 @@ export default function ProgramApply() {
             <button className="pa-page-btn" disabled={currentPage === 1} onClick={() => setPage(current => Math.max(1, current - 1))}>
               <i className="fa-solid fa-chevron-left" />
             </button>
-            {Array.from({ length: totalPages }, (_, index) => index + 1).map(pageNumber => (
+            {pageNumbers(currentPage, totalPages).map(pageNumber => (
               <button
                 key={pageNumber}
                 className={`pa-page-btn${currentPage === pageNumber ? ' active' : ''}`}

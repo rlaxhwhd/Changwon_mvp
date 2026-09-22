@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { LuChevronLeft, LuChevronRight, LuFrown, LuLoaderCircle, LuSearch } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
 import type { StaffRole } from '../data/schema/staff'
@@ -177,6 +178,7 @@ export default function StudentRosterTable({ departments, studentIds, professorI
                 <button type="button" className="admin-page-btn" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
                   <LuChevronLeft />
                 </button>
+                <PageNumbers page={page} pages={pages} onChange={setPage} />
                 <span className="admin-page-info">{page} / {pages} 페이지 · 총 {totalCount}명</span>
                 <button type="button" className="admin-page-btn" disabled={page === pages} onClick={() => setPage(p => Math.min(pages, p + 1))}>
                   <LuChevronRight />

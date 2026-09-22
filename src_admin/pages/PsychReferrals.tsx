@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useRef, useState } from 'react'
 import { LuArrowRightLeft, LuRefreshCw, LuSearch } from 'react-icons/lu'
 import EmptyState from '../components/EmptyState'
@@ -120,7 +121,7 @@ function ReferralPage() {
             <td>{career && row.status === 'PENDING' ? <button className="admin-btn admin-btn-ghost sm" disabled={busy} onClick={() => change(row, 'CANCEL')}>연계 취소</button> : !career && row.status === 'PENDING' ? <button className="admin-btn admin-btn-primary sm" disabled={busy} onClick={() => change(row, 'ACCEPT')}>접수</button> : !career && row.status === 'IN_PROGRESS' ? <button className="admin-btn admin-btn-ghost sm" disabled={busy} onClick={() => change(row, 'COMPLETE')}>처리 완료</button> : '—'}</td>
           </tr>)}</tbody></table></div>}
       </section>
-      {data && <div className="referral-pagination"><span>전체 {data.totalCount}건 · {page} / {Math.max(1, Math.ceil(data.totalCount / 20))}페이지</span><button className="admin-btn admin-btn-ghost sm" disabled={page <= 1} onClick={() => { setData(null); setPage(p => p - 1) }}>이전</button><button className="admin-btn admin-btn-ghost sm" disabled={page * 20 >= data.totalCount} onClick={() => { setData(null); setPage(p => p + 1) }}>다음</button></div>}
+      {data && <div className="referral-pagination"><PageNumbers page={page} pages={Math.ceil(data.totalCount / 20)} onChange={n => { setData(null); setPage(n) }} /><span>전체 {data.totalCount}건 · {page} / {Math.max(1, Math.ceil(data.totalCount / 20))}페이지</span><button className="admin-btn admin-btn-ghost sm" disabled={page <= 1} onClick={() => { setData(null); setPage(p => p - 1) }}>이전</button><button className="admin-btn admin-btn-ghost sm" disabled={page * 20 >= data.totalCount} onClick={() => { setData(null); setPage(p => p + 1) }}>다음</button></div>}
     </>}
   </div>
 }

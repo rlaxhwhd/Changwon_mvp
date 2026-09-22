@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useState } from 'react'
 import { api } from '../../shared/api'
 import { codeItems, loadMetadata } from '../../shared/metadataStore'
@@ -19,7 +20,7 @@ export type SystemTab = 'codes' | 'assignments' | 'menus' | 'events' | 'issues' 
 const HEAD: Record<SystemTab, [string, string]> = {
   codes: ['코드관리', '운영 코드의 명칭·정렬·사용 여부를 관리합니다. 변경 사유와 이전 값은 이력에 보관됩니다.'],
   menus: ['메뉴관리', '역할을 고르고 그 역할에 보일 상단바 메뉴·페이지를 켜고 끕니다. 메뉴 노출과 별도로 API에서 데이터 접근 권한을 검사합니다.'],
-  assignments: ['학과 담당 배정', '조교·교수·상담사의 학과 담당 기간을 관리합니다. 담당 학생 범위가 여기서 파생됩니다.'],
+  assignments: ['학과 담당 배정', '학과 업무 배정 기간을 관리합니다. 상담사는 배정 여부와 무관하게 전체 학생을 조회·수정합니다.'],
   events: ['변경 이력', '코드·메뉴·배정 변경의 이전/이후 값과 사유입니다.'],
   issues: ['이관 확인 사항', '시드 적재 중 자동으로 판정하지 못한 항목입니다.'],
   notices: ['공지 관리', '학생·교직원 포털에 게시할 공지를 관리합니다.'],
@@ -118,7 +119,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
       </>}
       {tab === 'menus' && <MenuVisibility />}
       {(tab === 'events' || tab === 'issues') && (data.items as Record<string, unknown>[]).map((row, i) => <details key={String(row.id ?? i)}><summary>{String(row.changed_at ?? row.code)} · {String(row.reason ?? row.detail)}</summary><pre>{JSON.stringify(row,null,2)}</pre></details>)}
-      {tab !== 'menus' && <div className="pagination"><button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>이전</button> {page}페이지 · 총 {data.totalCount}건 <button className="btn btn-secondary" disabled={page * 20 >= data.totalCount} onClick={() => setPage(p => p + 1)}>다음</button></div>}
+      {tab !== 'menus' && <div className="pagination"><PageNumbers page={page} pages={Math.ceil(data.totalCount / 20)} onChange={setPage} /><button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>이전</button> {page}페이지 · 총 {data.totalCount}건 <button className="btn btn-secondary" disabled={page * 20 >= data.totalCount} onClick={() => setPage(p => p + 1)}>다음</button></div>}
     </>}
   </div>
 }

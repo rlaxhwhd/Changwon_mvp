@@ -9,7 +9,6 @@ import IapSummaryBanner from '../../components/IapSummaryBanner'
 import CounselTabs from '../../components/CounselTabs'
 import CounselWeekCard from '../../components/CounselWeekCard'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
-import { CAREER_INTAKE_QUESTIONS } from '../../data/counselIntake'
 import { CARE_TRACK_LABEL, type CareTrack } from '../../data/counselTrack'
 import { getNextAction, isDiagnosisDone, getTopicsForType } from '../../data/careerProcess'
 import { useMetadata } from '../../../shared/useMetadata'
@@ -45,7 +44,7 @@ export default function CareerCounsel() {
   useMetadata()
   const currentType = getStudentType(getActiveStudent())
   // 진로·취업 상담은 성격이 다른 두 가지다(counselTrack). 무엇을 신청하는지 고르기
-  // 전에는 예약 화면을 그리지 않는다 — 문진표 유무도 로드맵 생성 여부도 갈린다.
+  // 전에는 예약 화면을 그리지 않는다 — 로드맵 생성 여부가 갈린다.
   const [track, setTrack] = useState<CareTrack | null>(null)
   const pipeline = getPipelineState(getActiveStudent())
   // 진단 2종을 요구하는 것은 CARE 7+ 연계 상담뿐이다. 일반 상담은 게이트 밖이라
@@ -162,7 +161,7 @@ export default function CareerCounsel() {
           <article className="cc-track-card">
             <h2>{CARE_TRACK_LABEL.general.student}</h2>
             <p>진로·취업 관련 어떤 고민이든 상담받을 수 있습니다.</p>
-            <small>진단 없이 바로 신청 · 사전문진표 없음</small>
+            <small>진단 없이 바로 상담 신청</small>
             <button type="button" className="cc-track-cta" onClick={() => setTrack('general')}>
               신청하기
             </button>
@@ -176,7 +175,7 @@ export default function CareerCounsel() {
             <p>진단 결과를 바탕으로 나의 유형을 확정하고, 그 자리에서 경력개발 로드맵을 만듭니다.</p>
             <small>
               {care7Open
-                ? '진단 2종 완료 · 사전문진표를 작성합니다'
+                ? '진단 2종 완료 · 상담을 신청합니다'
                 : 'C-CORE 핵심진단과 후속진단을 마쳐야 신청할 수 있습니다'}
             </small>
             {care7Open ? (
@@ -208,7 +207,7 @@ export default function CareerCounsel() {
 
       <CounselTabs />
 
-      {/* 지금 무엇을 신청하는 중인지 계속 보여 준다 — 두 상담은 문진표도 결과도 다르다. */}
+      {/* 지금 무엇을 신청하는 중인지 계속 보여 준다 — 두 상담은 목적과 결과가 다르다. */}
       <div className="cc-track-bar">
         <span className={`cc-track-tag${track === 'care7' ? ' is-care7' : ''}`}>
           {CARE_TRACK_LABEL[track].student}
@@ -389,16 +388,12 @@ export default function CareerCounsel() {
         time={selectedSlot?.time ?? ''}
         room="학생회관 2층 진로취업상담실"
         phone="055-213-3214"
-        // 사전문진표는 CARE 7+ 연계 상담에만 있다. 일반 상담은 목적 한 칸으로 끝난다.
-        questions={track === 'care7' ? CAREER_INTAKE_QUESTIONS : undefined}
         topicOptions={track === 'care7' ? currentType ? getTopicsForType(currentType) : [] : undefined}
         completion={{
           title: '상담 신청이 완료되었습니다',
-          desc: track === 'care7'
-            ? '상담사가 문진표를 확인한 뒤 일정을 확정합니다. 확정 결과는 마이페이지 상담현황에서 볼 수 있습니다.'
-            : '상담사가 신청 내용을 확인한 뒤 일정을 확정합니다. 확정 결과는 마이페이지 상담현황에서 볼 수 있습니다.',
+          desc: '상담사가 신청 내용을 확인한 뒤 일정을 확정합니다. 확정 결과는 마이페이지 상담현황에서 볼 수 있습니다.',
         }}
-        onSubmit={async (purpose, answers, topicCode) => {
+        onSubmit={async (purpose, topicCode) => {
           await submitCounselRequest({
             topicCode,
             type: '진로취업',
@@ -408,9 +403,6 @@ export default function CareerCounsel() {
             slotDate: selectedSlot?.day.iso ?? '',
             time: selectedSlot?.time ?? '',
             place: '학생회관 2층 진로취업상담실',
-            intake: track === 'care7'
-              ? CAREER_INTAKE_QUESTIONS.map((question, i) => ({ question, answer: answers[i] ?? '' }))
-              : undefined,
           })
           setSubmitted(true)
           // 완료 화면을 모달이 직접 띄운다 — 여기서 닫으면 안내가 안 보인다.

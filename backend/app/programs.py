@@ -98,6 +98,29 @@ def applicants_of(conn, user, program_ids):
     return grouped
 
 
+@router.get('/programs/mine')
+def my_programs(page: int = Query(1, ge=1), pageSize: int = Query(100, ge=1, le=100),
+                user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    """Authenticated student's history, including cancellations; no other applicants or large HTML."""
+    if user['kind'] != 'STUDENT':
+        raise HTTPException(403, '학생 본인의 신청 내역만 조회할 수 있습니다.')
+    uid = user['intg_uid']
+    total = conn.execute('SELECT count(*) AS n FROM dc.program_apply WHERE student_uid=%s',
+                         (uid,)).fetchone()['n']
+    rows = conn.execute('''SELECT p.id,p.title,p.summary,p.category_code,p.manager,p.location,
+      p.run_start,p.run_end,p.sessions,a.applied_at,a.cancelled_at,a.selection_code,a.outcome_code,
+      a.attendance_code FROM dc.program_apply a JOIN dc.program p ON p.id=a.program_id
+      WHERE a.student_uid=%s ORDER BY a.applied_at DESC,p.id LIMIT %s OFFSET %s''',
+      (uid, pageSize, (page-1)*pageSize)).fetchall()
+    return {'totalCount': total, 'items': [{
+        'id': r['id'], 'title': r['title'], 'description': r['summary'],
+        'category': r['category_code'], 'manager': r['manager'], 'location': r['location'],
+        'startDate': r['run_start'], 'endDate': r['run_end'], 'sessions': r['sessions'],
+        'appliedAt': r['applied_at'], 'cancelledAt': r['cancelled_at'],
+        'selection': r['selection_code'], 'outcome': r['outcome_code'], 'attendance': r['attendance_code'],
+    } for r in rows]}
+
+
 @router.get('/programs')
 def programs(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100),
              q: str = Query('', max_length=200), category: str | None = None, status: str | None = None,

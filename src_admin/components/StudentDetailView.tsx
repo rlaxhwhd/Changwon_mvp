@@ -1,9 +1,10 @@
 import type { CSSProperties, ReactNode } from 'react'
+import { fetchAcademicStudentDetail, academicStudentStats, type AcademicStudentDetail } from '../data/academicStudents'
 import type { IconType } from 'react-icons'
 import {
   LuArrowRight, LuBook, LuBoxes, LuBriefcase, LuCalendarCheck, LuChartColumn, LuChartLine,
   LuCircleDot, LuClipboardCheck, LuFolderOpen, LuFrown, LuGraduationCap,
-  LuListChecks, LuLock, LuMessagesSquare, LuPencilRuler, LuRoute, LuRotateCw, LuSparkles, LuSprout,
+  LuListChecks, LuMessagesSquare, LuPencilRuler, LuRoute, LuRotateCw, LuSparkles, LuSprout,
   LuStar, LuTrophy, LuWorkflow, LuX,
 } from 'react-icons/lu'
 import { useEffect, useMemo, useState } from 'react'
@@ -424,8 +425,16 @@ function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentDa
 
 // ── 탭 ④: 비교과 프로그램 ──────────────────────────────────────────────────
 
-function ProgramTab({ studentId }: { studentId: string }) {
+function ProgramTab({ studentId, academicRecords }: { studentId: string; academicRecords?: AcademicStudentDetail['programs'] }) {
   const summary = useMemo(() => getStudentPrograms(studentId), [studentId])
+
+  if (academicRecords) return <section data-slot="card">
+    <CardHead title="비교과 활동" desc="현재 연결된 비교과 신청·이수 기록입니다." />
+    <div data-slot="card-content">{academicRecords.length ? <div className="table-wrap"><table>
+      <thead><tr><th>프로그램</th><th>신청일</th><th>이수</th></tr></thead>
+      <tbody>{academicRecords.map(p => <tr key={p.id}><td>{p.title}</td><td>{p.date}</td><td>{p.completed?'이수':'미이수'}</td></tr>)}</tbody>
+    </table></div> : <p className="sdv-empty">비교과 활동 없음</p>}</div>
+  </section>
 
   return (
     <div className="dashboard-grid">
@@ -727,6 +736,7 @@ function StarTab({ student }: { student: StudentData }) {
 // ── 본체 ───────────────────────────────────────────────────────────────────
 
 interface StudentDetailViewProps {
+  academic?: boolean
   studentId: string
   role: StaffRole
   /** 헤더 우측 액션 (예: 목록 버튼). 모달에서는 생략. */
@@ -768,10 +778,72 @@ function counselOwnerAsRoster(studentId: string): RosterStudent | undefined {
 }
 
 export default function StudentDetailView(props: StudentDetailViewProps) {
+  if (props.academic) return <AcademicStudentContent key={props.studentId} {...props} />
   return <StudentDetailContent key={`${props.studentId}:${props.role}`} {...props} />
 }
 
-function StudentDetailContent({ studentId, role, headerAction, initialTab, counselRequestId }: StudentDetailViewProps) {
+/** The same public detail/modal entry point also accepts never-enrolled academic students. */
+function AcademicStudentContent(props: StudentDetailViewProps) {
+  const { studentId } = props
+  const [data, setData] = useState<AcademicStudentDetail | null>(null)
+  const [error, setError] = useState('')
+  const [retry, setRetry] = useState(0)
+  const [tab, setTab] = useState<'counsel' | 'program'>('counsel')
+  useEffect(() => {
+    let cancelled = false
+    setError('')
+    fetchAcademicStudentDetail(studentId).then(value => { if (!cancelled) setData(value) })
+      .catch(e => { if (!cancelled) setError(e.message) })
+    return () => { cancelled = true }
+  }, [studentId, retry])
+  if (error) return <div role="alert">{error}<button type="button" className="admin-btn" onClick={() => setRetry(n => n+1)}>다시 시도</button></div>
+  if (!data) return <p role="status">학생정보를 불러오는 중입니다…</p>
+  // Enrolled, accessible students retain the full shared diagnosis/counsel/roadmap tabs.
+  // Academic IDs are integration UIDs; service profiles use aliases. Match the
+  // academic student number against authorized profiles, then use their API ID.
+  const serviceStudent = STUDENTS.find(s => s.studentNo === data.studentNo)
+  if (serviceStudent) return <StudentDetailContent {...props} studentId={serviceStudent.id} academicData={data} />
+  const status = { REQ: '신청', CONFIRMED: '확정', DONE: '완료' }
+  return <div className="sdv">
+    <AcademicStudentHeader data={data} />
+    <StudentStatCards stats={academicStudentStats(data)} />
+    <div className="admin-tabs" role="tablist" aria-label="학생 활동">
+      <button type="button" role="tab" aria-selected={tab==='counsel'} className={`admin-tab${tab==='counsel'?' active':''}`} onClick={() => setTab('counsel')}>상담</button>
+      <button type="button" role="tab" aria-selected={tab==='program'} className={`admin-tab${tab==='program'?' active':''}`} onClick={() => setTab('program')}>비교과 활동</button>
+    </div>
+    <section className="admin-card" role="tabpanel" aria-label={tab==='counsel'?'상담':'비교과 활동'}>
+      <p className="admin-page-desc">현재 연결된 기록입니다. 외부 상담·비교과 이력은 연계 전입니다.</p>
+      {tab==='counsel' ? (data.counsels.length ? <ul>{data.counsels.map(c => <li key={c.id}>{c.date} · {c.type} · {status[c.status]}</li>)}</ul> : <p>상담 기록 없음</p>)
+        : (data.programs.length ? <ul>{data.programs.map(p => <li key={p.id}>{p.date} · {p.title} · {p.completed?'이수':'미이수'}</li>)}</ul> : <p>비교과 활동 없음</p>)}
+    </section>
+  </div>
+}
+
+function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; action?: ReactNode }) {
+  return <>
+    <header className="admin-page-head">
+      <div className="admin-detail-id">
+        <h1 className="admin-page-title">{data.name}</h1>
+        <span className={studentTypeClass(data.studentType)}>
+          {data.studentType && <b>{data.studentType}</b>}{typeLabel(data.studentType)}
+        </span>
+      </div>
+      {action}
+    </header>
+    <dl className="sdv-idbar sdv-academic-idbar">
+      <div><dt>학번</dt><dd>{data.studentNo || '없음'}</dd></div>
+      <div><dt>대학</dt><dd>{data.collegeName || '없음'}</dd></div>
+      <div><dt>학과</dt><dd>{data.major || '없음'}</dd></div>
+      <div><dt>학부/대학원</dt><dd>{data.academicLevel || '없음'}</dd></div>
+      <div><dt>학년 / 학적</dt><dd>{data.grade == null ? '없음' : `${data.grade}학년`} / {data.status}</dd></div>
+      <div><dt>성별</dt><dd>{data.sex || '없음'}</dd></div>
+      <div><dt>졸업년월</dt><dd>{data.graduationMonth || '없음'}</dd></div>
+      <div><dt>학점</dt><dd>{data.gpa ?? '없음'}</dd></div>
+    </dl>
+  </>
+}
+
+function StudentDetailContent({ studentId, role, headerAction, initialTab, counselRequestId, academicData }: StudentDetailViewProps & { academicData?: AcademicStudentDetail }) {
   useStore('dc_roadmap_changed')
   useStore('dc:counsel-updated')
   useStore('dc:diagnosis-updated')
@@ -789,14 +861,13 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
       .finally(() => { if (!cancelled) setDiagnosisLoading(false) })
     return () => { cancelled=true }
   },[studentId])
-  const canEdit = role === 'career' // 로드맵 편집은 진로상담사 전용
-  const isPsych = role === 'psych'
+  const canEdit = role === 'career' || role === 'psych'
 
   const student = STUDENTS.find(s => s.id === studentId)
 
   const visibleTabs = useMemo(
-    () => (isPsych ? TABS.filter(t => t.psychAllowed) : TABS),
-    [isPsych],
+    () => TABS,
+    [],
   )
   const [tab, setTab] = useState<TabKey>(initialTab ?? visibleTabs[0]?.key ?? 'diagnosis')
   // 부모가 진입 탭을 바꾸면 따라간다 — 상담 완료 직후 로드맵 진행 탭으로 옮기는 데 쓴다.
@@ -873,10 +944,11 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
   const radar = getCompetencyRadar(student)
   // 유형은 시드가 아니라 실효값을 본다 — 학생이 방금 진단을 마쳤다면 그 결과가 여기 반영돼야 한다.
   const studentType = getStudentType(student)
-  const stats = getStudentStatCards(student, studentType)
+  const stats = academicData ? academicStudentStats(academicData) : getStudentStatCards(student, studentType)
 
   return (
     <div className="sdv">
+      {academicData ? <AcademicStudentHeader data={academicData} action={headerAction} /> : <>
       <header className="admin-page-head">
         <div className="admin-detail-id">
           <h1 className="admin-page-title">{student.name}</h1>
@@ -889,20 +961,14 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
         <div><dt>학과</dt><dd>{student.major}</dd></div>
         <div><dt>학년</dt><dd>{student.grade}학년</dd></div>
         <div><dt>학번</dt><dd>{student.studentNo}</dd></div>
-        <div><dt>학점</dt><dd>{student.gpa}</dd></div>
-        <div><dt>어학</dt><dd>{student.language}</dd></div>
+        <div><dt>학점</dt><dd>{student.gpa ?? '없음'}</dd></div>
+        <div><dt>어학</dt><dd>{student.language || '없음'}</dd></div>
         <div>
           <dt>진단 유형</dt>
           <dd><span className={studentTypeClass(studentType)}>{studentType && <b>{studentType}</b>}{typeLabel(studentType)}</span></dd>
         </div>
       </dl>
-
-      {isPsych && (
-        <div className="admin-perm-banner">
-          <LuLock />
-          심리상담사 제한 열람 — 진단·상담·성장 중심으로 표시됩니다. 로드맵·비교과·GAP·포트폴리오는 진로상담사 전용입니다.
-        </div>
-      )}
+      </>}
 
       {/* 요약 지표 5장은 학생 라운지와 같은 공용 컴포넌트 — 수정은 StudentStatCards 한 곳에서만 */}
       <StudentStatCards stats={stats} />
@@ -927,7 +993,7 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
       {activeTab === 'diagnosis' && <DiagnosisTab student={student} />}
       {activeTab === 'counsel' && <CounselTab studentId={student.id} />}
       {activeTab === 'roadmap' && <RoadmapTab student={student} canEdit={canEdit} counselRequestId={counselRequestId} />}
-      {activeTab === 'program' && <ProgramTab studentId={student.id} />}
+      {activeTab === 'program' && <ProgramTab studentId={student.id} academicRecords={academicData?.programs} />}
       {activeTab === 'gap' && <GapTab student={student} radar={radar} />}
       {activeTab === 'growth' && <GrowthTab student={student} />}
       {activeTab === 'portfolio' && <PortfolioTab student={student} />}

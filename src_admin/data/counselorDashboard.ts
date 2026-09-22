@@ -8,6 +8,7 @@ import { isCare7 } from '../../src_v2/data/counselTrack'
 import { TYPE_TINT, typeColorVar, typeSwatchClass } from './studentRoster'
 
 export interface Dashboard {
+  uncontacted: { total: number; diagnosis: number; counsel: number; roadmap: number }
   refDate: string
   role: 'career' | 'psych'
   counts: { today: number; todayDone: number; pending: number; confirmed: number; done: number; active: number; recorded: number; recordCount: number }
@@ -93,14 +94,6 @@ export function getHelloSummary(data: Dashboard) {
     studentCount: data.distribution.total, recordCount: data.counts.recordCount }
 }
 
-export function getRiskSummary(data: Dashboard) {
-  const { base: total, high, core } = data.distribution.risk
-  return { total, rows: [
-    { label: '고위험군', code: undefined, focus: 'high', count: high, ratio: pct(high, total), solid: 'b-red', ink: 'f-red' },
-    { label: '핵심관리대상', code: undefined, focus: 'core', count: core, ratio: pct(core, total), solid: 'b-green', ink: 'f-green' },
-  ] }
-}
-
 export function getKpis(data: Dashboard) {
   const c = data.counts
   const cards = [
@@ -145,19 +138,19 @@ export function getTodayTimeline(data: Dashboard) { return data.timeline.map(tim
 function getBriefing(data: BriefingData) {
   const r = data.request
   const item = timelineItem(r)
-  // 로드맵 카드는 항상 첫 자리 — 생성 전 학생도 "없음"이 아니라 '생성 전'으로 읽히게 한다.
+  // 상담 전 확인 순서: 진단 → 상담 횟수 → 로드맵 이행률.
   const scores = [
+    { label: '진단 완료', value: data.diagnoses ? String(data.diagnoses.done) : '없음', unit: data.diagnoses ? `/${data.diagnoses.total}` : '', ink: 'f-blue' },
+    { label: '상담 횟수', value: String(data.doneCount), unit: '회', ink: 'f-orange' },
     data.roadmap
       ? { label: '로드맵 이행률', value: String(data.roadmap.progress), unit: '%', ink: 'f-green' }
       : { label: '로드맵 이행률', value: '생성 전', unit: '', ink: 'f-purple' },
-    { label: '상담 횟수', value: String(data.doneCount), unit: '회', ink: 'f-orange' },
   ]
   const rows = [{ label: '상담 주제', value: r.topic, tint: 's-blue' }]
   if (data.roadmap) {
     rows.push({ label: '목표', value: [data.roadmap.targetRole, data.roadmap.targetCompany?.name].filter(Boolean).join(' · ') || '등록된 목표가 없습니다.', tint: 's-teal' })
     rows.push({ label: '로드맵', value: data.roadmap.status === 'CONFIRMED' ? '확정' : data.roadmap.status === 'REVIEW' ? '검토중' : '초안', tint: 's-purple' })
   }
-  if (data.diagnoses) scores.push({ label: '진단 완료', value: String(data.diagnoses.done), unit: `/${data.diagnoses.total}`, ink: 'f-blue' })
   return { ...item, mode: r.method, scores, rows, intake: data.intake }
 }
 

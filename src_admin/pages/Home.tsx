@@ -1,10 +1,10 @@
 import type { CSSProperties } from 'react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import spriteHtml from './testAdminSprite.html?raw'
 import { getActiveCounselor } from '../data/counselors'
 import {
-  getHelloSummary, getRiskSummary, getKpis, getTypeDistribution,
+  getHelloSummary, getKpis, getTypeDistribution,
   getTodayTimeline, getIntake, getMyPrograms, getPerformance,
   useCounselDashboard, useCounselBriefing, type Dashboard,
 } from '../data/counselorDashboard'
@@ -25,8 +25,8 @@ function Ico({ id }: { id: string }) {
 }
 
 /** KPI 카드 4장의 아이콘·목적지 — key 는 getKpis() 가 정한다 */
-const KPI_META: Record<string, { icon: string; to: string }> = {
-  today: { icon: 'cal', to: '/counsel/schedule' },
+const KPI_META: Record<string, { icon: string; to?: string }> = {
+  today: { icon: 'cal' },
   intake: { icon: 'clip', to: '/counsel/requests' },
   roadmap: { icon: 'route', to: '/roadmap/requests' },
   record: { icon: 'pen', to: '/counsel/journals' },
@@ -79,7 +79,8 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
   const isCareer = me.role === 'career'
 
   const hello = getHelloSummary(data)
-  const risk = getRiskSummary(data)
+  const [contactTab, setContactTab] = useState<'diagnosis' | 'counsel' | 'roadmap'>('diagnosis')
+  const contactLabels = { diagnosis: '진단을 완료하지 않은 학생', counsel: '진단 완료 후 상담을 완료하지 않은 학생', roadmap: '진단·상담 완료 후 로드맵이 생성되지 않은 학생' }
   const kpis = getKpis(data)
   const dist = getTypeDistribution(data)
   const timeline = getTodayTimeline(data)
@@ -87,7 +88,7 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
   const programs = getMyPrograms(data)
   const perf = getPerformance(data)
 
-  // 신청 ID로 구분한다. 같은 학생의 서로 다른 상담·문진표를 섞지 않는다.
+  // 신청 ID로 구분한다. 같은 학생의 서로 다른 상담를 섞지 않는다.
   const [openId, setOpenId] = useState<string | null | undefined>(undefined)
   const activeRequestId = openId === undefined
     ? timeline.find(t => t.status !== '완료')?.requestId ?? null
@@ -97,21 +98,6 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
 
   // 학생정보 모달 — 상담사 학생관리 상세와 같은 화면(StudentDetailModal 공용)
   const [infoId, setInfoId] = useState<string | null>(null)
-
-  // 사전 문진표 모달
-  const [sheetOpen, setSheetOpen] = useState(false)
-  useEffect(() => {
-    if (!sheetOpen) return
-    const onEsc = (e: KeyboardEvent) => { if (e.key === 'Escape') setSheetOpen(false) }
-    document.addEventListener('keydown', onEsc)
-    document.body.style.overflow = 'hidden'
-    return () => {
-      document.removeEventListener('keydown', onEsc)
-      document.body.style.overflow = ''
-    }
-  }, [sheetOpen])
-
-  const questions = briefing?.intake ?? []
 
   return (
     <div className="tadmin">
@@ -138,16 +124,16 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
               <div className="under" />
               <div className="facts">
                 <span><Ico id="sun" />{me.dept}</span>
-                <span><Ico id="users" />담당 학생 {hello.studentCount}명</span>
+                <span><Ico id="users" />CARE 7+ 참여학생 {hello.studentCount}명</span>
                 <span><Ico id="cal" />{formatDate(hello.refDate)}</span>
               </div>
             </div>
 
-            {/* 담당 학생 요약 */}
-            <Link to="/students" className="card sm assign">
+            {/* CARE 7+ 참여학생 요약 */}
+            <Link to="/students/all" className="card sm assign">
               <span className="rounded s-green"><Ico id="users" /></span>
               <div className="unit">
-                <div className="k">담당 학생</div>
+                <div className="k">CARE 7+ 참여학생</div>
                 <div className="v">{hello.studentCount}<u>명</u></div>
               </div>
               <div className="sep" />
@@ -158,46 +144,41 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
               <span className="go"><Ico id="chev" /></span>
             </Link>
 
-            {/* 집중관리 현황 — 학생 목록 API와 같은 DB 분류·담당 범위 사용 */}
             <div className="card sm risk">
-              <div className="risk-hd">
-                <span className="rounded s-red"><Ico id="alert" /></span>
-                <div>
-                  <div className="k">집중관리 현황</div>
-                  <div className="s">1학년 제외 {risk.total}명 대비</div>
-                </div>
+              <div className="risk-hd"><span className="rounded s-red"><Ico id="alert" /></span>
+                <div><div className="k">미접촉자 현황</div><div className="s">재학생 {data.uncontacted.total.toLocaleString()}명 기준</div></div>
               </div>
-              {/* 분류를 누르면 전체 학생 목록이 그 분류로 걸린 채 열린다.
-                  담당 목록이 아니라 전체 목록이다 — 집중관리는 담당 배정과 무관하게 본다. */}
-              {risk.rows.map(row => (
-                <Link key={row.label} to={`/students/all?focus=${row.focus}`} className="risk-row">
-                  <span className="nm">{row.code && <span className="cd">{row.code}</span>}{row.label}</span>
-                  <span className="v">{row.count}<u>명</u></span>
-                  <span className={`p ${row.ink}`}>{row.ratio}%</span>
-                  <span className="bar"><i className={row.solid} style={bar(row.ratio)} /></span>
+              <div className="admin-tabs" role="tablist" aria-label="미접촉 단계">
+                {(['diagnosis', 'counsel', 'roadmap'] as const).map((key, index) => <button key={key} type="button" role="tab"
+                  aria-selected={contactTab === key} className={`admin-tab${contactTab === key ? ' active' : ''}`} onClick={() => setContactTab(key)}>
+                  {['진단', '상담', '로드맵'][index]}</button>)}
+              </div>
+              <div role="tabpanel" aria-label={contactLabels[contactTab]}>
+                <p>{contactLabels[contactTab]}</p>
+                <Link to={`/students/all?contact=${contactTab}`} className="risk-row">
+                  <span className="v">{data.uncontacted[contactTab].toLocaleString()}<u>명</u></span><span>학생 목록 보기 →</span>
                 </Link>
-              ))}
+              </div>
             </div>
 
             {/* KPI 4장 */}
             <div className="kpis">
               {kpis.map(k => {
                 const meta = KPI_META[k.key]
-                return (
-                  <Link key={k.key} to={meta.to} className="card sm kpi">
+                const content = <>
                     <span className={`ico ${k.tint}`}><Ico id={meta.icon} /></span>
                     <div className="name">{k.name}</div>
                     <div className="num">{k.value}<u>{k.unit}</u></div>
                     <div className="bar"><i className={k.solid} style={bar(k.ratio)} /></div>
                     <div className="ratio">{k.detail}</div>
-                  </Link>
-                )
+                </>
+                return meta.to ? <Link key={k.key} to={meta.to} className="card sm kpi">{content}</Link> : <div key={k.key} className="card sm kpi">{content}</div>
               })}
             </div>
 
             {/* 유형 분포 */}
             <div className="card">
-              <div className="card-hd"><h2>담당 학생 유형 분포</h2></div>
+              <div className="card-hd"><h2>CARE 7+ 참여학생 유형 분포</h2></div>
               <div className="donut-wrap">
                 <div className="donut" style={{ background: dist.gradient }}>
                   <div className="mid">
@@ -329,14 +310,6 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                             </div>
 
                             <div className="actions">
-                              <button
-                                type="button"
-                                className="btn"
-                                disabled={questions.length === 0}
-                                onClick={e => { e.stopPropagation(); setSheetOpen(true) }}
-                              >
-                                <Ico id="doc" />사전 문진표 보기
-                              </button>
                               <Link to={item.status === '대기' ? '/counsel/requests' : `/counsel/session/${briefing.studentId}`} className="btn primary">
                                 <Ico id="route" />{item.status === '대기' ? '접수 확인' : '상담 진행'}
                               </Link>
@@ -349,9 +322,6 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                 </div>
               )}
 
-              <div className="foot-link">
-                <Link to="/counsel/schedule" className="link">전체 일정 보기<Ico id="chev" /></Link>
-              </div>
             </div>
           </div>
 
@@ -446,43 +416,6 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
         <StudentDetailModal studentId={infoId} role={me.role} onClose={() => setInfoId(null)} />
       )}
 
-      {/* 해당 상담 신청에 저장된 실제 문항·응답 */}
-      {sheetOpen && briefing && (
-        <div className="modal-backdrop" role="presentation" onClick={() => setSheetOpen(false)}>
-          <section
-            className="modal-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`${briefing.name} 사전 문진표`}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="modal-head">
-              <div>
-                <h2>{briefing.name} 사전 문진표</h2>
-                <p>상담 전 확인 · {briefing.meta}</p>
-              </div>
-              <button
-                type="button"
-                className="modal-close"
-                aria-label="사전 문진표 닫기"
-                onClick={() => setSheetOpen(false)}
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </button>
-            </div>
-            <dl className="questionnaire">
-              {questions.map((q, i) => (
-                <div key={i} className="questionnaire-row">
-                  <dt>{q.question}</dt>
-                  <dd>{q.answer || '등록된 응답이 없습니다.'}</dd>
-                </div>
-              ))}
-            </dl>
-          </section>
-        </div>
-      )}
     </div>
   )
 }

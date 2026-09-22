@@ -1,3 +1,4 @@
+import { pageNumbers } from '../../../shared/pagination'
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CATEGORIES, CATEGORY_LABEL, loadJournalEntries, setJournalBookmark,
@@ -288,7 +289,7 @@ export default function GrowthJournal() {
                 <button className="gj-page-btn" disabled={currentPage === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
                   <i className="fa-solid fa-chevron-left" />
                 </button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(n => (
+                {pageNumbers(currentPage, totalPages).map(n => (
                   <button key={n} className={`gj-page-btn${currentPage === n ? ' on' : ''}`} onClick={() => setPage(n)}>
                     {n}
                   </button>

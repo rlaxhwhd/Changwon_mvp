@@ -1,0 +1,27 @@
+/* Shared table alignment policy, including portal-rendered dialogs.
+   Important deliberately overrides page-specific and inline alignment rules. */
+table th,
+table td {
+  text-align: center !important;
+  vertical-align: middle !important;
+}
+
+/* Roster lists use CSS grid for rows and flex for compound cells. Keep their
+   existing column widths and row/column directions while centering contents. */
+.admin-roster-head > *,
+.admin-roster-row > *,
+.counsel-request-columns > *,
+.counsel-request-row > * {
+  text-align: center !important;
+  align-content: center;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.admin-roster-row .admin-roster-cell > *,
+.admin-roster-row .admin-roster-student > *,
+.admin-roster-row .admin-roster-progress > *,
+.counsel-request-cell > * {
+  align-self: center !important;
+  text-align: center !important;
+}

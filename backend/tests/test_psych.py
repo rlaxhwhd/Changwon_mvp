@@ -21,9 +21,9 @@ def test_psych_direct_record_is_done_and_isolated(client):
     request=client.get(f"/api/v1/counsel-requests/{record['requestId']}",headers=headers('psych_lee')).json()
     assert request['status']=='완료' and request['type']=='심리' and 'slot' not in request
     # 진로상담사·교수는 심리 기록을 보지 못하고, 심리상담사가 아니면 만들 수도 없다.
-    assert client.get(f"/api/v1/counsel-requests/{record['requestId']}",headers=headers('career_kim')).status_code==404
+    assert client.get(f"/api/v1/counsel-requests/{record['requestId']}",headers=headers('career_kim')).status_code==200
     career_ids={r['id'] for r in client.get('/api/v1/counsel-records?pageSize=100',headers=headers('career_kim')).json()['items']}
-    assert record['id'] not in career_ids
+    assert record['id'] in career_ids
     assert client.post('/api/v1/counsel-records/psych',headers={**headers('career_kim'),'Idempotency-Key':str(uuid4())},json=psych_body()).status_code==403
     assert client.post('/api/v1/counsel-records/psych',headers={**headers('jiwoo'),'Idempotency-Key':str(uuid4())},json=psych_body()).status_code==403
 
@@ -52,9 +52,10 @@ def test_psych_test_result_upsert_and_access(client):
     assert next(item for item in listed if item['id']==done['id'])==done
     refreshed=client.put(path,headers=headers('psych_lee'),json={**draft,'expectedVersion':done['version']})
     assert refreshed.status_code==200 and refreshed.json()['version']==3
-    # 진로상담사·학생은 결과에 접근할 수 없다.
-    assert client.get('/api/v1/psych-tests',headers=headers('career_kim')).status_code==403
-    assert client.put(path,headers=headers('career_kim'),json=draft).status_code==403
+    # Counselors share editing; stale versions and student access stay blocked.
+    assert client.get('/api/v1/psych-tests',headers=headers('career_kim')).status_code==200
+    assert client.put(path,headers=headers('career_kim'),json=draft).status_code==409
+    assert client.put(path,headers=headers('career_kim'),json={**draft,'expectedVersion':refreshed.json()['version']}).status_code==200
     assert client.put(path,headers=headers('jiwoo'),json=draft).status_code==403
 
 

@@ -52,7 +52,7 @@ def dto(row):
 
 def require_psych(user):
     require_staff(user)
-    if user['profile'].get('role')!='psych':
+    if user['profile'].get('role') not in ('career','psych'):
         raise HTTPException(403,'심리상담사만 심리검사 결과를 다룰 수 있습니다.')
 
 

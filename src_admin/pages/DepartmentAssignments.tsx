@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useState } from 'react'
 import { api, queryString } from '../../shared/api'
 import AdminModal from '../components/AdminModal'
@@ -13,7 +14,7 @@ const endpoint = '/system/department-assignments'
 const message = (error: unknown) => error instanceof Error ? error.message : '요청을 처리하지 못했습니다.'
 
 function Pager({ page, total, onChange, disabled = false }: { page: number; total: number; onChange: (page: number) => void; disabled?: boolean }) {
-  return <div className="da-pagination"><button className="admin-btn admin-btn-ghost" disabled={disabled || page === 1} onClick={() => onChange(page - 1)}>이전</button><span>{page} / {Math.max(1, Math.ceil(total / 20))} 페이지</span><button className="admin-btn admin-btn-ghost" disabled={disabled || page * 20 >= total} onClick={() => onChange(page + 1)}>다음</button></div>
+  return <div className="da-pagination"><button className="admin-btn admin-btn-ghost" disabled={disabled || page === 1} onClick={() => onChange(page - 1)}>이전</button><PageNumbers page={page} pages={Math.ceil(total / 20)} onChange={onChange} disabled={disabled} /><span>{page} / {Math.max(1, Math.ceil(total / 20))} 페이지</span><button className="admin-btn admin-btn-ghost" disabled={disabled || page * 20 >= total} onClick={() => onChange(page + 1)}>다음</button></div>
 }
 
 function StaffSearch({ role, target, onClose, onSaved }: { role: Role; target: Target; onClose: () => void; onSaved: () => void }) {

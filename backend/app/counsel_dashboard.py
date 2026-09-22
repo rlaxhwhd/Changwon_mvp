@@ -9,6 +9,7 @@ from .counsel import SELECT, dto
 from .db import connection
 from .roadmap import has_menu, PLAN_MENU, REQUEST_MENU, scope_condition
 from .students import summary as student_summary
+from .student_contact import contact_summary
 
 router = APIRouter()
 SEOUL = ZoneInfo('Asia/Seoul')
@@ -58,7 +59,7 @@ def dashboard(request: Request, response: Response, user=Depends(principal, scop
     intake = conn.execute(SELECT + f''' WHERE {condition} AND r.status_code='REQ'
       ORDER BY r.requested_at DESC,r.id DESC LIMIT 5''', values).fetchall()
     # Share the exact roster classification and access scope used by Students.
-    distribution = student_summary(request, 'type', user, conn)
+    distribution = student_summary(request, 'type', user, conn, care7_only=True)
     roadmap = None
     if role == 'career' and has_menu(conn, user, REQUEST_MENU):
         scope, params = scope_condition(user, 'r.student_uid')
@@ -79,6 +80,7 @@ def dashboard(request: Request, response: Response, user=Depends(principal, scop
           FROM dc.program p WHERE p.created_by=%s ORDER BY p.created_at DESC,p.id LIMIT 3''',
           (day, user['intg_uid'])).fetchall()
     return {'refDate': day, 'role': role, 'counts': counts, 'distribution': distribution,
+            'uncontacted': contact_summary(conn),
             'timeline': [dto(r) for r in timeline], 'intake': [dto(r) for r in intake],
             'programs': programs, 'programCount': program_count, 'roadmap': roadmap}
 
@@ -97,19 +99,18 @@ def briefing(request_id: str, response: Response, user=Depends(principal, scope=
       [*values, row['student_uid']]).fetchone()['n']
     plan = None
     diagnoses = None
-    # A psych briefing contains its own counseling/intake only. CARE 7+ data
-    # additionally requires the same menu and student scope as the roadmap API.
+    # The request lookup above verifies the assigned counselor. Diagnosis counts
+    # follow student_access's own-request access; roadmap retains its own scope.
+    # Psych briefings do not disclose career diagnoses or roadmaps.
+    if role == 'career':
+        diagnoses = conn.execute('''SELECT count(*) AS total,
+          count(*) FILTER(WHERE completed_at IS NOT NULL) AS done
+          FROM dc.diagnosis_attempt WHERE student_uid=%s''', (row['student_uid'],)).fetchone()
     scope, params = scope_condition(user, 'r.student_uid')
     if role == 'career' and has_menu(conn, user, PLAN_MENU):
         plan = conn.execute(f'''SELECT r.target_role AS "targetRole",r.target_company AS "targetCompany",
           r.status_code AS status,p.pct AS progress
           FROM dc.roadmap r LEFT JOIN LATERAL dc.roadmap_progress(r.student_uid,now()) p ON true
           WHERE r.student_uid=%s AND {scope}''', [row['student_uid'], *params]).fetchone()
-        allowed = conn.execute('SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
-                               (user['intg_uid'], row['student_uid'])).fetchone()
-        if allowed:
-            diagnoses = conn.execute('''SELECT count(*) AS total,
-              count(*) FILTER(WHERE completed_at IS NOT NULL) AS done
-              FROM dc.diagnosis_attempt WHERE student_uid=%s''', (row['student_uid'],)).fetchone()
     return {'request': dto(row), 'doneCount': done, 'roadmap': plan, 'diagnoses': diagnoses,
             'intake': row['intake'] or []}

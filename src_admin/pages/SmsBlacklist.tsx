@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { useState } from 'react'
 import { LuChevronLeft, LuChevronRight, LuInfo, LuPlus, LuSearch, LuUserCheck } from 'react-icons/lu'
 import AdminModal from '../components/AdminModal'
@@ -13,7 +14,7 @@ function Pager({ page, count, onChange }: { page: number; count: number; onChang
   const pages = Math.max(1, Math.ceil(count / 20))
   return <nav className="blk-pager" aria-label="목록 페이지">
     <button type="button" aria-label="이전 페이지" disabled={page <= 1} onClick={() => onChange(page - 1)}><LuChevronLeft /></button>
-    <span>{page} / {pages}</span>
+    <PageNumbers page={page} pages={pages} onChange={onChange} /><span>{page} / {pages}</span>
     <button type="button" aria-label="다음 페이지" disabled={page >= pages} onClick={() => onChange(page + 1)}><LuChevronRight /></button>
   </nav>
 }

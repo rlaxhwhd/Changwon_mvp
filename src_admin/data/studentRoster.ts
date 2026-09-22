@@ -20,6 +20,11 @@ export type RosterTier = '하위' | '중간' | '상위'
 /** 로스터 학생 1명 (경량) — 상세 데이터는 STUDENTS(src_v2) 상세 학생만 보유 */
 export interface RosterStudent {
   collegeName?: string | null
+  academicLevel?: '학부' | '대학원'
+  sex?: string
+  sexCode?: string | null
+  graduationMonth?: string | null
+  canReadDetail?: boolean
   id: string
   /** 학번 (입학년도 4자리 + 일련 4자리) */
   studentNo: string
@@ -62,8 +67,8 @@ export const ROSTER_EVENT = 'dc:roster-updated'
 
 const byId = new Map<string, RosterStudent>()
 export interface RosterMetadata {
-  options: { majors: string[]; grades: number[]; types: StudentType[]; tiers: RosterTier[]; statuses: EnrollStatus[] }
-  summary: { total: number; focusCount: number; highRiskCount: number; coreCareCount: number; starCount: number }
+  options: { majors: string[]; colleges?: string[]; grades: number[]; types: StudentType[]; tiers: RosterTier[]; statuses: EnrollStatus[] }
+  summary: { total: number; focusCount: number; highRiskCount: number; coreCareCount: number; starCount: number; care7Count: number }
 }
 export interface RosterDistribution {
   total: number
@@ -72,7 +77,7 @@ export interface RosterDistribution {
 }
 const emptyMetadata: RosterMetadata = {
   options: { majors: [], grades: [], types: [], tiers: [], statuses: [] },
-  summary: { total: 0, focusCount: 0, highRiskCount: 0, coreCareCount: 0, starCount: 0 },
+  summary: { total: 0, focusCount: 0, highRiskCount: 0, coreCareCount: 0, starCount: 0, care7Count: 0 },
 }
 const metadataCache = new Map<string, RosterMetadata>()
 const distributionCache = new Map<string, RosterDistribution>()
@@ -263,13 +268,13 @@ export function isStarTrack(s: RosterStudent): boolean {
  * 목록 필터 값 — 홈 카드 링크(?focus=)와 목록 버튼이 같은 코드를 쓴다.
  * high·core 는 집중관리 판정이고 star 는 트랙 소속이다 — 성격이 달라 화면에서 갈라 보인다.
  */
-export type FocusFilter = 'high' | 'core' | 'star'
+export type FocusFilter = 'high' | 'core' | 'star' | 'care7'
 
 /** 필터 값 → 판정 함수. 화면은 코드만 넘기고 조건 자체를 알지 못한다. */
 
 /** 쿼리스트링·상태값이 유효한 필터인지 — 화면이 문자열을 그대로 넘겨도 안전하게. */
 export function isFocusFilter(value: string | null | undefined): value is FocusFilter {
-  return value === 'high' || value === 'core' || value === 'star'
+  return value === 'high' || value === 'core' || value === 'star' || value === 'care7'
 }
 
 /** [DB-ready] 로스터 목록 조회 — async + 페이징. 6천건이 와도 화면은 현재 페이지만 받는다. */

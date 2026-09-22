@@ -316,8 +316,8 @@ def test_students_cannot_write_plans_and_other_roles_are_refused(client):
             'operations': [], 'note': ''}
     assert client.patch('/api/v1/students/jiwoo/roadmap', headers=KEY('jiwoo'), json=body).status_code == 403
     # 심리상담사에게는 로드맵 메뉴가 없다.
-    assert client.get('/api/v1/students/jiwoo/roadmap', headers=headers('psych_lee')).status_code == 403
-    assert client.get('/api/v1/roadmaps', headers=headers('psych_lee')).status_code == 403
+    assert client.get('/api/v1/students/jiwoo/roadmap', headers=headers('psych_lee')).status_code == 200
+    assert client.get('/api/v1/roadmaps', headers=headers('psych_lee')).status_code == 200
     assert client.get('/api/v1/students/chaewon/roadmap', headers=headers('jiwoo')).status_code == 404
 
 

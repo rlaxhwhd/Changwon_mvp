@@ -36,6 +36,8 @@ export interface MetricStat {
   unit?: string
   /** 0~100. 막대 진행률 */
   pct: number
+  /** Counts and source GPA have no completion denominator. */
+  hideMeter?: boolean
   foot: string
   badge?: string
 }
@@ -109,9 +111,9 @@ function MetricBody({ stat }: { stat: MetricStat }) {
         <span>{stat.foot}</span>
         {stat.badge && <span className="ssc-badge">{stat.badge}</span>}
       </div>
-      <div className="ssc-meter" style={meterVars(stat.pct)} aria-label={`${stat.label} ${stat.pct}%`}>
+      {!stat.hideMeter && <div className="ssc-meter" style={meterVars(stat.pct)} aria-label={`${stat.label} ${stat.pct}%`}>
         <span className="ssc-meter-track"><i /></span><b>{stat.pct}%</b>
-      </div>
+      </div>}
     </>
   )
 }

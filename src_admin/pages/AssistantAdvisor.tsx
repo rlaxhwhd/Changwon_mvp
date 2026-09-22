@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { useState } from 'react'
 import {
   LuChevronLeft,
@@ -387,7 +388,8 @@ function Pagination({
       >
         <LuChevronLeft />
       </button>
-      <span className="admin-page-info">{page} / {pages} 페이지 · 총 {total}명</span>
+      <PageNumbers page={page} pages={pages} onChange={onChange} />
+                <span className="admin-page-info">{page} / {pages} 페이지 · 총 {total}명</span>
       <button
         type="button"
         className="admin-page-btn"

@@ -76,9 +76,14 @@ def test_general_track_cannot_write_care7_assessment(client,db,draft):
     body=dict(expectedVersion=0,summary='Notes',comment='Comment',status='작성중',template=form())
     assert client.put(path,headers=headers('career_kim'),json=body).status_code==422
     body['template']['finalType']=None
-    body['template']['qualitative']={}
     response=client.put(path,headers=headers('career_kim'),json=body)
     assert response.status_code==200,response.text
+    assert response.json()['template']['qualitative'] == body['template']['qualitative']
+    body['expectedVersion']=response.json()['version']
+    response=client.put(path,headers=headers('career_park'),json=body)
+    assert response.status_code==200,response.text
+    body['expectedVersion']=response.json()['version']
+    assert client.put(path,headers=headers('psych_lee'),json=body).status_code==200
 
 
 def test_new_care7_counsel_requires_retest_then_updates_type(client,db,draft):

@@ -204,7 +204,7 @@ export default function CounselConsentModal({ open, onClose, onAgree, applicantN
           <button className="ccm-btn-ghost" onClick={onClose}>
             상담신청 닫기
           </button>
-          {/* 여기서 신청이 끝나지 않는다 — 다음 단계(예약·문진표)가 이어진다. */}
+          {/* 여기서 신청이 끝나지 않는다 — 다음 단계(예약 신청)가 이어진다. */}
           <button className="ccm-btn-primary" onClick={handleSubmit} disabled={!canSubmit}>
             다음 <i className="fa-solid fa-arrow-right" />
           </button>

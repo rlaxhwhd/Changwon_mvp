@@ -1,314 +1,119 @@
-import { useMemo, useState } from 'react'
+import { pageNumbers } from '../../../shared/pagination'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
+import { api } from '../../../shared/api'
+import { PROGRAM_EVENT } from '../../../shared/programStore'
+import { categoryLabel, selectionLabel, outcomeLabel, attendanceLabel } from '../../../src_admin/data/schema/program'
+import { getActiveStudentId } from '../../data/students'
+import type { MyProgram } from '../../../shared/myPrograms'
 import Modal from '../../components/Modal'
+import '../../../shared/components/CounselHistory.css'
+import HistoryCalendar, { type HistoryDayMark } from '../../../shared/components/HistoryCalendar'
+import { Icon } from '../../components/Icon'
 import './MyPrograms.css'
 import { usePageHead } from '../../components/PageCrumb'
 
-type Status = '신청완료' | '진행중' | '수료' | '취소'
-
-interface AppliedProgram {
-  id: string
-  title: string
-  category: '취업' | 'AI' | '창업' | '전공' | '멘토링' | '어학' | '글로벌'
-  hostDept: string
-  appliedAt: string
-  startDate: string
-  endDate: string
+type Status = string
+interface AppliedProgram extends MyProgram {
   status: Status
-  hours: number
-  rewardXp: number
-  certUrl?: string
-  description: string
-  reflection?: string
+  hostDept: string
 }
-
-const PROGRAMS: AppliedProgram[] = [
-  {
-    id: 'p-2026-001',
-    title: '취업역량강화 캠프 (4기)',
-    category: '취업',
-    hostDept: '대학일자리플러스센터',
-    appliedAt: '2026.03.04',
-    startDate: '2026.03.18',
-    endDate: '2026.03.20',
-    status: '수료',
-    hours: 24,
-    rewardXp: 120,
-    certUrl: '#cert-001',
-    description: '3박 4일 합숙 캠프에서 모의면접·기업 분석·자소서 첨삭을 진행했습니다.',
-    reflection: '면접 시 답변 구조화(STAR)를 실전에서 연습할 수 있어서 가장 도움됐어요.',
-  },
-  {
-    id: 'p-2026-002',
-    title: 'AI 활용 자소서 특강',
-    category: 'AI',
-    hostDept: '취업전략센터',
-    appliedAt: '2026.04.01',
-    startDate: '2026.04.08',
-    endDate: '2026.04.08',
-    status: '수료',
-    hours: 3,
-    rewardXp: 30,
-    certUrl: '#cert-002',
-    description: 'ChatGPT·Claude를 활용한 자소서 작성 워크플로우 학습.',
-    reflection: '템플릿 의존 없이 강점 중심 단락을 빠르게 뽑아내는 방법을 익혔습니다.',
-  },
-  {
-    id: 'p-2026-003',
-    title: '데이터 분석 기초 (Python + Pandas)',
-    category: '전공',
-    hostDept: '컴퓨터공학과',
-    appliedAt: '2026.04.18',
-    startDate: '2026.04.22',
-    endDate: '2026.05.27',
-    status: '진행중',
-    hours: 12,
-    rewardXp: 72,
-    description: '주 1회 3시간씩 5주간 진행되는 실습 강의. 현재 3주차 진행 중.',
-  },
-  {
-    id: 'p-2026-004',
-    title: '창업아이디어 경진대회 사전 워크숍',
-    category: '창업',
-    hostDept: '창업지원센터',
-    appliedAt: '2026.05.02',
-    startDate: '2026.05.20',
-    endDate: '2026.05.21',
-    status: '신청완료',
-    hours: 16,
-    rewardXp: 96,
-    description: 'BMC(비즈니스 모델 캔버스) 작성과 발표 자료 코칭을 받습니다.',
-  },
-  {
-    id: 'p-2026-005',
-    title: '글로벌 PBL — 베트남 IT 기업 탐방',
-    category: '글로벌',
-    hostDept: '국제교류처',
-    appliedAt: '2026.05.10',
-    startDate: '2026.06.24',
-    endDate: '2026.07.01',
-    status: '신청완료',
-    hours: 56,
-    rewardXp: 240,
-    description: '베트남 호치민/하노이 IT 스타트업 탐방 및 합동 프로젝트.',
-  },
-  {
-    id: 'p-2026-006',
-    title: '현직자 멘토링 프로그램 (1:1, 8회)',
-    category: '멘토링',
-    hostDept: '취업전략센터',
-    appliedAt: '2026.03.25',
-    startDate: '2026.04.05',
-    endDate: '2026.05.31',
-    status: '진행중',
-    hours: 8,
-    rewardXp: 48,
-    description: '네이버 백엔드 개발자 멘토와 격주 1:1 멘토링 (현재 5회차).',
-  },
-  {
-    id: 'p-2025-018',
-    title: 'TOEIC 집중 캠프 (겨울학기)',
-    category: '어학',
-    hostDept: '어학교육원',
-    appliedAt: '2025.12.18',
-    startDate: '2026.01.06',
-    endDate: '2026.02.07',
-    status: '수료',
-    hours: 60,
-    rewardXp: 180,
-    certUrl: '#cert-003',
-    description: '주 5회 / 5주간 LC·RC 집중 학습. 사후 모의고사 765점 기록.',
-    reflection: 'PART 7 시간 관리법을 체득. 다음 정기시험 800점 목표.',
-  },
-  {
-    id: 'p-2025-014',
-    title: 'AI 챗봇 해커톤 (24시간)',
-    category: 'AI',
-    hostDept: '소프트웨어융합대학',
-    appliedAt: '2025.11.02',
-    startDate: '2025.11.15',
-    endDate: '2025.11.16',
-    status: '취소',
-    hours: 0,
-    rewardXp: 0,
-    description: '개인 사정으로 시작 전 취소.',
-  },
-]
-
-const STATUS_COLORS: Record<Status, string> = {
-  신청완료: '#2E5BFF',
-  진행중: '#F59E0B',
-  수료: '#22C55E',
-  취소: '#99A1A9',
-}
-
-const FILTERS = ['전체', '진행중', '신청완료', '수료', '취소'] as const
-type Filter = (typeof FILTERS)[number]
+const kstDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit' })
+const iso = (date: string | null) => !date ? '' : date.includes('T') ? kstDate.format(new Date(date)) : date.slice(0, 10)
+const tone = (status: Status) => status === outcomeLabel('COMPLETED') ? 'done' : [selectionLabel('CANCELLED'), selectionLabel('REJECTED'), outcomeLabel('NOT_COMPLETED'), outcomeLabel('ABSENT')].includes(status) ? 'cancel' : 'scheduled'
 
 export default function MyPrograms() {
-  usePageHead('비교과프로그램 현황', '지금까지 신청·수료한 비교과 프로그램과 누적 활동 시간을 확인합니다.')
-  const [filter, setFilter] = useState<Filter>('전체')
-  const [detail, setDetail] = useState<AppliedProgram | null>(null)
-
-  const stats = useMemo(() => {
-    const total = PROGRAMS.length
-    const done = PROGRAMS.filter(p => p.status === '수료').length
-    const active = PROGRAMS.filter(p => p.status === '진행중').length
-    const upcoming = PROGRAMS.filter(p => p.status === '신청완료').length
-    const totalHours = PROGRAMS.filter(p => p.status === '수료').reduce((s, p) => s + p.hours, 0)
-    const totalXp = PROGRAMS.filter(p => p.status === '수료').reduce((s, p) => s + p.rewardXp, 0)
-    return { total, done, active, upcoming, totalHours, totalXp }
-  }, [])
-
-  const visible = useMemo(() => {
-    if (filter === '전체') return PROGRAMS
-    return PROGRAMS.filter(p => p.status === filter)
-  }, [filter])
-
-  return (
-    <div className="mp-wrap">
-      <header className="mp-hero">
-        <Link to="/growth/program" className="mp-hero-cta">
-          <i className="fa-solid fa-plus" /> 새 프로그램 신청
-        </Link>
-      </header>
-
-      <section className="mp-stats">
-        <article className="mp-stat">
-          <span className="mp-stat-num">{stats.total}</span>
-          <span className="mp-stat-lbl">전체 신청</span>
-        </article>
-        <article className="mp-stat mp-stat--done">
-          <span className="mp-stat-num">{stats.done}</span>
-          <span className="mp-stat-lbl">수료</span>
-        </article>
-        <article className="mp-stat mp-stat--active">
-          <span className="mp-stat-num">{stats.active}</span>
-          <span className="mp-stat-lbl">진행중</span>
-        </article>
-        <article className="mp-stat mp-stat--upcoming">
-          <span className="mp-stat-num">{stats.upcoming}</span>
-          <span className="mp-stat-lbl">신청완료</span>
-        </article>
-        <article className="mp-stat mp-stat--hours">
-          <span className="mp-stat-num">{stats.totalHours}<small>h</small></span>
-          <span className="mp-stat-lbl">누적 인정 시간</span>
-        </article>
-        <article className="mp-stat mp-stat--xp">
-          <span className="mp-stat-num">{stats.totalXp}<small>XP</small></span>
-          <span className="mp-stat-lbl">획득 XP</span>
-        </article>
-      </section>
-
-      <div className="mp-filter-bar">
-        {FILTERS.map(f => (
-          <button
-            key={f}
-            className={`mp-filter-btn${filter === f ? ' active' : ''}`}
-            onClick={() => setFilter(f)}
-          >
-            {f}
-            <span className="mp-filter-count">
-              {f === '전체' ? PROGRAMS.length : PROGRAMS.filter(p => p.status === f).length}
-            </span>
-          </button>
-        ))}
+  usePageHead('비교과프로그램 현황', '신청한 프로그램의 일정과 참여 내역을 한눈에 확인합니다.')
+  const [items, setItems] = useState<MyProgram[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState('')
+  const [revision, setRevision] = useState(0)
+  const studentId = getActiveStudentId()
+  useEffect(() => {
+    const controller = new AbortController()
+    async function load() {
+      setLoading(true); setError(''); setItems([])
+      try {
+        const result: MyProgram[] = []
+        for (let page = 1; ; page++) {
+          const response = await api<{ items: MyProgram[]; totalCount: number }>(`/programs/mine?page=${page}&pageSize=100`, { signal: controller.signal })
+          result.push(...response.items)
+          if (!response.items.length || result.length >= response.totalCount) break
+        }
+        if (!controller.signal.aborted) setItems(result)
+      } catch (cause) {
+        if (!controller.signal.aborted) setError(cause instanceof Error ? cause.message : '신청 내역을 불러오지 못했습니다.')
+      } finally { if (!controller.signal.aborted) setLoading(false) }
+    }
+    void load()
+    const refresh = () => setRevision(value => value + 1)
+    window.addEventListener(PROGRAM_EVENT, refresh)
+    return () => { controller.abort(); window.removeEventListener(PROGRAM_EVENT, refresh) }
+  }, [studentId, revision])
+  const programs: AppliedProgram[] = items.map(p => ({ ...p,
+    category: categoryLabel(p.category), hostDept: p.manager || '미등록',
+    status: p.cancelledAt || p.selection === 'CANCELLED' ? selectionLabel('CANCELLED')
+      : p.outcome ? outcomeLabel(p.outcome) : selectionLabel(p.selection),
+  }))
+  const filters = ['전체', ...new Set(programs.map(p => p.status))]
+  const [filter, setFilter] = useState('전체')
+  const [detailId, setDetailId] = useState<string | null>(null)
+  const detail = programs.find(p => p.id === detailId) ?? null
+  const setDetail = (p: AppliedProgram | null) => setDetailId(p?.id ?? null)
+  const [query, setQuery] = useState('')
+  const [category, setCategory] = useState('')
+  const [from, setFrom] = useState('')
+  const [until, setUntil] = useState('')
+  const [selectedDate, setSelectedDate] = useState('')
+  const [order, setOrder] = useState('desc')
+  const [page, setPage] = useState(1)
+  const [size, setSize] = useState(10)
+  const today = kstDate.format(new Date())
+  const reset = () => { setFilter('전체'); setQuery(''); setCategory(''); setFrom(''); setUntil(''); setSelectedDate(''); setPage(1) }
+  const filtered = programs.filter(p => (filter === '전체' || p.status === filter)
+    && (!category || p.category === category)
+    && `${p.title} ${p.hostDept}`.toLowerCase().includes(query.trim().toLowerCase())
+    && (!(from || until || selectedDate) || Boolean(p.startDate && p.endDate))
+    && (!from || iso(p.endDate) >= from) && (!until || iso(p.startDate) <= until)
+    && (!selectedDate || (iso(p.startDate) <= selectedDate && iso(p.endDate) >= selectedDate)))
+    .sort((a,b) => (order === 'desc' ? -1 : 1) * iso(a.startDate).localeCompare(iso(b.startDate)))
+  const pages = Math.max(1, Math.ceil(filtered.length / size))
+  const current = Math.min(page, pages)
+  const rows = filtered.slice((current - 1) * size, current * size)
+  const done = programs.filter(p => p.outcome === 'COMPLETED' && !p.cancelledAt)
+  const markForDate = (date: string): HistoryDayMark => programs.reduce((mark, p) => {
+    if (!p.cancelledAt && p.selection !== 'CANCELLED' && p.selection !== 'REJECTED'
+      && p.startDate && p.endDate && iso(p.startDate) <= date && iso(p.endDate) >= date) {
+      if (p.outcome === 'COMPLETED') mark.done++
+      else if (p.selection === 'SELECTED' && !p.outcome) mark.scheduled++
+    }
+    return mark
+  }, { scheduled: 0, done: 0 })
+  const upcoming = programs.filter(p => !p.cancelledAt && p.selection === 'SELECTED' && !p.outcome && iso(p.endDate) >= today).sort((a,b) => iso(a.startDate).localeCompare(iso(b.startDate))).slice(0,3)
+  return <div className="cs-page mp-page"><div className="cs-layout"><div className="cs-main-column">
+    <section className="cs-stats" aria-label="프로그램 요약">
+      {[{label:'전체 신청',value:loading?'—':`${programs.length}건`,icon:'message' as const},{label:'수료 프로그램',value:`${done.length}건`,icon:'check' as const},{label:'선발 프로그램',value:`${programs.filter(p=>p.selection==='SELECTED'&&!p.cancelledAt).length}건`,icon:'calendar' as const},{label:'선발 대기',value:`${programs.filter(p=>p.selection==='PENDING'&&!p.cancelledAt).length}건`,icon:'clock' as const}].map(s=><div className="cs-stat" key={s.label}><Icon name={s.icon}/><div><p>{s.label}</p><strong>{loading || error ? '—' : s.value}</strong></div></div>)}
+    </section>
+    <section className="cs-panel cs-history" aria-label="프로그램 신청 내역">
+      <div className="cs-tabs" role="group" aria-label="프로그램 상태">{filters.map(f=><button type="button" key={f} aria-pressed={filter===f} className={filter===f?'is-active':''} onClick={()=>{setFilter(f);setPage(1)}}>{f} <span>({f==='전체'?programs.length:programs.filter(p=>p.status===f).length})</span></button>)}</div>
+      <div className="cs-filters"><label className="cs-search"><Icon name="search"/><input aria-label="프로그램명 또는 담당자 검색" placeholder="프로그램명, 담당자 검색" value={query} onChange={e=>{setQuery(e.target.value);setPage(1)}}/></label>
+        <select aria-label="프로그램 분류" value={category} onChange={e=>{setCategory(e.target.value);setPage(1)}}><option value="">분류 전체</option>{[...new Set(programs.map(p=>p.category))].map(c=><option key={c}>{c}</option>)}</select>
+        <div className="cs-date-range"><input type="date" aria-label="운영 시작일" value={from} max={until||undefined} onChange={e=>{setFrom(e.target.value);setSelectedDate('');setPage(1)}}/><span>~</span><input type="date" aria-label="운영 종료일" value={until} min={from||undefined} onChange={e=>{setUntil(e.target.value);setSelectedDate('');setPage(1)}}/></div>
+        <select aria-label="프로그램 정렬" value={order} onChange={e=>{setOrder(e.target.value);setPage(1)}}><option value="desc">최신순</option><option value="asc">오래된순</option></select>
       </div>
-
-      <div className="mp-list">
-        {visible.length === 0 ? (
-          <div className="mp-empty">
-            <i className="fa-solid fa-box-open" />
-            <p>해당 조건의 신청 기록이 없습니다.</p>
-          </div>
-        ) : (
-          visible.map(p => (
-            <article key={p.id} className="mp-card" onClick={() => setDetail(p)}>
-              <div className="mp-card-top">
-                <span className="mp-cat-badge">
-                  {p.category}
-                </span>
-                <span className="mp-status" style={{ background: STATUS_COLORS[p.status] + '1a', color: STATUS_COLORS[p.status] }}>
-                  <span className="mp-status-dot" style={{ background: STATUS_COLORS[p.status] }} />
-                  {p.status}
-                </span>
-              </div>
-              <h2 className="mp-card-title">{p.title}</h2>
-              <p className="mp-card-host">
-                <i className="fa-solid fa-building" /> {p.hostDept}
-              </p>
-              <div className="mp-card-meta">
-                <span><i className="fa-regular fa-calendar" /> {p.startDate} ~ {p.endDate}</span>
-                <span><i className="fa-regular fa-clock" /> {p.hours}시간</span>
-                {p.status === '수료' && (
-                  <span className="mp-card-xp">+{p.rewardXp} XP</span>
-                )}
-              </div>
-              <div className="mp-card-actions">
-                {p.certUrl && (
-                  <button
-                    type="button"
-                    className="mp-cert-btn"
-                    onClick={event => { event.stopPropagation(); setDetail(p) }}
-                  >
-                    <i className="fa-solid fa-award" /> 수료증
-                  </button>
-                )}
-                <span className="mp-card-arrow">상세 보기 <i className="fa-solid fa-chevron-right" /></span>
-              </div>
-            </article>
-          ))
-        )}
+      {(query||category||from||until||selectedDate)&&<div className="cs-filter-note"><span>{selectedDate?`${selectedDate} 운영 프로그램`:`검색 결과 ${filtered.length}건`}</span><button type="button" onClick={reset}>필터 초기화 <Icon name="x"/></button></div>}
+      {loading && <p className="cs-load-state" role="status">신청 내역을 불러오는 중입니다.</p>}
+      {error && <div className="cs-load-state" role="alert"><p>{error}</p><button type="button" className="cs-button" onClick={()=>setRevision(value=>value+1)}>다시 시도</button></div>}
+      <div className="cs-table-scroll" tabIndex={0} role="region" aria-label="프로그램 신청 내역 표"><table className="cs-table mp-table"><thead><tr>{['No.','분류','프로그램명','담당자','운영 기간','상태','운영 회차','신청일','상세'].map(h=><th scope="col" key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((p,i)=><tr key={p.id}><td>{filtered.length-(current-1)*size-i}</td><td>{p.category}</td><td><span className="cs-cell-text" title={p.title}>{p.title}</span></td><td><span className="cs-cell-text" title={p.hostDept}>{p.hostDept}</span></td><td className="cs-table-date">{p.startDate || '일정 미정'}{p.endDate && <small>~ {p.endDate}</small>}</td><td><span className={`cs-status cs-status--${tone(p.status)}`}>{p.status}</span></td><td>{p.sessions}회</td><td className="cs-table-date">{iso(p.appliedAt)}</td><td><button type="button" className="cs-detail-button" onClick={()=>setDetail(p)} aria-label={`${p.title} 상세보기`}>상세보기</button></td></tr>)}</tbody></table>
+        {!loading&&!error&&!rows.length&&<div className="cs-empty"><Icon name="calendar"/><strong>조건에 맞는 프로그램 내역이 없습니다.</strong><p>다른 날짜를 선택하거나 필터를 초기화해 보세요.</p><button type="button" className="cs-button" onClick={reset}>전체 내역 보기</button></div>}
       </div>
-
-      <Modal open={detail !== null} onClose={() => setDetail(null)} title={detail?.title ?? ''} size="md">
-        {detail && (
-          <div className="mp-detail">
-            <div className="mp-detail-tags">
-              <span className="mp-cat-badge">
-                {detail.category}
-              </span>
-              <span className="mp-status" style={{ background: STATUS_COLORS[detail.status] + '1a', color: STATUS_COLORS[detail.status] }}>
-                <span className="mp-status-dot" style={{ background: STATUS_COLORS[detail.status] }} />
-                {detail.status}
-              </span>
-            </div>
-
-            <table className="mp-detail-table">
-              <tbody>
-                <tr><th>주관 부서</th><td>{detail.hostDept}</td></tr>
-                <tr><th>신청일</th><td>{detail.appliedAt}</td></tr>
-                <tr><th>운영 기간</th><td>{detail.startDate} ~ {detail.endDate}</td></tr>
-                <tr><th>인정 시간</th><td>{detail.hours}시간</td></tr>
-                <tr><th>획득 XP</th><td className="mp-xp-strong">{detail.rewardXp} XP</td></tr>
-              </tbody>
-            </table>
-
-            <div className="mp-detail-section">
-              <h4>프로그램 소개</h4>
-              <p>{detail.description}</p>
-            </div>
-
-            {detail.reflection && (
-              <div className="mp-detail-section mp-detail-section--reflect">
-                <h4><i className="fa-solid fa-quote-left" /> 나의 회고</h4>
-                <p>{detail.reflection}</p>
-              </div>
-            )}
-
-            <div className="mp-detail-actions">
-              {detail.certUrl && (
-                <button type="button" className="mp-btn mp-btn--ghost">
-                  <i className="fa-solid fa-download" /> 수료증 다운로드
-                </button>
-              )}
-              <button type="button" className="mp-btn mp-btn--primary" onClick={() => setDetail(null)}>
-                확인
-              </button>
-            </div>
-          </div>
-        )}
-      </Modal>
-    </div>
-  )
+      <div className="cs-pagination"><span>총 <strong>{filtered.length}</strong>건 <span className="cs-page-divider">|</span> {current} / {pages} 페이지</span><nav aria-label="프로그램 내역 페이지"><button type="button" aria-label="이전 페이지" disabled={current===1} onClick={()=>setPage(current-1)}><Icon name="chevron-left"/></button>{pageNumbers(current, pages).map(n => <button type="button" key={n} aria-current={n === current ? "page" : undefined} onClick={() => setPage(n)}>{n}</button>)}<button type="button" aria-label="다음 페이지" disabled={current===pages} onClick={()=>setPage(current+1)}><Icon name="chevron-right"/></button></nav><select aria-label="페이지당 프로그램 수" value={size} onChange={e=>{setSize(Number(e.target.value));setPage(1)}}>{[10,20,50].map(n=><option value={n} key={n}>{n}개씩 보기</option>)}</select></div>
+    </section>
+  </div><aside className="cs-sidebar" aria-label="프로그램 일정">
+    <HistoryCalendar today={today} selectedDate={selectedDate} onSelect={date=>{reset();setSelectedDate(date===selectedDate?'':date)}} markForDate={markForDate} title="프로그램 캘린더" scheduledLabel="예정·진행" doneLabel="수료"/>
+    <section className="cs-panel cs-upcoming"><div className="cs-panel-head"><h2>다가오는 프로그램</h2></div>{upcoming.length?<ul>{upcoming.map(p=><li key={p.id}><button type="button" onClick={()=>setDetail(p)}><span className="cs-upcoming-date">{p.startDate} ~ {p.endDate}</span><strong>{p.title}</strong><small>{p.hostDept} · {p.status}</small></button></li>)}</ul>:<p className="cs-side-empty">예정된 프로그램이 없습니다.<br/>새로운 프로그램을 찾아보세요.</p>}</section>
+    <section className="cs-booking"><Icon name="calendar"/><h2>새로운 경험을 시작해 보세요</h2><p>진로와 취업에 도움이 되는<br/>다양한 비교과 프로그램을 만나보세요.</p><Link to="/growth/program">프로그램 찾아보기 <Icon name="arrow"/></Link></section>
+  </aside></div>
+  <Modal open={!!detail} onClose={()=>setDetail(null)} title="프로그램 참여 내역" size="md">{detail&&<div className="cs-detail"><span className={`cs-status cs-status--${tone(detail.status)}`}>{detail.status}</span><h3>{detail.title}</h3><dl><div><dt>분류</dt><dd>{detail.category}</dd></div><div><dt>담당자</dt><dd>{detail.hostDept}</dd></div><div><dt>운영 기간</dt><dd>{detail.startDate || '일정 미정'}{detail.endDate ? ` ~ ${detail.endDate}` : ''}</dd></div><div><dt>신청일</dt><dd>{iso(detail.appliedAt)}</dd></div><div><dt>운영 회차</dt><dd>{detail.sessions}회</dd></div></dl><section className="cs-public-comment"><h4>프로그램 소개</h4><p>{detail.description}</p></section><dl><div><dt>장소</dt><dd>{detail.location || '미등록'}</dd></div><div><dt>출석</dt><dd>{attendanceLabel(detail.attendance)}</dd></div></dl><button type="button" className="cs-button" onClick={()=>setDetail(null)}>확인</button></div>}</Modal>
+  </div>
 }

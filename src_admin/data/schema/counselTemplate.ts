@@ -40,7 +40,7 @@ export function counselContent(template: CounselTemplate): string {
 export function counselTemplateErrors(template: CounselTemplate, care7: boolean, typeLocked: boolean, comment: string): string[] {
   const errors: string[] = []
   if (!comment.trim()) errors.push('학생 공개 코멘트를 입력해 주세요.')
-  if (care7 && QUALITATIVE_ITEMS.some(([key]) => !template.qualitative[key])) errors.push('정성진단 5개 항목을 모두 선택해 주세요.')
+  if (QUALITATIVE_ITEMS.some(([key]) => !template.qualitative[key])) errors.push('정성진단 5개 항목을 모두 선택해 주세요.')
   if (care7 && !typeLocked && !template.finalType) errors.push('상담 후 최종 유형을 선택해 주세요.')
   const sections = [template.program, template.application].filter(section => section.selected)
   if (!sections.length || sections.some(section => !section.content.trim())) errors.push('상담내용을 한 가지 이상 선택하고 선택한 항목의 내용을 모두 입력해 주세요.')

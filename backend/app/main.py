@@ -13,6 +13,7 @@ from .academic_directory import router as academic_directory_router
 from .department_assignments import router as department_assignments_router
 from .company_members import router as company_members_router
 from .students import router as students_router
+from .academic_students import router as academic_students_router
 from .counsel import router as counsel_router
 from .counsel_dashboard import router as counsel_dashboard_router
 from .psych_referrals import router as psych_referrals_router
@@ -69,6 +70,7 @@ app.include_router(academic_directory_router, prefix='/api/v1')
 app.include_router(department_assignments_router, prefix='/api/v1')
 app.include_router(company_members_router, prefix='/api/v1')
 app.include_router(students_router, prefix='/api/v1')
+app.include_router(academic_students_router, prefix='/api/v1')
 app.include_router(counsel_router, prefix='/api/v1')
 app.include_router(counsel_dashboard_router, prefix='/api/v1')
 app.include_router(psych_referrals_router, prefix='/api/v1')

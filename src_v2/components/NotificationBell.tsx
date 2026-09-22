@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { formatRelativeTime } from '../../src_admin/data/counselRequests'
 import './NotificationBell.css'
-import { COMMUNICATIONS_EVENT, hasMoreNotifications, loadMoreNotifications, loadNotificationSummary, markNotificationRead, notificationRows, openNotifications, unreadCount } from '../../shared/communicationsStore'
+import { COMMUNICATIONS_EVENT, hasMoreNotifications, loadMoreNotifications, loadNotificationSummary, markAllNotificationsRead, markNotificationRead, notificationRows, openNotifications, unreadCount, withinNotificationWindow } from '../../shared/communicationsStore'
 import { downloadApiFile } from '../../shared/api'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -15,7 +15,7 @@ import { downloadApiFile } from '../../shared/api'
 //
 // 목록과 수신자별 읽음 시각은 서버에서 관리한다.
 // 폴링은 60초마다 summary(미읽음 수)만, 탭이 숨겨져 있으면 쉰다. 목록은 열 때 받는다
-// (23시간 캐시 + delta). 스크롤 끝에서 옛 알림을 서버 페이지로 이어 받는다.
+// (최근 23시간만 표시). 아이콘 클릭 시 전체 읽음을 서버에 저장한다.
 // 배선은 shared/communicationsStore 가 갖는다 — 여기서는 그리기만 한다.
 // ─────────────────────────────────────────────────────────────────────────
 const SUMMARY_POLL_MS = 60000
@@ -62,18 +62,20 @@ export default function NotificationBell({ items, icon, triggerClassName }: Noti
     return () => { window.removeEventListener(COMMUNICATIONS_EVENT, update); document.removeEventListener('visibilitychange', onVisible); window.clearInterval(timer) }
   }, [])
   // 열 때만 목록을 받는다 — 캐시가 있으면 즉시 그려지고 신규분만 뒤따라 온다.
-  useEffect(() => {
-    if (!open) return
+  const showNotifications = () => {
+    if (open) return
+    setOpen(true)
+    setError('')
     setLoading(true)
     void openNotifications().catch(e => setError((e as Error).message)).finally(() => setLoading(false))
-  }, [open])
+  }
   const loadMore = (el: HTMLUListElement) => {
     if (loading || !hasMoreNotifications) return
     if (el.scrollTop + el.clientHeight < el.scrollHeight - 24) return
     setLoading(true)
     void loadMoreNotifications().catch(e => setError((e as Error).message)).finally(() => setLoading(false))
   }
-  const visibleItems = revision ? notificationRows : items
+  const visibleItems = (revision ? notificationRows : items).filter(item => withinNotificationWindow(item))
   const wrapRef = useRef<HTMLDivElement | null>(null)
 
   // 마우스를 벗어나면 닫히지만, 키보드·터치로 연 경우를 위해 ESC와 바깥 클릭도 받는다.
@@ -95,7 +97,7 @@ export default function NotificationBell({ items, icon, triggerClassName }: Noti
     <div
       className="nbell"
       ref={wrapRef}
-      onMouseEnter={() => setOpen(true)}
+      onMouseEnter={showNotifications}
       onMouseLeave={() => setOpen(false)}
     >
       <button
@@ -104,7 +106,11 @@ export default function NotificationBell({ items, icon, triggerClassName }: Noti
         aria-haspopup="menu"
         aria-expanded={open}
         aria-label={`읽지 않은 알림 ${unreadCount}건`}
-        onClick={() => setOpen(v => !v)}
+        onClick={() => {
+          showNotifications()
+          setError('')
+          void markAllNotificationsRead().catch(e => setError((e as Error).message))
+        }}
       >
         {icon}
         {unreadCount > 0 && (
@@ -115,7 +121,7 @@ export default function NotificationBell({ items, icon, triggerClassName }: Noti
       {open && (
         <div className="nbell-panel" role="menu" aria-label="알림">
           <div className="nbell-head">
-            <strong>알림</strong>
+            <strong>알림 · 최근 23시간</strong>
             <span>읽지 않음 {unreadCount}건</span>
             <button type="button" onClick={() => { void downloadApiFile('/notifications/export.csv', 'notifications.csv').catch(e => setError((e as Error).message)) }}>CSV</button>
           </div>
@@ -132,7 +138,7 @@ export default function NotificationBell({ items, icon, triggerClassName }: Noti
                     to={item.to}
                     className={`nbell-item is-${item.tone}${item.readAt ? ' is-read' : ''}`}
                     role="menuitem"
-                    onClick={() => { setOpen(false); void markNotificationRead(item.id).catch(e => setError((e as Error).message)) }}
+                    onClick={() => { setOpen(false); if (!item.readAt) void markNotificationRead(item.id).catch(e => setError((e as Error).message)) }}
                   >
                     <span className="nbell-dot" aria-hidden="true" />
                     <span className="nbell-text">

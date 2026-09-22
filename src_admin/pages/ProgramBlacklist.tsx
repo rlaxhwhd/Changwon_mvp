@@ -1,3 +1,4 @@
+import { pageNumbers } from '../../shared/pagination'
 import type { IconType } from 'react-icons'
 import {
   LuChevronLeft,
@@ -179,14 +180,7 @@ export default function ProgramBlacklist() {
   // 벌점 차감·해제 후 재조회 + 집계 갱신
   const refresh = () => { refetch(); setRefreshKey(k => k + 1); setSelected(null) }
 
-  const pageWindow = useMemo(() => {
-    const size = 10
-    const start = Math.max(1, Math.min(page - 4, pages - size + 1))
-    const end = Math.min(pages, start + size - 1)
-    const out: number[] = []
-    for (let p = start; p <= end; p++) out.push(p)
-    return out
-  }, [page, pages])
+  const pageWindow = pageNumbers(page, pages)
 
   const downloadCsv = async () => {
     const rows = await getPenaltyRowsForExport(params)

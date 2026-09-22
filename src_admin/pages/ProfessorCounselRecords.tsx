@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 /** 교수 상담 기록 화면 — 기록은 append하고 신청 연계 건은 완료로 전이한다. */
 import { LuChevronLeft, LuChevronRight, LuSearch } from 'react-icons/lu'
 import { useState } from 'react'
@@ -187,6 +188,7 @@ export default function ProfessorCounselRecords() {
                 >
                   <LuChevronLeft />
                 </button>
+                <PageNumbers page={page} pages={pages} onChange={setPage} />
                 <span className="admin-page-info">{page} / {pages} 페이지 · 총 {data.totalCount}건</span>
                 <button
                   type="button"

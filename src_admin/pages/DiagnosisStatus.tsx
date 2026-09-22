@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useState } from 'react'
 import { useAsyncAction } from '../../shared/useAsyncAction'
 import {
@@ -29,7 +30,7 @@ const ALL = '전체'
 const PAGE_SIZE = 12
 const STATUSES = ['미응시', '진행중', '완료'] as const
 
-const formatDate = (value?: string) => (value ? value.replaceAll('-', '.') : '—')
+const formatDate = (value?: string) => (value ? value.slice(0, 10).replaceAll('-', '/') : '—')
 const formatStamp = (iso?: string) => (iso ? iso.slice(0, 10).replaceAll('-', '.') : '—')
 
 function statusClass(status: DiagnosisStatusRow['status']): string {
@@ -101,7 +102,7 @@ function CommentModal({ row, onClose, onSaved }: { row: DiagnosisStatusRow; onCl
 
 export default function DiagnosisStatus() {
   const counselor = getActiveCounselor()
-  const departments = counselor.departments
+  const departments: string[] = []
   const [query, setQuery] = useState('')
   const [testId, setTestId] = useState(ALL)
   const [status, setStatus] = useState(ALL)
@@ -147,7 +148,7 @@ export default function DiagnosisStatus() {
         <div>
           <h1 className="admin-page-title">검사 현황</h1>
           <p className="admin-page-desc">
-            담당 학생의 진단검사 응시 현황과 결과를 상담 준비용으로 확인합니다.
+            전체 학생의 진단검사 응시 현황과 결과를 상담 준비용으로 확인합니다.
           </p>
           <p className="admin-field-hint">
             대상 검사는 필수진단 C-CORE(전원)와 진단 결과 유형별 후속진단 C1~C6 1종으로 산정됩니다.
@@ -252,7 +253,7 @@ export default function DiagnosisStatus() {
                     {row.isRetake && <small className="admin-tag admin-tag-soft">재검사 {row.attemptNo}회차</small>}
                   </span>
                   <span className="admin-roster-cell"><span className={statusClass(row.status)}>{row.status}</span></span>
-                  <span className="admin-roster-cell">{formatDate(row.date)}</span>
+                  <span className="admin-roster-cell" style={{ whiteSpace: 'nowrap' }}>{formatDate(row.date)}</span>
                   <span className="admin-roster-cell admin-diag-result">
                     {row.resultSummary ?? '—'}
                     {row.comment && <small><LuMessageSquareMore /> {row.comment.body}</small>}
@@ -290,6 +291,7 @@ export default function DiagnosisStatus() {
                 <button type="button" className="admin-page-btn" disabled={result.page === 1} onClick={() => setPage(result.page - 1)}>
                   <LuChevronLeft />
                 </button>
+                <PageNumbers page={result.page} pages={pages} onChange={setPage} />
                 <span className="admin-page-info">
                   {result.page} / {pages} 페이지 · 총 {result.totalCount}건
                 </span>

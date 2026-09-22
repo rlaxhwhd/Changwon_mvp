@@ -1,12 +1,15 @@
+from .care7_participation import PARTICIPANT
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
-from .auth import principal, require_staff, student_access
+from .auth import principal, require_staff, student_access, is_counselor
 from .db import connection
 from .settings import settings
 
 router=APIRouter()
-HIGH="grade<>1 AND gpa ~ '^[0-9]+([.][0-9]+)?$' AND gpa::numeric<2.5 AND program_count=0 AND counsel_count=0"
-CORE="grade<>1 AND student_type<>'T5' AND gpa ~ '^[0-9]+([.][0-9]+)?$' AND gpa::numeric<2.5 AND program_count>=3 AND counsel_count>=1 AND progress>=60"
+# Retired classifications. Preserve response keys for older clients without
+# continuing to classify students under the superseded GPA/activity rules.
+HIGH = 'false'
+CORE = 'false'
 
 
 def profile(conn,row):
@@ -69,9 +72,14 @@ def profiles(user=Depends(principal,scope='function'),conn=Depends(connection,sc
     if user['kind']=='STUDENT':
         condition='s.intg_uid=%s'
         values=[user['intg_uid']]
+    elif is_counselor(user):
+        condition, values = 'true', []
     else:
-        condition='EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=s.intg_uid)'
-        values=[user['intg_uid']]
+        # Match student_access: intake owners can open their applicants even when
+        # the student's academic department has no service-directory mapping.
+        condition='''(EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=s.intg_uid)
+          OR EXISTS(SELECT 1 FROM dc.counsel_request q WHERE q.counselor_uid=%s AND q.student_uid=s.intg_uid))'''
+        values=[user['intg_uid'],user['intg_uid']]
     rows=conn.execute('SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid) WHERE (s.detail IS NOT NULL OR p.source IN (\'academic\',\'local\')) AND '+condition+' ORDER BY p.alias',values).fetchall()
     students=[]
     owners=[]
@@ -88,6 +96,8 @@ def scope(request,user):
     require_staff(user)
     where=['EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=v.intg_uid)']
     values=[user['intg_uid']]
+    if is_counselor(user):
+        where, values = ['true'], []
     departments=request.query_params.getlist('departments')
     if departments:
         where.append('major_label=ANY(%s)')
@@ -129,8 +139,8 @@ def students(request:Request,page:int=Query(1,ge=1),pageSize:int=Query(20,ge=1,l
             where.append(f'{column}=%s')
             values.append(value)
     focus=request.query_params.get('filters.focus')
-    if focus in ('high','core','star'):
-        where.append({'high':HIGH,'core':CORE,'star':'star'}[focus])
+    if focus in ('high','core','star','care7'):
+        where.append({'high':HIGH,'core':CORE,'star':'star','care7':PARTICIPANT}[focus])
     if q.strip():
         where.append("concat_ws(' ',name,student_no,major_label,type_label) ILIKE %s")
         values.append('%'+q.strip().replace('%','\\%').replace('_','\\_')+'%')
@@ -149,23 +159,25 @@ def metadata(request:Request,user=Depends(principal, scope='function'),conn=Depe
     condition=' AND '.join(f'({x})' for x in where)
     row=conn.execute(f'''SELECT count(*) AS total,count(*) FILTER(WHERE tier='하위') AS "focusCount",
       count(*) FILTER(WHERE {HIGH}) AS "highRiskCount",count(*) FILTER(WHERE {CORE}) AS "coreCareCount",
-      count(*) FILTER(WHERE star) AS "starCount",
+      count(*) FILTER(WHERE star) AS "starCount",count(*) FILTER(WHERE {PARTICIPANT}) AS "care7Count",
       array_agg(DISTINCT major_label ORDER BY major_label) AS majors,
       array_agg(DISTINCT grade ORDER BY grade) AS grades,
       array_agg(DISTINCT student_type) FILTER(WHERE student_type IS NOT NULL) AS types,
       array_agg(DISTINCT tier) FILTER(WHERE tier IS NOT NULL) AS tiers,
       array_agg(DISTINCT status) AS statuses FROM dc.student_list v WHERE {condition}''',values).fetchone()
-    return {'summary':{k:row[k] for k in ('total','focusCount','highRiskCount','coreCareCount','starCount')},
+    return {'summary':{k:row[k] for k in ('total','focusCount','highRiskCount','coreCareCount','starCount','care7Count')},
             'options':{k:row[k] or [] for k in ('majors','grades','types','tiers','statuses')}}
 
 
 @router.get('/students/summary')
-def summary(request:Request,groupBy:str,user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
+def summary(request:Request,groupBy:str,user=Depends(principal,scope='function'),conn=Depends(connection,scope='function'), *, care7_only=False):
     columns={'type':('student_type','type_label'),'grade':('grade::text','grade::text'),
              'college':('college_code','college_name')}
     if groupBy not in columns:
         raise HTTPException(400,detail={'code':'INVALID_GROUP_BY','message':'지원하지 않는 집계 기준입니다.'})
     where,values=scope(request,user)
+    if care7_only:
+        where.append(PARTICIPANT)
     condition=' AND '.join(f'({x})' for x in where)
     key,label=columns[groupBy]
     missing='미정' if groupBy=='type' else '기타'

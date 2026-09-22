@@ -1,0 +1,16 @@
+/* Map the shared view to the admin portal's existing tokens; preserve shell gutters. */
+.admin-counsel-history {
+  --foreground: var(--text);
+  --muted-foreground: var(--text-sub);
+  --card: var(--bg-card);
+  --radius: var(--radius-lg);
+  --blue-soft: var(--blue-bg);
+  --blue-wash: var(--blue-bg);
+  --blue-border: var(--border);
+  --mint-ink: var(--on-green);
+  --mint-soft: var(--green-bg);
+  --coral-ink: var(--on-red);
+  --coral-soft: var(--red-bg);
+}
+.admin-counsel-history .cs-booking h2 { grid-column: 1 / -1; }
+.admin-counsel-history .cs-booking p { grid-column: 1 / -1; }

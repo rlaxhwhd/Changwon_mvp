@@ -5,7 +5,7 @@
 //   완료 상담 중 dc_counsel_records 에 기록이 없으면 미작성.
 // 판정·집계는 여기 한 곳이다(CLAUDE.md 규칙 10) — 화면이 다시 세지 않는다.
 // ─────────────────────────────────────────────────────────────────────────
-import { getRequestsByAssignee, splitMajorGrade } from './counselRequests'
+import { getCounselRequests, splitMajorGrade } from './counselRequests'
 import { getCounselRecords } from './counselRecords'
 import type { EnrollStatus } from './studentRoster'
 import type { CounselRecord } from './schema/counselRecord'
@@ -59,9 +59,9 @@ function statusOf(record?: CounselRecord): JournalStatus {
 }
 
 /** 상담사 1명의 일지 대장 — 최근 상담이 위로. */
-export function getJournalRows(counselorId: string): JournalRow[] {
+export function getJournalRows(_counselorId: string): JournalRow[] {
   const byRequest = new Map(getCounselRecords().map(r => [r.requestId, r]))
-  return getRequestsByAssignee(counselorId)
+  return getCounselRequests()
     .filter(r => r.status === '완료')
     .map(r => {
       const record = byRequest.get(r.id)

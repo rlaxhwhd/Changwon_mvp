@@ -1,3 +1,4 @@
+import PageNumbers from '../../shared/components/PageNumbers'
 import {
   LuChevronLeft, LuChevronRight, LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuSparkles, LuStar, LuTriangleAlert,
 } from 'react-icons/lu'
@@ -13,11 +14,16 @@ import {
   studentTypeClass,
 } from '../data/studentRoster'
 import type { FocusFilter } from '../data/studentRoster'
-import { typeLabel } from '../../src_v2/data/careerProcess'
+import { STUDENT_TYPES, typeLabel } from '../../src_v2/data/careerProcess'
 import { totalPages } from '../data/query'
 import { useListData } from '../hooks/useListData'
 import EmptyState from './EmptyState'
+import StudentDetailModal from './StudentDetailModal'
+import { getActiveUser } from '../data/staff'
+import { queryAcademicStudents, fetchAcademicStudentMetadata, downloadAcademicStudents } from '../data/academicStudents'
+import type { RosterStudent } from '../data/studentRoster'
 import { useMetadata } from '../../shared/useMetadata'
+import './StudentChargeTable.css'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 상담사 학생 목록 표 (담당·전체 공유) — 번호·학생·학과·학년·진단 유형·학적·IAP 이행률.
@@ -31,7 +37,6 @@ import { useMetadata } from '../../shared/useMetadata'
 //   - scopeLabel: 머리글 설명 앞부분. 총원·집중관리 집계는 이 컴포넌트가 붙인다.
 // ─────────────────────────────────────────────────────────────────────────
 const ALL = '전체'
-const PAGE_SIZE = 20
 
 type RosterSummary = Awaited<ReturnType<typeof fetchRosterMetadata>>['summary']
 
@@ -43,12 +48,12 @@ type RosterSummary = Awaited<ReturnType<typeof fetchRosterMetadata>>['summary']
  * 같은 줄에 두되 구분선으로 갈라 놓는다(집중관리로 읽히면 안 된다).
  */
 const FOCUS_BUTTONS: { focus: FocusFilter; label: string; tone: string; count: (s: RosterSummary) => number }[] = [
-  { focus: 'high', label: '고위험군', tone: 'is-high', count: s => s.highRiskCount },
-  { focus: 'core', label: '핵심관리대상', tone: 'is-core', count: s => s.coreCareCount },
+  { focus: 'care7', label: 'CARE 7+', tone: 'is-star', count: s => s.care7Count },
   { focus: 'star', label: 'STAR 트랙', tone: 'is-star', count: s => s.starCount },
 ]
 
 interface StudentChargeTableProps {
+  academic?: boolean
   departments: string[]
   title: string
   scopeLabel: string
@@ -66,7 +71,7 @@ interface StudentChargeTableProps {
 }
 
 export default function StudentChargeTable({
-  departments, title, scopeLabel, mode = 'roster', onPickStudent, refreshKey = 0,
+  departments, title, scopeLabel, mode = 'roster', onPickStudent, refreshKey = 0, academic = false,
 }: StudentChargeTableProps) {
   useMetadata()
   const navigate = useNavigate()
@@ -85,30 +90,40 @@ export default function StudentChargeTable({
   const [grade, setGrade] = useState(ALL)
   const [type, setType] = useState(ALL)
   const [status, setStatus] = useState(ALL)
+  const [academicLevel, setAcademicLevel] = useState(ALL)
+  const [college, setCollege] = useState(ALL)
+  const [sex, setSex] = useState('')
+  const [graduationFrom, setGraduationFrom] = useState('')
+  const [graduationTo, setGraduationTo] = useState('')
+  const [pageSize, setPageSize] = useState(academic ? 100 : 20)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState('')
+  const [selectedAcademic, setSelectedAcademic] = useState<RosterStudent | null>(null)
   const [page, setPage] = useState(1)
 
   // 필터 옵션·헤더 집계는 전체 집합에서(현재 페이지가 아니라). DB 전환 시 별도 집계 엔드포인트.
   const [metadata, setMetadata] = useState<Awaited<ReturnType<typeof fetchRosterMetadata>>>({
     options: { majors: [], grades: [], types: [], tiers: [], statuses: [] },
-    summary: { total: 0, focusCount: 0, highRiskCount: 0, coreCareCount: 0, starCount: 0 },
+    summary: { total: 0, focusCount: 0, highRiskCount: 0, coreCareCount: 0, starCount: 0, care7Count: 0 },
   })
   const [metadataError, setMetadataError] = useState<Error | null>(null)
   const [metadataRetry, setMetadataRetry] = useState(0)
   useEffect(() => {
     let cancelled = false
     setMetadataError(null)
-    fetchRosterMetadata(departments).then(value => {
+    const metadataRequest = academic ? fetchAcademicStudentMetadata() : fetchRosterMetadata(departments)
+    metadataRequest.then(value => {
       if (!cancelled) setMetadata(value)
     }).catch((error: Error) => { if (!cancelled) setMetadataError(error) })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deptKey, refreshKey, metadataRetry])
+  }, [deptKey, refreshKey, metadataRetry, academic])
   const { options, summary } = metadata
 
   // 서버(목업) 조회 — useListData가 useEffect+레이스 cleanup을 담당. DB 전환 시 훅 내부만 교체.
-  const { data: result, isLoading: loading, error, refetch } = useListData(queryStudentRoster, {
+  const listParams = {
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     q: query,
     departments,
     filters: {
@@ -116,9 +131,22 @@ export default function StudentChargeTable({
       grade: grade === ALL ? undefined : grade,
       studentType: type === ALL ? undefined : type,
       status: status === ALL ? undefined : status,
+      academicLevel: academicLevel === ALL ? undefined : academicLevel,
+      college: college === ALL ? undefined : college,
+      sex: sex || undefined,
+      graduationFrom: graduationFrom || undefined,
+      graduationTo: graduationTo || undefined,
       focus,
+      contact: academic ? searchParams.get('contact') || undefined : undefined,
     },
-  })
+  }
+  const { data: result, isLoading: loading, error, refetch } = useListData(academic ? queryAcademicStudents : queryStudentRoster, listParams)
+  const exportExcel = async () => {
+    setExporting(true); setExportError('')
+    try { await downloadAcademicStudents(listParams) }
+    catch (e) { setExportError(e instanceof Error ? e.message : '다운로드에 실패했습니다.') }
+    finally { setExporting(false) }
+  }
 
   // 필터 변경 시 항상 1페이지부터
   const onFilter = (setter: (v: string) => void) => (v: string) => {
@@ -149,7 +177,11 @@ export default function StudentChargeTable({
     () => new Set(isRoadmap ? items.filter(s => !s.hasRoadmap).map(s => s.id) : []),
     [items, isRoadmap, refreshKey],
   )
-  const pick = (id: string) => (onPickStudent ? onPickStudent(id) : navigate(`/students/${id}`))
+  const pick = (id: string) => {
+    if (academic) { setSelectedAcademic(items.find(s => s.id === id) ?? null); return }
+    if (onPickStudent) onPickStudent(id)
+    else navigate(`/students/${id}`)
+  }
 
   return (
     <div className="admin-page">
@@ -171,7 +203,7 @@ export default function StudentChargeTable({
 
       {/* 집중관리 분류 — 인원과 판정은 데이터층이 준다(홈 카드와 같은 수치) */}
       <div className="admin-focus-filter">
-        <span className="admin-focus-filter-label">집중관리</span>
+        <span className="admin-focus-filter-label">학생 분류</span>
         <button
           type="button"
           className={`admin-focus-btn${focus ? '' : ' is-on'}`}
@@ -193,12 +225,11 @@ export default function StudentChargeTable({
             </button>
           </span>
         ))}
-        <span className="admin-focus-filter-hint">1학년은 집중관리 판정 대상에서 제외됩니다.</span>
       </div>
 
       {/* 필터/검색 — 옵션은 전체 조회 집합에서 파생 */}
       <form
-        className="admin-filterbar"
+        className={`admin-filterbar${academic ? ' academic-student-filters' : ''}`}
         onSubmit={e => { e.preventDefault(); submitSearch() }}
       >
         <div className="admin-search">
@@ -207,9 +238,24 @@ export default function StudentChargeTable({
             type="text"
             value={draft}
             onChange={e => setDraft(e.target.value)}
-            placeholder="이름·학과·유형 검색"
+            placeholder="이름·학번·학과·유형 검색"
+            aria-label="학생 검색"
           />
         </div>
+        {academic && <label className="admin-select">
+          <span>학부/대학원</span>
+          <select value={academicLevel} onChange={e => onFilter(setAcademicLevel)(e.target.value)}>
+            <option value={ALL}>{ALL}</option>
+            <option value="학부">학부</option>
+            <option value="대학원">대학원</option>
+          </select>
+        </label>}
+        {academic && <label className="admin-select"><span>대학</span>
+          <select value={college} onChange={e => onFilter(setCollege)(e.target.value)}>
+            <option value={ALL}>{ALL}</option>
+            {(options.colleges ?? []).map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+        </label>}
         <label className="admin-select">
           <span>학과</span>
           <select value={major} onChange={e => onFilter(setMajor)(e.target.value)}>
@@ -221,14 +267,14 @@ export default function StudentChargeTable({
           <span>학년</span>
           <select value={grade} onChange={e => onFilter(setGrade)(e.target.value)}>
             <option value={ALL}>{ALL}</option>
-            {options.grades.map(g => <option key={g} value={String(g)}>{g}학년</option>)}
+            {(academic ? [1, 2, 3, 4] : options.grades).map(g => <option key={g} value={String(g)}>{g}학년</option>)}
           </select>
         </label>
         <label className="admin-select">
           <span>유형</span>
           <select value={type} onChange={e => onFilter(setType)(e.target.value)}>
             <option value={ALL}>{ALL}</option>
-            {options.types.map(t => <option key={t} value={t}>{typeLabel(t)}</option>)}
+            {(academic ? STUDENT_TYPES.map(t => t.code) : options.types).map(t => <option key={t} value={t}>{typeLabel(t)}</option>)}
           </select>
         </label>
         <label className="admin-select">
@@ -241,6 +287,23 @@ export default function StudentChargeTable({
         <button type="submit" className="admin-btn admin-btn-primary admin-filter-submit">
           <LuSearch /> 검색하기
         </button>
+        {academic && <>
+          <label className="admin-select"><span>조회인원</span>
+            <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}>
+              {[100,200,300].map(n => <option key={n} value={n}>{n}명</option>)}
+            </select>
+          </label>
+          <label className="admin-select"><span>졸업년월 시작</span>
+            <input type="month" value={graduationFrom} max={graduationTo || undefined} onChange={e => onFilter(setGraduationFrom)(e.target.value)} />
+          </label>
+          <label className="admin-select"><span>졸업년월 종료</span>
+            <input type="month" value={graduationTo} min={graduationFrom || undefined} onChange={e => onFilter(setGraduationTo)(e.target.value)} />
+          </label>
+          <fieldset className="academic-sex-filter"><legend>성별</legend>
+            {[['','전체'],['0001','남자'],['0002','여자']].map(([value,label]) =>
+              <label key={value}><input type="radio" name="academic-sex" value={value} checked={sex===value} onChange={() => onFilter(setSex)(value)} /> {label} </label>)}
+          </fieldset>
+        </>}
       </form>
 
       <div className="admin-toolbar">
@@ -253,7 +316,11 @@ export default function StudentChargeTable({
           </span>}
           {loading && <LuLoaderCircle className="admin-spin" />}
         </span>
+        {academic && <button type="button" className="admin-btn admin-btn-primary" disabled={exporting || loading || !!error || totalCount===0} onClick={exportExcel}>
+          {exporting ? '엑셀 생성 중…' : '엑셀 다운로드'}
+        </button>}
       </div>
+      {exportError && <p role="alert">{exportError}</p>}
 
       <section className="admin-card">
         {error || metadataError ? (
@@ -280,13 +347,15 @@ export default function StudentChargeTable({
                 const cells = (
                   <>
                     {/* 페이지가 넘어가도 이어지는 통 번호 (1페이지 20명이면 2페이지는 21부터) */}
-                    <span className="admin-roster-no">{(page - 1) * PAGE_SIZE + i + 1}</span>
+                    <span className="admin-roster-no">{(page - 1) * pageSize + i + 1}</span>
                     <span className="admin-roster-student">
-                      <strong>{s.name}</strong>
+                      <span><strong>{s.name}</strong>
+                        {academic && <small style={{ display: 'block' }}>{s.studentNo} · {s.academicLevel}</small>}
+                      </span>
                       {s.hasDetail && <span className="admin-tag admin-tag-soft">상세</span>}
                     </span>
                     <span className="admin-roster-cell">{s.major}</span>
-                    <span className="admin-roster-cell">{s.grade}학년</span>
+                    <span className="admin-roster-cell">{s.grade == null ? '미상' : `${s.grade}학년`}</span>
                     <span className="admin-roster-cell">
                       {/* 유형은 '코드 → 라벨' 순서로 읽는다 (T3 역량성장형) */}
                       <span className={studentTypeClass(s.studentType)}><b>{s.studentType}</b>{typeLabel(s.studentType)}</span>
@@ -345,7 +414,7 @@ export default function StudentChargeTable({
                 <button type="button" className="admin-page-btn" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
                   <LuChevronLeft />
                 </button>
-                <span className="admin-page-info">{page} / {pages} 페이지 · 총 {totalCount}명</span>
+                <PageNumbers page={page} pages={pages} onChange={setPage} />
                 <button type="button" className="admin-page-btn" disabled={page === pages} onClick={() => setPage(p => Math.min(pages, p + 1))}>
                   <LuChevronRight />
                 </button>
@@ -354,6 +423,8 @@ export default function StudentChargeTable({
           </>
         )}
       </section>
+      {selectedAcademic && <StudentDetailModal studentId={selectedAcademic.id} role={getActiveUser().role}
+        academic onClose={() => setSelectedAcademic(null)} />}
     </div>
   )
 }

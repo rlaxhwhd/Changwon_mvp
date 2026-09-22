@@ -1,3 +1,4 @@
+import CounselHistory from './pages/CounselHistory'
 import MissionManagement from './pages/MissionManagement'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import Layout from './components/Layout'
@@ -8,7 +9,6 @@ import CompanyMembers from './pages/CompanyMembers'
 import { hasActiveSession } from './data/session'
 import Home from './pages/Home'
 import CounselRequests from './pages/CounselRequests'
-import CounselSchedule from './pages/CounselSchedule'
 import CounselSession from './pages/CounselSession'
 import CounselJournals from './pages/CounselJournals'
 import CounselRecordPrint from './pages/CounselRecordPrint'
@@ -19,7 +19,6 @@ import PsychTests from './pages/PsychTests'
 import SmsBlacklist from './pages/SmsBlacklist'
 import PsychReferrals from './pages/PsychReferrals'
 import PsychCounselRecordNew from './pages/PsychCounselRecordNew'
-import StudentList from './pages/StudentList'
 import StudentAll from './pages/StudentAll'
 import StudentDetail from './pages/StudentDetail'
 import RoadmapRequests from './pages/RoadmapRequests'
@@ -145,15 +144,13 @@ const router = createBrowserRouter(
               children: [
                 { path: '/counsel/requests', element: <CounselRequests /> },
                 { path: '/counsel/psych-referrals', element: <PsychReferrals /> },
-                { path: '/counsel/schedule', element: <CounselSchedule /> },
                 { path: '/counsel/session/:studentId', element: <CounselSession /> },
                 { path: '/counsel/journals', element: <CounselJournals /> },
-                // 옛 「완료 상담 내역」 — 상담일지 대장의 '완료' 필터와 같은 집합이라 흡수했다.
-                { path: '/counsel/records', element: <Navigate to="/counsel/journals" replace /> },
+                { path: '/counsel/records', element: <CounselHistory /> },
                 { path: '/counsel/groups', element: <GroupCounsels /> },
                 { path: '/counsel/stats', element: <CounselStats /> },
                 { path: '/diagnosis/status', element: <DiagnosisStatus /> },
-                { path: '/students', element: <StudentList /> },
+                { path: '/students', element: <Navigate to="/students/all" replace /> },
                 // '/students/all' 은 반드시 ':id' 보다 위에 — 아래로 내려가면 id='all' 로 잡힌다.
                 { path: '/students/all', element: <StudentAll /> },
                 { path: '/students/:id', element: <StudentDetail /> },

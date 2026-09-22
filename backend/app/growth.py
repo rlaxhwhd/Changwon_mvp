@@ -25,7 +25,7 @@ from .jobs import idempotent, remember
 from .roadmap import fail, has_menu
 
 router = APIRouter()
-VIEW_MENU = 'students.0'
+VIEW_MENU = 'students.1'
 KINDS = ('RECORD', 'JOURNAL', 'PROJECT', 'SKILL', 'CERTIFICATE', 'LANGUAGE', 'AWARD')
 ENTRY_COLUMNS = ('kind_code,category_code,title,occurred_on,date_text,date_precision,tags,content,'
                  'bookmarked,resume_used,cert_id')
@@ -45,7 +45,7 @@ def resolve_student(conn, user, identity):
         return student, True
     if not has_menu(conn, user, VIEW_MENU):
         fail(403, 'MENU_DENIED', '학생 상세 열람 권한이 없습니다.')
-    if not conn.execute('SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
+    if user['profile'].get('role') not in ('career','psych') and not conn.execute('SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
                         (user['intg_uid'], student['intg_uid'])).fetchone():
         fail(404, 'NOT_FOUND', '학생을 찾을 수 없습니다.')
     return student, False

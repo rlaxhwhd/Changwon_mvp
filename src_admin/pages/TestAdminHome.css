@@ -199,6 +199,16 @@
 .tadmin .risk-hd .rounded svg{width:17px;height:17px}
 .tadmin .risk-hd .k{font-size:13.5px;font-weight:700;line-height:1.3}
 .tadmin .risk-hd .s{font-size:12px;font-weight:500;color:var(--text-sub);line-height:1.35}
+/* 단계 탭은 카드 폭을 3등분해 채운다. `.tadmin button` 초기화가 index.css 의 .admin-tab 보다 세서
+   세그먼트 모양(활성 탭 강조)을 여기서 다시 준다. */
+.tadmin .risk .admin-tabs{display:flex;width:100%;gap:0;margin-bottom:var(--sp-3);background:#fff;border-color:#F1C7C1}
+.tadmin .risk .admin-tab{flex:1 1 0;justify-content:center;padding:0 8px;color:var(--text-sub);border-radius:0}
+.tadmin .risk .admin-tab:first-child{border-radius:var(--radius-sm) 0 0 var(--radius-sm)}
+.tadmin .risk .admin-tab:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0}
+.tadmin .risk .admin-tab+.admin-tab{border-left:1px solid #F1C7C1}
+.tadmin .risk .admin-tab:hover{background:#FEF7F6;color:var(--text)}
+.tadmin .risk .admin-tab.active{background:#FEF7F6;color:var(--text);box-shadow:none}
+.tadmin .risk [role=tabpanel]>p{font-size:12.5px;font-weight:600;color:var(--text-sub);margin:0 0 var(--sp-2)}
 .tadmin .risk-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:baseline;
           gap:0 var(--sp-2);width:calc(100% + var(--sp-4));margin-inline:calc(var(--sp-2) * -1);
           padding:var(--sp-2);text-align:left;border:1px solid transparent;border-radius:var(--r-ctl);
@@ -312,6 +322,7 @@
 .tadmin .alert p{font-size:13px;color:var(--on-red);font-weight:500;line-height:1.6}
 .tadmin .alert p b{font-weight:700}
 .tadmin .actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3);margin-top:var(--sp-4)}
+.tadmin .inline-briefing .actions{grid-template-columns:minmax(0,1fr)}
 .tadmin .modal-backdrop{
   position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:var(--sp-5);
   background:rgba(29,36,51,.42);
