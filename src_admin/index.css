@@ -1814,7 +1814,7 @@ input, textarea, select { font-family: var(--font); }
 }
 /* 이름 칸은 왼쪽 정렬 — ⭐ 표식이 있어도 첫 글자가 같은 선에 선다.
    shared/tableAlignment.css 의 center !important(.admin-roster-cell > *) 보다 우선하도록 선택자를 길게 둔다. */
-.admin-applicant-mgmt-roster .admin-roster-row .admin-roster-cell.admin-name-cell { justify-content: flex-start !important; text-align: left !important; padding-left: 4px; }
+.admin-applicant-mgmt-roster .admin-roster-row .admin-roster-cell.admin-name-cell { justify-content: flex-start !important; text-align: left !important; padding-left: 18px; }
 .admin-applicant-mgmt-roster .admin-roster-row .admin-roster-cell.admin-name-cell > .admin-name-fixed { text-align: left !important; align-self: flex-start !important; }
 .admin-ox { font-style: normal; font-weight: 800; font-size: 13px; color: var(--color-text-tertiary, var(--color-text-secondary)); }
 .admin-ox.on { color: var(--on-blue); }
