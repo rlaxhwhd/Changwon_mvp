@@ -1,7 +1,6 @@
+import AdminPagination from '../components/AdminPagination'
 import { useState } from 'react'
 import {
-  LuChevronLeft,
-  LuChevronRight,
   LuFrown,
   LuLoaderCircle,
   LuSearch,
@@ -257,27 +256,7 @@ export default function AssistantAdvisorRecords() {
               ))}
             </div>
             {pages > 1 && (
-              <div className="admin-pagination">
-                <button
-                  type="button"
-                  className="admin-page-btn"
-                  disabled={result.page === 1}
-                  onClick={() => setPage(result.page - 1)}
-                >
-                  <LuChevronLeft />
-                </button>
-                <span className="admin-page-info">
-                  {result.page} / {pages} 페이지 · 총 {result.totalCount}명
-                </span>
-                <button
-                  type="button"
-                  className="admin-page-btn"
-                  disabled={result.page === pages}
-                  onClick={() => setPage(result.page + 1)}
-                >
-                  <LuChevronRight />
-                </button>
-              </div>
+              <AdminPagination page={result.page} pages={pages} onChange={setPage}>{result.page} / {pages} 페이지 · 총 {result.totalCount}명</AdminPagination>
             )}
           </>
         )}

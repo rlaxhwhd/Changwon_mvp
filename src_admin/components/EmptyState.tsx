@@ -6,6 +6,7 @@ interface EmptyStateProps {
   title?: string
   message: string
   action?: { label: string; onClick: () => void }
+  compact?: boolean
 }
 
 export default function EmptyState({
@@ -13,9 +14,10 @@ export default function EmptyState({
   title,
   message,
   action,
+  compact = false,
 }: EmptyStateProps) {
   return (
-    <div className="admin-empty">
+    <div className={`admin-empty${compact ? ' admin-empty-compact' : ''}`}>
       <Icon />
       {title && <strong>{title}</strong>}
       <p>{message}</p>

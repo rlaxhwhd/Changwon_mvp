@@ -3,6 +3,8 @@
    이 화면 전용 팔레트는 UI.md 토큰을 .pf 스코프로 격리한다(전역 /admin 토큰 미오염).
    ─────────────────────────────────────────────────────────────────────── */
 .pf, .pf-modal {
+  --editor-primary: var(--pf-primary);
+  --editor-primary-bg: var(--pf-primary-soft);
   --pf-primary: #2563EB;
   --pf-primary-hover: #1D4ED8;
   --pf-primary-active: #1E40AF;
@@ -236,7 +238,7 @@
 .pf-editor textarea::placeholder { color: var(--pf-placeholder); }
 
 /* ─── bottom actions ──────────────────────────────────────────────── */
-.pf-form-actions { display: flex; justify-content: center; gap: 12px; margin-top: 26px; }
+.pf-form-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 26px; }
 .pf-form-actions .pf-btn { min-width: 120px; }
 
 /* ─── Preview card (썸네일 미리보기) ───────────────────────────────── */
@@ -307,7 +309,7 @@
 .pf-extra-col > span { font-size: 12.5px; font-weight: 600; color: var(--pf-text-2); }
 .pf-extra-sublink { font-size: 12.5px; color: var(--pf-primary); font-weight: 600; margin-top: 2px; }
 .pf-extra-del { align-self: flex-start; margin-top: 24px; }
-.pf-modal-foot { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
+.pf-modal-foot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .pf-modal-foot .pf-btn { min-width: 96px; height: 42px; }
 
 @media (max-width: 1180px) {

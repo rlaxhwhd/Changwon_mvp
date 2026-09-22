@@ -1,3 +1,4 @@
+import AdminStatusBadge from './AdminStatusBadge'
 import type { CSSProperties, ReactNode } from 'react'
 import type { IconType } from 'react-icons'
 import {
@@ -257,7 +258,7 @@ function CounselTab({ studentId }: { studentId: string }) {
         />
         <div data-slot="card-content">
           {total === 0 ? (
-            <p className="sdv-empty">아직 상담 이력이 없습니다.<br />상담이 접수되면 채널별로 여기에 쌓입니다.</p>
+            <EmptyState compact message="아직 상담 이력이 없습니다. 상담이 접수되면 채널별로 여기에 쌓입니다." />
           ) : (
             <div className="counseling-detail-grid">
               {channels.map(c => (
@@ -276,7 +277,7 @@ function CounselTab({ studentId }: { studentId: string }) {
                     {c.rows.map((r, i) => (
                       <div key={i} className="counseling-record">
                         <span><b>{r.title}</b><small>{r.date} · {r.by}</small></span>
-                        <span className="badge">{r.status}</span>
+                        <AdminStatusBadge status={r.status} />
                       </div>
                     ))}
                   </div>
@@ -355,7 +356,7 @@ function ProgramTab({ studentId }: { studentId: string }) {
         />
         <div data-slot="card-content">
           {summary.rows.length === 0 ? (
-            <p className="sdv-empty">신청한 비교과 프로그램이 없습니다.<br />학생이 신청하면 이곳에 표시됩니다.</p>
+            <EmptyState compact message="신청한 비교과 프로그램이 없습니다. 학생이 신청하면 이곳에 표시됩니다." />
           ) : (
             <div className="table-wrap">
               <table>
@@ -371,9 +372,9 @@ function ProgramTab({ studentId }: { studentId: string }) {
                       <td>{r.category}</td>
                       <td>{r.period}</td>
                       <td>{r.appliedAt}</td>
-                      <td><span className="badge">{r.selectionStatus}</span></td>
-                      <td><span className={`badge${r.attendance === '출석' ? ' mint' : r.attendance === '노쇼' ? ' coral' : ''}`}>{r.attendance}</span></td>
-                      <td><span className={`badge${r.outcomeStatus === '수료' ? ' mint' : ''}`}>{r.outcomeStatus}</span></td>
+                      <td><AdminStatusBadge status={r.selectionStatus} /></td>
+                      <td><AdminStatusBadge status={r.attendance} /></td>
+                      <td><AdminStatusBadge status={r.outcomeStatus} /></td>
                     </tr>
                   ))}
                 </tbody>
@@ -503,7 +504,7 @@ function GrowthTab({ student }: { student: StudentData }) {
           <CardHead title="목표 직무 대비 GAP" desc="목표 직무 요구 조건과 현재 보유 수준의 차이입니다." />
           <div data-slot="card-content">
             {student.gapItems.length === 0 ? (
-              <p className="sdv-empty">분석된 역량 GAP이 없습니다.</p>
+              <EmptyState compact message="분석된 역량 GAP이 없습니다." />
             ) : (
               student.gapItems.map((g, i) => (
                 <div key={i} className="gap-row">
@@ -530,7 +531,7 @@ function GrowthTab({ student }: { student: StudentData }) {
           <CardHead title="성장경험일지" desc="학생이 직접 기록한 경험입니다. 상담 시 자소서 소재로 활용합니다." action={<span className="badge">{journal.length}편</span>} />
           <div data-slot="card-content">
             {journal.length === 0 ? (
-              <p className="sdv-empty">작성된 성장경험일지가 없습니다.<br />학생이 작성하면 이곳에 표시됩니다.</p>
+              <EmptyState compact message="작성된 성장경험일지가 없습니다. 학생이 작성하면 이곳에 표시됩니다." />
             ) : (
               <div className="row-list">
                 {journal.map(e => (
@@ -623,6 +624,7 @@ interface StudentDetailViewProps {
   role: StaffRole
   /** 헤더 우측 액션 (예: 목록 버튼). 모달에서는 생략. */
   headerAction?: ReactNode
+  embedded?: boolean
 }
 
 /**
@@ -656,7 +658,8 @@ function counselOwnerAsRoster(studentId: string): RosterStudent | undefined {
   }
 }
 
-export default function StudentDetailView({ studentId, role, headerAction }: StudentDetailViewProps) {
+export default function StudentDetailView({ studentId, role, headerAction, embedded = false }: StudentDetailViewProps) {
+  const Title = embedded ? 'h2' : 'h1'
   const canEdit = role === 'career' // 로드맵 편집은 진로상담사 전용
   const isPsych = role === 'psych'
 
@@ -680,7 +683,7 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
           <header className="admin-page-head">
             <div className="admin-detail-id">
               <div>
-                <h1 className="admin-page-title">{roster.name}</h1>
+                <Title className="admin-page-title">{roster.name}</Title>
                 <p className="admin-page-desc">
                   {roster.major} · {roster.grade}학년 · 학번 {roster.studentNo}
                   {roster.gpa && ` · GPA ${roster.gpa} · ${roster.language}`}
@@ -743,7 +746,7 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
     <div className="sdv">
       <header className="admin-page-head">
         <div className="admin-detail-id">
-          <h1 className="admin-page-title">{student.name}</h1>
+          <Title className="admin-page-title">{student.name}</Title>
         </div>
         {headerAction}
       </header>
@@ -788,14 +791,16 @@ export default function StudentDetailView({ studentId, role, headerAction }: Stu
         })}
       </div>
 
-      {activeTab === 'diagnosis' && <DiagnosisTab student={student} />}
-      {activeTab === 'counsel' && <CounselTab studentId={student.id} />}
-      {activeTab === 'roadmap' && <RoadmapTab student={student} canEdit={canEdit} />}
-      {activeTab === 'program' && <ProgramTab studentId={student.id} />}
-      {activeTab === 'gap' && <GapTab student={student} radar={radar} />}
-      {activeTab === 'growth' && <GrowthTab student={student} />}
-      {activeTab === 'portfolio' && <PortfolioTab student={student} />}
-      {activeTab === 'star' && <StarTab student={student} />}
+      <div className="sdv-tab-panel" role="tabpanel">
+        {activeTab === 'diagnosis' && <DiagnosisTab student={student} />}
+        {activeTab === 'counsel' && <CounselTab studentId={student.id} />}
+        {activeTab === 'roadmap' && <RoadmapTab student={student} canEdit={canEdit} />}
+        {activeTab === 'program' && <ProgramTab studentId={student.id} />}
+        {activeTab === 'gap' && <GapTab student={student} radar={radar} />}
+        {activeTab === 'growth' && <GrowthTab student={student} />}
+        {activeTab === 'portfolio' && <PortfolioTab student={student} />}
+        {activeTab === 'star' && <StarTab student={student} />}
+      </div>
     </div>
   )
 }

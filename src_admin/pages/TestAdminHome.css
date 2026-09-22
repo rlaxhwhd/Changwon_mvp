@@ -81,12 +81,12 @@
 .tadmin .bar{height:6px;border-radius:var(--r-pill);background:var(--divider);overflow:hidden}
 .tadmin .bar i{display:block;height:100%;width:var(--v,0%);border-radius:var(--r-pill)}
 .tadmin .btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:var(--r-btn);
-     padding:10px 16px;font-size:13px;font-weight:600;border:1px solid var(--border);
+     min-height:var(--admin-control-height);padding:0 18px;font-size:14px;font-weight:700;border:1px solid var(--border);
      background:var(--card);color:var(--text-sub);white-space:nowrap;
      transition:color .15s ease-out, border-color .15s ease-out, background-color .15s ease-out}
 .tadmin .btn svg{width:14px;height:14px;flex:none}
 .tadmin .btn:hover{border-color:var(--text-cap);color:var(--text)}
-.tadmin .btn.sm{padding:8px 13px;font-size:12.5px;border-radius:11px}
+.tadmin .btn.sm{min-height:var(--admin-control-height-sm);padding:0 13px;font-size:13px;border-radius:var(--radius-md)}
 .tadmin .btn.primary, .tadmin .btn.on{background:var(--on-green);border-color:var(--on-green);color:#fff}
 .tadmin .btn.primary:hover, .tadmin .btn.on:hover{background:#106242;border-color:#106242;color:#fff}
 .tadmin .link{display:inline-flex;align-items:center;gap:var(--sp-1);font-size:13px;font-weight:600;
@@ -717,7 +717,7 @@
 }
 .tadmin .briefing-toggle{
   min-width:104px;
-  height:36px;
+  height:var(--admin-control-height-sm);
   padding:0 10px;
   border-color:var(--border);
   background:#FFF;
@@ -1345,7 +1345,7 @@
 /* 오늘의 상담 행 액션이 2개(학생정보 · 브리핑) */
 .tadmin .tl-act{gap:8px}
 .tadmin .student-info-btn{
-  height:36px;
+  height:var(--admin-control-height-sm);
   padding:0 12px;
   border-color:var(--border);
   background:#FFF;
@@ -1358,7 +1358,7 @@
 
 /* AI 추천 질문 — 눌러야 생성된다 */
 .tadmin .ai-question-btn{
-  height:32px;
+  height:var(--admin-control-height-sm);
   padding:0 12px;
   border-color:var(--sel-line);
   background:var(--sel);

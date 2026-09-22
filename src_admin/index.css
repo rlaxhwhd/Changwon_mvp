@@ -28,6 +28,8 @@
    출처: test_admin.html 최종 캐스케이드 + Primary=Violet(사용자 확정).
    새 색 발명 금지 — 7색 solid/tint/on-잉크 짝에서만 고른다. */
 :root {
+  --admin-control-height: 44px;
+  --admin-control-height-sm: 36px;
   /* ── 중립 · 표면 ────────────────────────────────────────── */
   --bg-page:   #F7F8FB;   /* 페이지 배경 — 흰색 아님 */
   --bg-card:   #FFFFFF;   /* 카드 · GNB · 모달 */
@@ -555,8 +557,11 @@ input, textarea, select { font-family: var(--font); }
 .admin-btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
-  padding: 10px 18px;
+  min-height: var(--admin-control-height);
+  padding: 0 18px;
+  border: 1px solid transparent;
   border-radius: var(--radius-md);
   font-size: 14px;
   font-weight: 700;
@@ -615,6 +620,9 @@ input, textarea, select { font-family: var(--font); }
   padding: var(--pad);
   box-shadow: var(--shadow-sm);
 }
+.admin-page > .admin-card-head { margin-bottom: 0; }
+.admin-stat-label { display: inline-flex; align-items: center; gap: 8px; }
+.admin-stat-label svg { width: 18px; height: 18px; }
 .admin-card-head {
   display: flex;
   align-items: center;
@@ -733,6 +741,8 @@ input, textarea, select { font-family: var(--font); }
   text-align: center;
 }
 .admin-empty svg { font-size: 34px; color: var(--color-primary-light); }
+.admin-empty-compact { padding: 24px 16px; }
+.admin-empty-compact svg { font-size: 26px; }
 .admin-empty strong { font-size: 16px; font-weight: 800; color: var(--color-text); }
 .admin-empty p { font-size: 14px; font-weight: 600; color: var(--color-text-secondary); }
 
@@ -816,7 +826,7 @@ input, textarea, select { font-family: var(--font); }
    ══════════════════════════════════════════════════════════════════════ */
 
 /* ─── Button variants (G1) ───────────────────────────────────────────── */
-.admin-btn.sm { padding: 7px 13px; font-size: 13px; }
+.admin-btn.sm { min-height: var(--admin-control-height-sm); padding: 0 13px; font-size: 13px; }
 .admin-btn-ghost {
   background: #fff;
   color: var(--color-primary);
@@ -841,9 +851,10 @@ input, textarea, select { font-family: var(--font); }
   padding: 4px 12px;
   white-space: nowrap;
 }
-.admin-chip-wait   { background: #FFF3E0; color: var(--color-warning); }
+.admin-chip-wait   { background: var(--state-wait-bg); color: var(--state-wait-ink); }
 .admin-chip-ok     { background: var(--color-primary-bg); color: var(--color-primary); }
-.admin-chip-done   { background: #E2F7EF; color: var(--color-success); }
+.admin-chip-done   { background: var(--state-done-bg); color: var(--state-done-ink); }
+.admin-chip-scheduled, .admin-chip-draft { background: var(--state-fixed-bg); color: var(--state-fixed-ink); }
 .admin-chip-cancel { background: #F1F4F9; color: var(--color-text-secondary); }
 /* 누적 벌점 — 블랙리스트와 같은 경고 색 */
 .admin-chip-penalty { background: var(--red-bg); color: var(--red); }
@@ -896,6 +907,7 @@ input, textarea, select { font-family: var(--font); }
 /* ─── Toolbar / search ───────────────────────────────────────────────── */
 .admin-toolbar { display: flex; align-items: center; gap: 14px; }
 .admin-search {
+  min-height: var(--admin-control-height);
   display: flex; align-items: center; gap: 10px;
   flex: 1; max-width: 420px;
   padding: 10px 14px;
@@ -942,6 +954,8 @@ input, textarea, select { font-family: var(--font); }
 
 .admin-form-actions {
   display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  grid-column: 1 / -1;
+  flex-wrap: wrap;
   margin-top: 14px;
 }
 .admin-form-hint { font-size: 13px; font-weight: 600; color: var(--color-text-secondary); text-align: right; margin-top: 6px; }
@@ -995,7 +1009,7 @@ input, textarea, select { font-family: var(--font); }
 }
 
 /* ─── Schedule ───────────────────────────────────────────────────────── */
-.admin-col-2-wide { grid-template-columns: 1.7fr 1fr; }
+.admin-col-2-wide { align-items: start; grid-template-columns: 1.7fr 1fr; }
 .admin-schedule-days { display: flex; flex-direction: column; gap: 20px; }
 .admin-schedule-date {
   display: flex; align-items: center; gap: 10px;
@@ -1235,9 +1249,10 @@ input, textarea, select { font-family: var(--font); }
 .admin-select { display: flex; flex-direction: column; gap: 5px; }
 .admin-select > span { font-size: 12px; font-weight: 800; color: var(--color-text-secondary); }
 .admin-select select {
-  padding: 9px 12px;
+  height: var(--admin-control-height);
+  padding: 0 12px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   background: #fff; font-size: 14px; font-weight: 700; color: var(--color-text);
   min-width: 120px;
 }
@@ -1310,7 +1325,7 @@ input, textarea, select { font-family: var(--font); }
 }
 
 /* 필터 줄 맨 끝의 검색 실행 버튼 — 셀렉트와 아랫줄을 맞춘다(.admin-filterbar 는 flex-end). */
-.admin-filter-submit { height: 38px; }
+.admin-filter-submit { min-height: var(--admin-control-height); }
 
 /* ── 학생 로스터(표) ─────────────────────────────────────────────────── */
 .admin-roster { display: flex; flex-direction: column; }
@@ -1329,8 +1344,10 @@ input, textarea, select { font-family: var(--font); }
   text-align: center;
 }
 .admin-roster-head {
-  padding: 4px 14px 12px;
-  font-size: 12px; font-weight: 800; color: var(--color-text-secondary);
+  min-height: 48px;
+  padding: 12px 14px;
+  background: var(--color-section-bg);
+  font-size: 13px; font-weight: 800; color: var(--color-text-secondary);
   border-bottom: 1px solid var(--color-border);
 }
 .admin-roster-row {
@@ -1401,16 +1418,16 @@ input, textarea, select { font-family: var(--font); }
 .admin-diag-legend em { font-style: normal; font-size: 12px; font-weight: 700; color: var(--color-caption); }
 
 /* ── 상담 통계 (SPEC §3-1-⑥) ─────────────────────────────────────────── */
-.admin-statsum { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.admin-statsum { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; }
 .admin-statsum-card {
-  display: flex; flex-direction: column; gap: 4px;
-  padding: 16px 18px;
+  display: flex; flex-direction: column; justify-content: flex-start; gap: 8px;
+  min-height: 120px; padding: 18px 20px;
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
 }
-.admin-statsum-card > span { font-size: 12px; font-weight: 800; color: var(--color-text-secondary); }
-.admin-statsum-card > strong { font-size: 24px; font-weight: 800; color: var(--color-text); line-height: 1.1; }
+.admin-statsum-card > span { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+.admin-statsum-card > strong { font-size: 26px; font-weight: 800; color: var(--color-text); line-height: 1.1; }
 .admin-statsum-card > small { font-size: 12px; font-weight: 600; color: var(--color-caption); }
 
 .admin-statsec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
@@ -1446,7 +1463,9 @@ input, textarea, select { font-family: var(--font); }
 .admin-advisor-name { color: var(--color-primary); font-weight: 800; }
 .admin-roster-student { display: flex; align-items: center; gap: 10px; }
 .admin-roster-student strong { font-size: 15px; font-weight: 800; color: var(--color-text); }
-.admin-roster-cell { display: flex; flex-direction: column; gap: 3px; font-size: 14px; font-weight: 700; color: var(--color-text); }
+.admin-roster-cell { display: flex; flex-direction: column; min-width: 0; gap: 6px; font-size: 14px; font-weight: 700; color: var(--color-text); }
+.admin-roster-cell > :is(.admin-btn, .admin-chip, .admin-tag, .counsel-status-badge) { width: fit-content; max-width: 100%; }
+.admin-profreq-roster .admin-roster-topic { white-space: normal; overflow-wrap: anywhere; line-height: 1.6; }
 .admin-roster-cell small { font-size: 12px; font-weight: 600; color: var(--color-text-secondary); }
 /* 셀은 flex column 이라 배지가 열 너비만큼 늘어난다 — 내용만큼만 차지하게 한다.
    새 배지를 셀에 넣을 때 이 목록에 추가할 것. */
@@ -1463,8 +1482,10 @@ input, textarea, select { font-family: var(--font); }
 .admin-loading { display: flex; align-items: center; justify-content: center; gap: 8px; padding: 48px; color: var(--color-text-secondary); font-size: 14px; }
 .admin-loading .admin-spin { margin: 0; width: 18px; height: 18px; }
 .admin-pagination { display: flex; align-items: center; justify-content: center; gap: 14px; padding: 18px 0 4px; }
-.admin-page-btn { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); background: var(--color-bg); }
-.admin-page-btn:hover:not(:disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+.admin-page-btn { display: inline-flex; align-items: center; justify-content: center; width: var(--admin-control-height-sm); height: var(--admin-control-height-sm); border: 1px solid var(--color-border); border-radius: var(--radius-sm); color: var(--color-text); background: var(--color-bg); font-size: 13px; font-weight: 700; }
+.admin-page-btn[aria-current="page"] { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
+.admin-pagination-pages { display: flex; align-items: center; gap: 8px; }
+.admin-page-btn:hover:not(:disabled):not([aria-current="page"]) { border-color: var(--color-primary); color: var(--color-primary); }
 .admin-page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .admin-page-info { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
 
@@ -2031,59 +2052,6 @@ input, textarea, select { font-family: var(--font); }
 .counsel-filter-search input:focus,
 .counsel-filter-select:focus,
 .counsel-filter-date:focus { border-color: var(--color-primary); }
-.counsel-filter-bar .counsel-primary-btn,
-.counsel-filter-bar .counsel-outline-btn { min-height: 44px; }
-
-/* 폭은 왼쪽 캘린더 열과 같다 — 두 요소가 같은 세로선에서 시작하고 끝난다.
-   365px 는 .counsel-requests-layout 의 첫 열과 같은 값이다(둘을 같이 고쳐야 한다). */
-.counsel-status-tabs {
-  width: min(100%, 365px);
-  height: 52px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  align-items: center;
-  padding: 5px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
-}
-.counsel-status-tabs button {
-  height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  border-radius: 8px;
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 700;
-}
-.counsel-status-tabs button strong {
-  min-width: 25px;
-  height: 24px;
-  padding: 0 7px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 7px;
-  background: var(--color-section-bg);
-  color: var(--color-text);
-  font-size: 12px;
-  font-weight: 800;
-}
-/* 탭이 한 색이면 지금 어느 상태를 보고 있는지 색으로 알 수 없다.
-   상태별 잉크를 --tab-ink 로 물려 활성 탭과 카운트 칩이 같은 색을 쓴다. */
-.counsel-status-tabs button { --tab-ink: var(--color-text); }
-.counsel-status-tabs button.tab-대기 { --tab-ink: var(--state-wait-ink); }
-.counsel-status-tabs button.tab-확정 { --tab-ink: var(--state-fixed-ink); }
-.counsel-status-tabs button.tab-취소 { --tab-ink: var(--state-cancel-ink); }
-.counsel-status-tabs button.active {
-  color: #fff;
-  background: var(--tab-ink);
-}
-.counsel-status-tabs button.active strong { background: #fff; color: var(--tab-ink); }
-
 /* 캘린더는 날짜를 고르는 보조 도구다 — 폭을 고정해 좁게 두고, 남는 폭은 전부 목록이 가진다.
    (예전에는 .76fr/1.24fr 비례였고 캘린더가 521px 를 먹었다.) */
 .counsel-requests-layout {
@@ -2231,25 +2199,6 @@ input, textarea, select { font-family: var(--font); }
   font-style: normal;
 }
 .counsel-request-table-head > div { display: flex; gap: 10px; }
-.counsel-outline-btn,
-.counsel-primary-btn,
-.counsel-detail-btn {
-  min-height: 38px;
-  padding: 0 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  border: 1px solid var(--color-border);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--color-text);
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.counsel-outline-btn:hover,
-.counsel-detail-btn:hover { border-color: var(--color-primary-light); color: var(--color-primary); }
 .counsel-reassign-menu {
   position: fixed;
   z-index: 100;
@@ -2280,10 +2229,6 @@ input, textarea, select { font-family: var(--font); }
 .counsel-reassign-item:hover { background: var(--color-primary-bg); }
 .counsel-reassign-item strong { font-size: 13px; font-weight: 700; color: var(--color-text); }
 .counsel-reassign-item small { font-size: 11px; color: var(--color-text-secondary); }
-.counsel-primary-btn { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
-.counsel-primary-btn:disabled { opacity: .45; cursor: not-allowed; }
-.counsel-outline-btn.is-danger { color: var(--color-danger); }
-
 .counsel-request-table-scroll { flex: 1; overflow-x: auto; }
 .counsel-request-columns,
 .counsel-request-row {
@@ -2372,7 +2317,7 @@ input, textarea, select { font-family: var(--font); }
 .counsel-type-badge { padding: 4px 10px; background: var(--counsel-1-soft); color: var(--counsel-1-ink); }
 .counsel-type-badge.is-psych { background: var(--counsel-2-soft); color: var(--counsel-2-ink); }
 /* 4상태 4색 — 확정(예약됨)과 완료(끝)는 다른 일이다 */
-.counsel-status-badge { min-width: 48px; padding: 4px 10px; }
+.counsel-status-badge { padding: 4px 12px; border-radius: var(--radius-pill); }
 .counsel-status-badge.is-waiting { background: var(--state-wait-bg); color: var(--state-wait-ink); }
 .counsel-status-badge.is-confirmed { background: var(--state-fixed-bg); color: var(--state-fixed-ink); }
 .counsel-status-badge.is-complete { background: var(--state-done-bg); color: var(--state-done-ink); }
@@ -2408,18 +2353,14 @@ input, textarea, select { font-family: var(--font); }
 .counsel-topic-toggle svg { font-size: 11px; }
 .counsel-topic-full { margin: 0 16px 12px; padding: 10px 12px; border-left: 3px solid var(--color-primary); background: var(--color-section-bg); color: var(--color-text-secondary); font-size: 13px; line-height: 1.6; text-align: left; }
 
-/* 행 안의 버튼은 두 개가 세로로 쌓이므로 기본(36px)보다 낮춘다. */
-.counsel-request-row .counsel-detail-btn { min-height: 30px; padding: 0 8px; font-size: 12px; }
-.counsel-detail-btn { min-height: 36px; padding: 0 10px; color: var(--color-primary); }
-
 .counsel-request-detail { padding: 16px 18px; background: var(--color-section-bg); }
-.counsel-request-detail-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.counsel-request-detail-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
 .counsel-request-detail-grid label { display: flex; flex-direction: column; gap: 6px; }
 .counsel-request-detail-grid label.is-wide { grid-column: 1 / -1; }
-.counsel-request-detail-grid span { font-size: 11px; font-weight: 800; color: var(--color-text-secondary); }
-.counsel-request-detail-grid input,
-.counsel-request-detail-grid select { height: 38px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: 7px; background: #fff; color: var(--color-text); }
-.counsel-request-detail-grid textarea { padding: 8px 10px; border: 1px solid var(--color-border); border-radius: 7px; background: #fff; color: var(--color-text); font: inherit; resize: vertical; }
+.counsel-request-detail-grid span { font-size: 13px; font-weight: 800; color: var(--color-text-secondary); }
+.counsel-request-detail-grid :is(input, select, textarea) { min-height: var(--admin-control-height); width: 100%; padding: 10px 12px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--color-bg); color: var(--color-text); font-size: 14px; }
+.counsel-request-detail-grid textarea { resize: vertical; line-height: 1.6; }
+.counsel-request-detail-grid :is(input, select, textarea):focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-bg); }
 .counsel-request-detail-empty { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
 .counsel-required { font-style: normal; color: var(--color-danger); margin-left: 4px; }
 .counsel-optional { font-style: normal; color: var(--color-caption); margin-left: 4px; }
@@ -2435,7 +2376,7 @@ input, textarea, select { font-family: var(--font); }
 .counsel-event-kind.is-완료 { background: var(--state-done-bg); color: var(--state-done-ink); }
 .counsel-event-kind.is-취소 { background: var(--tint-danger-bg); color: var(--tint-danger-ink); }
 .counsel-event-kind.is-재배정 { background: var(--tint-warning-bg); color: var(--tint-warning-ink); }
-.counsel-request-detail-actions { margin-top: 12px; display: flex; justify-content: flex-end; gap: 8px; }
+
 
 .admin-modal-overlay { position: fixed; inset: 0; z-index: 1200; display: flex; align-items: center; justify-content: center; padding: 32px; background: color-mix(in srgb, var(--color-title) 36%, transparent); }
 .admin-modal { width: min(100%, 680px); max-height: calc(100vh - 64px); display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-bg); box-shadow: var(--shadow-lg); }
@@ -2468,8 +2409,6 @@ input, textarea, select { font-family: var(--font); }
 .counsel-questions-list { list-style: none; display: flex; flex-direction: column; gap: 10px; counter-reset: q; padding: 0; margin: 0; }
 .counsel-questions-list li { position: relative; padding: 12px 14px 12px 44px; border-radius: var(--radius-md); background: var(--color-section-bg); border: 1px solid var(--color-border); font-size: 14px; line-height: 1.55; color: var(--color-text); counter-increment: q; }
 .counsel-questions-list li::before { content: counter(q); position: absolute; left: 12px; top: 12px; width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--color-primary); color: #fff; font-size: 12px; font-weight: 800; }
-.counsel-outline-btn.sm { height: 32px; padding: 0 12px; font-size: 12px; }
-
 /* ── 상담 질문 챗봇 (우측 하단 플로팅) ─────────────────────────────────── */
 .counsel-chatbot-fab {
   position: fixed; right: 24px; bottom: 24px; z-index: 1300;
@@ -2590,13 +2529,6 @@ input, textarea, select { font-family: var(--font); }
 /* ─── 상담 일정 뷰 ────────────────────────────────────────────────────
    신청 목록 카드 안에서 「상담일정」으로 갈아 끼우는 하루 시간표.
    축은 상담사 가능 시간대(dc_availability)가 깔고, 그 밖 시각에 잡힌 예약도 제 줄을 얻는다. */
-.counsel-outline-btn.is-active {
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: #fff;
-}
-.counsel-outline-btn.is-active:hover { border-color: var(--color-primary); color: #fff; }
-
 .counsel-day-schedule { padding: 6px 20px 18px; }
 .counsel-day-row {
   display: grid;
@@ -2631,7 +2563,7 @@ input, textarea, select { font-family: var(--font); }
 .counsel-day-main small { color: var(--color-text-secondary); font-size: 12px; }
 .counsel-day-main p { color: var(--color-text); font-size: 13px; }
 .counsel-day-side { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
-.counsel-day-side a.counsel-detail-btn { text-decoration: none; }
+.counsel-day-side a.admin-btn { text-decoration: none; }
 
 .counsel-request-table-footer {
   min-height: 66px;
@@ -2656,7 +2588,7 @@ input, textarea, select { font-family: var(--font); }
   font-weight: 700;
 }
 .counsel-request-table-footer nav { margin-left: auto; margin-right: auto; display: flex; gap: 8px; }
-.counsel-request-table-footer nav button { width: 34px; padding: 0; }
+.counsel-request-table-footer nav button { width: var(--admin-control-height-sm); height: var(--admin-control-height-sm); padding: 0; border-radius: var(--radius-sm); }
 .counsel-request-table-footer nav button.active { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
 .counsel-request-table-footer button:disabled { opacity: .45; cursor: default; }
 

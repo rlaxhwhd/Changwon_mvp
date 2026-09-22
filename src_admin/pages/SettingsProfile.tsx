@@ -1,3 +1,5 @@
+import AdminFormActions from '../components/AdminFormActions'
+import AdminAvatar from '../components/AdminAvatar'
 import { LuSave } from 'react-icons/lu'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -43,7 +45,7 @@ export default function SettingsProfile() {
 
       <section className="admin-card admin-profile-card">
         <div className="admin-profile-hero">
-          <span className="admin-student-avatar xl"></span>
+          <AdminAvatar />
           <div>
             <strong>{counselor.name}</strong>
             <div className="admin-profile-hero-tags">
@@ -103,11 +105,11 @@ export default function SettingsProfile() {
           </label>
         </div>
 
-        <div className="admin-form-actions">
+        <AdminFormActions>
           <button className="admin-btn admin-btn-primary" disabled={!canSave} onClick={handleSave}>
             <LuSave /> 저장
           </button>
-        </div>
+        </AdminFormActions>
       </section>
     </div>
   )

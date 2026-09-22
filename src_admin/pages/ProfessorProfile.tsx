@@ -1,3 +1,5 @@
+import AdminFormActions from '../components/AdminFormActions'
+import AdminAvatar from '../components/AdminAvatar'
 /**
  * ---------------------------------------------------------------------------
  * 교수 상담 노출 설정 화면. 로그인 교수의 학생 선택 화면 노출 정보를 관리한다.
@@ -27,7 +29,7 @@ export default function ProfessorProfile() {
       </header>
       <section className="admin-card admin-profile-card">
         <div className="admin-profile-hero">
-          <span className="admin-student-avatar xl" />
+          <AdminAvatar />
           <div>
             <strong>{user.name}</strong>
             <div className="admin-profile-hero-tags">
@@ -54,7 +56,7 @@ export default function ProfessorProfile() {
             <textarea value={intro} onChange={event => setIntro(event.target.value)} placeholder="학생에게 보여줄 상담 소개를 입력하세요." />
           </label>
         </div>
-        <div className="admin-form-actions">
+        <AdminFormActions>
           <button
             type="button"
             className="admin-btn admin-btn-primary"
@@ -63,7 +65,7 @@ export default function ProfessorProfile() {
           >
             <LuSave /> 저장
           </button>
-        </div>
+        </AdminFormActions>
       </section>
     </div>
   )

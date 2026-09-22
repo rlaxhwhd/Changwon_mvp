@@ -1,8 +1,8 @@
+import AdminFormActions from '../components/AdminFormActions'
+import AdminPagination from '../components/AdminPagination'
 import { useState } from 'react'
 import {
   LuBellRing,
-  LuChevronLeft,
-  LuChevronRight,
   LuClipboardCheck,
   LuFrown,
   LuLoaderCircle,
@@ -88,10 +88,10 @@ function CommentModal({ row, onClose, onSaved }: { row: DiagnosisStatusRow; onCl
         <small className="admin-field-hint">코멘트는 이력으로 쌓입니다. 기존 코멘트는 수정·삭제되지 않습니다.</small>
       </label>
 
-      <div className="admin-form-actions">
+      <AdminFormActions>
         <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>취소</button>
         <button type="button" className="admin-btn admin-btn-primary" disabled={body.trim() === ''} onClick={save}>저장</button>
-      </div>
+      </AdminFormActions>
     </AdminModal>
   )
 }
@@ -273,17 +273,7 @@ export default function DiagnosisStatus() {
               ))}
             </div>
             {pages > 1 && (
-              <div className="admin-pagination">
-                <button type="button" className="admin-page-btn" disabled={result.page === 1} onClick={() => setPage(result.page - 1)}>
-                  <LuChevronLeft />
-                </button>
-                <span className="admin-page-info">
-                  {result.page} / {pages} 페이지 · 총 {result.totalCount}건
-                </span>
-                <button type="button" className="admin-page-btn" disabled={result.page === pages} onClick={() => setPage(result.page + 1)}>
-                  <LuChevronRight />
-                </button>
-              </div>
+              <AdminPagination page={result.page} pages={pages} onChange={setPage}>{result.page} / {pages} 페이지 · 총 {result.totalCount}건</AdminPagination>
             )}
           </>
         )}

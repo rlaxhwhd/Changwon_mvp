@@ -1,5 +1,9 @@
 /* Summernote(WYSIWYG) 컨테이너 — 폼 너비에 맞춤 */
 .rich-editor { width: 100%; }
 .rich-editor .note-editor { margin: 0; }
-.rich-editor .note-editor.note-frame { border-radius: 6px; }
+.rich-editor .note-editor.note-frame { border: 1px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; }
+.rich-editor .note-toolbar { padding: 8px; background: var(--color-section-bg); border-bottom: 1px solid var(--color-border); }
+.rich-editor .note-btn { min-height: var(--admin-control-height-sm); border-color: var(--color-border); border-radius: var(--radius-xs); color: var(--color-text); background: var(--color-bg); }
+.rich-editor .note-btn:hover, .rich-editor .note-btn.active { color: var(--editor-primary, var(--color-primary)); background: var(--editor-primary-bg, var(--color-primary-bg)); }
+.rich-editor .note-statusbar { background: var(--color-section-bg); border-top-color: var(--color-border); }
 .rich-editor .note-editable { font-size: 14px; line-height: 1.6; }

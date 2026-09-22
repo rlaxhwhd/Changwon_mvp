@@ -1,3 +1,5 @@
+import AdminFormActions from '../components/AdminFormActions'
+import AdminStatCard from '../components/AdminStatCard'
 import { useState } from 'react'
 import { LuBrain, LuEye, LuEyeOff, LuPlus, LuTrash2 } from 'react-icons/lu'
 import AdminModal from '../components/AdminModal'
@@ -126,11 +128,11 @@ function ResultModal({ row, onClose }: { row: PsychTestRow; onClose: () => void 
         <span>학생에게 결과 공개</span>
       </label>
 
-      <div className="admin-form-actions">
+      <AdminFormActions>
         <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>닫기</button>
         <button type="button" className="admin-btn admin-btn-ghost" onClick={() => save('작성중')}>임시 저장</button>
         <button type="button" className="admin-btn admin-btn-primary" disabled={!valid} onClick={() => save('완료')}>작성 완료</button>
-      </div>
+      </AdminFormActions>
     </AdminModal>
   )
 }
@@ -160,11 +162,7 @@ export default function PsychTests() {
           ['임시 저장', `${summary.draft}건`, ''],
           ['미작성', `${summary.none}건`, ''],
         ] as const).map(([label, value, hint]) => (
-          <div className="admin-statsum-card" key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-            {hint && <small>{hint}</small>}
-          </div>
+          <AdminStatCard key={label} label={label} value={value} hint={hint} />
         ))}
       </div>
 

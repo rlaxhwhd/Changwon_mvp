@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getJobsByScope, countJobs } from '../data/jobsSource'
 import JobBoard from '../../src_v2/components/JobBoard'
+import EmptyState from '../components/EmptyState'
 import { summarizeJob } from '../data/jobApplications'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -42,6 +43,7 @@ export default function JobManage() {
       </div>
 
       <JobBoard
+        renderEmpty={(title, message) => <section className="admin-card"><EmptyState title={title} message={message} /></section>}
         applicantCountOf={job => summarizeJob(job.id).total}
         jobs={jobs}
         onOpen={job => navigate(`/jobs/${job.id}/edit`)}

@@ -1,5 +1,6 @@
+import AdminPagination from './AdminPagination'
 import {
-  LuChevronLeft, LuChevronRight, LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuStar, LuTriangleAlert,
+  LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuStar, LuTriangleAlert,
 } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -269,15 +270,7 @@ export default function StudentChargeTable({ departments, title, scopeLabel }: S
             </div>
 
             {pages > 1 && (
-              <div className="admin-pagination">
-                <button type="button" className="admin-page-btn" disabled={page === 1} onClick={() => setPage(p => Math.max(1, p - 1))}>
-                  <LuChevronLeft />
-                </button>
-                <span className="admin-page-info">{page} / {pages} 페이지 · 총 {totalCount}명</span>
-                <button type="button" className="admin-page-btn" disabled={page === pages} onClick={() => setPage(p => Math.min(pages, p + 1))}>
-                  <LuChevronRight />
-                </button>
-              </div>
+              <AdminPagination page={page} pages={pages} onChange={setPage}>{page} / {pages} 페이지 · 총 {totalCount}명</AdminPagination>
             )}
           </>
         )}

@@ -1,8 +1,7 @@
+import AdminFormActions from '../components/AdminFormActions'
+import AdminPagination from '../components/AdminPagination'
 import type { IconType } from 'react-icons'
 import {
-  LuChevronLeft,
-  LuChevronRight,
-  LuChevronsRight,
   LuDownload,
   LuHand,
   LuInfo,
@@ -115,13 +114,15 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
           <span>차감·해제 사유</span>
           <input type="text" value={waiveReason} onChange={e => setWaiveReason(e.target.value)} placeholder="예: 소명 인정 — 병결 확인" />
         </label>
-        <button className="admin-btn admin-btn-ghost sm" disabled={!canWaive} onClick={handleWaive}>
+      </div>
+      <AdminFormActions>
+        <button className="admin-btn admin-btn-ghost" disabled={!canWaive} onClick={handleWaive}>
           <LuRotateCcw /> 차감
         </button>
-        <button className="admin-btn admin-btn-danger-ghost sm" onClick={handleClear}>
+        <button className="admin-btn admin-btn-danger-ghost" onClick={handleClear}>
           <LuTrash2 /> 전체 해제
         </button>
-      </div>
+      </AdminFormActions>
     </div>
   )
 }
@@ -162,15 +163,6 @@ export default function ProgramBlacklist() {
 
   // 벌점 차감·해제 후 재조회 + 집계 갱신
   const refresh = () => { refetch(); setRefreshKey(k => k + 1); setSelected(null) }
-
-  const pageWindow = useMemo(() => {
-    const size = 10
-    const start = Math.max(1, Math.min(page - 4, pages - size + 1))
-    const end = Math.min(pages, start + size - 1)
-    const out: number[] = []
-    for (let p = start; p <= end; p++) out.push(p)
-    return out
-  }, [page, pages])
 
   const downloadCsv = () => {
     const rows = getPenaltyRowsForExport(params)
@@ -232,7 +224,6 @@ export default function ProgramBlacklist() {
             <option value="20">20점 이상</option>
             <option value="30">30점 이상</option>
           </select>
-          <button type="submit" className="blk-search-btn"><LuSearch /> 검색</button>
         </div>
         <div className="blk-filter-row">
           <span className="blk-label">검색조건</span>
@@ -242,10 +233,10 @@ export default function ProgramBlacklist() {
             <option value="학번">학번</option>
             <option value="학과">학과</option>
           </select>
-          <div className="blk-search">
-            <input type="text" value={query} onChange={e => { setQuery(e.target.value); setPage(1) }} placeholder="검색어를 입력하세요" aria-label="검색어" />
-            <LuSearch aria-hidden="true" />
+          <div className="admin-search">
+            <LuSearch aria-hidden="true" /><input type="text" value={query} onChange={e => { setQuery(e.target.value); setPage(1) }} placeholder="검색어를 입력하세요" aria-label="검색어" />
           </div>
+          <button type="submit" className="admin-btn admin-btn-primary"><LuSearch /> 검색</button>
         </div>
       </form>
 
@@ -255,7 +246,7 @@ export default function ProgramBlacklist() {
           총 <em>{result.totalCount}</em> 개
           {isLoading && <LuLoaderCircle className="admin-spin" />}
         </span>
-        <button type="button" className="blk-excel-btn" onClick={downloadCsv}>
+        <button type="button" className="admin-btn admin-btn-ghost" onClick={downloadCsv}>
           <LuDownload /> 엑셀 다운로드
         </button>
       </div>
@@ -303,22 +294,7 @@ export default function ProgramBlacklist() {
               })}
             </div>
 
-            <nav className="blk-pager" aria-label="블랙리스트 페이지">
-              <button type="button" disabled={page === 1} onClick={() => setPage(page - 1)} aria-label="이전">
-                <LuChevronLeft />
-              </button>
-              {pageWindow.map(p => (
-                <button type="button" key={p} className={p === page ? 'active' : ''} onClick={() => setPage(p)}>
-                  {p}
-                </button>
-              ))}
-              <button type="button" disabled={page >= pages} onClick={() => setPage(page + 1)} aria-label="다음">
-                <LuChevronRight />
-              </button>
-              <button type="button" disabled={page >= pages} onClick={() => setPage(pages)} aria-label="마지막">
-                <LuChevronsRight />
-              </button>
-            </nav>
+            <AdminPagination page={page} pages={pages} onChange={setPage} numbered label="블랙리스트 페이지" />
           </>
         )}
       </section>

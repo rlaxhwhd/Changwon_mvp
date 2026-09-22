@@ -1,5 +1,7 @@
+import AdminFormActions from '../components/AdminFormActions'
+import AdminPagination from '../components/AdminPagination'
 /** 교수 상담 기록 화면 — 기록은 append하고 신청 연계 건은 완료로 전이한다. */
-import { LuChevronLeft, LuChevronRight, LuSearch } from 'react-icons/lu'
+import { LuSearch } from 'react-icons/lu'
 import { useState } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
@@ -130,9 +132,9 @@ export default function ProfessorCounselRecords() {
               <textarea value={summary} onChange={event => setSummary(event.target.value)} />
             </label>
             {error && <p className="admin-field-hint" role="alert">{error}</p>}
-            <div className="admin-form-actions">
+            <AdminFormActions>
               <button type="button" className="admin-btn admin-btn-primary" onClick={save}>저장</button>
-            </div>
+            </AdminFormActions>
           </div>
         )}
       </section>
@@ -184,25 +186,7 @@ export default function ProfessorCounselRecords() {
               ))}
             </div>
             {pages > 1 && (
-              <div className="admin-pagination">
-                <button
-                  type="button"
-                  className="admin-page-btn"
-                  disabled={page === 1}
-                  onClick={() => setPage(value => Math.max(1, value - 1))}
-                >
-                  <LuChevronLeft />
-                </button>
-                <span className="admin-page-info">{page} / {pages} 페이지 · 총 {data.totalCount}건</span>
-                <button
-                  type="button"
-                  className="admin-page-btn"
-                  disabled={page === pages}
-                  onClick={() => setPage(value => Math.min(pages, value + 1))}
-                >
-                  <LuChevronRight />
-                </button>
-              </div>
+              <AdminPagination page={page} pages={pages} onChange={setPage}>{page} / {pages} 페이지 · 총 {data.totalCount}건</AdminPagination>
             )}
           </>
         )}

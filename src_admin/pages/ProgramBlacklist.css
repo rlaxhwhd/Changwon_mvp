@@ -12,7 +12,7 @@
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  margin-bottom: 18px;
+  margin-bottom: 0;
 }
 .blk .blk-filter-row {
   display: flex;
@@ -21,7 +21,7 @@
   flex-wrap: wrap;
 }
 .blk .blk-field {
-  height: 46px;
+  height: var(--admin-control-height);
   min-width: 168px;
   padding: 0 14px;
   border: 1px solid var(--color-border);
@@ -38,49 +38,11 @@
   font-weight: 800;
   color: var(--color-text-secondary);
 }
-.blk .blk-search {
-  position: relative;
-  flex: 1 1 240px;
-}
-.blk .blk-search input {
-  width: 100%;
-  height: 46px;
-  padding: 0 44px 0 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  color: var(--color-text);
-  font-size: 14px;
-}
-.blk .blk-search > svg {
-  position: absolute;
-  right: 16px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-caption);
-  font-size: 16px;
-}
-.blk .blk-field:focus,
-.blk .blk-search input:focus {
+.blk .blk-field:focus {
   outline: none;
   border-color: var(--color-primary);
   box-shadow: 0 0 0 3px var(--color-primary-bg);
 }
-.blk .blk-search-btn {
-  margin-left: auto;
-  height: 46px;
-  padding: 0 28px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--color-primary);
-  color: #fff;
-  border-radius: var(--radius-md);
-  font-size: 15px;
-  font-weight: 800;
-}
-.blk .blk-search-btn:hover { background: var(--color-primary-hover); }
-.blk .blk-search-btn:active { background: var(--color-primary-pressed); }
 
 /* 카운트 + 엑셀 다운로드 */
 .blk .blk-toolbar {
@@ -100,19 +62,6 @@
   color: var(--color-primary);
   margin: 0 2px;
 }
-.blk .blk-excel-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 42px;
-  padding: 0 20px;
-  background: var(--color-success);
-  color: #fff;
-  border-radius: var(--radius-md);
-  font-size: 14px;
-  font-weight: 800;
-}
-.blk .blk-excel-btn:hover { filter: brightness(0.95); }
 
 /* 표 */
 .blk .blk-card {
@@ -127,7 +76,7 @@
   text-align: center;
 }
 .blk .blk-thead {
-  height: 56px;
+  min-height: 48px;
   background: var(--color-section-bg);
   border-bottom: 1px solid var(--color-border);
 }
@@ -138,7 +87,7 @@
 }
 .blk .blk-row {
   width: 100%;
-  min-height: 58px;
+  min-height: 60px;
   background: var(--color-bg);
   border-bottom: 1px solid var(--color-divider);
   font: inherit;
@@ -163,38 +112,6 @@
 }
 
 /* 페이지네이션 */
-.blk .blk-pager {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 22px 0 8px;
-}
-.blk .blk-pager button {
-  min-width: 38px;
-  height: 38px;
-  padding: 0 6px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  color: var(--color-text-secondary);
-  font-size: 14px;
-  font-weight: 700;
-}
-.blk .blk-pager button:hover:not(:disabled):not(.active) {
-  border-color: var(--color-primary-light);
-  color: var(--color-primary);
-}
-.blk .blk-pager button.active {
-  background: var(--color-primary);
-  border-color: var(--color-primary);
-  color: #fff;
-}
-.blk .blk-pager button:disabled { opacity: 0.4; cursor: default; }
-
 /* 빈 상태일 때 카드 여백 복원 (표는 flush, 빈상태는 패딩) */
 .blk .blk-card > .admin-empty,
 .blk .blk-card > .empty-state { padding: 48px 24px; }
@@ -226,3 +143,5 @@
   font-size: 13px;
   color: var(--color-text-secondary);
 }
+
+.blk .blk-filter-row .admin-search { max-width: none; min-width: 220px; }

@@ -22,7 +22,7 @@ interface StudentDetailModalProps {
 export default function StudentDetailModal({ studentId, role, onClose }: StudentDetailModalProps) {
   return createPortal(
     <AdminModal title="학생 상세 정보" size="xl" onClose={onClose}>
-      <StudentDetailView studentId={studentId} role={role} />
+      <StudentDetailView studentId={studentId} role={role} embedded />
     </AdminModal>,
     document.body,
   )

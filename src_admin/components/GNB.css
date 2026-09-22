@@ -54,9 +54,7 @@
          font-size:14px;font-weight:600;color:var(--text-sub);white-space:nowrap;
          position:relative;transition:color .15s ease-out}
 .tadmin-gnb .gnb-btn > svg{width:15px;height:15px;flex:none}
-.tadmin-gnb .gnb-btn .caret{width:12px;height:12px;color:var(--text-cap);transition:transform .15s ease-out}
 .tadmin-gnb .gnb-btn:hover{color:var(--text)}
-.tadmin-gnb .gnb-item:hover .caret{transform:rotate(180deg)}
 .tadmin-gnb .gnb-item.is-active .gnb-btn{color:var(--text)}
 .tadmin-gnb .gnb-item.is-active .gnb-btn::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2px;
                                     background:var(--green);border-radius:2px 2px 0 0}
@@ -269,7 +267,6 @@
   transition:color 180ms ease,border-color 180ms ease;
 }
 .tadmin-gnb .gnb-btn>svg:first-child{display:none}
-.tadmin-gnb .gnb-btn .caret{width:12px;height:12px;color:#667085}
 .tadmin-gnb .gnb-btn:hover{color:#7C5CFC}
 .tadmin-gnb .gnb-item.is-active .gnb-btn{
   color:#7C5CFC;
@@ -277,18 +274,28 @@
   border-bottom-color:#7C5CFC;
 }
 .tadmin-gnb .gnb-item.is-active .gnb-btn::after{display:none}
+/* 학생 포털 index.css의 .nav-dropdown / .nav-dropdown-link와 같은 디자인. */
 .tadmin-gnb .submenu{
-  top:100%;
-  left:0;
-  min-width:184px;
-  padding:8px;
+  top:calc(100% - 1px);
+  left:50%;
+  transform:translateX(-50%);
+  min-width:208px;
+  padding:6px;
   border:1px solid var(--border);
   border-radius:12px;
-  background:#FFF;
-  box-shadow:0 16px 40px rgba(18,24,38,.14);
+  background:var(--card);
+  box-shadow:0 8px 28px rgba(24,28,37,.14);
 }
-.tadmin-gnb .sub-i{padding:8px 10px;border-radius:8px;font-size:12px}
-.tadmin-gnb .sub-i:hover{background:#F0EDFF;color:#7C5CFC}
+.tadmin-gnb .sub-i{
+  padding:9px 12px;
+  border-radius:8px;
+  color:#565E6D;
+  font-size:14px;
+  font-weight:600;
+  line-height:1.5;
+  transition:background 160ms ease,color 160ms ease;
+}
+.tadmin-gnb .sub-i:hover{background:var(--muted);color:#181C25}
 .tadmin-gnb .gnb-user{
   margin-left:auto;
   flex:0 0 auto;
@@ -468,10 +475,9 @@
     gap:10px;
   }
 .tadmin-gnb .gnb-btn>svg:first-child{display:block}
-.tadmin-gnb .gnb-btn .caret{margin-left:auto}
 .tadmin-gnb .gnb-btn:hover{background:#F7F5FF}
 .tadmin-gnb .gnb-item.is-active .gnb-btn{border-bottom-color:transparent;background:#F0EDFF}
-.tadmin-gnb .submenu{position:static;width:100%;margin-top:4px;box-shadow:none}
+.tadmin-gnb .submenu{position:static;width:100%;margin-top:4px;transform:none;box-shadow:none}
 }
 @media (max-width:760px){
 .tadmin-gnb .gnb-in{padding:0 12px;gap:4px}
@@ -496,7 +502,7 @@
 .tadmin-gnb .profile-switch-btn small{color:#667085;font-size:12px;font-weight:500}
 .tadmin-gnb .profile-switch-btn.is-on{background:var(--nav-accent-soft);color:var(--nav-accent)}
 .tadmin-gnb .profile-switch-check{margin-left:auto;width:14px;height:14px}
-.tadmin-gnb .sub-i.is-active{background:var(--nav-accent-soft);color:var(--nav-accent);font-weight:700}
+.tadmin-gnb .sub-i.is-active{background:var(--nav-accent-soft);color:var(--nav-accent);font-weight:800}
 
 /* 시안의 @media (max-width:1360px) 는 "1행에 브랜드 로고가 있다"는 전제의 2행 그리드다.
    로고를 뺐으므로 지원 최소폭(데스크톱 전용 1280px)에서는 1행 flex 를 유지한다.

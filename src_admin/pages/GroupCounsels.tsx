@@ -1,3 +1,5 @@
+import AdminStatusBadge from '../components/AdminStatusBadge'
+import AdminFormActions from '../components/AdminFormActions'
 import { useState } from 'react'
 import { LuCalendarPlus, LuUsersRound, LuUserPlus, LuX } from 'react-icons/lu'
 import AdminModal from '../components/AdminModal'
@@ -19,10 +21,6 @@ import { PSYCH_TEST_TYPES, psychTestLabel } from '../data/schema/psychTest'
 
 const TABS: (GroupCounselStatus | '전체')[] = ['전체', '예정', '완료', '취소']
 const today = () => new Date().toISOString().slice(0, 10)
-
-function statusClass(status: GroupCounselStatus) {
-  return status === '완료' ? 'admin-chip admin-chip-done' : status === '취소' ? 'admin-chip admin-chip-cancel' : 'admin-chip admin-chip-ok'
-}
 
 /** 회차 개설 — 유형은 로그인 역할이 결정한다(진로=집단상담 / 심리=집단심리검사). */
 function CreateModal({ onClose }: { onClose: () => void }) {
@@ -75,10 +73,10 @@ function CreateModal({ onClose }: { onClose: () => void }) {
           </label>
         )}
       </div>
-      <div className="admin-form-actions">
+      <AdminFormActions>
         <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>닫기</button>
         <button type="button" className="admin-btn admin-btn-primary" disabled={!valid} onClick={save}>개설</button>
-      </div>
+      </AdminFormActions>
     </AdminModal>
   )
 }
@@ -101,7 +99,7 @@ function DetailModal({ session, onClose }: { session: GroupCounsel; onClose: () 
       <AdminModal title={session.title} size="lg" onClose={onClose}>
         <dl className="admin-detail-grid">
           <div><dt>유형</dt><dd>{session.kind}{session.testCode && ` · ${psychTestLabel(session.testCode)}`}</dd></div>
-          <div><dt>상태</dt><dd><span className={statusClass(session.status)}>{session.status}</span></dd></div>
+          <div><dt>상태</dt><dd><AdminStatusBadge status={session.status} /></dd></div>
           <div><dt>일시</dt><dd>{session.date} {session.start}–{session.end}</dd></div>
           <div><dt>장소</dt><dd>{session.place}</dd></div>
           <div className="is-wide"><dt>주제 · 목표</dt><dd>{session.topic}</dd></div>
@@ -167,7 +165,7 @@ function DetailModal({ session, onClose }: { session: GroupCounsel; onClose: () 
                 <textarea rows={2} value={cancelReason} onChange={event => setCancelReason(event.target.value)} />
               </label>
             )}
-            <div className="admin-form-actions">
+            <AdminFormActions>
               {cancelling ? (
                 <>
                   <button type="button" className="admin-btn admin-btn-ghost" onClick={() => { setCancelling(false); setCancelReason('') }}>취소 중단</button>
@@ -184,7 +182,7 @@ function DetailModal({ session, onClose }: { session: GroupCounsel; onClose: () 
               >
                 완료 처리
               </button>
-            </div>
+            </AdminFormActions>
           </>
         ) : (
           <>
@@ -264,7 +262,7 @@ export default function GroupCounsels() {
                 </span>
                 <span className="admin-roster-cell">{session.place}</span>
                 <span className="admin-roster-cell">{session.members.length} / {session.capacity}</span>
-                <span className="admin-roster-cell"><span className={statusClass(session.status)}>{session.status}</span></span>
+                <span className="admin-roster-cell"><AdminStatusBadge status={session.status} /></span>
                 <span className="admin-roster-cell">
                   <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => setTarget(session)}>
                     {session.status === '예정' ? '참여자·완료' : '기록 보기'}

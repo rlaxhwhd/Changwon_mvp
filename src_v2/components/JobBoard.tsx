@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import {
   jobDdayLabel, jobHighlights, isJobClosed, sortJobs, JOB_SORTS, JOB_SORT_LABEL,
 } from '../../src_admin/data/jobsSource'
@@ -39,6 +40,8 @@ interface JobBoardProps {
   applicantCountOf?: (job: JobPosting) => number
   emptyMain: string
   emptyHint: string
+  /** 포털 공통 빈 상태를 주입한다. 카드·필터와 학생 기본 표현은 공유한다. */
+  renderEmpty?: (title: string, message: string) => ReactNode
 }
 
 function regionLabel(job: JobPosting): string {
@@ -90,7 +93,7 @@ function tagsOf(job: JobPosting): { label: string; kind: 'emp' | 'cat' | 'flag' 
 }
 
 export default function JobBoard({
-  jobs, onOpen, showWish = false, split = true, cardAction, applicantCountOf, emptyMain, emptyHint,
+  jobs, onOpen, showWish = false, split = true, cardAction, applicantCountOf, emptyMain, emptyHint, renderEmpty,
 }: JobBoardProps) {
   const [query, setQuery] = useState('')
   const [status, setStatus] = useState<JobStatus | typeof ALL>(ALL)
@@ -281,6 +284,7 @@ export default function JobBoard({
       </section>
 
       {list.length === 0 ? (
+        renderEmpty ? renderEmpty(jobs.length === 0 ? emptyMain : '검색 결과가 없습니다.', jobs.length === 0 ? emptyHint : '다른 기업명이나 공고명으로 검색해 주세요.') :
         <div className="jb-empty">
           <i className="fa-regular fa-folder-open" />
           <p>{jobs.length === 0 ? emptyMain : '검색 결과가 없어요.'}</p>

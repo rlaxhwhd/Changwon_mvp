@@ -1,3 +1,4 @@
+import AdminFormActions from '../components/AdminFormActions'
 import { LuCheck, LuFrown, LuHistory, LuInbox, LuInfo, LuLock, LuPencilRuler, LuPlus, LuRotateCcw, LuTrash2, LuUser } from 'react-icons/lu'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -265,7 +266,7 @@ export default function RoadmapEditor() {
         )}
         {!dirty && <p className="admin-detail-note">변경 사항이 없습니다.</p>}
 
-        <div className="admin-form-actions">
+        <AdminFormActions>
           {merged.meta && (
             <button className="admin-btn admin-btn-danger-ghost" onClick={handleReset}>
               <LuRotateCcw /> 원본으로 초기화
@@ -278,7 +279,7 @@ export default function RoadmapEditor() {
           >
             <LuCheck /> {saved ? '확정 저장됨' : `확정 (v${(merged.meta?.version ?? 0) + 1})`}
           </button>
-        </div>
+        </AdminFormActions>
       </section>
 
       {/* 변경 이력 */}
@@ -331,7 +332,7 @@ export default function RoadmapEditor() {
               <option value="DONE">완료</option>
             </select>
           </label>
-          <div className="admin-form-actions">
+          <AdminFormActions>
             <button
               type="button"
               className="admin-btn admin-btn-danger-ghost"
@@ -342,7 +343,7 @@ export default function RoadmapEditor() {
             <button type="button" className="admin-btn admin-btn-primary" onClick={() => setEditing(null)}>
               <LuCheck /> 닫기
             </button>
-          </div>
+          </AdminFormActions>
         </AdminModal>
       )}
 
@@ -367,11 +368,11 @@ export default function RoadmapEditor() {
               placeholder="왜 이 축에 이 칸들을 배치했는지 (내부 기록)"
             />
           </label>
-          <div className="admin-form-actions">
+          <AdminFormActions>
             <button type="button" className="admin-btn admin-btn-primary" onClick={() => setEditingAxis(null)}>
               <LuCheck /> 닫기
             </button>
-          </div>
+          </AdminFormActions>
         </AdminModal>
       )}
     </div>

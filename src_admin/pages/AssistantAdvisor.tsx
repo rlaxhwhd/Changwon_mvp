@@ -1,7 +1,8 @@
+import AdminFormActions from '../components/AdminFormActions'
+import AdminPagination from '../components/AdminPagination'
 import { useState } from 'react'
 import {
-  LuChevronLeft,
-  LuChevronRight,
+  LuDownload,
   LuFrown,
   LuLoaderCircle,
   LuSearch,
@@ -148,8 +149,8 @@ export default function AssistantAdvisor() {
           <button type="button" className="admin-btn admin-btn-ghost" onClick={reset}>
             초기화
           </button>
-          <button type="button" className="admin-btn admin-btn-primary" onClick={download}>
-            엑셀 다운로드
+          <button type="button" className="admin-btn admin-btn-ghost" onClick={download}>
+            <LuDownload /> 엑셀 다운로드
           </button>
         </div>
       </header>
@@ -346,7 +347,7 @@ function AssignModal({
             </label>
           </div>
           {error && <p className="admin-field-hint">{error}</p>}
-          <div className="admin-form-actions">
+          <AdminFormActions>
             <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>
               취소
             </button>
@@ -357,7 +358,7 @@ function AssignModal({
             >
               배정 확정
             </button>
-          </div>
+          </AdminFormActions>
         </>
       )}
     </AdminModal>
@@ -376,24 +377,6 @@ function Pagination({
   onChange: (page: number) => void
 }) {
   return (
-    <div className="admin-pagination">
-      <button
-        type="button"
-        className="admin-page-btn"
-        disabled={page === 1}
-        onClick={() => onChange(page - 1)}
-      >
-        <LuChevronLeft />
-      </button>
-      <span className="admin-page-info">{page} / {pages} 페이지 · 총 {total}명</span>
-      <button
-        type="button"
-        className="admin-page-btn"
-        disabled={page === pages}
-        onClick={() => onChange(page + 1)}
-      >
-        <LuChevronRight />
-      </button>
-    </div>
+    <AdminPagination page={page} pages={pages} onChange={onChange}>{page} / {pages} 페이지 · 총 {total}명</AdminPagination>
   )
 }

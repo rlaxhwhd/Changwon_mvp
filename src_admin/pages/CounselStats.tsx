@@ -1,3 +1,4 @@
+import AdminStatCard from '../components/AdminStatCard'
 import { useState } from 'react'
 import { LuChartNoAxesColumn, LuDownload, LuFrown } from 'react-icons/lu'
 import EmptyState from '../components/EmptyState'
@@ -103,11 +104,7 @@ export default function CounselStats() {
               ['평균 소요일', `${totals.avgLeadDays}일`, '신청 → 상담일'],
               ['기록지 작성률', `${totals.recordedRate}%`, '완료 건 기준'],
             ] as const).map(([label, value, hint]) => (
-              <div className="admin-statsum-card" key={label}>
-                <span>{label}</span>
-                <strong>{value}</strong>
-                <small>{hint}</small>
-              </div>
+              <AdminStatCard key={label} label={label} value={value} hint={hint} />
             ))}
           </div>
 

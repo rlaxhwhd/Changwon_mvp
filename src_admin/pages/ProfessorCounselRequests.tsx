@@ -1,7 +1,8 @@
+import AdminStatusBadge from '../components/AdminStatusBadge'
+import AdminFormActions from '../components/AdminFormActions'
+import AdminPagination from '../components/AdminPagination'
 /** 교수 상담 신청 접수 화면 — 교수에게 지정된 신청만 일정 확정 또는 취소한다. */
 import {
-  LuChevronLeft,
-  LuChevronRight,
   LuLoaderCircle,
   LuSearch,
 } from 'react-icons/lu'
@@ -97,14 +98,14 @@ function ConfirmScheduleModal({
           />
         </label>
         {error && <p className="admin-field-hint" role="alert">{error}</p>}
-        <div className="admin-form-actions">
+        <AdminFormActions>
           <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>
             취소
           </button>
           <button type="button" className="admin-btn admin-btn-primary" onClick={confirm}>
             일정 확정
           </button>
-        </div>
+        </AdminFormActions>
       </div>
     </AdminModal>
   )
@@ -188,7 +189,7 @@ export default function ProfessorCounselRequests() {
         </span>
       </div>
       <section className="admin-card">
-        {data.items.length === 0 ? <EmptyState message="접수된 교수상담 신청이 없습니다." /> : (
+        {isLoading && data.items.length === 0 ? <div className="admin-loading" role="status"><LuLoaderCircle className="admin-spin" /> 불러오는 중…</div> : data.items.length === 0 ? <EmptyState message="접수된 교수상담 신청이 없습니다." /> : (
           <>
             <div className="admin-roster admin-profreq-roster">
               <div className="admin-roster-head">
@@ -214,25 +215,13 @@ export default function ProfessorCounselRequests() {
                     <span className={enrollStatusClass(row.enrollmentStatus)}>{row.enrollmentStatus}</span>
                   </span>
                   <span className="admin-roster-cell"><span className="admin-tag">{row.method}</span></span>
-                  <span className="admin-roster-cell admin-td-ellipsis" title={row.topic}>{row.topic}</span>
+                  <span className="admin-roster-cell admin-roster-topic" title={row.topic}>{row.topic}</span>
                   <span className="admin-roster-cell">
                     <small>{formatRelativeTime(row.requestedAt)} 신청</small><br />
                     {row.slot ? `${row.slot.date} ${row.slot.start}–${row.slot.end}` : '일정 미정'}
                   </span>
                   <span className="admin-roster-cell">
-                    <span
-                      className={`counsel-status-badge is-${
-                        row.status === '대기'
-                          ? 'waiting'
-                          : row.status === '확정'
-                            ? 'confirmed'
-                            : row.status === '완료'
-                              ? 'complete'
-                              : 'cancelled'
-                      }`}
-                    >
-                      {row.status}
-                    </span>
+                    <AdminStatusBadge status={row.status} />
                   </span>
                   <span className="admin-roster-cell">
                     {row.status === '대기' && <>
@@ -266,25 +255,7 @@ export default function ProfessorCounselRequests() {
               ))}
             </div>
             {pages > 1 && (
-              <div className="admin-pagination">
-                <button
-                  type="button"
-                  className="admin-page-btn"
-                  disabled={page === 1}
-                  onClick={() => setPage(value => Math.max(1, value - 1))}
-                >
-                  <LuChevronLeft />
-                </button>
-                <span className="admin-page-info">{page} / {pages} 페이지 · 총 {data.totalCount}건</span>
-                <button
-                  type="button"
-                  className="admin-page-btn"
-                  disabled={page === pages}
-                  onClick={() => setPage(value => Math.min(pages, value + 1))}
-                >
-                  <LuChevronRight />
-                </button>
-              </div>
+              <AdminPagination page={page} pages={pages} onChange={setPage}>{page} / {pages} 페이지 · 총 {data.totalCount}건</AdminPagination>
             )}
           </>
         )}

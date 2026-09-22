@@ -1,3 +1,4 @@
+import AdminStatCard from '../components/AdminStatCard'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -56,20 +57,20 @@ export default function RoadmapProgress() {
             </p>
           )}
         </div>
-        <div className="rmp-scope" role="tablist" aria-label="조회 범위">
+        <div className="admin-tabs" role="tablist" aria-label="조회 범위">
           <button
             type="button" role="tab" aria-selected={scope === 'mine'}
-            className={scope === 'mine' ? 'is-active' : ''}
+            className={scope === 'mine' ? 'admin-tab active' : 'admin-tab'}
             onClick={() => setScope('mine')}
           >
-            <LuUsers /> 담당 학생 <em>{mine.count}</em>
+            <LuUsers /> 담당 학생 <span className="admin-tab-count">{mine.count}</span>
           </button>
           <button
             type="button" role="tab" aria-selected={scope === 'all'}
-            className={scope === 'all' ? 'is-active' : ''}
+            className={scope === 'all' ? 'admin-tab active' : 'admin-tab'}
             onClick={() => setScope('all')}
           >
-            <LuBuilding2 /> 전체 학생 <em>{all.count}</em>
+            <LuBuilding2 /> 전체 학생 <span className="admin-tab-count">{all.count}</span>
           </button>
         </div>
       </header>
@@ -243,11 +244,7 @@ function SumCard({ hue, icon, label, value, note }: {
   hue: string; icon: React.ReactNode; label: string; value: string; note: string
 }) {
   return (
-    <div className={`admin-statsum-card rmp-sum-card is-${hue}`}>
-      <span className="rmp-sum-label"><i className={`rmp-sum-ico s-${hue}`}>{icon}</i>{label}</span>
-      <strong>{value}</strong>
-      <small>{note}</small>
-    </div>
+    <AdminStatCard label={label} value={value} hint={note} icon={<i className={`rmp-sum-ico s-${hue}`}>{icon}</i>} />
   )
 }
 

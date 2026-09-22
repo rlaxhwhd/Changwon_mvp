@@ -1,3 +1,4 @@
+import AdminFormActions from '../components/AdminFormActions'
 import { LuArrowLeft, LuCheck, LuChevronRight, LuClipboardCheck, LuFileText, LuQuote, LuSquarePen, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -124,7 +125,7 @@ function RecordForm({
         />
       </label>
 
-      <div className="admin-form-actions">
+      <AdminFormActions>
         {saved && <span className="admin-save-hint"><LuCheck /> 임시 저장됨</span>}
         <button type="button" className="admin-btn admin-btn-ghost" onClick={handleSaveDraft}>
           임시 저장
@@ -137,7 +138,7 @@ function RecordForm({
         >
           <LuClipboardCheck /> 저장 후 완료 처리
         </button>
-      </div>
+      </AdminFormActions>
       {!canComplete && (
         <p className="admin-form-hint">완료 처리하려면 소견과 학생 코멘트를 모두 입력하세요.</p>
       )}
@@ -203,6 +204,7 @@ export default function CounselSession() {
             진단·상담·로드맵·비교과를 이 한 컴포넌트가 소유한다(화면별 복붙 금지). */}
         <aside className="admin-session-left">
           <StudentDetailView
+            embedded
             studentId={student.id}
             role={counselor.role}
             headerAction={

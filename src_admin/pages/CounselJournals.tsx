@@ -1,3 +1,4 @@
+import AdminFormActions from '../components/AdminFormActions'
 import {
   LuCalendarCheck, LuCheck, LuChevronDown, LuDownload, LuFileText, LuFolderOpen, LuInfo,
   LuMessageSquareMore, LuPaperclip, LuPen, LuPrinter, LuSearch,
@@ -123,7 +124,7 @@ function JournalForm({
         </div>
       </div>
 
-      <div className="admin-form-actions">
+      <AdminFormActions>
         {justSaved && <span className="admin-save-hint"><LuCheck /> 임시 저장됨</span>}
         <button type="button" className="admin-btn admin-btn-ghost sm" onClick={onClose}>닫기</button>
         <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => save('작성중')}>
@@ -138,7 +139,7 @@ function JournalForm({
         >
           일지 제출
         </button>
-      </div>
+      </AdminFormActions>
     </AdminModal>
   )
 }
@@ -340,7 +341,7 @@ export default function CounselJournals() {
             >
               <LuPrinter /> 선택 인쇄 ({printIds.length})
             </Link>
-            <button type="button" className="admin-btn admin-btn-primary sm" onClick={downloadCsv}>
+            <button type="button" className="admin-btn admin-btn-ghost sm" onClick={downloadCsv}>
               <LuDownload /> 엑셀 다운로드 ({targetRows.length})
             </button>
           </div>

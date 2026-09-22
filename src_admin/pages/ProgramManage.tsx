@@ -112,7 +112,7 @@ export default function ProgramManage() {
                 </select>
                 <button
                   type="button"
-                  className="admin-btn admin-btn-primary sm"
+                  className="admin-btn admin-btn-ghost sm"
                   onClick={downloadCsv}
                   disabled={exportCount === 0}
                 >

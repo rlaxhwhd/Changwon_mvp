@@ -1,3 +1,4 @@
+import AdminPagination from './AdminPagination'
 import { useState } from 'react'
 import { LuFrown, LuLoaderCircle, LuSearch } from 'react-icons/lu'
 import AdminModal from './AdminModal'
@@ -105,11 +106,7 @@ export default function StudentPicker({ title = '학생 검색', departments = [
       )}
 
       {pages > 1 && (
-        <div className="admin-pagination">
-          <button type="button" className="admin-page-btn" disabled={result.page === 1} onClick={() => setPage(result.page - 1)}>이전</button>
-          <span className="admin-page-info">{result.page} / {pages} 페이지 · 총 {result.totalCount}명</span>
-          <button type="button" className="admin-page-btn" disabled={result.page === pages} onClick={() => setPage(result.page + 1)}>다음</button>
-        </div>
+        <AdminPagination page={result.page} pages={pages} onChange={setPage}>{result.page} / {pages} 페이지 · 총 {result.totalCount}명</AdminPagination>
       )}
     </AdminModal>
   )

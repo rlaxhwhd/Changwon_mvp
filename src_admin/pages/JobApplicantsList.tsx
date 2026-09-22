@@ -69,7 +69,7 @@ export default function JobApplicantsList() {
         <div className="admin-head-actions">
           <button
             type="button"
-            className="admin-btn admin-btn-primary"
+            className="admin-btn admin-btn-ghost"
             onClick={downloadCsv}
             disabled={exportCount === 0}
           >

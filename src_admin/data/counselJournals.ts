@@ -21,7 +21,7 @@ export const JOURNAL_STATUSES: JournalStatus[] = ['미작성', '작성중', '완
 /** 배지 색 — 다른 목록의 상태 배지와 같은 토큰을 쓴다 */
 export const JOURNAL_STATUS_CLASS: Record<JournalStatus, string> = {
   미작성: 'admin-chip-wait',
-  작성중: 'admin-chip-cancel',
+  작성중: 'admin-chip-draft',
   완료: 'admin-chip-done',
 }
 

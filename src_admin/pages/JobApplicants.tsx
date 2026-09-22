@@ -141,7 +141,7 @@ export default function JobApplicants() {
         <div className="admin-head-actions">
           <button
             type="button"
-            className="admin-btn admin-btn-primary"
+            className="admin-btn admin-btn-ghost"
             onClick={downloadCsv}
             disabled={!summary || summary.total === 0}
           >

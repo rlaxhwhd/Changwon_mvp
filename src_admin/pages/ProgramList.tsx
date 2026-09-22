@@ -83,7 +83,7 @@ export default function ProgramList() {
         <span className="admin-toolbar-count">검색 결과 {list.length}건</span>
       </div>
 
-      <section className="admin-card">
+      <section className={list.length === 0 ? 'admin-card' : undefined}>
         {all.length === 0 ? (
           <EmptyState
             icon={LuGraduationCap}

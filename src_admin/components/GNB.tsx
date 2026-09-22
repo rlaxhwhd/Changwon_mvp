@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { LuBell, LuCheck, LuChevronDown, LuLogOut, LuMenu, LuUser, LuUsers, LuX } from 'react-icons/lu'
+import { LuBell, LuCheck, LuLogOut, LuMenu, LuUser, LuUsers, LuX } from 'react-icons/lu'
 import NotificationBell from '../../src_v2/components/NotificationBell'
 import { getStaffNotifications } from '../data/notifications'
 import { getNavSections, getSectionForPath, getActiveChildPath } from './navConfig'
@@ -89,7 +89,6 @@ export default function GNB() {
                 >
                   <Icon />
                   {section.label}
-                  {hasSub && <LuChevronDown className="caret" />}
                 </Link>
 
                 {hasSub && (
