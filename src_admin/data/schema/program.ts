@@ -86,19 +86,16 @@ export function selectedActions(): SelectedAction[] {
 // ── 조사 설정 (프로그램 개설 시 지정) ─────────────────────────────────────
 
 /**
- * 만족도 조사 질문지 — 관리자 모듈에서 사전 등록한 것 중 하나를 고른다.
- * 현재 1종이고, 관리자 모듈에서 종류를 추가 등록할 수 있다.
+ * 만족도 조사 문항 요약 — 정본은 코드관리(`SURVEY_AREA` group=SATISFACTION · `SURVEY_ITEM`, migration 101).
+ * 개설 화면은 실시 여부만 정하고 문항은 여기서 세어 보여 준다(척도·서술형).
  */
-export interface SatisfactionForm {
-  id: string
-  label: string
-  /** 참고 설문지 파일명 — 개설 화면에는 이름만 표시한다(업로드 아님). */
-  attachment: string
+export function satisfactionSurveySummary(): { areas: number; scale: number; text: number } {
+  const areas = codeItems.filter(i => i.group_code === 'SURVEY_AREA' && i.is_active && i.payload.group === 'SATISFACTION')
+  const keys = new Set(areas.map(a => a.code))
+  const items = codeItems.filter(i => i.group_code === 'SURVEY_ITEM' && i.is_active && keys.has(String(i.payload.areaKey)))
+  const text = items.filter(i => i.payload.kind === 'TEXT').length
+  return { areas: areas.length, scale: items.length - text, text }
 }
-
-export const SATISFACTION_FORMS: SatisfactionForm[] = [
-  { id: 'SAT_DEFAULT', label: '기본 만족도 질문지', attachment: '만족도조사_설문지.hwp' },
-]
 
 /**
  * 역량향상률 조사 중분류 — 진로 · 직무 · 취업.
@@ -211,7 +208,7 @@ export interface Program {
   pinned?: boolean
   /** 만족도 조사 실시 여부 */
   satisfactionSurvey?: boolean
-  /** 실시할 때 쓰는 질문지 id — SATISFACTION_FORMS 중 하나 */
+  /** 옛 질문지 id — 문항이 코드관리로 옮겨져 더 이상 쓰지 않는다(서버 컬럼은 남아 있다). */
   satisfactionFormId?: string
   /** 역량향상률 조사 실시 여부 */
   competencySurvey?: boolean
@@ -248,7 +245,6 @@ export function blankProgram(): Omit<Program, 'id' | 'applicants' | 'createdAt'>
     status: 'RECRUITING',
     pinned: false,
     satisfactionSurvey: true,
-    satisfactionFormId: SATISFACTION_FORMS[0].id,
     competencySurvey: true,
     competencyAreas: [],
     includeInStats: true,

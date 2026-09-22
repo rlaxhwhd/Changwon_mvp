@@ -30,3 +30,17 @@
 .pss-legend { margin: 0; font-size: 12px; color: var(--color-text-secondary); display: flex; align-items: center; gap: 6px; }
 .pss-legend i { width: 18px; height: 6px; border-radius: var(--radius-pill); background: var(--blue); opacity: .45; }
 .pss-legend i.post { background: var(--teal); opacity: 1; margin-left: 8px; }
+
+/* ── 만족도 탭(ProgramSatisfaction) — 같은 골격 위에 점수 분포 막대·서술형 답변만 추가 ── */
+.pss-total-body--sat { grid-template-columns: repeat(5, 1fr); }
+.pss-dist { display: flex; width: 160px; height: 8px; border-radius: var(--radius-pill); overflow: hidden; background: var(--muted); }
+.pss-dist i { display: block; height: 100%; }
+.pss-dist .s5, .pss-legend .s5 { background: var(--teal); }
+.pss-dist .s4, .pss-legend .s4 { background: var(--teal); opacity: .6; }
+.pss-dist .s3, .pss-legend .s3 { background: var(--color-border); }
+.pss-dist .s2, .pss-legend .s2 { background: var(--color-danger); opacity: .5; }
+.pss-dist .s1, .pss-legend .s1 { background: var(--color-danger); }
+.pss-legend span { display: inline-flex; align-items: center; gap: 4px; margin-right: 10px; }
+.pss-legend span i { opacity: 1; margin: 0; }
+.pss-comments { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 8px; }
+.pss-comments li { padding: 10px 14px; border: 1px solid var(--color-border); border-radius: var(--radius-md); background: var(--muted); font-size: 13px; line-height: 1.55; white-space: pre-wrap; }

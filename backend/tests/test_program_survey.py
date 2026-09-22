@@ -38,11 +38,11 @@ def test_items_come_from_code_management_and_follow_selected_areas(client):
     assert [len(a['items']) for a in data['areas']] == [4, 4]
     assert data['areas'][0]['items'][0]['prompt'].startswith('나는 나의 적성과 직업 전망')
     assert all(i['value'] is None for a in data['areas'] for i in a['items'])
-    # 문항이 코드관리에 있다 — 66문항 15영역이 시드됐다.
+    # 문항이 코드관리에 있다 — 역량 66문항 15영역 + 만족도 18문항 5영역(101).
     with pool.connection() as conn:
         counts = conn.execute('''SELECT count(*) FILTER(WHERE group_code='SURVEY_AREA') AS areas,
           count(*) FILTER(WHERE group_code='SURVEY_ITEM') AS items FROM dc.code_item''').fetchone()
-    assert (counts['areas'], counts['items']) == (15, 66)
+    assert (counts['areas'], counts['items']) == (20, 84)
 
 
 def test_pre_window_closes_at_run_start_and_post_opens_after_completion(client):
@@ -162,7 +162,7 @@ def test_export_pre_post_workbooks_follow_template_and_blank_unselected_areas(cl
     assert submit(client, program['id'], 'POST', 5).status_code == 201
     url = f"/api/v1/programs/{program['id']}/survey/PRE/export.xlsx"
     assert client.get(url, headers=headers('chaewon')).status_code == 403
-    assert client.get(f"/api/v1/programs/{program['id']}/survey/SATISFACTION/export.xlsx", headers=headers('career_kim')).status_code == 404
+    assert client.get(f"/api/v1/programs/{program['id']}/survey/MID/export.xlsx", headers=headers("career_kim")).status_code == 404
     response = client.get(url, headers=headers('career_kim'))
     assert response.status_code == 200, response.text
     assert response.headers['content-type'].startswith('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
@@ -183,3 +183,46 @@ def test_export_pre_post_workbooks_follow_template_and_blank_unselected_areas(cl
     assert cells(ZipFile(BytesIO(post.content)).read('xl/worksheets/sheet1.xml').decode())[1][6:] == [''] * 10 + ['5'] * 4 + [''] * 8
     plain = new_program(client, capacity=2)
     assert client.get(f"/api/v1/programs/{plain['id']}/survey/PRE/export.xlsx", headers=headers('career_kim')).status_code == 409
+
+
+def test_satisfaction_survey_scale_and_text_items_stats_and_export(client):
+    from io import BytesIO
+    from zipfile import ZipFile
+    program = new_program(client, satisfactionSurvey=True, competencySurvey=False, competencyAreas=[], capacity=3)
+    assert apply_as(client, 'chaewon', program['id']).status_code == 201
+    assert apply_as(client, 'changwon', program['id']).status_code == 201
+    select_and_complete(client, program['id'], 'chaewon')
+    assert form(client, program['id'], 'SATISFACTION')['open'] is False  # 수료 전
+    select_and_complete(client, program['id'], 'chaewon', complete=True)
+    select_and_complete(client, program['id'], 'changwon', complete=True)
+    data = form(client, program['id'], 'SATISFACTION')
+    assert data['open'] is True
+    assert [a['label'] for a in data['areas']] == ['교육 내용', '교수자', '운영 및 환경', '교육 성과', '의견']
+    kinds = [i['kind'] for a in data['areas'] for i in a['items']]
+    assert kinds == ['SCALE'] * 16 + ['TEXT'] * 2
+    scale = [i['code'] for a in data['areas'] for i in a['items'] if i['kind'] == 'SCALE']
+    url = f"/api/v1/programs/{program['id']}/survey/SATISFACTION"
+    # 서술형에 점수를 넣거나 척도에 글을 넣으면 거절
+    assert client.post(url, headers=headers('chaewon'), json={'answers': {**{c: 4 for c in scale}, 'SAT_5_01': 3}}).status_code == 422
+    assert client.post(url, headers=headers('chaewon'), json={'answers': {**{c: 4 for c in scale}, scale[0]: '좋아요'}}).status_code == 422
+    # 서술형은 선택 — 하나는 쓰고 하나는 비운다
+    assert client.post(url, headers=headers('chaewon'), json={'answers': {**{c: 4 for c in scale}, 'SAT_5_01': '강사님이 좋았어요', 'SAT_5_02': ''}}).status_code == 201
+    assert client.post(url, headers=headers('changwon'), json={'answers': {c: 2 for c in scale}}).status_code == 201
+    mine = form(client, program['id'], 'SATISFACTION')
+    assert mine['open'] is False and mine['reason'] == '이미 제출했습니다.'
+    assert {i['code']: i['value'] for a in mine['areas'] for i in a['items']}['SAT_5_01'] == '강사님이 좋았어요'
+    stats = client.get(f"/api/v1/programs/{program['id']}/survey/satisfaction/stats", headers=headers('career_kim')).json()
+    assert stats['participation'] == {'completed': 2, 'responses': 2}
+    assert stats['total'] == {'avg': 3.0, 'n': 32, 'distribution': {'1': 0, '2': 16, '3': 0, '4': 16, '5': 0}}
+    assert [a['label'] for a in stats['areas']] == ['교육 내용', '교수자', '운영 및 환경', '교육 성과']
+    assert stats['areas'][0]['avg'] == 3.0 and stats['areas'][0]['items'][0]['n'] == 2
+    assert [c['answers'] for c in stats['comments']] == [['강사님이 좋았어요'], []]
+    response = client.get(f"/api/v1/programs/{program['id']}/survey/SATISFACTION/export.xlsx", headers=headers('career_kim'))
+    assert response.status_code == 200 and '%EB%A7%8C%EC%A1%B1%EB%8F%84%20%EA%B2%B0%EA%B3%BC.xlsx' in response.headers['content-disposition']
+    with ZipFile(BytesIO(response.content)) as book:
+        assert 'name="만족도"' in book.read('xl/workbook.xml').decode()
+        rows = cells(book.read('xl/worksheets/sheet1.xml').decode())
+    assert rows[0][6:] == [f'질문{k}' for k in range(1, 19)]
+    assert rows[1][6:] == ['4'] * 16 + ['강사님이 좋았어요', ''] and rows[2][6:] == ['2'] * 16 + ['', '']
+    plain = new_program(client, satisfactionSurvey=False, capacity=2)
+    assert client.get(f"/api/v1/programs/{plain['id']}/survey/SATISFACTION/export.xlsx", headers=headers('career_kim')).status_code == 409

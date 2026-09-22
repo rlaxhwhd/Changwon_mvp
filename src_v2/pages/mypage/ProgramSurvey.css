@@ -23,6 +23,13 @@
 .ps-choices label.is-on { background: var(--blue-soft); border-color: var(--blue-border); }
 .ps-choices input { width: 18px; height: 18px; accent-color: var(--blue); margin: 0; }
 .ps-choice-label { display: none; }
+/* 서술형 — 척도 5칸 대신 전체 폭 textarea */
+.ps-item--text { grid-template-columns: 1fr; gap: 8px; }
+.ps-item--text label { display: flex; gap: 8px; font-size: 13.5px; line-height: 1.5; }
+.ps-item--text label b { flex: none; color: var(--muted-foreground); font-weight: 700; }
+.ps-item--text textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-xs); font: inherit; font-size: 13.5px; line-height: 1.5; resize: vertical; background: var(--background, #fff); color: inherit; }
+.ps-item--text textarea:focus { outline: none; border-color: var(--blue-border); box-shadow: 0 0 0 3px var(--blue-wash); }
+.ps-item--text textarea:disabled { opacity: .75; }
 
 .ps-submit { padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .ps-submit p { margin: 0; font-size: 13px; color: var(--muted-foreground); }

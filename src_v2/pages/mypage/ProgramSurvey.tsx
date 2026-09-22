@@ -22,7 +22,7 @@ export default function ProgramSurvey() {
   const navigate = useNavigate()
   const [form, setForm] = useState<SurveyForm | null>(null)
   const [loadError, setLoadError] = useState('')
-  const [answers, setAnswers] = useState<Record<string, number>>({})
+  const [answers, setAnswers] = useState<Record<string, number | string>>({})
   const action = useAsyncAction()
   usePageHead(form ? `${form.programTitle} · ${SURVEY_PHASE_LABEL[surveyPhase]}` : SURVEY_PHASE_LABEL[surveyPhase],
               '각 문항에 해당하는 정도를 선택한 뒤 제출합니다. 제출 후에는 수정할 수 없습니다.')
@@ -35,7 +35,7 @@ export default function ProgramSurvey() {
       .then(next => {
         if (!alive) return
         setForm(next)
-        setAnswers(Object.fromEntries(next.areas.flatMap(a => a.items).filter(i => i.value != null).map(i => [i.code, i.value as number])))
+        setAnswers(Object.fromEntries(next.areas.flatMap(a => a.items).filter(i => i.value != null).map(i => [i.code, i.value as number | string])))
       })
       .catch(e => { if (alive) setLoadError(e instanceof Error ? e.message : '조사를 불러오지 못했습니다.') })
     return () => { alive = false }
@@ -44,7 +44,10 @@ export default function ProgramSurvey() {
   if (!valid) return <div className="cs-page ps-page"><div className="cs-empty"><Icon name="x" /><strong>없는 조사 종류입니다.</strong><Link className="cs-button" to="/mypage/programs">프로그램 현황으로</Link></div></div>
 
   const items = form?.areas.flatMap(a => a.items) ?? []
-  const remaining = items.filter(i => answers[i.code] == null).length
+  const scaleItems = items.filter(i => i.kind === 'SCALE')
+  const textCount = items.length - scaleItems.length
+  // 서술형은 선택 응답 — 남은 문항은 척도만 센다.
+  const remaining = scaleItems.filter(i => answers[i.code] == null).length
   const submit = () => action.run(async () => {
     await submitSurvey(id, surveyPhase, answers)
     window.dispatchEvent(new Event(PROGRAM_EVENT))
@@ -62,17 +65,26 @@ export default function ProgramSurvey() {
               {form.submittedAt ? '제출 완료' : form.open ? '응답 가능' : '응답 불가'}
             </span>
             <h2>{form.programTitle}</h2>
-            <p>{SURVEY_PHASE_LABEL[surveyPhase]} · {items.length}문항 · 5점 척도</p>
+            <p>{SURVEY_PHASE_LABEL[surveyPhase]} · 5점 척도 {scaleItems.length}문항{textCount > 0 && ` · 서술형 ${textCount}문항(선택)`}</p>
             {!form.open && <p className="ps-reason">{form.reason}</p>}
           </section>
 
           {form.areas.map((area, ai) => (
             <section className="cs-panel ps-area" key={area.key} aria-labelledby={`ps-area-${ai}`}>
               <h3 id={`ps-area-${ai}`}><span>{ai + 1}</span>{area.label}</h3>
-              <div className="ps-scale-head" aria-hidden="true">
-                <span />{SURVEY_SCALE.map(s => <small key={s.value}>{s.label}<br />({s.value}점)</small>)}
-              </div>
-              {area.items.map((item, ii) => (
+              {area.items.some(i => i.kind === 'SCALE') && (
+                <div className="ps-scale-head" aria-hidden="true">
+                  <span />{SURVEY_SCALE.map(s => <small key={s.value}>{s.label}<br />({s.value}점)</small>)}
+                </div>
+              )}
+              {area.items.map((item, ii) => item.kind === 'TEXT' ? (
+                <div className="ps-item ps-item--text" key={item.code}>
+                  <label htmlFor={`ps-${item.code}`}><b>{ii + 1}</b>{item.prompt}</label>
+                  <textarea id={`ps-${item.code}`} rows={3} maxLength={2000} disabled={!form.open}
+                            value={String(answers[item.code] ?? '')} placeholder="자유롭게 적어 주세요 (선택)"
+                            onChange={e => setAnswers(prev => ({ ...prev, [item.code]: e.target.value }))} />
+                </div>
+              ) : (
                 <fieldset className="ps-item" key={item.code} disabled={!form.open}>
                   <legend><b>{ii + 1}</b>{item.prompt}</legend>
                   <div className="ps-choices">
@@ -93,7 +105,7 @@ export default function ProgramSurvey() {
             {action.error && <p role="alert" className="ps-error">{action.error}</p>}
             {form.open ? (
               <>
-                <p>{remaining > 0 ? `아직 응답하지 않은 문항이 ${remaining}개 있습니다.` : '모든 문항에 응답했습니다. 제출하면 수정할 수 없습니다.'}</p>
+                <p>{remaining > 0 ? `아직 응답하지 않은 문항이 ${remaining}개 있습니다.` : '모든 척도 문항에 응답했습니다. 제출하면 수정할 수 없습니다.'}</p>
                 <div className="ps-actions">
                   <Link className="cs-button" to="/mypage/programs">나중에 하기</Link>
                   <button type="button" className="cs-button is-primary" disabled={remaining > 0 || action.saving} onClick={submit}>

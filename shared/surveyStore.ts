@@ -5,7 +5,9 @@ import { api, downloadApiFile } from './api'
 
 export type SurveyPhase = 'PRE' | 'POST' | 'SATISFACTION'
 
-export interface SurveyItem { code: string; prompt: string; value: number | null }
+/** SCALE = 5점 척도(값 1~5), TEXT = 서술형(값은 문자열, 선택 응답). */
+export type SurveyItemKind = 'SCALE' | 'TEXT'
+export interface SurveyItem { code: string; prompt: string; kind: SurveyItemKind; value: number | string | null }
 export interface SurveyArea { key: string; label: string; items: SurveyItem[] }
 
 export interface SurveyForm {
@@ -31,6 +33,19 @@ export interface SurveyStats {
   areas: SurveyStatArea[]
 }
 
+export interface ScoreSummary { avg: number | null; n: number; distribution: Record<'1' | '2' | '3' | '4' | '5', number> }
+export interface SatisfactionStatItem extends ScoreSummary { code: string; prompt: string }
+export interface SatisfactionStatArea extends ScoreSummary { key: string; label: string; items: SatisfactionStatItem[] }
+export interface SatisfactionStats {
+  programId: string
+  satisfactionSurvey: boolean
+  participation: { completed: number; responses: number }
+  total: ScoreSummary
+  areas: SatisfactionStatArea[]
+  /** 서술형 문항과 답변 목록(제출 순) */
+  comments: { code: string; prompt: string; answers: string[] }[]
+}
+
 export const SURVEY_SCALE: { value: number; label: string }[] = [
   { value: 5, label: '매우 그렇다' }, { value: 4, label: '그렇다' }, { value: 3, label: '보통이다' },
   { value: 2, label: '그렇지 않다' }, { value: 1, label: '매우 그렇지 않다' },
@@ -42,7 +57,7 @@ export function loadSurveyForm(programId: string, phase: SurveyPhase): Promise<S
   return api<SurveyForm>(`/programs/${encodeURIComponent(programId)}/survey/${phase}`)
 }
 
-export function submitSurvey(programId: string, phase: SurveyPhase, answers: Record<string, number>): Promise<void> {
+export function submitSurvey(programId: string, phase: SurveyPhase, answers: Record<string, number | string>): Promise<void> {
   return api(`/programs/${encodeURIComponent(programId)}/survey/${phase}`,
              { method: 'POST', body: JSON.stringify({ answers }) }).then(() => undefined)
 }
@@ -51,9 +66,15 @@ export function loadSurveyStats(programId: string): Promise<SurveyStats> {
   return api<SurveyStats>(`/programs/${encodeURIComponent(programId)}/survey/stats`)
 }
 
-/** 사전·사후 결과 엑셀 — 설문지(진로·직무·취업)마다 한 장, 질문1…N 양식. 파일은 서버가 만든다. */
-export function downloadSurveyExport(programId: string, programTitle: string, phase: 'PRE' | 'POST'): Promise<void> {
-  const label = phase === 'PRE' ? '사전' : '사후'
+export function loadSatisfactionStats(programId: string): Promise<SatisfactionStats> {
+  return api<SatisfactionStats>(`/programs/${encodeURIComponent(programId)}/survey/satisfaction/stats`)
+}
+
+export const SURVEY_EXPORT_LABEL: Record<SurveyPhase, string> = { PRE: '사전', POST: '사후', SATISFACTION: '만족도' }
+
+/** 사전·사후·만족도 결과 엑셀 — 질문1…N 양식(역량은 설문지마다 한 장). 파일은 서버가 만든다. */
+export function downloadSurveyExport(programId: string, programTitle: string, phase: SurveyPhase): Promise<void> {
+  const label = SURVEY_EXPORT_LABEL[phase]
   return downloadApiFile(`/programs/${encodeURIComponent(programId)}/survey/${phase}/export.xlsx`,
                          `${programTitle.replace(/[\\/:*?"<>|]/g, '_')}_${label} 결과.xlsx`)
 }

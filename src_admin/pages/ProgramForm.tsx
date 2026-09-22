@@ -1,7 +1,7 @@
 import {
   LuCalendar, LuCalendarClock, LuCalendarRange, LuChevronRight,
   LuCircleHelp, LuClipboardList, LuClock, LuGripVertical, LuHouse, LuImage,
-  LuMapPin, LuPaperclip, LuPlus, LuSmile, LuTrash2,
+  LuMapPin, LuPlus, LuSmile, LuTrash2,
   LuUpload, LuUserRound, LuUsers, LuX,
 } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
@@ -10,7 +10,7 @@ import AdminModal from '../components/AdminModal'
 import RichEditor from '../components/RichEditor'
 import { COUNSELORS } from '../data/counselors'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
-import { competencySurveyGroups, SATISFACTION_FORMS } from '../data/schema/program'
+import { competencySurveyGroups, satisfactionSurveySummary } from '../data/schema/program'
 import { codeItems, codeLabel } from '../../shared/metadataStore'
 import { useMetadata } from '../../shared/useMetadata'
 import { STUDENT_TYPES, typeLabel } from '../../src_v2/data/careerProcess'
@@ -152,7 +152,6 @@ export default function ProgramForm() {
   const [pinned, setPinned] = useState(existing?.pinned ?? false)
   // 만족도 조사 — 실시할 때만 질문지를 고른다. 질문지는 관리자 모듈이 사전 등록한다.
   const [satisfaction, setSatisfaction] = useState(existing?.satisfactionSurvey ?? true)
-  const [satisfactionFormId, setSatisfactionFormId] = useState(existing?.satisfactionFormId ?? SATISFACTION_FORMS[0].id)
   // 역량향상률 조사 — 실시할 때만 조사 영역을 고른다. 체크한 영역의 질문지만 조사된다.
   const [competency, setCompetency] = useState(existing?.competencySurvey ?? true)
   const [competencyAreas, setCompetencyAreas] = useState<string[]>(existing?.competencyAreas ?? [])
@@ -193,7 +192,6 @@ export default function ProgramForm() {
       pinned,
       satisfactionSurvey: satisfaction,
       // 미실시면 질문지 선택은 의미가 없다 — 값이 남지 않게 정리한다.
-      satisfactionFormId: satisfaction ? satisfactionFormId : undefined,
       competencySurvey: competency,
       competencyAreas: competency ? competencyAreas : [],
       includeInStats,
@@ -219,6 +217,7 @@ export default function ProgramForm() {
 
   /** 조사 영역 체크 토글 — 저장 순서는 항상 코드관리 영역 순서를 유지한다. */
   const surveyGroups = competencySurveyGroups()
+  const satisfactionSummary = satisfactionSurveySummary()
   const toggleArea = (key: string) =>
     setCompetencyAreas(prev => {
       const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
@@ -562,27 +561,15 @@ export default function ProgramForm() {
 
                 {satisfaction && (
                   <div className="pf-survey-body">
-                    <div className="pf-field" style={{ gap: 6 }}>
-                      <span className="pf-sub">질문지 선택</span>
-                      <select
-                        className="pf-select"
-                        style={{ maxWidth: 320 }}
-                        value={satisfactionFormId}
-                        onChange={e => setSatisfactionFormId(e.target.value)}
-                      >
-                        {SATISFACTION_FORMS.map(f => <option key={f.id} value={f.id}>{f.label}</option>)}
-                      </select>
-                    </div>
-                    <span className="pf-attach-note">
-                      <LuPaperclip />
-                      {SATISFACTION_FORMS.find(f => f.id === satisfactionFormId)?.attachment}
+                    <span className="pf-survey-group-head">
+                      <b>프로그램 만족도 설문</b>
+                      <small>{satisfactionSummary.areas}개 영역 · 5점 척도 {satisfactionSummary.scale}문항 · 서술형 {satisfactionSummary.text}문항</small>
                     </span>
                   </div>
                 )}
 
                 <span className="pf-help">
-                  실시할 경우 관리자 모듈에서 사전에 설정한 질문지를 선택합니다.
-                  현재는 질문지가 1개지만, 관리자 모듈에서 질문지 종류를 추가 등록할 수 있습니다.
+                  실시하면 수료한 학생에게 만족도 조사가 열립니다. 문항은 시스템관리 › 코드관리(설문 · 조사 영역/문항)에서 관리합니다.
                 </span>
               </div>
 

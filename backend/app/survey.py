@@ -20,7 +20,7 @@ from .xlsx_export import workbook_sheets
 router = APIRouter()
 
 PHASES = ('PRE', 'POST', 'SATISFACTION')
-EXPORT_PHASES = {'PRE': '사전', 'POST': '사후'}
+EXPORT_PHASES = {'PRE': '사전', 'POST': '사후', 'SATISFACTION': '만족도'}
 # 설문지 3종 — 시트명. 영역·문항은 코드관리가 정본이고 설문지 묶음만 여기서 이름 붙인다.
 SURVEY_GROUP_LABEL = {'CAREER': '진로역량', 'JOB': '직무역량', 'EMPLOY': '취업역량'}
 
@@ -59,7 +59,7 @@ def items_for(conn, program, phase):
     else:
         area_filter, values = 'a.code=ANY(%s)', [list(program['competency_areas'])]
     return conn.execute(f'''SELECT a.code AS area_key,a.label AS area_label,
-      i.code,i.label,i.version
+      i.code,i.label,i.version,COALESCE(i.payload->>'kind','SCALE') AS kind
       FROM dc.code_item a JOIN dc.code_item i ON i.group_code='SURVEY_ITEM' AND i.payload->>'areaKey'=a.code
       WHERE a.group_code='SURVEY_AREA' AND a.is_active AND i.is_active AND {area_filter}
       ORDER BY a.sort_order,i.sort_order,i.code''', values).fetchall()
@@ -70,7 +70,7 @@ def group_by_area(rows, answers=None):
     for row in rows:
         if not areas or areas[-1]['key'] != row['area_key']:
             areas.append({'key': row['area_key'], 'label': row['area_label'], 'items': []})
-        areas[-1]['items'].append({'code': row['code'], 'prompt': row['label'],
+        areas[-1]['items'].append({'code': row['code'], 'prompt': row['label'], 'kind': row['kind'],
                                    'value': (answers or {}).get(row['code'])})
     return areas
 
@@ -125,6 +125,49 @@ def survey_stats(program_id: str, user=Depends(principal, scope='function'),
             'total': summarize(all_pairs), 'areas': areas}
 
 
+@router.get('/programs/{program_id}/survey/satisfaction/stats')
+def satisfaction_stats(program_id: str, user=Depends(principal, scope='function'),
+                       conn=Depends(connection, scope='function')):
+    """만족도 통계 — 문항별 평균·점수 분포, 영역·전체 평균, 서술형 답변 목록. 집계는 여기서 끝낸다."""
+    require_staff(user)
+    program = get_program(conn, program_id)
+    rows = items_for(conn, program, 'SATISFACTION')
+    answers = conn.execute('''SELECT s.item_code,s.value,s.text_value
+      FROM dc.survey_response r JOIN dc.survey_answer s ON s.response_id=r.id
+      WHERE r.program_id=%s AND r.phase='SATISFACTION' ORDER BY r.submitted_at,r.id''', (program_id,)).fetchall()
+    scores, texts = {}, {}
+    for a in answers:
+        if a['value'] is not None:
+            scores.setdefault(a['item_code'], []).append(a['value'])
+        else:
+            texts.setdefault(a['item_code'], []).append(a['text_value'])
+
+    def score_summary(values):
+        return {'avg': round(sum(values) / len(values), 2) if values else None, 'n': len(values),
+                'distribution': {str(k): sum(1 for v in values if v == k) for k in range(1, 6)}}
+
+    areas, comments, all_values = [], [], []
+    for area in group_by_area(rows):
+        area_values, items = [], []
+        for item in area['items']:
+            item.pop('value', None)
+            if item['kind'] == 'TEXT':
+                comments.append({'code': item['code'], 'prompt': item['prompt'], 'answers': texts.get(item['code'], [])})
+                continue
+            values = scores.get(item['code'], [])
+            items.append({**item, **score_summary(values)})
+            area_values += values
+        if items:
+            areas.append({'key': area['key'], 'label': area['label'], 'items': items, **score_summary(area_values)})
+            all_values += area_values
+    counts = conn.execute('''SELECT
+      count(*) FILTER(WHERE outcome_code='COMPLETED')::int AS completed,
+      (SELECT count(*) FROM dc.survey_response r WHERE r.program_id=%s AND r.phase='SATISFACTION')::int AS responses
+      FROM dc.program_apply WHERE program_id=%s''', (program_id, program_id)).fetchone()
+    return {'programId': program_id, 'satisfactionSurvey': program['satisfaction_survey'],
+            'participation': dict(counts), 'total': score_summary(all_values), 'areas': areas, 'comments': comments}
+
+
 @router.get('/programs/{program_id}/survey/{phase}/export.xlsx')
 def survey_export(program_id: str, phase: str, user=Depends(principal, scope='function'),
                   conn=Depends(connection, scope='function')):
@@ -134,9 +177,15 @@ def survey_export(program_id: str, phase: str, user=Depends(principal, scope='fu
     if phase not in EXPORT_PHASES:
         raise HTTPException(404, '조사 종류를 찾을 수 없습니다.')
     program = get_program(conn, program_id)
-    if not program['competency_survey'] or not program['competency_areas']:
-        raise HTTPException(409, '역량향상률 조사를 실시하지 않는 프로그램입니다.')
-    output = workbook_sheets(export_sheets(conn, program, phase))
+    if phase == 'SATISFACTION':
+        if not program['satisfaction_survey']:
+            raise HTTPException(409, '만족도 조사를 실시하지 않는 프로그램입니다.')
+        sheets = [('만족도', *satisfaction_sheet(conn, program))]
+    else:
+        if not program['competency_survey'] or not program['competency_areas']:
+            raise HTTPException(409, '역량향상률 조사를 실시하지 않는 프로그램입니다.')
+        sheets = export_sheets(conn, program, phase)
+    output = workbook_sheets(sheets)
 
     def chunks():
         try:
@@ -149,32 +198,57 @@ def survey_export(program_id: str, phase: str, user=Depends(principal, scope='fu
         headers={'Content-Disposition': "attachment; filename*=UTF-8''"+quote(filename), 'Cache-Control': 'no-store'})
 
 
+EXPORT_HEADERS = ['연번', '프로그램명', '운영기간', '소속', '학년', '성별']
+
+
+def export_responses(conn, program, phase):
+    """제출 순 응답 — answers 는 {문항코드: 점수 또는 서술}."""
+    return conn.execute('''SELECT r.snapshot,
+      (SELECT jsonb_object_agg(s.item_code,COALESCE(to_jsonb(s.value),to_jsonb(s.text_value)))
+         FROM dc.survey_answer s WHERE s.response_id=r.id) AS answers
+      FROM dc.survey_response r WHERE r.program_id=%s AND r.phase=%s ORDER BY r.submitted_at,r.id''',
+      (program['id'], phase)).fetchall()
+
+
+def export_prefix(n, program, snap):
+    """연번·프로그램명·운영기간·소속(대학 - 학과)·학년·성별 — 응답 스냅샷에서 읽는다."""
+    period = ' ~ '.join(str(d) for d in (program['run_start'], program['run_end']) if d) or '없음'
+    return [n, program['title'], period,
+            ' - '.join(v for v in (snap.get('studentCollege'), snap.get('studentMajor')) if v) or '없음',
+            snap.get('grade'), snap.get('sex') or '없음']
+
+
+def satisfaction_sheet(conn, program):
+    """(헤더, 행들) — 만족도 문항 전체(척도 16 + 서술형 2)를 질문1…N 으로."""
+    items = items_for(conn, program, 'SATISFACTION')
+    headers = EXPORT_HEADERS + [f'질문{k}' for k in range(1, len(items)+1)]
+    rows = []
+    for n, r in enumerate(export_responses(conn, program, 'SATISFACTION'), start=1):
+        snap, answers = r['snapshot'] or {}, r['answers'] or {}
+        rows.append(export_prefix(n, program, snap) + [answers.get(row['code'], '') for row in items])
+    return headers, rows
+
+
 def export_sheets(conn, program, phase):
     """[(설문지명, 헤더, 행들)] — 프로그램이 고른 영역이 속한 설문지마다 한 장."""
     items = conn.execute('''SELECT a.payload->>'group' AS grp,a.code AS area_key,i.code
       FROM dc.code_item a JOIN dc.code_item i ON i.group_code='SURVEY_ITEM' AND i.payload->>'areaKey'=a.code
       WHERE a.group_code='SURVEY_AREA' AND a.is_active AND i.is_active
       ORDER BY a.sort_order,i.sort_order,i.code''').fetchall()
-    responses = conn.execute('''SELECT r.snapshot,
-      (SELECT jsonb_object_agg(s.item_code,s.value) FROM dc.survey_answer s WHERE s.response_id=r.id) AS answers
-      FROM dc.survey_response r WHERE r.program_id=%s AND r.phase=%s ORDER BY r.submitted_at,r.id''',
-      (program['id'], phase)).fetchall()
+    responses = export_responses(conn, program, phase)
     selected = set(program['competency_areas'])
-    period = ' ~ '.join(str(d) for d in (program['run_start'], program['run_end']) if d) or '없음'
     sheets = []
     for grp, label in SURVEY_GROUP_LABEL.items():
         mine = [row for row in items if row['grp'] == grp]
         if not any(row['area_key'] in selected for row in mine):
             continue
-        headers = ['연번', '프로그램명', '운영기간', '소속', '학년', '성별'] + [f'질문{k}' for k in range(1, len(mine)+1)]
+        headers = EXPORT_HEADERS + [f'질문{k}' for k in range(1, len(mine)+1)]
         rows = []
         for n, r in enumerate(responses, start=1):
             snap, answers = r['snapshot'] or {}, r['answers'] or {}
-            rows.append([n, program['title'], period,
-                         ' - '.join(v for v in (snap.get('studentCollege'), snap.get('studentMajor')) if v) or '없음',
-                         snap.get('grade'), snap.get('sex') or '없음',
-                         # 고른 영역의 문항만 값을 적고, 나머지 영역은 빈칸으로 둔다(없음 아님).
-                         *(answers.get(row['code'], '') if row['area_key'] in selected else '' for row in mine)])
+            # 고른 영역의 문항만 값을 적고, 나머지 영역은 빈칸으로 둔다(없음 아님).
+            rows.append(export_prefix(n, program, snap)
+                        + [answers.get(row['code'], '') if row['area_key'] in selected else '' for row in mine])
         sheets.append((label, headers, rows))
     return sheets
 
@@ -200,8 +274,8 @@ def survey_form(program_id: str, phase: str, user=Depends(principal, scope='func
     submitted = response_of(conn, program_id, user['intg_uid'], phase)
     answers = {}
     if submitted:
-        answers = {r['item_code']: r['value'] for r in conn.execute(
-            'SELECT item_code,value FROM dc.survey_answer WHERE response_id=%s', (submitted['id'],)).fetchall()}
+        answers = {r['item_code']: r['value'] if r['value'] is not None else r['text_value'] for r in conn.execute(
+            'SELECT item_code,value,text_value FROM dc.survey_answer WHERE response_id=%s', (submitted['id'],)).fetchall()}
     is_open, reason = survey_window(program, application, phase)
     rows = items_for(conn, program, phase)
     if is_open and not rows:
@@ -214,7 +288,8 @@ def survey_form(program_id: str, phase: str, user=Depends(principal, scope='func
 
 class SubmitBody(BaseModel):
     model_config = ConfigDict(extra='forbid')
-    answers: dict[str, int] = Field(max_length=200)
+    # 척도 문항은 1~5 정수, 서술형(kind=TEXT)은 문자열 — 빈 문자열은 응답 없음으로 본다.
+    answers: dict[str, int | str] = Field(max_length=200)
 
 
 @router.post('/programs/{program_id}/survey/{phase}', status_code=201)
@@ -235,10 +310,14 @@ def submit_survey(program_id: str, phase: str, body: SubmitBody, user=Depends(pr
     if not rows:
         raise HTTPException(409, '등록된 조사 문항이 없습니다.')
     expected = {r['code']: r for r in rows}
-    if set(body.answers) != set(expected):
+    scale = {code for code, r in expected.items() if r['kind'] != 'TEXT'}
+    if not set(body.answers) <= set(expected) or not scale <= set(body.answers):
         raise HTTPException(422, '모든 문항에 응답해야 합니다.')
-    if any(not 1 <= v <= 5 for v in body.answers.values()):
+    if any(not (isinstance(v, int) and 1 <= v <= 5) for code, v in body.answers.items() if code in scale):
         raise HTTPException(422, '응답은 1~5점이어야 합니다.')
+    if any(not isinstance(v, str) for code, v in body.answers.items() if code not in scale):
+        raise HTTPException(422, '서술형 문항은 글로 답합니다.')
+    texts = {code: v.strip()[:2000] for code, v in body.answers.items() if code not in scale}
     student_type = conn.execute('''SELECT student_type FROM dc.current_student_type WHERE student_uid=%s
       ORDER BY decided_at DESC,id DESC LIMIT 1''', (student['intg_uid'],)).fetchone()
     # 제출 시점 학적을 복사한다(CLAUDE.md 규칙 2) — 학년이 올라가도 그때의 응답으로 남는다.
@@ -256,7 +335,8 @@ def submit_survey(program_id: str, phase: str, body: SubmitBody, user=Depends(pr
     response = conn.execute('''INSERT INTO dc.survey_response(program_id,student_uid,phase,snapshot)
       VALUES(%s,%s,%s,%s) RETURNING id,submitted_at''',
       (program_id, student['intg_uid'], phase, Jsonb(snapshot))).fetchone()
-    conn.cursor().executemany('''INSERT INTO dc.survey_answer(response_id,item_code,item_version,value)
-      VALUES(%s,%s,%s,%s)''', [(response['id'], code, expected[code]['version'], value)
-                              for code, value in body.answers.items()])
+    conn.cursor().executemany('''INSERT INTO dc.survey_answer(response_id,item_code,item_version,value,text_value)
+      VALUES(%s,%s,%s,%s,%s)''',
+      [(response['id'], code, expected[code]['version'], value, None) for code, value in body.answers.items() if code in scale]
+      + [(response['id'], code, expected[code]['version'], None, text) for code, text in texts.items() if text])
     return {'programId': program_id, 'phase': phase, 'submittedAt': response['submitted_at']}
