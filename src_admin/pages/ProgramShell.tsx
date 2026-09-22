@@ -1,5 +1,5 @@
 import { useCallback, useState } from 'react'
-import { LuFrown, LuGraduationCap, LuList, LuPencil, LuUserCheck, LuUsers, LuUserX } from 'react-icons/lu'
+import { LuChartColumn, LuFrown, LuGraduationCap, LuList, LuPencil, LuUserCheck, LuUsers, LuUserX } from 'react-icons/lu'
 import { Link, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
 import { getProgramById, pendingApplicants, selectedApplicants } from '../data/programs'
 import type { Program } from '../data/schema/program'
@@ -79,6 +79,9 @@ export default function ProgramShell() {
         </NavLink>
         <NavLink to={`/programs/${program.id}/selected`} className={tabClass}>
           <LuUserCheck /> 선발자 관리 <span className="admin-tab-count">{selectedCount}</span>
+        </NavLink>
+        <NavLink to={`/programs/${program.id}/survey`} className={tabClass}>
+          <LuChartColumn /> 역량향상률 통계
         </NavLink>
       </div>
 

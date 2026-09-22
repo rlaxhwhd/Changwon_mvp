@@ -10,11 +10,7 @@ import AdminModal from '../components/AdminModal'
 import RichEditor from '../components/RichEditor'
 import { COUNSELORS } from '../data/counselors'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
-import {
-  COMPETENCY_SURVEY_ATTACHMENT,
-  COMPETENCY_SURVEY_GROUPS,
-  SATISFACTION_FORMS,
-} from '../data/schema/program'
+import { competencySurveyGroups, SATISFACTION_FORMS } from '../data/schema/program'
 import { codeItems, codeLabel } from '../../shared/metadataStore'
 import { useMetadata } from '../../shared/useMetadata'
 import { STUDENT_TYPES, typeLabel } from '../../src_v2/data/careerProcess'
@@ -221,11 +217,12 @@ export default function ProgramForm() {
       return STUDENT_TYPES.filter(t => next.includes(t.code)).map(t => t.code)
     })
 
-  /** 조사 영역 체크 토글 — 저장 순서는 항상 COMPETENCY_SURVEY_GROUPS 순서를 유지한다. */
+  /** 조사 영역 체크 토글 — 저장 순서는 항상 코드관리 영역 순서를 유지한다. */
+  const surveyGroups = competencySurveyGroups()
   const toggleArea = (key: string) =>
     setCompetencyAreas(prev => {
       const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
-      return COMPETENCY_SURVEY_GROUPS.flatMap(g => g.areas.map(a => a.key)).filter(k => next.includes(k))
+      return surveyGroups.flatMap(g => g.areas.map(a => a.key)).filter(k => next.includes(k))
     })
 
   const addExtra = () => setExtras(prev => [...prev, { id: nextId(), type: EXTRA_TYPES[0], question: '' }])
@@ -608,7 +605,7 @@ export default function ProgramForm() {
                 {competency && (
                   <div className="pf-survey-body">
                     <span className="pf-sub">중분류</span>
-                    {COMPETENCY_SURVEY_GROUPS.map(g => (
+                    {surveyGroups.map(g => (
                       <div className="pf-survey-group" key={g.code}>
                         <span className="pf-survey-group-head">
                           <b>{g.label}</b>
@@ -622,16 +619,12 @@ export default function ProgramForm() {
                                 checked={competencyAreas.includes(a.key)}
                                 onChange={() => toggleArea(a.key)}
                               />
-                              {a.label}
+                              {a.label} <small>({a.itemCount})</small>
                             </label>
                           ))}
                         </div>
                       </div>
                     ))}
-                    <span className="pf-attach-note">
-                      <LuPaperclip />
-                      {COMPETENCY_SURVEY_ATTACHMENT}
-                    </span>
                   </div>
                 )}
 

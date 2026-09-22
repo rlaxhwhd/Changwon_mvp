@@ -1,4 +1,9 @@
 .mp-page .cs-stat:last-child strong { font-size: 24px; }
 .mp-table .cs-cell-text { max-width: 200px; }
 .mp-page .cs-tabs { overflow-x: auto; }
+/* 조사 안내 — 상태 배지 아래 작은 링크, 상세 모달에는 단계별 목록 */
+.mp-survey-pill { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--blue-soft); color: var(--blue); font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.mp-survey-pill:hover { background: var(--blue); color: #fff; }
+.mp-surveys ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.mp-surveys li { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 600; }
 @media (max-width: 600px) { .mp-page .cs-stat:last-child strong { font-size: 22px; } }

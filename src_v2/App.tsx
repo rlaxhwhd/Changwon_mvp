@@ -48,6 +48,7 @@ import StarTrack from './pages/star/StarTrack'
 // 마이페이지
 import Portfolio from './pages/mypage/Portfolio'
 import MyPrograms from './pages/mypage/MyPrograms'
+import ProgramSurvey from './pages/mypage/ProgramSurvey'
 import MyApplications from './pages/mypage/MyApplications'
 import CounselStatus from './pages/mypage/CounselStatus'
 import Attendance from './pages/mypage/Attendance'
@@ -129,6 +130,7 @@ const router = createBrowserRouter(
         { path: '/mypage',           element: <Navigate to={getActiveStudent().grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'} replace /> },
         { path: '/mypage/portfolio',  element: getActiveStudent().grade >= 4 ? <Portfolio /> : <Navigate to="/growth" replace /> },
         { path: '/mypage/programs',   element: <StageGate stage="growth" title="비교과 프로그램 현황"><MyPrograms /></StageGate> },
+        { path: '/mypage/programs/:id/survey/:phase', element: <StageGate stage="growth" title="비교과 조사"><ProgramSurvey /></StageGate> },
         { path: '/mypage/applications', element: <MyApplications /> },
         { path: '/mypage/notices',    element: <Navigate to="/jobs/notices" replace /> },
         // 상담 현황: 라우팅을 /counsel/record로 이동 (기존 /mypage/counsel은 하위 호환용 리다이렉트)

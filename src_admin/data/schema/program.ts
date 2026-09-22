@@ -102,29 +102,28 @@ export const SATISFACTION_FORMS: SatisfactionForm[] = [
 
 /**
  * 역량향상률 조사 중분류 — 진로 · 직무 · 취업.
- * `itemCount`(진로 22 · 직무 23 · 취업 21)는 확정값이다.
- * ⚠️ `areas`의 영역 명칭은 아직 미확정이라 자리표시자다.
- *    설문지(한글)를 받으면 이 배열의 label만 교체하면 화면이 따라간다.
+ * 영역과 문항의 정본은 코드관리(`SURVEY_AREA` · `SURVEY_ITEM`, migration 100)다 — 여기서는
+ * 그룹 이름만 두고 영역·문항 수는 /metadata 에서 읽는다. 학생 설문 화면도 같은 코드를 쓴다.
  */
 export interface CompetencySurveyGroup {
   code: 'CAREER' | 'JOB' | 'EMPLOY'
   label: string
-  /** 이 중분류의 전체 문항 수 */
+  /** 이 중분류의 활성 문항 수 */
   itemCount: number
-  areas: { key: string; label: string }[]
+  areas: { key: string; label: string; itemCount: number }[]
 }
 
-const areasOf = (code: string): { key: string; label: string }[] =>
-  Array.from({ length: 5 }, (_, i) => ({ key: `${code}_${i + 1}`, label: `영역 ${i + 1}` }))
+const SURVEY_GROUP_LABEL: Record<CompetencySurveyGroup['code'], string> = { CAREER: '진로', JOB: '직무', EMPLOY: '취업' }
 
-export const COMPETENCY_SURVEY_GROUPS: CompetencySurveyGroup[] = [
-  { code: 'CAREER', label: '진로', itemCount: 22, areas: areasOf('CAREER') },
-  { code: 'JOB',    label: '직무', itemCount: 23, areas: areasOf('JOB') },
-  { code: 'EMPLOY', label: '취업', itemCount: 21, areas: areasOf('EMPLOY') },
-]
-
-/** 역량향상률 조사 참고 설문지 — 이름만 표시한다(업로드 아님). */
-export const COMPETENCY_SURVEY_ATTACHMENT = '역량향상률조사_설문지(한글).hwp'
+export function competencySurveyGroups(): CompetencySurveyGroup[] {
+  const items = codeItems.filter(i => i.group_code === 'SURVEY_ITEM' && i.is_active)
+  const areas = codeItems.filter(i => i.group_code === 'SURVEY_AREA' && i.is_active).sort((a, b) => a.sort_order - b.sort_order)
+  return (Object.keys(SURVEY_GROUP_LABEL) as CompetencySurveyGroup['code'][]).map(code => {
+    const mine = areas.filter(a => a.payload.group === code)
+      .map(a => ({ key: a.code, label: a.label, itemCount: items.filter(i => i.payload.areaKey === a.code).length }))
+    return { code, label: SURVEY_GROUP_LABEL[code], itemCount: mine.reduce((n, a) => n + a.itemCount, 0), areas: mine }
+  })
+}
 
 /** 프로그램 신청자 1명 */
 export interface ProgramApplicant {
@@ -156,6 +155,10 @@ export interface ProgramApplicant {
   absencePoints?: number
   /** 이 학생의 누적 벌점 — 선발 판단용으로 서버가 함께 실어 준다. */
   penaltyTotal?: number
+  /** 조사 제출 여부(O/X) — 목록 조회에서만 채워진다. */
+  surveyPre?: boolean | null
+  surveyPost?: boolean | null
+  surveySatisfaction?: boolean | null
   /** 낙관적 잠금용 버전 */
   version?: number
 }

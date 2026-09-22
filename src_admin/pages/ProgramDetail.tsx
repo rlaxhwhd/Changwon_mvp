@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import {
   LuCheck, LuCircleHelp, LuClipboardCheck,
   LuInfo, LuPaperclip, LuTrash2,
@@ -275,12 +276,12 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                       type="checkbox"
                       checked={checked.has(a.studentId)}
                       onChange={() => toggleCheck(a.studentId)}
-                      aria-label={`${name} 선택`}
+                      aria-label={`${studentDisplayName(name, a.studentId)} 선택`}
                     />
                   </span>
                   <span className="admin-roster-cell">{index + 1}</span>
                   <span className="admin-roster-cell">{a.round ?? 1}차</span>
-                  <span className="admin-roster-cell"><strong>{name}</strong></span>
+                  <span className="admin-roster-cell"><strong>{studentDisplayName(name, a.studentId)}</strong></span>
                   <span className="admin-roster-cell">{studentNo}</span>
                   <span className="admin-roster-cell">{collegeOf(major)}</span>
                   <span className="admin-roster-cell">{major}</span>
@@ -293,8 +294,16 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                   <span className="admin-roster-cell">
                     {enroll ? <span className={enrollStatusClass(enroll)}>{enroll}</span> : <small>—</small>}
                   </span>
-                  <span className="admin-roster-cell">
+                  <span className="admin-roster-cell admin-status-cell">
                     <span className={`admin-chip ${chipCls}`}>{label}</span>
+                    {/* 조사 제출 O/X — 컬럼을 늘리지 않고 상태 칸 안에 둔다. 선발자에게만 의미가 있다. */}
+                    {mode === 'selected' && (program.competencySurvey || program.satisfactionSurvey) && (
+                      <span className="admin-survey-marks" title="조사 제출 여부">
+                        {program.competencySurvey && <em className={a.surveyPre ? 'on' : ''}>사전 {a.surveyPre ? 'O' : 'X'}</em>}
+                        {program.competencySurvey && <em className={a.surveyPost ? 'on' : ''}>사후 {a.surveyPost ? 'O' : 'X'}</em>}
+                        {program.satisfactionSurvey && <em className={a.surveySatisfaction ? 'on' : ''}>만족도 {a.surveySatisfaction ? 'O' : 'X'}</em>}
+                      </span>
+                    )}
                   </span>
                   <span className="admin-roster-cell"><small>{fmtDateTime(a.appliedAt)}</small></span>
                   {mode === 'applicants' && (

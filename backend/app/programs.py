@@ -68,6 +68,9 @@ def applicant_dto(row):
         'outcomeStatus': row['outcome_code'], 'absencePoints': row['absence_points'],
         # 선발 판단에 쓰는 값이라 행에 실어 보낸다 — 화면이 학생마다 다시 묻지 않게.
         'penaltyTotal': row.get('penalty_total') or 0, 'version': row['version'],
+        # 조사 제출 여부(O/X). 목록 조회에서만 채운다 — 쓰기 응답은 None 으로 온다.
+        'surveyPre': row.get('survey_pre'), 'surveyPost': row.get('survey_post'),
+        'surveySatisfaction': row.get('survey_satisfaction'),
     }
 
 
@@ -86,7 +89,10 @@ def applicants_of(conn, user, program_ids):
     rows = conn.execute(f'''SELECT a.*,p.alias,p.name,s.major_label,s.student_no,s.grade,
       COALESCE(s.detail->>'enrollmentStatus','재학') AS student_status,
       (SELECT e.student_type FROM dc.current_student_type e WHERE e.student_uid=s.intg_uid ORDER BY e.decided_at DESC,e.id DESC LIMIT 1) AS student_type,
-      t.total AS penalty_total
+      t.total AS penalty_total,
+      EXISTS(SELECT 1 FROM dc.survey_response r WHERE r.program_id=a.program_id AND r.student_uid=a.student_uid AND r.phase='PRE') AS survey_pre,
+      EXISTS(SELECT 1 FROM dc.survey_response r WHERE r.program_id=a.program_id AND r.student_uid=a.student_uid AND r.phase='POST') AS survey_post,
+      EXISTS(SELECT 1 FROM dc.survey_response r WHERE r.program_id=a.program_id AND r.student_uid=a.student_uid AND r.phase='SATISFACTION') AS survey_satisfaction
       FROM dc.program_apply a JOIN dc.person p ON p.intg_uid=a.student_uid
       JOIN dc.student s ON s.intg_uid=a.student_uid
       LEFT JOIN dc.penalty_total t ON t.student_uid=a.student_uid
@@ -109,7 +115,12 @@ def my_programs(page: int = Query(1, ge=1), pageSize: int = Query(100, ge=1, le=
                          (uid,)).fetchone()['n']
     rows = conn.execute('''SELECT p.id,p.title,p.summary,p.category_code,p.manager,p.location,
       p.run_start,p.run_end,p.sessions,a.applied_at,a.cancelled_at,a.selection_code,a.outcome_code,
-      a.attendance_code FROM dc.program_apply a JOIN dc.program p ON p.id=a.program_id
+      a.attendance_code,
+      (p.competency_survey AND cardinality(p.competency_areas)>0) AS competency_survey,p.satisfaction_survey,
+      EXISTS(SELECT 1 FROM dc.survey_response r WHERE r.program_id=p.id AND r.student_uid=a.student_uid AND r.phase='PRE') AS survey_pre,
+      EXISTS(SELECT 1 FROM dc.survey_response r WHERE r.program_id=p.id AND r.student_uid=a.student_uid AND r.phase='POST') AS survey_post,
+      EXISTS(SELECT 1 FROM dc.survey_response r WHERE r.program_id=p.id AND r.student_uid=a.student_uid AND r.phase='SATISFACTION') AS survey_satisfaction
+      FROM dc.program_apply a JOIN dc.program p ON p.id=a.program_id
       WHERE a.student_uid=%s ORDER BY a.applied_at DESC,p.id LIMIT %s OFFSET %s''',
       (uid, pageSize, (page-1)*pageSize)).fetchall()
     return {'totalCount': total, 'items': [{
@@ -118,6 +129,9 @@ def my_programs(page: int = Query(1, ge=1), pageSize: int = Query(100, ge=1, le=
         'startDate': r['run_start'], 'endDate': r['run_end'], 'sessions': r['sessions'],
         'appliedAt': r['applied_at'], 'cancelledAt': r['cancelled_at'],
         'selection': r['selection_code'], 'outcome': r['outcome_code'], 'attendance': r['attendance_code'],
+        # 조사 안내용 — 열림 여부의 정본은 /programs/{id}/survey/{phase} 가 판정한다.
+        'competencySurvey': r['competency_survey'], 'satisfactionSurvey': r['satisfaction_survey'],
+        'surveyPre': r['survey_pre'], 'surveyPost': r['survey_post'], 'surveySatisfaction': r['survey_satisfaction'],
     } for r in rows]}
 
 

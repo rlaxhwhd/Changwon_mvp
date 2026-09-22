@@ -1,0 +1,43 @@
+/* 비교과 조사 응답 — CounselHistory.css 의 패널·버튼·상태 배지 위에 문항 격자만 얹는다. */
+.ps-page { max-width: 960px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+.ps-head { padding: 22px 24px; }
+.ps-head h2 { margin: 10px 0 4px; font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+.ps-head p { margin: 0; font-size: 13px; color: var(--muted-foreground); }
+.ps-reason { margin-top: 10px !important; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--coral-soft); color: var(--coral-ink); font-weight: 600; }
+
+.ps-area { padding: 18px 24px 8px; }
+.ps-area h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 12px; font-size: 15px; font-weight: 700; }
+.ps-area h3 span { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--blue-soft); color: var(--blue); font-size: 13px; }
+
+.ps-scale-head { display: grid; grid-template-columns: minmax(0, 1fr) repeat(5, 92px); gap: 6px; padding: 0 0 8px; border-bottom: 1px solid var(--border); }
+.ps-scale-head small { text-align: center; font-size: 11px; line-height: 1.3; color: var(--muted-foreground); }
+
+.ps-item { display: grid; grid-template-columns: minmax(0, 1fr) repeat(5, 92px); gap: 6px; align-items: center; margin: 0; padding: 10px 0; border: 0; border-bottom: 1px solid var(--border); }
+.ps-item:last-child { border-bottom: 0; }
+.ps-item legend { float: left; width: 100%; padding: 0; font-size: 13.5px; line-height: 1.5; display: flex; gap: 8px; }
+.ps-item legend b { flex: none; color: var(--muted-foreground); font-weight: 700; }
+.ps-item[disabled] { opacity: .75; }
+.ps-choices { display: contents; }
+.ps-choices label { display: grid; place-items: center; min-height: 34px; border: 1px solid transparent; border-radius: var(--radius-xs); cursor: pointer; }
+.ps-choices label:hover { background: var(--blue-wash); }
+.ps-choices label.is-on { background: var(--blue-soft); border-color: var(--blue-border); }
+.ps-choices input { width: 18px; height: 18px; accent-color: var(--blue); margin: 0; }
+.ps-choice-label { display: none; }
+
+.ps-submit { padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.ps-submit p { margin: 0; font-size: 13px; color: var(--muted-foreground); }
+.ps-error { flex-basis: 100%; color: var(--coral-ink); font-weight: 600; }
+.ps-actions { display: flex; gap: 8px; }
+.ps-actions .cs-button.is-primary { background: var(--blue); border-color: var(--blue); color: #fff; }
+.ps-actions .cs-button.is-primary:hover:not(:disabled) { background: var(--blue); color: #fff; opacity: .9; }
+
+/* 모바일 — 척도를 가로 5칸 대신 세로 pill 로 편다 */
+@media (max-width: 900px) {
+  .ps-scale-head { display: none; }
+  .ps-item { grid-template-columns: 1fr; gap: 8px; }
+  .ps-choices { display: flex; flex-wrap: wrap; gap: 6px; }
+  .ps-choices label { grid-template-columns: auto 1fr; gap: 6px; padding: 6px 10px; min-height: 0; border-color: var(--border); font-size: 12.5px; }
+  .ps-choices input { width: 14px; height: 14px; }
+  .ps-choice-label { display: inline; }
+  .ps-head, .ps-area, .ps-submit { padding-left: 16px; padding-right: 16px; }
+}
