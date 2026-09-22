@@ -61,7 +61,7 @@
 .tadmin-gnb .gnb-item.is-active .gnb-btn::after{content:'';position:absolute;left:13px;right:13px;bottom:0;height:2px;
                                     background:var(--green);border-radius:2px 2px 0 0}
 .tadmin-gnb .submenu{position:absolute;top:100%;left:0;min-width:184px;background:var(--card);
-         border:1px solid var(--border);border-radius:var(--r-ctl);box-shadow:var(--shadow);
+         border:1px solid var(--border);border-radius:0;box-shadow:var(--shadow);
          padding:6px;display:none;z-index:60}
 .tadmin-gnb .gnb-item.has-sub:hover .submenu, .tadmin-gnb .gnb-item.has-sub:has(:focus-visible) .submenu{display:block}
 /* 눌러서 이동한 직후에는 접어 둔다(GNB.collapsedNavId). 포인터가 벗어나면 풀린다.
@@ -161,7 +161,7 @@
 .tadmin-gnb .submenu{
   padding:8px;
   border-color:var(--border);
-  border-radius:12px;
+  border-radius:0;
   background:#FFF;
 }
 .tadmin-gnb .sub-i{padding:8px 10px;border-radius:8px;font-size:14px}
@@ -283,7 +283,7 @@
   min-width:184px;
   padding:8px;
   border:1px solid var(--border);
-  border-radius:12px;
+  border-radius:0;
   background:#FFF;
   box-shadow:0 16px 40px rgba(18,24,38,.14);
 }

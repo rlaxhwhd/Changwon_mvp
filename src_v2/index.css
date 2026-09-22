@@ -435,7 +435,7 @@ select:focus-visible {
   padding: 6px;
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: 0;
   box-shadow: var(--shadow-pop);
   opacity: 0;
   visibility: hidden;
