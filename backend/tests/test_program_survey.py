@@ -144,28 +144,42 @@ def test_survey_disabled_program_and_unknown_phase(client):
     assert stats['competencySurvey'] is False and stats['total']['n'] == 0 and stats['areas'] == []
 
 
-def test_export_workbook_has_three_sheets_with_raw_values(client):
+def cells(sheet_xml):
+    import re
+    return [re.findall(r'<t xml:space="preserve">(.*?)</t>', row) for row in re.findall(r'<row>(.*?)</row>', sheet_xml)]
+
+
+def test_export_pre_post_workbooks_follow_template_and_blank_unselected_areas(client):
     from io import BytesIO
     from zipfile import ZipFile
     future = (date.today() + timedelta(days=30)).isoformat()
-    program = new_program(client, competencySurvey=True, competencyAreas=AREAS, runStartDate=future, capacity=2)
+    program = new_program(client, competencySurvey=True, competencyAreas=AREAS, runStartDate=future,
+                          runEndDate=future, capacity=2)
     assert apply_as(client, 'chaewon', program['id']).status_code == 201
     select_and_complete(client, program['id'], 'chaewon')
     assert submit(client, program['id'], 'PRE', 2).status_code == 201
     select_and_complete(client, program['id'], 'chaewon', complete=True)
     assert submit(client, program['id'], 'POST', 5).status_code == 201
-    assert client.get(f"/api/v1/programs/{program['id']}/survey/export.xlsx", headers=headers('chaewon')).status_code == 403
-    response = client.get(f"/api/v1/programs/{program['id']}/survey/export.xlsx", headers=headers('career_kim'))
+    url = f"/api/v1/programs/{program['id']}/survey/PRE/export.xlsx"
+    assert client.get(url, headers=headers('chaewon')).status_code == 403
+    assert client.get(f"/api/v1/programs/{program['id']}/survey/SATISFACTION/export.xlsx", headers=headers('career_kim')).status_code == 404
+    response = client.get(url, headers=headers('career_kim'))
     assert response.status_code == 200, response.text
     assert response.headers['content-type'].startswith('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
-    assert '_%EC%A1%B0%EC%82%AC%EA%B2%B0%EA%B3%BC.xlsx' in response.headers['content-disposition']
+    assert '_%EC%82%AC%EC%A0%84%20%EA%B2%B0%EA%B3%BC.xlsx' in response.headers['content-disposition']
     with ZipFile(BytesIO(response.content)) as book:
         workbook = book.read('xl/workbook.xml').decode()
-        assert ['만족도', '역량향상률-사전', '역량향상률-사후'] == [n for n in ('만족도', '역량향상률-사전', '역량향상률-사후') if f'name="{n}"' in workbook]
-        assert workbook.index('만족도') < workbook.index('역량향상률-사전') < workbook.index('역량향상률-사후')
-        pre, post, satisfaction = (book.read(f'xl/worksheets/sheet{n}.xml').decode() for n in (2, 3, 1))
-    # 사전 시트: 헤더 + 응답 1행, 8문항 모두 2점, 평균 2.0
-    assert pre.count('<row>') == 2 and '[진로 설계·의사결정 역량]' in pre and pre.count('<t xml:space="preserve">2</t>') == 8
-    assert '<t xml:space="preserve">2.0</t>' in pre and '김채원' in pre
-    assert post.count('<row>') == 2 and post.count('<t xml:space="preserve">5</t>') == 8
-    assert satisfaction.count('<row>') == 1  # 만족도 문항·응답이 아직 없어 헤더만
+        # CAREER_3 + JOB_1 → 진로역량·직무역량 두 장, 취업역량은 없다
+        assert 'name="진로역량"' in workbook and 'name="직무역량"' in workbook and '취업역량' not in workbook
+        career, job = cells(book.read('xl/worksheets/sheet1.xml').decode()), cells(book.read('xl/worksheets/sheet2.xml').decode())
+    assert career[0] == ['연번', '프로그램명', '운영기간', '소속', '학년', '성별'] + [f'질문{k}' for k in range(1, 23)]
+    assert job[0][6:] == [f'질문{k}' for k in range(1, 24)]
+    assert len(career) == 2 and career[1][:3] == ['1', program['title'], f'{future} ~ {future}']
+    assert career[1][3].endswith('대학 - 컴퓨터공학과') and career[1][4:6] == ['3', '없음']  # 소속 = 대학 - 학과, 성별은 학사 미러에 없으면 없음
+    # 진로역량 설문지: CAREER_1·2 (10문항) 빈칸, CAREER_3 (질문11~14) 2점, 나머지 빈칸
+    assert career[1][6:] == [''] * 10 + ['2'] * 4 + [''] * 8
+    assert job[1][6:] == ['2'] * 4 + [''] * 19
+    post = client.get(f"/api/v1/programs/{program['id']}/survey/POST/export.xlsx", headers=headers('career_kim'))
+    assert cells(ZipFile(BytesIO(post.content)).read('xl/worksheets/sheet1.xml').decode())[1][6:] == [''] * 10 + ['5'] * 4 + [''] * 8
+    plain = new_program(client, capacity=2)
+    assert client.get(f"/api/v1/programs/{plain['id']}/survey/PRE/export.xlsx", headers=headers('career_kim')).status_code == 409

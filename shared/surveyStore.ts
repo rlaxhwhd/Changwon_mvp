@@ -51,8 +51,9 @@ export function loadSurveyStats(programId: string): Promise<SurveyStats> {
   return api<SurveyStats>(`/programs/${encodeURIComponent(programId)}/survey/stats`)
 }
 
-/** 응답 원자료 엑셀(만족도·사전·사후 3장). 파일명은 서버가 Content-Disposition 으로 주지만 a[download] 에도 같은 이름을 준다. */
-export function downloadSurveyExport(programId: string, programTitle: string): Promise<void> {
-  return downloadApiFile(`/programs/${encodeURIComponent(programId)}/survey/export.xlsx`,
-                         `${programTitle.replace(/[\\/:*?"<>|]/g, '_')}_조사결과.xlsx`)
+/** 사전·사후 결과 엑셀 — 설문지(진로·직무·취업)마다 한 장, 질문1…N 양식. 파일은 서버가 만든다. */
+export function downloadSurveyExport(programId: string, programTitle: string, phase: 'PRE' | 'POST'): Promise<void> {
+  const label = phase === 'PRE' ? '사전' : '사후'
+  return downloadApiFile(`/programs/${encodeURIComponent(programId)}/survey/${phase}/export.xlsx`,
+                         `${programTitle.replace(/[\\/:*?"<>|]/g, '_')}_${label} 결과.xlsx`)
 }

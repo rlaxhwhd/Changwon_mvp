@@ -14,13 +14,15 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import principal, require_staff, student_access
 from .db import connection
-from .programs import SEOUL, get_program, today
+from .programs import get_program, today
 from .xlsx_export import workbook_sheets
 
 router = APIRouter()
 
 PHASES = ('PRE', 'POST', 'SATISFACTION')
-EXPORT_SHEETS = (('만족도', 'SATISFACTION'), ('역량향상률-사전', 'PRE'), ('역량향상률-사후', 'POST'))
+EXPORT_PHASES = {'PRE': '사전', 'POST': '사후'}
+# 설문지 3종 — 시트명. 영역·문항은 코드관리가 정본이고 설문지 묶음만 여기서 이름 붙인다.
+SURVEY_GROUP_LABEL = {'CAREER': '진로역량', 'JOB': '직무역량', 'EMPLOY': '취업역량'}
 
 
 def phase_or_404(phase):
@@ -123,13 +125,18 @@ def survey_stats(program_id: str, user=Depends(principal, scope='function'),
             'total': summarize(all_pairs), 'areas': areas}
 
 
-@router.get('/programs/{program_id}/survey/export.xlsx')
-def survey_export(program_id: str, user=Depends(principal, scope='function'),
+@router.get('/programs/{program_id}/survey/{phase}/export.xlsx')
+def survey_export(program_id: str, phase: str, user=Depends(principal, scope='function'),
                   conn=Depends(connection, scope='function')):
-    """응답 원자료 엑셀 — 시트 3장(만족도·사전·사후), 학생 1행, 문항 1열. 집계는 stats 가 하고 여기는 값만 준다."""
+    """사전·사후 결과 엑셀 — 학생 1행, 설문지(진로·직무·취업) 1장씩. 열은 설문지 문항 전체(질문1…N)이고
+    개설 때 고르지 않은 영역은 빈칸이다. 집계는 stats 가 하고 여기는 값만 준다."""
     require_staff(user)
+    if phase not in EXPORT_PHASES:
+        raise HTTPException(404, '조사 종류를 찾을 수 없습니다.')
     program = get_program(conn, program_id)
-    output = workbook_sheets([(name, *export_sheet(conn, program, phase)) for name, phase in EXPORT_SHEETS])
+    if not program['competency_survey'] or not program['competency_areas']:
+        raise HTTPException(409, '역량향상률 조사를 실시하지 않는 프로그램입니다.')
+    output = workbook_sheets(export_sheets(conn, program, phase))
 
     def chunks():
         try:
@@ -137,37 +144,39 @@ def survey_export(program_id: str, user=Depends(principal, scope='function'),
                 yield chunk
         finally:
             output.close()
-    filename = re.sub(r'[\\/:*?"<>|]', '_', program['title']) + '_조사결과.xlsx'
+    filename = re.sub(r'[\\/:*?"<>|]', '_', program['title']) + f'_{EXPORT_PHASES[phase]} 결과.xlsx'
     return StreamingResponse(chunks(), media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         headers={'Content-Disposition': "attachment; filename*=UTF-8''"+quote(filename), 'Cache-Control': 'no-store'})
 
 
-def export_sheet(conn, program, phase):
-    """(헤더, 행들). 열은 현재 문항 + 응답에만 남은 옛 문항(코드관리에서 뺀 것) — 제출된 값은 버리지 않는다."""
-    items = [(r['code'], f"[{r['area_label']}] {r['label']}") for r in items_for(conn, program, phase)]
-    known = {code for code, _ in items}
-    items += [(r['code'], f"[{r['area_label']}] {r['label']}") for r in conn.execute('''SELECT DISTINCT i.code,i.label,
-      a.label AS area_label,a.sort_order AS area_order,i.sort_order
-      FROM dc.survey_response r JOIN dc.survey_answer s ON s.response_id=r.id
-      JOIN dc.code_item i ON i.group_code='SURVEY_ITEM' AND i.code=s.item_code
-      JOIN dc.code_item a ON a.group_code='SURVEY_AREA' AND a.code=i.payload->>'areaKey'
-      WHERE r.program_id=%s AND r.phase=%s AND NOT i.code=ANY(%s)
-      ORDER BY a.sort_order,i.sort_order,i.code''', (program['id'], phase, list(known))).fetchall()]
-    responses = conn.execute('''SELECT r.id,r.submitted_at,r.snapshot,
+def export_sheets(conn, program, phase):
+    """[(설문지명, 헤더, 행들)] — 프로그램이 고른 영역이 속한 설문지마다 한 장."""
+    items = conn.execute('''SELECT a.payload->>'group' AS grp,a.code AS area_key,i.code
+      FROM dc.code_item a JOIN dc.code_item i ON i.group_code='SURVEY_ITEM' AND i.payload->>'areaKey'=a.code
+      WHERE a.group_code='SURVEY_AREA' AND a.is_active AND i.is_active
+      ORDER BY a.sort_order,i.sort_order,i.code''').fetchall()
+    responses = conn.execute('''SELECT r.snapshot,
       (SELECT jsonb_object_agg(s.item_code,s.value) FROM dc.survey_answer s WHERE s.response_id=r.id) AS answers
       FROM dc.survey_response r WHERE r.program_id=%s AND r.phase=%s ORDER BY r.submitted_at,r.id''',
       (program['id'], phase)).fetchall()
-    headers = ['학번', '이름', '학과', '학년', '진단 유형', '제출일시'] + [label for _, label in items] + ['평균']
-
-    def rows():
-        for r in responses:
+    selected = set(program['competency_areas'])
+    period = ' ~ '.join(str(d) for d in (program['run_start'], program['run_end']) if d) or '없음'
+    sheets = []
+    for grp, label in SURVEY_GROUP_LABEL.items():
+        mine = [row for row in items if row['grp'] == grp]
+        if not any(row['area_key'] in selected for row in mine):
+            continue
+        headers = ['연번', '프로그램명', '운영기간', '소속', '학년', '성별'] + [f'질문{k}' for k in range(1, len(mine)+1)]
+        rows = []
+        for n, r in enumerate(responses, start=1):
             snap, answers = r['snapshot'] or {}, r['answers'] or {}
-            values = [answers.get(code) for code, _ in items]
-            scored = [v for v in values if v is not None]
-            yield [snap.get('studentNo'), snap.get('studentName'), snap.get('studentMajor'), snap.get('grade'),
-                   snap.get('studentType'), r['submitted_at'].astimezone(SEOUL).strftime('%Y-%m-%d %H:%M'),
-                   *values, round(sum(scored) / len(scored), 2) if scored else None]
-    return headers, rows()
+            rows.append([n, program['title'], period,
+                         ' - '.join(v for v in (snap.get('studentCollege'), snap.get('studentMajor')) if v) or '없음',
+                         snap.get('grade'), snap.get('sex') or '없음',
+                         # 고른 영역의 문항만 값을 적고, 나머지 영역은 빈칸으로 둔다(없음 아님).
+                         *(answers.get(row['code'], '') if row['area_key'] in selected else '' for row in mine)])
+        sheets.append((label, headers, rows))
+    return sheets
 
 
 def summarize(pairs):
@@ -233,7 +242,14 @@ def submit_survey(program_id: str, phase: str, body: SubmitBody, user=Depends(pr
     student_type = conn.execute('''SELECT student_type FROM dc.current_student_type WHERE student_uid=%s
       ORDER BY decided_at DESC,id DESC LIMIT 1''', (student['intg_uid'],)).fetchone()
     # 제출 시점 학적을 복사한다(CLAUDE.md 규칙 2) — 학년이 올라가도 그때의 응답으로 남는다.
+    organization = conn.execute('''SELECT d.college_name,
+      CASE x.sex_code WHEN '0001' THEN '남자' WHEN '0002' THEN '여자' END AS sex
+      FROM (SELECT 1) one
+      LEFT JOIN dc.department d ON d.college_code=%s AND d.dept_code=%s
+      LEFT JOIN dc.academic_student_details x ON x.intg_uid=%s''',
+      (student['college_code'], student['dept_code'], student['intg_uid'])).fetchone()
     snapshot = {'studentName': student['name'], 'studentMajor': student['major_label'],
+                'studentCollege': organization['college_name'], 'sex': organization['sex'],
                 'studentNo': student['student_no'], 'grade': student['grade'],
                 'studentType': student_type['student_type'] if student_type else None,
                 'areas': list(program['competency_areas']) if phase != 'SATISFACTION' else []}

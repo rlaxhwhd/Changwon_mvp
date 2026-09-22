@@ -70,7 +70,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [bulkValue, setBulkValue] = useState<string>('SELECTED')
   const [picking, setPicking] = useState(false)
-  const [exporting, setExporting] = useState(false)
+  const [exporting, setExporting] = useState<'PRE' | 'POST' | null>(null)
 
   // 신청자/선발자 페이지 전환 시 선택 초기화
   useEffect(() => { setChecked(new Set()) }, [mode])
@@ -124,13 +124,13 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
     run(updateProgram(program.id, { status }))
   }
 
-  /** 조사 응답 원자료(만족도·사전·사후 3장) — 파일은 서버가 만든다. 실패 사유는 alert 로 남긴다. */
-  const handleExport = () => {
-    setExporting(true)
-    downloadSurveyExport(program.id, program.title)
+  /** 사전·사후 결과 엑셀 — 파일은 서버가 만든다. 실패 사유는 alert 로 남긴다. */
+  const handleExport = (phase: 'PRE' | 'POST') => {
+    setExporting(phase)
+    downloadSurveyExport(program.id, program.title, phase)
       .catch((error: unknown) =>
         window.alert(error instanceof Error ? error.message : '엑셀을 내려받지 못했습니다.'))
-      .finally(() => setExporting(false))
+      .finally(() => setExporting(null))
   }
 
   const handleDeleteProgram = () => {
@@ -195,12 +195,12 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
           >
             <LuCheck /> 상태 저장
           </button>
-          {mode === 'selected' && (
-            <button type="button" className="admin-btn admin-btn-ghost sm admin-program-export" disabled={exporting}
-                    onClick={handleExport}>
-              <LuDownload /> {exporting ? '엑셀 생성 중…' : '조사 결과 엑셀'}
+          {mode === 'selected' && program.competencySurvey && (['PRE', 'POST'] as const).map(phase => (
+            <button key={phase} type="button" className="admin-btn admin-btn-ghost sm admin-program-export"
+                    disabled={exporting !== null} onClick={() => handleExport(phase)}>
+              <LuDownload /> {exporting === phase ? '엑셀 생성 중…' : `${phase === 'PRE' ? '사전' : '사후'} 결과 엑셀`}
             </button>
-          )}
+          ))}
           <button className="admin-btn admin-btn-danger-ghost sm admin-program-delete" onClick={handleDeleteProgram}>
             <LuTrash2 /> 프로그램 삭제
           </button>
