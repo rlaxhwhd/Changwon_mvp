@@ -206,8 +206,8 @@
 .tadmin .risk .admin-tab:first-child{border-radius:var(--radius-sm) 0 0 var(--radius-sm)}
 .tadmin .risk .admin-tab:last-child{border-radius:0 var(--radius-sm) var(--radius-sm) 0}
 .tadmin .risk .admin-tab+.admin-tab{border-left:1px solid #F1C7C1}
-.tadmin .risk .admin-tab:hover{background:#FEF7F6;color:var(--text)}
-.tadmin .risk .admin-tab.active{background:#FEF7F6;color:var(--text);box-shadow:none}
+.tadmin .risk .admin-tab:hover{background:#FCEDEA;color:var(--text)}
+.tadmin .risk .admin-tab.active{background:#F8D9D3;color:#B42318;box-shadow:none}
 .tadmin .risk [role=tabpanel]>p{font-size:12.5px;font-weight:600;color:var(--text-sub);margin:0 0 var(--sp-2)}
 .tadmin .risk-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:baseline;
           gap:0 var(--sp-2);width:calc(100% + var(--sp-4));margin-inline:calc(var(--sp-2) * -1);
