@@ -111,6 +111,28 @@ def test_stats_use_paired_responses_only(client):
     assert item['n'] == 2 and item['improvement'] == 33.3
 
 
+def test_selection_and_completion_notify_student_once(client):
+    future = (date.today() + timedelta(days=30)).isoformat()
+    program = new_program(client, competencySurvey=True, competencyAreas=AREAS, runStartDate=future)
+    assert apply_as(client, 'chaewon', program['id']).status_code == 201
+    select_and_complete(client, program['id'], 'chaewon')
+    select_and_complete(client, program['id'], 'chaewon')  # 재선발해도 알림은 1건
+    items = client.get('/api/v1/notifications', headers=headers('chaewon')).json()['items']
+    pre = [n for n in items if n['to'] == f"/mypage/programs/{program['id']}/survey/PRE"]
+    assert len(pre) == 1 and pre[0]['tone'] == 'program' and '사전 역량 진단' in pre[0]['title'] and program['title'] in pre[0]['title']
+    select_and_complete(client, program['id'], 'chaewon', complete=True)
+    items = client.get('/api/v1/notifications', headers=headers('chaewon')).json()['items']
+    routes = [n['to'] for n in items if n['to'].startswith(f"/mypage/programs/{program['id']}/survey/")]
+    # 만족도 문항이 아직 없으므로 사후만 알린다
+    assert sorted(routes) == sorted([f"/mypage/programs/{program['id']}/survey/PRE", f"/mypage/programs/{program['id']}/survey/POST"])
+    # 조사를 실시하지 않는 프로그램은 알리지 않는다
+    silent = new_program(client, competencySurvey=False, competencyAreas=[])
+    assert apply_as(client, 'changwon', silent['id']).status_code == 201
+    select_and_complete(client, silent['id'], 'changwon', complete=True)
+    items = client.get('/api/v1/notifications', headers=headers('changwon')).json()['items']
+    assert not [n for n in items if silent['id'] in n['to']]
+
+
 def test_survey_disabled_program_and_unknown_phase(client):
     program = new_program(client, competencySurvey=False, competencyAreas=[])
     assert apply_as(client, 'chaewon', program['id']).status_code == 201

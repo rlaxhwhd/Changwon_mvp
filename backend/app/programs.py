@@ -356,6 +356,29 @@ def record(conn, user, program_id, student_uid, action, before, after, reason=''
        Jsonb(jsonable_encoder(after)), reason, user['intg_uid']))
 
 
+SURVEY_NOTICE = {
+    'PRE': ('선발 축하드립니다 — 사전 역량 진단을 진행해 주세요', '프로그램 시작 전까지 사전 역량 진단 설문에 응답해야 사후 결과와 비교할 수 있습니다.'),
+    'POST': ('수료 확인 — 사후 역량 진단을 진행해 주세요', '수료가 확정되었습니다. 사후 역량 진단 설문에 응답해 주세요.'),
+    'SATISFACTION': ('수료 확인 — 만족도 조사를 진행해 주세요', '프로그램 만족도 조사에 응답해 주세요.'),
+}
+
+
+def notify_survey(conn, program, student_uid, phase):
+    """조사 창이 열리는 사건(선발·수료)에 학생 알림 1건. 같은 학생·프로그램·단계는 한 번만(UNIQUE)."""
+    if phase == 'SATISFACTION':
+        if not program['satisfaction_survey'] or not conn.execute('''SELECT 1 FROM dc.code_item a
+          JOIN dc.code_item i ON i.group_code='SURVEY_ITEM' AND i.payload->>'areaKey'=a.code AND i.is_active
+          WHERE a.group_code='SURVEY_AREA' AND a.is_active AND a.payload->>'group'='SATISFACTION' LIMIT 1''').fetchone():
+            return
+    elif not program['competency_survey'] or not program['competency_areas']:
+        return
+    title, body = SURVEY_NOTICE[phase]
+    conn.execute('''INSERT INTO dc.notification(recipient_uid,source_kind,source_id,tone,title,body,route)
+      VALUES(%s,'PROGRAM_SURVEY',%s,'program',%s,%s,%s) ON CONFLICT DO NOTHING''',
+      (student_uid, f"{program['id']}:{phase}", f"[{program['title']}] {title}", body,
+       f"/mypage/programs/{program['id']}/survey/{phase}"))
+
+
 def get_application(conn, program_id, student_uid, lock=True):
     # 잠금 대상이 흐려지지 않게 집계 뷰는 조인하지 않는다(벌점은 목록 DTO 가 싣는다).
     row = conn.execute('''SELECT a.*,p.alias,p.name,s.major_label FROM dc.program_apply a
@@ -518,6 +541,8 @@ def set_selection(program_id: str, body: SelectionBody, user=Depends(principal, 
         after = applicant_dto({**row, 'alias': student['alias'], 'name': student['name'],
                                'major_label': student['major_label']})
         record(conn, user, program_id, student['intg_uid'], 'SELECTION', applicant_dto(before), after, body.reason)
+        if body.selection == 'SELECTED':
+            notify_survey(conn, program, student['intg_uid'], 'PRE')
         results.append(after)
     return results
 
@@ -544,6 +569,9 @@ def set_outcome(program_id: str, body: OutcomeBody, user=Depends(principal, scop
         after = applicant_dto({**row, 'alias': student['alias'], 'name': student['name'],
                                'major_label': student['major_label']})
         record(conn, user, program_id, student['intg_uid'], 'OUTCOME', applicant_dto(before), after, body.reason)
+        if body.outcome == 'COMPLETED':
+            notify_survey(conn, program, student['intg_uid'], 'POST')
+            notify_survey(conn, program, student['intg_uid'], 'SATISFACTION')
         results.append(after)
     return results
 
