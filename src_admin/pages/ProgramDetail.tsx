@@ -282,7 +282,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                   </span>
                   <span className="admin-roster-cell">{index + 1}</span>
                   <span className="admin-roster-cell">{a.round ?? 1}차</span>
-                  <span className="admin-roster-cell"><strong className="admin-name-fixed">{studentDisplayName(name, a.studentId)}</strong></span>
+                  <span className="admin-roster-cell admin-name-cell"><strong className="admin-name-fixed">{studentDisplayName(name, a.studentId)}</strong></span>
                   <span className="admin-roster-cell">{studentNo}</span>
                   <span className="admin-roster-cell">{collegeOf(major)}</span>
                   <span className="admin-roster-cell">{major}</span>
