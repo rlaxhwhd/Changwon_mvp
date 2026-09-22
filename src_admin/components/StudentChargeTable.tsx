@@ -48,7 +48,7 @@ type RosterSummary = Awaited<ReturnType<typeof fetchRosterMetadata>>['summary']
  * 같은 줄에 두되 구분선으로 갈라 놓는다(집중관리로 읽히면 안 된다).
  */
 const FOCUS_BUTTONS: { focus: FocusFilter; label: string; tone: string; count: (s: RosterSummary) => number }[] = [
-  { focus: 'care7', label: 'CARE 7+', tone: 'is-star', count: s => s.care7Count },
+  { focus: 'care7', label: 'CARE 7+', tone: 'is-sky', count: s => s.care7Count },
   { focus: 'star', label: 'STAR 트랙', tone: 'is-star', count: s => s.starCount },
 ]
 
@@ -56,7 +56,8 @@ interface StudentChargeTableProps {
   academic?: boolean
   departments: string[]
   title: string
-  scopeLabel: string
+  /** 생략하면 머리글 설명(범위 · 총원 · 하위 계층)을 그리지 않는다. */
+  scopeLabel?: string
   /**
    * 마지막 칸이 무엇인가.
    *   roster  — IAP 이행률 (기본). 행을 누르면 학생 상세 페이지로 간다.
@@ -188,16 +189,18 @@ export default function StudentChargeTable({
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">{title}</h1>
-          <p className="admin-page-desc">
-            {scopeLabel} · 총 {summary.total}명
-            {summary.focusCount > 0 && (
-              <>
-                {/* 계층(상·중·하) 집계다. 아래 버튼의 고위험군·핵심관리대상과는 다른 기준이라
-                    이름을 겹치게 쓰지 않는다. */}
-                {' '}· <span className="admin-focus-inline"><LuTriangleAlert /> 하위 계층 {summary.focusCount}명</span>
-              </>
-            )}
-          </p>
+          {scopeLabel && (
+            <p className="admin-page-desc">
+              {scopeLabel} · 총 {summary.total}명
+              {summary.focusCount > 0 && (
+                <>
+                  {/* 계층(상·중·하) 집계다. 아래 버튼의 고위험군·핵심관리대상과는 다른 기준이라
+                      이름을 겹치게 쓰지 않는다. */}
+                  {' '}· <span className="admin-focus-inline"><LuTriangleAlert /> 하위 계층 {summary.focusCount}명</span>
+                </>
+              )}
+            </p>
+          )}
         </div>
       </header>
 

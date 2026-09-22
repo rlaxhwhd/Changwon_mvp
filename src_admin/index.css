@@ -1299,6 +1299,12 @@ input, textarea, select { font-family: var(--font); }
    앞에 구분선을 하나 둔다. 색은 학생 화면 STAR 배지(--amber)와 맞춘다. */
 .admin-focus-slot { display: inline-flex; align-items: center; gap: 8px; }
 .admin-focus-sep { display: inline-block; width: 1px; height: 18px; background: var(--color-border); }
+.admin-focus-btn.is-sky { border-color: #BFD8FB; color: var(--on-blue); }
+.admin-focus-btn.is-sky em { color: var(--on-blue); }
+.admin-focus-btn.is-sky:hover { background: var(--blue-bg); }
+.admin-focus-btn.is-sky.is-on { background: var(--blue); border-color: var(--blue); color: #fff; }
+.admin-focus-btn.is-sky.is-on em { color: #fff; }
+
 .admin-focus-btn.is-star { border-color: #F3D9A6; color: #9A6300; }
 .admin-focus-btn.is-star em { color: #9A6300; }
 .admin-focus-btn.is-star svg { color: #F5A524; }

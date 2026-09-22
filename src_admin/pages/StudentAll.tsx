@@ -13,7 +13,6 @@ export default function StudentAll() {
       departments={[]}
       academic
       title="전체 학생 목록"
-      scopeLabel="학사 DB 전체 · 학부·대학원 · 모든 학적 상태"
     />
   )
 }
