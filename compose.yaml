@@ -58,6 +58,33 @@ services:
       timeout: 5s
       retries: 12
 
+  # 빈 DB 에 스키마와 시드를 넣는다 — 새 컴퓨터에서 `npm run docker:bootstrap` 이 한 번 부른다.
+  # profiles 에 묶여 있어 `docker:up` 은 이 서비스를 띄우지 않는다. api 와 달리 스키마 소유자
+  # 권한이 필요해 postgres 로 붙는다. 시드 JSON 은 이미지에 없으므로 저장소에서 읽어 붙인다.
+  bootstrap:
+    image: dreamcatch-api:local
+    build: ./backend
+    profiles: ["bootstrap"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      DC_DB_HOST: db
+      DC_DB_PORT: 5432
+      DC_DB_NAME: dreamcatch
+      DC_DB_USER: postgres
+      DC_DB_PASSWORD_FILE: /run/secrets/postgres_password
+      DC_ENVIRONMENT: development
+    secrets:
+      - postgres_password
+    volumes:
+      - ./backend/seeds:/srv/backend/seeds:ro
+    depends_on:
+      db:
+        condition: service_healthy
+    command: ["sh", "-c", "python -m app.migrate && python -m app.seed --root /srv"]
+
   web:
     image: dreamcatch-web:local
     build:

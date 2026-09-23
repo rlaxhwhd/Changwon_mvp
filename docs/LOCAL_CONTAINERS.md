@@ -4,6 +4,28 @@
 React 정적 빌드 + Nginx(`web`), FastAPI(`api`), PostgreSQL(`db`)을 실행한다.
 기존 VPS용 `deploy/compose.*.yaml`과는 별도 구성이다.
 
+## 새 컴퓨터에서 처음 켤 때 — 한 번만
+
+`git clone`(또는 `git pull`) 직후에는 저장소에 없는 것이 세 가지다. 로컬 전용 비밀
+3개(`deploy/secrets/`, git 제외), DB 데이터 볼륨, 그리고 빈 DB 의 스키마·시드다.
+**컨테이너는 기동할 때 마이그레이션을 돌리지 않는다.** 이 셋을 한 번에 세운다.
+
+```powershell
+npm run docker:bootstrap
+```
+
+Docker Desktop 만 켜져 있으면 된다(Node 는 이 저장소를 받았으면 이미 있다).
+여러 번 돌려도 안전하다 — 이미 있는 것은 건너뛰고, 기존 볼륨의 데이터는 지우지 않는다.
+끝나면 전체 스택까지 떠 있고, 그다음부터는 `npm run docker:up` 하나면 된다.
+
+> ⚠️ 이 스크립트는 **아직 빈 컴퓨터에서 실행해 보지 않았다**(2026-09-23). 막히면 그 단계의
+> 명령을 [LOCAL_DEV.md](LOCAL_DEV.md) 「처음 한 번만 하는 것」에서 손으로 실행할 수 있다.
+
+하는 일은 [`scripts/bootstrap-local.mjs`](../scripts/bootstrap-local.mjs) 에 순서대로 있다 —
+비밀 생성 → 볼륨 생성 → `db` 기동 → `deploy/bootstrap.db.sql`(역할·스키마) →
+`dc_app` 비밀번호 맞추기 → `app.migrate` + `app.seed`(compose 의 `bootstrap` 프로필) →
+전체 기동.
+
 ## 실행과 접속
 
 Docker Desktop이 실행된 상태에서 저장소 루트에서:
