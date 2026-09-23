@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../../shared/studentDisplayName'
 import { useMemo, useState } from 'react'
 import Modal from '../../components/Modal'
 import ResumeSheet from '../../components/ResumeSheet'
@@ -284,10 +285,10 @@ function ProfileSection({ profile, onChange }: { profile: ProfileData; onChange:
     <section className="pf-section">
       <div className="pf-profile-card">
         <div className="pf-profile-avatar">
-          <img className="pf-profile-photo" src="/student-profile.png" alt={`${profile.name} 프로필`} />
+          <img className="pf-profile-photo" src="/student-profile.png" alt={`${studentDisplayName(profile.name, profile.studentId)} 프로필`} />
         </div>
         <div className="pf-profile-info">
-          <h2>{profile.name} <small>· {profile.school}</small></h2>
+          <h2>{studentDisplayName(profile.name, profile.studentId)} <small>· {profile.school}</small></h2>
           <p className="pf-profile-sub">
             {profile.dept} · {profile.grade} · 학번 {profile.studentId}
           </p>
@@ -609,7 +610,7 @@ function DocumentsSection({ profile, resumes, onView, onRemove }: DocumentsSecti
           위 정보를 종합해서 만들어진 이력서를 미리 보고, PDF로 내보낼 수 있어요. 우측 상단의 "이력서 PDF" 버튼을 눌러주세요.
         </p>
         <div className="pf-resume-summary-grid">
-          <div><strong>기본 정보</strong><span>{profile.name} · {profile.dept}</span></div>
+          <div><strong>기본 정보</strong><span>{studentDisplayName(profile.name, profile.studentId)} · {profile.dept}</span></div>
           <div><strong>학점</strong><span>{profile.gpa}</span></div>
           <div><strong>강조 키워드</strong><span>AI · 데이터 · 백엔드 · 풀스택</span></div>
         </div>

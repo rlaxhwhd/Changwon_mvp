@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import Modal from './Modal'
 import { getActiveStudent } from '../data/students'
 import DiagnosisResultReport from './DiagnosisResultReport'
@@ -157,7 +158,7 @@ export default function CRAReport({ open, onClose, examDate }: CRAReportProps) {
           <div><span style={{ color: 'var(--color-text-sub)' }}>학과</span> <strong>{student.major}</strong></div>
           <div><span style={{ color: 'var(--color-text-sub)' }}>학번</span> <strong>20250001</strong></div>
           <div><span style={{ color: 'var(--color-text-sub)' }}>학년</span> <strong>{student.grade}학년</strong></div>
-          <div><span style={{ color: 'var(--color-text-sub)' }}>성명</span> <strong>{student.name}</strong></div>
+          <div><span style={{ color: 'var(--color-text-sub)' }}>성명</span> <strong>{studentDisplayName(student.name, student.id)}</strong></div>
         </div>
 
         {/* ─── 1. 종합 결과 ─── */}

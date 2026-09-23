@@ -40,20 +40,19 @@ export default function JobApplicantsList() {
     setChecked(allChecked ? new Set() : new Set(jobs.map(j => j.id)))
   }
 
-  // 선택이 없으면 담당 범위의 전체 지원을 내려받는다 — "모든 지원자 현황"이 기본값이다.
+  // Only selected postings contribute applicants to the export.
   // 서버가 한 공고씩만 필터를 받으므로 여러 공고를 고르면 나눠 받아 잇는다.
   const targetIds = checked.size ? [...checked] : []
   const exportCount = targetIds.length
     ? rows.filter(r => targetIds.includes(r.job.id)).reduce((sum, r) => sum + r.summary.total, 0)
-    : rows.reduce((sum, r) => sum + r.summary.total, 0)
+    : 0
 
   const downloadCsv = () => {
+    if (!targetIds.length) return
     void run(async () => {
       // 명단은 서버가 만든다 — 목록·집계와 같은 필터, 같은 범위 술어를 쓰고
       // 다운로드 사실이 dc.job_access_event 에 남는다.
-      const parts = targetIds.length
-        ? await Promise.all(targetIds.map(postingId => fetchJobApplicantCsv({ postingId })))
-        : [await fetchJobApplicantCsv()]
+      const parts = await Promise.all(targetIds.map(postingId => fetchJobApplicantCsv({ postingId })))
       // 두 번째 파일부터는 머리글 줄을 뺀다(BOM 도 첫 파일 것만 남긴다).
       const dropHeader = (part: string) => part.split('\n').slice(1).join('\n')
       const [first, ...rest] = parts

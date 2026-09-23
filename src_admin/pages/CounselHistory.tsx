@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import AdminModal from '../components/AdminModal'
 import CounselRecordContext from '../components/CounselRecordContext'
 import CounselJournalFields from '../components/CounselJournalFields'
@@ -43,9 +44,9 @@ export default function CounselHistory() {
     {error && <p role="alert">{error}</p>}
     {loading && <p role="status">상담기록을 불러오는 중입니다.</p>}
     <CounselHistoryView rows={rows} showStudent onExport={downloadCounselHistoryCsv} onOpenDetail={setDetail} sidebarFooter={<section className="cs-booking"><h2>상담일지 관리</h2><p>상담내용과 학생 공개 코멘트는<br />상담일지에서 작성하고 관리할 수 있습니다.</p><Link to="/counsel/journals">상담일지 바로가기</Link></section>} />
-    {detail && <AdminModal title={`상담일지 — ${detail.studentName}`} size="lg" onClose={() => setDetail(null)}>
+    {detail && <AdminModal title={`상담일지 — ${studentDisplayName(detail.studentName, detail.studentNo)}`} size="lg" onClose={() => setDetail(null)}>
       <dl className="admin-journal-brief">
-        <div><dt>학생</dt><dd>{detail.studentName} · {detail.studentNo}</dd></div>
+        <div><dt>학생</dt><dd>{studentDisplayName(detail.studentName, detail.studentNo)} · {detail.studentNo}</dd></div>
         <div><dt>상담유형 · 상태</dt><dd>{detail.type} · {detail.status}</dd></div>
         <div><dt>상담일시</dt><dd>{detail.date || '일정 미정'} {detail.time}</dd></div>
         <div><dt>상담사</dt><dd>{detail.counselor}</dd></div>

@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { useState } from 'react'
 import {
@@ -220,7 +221,7 @@ export default function AssistantAdvisorRecords() {
                 <div className="admin-roster-row" key={row.studentId}>
                   <span className="admin-roster-cell">{start + index + 1}</span>
                   <span className="admin-roster-cell">{row.studentNo}</span>
-                  <span className="admin-roster-cell"><strong>{row.name}</strong></span>
+                  <span className="admin-roster-cell"><strong>{studentDisplayName(row.name, row.studentNo)}</strong></span>
                   <span className="admin-roster-cell">{row.grade}</span>
                   <span className="admin-roster-cell">
                     <span className="admin-advisor-name">{row.professorName}</span>

@@ -8,6 +8,33 @@ from test_api import headers
 from test_psych_referrals import db  # noqa: F401
 
 
+def test_star_name_markers_match_membership_and_student_scope(client, db):
+    members=db.execute('''SELECT s.intg_uid,s.student_no,p.alias,p.name FROM dc.star_track t
+      JOIN dc.student s ON s.intg_uid=t.student_uid JOIN dc.person p USING(intg_uid)''').fetchall()
+    assert members
+    expected={value for row in members for key,value in row.items() if key!='name' and value}
+    for viewer in ('career_kim','system-admin'):
+        response=client.get('/api/v1/bootstrap/profiles',headers=headers(viewer))
+        assert response.status_code==200
+        assert set(response.json()['starStudentKeys'])==expected
+    for row in members:
+        # This regression DB does not mirror the full academic source. Supply a
+        # matching academic identity inside this rollback-only transaction.
+        db.execute('''INSERT INTO academic.v_usr_inf(intg_uid,login_id,usr_nm,user_ty_cd,hofc_sta_cd,stu_schgr,orgz_nm)
+          SELECT %s,%s,%s,'1101','0001','3','Test Major'
+          WHERE NOT EXISTS(SELECT 1 FROM academic.v_usr_inf WHERE intg_uid=%s)''',
+          (row['intg_uid'],row['student_no'],row['name'],row['intg_uid']))
+        mine=client.get('/api/v1/bootstrap/profiles',headers=headers(row['alias']))
+        assert mine.status_code==200
+        assert set(mine.json()['starStudentKeys'])=={row['intg_uid'],row['alias'],row['student_no']}
+        response=client.get('/api/v1/academic-students',headers=headers('career_kim'),params={'q':row['student_no']})
+        found=next(item for item in response.json()['items'] if item['studentNo']==row['student_no'])
+        assert found['star'] is True and found['name']==row['name']
+        detail=client.get('/api/v1/academic-students/'+found['id'],headers=headers('career_kim'))
+        assert detail.json()['star'] is True
+    assert client.get('/api/v1/bootstrap/profiles',headers=headers('jiwoo')).json()['starStudentKeys']==[]
+
+
 def test_care7_filter_matches_confirmed_roadmaps_and_home(client, db):
     expected = db.execute("SELECT count(*) AS n FROM dc.roadmap WHERE status_code='CONFIRMED'").fetchone()['n']
     home = client.get('/api/v1/counsel-dashboard', headers=headers('career_kim'))
@@ -106,7 +133,7 @@ def test_unenrolled_detail_and_excel_share_filters(client, db, academic_rows):
     assert client.get('/api/v1/academic-students/'+uid,headers=headers('chaewon')).status_code==403
     # Excel strings preserve leading zeroes and cannot execute formula-like names.
     db.execute("UPDATE academic.v_usr_inf SET usr_nm='=1+1',login_id='00123' WHERE intg_uid=%s",(uid,))
-    r=client.get('/api/v1/academic-students/export',headers=headers('career_kim'),
+    r=client.post('/api/v1/academic-students/export',headers=headers('career_kim'), json={'ids':[uid,uid]},
                  params={'filters.status':'졸업','pageSize':1,'page':9})
     assert r.status_code == 200, r.text if r.status_code!=200 else ''
     assert 'spreadsheetml' in r.headers['content-type']
@@ -118,7 +145,14 @@ def test_unenrolled_detail_and_excel_share_filters(client, db, academic_rows):
         assert rows[1].findall('s:c/s:is/s:t',ns)[0].text=='00123'
         assert rows[1].findall('s:c/s:is/s:t',ns)[1].text=='=1+1'
         assert not sheet.findall('.//s:f',ns)
-    assert client.get('/api/v1/academic-students/export',headers=headers('chaewon')).status_code==403
+    assert client.post('/api/v1/academic-students/export',headers=headers('chaewon'),json={'ids':[uid]}).status_code==403
+    assert client.post('/api/v1/academic-students/export',headers=headers('career_kim'),json={'ids':[]}).status_code==422
+    excluded=client.post('/api/v1/academic-students/export',headers=headers('career_kim'),
+                        json={'ids':[academic_rows+'1']},params={'filters.status':'졸업'})
+    assert excluded.status_code==200
+    with ZipFile(BytesIO(excluded.content)) as book:
+        sheet=ElementTree.fromstring(book.read('xl/worksheets/sheet1.xml'))
+        assert len(sheet.findall('s:sheetData/s:row',ns))==1
 
 
 def test_activity_without_care7_is_visible_and_private_notes_are_not(client, db, academic_rows):

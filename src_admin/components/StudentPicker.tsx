@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useState } from 'react'
 import { LuFrown, LuLoaderCircle, LuSearch } from 'react-icons/lu'
@@ -99,7 +100,7 @@ export default function StudentPicker({ title = '학생 검색', departments = [
           {result.items.map(student => (
             <div className="admin-roster-row" key={student.id}>
               <span className="admin-roster-cell">{student.studentNo}</span>
-              <span className="admin-roster-cell"><strong>{student.name}</strong></span>
+              <span className="admin-roster-cell"><strong>{studentDisplayName(student.name, student.id, student.star)}</strong></span>
               <span className="admin-roster-cell">{student.major}</span>
               <span className="admin-roster-cell">{student.grade}</span>
               <span className="admin-roster-cell">

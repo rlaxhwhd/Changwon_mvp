@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { LuArrowLeft, LuCheck, LuChevronRight, LuClipboardCheck, LuFileText, LuQuote, LuSquarePen, LuUserX } from 'react-icons/lu'
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -246,7 +247,7 @@ export default function CounselSession() {
         <div>
           <h1 className="admin-page-title">상담 진행</h1>
           <p className="admin-page-desc">
-            {student.name} · {targetRequest?.type ?? myType} 상담 · 좌측 진단결과를 참고해 기록지를 작성합니다.
+            {studentDisplayName(student.name, student.id)} · {targetRequest?.type ?? myType} 상담 · 좌측 진단결과를 참고해 기록지를 작성합니다.
           </p>
         </div>
         <Link to="/counsel/requests" className="admin-btn admin-btn-ghost">

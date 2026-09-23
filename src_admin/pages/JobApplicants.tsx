@@ -1,3 +1,5 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
+import { useExportSelection } from '../../shared/useExportSelection'
 // ─────────────────────────────────────────────────────────────────────────────
 // 추천채용 지원자관리 — 공고 1건
 //
@@ -80,6 +82,8 @@ export default function JobApplicants() {
   )
   const summary = useMemo(() => (jobId ? summarizeJob(jobId) : undefined), [jobId, tick])
 
+  const selection = useExportSelection(JSON.stringify([jobId, stageFilter]), applications, row => row.id)
+
   // 지원 접수 대상이 아닌 공고는 이 화면에 들어올 이유가 없다.
   if (!job || !isRecommendedInternal(job)) return <Navigate to="/jobs/applicants" replace />
 
@@ -101,17 +105,17 @@ export default function JobApplicants() {
     void run(() => removeStage(jobId, stageId))
   }
 
-  const onReject = (id: string, name: string) => {
-    const reason = window.prompt(`${name} 지원자를 탈락 처리합니다.\n사유를 남겨 주세요(선택).`)
+  const onReject = (id: string, name: string, studentId: string) => {
+    const reason = window.prompt(`${studentDisplayName(name, studentId)} 지원자를 탈락 처리합니다.\n사유를 남겨 주세요(선택).`)
     if (reason === null) return
     void run(() => rejectApplication(id, reason.trim()))
   }
 
   const downloadCsv = () => {
-    if (!jobId) return
+    if (!jobId || !selection.count) return
     void run(async () => {
       // 명단은 서버가 만든다 — 목록·집계와 같은 필터와 범위를 쓰고 다운로드가 감사된다.
-      const body = await fetchJobApplicantCsv({ postingId: jobId })
+      const body = await fetchJobApplicantCsv({ postingId: jobId }, selection.ids)
       const today = new Date().toISOString().slice(0, 10).replaceAll('-', '')
       const url = URL.createObjectURL(new Blob([body], { type: 'text/csv;charset=utf-8' }))
       const anchor = document.createElement('a')
@@ -141,9 +145,9 @@ export default function JobApplicants() {
             type="button"
             className="admin-btn admin-btn-primary"
             onClick={downloadCsv}
-            disabled={!summary || summary.total === 0 || saving}
+            disabled={!selection.count || saving}
           >
-            <LuDownload /> {saving ? '처리 중…' : '엑셀 다운로드'}
+            <LuDownload /> {saving ? '처리 중…' : `엑셀 다운로드 (${selection.count})`}
           </button>
         </div>
       </header>
@@ -279,7 +283,7 @@ export default function JobApplicants() {
         ) : (
           <div className="admin-roster admin-jobapp-applicant-roster">
             <div className="admin-roster-head">
-              <span>학생</span>
+              <span>{selection.header}</span><span>번호</span><span>학생</span>
               <span>학번</span>
               <span>학과 · 학년</span>
               <span>학적</span>
@@ -290,7 +294,7 @@ export default function JobApplicants() {
               <span>관리</span>
               <span>지원서</span>
             </div>
-            {applications.map(a => {
+            {applications.map((a, index) => {
               const open = a.status === 'APPLIED' || a.status === 'IN_PROGRESS'
               // 표시는 신청 시점 스냅샷을 쓴다(CLAUDE.md 규칙 2).
               const snap = a.currentAttempt
@@ -299,7 +303,7 @@ export default function JobApplicants() {
               const document = attachmentUrl(snap)
               return (
                 <div key={a.id} className="admin-roster-row">
-                  <span className="admin-roster-student"><strong>{name}</strong></span>
+                  <span>{selection.checkbox(a, name)}</span><span>{index + 1}</span><span className="admin-roster-student"><strong>{studentDisplayName(name, a.studentId)}</strong></span>
                   <span className="admin-roster-cell">{snap?.studentNo ?? ''}</span>
                   <span className="admin-roster-cell">
                     {snap?.deptLabel ?? snap?.studentMajor ?? ''}
@@ -335,7 +339,7 @@ export default function JobApplicants() {
                           type="button"
                           className="admin-btn admin-btn-danger-ghost sm"
                           disabled={saving}
-                          onClick={() => onReject(a.id, name)}
+                          onClick={() => onReject(a.id, name, a.studentId)}
                         >
                           탈락
                         </button>

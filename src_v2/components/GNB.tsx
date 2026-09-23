@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { getNavSections, getSectionForPath, getActiveChildPath, getVisibleNavChildren, type NavChild } from './navConfig'
@@ -180,7 +181,7 @@ export default function GNB() {
                 aria-haspopup="menu"
                 aria-expanded={profileOpen}
                 onClick={() => setProfileOpen(v => !v)}
-                title={`${activeStudent.name} 메뉴`}
+                title={`${studentDisplayName(activeStudent.name, activeStudent.id)} 메뉴`}
               >
                 <span className="profile-avatar-icon">
                   <img src="/student-profile.png" alt="" />
@@ -195,7 +196,7 @@ export default function GNB() {
                       <img src="/student-profile.png" alt="" />
                     </span>
                     <div className="profile-popover-meta">
-                      <strong>{activeStudent.name}</strong>
+                      <strong>{studentDisplayName(activeStudent.name, activeStudent.id)}</strong>
                       <small>{activeStudent.grade ? `${activeStudent.grade}학년 · ` : ''}{activeStudent.collegeName ? `${activeStudent.collegeName} / ` : ''}{activeStudent.major}</small>
                     </div>
                   </div>
@@ -256,7 +257,7 @@ export default function GNB() {
                 <img src="/student-profile.png" alt="" />
               </span>
               <div className="profile-popover-meta">
-                <strong>{activeStudent.name}</strong>
+                <strong>{studentDisplayName(activeStudent.name, activeStudent.id)}</strong>
                 <small>{activeStudent.grade ? `${activeStudent.grade}학년 · ` : ''}{activeStudent.collegeName ? `${activeStudent.collegeName} / ` : ''}{activeStudent.major}</small>
               </div>
               <Link to={myPagePath} className="mobile-profile-link">

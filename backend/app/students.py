@@ -4,6 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from .auth import principal, require_staff, student_access, is_counselor
 from .db import connection
 from .settings import settings
+from .jobs import can_manage
+from .administration import is_administrator
 
 router=APIRouter()
 # Retired classifications. Preserve response keys for older clients without
@@ -89,7 +91,16 @@ def profiles(user=Depends(principal,scope='function'),conn=Depends(connection,sc
             students.append(data)
         else:
             owners.append(data)
-    return {'students':students,'counselOwners':owners}
+    # Lightweight name marker, using the same membership and access scope as the roster.
+    # One query for all markers, not one STAR detail request per rendered name.
+    star_condition,star_values=condition,values
+    if user['kind']=='STAFF' and (can_manage(conn,user,'students.1') or is_administrator(conn,user)):
+        star_condition,star_values='true',[]
+    star_rows=conn.execute('''SELECT s.intg_uid,p.alias,s.student_no
+      FROM dc.star_track st JOIN dc.student s ON s.intg_uid=st.student_uid
+      JOIN dc.person p ON p.intg_uid=s.intg_uid WHERE '''+star_condition,star_values).fetchall()
+    star_keys=sorted({key for row in star_rows for key in row.values() if key})
+    return {'students':students,'counselOwners':owners,'starStudentKeys':star_keys}
 
 
 def scope(request,user):
@@ -118,7 +129,7 @@ def scope(request,user):
 
 def roster(row):
     detail=row['detail'] or {}
-    return {'id':row['alias'],'studentNo':row['student_no'],'name':row['name'],
+    return {'id':row['alias'],'studentNo':row['student_no'],'name':row['name'],'star':row['star'],
             'major':row['major_label'],'grade':row['grade'],'studentType':row['student_type'],
             'tier':row['tier'],'status':row['status'],'gpa':row['gpa'],'progress':row['progress'],
             'phone':detail.get('phone'),'language':detail.get('language'),

@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useMemo, useState, type ReactNode } from 'react'
 import type { ProfileData, Skill, Cert, Language, Award, Project, Resume } from '../data/portfolio'
 import './ResumeSheet.css'
@@ -122,7 +123,7 @@ export default function ResumeSheet({
               </div>
             ) : (
               <h2 className="pf-resume-name">
-                {profile.name}
+                {studentDisplayName(profile.name, profile.studentId)}
                 {editable && (
                   <button type="button" className="pf-inline-edit-btn" onClick={() => startEdit('name')} aria-label="이름 수정">
                     <i className="fa-solid fa-pen" />

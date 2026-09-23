@@ -41,9 +41,11 @@ export function academicStudentStats(data: AcademicStudentDetail): StudentStat[]
   ]
 }
 
-export async function downloadAcademicStudents(params: ListParams): Promise<void> {
+export async function downloadAcademicStudents(params: ListParams, ids: string[]): Promise<void> {
+  if (!ids.length) return
   const response = await fetch(`/api/v1/academic-students/export?${queryString(params)}`, {
-    headers: { 'X-DC-Portal': 'admin', 'X-DC-Identity': localStorage.getItem('dc_active_staff') ?? '' },
+    method: 'POST', body: JSON.stringify({ ids }),
+    headers: { 'Content-Type': 'application/json', 'X-DC-Portal': 'admin', 'X-DC-Identity': localStorage.getItem('dc_active_staff') ?? '' },
   })
   if (!response.ok) {
     const error = await response.json().catch(() => null)

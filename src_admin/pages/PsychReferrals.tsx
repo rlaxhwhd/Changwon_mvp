@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useRef, useState } from 'react'
 import { LuArrowRightLeft, LuRefreshCw, LuSearch } from 'react-icons/lu'
@@ -75,7 +76,7 @@ function ReferralPage() {
 
   function change(row: Referral, action: 'ACCEPT' | 'COMPLETE' | 'CANCEL') {
     const text = action === 'ACCEPT' ? '접수' : action === 'COMPLETE' ? '처리 완료' : '취소'
-    if (!window.confirm(`${row.studentName} 학생의 연계를 ${text}하시겠습니까?`)) return
+    if (!window.confirm(`${studentDisplayName(row.studentName, row.studentId)} 학생의 연계를 ${text}하시겠습니까?`)) return
     void act(() => updateReferral(row, action), `${text}했습니다.`)
   }
 
@@ -100,7 +101,7 @@ function ReferralPage() {
         {searched && <p className="admin-field-hint" role="status">{students.length ? `${students.length}명 조회 · 최대 30명까지 표시합니다. 이름이나 학번으로 검색 범위를 좁힐 수 있습니다.` : '검색 결과가 없습니다. 학생 이름·학번과 담당 범위를 확인해 주세요.'}</p>}
         <form onSubmit={e => { e.preventDefault(); void act(async () => { await sendReferral({ studentId, counselorId, reasonCode }); setStudentId(''); setReasonCode('') }, '심리상담사에게 연계를 요청했습니다.') }}>
           <div className="admin-form-grid">
-            <label className="admin-form-field">연계 학생<select aria-label="연계 학생" required value={studentId} onChange={e => setStudentId(e.target.value)}><option value="">학생을 검색하고 선택해 주세요</option>{students.map(s => <option key={s.id} value={s.id}>{s.name} · {s.studentNo} · {s.major}</option>)}</select></label>
+            <label className="admin-form-field">연계 학생<select aria-label="연계 학생" required value={studentId} onChange={e => setStudentId(e.target.value)}><option value="">학생을 검색하고 선택해 주세요</option>{students.map(s => <option key={s.id} value={s.id}>{studentDisplayName(s.name, s.id)} · {s.studentNo} · {s.major}</option>)}</select></label>
             <label className="admin-form-field">담당 심리상담사<select aria-label="담당 심리상담사" required value={counselorId} onChange={e => setCounselorId(e.target.value)}><option value="">상담사 선택</option>{options.counselors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
             <label className="admin-form-field">연계 사유<select aria-label="연계 사유" required value={reasonCode} onChange={e => setReasonCode(e.target.value)}><option value="">사유 선택</option>{options.reasons.map(r => <option key={r.code} value={r.code}>{r.label}</option>)}</select></label>
           </div>
@@ -116,7 +117,7 @@ function ReferralPage() {
         {!data ? <p className="referral-form" role="status">{error ? '목록 조회를 다시 시도해 주세요.' : '목록을 불러오는 중입니다.'}</p> : !data.items.length ? <EmptyState icon={LuArrowRightLeft} message="해당하는 연계 요청이 없습니다." /> : <div className="referral-table-wrap"><table className="referral-table">
           <thead><tr><th>연계일</th><th>학생</th><th>연계 사유</th><th>{career ? '담당 심리상담사' : '보낸 상담사'}</th><th>상태</th><th>처리</th></tr></thead>
           <tbody>{data.items.map(row => <tr key={row.id}>
-            <td>{date(row.createdAt)}</td><td><strong>{row.studentName}</strong><small>{row.studentNo}<br />{row.major}</small></td><td>{row.reason}</td><td>{career ? row.recipientName : row.senderName}</td>
+            <td>{date(row.createdAt)}</td><td><strong>{studentDisplayName(row.studentName, row.studentId)}</strong><small>{row.studentNo}<br />{row.major}</small></td><td>{row.reason}</td><td>{career ? row.recipientName : row.senderName}</td>
             <td><span className={`admin-chip ${row.status === 'DONE' ? 'admin-chip-done' : row.status === 'PENDING' ? 'admin-chip-wait' : 'admin-chip-ok'}`}>{REFERRAL_STATUS[row.status]}</span><small>{row.completedAt ? date(row.completedAt) : row.cancelledAt ? date(row.cancelledAt) : row.acceptedAt ? date(row.acceptedAt) : ''}</small></td>
             <td>{career && row.status === 'PENDING' ? <button className="admin-btn admin-btn-ghost sm" disabled={busy} onClick={() => change(row, 'CANCEL')}>연계 취소</button> : !career && row.status === 'PENDING' ? <button className="admin-btn admin-btn-primary sm" disabled={busy} onClick={() => change(row, 'ACCEPT')}>접수</button> : !career && row.status === 'IN_PROGRESS' ? <button className="admin-btn admin-btn-ghost sm" disabled={busy} onClick={() => change(row, 'COMPLETE')}>처리 완료</button> : '—'}</td>
           </tr>)}</tbody></table></div>}

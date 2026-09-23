@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useEffect } from 'react'
 import { LuArrowLeft, LuPrinter } from 'react-icons/lu'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
@@ -80,7 +81,7 @@ function RecordSheet({ record }: { record: CounselRecord }) {
         <tbody>
           <tr>
             <th>학번</th><td>{profile?.studentNo ?? '—'}</td>
-            <th>성명</th><td>{record.studentName}</td>
+            <th>성명</th><td>{studentDisplayName(record.studentName, record.studentId)}</td>
           </tr>
           <tr>
             <th>학과</th><td>{record.studentMajor}</td>

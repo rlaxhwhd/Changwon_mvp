@@ -19,6 +19,7 @@ export type RosterTier = '하위' | '중간' | '상위'
 
 /** 로스터 학생 1명 (경량) — 상세 데이터는 STUDENTS(src_v2) 상세 학생만 보유 */
 export interface RosterStudent {
+  star?: boolean
   collegeName?: string | null
   academicLevel?: '학부' | '대학원'
   sex?: string
@@ -261,7 +262,7 @@ export function isCoreCare(s: RosterStudent): boolean {
  * 선발 결과는 starTrack 시드가 쥐고 있으므로 여기서 기준을 다시 만들지 않는다.
  */
 export function isStarTrack(s: RosterStudent): boolean {
-  return getStarTrack(s.id) !== undefined
+  return s.star ?? getStarTrack(s.id) !== undefined
 }
 
 /**

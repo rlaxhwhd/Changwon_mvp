@@ -10,6 +10,7 @@
 import io
 import re
 from pathlib import Path
+from uuid import uuid4
 
 import pytest
 
@@ -78,7 +79,7 @@ def test_student_portal_boots_while_the_plan_is_a_draft(client):
     """
     plan = plan_of(client, 'chaewon', 'career_kim')['roadmap']
     reopened = client.post('/api/v1/students/chaewon/roadmap/reopen',
-                           headers={**headers('career_kim'), 'Idempotency-Key': 'boot-draft-1'},
+                           headers={**headers('career_kim'), 'Idempotency-Key': 'boot-draft-'+uuid4().hex},
                            json={'expectedRoadmapVersion': plan['roadmapVersion'],
                                  'expectedVersion': plan['version']})
     assert reopened.status_code == 200, reopened.text
@@ -103,7 +104,7 @@ def test_student_portal_boots_while_the_plan_is_a_draft(client):
     finally:
         current = plan_of(client, 'chaewon', 'career_kim')['roadmap']
         client.post('/api/v1/students/chaewon/roadmap/confirm',
-                    headers={**headers('career_kim'), 'Idempotency-Key': 'boot-draft-2'},
+                    headers={**headers('career_kim'), 'Idempotency-Key': 'boot-confirm-'+uuid4().hex},
                     json={'expectedRoadmapVersion': current['roadmapVersion'],
                           'expectedVersion': current['version']})
     assert plan_of(client, 'chaewon', 'chaewon')['roadmap'] is not None

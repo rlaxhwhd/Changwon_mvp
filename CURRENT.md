@@ -316,9 +316,12 @@ SY_AUTH_LOG    권한 변경 이력 278건
 ### 4-2. 학사DB 경계 — DB 링크 2개
 
 ```
-DREAMCATCH(dream) ──[ V_BRDB ]──> BRDB   ← 학사DB   (2020-05-07 생성, 가동 중)
-                  ──[ IC2_LINK ]─> IC2    ← 구 시스템 (IC2_* 테이블의 출처)
+학사DB(BRDB, 위치 미상) ──push──> 12c dream (중계) ──[ V_BRDB ]──> 11g dream (이 DB)
+                                                  ──[ IC2_LINK ]─> IC2  ← 구 시스템 (IC2_* 테이블의 출처)
 ```
+
+> ⚠️ **정정 (2026-09-22 실측).** `V_BRDB`는 학사DB로 가는 링크가 **아니다.** 링크 양쪽을 대조하면 DB명 `dream`·호스트 `dreamcatch`가 같고 버전만 다르다(로컬 11.2.0.4 / 링크 12.2.0.1) — **같은 서버의 옆 인스턴스**다. 그 12c에는 `MCODE`(학과·교과목 마스터 `C_DEPT`·`C_EDU_COURSE`)·`REQUEST.LECTURE_PLAN`·`DREAMCATCH` 스키마가 있고, 학사 쪽이 골라서 밀어 넣는 **중계(staging) DB**로 보인다. 진짜 학사DB로 가는 경로는 이 계정에 없다.
+> `SELECT COUNT(*) FROM VIEW_SUGANG_ALL@V_BRDB` → `ORA-00942`(링크 너머에 없음). 조인키 컬럼(`CURI_NUM`·`COURSE_CLS`·`GRAD_DIV`·`STUDENT_CD`)을 가진 객체가 12c에 **0건** — 수강·개설 데이터는 grant 문제가 아니라 **중계 DB에 온 적이 없다.** 아래 「받을 준비만 해두고 비어 있는 것」은 쿼리·개발로 채울 수 없고 전산원이 12c로 밀어 줘야 한다(`docs/DB_BLOCKERS.html` A1).
 
 **한 줄 요약: 학사DB는 "누가·어디 소속인지"만 준다. "무엇을 했는지"는 전부 이 DB가 만든다. "무엇을 배웠는지(수강·성적)"는 받을 준비만 해두고 비어 있다.**
 
@@ -362,7 +365,7 @@ DREAMCATCH(dream) ──[ V_BRDB ]──> BRDB   ← 학사DB   (2020-05-07 생�
 
 → `V_USR_INF`는 순수 적재본이 아니라 **"학사 데이터 + 외부 인원"이 섞인 하이브리드 테이블**이다.
 → 구분은 `USER_TY_CD` + `HOFC_STA_CD` 조합. 짝이 되는 것은 `COM_CON_INF.INOUT_GB`(내외부)와 `CONPWD`(자체 비밀번호).
-→ `@V_BRDB` 실시간 조회가 소스에 존재한다 = 필요 시 실시간 조회가 가능하다는 뜻.
+→ `@V_BRDB` 실시간 조회가 소스에 존재한다 = 필요 시 **중계 12c**를 실시간 조회할 수 있다는 뜻이다. 학사DB 자체는 아니다(위 정정).
 
 ### 4-3. 조직 트리 구조
 

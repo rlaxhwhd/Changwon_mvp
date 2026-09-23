@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import type { CSSProperties } from 'react'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -240,7 +241,7 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                           <div className="tl-main">
                             <div className="tl-head">
                               <span className="time">{item.time}</span>
-                              <span className="who">{item.name}</span>
+                              <span className="who">{studentDisplayName(item.name, item.studentId)}</span>
                               <span className="kind">{item.meta}</span>
                               {item.typeCode && (
                                 <span className={`badge ${item.typeTint}`}>{item.typeCode} {item.typeLabel}</span>
@@ -278,10 +279,10 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                         </div>}
                         {on && !briefing && !briefingResource.error && <p role="status">브리핑을 불러오는 중입니다.</p>}
                         {on && briefing && !briefingResource.error && (
-                          <section className="inline-briefing" aria-label={`${briefing.name} 상담 전 브리핑`}>
+                          <section className="inline-briefing" aria-label={`${studentDisplayName(briefing.name, briefing.studentId)} 상담 전 브리핑`}>
                             <div className="inline-briefing-head">
                               <div className="inline-briefing-title">
-                                <h3>{briefing.name} 상담 전 브리핑</h3>
+                                <h3>{studentDisplayName(briefing.name, briefing.studentId)} 상담 전 브리핑</h3>
                               </div>
                               <div className="inline-briefing-meta">
                                 <span><Ico id="user" />{briefing.mode}</span>
@@ -345,7 +346,7 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                   >
                     <span className={`ava ${row.tint}`}>{row.initial}</span>
                     <div className="info">
-                      <div className="nm">{row.name}<span>{row.meta}</span></div>
+                      <div className="nm">{studentDisplayName(row.name, row.studentId)}<span>{row.meta}</span></div>
                       <div className="sub">{row.sub}</div>
                     </div>
                     <span className="badge s-orange">{row.status}</span>

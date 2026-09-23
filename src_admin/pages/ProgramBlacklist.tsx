@@ -1,3 +1,5 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
+import { useExportSelection } from '../../shared/useExportSelection'
 import { pageNumbers } from '../../shared/pagination'
 import type { IconType } from 'react-icons'
 import {
@@ -19,7 +21,6 @@ import {
   waivePenalty,
   clearPenalty,
   queryPenaltyList,
-  getPenaltyRowsForExport,
   getPenaltySummary,
   getStudentPenalty,
 } from '../data/penalties'
@@ -80,7 +81,7 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
   }
 
   const handleClear = () => {
-    if (!window.confirm(`${record.studentName} 학생의 벌점 이력을 전부 해제할까요?`)) return
+    if (!window.confirm(`${studentDisplayName(record.studentName, record.studentId)} 학생의 벌점 이력을 전부 해제할까요?`)) return
     run(async () => { await clearPenalty(record.studentId); onDone() })
   }
 
@@ -88,7 +89,7 @@ function PenaltyDetail({ record, onDone }: { record: StudentPenalty; onDone: () 
     <div className="blk-detail">
       <div className="blk-detail-head">
         <div className="blk-detail-who">
-          <strong>{record.studentName}</strong>
+          <strong>{studentDisplayName(record.studentName, record.studentId)}</strong>
           <small>{record.college ?? collegeOf(record.studentMajor)} · {record.studentMajor} · {record.studentNo ?? studentNoOf(record.studentId)}</small>
         </div>
         <span className="admin-blacklist-total"><em>{record.total}</em>점</span>
@@ -172,6 +173,7 @@ export default function ProgramBlacklist() {
   const { data: result, isLoading, refetch } = useListData(queryPenaltyList, params)
 
   const items = result.items
+  const selection = useExportSelection(JSON.stringify([query, college, major, ptsMin, scope]), items, row => row.studentId, isLoading)
   const pages = totalPages(result)
 
   // 필터 변경 시 항상 1페이지부터
@@ -183,7 +185,8 @@ export default function ProgramBlacklist() {
   const pageWindow = pageNumbers(page, pages)
 
   const downloadCsv = async () => {
-    const rows = await getPenaltyRowsForExport(params)
+    if (!selection.count) return
+    const rows = selection.rows
     const header = ['번호', '이름', '학번', '대학', '학과', '벌점점수']
     const body = rows.map((r, idx) => [
       String(rows.length - idx),
@@ -260,8 +263,8 @@ export default function ProgramBlacklist() {
           총 <em>{result.totalCount}</em> 개
           {isLoading && <LuLoaderCircle className="admin-spin" />}
         </span>
-        <button type="button" className="blk-excel-btn" onClick={downloadCsv}>
-          <LuDownload /> 엑셀 다운로드
+        <button type="button" className="blk-excel-btn" onClick={downloadCsv} disabled={!selection.count || isLoading}>
+          <LuDownload /> 엑셀 다운로드 ({selection.count})
         </button>
       </div>
 
@@ -280,7 +283,7 @@ export default function ProgramBlacklist() {
           <>
             <div className="blk-table" role="table">
               <div className="blk-thead" role="row">
-                <span>번호</span>
+                <span>{selection.header}</span><span>번호</span>
                 <span>이름</span>
                 <span>학번</span>
                 <span>대학</span>
@@ -290,20 +293,21 @@ export default function ProgramBlacklist() {
               {items.map((r, i) => {
                 const no = result.totalCount - ((page - 1) * PER_PAGE + i)
                 return (
-                  <button
-                    type="button"
+                  <div
+                    tabIndex={0}
+                    onKeyDown={e => { if (e.target === e.currentTarget && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); void getStudentPenalty(r.studentId).then(setSelected) } }}
                     className="blk-row"
                     role="row"
                     key={r.studentId}
                     onClick={() => { void getStudentPenalty(r.studentId).then(setSelected) }}
                   >
-                    <span className="blk-c-no">{no}</span>
-                    <span className="blk-c-name">{r.studentName}</span>
+                    <span>{selection.checkbox(r, r.studentName)}</span><span className="blk-c-no">{no}</span>
+                    <span className="blk-c-name">{studentDisplayName(r.studentName, r.studentId)}</span>
                     <span className="blk-c-mono">{r.studentNo}</span>
                     <span>{r.college ?? collegeOf(r.studentMajor)}</span>
                     <span>{r.studentMajor}</span>
                     <span className="blk-c-pts"><em>{r.total}</em></span>
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -329,7 +333,7 @@ export default function ProgramBlacklist() {
       </section>
 
       {selected && (
-        <AdminModal title={`${selected.studentName} · 벌점 이력`} onClose={() => setSelected(null)} size="md">
+        <AdminModal title={`${studentDisplayName(selected.studentName, selected.studentId)} · 벌점 이력`} onClose={() => setSelected(null)} size="md">
           <PenaltyDetail record={selected} onDone={refresh} />
         </AdminModal>
       )}

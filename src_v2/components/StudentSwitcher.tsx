@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { DEVELOPMENT_STUDENTS, getActiveStudentId, setActiveStudent } from '../data/students'
 import './StudentSwitcher.css'
 
@@ -18,7 +19,7 @@ export default function StudentSwitcher() {
             className={`ss-btn${s.id === activeId ? ' active' : ''}`}
             onClick={() => s.id !== activeId && setActiveStudent(s.id)}
           >
-            <strong>{s.name}</strong>
+            <strong>{studentDisplayName(s.name, s.id)}</strong>
             <small>{s.grade}학년 · {s.major}</small>
           </button>
         ))}

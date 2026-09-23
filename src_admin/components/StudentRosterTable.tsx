@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { LuChevronLeft, LuChevronRight, LuFrown, LuLoaderCircle, LuSearch } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
@@ -156,7 +157,7 @@ export default function StudentRosterTable({ departments, studentIds, professorI
               {items.map((s, i) => (
                 <div key={s.id} className="admin-roster-row">
                   <span className="admin-roster-cell">{startIndex + i + 1}</span>
-                  <span className="admin-roster-cell"><strong>{s.name}</strong></span>
+                  <span className="admin-roster-cell"><strong>{studentDisplayName(s.name, s.id, s.star)}</strong></span>
                   <span className="admin-roster-cell">{s.studentNo}</span>
                   <span className="admin-roster-cell">{s.grade}</span>
                   <span className="admin-roster-cell">{s.collegeName ?? '코드 미확인'}</span>

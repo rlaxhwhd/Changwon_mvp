@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import type { CSSProperties, ReactNode } from 'react'
 import { fetchAcademicStudentDetail, academicStudentStats, type AcademicStudentDetail } from '../data/academicStudents'
 import type { IconType } from 'react-icons'
@@ -179,7 +180,7 @@ function DiagnosisTab({ student }: { student: StudentData }) {
             {!type ? (
               <EmptyState
                 icon={LuClipboardCheck}
-                message={`${student.name} 학생은 아직 C-CORE 핵심진단을 보지 않았습니다.\n응시하면 6유형이 정해지고 후속진단·상담 주제가 결정됩니다.`}
+                message={`${studentDisplayName(student.name, student.id)} 학생은 아직 C-CORE 핵심진단을 보지 않았습니다.\n응시하면 6유형이 정해지고 후속진단·상담 주제가 결정됩니다.`}
               />
             ) : (
               <>
@@ -711,7 +712,7 @@ function StarTab({ student }: { student: StudentData }) {
       <section className="admin-card">
         <EmptyState
           icon={LuStar}
-          message={`${student.name} 학생은 STAR 트랙 참여자가 아닙니다. 학부 2·3학년 40명을 서류심사로 선발합니다.`}
+          message={`${studentDisplayName(student.name, student.id)} 학생은 STAR 트랙 참여자가 아닙니다. 학부 2·3학년 40명을 서류심사로 선발합니다.`}
         />
       </section>
     )
@@ -823,7 +824,7 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
   return <>
     <header className="admin-page-head">
       <div className="admin-detail-id">
-        <h1 className="admin-page-title">{data.name}</h1>
+        <h1 className="admin-page-title">{studentDisplayName(data.name, data.id, data.star)}</h1>
         <span className={studentTypeClass(data.studentType)}>
           {data.studentType && <b>{data.studentType}</b>}{typeLabel(data.studentType)}
         </span>
@@ -887,7 +888,7 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
           <header className="admin-page-head">
             <div className="admin-detail-id">
               <div>
-                <h1 className="admin-page-title">{roster.name}</h1>
+                <h1 className="admin-page-title">{studentDisplayName(roster.name, roster.id, roster.star)}</h1>
                 <p className="admin-page-desc">
                   {roster.major} · {roster.grade}학년 · 학번 {roster.studentNo}
                   {roster.gpa && ` · GPA ${roster.gpa} · ${roster.language}`}
@@ -951,7 +952,7 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
       {academicData ? <AcademicStudentHeader data={academicData} action={headerAction} /> : <>
       <header className="admin-page-head">
         <div className="admin-detail-id">
-          <h1 className="admin-page-title">{student.name}</h1>
+          <h1 className="admin-page-title">{studentDisplayName(student.name, student.id)}</h1>
         </div>
         {headerAction}
       </header>

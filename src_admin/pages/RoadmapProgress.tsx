@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -194,7 +195,7 @@ export default function RoadmapProgress() {
           </div>
           {stats.laggards.map(row => (
             <div key={row.id} className="rmp-lag-row" role="row">
-              <span role="cell"><strong>{row.name}</strong></span>
+              <span role="cell"><strong>{studentDisplayName(row.name, row.id)}</strong></span>
               <span role="cell">{row.major} · {row.grade}학년</span>
               <span role="cell"><span className={studentTypeClass(row.studentType)}><b>{row.studentType}</b>{row.typeLabel}</span></span>
               <span role="cell" className="rmp-lag-rate">

@@ -1,3 +1,5 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
+import { useExportSelection } from '../../shared/useExportSelection'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { useState } from 'react'
 import {
@@ -11,7 +13,6 @@ import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
 import {
   assignAdvisor,
-  getAdvisorRosterForExport,
   getAdvisorTabCounts,
   getAssignYearOptions,
   getProfessorAdvisorCounts,
@@ -67,6 +68,7 @@ export default function AssistantAdvisor() {
     queryAdvisorRoster,
     params,
   )
+  const selection = useExportSelection(JSON.stringify([query, tab, params.filters, departments]), result.items, row => row.id, isLoading)
   const change = (setter: (value: string) => void) => (value: string) => {
     setter(value)
     setPage(1)
@@ -81,11 +83,8 @@ export default function AssistantAdvisor() {
   }
   const download = async () => {
     try {
-    const rows = await getAdvisorRosterForExport({
-      ...params,
-      page: undefined,
-      pageSize: undefined,
-    })
+    if (!selection.count) return
+    const rows = selection.rows
     const escape = (value: string | number | undefined) =>
       `"${String(value ?? '').replaceAll('"', '""')}"`
     const csv = [
@@ -151,8 +150,8 @@ export default function AssistantAdvisor() {
           <button type="button" className="admin-btn admin-btn-ghost" onClick={reset}>
             초기화
           </button>
-          <button type="button" className="admin-btn admin-btn-primary" onClick={download}>
-            엑셀 다운로드
+          <button type="button" className="admin-btn admin-btn-primary" onClick={download} disabled={!selection.count || isLoading}>
+            엑셀 다운로드 ({selection.count})
           </button>
         </div>
       </header>
@@ -242,15 +241,15 @@ export default function AssistantAdvisor() {
           <>
             <div className="admin-roster admin-advisor-roster">
               <div className="admin-roster-head">
-                <span>번호</span><span>학번</span><span>이름</span><span>소속</span>
+                <span>{selection.header}</span><span>번호</span><span>학번</span><span>이름</span><span>소속</span>
                 <span>학년</span><span>학적</span><span>연락처</span><span>지도교수</span>
                 <span>배정일자</span>
               </div>
               {result.items.map((row, index) => (
                 <div key={row.id} className="admin-roster-row">
-                  <span className="admin-roster-cell">{start + index + 1}</span>
+                  <span>{selection.checkbox(row, row.name)}</span><span className="admin-roster-cell">{start + index + 1}</span>
                   <span className="admin-roster-cell">{row.studentNo}</span>
-                  <span className="admin-roster-cell"><strong>{row.name}</strong></span>
+                  <span className="admin-roster-cell"><strong>{studentDisplayName(row.name, row.id)}</strong></span>
                   <span className="admin-roster-cell">{collegeOf(row.major)} {row.major}</span>
                   <span className="admin-roster-cell">{row.grade}</span>
                   <span className="admin-roster-cell">
@@ -319,7 +318,7 @@ function AssignModal({
   return (
     <AdminModal title="교수 배정" size="md" onClose={onClose}>
       <dl className="admin-kv">
-        <div><dt>학생</dt><dd>{student.name}</dd></div>
+        <div><dt>학생</dt><dd>{studentDisplayName(student.name, student.id)}</dd></div>
         <div><dt>학번</dt><dd>{student.studentNo}</dd></div>
         <div><dt>소속</dt><dd>{student.major}</dd></div>
         <div><dt>학년</dt><dd>{student.grade}학년</dd></div>

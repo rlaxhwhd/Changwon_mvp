@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { LuFrown, LuInbox, LuPencilRuler, LuUser } from 'react-icons/lu'
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -40,7 +41,7 @@ export default function RoadmapEditor() {
       <header className="admin-page-head">
         <div>
           <h1 className="admin-page-title">
-            <LuPencilRuler /> 로드맵 편집 — {student.name}
+            <LuPencilRuler /> 로드맵 편집 — {studentDisplayName(student.name, student.id)}
           </h1>
           <p className="admin-page-desc">
             {student.major} · {student.grade}학년 · 학번 {student.studentNo}

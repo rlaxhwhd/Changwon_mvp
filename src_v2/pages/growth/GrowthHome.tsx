@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../../shared/studentDisplayName'
 // ★ 이 화면에 있던 공통 초기 상수(SKILLS·PROJECTS·QUALIFICATIONS·GROWTH_RECORDS)를 걷었다.
 //   useStoredList 가 mount 직후 그 상수를 **학생별 키에 그대로 저장**해서, 아무도 쓴 적 없는
 //   실적이 모든 학생에게 자기 것처럼 보였다. 정본은 서버(dc.growth_entry)이고, 소유자가
@@ -185,7 +186,7 @@ export default function GrowthHome() {
           <div className="gh-avatar" aria-hidden="true">{student.name.slice(-2)}</div>
           <div>
             <span className="gh-eyebrow">{isSenior ? 'CAREER PORTFOLIO' : 'MY GROWTH RECORD'}</span>
-            <h2 id="growth-title">{student.name}의 {isSenior ? '성장 포트폴리오' : '성장 기록'}</h2>
+            <h2 id="growth-title">{studentDisplayName(student.name, student.id)}의 {isSenior ? '성장 포트폴리오' : '성장 기록'}</h2>
             <p>{student.major} · {student.grade}학년 · {student.studentNo}</p>
           </div>
         </div>

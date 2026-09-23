@@ -96,7 +96,7 @@ def test_catalog_is_readable_but_applications_are_scoped(client):
 # ── 게이트 ──────────────────────────────────────────────────────────────
 
 def test_gate_blocks_incomplete_diagnosis_and_opens_for_completed(client):
-    """E03·E04 — 판정은 gates.py 한 곳에서 하고 care_track 이 비어도 진로 상담은 게이트를 연다."""
+    """Employment requires diagnosis, completed CARE 7+ counseling and a confirmed roadmap."""
     ready = client.get('/api/v1/jobs/eligibility', headers=headers('chaewon')).json()
     assert ready['eligible'] is True, ready
     # 막히는 쪽은 진단을 안 본 학생으로 잡는다. changwon 은 후속진단(C4) 결과가
@@ -107,7 +107,9 @@ def test_gate_blocks_incomplete_diagnosis_and_opens_for_completed(client):
     blocked = client.get('/api/v1/jobs/eligibility', headers=headers(blocked_alias)).json()
     assert blocked['eligible'] is False
     codes = {r['code'] for r in blocked['reasons']}
-    assert 'FOLLOWUP_REQUIRED' in codes, blocked
+    # The reset fixture has no confirmed type; follow-up is determined only after type confirmation.
+    assert 'TYPE_REQUIRED' in codes, blocked
+    assert 'CARE7_REQUIRED' in codes and 'ROADMAP_CONFIRMATION_REQUIRED' in codes, blocked
     # 잠긴 화면이 빈 화면이 되지 않도록 다음 단계 경로를 함께 준다(PROCESS.md §2 구현규칙 1).
     assert all(r['nextRoute'] and r['message'] for r in blocked['reasons'])
     posting = new_posting(client)
@@ -342,6 +344,18 @@ def test_summary_and_export_share_the_filter_and_the_scope(client):
     lines = export.text.lstrip('﻿').splitlines()
     assert lines[0].startswith('"공고명","회사명","이름","학번","대학","학과"')
     assert len(lines) == 2
+    chosen = listed['items'][0]['id']
+    selected = client.post('/api/v1/job-applications/export', headers=head,
+                           params={'postingId': posting['id']}, json={'applicationIds':[chosen, chosen]})
+    assert selected.status_code == 200, selected.text
+    assert selected.text == export.text
+    excluded = client.post('/api/v1/job-applications/export', headers=head,
+                           params={'postingId': posting['id']}, json={'applicationIds':['nonexistent']})
+    assert excluded.status_code == 200 and len(excluded.text.splitlines()) == 1
+    assert client.post('/api/v1/job-applications/export', headers=head,
+                       json={'applicationIds':[]}).status_code == 422
+    assert client.post('/api/v1/job-applications/export', headers=headers('chaewon'),
+                       json={'applicationIds':[chosen]}).status_code == 403
     cells = [c.strip('"') for c in lines[1].split('","')]
     # E10 — 「대학」은 (단대코드,학과코드) 조인 결과다. 코드가 없는 학생은 빈칸이다.
     with pool.connection() as conn:

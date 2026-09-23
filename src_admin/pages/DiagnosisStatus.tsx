@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useState } from 'react'
 import { useAsyncAction } from '../../shared/useAsyncAction'
@@ -66,7 +67,7 @@ function CommentModal({ row, onClose, onSaved }: { row: DiagnosisStatusRow; onCl
   return (
     <AdminModal title="결과 코멘트 작성" size="md" onClose={onClose}>
       <dl className="admin-detail-grid">
-        <div><dt>학생</dt><dd>{row.studentName} · {row.studentNo} · {row.studentMajor} {row.studentGrade}학년</dd></div>
+        <div><dt>학생</dt><dd>{studentDisplayName(row.studentName, row.studentNo)} · {row.studentNo} · {row.studentMajor} {row.studentGrade}학년</dd></div>
         <div><dt>검사</dt><dd>{row.testName}{row.isRetake && ` (${row.attemptNo}회차)`}</dd></div>
         <div><dt>응시일</dt><dd>{formatDate(row.date)}</dd></div>
         <div><dt>결과 요약</dt><dd>{row.resultSummary ?? '—'}</dd></div>
@@ -243,7 +244,7 @@ export default function DiagnosisStatus() {
                 <div className="admin-roster-row" key={row.key}>
                   <span className="admin-roster-cell">{row.studentNo}</span>
                   <span className="admin-roster-cell">
-                    <strong>{row.studentName}</strong>
+                    <strong>{studentDisplayName(row.studentName, row.studentNo)}</strong>
                     <span className={enrollStatusClass(row.enrollStatus)}>{row.enrollStatus}</span>
                   </span>
                   <span className="admin-roster-cell">{row.studentMajor}</span>

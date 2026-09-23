@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import type { IconType } from 'react-icons'
 import { LuBan, LuBellRing, LuCircleCheck, LuHourglass, LuInbox, LuPencilRuler, LuRoute, LuX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
@@ -59,7 +60,7 @@ export default function RoadmapRequests() {
   }
 
   const onReject = (req: RoadmapChangeRequest) => {
-    if (!window.confirm(`${req.studentName}(${req.studentNo}) 님의 요청을 반려합니다. 계속할까요?`)) return
+    if (!window.confirm(`${studentDisplayName(req.studentName, req.studentId)}(${req.studentNo}) 님의 요청을 반려합니다. 계속할까요?`)) return
     rejectRoadmapRequests([req])
       .catch(e => { setError(e instanceof Error ? e.message : '반려하지 못했습니다.'); loadRoadmapRequests() })
   }
@@ -204,11 +205,11 @@ function RequestRow({ req, no, checked, onToggle, nudgedAt, onNudge, onReject }:
           checked={checked}
           disabled={!waiting}
           onChange={onToggle}
-          aria-label={`${req.studentName}(${req.studentNo}) 요청 선택`}
+          aria-label={`${studentDisplayName(req.studentName, req.studentId)}(${req.studentNo}) 요청 선택`}
         />
       </span>
       <span className="admin-roster-cell">{no}</span>
-      <span className="admin-roster-cell"><strong>{req.studentName}</strong></span>
+      <span className="admin-roster-cell"><strong>{studentDisplayName(req.studentName, req.studentId)}</strong></span>
       {/* 동명이인은 학번으로만 갈린다 — 이름 옆 보조 텍스트가 아니라 독립 열로 둔다. */}
       <span className="admin-roster-cell">{req.studentNo}</span>
       <span className="admin-roster-cell">{req.studentMajor}</span>
@@ -250,7 +251,7 @@ function RequestRow({ req, no, checked, onToggle, nudgedAt, onNudge, onReject }:
               type="button"
               className="admin-icon-btn danger"
               title="반려"
-              aria-label={`${req.studentName} 요청 반려`}
+              aria-label={`${studentDisplayName(req.studentName, req.studentId)} 요청 반려`}
               onClick={() => onReject(req)}
             >
               <LuX />

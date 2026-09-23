@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useMemo, useState } from 'react'
 import { LuBrain, LuEye, LuEyeOff, LuPlus, LuTrash2 } from 'react-icons/lu'
 import AdminModal from '../components/AdminModal'
@@ -60,7 +61,7 @@ function ResultModal({ row, onClose, onSaved, onReload }: { row: PsychTestRow; o
     <AdminModal title="심리검사 결과 작성" size="lg" onClose={onClose}>
       <div className="counsel-profile-heading">
         <div>
-          <strong>{row.request.studentName}</strong>
+          <strong>{studentDisplayName(row.request.studentName, row.request.studentId)}</strong>
           <span>{row.request.studentNo}</span>
         </div>
         <span className={enrollStatusClass(row.request.studentEnrollmentStatus)}>{row.request.studentEnrollmentStatus}</span>
@@ -190,7 +191,7 @@ export default function PsychTests() {
             {rows.map(row => (
               <div className="admin-roster-row" key={row.request.id}>
                 <span className="admin-roster-cell">{row.request.studentNo}</span>
-                <span className="admin-roster-cell"><strong>{row.request.studentName}</strong></span>
+                <span className="admin-roster-cell"><strong>{studentDisplayName(row.request.studentName, row.request.studentId)}</strong></span>
                 <span className="admin-roster-cell">{row.request.studentMajor}</span>
                 <span className="admin-roster-cell">{row.request.slot?.date ?? '—'}</span>
                 <span className="admin-roster-cell">

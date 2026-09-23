@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import PageNumbers from '../../shared/components/PageNumbers'
 /** 교수 상담 신청 접수 화면 — 교수에게 지정된 신청만 일정 확정 또는 취소한다. */
 import {
@@ -67,7 +68,7 @@ function ConfirmScheduleModal({
     <AdminModal title="상담 일정 확정" size="md" onClose={onClose}>
       <div className="admin-kv">
         <span>이름</span>
-        <strong>{request.studentName}</strong>
+        <strong>{studentDisplayName(request.studentName, request.studentId)}</strong>
         <span>학번</span>
         <strong>{request.studentNo}</strong>
         <span>학과</span>
@@ -143,7 +144,7 @@ export default function ProfessorCounselRequests() {
   }
   // 취소 사유는 서버가 필수로 요구한다 — 사유 없이 보내면 422 로 거절된다.
   const reject = (row: ProfCounselRequestRow) => {
-    const reason = window.prompt(`${row.studentName} 학생의 상담 신청을 거절합니다.\n사유를 입력해 주세요.`)
+    const reason = window.prompt(`${studentDisplayName(row.studentName, row.studentId)} 학생의 상담 신청을 거절합니다.\n사유를 입력해 주세요.`)
     if (!reason?.trim()) return
     run(async () => { await cancelProfRequest(row.id, reason.trim()); refetch() })
   }
@@ -209,7 +210,7 @@ export default function ProfessorCounselRequests() {
                 <div className="admin-roster-row" key={row.id}>
                   <span className="admin-roster-cell">{startIndex + index + 1}</span>
                   <span className="admin-roster-cell">
-                    <strong>{row.studentName}</strong>
+                    <strong>{studentDisplayName(row.studentName, row.studentId)}</strong>
                     <small>{row.studentNo} · {row.studentMajor}</small>
                     {row.isAdvisee && <span className="admin-tag admin-tag-soft">지도</span>}
                     <button

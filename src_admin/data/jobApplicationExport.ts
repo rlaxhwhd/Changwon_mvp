@@ -29,11 +29,12 @@ function exportUrl(filter: JobApplicantExportFilter): string {
 }
 
 /** CSV 본문(BOM 포함). 필터를 비우면 담당 범위의 전체 지원이 나온다. */
-export async function fetchJobApplicantCsv(filter: JobApplicantExportFilter = {}): Promise<string> {
+export async function fetchJobApplicantCsv(filter: JobApplicantExportFilter = {}, applicationIds?: string[]): Promise<string> {
   const identity = localStorage.getItem('dc_active_staff')
   const headers = new Headers()
   if (identity) headers.set('X-DC-Identity', identity)
-  const response = await fetch(exportUrl(filter), { headers })
+  headers.set('Content-Type', 'application/json')
+  const response = await fetch(exportUrl(filter), { headers, method: 'POST', body: JSON.stringify({ applicationIds }) })
   if (!response.ok) {
     const error = await response.json().catch(() => null) as { detail?: string } | null
     throw new Error(error?.detail ?? '명단을 내려받지 못했습니다.')

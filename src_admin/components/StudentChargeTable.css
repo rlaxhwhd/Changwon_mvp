@@ -15,3 +15,7 @@
 .academic-sex-filter legend { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); }
 .academic-sex-filter label { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding-inline-end: 12px; cursor: pointer; }
 .academic-sex-filter input { accent-color: var(--color-primary); }
+.admin-charge-roster.has-export-selection .admin-roster-head,
+.admin-charge-roster.has-export-selection .admin-roster-row {
+  grid-template-columns: 36px 52px 1.1fr 1.4fr 0.6fr 1.4fr 0.8fr 1fr;
+}

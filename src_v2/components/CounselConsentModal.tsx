@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Modal from './Modal'
 import { getActiveStudent } from '../data/students'
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import './CounselConsentModal.css'
 
 interface Props {
@@ -183,7 +184,7 @@ export default function CounselConsentModal({ open, onClose, onAgree, applicantN
           </p>
           <div className="ccm-signature">
             <span className="ccm-signature-label">신청자</span>
-            <span className="ccm-signature-name">{name}</span>
+            <span className="ccm-signature-name">{studentDisplayName(name, getActiveStudent().id)}</span>
             <input
               className="ccm-signature-input"
               type="text"

@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { useState } from 'react'
 import { LuChevronLeft, LuChevronRight, LuInfo, LuPlus, LuSearch, LuUserCheck } from 'react-icons/lu'
@@ -30,7 +31,7 @@ function BlockModal({ initial, onClose, onSaved }: { initial: SmsBlockRow | null
   const history = useListData(smsBlockEvents, { studentId: initial?.studentId ?? '', page: historyPage })
   const { run, saving, error } = useAsyncAction()
   const blocking = !initial
-  return <AdminModal title={blocking ? 'SMS 차단 등록' : `${initial.studentName} · SMS 차단 관리`} onClose={onClose} size="md">
+  return <AdminModal title={blocking ? 'SMS 차단 등록' : `${studentDisplayName(initial.studentName, initial.studentId)} · SMS 차단 관리`} onClose={onClose} size="md">
     {!initial && <>
       <form className="blk-filter" onSubmit={e => { e.preventDefault(); setSearch(query); setPage(1); setSelected(null) }}>
         <label className="admin-field"><span>학생 검색</span><input value={query} maxLength={200} onChange={e => setQuery(e.target.value)} placeholder="이름·학번·학과" /></label>
@@ -40,13 +41,13 @@ function BlockModal({ initial, onClose, onSaved }: { initial: SmsBlockRow | null
       {candidates.isLoading ? <p role="status">불러오는 중…</p> : <div className="sms-candidates">
         {candidates.data.items.map(row => <label className="sms-candidate" key={row.studentId}>
           <input type="radio" name="sms-student" checked={selected?.studentId === row.studentId} onChange={() => setSelected(row)} />
-          <span><strong>{row.studentName}</strong> · {row.studentNo}<small>{row.college ?? '소속 미등록'} · {row.studentMajor}</small></span>
+          <span><strong>{studentDisplayName(row.studentName, row.studentId)}</strong> · {row.studentNo}<small>{row.college ?? '소속 미등록'} · {row.studentMajor}</small></span>
         </label>)}
         {search && !candidates.data.items.length && <p>등록 가능한 학생이 없습니다. 이미 차단된 학생은 제외됩니다.</p>}
       </div>}
       {candidates.data.totalCount > 20 && <Pager page={page} count={candidates.data.totalCount} onChange={setPage} />}
     </>}
-    {selected && <div className="admin-editor-hint"><LuInfo /> {selected.studentName} · {selected.studentNo} · {selected.studentMajor}</div>}
+    {selected && <div className="admin-editor-hint"><LuInfo /> {studentDisplayName(selected.studentName, selected.studentId)} · {selected.studentNo} · {selected.studentMajor}</div>}
     {initial && <>
       <p>차단 사유: {initial.reason}</p>
       {history.error && <p role="alert">{history.error.message}</p>}
@@ -98,7 +99,7 @@ export default function SmsBlacklist() {
         <div className="blk-table">
           <div className="blk-thead"><span>번호</span><span>이름</span><span>학번</span><span>대학</span><span>학과</span><span>상태</span></div>
           {data.items.map((row, i) => <button className="blk-row" key={row.studentId} onClick={() => setEditing(row)}>
-            <span className="blk-c-no">{data.totalCount - (page - 1) * 20 - i}</span><span className="blk-c-name">{row.studentName}</span>
+            <span className="blk-c-no">{data.totalCount - (page - 1) * 20 - i}</span><span className="blk-c-name">{studentDisplayName(row.studentName, row.studentId)}</span>
             <span className="blk-c-mono">{row.studentNo}</span><span>{row.college ?? '소속 미등록'}</span><span>{row.studentMajor}</span><span>SMS 차단</span>
           </button>)}
         </div>}

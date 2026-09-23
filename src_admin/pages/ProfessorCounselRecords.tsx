@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import PageNumbers from '../../shared/components/PageNumbers'
 /** 교수 상담 기록 화면 — 기록은 append하고 신청 연계 건은 완료로 전이한다. */
 import { LuChevronLeft, LuChevronRight, LuSearch } from 'react-icons/lu'
@@ -76,7 +77,7 @@ export default function ProfessorCounselRecords() {
           <div className="admin-form-grid">
             {request ? <>
               <div className="admin-kv">
-                <span>학생</span><strong>{request.studentName} ({request.studentNo})</strong>
+                <span>학생</span><strong>{studentDisplayName(request.studentName, request.studentId)} ({request.studentNo})</strong>
               </div>
               <div className="admin-kv">
                 <span>학과·학년</span><strong>{request.studentMajor} · {request.studentGrade}학년</strong>
@@ -86,7 +87,7 @@ export default function ProfessorCounselRecords() {
               <div className="admin-field">
                 <span>학생</span>
                 <button type="button" className="admin-btn" onClick={() => setPickingStudent(true)}>
-                  {selectedStudent ? `${selectedStudent.name} (${selectedStudent.studentNo})` : '지도학생 검색'}
+                  {selectedStudent ? `${studentDisplayName(selectedStudent.name, selectedStudent.id)} (${selectedStudent.studentNo})` : '지도학생 검색'}
                 </button>
               </div>
             )}
@@ -164,7 +165,7 @@ export default function ProfessorCounselRecords() {
                 <div className="admin-roster-row" key={item.id}>
                   <span className="admin-roster-cell">{startIndex + index + 1}</span>
                   <span className="admin-roster-cell">{item.date.replaceAll('-', '.')}</span>
-                  <span className="admin-roster-cell">{item.snapshot.name} {item.snapshot.studentNo}</span>
+                  <span className="admin-roster-cell">{studentDisplayName(item.snapshot.name, item.snapshot.studentNo)} {item.snapshot.studentNo}</span>
                   <span className="admin-roster-cell">{item.snapshot.major} · {item.snapshot.grade}학년</span>
                   <span className="admin-roster-cell">
                     {PROF_COUNSEL_CATEGORIES.find(category => category.code === item.categoryCode)?.label}

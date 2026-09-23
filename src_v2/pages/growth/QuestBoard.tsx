@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../../shared/studentDisplayName'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../../shared/api'
@@ -78,7 +79,7 @@ export default function QuestBoard() {
     ? `오늘 출석하면 ${data.rules.DAILY.xp.toLocaleString()} XP · 학년 상한까지 적립`
     : '학기 중 평일에 XP가 지급됩니다. 오늘은 출석 기록만 남겨요.'
   return <div className="qb-page" aria-busy={loading}>
-    <header className="qb-toolbar"><div><small className="qb-welcome-meta">{student.major}{student.grade ? ` ${student.grade}학년` : ''} · {year}.{String(month).padStart(2, '0')}.{String(day).padStart(2, '0')}</small><h2><span>{student.name}</span>님의 성장 퀘스트<br />오늘의 작은 실천을 시작해 볼까요?</h2></div><button className="qb-button" onClick={() => setGuide(true)}><i className="fa-regular fa-circle-question" aria-hidden="true" /> 퀘스트 가이드</button></header>
+    <header className="qb-toolbar"><div><small className="qb-welcome-meta">{student.major}{student.grade ? ` ${student.grade}학년` : ''} · {year}.{String(month).padStart(2, '0')}.{String(day).padStart(2, '0')}</small><h2><span>{studentDisplayName(student.name, student.id)}</span>님의 성장 퀘스트<br />오늘의 작은 실천을 시작해 볼까요?</h2></div><button className="qb-button" onClick={() => setGuide(true)}><i className="fa-regular fa-circle-question" aria-hidden="true" /> 퀘스트 가이드</button></header>
     {error && <div className="qb-error" role="alert">{error}<button className="qb-text-button" onClick={() => setRevision(value => value + 1)}>다시 불러오기</button></div>}
     <StudentStatCards stats={stats} />
     <div className="qb-dashboard">

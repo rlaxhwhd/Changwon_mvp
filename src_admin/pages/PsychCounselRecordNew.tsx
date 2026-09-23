@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 /** 추가 심리상담신청 — 학생 신청 없이 이뤄진 심리상담(내방·전화·후속 회차)을 상담사가 기록한다.
  *  교수의 지도학생 상담기록과 같은 방식: 저장 즉시 신청(완료)+기록이 함께 생겨 접수함·상담일지·통계에 잡힌다. */
 import { useState } from 'react'
@@ -49,7 +50,7 @@ export default function PsychCounselRecordNew() {
           <div className="admin-field">
             <span>학생</span>
             <button type="button" className="admin-btn" onClick={() => setPicking(true)}>
-              {student ? `${student.name} (${student.studentNo})` : '학생 검색'}
+              {student ? `${studentDisplayName(student.name, student.id)} (${student.studentNo})` : '학생 검색'}
             </button>
           </div>
           <label className="admin-field">

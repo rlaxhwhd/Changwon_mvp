@@ -957,13 +957,21 @@ def csv_cell(value):
     return '"' + text.replace('"', '""') + '"'
 
 
+class ApplicantExportSelection(BaseModel):
+    applicationIds: list[str] | None = Field(default=None, min_length=1, max_length=100000)
+
+
 @router.get('/job-applications/export')
-def export_applications(postingId: str | None = None, status: str | None = None, stageId: str | None = None,
+@router.post('/job-applications/export')
+def export_applications(body: ApplicantExportSelection | None = None, postingId: str | None = None, status: str | None = None, stageId: str | None = None,
                         collegeCode: str | None = None, deptCode: str | None = None, grade: int | None = None,
                         q: str = Query('', max_length=200),
                         user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
     require_manage(conn, user, APPLICANT_MENU)
     condition, values = applicant_filters(user, postingId, status, stageId, collegeCode, deptCode, grade, q)
+    if body is not None and body.applicationIds is not None:
+        condition += ' AND a.id = ANY(%s)'
+        values.append(list(dict.fromkeys(body.applicationIds)))
     rows = conn.execute(f'''SELECT j.role,j.company_name_snapshot,p.name,s.student_no,
       t.snap_college_label,t.snap_dept_label,t.snap_major_label,t.snap_grade,t.snap_enrollment_status,
       t.snap_student_type,t.attachment_kind,f.original_name,st.name AS stage_name,a.status,a.applied_at,

@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useState } from 'react'
 import { LuCalendarPlus, LuUsersRound, LuUserPlus, LuX } from 'react-icons/lu'
 import AdminModal from '../components/AdminModal'
@@ -144,15 +145,15 @@ function DetailModal({ session, onClose }: { session: GroupCounsel; onClose: () 
                     <input
                       type="checkbox"
                       className="admin-member-check"
-                      aria-label={`${member.name} 출석`}
+                      aria-label={`${studentDisplayName(member.name, member.studentId)} 출석`}
                       checked={attended.has(member.studentId)}
                       onChange={event => setAttended(prev => { const next = new Set(prev); if (event.target.checked) next.add(member.studentId); else next.delete(member.studentId); return next })}
                     />
                   )}
-                  <strong>{member.name}</strong>
+                  <strong>{studentDisplayName(member.name, member.studentId)}</strong>
                   <small>{member.studentNo} · {member.major} {member.grade}학년</small>
                   {editable && (
-                    <button type="button" className="admin-icon-btn danger" aria-label={`${member.name} 제외`} onClick={() => run(() => removeGroupMember(session.id, member.studentId))}>
+                    <button type="button" className="admin-icon-btn danger" aria-label={`${studentDisplayName(member.name, member.studentId)} 제외`} onClick={() => run(() => removeGroupMember(session.id, member.studentId))}>
                       <LuX />
                     </button>
                   )}

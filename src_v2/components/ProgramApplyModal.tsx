@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useState } from 'react'
 import Modal from './Modal'
 import { getActiveStudent } from '../data/students'
@@ -90,7 +91,7 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
         <table className="pam-table">
           <tbody>
             <tr>
-              <th>이름</th><td>{STUDENT.name}</td>
+              <th>이름</th><td>{studentDisplayName(STUDENT.name, STUDENT.studentId)}</td>
               <th>학번</th><td>{STUDENT.studentId}</td>
             </tr>
             <tr>
@@ -263,7 +264,7 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
           위와 같이 선택하였음을 확인합니다.
         </p>
         <p className="pam-sign">
-          신청자: <strong>{STUDENT.name}</strong> <span className="pam-sign-mark">(서명)</span>
+          신청자: <strong>{studentDisplayName(STUDENT.name, STUDENT.studentId)}</strong> <span className="pam-sign-mark">(서명)</span>
         </p>
       </div>
 

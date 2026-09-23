@@ -15,11 +15,14 @@ from .db import connection
 router = APIRouter()
 
 
-def administrator(user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    allowed = conn.execute('''SELECT 1 FROM dc.auth_user u JOIN dc.auth_role r USING(role_code)
+def is_administrator(conn, user):
+    return bool(conn.execute('''SELECT 1 FROM dc.auth_user u JOIN dc.auth_role r USING(role_code)
       WHERE u.person_uid=%s AND r.role_code='AUTH0006' AND r.is_active
-      AND u.valid_from<=now() AND (u.valid_to IS NULL OR u.valid_to>now())''', (user['intg_uid'],)).fetchone()
-    if not allowed:
+      AND u.valid_from<=now() AND (u.valid_to IS NULL OR u.valid_to>now())''', (user['intg_uid'],)).fetchone())
+
+
+def administrator(user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    if not is_administrator(conn, user):
         raise HTTPException(403, '시스템관리자 권한이 필요합니다.')
     return user
 

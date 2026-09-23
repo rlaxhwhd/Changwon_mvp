@@ -5,6 +5,7 @@ from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel, Field
 
 from .auth import principal, require_staff, is_counselor
 from .db import connection
@@ -128,19 +129,25 @@ def students(request: Request, page: int = Query(1, ge=1), pageSize: int = Query
     return {'items': [dict(id=r['intg_uid'], studentNo=r['student_no'],name=r['name'],
              major=r['major_label'],collegeName=r['college_name'],grade=r['grade'],
              sex=r['sex'],sexCode=r['sex_code'],graduationMonth=r['graduation_month'],gpa=r['gpa'],
-             academicLevel=r['academic_level'],status=r['status'],studentType=r['student_type'],
+             academicLevel=r['academic_level'],status=r['status'],studentType=r['student_type'],star=r['star'],
              tier=r['tier'],progress=r['progress'],hasRoadmap=r['has_roadmap'],hasDetail=False,
              canReadDetail=is_counselor(user) or r['intg_uid'] in readable,
              programCount=r['program_count'],counselCount=r['counsel_count']) for r in result['items']],
             'totalCount': result['total'], 'page': page, 'pageSize': pageSize}
 
 
-@router.get('/academic-students/export')
-def export(request: Request, q: str = Query('', max_length=200),
+class StudentExportSelection(BaseModel):
+    ids: list[str] = Field(min_length=1, max_length=100000)
+
+
+@router.post('/academic-students/export')
+def export(request: Request, body: StudentExportSelection, q: str = Query('', max_length=200),
            user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
     authorize(conn, user)
     condition, values = filters(request, q)
-    # Export all matching rows, independent of the current page. Server cursor and
+    condition += ' AND intg_uid = ANY(%s)'
+    values.append(list(dict.fromkeys(body.ids)))
+    # Export selected matching rows, independent of the current page. Server cursor and
     # spooled ZIP keep the full roster out of application memory.
     with conn.cursor(name='academic_student_export') as cursor:
         cursor.execute(ROSTER + f''' SELECT student_no,name,college_name,major_label,academic_level,
@@ -178,7 +185,7 @@ def detail(identity: str, user=Depends(principal, scope='function'), conn=Depend
         WHERE a.student_uid=h.intg_uid AND a.program_id=h.program_id)
       ORDER BY date DESC,id''', (identity,identity)).fetchall()
     diagnoses = conn.execute("SELECT count(*) AS n FROM dc.diagnosis_attempt WHERE student_uid=%s AND status_code='DONE'", (identity,)).fetchone()['n']
-    return dict(id=identity,studentNo=row['student_no'],name=row['name'],major=row['major_label'],
+    return dict(id=identity,studentNo=row['student_no'],name=row['name'],major=row['major_label'],star=row['star'],
       collegeName=row['college_name'],grade=row['grade'],academicLevel=row['academic_level'],
       status=row['status'],sex=row['sex'],graduationMonth=row['graduation_month'],gpa=row['gpa'],
       studentType=row['student_type'],diagnosisCount=diagnoses,counsels=counsels,programs=programs,

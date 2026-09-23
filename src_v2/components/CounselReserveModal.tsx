@@ -1,3 +1,4 @@
+import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useState } from 'react'
 import Modal from './Modal'
 import { getActiveStudent } from '../data/students'
@@ -130,7 +131,7 @@ export default function CounselReserveModal({
         <table className="crm-table">
           <tbody>
             <tr>
-              <th>이름</th><td>{STUDENT.name}</td>
+              <th>이름</th><td>{studentDisplayName(STUDENT.name, STUDENT.studentNo)}</td>
               <th>학번</th><td>{STUDENT.studentNo}</td>
             </tr>
             <tr>
