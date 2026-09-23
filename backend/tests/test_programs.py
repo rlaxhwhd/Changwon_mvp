@@ -12,6 +12,10 @@ from app.db import pool
 from test_api import headers
 
 
+# 서버가 정하는 값 — 화면(updateProgram)도 이 키들을 떼고 PUT 한다. 본문은 extra='forbid' 다.
+SERVER_OWNED = ('id', 'version', 'createdAt', 'applicants', 'competencyFormId', 'satisfactionFormId')
+
+
 def new_program(client, **overrides):
     body = {'title': '통합 검증 프로그램', 'desc': '설명', 'category': 'CAREER', 'capacity': 2,
             'startDate': '2026-01-01', 'endDate': '2099-12-31', 'manager': '검증',
@@ -28,7 +32,7 @@ def test_classification_and_targets_roundtrip(client):
     assert program['middleCategory'] == 'UNIV_PLUS_GRAD'
     assert program['targetStatuses'] == ['ENROLLED', 'GRADUATED_COMPLETED']
     assert program['targetGrades'] == ['1', '4']
-    body = {key: value for key, value in program.items() if key not in ('id', 'version', 'createdAt', 'applicants')}
+    body = {key: value for key, value in program.items() if key not in SERVER_OWNED}
     body.update(expectedVersion=program['version'], middleCategory='GLOCAL', targetGrades=['2'])
     response = client.put(f"/api/v1/programs/{program['id']}", headers=headers('career_kim'), json=body)
     assert response.status_code == 200, response.text
@@ -45,7 +49,7 @@ def test_legacy_category_can_be_preserved_but_not_newly_selected(client):
     program = new_program(client)
     with pool.connection() as conn:
         conn.execute("UPDATE dc.program SET category_code='LANGUAGE' WHERE id=%s", (program['id'],))
-    body = {key: value for key, value in program.items() if key not in ('id', 'version', 'createdAt', 'applicants')}
+    body = {key: value for key, value in program.items() if key not in SERVER_OWNED}
     body.update(category='LANGUAGE', expectedVersion=program['version'])
     response = client.put(f"/api/v1/programs/{program['id']}", headers=headers('career_kim'), json=body)
     assert response.status_code == 200, response.text

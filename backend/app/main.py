@@ -24,6 +24,7 @@ from .metadata import router as metadata_router
 from .diagnosis import router as diagnosis_router
 from .programs import router as programs_router
 from .survey import router as survey_router
+from .survey_forms import router as survey_forms_router
 from .blacklists import router as blacklists_router
 from .jobs import router as jobs_router
 from .roadmap import router as roadmap_router
@@ -82,6 +83,7 @@ app.include_router(metadata_router, prefix='/api/v1')
 app.include_router(diagnosis_router, prefix='/api/v1')
 app.include_router(programs_router, prefix='/api/v1')
 app.include_router(survey_router, prefix='/api/v1')
+app.include_router(survey_forms_router, prefix='/api/v1')
 app.include_router(blacklists_router, prefix='/api/v1')
 app.include_router(jobs_router, prefix='/api/v1')
 app.include_router(roadmap_router, prefix='/api/v1')

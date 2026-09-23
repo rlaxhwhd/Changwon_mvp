@@ -107,6 +107,28 @@ def save_item(group: str, code: str, data: CodeChange,
         if parent and data.isActive and not conn.execute(
                 'SELECT 1 FROM dc.code_item WHERE group_code=%s AND code=%s AND is_active', (parent,value)).fetchone():
             raise HTTPException(422, '사용 중인 분류를 선택해 주세요.')
+    elif group in ('SURVEY_AREA','SURVEY_ITEM'):
+        # 설문 부품 — 영역은 어느 묶음에 속하는지, 문항은 어느 영역에 속하고 척도인지 서술형인지를 함께 정한다.
+        # position 은 옛 시드가 남긴 값이라 그대로 두되, 순서의 정본은 설문지(survey_form_*)다.
+        if group=='SURVEY_AREA':
+            if set(data.payload)-{'group','position'} or data.payload.get('group') not in ('CAREER','JOB','EMPLOY','SATISFACTION'):
+                raise HTTPException(422, '영역이 속한 설문지 묶음을 선택해 주세요.')
+        else:
+            if set(data.payload)-{'areaKey','kind','position'} or data.payload.get('kind','SCALE') not in ('SCALE','TEXT'):
+                raise HTTPException(422, '문항의 소속 영역과 응답 방식을 확인해 주세요.')
+            if not conn.execute("""SELECT 1 FROM dc.code_item WHERE group_code='SURVEY_AREA'
+              AND code=%s AND is_active""",(data.payload.get('areaKey'),)).fetchone():
+                raise HTTPException(422, '사용 중인 영역을 선택해 주세요.')
+        # 게시본이 쓰는 부품의 소속은 바꿀 수 없고, 그 영역은 사용 해제할 수 없다.
+        # 문항의 사용 해제는 막지 않는다 — 게시본은 그대로 쓰고(items_for 가 is_active 를 보지 않는다)
+        # 새 초안에만 담기지 않게 하는 것이 사전의 is_active 가 하는 일이다.
+        key = 'group' if group=='SURVEY_AREA' else 'areaKey'
+        table,column = ('dc.survey_form_area','area_code') if group=='SURVEY_AREA' else ('dc.survey_form_item','item_code')
+        blocked = data.payload.get(key) != before['payload'].get(key) if before else False
+        if before and (blocked or (not data.isActive and group=='SURVEY_AREA')) and conn.execute(
+                f"""SELECT 1 FROM {table} f JOIN dc.survey_form s ON s.id=f.form_id AND s.status='PUBLISHED'
+                WHERE f.{column}=%s""",(code,)).fetchone():
+            raise HTTPException(422, '게시된 설문지가 쓰고 있어 소속을 바꾸거나 사용 해제할 수 없습니다. 새 설문지를 만들어 빼세요.')
     elif data.payload != (before['payload'] if before else {}):
         raise HTTPException(422, '이 그룹의 프로세스 속성은 배포로 관리합니다.')
     if len(json.dumps(data.payload,ensure_ascii=False))>10000:

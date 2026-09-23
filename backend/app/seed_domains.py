@@ -109,7 +109,7 @@ def import_domains(conn, sources, aliases, details):
                image=row.get('image'), pinned=row.get('pinned', False),
                roadmap_entry=row.get('roadmapEntry', 'NONE'), care_types=Array(row.get('careTypes') or []),
                satisfaction_survey=row.get('satisfactionSurvey', False),
-               satisfaction_form_id=row.get('satisfactionFormId'),
+               # 설문지 고정은 시드가 정하지 않는다 — 103 backfill 이 시드 직후 v1 으로 채운다.
                competency_survey=row.get('competencySurvey', False),
                competency_areas=Array(row.get('competencyAreas') or []),
                include_in_stats=row.get('includeInStats', True), created_at=row['createdAt']))

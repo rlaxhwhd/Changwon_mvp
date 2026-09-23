@@ -18,6 +18,7 @@ from .administration import administrator
 from .blacklists import managed_student
 from .db import connection
 from .gates import program_gate
+from .survey_forms import current_form_id
 # 로드맵 쓰기는 전부 roadmap.py 가 한다 — 칸을 두 모듈에서 만들면 규칙이 갈린다.
 from .roadmap import enroll_program, lifecycle_lock, linked_cells, program_expiry
 
@@ -27,9 +28,14 @@ NOSHOW_POINTS = 10
 SEOUL = ZoneInfo('Asia/Seoul')
 WRITABLE = ('title,summary,detail,category_code,status_code,apply_start,apply_end,run_start,run_end,sessions,'
             'manager,fiscal_year,location,image,capacity,pinned,roadmap_entry,care_types,satisfaction_survey,'
-            'satisfaction_form_id,competency_survey,competency_areas,include_in_stats,'
+            'competency_survey,competency_areas,include_in_stats,'
             'middle_category_code,target_statuses,target_grades')
-PROGRAM_COLUMNS = 'id,' + WRITABLE + ',created_at,version'
+# 설문지 고정(pin)은 개설 때 서버가 정하고 그 뒤로 바뀌지 않는다 — 요청 본문으로는 받지 않는다(본문이
+# extra='forbid' 다). DTO 로는 읽기 전용으로 내보낸다: 수정 화면이 어느 버전의 영역을 보여 줄지 알아야 한다.
+# 화면이 GET 응답을 그대로 PUT 으로 돌려보내므로 보내는 쪽(programs.ts updateProgram)이 id·createdAt 과
+# 함께 떼어 낸다.
+PIN_COLUMNS = 'competency_form_id,satisfaction_form_id'
+PROGRAM_COLUMNS = 'id,' + WRITABLE + ',' + PIN_COLUMNS + ',created_at,version'
 
 
 def today():
@@ -48,8 +54,9 @@ def program_dto(row, applicants):
         'sessions': row['sessions'], 'manager': row['manager'], 'fiscalYear': row['fiscal_year'],
         'capacity': row['capacity'], 'image': row['image'], 'location': row['location'],
         'pinned': row['pinned'], 'satisfactionSurvey': row['satisfaction_survey'],
-        'satisfactionFormId': row['satisfaction_form_id'],
         'competencySurvey': row['competency_survey'], 'competencyAreas': row['competency_areas'],
+        # 이 프로그램이 붙잡은 설문지 — 수정 화면의 영역 선택지가 최신이 아니라 이 버전을 따라야 한다.
+        'competencyFormId': row['competency_form_id'], 'satisfactionFormId': row['satisfaction_form_id'],
         'includeInStats': row['include_in_stats'], 'createdAt': row['created_at'],
         'version': row['version'], 'applicants': applicants,
     }
@@ -228,7 +235,6 @@ class ProgramBody(BaseModel):
     location: str = Field(default='', max_length=200)
     pinned: bool = False
     satisfactionSurvey: bool = False
-    satisfactionFormId: str | None = Field(default=None, max_length=64)
     competencySurvey: bool = False
     competencyAreas: list[str] = Field(default_factory=list, max_length=100)
     includeInStats: bool = True
@@ -254,7 +260,7 @@ def program_values(body: ProgramBody):
     return (body.title, body.desc, body.detail, body.category, body.status, body.startDate, body.endDate,
             body.runStartDate, body.runEndDate, body.sessions, body.manager, body.fiscalYear, body.location,
             body.image, body.capacity, body.pinned, body.roadmapEntry, body.careTypes, body.satisfactionSurvey,
-            body.satisfactionFormId, body.competencySurvey, body.competencyAreas, body.includeInStats,
+            body.competencySurvey, body.competencyAreas, body.includeInStats,
             body.middleCategory, body.targetStatuses, body.targetGrades)
 
 
@@ -282,18 +288,39 @@ def check_program_options(conn, body, before=None):
                 raise HTTPException(422, f'사용 가능한 {label} 코드를 선택해 주세요.')
 
 
+def check_competency_areas(conn, body, before=None):
+    """역량 영역은 그 프로그램이 붙잡은 설문지가 담은 영역이어야 한다.
+    이미 골라 둔 코드는 통과시킨다 — 설문지 밖 영역을 가진 옛 프로그램이 저장만 해도 막히면 안 된다."""
+    form_id = before['competency_form_id'] if before else current_form_id(conn, 'COMPETENCY')
+    old_codes = list(before['competency_areas']) if before else []
+    # 사전 응답이 들어온 뒤 영역을 바꾸면 사전·사후 짝이 깨져 향상률이 왜곡된다. 그때부터 고정이다.
+    if before and set(body.competencyAreas) != set(old_codes) and conn.execute(
+            "SELECT 1 FROM dc.survey_response WHERE program_id=%s AND phase='PRE' LIMIT 1",
+            (before['id'],)).fetchone():
+        raise HTTPException(422, '사전 조사 응답이 있어 조사 영역을 바꿀 수 없습니다.')
+    for code in body.competencyAreas:
+        if code in old_codes:
+            continue
+        if not conn.execute('SELECT 1 FROM dc.survey_form_area WHERE form_id=%s AND area_code=%s',
+                            (form_id, code)).fetchone():
+            raise HTTPException(422, '게시된 설문지에 있는 영역만 선택할 수 있습니다.')
+
+
 @router.post('/programs', status_code=201)
 def create_program(body: ProgramBody, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
     require_staff(user)
     check_program_options(conn, body)
+    check_competency_areas(conn, body)
     # 개설은 여러 학생의 계획을 한 번에 건드린다 → lifecycle 을 exclusive 로 먼저 잡는다.
     # sync_roadmap 안에서 뒤늦게 잡으면 기존 호출부의 program 락과 역전된다.
     lifecycle_lock(conn, exclusive=True)
-    columns = ['id', *WRITABLE.split(','), 'created_by', 'updated_by']
+    # 개설 시점의 게시본을 붙잡는다. 이후 새 버전이 나와도 이 프로그램의 문항은 바뀌지 않는다.
+    pins = [current_form_id(conn, kind) for kind in ('COMPETENCY', 'SATISFACTION')]
+    columns = ['id', *WRITABLE.split(','), *PIN_COLUMNS.split(','), 'created_by', 'updated_by']
     row = conn.execute(f'''INSERT INTO dc.program({",".join(columns)})
       VALUES({",".join(["%s"] * len(columns))}) RETURNING {PROGRAM_COLUMNS}''',
-      ('prog_' + uuid4().hex[:12], *program_values(body), user['intg_uid'], user['intg_uid'])).fetchone()
+      ('prog_' + uuid4().hex[:12], *program_values(body), *pins, user['intg_uid'], user['intg_uid'])).fetchone()
     program_expiry(row)
     enroll_program(conn, user, row)
     return program_dto(row, [])
@@ -306,6 +333,7 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
     lifecycle_lock(conn, exclusive=True)
     before = get_program(conn, program_id, lock=True)
     check_program_options(conn, body, before)
+    check_competency_areas(conn, body, before)
     if before['version'] != body.expectedVersion:
         raise HTTPException(409, '다른 담당자가 변경했습니다. 새로 조회한 뒤 수정하세요.')
     # 이미 학생 계획에 붙어 있는 프로그램의 **편입 조건**은 바꾸지 않는다. 소급 삭제·소급 완료·

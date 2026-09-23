@@ -10,7 +10,7 @@ import AdminModal from '../components/AdminModal'
 import RichEditor from '../components/RichEditor'
 import { COUNSELORS } from '../data/counselors'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
-import { competencySurveyGroups, satisfactionSurveySummary } from '../data/schema/program'
+import { competencySurveyGroups, pinnedSurveyForm, satisfactionSurveySummary } from '../data/schema/program'
 import { codeItems, codeLabel } from '../../shared/metadataStore'
 import { useMetadata } from '../../shared/useMetadata'
 import { STUDENT_TYPES, typeLabel } from '../../src_v2/data/careerProcess'
@@ -216,8 +216,12 @@ export default function ProgramForm() {
     })
 
   /** 조사 영역 체크 토글 — 저장 순서는 항상 코드관리 영역 순서를 유지한다. */
-  const surveyGroups = competencySurveyGroups()
-  const satisfactionSummary = satisfactionSurveySummary()
+  // 프로그램은 개설 시점의 게시본을 평생 붙잡는다 — 수정 화면도 최신이 아니라 그 버전의 영역을 보여 준다.
+  // 최신 기준으로 그리면 이미 고른 영역이 화면에서 사라지거나, 새 버전의 영역을 골랐다 저장에서 거절된다.
+  const competencyForm = pinnedSurveyForm('COMPETENCY', existing?.competencyFormId)
+  const satisfactionForm = pinnedSurveyForm('SATISFACTION', existing?.satisfactionFormId)
+  const surveyGroups = competencySurveyGroups(existing?.competencyFormId)
+  const satisfactionSummary = satisfactionSurveySummary(existing?.satisfactionFormId)
   const toggleArea = (key: string) =>
     setCompetencyAreas(prev => {
       const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
@@ -562,7 +566,7 @@ export default function ProgramForm() {
                 {satisfaction && (
                   <div className="pf-survey-body">
                     <span className="pf-survey-group-head">
-                      <b>프로그램 만족도 설문</b>
+                      <b>프로그램 만족도 설문{satisfactionForm ? ` v${satisfactionForm.version}` : ''}</b>
                       <small>{satisfactionSummary.areas}개 영역 · 5점 척도 {satisfactionSummary.scale}문항 · 서술형 {satisfactionSummary.text}문항</small>
                     </span>
                   </div>
@@ -591,7 +595,10 @@ export default function ProgramForm() {
 
                 {competency && (
                   <div className="pf-survey-body">
-                    <span className="pf-sub">중분류</span>
+                    <span className="pf-sub">
+                      중분류
+                      {competencyForm && ` · 역량향상률 설문지 v${competencyForm.version}`}
+                    </span>
                     {surveyGroups.map(g => (
                       <div className="pf-survey-group" key={g.code}>
                         <span className="pf-survey-group-head">
@@ -617,6 +624,8 @@ export default function ProgramForm() {
 
                 <span className="pf-help">
                   설문조사 할 영역만 중복 체크합니다. 체크에 따라 해당 영역 질문지만 활성화되고 조사됩니다.
+                  {competencyForm && !competencyForm.isCurrent
+                    && ' 이 프로그램은 개설 때의 설문지를 그대로 씁니다 — 이후 게시된 최신 버전과 영역이 다를 수 있습니다.'}
                 </span>
               </div>
 

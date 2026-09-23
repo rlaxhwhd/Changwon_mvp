@@ -52,17 +52,32 @@ def survey_window(program, application, phase):
     return True, ''
 
 
+def form_id_for(program, phase):
+    """이 프로그램이 개설 시점에 붙잡은 설문지. 만족도와 역량은 갈래가 다르다."""
+    return program['satisfaction_form_id'] if phase == 'SATISFACTION' else program['competency_form_id']
+
+
 def items_for(conn, program, phase):
-    """프로그램이 고른 영역의 활성 문항만, 영역 순서 → 문항 순서."""
+    """프로그램이 붙잡은 설문지의 문항. 역량은 그중 고른 영역만, 영역 순서 → 문항 순서.
+
+    사전(code_item)의 is_active 를 보지 않는다 — 게시본이 사전을 이긴다. 관리자가 나중에 문항을
+    비활성해도 운영 중 프로그램의 사전·사후 문항은 달라지지 않아야 한다. 문장·척도만 사전에서 읽는다.
+    """
+    form_id = form_id_for(program, phase)
+    if not form_id:
+        return []
     if phase == 'SATISFACTION':
-        area_filter, values = "a.payload->>'group'='SATISFACTION'", []
+        area_filter, values = '', [form_id]
     else:
-        area_filter, values = 'a.code=ANY(%s)', [list(program['competency_areas'])]
-    return conn.execute(f'''SELECT a.code AS area_key,a.label AS area_label,
+        area_filter, values = 'AND fa.area_code=ANY(%s)', [form_id, list(program['competency_areas'])]
+    return conn.execute(f'''SELECT fa.area_code AS area_key,a.label AS area_label,
       i.code,i.label,i.version,COALESCE(i.payload->>'kind','SCALE') AS kind
-      FROM dc.code_item a JOIN dc.code_item i ON i.group_code='SURVEY_ITEM' AND i.payload->>'areaKey'=a.code
-      WHERE a.group_code='SURVEY_AREA' AND a.is_active AND i.is_active AND {area_filter}
-      ORDER BY a.sort_order,i.sort_order,i.code''', values).fetchall()
+      FROM dc.survey_form_area fa
+      JOIN dc.survey_form_item fi ON fi.form_id=fa.form_id AND fi.area_code=fa.area_code
+      JOIN dc.code_item a ON (a.group_code,a.code)=('SURVEY_AREA',fa.area_code)
+      JOIN dc.code_item i ON (i.group_code,i.code)=('SURVEY_ITEM',fi.item_code)
+      WHERE fa.form_id=%s {area_filter}
+      ORDER BY fa.area_order,fi.item_order,fi.item_code''', values).fetchall()
 
 
 def group_by_area(rows, answers=None):
@@ -231,10 +246,14 @@ def satisfaction_sheet(conn, program):
 
 def export_sheets(conn, program, phase):
     """[(설문지명, 헤더, 행들)] — 프로그램이 고른 영역이 속한 설문지마다 한 장."""
-    items = conn.execute('''SELECT a.payload->>'group' AS grp,a.code AS area_key,i.code
-      FROM dc.code_item a JOIN dc.code_item i ON i.group_code='SURVEY_ITEM' AND i.payload->>'areaKey'=a.code
-      WHERE a.group_code='SURVEY_AREA' AND a.is_active AND i.is_active
-      ORDER BY a.sort_order,i.sort_order,i.code''').fetchall()
+    # 훑는 대상은 이 프로그램이 붙잡은 설문지의 구성이다 — 나중 버전의 새 문항이 옛 프로그램 엑셀에
+    # 열로 끼어들면 안 된다. 시트를 가르는 묶음(진로·직무·취업)은 여전히 영역 사전에서 읽는다.
+    items = conn.execute('''SELECT a.payload->>'group' AS grp,fa.area_code AS area_key,fi.item_code AS code
+      FROM dc.survey_form_area fa
+      JOIN dc.survey_form_item fi ON fi.form_id=fa.form_id AND fi.area_code=fa.area_code
+      JOIN dc.code_item a ON (a.group_code,a.code)=('SURVEY_AREA',fa.area_code)
+      WHERE fa.form_id=%s ORDER BY fa.area_order,fi.item_order,fi.item_code''',
+      (program['competency_form_id'],)).fetchall()
     responses = export_responses(conn, program, phase)
     selected = set(program['competency_areas'])
     sheets = []

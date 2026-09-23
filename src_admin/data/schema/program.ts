@@ -8,7 +8,7 @@
 
 import type { StudentType } from '../../../src_v2/data/careerProcess'
 import type { RoadmapEntry } from '../../../src_v2/data/schema/roadmap'
-import { codeItems, codeLabel } from '../../../shared/metadataStore'
+import { codeItems, codeLabel, publishedSurveyForms } from '../../../shared/metadataStore'
 
 /**
  * 프로그램 분류 — **DB 가 정본인 운영 코드**다(DB.md §8-5). 관리자 화면에서
@@ -86,22 +86,30 @@ export function selectedActions(): SelectedAction[] {
 // ── 조사 설정 (프로그램 개설 시 지정) ─────────────────────────────────────
 
 /**
- * 만족도 조사 문항 요약 — 정본은 코드관리(`SURVEY_AREA` group=SATISFACTION · `SURVEY_ITEM`, migration 101).
- * 개설 화면은 실시 여부만 정하고 문항은 여기서 세어 보여 준다(척도·서술형).
+ * 이 프로그램이 붙잡은 설문지 — 프로그램은 개설 시점의 게시본을 평생 쓴다.
+ * 그래서 수정 화면의 선택지는 최신 게시본이 아니라 이 버전을 따라야 한다.
+ * 아직 개설 전(새 프로그램)이거나 붙잡은 버전을 못 찾으면 현재 게시본으로 돌아간다.
  */
-export function satisfactionSurveySummary(): { areas: number; scale: number; text: number } {
-  const areas = codeItems.filter(i => i.group_code === 'SURVEY_AREA' && i.is_active && i.payload.group === 'SATISFACTION')
-  const keys = new Set(areas.map(a => a.code))
-  const items = codeItems.filter(i => i.group_code === 'SURVEY_ITEM' && i.is_active && keys.has(String(i.payload.areaKey)))
-  const text = items.filter(i => i.payload.kind === 'TEXT').length
-  return { areas: areas.length, scale: items.length - text, text }
+export function pinnedSurveyForm(kind: 'COMPETENCY' | 'SATISFACTION', formId?: number | null) {
+  const forms = publishedSurveyForms.filter(f => f.kind === kind)
+  return forms.find(f => f.id === formId) ?? forms.find(f => f.isCurrent)
 }
 
 /**
- * 역량향상률 조사 중분류 — 진로 · 직무 · 취업.
- * 영역과 문항의 정본은 코드관리(`SURVEY_AREA` · `SURVEY_ITEM`, migration 100)다 — 여기서는
- * 그룹 이름만 두고 영역·문항 수는 /metadata 에서 읽는다. 학생 설문 화면도 같은 코드를 쓴다.
+ * 만족도 조사 문항 요약 — 그 프로그램이 붙잡은 만족도 설문지의 구성을 센다.
+ * 문항 문장·척도의 정본은 코드관리(`SURVEY_ITEM`)이고, 어느 문항을 담을지는 설문지 관리가 정한다.
  */
+export function satisfactionSurveySummary(formId?: number | null): { areas: number; scale: number; text: number } {
+  const form = pinnedSurveyForm('SATISFACTION', formId)
+  const codes = form?.areas.flatMap(area => area.items) ?? []
+  const text = codes.filter(code => itemOf(code)?.payload.kind === 'TEXT').length
+  return { areas: form?.areas.length ?? 0, scale: codes.length - text, text }
+}
+
+function itemOf(code: string) {
+  return codeItems.find(i => i.group_code === 'SURVEY_ITEM' && i.code === code)
+}
+
 export interface CompetencySurveyGroup {
   code: 'CAREER' | 'JOB' | 'EMPLOY'
   label: string
@@ -112,12 +120,13 @@ export interface CompetencySurveyGroup {
 
 const SURVEY_GROUP_LABEL: Record<CompetencySurveyGroup['code'], string> = { CAREER: '진로', JOB: '직무', EMPLOY: '취업' }
 
-export function competencySurveyGroups(): CompetencySurveyGroup[] {
-  const items = codeItems.filter(i => i.group_code === 'SURVEY_ITEM' && i.is_active)
-  const areas = codeItems.filter(i => i.group_code === 'SURVEY_AREA' && i.is_active).sort((a, b) => a.sort_order - b.sort_order)
+export function competencySurveyGroups(formId?: number | null): CompetencySurveyGroup[] {
+  const form = pinnedSurveyForm('COMPETENCY', formId)
   return (Object.keys(SURVEY_GROUP_LABEL) as CompetencySurveyGroup['code'][]).map(code => {
-    const mine = areas.filter(a => a.payload.group === code)
-      .map(a => ({ key: a.code, label: a.label, itemCount: items.filter(i => i.payload.areaKey === a.code).length }))
+    const mine = (form?.areas ?? [])
+      .map(area => ({ area, meta: codeItems.find(i => i.group_code === 'SURVEY_AREA' && i.code === area.key) }))
+      .filter(row => row.meta?.payload.group === code)
+      .map(row => ({ key: row.area.key, label: row.meta?.label ?? row.area.key, itemCount: row.area.items.length }))
     return { code, label: SURVEY_GROUP_LABEL[code], itemCount: mine.reduce((n, a) => n + a.itemCount, 0), areas: mine }
   })
 }
@@ -208,12 +217,14 @@ export interface Program {
   pinned?: boolean
   /** 만족도 조사 실시 여부 */
   satisfactionSurvey?: boolean
-  /** 옛 질문지 id — 문항이 코드관리로 옮겨져 더 이상 쓰지 않는다(서버 컬럼은 남아 있다). */
-  satisfactionFormId?: string
   /** 역량향상률 조사 실시 여부 */
   competencySurvey?: boolean
   /** 조사할 영역 키 목록 — 체크한 영역의 질문지만 활성화된다. 예: ['CAREER_1','JOB_3'] */
   competencyAreas?: string[]
+  /** 개설 때 붙잡은 설문지 — **서버가 정하는 읽기 전용 값**이다. 수정 화면의 영역 선택지가 이 버전을 따른다.
+   *  저장 본문에 실어 보내면 서버가 거절하므로 updateProgram 이 id·createdAt 과 함께 떼어 낸다. */
+  competencyFormId?: number | null
+  satisfactionFormId?: number | null
   /** 통계값 반영 — false면 통계 요청의 참가/수료 인원 집계에서 제외한다 */
   includeInStats?: boolean
   /** 신청자 목록 (출석 포함) */

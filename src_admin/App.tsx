@@ -4,6 +4,7 @@ import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-rou
 import Layout from './components/Layout'
 import Login from './pages/Login'
 import SystemManagement from './pages/SystemManagement'
+import SurveyForms from './pages/SurveyForms'
 import DepartmentAssignments from './pages/DepartmentAssignments'
 import CompanyMembers from './pages/CompanyMembers'
 import { hasActiveSession } from './data/session'
@@ -120,6 +121,7 @@ const router = createBrowserRouter(
                 { path: '/system', element: <Navigate to="/system/menus" replace /> },
                 { path: '/system/menus', element: <SystemManagement key="menus" tab="menus" /> },
                 { path: '/system/codes', element: <SystemManagement key="codes" tab="codes" /> },
+                { path: '/system/surveys', element: <SurveyForms /> },
                 { path: '/system/events', element: <SystemManagement key="events" tab="events" /> },
                 { path: '/system/issues', element: <SystemManagement key="issues" tab="issues" /> },
                 { path: '/members', element: <Navigate to="/members/assistants" replace /> },
@@ -133,7 +135,7 @@ const router = createBrowserRouter(
                   ['/forecast', '취업예측분석시스템'], ['/diagnosis', '진단관리'], ['/counsel', '상담관리'],
                   ['/extracurricular', '비교과프로그램관리'], ['/companies', '기업정보플랫폼'],
                   ['/system/groups', '그룹관리'], ['/system/auth', '권한관리'], ['/system/boards', '게시판관리'], ['/system/banners', '배너관리'],
-                  ['/system/popups', '팝업관리'], ['/system/surveys', '설문조사 관리'], ['/system/access-log', '사용자 접속이력'],
+                  ['/system/popups', '팝업관리'], ['/system/access-log', '사용자 접속이력'],
                   ['/system/work-access', '업무접근 현황'], ['/system/access-stats', '접속통계'], ['/system/access-path', '접근경로'],
                   ['/system/admin-ip', '관리자 IP관리'], ['/system/auth-events', '권한변경이력'], ['/system/sms', 'SMS 관리'],
                 ].map(([path, title]) => ({ path, element: <NotReady title={title} /> })),

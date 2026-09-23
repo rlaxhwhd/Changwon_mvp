@@ -129,7 +129,8 @@ def seed(root: Path) -> dict:
                         '026_roadmap_growth_backfill.sql', '028_followup_diagnosis_scores.sql'):
             conn.execute((Path(__file__).resolve().parents[1] / 'migrations' / derived).read_text(encoding='utf-8'))
         for derived in ('034_diagnosis_factor_backfill.sql','038_counsel_fixture_backfill.sql',
-                        '043_student_department_backfill.sql','046_advisor_assignment_backfill.sql','048_main_popup_seed.sql','050_prof_counsel_record_backfill.sql','051_professor_organization.sql'):
+                        '043_student_department_backfill.sql','046_advisor_assignment_backfill.sql','048_main_popup_seed.sql','050_prof_counsel_record_backfill.sql','051_professor_organization.sql',
+                        '103_survey_form_backfill.sql'):
             conn.execute((Path(__file__).resolve().parents[1] / 'migrations' / derived).read_text(encoding='utf-8'))
         from .seed_operations import seed_notices
         seed_notices(conn)
