@@ -55,6 +55,15 @@ def profile(conn,row):
     data['progress']=conn.execute('SELECT pct FROM dc.roadmap_progress(%s,now())',(row['intg_uid'],)).fetchone()['pct']
     # Raw accumulated points are not a general 100-point scoring policy.
     # Only the explicitly supplied development fixture uses them as graph scores.
+    examples=[]
+    if settings.environment=='development':
+        examples=conn.execute('''SELECT e.competency_code,e.score
+          FROM dc.development_core_competency_score e JOIN dc.person p ON p.intg_uid=e.student_uid
+          WHERE e.student_uid=%s AND p.source='fixture' AND p.kind='STUDENT' ''',(row['intg_uid'],)).fetchall()
+    if len(examples)==5:
+        data['coreCompetencyScores']={s['competency_code']:s['score'] for s in examples}
+        data['coreCompetencySource']='DEVELOPMENT_CARE7_TEST'
+        return data
     scores=conn.execute('''SELECT competency_code,accumulated_points
       FROM dc.student_core_competency_points WHERE student_uid=%s''',(row['intg_uid'],)).fetchall()
     fixture=conn.execute('''SELECT bool_and(a.source_system='DEVELOPMENT_CARE7_TEST') AS yes

@@ -134,6 +134,11 @@ def seed(root: Path) -> dict:
             conn.execute((Path(__file__).resolve().parents[1] / 'migrations' / derived).read_text(encoding='utf-8'))
         from .seed_operations import seed_notices
         seed_notices(conn)
+        # Retired demo data stays available only to isolated regression fixtures.
+        # Normal fresh-machine bootstrap must not recreate the removed student.
+        if not settings.db_name.endswith('_test'):
+            conn.execute((Path(__file__).resolve().parents[1] / 'migrations' /
+                          '106_retire_jiwoo_remaining_dependencies.sql').read_text(encoding='utf-8'))
         return {'status': 'imported', 'sourceFiles': len(sources), 'students': len(set(aliases.values())), 'skippedRows': skipped}
 
 

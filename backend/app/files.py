@@ -18,6 +18,7 @@ from urllib.parse import quote
 from fastapi import HTTPException, Response
 
 from .settings import settings
+from .upload_security import validate_content
 
 # 슬롯마다 허용 확장자가 다르다. 지원 서류는 현행 JobApplyModal 의 accept 를 따른다.
 ALLOWED = {
@@ -98,6 +99,9 @@ def store(conn, user, slot: str, name: str, data: bytes):
     ext = extension(original)
     if ext not in ALLOWED[slot]:
         raise HTTPException(422, '허용되지 않는 파일 형식입니다. (' + ', '.join(sorted(ALLOWED[slot])) + ')')
+    data = validate_content(name, data)
+    if len(data) > settings.file_max_bytes:
+        raise too_large()
     file_id = uuid4().hex
     owner_kind = {'LOGO': 'JOB_POSTING', 'ATTACHMENT': 'JOB_POSTING',
                   'RESUME': 'JOB_APPLICATION_ATTEMPT', 'PORTFOLIO_ATTACHMENT': 'GROWTH_ENTRY'}[slot]
@@ -152,5 +156,6 @@ def stream(row):
     if not path.is_file():
         raise HTTPException(404, '파일 본문이 없습니다.')
     return Response(path.read_bytes(), media_type=row['content_type'],
-                    headers={'Content-Disposition': "attachment; filename*=UTF-8''"
+                    headers={'X-Content-Type-Options': 'nosniff', 'Cache-Control': 'private, no-store',
+                             'Content-Disposition': "attachment; filename*=UTF-8''"
                              + quote(safe_name(row['original_name']))})

@@ -97,7 +97,7 @@ export function getProfRequestsByStatus(
 
 export function getProfReqTabCounts(professorId: string): Record<ProfReqTab, number> {
   const rows = allRows(professorId)
-  const counts: Record<ProfReqTab, number> = { 전체: rows.length, 대기: 0, 확정: 0, 완료: 0, 취소: 0 }
+  const counts: Record<ProfReqTab, number> = { 전체: rows.length, 대기: 0, 확정: 0, 완료: 0, 불참: 0, 취소: 0 }
   rows.forEach(row => { counts[row.status] += 1 })
   return counts
 }

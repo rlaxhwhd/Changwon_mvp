@@ -4,15 +4,18 @@ import {
   LuMapPin, LuPlus, LuSmile, LuTrash2,
   LuUpload, LuUserRound, LuUsers, LuX,
 } from 'react-icons/lu'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AdminModal from '../components/AdminModal'
+import ProgramSurveySelect from '../components/ProgramSurveySelect'
 import RichEditor from '../components/RichEditor'
+import { IMAGE_ACCEPT, validateUpload } from '../../shared/uploadPolicy'
 import { COUNSELORS } from '../data/counselors'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
 import { competencySurveyGroups, pinnedSurveyForm, satisfactionSurveySummary } from '../data/schema/program'
 import { codeItems, codeLabel } from '../../shared/metadataStore'
 import { useMetadata } from '../../shared/useMetadata'
+import { api } from '../../shared/api'
 import { STUDENT_TYPES, typeLabel } from '../../src_v2/data/careerProcess'
 import type { StudentType } from '../../src_v2/data/careerProcess'
 import { ROADMAP_ENTRIES, ROADMAP_ENTRY_DESC, ROADMAP_ENTRY_LABEL } from '../../src_v2/data/schema/roadmap'
@@ -58,6 +61,7 @@ const THUMB_MAX_PX = 800
 
 /** 고른 이미지를 THUMB_MAX_PX 안으로 줄여 data URL 로 만든다(채용공고 로고와 같은 방식). */
 function toThumbDataUrl(file: File): Promise<string> {
+  validateUpload(file, IMAGE_ACCEPT)
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
     reader.onerror = () => reject(new Error('파일을 읽지 못했습니다.'))
@@ -155,15 +159,37 @@ export default function ProgramForm() {
   // 역량향상률 조사 — 실시할 때만 조사 영역을 고른다. 체크한 영역의 질문지만 조사된다.
   const [competency, setCompetency] = useState(existing?.competencySurvey ?? true)
   const [competencyAreas, setCompetencyAreas] = useState<string[]>(existing?.competencyAreas ?? [])
+  const [competencyFormId, setCompetencyFormId] = useState<number | null>(() => pinnedSurveyForm('COMPETENCY', existing?.competencyFormId)?.id ?? null)
+  const [satisfactionFormId, setSatisfactionFormId] = useState<number | null>(() => pinnedSurveyForm('SATISFACTION', existing?.satisfactionFormId)?.id ?? null)
   // 통계값 반영 — 미포함이면 통계 요청의 참가/수료 인원에서 빠진다.
   const [includeInStats, setIncludeInStats] = useState(existing?.includeInStats ?? true)
   const [saved, setSaved] = useState(false)
+  const [surveyLocks, setSurveyLocks] = useState<{ competency: boolean; satisfaction: boolean } | null>(null)
+  const [surveyLockError, setSurveyLockError] = useState('')
+  const [lockRevision, setLockRevision] = useState(0)
+  useEffect(() => {
+    if (!id) return
+    let controller: AbortController
+    const load = () => {
+      controller?.abort()
+      controller = new AbortController()
+      const { signal } = controller
+      setSurveyLocks(null); setSurveyLockError('')
+      api<{ competency: boolean; satisfaction: boolean }>(`/programs/${encodeURIComponent(id)}/survey-locks`, { signal })
+        .then(locks => { if (!signal.aborted) setSurveyLocks(locks) })
+        .catch((error: unknown) => { if (!signal.aborted) setSurveyLockError(error instanceof Error ? error.message : '설문 응답 여부를 확인하지 못했습니다.') })
+    }
+    load()
+    window.addEventListener('focus', load)
+    return () => { controller.abort(); window.removeEventListener('focus', load) }
+  }, [id, lockRevision])
 
   const targetSummary = targets.map(code => codeLabel('PROGRAM_TARGET_STATUS', code)).join(', ')
     + (grades.length ? ` (${grades.map(code => codeLabel('PROGRAM_TARGET_GRADE', code)).join(', ')})` : '')
   const capacityLabel = `${selectCount || '-'}명 / ${limitCount || '-'}명 (${selectMethod === '선착순' ? '선착순 선발' : '심사 후 선발'})`
 
   const canSave = title.trim() !== '' && applyStartDate !== '' && applyEndDate !== '' && managerName !== '' && majorCat !== '' && minorCat !== '' && targets.length > 0 && grades.length > 0 && !saved
+    && (!editing || !!surveyLocks) && (!satisfaction || !!satisfactionFormId) && (!competency || !!competencyFormId)
 
   const handleSave = () => {
     if (!canSave) return
@@ -191,8 +217,10 @@ export default function ProgramForm() {
       status: existing?.status ?? 'RECRUITING',
       pinned,
       satisfactionSurvey: satisfaction,
+      satisfactionFormId: satisfaction || surveyLocks?.satisfaction ? satisfactionFormId : null,
       // 미실시면 질문지 선택은 의미가 없다 — 값이 남지 않게 정리한다.
       competencySurvey: competency,
+      competencyFormId: competency || surveyLocks?.competency ? competencyFormId : null,
       competencyAreas: competency ? competencyAreas : [],
       includeInStats,
       // 안 고르면 필드를 만들지 않는다 — 빈 문자열이 남으면 공고가 '이미지 있음'으로 읽는다.
@@ -216,12 +244,11 @@ export default function ProgramForm() {
     })
 
   /** 조사 영역 체크 토글 — 저장 순서는 항상 코드관리 영역 순서를 유지한다. */
-  // 프로그램은 개설 시점의 게시본을 평생 붙잡는다 — 수정 화면도 최신이 아니라 그 버전의 영역을 보여 준다.
-  // 최신 기준으로 그리면 이미 고른 영역이 화면에서 사라지거나, 새 버전의 영역을 골랐다 저장에서 거절된다.
-  const competencyForm = pinnedSurveyForm('COMPETENCY', existing?.competencyFormId)
-  const satisfactionForm = pinnedSurveyForm('SATISFACTION', existing?.satisfactionFormId)
-  const surveyGroups = competencySurveyGroups(existing?.competencyFormId)
-  const satisfactionSummary = satisfactionSurveySummary(existing?.satisfactionFormId)
+  // 선택한 게시본의 영역을 보여 준다. 응답이 생긴 뒤에는 버전과 역량 영역이 고정된다.
+  const competencyForm = pinnedSurveyForm('COMPETENCY', competencyFormId)
+  const satisfactionForm = pinnedSurveyForm('SATISFACTION', satisfactionFormId)
+  const surveyGroups = competencySurveyGroups(competencyFormId)
+  const satisfactionSummary = satisfactionSurveySummary(satisfactionFormId)
   const toggleArea = (key: string) =>
     setCompetencyAreas(prev => {
       const next = prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]
@@ -554,14 +581,11 @@ export default function ProgramForm() {
               {/* 만족도 조사 */}
               <div className="pf-field">
                 <span className="pf-label">만족도 조사 <span className="pf-req">*</span></span>
-                <div className="pf-radio-row">
-                  <label className="pf-radio">
-                    <input type="radio" name="satisfaction" checked={satisfaction} onChange={() => setSatisfaction(true)} /> 실시
-                  </label>
-                  <label className="pf-radio">
-                    <input type="radio" name="satisfaction" checked={!satisfaction} onChange={() => setSatisfaction(false)} /> 미실시
-                  </label>
-                </div>
+                {surveyLockError && <div role="alert" className="pf-help">{surveyLockError} <button type="button" className="pf-btn-outline" onClick={() => setLockRevision(v => v + 1)}>다시 시도</button></div>}
+                {editing && !surveyLocks && !surveyLockError && <span className="pf-help" role="status">설문 응답 여부를 확인하고 있습니다.</span>}
+                <ProgramSurveySelect kind="SATISFACTION" value={satisfaction ? satisfactionFormId : null} disabled={editing && (!surveyLocks || surveyLocks.satisfaction)}
+                  onChange={value => { setSatisfaction(value !== null); setSatisfactionFormId(value) }} />
+                {surveyLocks?.satisfaction && <span className="pf-help">만족도 응답이 등록되어 설문 버전이 고정되었습니다.</span>}
 
                 {satisfaction && (
                   <div className="pf-survey-body">
@@ -580,18 +604,13 @@ export default function ProgramForm() {
               {/* 역량향상률 조사 */}
               <div className="pf-field">
                 <span className="pf-label">역량향상률 조사 <span className="pf-req">*</span></span>
-                <div className="pf-field" style={{ gap: 6 }}>
-                  <span className="pf-sub">대분류</span>
-                  <select
-                    className="pf-select"
-                    style={{ maxWidth: 200 }}
-                    value={competency ? '실시' : '미실시'}
-                    onChange={e => setCompetency(e.target.value === '실시')}
-                  >
-                    <option value="실시">실시</option>
-                    <option value="미실시">미실시</option>
-                  </select>
-                </div>
+                <ProgramSurveySelect kind="COMPETENCY" value={competency ? competencyFormId : null} selectedAreas={competencyAreas} disabled={editing && (!surveyLocks || surveyLocks.competency)}
+                  onChange={value => {
+                    setCompetency(value !== null); setCompetencyFormId(value)
+                    const allowed = competencySurveyGroups(value).flatMap(g => g.areas.map(a => a.key))
+                    setCompetencyAreas(prev => prev.filter(key => allowed.includes(key)))
+                  }} />
+                {surveyLocks?.competency && <span className="pf-help">역량 조사 응답이 등록되어 설문 버전과 조사 영역이 고정되었습니다.</span>}
 
                 {competency && (
                   <div className="pf-survey-body">
@@ -611,6 +630,7 @@ export default function ProgramForm() {
                               <input
                                 type="checkbox"
                                 checked={competencyAreas.includes(a.key)}
+                                disabled={editing && (!surveyLocks || surveyLocks.competency)}
                                 onChange={() => toggleArea(a.key)}
                               />
                               {a.label} <small>({a.itemCount})</small>
@@ -625,7 +645,7 @@ export default function ProgramForm() {
                 <span className="pf-help">
                   설문조사 할 영역만 중복 체크합니다. 체크에 따라 해당 영역 질문지만 활성화되고 조사됩니다.
                   {competencyForm && !competencyForm.isCurrent
-                    && ' 이 프로그램은 개설 때의 설문지를 그대로 씁니다 — 이후 게시된 최신 버전과 영역이 다를 수 있습니다.'}
+                    && ' 선택한 설문 버전은 최신 게시본과 영역이 다를 수 있습니다.'}
                 </span>
               </div>
 
@@ -654,7 +674,7 @@ export default function ProgramForm() {
                     <span className="pf-dropzone-hint">JPG, PNG 파일 지원 (권장 사이즈 800x450px, 최대 5MB)</span>
                     <input
                       type="file"
-                      accept="image/*"
+                      accept={IMAGE_ACCEPT}
                       className="pf-dropzone-input"
                       onChange={async e => {
                         const file = e.target.files?.[0]

@@ -829,6 +829,8 @@ input, textarea, select { font-family: var(--font); }
   border: 1px solid var(--color-border);
 }
 .admin-btn-danger-ghost:hover { background: #FDECEC; border-color: var(--color-danger); }
+/* 되돌리기 어려운 처리(불참 확정)는 채운 빨강으로 둔다 — ghost 는 '취소·삭제 안내'용이다. */
+.admin-btn-danger { background: var(--color-danger); color: #fff; border: 1px solid var(--color-danger); }
 .admin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 /* 링크(<a>)는 disabled 속성이 없어서 상태 클래스로 막는다 */
 .admin-btn.is-disabled { opacity: 0.5; cursor: not-allowed; pointer-events: none; }
@@ -2306,6 +2308,10 @@ input, textarea, select { font-family: var(--font); }
 .counsel-primary-btn { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }
 .counsel-primary-btn:disabled { opacity: .45; cursor: not-allowed; }
 .counsel-outline-btn.is-danger { color: var(--color-danger); }
+/* 불참 확정 — .counsel-primary-btn 과 같은 채움 형이고 색만 위험색이다. */
+.counsel-outline-btn.is-danger-solid { border-color: var(--color-danger); background: var(--color-danger); color: #fff; }
+.counsel-outline-btn.is-danger-solid:hover { border-color: var(--color-danger); color: #fff; }
+.counsel-outline-btn.is-danger-solid:disabled { opacity: .45; cursor: not-allowed; }
 
 .counsel-request-table-scroll { flex: 1; overflow-x: auto; }
 .counsel-request-columns,

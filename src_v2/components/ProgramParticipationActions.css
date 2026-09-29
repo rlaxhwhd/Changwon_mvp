@@ -1,0 +1,11 @@
+.program-participation { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.program-participation--notice { align-items: stretch; }
+.program-survey-action {
+  display: inline-flex; align-items: center; justify-content: center;
+  min-height: 36px; padding: 7px 12px; border-radius: var(--radius-sm, 6px);
+  background: var(--blue-soft); color: var(--on-blue, #1a5fcc);
+  font-size: 12px; font-weight: 700; line-height: 1.4; text-decoration: none; white-space: nowrap;
+  transition: background-color .15s, color .15s;
+}
+.program-survey-action:hover { background: var(--on-blue, #1a5fcc); color: #fff; }
+.program-participation a:focus-visible { outline: 2px solid var(--on-blue, #1a5fcc); outline-offset: 3px; }

@@ -10,7 +10,7 @@ export const menuItems: MenuItem[] = []
 export interface FactorDefinition {test_code: string;factor_code: string;label: string;secondary_label: string | null;sort_order: number}
 export const factorDefinitions: FactorDefinition[] = []
 /** 갈래별 현재 게시본의 구성. 문장·척도는 codeItems 에서 읽는다 — 여기엔 코드와 순서만 있다. */
-/** 게시된 설문지의 구성 — 옛 버전도 함께 실려 온다. 프로그램은 개설 시점 게시본을 평생 붙잡는다. */
+/** 게시된 설문지의 구성 — 옛 버전도 포함한다. 프로그램별 선택본은 응답이 생기면 고정된다. */
 export interface SurveyFormSummary { id: number; kind: 'COMPETENCY' | 'SATISFACTION'; version: number; isCurrent: boolean; areas: { key: string; items: string[] }[] }
 export const publishedSurveyForms: SurveyFormSummary[] = []
 export const METADATA_EVENT = 'dc_metadata_changed'

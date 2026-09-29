@@ -103,7 +103,7 @@ export interface Job {
 // 학생 레코드에 내장되는 상담신청. 상담사 포털은 이 데이터를 투영해 읽는다.
 // (src_admin/data/schema/counselRequest 의 투영 타입과 구조 정합 — '교수'는 접수함 밖)
 export type CounselRequestType = '진로취업' | '심리' | '교수'
-export type CounselRequestStatus = '대기' | '확정' | '완료' | '취소'
+export type CounselRequestStatus = '대기' | '확정' | '완료' | '불참' | '취소'
 export type CounselMethod = '대면' | '비대면'
 export interface CounselSlot { date: string; start: string; end: string; place?: string }
 
@@ -189,7 +189,7 @@ export interface StudentData {
   jobSkills: JobSkill[]
   jobs: Job[]
   /** 시드 상세 학생만 갖는 목업 구조. 학사 로그인 학생은 null — 목표는 targetRole·targetCompany,
-   *  이번 주 할 일은 getWeeklyTodos(확정 로드맵 칸)에서 읽는다. */
+   *  이번 주 할 일은 useWeeklyTodos(서버의 상담·비교과·설문 일정)에서 읽는다. */
   finalRoadmap: FinalRoadmap | null
   /** 점수 계산식(lib/scoring.ts)이 사용하는 9개 raw 입력값. JSON에서 직접 주입. */
   scoreInputs: StudentInputs

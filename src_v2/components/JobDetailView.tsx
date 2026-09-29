@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { safeHtml } from '../../shared/safeHtml'
 import JobLogo from '../../shared/JobLogo'
 import type { ReactNode } from 'react'
 import { isJobClosed, jobDdayLabel, jobHighlights } from '../../src_admin/data/jobsSource'
@@ -172,7 +173,7 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
 
           <Section title="모집요강">
             {job.content
-              ? <div className="jd-content" dangerouslySetInnerHTML={{ __html: job.content }} />
+              ? <div className="jd-content" dangerouslySetInnerHTML={{ __html: safeHtml(job.content) }} />
               : <p className="jd-empty">등록된 모집요강이 없습니다.</p>}
           </Section>
 

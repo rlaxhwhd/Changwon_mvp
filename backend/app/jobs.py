@@ -17,7 +17,6 @@
 import calendar
 import hashlib
 from datetime import date, datetime, timedelta
-from urllib.parse import quote
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
@@ -28,6 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from . import files
 from .auth import principal, require_staff
+from .html_security import clean_html
 from .db import connection
 from .gates import employment_gate
 
@@ -410,6 +410,8 @@ class PostingBody(BaseModel):
 
     @model_validator(mode='after')
     def consistent(self):
+        if self.contentFormat == 'HTML':
+            self.content = clean_html(self.content)
         for tag in self.tags:
             if len(tag) > 50:
                 raise ValueError('태그는 50자 이하여야 합니다.')
@@ -1303,10 +1305,4 @@ def download(file_id: str, user=Depends(principal, scope='function'),
             conn.execute('''INSERT INTO dc.job_access_event(actor_uid,action,target_kind,target_id,
               filter_hash,row_count) VALUES(%s,'VIEW_DOCUMENT','FILE',%s,%s,1)''',
               (user['intg_uid'], file_id, hashlib.sha256(file_id.encode()).hexdigest()))
-    path = files.location(file_id)
-    if not path.is_file():
-        raise HTTPException(404, '파일 본문이 없습니다.')
-    # 파일명은 RFC 5987 로 퍼센트 인코딩한다 — 헤더는 latin-1 만 실을 수 있다.
-    return Response(path.read_bytes(), media_type=row['content_type'],
-                    headers={'Content-Disposition': "attachment; filename*=UTF-8''"
-                             + quote(files.safe_name(row['original_name']))})
+    return files.stream(row)

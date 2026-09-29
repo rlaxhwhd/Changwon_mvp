@@ -17,6 +17,7 @@ from app.db import pool
 from app.main import app
 from app.settings import settings
 from test_api import headers
+from security_fixtures import pdf_bytes
 from test_jobs import apply_as, key, new_posting, upload_resume
 
 
@@ -31,7 +32,7 @@ def test_file_root_is_outside_the_served_tree_and_names_are_server_made(client):
     """③④ 저장 이름은 서버가 만든 id 뿐이고, 원본 이름은 경로에 쓰이지 않는다."""
     hostile = '../../../evil<script>.pdf'
     response = client.post('/api/v1/job-files?slot=RESUME&name=' + hostile,
-                           headers=headers('chaewon'), content=b'%PDF-1.4 hostile')
+                           headers=headers('chaewon'), content=pdf_bytes())
     assert response.status_code == 201, response.text
     file_id = response.json()['id']
     assert file_id.isalnum() and len(file_id) == 32, file_id

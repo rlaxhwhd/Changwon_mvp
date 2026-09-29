@@ -18,6 +18,7 @@ from app.db import pool
 from app.jobs import JOB_CONTENT_MAX_CHARS, PostingBody, PostingUpdate, plus_one_month
 from pydantic import ValidationError
 from test_api import headers
+from security_fixtures import pdf_bytes
 
 
 def key():
@@ -53,7 +54,7 @@ def new_posting(client, identity='career_kim', **overrides):
 def upload_resume(client, identity='chaewon', name='이력서.pdf'):
     response = client.post('/api/v1/job-files?slot=RESUME&name=' + name,
                            headers={**headers(identity), 'Content-Type': 'application/pdf'},
-                           content=b'%PDF-1.4 fixture')
+                           content=pdf_bytes())
     assert response.status_code == 201, response.text
     return response.json()
 
@@ -476,10 +477,17 @@ def test_posting_logo_preview_replace_and_preserve_by_another_manager(client):
         return response.json()
 
     logo = upload_logo()
-    assert client.get(logo['downloadUrl'], headers=head).content == image
+    from io import BytesIO
+    from PIL import Image
+    def assert_image(response):
+        assert response.status_code == 200
+        actual = Image.open(BytesIO(response.content)).convert('RGBA')
+        expected = Image.open(BytesIO(image)).convert('RGBA')
+        assert actual.size == expected.size and actual.tobytes() == expected.tobytes()
+    assert_image(client.get(logo['downloadUrl'], headers=head))
     assert client.get(logo['downloadUrl'], headers=headers('chaewon')).status_code == 404
     posting = new_posting(client, logoFileId=logo['id'])
-    assert client.get(posting['logo'], headers=headers('chaewon')).content == image
+    assert_image(client.get(posting['logo'], headers=headers('chaewon')))
     # 관리 권한은 호출자가 확인한다. 기존 귀속 파일은 업로더가 달라도 유지한다.
     with pool.connection() as conn:
         bind_files(conn, {'intg_uid': 'another-manager'}, posting['id'],
@@ -495,14 +503,22 @@ def test_posting_logo_preview_replace_and_preserve_by_another_manager(client):
     assert response.status_code == 200, response.text
     stored = client.get(f"/api/v1/jobs/{posting['id']}", headers=head).json()
     assert stored['logoFileId'] == replacement['id']
-    assert client.get(stored['logo'], headers=headers('chaewon')).content == image
+    assert_image(client.get(stored['logo'], headers=headers('chaewon')))
     assert client.get(logo['downloadUrl'], headers=head).status_code == 404
 
 
 def test_image_heavy_posting_content_can_be_created_and_updated(client):
-    content = '<p>채용 안내</p><img src="data:image/png;base64,' + 'A' * 1_500_000 + '">'
+    import base64
+    import random
+    from io import BytesIO
+    from PIL import Image
+    from app.html_security import clean_html
+    output = BytesIO()
+    Image.frombytes('RGB', (600, 600), random.Random(17).randbytes(600 * 600 * 3)).save(output, format='PNG')
+    content = '<p>채용 안내</p><img src="data:image/png;base64,' + base64.b64encode(output.getvalue()).decode() + '">'
+    expected = clean_html(content)
     posting = new_posting(client, content=content)
-    assert posting['content'] == content
+    assert posting['content'] == expected
     changed = content + '<p>추가 안내</p>'
     response = client.patch(f"/api/v1/jobs/{posting['id']}",
                             headers={**headers('career_kim'), **key()},
@@ -510,7 +526,7 @@ def test_image_heavy_posting_content_can_be_created_and_updated(client):
                                               expectedVersion=posting['version']))
     assert response.status_code == 200, response.text
     stored = client.get(f"/api/v1/jobs/{posting['id']}", headers=headers('career_kim')).json()
-    assert stored['content'] == changed
+    assert stored['content'] == expected + '<p>추가 안내</p>'
 
 
 @pytest.mark.parametrize('model', [PostingBody, PostingUpdate])

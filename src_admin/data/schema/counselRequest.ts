@@ -14,8 +14,8 @@ import type { CareTrack } from '../../../src_v2/data/counselTrack'
 /** 상담 유형 — 진로취업상담사는 '진로취업', 심리상담사는 '심리' 접수 */
 export type CounselRequestType = '진로취업' | '심리'
 
-/** 상담 신청 상태 */
-export type CounselRequestStatus = '대기' | '확정' | '완료' | '취소'
+/** 상담 신청 상태. '불참'은 확정된 상담에 학생이 오지 않은 것을 상담사가 체크한 종결 상태다. */
+export type CounselRequestStatus = '대기' | '확정' | '완료' | '불참' | '취소'
 
 /** 상담 방식 */
 export type CounselMethod = '대면' | '비대면'

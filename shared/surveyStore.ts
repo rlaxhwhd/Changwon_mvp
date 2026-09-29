@@ -53,13 +53,13 @@ export const SURVEY_SCALE: { value: number; label: string }[] = [
 
 export const SURVEY_PHASE_LABEL: Record<SurveyPhase, string> = { PRE: '사전 역량 진단', POST: '사후 역량 진단', SATISFACTION: '만족도 조사' }
 
-export function loadSurveyForm(programId: string, phase: SurveyPhase): Promise<SurveyForm> {
-  return api<SurveyForm>(`/programs/${encodeURIComponent(programId)}/survey/${phase}`)
+export function loadSurveyForm(programId: string, phase: SurveyPhase, signal?: AbortSignal): Promise<SurveyForm> {
+  return api<SurveyForm>(`/programs/${encodeURIComponent(programId)}/survey/${phase}`, { signal })
 }
 
 export function submitSurvey(programId: string, phase: SurveyPhase, answers: Record<string, number | string>): Promise<void> {
   return api(`/programs/${encodeURIComponent(programId)}/survey/${phase}`,
-             { method: 'POST', body: JSON.stringify({ answers }) }).then(() => undefined)
+             { method: 'POST', body: JSON.stringify({ answers }) }).then(() => { window.dispatchEvent(new Event('dc:survey-submitted')) })
 }
 
 export function loadSurveyStats(programId: string): Promise<SurveyStats> {

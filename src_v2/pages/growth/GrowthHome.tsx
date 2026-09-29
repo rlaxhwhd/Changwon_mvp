@@ -19,7 +19,7 @@ import { createGrowthEntry, deleteGrowthEntry, growthEntries, updateGrowthEntry 
 import type { GrowthEntry } from '../../../shared/growthStore'
 import { useGrowth, useRoadmap } from '../../../shared/useRoadmapStore'
 // 「이번 주 실행」은 라운지와 같은 셀렉터에서 읽는다 — 확정 로드맵의 미완료 칸이 여기서 나온다.
-import { getWeeklyTodos } from '../../data/lounge'
+import { useWeeklyTodos } from '../../../shared/useWeeklyTodos'
 import './GrowthHome.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -88,7 +88,8 @@ export default function GrowthHome() {
   // 목표는 확정 로드맵이 덮어쓴 값(targetRole·targetCompany)이 정본이다 — 시드 전용 finalRoadmap 을 읽지 않는다.
   const goalRole = student.targetRole || '미정'
   const goalCompany = student.targetCompany?.name || '미정'
-  const nextAction = getWeeklyTodos(student)[0]
+  const weeklyAgenda = useWeeklyTodos(student.id)
+  const nextAction = weeklyAgenda.items.find(item => !item.done && !item.closed)
 
   const openCreate = (kind: EditorKind) => {
     const defaults: Record<EditorKind, Record<string, string>> = {

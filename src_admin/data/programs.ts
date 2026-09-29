@@ -100,8 +100,7 @@ export function countPrograms(): Record<ProgramStatus, number> & { total: number
   }
 }
 
-// 설문지 pin 은 서버가 개설 때 정하는 읽기 전용 값이라 입력에서 뺀다(본문은 extra='forbid').
-type ProgramInput = Omit<Program, 'id' | 'applicants' | 'createdAt' | 'version' | 'competencyFormId' | 'satisfactionFormId'>
+type ProgramInput = Omit<Program, 'id' | 'applicants' | 'createdAt' | 'version'>
 
 /** 새 프로그램 등록 — id·createdAt 은 서버가 부여한다. */
 export async function addProgram(input: ProgramInput): Promise<Program> {
@@ -114,11 +113,10 @@ export async function addProgram(input: ProgramInput): Promise<Program> {
 export async function updateProgram(id: string, patch: Partial<ProgramInput>): Promise<void> {
   const current = getProgramById(id)
   if (!current) throw new Error('프로그램을 찾을 수 없습니다.')
-  const { applicants: _applicants, createdAt: _createdAt, id: _id,
-          competencyFormId: _competencyFormId, satisfactionFormId: _satisfactionFormId,
-          version, ...rest } = { ...current, ...patch }
+  const rest = Object.fromEntries(Object.entries({ ...current, ...patch })
+    .filter(([key]) => !['applicants', 'createdAt', 'id', 'version'].includes(key)))
   await api(`/programs/${encodeURIComponent(id)}`, {
-    method: 'PUT', body: JSON.stringify({ ...rest, expectedVersion: version }),
+    method: 'PUT', body: JSON.stringify({ ...rest, expectedVersion: current.version }),
   })
   await refreshProgram(id)
 }

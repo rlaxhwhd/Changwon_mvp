@@ -10,7 +10,7 @@ import { splitMajorGrade } from '../data/counselRequests'
 import StudentDetailModal from '../components/StudentDetailModal'
 import { getEventsByRequest } from '../data/counselEvents'
 import { getActiveCounselor, getCounselorById, getReassignableCounselors } from '../data/counselors'
-import { buildDaySchedule, confirmRequest, formatRelativeTime, getCounselStudentProfile, getCounselRequests, pickReferenceDate, reassignRequest, refreshCounselRequests, rejectRequest, rescheduleRequest } from '../data/counselRequests'
+import { buildDaySchedule, confirmRequest, formatRelativeTime, getCounselStudentProfile, getRequestsByAssignee, markNoShow, pickReferenceDate, reassignRequest, refreshCounselRequests, rejectRequest, rescheduleRequest } from '../data/counselRequests'
 import { useStore } from '../../shared/useRoadmapStore'
 import type { CounselRequest, CounselRequestStatus, CounselSlot } from '../data/counselRequests'
 import { getOpenHours } from '../data/availability'
@@ -63,7 +63,9 @@ function ScheduleAction({ request, onClose }: { request: CounselRequest; onClose
     await rejectRequest(request.id, cancelReason.trim())
     onClose()
   })
-  return <div className="counsel-modal-action">{action.error && <p role="alert">{action.error}</p>}<div className="counsel-request-detail-grid"><label><span>날짜</span><input type="date" value={date} onChange={e => setDate(e.target.value)} /></label><label><span>시작</span><input type="time" value={start} onChange={e => setStart(e.target.value)} /></label><label><span>종료</span><input type="time" value={end} onChange={e => setEnd(e.target.value)} /></label><label className="is-wide"><span>장소 / 링크</span><input value={place} onChange={e => setPlace(e.target.value)} /></label>{cancelling && <label className="is-wide"><span>취소 사유 <em className="counsel-required">필수</em></span><textarea rows={2} value={cancelReason} onChange={e => setCancelReason(e.target.value)} placeholder="취소 사유를 입력하세요. 처리 이력에 기록됩니다." /></label>}</div><div className="counsel-request-detail-actions">{request.status === '대기' && (cancelling ? <><button type="button" className="counsel-outline-btn" onClick={() => { setCancelling(false); setCancelReason('') }}>취소 중단</button><button type="button" className="counsel-outline-btn is-danger" disabled={!cancelReason.trim() || action.saving} onClick={cancel}>취소 확정</button></> : <button type="button" className="counsel-outline-btn is-danger" onClick={() => setCancelling(true)}>신청 취소</button>)}<button type="button" className="counsel-outline-btn" onClick={onClose}>닫기</button><button type="button" className="counsel-primary-btn" disabled={!valid || action.saving} onClick={save}>{request.status === '확정' ? '일정 변경' : '상담 확정'}</button></div></div>
+  // 불참 처리 — 상담사가 직접 체크한다(자동 만료 없음). 사유는 받지 않고 처리 이력에 남는다.
+  const noShow = () => action.run(async () => { await markNoShow(request.id); onClose() })
+  return <div className="counsel-modal-action">{action.error && <p role="alert">{action.error}</p>}<div className="counsel-request-detail-grid"><label><span>날짜</span><input type="date" value={date} onChange={e => setDate(e.target.value)} /></label><label><span>시작</span><input type="time" value={start} onChange={e => setStart(e.target.value)} /></label><label><span>종료</span><input type="time" value={end} onChange={e => setEnd(e.target.value)} /></label><label className="is-wide"><span>장소 / 링크</span><input value={place} onChange={e => setPlace(e.target.value)} /></label>{cancelling && <label className="is-wide"><span>취소 사유 <em className="counsel-required">필수</em></span><textarea rows={2} value={cancelReason} onChange={e => setCancelReason(e.target.value)} placeholder="취소 사유를 입력하세요. 처리 이력에 기록됩니다." /></label>}</div><div className="counsel-request-detail-actions"><button type="button" className="counsel-primary-btn" disabled={!valid || action.saving} onClick={save}>{request.status === '확정' ? '일정 변경' : '상담 확정'}</button>{request.status === '대기' && (cancelling ? <><button type="button" className="counsel-outline-btn" onClick={() => { setCancelling(false); setCancelReason('') }}>취소 중단</button><button type="button" className="counsel-outline-btn is-danger" disabled={!cancelReason.trim() || action.saving} onClick={cancel}>취소 확정</button></> : <button type="button" className="counsel-outline-btn is-danger" onClick={() => setCancelling(true)}>신청 취소</button>)}{/* 불참은 약속이 잡힌 '확정' 건에만 뜬다 — 대기 건은 어길 약속이 없다. */}{request.status === '확정' && <button type="button" className="counsel-outline-btn is-danger-solid" disabled={action.saving} onClick={noShow}>불참</button>}<button type="button" className="counsel-outline-btn" onClick={onClose}>닫기</button></div></div>
 }
 
 function ReassignAction({ request, onClose }: { request: CounselRequest; onClose: () => void }) {
@@ -122,10 +124,10 @@ function RequestModal({ request, initialTab, onClose }: { request: CounselReques
 export default function CounselRequests() {
   const counselor = getActiveCounselor()
   // 진입 시 서버 재조회 — 홈(useResource)과 달리 이 화면은 부팅 캐시를 읽으므로, 그 뒤 학생이 넣은 신청은 새로고침 전까지 보이지 않았다.
-  const version = useStore('dc:counsel-updated')
+  useStore('dc:counsel-updated')
   const [refreshError, setRefreshError] = useState('')
   useEffect(() => { refreshCounselRequests().catch(error => setRefreshError(error instanceof Error ? error.message : '신청 목록을 다시 불러오지 못했습니다.')) }, [])
-  const stored = useMemo(() => getCounselRequests(), [counselor.id, version])
+  const stored = getRequestsByAssignee(counselor.id)
   // 접수함은 앞으로 처리할 신청만 다룬다 — 접속일(오늘) 이전 건은 상태를 가리지 않고 모두 뺀다.
   // 지난 상담 기록은 「상담일지」가 맡는다.
   const today = dateKey(new Date())
@@ -139,8 +141,8 @@ const initialKey = useMemo(() => pickReferenceDate(all.map(requestDate), today),
   // 같은 카드 안에서 신청 목록 ↔ 그날의 상담 일정을 갈아 끼운다. 캘린더·상태 탭·검색은
   // 두 뷰가 공유한다 — 「일정·예약」 화면으로 나가지 않고 확정·진행까지 여기서 끝낸다.
   const [view, setView] = useState<RequestView>('list')
-  const counts = useMemo(() => { const result: Record<RequestTab, number> = { 전체: all.length, 대기: 0, 확정: 0, 완료: 0, 취소: 0 }; all.forEach(req => result[req.status] += 1); return result }, [all]); // 캘린더 배지는 살아 있는 신청만 센다 — 취소된 건은 그 날짜에 처리할 일이 없다.
-  const dateCounts = useMemo(() => { const result = new Map<string, number>(); all.forEach(req => { if (req.status === '취소') return; result.set(requestDate(req), (result.get(requestDate(req)) ?? 0) + 1) }); return result }, [all]); const days = useMemo(() => calendarDays(month), [month]); // 상태 탭·유형·검색어는 두 뷰가 똑같이 쓴다. 다른 것은 날짜 기준뿐 —
+  const counts = useMemo(() => { const result: Record<RequestTab, number> = { 전체: all.length, 대기: 0, 확정: 0, 완료: 0, 불참: 0, 취소: 0 }; all.forEach(req => result[req.status] += 1); return result }, [all]); // 캘린더 배지는 살아 있는 신청만 센다 — 취소된 건은 그 날짜에 처리할 일이 없다.
+  const dateCounts = useMemo(() => { const result = new Map<string, number>(); all.forEach(req => { if (req.status === '취소' || req.status === '불참') return; result.set(requestDate(req), (result.get(requestDate(req)) ?? 0) + 1) }); return result }, [all]); const days = useMemo(() => calendarDays(month), [month]); // 상태 탭·유형·검색어는 두 뷰가 똑같이 쓴다. 다른 것은 날짜 기준뿐 —
   // 목록은 신청 대표일(requestDate), 일정은 실제로 잡힌 슬롯 날짜다.
   const matchesFilters = useCallback((req: CounselRequest) => (tab === '전체' || req.status === tab) && (typeFilter === '전체' || req.type === typeFilter) && (!query.trim() || req.studentName.toLowerCase().includes(query.trim().toLowerCase()) || req.studentNo.toLowerCase().includes(query.trim().toLowerCase())), [tab, typeFilter, query])
   const list = useMemo(() => all.filter(req => requestDate(req) === selectedDate).filter(matchesFilters).sort((a,b) => requestTime(a).localeCompare(requestTime(b))), [all, selectedDate, matchesFilters])

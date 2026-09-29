@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react'
+import { safeHtml } from '../../shared/safeHtml'
+import { IMAGE_ACCEPT, validateUpload } from '../../shared/uploadPolicy'
 import $ from './summernote-init'
 import './RichEditor.css'
-
-/* eslint-disable @typescript-eslint/no-explicit-any */
 
 const fileToBase64 = (file: File): Promise<string> =>
   new Promise((resolve, reject) => {
@@ -93,7 +93,7 @@ export default function RichEditor({ value, onChange, height = 320, placeholder 
   const containerRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement | null>(null)
   const onChangeRef = useRef(onChange)
-  const valueRef = useRef(value || '')
+  const valueRef = useRef(safeHtml(value || ''))
   const initializedRef = useRef(false)
 
   useEffect(() => {
@@ -112,6 +112,18 @@ export default function RichEditor({ value, onChange, height = 320, placeholder 
     textareaRef.current = textarea
 
     const $note = $(textarea)
+    const insertImages = async (files: FileList) => {
+      for (const file of Array.from(files)) {
+        try {
+          validateUpload(file, IMAGE_ACCEPT)
+          const dataUrl = await shrinkImage(await fileToBase64(file))
+          if (dataUrl.length > IMAGE_MAX_CHARS) throw new Error('이미지를 더 작게 만들어 다시 넣어주세요.')
+          $note.summernote('insertImage', dataUrl, file.name)
+        } catch (error) {
+          window.alert(error instanceof Error ? error.message : '이미지 파일을 확인해 주세요.')
+        }
+      }
+    }
     $note.summernote({
       placeholder: placeholder || '내용을 입력하거나 이미지를 끌어다 놓으세요.',
       tabsize: 2,
@@ -123,31 +135,31 @@ export default function RichEditor({ value, onChange, height = 320, placeholder 
         ['color', ['color']],
         ['para', ['ul', 'ol', 'paragraph']],
         ['insert', ['picture', 'link', 'hr']],
-        ['view', ['fullscreen', 'codeview']],
+        ['view', ['fullscreen']],
       ],
       callbacks: {
         onChange: (contents: string) => {
-          valueRef.current = contents || ''
-          onChangeRef.current?.(contents || '')
+          const cleaned = safeHtml(contents || '')
+          valueRef.current = cleaned
+          onChangeRef.current?.(cleaned)
+          if (cleaned !== contents) $note.summernote('code', cleaned)
         },
-        onImageUpload: async (files: FileList) => {
-          for (const file of Array.from(files)) {
-            try {
-              const dataUrl = await shrinkImage(await fileToBase64(file))
-              // 줄이고도 한도를 넘으면 넣지 않는다. 넣어 두면 저장할 때
-              // 「본문이 통째로 안 들어간다」로 뒤늦게 터진다 — 올린 자리에서 바로 알린다.
-              if (dataUrl.length > IMAGE_MAX_CHARS) {
-                window.alert(`'${file.name}' 은(는) 줄여도 너무 큽니다.\n이미지를 더 작게 만들어 다시 넣어주세요.`)
-                continue
-              }
-              $note.summernote('insertImage', dataUrl, file.name)
-            } catch (err) {
-              console.error('image embed failed', err)
-              window.alert(`'${file.name}' 을(를) 넣지 못했습니다. 이미지 파일인지 확인해주세요.`)
-            }
+        onPaste: (event: ClipboardEvent & { originalEvent?: ClipboardEvent }) => {
+          const clipboard = event.clipboardData ?? event.originalEvent?.clipboardData
+          if (clipboard?.files.length) {
+            event.preventDefault()
+            void insertImages(clipboard.files)
+            return
+          }
+          const html = clipboard?.getData('text/html')
+          if (html) {
+            event.preventDefault()
+            $note.summernote('pasteHTML', safeHtml(html))
           }
         },
+        onImageUpload: insertImages,
       },
+      disableDragAndDrop: true,
     })
 
     if (valueRef.current) {
@@ -156,7 +168,20 @@ export default function RichEditor({ value, onChange, height = 320, placeholder 
     initializedRef.current = true
 
     const container = containerRef.current
+    // Summernote's raw HTML drop path bypasses onPaste. Intercept it before DOM insertion.
+    const drop = (event: DragEvent) => {
+      event.preventDefault()
+      event.stopPropagation()
+      const transfer = event.dataTransfer
+      if (transfer?.files.length) void insertImages(transfer.files)
+      else if (transfer?.getData('text/html')) $note.summernote('pasteHTML', safeHtml(transfer.getData('text/html')))
+    }
+    const dragOver = (event: DragEvent) => event.preventDefault()
+    container.addEventListener('drop', drop, true)
+    container.addEventListener('dragover', dragOver)
     return () => {
+      container.removeEventListener('drop', drop, true)
+      container.removeEventListener('dragover', dragOver)
       try {
         $note.summernote('destroy')
       } catch {
@@ -173,7 +198,7 @@ export default function RichEditor({ value, onChange, height = 320, placeholder 
 
   // 외부 value 변경분 동기화 (내부 편집분과 다를 때만)
   useEffect(() => {
-    const next = value || ''
+    const next = safeHtml(value || '')
     if (!initializedRef.current || !textareaRef.current) return
     if (next === valueRef.current) return
     valueRef.current = next

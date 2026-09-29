@@ -12,7 +12,8 @@ import { LockedContent } from '../components/LockedContent'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
 import { getCompetencyAxes } from '../data/competency'
 import { getGrowthRecords } from '../data/growthRecords'
-import { getLoungeData, getWeeklyTodos } from '../data/lounge'
+import { getLoungeData } from '../data/lounge'
+import { useWeeklyTodos } from '../../shared/useWeeklyTodos'
 import { ROADMAP_AXIS_MAP, type RoadmapAxis } from '../data/schema/roadmap'
 import './AiLounge.css'
 // 성장 활동 기록 카드는 「내 성장」과 같은 모양이다 — 그 스타일시트를 그대로 쓴다.
@@ -70,7 +71,9 @@ export default function AiLounge() {
   const growth = getGrowthRecords(student.id)
   const tasks = roadmap?.axes.flatMap(a => a.cells.filter(c => c.status !== 'DONE').map(c => ({ ...c, axis: a.axis }))) ?? []
   const active = requests.filter(r => r.status !== '취소')
-  const todos = getWeeklyTodos(student)
+  const agenda = useWeeklyTodos(student.id)
+  const todos = agenda.items
+  const remaining = todos.filter(item => !item.done && !item.closed).length
 
   return <div className="al-page">
     <NextStepBanner />
@@ -81,7 +84,6 @@ export default function AiLounge() {
 
       <Card id="competency" className="competency-card" title="5대 핵심역량" description="비교과 프로그램과 수강 강의활동으로 쌓은 역량입니다.">
         <div className="competency-chart">
-          {student.coreCompetencySource === 'DEVELOPMENT_CARE7_TEST' && <p>개발 테스트용 예시 점수입니다.</p>}
           <CompetencyRadarChart axes={getCompetencyAxes(student)} currentFill="competency-mine">
             <defs><linearGradient id="competency-mine" x1="0" y1="0" x2="1" y2="0">
               <stop offset="0%" stopColor="var(--competency-current)" />
@@ -148,14 +150,17 @@ export default function AiLounge() {
         </div>}
       </Card>
 
-      {/* 이번 주 할 일 — 시안의 체크박스는 표시용이다. 완료 판정은 상담·수료·로드맵 쪽 정본이 한다. */}
-      <Card id="todo" className="todo-card" title="이번 주 할 일" description="마감이 가까운 순서입니다."
-        action={todos.length > 0 && <span className="badge coral">{todos.length}개 남음</span>}>
-        {todos.length === 0 ? <p className="gh-empty">예정된 할 일이 없습니다.</p>
-          : <div className="row-list">{todos.slice(0, 6).map(t => <Link key={t.id} className="list-item" to={t.to}>
-            <input className="checkbox" type="checkbox" checked={false} readOnly tabIndex={-1} aria-hidden="true" />
-            <span className="item-copy"><b>{t.title}</b><span>{t.sub}</span></span>
-            <span className={`badge${t.dday <= 3 ? ' coral' : t.dday <= 7 ? ' amber' : ''}`}>{t.dday === 0 ? 'D-DAY' : `D-${t.dday}`}</span>
+      {/* 체크는 날짜 경과·실제 완료의 표시이며 상담/설문 상태를 변경하지 않는다. */}
+      <Card id="todo" className="todo-card" title="이번 주 할 일"
+        description={agenda.weekStart && agenda.weekEnd ? `${agenda.weekStart.slice(5).replace('-', '.')} 월 ~ ${agenda.weekEnd.slice(5).replace('-', '.')} 일 · 지난 일정도 이번 주에는 남아 있습니다.` : '이번 주 월요일부터 일요일까지의 일정입니다.'}
+        action={!agenda.loading && !agenda.error && todos.length > 0 && <span className="badge coral">{remaining}개 남음</span>}>
+        {agenda.loading ? <p className="gh-empty" role="status">이번 주 일정을 불러오는 중입니다.</p>
+          : agenda.error ? <div className="weekly-todo-error" role="alert"><p>{agenda.error}</p><button type="button" className="button" onClick={agenda.reload}>다시 불러오기</button></div>
+          : todos.length === 0 ? <p className="gh-empty">이번 주 예정된 상담·비교과·설문 일정이 없습니다.</p>
+          : <div className="row-list weekly-todo-list">{todos.map(t => <Link key={t.id} className={`list-item${t.done ? ' is-checked' : ''}`} to={t.to}>
+            <span className={`weekly-todo-check${t.done ? ' is-checked' : ''}`} aria-hidden="true">{t.done && <Icon id="i-check" />}</span>
+            <span className="item-copy"><b>{t.title}</b><span><time dateTime={t.date}>{t.date.slice(5).replace('-', '.')}</time> · {t.sub}</span></span>
+            <span className={`badge${!t.done && !t.closed && t.dday <= 3 ? ' coral' : ''}`}>{t.state === 'completed' ? '완료' : t.state === 'elapsed' ? '날짜 지남' : t.closed ? '종료' : t.dday === 0 ? '오늘' : `D-${t.dday}`}</span>
           </Link>)}</div>}
       </Card>
 

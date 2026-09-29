@@ -1,4 +1,5 @@
 import PageNumbers from '../../shared/components/PageNumbers'
+import { DOCUMENT_ACCEPT, IMAGE_ACCEPT } from '../../shared/uploadPolicy'
 // ─────────────────────────────────────────────────────────────────────────────
 // 채용공고 등록·수정 — 정본은 서버(dc.job_posting)다.
 //
@@ -305,7 +306,7 @@ export default function JobForm() {
                       {logo ? '이미지 변경' : '이미지 선택'}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept={IMAGE_ACCEPT}
                         onChange={e => { void upload('LOGO', e.target.files?.[0]); e.target.value = '' }}
                       />
                     </label>
@@ -464,6 +465,7 @@ export default function JobForm() {
                   파일 추가
                   <input
                     type="file"
+                    accept={DOCUMENT_ACCEPT}
                     onChange={e => { void upload('ATTACHMENT', e.target.files?.[0]); e.target.value = '' }}
                   />
                 </label>

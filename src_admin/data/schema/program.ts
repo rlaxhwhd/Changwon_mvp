@@ -221,8 +221,7 @@ export interface Program {
   competencySurvey?: boolean
   /** 조사할 영역 키 목록 — 체크한 영역의 질문지만 활성화된다. 예: ['CAREER_1','JOB_3'] */
   competencyAreas?: string[]
-  /** 개설 때 붙잡은 설문지 — **서버가 정하는 읽기 전용 값**이다. 수정 화면의 영역 선택지가 이 버전을 따른다.
-   *  저장 본문에 실어 보내면 서버가 거절하므로 updateProgram 이 id·createdAt 과 함께 떼어 낸다. */
+  /** 선택한 게시 설문 버전. 해당 종류의 응답이 생기면 서버가 변경을 막는다. */
   competencyFormId?: number | null
   satisfactionFormId?: number | null
   /** 통계값 반영 — false면 통계 요청의 참가/수료 인원 집계에서 제외한다 */

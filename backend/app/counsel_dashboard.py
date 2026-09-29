@@ -13,6 +13,8 @@ from .student_contact import contact_summary
 
 router = APIRouter()
 SEOUL = ZoneInfo('Asia/Seoul')
+# Same representative date as the request inbox: booked date, otherwise receipt date.
+PENDING_INBOX = "r.status_code='REQ' AND COALESCE(r.slot_date,(r.requested_at AT TIME ZONE 'Asia/Seoul')::date)>=%s"
 
 
 def today():
@@ -43,7 +45,7 @@ def dashboard(request: Request, response: Response, user=Depends(principal, scop
     counts = conn.execute(f'''SELECT
       count(*) FILTER(WHERE r.slot_date=%s AND r.status_code IN ('REQ','CONFIRMED','DONE')) AS today,
       count(*) FILTER(WHERE r.slot_date=%s AND r.status_code='DONE') AS "todayDone",
-      count(*) FILTER(WHERE r.status_code='REQ') AS pending,
+      count(*) FILTER(WHERE {PENDING_INBOX}) AS pending,
       count(*) FILTER(WHERE r.status_code='CONFIRMED') AS confirmed,
       count(*) FILTER(WHERE r.status_code='DONE') AS done,
       count(*) FILTER(WHERE r.status_code IN ('REQ','CONFIRMED','DONE')) AS active,
@@ -52,12 +54,12 @@ def dashboard(request: Request, response: Response, user=Depends(principal, scop
       )) AS recorded,
       (SELECT count(*) FROM dc.counsel_record cr JOIN dc.counsel_request r ON r.id=cr.request_id
        WHERE {condition}) AS "recordCount"
-      FROM dc.counsel_request r WHERE {condition}''', [day, day, *values, *values]).fetchone()
+      FROM dc.counsel_request r WHERE {condition}''', [day, day, day, *values, *values]).fetchone()
     timeline = conn.execute(SELECT + f''' WHERE {condition}
       AND r.slot_date=%s AND r.status_code IN ('REQ','CONFIRMED','DONE')
       ORDER BY r.slot_start NULLS LAST,r.requested_at,r.id''', [*values, day]).fetchall()
-    intake = conn.execute(SELECT + f''' WHERE {condition} AND r.status_code='REQ'
-      ORDER BY r.requested_at DESC,r.id DESC LIMIT 5''', values).fetchall()
+    intake = conn.execute(SELECT + f''' WHERE {condition} AND {PENDING_INBOX}
+      ORDER BY r.requested_at DESC,r.id DESC LIMIT 5''', [*values, day]).fetchall()
     # Share the exact roster classification and access scope used by Students.
     distribution = student_summary(request, 'type', user, conn, care7_only=True)
     roadmap = None

@@ -760,6 +760,38 @@
   column-gap: 8px
 }
 
+.al-page .weekly-todo-list {
+  max-height: 420px;
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+}
+
+.al-page .weekly-todo-check {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--line, #cbd5e1);
+  border-radius: 4px;
+}
+
+.al-page .weekly-todo-check.is-checked {
+  border-color: var(--mint);
+  background: var(--mint);
+  color: #fff;
+}
+
+.al-page .weekly-todo-check .icon { width: 14px; height: 14px; }
+.al-page .weekly-todo-list .is-checked .item-copy b {
+  text-decoration: line-through;
+  color: var(--muted-foreground, #565e6d);
+}
+.al-page .weekly-todo-list a:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: -2px;
+}
+.al-page .weekly-todo-error { padding: 12px 0; }
+
 .al-page .checkbox:checked {
   border-color: var(--mint);
   background: var(--mint)

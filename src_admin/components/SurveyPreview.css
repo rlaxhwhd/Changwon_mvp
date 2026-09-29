@@ -1,0 +1,27 @@
+.survey-preview { width: min(800px, calc(100vw - 32px)); max-width: none; max-height: calc(100dvh - 32px); margin: auto; padding: 0; border: 1px solid #609fd1; border-radius: 0; background: #fff; color: #263442; }
+.survey-preview[open] { display: flex; flex-direction: column; }
+.survey-preview::backdrop { background: rgb(20 30 40 / 45%); }
+.survey-preview.is-expanded { width: calc(100vw - 24px); height: calc(100dvh - 24px); max-height: none; }
+.survey-preview-head { display: flex; justify-content: space-between; align-items: center; flex: none; min-height: 40px; padding: 0 12px 0 16px; background: #609fd1; color: #fff; }
+.survey-preview-head h2 { margin: 0; font-size: 14px; font-weight: 700; }
+.survey-preview-head > div { display: flex; gap: 4px; }
+.survey-preview-head button { display: grid; place-items: center; width: 30px; height: 32px; padding: 0; border: 0; background: transparent; color: #fff; cursor: pointer; }
+.survey-preview-body { overflow: auto; padding: 30px 22px 16px; overscroll-behavior: contain; }
+.survey-preview-footer { display: flex; align-items: center; justify-content: flex-end; flex: none; gap: 6px; padding: 8px; border-top: 1px solid #ccc; background: #ececec; }
+.survey-preview-footer > span { margin-right: auto; padding-left: 8px; color: #555; font-size: 12px; }
+.survey-preview-footer button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 75px; min-height: 34px; border: 1px solid #387bb3; border-radius: 0; background: #427fac; color: #fff; font: inherit; font-size: 13px; cursor: pointer; }
+.survey-preview button:focus-visible { outline: 2px solid #173f63; outline-offset: 2px; }
+.survey-preview-empty { font-size: 14px; }
+@media (max-width: 600px) {
+  .survey-preview-body { padding: 20px 16px; }
+  .survey-preview-footer { flex-wrap: wrap; }
+  .survey-preview-footer > span { flex-basis: 100%; padding: 0 0 4px; }
+}
+@media print {
+  body:has(.survey-preview[open]) * { visibility: hidden; }
+  body:has(.survey-preview[open]) .survey-preview, body:has(.survey-preview[open]) .survey-preview * { visibility: visible; }
+  .survey-preview[open] { position: absolute; inset: 0 auto auto 0; width: 100%; height: auto; max-height: none; border: 0; overflow: visible; }
+  .survey-preview .survey-preview-head, .survey-preview .survey-preview-footer { display: none; }
+  .survey-preview-body { overflow: visible; padding: 0; }
+  .survey-question { break-inside: avoid; }
+}

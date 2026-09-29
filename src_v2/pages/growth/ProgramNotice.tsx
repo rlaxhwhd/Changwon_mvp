@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { safeHtml } from '../../../shared/safeHtml'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
@@ -175,7 +176,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
             {paragraphs.length === 0
               ? <p className="jd-empty">등록된 프로그램 내용이 없습니다.</p>
               : descIsHtml
-                ? <div className="jd-content" dangerouslySetInnerHTML={{ __html: program.desc }} />
+                ? <div className="jd-content" dangerouslySetInnerHTML={{ __html: safeHtml(program.desc) }} />
                 : <div className="jd-content">{paragraphs.map((p, i) => <p key={i}>{p}</p>)}</div>}
           </Section>
 
@@ -183,7 +184,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
               썸네일(program.image)은 히어로 배너가 이미 쓰므로 여기서 또 그리지 않는다. */}
           {detail && (
             <Section title="상세 내용">
-              <div className="jd-content" dangerouslySetInnerHTML={{ __html: detail }} />
+              <div className="jd-content" dangerouslySetInnerHTML={{ __html: safeHtml(detail) }} />
             </Section>
           )}
         </main>

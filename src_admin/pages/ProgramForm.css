@@ -314,3 +314,6 @@
   .pf-grid { grid-template-columns: 1fr; }
   .pf-aside { position: static; }
 }
+.pf-survey-select-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.pf-survey-select-row .pf-select { flex: 1; min-width: 220px; }
+.pf-survey-select-row .pf-btn-outline { flex: none; }

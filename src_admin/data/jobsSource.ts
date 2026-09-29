@@ -17,6 +17,7 @@ import type {
 } from './schema/job'
 import { JOB_HIGHLIGHT_TAGS } from './schema/job'
 import { api, queryString } from '../../shared/api'
+import { DOCUMENT_ACCEPT, IMAGE_ACCEPT, validateUpload } from '../../shared/uploadPolicy'
 import {
   dropPosting,
   loadPostings,
@@ -214,10 +215,12 @@ export async function addCompany(input: {
 export async function uploadJobFile(slot: 'LOGO' | 'ATTACHMENT' | 'RESUME', file: File): Promise<{
   id: string; name: string; size: number; contentType: string; downloadUrl: string
 }> {
+  validateUpload(file, slot === 'LOGO' ? IMAGE_ACCEPT : slot === 'RESUME' ? '.pdf,.doc,.docx,.hwp,.hwpx' : DOCUMENT_ACCEPT)
   const identity = location.pathname.startsWith('/admin')
     ? localStorage.getItem('dc_active_staff')
     : localStorage.getItem('dc_active_student')
   const headers = new Headers({ 'Content-Type': file.type || 'application/octet-stream' })
+  headers.set('X-DC-Portal', location.pathname.startsWith('/admin') ? 'admin' : 'student')
   if (identity) headers.set('X-DC-Identity', identity)
   const path = `/api/v1/job-files?slot=${slot}&name=${encodeURIComponent(file.name)}`
   const response = await fetch(path, { method: 'POST', headers, body: file })

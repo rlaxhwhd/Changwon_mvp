@@ -1,9 +1,47 @@
 .mp-page .cs-stat:last-child strong { font-size: 24px; }
 .mp-table .cs-cell-text { max-width: 200px; }
 .mp-page .cs-tabs { overflow-x: auto; }
-/* 조사 안내 — 상태 배지 아래 작은 링크, 상세 모달에는 단계별 목록 */
-.mp-survey-pill { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: var(--radius-pill); background: var(--blue-soft); color: var(--blue); font-size: 11px; font-weight: 700; text-decoration: none; white-space: nowrap; }
-.mp-survey-pill:hover { background: var(--blue); color: #fff; }
+/* 신청 내역 카드 안의 기존 글자 크기만 각각 2px 확대한다. */
+.mp-page .cs-history .cs-tabs button { font-size: 16px; }
+.mp-page .cs-history .cs-filters input,
+.mp-page .cs-history .cs-filters select,
+.mp-page .cs-history .cs-pagination select,
+.mp-page .cs-history .cs-button,
+.mp-page .cs-history .cs-date-range > span,
+.mp-page .cs-history .cs-filter-note,
+.mp-page .cs-history .cs-filter-note button,
+.mp-page .cs-history .cs-pagination,
+.mp-page .cs-history .cs-pagination nav button,
+.mp-page .mp-table, .mp-page .mp-table th { font-size: 14px; }
+.mp-page .cs-history .cs-load-state,
+.mp-page .cs-history .cs-empty strong { font-size: 16px; }
+.mp-page .cs-history .cs-empty p { font-size: 15px; }
+.mp-page .mp-table .cs-table-date small,
+.mp-page .mp-table .cs-status,
+.mp-page .mp-table .cs-detail-button { font-size: 13px; }
+.mp-page .mp-table { table-layout: fixed; min-width: 1030px; }
+.mp-table .mp-col-number { width: 40px; }
+.mp-table .mp-col-category { width: 68px; }
+.mp-table .mp-col-manager { width: 76px; }
+.mp-table .mp-col-date { width: 104px; }
+.mp-table .mp-col-status { width: 86px; }
+.mp-table .mp-col-sessions { width: 66px; }
+.mp-table .mp-col-survey { width: 94px; }
+.mp-table .mp-col-detail { width: 76px; }
+.mp-page .mp-table th, .mp-page .mp-table td { padding: 12px 4px; text-align: center; }
+.mp-page .mp-table thead th { padding-block: 9px; }
+.mp-page .mp-table thead tr + tr th { border-top: 1px solid var(--border); }
+.mp-page .mp-table td:nth-child(3) { text-align: left; }
+.mp-page .mp-table .cs-cell-text { min-width: 0; max-width: 100%; }
+.mp-page .mp-table .mp-status-cell { text-align: center; }
+.mp-survey-link { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 3px 6px; border-radius: 5px; background: var(--blue-soft); color: var(--on-blue, #1a5fcc); font-size: 14px; font-weight: 700; line-height: 1.45; word-break: keep-all; text-decoration: none; }
+.mp-survey-upcoming { color: #F5A524; font-size: 14px; font-weight: 700; }
+.mp-survey-link:hover { background: var(--blue); color: #fff; }
+.mp-survey-link:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+.mp-survey-complete { color: var(--blue); font-weight: 800; }
+.mp-survey-muted { color: var(--muted-foreground); }
+@media (max-width: 600px) { .mp-page .cs-history .cs-tabs button { font-size: 15px; } }
+/* 상세 모달의 단계별 제출 내역 */
 .mp-surveys ul { list-style: none; margin: 8px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .mp-surveys li { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-size: 13px; font-weight: 600; }
 @media (max-width: 600px) { .mp-page .cs-stat:last-child strong { font-size: 22px; } }

@@ -170,6 +170,8 @@ def test_activity_without_care7_is_visible_and_private_notes_are_not(client, db,
     data=r.json()
     assert data['diagnosisCount']==0 and data['studentType'] is None
     assert len(data['counsels'])==1 and len(data['programs'])==1
+    # 요약 카드가 진로취업을 일반/CARE 7+ 로 가르려면 트랙이 응답에 있어야 한다.
+    assert data['counsels'][0]['careTrack']=='general'
     assert data['programs'][0]['completed'] is True
     assert 'Private topic' not in r.text and 'do not expose' not in r.text
     listed=client.get('/api/v1/academic-students',headers=headers('career_kim'),params={'q':uid}).json()

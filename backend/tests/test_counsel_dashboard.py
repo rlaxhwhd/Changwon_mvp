@@ -143,6 +143,30 @@ def test_pending_total_is_not_preview_length(client, db):
     assert len(result['intake']) == 5
 
 
+def test_inbox_uses_booking_day_or_korean_receipt_day(client, db):
+    before = home(client)['counts']['pending']
+    current = request_row(db)
+    past = request_row(db, day=DAY-timedelta(days=1))
+    other = request_row(db, owner='career_park')
+    confirmed = request_row(db, status='CONFIRMED')
+    undated_today = request_row(db)
+    undated_past = request_row(db)
+    db.execute('UPDATE dc.counsel_request SET slot_date=NULL,slot_start=NULL,slot_end=NULL WHERE id=ANY(%s)',
+               ([undated_today, undated_past],))
+    # 15:00 UTC on the previous date is midnight of DAY in Korea.
+    db.execute("UPDATE dc.counsel_request SET requested_at=%s WHERE id=%s",
+               (str(DAY-timedelta(days=1))+'T15:00:00Z', undated_today))
+    db.execute("UPDATE dc.counsel_request SET requested_at=%s WHERE id=%s",
+               (str(DAY-timedelta(days=1))+'T14:59:59Z', undated_past))
+    result = home(client)
+    ids = {r['id'] for r in result['intake']}
+    assert {current, undated_today} <= ids
+    assert not {past, other, confirmed, undated_past} & ids
+    assert result['counts']['pending'] == before+2
+    # Filtering is read-only: old applications retain their pending status.
+    assert db.execute('SELECT status_code FROM dc.counsel_request WHERE id=%s', (past,)).fetchone()['status_code'] == 'REQ'
+
+
 def test_student_without_json_profile_is_visible(client, db):
     identity = 'dashboard-' + str(uuid4())
     db.execute("INSERT INTO dc.person(intg_uid,alias,name,kind,source) VALUES(%s,%s,'New DB student','STUDENT','local')",

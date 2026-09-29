@@ -173,7 +173,9 @@ def detail(identity: str, user=Depends(principal, scope='function'), conn=Depend
     if not row:
         raise HTTPException(404, '학사 학생정보가 없습니다.')
     # Expose activity summaries, not counselor notes/intake/psychological records.
+    # care_track 을 함께 낸다 — 요약 카드가 진로취업을 일반/CARE 7+ 로 가른다(counselTrack.ts).
     counsels = conn.execute('''SELECT id,legacy_type AS type,status_code AS status,
+      care_track AS "careTrack",
       COALESCE(slot_date,requested_at::date) AS date FROM dc.counsel_request
       WHERE student_uid=%s AND status_code IN ('REQ','CONFIRMED','DONE')
       ORDER BY date DESC,id''', (identity,)).fetchall()

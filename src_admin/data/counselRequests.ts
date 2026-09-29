@@ -171,6 +171,7 @@ export function countByStatus(
     대기: 0,
     확정: 0,
     완료: 0,
+    불참: 0,
     취소: 0,
   }
   for (const r of getRequestsByType(type)) counts[r.status] += 1
@@ -301,6 +302,10 @@ export async function completeRequest(
   roadmap?: { expectedRoadmapVersion: number; expectedRoadmapLockVersion: number },
 ): Promise<void> {
   await performCounselAction(id, 'complete', { ...record, followUp: record.followUp ?? '', finalType, ...roadmap })
+}
+/** 불참(노쇼) 처리 — 확정된 상담에 학생이 오지 않았음을 상담사가 직접 체크한다. */
+export async function markNoShow(id: string): Promise<void> {
+  await performCounselAction(id, 'noshow', {})
 }
 export async function reassignRequest(id: string, counselorId: string, reason?: string): Promise<void> {
   await performCounselAction(id, 'reassign', { assigneeId: counselorId, reason: reason ?? '' })

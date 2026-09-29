@@ -5,11 +5,12 @@ import { usePageHead } from '../../components/PageCrumb'
 import { PROGRAM_EVENT } from '../../../shared/programStore'
 import { useAsyncAction } from '../../../shared/useAsyncAction'
 import {
-  SURVEY_PHASE_LABEL, SURVEY_SCALE, loadSurveyForm, submitSurvey,
+  SURVEY_PHASE_LABEL, loadSurveyForm, submitSurvey,
   type SurveyForm, type SurveyPhase,
 } from '../../../shared/surveyStore'
 import '../../../shared/components/CounselHistory.css'
 import './ProgramSurvey.css'
+import SurveyQuestions from '../../../shared/components/SurveyQuestions'
 
 // 비교과 조사 응답 페이지 — 사전·사후 역량 진단, 만족도 조사가 같은 화면을 쓴다.
 // 문항·열림 여부는 서버(코드관리 + survey_window)가 주고, 여기서는 라디오를 그리고 제출만 한다.
@@ -17,6 +18,10 @@ const PHASES: SurveyPhase[] = ['PRE', 'POST', 'SATISFACTION']
 
 export default function ProgramSurvey() {
   const { id = '', phase = '' } = useParams<{ id: string; phase: string }>()
+  return <ProgramSurveyForm key={`${id}:${phase}`} id={id} phase={phase} />
+}
+
+function ProgramSurveyForm({ id, phase }: { id: string; phase: string }) {
   const valid = PHASES.includes(phase as SurveyPhase)
   const surveyPhase = (valid ? phase : 'PRE') as SurveyPhase
   const navigate = useNavigate()
@@ -29,16 +34,15 @@ export default function ProgramSurvey() {
 
   useEffect(() => {
     if (!valid) return
-    let alive = true
-    setForm(null); setLoadError('')
-    loadSurveyForm(id, surveyPhase)
+    const controller = new AbortController()
+    loadSurveyForm(id, surveyPhase, controller.signal)
       .then(next => {
-        if (!alive) return
+        if (controller.signal.aborted) return
         setForm(next)
         setAnswers(Object.fromEntries(next.areas.flatMap(a => a.items).filter(i => i.value != null).map(i => [i.code, i.value as number | string])))
       })
-      .catch(e => { if (alive) setLoadError(e instanceof Error ? e.message : '조사를 불러오지 못했습니다.') })
-    return () => { alive = false }
+      .catch(e => { if (!controller.signal.aborted) setLoadError(e instanceof Error ? e.message : '조사를 불러오지 못했습니다.') })
+    return () => { controller.abort() }
   }, [id, surveyPhase, valid])
 
   if (!valid) return <div className="cs-page ps-page"><div className="cs-empty"><Icon name="x" /><strong>없는 조사 종류입니다.</strong><Link className="cs-button" to="/mypage/programs">프로그램 현황으로</Link></div></div>
@@ -69,37 +73,11 @@ export default function ProgramSurvey() {
             {!form.open && <p className="ps-reason">{form.reason}</p>}
           </section>
 
-          {form.areas.map((area, ai) => (
-            <section className="cs-panel ps-area" key={area.key} aria-labelledby={`ps-area-${ai}`}>
-              <h3 id={`ps-area-${ai}`}><span>{ai + 1}</span>{area.label}</h3>
-              {area.items.some(i => i.kind === 'SCALE') && (
-                <div className="ps-scale-head" aria-hidden="true">
-                  <span />{SURVEY_SCALE.map(s => <small key={s.value}>{s.label}<br />({s.value}점)</small>)}
-                </div>
-              )}
-              {area.items.map((item, ii) => item.kind === 'TEXT' ? (
-                <div className="ps-item ps-item--text" key={item.code}>
-                  <label htmlFor={`ps-${item.code}`}><b>{ii + 1}</b>{item.prompt}</label>
-                  <textarea id={`ps-${item.code}`} rows={3} maxLength={2000} disabled={!form.open}
-                            value={String(answers[item.code] ?? '')} placeholder="자유롭게 적어 주세요 (선택)"
-                            onChange={e => setAnswers(prev => ({ ...prev, [item.code]: e.target.value }))} />
-                </div>
-              ) : (
-                <fieldset className="ps-item" key={item.code} disabled={!form.open}>
-                  <legend><b>{ii + 1}</b>{item.prompt}</legend>
-                  <div className="ps-choices">
-                    {SURVEY_SCALE.map(s => (
-                      <label key={s.value} className={answers[item.code] === s.value ? 'is-on' : ''}>
-                        <input type="radio" name={item.code} value={s.value} checked={answers[item.code] === s.value}
-                               onChange={() => setAnswers(prev => ({ ...prev, [item.code]: s.value }))} />
-                        <span className="ps-choice-label">{s.label} ({s.value}점)</span>
-                      </label>
-                    ))}
-                  </div>
-                </fieldset>
-              ))}
-            </section>
-          ))}
+          <section className="ps-document">
+            <h3 className="survey-document-title">{SURVEY_PHASE_LABEL[surveyPhase]}</h3>
+            <SurveyQuestions areas={form.areas} answers={answers} disabled={!form.open || action.saving}
+              onChange={(code, value) => setAnswers(prev => ({ ...prev, [code]: value }))} />
+          </section>
 
           <section className="cs-panel ps-submit">
             {action.error && <p role="alert" className="ps-error">{action.error}</p>}

@@ -155,6 +155,10 @@
   line-height: 18px;
 }
 .ssc-foot > span { color: var(--ssc-sub); }
+/* foot 이 설명이 아니라 결과값인 카드(진단 완료의 C-CORE 6유형) — 교직원 포털의 진단 결과
+   카드(.diagnosis-primary-result)와 같은 보라·굵기로 읽혀야 같은 값으로 보인다.
+   호스트 토큰(--purple)은 학생 포털에 없으므로 그 값을 여기 고정한다. */
+.ssc-foot > span.ssc-result { color: #8B63D9; font-size: 18px; font-weight: 900; line-height: 26px; }
 
 .ssc-badge {
   min-height: 24px;
@@ -346,14 +350,15 @@
   .ssc-card { min-height: 0; }
   .ssc-body { padding: 14px; }
 
-  .ssc-label { font-size: 12px; line-height: 16px; }
+  /* 제목·설명은 줄이지 않는다 — 모달에서 읽히는 크기가 기준이다(제목 14 · 설명 12). */
+  .ssc-label { font-size: 14px; line-height: 18px; }
   .ssc-icon { width: 28px; height: 28px; border-radius: 8px; }
   .ssc-icon svg { width: 15px; height: 15px; }
 
   .ssc-value { margin: 12px 0 8px; font-size: 22px; line-height: 28px; }
   .ssc-value small { font-size: 12px; line-height: 16px; }
 
-  .ssc-foot { gap: 6px; font-size: 11px; line-height: 16px; }
+  .ssc-foot { gap: 6px; font-size: 12px; line-height: 16px; }
   .ssc-badge { min-height: 20px; padding: 0 6px; border-radius: 8px; font-size: 11px; }
 
   .ssc-meter { margin-top: auto; gap: 6px; }
@@ -362,7 +367,7 @@
   .ssc-counsel { margin-top: 10px; gap: 8px; }
   .ssc-counsel-total strong { font-size: 22px; line-height: 28px; }
   .ssc-counsel-total strong small { font-size: 12px; }
-  .ssc-counsel-total > span { font-size: 11px; }
+  .ssc-counsel-total > span { font-size: 12px; }
   .ssc-channels { gap: 4px; }
   .ssc-channels > span { min-height: 20px; gap: 6px; font-size: 11px; }
 

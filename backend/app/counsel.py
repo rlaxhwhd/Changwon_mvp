@@ -1,6 +1,6 @@
 import hashlib
 import json
-from datetime import date, datetime, time, timedelta
+from datetime import date, datetime, time
 from typing import Literal
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -15,7 +15,7 @@ from .gates import COUNSEL_TYPE_CODE, diagnosis_gate, is_care7_request
 from .counsel_template import CounselTemplate, validate_template_scope, validate_completed_template, template_storage
 
 router=APIRouter()
-LABELS={'REQ':'대기','CONFIRMED':'확정','DONE':'완료','CANCEL_UNKNOWN':'취소','CANCEL_STU':'취소','CANCEL_CNS':'취소'}
+LABELS={'REQ':'대기','CONFIRMED':'확정','DONE':'완료','NO_SHOW':'불참','CANCEL_UNKNOWN':'취소','CANCEL_STU':'취소','CANCEL_CNS':'취소'}
 
 
 class Slot(BaseModel):
@@ -237,7 +237,7 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
 
 
 @router.post('/counsel-requests/{request_id}/{action}')
-def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign','complete'],body:Action,
+def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign','complete','noshow'],body:Action,
         user=Depends(principal, scope='function'),conn=Depends(connection, scope='function')):
     # Match generation's lifecycle -> plan -> counsel lock order.
     plan=None
@@ -268,10 +268,21 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
     elif action=='cancel':
         if not body.reason.strip():
             raise HTTPException(422,'취소 사유가 필요합니다.')
-        if user['kind']=='STUDENT' and row['slot_date'] and row['slot_date']<datetime.now(ZoneInfo('Asia/Seoul')).date()+timedelta(days=3):
-            raise HTTPException(409,'상담 3일 전 이후 취소는 담당자에게 문의해 주세요.')
+        # 예약 시각 전이면 언제든 취소할 수 있다(2026-09-28 사용자 확정) — 옛 '상담 3일 전' 제한을 없앴다.
+        # 이미 시작된 상담만 막는다: 끝난 자리를 취소로 덮으면 완료·불참 처리와 어긋난다.
+        # 상담사(STAFF)는 이전에도 제한이 없었다 — 여기서 새로 걸지 않는다.
+        if (user['kind']=='STUDENT' and row['slot_date'] and row['slot_start']
+                and datetime.combine(row['slot_date'],row['slot_start'],tzinfo=ZoneInfo('Asia/Seoul'))
+                    <=datetime.now(ZoneInfo('Asia/Seoul'))):
+            raise HTTPException(409,'이미 시작된 상담은 취소할 수 없습니다. 담당자에게 문의해 주세요.')
         code='CANCEL_STU' if user['kind']=='STUDENT' else 'CANCEL_CNS'
         conn.execute('UPDATE dc.counsel_request SET status_code=%s WHERE id=%s',(code,request_id))
+    elif action=='noshow':
+        # 불참은 약속이 있는 건에만 있다 — 대기 건은 잡힌 시간 자체가 없다.
+        # 판정은 상담사가 한다(자동 만료 없음). 사유는 받지 않는다 — 처리 이력에 누가 언제가 남는다.
+        if row['status_code']!='CONFIRMED':
+            raise HTTPException(409,'확정된 상담만 불참으로 처리할 수 있습니다.')
+        conn.execute("UPDATE dc.counsel_request SET status_code='NO_SHOW' WHERE id=%s",(request_id,))
     elif action=='reassign':
         assignee=resolve_assignee(conn,body.assigneeId,row['legacy_type'])
         if row['slot_date']:

@@ -12,7 +12,7 @@ import './CounselHistory.css'
 const icons = { message: LuMessageSquare, check: LuCheck, calendar: LuCalendarDays, clock: LuClock, search: LuSearch, x: LuX, 'chevron-left': LuChevronLeft, 'chevron-right': LuChevronRight, arrow: LuArrowRight, download: LuDownload }
 type IconName = keyof typeof icons
 function Icon({ name }: { name: IconName }) { const Glyph = icons[name]; return <Glyph className="icon" aria-hidden="true" /> }
-type Status = '대기' | '확정' | '완료' | '취소'
+type Status = '대기' | '확정' | '완료' | '불참' | '취소'
 type Tab = '전체' | '예정' | '완료' | '취소'
 export interface CounselHistoryRow {
   studentName?: string; studentNo?: string

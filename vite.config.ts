@@ -5,7 +5,6 @@ import { resolve } from 'path'
 import { existsSync, readFileSync } from 'node:fs'
 
 const tokenFile = process.env.DC_API_TOKEN_FILE ?? resolve(__dirname, 'deploy/secrets/api_token')
-const apiToken = existsSync(tokenFile) ? readFileSync(tokenFile, 'utf8').trim() : ''
 
 // API 프록시 대상은 개발자마다 다르다 — 로컬 백엔드를 띄웠는지, SSH 터널을 쓰는지.
 // `.env.local`(git 무시)에 DC_API_TARGET 을 두면 `npm run dev` 만으로 그쪽을 본다.
@@ -20,7 +19,22 @@ export default defineConfig(({ mode }) => {
       {
         name: 'multi-spa-fallback',
         configureServer(server) {
-          server.middlewares.use((req, _res, next) => {
+          server.middlewares.use((req, res, next) => {
+            // Check before Vite/plugin decoding and SPA fallback, including encoded separators.
+            let path = (req.url ?? '').split('?')[0].split('#')[0]
+            try {
+              for (let pass = 0; pass < 3 && path.includes('%'); pass++) path = decodeURIComponent(path)
+            } catch {
+              res.writeHead(400).end('Invalid path')
+              return
+            }
+            const privateParts = new Set(['deploy', 'backend', 'origin', 'docs', 'tools', 'scripts',
+              '_workspace', '.git', '.claude', '.ai', '.graft', 'graft'])
+            if (path.replaceAll('\\', '/').toLowerCase().split('/').some(part =>
+              privateParts.has(part) || part.startsWith('.env') || part.startsWith('.scratch') || part.endsWith('.log'))) {
+              res.writeHead(403, { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' }).end('Forbidden')
+              return
+            }
             const url = req.url ?? ''
             if (url === '/v2' || url.startsWith('/v2/')) {
               req.url = '/v2.html'
@@ -34,6 +48,14 @@ export default defineConfig(({ mode }) => {
     ],
     server: {
       host: '127.0.0.1',
+      fs: {
+        strict: true,
+        // These files are read by server processes, never by the browser.
+        deny: ['**/.env', '**/.env.*', '**/*.{crt,pem,key,p12,pfx,cer,der}', '**/.npmrc',
+          '**/.yarnrc.yml', '**/.git/**', '**/deploy/**', '**/backend/**',
+          '**/.scratch*', '**/_workspace/**', '**/.claude/**', '**/.ai/**', '**/*.log',
+          '**/origin/**', '**/docs/**', '**/tools/**', '**/scripts/**', '**/.graft/**', '**/graft/**'],
+      },
       proxy: {
         '/api': {
           target: apiTarget,
@@ -41,6 +63,7 @@ export default defineConfig(({ mode }) => {
           configure(proxy) {
             proxy.on('proxyReq', (proxyReq) => {
               proxyReq.removeHeader('X-DC-Token')
+              const apiToken = existsSync(tokenFile) ? readFileSync(tokenFile, 'utf8').trim() : ''
               if (apiToken) proxyReq.setHeader('X-DC-Token', apiToken)
             })
           },

@@ -40,8 +40,8 @@ export async function loadPrograms(): Promise<void> {
 }
 
 /** 한 건만 서버에서 다시 읽어 교체한다(없으면 목록에서 뺀다). */
-export async function refreshProgram(id: string): Promise<void> {
-  const fresh = await api<Program>(`/programs/${encodeURIComponent(id)}`)
+export async function refreshProgram(id: string, signal?: AbortSignal): Promise<void> {
+  const fresh = await api<Program>(`/programs/${encodeURIComponent(id)}`, { signal })
   publish(programs.some(p => p.id === fresh.id)
     ? programs.map(p => (p.id === fresh.id ? fresh : p))
     : [fresh, ...programs])

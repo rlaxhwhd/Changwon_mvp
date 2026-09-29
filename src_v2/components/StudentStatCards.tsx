@@ -39,6 +39,8 @@ export interface MetricStat {
   /** Counts and source GPA have no completion denominator. */
   hideMeter?: boolean
   foot: string
+  /** foot 이 설명이 아니라 결과값일 때(예: C-CORE 6유형) — 진단 결과 카드와 같은 강조로 그린다. */
+  footResult?: boolean
   badge?: string
 }
 
@@ -108,7 +110,7 @@ function MetricBody({ stat }: { stat: MetricStat }) {
     <>
       <div className="ssc-value">{stat.value}{stat.unit && <small>{stat.unit}</small>}</div>
       <div className="ssc-foot">
-        <span>{stat.foot}</span>
+        <span className={stat.footResult ? 'ssc-result' : undefined}>{stat.foot}</span>
         {stat.badge && <span className="ssc-badge">{stat.badge}</span>}
       </div>
       {!stat.hideMeter && <div className="ssc-meter" style={meterVars(stat.pct)} aria-label={`${stat.label} ${stat.pct}%`}>

@@ -10,7 +10,8 @@ import { Link } from 'react-router-dom'
 import CounselHistoryView, { type CounselHistoryRow } from '../../shared/components/CounselHistory'
 import { counselRecords, loadCounselRecords } from '../../shared/counselStore'
 import { useStore } from '../../shared/useRoadmapStore'
-import { getRequestsByAssignee, refreshCounselRequests } from '../data/counselRequests'
+import { getRequestsByAssignee, markNoShow, refreshCounselRequests } from '../data/counselRequests'
+import { useAsyncAction } from '../../shared/useAsyncAction'
 import { getActiveCounselor, getCounselorById } from '../data/counselors'
 import './CounselHistory.css'
 
@@ -20,6 +21,8 @@ export default function CounselHistory() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [detail, setDetail] = useState<CounselHistoryRow | null>(null)
+  // 불참 처리는 접수함과 같은 서버 전이를 쓴다 — 두 화면이 같은 상태를 만든다.
+  const noShow = useAsyncAction()
   useEffect(() => {
     let active = true
     void Promise.all([refreshCounselRequests(), loadCounselRecords()])
@@ -61,7 +64,12 @@ export default function CounselHistory() {
           diagnosisType={context.diagnosisType} typeLocked={context.typeLocked}
           setTemplate={() => {}} setSummary={() => {}} setComment={() => {}} setFollowUp={() => {}} readOnly />
       </> : <p role="status">작성된 상담일지가 없습니다.</p>}</CounselRecordContext>
-      <div className="admin-form-actions"><Link className="admin-btn admin-btn-ghost" to="/counsel/journals">상담일지 작성·관리</Link><button type="button" className="admin-btn admin-btn-ghost" onClick={() => setDetail(null)}>닫기</button></div>
+      {noShow.error && <p role="alert" className="admin-form-hint-warn">{noShow.error}</p>}
+      <div className="admin-form-actions"><Link className="admin-btn admin-btn-ghost" to="/counsel/journals">상담일지 작성·관리</Link>
+        {/* 불참은 약속이 잡힌 '확정' 건에만 뜬다 — 접수함의 「상담 처리」와 같은 규칙이다. */}
+        {detail.status === '확정' && <button type="button" className="admin-btn admin-btn-danger" disabled={noShow.saving}
+          onClick={() => noShow.run(async () => { await markNoShow(detail.id); setDetail(null) })}>불참</button>}
+        <button type="button" className="admin-btn admin-btn-ghost" onClick={() => setDetail(null)}>닫기</button></div>
     </AdminModal>}
   </div>
 }

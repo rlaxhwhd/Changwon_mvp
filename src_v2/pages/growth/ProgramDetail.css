@@ -212,6 +212,7 @@
   /* 고정 바가 푸터 마지막 줄을 덮지 않게 문서 아래를 그만큼 비운다 — 푸터는 이 페이지 밖(Layout)에
      있으므로 페이지가 아니라 body 에 준다. */
   body:has(.pn-page .jd-cta) { padding-bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
+  body:has(.pn-page .program-participation--notice a + a) { padding-bottom: calc(128px + env(safe-area-inset-bottom, 0px)); }
 
   /* 지표 값 옆의 칩(마감·신청 n)이 값을 두 줄로 쪼개지 않게 — 칩만 다음 줄로 떨어진다. */
   .pn-page .jd-hero-stats dd { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
