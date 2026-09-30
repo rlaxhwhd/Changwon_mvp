@@ -5,6 +5,7 @@ import { codeItems, loadMetadata } from '../../shared/metadataStore'
 import './SystemManagement.css'
 import NoticeManagement from '../components/NoticeManagement'
 import MenuVisibility from './MenuVisibility'
+import QuestSchedulePicker from '../components/QuestSchedulePicker'
 import type { Notice } from '../../src_v2/data/notices'
 
 type Page<T> = { items: T[]; totalCount: number; page: number; pageSize: number }
@@ -29,6 +30,7 @@ const HEAD: Record<SystemTab, [string, string]> = {
 /** 탭은 라우트가 정한다(App.tsx) — 상단바 하위 메뉴가 곧 탭이라 화면 안에 탭 버튼을 두지 않는다. */
 export default function SystemManagement({ tab }: { tab: SystemTab }) {
   const [groups, setGroups] = useState<Group[]>([])
+  const [loadedGroup, setLoadedGroup] = useState('')
   const [group, setGroup] = useState('STUDENT_TYPE')
   const [page, setPage] = useState(1)
   const [data, setData] = useState<Page<Item | Assignment | Record<string, unknown>>>(EMPTY_PAGE)
@@ -46,6 +48,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
   const [saving, setSaving] = useState(false)
   const [reload, setReload] = useState(0)
   const definition = groups.find(x => x.group_code === group)
+  const [showSemesterCodes, setShowSemesterCodes] = useState(false)
 
   useEffect(() => {
     let cancelled = false
@@ -55,7 +58,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
     const path = tab === 'notices' ? `/system/notices?page=${page}` : tab === 'codes' ? `/system/code-groups/${group}/items?page=${page}`
       : `/system/${tab === 'assignments' ? 'org-assignments' : tab === 'issues' ? 'import-issues' : 'events'}?page=${page}`
     Promise.all([api<Group[]>('/system/code-groups'), api<Page<Item | Assignment | Record<string, unknown>>>(path)])
-      .then(([definitions, result]) => { if (!cancelled) { setGroups(definitions); setData(result) } })
+      .then(([definitions, result]) => { if (!cancelled) { setGroups(definitions); setData(result); setLoadedGroup(group) } })
       .catch(e => { if (!cancelled) setError(e.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
@@ -80,6 +83,8 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
       {tab === 'notices' && <NoticeManagement rows={data.items as unknown as (Notice & { version: number })[]} saved={() => setReload(n => n + 1)} />}
       {tab === 'codes' && <>
         <label>코드 그룹 <select value={group} onChange={e => { setGroup(e.target.value); setPage(1) }}>{groups.map(g => <option key={g.group_code} value={g.group_code}>{g.label} ({g.group_code})</option>)}</select></label>
+        {group === 'QUEST_SEMESTER' && loadedGroup === group && <><QuestSchedulePicker /><button className="btn btn-secondary" aria-expanded={showSemesterCodes} onClick={() => setShowSemesterCodes(v => !v)}>기본 학기 일정 관리 {showSemesterCodes ? '닫기' : '열기'}</button></>}
+        {(group !== 'QUEST_SEMESTER' || showSemesterCodes) && <>
         <p>{group === 'QUEST_XP_REWARD' ? '일일·월간·학기 퀘스트의 지급 XP를 수정할 수 있습니다. 변경 전 지급 이력은 유지됩니다.' : definition?.managed_by === 'STRUCTURAL' ? '상태 전이에 사용하는 구조 코드입니다. 조회만 가능합니다.' : definition?.fixed_codes ? '코드값은 고정입니다. 명칭과 정렬을 수정할 수 있습니다.' : '항목을 추가하거나 수정할 수 있습니다. 폐지한 항목은 이력 보존을 위해 비활성 상태로 남습니다.'}</p>
         {definition?.managed_by === 'OPERATIONAL' && !definition.fixed_codes && <button className="btn btn-primary" onClick={() => edit({ group_code: group, code: '', label: '', sort_order: 0, is_active: true, payload: group === 'COUNSEL_TOPIC' ? {type:'T1',goal:''} : {}, version: 0 })}>항목 추가</button>}
         <table className="data-table"><thead><tr><th>코드</th><th>명칭</th><th>정렬</th><th>사용</th><th>관리</th></tr></thead><tbody>
@@ -113,13 +118,14 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
           </fieldset>
         </form>}
         {history && <section><h2>최근 변경 이력 (최대 20건)</h2>{history.length ? history.map(row => <details key={String(row.id)}><summary>{String(row.changed_at)} · {String(row.changed_by)} · {String(row.reason)}</summary><pre>{JSON.stringify({before:row.before,after:row.after},null,2)}</pre></details>) : <p>변경 이력이 없습니다.</p>}</section>}
+        </>}
       </>}
       {tab === 'assignments' && <><AssignmentForm saving={saving} run={run} />
         <table className="data-table"><thead><tr><th>교직원 ID</th><th>단대 / 학과 코드</th><th>역할</th><th>기간</th><th>상태</th><th>관리</th></tr></thead><tbody>{(data.items as Assignment[]).map(row => <tr key={row.id}><td>{row.staff_uid}</td><td>{row.college_code} / {row.dept_code}</td><td>{row.role_code}</td><td>{row.valid_from} ~ {row.valid_to ?? '종료일 없음'}</td><td>{row.is_active ? '활성' : '비활성'}</td><td><AssignmentEnd row={row} saving={saving} run={run} /></td></tr>)}</tbody></table>
       </>}
       {tab === 'menus' && <MenuVisibility />}
       {(tab === 'events' || tab === 'issues') && (data.items as Record<string, unknown>[]).map((row, i) => <details key={String(row.id ?? i)}><summary>{String(row.changed_at ?? row.code)} · {String(row.reason ?? row.detail)}</summary><pre>{JSON.stringify(row,null,2)}</pre></details>)}
-      {tab !== 'menus' && <div className="pagination"><PageNumbers page={page} pages={Math.ceil(data.totalCount / 20)} onChange={setPage} /><button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>이전</button> {page}페이지 · 총 {data.totalCount}건 <button className="btn btn-secondary" disabled={page * 20 >= data.totalCount} onClick={() => setPage(p => p + 1)}>다음</button></div>}
+      {tab !== 'menus' && !(tab === 'codes' && group === 'QUEST_SEMESTER' && !showSemesterCodes) && <div className="pagination"><PageNumbers page={page} pages={Math.ceil(data.totalCount / 20)} onChange={setPage} /><button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(p => p - 1)}>이전</button> {page}페이지 · 총 {data.totalCount}건 <button className="btn btn-secondary" disabled={page * 20 >= data.totalCount} onClick={() => setPage(p => p + 1)}>다음</button></div>}
     </>}
   </div>
 }

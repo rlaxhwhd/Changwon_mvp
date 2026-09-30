@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import ProgramApplyModal from '../../components/ProgramApplyModal'
-import { applyToProgram, getProgramById, isProgramClosed } from '../../../src_admin/data/programs'
+import { applyToProgram, getProgramById, isProgramClosed, isProgramUpcoming } from '../../../src_admin/data/programs'
 import ProgramNotice from './ProgramNotice'
 import './ProgramDetail.css'
 import { usePageHead } from '../../components/PageCrumb'
@@ -45,6 +45,7 @@ export default function ProgramDetail() {
 
   // 마감 판정은 데이터층이 한다 — 목록·공고가 같은 답을 낸다.
   const closed = program ? isProgramClosed(program) : true
+  const upcoming = program ? isProgramUpcoming(program) : false
 
   // 서버에 저장된 뒤에만 완료로 표시한다. 마감·중복·정원은 서버가 판정하므로
   // 여기서 미리 성공을 알리면 저장되지 않은 신청이 완료로 보인다.
@@ -52,11 +53,12 @@ export default function ProgramDetail() {
     path: string; motive: string
     agree3rd: 'yes' | 'no'; agreeCollect: 'yes' | 'no'
     agreeIdent: 'yes' | 'no'; agreeNotice: 'yes' | 'no'
+    answers: import('../../../shared/programContent').ApplicationAnswers
   }) => {
     if (saving) return
     setSaving(true)
-    const { path, motive, ...consents } = payload
-    applyToProgram(programId, { path, motive, consents })
+    const { path, motive, answers, ...consents } = payload
+    applyToProgram(programId, { path, motive, consents, answers })
       .then(() => {
         setApplyOpen(false)
         setApplied(true)
@@ -80,10 +82,10 @@ export default function ProgramDetail() {
               : <button
               type="button"
               className="jd-apply-btn"
-              disabled={loading || closed || saving}
+              disabled={loading || closed || upcoming || saving}
               onClick={() => setApplyOpen(true)}
             >
-              {loading ? '신청 상태 확인 중…' : closed ? '신청 마감' : saving ? '신청 중…' : '신청하기'}
+              {loading ? '신청 상태 확인 중…' : closed ? '신청 마감' : upcoming ? '접수 예정' : saving ? '신청 중…' : '신청하기'}
             </button>}
             {applied && (
               <p className="pn-applied-toast" role="status">신청이 완료되었습니다.</p>
@@ -92,11 +94,13 @@ export default function ProgramDetail() {
         )}
       />
 
-      {program && (
+      {program && applyOpen && (
         <ProgramApplyModal
           open={applyOpen}
           onClose={() => setApplyOpen(false)}
           programTitle={program.title}
+          questions={program.applicationQuestions}
+          saving={saving}
           onSubmit={handleApplySubmit}
         />
       )}

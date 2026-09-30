@@ -659,7 +659,7 @@ def set_wish(program_id: str, body: Wish, user=Depends(principal, scope='functio
     if user['kind'] != 'STUDENT':
         fail(403, 'SCOPE_DENIED', '학생 본인만 찜할 수 있습니다.')
     uid = user['intg_uid']
-    if not conn.execute('SELECT 1 FROM dc.program WHERE id=%s', (program_id,)).fetchone():
+    if not conn.execute('SELECT 1 FROM dc.program WHERE id=%s AND (notice_at IS NULL OR notice_at <= now())', (program_id,)).fetchone():
         fail(404, 'NOT_FOUND', '프로그램을 찾을 수 없습니다.')
     before = conn.execute('''SELECT * FROM dc.program_wishlist WHERE student_uid=%s AND program_id=%s
       FOR UPDATE''', (uid, program_id)).fetchone()

@@ -1,5 +1,6 @@
 import CounselHistory from './pages/CounselHistory'
 import MissionManagement from './pages/MissionManagement'
+import QuestManagement from './pages/QuestManagement'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import Layout from './components/Layout'
 import Login from './pages/Login'
@@ -117,6 +118,7 @@ const router = createBrowserRouter(
                 { path: '/blacklists/sms', element: <SmsBlacklist /> },
                 { path: '/programs/blacklist', element: <Navigate to="/blacklists/programs" replace /> },
                 { path: '/quests/missions', element: <MissionManagement /> },
+                { path: '/quests/manage', element: <QuestManagement /> },
                 { path: '/quests', element: <Navigate to="/quests/missions" replace /> },
                 { path: '/system', element: <Navigate to="/system/menus" replace /> },
                 { path: '/system/menus', element: <SystemManagement key="menus" tab="menus" /> },

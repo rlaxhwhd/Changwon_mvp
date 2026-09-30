@@ -5,6 +5,7 @@
 향상률 = (사후 평균 - 사전 평균) / 사전 평균 × 100 — 사전·사후가 모두 있는 학생만 센다.
 """
 import re
+from datetime import datetime, time
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -14,7 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from .auth import principal, require_staff, student_access
 from .db import connection
-from .programs import get_program, today
+from .programs import SEOUL, get_program
 from .xlsx_export import workbook_sheets
 
 router = APIRouter()
@@ -31,7 +32,7 @@ def phase_or_404(phase):
 
 
 def survey_window(program, application, phase):
-    """(열림 여부, 닫힌 이유). 프로그램 설정·선발·수료·운영 시작일을 한 번에 본다."""
+    """(열림 여부, 닫힌 이유). 운영 시작 시각은 한국시간이며, 기존 시각 미지정 건은 자정이다."""
     if phase == 'SATISFACTION':
         if not program['satisfaction_survey']:
             return False, '만족도 조사를 실시하지 않는 프로그램입니다.'
@@ -44,7 +45,8 @@ def survey_window(program, application, phase):
     if phase == 'PRE':
         if application['outcome_code']:
             return False, '이수 결과가 확정되어 사전 조사가 닫혔습니다.'
-        if program['run_start'] and program['run_start'] <= today():
+        if program['run_start'] and datetime.now(SEOUL) >= datetime.combine(
+                program['run_start'], program['run_start_time'] or time.min, SEOUL):
             return False, '프로그램이 시작되어 사전 조사가 닫혔습니다.'
         return True, ''
     if application['outcome_code'] != 'COMPLETED':

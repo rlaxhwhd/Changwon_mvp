@@ -6,6 +6,23 @@
 
 이 문서는 ERD, 이름 규칙, DDL 변경 순서를 소유한다. 컬럼의 정확한 type/default/constraint는 migration SQL이 최종 근거다. 스키마를 바꾸는 작업은 migration과 이 문서를 한 커밋에서 함께 갱신한다.
 
+2026-09-30 비교과 공고 연결(110): `program.notice_at`은 예약 공개 시각(`timestamptz`),
+`apply_start_time/apply_end_time/run_start_time/run_end_time`은 기존 날짜에 대응하는 한국 시간(`time`)이다.
+기존 날짜만 있는 기록의 시간은 NULL로 유지한다. `application_questions`는 공고에 종속된 순서 있는 질문 정의이며,
+신청 답변과 당시 질문은 기존 `program_apply.snapshot.applicationAnswers`에 보관한다.
+파일은 기존 `file_object`를 재사용하며 `PROGRAM/PROGRAM_ATTACHMENT`,
+`PROGRAM_APPLICATION/PROGRAM_APPLICATION_ATTACHMENT` 용도를 추가한다. 바이너리는 DB에 저장하지 않는다.
+검증과 복구 절차: [비교과 공고 연결 검증](docs/PROGRAM_CONTENT_2026-09-30.md).
+
+2026-09-30 비교과 복수 담당자(111–112): `program_manager(program_id, staff_uid, position)`로
+프로그램과 교직원의 다대다 관계 및 표시 순서를 저장한다. 이름은 알림 수신자 식별키로 사용하지 않는다.
+기존 담당자명은 직원 이름이 정확히 한 명과 일치할 때만 이관한다.
+신청 알림은 기존 `notification`의 `PROGRAM_APPLICATION` 종류로 담당자별 기록한다.
+검증과 복구 절차: [담당자 알림·사전 설문 시각 검증](docs/PROGRAM_MANAGERS_2026-09-30.md).
+
+2026-09-30 로그인 조회 보완(113): 로컬 `academic.v_usr_inf`의 학번 해석식과 `intg_uid`에
+비고유 인덱스를 추가한다. 원본 데이터·뷰·권한·중복 계정 거부 규칙은 유지한다.
+
 ## 1. 네이밍 규칙
 
 | 대상 | 표준 | 예 |

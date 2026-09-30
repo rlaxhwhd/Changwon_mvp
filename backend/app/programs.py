@@ -4,11 +4,11 @@
 벌점은 합계를 저장하지 않고 부여·회수 행을 쌓아 합으로 읽는다.
 """
 import hashlib
-from datetime import date, datetime
+from datetime import date, datetime, time
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.encoders import jsonable_encoder
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -20,18 +20,60 @@ from .administration import administrator
 from .blacklists import managed_student
 from .db import connection
 from .gates import program_gate
+from . import files
+from .program_content import ApplicationQuestion, attachments_of, sync_attachments, validate_answers
+from .program_managers import managers_of, notify_application, resolve_managers, sync_managers
 from .survey_forms import current_form_id
 # 로드맵 쓰기는 전부 roadmap.py 가 한다 — 칸을 두 모듈에서 만들면 규칙이 갈린다.
 from .roadmap import enroll_program, lifecycle_lock, linked_cells, program_expiry
 
 router = APIRouter()
 
+
+@router.post('/program-files', status_code=201)
+async def upload_program_file(request: Request,
+                              slot: str = Query(pattern='^(PROGRAM_ATTACHMENT|PROGRAM_APPLICATION_ATTACHMENT)$'),
+                              name: str = Query(min_length=1, max_length=300),
+                              user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    if slot == 'PROGRAM_ATTACHMENT':
+        require_staff(user)
+    elif user['kind'] != 'STUDENT':
+        raise HTTPException(403, '학생 본인만 신청 첨부파일을 올릴 수 있습니다.')
+    row = files.store(conn, user, slot, name, await files.read_body(request))
+    return files.file_dto(row, '/api/v1/program-files/')
+
+
+@router.get('/program-files/{file_id}')
+def download_program_file(file_id: str, user=Depends(principal, scope='function'),
+                          conn=Depends(connection, scope='function')):
+    row = files.get_file(conn, file_id)
+    if row['owner_kind'] not in ('PROGRAM', 'PROGRAM_APPLICATION'):
+        raise HTTPException(404, '파일을 찾을 수 없습니다.')
+    if row['owner_id'] is None:
+        if row['uploaded_by'] != user['intg_uid']:
+            raise HTTPException(404, '파일을 찾을 수 없습니다.')
+    elif row['owner_kind'] == 'PROGRAM':
+        require_published(get_program(conn, row['owner_id']), user)
+    else:
+        program_id, _, student_uid = row['owner_id'].partition(':')
+        application = conn.execute('SELECT student_uid FROM dc.program_apply WHERE program_id=%s AND student_uid=%s',
+                                   (program_id, student_uid)).fetchone()
+        if not application:
+            raise HTTPException(404, '파일을 찾을 수 없습니다.')
+        student_access(conn, user, application['student_uid'])
+        if user['kind'] == 'STAFF' and not conn.execute(
+                'SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
+                (user['intg_uid'], student_uid)).fetchone():
+            raise HTTPException(404, '파일을 찾을 수 없습니다.')
+    return files.stream(row)
+
 NOSHOW_POINTS = 10
 SEOUL = ZoneInfo('Asia/Seoul')
 WRITABLE = ('title,summary,detail,category_code,status_code,apply_start,apply_end,run_start,run_end,sessions,'
             'manager,fiscal_year,location,image,capacity,pinned,roadmap_entry,care_types,satisfaction_survey,'
             'competency_survey,competency_areas,include_in_stats,'
-            'middle_category_code,target_statuses,target_grades')
+            'middle_category_code,target_statuses,target_grades,notice_at,apply_start_time,apply_end_time,'
+            'run_start_time,run_end_time,application_questions')
 # 프로그램이 선택한 게시본. 해당 종류의 응답이 들어오면 고정한다.
 PIN_COLUMNS = 'competency_form_id,satisfaction_form_id'
 PROGRAM_COLUMNS = 'id,' + WRITABLE + ',' + PIN_COLUMNS + ',created_at,version'
@@ -41,7 +83,21 @@ def today():
     return datetime.now(SEOUL).date()
 
 
-def program_dto(row, applicants):
+def require_published(program, user):
+    if user['kind'] == 'STUDENT' and program['notice_at'] and program['notice_at'] > datetime.now(SEOUL):
+        raise HTTPException(404, '프로그램을 찾을 수 없습니다.')
+
+
+def application_window(program):
+    now = datetime.now(SEOUL)
+    start, end = program['apply_start'], program['apply_end']
+    if start and now < datetime.combine(start, program['apply_start_time'] or time.min, SEOUL):
+        raise HTTPException(409, '아직 신청 기간이 시작되지 않았습니다.')
+    if end and now > datetime.combine(end, program['apply_end_time'] or time.max, SEOUL):
+        raise HTTPException(409, '신청이 마감된 프로그램입니다.')
+
+
+def program_dto(row, applicants, attachments=None, managers=None):
     return {
         'id': row['id'], 'title': row['title'], 'desc': row['summary'], 'detail': row['detail'],
         'category': row['category_code'], 'status': row['status_code'],
@@ -58,6 +114,10 @@ def program_dto(row, applicants):
         'competencyFormId': row['competency_form_id'], 'satisfactionFormId': row['satisfaction_form_id'],
         'includeInStats': row['include_in_stats'], 'createdAt': row['created_at'],
         'version': row['version'], 'applicants': applicants,
+        'noticeAt': row['notice_at'], 'startTime': row['apply_start_time'], 'endTime': row['apply_end_time'],
+        'runStartTime': row['run_start_time'], 'runEndTime': row['run_end_time'],
+        'applicationQuestions': row['application_questions'], 'attachments': attachments or [],
+        'managerIds': [manager['alias'] for manager in managers or []],
     }
 
 
@@ -77,6 +137,7 @@ def applicant_dto(row):
         # 조사 제출 여부(O/X). 목록 조회에서만 채운다 — 쓰기 응답은 None 으로 온다.
         'surveyPre': row.get('survey_pre'), 'surveyPost': row.get('survey_post'),
         'surveySatisfaction': row.get('survey_satisfaction'),
+        'applicationAnswers': snapshot.get('applicationAnswers', []),
     }
 
 
@@ -147,14 +208,16 @@ def programs(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100)
              recommended: bool = False,
              user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
     where, values = ['true'], []
+    if user['kind'] == 'STUDENT':
+        where.append('(notice_at IS NULL OR notice_at <= now())')
     if recommended:
         if user['kind'] != 'STUDENT':
             raise HTTPException(403, '본인의 맞춤 프로그램만 조회할 수 있습니다.')
         where.append('''(SELECT student_type FROM dc.current_student_type WHERE student_uid=%s
           ORDER BY decided_at DESC,id DESC LIMIT 1)=ANY(care_types)''')
         values.append(user['intg_uid'])
-        where.append("status_code='RECRUITING' AND (apply_end IS NULL OR apply_end >= %s)")
-        values.append(today())
+        where.append("""status_code='RECRUITING' AND (apply_end IS NULL OR
+          (apply_end + COALESCE(apply_end_time,'23:59:59.999999'::time)) AT TIME ZONE 'Asia/Seoul' >= now())""")
     if category:
         where.append('category_code=%s')
         values.append(category)
@@ -171,7 +234,9 @@ def programs(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100)
       ORDER BY {ordering} LIMIT %s OFFSET %s''',
       [*values, pageSize, (page - 1) * pageSize]).fetchall()
     grouped = applicants_of(conn, user, [r['id'] for r in rows])
-    return dict(items=[program_dto(r, grouped[r['id']]) for r in rows],
+    attached = attachments_of(conn, [r['id'] for r in rows])
+    managers = managers_of(conn, [r['id'] for r in rows])
+    return dict(items=[program_dto(r, grouped[r['id']], attached[r['id']], managers[r['id']]) for r in rows],
                 totalCount=total, page=page, pageSize=pageSize)
 
 
@@ -207,7 +272,9 @@ def statistics(user=Depends(principal, scope='function'), conn=Depends(connectio
 def program_detail(program_id: str, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
     row = get_program(conn, program_id)
-    return program_dto(row, applicants_of(conn, user, [program_id])[program_id])
+    require_published(row, user)
+    return program_dto(row, applicants_of(conn, user, [program_id])[program_id],
+                       attachments_of(conn, [program_id])[program_id], managers_of(conn, [program_id])[program_id])
 
 
 def survey_response_locks(conn, program_id):
@@ -243,7 +310,8 @@ class ProgramBody(BaseModel):
     runStartDate: date | None = None
     runEndDate: date | None = None
     sessions: int = Field(default=1, ge=1, le=999)
-    manager: str = Field(default='', max_length=100)
+    manager: str = Field(default='', max_length=5000)
+    managerIds: list[str] | None = Field(default=None, max_length=50)
     fiscalYear: str = Field(default='', max_length=10)
     capacity: int = Field(ge=0, le=100000)
     image: str | None = Field(default=None, max_length=2000000)
@@ -255,9 +323,31 @@ class ProgramBody(BaseModel):
     satisfactionFormId: int | None = Field(default=None, gt=0)
     competencyAreas: list[str] = Field(default_factory=list, max_length=100)
     includeInStats: bool = True
+    noticeAt: datetime | None = None
+    startTime: time | None = None
+    endTime: time | None = None
+    runStartTime: time | None = None
+    runEndTime: time | None = None
+    applicationQuestions: list[ApplicationQuestion] = Field(default_factory=list, max_length=30)
+    attachmentFileIds: list[str] | None = Field(default=None, max_length=20)
+    # Read-only DTO field accepted for compatibility with existing full-object updates.
+    attachments: list[dict] = Field(default_factory=list, max_length=20, exclude=True)
 
     @model_validator(mode='after')
     def consistent(self):
+        if self.noticeAt is not None and self.noticeAt.tzinfo is None:
+            raise ValueError('공고일시에는 시간대가 필요합니다.')
+        for start, end, start_time, end_time in (
+                (self.startDate, self.endDate, self.startTime, self.endTime),
+                (self.runStartDate, self.runEndDate, self.runStartTime, self.runEndTime)):
+            if any(value is not None and value.tzinfo is not None for value in (start_time, end_time)):
+                raise ValueError('접수·운영 시간은 한국 시간으로 입력해 주세요.')
+            if (start_time and not start) or (end_time and not end):
+                raise ValueError('시간과 날짜를 함께 입력해 주세요.')
+            if start == end and start_time and end_time and start_time > end_time:
+                raise ValueError('종료 시각은 시작 시각 이후여야 합니다.')
+        if len({q.id for q in self.applicationQuestions}) != len(self.applicationQuestions):
+            raise ValueError('질문 ID가 중복되었습니다.')
         self.desc = clean_html(self.desc) if '<' in self.desc else self.desc
         if self.detail is not None:
             self.detail = clean_html(self.detail)
@@ -283,7 +373,9 @@ def program_values(body: ProgramBody):
             body.runStartDate, body.runEndDate, body.sessions, body.manager, body.fiscalYear, body.location,
             body.image, body.capacity, body.pinned, body.roadmapEntry, body.careTypes, body.satisfactionSurvey,
             body.competencySurvey, body.competencyAreas, body.includeInStats,
-            body.middleCategory, body.targetStatuses, body.targetGrades)
+            body.middleCategory, body.targetStatuses, body.targetGrades, body.noticeAt,
+            body.startTime, body.endTime, body.runStartTime, body.runEndTime,
+            Jsonb([q.model_dump() for q in body.applicationQuestions]))
 
 
 def check_category(conn, code):
@@ -350,6 +442,9 @@ def selected_form_id(conn, body, kind, before=None):
 def create_program(body: ProgramBody, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
     require_staff(user)
+    managers = resolve_managers(conn, body)
+    if managers:
+        body.manager = ', '.join(row['name'] for row in managers)
     check_program_options(conn, body)
     pins = [selected_form_id(conn, body, kind) for kind in ('COMPETENCY', 'SATISFACTION')]
     check_competency_areas(conn, body, form_id=pins[0])
@@ -363,7 +458,9 @@ def create_program(body: ProgramBody, user=Depends(principal, scope='function'),
       ('prog_' + uuid4().hex[:12], *program_values(body), *pins, user['intg_uid'], user['intg_uid'])).fetchone()
     program_expiry(row)
     enroll_program(conn, user, row)
-    return program_dto(row, [])
+    sync_attachments(conn, user, row['id'], body.attachmentFileIds)
+    sync_managers(conn, row['id'], managers)
+    return program_dto(row, [], attachments_of(conn, [row['id']])[row['id']], managers)
 
 
 @router.put('/programs/{program_id}')
@@ -372,9 +469,23 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
     require_staff(user)
     lifecycle_lock(conn, exclusive=True)
     before = get_program(conn, program_id, lock=True)
+    # A client predating these fields must not silently erase saved notice/question data.
+    for field, column in (('noticeAt', 'notice_at'), ('startTime', 'apply_start_time'),
+                          ('endTime', 'apply_end_time'), ('runStartTime', 'run_start_time'),
+                          ('runEndTime', 'run_end_time'), ('applicationQuestions', 'application_questions')):
+        if field not in body.model_fields_set:
+            value = before[column]
+            setattr(body, field, [ApplicationQuestion(**q) for q in value] if field == 'applicationQuestions' else value)
+    try:
+        body.consistent()
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from error
     check_program_options(conn, body, before)
     if before['version'] != body.expectedVersion:
         raise HTTPException(409, '다른 담당자가 변경했습니다. 새로 조회한 뒤 수정하세요.')
+    managers = resolve_managers(conn, body, before)
+    if managers:
+        body.manager = ', '.join(row['name'] for row in managers)
     pins = [selected_form_id(conn, body, kind, before) for kind in ('COMPETENCY', 'SATISFACTION')]
     if pins != [before['competency_form_id'], before['satisfaction_form_id']]:
         # 제출도 같은 program 행을 FOR UPDATE로 잠근다. 잠금 획득 뒤 응답을 다시 검사한다.
@@ -402,7 +513,10 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
       (*program_values(body), *pins, user['intg_uid'], program_id)).fetchone()
     program_expiry(row)
     enroll_program(conn, user, row)
-    return program_dto(row, applicants_of(conn, user, [program_id])[program_id])
+    sync_attachments(conn, user, program_id, body.attachmentFileIds)
+    sync_managers(conn, program_id, managers)
+    return program_dto(row, applicants_of(conn, user, [program_id])[program_id],
+                       attachments_of(conn, [program_id])[program_id], managers)
 
 
 @router.delete('/programs/{program_id}', status_code=204)
@@ -419,6 +533,15 @@ def delete_program(program_id: str, user=Depends(principal, scope='function'),
     if linked_cells(conn, program_id):
         raise HTTPException(409, {'code': 'PROGRAM_IN_ROADMAP',
                                   'message': '로드맵에 편입된 프로그램은 삭제할 수 없습니다.'})
+    # Preserve referenced history instead of allowing a FK failure to become a 500.
+    for table in ('survey_response', 'program_wishlist', 'core_competency_allocation'):
+        if conn.execute(f'SELECT 1 FROM dc.{table} WHERE program_id=%s LIMIT 1', (program_id,)).fetchone():
+            raise HTTPException(409, '설문·관심 등록·역량 배점 이력이 있는 프로그램은 삭제할 수 없습니다.')
+    sync_attachments(conn, user, program_id, [])
+    conn.execute("""UPDATE dc.file_object SET state='DELETED',deleted_at=now(),deleted_by=%s
+      WHERE owner_kind='PROGRAM_APPLICATION' AND state='READY' AND owner_id IN
+      (SELECT program_id || ':' || student_uid FROM dc.program_apply WHERE program_id=%s)""",
+      (user['intg_uid'], program_id))
     conn.execute('DELETE FROM dc.program_apply WHERE program_id=%s', (program_id,))
     conn.execute('DELETE FROM dc.program WHERE id=%s', (program_id,))
 
@@ -472,6 +595,7 @@ class ApplyBody(BaseModel):
     path: str = Field(default='', max_length=500)
     motive: str = Field(default='', max_length=2000)
     consents: dict = Field(default_factory=dict)
+    answers: dict[str, str | list[str]] = Field(default_factory=dict, max_length=30)
 
 
 @router.post('/programs/{program_id}/applications', status_code=201)
@@ -500,24 +624,28 @@ def apply(program_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
         require_staff(user)
         student = student_access(conn, user, body.studentId or '')
     program = get_program(conn, program_id, lock=True)
+    require_published(program, user)
     if program['status_code'] != 'RECRUITING':
         raise HTTPException(409, '모집 중인 프로그램이 아닙니다.')
-    if program['apply_end'] and program['apply_end'] < today():
-        raise HTTPException(409, '신청이 마감된 프로그램입니다.')
+    application_window(program)
     if conn.execute('SELECT 1 FROM dc.program_apply WHERE program_id=%s AND student_uid=%s',
                     (program_id, student['intg_uid'])).fetchone():
         raise HTTPException(409, '이미 신청한 프로그램입니다.')
     # 신청 시점 학적을 복사해 둔다(CLAUDE.md 규칙 2) — 학과 개편 뒤에도 명단이 흔들리지 않는다.
+    answer_snapshot, answer_files = validate_answers(conn, user, program, body.answers)
     snapshot = {'studentName': student['name'], 'studentMajor': student['major_label'],
                 'studentNo': student['student_no'], 'grade': student['grade'],
-                'path': body.path, 'motive': body.motive}
+                'path': body.path, 'motive': body.motive, 'applicationAnswers': answer_snapshot}
     row = conn.execute('''INSERT INTO dc.program_apply(program_id,student_uid,applied_at,snapshot,apply_path,
       motive,consents,updated_by) VALUES(%s,%s,now(),%s,%s,%s,%s,%s) RETURNING *''',
       (program_id, student['intg_uid'], Jsonb(snapshot), body.path, body.motive,
        Jsonb(body.consents), user['intg_uid'])).fetchone()
+    for file_id in sorted(answer_files):
+        files.claim(conn, user, file_id, 'PROGRAM_APPLICATION', program_id + ':' + student['intg_uid'], 'PROGRAM_APPLICATION_ATTACHMENT')
     result = applicant_dto({**row, 'alias': student['alias'], 'name': student['name'],
                             'major_label': student['major_label']})
     record(conn, user, program_id, student['intg_uid'], 'APPLY', None, result)
+    notify_application(conn, program, student)
     conn.execute('INSERT INTO dc.idempotency(actor_uid,route,key,request_hash,response) VALUES(%s,%s,%s,%s,%s)',
                  (user['intg_uid'], route, idempotency_key, digest, Jsonb(jsonable_encoder(result))))
     return result

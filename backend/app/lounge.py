@@ -50,7 +50,7 @@ def weekly_items(conn, uid, day):
     # completion notification event, without any read_at / 23-hour condition.
     # Only pinned forms with actual questions are linked, matching items_for().
     surveys = conn.execute('''WITH scheduled AS (
-      SELECT p.id,p.title,p.run_start,p.satisfaction_survey,p.competency_survey,p.competency_areas,
+      SELECT p.id,p.title,p.run_start,p.run_start_time,p.satisfaction_survey,p.competency_survey,p.competency_areas,
         a.cancelled_at,a.selection_code,a.outcome_code,phase.code AS phase,
         CASE WHEN phase.code='PRE' THEN a.selected_at ELSE n.occurred_at END AS opens_at,
         r.submitted_at

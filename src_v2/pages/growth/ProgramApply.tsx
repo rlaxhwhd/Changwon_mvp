@@ -36,6 +36,8 @@ export default function ProgramApply() {
     category: program.category,
     startDate: program.startDate,
     endDate: program.endDate,
+    endTime: program.endTime,
+    status: program.status,
     runStartDate: program.runStartDate,
     runEndDate: program.runEndDate,
     capacity: program.capacity,

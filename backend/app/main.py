@@ -38,6 +38,7 @@ from .advisor_assignments import router as advisor_assignments_router
 from .db import pool
 from .settings import settings
 from .auth import validate_development_token
+from .demo_access import router as demo_access_router
 from .db import connection
 
 
@@ -55,6 +56,7 @@ async def lifespan(app):
 
 
 app = FastAPI(title='DREAMCATCH API', version='1.0.0', lifespan=lifespan)
+app.include_router(demo_access_router)
 
 
 @app.exception_handler(RequestValidationError)

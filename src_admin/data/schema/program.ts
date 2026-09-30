@@ -133,6 +133,7 @@ export function competencySurveyGroups(formId?: number | null): CompetencySurvey
 
 /** 프로그램 신청자 1명 */
 export interface ProgramApplicant {
+  applicationAnswers?: { question: import('../../../shared/programContent').ApplicationQuestion; value: string | string[]; files?: import('../../../shared/programContent').ProgramFile[] }[]
   studentNo?: string | null
   studentGrade?: number | null
   studentStatus?: import('../../../src_v2/data/students').EnrollmentStatus | null
@@ -171,6 +172,14 @@ export interface ProgramApplicant {
 
 /** 비교과 프로그램 1건 */
 export interface Program {
+  noticeAt?: string | null
+  startTime?: string | null
+  endTime?: string | null
+  runStartTime?: string | null
+  runEndTime?: string | null
+  applicationQuestions?: import('../../../shared/programContent').ApplicationQuestion[]
+  attachments?: import('../../../shared/programContent').ProgramFile[]
+  attachmentFileIds?: string[]
   id: string
   title: string
   /** 프로그램 내용 — 등록 화면의 평문 입력칸. 목록 카드·요약이 쓰는 짧은 소개다. */
@@ -204,6 +213,7 @@ export interface Program {
   sessions: number
   /** 담당자명 */
   manager: string
+  managerIds?: string[]
   /** 회계년도 */
   fiscalYear: string
   /** 정원 */

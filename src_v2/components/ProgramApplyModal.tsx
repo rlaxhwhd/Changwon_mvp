@@ -4,11 +4,15 @@ import Modal from './Modal'
 import { getActiveStudent } from '../data/students'
 import { collegeOf } from '../../src_admin/data/colleges'
 import './ProgramApplyModal.css'
+import { questionsAnswered, type ApplicationAnswers, type ApplicationQuestion } from '../../shared/programContent'
+import ProgramApplicationQuestions from '../../shared/components/ProgramApplicationQuestions'
 
 interface Props {
   open: boolean
   onClose: () => void
   programTitle: string
+  questions?: ApplicationQuestion[]
+  saving?: boolean
   onSubmit: (payload: {
     path: string
     motive: string
@@ -16,12 +20,20 @@ interface Props {
     agreeCollect: 'yes' | 'no'
     agreeIdent: 'yes' | 'no'
     agreeNotice: 'yes' | 'no'
+    answers: ApplicationAnswers
   }) => void
 }
 
 type YN = 'yes' | 'no' | ''
 
-export default function ProgramApplyModal({ open, onClose, programTitle, onSubmit }: Props) {
+function YesNo({ value, onChange, name }: { value: YN; onChange: (v: YN) => void; name: string }) {
+  return <div className="pam-yn">
+    <label><input type="radio" name={name} checked={value === 'yes'} onChange={() => onChange('yes')} />예</label>
+    <label><input type="radio" name={name} checked={value === 'no'} onChange={() => onChange('no')} />아니오</label>
+  </div>
+}
+
+export default function ProgramApplyModal({ open, onClose, programTitle, onSubmit, questions = [], saving = false }: Props) {
   // 신청서에 뜨는 인적사항은 학사 데이터에서 온다. 없는 값을 지어내지 않는다
   // (CLAUDE.md 규칙 1 — 학사 유래 데이터는 읽기 전용이다).
   const active = getActiveStudent()
@@ -40,16 +52,19 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
   const [agreeCollect, setAgreeCollect] = useState<YN>('')
   const [agreeIdent, setAgreeIdent] = useState<YN>('')
   const [agreeNotice, setAgreeNotice] = useState<YN>('')
+  const [answers, setAnswers] = useState<ApplicationAnswers>({})
+  const [uploading, setUploading] = useState(false)
 
   const reset = () => {
     setPath(''); setMotive('')
     setAgree3rd(''); setAgreeCollect(''); setAgreeIdent(''); setAgreeNotice('')
+    setAnswers({})
   }
 
-  const handleClose = () => { reset(); onClose() }
+  const handleClose = () => { if (!saving && !uploading) { reset(); onClose() } }
 
   const allAnswered = agree3rd && agreeCollect && agreeIdent && agreeNotice
-  const canSubmit = path.trim() !== '' && motive.trim() !== '' && allAnswered
+  const canSubmit = path.trim() !== '' && motive.trim() !== '' && allAnswered && !saving && !uploading && questionsAnswered(questions, answers)
 
   const handleSubmit = () => {
     if (!canSubmit) return
@@ -60,22 +75,9 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
       agreeCollect: agreeCollect as 'yes' | 'no',
       agreeIdent: agreeIdent as 'yes' | 'no',
       agreeNotice: agreeNotice as 'yes' | 'no',
+      answers,
     })
-    reset()
   }
-
-  const YesNo = ({ value, onChange, name }: { value: YN; onChange: (v: YN) => void; name: string }) => (
-    <div className="pam-yn">
-      <label>
-        <input type="radio" name={name} checked={value === 'yes'} onChange={() => onChange('yes')} />
-        예
-      </label>
-      <label>
-        <input type="radio" name={name} checked={value === 'no'} onChange={() => onChange('no')} />
-        아니오
-      </label>
-    </div>
-  )
 
   return (
     <Modal open={open} onClose={handleClose} title="비교과 프로그램 신청서" size="lg">
@@ -247,6 +249,11 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
           <YesNo value={agreeNotice} onChange={setAgreeNotice} name="pam-agree-notice" />
         </div>
       </div>
+
+      {questions.length > 0 && <div className="pam-section">
+        <h3 className="pam-section-title">신청 시 추가정보</h3>
+        <ProgramApplicationQuestions questions={questions} answers={answers} onChange={setAnswers} onBusyChange={setUploading} />
+      </div>}
 
       {/* ── 안내사항 ── */}
       <div className="pam-section">

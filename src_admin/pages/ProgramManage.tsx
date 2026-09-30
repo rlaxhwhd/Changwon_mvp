@@ -2,7 +2,8 @@ import { LuClipboardList, LuDownload, LuPin, LuPlus } from 'react-icons/lu'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
-import { getPrograms, sortByPriority, updateProgram } from '../data/programs'
+import { getPrograms, sortByPriority, updateProgram, removeProgram } from '../data/programs'
+import AdminModal from '../components/AdminModal'
 import { EXPORT_TARGETS, EXPORT_TARGET_LABEL, getApplicantExportRows, toApplicantCsv } from '../data/programExport'
 import type { ExportTarget } from '../data/programExport'
 import type { Program } from '../data/schema/program'
@@ -37,6 +38,9 @@ export default function ProgramManage() {
   const [programs, setPrograms] = useState<Program[]>(() => sortByPriority(getPrograms()))
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [target, setTarget] = useState<ExportTarget>('applicants')
+  const [deleting, setDeleting] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
+  const [deleteError, setDeleteError] = useState('')
   const today = new Date().toISOString().slice(0, 10)
 
   const togglePin = (id: string, pinned: boolean) => {
@@ -60,6 +64,20 @@ export default function ProgramManage() {
   const toggleAll = () => {
     setChecked(allChecked ? new Set() : new Set(programs.map(p => p.id)))
   }
+  const deleteSelected = async () => {
+    setDeleting(true); setDeleteError('')
+    const failures: string[] = []
+    for (const id of checked) {
+      try {
+        await removeProgram(id)
+        setChecked(prev => { const next = new Set(prev); next.delete(id); return next })
+      } catch (error) { failures.push(`${programs.find(p => p.id === id)?.title}: ${error instanceof Error ? error.message : '삭제 실패'}`) }
+    }
+    setPrograms(sortByPriority(getPrograms()))
+    setDeleting(false)
+    if (failures.length) setDeleteError(failures.join('\n'))
+    else setDeleteOpen(false)
+  }
 
   // 명단 조립은 데이터층(programExport)이 하고, 여기서는 파일로만 만든다.
   const exportCount = getApplicantExportRows([...checked], target).length
@@ -68,7 +86,7 @@ export default function ProgramManage() {
     const ids = [...checked]
     if (ids.length === 0) return
     const url = URL.createObjectURL(
-      new Blob([`﻿${toApplicantCsv(ids, target)}`], { type: 'text/csv;charset=utf-8' }),
+      new Blob([`\uFEFF${toApplicantCsv(ids, target)}`], { type: 'text/csv;charset=utf-8' }),
     )
     const anchor = document.createElement('a')
     anchor.href = url
@@ -124,6 +142,7 @@ export default function ProgramManage() {
                 >
                   <LuDownload /> 엑셀 다운로드
                 </button>
+                <button type="button" className="admin-btn admin-btn-danger sm" onClick={() => { setDeleteError(''); setDeleteOpen(true) }}>선택 삭제</button>
               </div>
             )}
 
@@ -201,6 +220,12 @@ export default function ProgramManage() {
           </>
         )}
       </section>
+      {deleteOpen && <AdminModal title="프로그램 삭제" onClose={() => { if (!deleting) setDeleteOpen(false) }}>
+        <p>선택한 {checked.size}개 프로그램과 신청 기록을 삭제합니다. 삭제한 데이터는 복구할 수 없습니다.</p>
+        <p>이수 결과·로드맵·설문 등 연결된 이력이 있으면 삭제되지 않습니다.</p>
+        {deleteError && <p role="alert" style={{ whiteSpace: 'pre-line' }}>{deleteError}</p>}
+        <div className="admin-head-actions"><button type="button" className="admin-btn" disabled={deleting} onClick={() => setDeleteOpen(false)}>취소</button><button type="button" className="admin-btn admin-btn-danger" disabled={deleting || checked.size === 0} onClick={() => { void deleteSelected() }}>{deleting ? '삭제 중…' : '삭제'}</button></div>
+      </AdminModal>}
     </div>
   )
 }

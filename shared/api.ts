@@ -16,7 +16,7 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
     : localStorage.getItem('dc_active_student')
   const headers = new Headers(init.headers)
   headers.set('X-DC-Portal', location.pathname.startsWith('/admin') ? 'admin' : 'student')
-  headers.set('Content-Type', 'application/json')
+  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
   if (identity) headers.set('X-DC-Identity', identity)
   const response = await fetch(`/api/v1${path}`, { ...init, headers })
   if (!response.ok) {

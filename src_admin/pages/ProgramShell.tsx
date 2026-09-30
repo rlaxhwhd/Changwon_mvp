@@ -1,10 +1,12 @@
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { LuChartColumn, LuFrown, LuGraduationCap, LuList, LuPencil, LuSmile, LuUserCheck, LuUsers, LuUserX } from 'react-icons/lu'
-import { Link, NavLink, Outlet, useNavigate, useParams } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { getProgramById, pendingApplicants, selectedApplicants } from '../data/programs'
 import type { Program } from '../data/schema/program'
 import { categoryLabel } from '../data/schema/program'
 import EmptyState from '../components/EmptyState'
+import { PROGRAM_EVENT, refreshProgram } from '../../shared/programStore'
+import { useStore } from '../../shared/useRoadmapStore'
 
 /** 탭 자식이 받는 컨텍스트 — 프로그램 1건은 셸이 소유한다(자식이 따로 조회하지 않는다). */
 export interface ProgramTabContext {
@@ -20,11 +22,31 @@ export interface ProgramTabContext {
 export default function ProgramShell() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
-  // program 은 렌더마다 localStorage 를 다시 읽는다 — 자식이 신청자를 바꾸면
-  // refresh() 로 이 셸을 재렌더시켜 탭 카운트와 자식 목록을 한 번에 맞춘다.
+  const location = useLocation()
+  useStore(PROGRAM_EVENT)
   const [, bumpVersion] = useState(0)
   const refresh = useCallback(() => bumpVersion(v => v + 1), [])
+  const [retry, setRetry] = useState(0)
+  const requestKey = `${id}:${location.key}:${retry}`
+  const [loaded, setLoaded] = useState({ key: '', error: '' })
+  useEffect(() => {
+    if (!id) return
+    const controller = new AbortController()
+    refreshProgram(id, controller.signal)
+      .then(() => { if (!controller.signal.aborted) setLoaded({ key: requestKey, error: '' }) })
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) setLoaded({ key: requestKey, error: error instanceof Error ? error.message : '프로그램을 불러오지 못했습니다.' })
+      })
+    return () => controller.abort()
+  }, [id, requestKey])
   const program = id ? getProgramById(id) : undefined
+
+  if (id && loaded.key !== requestKey) return <div className="admin-page" role="status">프로그램과 신청 내역을 불러오는 중입니다…</div>
+  if (loaded.error) return <div className="admin-page" role="alert">
+    <p>{loaded.error}</p>
+    <button className="admin-btn admin-btn-ghost" onClick={() => setRetry(value => value + 1)}>다시 시도</button>
+    <Link className="admin-btn admin-btn-ghost" to="/programs/manage">프로그램 목록으로</Link>
+  </div>
 
   if (!program) {
     return (

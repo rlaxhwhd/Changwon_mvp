@@ -8,7 +8,7 @@
 // ⚠ 목록을 통째로 들고 있는 구조라 프로그램이 수천 건이 되면 이 방식은 못 버틴다.
 //   그때는 화면이 queryPrograms(페이징)만 쓰도록 옮겨야 한다.
 // ─────────────────────────────────────────────────────────────────────────
-import { api } from './api'
+import { api, ApiError } from './api'
 import type { Program } from '../src_admin/data/schema/program'
 
 let programs: Program[] = []
@@ -41,7 +41,12 @@ export async function loadPrograms(): Promise<void> {
 
 /** 한 건만 서버에서 다시 읽어 교체한다(없으면 목록에서 뺀다). */
 export async function refreshProgram(id: string, signal?: AbortSignal): Promise<void> {
-  const fresh = await api<Program>(`/programs/${encodeURIComponent(id)}`, { signal })
+  let fresh: Program
+  try { fresh = await api<Program>(`/programs/${encodeURIComponent(id)}`, { signal }) }
+  catch (error) {
+    if (error instanceof ApiError && error.status === 404) dropProgram(id)
+    throw error
+  }
   publish(programs.some(p => p.id === fresh.id)
     ? programs.map(p => (p.id === fresh.id ? fresh : p))
     : [fresh, ...programs])

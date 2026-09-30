@@ -67,3 +67,6 @@
 
 .mm-selection-tools { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; }
 .mm-selection-tools label { min-width: 120px; }
+.mm-count-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 16px; background: #f3f7f5; border-radius: 8px; }
+.mm-count-settings p { grid-column: 1 / -1; }
+@media(max-width:600px) { .mm-count-settings { grid-template-columns:1fr; } }

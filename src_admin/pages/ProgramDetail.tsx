@@ -4,7 +4,7 @@ import {
   LuInfo, LuPaperclip, LuTrash2,
   LuUser, LuUserCheck, LuUserPlus, LuUsers, LuUserX,
 } from 'react-icons/lu'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import type { ProgramTabContext } from './ProgramShell'
 import {
@@ -32,6 +32,9 @@ import { collegeOf, enrollStatusClass, studentTypeClass } from '../data/studentR
 import { typeLabel } from '../../src_v2/data/careerProcess'
 import EmptyState from '../components/EmptyState'
 import StudentPicker from '../components/StudentPicker'
+import AdminModal from '../components/AdminModal'
+import { downloadApiFile } from '../../shared/api'
+import type { ProgramApplicant } from '../data/schema/program'
 import { SURVEY_EXPORT_LABEL, downloadSurveyExport, type SurveyPhase } from '../../shared/surveyStore'
 
 type Mode = 'applicants' | 'selected'
@@ -71,9 +74,12 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   const [bulkValue, setBulkValue] = useState<string>('SELECTED')
   const [picking, setPicking] = useState(false)
   const [exporting, setExporting] = useState<SurveyPhase | null>(null)
+  const [answerApplicant, setAnswerApplicant] = useState<ProgramApplicant | null>(null)
+  const [answerError, setAnswerError] = useState('')
 
   // 신청자/선발자 페이지 전환 시 선택 초기화
-  useEffect(() => { setChecked(new Set()) }, [mode])
+  const [checkedMode, setCheckedMode] = useState(mode)
+  if (checkedMode !== mode) { setCheckedMode(mode); setChecked(new Set()) }
 
   const applicants = program.applicants
   const selectedList = selectedApplicants(program)
@@ -274,7 +280,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
               <span>상태</span>
               <span>신청일</span>
               {mode === 'applicants' && <span>취소일</span>}
-              <span>첨부파일</span>
+              <span>추가정보·첨부</span>
               <span>벌점</span>
               {mode === 'selected' && <><span>만족도조사</span><span>사전</span><span>사후</span></>}
             </div>
@@ -327,7 +333,9 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                       {a.canceledAt ? <small>{fmtDateTime(a.canceledAt)}</small> : <small>—</small>}
                     </span>
                   )}
-                  <span className="admin-roster-cell admin-attach-cell" title="첨부파일 없음"><LuPaperclip /></span>
+                  <span className="admin-roster-cell admin-attach-cell">{a.applicationAnswers?.length
+                    ? <button type="button" className="admin-btn sm" onClick={() => { setAnswerError(''); setAnswerApplicant(a) }} aria-label={`${name} 추가정보 보기`}><LuPaperclip /> 보기</button>
+                    : <span title="추가정보 없음">—</span>}</span>
                   <span className="admin-roster-cell">
                     {penalty > 0
                       ? <span className="admin-chip admin-chip-penalty">{penalty}점</span>
@@ -367,6 +375,15 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
       </section>
 
       {/* 신청자 직접 추가 — 집단상담 참여자 추가와 같은 학생 검색 피커를 쓴다. */}
+      {answerApplicant && <AdminModal title={`${answerApplicant.studentName} · 신청 시 추가정보`} onClose={() => setAnswerApplicant(null)}>
+        {answerApplicant.applicationAnswers?.map(answer => <section key={answer.question.id}>
+          <h3>{answer.question.question}</h3>
+          {answer.question.type === 'FILE' ? answer.files?.map(file => <p key={file.id}><button type="button" className="admin-btn" onClick={() => {
+            void downloadApiFile(`/program-files/${encodeURIComponent(file.id)}`, file.name).catch((error: unknown) => setAnswerError(error instanceof Error ? error.message : '다운로드 실패'))
+          }}>{file.name}</button></p>) : <p>{Array.isArray(answer.value) ? answer.value.join(', ') : answer.question.type === 'CONSENT' ? (answer.value === 'yes' ? '동의' : '미동의') : answer.value}</p>}
+        </section>)}
+        {answerError && <p role="alert">{answerError}</p>}
+      </AdminModal>}
       {picking && (
         <StudentPicker
           title="신청 학생 추가"

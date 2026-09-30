@@ -1315,6 +1315,9 @@
   height: 62px;
   background: var(--card);
 }
+.mn-page .quest-ring--done-0 { --quest-pct: 0%; }
+.mn-page .quest-ring--done-1 { --quest-pct: 50%; }
+.mn-page .quest-ring--done-2 { --quest-pct: 100%; }
 
 .mn-page .hero-quest .quest-value strong {
   color: var(--card-foreground);

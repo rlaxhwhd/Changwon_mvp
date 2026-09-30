@@ -39,6 +39,8 @@ CONTENT_TYPES = {
     'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
 }
+ALLOWED['PROGRAM_ATTACHMENT'] = ALLOWED['ATTACHMENT']
+ALLOWED['PROGRAM_APPLICATION_ATTACHMENT'] = ALLOWED['ATTACHMENT']
 
 
 def root() -> Path:
@@ -104,7 +106,8 @@ def store(conn, user, slot: str, name: str, data: bytes):
         raise too_large()
     file_id = uuid4().hex
     owner_kind = {'LOGO': 'JOB_POSTING', 'ATTACHMENT': 'JOB_POSTING',
-                  'RESUME': 'JOB_APPLICATION_ATTEMPT', 'PORTFOLIO_ATTACHMENT': 'GROWTH_ENTRY'}[slot]
+                  'RESUME': 'JOB_APPLICATION_ATTEMPT', 'PORTFOLIO_ATTACHMENT': 'GROWTH_ENTRY',
+                  'PROGRAM_ATTACHMENT': 'PROGRAM', 'PROGRAM_APPLICATION_ATTACHMENT': 'PROGRAM_APPLICATION'}[slot]
     path = location(file_id)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)

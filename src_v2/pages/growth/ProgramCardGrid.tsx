@@ -1,5 +1,6 @@
 import type { ProgramCategory } from '../../../src_admin/data/schema/program'
 import { categoryLabel } from '../../../src_admin/data/schema/program'
+import { programDdayLabel } from '../../../src_admin/data/programs'
 import './ProgramCardGrid.css'
 
 export interface ProgramCardVM {
@@ -9,6 +10,8 @@ export interface ProgramCardVM {
   category: ProgramCategory
   startDate: string
   endDate: string
+  endTime?: string | null
+  status?: import('../../../src_admin/data/schema/program').ProgramStatus
   runStartDate?: string
   runEndDate?: string
   capacity: number
@@ -22,25 +25,13 @@ interface Props {
   onToggleWish?: (id: string) => void
 }
 
-function getDDay(endDate: string): string {
-  const end = new Date(`${endDate.replaceAll('.', '-')}T23:59:59`)
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const days = Math.ceil((end.getTime() - today.getTime()) / 86_400_000)
-
-  if (Number.isNaN(days)) return '일정 확인'
-  if (days < 0) return '마감'
-  if (days === 0) return 'D-Day'
-  return `D-${days}`
-}
-
 export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWish }: Props) {
   return (
     <div className="pcg-grid">
       {programs.map(program => {
         const isWished = wished?.has(program.id) ?? false
-        const dDay = getDDay(program.endDate)
-        const isUrgent = dDay === 'D-Day' || /^D-[1-5]$/.test(dDay)
+        const dDay = programDdayLabel({ ...program, status: program.status ?? 'RECRUITING' })
+        const isUrgent = dDay === 'D-day' || /^D-[1-5]$/.test(dDay)
 
         return (
           <article key={program.id} className="pcg-card" data-cat={program.category}>

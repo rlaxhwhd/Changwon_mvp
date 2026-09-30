@@ -48,7 +48,7 @@ const ALL_SECTIONS: NavSection[] = [
   { id: 'adm-notices', label: '공지사항', basePaths: ['/notices'], path: '/notices', icon: LuFileText, children: [] },
   {
     id: 'adm-quests', label: '퀘스트 관리', basePaths: ['/quests'], path: '/quests/missions', icon: LuClipboardCheck,
-    children: [{ label: '미션 관리', path: '/quests/missions', icon: LuList }],
+    children: [{ label: '미션 관리', path: '/quests/missions', icon: LuList }, { label: '퀘스트 관리', path: '/quests/manage', icon: LuClipboardCheck }],
   },
   {
     id: 'system', label: '시스템 관리', basePaths: ['/system'], icon: LuSettings,

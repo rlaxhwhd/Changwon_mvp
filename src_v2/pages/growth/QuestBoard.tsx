@@ -30,9 +30,10 @@ export default function QuestBoard() {
   const [revision, setRevision] = useState(0)
   useEffect(() => {
     const refresh = () => setToday(dayKey())
+    const focus = () => { refresh(); setRevision(value => value + 1) }
     const timer = window.setInterval(refresh, 1000)
-    window.addEventListener('focus', refresh)
-    return () => { window.clearInterval(timer); window.removeEventListener('focus', refresh) }
+    window.addEventListener('focus', focus)
+    return () => { window.clearInterval(timer); window.removeEventListener('focus', focus) }
   }, [])
   const [year, month, day] = today.split('-').map(Number)
   const calendar = new Date(year, month - 1 + monthOffset, 1)
@@ -42,7 +43,7 @@ export default function QuestBoard() {
   useEffect(() => {
     const abort = new AbortController()
     setLoading(true); setError('')
-    api<QuestDashboard>(`/quests/dashboard?month=${monthKey}`, { signal: abort.signal })
+    api<QuestDashboard>(`/quests/sync?month=${monthKey}`, { method: 'POST', signal: abort.signal })
       .then(result => { if (!abort.signal.aborted) setData(result) })
       .catch(reason => { if (!abort.signal.aborted) { setError(missionError(reason)); setData(null) } })
       .finally(() => { if (!abort.signal.aborted) setLoading(false) })
@@ -58,7 +59,7 @@ export default function QuestBoard() {
     return { kind: (['diagnosis', 'roadmap', 'program'] as const)[index], label: item.label,
       kicker: '나의 퀘스트', value: data ? String(count) : '—', unit: data ? `/ ${quota}개` : '',
       pct: quota ? Math.min(100, Math.round(count / quota * 100)) : 0,
-      foot: data ? `완료 보상 ${data.rules[item.id].xp.toLocaleString()} XP` : '기록 불러오는 중' }
+      foot: data ? item.id === 'DAILY' ? `완료 보상 ${data.rules[item.id].xp.toLocaleString()} XP` : '퀘스트별 설정된 XP 지급' : '기록 불러오는 중' }
   })
   stats.push({ kind: 'counsel', label: '연속 출석', kicker: '꾸준한 성장', total: data ? String(data.attendance.streak) : '—', unit: '일', foot: attended ? '오늘 출석 완료' : '오늘도 출석을 이어가세요', channels: [] },
     { kind: 'level', label: '성장 레벨', levelUnit: 'LV', level: data ? String(data.level) : '—',
@@ -91,7 +92,11 @@ export default function QuestBoard() {
           event.preventDefault(); setPeriod(periods[next].id); document.getElementById(`qb-tab-${periods[next].id}`)?.focus()
         }} onClick={() => setPeriod(item.id)}>{item.label}</button>)}</div>
         <div id="qb-quest-panel" role="tabpanel" aria-labelledby={`qb-tab-${period}`} tabIndex={0}>
-          {period === 'DAILY' ? <><ul className="qb-quest-list"><li className={attended ? 'is-done' : ''}><span className="qb-quest-symbol" aria-hidden="true"><i className={`fa-solid ${attended ? 'fa-check' : 'fa-calendar-check'}`} /></span><div className="qb-quest-copy"><span className="qb-subtle">{attended ? '출석 완료' : '오늘의 출석'}</span><h3>오늘의 출석 남기기</h3><p>{attendanceNote}</p><div className="qb-row-actions"><button className="qb-text-button" disabled={busy || attended || !data} onClick={checkIn}>{saving ? '기록 중…' : attended ? '오늘 출석 완료' : '출석체크'}</button></div></div></li></ul><p className="qb-pending-note">나머지 일일 퀘스트는 등록 후 제공됩니다.</p></> : <div className="qb-empty"><i className="fa-regular fa-clipboard" aria-hidden="true" /><h3>{periods.find(item => item.id === period)?.label} 등록 준비 중</h3><p>참여할 활동과 완료 조건이 등록되면 이곳에서 확인할 수 있습니다.</p></div>}
+          {period === 'DAILY' ? <ul className="qb-quest-list">
+            <li className={attended ? 'is-done' : ''}><span className="qb-quest-symbol" aria-hidden="true"><i className={`fa-solid ${attended ? 'fa-check' : 'fa-calendar-check'}`} /></span><div className="qb-quest-copy"><span className="qb-subtle">일일 · 1 / 2</span><h3>오늘의 출석 남기기</h3><p>{attendanceNote}</p><div className="qb-row-actions"><button className="qb-text-button" disabled={busy || attended || !data} onClick={checkIn}>{saving ? '기록 중…' : attended ? '오늘 출석 완료' : '출석체크'}</button></div></div></li>
+            <li className={data?.toeic.done ? 'is-done' : ''}><span className="qb-quest-symbol" aria-hidden="true"><i className={`fa-solid ${data?.toeic.done ? 'fa-check' : 'fa-book'}`} /></span><div className="qb-quest-copy"><span className="qb-subtle">일일 · 2 / 2</span><h3>TOEIC 영단어 맞추기</h3><p>{data?.toeic.done ? '오늘의 영단어 퀘스트를 완료했습니다.' : data?.toeic.threshold ? `${data.toeic.threshold}개 이상 정답이면 완료 · 오늘 최고 ${data.toeic.correct}개 정답` : '오늘의 TOEIC 미션 게시를 기다리고 있습니다.'}</p><div className="qb-row-actions"><Link className="qb-text-button" to="/growth/mission">영단어 학습하기</Link></div></div></li>
+          </ul> : data?.assigned.some(q => q.period === period) ? <ul className="qb-quest-list">{data.assigned.filter(q => q.period === period).map(q => <li key={`${q.assignment_id}-${q.quest_id}`} className={q.done ? 'is-done' : ''}><span className="qb-quest-symbol" aria-hidden="true"><i className={`fa-solid ${q.done ? 'fa-check' : 'fa-flag'}`} /></span><div className="qb-quest-copy"><span className="qb-subtle">{q.done ? '완료' : '진행 중'} · {q.xp.toLocaleString()} XP</span><h3>{q.title}</h3><p>{q.description}</p><p>{Math.min(q.current, q.target_count)} / {q.target_count} 달성{q.done ? ` · 지급 ${q.granted_xp ?? 0} XP` : ''}</p></div></li>)}</ul> : <div className="qb-empty"><i className="fa-regular fa-clipboard" aria-hidden="true" /><h3>배정된 {periods.find(item => item.id === period)?.label}가 없습니다</h3><p>관리자가 해당 기간과 학생 대상에 맞춰 게시하면 이곳에 표시됩니다.</p></div>}
+
         </div>
         {data && <div className="qb-growth-summary"><span>지금까지 쌓은 경험치</span><strong>{data.totalXp.toLocaleString()} XP</strong><p>1,000 XP마다 레벨이 올라갑니다. 학년별 상한을 초과한 XP는 이월되지 않습니다.</p></div>}
       </section>
@@ -112,6 +117,6 @@ export default function QuestBoard() {
     </div>
     <footer className="qb-bottom"><span>오늘의 경험을 포트폴리오의 재료로 남겨보세요.</span><Link to="/growth">나의 성장 기록으로 <i className="fa-solid fa-arrow-right" aria-hidden="true" /></Link></footer>
     <p className="qb-feedback" role="status">{message}</p>
-    <Modal open={guide} onClose={() => setGuide(false)} title="퀘스트 가이드"><div className="qb-guide-content"><ol><li><h3>기간별 퀘스트</h3><p>일일 3개, 월간 4개, 학기 3개를 기준으로 운영합니다. 월간 퀘스트는 학기당 4회입니다. 현재는 출석 퀘스트부터 참여할 수 있습니다.</p></li><li><h3>매일 출석하기</h3><p>한국 시간 기준 하루 한 번 출석할 수 있습니다. 하루를 빠뜨리면 연속 기록이 끊깁니다. 오늘 체크 전에는 어제까지의 기록을 유지합니다. 학기 중 평일에만 출석 XP가 지급됩니다.</p></li><li><h3>경험치와 레벨</h3><p>LV 0부터 시작해 1,000 XP마다 레벨이 올라갑니다. 학년별 누적 상한은 1학년 LV 25, 2학년 LV 50, 3학년 LV 75, 4학년 LV 100입니다. 상한 초과분은 적립하지 않습니다. XP 보상이 변경돼도 이미 받은 XP는 유지됩니다.</p></li><li><h3>나의 성장 확인</h3><p>그래프는 실제 지급된 일별 XP를 보여줍니다. 주말·방학의 출석과 상한 초과분은 XP에 포함되지 않습니다. 보상 미리보기와 비교과 XP 지급 기능은 준비 중입니다.</p></li></ol><button className="qb-button qb-button--primary" onClick={() => setGuide(false)}>확인했어요</button></div></Modal>
+    <Modal open={guide} onClose={() => setGuide(false)} title="퀘스트 가이드"><div className="qb-guide-content"><ol><li><h3>기간별 퀘스트</h3><p>일일 퀘스트는 출석체크와 TOEIC 영단어 두 개입니다. 월간·학기 퀘스트는 관리자가 학생 대상별로 편성하며 실제 활동 기록으로 완료를 확인합니다.</p></li><li><h3>매일 출석하기</h3><p>한국 시간 기준 하루 한 번 출석할 수 있습니다. 하루를 빠뜨리면 연속 기록이 끊깁니다. 오늘 체크 전에는 어제까지의 기록을 유지합니다. 학기 중 평일에만 출석 XP가 지급됩니다.</p></li><li><h3>경험치와 레벨</h3><p>LV 0부터 시작해 1,000 XP마다 레벨이 올라갑니다. 학년별 누적 상한은 1학년 LV 25, 2학년 LV 50, 3학년 LV 75, 4학년 LV 100입니다. 상한 초과분은 적립하지 않습니다. XP 보상이 변경돼도 이미 받은 XP는 유지됩니다.</p></li><li><h3>나의 성장 확인</h3><p>그래프는 실제 지급된 일별 XP를 보여줍니다. 일일 퀘스트는 학기 중 평일에 XP가 지급됩니다. 월간·학기 퀘스트는 메인이나 보드에 접속할 때 활동 기록을 확인해 보상을 반영합니다. 상한 초과분은 적립하지 않습니다.</p></li></ol><button className="qb-button qb-button--primary" onClick={() => setGuide(false)}>확인했어요</button></div></Modal>
   </div>
 }

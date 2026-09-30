@@ -37,7 +37,12 @@ export function getProgramById(id: string): Program | undefined {
 /** 신청을 받을 수 있는가 — 상태와 마감일 둘 다 본다(상태만 믿으면 지난 공고가 열려 있다). */
 export function isProgramClosed(program: Program): boolean {
   if (program.status !== 'RECRUITING') return true
+  if (program.endDate && program.endTime && Date.now() > new Date(`${program.endDate}T${program.endTime}+09:00`).getTime()) return true
   return programDdayLabel(program) === '마감'
+}
+
+export function isProgramUpcoming(program: Program): boolean {
+  return !!program.startDate && Date.now() < new Date(`${program.startDate}T${program.startTime || '00:00:00'}+09:00`).getTime()
 }
 
 /**
@@ -56,8 +61,9 @@ export function noticeStatusLabel(program: Program): ProgramStatus {
  * 읽혀 KST 에선 오늘 마감이 D-1 로 나온다 — 로컬 자정으로 고정해서 읽는다.
  * (채용공고의 jobDdayLabel 과 같은 규약 — 두 공고가 같은 날짜를 다르게 세면 안 된다)
  */
-export function programDdayLabel(program: Program): string {
+export function programDdayLabel(program: Pick<Program, 'status' | 'endDate' | 'endTime'>): string {
   if (program.status === 'ENDED') return '종료'
+  if (program.endDate && program.endTime && Date.now() > new Date(`${program.endDate}T${program.endTime}+09:00`).getTime()) return '마감'
   if (!program.endDate) return '상시'
   const end = new Date(`${program.endDate.slice(0, 10)}T00:00:00`)
   if (Number.isNaN(end.getTime())) return program.endDate
@@ -208,7 +214,7 @@ export async function removeApplicant(programId: string, studentId: string): Pro
 /** 학생 본인의 프로그램 신청 — 동의·지원동기를 함께 남긴다. */
 export async function applyToProgram(
   programId: string,
-  body: { path: string; motive: string; consents: Record<string, string> },
+    body: { path: string; motive: string; consents: Record<string, string>; answers?: import('../../shared/programContent').ApplicationAnswers },
 ): Promise<void> {
   await api(`/programs/${encodeURIComponent(programId)}/applications`, {
     method: 'POST',

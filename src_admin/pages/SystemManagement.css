@@ -20,6 +20,14 @@
 .system-management summary { cursor: pointer; }
 .system-management pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: var(--sp-3); background: var(--muted); font-size: 12px; }
 
+.quest-schedule-picker { margin: var(--sp-4) 0; }
+.quest-schedule-picker fieldset { margin: var(--sp-3) 0; }
+.quest-schedule-picker .qs-search { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.quest-schedule-picker .qs-select { display: flex; max-width: 900px; }
+.quest-schedule-picker .qs-select select { flex: 1; min-width: 0; }
+.quest-schedule-picker .qs-reason { display: flex; max-width: 900px; }
+.quest-schedule-picker .qs-reason input { flex: 1; min-width: 0; }
+
 /* 메뉴관리 — 역할별 노출 (MenuVisibility) */
 .menu-visibility .mv-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--sp-4); padding: var(--pad-sm) var(--pad); background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-md); margin-bottom: var(--gap-set); }
 .menu-visibility .mv-toolbar select { min-width: 220px; }

@@ -4,13 +4,14 @@ import {
   LuMapPin, LuPlus, LuSmile, LuTrash2,
   LuUpload, LuUserRound, LuUsers, LuX,
 } from 'react-icons/lu'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import AdminModal from '../components/AdminModal'
 import ProgramSurveySelect from '../components/ProgramSurveySelect'
 import RichEditor from '../components/RichEditor'
-import { IMAGE_ACCEPT, validateUpload } from '../../shared/uploadPolicy'
-import { COUNSELORS } from '../data/counselors'
+import { DOCUMENT_ACCEPT, IMAGE_ACCEPT, validateUpload } from '../../shared/uploadPolicy'
+import { getActiveUser, STAFF_USERS } from '../data/staff'
+import { QUESTION_TYPES, noticeParts, uploadProgramFile, type ApplicationQuestion, type ProgramFile } from '../../shared/programContent'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
 import { competencySurveyGroups, pinnedSurveyForm, satisfactionSurveySummary } from '../data/schema/program'
 import { codeItems, codeLabel } from '../../shared/metadataStore'
@@ -24,26 +25,9 @@ import './ProgramForm.css'
 
 const FISCAL_YEARS = ['2026', '2027']
 const optionsOf = (group: string) => codeItems.filter(item => item.group_code === group && item.is_active).sort((a, b) => a.sort_order - b.sort_order)
-const EXTRA_TYPES = ['객관식(설문 선택형)', '객관식(설문 중복 선택형)', '주관식(설문 서술형, MAX500)', '개인정보 동의서', '첨부파일']
-const EXTRA_SUBLINK: Record<string, string> = {
-  '객관식(설문 선택형)': '보기/선택지 설정',
-  '객관식(설문 중복 선택형)': '보기/선택지 설정',
-  '개인정보 동의서': '동의서 내용 설정',
-  '첨부파일': '파일 형식/개수 설정',
-}
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
-type ExtraItem = { id: string; type: string; question: string }
-
-let seq = 0
-const nextId = () => `extra_${(seq += 1)}`
-const DEFAULT_EXTRAS: ExtraItem[] = [
-  { id: nextId(), type: '객관식(설문 선택형)', question: '참여 동기를 선택해주세요.' },
-  { id: nextId(), type: '객관식(설문 중복 선택형)', question: '관심 있는 분야를 선택해주세요. (복수선택 가능)' },
-  { id: nextId(), type: '주관식(설문 서술형, MAX500)', question: '기대하는 점을 자유롭게 작성해주세요.' },
-  { id: nextId(), type: '개인정보 동의서', question: '개인정보 수집 및 이용에 동의해주세요.' },
-  { id: nextId(), type: '첨부파일', question: '포트폴리오 파일을 첨부해주세요.' },
-]
+type ExtraItem = ApplicationQuestion
 
 const pad = (n: number) => String(n).padStart(2, '0')
 
@@ -117,27 +101,24 @@ export default function ProgramForm() {
   const [purpose, setPurpose] = useState(existing?.desc ?? '')
   // 새로 등록할 때 날짜칸은 전부 오늘에서 시작한다 — 담당자가 지나간 날짜를 지우고
   // 다시 쓰지 않게. 수정할 때는 저장된 값이 우선이다.
-  const [noticeDate, setNoticeDate] = useState(today)
-  const [noticeTime, setNoticeTime] = useState('10:00')
+  const [noticeDate, setNoticeDate] = useState(existing ? noticeParts(existing.noticeAt).date : today)
+  const [noticeTime, setNoticeTime] = useState(existing ? noticeParts(existing.noticeAt).time : '10:00')
   const [applyStartDate, setApplyStartDate] = useState(existing?.startDate ?? today)
-  const [applyStartTime, setApplyStartTime] = useState('10:00')
+  const [applyStartTime, setApplyStartTime] = useState(existing ? existing.startTime?.slice(0, 5) ?? '' : '10:00')
   const [applyEndDate, setApplyEndDate] = useState(existing?.endDate ?? today)
-  const [applyEndTime, setApplyEndTime] = useState('17:00')
+  const [applyEndTime, setApplyEndTime] = useState(existing ? existing.endTime?.slice(0, 5) ?? '' : '17:00')
   const [runStartDate, setRunStartDate] = useState(existing?.runStartDate ?? today)
-  const [runStartTime, setRunStartTime] = useState('10:00')
+  const [runStartTime, setRunStartTime] = useState(existing ? existing.runStartTime?.slice(0, 5) ?? '' : '10:00')
   const [runEndDate, setRunEndDate] = useState(existing?.runEndDate ?? today)
-  const [runEndTime, setRunEndTime] = useState('17:00')
+  const [runEndTime, setRunEndTime] = useState(existing ? existing.runEndTime?.slice(0, 5) ?? '' : '17:00')
   const [place, setPlace] = useState(existing?.location ?? '')
   const [sessions, setSessions] = useState(existing ? String(existing.sessions) : '1')
-  const [managerName, setManagerName] = useState(existing?.manager ?? (COUNSELORS[0]?.name ?? ''))
+  const [managerIds, setManagerIds] = useState<string[]>(() => existing
+    ? existing.managerIds ?? [] : getActiveUser() ? [getActiveUser().id] : [])
+  const [managerChoice, setManagerChoice] = useState('')
+  const managerName = managerIds.map(managerId => STAFF_USERS.find(staff => staff.id === managerId)?.name ?? managerId).join(', ')
   const [targets, setTargets] = useState<string[]>(existing?.targetStatuses ?? [])
   const [grades, setGrades] = useState<string[]>(existing?.targetGrades ?? [])
-  const [manager, setManager] = useState<{ name: string; role: string } | null>(() => {
-    const counselor = existing
-      ? COUNSELORS.find(c => c.name === existing.manager) ?? COUNSELORS[0]
-      : COUNSELORS[0]
-    return counselor ? { name: counselor.name, role: counselor.roleLabel } : null
-  })
   const [limitCount, setLimitCount] = useState(existing ? String(existing.capacity) : '100')
   const [selectCount, setSelectCount] = useState('30')
   const [selectMethod, setSelectMethod] = useState<'선착순' | '심사'>('선착순')
@@ -152,7 +133,13 @@ export default function ProgramForm() {
   const [thumb, setThumb] = useState(existing?.image ?? '')
   const [thumbError, setThumbError] = useState('')
   const [extraOpen, setExtraOpen] = useState(false)
-  const [extras, setExtras] = useState<ExtraItem[]>(DEFAULT_EXTRAS)
+  const [extras, setExtras] = useState<ExtraItem[]>(existing?.applicationQuestions ?? [])
+  const [extraDraft, setExtraDraft] = useState<ExtraItem[]>([])
+  const [attachments, setAttachments] = useState<ProgramFile[]>(existing?.attachments ?? [])
+  const attachmentInput = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
   const [pinned, setPinned] = useState(existing?.pinned ?? false)
   // 만족도 조사 — 실시할 때만 질문지를 고른다. 질문지는 관리자 모듈이 사전 등록한다.
   const [satisfaction, setSatisfaction] = useState(existing?.satisfactionSurvey ?? true)
@@ -189,10 +176,15 @@ export default function ProgramForm() {
   const capacityLabel = `${selectCount || '-'}명 / ${limitCount || '-'}명 (${selectMethod === '선착순' ? '선착순 선발' : '심사 후 선발'})`
 
   const canSave = title.trim() !== '' && applyStartDate !== '' && applyEndDate !== '' && managerName !== '' && majorCat !== '' && minorCat !== '' && targets.length > 0 && grades.length > 0 && !saved
-    && (!editing || !!surveyLocks) && (!satisfaction || !!satisfactionFormId) && (!competency || !!competencyFormId)
+    && !saving && !uploading && (!editing || !!surveyLocks) && (!satisfaction || !!satisfactionFormId) && (!competency || !!competencyFormId)
 
   const handleSave = () => {
     if (!canSave) return
+    setSaveError('')
+    if (Boolean(noticeDate) !== Boolean(noticeTime)) {
+      setSaveError('공고 날짜와 시간을 함께 입력해 주세요.'); return
+    }
+    setSaving(true)
     const payload = {
       title: title.trim(),
       // 두 칸은 서로 다른 것이다 — 한 칸에 합치면 상세 내용이 프로그램 내용을 덮어썼다.
@@ -209,9 +201,15 @@ export default function ProgramForm() {
       endDate: applyEndDate,
       runStartDate,
       runEndDate,
+      noticeAt: noticeDate ? `${noticeDate}T${noticeTime}:00+09:00` : null,
+      startTime: applyStartTime || null, endTime: applyEndTime || null,
+      runStartTime: runStartTime || null, runEndTime: runEndTime || null,
+      applicationQuestions: extras,
+      attachmentFileIds: attachments.map(file => file.id),
       fiscalYear,
       sessions: Math.max(1, Number(sessions) || 1),
       manager: managerName,
+      managerIds,
       capacity: Number(limitCount) || Number(selectCount) || 20,
       location: place.trim(),
       status: existing?.status ?? 'RECRUITING',
@@ -224,7 +222,7 @@ export default function ProgramForm() {
       competencyAreas: competency ? competencyAreas : [],
       includeInStats,
       // 안 고르면 필드를 만들지 않는다 — 빈 문자열이 남으면 공고가 '이미지 있음'으로 읽는다.
-      image: thumb || undefined,
+      image: thumb || '',
     }
     const saving = editing && id ? updateProgram(id, payload) : addProgram(payload).then(() => undefined)
     saving.then(() => {
@@ -232,8 +230,8 @@ export default function ProgramForm() {
       window.setTimeout(() => navigate(editing ? '/programs/manage' : '/programs'), 400)
     }).catch((error: unknown) => {
       // 서버가 거절한 이유를 그대로 보여 준다 — 저장된 척하고 넘어가지 않는다.
-      window.alert(error instanceof Error ? error.message : '저장하지 못했습니다.')
-    })
+      setSaveError(error instanceof Error ? error.message : '저장하지 못했습니다.')
+    }).finally(() => setSaving(false))
   }
 
   /** 유형 체크 토글 — 저장 순서는 항상 T1~T6를 유지한다. */
@@ -255,13 +253,27 @@ export default function ProgramForm() {
       return surveyGroups.flatMap(g => g.areas.map(a => a.key)).filter(k => next.includes(k))
     })
 
-  const addExtra = () => setExtras(prev => [...prev, { id: nextId(), type: EXTRA_TYPES[0], question: '' }])
-  const removeExtra = (id: string) => setExtras(prev => prev.filter(x => x.id !== id))
-  const patchExtra = (id: string, patch: Partial<ExtraItem>) => setExtras(prev => prev.map(x => (x.id === id ? { ...x, ...patch } : x)))
+  const addExtra = () => setExtraDraft(prev => [...prev, { id: `extra_${crypto.randomUUID()}`, type: 'TEXT', question: '', required: false, options: [], content: '', maxFiles: 1 }])
+  const removeExtra = (id: string) => setExtraDraft(prev => prev.filter(x => x.id !== id))
+  const patchExtra = (id: string, patch: Partial<ExtraItem>) => setExtraDraft(prev => prev.map(x => (x.id === id ? { ...x, ...patch } : x)))
+  const extraValid = extraDraft.every(q => q.question.trim() && (!['SINGLE', 'MULTIPLE'].includes(q.type) || (q.options.length > 0 && q.options.every(x => x.trim()) && new Set(q.options.map(x => x.trim())).size === q.options.length)))
+  const addAttachments = async (selected: File[]) => {
+    if (uploading) return
+    if (attachments.length + selected.length > 20) { setSaveError('첨부파일은 최대 20개입니다.'); return }
+    setUploading(true); setSaveError('')
+    try {
+      for (const file of selected) {
+        const uploaded = await uploadProgramFile(file)
+        setAttachments(prev => [...prev, uploaded])
+      }
+    } catch (error) { setSaveError(error instanceof Error ? error.message : '파일을 올리지 못했습니다.') }
+    finally { setUploading(false) }
+  }
 
   return (
     <div className={`pf${editing ? ' pf-embedded' : ''}`}>
       <div className="pf-inner">
+        {saveError && <p className="pf-thumb-error" role="alert">{saveError}</p>}
         {/* Top bar — 신규 등록(standalone)에서만. 수정 탭은 부모 셸이 헤더·탭을 제공. */}
         {!editing && (
           <div className="pf-topbar">
@@ -479,28 +491,29 @@ export default function ProgramForm() {
               {/* 담당자 */}
               <div className="pf-field">
                 <span className="pf-label">담당자 <span className="pf-req">*</span></span>
-                <div>
-                  <button type="button" className="pf-btn-outline" onClick={() => {
-                    const counselor = COUNSELORS[0]
-                    setManager(counselor ? { name: counselor.name, role: counselor.roleLabel } : null)
-                  }}>교직원 검색</button>
+                <div className="pf-inline pf-manager-picker">
+                  <select aria-label="추가할 담당자" className="pf-select" value={managerChoice} onChange={e => setManagerChoice(e.target.value)}>
+                    <option value="">담당자를 선택해주세요.</option>
+                    {STAFF_USERS.filter(staff => !managerIds.includes(staff.id)).map(staff => (
+                      <option key={staff.id} value={staff.id}>{staff.name} ({staff.roleLabel} · {staff.dept})</option>
+                    ))}
+                  </select>
+                  <button type="button" className="pf-btn-outline" disabled={!managerChoice || managerIds.length >= 50} onClick={() => {
+                    setManagerIds(ids => ids.includes(managerChoice) ? ids : [...ids, managerChoice])
+                    setManagerChoice('')
+                  }}>담당자 추가</button>
                 </div>
-                {manager && (
-                  <div className="pf-chip">
-                    {manager.name} ({manager.role})
-                    <button type="button" aria-label="담당자 삭제" onClick={() => setManager(null)}><LuX /></button>
-                  </div>
-                )}
-              </div>
-
-              <div className="pf-field">
-                <span className="pf-label">관리 담당자<span className="pf-req">*</span></span>
-                <select className="pf-select" value={managerName} onChange={e => setManagerName(e.target.value)}>
-                  <option value="">담당자를 선택해주세요.</option>
-                  {COUNSELORS.map(counselor => (
-                    <option key={counselor.id} value={counselor.name}>{counselor.name} ({counselor.roleLabel})</option>
-                  ))}
-                </select>
+                <div className="pf-inline" aria-label="지정된 담당자">
+                  {managerIds.map(managerId => {
+                    const staff = STAFF_USERS.find(person => person.id === managerId)
+                    return <span key={managerId} className="pf-chip">
+                      {staff?.name ?? managerId}
+                      <button type="button" aria-label={`${staff?.name ?? managerId} 담당자 제거`} onClick={() => setManagerIds(ids => ids.filter(value => value !== managerId))}><LuX /></button>
+                    </span>
+                  })}
+                </div>
+                {existing?.manager && !existing.managerIds?.length && !managerIds.length && <span className="pf-help">기존 담당자: {existing.manager}. 목록에서 담당자를 지정해 주세요.</span>}
+                <span className="pf-help">학생이 신청하면 지정된 담당자 모두에게 알림이 전달됩니다.</span>
               </div>
 
               {/* 인원·선발방식·수료·인증서 — 열 정렬 그리드 (참여 인증서를 선발 인원과 같은 열에) */}
@@ -564,17 +577,19 @@ export default function ProgramForm() {
               {/* 첨부 파일 */}
               <div className="pf-field">
                 <span className="pf-label">첨부 파일</span>
-                <div className="pf-dropzone">
+                <div className="pf-dropzone" onDragOver={e => e.preventDefault()} onDrop={e => { e.preventDefault(); void addAttachments(Array.from(e.dataTransfer.files)) }}>
                   <span className="pf-dropzone-title"><LuUpload /> 파일 선택 또는 드래그하여 업로드</span>
-                  <span className="pf-dropzone-hint">PDF, HWP, DOC, XLS, PPT, ZIP 파일 지원 (최대 20MB)</span>
+                  <span className="pf-dropzone-hint">문서·이미지·ZIP 파일 지원 (파일당 최대 10MB, 20개)</span>
+                  <input ref={attachmentInput} aria-label="공고 첨부파일" type="file" multiple accept={DOCUMENT_ACCEPT} className="pf-dropzone-input" disabled={uploading} onChange={e => { void addAttachments(Array.from(e.target.files ?? [])); e.target.value = '' }} />
                 </div>
-                <div><button type="button" className="pf-btn-outline"><LuPlus /> 파일 추가</button></div>
+                <div><button type="button" className="pf-btn-outline" disabled={uploading} onClick={() => attachmentInput.current?.click()}><LuPlus /> {uploading ? '업로드 중…' : '파일 추가'}</button></div>
+                {attachments.map(file => <div key={file.id} className="pf-attachment"><span>{file.name} ({Math.ceil(file.size / 1024)}KB)</span><button type="button" className="pf-btn-danger-soft" onClick={() => setAttachments(prev => prev.filter(f => f.id !== file.id))} aria-label={`${file.name} 제거`}><LuX /></button></div>)}
               </div>
 
               {/* 신청 시 추가 정보 */}
               <div className="pf-field">
                 <span className="pf-label">신청 시 추가 정보</span>
-                <div><button type="button" className="pf-btn-outline" onClick={() => setExtraOpen(true)}>추가 설정</button></div>
+                <div><button type="button" className="pf-btn-outline" onClick={() => { setExtraDraft(structuredClone(extras)); setExtraOpen(true) }}>추가 설정 ({extras.length})</button></div>
                 <span className="pf-help">신청서 작성 시 추가로 수집할 정보를 설정합니다.</span>
               </div>
 
@@ -720,7 +735,7 @@ export default function ProgramForm() {
               <div className="pf-card-head" style={{ marginBottom: 18 }}>
                 <h2 style={{ fontSize: 16 }}>썸네일 미리보기 <LuCircleHelp style={{ width: 15, height: 15, color: 'var(--pf-muted)' }} /></h2>
               </div>
-              <div className="pf-preview-img"><LuImage /></div>
+              <div className="pf-preview-img">{thumb ? <img src={thumb} alt="프로그램 썸네일 미리보기" /> : <LuImage />}</div>
               <div className="pf-preview-title">{title.trim() || '프로그램명이 표시됩니다'}</div>
               <div className="pf-badges">
                 <span className="pf-badge">{codeLabel('PROGRAM_CATEGORY', majorCat)}</span>
@@ -734,7 +749,7 @@ export default function ProgramForm() {
                 <div className="pf-meta-row"><LuUsers /><span className="pf-meta-label">대상</span><span className={`pf-meta-value${targetSummary ? '' : ' is-empty'}`}>{targetSummary || '대상 미선택'}</span></div>
                 <div className="pf-meta-row"><LuSmile /><span className="pf-meta-label">인원</span><span className="pf-meta-value">{capacityLabel}</span></div>
                 <div className="pf-meta-row"><LuClock /><span className="pf-meta-label">수료시간</span><span className="pf-meta-value">{completeHours || 0}시간</span></div>
-                <div className="pf-meta-row"><LuUserRound /><span className="pf-meta-label">담당자</span><span className={`pf-meta-value${manager ? '' : ' is-empty'}`}>{manager ? `${manager.name} (${manager.role})` : '미지정'}</span></div>
+                <div className="pf-meta-row"><LuUserRound /><span className="pf-meta-label">담당자</span><span className={`pf-meta-value${managerName ? '' : ' is-empty'}`}>{managerName || '미지정'}</span></div>
               </div>
             </section>
             <p className="pf-preview-foot">* 미리보기는 실제 화면과 다를 수 있습니다.</p>
@@ -751,19 +766,22 @@ export default function ProgramForm() {
               <button type="button" className="pf-btn pf-btn-primary pf-btn-sm" onClick={addExtra}><LuPlus /> 항목 추가</button>
             </div>
             <div className="pf-extra-list">
-              {extras.map(item => (
+              {extraDraft.map(item => (
                 <div key={item.id} className="pf-extra-row">
                   <span className="pf-extra-handle" aria-hidden="true"><LuGripVertical /></span>
                   <div className="pf-extra-col">
                     <span>유형 선택</span>
-                    <select className="pf-select" value={item.type} onChange={e => patchExtra(item.id, { type: e.target.value })}>
-                      {EXTRA_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+                    <select aria-label="질문 유형" className="pf-select" value={item.type} onChange={e => patchExtra(item.id, { type: e.target.value as ExtraItem['type'] })}>
+                      {Object.entries(QUESTION_TYPES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
                     </select>
-                    {EXTRA_SUBLINK[item.type] && <span className="pf-extra-sublink">{EXTRA_SUBLINK[item.type]}</span>}
+                    <label><input type="checkbox" checked={item.required} onChange={e => patchExtra(item.id, { required: e.target.checked })} /> 필수 응답</label>
                   </div>
                   <div className="pf-extra-col">
                     <span>질문 내용</span>
                     <input className="pf-input" value={item.question} onChange={e => patchExtra(item.id, { question: e.target.value })} placeholder="질문 내용을 입력해주세요." />
+                    {['SINGLE', 'MULTIPLE'].includes(item.type) && <textarea aria-label="선택지 (한 줄에 하나)" className="pf-input" placeholder="선택지를 한 줄에 하나씩 입력" value={item.options.join('\n')} onChange={e => patchExtra(item.id, { options: e.target.value.split('\n') })} />}
+                    {item.type === 'CONSENT' && <textarea aria-label="동의서 내용" className="pf-input" placeholder="동의서 내용" value={item.content} onChange={e => patchExtra(item.id, { content: e.target.value })} />}
+                    {item.type === 'FILE' && <label>최대 파일 개수 <input type="number" min={1} max={5} value={item.maxFiles} onChange={e => patchExtra(item.id, { maxFiles: Number(e.target.value) })} /><span className="pf-help">문서·이미지·ZIP, 파일당 10MB 이하</span></label>}
                   </div>
                   <button type="button" className="pf-btn-danger-soft pf-extra-del" onClick={() => removeExtra(item.id)}><LuTrash2 style={{ width: 14, height: 14 }} /> 삭제</button>
                 </div>
@@ -771,7 +789,7 @@ export default function ProgramForm() {
             </div>
             <div className="pf-modal-foot">
               <button type="button" className="pf-btn pf-btn-ghost" onClick={() => setExtraOpen(false)}>취소</button>
-              <button type="button" className="pf-btn pf-btn-primary" onClick={() => setExtraOpen(false)}>저장</button>
+              <button type="button" className="pf-btn pf-btn-primary" disabled={!extraValid} onClick={() => { setExtras(extraDraft); setExtraOpen(false) }}>설정 적용</button>
             </div>
           </div>
         </AdminModal>

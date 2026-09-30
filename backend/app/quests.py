@@ -6,8 +6,10 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import principal
 from .db import connection
+from .quest_management import router as management_router, progress
 
 router = APIRouter()
+router.include_router(management_router)
 XP_PER_LEVEL = 1000
 LEVELS_PER_GRADE = 25
 
@@ -59,6 +61,16 @@ def grant_xp(conn, uid, *, source_type, source_key, title, amount, day, reward_c
     return dict(grantedXp=granted, duplicate=False)
 
 
+def award_toeic(conn, uid, day):
+    """Called only after server scoring. One TOEIC reward per KST date, across retries."""
+    if day.weekday() >= 5 or not active_semester(conn, day):
+        return
+    rule = reward_rules(conn)['DAILY']
+    grant_xp(conn, uid, source_type='QUEST', source_key='toeic:'+day.isoformat(),
+             title='오늘의 TOEIC 영단어', amount=rule['xp'], day=day,
+             reward_code='DAILY', reward_version=rule['version'])
+
+
 @router.post('/quests/attendance')
 def check_in(user=Depends(quest_student, scope='function'), conn=Depends(connection, scope='function')):
     uid, day = user['intg_uid'], today_kst()
@@ -79,6 +91,10 @@ def check_in(user=Depends(quest_student, scope='function'), conn=Depends(connect
 @router.get('/quests/dashboard')
 def dashboard(month: str | None = Query(default=None, pattern=r'^\d{4}-\d{2}$'),
               user=Depends(quest_student, scope='function'), conn=Depends(connection, scope='function')):
+    return dashboard_data(month, user, conn)
+
+
+def dashboard_data(month, user, conn, assigned=None):
     uid, day = user['intg_uid'], today_kst()
     conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))', ('quest-growth:'+uid,))
     try:
@@ -105,18 +121,42 @@ def dashboard(month: str | None = Query(default=None, pattern=r'^\d{4}-\d{2}$'),
       FROM dc.growth_xp_event WHERE student_uid=%s AND earned_on BETWEEN %s AND %s GROUP BY earned_on''', (uid,graph_start,day)).fetchall()}
     graph = [dict(date=graph_start+timedelta(days=i),xp=amounts.get(graph_start+timedelta(days=i),0)) for i in range(30)]
     semester = active_semester(conn,day)
-    semester_start = date.fromisoformat(semester['payload']['startDate']) if semester else day
-    counts = conn.execute('''SELECT
-      count(*) FILTER(WHERE reward_code='DAILY' AND earned_on=%s) AS daily,
-      count(*) FILTER(WHERE reward_code='MONTHLY' AND earned_on>=%s) AS monthly,
-      count(*) FILTER(WHERE reward_code='SEMESTER') AS semester
-      FROM dc.growth_xp_event WHERE student_uid=%s AND earned_on BETWEEN %s AND %s''',
-      (day,day.replace(day=1),uid,min(semester_start,day),day)).fetchone()
     at_cap = cap is not None and total >= cap*XP_PER_LEVEL
+    if assigned is None:
+        assigned = progress(conn, uid, day)
+    toeic = conn.execute('''SELECT coalesce(bool_or((result->>'questPassed')::boolean),false) AS done,
+      coalesce(max((result->>'correctCount')::integer),0) AS correct
+      FROM dc.mission_attempt WHERE student_uid=%s AND kind='TOEIC'
+      AND submitted_at>=(%s::date::timestamp AT TIME ZONE 'Asia/Seoul')
+      AND submitted_at<((%s::date+1)::timestamp AT TIME ZONE 'Asia/Seoul')''', (uid,day,day)).fetchone()
+    current_week = day-timedelta(days=day.weekday())
+    toeic_week = conn.execute("SELECT quest_pass_count FROM dc.mission_week WHERE week_start=%s AND kind='TOEIC' AND published", (current_week,)).fetchone()
+    completed = dict(DAILY=int(attended)+int(toeic['done']),
+                     MONTHLY=sum(i['done'] for i in assigned if i['period']=='MONTHLY'),
+                     SEMESTER=sum(i['done'] for i in assigned if i['period']=='SEMESTER'))
+    rules = reward_rules(conn)
+    rules['DAILY']['quota'] = 2
+    for period in ('MONTHLY','SEMESTER'):
+        rules[period]['quota'] = sum(i['period']==period for i in assigned)
     return dict(today=day,grade=grade,totalXp=total,level=total//XP_PER_LEVEL,levelCap=cap,
                 xpInLevel=1000 if at_cap else total%XP_PER_LEVEL,xpPerLevel=XP_PER_LEVEL,atCap=at_cap,
                 attendance=dict(today=attended,streak=streak,dates=[r['attended_on'] for r in attendance]),
-                graph=graph,rules=reward_rules(conn),dailyCompleted=counts['daily'],
-                completed=dict(DAILY=counts['daily'],MONTHLY=counts['monthly'] if semester else 0,SEMESTER=counts['semester'] if semester else 0),
+                graph=graph,rules=rules,dailyCompleted=completed['DAILY'],completed=completed,
+                assigned=assigned,toeic=dict(done=toeic['done'],correct=toeic['correct'],threshold=toeic_week['quest_pass_count'] if toeic_week else None),
                 semester=dict(code=semester['code'],label=semester['label'],**semester['payload']) if semester else None,
                 attendanceRewardEligible=bool(semester and day.weekday()<5))
+
+
+@router.post('/quests/sync')
+def sync(month: str | None = Query(default=None, pattern=r'^\d{4}-\d{2}$'),
+         user=Depends(quest_student, scope='function'), conn=Depends(connection, scope='function')):
+    uid = user['intg_uid']
+    conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))', ('quest-growth:'+uid,))
+    # Do not prevent students with missing grade information from reading their progress.
+    grade = conn.execute('SELECT grade FROM dc.student WHERE intg_uid=%s', (uid,)).fetchone()['grade']
+    assigned = None
+    if grade and grade > 0:
+        # Keep assignment snapshots stable until evidence and awards commit.
+        conn.execute("SELECT pg_advisory_xact_lock_shared(hashtextextended('quest-assignments',0))")
+        assigned = progress(conn, uid, today_kst(), award=True)
+    return dashboard_data(month, user, conn, assigned=assigned)

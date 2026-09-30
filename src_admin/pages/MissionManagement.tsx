@@ -53,7 +53,9 @@ export default function MissionManagement() {
   const [week, setWeek] = useState<MissionWeek | null>(null)
   const [title, setTitle] = useState('')
   const [selected, setSelected] = useState<MissionQuestion[]>([])
-  const [selectionLimit, setSelectionLimit] = useState<10 | 20>(10)
+  const [selectionLimit, setSelectionLimit] = useState(10)
+  const [questPassCount, setQuestPassCount] = useState(6)
+  const [countSettings, setCountSettings] = useState(false)
   const [bank, setBank] = useState<MissionQuestion[]>([])
   const [total, setTotal] = useState(0)
   const [page, setPage] = useState(1)
@@ -73,7 +75,8 @@ export default function MissionManagement() {
     const abort = new AbortController()
     setLoading(true); setError(''); setMessage('')
     api<MissionWeek | null>(`/system/missions/weeks/${date}/${kind}`, { signal: abort.signal }).then(row => {
-      setLoadedWeek(`${date}/${kind}`); setWeek(row); setTitle(row?.title ?? (kind === 'TOEIC' ? '이번 주 TOEIC 영단어' : '이번 주 NCS/GSAT')); setSelected(row?.items ?? []); setSelectionLimit(row?.selection_limit ?? 10)
+      if (abort.signal.aborted) return
+      setLoadedWeek(`${date}/${kind}`); setWeek(row); setTitle(row?.title ?? (kind === 'TOEIC' ? '이번 주 TOEIC 영단어' : '이번 주 NCS/GSAT')); setSelected(row?.items ?? []); setSelectionLimit(row?.selection_limit ?? 10); setQuestPassCount(row?.quest_pass_count ?? Math.max(1, Math.ceil((row?.items.length || 10) * .6))); setCountSettings(false)
     }).catch(e => { if (!abort.signal.aborted) setError(missionError(e)) }).finally(() => { if (!abort.signal.aborted) setLoading(false) })
     return () => abort.abort()
   }, [date, kind, reloadWeek])
@@ -86,7 +89,7 @@ export default function MissionManagement() {
   async function save(published: boolean) {
     setSaving(true); setError(''); setMessage('')
     try {
-      const row = await api<MissionWeek>(`/system/missions/weeks/${date}/${kind}`, { method: 'PUT', body: JSON.stringify({ expectedVersion: week?.version ?? 0, title, selectionLimit, questionIds: selected.map(x => x.id), published }) })
+      const row = await api<MissionWeek>(`/system/missions/weeks/${date}/${kind}`, { method: 'PUT', body: JSON.stringify({ expectedVersion: week?.version ?? 0, title, selectionLimit, questPassCount: kind === 'TOEIC' ? questPassCount : null, questionIds: selected.map(x => x.id), published }) })
       setWeek(row); setSelected(row.items); setRevision(x => x + 1); setMessage(published ? '게시했습니다. 해당 주에 학생 화면에서 학습할 수 있습니다.' : '비공개로 저장했습니다. 학생에게는 표시되지 않습니다.')
     } catch (e) { setError(missionError(e)) } finally { setSaving(false) }
   }
@@ -113,9 +116,11 @@ export default function MissionManagement() {
         {bankLoading ? <p className="mm-empty" role="status">문제 풀을 불러오는 중입니다.</p> : !bankError && <><div className="mm-table-scroll"><table className="mm-table"><thead><tr><th>선택</th><th>번호</th><th>{bankKind === 'TOEIC' ? '영어단어 / 뜻' : '문제'}</th>{bankKind === 'TOEIC' ? <><th>난이도</th><th>출제횟수</th></> : <th>분류</th>}<th>관리</th></tr></thead><tbody>{bank.map(item => <tr key={item.id}><td><input type="checkbox" aria-label={`${item.content.word || item.prompt} 출제 선택`} disabled={!item.is_active || saving || loading || loadedWeek !== `${date}/${kind}` || (selected.length >= selectionLimit && !selected.some(x => x.id === item.id))} checked={selected.some(x => x.id === item.id)} onChange={() => setSelected(previous => previous.some(x => x.id === item.id) ? previous.filter(x => x.id !== item.id) : [...previous, item])} /></td><td className="mm-id">{item.id}</td><td>{item.kind === 'TOEIC' && <strong>{item.content.word}</strong>}<span>{item.prompt}</span>{!item.is_active && <small>사용 중지</small>}</td>{bankKind === 'TOEIC' ? <><td><span className={`mm-difficulty is-${item.difficulty_code?.toLowerCase()}`}>{codeLabel('TOEIC_DIFFICULTY', item.difficulty_code ?? '')}</span></td><td className="mm-count">{item.publication_count ?? 0}회</td></> : <td>{item.category || '—'}</td>}<td><button className="admin-btn admin-btn-ghost" disabled={saving} onClick={() => setEditor({ item, kind: item.kind })}>수정</button></td></tr>)}</tbody></table></div>{bank.length === 0 && <p className="mm-empty">등록된 문제가 없습니다. 새 단어 또는 문제를 등록해 주세요.</p>}</>}
         <div className="mm-pagination"><button disabled={page <= 1 || bankLoading} onClick={() => setPage(x => x - 1)}>이전</button><PageNumbers page={page} pages={Math.ceil(total / 30)} onChange={setPage} disabled={bankLoading} /><span>{page} / {Math.max(1, Math.ceil(total / 30))}</span><button disabled={page * 30 >= total || bankLoading} onClick={() => setPage(x => x + 1)}>다음</button></div>
       </section>
-      <section className="mm-panel mm-week"><div className="mm-heading"><div><span className="mm-kicker">02 · 주간 출제</span><h2>선택한 문제 <small>{selected.length} / {selectionLimit}</small></h2></div></div>
+      <section className="mm-panel mm-week"><div className="mm-heading"><div><span className="mm-kicker">02 · 주간 출제</span><h2>선택한 문제 <small>{selected.length} / {selectionLimit}</small></h2></div><button className="admin-btn admin-btn-ghost" aria-expanded={countSettings} aria-controls="mm-count-settings" disabled={saving || loading} onClick={() => setCountSettings(v => !v)}>개수 지정</button></div>
         <fieldset disabled={saving || loading || loadedWeek !== `${date}/${kind}`} className="mm-fields">
-        <div className="mm-selection-tools"><label>최대 선택 개수<select value={selectionLimit} onChange={e => { setSelectionLimit(Number(e.target.value) as 10 | 20); setMessage('') }}><option value={10}>10개</option><option value={20}>20개</option></select></label><button className="admin-btn admin-btn-primary" disabled={selected.length >= selectionLimit || bankLoading || !!bankError} onClick={() => void randomFill()}>{saving ? '처리 중…' : '랜덤 생성'}</button><button className="admin-btn admin-btn-danger-ghost" disabled={!selected.length} onClick={() => { setSelected([]); setError(''); setMessage('선택 목록을 모두 비웠습니다. 문제 풀의 원본은 유지됩니다.') }}>선택 전체 삭제</button></div>
+        {countSettings && <div id="mm-count-settings" className="mm-count-settings"><label>최대 문제 수 (1~20개)<input type="number" min={1} max={20} step={1} value={selectionLimit || ''} onChange={e => setSelectionLimit(Number(e.target.value))} /></label>{kind === 'TOEIC' && <label>퀘스트 이수 정답 수<input type="number" min={1} max={selectionLimit || 20} step={1} value={questPassCount || ''} onChange={e => setQuestPassCount(Number(e.target.value))} /></label>}<p className="mm-hint">최초 기준은 60%이며 직접 변경할 수 있습니다. 주간 저장·게시 시 함께 저장됩니다. 이미 시작한 풀이의 기준은 유지됩니다.</p></div>}
+        <p className="mm-hint">최대 {selectionLimit}개{kind === 'TOEIC' ? ` · ${questPassCount}개 이상 정답이면 일일 퀘스트 이수` : ''}</p>
+        <div className="mm-selection-tools"><button className="admin-btn admin-btn-primary" disabled={!Number.isInteger(selectionLimit) || selectionLimit < 1 || selectionLimit > 20 || selected.length >= selectionLimit || bankLoading || !!bankError} onClick={() => void randomFill()}>{saving ? '처리 중…' : '랜덤 생성'}</button><button className="admin-btn admin-btn-danger-ghost" disabled={!selected.length} onClick={() => { setSelected([]); setError(''); setMessage('선택 목록을 모두 비웠습니다. 문제 풀의 원본은 유지됩니다.') }}>선택 전체 삭제</button></div>
         <p className="mm-hint">현재 문제 유형·난이도·검색 조건의 전체 문제 풀에서, 기존 선택과 중복되지 않도록 부족한 개수만 추가합니다.</p>
         {selected.length > selectionLimit && <p className="mm-error" role="alert">선택된 문제가 {selected.length}개입니다. {selectionLimit}개 이하로 줄이거나 선택 한도를 변경하세요.</p>}
         <label>학생에게 표시할 제목<input required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} /></label>

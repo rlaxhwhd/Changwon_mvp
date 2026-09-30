@@ -1,0 +1,25 @@
+.qm-tabs { display:flex; flex-wrap:wrap; gap:4px; border-bottom:1px solid var(--mm-border); }
+.qm-tabs button { padding:14px 22px; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--mm-sub); font:inherit; font-size:14px; }
+.qm-tabs button[aria-current] { color:var(--color-primary,#126248); border-bottom-color:currentColor; font-weight:700; }
+.qm-form-row { display:grid; grid-template-columns:2fr 1fr 1fr; gap:16px; }
+.qm-rule { margin:0; padding:14px 18px; background:#f3f7f5; color:#3d5b4c; font-size:13px; line-height:1.8; border-left:3px solid #75a58b; }
+.qm-nowrap { white-space:nowrap; font-variant-numeric:tabular-nums; }
+.qm-editor, .qm-assignment-fields { display:grid; gap:20px; }
+.qm-audience { display:flex; flex-wrap:wrap; gap:24px; }
+.qm-filter-grid { display:grid; grid-template-columns:1fr 2fr; gap:24px; }
+.qm-filter-grid legend { font-size:13px; font-weight:700; margin-bottom:14px; }
+.qm-filter-grid small { font-weight:400; color:var(--mm-sub); margin-left:6px; }
+.qm-checks { display:flex; flex-wrap:wrap; gap:12px 20px; }
+.qm-compose { display:grid; grid-template-columns:minmax(0,1fr) minmax(0,1fr); gap:20px; align-items:start; }
+.qm-compose > :only-child { grid-column:1 / -1; }
+.qm-total { color:var(--color-primary,#126248); white-space:nowrap; }
+.qm-save { display:flex; justify-content:flex-end; gap:10px; }
+.qm-link { color:var(--color-primary,#126248); font-size:13px; text-underline-offset:4px; }
+.qm-daily { list-style:none; margin:0 0 24px; padding:0; }
+.qm-daily li { display:flex; gap:16px; padding:22px 0; border-bottom:1px solid var(--mm-border); }
+.qm-daily h3 { font-size:16px; margin:0 0 8px; }
+.qm-daily p { color:var(--mm-sub); font-size:14px; line-height:1.8; margin:0 0 10px; max-width:760px; }
+.qm-page .mm-table td:first-child { min-width:180px; }
+.qm-page .mm-table td { vertical-align:top; }
+@media(max-width:1000px) { .qm-compose,.qm-filter-grid { grid-template-columns:1fr; } }
+@media(max-width:600px) { .qm-form-row { grid-template-columns:1fr; } .qm-tabs button { padding:12px; } .qm-save { flex-wrap:wrap; } }

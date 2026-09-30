@@ -2,7 +2,7 @@ import pytest
 from test_api import headers
 from test_missions import ADMIN, publish
 
-@pytest.mark.parametrize('count',[10,20])
+@pytest.mark.parametrize('count',[3,10,15,20])
 def test_random_returns_requested_active_unique_questions(client,count):
     r=client.get('/api/v1/system/missions/questions/random',headers=headers(ADMIN),params={'kind':'TOEIC','count':count,'difficulty':'LOW'})
     assert r.status_code==200,r.text
@@ -18,7 +18,8 @@ def test_random_returns_requested_active_unique_questions(client,count):
 def test_random_validation_and_permissions(client):
     path='/api/v1/system/missions/questions/random'
     assert client.get(path,headers=headers('chaewon'),params={'kind':'TOEIC'}).status_code==403
-    assert client.get(path,headers=headers(ADMIN),params={'kind':'TOEIC','count':15}).status_code==422
+    assert client.get(path,headers=headers(ADMIN),params={'kind':'TOEIC','count':21}).status_code==422
+    assert client.get(path,headers=headers(ADMIN),params={'kind':'TOEIC','count':0}).status_code==422
     assert client.get(path,headers=headers(ADMIN),params={'kind':'TOEIC','q':'NO_SUCH_WORD_987XYZ'}).status_code==422
     r=client.get(path,headers=headers(ADMIN),params=[('kind','TOEIC'),('count',10)]+[('excludeIds',x) for x in range(10)])
     assert r.status_code==200 and r.json()['items']==[]

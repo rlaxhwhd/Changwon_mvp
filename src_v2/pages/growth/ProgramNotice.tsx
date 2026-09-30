@@ -1,4 +1,6 @@
-import { useMemo } from 'react'
+import { useState } from 'react'
+import { formatProgramDate, noticeParts } from '../../../shared/programContent'
+import { downloadApiFile } from '../../../shared/api'
 import { safeHtml } from '../../../shared/safeHtml'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
@@ -46,17 +48,18 @@ function rows(list: (Row | false | null | undefined)[]): Row[] {
   return list.filter((r): r is Row => !!r && r.value.trim().length > 0)
 }
 
-function periodOf(start?: string, end?: string): string {
+function periodOf(start?: string, end?: string, startTime?: string | null, endTime?: string | null): string {
   if (!start && !end) return ''
-  if (start && end) return `${start} ~ ${end}`
-  return start || end || ''
+  if (start && end) return `${formatProgramDate(start, startTime)} ~ ${formatProgramDate(end, endTime)}`
+  return formatProgramDate(start || end, start ? startTime : endTime)
 }
 
 export default function ProgramNotice({ programId, backTo, action, showWish = false }: Props) {
   const program = getProgramById(programId)
+  const [fileError, setFileError] = useState('')
   // 찜은 서버가 정본이다 — 로컬 상태로 낙관적 표시를 하지 않는다.
-  const wishRevision = useStore(GROWTH_EVENT)
-  const wished = useMemo(() => isWishedStore(programId), [programId, wishRevision])
+  useStore(GROWTH_EVENT)
+  const wished = isWishedStore(programId)
 
   if (!program) {
     return (
@@ -94,8 +97,9 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
 
   // 신청 안내
   const applyRows = rows([
-    { label: '신청기간', value: periodOf(program.startDate, program.endDate) },
-    { label: '운영기간', value: periodOf(program.runStartDate, program.runEndDate) },
+    { label: '공고일시', value: formatProgramDate(noticeParts(program.noticeAt).date, noticeParts(program.noticeAt).time) },
+    { label: '접수기간', value: periodOf(program.startDate, program.endDate, program.startTime, program.endTime) },
+    { label: '운영기간', value: periodOf(program.runStartDate, program.runEndDate, program.runStartTime, program.runEndTime) },
     { label: '정원', value: `${program.capacity}명` },
     { label: '신청현황', value: `${applied}명 / ${program.capacity}명` },
     // 로드맵에 칸이 생기는 프로그램만 알린다 — 학생이 이행률에 잡히는지가 달라진다.
@@ -108,8 +112,8 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
   const summaryRows = rows([
     { label: '프로그램', value: program.title },
     { label: '분류', value: categoryText },
-    { label: '신청마감', value: program.endDate },
-    { label: '운영기간', value: periodOf(program.runStartDate, program.runEndDate) },
+    { label: '신청마감', value: formatProgramDate(program.endDate, program.endTime) },
+    { label: '운영기간', value: periodOf(program.runStartDate, program.runEndDate, program.runStartTime, program.runEndTime) },
     { label: '장소', value: program.location },
     { label: '정원', value: `${applied} / ${program.capacity}명` },
   ])
@@ -156,7 +160,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
             <dl className="jd-hero-stats">
               <div>
                 <dt><Icon name="calendar" />신청마감일</dt>
-                <dd>{program.endDate || '상시'}<em>{closed ? '마감' : dday}</em></dd>
+                <dd>{formatProgramDate(program.endDate, program.endTime) || '상시'}<em>{closed ? '마감' : dday}</em></dd>
               </div>
               <div>
                 <dt><Icon name="users" />정원</dt>
@@ -171,6 +175,12 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
 
           <Section title="프로그램 정보"><KvTable rows={infoRows} /></Section>
           <Section title="신청 안내"><KvTable rows={applyRows} /></Section>
+          {!!program.attachments?.length && <Section title="첨부파일">
+            {program.attachments.map(file => <p key={file.id}><button type="button" className="pn-file-download" onClick={() => {
+              setFileError(''); void downloadApiFile(`/program-files/${encodeURIComponent(file.id)}`, file.name).catch((error: unknown) => setFileError(error instanceof Error ? error.message : '파일을 내려받지 못했습니다.'))
+            }}>{file.name} · {Math.ceil(file.size / 1024)}KB</button></p>)}
+            {fileError && <p role="alert">{fileError}</p>}
+          </Section>}
 
           <Section title="프로그램 내용" accent>
             {paragraphs.length === 0

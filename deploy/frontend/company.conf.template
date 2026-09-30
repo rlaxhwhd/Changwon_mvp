@@ -1,0 +1,78 @@
+limit_req_zone $binary_remote_addr zone=demo_login:10m rate=5r/m;
+
+server {
+    listen 443 ssl;
+    server_name _;
+    # Preserve the externally published 18443 port in relative redirects.
+    absolute_redirect off;
+    ssl_certificate /run/secrets/demo_tls_cert;
+    ssl_certificate_key /run/secrets/demo_tls_key;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    root /usr/share/nginx/html;
+    index index.html;
+    client_max_body_size 12m;
+    resolver 127.0.0.11 valid=10s ipv6=off;
+    set $api_upstream http://api:8000;
+    auth_request /__demo/check;
+    error_page 401 = @demo_login;
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_comp_level 5;
+    gzip_types application/json application/javascript text/css image/svg+xml;
+
+    location = /healthz {
+        auth_request off;
+        access_log off;
+        default_type text/plain;
+        return 200 'ok';
+    }
+    location @demo_login { return 303 /__demo/login; }
+    location = /__demo/check {
+        internal;
+        auth_request off;
+        proxy_pass $api_upstream/__demo/check;
+        proxy_pass_request_body off;
+        proxy_set_header Content-Length "";
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location = /__demo/login {
+        auth_request off;
+        proxy_pass $api_upstream;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location = /__demo/session {
+        auth_request off;
+        client_max_body_size 4k;
+        limit_req zone=demo_login burst=5 nodelay;
+        limit_req_status 429;
+        proxy_pass $api_upstream;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    location /api/ {
+        resolver 127.0.0.11 valid=10s ipv6=off;
+        set $api_upstream http://api:8000;
+        proxy_pass $api_upstream$request_uri;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-DC-Token "${DC_PROXY_TOKEN}";
+        proxy_read_timeout 75s;
+    }
+    location /assets/ { try_files $uri =404; }
+    location = /v2 { try_files /v2.html =404; }
+    location /v2/ { try_files $uri /v2.html; }
+    location = /admin { try_files /admin.html =404; }
+    location /admin/ { try_files $uri /admin.html; }
+    location / { try_files $uri $uri/ /index.html; }
+}
+
+# Container health check only. Port 80 is not published on the host.
+server {
+    listen 80;
+    location = /healthz { access_log off; return 200 'ok'; }
+    location / { return 404; }
+}

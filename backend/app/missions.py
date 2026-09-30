@@ -76,12 +76,10 @@ def questions(kind: Kind, q: str = Query('', max_length=100), page: int = Query(
     return {'items':rows, 'totalCount':total}
 
 @router.get('/system/missions/questions/random')
-def random_questions(kind: Kind, count: int = Query(10, ge=10, le=20),
+def random_questions(kind: Kind, count: int = Query(10, ge=1, le=20),
                      q: str = Query('', max_length=100), difficulty: str = Query('', max_length=40),
                      excludeIds: list[int] = Query(default=[], max_length=20),
                      user=Depends(administrator, scope='function'), conn=Depends(connection, scope='function')):
-    if count not in (10,20):
-        raise HTTPException(422,'선택 개수는 10개 또는 20개여야 합니다.')
     if len(set(excludeIds)) != len(excludeIds) or len(excludeIds)>count:
         raise HTTPException(422,'기존 선택 개수를 확인하세요.')
     remaining = count-len(excludeIds)
@@ -128,9 +126,12 @@ class Weekly(BaseModel):
     title: str = Field(min_length=1, max_length=200)
     questionIds: list[int] = Field(max_length=100)
     published: bool = False
-    selectionLimit: Literal[10,20] = 20
+    selectionLimit: StrictInt = Field(default=20, ge=1, le=20)
+    questPassCount: StrictInt | None = Field(default=None, ge=1, le=20)
     @model_validator(mode='after')
     def valid(self):
+        if self.questPassCount is not None and (self.questPassCount > self.selectionLimit or (self.published and self.questPassCount > len(self.questionIds))):
+            raise ValueError('이수 정답 수는 최대 문제 수와 게시할 문제 수를 초과할 수 없습니다.')
         if len(self.questionIds)>self.selectionLimit:
             raise ValueError(f'선택한 문제는 최대 {self.selectionLimit}개까지 저장할 수 있습니다.')
         if len(set(self.questionIds)) != len(self.questionIds) or (self.published and not self.questionIds):
@@ -158,9 +159,10 @@ def save_week(week_start: date, kind: WeekKind, data: Weekly, user=Depends(admin
     if len(rows) != len(data.questionIds) or any((row['kind']=='TOEIC') != (kind=='TOEIC') for row in rows):
         raise HTTPException(422,'선택한 문제의 유형 또는 사용 상태를 확인하세요.')
     snapshot = [{key:lookup[id][key] for key in ('id','kind','prompt','category','content','version')} for id in data.questionIds]
-    row = conn.execute('''INSERT INTO dc.mission_week(week_start,kind,title,items,published,updated_by,selection_limit) VALUES(%s,%s,%s,%s,%s,%s,%s)
-      ON CONFLICT(week_start,kind) DO UPDATE SET title=EXCLUDED.title,items=EXCLUDED.items,published=EXCLUDED.published,updated_by=EXCLUDED.updated_by,selection_limit=EXCLUDED.selection_limit,version=dc.mission_week.version+1,updated_at=now() RETURNING *''',
-      (week_start,kind,data.title,Jsonb(snapshot),data.published,user['intg_uid'],data.selectionLimit)).fetchone()
+    threshold = (data.questPassCount or max(1, (len(snapshot)*6+9)//10)) if kind == 'TOEIC' else None
+    row = conn.execute('''INSERT INTO dc.mission_week(week_start,kind,title,items,published,updated_by,selection_limit,quest_pass_count) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)
+      ON CONFLICT(week_start,kind) DO UPDATE SET title=EXCLUDED.title,items=EXCLUDED.items,published=EXCLUDED.published,updated_by=EXCLUDED.updated_by,selection_limit=EXCLUDED.selection_limit,quest_pass_count=EXCLUDED.quest_pass_count,version=dc.mission_week.version+1,updated_at=now() RETURNING *''',
+      (week_start,kind,data.title,Jsonb(snapshot),data.published,user['intg_uid'],data.selectionLimit,threshold)).fetchone()
     audit(conn,user,'mission_week',row['id'],before,row,'주간 미션 게시' if data.published else '주간 미션 비공개 저장')
     if data.published:
         conn.execute('''INSERT INTO dc.mission_question_publication(question_id,week_id)
@@ -178,7 +180,7 @@ def public_item(item, study=False):
 def current(user=Depends(student, scope='function'),conn=Depends(connection, scope='function')):
     start = monday()
     rows = conn.execute('SELECT * FROM dc.mission_week WHERE week_start=%s AND published ORDER BY kind',(start,)).fetchall()
-    return {'weekStart':start,'weekEnd':start+timedelta(days=6),'items':[{'id':r['id'],'kind':r['kind'],'title':r['title'],'version':r['version'],'questions':[public_item(i,True) for i in r['items']]} for r in rows]}
+    return {'weekStart':start,'weekEnd':start+timedelta(days=6),'items':[{'id':r['id'],'kind':r['kind'],'title':r['title'],'version':r['version'],'questPassCount':r['quest_pass_count'],'questions':[public_item(i,True) for i in r['items']]} for r in rows]}
 
 class Start(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -193,8 +195,8 @@ def start_attempt(data: Start,user=Depends(student, scope='function'),conn=Depen
         raise HTTPException(409,'게시 내용이 변경되었거나 학습 기간이 끝났습니다. 새로 조회하세요.')
     attempt = conn.execute('SELECT * FROM dc.mission_attempt WHERE student_uid=%s AND week_id=%s AND week_version=%s AND submitted_at IS NULL',(user['intg_uid'],row['id'],row['version'])).fetchone()
     if not attempt:
-        attempt = conn.execute('INSERT INTO dc.mission_attempt(student_uid,week_id,week_version,title,kind,items) VALUES(%s,%s,%s,%s,%s,%s) RETURNING *',(user['intg_uid'],row['id'],row['version'],row['title'],row['kind'],Jsonb(row['items']))).fetchone()
-    return {'id':attempt['id'],'title':attempt['title'],'questions':[public_item(i) for i in attempt['items']]}
+        attempt = conn.execute('INSERT INTO dc.mission_attempt(student_uid,week_id,week_version,title,kind,items,quest_pass_count) VALUES(%s,%s,%s,%s,%s,%s,%s) RETURNING *',(user['intg_uid'],row['id'],row['version'],row['title'],row['kind'],Jsonb(row['items']),row['quest_pass_count'])).fetchone()
+    return {'id':attempt['id'],'title':attempt['title'],'questPassCount':attempt['quest_pass_count'],'questions':[public_item(i) for i in attempt['items']]}
 
 class Submission(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -224,8 +226,12 @@ def submit(attempt_id: UUID,data: Submission,user=Depends(student, scope='functi
                 raise HTTPException(422,'올바른 보기를 선택하세요.')
             correct=answer==content['answer']; expected=content['choices'][content['answer']]; actual=content['choices'][answer]
         reviews.append({**public_item(item),'correct':correct,'correctAnswer':expected,'userAnswer':actual,'explanation':content['explanation']})
-    result={'id':str(row['id']),'title':row['title'],'correctCount':sum(i['correct'] for i in reviews),'totalCount':len(reviews),'reviews':reviews}
+    result={'id':str(row['id']),'title':row['title'],'correctCount':sum(i['correct'] for i in reviews),'totalCount':len(reviews),'reviews':reviews,
+            'questPassCount':row['quest_pass_count'], 'questPassed':bool(row['quest_pass_count'] and sum(i['correct'] for i in reviews)>=row['quest_pass_count'])}
     conn.execute('UPDATE dc.mission_attempt SET answers=%s,result=%s,submitted_at=now() WHERE id=%s',(Jsonb(data.answers),Jsonb(result),attempt_id))
+    if row['kind']=='TOEIC' and result['questPassed']:
+        from .quests import award_toeic, today_kst
+        award_toeic(conn, user['intg_uid'], today_kst())
     return result
 
 @router.get('/missions/history')

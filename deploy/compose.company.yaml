@@ -1,0 +1,85 @@
+name: dreamcatch-company
+services:
+  db:
+    image: dreamcatch-db:company-20260930
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: dreamcatch
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/postgres_password
+      TZ: Asia/Seoul
+    command: [postgres, -c, timezone=UTC]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    secrets: [postgres_password]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U postgres -d dreamcatch"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+  api:
+    image: dreamcatch-api:company-session-20260930
+    restart: unless-stopped
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      PYTHONDONTWRITEBYTECODE: "1"
+      # API has no published port; HTTPS is terminated by the web container.
+      FORWARDED_ALLOW_IPS: "*"
+      DC_DB_HOST: db
+      DC_DB_PORT: 5432
+      DC_DB_NAME: dreamcatch
+      DC_DB_USER: dc_app
+      DC_DB_PASSWORD_FILE: /run/secrets/api_db_password
+      DC_ENVIRONMENT: development
+      DC_DEVELOPMENT_IDENTITY: "true"
+      DC_DEVELOPMENT_TOKEN_FILE: /run/secrets/api_token
+      DC_FILE_ROOT: /var/lib/dreamcatch/files
+      DC_DEMO_PASSWORD_FILE: /run/secrets/demo_password
+      DC_DEMO_SESSION_KEY_FILE: /run/secrets/demo_session_key
+    secrets: [api_db_password, api_token, demo_password, demo_session_key]
+    volumes:
+      - ./files:/var/lib/dreamcatch/files
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+  web:
+    image: dreamcatch-web:company-20260930
+    restart: unless-stopped
+    ports:
+      - "${DC_WEB_BIND:-192.168.0.250}:18443:443"
+    secrets: [api_token, demo_tls_cert, demo_tls_key]
+    volumes:
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: [CMD, curl, -fsS, http://127.0.0.1/healthz]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+secrets:
+  postgres_password:
+    file: ./secrets/postgres_password
+  api_db_password:
+    file: ./secrets/api_db_password
+  api_token:
+    file: ./secrets/api_token
+  demo_password:
+    file: ./secrets/demo_password
+  demo_session_key:
+    file: ./secrets/demo_session_key
+  demo_tls_cert:
+    file: ./secrets/demo_tls_cert
+  demo_tls_key:
+    file: ./secrets/demo_tls_key
+volumes:
+  pgdata:

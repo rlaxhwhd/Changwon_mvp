@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime
 from uuid import uuid4
 
 import pytest
@@ -16,7 +16,11 @@ UID = '20211304'
 @pytest.fixture(autouse=True)
 def freeze_day(monkeypatch):
     monkeypatch.setattr(lounge, 'today', lambda: DAY)
-    monkeypatch.setattr(survey, 'today', lambda: DAY)
+    class Clock(datetime):
+        @classmethod
+        def now(cls, tz=None):
+            return datetime(2026, 9, 30, 12, tzinfo=survey.SEOUL).astimezone(tz or survey.SEOUL)
+    monkeypatch.setattr(survey, 'datetime', Clock)
 
 
 def program(client, db, *, selected='2026-09-28T01:00:00Z', start='2026-10-02', outcome=None, selection='SELECTED'):

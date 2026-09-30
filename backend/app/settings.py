@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     environment: str = "development"
     development_identity: bool = True
     development_token_file: str | None = None
+    demo_password_file: str | None = None
+    demo_session_key_file: str | None = None
     # 업로드 파일의 바이트 정본. 웹루트 밖의 관리 볼륨이며 정적 서빙하지 않는다
     # (DB.md #41). 다운로드는 API 가 소유·범위를 확인한 뒤 스트리밍한다.
     # ⚠ DB 백업에 포함되지 않는다 — 별도 백업이 필요하다.

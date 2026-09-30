@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useQuestDashboard } from '../../shared/useQuestDashboard'
 import { Link } from 'react-router-dom'
 import CareerPopup from '../components/CareerPopup'
 import CareerJourneyCard from '../components/CareerJourneyCard'
@@ -17,10 +17,7 @@ import './Main.css'
 //   클래스·구조를 손대면 시안 CSS 가 어긋난다. 수정은 시안 쪽에서 먼저 한다.
 //   내용(수치·문구)은 시안 값 그대로 — 데이터 배선은 디자인 확정 후 별도로 한다.
 export default function Main() {
-  // 출석 체크 — 누르면 다른 화면으로 가는 게 아니라 이 자리에서 '출석 완료'로 바뀐다.
-  // 아직 화면 안에서만 사는 상태다(새로고침하면 풀린다). 출석 이벤트를 남기려면
-  // CLAUDE.md 의 '이벤트 → JSON 반영' 표에 저장소를 먼저 정의해야 한다.
-  const [attended, setAttended] = useState(false)
+  const { data: quests, attended, loading, saving, error, message, checkIn, reload } = useQuestDashboard()
   const student = getActiveStudent()
   // 5대 핵심역량 — 점수·목표선은 데이터층에서 온다(하드코딩된 6축을 대체).
   const competencyAxes = getCompetencyAxes(student)
@@ -28,9 +25,7 @@ export default function Main() {
   const todayTasks = getTodayTasks(student)
   // 진로 여정 — 학생 상태에서 파생한다(전 학생 공용 상수가 아니다).
   const journey = buildCareerJourney(getPipelineState(student))
-  // 퀘스트·출석은 아직 이벤트 저장소가 없다(CLAUDE.md 이벤트 표에 없음).
-  // 활동을 시작하지 않은 학생에게 시안 수치를 보여주지 않기 위한 판정만 둔다.
-  const hasActivity = (student.growth?.xp ?? 0) > 0
+  const dailyCompleted = quests?.completed.DAILY ?? 0
   // 「오늘 할 일」 헤더의 날짜 — 시안 값(08.26)이 박혀 있어 언제 봐도 8월이었다.
   const now = new Date()
   const todayLabel = `${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')} ${'일월화수목금토'[now.getDay()]}요일`
@@ -92,16 +87,16 @@ export default function Main() {
               <Link data-slot="card-action" className="hero-inline-action" to="/growth/quest">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
             </header>
             <div data-slot="card-content">
-              {/* 퀘스트 이벤트 저장소가 아직 없다 — 활동 이력이 없는 학생에게 시안 수치를 보이지 않는다. */}
-              {hasActivity ? (
+
+              {quests ? (
                 <div className="quest-layout">
-                  <div className="quest-ring" role="img" aria-label="오늘의 퀘스트 달성률 72퍼센트"><span className="quest-value"><strong>72%</strong></span></div>
-                  <div className="quest-copy"><b>커리어 루틴 만들기</b><p>오늘 5개 중 3개 완료<br />2개만 더 달성해 보세요!</p><div className="quest-steps" aria-hidden="true"><i className="done"></i><i className="done"></i><i className="done"></i><i></i><i></i></div></div>
+                  <div className={`quest-ring quest-ring--done-${dailyCompleted}`} role="img" aria-label={`오늘의 퀘스트 달성률 ${dailyCompleted * 50}퍼센트`}><span className="quest-value"><strong>{dailyCompleted * 50}%</strong></span></div>
+                  <div className="quest-copy"><b>매일 두 가지 성장 습관</b><p>오늘 2개 중 {dailyCompleted}개 완료<br />출석체크 · TOEIC 영단어</p><div className="quest-steps" aria-hidden="true"><i className={attended ? 'done' : ''}></i><i className={quests.toeic.done ? 'done' : ''}></i></div></div>
                 </div>
               ) : (
                 <div className="quest-layout">
                   <div className="quest-ring quest-ring--empty" role="img" aria-label="오늘의 퀘스트 달성률 0퍼센트"><span className="quest-value"><strong>0%</strong></span></div>
-                  <div className="quest-copy"><b>아직 시작한 퀘스트가 없어요</b><p>첫 퀘스트를 완료하면<br />성장 포인트가 쌓이기 시작합니다.</p></div>
+                  <div className="quest-copy"><b>{loading ? '퀘스트 기록을 불러오는 중입니다.' : '퀘스트 기록을 불러오지 못했습니다.'}</b><p>출석체크 · TOEIC 영단어</p></div>
                 </div>
               )}
             </div>
@@ -113,9 +108,9 @@ export default function Main() {
           <section data-slot="card" className="hero-panel hero-attendance attendance-card" aria-labelledby="attendanceTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="attendanceTitle">출석체크</h2><p data-slot="card-description">매일 접속하고 성장 포인트를 받아요.</p></div>
-              {/* 연속 출석 역시 저장소가 없다 — 오늘 눌렀는지만 사실대로 말한다. */}
+
               <span data-slot="card-action" className="badge amber">
-                {hasActivity ? '12일 연속' : attended ? '오늘 출석' : '첫 출석'}
+                {quests ? `${quests.attendance.streak}일 연속` : '기록 확인 중'}
               </span>
             </header>
             <div data-slot="card-content">
@@ -123,8 +118,9 @@ export default function Main() {
                 className={`button primary attendance-button${attended ? ' completed' : ''}`}
                 type="button"
                 aria-pressed={attended}
-                onClick={() => setAttended(true)}
-              >{attended ? '출석 완료 +10P' : '출석하기 +10P'}</button></div></div>
+                disabled={loading || saving || attended || !quests}
+                onClick={() => void checkIn()}
+              >{saving ? '기록 중…' : attended ? '오늘 출석 완료' : '출석하기'}</button>{quests && <p>{quests.attendanceRewardEligible ? `출석 보상 ${quests.rules.DAILY.xp} XP` : '학기 중 평일에 XP가 지급됩니다.'}</p>}{error && <p role="alert">{error} <button onClick={reload}>다시 조회</button></p>}{message && <p role="status">{message}</p>}</div></div>
             </div>
           </section>
 

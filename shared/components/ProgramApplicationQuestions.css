@@ -1,0 +1,6 @@
+.program-questions fieldset { border: 0; border-bottom: 1px solid #dde2e8; padding: 18px 0; margin: 0; min-width: 0; }
+.program-questions legend { font-size: 14px; font-weight: 700; padding: 0; }
+.program-questions label { display: flex; gap: 8px; align-items: center; margin: 10px 0; font-size: 14px; }
+.program-questions textarea { display: block; width: 100%; min-height: 90px; border: 1px solid #cbd2dc; border-radius: 6px; padding: 10px; font: inherit; box-sizing: border-box; }
+.program-question-consent { white-space: pre-wrap; font-size: 14px; }
+.program-question-required { color: #b42318; }
