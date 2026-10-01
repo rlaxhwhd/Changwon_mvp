@@ -264,3 +264,8 @@
   font-weight: 600;
   line-height: 1.7;
 }
+.rcp-target-input { display: grid; gap: 12px; }
+.rcp-target-input input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid var(--line, #dce2ea); border-radius: 8px; font: inherit; }
+.rcp-target-input label { font-weight: 600; }
+.rcp-target-input p { margin: 0; color: var(--muted, #64748b); }
+.rcp-target-input button { justify-self: start; }

@@ -19,7 +19,8 @@ export function getDiagnosisResult(
   const mine = DIAGNOSIS_RESULTS.filter(r => r.studentId === studentId && r.testId === testId)
   if (mine.length === 0) return undefined
   if (attemptNo != null) return mine.find(r => r.attemptNo === attemptNo)
-  return mine.reduce((latest, r) => (r.attemptNo > latest.attemptNo ? r : latest))
+  const current = mine.filter(r => r.isCurrent !== false)
+  return current.length ? current.reduce((latest, r) => (r.attemptNo > latest.attemptNo ? r : latest)) : undefined
 }
 
 /** 한 학생의 모든 상세 결과 (검사 이력 비교용). 최신 응시가 앞. */
@@ -33,7 +34,7 @@ export function getResultsByStudent(studentId: string): DiagnosisResult[] {
 export interface ResultRow {
   name: string
   desc?: string
-  tScore: number
+  tScore: number | null
   level: FactorLevel | '미등록'
 }
 
@@ -43,6 +44,10 @@ export interface ResultRow {
  * 점수는 응시 결과에서 이름으로 join 한다 — 점수만 있고 정의에 없는 요인은 버린다.
  */
 export function getResultRows(result: DiagnosisResult, module?: DiagnosisModule): ResultRow[] {
+  if (result.source === 'hrtest') return result.factors.map(f => ({
+    name:f.name, desc:f.category === 'areas' ? '영역 점수' : '하위 요인',
+    tScore:f.tScore, level:f.level ?? '미등록',
+  }))
   const mod = module ?? getModuleByTestId(result.testId)
   const scoreOf = new Map(result.factors.map(f => [f.factorCode ?? f.name, f.tScore]))
   const defs: DiagnosisFactorDef[] = mod?.factors ?? result.factors.map(f => ({ name: f.name }))
@@ -52,6 +57,6 @@ export function getResultRows(result: DiagnosisResult, module?: DiagnosisModule)
     .map(d => {
       const tScore = (scoreOf.get(d.code ?? d.name) ?? scoreOf.get(d.name))!
       const supplied = result.factors.find(f => (d.code && f.factorCode === d.code) || f.name === d.name)?.level
-      return { name: d.name, desc: d.desc, tScore, level: supplied ?? (['c2','c3','c4'].includes(result.testId) ? '미등록' : levelOf(tScore)) }
+      return { name: d.name, desc: d.desc, tScore, level: supplied ?? (tScore == null || ['c2','c3','c4'].includes(result.testId) ? '미등록' : levelOf(tScore)) }
     })
 }

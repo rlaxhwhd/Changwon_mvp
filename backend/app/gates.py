@@ -77,7 +77,7 @@ def diagnosis_gate(conn, uid):
     if not row:
         return None, [reason('TYPE_REQUIRED')]
     done = {r['test_id'].upper() for r in conn.execute(
-        'SELECT test_id FROM dc.diagnosis_attempt WHERE student_uid=%s AND completed_at IS NOT NULL',
+        'SELECT test_id FROM dc.current_diagnosis_attempt WHERE student_uid=%s AND completed_at IS NOT NULL',
         (uid,)).fetchall()}
     reasons = []
     if 'CCORE' not in done:

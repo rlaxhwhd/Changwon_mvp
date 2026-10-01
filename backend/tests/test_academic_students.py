@@ -176,3 +176,22 @@ def test_activity_without_care7_is_visible_and_private_notes_are_not(client, db,
     assert 'Private topic' not in r.text and 'do not expose' not in r.text
     listed=client.get('/api/v1/academic-students',headers=headers('career_kim'),params={'q':uid}).json()
     assert listed['items'][0]['programCount']==1
+
+    # Home/counseling links can carry an alias while the roster carries the UID.
+    db.execute('UPDATE dc.person SET alias=%s WHERE intg_uid=%s', ('detail-alias-test', uid))
+    by_alias = client.get('/api/v1/academic-students/detail-alias-test',
+                          headers=headers('career_kim'), params={'optional': True})
+    assert by_alias.status_code == 200
+    assert by_alias.json() == data
+    assert client.get('/api/v1/academic-students/detail-alias-test',
+                      headers=headers('chaewon'), params={'optional': True}).status_code == 403
+
+
+def test_optional_academic_detail_only_falls_back_for_accessible_service_students(client, db):
+    response = client.get('/api/v1/academic-students/chaewon',
+                          headers=headers('career_kim'), params={'optional': True})
+    assert response.status_code == 200
+    assert response.json() is None
+    assert client.get('/api/v1/academic-students/chaewon', headers=headers('career_kim')).status_code == 404
+    assert client.get('/api/v1/academic-students/missing-detail-student',
+                      headers=headers('career_kim'), params={'optional': True}).status_code == 404

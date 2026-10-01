@@ -1,0 +1,126 @@
+# Use with compose.company.yaml (deployed as /opt/dreamcatch/compose.yaml).
+# docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps searxng llm-tunnel
+services:
+  api:
+    environment:
+      DC_CHATBOT_ENABLED: "true"
+      DC_CHATBOT_API_URL: http://llm-tunnel:11435/v1/chat/completions
+      # Ollama's loopback listener validates Host even across an SSH tunnel.
+      DC_CHATBOT_API_HOST_HEADER: 127.0.0.1:11435
+      DC_CHATBOT_MODEL: qwen3-32b-chat
+      DC_CHATBOT_SEARXNG_URL: http://searxng:8080
+      DC_RAG_ENABLED: "true"
+      DC_RAG_URL: http://rag:8090
+      DC_RAG_KEY_FILE: /run/secrets/rag_key
+      DC_ROADMAP_PROVIDER: local-rag
+      DC_HRTEST_KEY_FILE: /run/secrets/hrtest_key
+    secrets: [rag_key, hrtest_key]
+  qdrant:
+    image: qdrant/qdrant@sha256:12364fe851b9f17356fc88189fc06d1b521262e04659ec7345975b00c9246a10
+    restart: unless-stopped
+    user: "10001:10001"
+    read_only: true
+    cpus: 1.0
+    mem_limit: 1g
+    memswap_limit: 1g
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    environment:
+      QDRANT__TELEMETRY_DISABLED: "true"
+      QDRANT__STORAGE__SNAPSHOTS_PATH: /qdrant/storage/snapshots
+      QDRANT__STORAGE__PERFORMANCE__MAX_SEARCH_THREADS: "2"
+    entrypoint: [/bin/sh, -ec]
+    command: ['export QDRANT__SERVICE__API_KEY="$$(cat /run/secrets/qdrant_key)"; exec /qdrant/qdrant']
+    volumes: [./ai/qdrant:/qdrant/storage]
+    secrets: [qdrant_key]
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "2"}
+  rag:
+    image: dreamcatch-rag:20261001
+    restart: unless-stopped
+    read_only: true
+    cpus: 1.5
+    mem_limit: 2g
+    memswap_limit: 2g
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp]
+    environment:
+      QDRANT_URL: http://qdrant:6333
+    secrets: [rag_key, qdrant_key]
+    depends_on: [qdrant]
+    healthcheck:
+      test: [CMD, python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8090/healthz', timeout=3)"]
+      start_period: 90s
+      interval: 15s
+      timeout: 5s
+      retries: 4
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "2"}
+  searxng:
+    image: searxng/searxng@sha256:a07a5cd2da2c63d66e559f9e4d3a3db106cfc6c32fb0ac70abe91cc28bcd7350
+    restart: unless-stopped
+    user: "977:977"
+    read_only: true
+    cpus: 1.0
+    mem_limit: 768m
+    memswap_limit: 768m
+    pids_limit: 128
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    tmpfs: [/tmp, "/var/cache/searxng:uid=977,gid=977,mode=0700"]
+    environment:
+      GRANIAN_HOST: 0.0.0.0
+      GRANIAN_WORKERS: "1"
+      GRANIAN_BLOCKING_THREADS: "4"
+      FORCE_OWNERSHIP: "false"
+    entrypoint: [/bin/sh, -ec]
+    command: ['export SEARXNG_SECRET="$$(cat /run/secrets/searxng_secret)"; exec /usr/local/searxng/entrypoint.sh']
+    volumes:
+      - ./ai/searxng/settings.yml:/etc/searxng/settings.yml:ro
+    secrets: [searxng_secret]
+    healthcheck:
+      test: [CMD, /usr/local/searxng/.venv/bin/python, -c, "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/healthz', timeout=3)"]
+      interval: 15s
+      timeout: 5s
+      retries: 4
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "2"}
+  llm-tunnel:
+    image: dreamcatch-llm-tunnel:20261001
+    restart: unless-stopped
+    read_only: true
+    cpus: 0.25
+    mem_limit: 64m
+    memswap_limit: 64m
+    pids_limit: 32
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    secrets: [llm_key, llm_known_hosts]
+    healthcheck:
+      test: [CMD-SHELL, "wget -q -T 5 -O /dev/null http://127.0.0.1:11435/api/tags"]
+      interval: 20s
+      timeout: 7s
+      retries: 3
+    logging:
+      driver: json-file
+      options: {max-size: 5m, max-file: "2"}
+secrets:
+  hrtest_key:
+    file: ./ai/secrets/hrtest_key
+  rag_key:
+    file: ./ai/secrets/rag_key
+  qdrant_key:
+    file: ./ai/secrets/qdrant_key
+  searxng_secret:
+    file: ./ai/secrets/searxng_secret
+  llm_key:
+    file: ./ai/secrets/llm_key
+  llm_known_hosts:
+    file: ./ai/secrets/llm_known_hosts

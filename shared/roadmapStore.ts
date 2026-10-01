@@ -30,6 +30,7 @@ export interface RoadmapCapabilities {
   canRegenerate: boolean
   canRequestChange: boolean
   providerSource: string | null
+  undoGeneration: 'restore' | 'cancel' | null
 }
 
 export interface GateReason { code: string; message: string; nextRoute: string }
@@ -174,6 +175,11 @@ export async function editPlan(studentId: string, operations: EditOperation[], n
                                requests: RequestRef[] = []): Promise<void> {
   await send(`/students/${encodeURIComponent(studentId)}/roadmap`, 'PATCH',
     { operations, note, requests, ...versions(studentId) })
+  await refresh(studentId)
+}
+
+export async function undoGeneratedPlan(studentId: string): Promise<void> {
+  await send(`/students/${encodeURIComponent(studentId)}/roadmap/generation/undo`, 'POST', versions(studentId))
   await refresh(studentId)
 }
 

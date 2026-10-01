@@ -4,3 +4,5 @@ __pycache__
 artifacts
 .pytest_cache
 tests
+var
+app/graphify-out

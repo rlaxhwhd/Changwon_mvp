@@ -91,7 +91,7 @@ export function getStudentRoadmap(studentId: string): StudentRoadmap | null {
   const envelope = roadmapEnvelope(studentId)
   if (!envelope?.roadmap) return null
   const history = envelope.events
-    .filter(event => ['EDIT', 'CONFIRM', 'REVIEW', 'REOPEN', 'RESTORE_EDIT'].includes(event.action))
+    .filter(event => ['EDIT', 'CONFIRM', 'REVIEW', 'REOPEN', 'RESTORE_EDIT', 'UNDO_GENERATION'].includes(event.action))
     .map(event => ({
       version: event.roadmapVersion,
       at: event.occurredAt,

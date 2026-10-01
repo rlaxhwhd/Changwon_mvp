@@ -7,7 +7,7 @@ from test_psych_referrals import db  # noqa: F401 -- isolated rollback fixture
 from test_api import headers
 
 
-def test_precomputed_hidden_and_development_completion_projects_scores(client,db):
+def test_precomputed_hidden_and_retired_simulation_preserves_scores(client,db):
     identity='numeric-test-'+uuid4().hex
     db.execute("INSERT INTO dc.person VALUES(%s,%s,'Numeric test','STUDENT','fixture','{}',1)",(identity,identity))
     db.execute('''INSERT INTO dc.student(intg_uid,student_no,major_label,detail)
@@ -19,11 +19,10 @@ def test_precomputed_hidden_and_development_completion_projects_scores(client,db
     assert response.status_code==200 and response.json()['results']==[]
     head={**headers(identity),'Idempotency-Key':uuid4().hex}
     response=client.post('/api/v1/development/diagnosis/ccore/complete',headers=head)
-    assert response.status_code==200
-    assert client.post('/api/v1/development/diagnosis/ccore/complete',headers=head).json()==response.json()
+    assert response.status_code==410
     rows=client.get('/api/v1/diagnosis/students/'+identity,headers=headers(identity)).json()['results']
-    assert len(rows)==1 and rows[0]['factors'][0]['tScore']==52.25
-    assert scores(db,identity,2,'ccore')[0]['t_score']==Decimal('52.25')
+    assert rows==[]
+    assert scores(db,identity,1,'ccore')[0]['t_score']==Decimal('52.25')
 
 
 def result(conn, factors, test='c2'):

@@ -18,7 +18,7 @@ services:
       timeout: 3s
       retries: 12
   api:
-    image: dreamcatch-api:company-session-20260930
+    image: dreamcatch-api:hrtest-20261001
     restart: unless-stopped
     read_only: true
     tmpfs: [/tmp]
@@ -51,7 +51,7 @@ services:
       timeout: 5s
       retries: 12
   web:
-    image: dreamcatch-web:company-20260930
+    image: dreamcatch-web:hrtest-20261001
     restart: unless-stopped
     ports:
       - "${DC_WEB_BIND:-192.168.0.250}:18443:443"

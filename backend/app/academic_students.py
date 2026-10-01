@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from .auth import principal, require_staff, is_counselor
+from .auth import principal, require_staff, is_counselor, student_access
 from .db import connection
 from .jobs import MENU_PREDICATE
 from .students import HIGH, CORE
@@ -167,10 +167,22 @@ def export(request: Request, body: StudentExportSelection, q: str = Query('', ma
 
 
 @router.get('/academic-students/{identity}')
-def detail(identity: str, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+def detail(identity: str, optional: bool = False, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
     authorize(conn, user)
     row = conn.execute(ROSTER+' SELECT * FROM roster WHERE intg_uid=%s', (identity,)).fetchone()
     if not row:
+        # Other entry points use the service alias. Resolve it on the server,
+        # then run the identical academic read model and activity aggregation.
+        person = conn.execute('SELECT intg_uid FROM dc.person WHERE alias=%s AND kind=\'STUDENT\'', (identity,)).fetchone()
+        if person:
+            identity = person['intg_uid']
+            row = conn.execute(ROSTER+' SELECT * FROM roster WHERE intg_uid=%s', (identity,)).fetchone()
+    if not row:
+        if optional:
+            # Legacy service-only fixtures have no academic source. Only allow
+            # their existing scoped detail, never hide authorization failures.
+            student_access(conn, user, identity)
+            return None
         raise HTTPException(404, '학사 학생정보가 없습니다.')
     # Expose activity summaries, not counselor notes/intake/psychological records.
     # care_track 을 함께 낸다 — 요약 카드가 진로취업을 일반/CARE 7+ 로 가른다(counselTrack.ts).

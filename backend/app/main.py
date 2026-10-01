@@ -8,6 +8,8 @@ from fastapi.responses import JSONResponse
 
 from .academic import router as academic_router
 from .quests import router as quests_router
+from .chatbot import router as chatbot_router
+from .ai_comments import router as ai_comments_router
 from .student_login import router as student_login_router
 from .academic_directory import router as academic_directory_router
 from .department_assignments import router as department_assignments_router
@@ -23,6 +25,7 @@ from .psych_tests import router as psych_tests_router
 from .administration import router as administration_router
 from .metadata import router as metadata_router
 from .diagnosis import router as diagnosis_router
+from .hrtest_sync import router as hrtest_router
 from .programs import router as programs_router
 from .survey import router as survey_router
 from .survey_forms import router as survey_forms_router
@@ -57,6 +60,7 @@ async def lifespan(app):
 
 app = FastAPI(title='DREAMCATCH API', version='1.0.0', lifespan=lifespan)
 app.include_router(demo_access_router)
+app.include_router(hrtest_router, prefix='/api/v1')
 
 
 @app.exception_handler(RequestValidationError)
@@ -70,6 +74,8 @@ async def validation_error(request: Request, exc: RequestValidationError):
 
 app.include_router(academic_router, prefix='/api/v1')
 app.include_router(quests_router, prefix='/api/v1')
+app.include_router(chatbot_router, prefix='/api/v1')
+app.include_router(ai_comments_router, prefix='/api/v1')
 app.include_router(student_login_router, prefix='/api/v1')
 app.include_router(academic_directory_router, prefix='/api/v1')
 app.include_router(department_assignments_router, prefix='/api/v1')

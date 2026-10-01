@@ -14,7 +14,6 @@ import type { TabKey } from './StudentDetailView'
 // ─────────────────────────────────────────────────────────────────────────
 
 interface StudentDetailModalProps {
-  academic?: boolean
   studentId: string
   /** 열람자 역할 — 탭 노출 범위와 편집 권한을 정한다 */
   role: StaffRole
@@ -23,10 +22,10 @@ interface StudentDetailModalProps {
   onClose: () => void
 }
 
-export default function StudentDetailModal({ studentId, role, initialTab, onClose, academic }: StudentDetailModalProps) {
+export default function StudentDetailModal({ studentId, role, initialTab, onClose }: StudentDetailModalProps) {
   return createPortal(
     <AdminModal title="학생 상세 정보" size="xl" onClose={onClose}>
-      <StudentDetailView studentId={studentId} role={role} initialTab={initialTab} academic={academic} />
+      <StudentDetailView studentId={studentId} role={role} initialTab={initialTab} />
     </AdminModal>,
     document.body,
   )

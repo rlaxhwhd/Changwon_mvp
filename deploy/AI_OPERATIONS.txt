@@ -1,0 +1,133 @@
+DREAMCATCH AI deployment — 2026-10-01
+
+Roadmap/score update (2026-10-01):
+  Current API/web tags: roadmap-undo-20261001.
+  Apply ONLY 114_roadmap_generation_undo.sql on this company deployment.
+  Unrelated local migrations 110-113 remain outside this release.
+  Backup: ai/roadmap-undo-backup-20261001/dreamcatch.dump + compose.yaml.
+  Migration adds nullable generation_undo and a confirmation-clearing trigger,
+  and permits the append-only UNDO_GENERATION event. No existing plan backfill.
+  API writes the exact pre-generation plan/axes/items; undo restores all cells
+  and completion provenance with monotonically increasing generation/lock
+  versions. Initial undo removes the current draft, preserving snapshots/runs/
+  events. Confirmation clears undo, including counsel-driven confirmation.
+  Concurrent/stale undo is rejected; repeat idempotency keys return one result.
+  Regeneration that atomically applies change requests does not offer undo.
+  Target roles are free text (1-200 characters); no job dictionary mutation.
+  Numeric scores with only UNMAPPED_FACTOR are source evidence, not missing
+  scores. Invalid numeric scores remain excluded. No new score rules or norms.
+  For diagnosis without registered levels, comments use score facts, next
+  actions and questions instead of invented high/medium/low classifications.
+  The input-read transaction commits before LLM network I/O; adoption starts
+  a new transaction and rechecks idempotency, permissions and plan versions.
+  This avoids the company role's 30s idle-in-transaction timeout without
+  weakening global timeout settings. Focused final regression: 33 passed.
+  Production Chrome verification: C-CORE stored scores generated a comment in
+  16.8s without invented levels. Free-text target generated a real Qwen draft
+  in 57.2s (3 axes/15 cells), persisted as DRAFT. UI undo took 53ms and restored
+  the demo's original 17 cells and CONFIRMED state; hashes of plan/axes/items
+  excluding version/update metadata matched exactly. Generation/snapshot/audit
+  history remains, and the restored plan has a new generation number.
+  Validation: broad relevant run 48 passed, 4 existing permission failures;
+  all four failures reproduced against HEAD roadmap.py. Company DB clone:
+  migration preserved all 3 plans, 8 comment/undo tests passed.
+  Rollback images: student-detail-20261001. Leave additive migration in place;
+  don't remove snapshots/events or undo evidence to roll back application code.
+
+Student detail consistency update (2026-10-01):
+  Current API/web tags: student-detail-20261001 (AI setup retained).
+  StudentDetailView always loads the academic detail first; entry points no
+  longer choose a different layout through an academic flag. Alias and UID
+  resolve to the same academic record. Existing scoped service-only profiles
+  remain available when there is no academic source. No DB migration.
+  Dockerfile.ai-company also layers academic_students.py onto the company base.
+  Rollback compose: ai/student-detail-backup-20261001/compose.yaml
+  Rollback tags: dreamcatch-api:chatbot-20261001, dreamcatch-web:chatbot-20261001
+  Validation: 9 academic API tests passed; production home/roster dialogs have
+  identical text and markup, 8 academic fields and 5 summary cards. Their
+  detail requests returned 200 in 57/62 ms, one request per open; no console
+  errors. DB/RAG/Qdrant/search/tunnel container IDs/start times unchanged.
+
+CentOS 192.168.0.250, /opt/dreamcatch
+  compose.yaml + compose.chatbot.yaml
+  .env sets COMPOSE_FILE=compose.yaml:compose.chatbot.yaml for future commands.
+  searxng: multi-engine public career/employment search, private port 8080
+  qdrant: versioned policy vectors, private port 6333
+  rag: CPU multilingual MiniLM embeddings + retrieval, private port 8090
+  llm-tunnel: restricted SSH forward to GPU loopback, private port 11435
+  No new host ports. Secret files are under ai/secrets; never commit them.
+
+GPU 192.168.0.230
+  /home/llm-test, deep owner, llm-test.service, Ollama loopback 11435
+  Enabled at boot with Restart=on-failure; configuration reload did not restart
+  the running LLM process. Models load on demand, not at server boot.
+  qwen3-32b-chat: Qwen3 32B Q4_K_M, context 8192, no thinking
+  CPU 4 cores, RAM+swap ceiling 64 GiB, NVIDIA MPS 50%, per-client GPU 21 GiB.
+  Existing Apache/MySQL/Jupyter services are separate.
+  Host: 127.0.0.1:11435 is required through the tunnel by Ollama validation.
+
+Build API for this company database with:
+  docker build -t dreamcatch-api:chatbot-20261001 -f backend/Dockerfile.ai-company backend
+This layers only AI modules onto company-session-20260930. A full build of
+the current checkout includes unrelated program/survey/growth changes whose
+database migrations are not deployed on this server. Do not replace this
+incremental release with backend/Dockerfile without a separate DB review.
+
+Start or update only specified services:
+  docker compose -p dreamcatch-company -f compose.yaml -f compose.chatbot.yaml up -d --no-deps SERVICE...
+Do not use down, remove-orphans, or recreate db for AI updates.
+Company nginx.conf.template includes 210s timeout for roadmap generation.
+Chat and comment responses send SSE progress and 10s heartbeats.
+
+Knowledge source: deploy/rag/corpus.json, eight reviewed project-policy documents.
+No personal student or counseling records are indexed. Context is read with
+existing API permissions for each request. Student context excludes private
+counseling summary, follow-up and form fields. Comment generation has no web
+tools and does not save or finalize records. Roadmap generation retains its
+existing draft/adoption/version/idempotency workflow and saves source versions.
+
+This is retrieval-augmented generation, not fine-tuning. It is an initial
+project-policy corpus, not a complete occupational or university handbook.
+Reviewed source additions require updating corpus.json and rebuilding the RAG
+image. Corpus SHA256 creates a new collection; old collections are not deleted.
+Personal information, secrets, unreviewed web pages and sample score tables
+must not be added to this shared corpus. Latest public facts use SearXNG.
+
+Backup before rollout:
+  /opt/dreamcatch/ai/latest-backup-path identifies the directory containing
+  dreamcatch.dump, files.tar.gz, original compose and nginx files, baseline IDs.
+Rollback app image tags to those original API/web tags with targeted up.
+No SQL migrations were needed for AI. Qdrant data is ai/qdrant; the current
+index can also be rebuilt deterministically from the versioned corpus image.
+
+Resource ceilings on CentOS:
+  searxng 1 CPU / 768 MiB; qdrant 1 CPU / 1 GiB;
+  rag 1.5 CPU / 2 GiB; SSH tunnel 0.25 CPU / 64 MiB.
+All additions use non-root users and read-only root filesystems.
+Some public search engines may rate-limit or CAPTCHA; report missing evidence
+instead of inventing current dates. Google/Bing/DuckDuckGo are configured,
+but successful engines vary per request.
+
+Validation:
+  Isolated PostgreSQL regression: 35 relevant tests passed (AI comments,
+  chatbot, roadmap generator); browser tests use existing demo fixtures.
+  Real local-Qwen roadmap: 3 axes / 15 cells / 3 sources, about 60 seconds;
+  read-only generation test did not save a roadmap.
+  Comprehensive comment observed about 30 seconds; timings are sample runs,
+  Valid student diagnosis comment observed about 16 seconds.
+  Browser Q-Net schedule answer observed about 15 seconds, policy RAG answer
+  about 8 seconds. No console errors on the final student verification page.
+  not service guarantees. Chat cancellation and route persistence verified.
+  Student access to another student's comment rejected with HTTP 404.
+  Invalid numeric diagnostic factors are excluded before model invocation;
+  with no valid scores, diagnosis interpretation is withheld deterministically.
+  Unmapped but numeric factors now retain source labels/scores without inferred norms.
+  Illustrative legacy company match/requirement numbers are excluded.
+  New shared frontend modules pass ESLint. Existing set-state-in-effect lint
+  findings remain in StudentDetailView and DiagnosisResultReport.
+  A full-image rollout hit an unrelated missing program notice_at column;
+  it was rolled back, then replaced with the incremental API image above.
+  Program reads were rechecked successfully. Company DB container was never
+  restarted; GPU Apache/MySQL process start dates were unchanged.
+  At a 500px browser viewport the chatbot panel fits. The existing admin app
+  retains a 1280px minimum width; this release is not a full mobile redesign.

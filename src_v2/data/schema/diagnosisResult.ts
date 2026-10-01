@@ -12,7 +12,7 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** 요인 수준 — T점수 밴드에서 파생한다(저장하지 않는다). */
-export type FactorLevel = '낮음' | '보통' | '높음'
+export type FactorLevel = '매우낮음' | '낮음' | '보통' | '높음' | '매우높음'
 
 /**
  * T점수 밴드 경계. 평균 50 · 표준편차 10 의 표준 T점수 규약.
@@ -34,12 +34,16 @@ export interface FactorScore {
   /** 요인명 — DIAGNOSIS_MODULES[].factors[].name 과 일치해야 한다 */
   name: string
   /** T점수 (평균 50 · 표준편차 10). 소수 2자리. */
-  tScore: number
-  level?: FactorLevel
+  tScore: number | null
+  level?: FactorLevel | null
+  category?: 'areas' | 'scales'
 }
 
 /** 검사 1회 응시의 상세 결과 */
 export interface DiagnosisResult {
+  needsReview?: boolean
+  isCurrent?: boolean
+  providerTypes?: Record<string,string|null>
   source?: string
   /** 학생 id */
   studentId: string

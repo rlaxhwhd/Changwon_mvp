@@ -29,7 +29,7 @@ import { useListData } from '../hooks/useListData'
 
 const ALL = '전체'
 const PAGE_SIZE = 12
-const STATUSES = ['미응시', '진행중', '완료'] as const
+const STATUSES = ['미응시', '진행중', '완료', '응답 누락', '유형 확인 필요'] as const
 
 const formatDate = (value?: string) => (value ? value.slice(0, 10).replaceAll('-', '/') : '—')
 const formatStamp = (iso?: string) => (iso ? iso.slice(0, 10).replaceAll('-', '.') : '—')

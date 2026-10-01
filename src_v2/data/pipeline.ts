@@ -32,7 +32,7 @@ export function getAttempts(studentId: string): DiagnosisAttempt[] {
 
 /** 해당 검사를 완료했는가. */
 export function isTestDone(studentId: string, testId: string): boolean {
-  return getAttempts(studentId).some(a => a.testId === testId && a.status === '완료')
+  return getAttempts(studentId).some(a => a.testId === testId && a.isCurrent !== false && a.status === '완료')
 }
 
 /**
@@ -98,15 +98,11 @@ export function getPipelineState(student: StudentData): PipelineState {
  * 응시 시점 스냅샷(학번·이름·학과·학년)을 같이 저장한다 — 현행 EP_PRM_APP 패턴
  * 계승(CLAUDE.md 2조). 학적이 바뀌어도 "응시 당시" 소속으로 집계가 재현돼야 한다.
  */
-const pendingDiagnosisKeys = new Map<string,string>()
-export async function completeDiagnosis(student: StudentData, testId: string): Promise<void> {
-  const key = pendingDiagnosisKeys.get(testId) ?? crypto.randomUUID()
-  pendingDiagnosisKeys.set(testId,key)
-  await api('/development/diagnosis/'+encodeURIComponent(testId)+'/complete', {
-    method:'POST',headers:{'Idempotency-Key':key},
-  })
+export async function importDiagnosis(student: StudentData, testId: string) {
+  const response = await api<{found:number; imported:number; updated:number; unchanged:number; incomplete:number; message:string}>(
+    '/diagnosis/external/'+encodeURIComponent(testId)+'/import', {method:'POST'})
   await Promise.all([loadStudentDiagnoses(student.id),loadProfiles()])
-  pendingDiagnosisKeys.delete(testId)
+  return response
 }
 
 // ── 진단 결과 카드 (라운지) ──────────────────────────────────────────────

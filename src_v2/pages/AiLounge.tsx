@@ -8,6 +8,7 @@ import { getPipelineState } from '../data/pipeline'
 import StudentStatCards from '../components/StudentStatCards'
 import CareerJourneyCard from '../components/CareerJourneyCard'
 import NextStepBanner from '../components/NextStepBanner'
+import AiCommentCard from '../../shared/AiCommentCard'
 import { LockedContent } from '../components/LockedContent'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
 import { getCompetencyAxes } from '../data/competency'
@@ -79,6 +80,7 @@ export default function AiLounge() {
     <NextStepBanner />
     <section className="welcome reveal"><div><small>{student.major}{student.grade ? ` ${student.grade}학년` : ''}</small><h1>안녕하세요, <span>{studentDisplayName(student.name, student.id)}</span>님.<br />오늘의 커리어 여정을 시작해 볼까요?</h1></div><div className="student-type"><span className="type-copy"><small>나의 진로 유형</small><b>{typeLabel(type)}</b><span>{meta?.goal ?? '진단 결과가 연계되면 유형을 확인할 수 있습니다.'}</span></span></div></section>
     <StudentStatCards stats={stats} />
+    <AiCommentCard studentId={student.id} kind="comprehensive" />
     <div className="dashboard-grid">
       <CareerJourneyCard journey={buildCareerJourney(getPipelineState(student))} title="나의 진로 여정" desc="내 CARE 7+의 현재 위치입니다." className="reveal" id="journey" />
 

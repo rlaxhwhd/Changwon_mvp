@@ -4,8 +4,8 @@ import { LuTarget } from 'react-icons/lu'
 import { typeLabel } from '../../src_v2/data/careerProcess'
 import { getHeadlineCompetency, getStudentCounselRequests } from '../../src_v2/data/students'
 import type { StudentData } from '../../src_v2/data/students'
-import { fetchAcademic, saveJobInterest, type AcademicSnapshot } from '../../src_v2/data/academic/repository'
-import { availableJobs, deriveSkillTree } from '../../src_v2/data/academic'
+import { fetchAcademic, type AcademicSnapshot } from '../../src_v2/data/academic/repository'
+import { deriveSkillTree } from '../../src_v2/data/academic'
 import type { CourseRow } from '../../src_v2/data/academic'
 import { getActiveCounselorId } from '../data/counselors'
 import { getRecordsByStudent } from '../data/counselRecords'
@@ -25,12 +25,8 @@ import './RoadmapCreatePanel.css'
 // 데이터는 공유한다 — 재료를 뽑는 것은 UI 가 아니라 데이터층이다(academic 리포지토리).
 // 학생 화면은 useSkillTree 훅(활성 학생 고정)을 쓰지만 여기는 담당 학생 id 로 직접 부른다.
 //
-// 흐름: 접힘(가운데 생성 버튼) → 재료 3종 → AI 직무분석 → 목표 직무 선택 → 생성
-// 15칸의 내용은 학생 시드 roadmapOutcome 에서 온다(roadmapGenerated.ts).
+// 흐름: 생성 재료 확인 → 목표 직무 직접 입력 → LLM 생성 → DB 초안 저장.
 // ─────────────────────────────────────────────────────────────────────────
-
-const ANALYZE_MS = 2400
-const GENERATE_MS = 2000
 
 /** 교과 구분 → 태그 색. 새 색을 만들지 않고 시안이 정한 4종에 매핑한다. */
 function courseTagClass(courseCls: string): string {
@@ -40,31 +36,6 @@ function courseTagClass(courseCls: string): string {
   return 'is-lib'
 }
 
-/** 진행률 애니메이션 한 벌 — 직무분석·로드맵생성 두 진행이 같이 쓴다. */
-function useProgressRun(active: boolean, duration: number, onDone: () => void) {
-  const [progress, setProgress] = useState(0)
-  const done = useRef(onDone)
-  useEffect(() => { done.current = onDone }, [onDone])
-
-  useEffect(() => {
-    if (!active) return
-    const start = performance.now()
-    let rafId = 0
-    const tick = (now: number) => {
-      const elapsed = now - start
-      setProgress(Math.min(100, Math.round((elapsed / duration) * 100)))
-      if (elapsed < duration) rafId = requestAnimationFrame(tick)
-      else done.current()
-    }
-    rafId = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafId)
-  }, [active, duration])
-
-  return progress
-}
-
-// ─── 아이콘 ───────────────────────────────────────────────────────────────
-// 시안이 쓴 outline 스프라이트(DESIGN.md §21). 이모지 금지.
 const ICON_PATHS: Record<string, ReactNode> = {
   spark: <><path d="M11 3l1.7 4.3L17 9l-4.3 1.7L11 15l-1.7-4.3L5 9l4.3-1.7z" /><path d="M18.5 14l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" /></>,
   users: <><path d="M15.5 20v-1.8a3.7 3.7 0 00-3.7-3.7H6.2A3.7 3.7 0 002.5 18.2V20" /><circle cx="9" cy="7.5" r="3.6" /><path d="M21.5 20v-1.8a3.7 3.7 0 00-2.8-3.6M16.5 4.2a3.7 3.7 0 010 6.7" /></>,
@@ -118,7 +89,7 @@ export interface RoadmapCreatePanelProps {
   onCancel?: () => void
 }
 
-type Phase = 'flow' | 'analyzing' | 'picking' | 'generating'
+type Phase = 'flow' | 'generating'
 
 export default function RoadmapCreatePanel({
   student, counselorName, counselRequestId, onGenerated, regenerate = false, onCancel,
@@ -127,10 +98,8 @@ export default function RoadmapCreatePanel({
   const [phase, setPhase] = useState<Phase>('flow')
   const [snap, setSnap] = useState<AcademicSnapshot | null>(null)
   const [loaded, setLoaded] = useState(false)
-  const [targetJobId, setTargetJobId] = useState<string | null>(null)
-  const [targetSetAt, setTargetSetAt] = useState<string | null>(null)
-  const [jobInput, setJobInput] = useState('')
-  const [jobInputError, setJobInputError] = useState('')
+  const [targetRole, setTargetRole] = useState(roadmapEnvelope(student.id)?.roadmap?.targetRole ?? '')
+  const generating = useRef(false)
 
   // 학사 스냅샷은 펼칠 때 한 번만 읽는다(리포지토리가 async 라 화면이 비동기 흐름이다).
   useEffect(() => {
@@ -145,15 +114,6 @@ export default function RoadmapCreatePanel({
   const data = useMemo(
     () => (snap ? deriveSkillTree(snap, student, getStudentCounselRequests(student.id)) : null),
     [snap, student])
-  const jobOptions = useMemo(() => (snap ? availableJobs(snap) : []), [snap])
-  // 적합도가 높은 순으로 — 위에서부터 고르게 한다.
-  const directions = useMemo(
-    () => [...(data?.directions ?? [])].sort((a, b) => b.fitPercent - a.fitPercent),
-    [data],
-  )
-  const target = directions.find(d => d.jobId === targetJobId) ?? null
-  const targetOption = jobOptions.find(job => job.jobId === targetJobId) ?? null
-
   // 코멘트를 아직 안 쓴 회차가 섞이므로 '코멘트가 있는' 최신 1건을 고른다.
   const lastComment = useMemo(
     () => getRecordsByStudent(student.id).find(r => r.comment?.trim()),
@@ -178,51 +138,23 @@ export default function RoadmapCreatePanel({
   const [generateError, setGenerateError] = useState('')
   const temporary = roadmapEnvelope(student.id)?.capabilities.providerSource === 'development-template'
 
-  const analyzeProgress = useProgressRun(phase === 'analyzing', ANALYZE_MS, () => setPhase('picking'))
-  const generateProgress = useProgressRun(phase === 'generating', GENERATE_MS, () => {
-    // 목표 직무는 상담에서 고른 것이 정본이다 — 시드 값보다 우선한다.
-    if (!basisRequest) {
-      setGenerateError(regenerate
-        ? '확정되거나 완료된 CARE 7+ 진로·취업 상담이 있어야 로드맵을 다시 만들 수 있습니다.'
-        : '완료된 CARE 7+ 진로·취업 상담이 있어야 로드맵을 만들 수 있습니다.')
+  const handleGenerate = async () => {
+    if (generating.current) return
+    const role = targetRole.trim()
+    if (!role) { setGenerateError('목표 직무를 입력해 주세요.'); return }
+    if (!basisRequest) { setGenerateError('완료된 CARE 7+ 상담을 확인해 주세요.'); return }
+    generating.current = true
+    setGenerateError('')
+    setPhase('generating')
+    try {
+      await generateRoadmap(student.id, basisRequest.id, role, `상담 ${counselorName}`)
+      onGenerated()
+    } catch (cause) {
+      setGenerateError(cause instanceof Error ? cause.message : '로드맵을 만들지 못했습니다. 다시 시도해 주세요.')
+    } finally {
+      generating.current = false
       setPhase('flow')
-      return
     }
-    generateRoadmap(student.id, basisRequest.id, target?.name, `상담 ${counselorName}`)
-      .then(() => { setGenerateError(''); onGenerated() })
-      .catch(cause => {
-        setGenerateError(cause instanceof Error ? cause.message : '로드맵을 만들지 못했습니다. 다시 시도해 주세요.')
-        setPhase('flow')
-      })
-  })
-
-  const pickJob = (jobId: string) => {
-    setTargetJobId(jobId)
-    setTargetSetAt(new Date().toISOString().slice(0, 10))
-    setPhase('flow')
-  }
-
-  /**
-   * 목록에 없는 직무를 직무사전에서 담아 분석한다.
-   * 관심직무가 하나도 없는 학생(신입생)은 이 경로로만 목표를 잡을 수 있다 —
-   * 적합도는 담긴 직무에 대해서만 계산되기 때문이다.
-   */
-  const handleAddJob = () => {
-    const query = jobInput.trim().toLocaleLowerCase()
-    if (!query) { setJobInputError('직무를 입력하거나 위 목록에서 선택하세요.'); return }
-    const existing = directions.find(d => d.name.toLocaleLowerCase() === query)
-    if (existing) { setJobInputError(''); setJobInput(''); pickJob(existing.jobId); return }
-    const candidate = jobOptions.find(job => job.label.toLocaleLowerCase() === query)
-    if (!candidate) { setJobInputError('등록된 직무 목록에서 선택할 수 있습니다.'); return }
-    saveJobInterest(student.id, candidate.jobId, true)
-      .then(() => fetchAcademic(student.id))
-      .then(next => {
-        setSnap(next)
-        setJobInputError('')
-        setJobInput('')
-        pickJob(candidate.jobId)
-      })
-      .catch(cause => setJobInputError(cause instanceof Error ? cause.message : '직무를 담지 못했습니다. 다시 시도해 주세요.'))
   }
 
   // 재료 2 — 수강했거나 수강 중인 과목만 재료로 쓴다.
@@ -385,123 +317,25 @@ export default function RoadmapCreatePanel({
         <span className="air-tail" style={{ left: '36.8%' }} />
       </div>
 
-      {/* 분석·생성 중에는 플로우 자리를 진행 표시로 바꿔 끼운다 —
-          이미 학생 상세 모달 안이라 모달을 한 겹 더 얹지 않는다. */}
-      {phase === 'analyzing' || phase === 'generating' ? (
-        <div className="air-run" aria-live="polite">
-          <h4>{temporary ? (phase === 'analyzing' ? '목표 직무 목록을 준비하고 있습니다' : '임시 로드맵을 생성하고 있습니다') : (phase === 'analyzing' ? 'AI가 직무 적합도를 분석중입니다' : 'AI가 맞춤형 로드맵을 생성중입니다')}</h4>
-          <p>
-            {phase === 'analyzing'
-              ? '수강 이력과 스펙을 직무 요구역량과 대조합니다'
-              : `${target?.name ?? ''} 기준으로 3축 15칸을 구성합니다`}
-          </p>
-          <div className="air-run-bar">
-            <i style={{ width: `${phase === 'analyzing' ? analyzeProgress : generateProgress}%` }} />
-          </div>
-          <span className="air-run-pct">{phase === 'analyzing' ? analyzeProgress : generateProgress}%</span>
-          {/* 서버가 거절하면 사실대로 보여 준다 — 진행률만 채우고 성공한 척하지 않는다. */}
-        </div>
-      ) : phase === 'picking' ? (
-        <div className="air-pick">
-          <div className="air-pick-head">
-            <h4>목표 직무를 선택하세요</h4>
-            <button type="button" className="admin-btn sm" onClick={() => setPhase('flow')}>닫기</button>
-          </div>
-          {directions.length === 0 ? (
-            <p className="air-pick-empty">
-              담긴 관심 직무가 없어 적합도를 낼 대상이 없습니다. 아래에서 직무를 담아 분석하세요.
-            </p>
-          ) : (
-            <div className="air-pick-list">
-              {directions.map(d => (
-                <button
-                  key={d.jobId}
-                  type="button"
-                  className={`air-pick-item${targetJobId === d.jobId ? ' is-on' : ''}`}
-                  onClick={() => pickJob(d.jobId)}
-                >
-                  <strong>{d.name}</strong>
-                  <small>{d.subtitle}</small>
-                  <span className="air-pick-fit">적합도 {d.fitPercent}%</span>
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* 목록에 없는 직무 — 직무사전에서 담아 그 자리에서 분석한다. */}
-          <div className="air-pick-add">
-            <input
-              value={jobInput}
-              onChange={event => { setJobInput(event.target.value); setJobInputError('') }}
-              onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); handleAddJob() } }}
-              list="rcp-job-options"
-              placeholder="분석할 직무를 입력해 추가"
-              aria-label="분석할 직무 입력"
-            />
-            <datalist id="rcp-job-options">
-              {jobOptions.map(job => <option key={job.jobId} value={job.label} />)}
-            </datalist>
-            <button type="button" className="admin-btn admin-btn-primary sm" onClick={handleAddJob}>추가</button>
-          </div>
-          {jobInputError && <p className="air-pick-error">{jobInputError}</p>}
+      {phase === 'generating' ? (
+        <div className="air-run" role="status" aria-live="polite" aria-busy="true">
+          <h4>AI가 맞춤형 로드맵을 생성하고 있습니다</h4>
+          <p>{targetRole.trim()} 기준으로 진단·상담·수강 정보와 내부 근거를 검토하고 있습니다.</p>
+          <p>생성이 끝나면 3축 15칸 초안을 DB에 저장합니다. 잠시 기다려 주세요.</p>
         </div>
       ) : (
-        <div className="air-flow">
-          <div className="air-flow-card">
-            <h4><AirIcon name="brain" />AI 종합 분석</h4>
-            <ul>
-              <li><AirIcon name="check-circle" />진단 결과 + 수강 패턴 + 스펙 분석</li>
-              <li><AirIcon name="check-circle" />직무 요구역량 매칭 및 역량 갭 분석</li>
-              <li><AirIcon name="check-circle" />개인 성장 우선순위 도출</li>
-            </ul>
-          </div>
-
-          <span className="air-chev" aria-hidden="true">
-            <AirIcon name="chev" /><AirIcon name="chev" /><AirIcon name="chev" />
-          </span>
-
-          <button
-            type="button"
-            className="air-orb"
-            onClick={() => setPhase('analyzing')}
-            disabled={!loaded}
-          >
-            <AirIcon name="spark" className="air-orb-star" />
-            <span className="air-orb-label">{temporary ? '목표 직무 선택' : 'AI 직무분석'}</span>
-          </button>
-
-          <span className="air-chev" aria-hidden="true"><AirIcon name="chev" /></span>
-
-          <div className="air-flow-card">
-            <h4><AirIcon name="target" />목표 직무 설정</h4>
-            <div className="air-job-box">
-              <p className={`air-job-name${target ? '' : ' is-empty'}`}>
-                {target ? target.name : '직무를 선택하세요'}
-              </p>
-              <dl className="air-job-meta">
-                <dt>직무 그룹</dt><dt>적합도</dt><dt>설정일</dt>
-                <dd>{targetOption?.category ?? target?.subtitle ?? '—'}</dd>
-                <dd>{target ? `${target.fitPercent}%` : '—'}</dd>
-                <dd>{targetSetAt ?? '—'}</dd>
-              </dl>
-            </div>
-          </div>
-
-          <span className="air-chev" aria-hidden="true"><AirIcon name="chev" /></span>
-
-          <button
-            type="button"
-            className="air-gen"
-            onClick={() => { setGenerateError(''); setPhase('generating') }}
-            disabled={!target || !canGenerate || !basisRequest}
-          >
-            <b><AirIcon name="spark" />{temporary ? '임시 로드맵 생성' : 'AI분석 / 로드맵 생성'}</b>
-            <small>
-              {!canGenerate ? '로드맵 생성 서비스 설정을 확인하세요'
-                : !basisRequest ? '확정된 CARE 7+ 상담이 필요합니다'
-                : target ? '선택한 직무의 로드맵 1개 생성' : '목표 직무를 먼저 설정하세요'}
-            </small>
-          </button>
+        <div className="air-flow-card rcp-target-input">
+          <h4><AirIcon name="target" />목표 직무 직접 입력</h4>
+          <label htmlFor={`rcp-target-${student.id}`}>목표 직무</label>
+          <input id={`rcp-target-${student.id}`} value={targetRole} maxLength={200}
+            placeholder="예: 자동차 부품 품질관리 엔지니어"
+            onChange={event => { setTargetRole(event.target.value); setGenerateError('') }} />
+          <p>직무명과 희망 업무를 자유롭게 입력하세요. 입력한 내용은 AI 로드맵 생성의 기준으로 사용됩니다.</p>
+          <button type="button" className="admin-btn admin-btn-primary"
+            disabled={!targetRole.trim() || !canGenerate || !basisRequest}
+            onClick={() => { void handleGenerate() }}>AI 분석 · 로드맵 생성 및 저장</button>
+          {!canGenerate && <p>로드맵 생성 서비스 설정을 확인해 주세요.</p>}
+          {!basisRequest && <p>완료된 CARE 7+ 상담이 필요합니다.</p>}
         </div>
       )}
 

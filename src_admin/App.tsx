@@ -3,6 +3,7 @@ import MissionManagement from './pages/MissionManagement'
 import QuestManagement from './pages/QuestManagement'
 import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
 import Layout from './components/Layout'
+import Chatbot from '../shared/Chatbot'
 import Login from './pages/Login'
 import SystemManagement from './pages/SystemManagement'
 import SurveyForms from './pages/SurveyForms'
@@ -65,7 +66,7 @@ import type { StaffRole } from './data/schema/staff'
  *  ★ 되살릴 때는 아래 한 줄의 주석만 풀면 된다. */
 function RequireLogin() {
   if (!hasActiveSession()) return <Navigate to="/login" replace />
-  return <Outlet />
+  return <><Outlet /><Chatbot /></>
 }
 
 /** 역할 가드 — 허용 역할이 아니면 홈으로. navConfig의 섹션 roles와 짝을 이룬다.

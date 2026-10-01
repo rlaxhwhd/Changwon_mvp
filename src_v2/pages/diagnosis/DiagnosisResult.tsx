@@ -3,11 +3,11 @@ import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import {
   getRequiredTests,
-  getModuleByTestId,
   typeLabel,
   type TestStatus,
 } from '../../data/careerProcess'
-import { completeDiagnosis, getModuleStatusFor, getStudentType } from '../../data/pipeline'
+import { importDiagnosis, getModuleStatusFor, getStudentType } from '../../data/pipeline'
+import { externalDiagnosisLinks, diagnosisAttempts } from '../../../shared/diagnosisStore'
 import NextStepBanner from '../../components/NextStepBanner'
 import { getActiveStudent } from '../../data/students'
 import './EmploymentTest.css'
@@ -58,34 +58,28 @@ export default function DiagnosisResult() {
   const availableCount = modulesWithStatus.filter(m => m.status === 'available').length
   const lockedCount = modulesWithStatus.filter(m => m.status === 'locked').length
 
-  // 응시 확인 — 실제 검사 문항이 없으므로(판정식 미확정) "응시했다"는 사실만 기록한다.
-  const [pendingTestId, setPendingTestId] = useState<string | null>(null)
-  const [saving,setSaving] = useState(false)
+  const [saving, setSaving] = useState<string | null>(null)
   const [saveError,setSaveError] = useState('')
-  const pendingModule = pendingTestId ? getModuleByTestId(pendingTestId) : undefined
-
-  const handleCardAction = (testId: string, status: TestStatus) => {
-    if (status === 'locked') return
-    if (status === 'done') navigate(`/diagnosis/employment/${testId}`)
-    else setPendingTestId(testId)
-  }
-
-  const confirmAttempt = async () => {
-    if (!pendingTestId || saving) return
-    setSaving(true); setSaveError('')
+  const [notice,setNotice] = useState('')
+  const importResult = async (testId: string) => {
+    if (saving) return
+    setSaving(testId); setSaveError(''); setNotice('')
     try {
-    await completeDiagnosis(student, pendingTestId)
-    setPendingTestId(null)
-    // 응시 결과가 유형·게이트를 바꾼다 — 화면 전체가 새 상태를 봐야 한다.
-    navigate(0)
-    } catch(e) { setSaveError(e instanceof Error ? e.message : '저장에 실패했습니다.') }
-    finally { setSaving(false) }
+      const response = await importDiagnosis(student, testId)
+      setNotice(response.message)
+    } catch (error) { setSaveError(error instanceof Error ? error.message : String(error)) }
+    finally { setSaving(null) }
   }
 
   return (
     <div className="de-wrap">
       {/* 진단이 남은 학생에게는 여기서도 다음 걸음을 짚어 준다(끝난 학생에겐 안 뜬다). */}
       <NextStepBanner />
+      <div className="de-access-notice" role="note">
+        외부 검사 사이트가 새 탭으로 열립니다. 학번을 정확히 입력해 응시한 뒤 이 페이지에서 ‘결과 가져오기’를 눌러 주세요.
+      </div>
+      {notice && <p role="status" className="de-access-notice">{notice}</p>}
+      {saveError && <p role="alert" className="de-access-notice">{saveError}</p>}
 
       <section className="de-hero">
         <div className="de-hero-visual" aria-label="AI 홀로그램 진단 이미지">
@@ -185,19 +179,34 @@ export default function DiagnosisResult() {
               </div>
             </div>
 
-            <button
+            {result.status === 'available' && externalDiagnosisLinks[result.testId] ? <a
+              className="de-start-btn de-start-btn--available"
+              href={externalDiagnosisLinks[result.testId]} target="_blank" rel="noopener noreferrer">
+              검사 시작 <i className="fa-solid fa-arrow-up-right-from-square" aria-label="새 탭" />
+            </a> : <button
               className={`de-start-btn de-start-btn--${result.status}`}
-              onClick={() => handleCardAction(result.testId, result.status)}
-              disabled={result.status === 'locked'}
+              onClick={() => navigate(`/diagnosis/employment/${result.testId}`)}
+              disabled={result.status !== 'done'}
             >
               {result.status === 'done' && <>결과 보기<i className="fa-solid fa-arrow-right" /></>}
-              {result.status === 'available' && <>검사 시작<i className="fa-solid fa-arrow-right" /></>}
+              {result.status === 'available' && <>검사 연동 준비 중</>}
               {result.status === 'locked' && <><i className="fa-solid fa-lock" />선행 검사 완료 후 응시</>}
-            </button>
+            </button>}
+            {result.status !== 'locked' && externalDiagnosisLinks[result.testId] && <div className="de-external-actions">
+              {result.status === 'done' && !diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.source === 'hrtest') &&
+                <a href={externalDiagnosisLinks[result.testId]} target="_blank" rel="noopener noreferrer">실제 검사 응시 (새 탭)</a>}
+              <button type="button" disabled={saving !== null} onClick={() => void importResult(result.testId)}>
+                {saving === result.testId ? '결과 조회 중…' : '결과 가져오기'}
+              </button>
+            </div>}
+            {diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.isCurrent && a.status === '응답 누락') &&
+              <p role="status" className="de-recent-date">응답 누락 · 담당자 확인 필요</p>}
+            {diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.isCurrent && a.status === '유형 확인 필요') &&
+              <div className="de-external-actions"><span>유형 확인 필요</span><button type="button" onClick={() => navigate(`/diagnosis/employment/${result.testId}`)}>수신 결과 확인</button></div>}
 
             <div className="de-recent-date">
               {result.status === 'done' ? (
-                <><i className="fa-regular fa-calendar-check" /> 최근 검사일시 {result.recentAt}</>
+                <><i className="fa-regular fa-calendar-check" /> 최근 검사일시 {diagnosisAttempts.find(a => a.studentId === student.id && a.testId === result.testId && a.isCurrent)?.completedAt?.slice(0,10) ?? '—'}</>
               ) : (
                 <><i className="fa-solid fa-circle-info" /> 상태: {STATUS_LABEL[result.status]}</>
               )}
@@ -220,43 +229,6 @@ export default function DiagnosisResult() {
           <i className="fa-solid fa-arrow-up-right-from-square" />
         </button>
       </section>
-
-      {/* 응시 확인 — 누르면 되돌릴 수 없는 기록이 남으므로 한 번 묻는다. */}
-      <Modal
-        open={pendingModule != null}
-        onClose={() => setPendingTestId(null)}
-        title={pendingModule ? `${pendingModule.name} 응시` : ''}
-        size="sm"
-      >
-        {pendingModule && (
-          <div className="de-attempt-confirm">
-            <p className="de-attempt-decides">
-              <i className="fa-solid fa-circle-info" />
-              {pendingModule.decides}
-            </p>
-            <dl className="de-attempt-meta">
-              <div><dt>소요 시간</dt><dd>{pendingModule.time}</dd></div>
-              <div><dt>문항 수</dt><dd>{pendingModule.questions}</dd></div>
-              <div><dt>진단 영역</dt><dd>{pendingModule.factors.map(f => f.name).join(' · ')}</dd></div>
-            </dl>
-            {/* 실제 검사는 외부 진단 사이트의 개별 링크에서 진행하고 결과를 API 로 받아온다(연결 전).
-                그때까지는 이 버튼이 임의 결과를 DB 에 남겨 유형·후속진단·게이트를 돌려 볼 수 있게 한다. */}
-            <p className="de-attempt-note">
-              검사 문항·채점 엔진은 아직 연결되지 않았습니다. 이 버튼은 <b>임의의 결과를 개발 테스트 이력으로 DB에 저장</b>합니다.
-              실제 검사 결과가 아니며, 실제 검사는 외부 진단 링크에서 진행한 뒤 결과를 API로 받아옵니다.
-            </p>
-            <div className="de-attempt-actions">
-              <button type="button" disabled={saving} className="de-attempt-cancel" onClick={() => setPendingTestId(null)}>
-                취소
-              </button>
-              <button type="button" disabled={saving} className="de-attempt-submit" onClick={() => void confirmAttempt()}>
-                {saving ? '저장 중…' : '개발 테스트 기록'} <i className="fa-solid fa-arrow-right" />
-              </button>
-            </div>
-            {saveError && <p role="alert">{saveError}</p>}
-          </div>
-        )}
-      </Modal>
 
       <Modal
         open={isGuideOpen}

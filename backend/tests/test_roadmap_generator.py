@@ -21,6 +21,28 @@ def outcome():
         for axis in ('IAP', 'CORE', 'GROWTH')]}
 
 
+def test_local_rag_validates_draft_and_keeps_evidence(client, monkeypatch):
+    monkeypatch.setattr(settings, 'roadmap_provider', 'local-rag')
+    monkeypatch.setattr(settings, 'chatbot_enabled', True)
+    monkeypatch.setattr(settings, 'rag_enabled', True)
+    evidence = [{'id': 'R1', 'title': 'Reviewed policy', 'snippet': 'Three axes', 'version': 'test'}]
+    monkeypatch.setattr(generator.rag, 'retrieve_sync', lambda query, kind: evidence)
+    real_client = httpx.Client
+    calls = []
+    def handler(request):
+        calls.append(json.loads(request.content))
+        return httpx.Response(200, json={'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(outcome())}}]})
+    monkeypatch.setattr(generator.httpx, 'Client', lambda **kw: real_client(transport=httpx.MockTransport(handler)))
+    snapshot = {'student': {'major': 'IT', 'grade': 3}, 'targetRole': 'Backend engineer', 'typeContext': {},
+                'counsel': {}, 'certificates': [], 'jobInterests': [], 'courses': [], 'diagnoses': []}
+    result = generator.generate_local_rag(snapshot)
+    assert len(result['axes']) == 3 and all(len(axis['cells']) == 5 for axis in result['axes'])
+    assert result['_source']['ragUsed'] and result['_input']['ragSources'] == evidence
+    assert json.loads(calls[0]['messages'][1]['content'])['knowledge'] == evidence
+    assert calls[0]['response_format']['type'] == 'json_schema'
+    assert generator.provider_name() == 'local-rag'
+
+
 @pytest.fixture
 def provider(monkeypatch):
     monkeypatch.setattr(settings, 'roadmap_provider', 'openai-compatible')
@@ -103,3 +125,23 @@ def test_explicit_fixture_provider_is_disabled_in_production(monkeypatch):
     monkeypatch.setattr(settings, 'roadmap_provider', 'fixture')
     monkeypatch.setattr(settings, 'environment', 'production')
     assert generator.provider_name() is None
+
+
+def test_llm_wait_has_no_open_database_transaction(client, provider, monkeypatch):
+    from psycopg.pq import TransactionStatus
+    captured = {}
+    original = generator.generation_input
+    def inputs(conn, *args):
+        captured['conn'] = conn
+        return original(conn, *args)
+    monkeypatch.setattr(generator, 'generation_input', inputs)
+    def handler(request):
+        assert captured['conn'].info.transaction_status == TransactionStatus.IDLE
+        return httpx.Response(200, json={'choices': [{'finish_reason': 'stop',
+            'message': {'content': json.dumps(outcome())}}]})
+    monkeypatch.setattr(generator, 'provider_client', lambda: httpx.Client(transport=httpx.MockTransport(handler)))
+    plan = client.get('/api/v1/students/chaewon/roadmap', headers=headers('career_kim')).json()['roadmap']
+    response = client.post('/api/v1/students/chaewon/roadmap/regenerate', headers=KEY('career_kim'), json={
+        'counselRequestId': care7_request('chaewon'), 'targetRole': 'Backend engineer',
+        'expectedRoadmapVersion': plan['roadmapVersion'], 'expectedVersion': plan['version']})
+    assert response.status_code == 200, response.text

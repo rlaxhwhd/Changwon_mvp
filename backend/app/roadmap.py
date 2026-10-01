@@ -192,6 +192,8 @@ def capabilities_for(conn, user, student, row):
         'canConfirm': bool(manage and row and row['status_code'] != 'CONFIRMED'),
         'canGenerate': bool(manage and not row and available(student)),
         'canRegenerate': bool(manage and row and available(student)),
+        'undoGeneration': ('restore' if row['generation_undo']['previous'] else 'cancel')
+            if manage and row and row['status_code'] != 'CONFIRMED' and row.get('generation_undo') else None,
         'canRequestChange': user['kind'] == 'STUDENT',
         'providerSource': provider_name() if available(student) else None,
     }
@@ -360,7 +362,7 @@ def touch(conn, user, uid):
 class Generate(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     counselRequestId: str = Field(min_length=1, max_length=200)
-    targetRole: str | None = Field(default=None, max_length=200)
+    targetRole: str | None = Field(default=None, min_length=1, max_length=200)
     expectedRoadmapVersion: int = Field(ge=0)
     expectedVersion: int = Field(ge=0)
     reason: str = Field(default='', max_length=2000)
@@ -499,6 +501,23 @@ def apply_requests(conn, user, uid, roadmap_version, requests, event_id, transac
            user['intg_uid'], entry.note, transaction_id))
 
 
+def next_generation(conn, uid):
+    # Cancellation must not reuse a generation number and accept stale clients.
+    return conn.execute('''SELECT COALESCE(max(v),0)+1 AS n FROM (
+      SELECT version AS v FROM dc.roadmap WHERE student_uid=%s
+      UNION ALL SELECT roadmap_version FROM dc.roadmap_event WHERE student_uid=%s
+      UNION ALL SELECT version FROM dc.roadmap_snapshot WHERE student_uid=%s) versions''',
+      (uid, uid, uid)).fetchone()['n']
+
+
+def generation_before(conn, uid, row):
+    previous = dict(row)
+    previous.pop('generation_undo', None)
+    return jsonable_encoder({'previous': previous,
+        'axes': conn.execute('SELECT * FROM dc.roadmap_axis WHERE student_uid=%s ORDER BY axis', (uid,)).fetchall(),
+        'items': conn.execute('SELECT * FROM dc.roadmap_item WHERE student_uid=%s ORDER BY axis,position', (uid,)).fetchall()})
+
+
 @router.post('/students/{identity}/roadmap/generate', status_code=201)
 def generate(identity: str, body: Generate, idempotency_key: str = Header(min_length=8, max_length=200),
              user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
@@ -516,21 +535,31 @@ def generate(identity: str, body: Generate, idempotency_key: str = Header(min_le
     if body.expectedRoadmapVersion or body.expectedVersion:
         fail(409, 'VERSION_CONFLICT', '아직 계획이 없습니다.', currentRoadmapVersion=0, currentVersion=0)
     counsel = check_counsel_basis(conn, uid, body.counselRequestId, lock=False, initial=True)
-    source = generate_outcome(conn, student, counsel, body.targetRole)
+    source = generate_outcome(conn, student, counsel, body.targetRole, before_network=conn.commit)
+    # The read-only input transaction ends before LLM I/O (production idle limit
+    # is shorter than inference). Reacquire idempotency and authorization after
+    # inference; competing duplicate calls can adopt only one saved result.
+    conn.execute('SET LOCAL jit=off')
+    digest, saved = idempotent(conn, user, route, idempotency_key, identity + body.model_dump_json())
+    if saved:
+        return saved
+    student = resolve_student(conn, user, identity)
+    require_plan_staff(conn, user)
     # Network I/O never holds the global lifecycle lock. Recheck after acquiring it.
     lifecycle_lock(conn, exclusive=False)
     if lock_plan(conn, uid) is not None:
         fail(409, 'INVALID_TRANSITION', '이미 계획이 있습니다. 새로 조회해 주세요.')
     counsel = check_counsel_basis(conn, uid, body.counselRequestId, initial=True)
     target_role = body.targetRole or source['targetRole']
-    run_id, suggestions = adopt_run(conn, user, student, counsel, source, target_role, 1)
+    generation = next_generation(conn, uid)
+    run_id, suggestions = adopt_run(conn, user, student, counsel, source, target_role, generation)
     row = conn.execute('''INSERT INTO dc.roadmap(student_uid,target_role,target_company,version,status_code,
-      basis_kind,counsel_request_id,ai_run_id,created_by,updated_by) VALUES(%s,%s,%s,1,'DRAFT','COUNSEL',%s,%s,%s,%s)
-      RETURNING *''', (uid, target_role, Jsonb(source['targetCompany']), counsel['id'], run_id,
+      basis_kind,counsel_request_id,ai_run_id,created_by,updated_by,generation_undo) VALUES(%s,%s,%s,%s,'DRAFT','COUNSEL',%s,%s,%s,%s,'{"previous":null}')
+      RETURNING *''', (uid, target_role, Jsonb(source['targetCompany']), generation, counsel['id'], run_id,
       user['intg_uid'], user['intg_uid'])).fetchone()
     write_plan_body(conn, source, uid, suggestions)
     transaction_id = uuid4()
-    plan_event(conn, user, uid, 1, 'CREATE', {'targetRole': target_role, 'aiRunId': run_id},
+    plan_event(conn, user, uid, generation, 'CREATE', {'targetRole': target_role, 'aiRunId': run_id},
                cause=('COUNSEL_REQUEST', counsel['id']), lock_after=row['lock_version'],
                reason_text=body.reason, transaction_id=transaction_id)
     result = plan_dto(conn, uid, row, as_of(conn), capabilities_for(conn, user, student, row))
@@ -559,7 +588,13 @@ def regenerate(identity: str, body: Regenerate, idempotency_key: str = Header(mi
         fail(404, 'NOT_FOUND', '계획이 없습니다.')
     check_versions(row, body.expectedRoadmapVersion, body.expectedVersion)
     counsel = check_counsel_basis(conn, uid, body.counselRequestId, lock=False)
-    source = generate_outcome(conn, student, counsel, body.targetRole)
+    source = generate_outcome(conn, student, counsel, body.targetRole, before_network=conn.commit)
+    conn.execute('SET LOCAL jit=off')
+    digest, saved = idempotent(conn, user, route, idempotency_key, identity + body.model_dump_json())
+    if saved:
+        return saved
+    student = resolve_student(conn, user, identity)
+    require_plan_staff(conn, user)
     lifecycle_lock(conn, exclusive=False)
     row = lock_plan(conn, uid)
     if not row:
@@ -569,8 +604,9 @@ def regenerate(identity: str, body: Regenerate, idempotency_key: str = Header(mi
     transaction_id = uuid4()
     moment = as_of(conn)
     before = plan_dto(conn, uid, row, moment, {})
+    undo = generation_before(conn, uid, row) if not body.requests else None
     snapshot_plan(conn, user, uid, row, moment, transaction_id)
-    generation = row['version'] + 1
+    generation = next_generation(conn, uid)
     target_role = body.targetRole or source['targetRole']
     run_id, suggestions = adopt_run(conn, user, student, counsel, source, target_role, generation)
     # 구세대 칸은 이월하지 않는다. 완료·자동편입 칸도 전부 사라지고 스냅샷에만 남는다.
@@ -578,9 +614,9 @@ def regenerate(identity: str, body: Regenerate, idempotency_key: str = Header(mi
     conn.execute('DELETE FROM dc.roadmap_axis WHERE student_uid=%s', (uid,))
     row = conn.execute('''UPDATE dc.roadmap SET version=%s,status_code='DRAFT',target_role=%s,target_company=%s,
       basis_kind='COUNSEL',counsel_request_id=%s,ai_run_id=%s,confirmed_at=NULL,confirmed_by=NULL,
-      lock_version=lock_version+1,updated_at=now(),updated_by=%s WHERE student_uid=%s RETURNING *''',
+      lock_version=lock_version+1,updated_at=now(),updated_by=%s,generation_undo=%s WHERE student_uid=%s RETURNING *''',
       (generation, target_role, Jsonb(source['targetCompany']), counsel['id'], run_id,
-       user['intg_uid'], uid)).fetchone()
+       user['intg_uid'], Jsonb(undo) if undo else None, uid)).fetchone()
     write_plan_body(conn, source, uid, suggestions)
     event_id = plan_event(conn, user, uid, generation, 'REGENERATE',
                           {'targetRole': target_role, 'aiRunId': run_id}, before=before,
@@ -593,6 +629,72 @@ def regenerate(identity: str, body: Regenerate, idempotency_key: str = Header(mi
 
 
 # ── 편집 ────────────────────────────────────────────────────────────────
+
+class UndoGeneration(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    expectedRoadmapVersion: int = Field(ge=1)
+    expectedVersion: int = Field(ge=1)
+
+
+@router.post('/students/{identity}/roadmap/generation/undo')
+def undo_generation(identity: str, body: UndoGeneration,
+                    idempotency_key: str = Header(min_length=8, max_length=200),
+                    user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    route = 'POST /students/roadmap/generation/undo'
+    digest, saved = idempotent(conn, user, route, idempotency_key, identity + body.model_dump_json())
+    if saved:
+        return saved
+    lifecycle_lock(conn, exclusive=False)
+    student = resolve_student(conn, user, identity)
+    require_plan_staff(conn, user)
+    uid = student['intg_uid']
+    row = lock_plan(conn, uid)
+    if not row:
+        fail(409, 'INVALID_TRANSITION', '취소할 로드맵이 없습니다.')
+    check_versions(row, body.expectedRoadmapVersion, body.expectedVersion)
+    undo = row.get('generation_undo')
+    if row['status_code'] == 'CONFIRMED' or not undo:
+        fail(409, 'INVALID_TRANSITION', '새로 생성한 로드맵은 최종 확정 전까지만 되돌릴 수 있습니다.')
+    transaction_id = uuid4()
+    snapshot_plan(conn, user, uid, row, as_of(conn), transaction_id)
+    previous = undo['previous']
+    generation = next_generation(conn, uid)
+    conn.execute('DELETE FROM dc.roadmap_item WHERE student_uid=%s', (uid,))
+    conn.execute('DELETE FROM dc.roadmap_axis WHERE student_uid=%s', (uid,))
+    if previous is None:
+        conn.execute('DELETE FROM dc.roadmap WHERE student_uid=%s', (uid,))
+        result = {'restored': False, 'roadmap': None}
+    else:
+        row_after = conn.execute('''UPDATE dc.roadmap SET target_role=%s,target_company=%s,
+          version=%s,lock_version=lock_version+1,status_code=%s,basis_kind=%s,counsel_request_id=%s,
+          ai_run_id=%s,confirmed_at=%s,confirmed_by=%s,created_at=%s,created_by=%s,
+          updated_at=now(),updated_by=%s,generation_undo=NULL WHERE student_uid=%s RETURNING *''',
+          (previous['target_role'], Jsonb(previous['target_company']), generation, previous['status_code'],
+           previous['basis_kind'], previous['counsel_request_id'], previous['ai_run_id'],
+           previous['confirmed_at'], previous['confirmed_by'], previous['created_at'], previous['created_by'],
+           user['intg_uid'], uid)).fetchone()
+        for axis in undo['axes']:
+            conn.execute('''INSERT INTO dc.roadmap_axis(student_uid,axis,headline,rationale,editor_note,ai_suggestion_id)
+              VALUES(%s,%s,%s,%s,%s,%s)''',
+              (uid, axis['axis'], axis['headline'], axis['rationale'], axis['editor_note'], axis['ai_suggestion_id']))
+        # Restore all original cells, including hidden/expired cells and completion
+        # provenance. Generated columns remain computed by PostgreSQL.
+        columns = ('student_uid,axis,id,position,title,priority,importance,why,status,program_id,entry,'
+                   'expires_at,version,origin_code,completed_at,completion_source_code,completion_ref,'
+                   'created_at,ai_suggestion_id,editor_note,entry_event_id')
+        for item in undo['items']:
+            item['version'] += 1
+            conn.execute(f'''INSERT INTO dc.roadmap_item({columns}) SELECT {columns}
+              FROM jsonb_populate_record(NULL::dc.roadmap_item,%s)''', (Jsonb(item),))
+        result = {'restored': True,
+                  'roadmap': plan_dto(conn, uid, row_after, as_of(conn), capabilities_for(conn, user, student, row_after))}
+    plan_event(conn, user, uid, generation, 'UNDO_GENERATION',
+               {'restoredVersion': previous['version'] if previous else None, 'cancelledVersion': row['version']},
+               before={'roadmapVersion': row['version'], 'aiRunId': row['ai_run_id']},
+               lock_before=row['lock_version'], lock_after=row['lock_version'] + 1 if previous else None,
+               reason_text='생성 직전 로드맵 복원' if previous else '첫 로드맵 생성 취소',
+               transaction_id=transaction_id)
+    return remember(conn, user, route, idempotency_key, digest, result)
 
 class RequestRef(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)

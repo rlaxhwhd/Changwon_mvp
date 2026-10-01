@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
+import Chatbot from '../shared/Chatbot'
 import Landing from './pages/Landing'
 // 순차 게이팅은 라우트 한 곳에서 건다 — 화면은 자기가 잠겼는지 알 필요가 없다(CLAUDE.md 13조).
 import StageGate from './components/StageGate'
@@ -151,5 +152,5 @@ const router = createBrowserRouter(
 )
 
 export default function App() {
-  return <RouterProvider router={router} />
+  return <><RouterProvider router={router} /><Chatbot /></>
 }

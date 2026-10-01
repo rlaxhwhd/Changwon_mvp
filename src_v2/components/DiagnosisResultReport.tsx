@@ -3,6 +3,7 @@ import { loadStudentDiagnoses } from '../../shared/diagnosisStore'
 import { getModuleByTestId, type DiagnosisModule } from '../data/careerProcess'
 import { getDiagnosisResult, getResultRows, type DiagnosisResult, type FactorLevel } from '../data/diagnosisResults'
 import './DiagnosisResultReport.css'
+import AiCommentCard from '../../shared/AiCommentCard'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 진단 상세 결과표 — 학생 포털(src_v2) · 교직원 포털(src_admin) 공용 컴포넌트.
@@ -17,7 +18,7 @@ import './DiagnosisResultReport.css'
 //   상담사 : .diagnosis-modal 안에 넣어 쓴다
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LEVEL_CLASS: Record<FactorLevel | '미등록', string> = { 낮음: 'low', 보통: 'mid', 높음: 'high', 미등록: '' }
+const LEVEL_CLASS: Record<FactorLevel | '미등록', string> = { 매우낮음:'low', 낮음: 'low', 보통: 'mid', 높음: 'high', 매우높음:'high', 미등록: '' }
 
 function SparkIcon() {
   return (
@@ -89,11 +90,13 @@ export default function DiagnosisResultReport({
 
   const module: DiagnosisModule | undefined = getModuleByTestId(found.testId)
   const rows = getResultRows(found, module)
-  const missing = module?.factors.filter(factor => !rows.some(row => row.name === factor.name)) ?? []
+  const missing = found.source === 'hrtest' ? [] : module?.factors.filter(factor => !rows.some(row => row.name === factor.name)) ?? []
 
   return (
     <div className="drr" style={style}>
-      {found.source?.includes('fixture') && <p className="drr-empty">기존 예시 데이터 기반의 개발 검증 결과입니다.</p>}
+      {(found.source?.includes('fixture') || found.source?.startsWith('development:')) && <p className="drr-empty">기존 개발 검증 이력입니다. 실제 검사 결과가 아닙니다.</p>}
+      {found.source === 'hrtest' && <p className="drr-empty">검사기관에서 수신한 실제 결과입니다. 점수와 수준은 제공된 값을 그대로 표시합니다.</p>}
+      {found.needsReview && <p role="status" className="drr-empty">유형 확인이 필요합니다. 점수는 보존하며 유형 확정·후속 검사 배정·AI 분석은 보류합니다. 담당자에게 확인해 주세요.</p>}
       {module?.factors.length === 0 && <p className="drr-empty">결과표 항목은 추가 예정입니다.</p>}
       <div className="drr-banner">
         <span className="drr-banner-headline">{missing.length || module?.factors.length === 0 ? '결과 항목 확인 필요' : found.headline}</span>
@@ -123,7 +126,7 @@ export default function DiagnosisResultReport({
                   <span className={`drr-level ${LEVEL_CLASS[r.level]}`}>{r.level}</span>
                 </td>
                 <td className="num">
-                  <span className="drr-score">{r.tScore.toFixed(2)}</span>
+                  <span className="drr-score">{r.tScore == null ? '점수 없음' : r.tScore.toFixed(2)}</span>
                 </td>
               </tr>
             ))}
@@ -140,11 +143,12 @@ export default function DiagnosisResultReport({
         <aside className="drr-comment">
           <span className="drr-comment-icon"><SparkIcon /></span>
           <div className="drr-comment-body">
-            <b>AI 코멘트</b>
+            <b>저장된 해석 코멘트</b>
             <p>{found.comment}</p>
           </div>
         </aside>
       )}
+      {!found.needsReview && <AiCommentCard studentId={studentId ?? found.studentId} kind="diagnosis" testId={found.testId} attemptNo={found.attemptNo} />}
     </div>
   )
 }

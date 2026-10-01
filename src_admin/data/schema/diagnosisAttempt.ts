@@ -12,9 +12,11 @@
 // ─────────────────────────────────────────────────────────────────────────────
 
 /** 응시 상태. '미응시'는 레코드로 저장하지 않고 로더가 파생한다(로스터 × 유형별 대상검사). */
-export type AttemptStatus = '미응시' | '진행중' | '완료'
+export type AttemptStatus = '미응시' | '진행중' | '완료' | '응답 누락' | '유형 확인 필요'
 
 export interface DiagnosisAttempt {
+  source?: string
+  isCurrent?: boolean
   /** 응시 id (dga_ prefix) */
   id: string
   /** 학생 id (studentRoster / src_v2 students 와 연결) */

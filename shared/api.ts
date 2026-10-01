@@ -10,7 +10,7 @@ export class ApiError extends Error {
 /** The identity selector is available only through the local development proxy.
  * The proxy supplies the secret token; it is never included in the browser build.
  */
-export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function apiResponse(path: string, init: RequestInit = {}): Promise<Response> {
   const identity = location.pathname.startsWith('/admin')
     ? localStorage.getItem('dc_active_staff')
     : localStorage.getItem('dc_active_student')
@@ -31,8 +31,14 @@ export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
       }).join('\n') : ''
     throw new ApiError(response.status,
       typeof error?.detail === 'string' ? error.detail
+        : error?.detail && typeof error.detail === 'object' && 'message' in error.detail && typeof error.detail.message === 'string' ? error.detail.message
         : validationMessages || error?.message || `요청에 실패했습니다. (${response.status})`)
   }
+  return response
+}
+
+export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await apiResponse(path, init)
   if (response.status === 204) return undefined as T
   return response.json() as Promise<T>
 }

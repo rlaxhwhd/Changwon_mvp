@@ -1,0 +1,15 @@
+.dc-ai-comment { margin: 20px 0; padding: 20px; border: 1px solid #dfe5ed; border-radius: 12px; background: #fff; color: #263345; font-size: 14px; line-height: 1.65; }
+.dc-ai-comment-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.dc-ai-comment-head strong { font-size: 16px; }
+.dc-ai-comment-head p { margin: 4px 0 0; color: #627186; }
+.dc-ai-comment button { flex-shrink: 0; padding: 8px 14px; border: 1px solid #d4dce7; border-radius: 8px; background: #f5f7fb; color: #263345; cursor: pointer; font: inherit; }
+.dc-ai-comment button:focus-visible, .dc-ai-comment summary:focus-visible { outline: 2px solid #5368b9; outline-offset: 3px; }
+.dc-ai-comment-result { margin-top: 16px; border-top: 1px solid #e8edf3; padding-top: 16px; }
+.dc-ai-comment-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.dc-ai-comment details { margin: 16px 0; }
+.dc-ai-comment summary { cursor: pointer; }
+.dc-ai-comment article { margin-top: 12px; padding-left: 12px; border-left: 2px solid #dfe5ed; }
+.dc-ai-comment small { display: block; color: #627186; }
+.dc-ai-comment article p { margin: 4px 0; }
+.dc-ai-comment [role=alert] { color: #a32d35; }
+@media (max-width: 600px) { .dc-ai-comment-head { flex-direction: column; } }

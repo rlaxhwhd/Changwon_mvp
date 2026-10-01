@@ -23,12 +23,22 @@ class Settings(BaseSettings):
     # ⚠ DB 백업에 포함되지 않는다 — 별도 백업이 필요하다.
     file_root: str = "var/files"
     file_max_bytes: int = 10 * 1024 * 1024
-    roadmap_provider: Literal['disabled', 'openai-compatible', 'fixture', 'development-template'] = 'disabled'
+    roadmap_provider: Literal['disabled', 'openai-compatible', 'fixture', 'development-template', 'local-rag'] = 'disabled'
     roadmap_api_url: str = 'https://api.openai.com/v1/chat/completions'
     roadmap_model: str = ''
     roadmap_api_key: SecretStr = SecretStr('')
     roadmap_api_key_file: str | None = None
     roadmap_timeout_seconds: float = Field(default=45, ge=1, le=60)
+    chatbot_enabled: bool = False
+    chatbot_api_url: str = 'http://llm-tunnel:11435/v1/chat/completions'
+    chatbot_api_host_header: str = ''
+    chatbot_model: str = 'qwen3-32b-chat'
+    chatbot_searxng_url: str = 'http://searxng:8080'
+    chatbot_timeout_seconds: float = Field(default=120, ge=10, le=180)
+    rag_enabled: bool = False
+    rag_url: str = 'http://rag:8090'
+    rag_key_file: str | None = None
+    hrtest_key_file: str | None = None
 
     def connection_kwargs(self) -> dict:
         password = self.db_password

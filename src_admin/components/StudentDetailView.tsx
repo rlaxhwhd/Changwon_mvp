@@ -45,13 +45,14 @@ import EmptyState from './EmptyState'
 // 로드맵 생성은 상담사 전용 작업 화면이라 학생 포털과 코드를 공유하지 않는다.
 import RoadmapCreatePanel from './RoadmapCreatePanel'
 import { useRoadmap, useStore } from '../../shared/useRoadmapStore'
-import { roadmapEnvelope } from '../../shared/roadmapStore'
+import { roadmapEnvelope, undoGeneratedPlan } from '../../shared/roadmapStore'
 import { useAsyncAction } from '../../shared/useAsyncAction'
 import { confirmRoadmap } from '../data/roadmapOverrides'
 // 편집은 편집 페이지와 같은 본문을 쓴다 — 상담 중에 상세를 열어 둔 채로 고친다.
 import RoadmapEditorPanel from './RoadmapEditorPanel'
 import { getActiveCounselor } from '../data/counselors'
 import './StudentDetailView.css'
+import AiCommentCard from '../../shared/AiCommentCard'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 학생 상세 정보 공유 뷰 — 상담사 학생관리 페이지 / 조교·교수 '보기' 모달이 공유한다.
@@ -316,6 +317,9 @@ function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentDa
   // 카드 하나가 세 얼굴을 갖는다 — 보기 / 편집 / (재)생성. 상담 중에 화면을 옮기지
   // 않고 여기서 다 끝내야 한다.
   const [mode, setMode] = useState<'view' | 'edit' | 'create'>('view')
+  const undoAction = useAsyncAction()
+  const [undoPrompt, setUndoPrompt] = useState(false)
+  const undoKind = roadmapEnvelope(student.id)?.capabilities.undoGeneration
   const plan = getGoalPlan(student)
   const journey = getCareerJourney(student)
   const refresh = () => { setReloadKey(n => n + 1); setMode('view') }
@@ -369,6 +373,8 @@ function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentDa
                 {plan.confirmed ? <span className="badge mint">확정 v{plan.version}</span> : <span className="badge">초안</span>}
                 {canEdit && mode === 'view' && (
                   <>
+                    {undoKind && <button type="button" className="admin-btn sm" disabled={undoAction.saving}
+                      onClick={() => setUndoPrompt(true)}>{undoKind === 'restore' ? '이전 로드맵으로 되돌리기' : '로드맵 생성 취소'}</button>}
                     {canConfirm && (
                       <button type="button" className="admin-btn admin-btn-primary sm" disabled={confirmAction.saving} onClick={handleConfirm}>
                         <LuClipboardCheck /> {confirmAction.saving ? '확정 중…' : '로드맵 확정'}
@@ -391,6 +397,14 @@ function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentDa
           />
           <div data-slot="card-content">
             {confirmAction.error && <p className="sdv-goal-error" role="alert">{confirmAction.error}</p>}
+            {undoAction.error && <p className="sdv-goal-error" role="alert">{undoAction.error}</p>}
+            {undoPrompt && undoKind && <div className="sdv-goal-note" role="group" aria-label="로드맵 되돌리기 확인">
+              <p>{undoKind === 'restore' ? '새 초안과 생성 후 수정 내용을 취소하고, 생성 직전 로드맵과 완료 상태를 복원합니다.' : '생성한 초안과 수정 내용을 취소하고 로드맵이 없는 상태로 돌아갑니다.'} 생성 이력은 보관됩니다.</p>
+              <button type="button" className="admin-btn sm" disabled={undoAction.saving} onClick={() => {
+                void undoAction.run(async () => { await undoGeneratedPlan(student.id); setUndoPrompt(false); refresh() })
+              }}>{undoAction.saving ? '처리 중…' : '확인하고 되돌리기'}</button>
+              <button type="button" className="admin-btn sm" disabled={undoAction.saving} onClick={() => setUndoPrompt(false)}>유지하기</button>
+            </div>}
             {canConfirm && mode === 'view' && (
               <p className="sdv-goal-note">초안입니다. 내용을 확인한 뒤 「로드맵 확정」을 누르면 학생에게 공개되고 비교과·취업지원이 열립니다.</p>
             )}
@@ -737,7 +751,6 @@ function StarTab({ student }: { student: StudentData }) {
 // ── 본체 ───────────────────────────────────────────────────────────────────
 
 interface StudentDetailViewProps {
-  academic?: boolean
   studentId: string
   role: StaffRole
   /** 헤더 우측 액션 (예: 목록 버튼). 모달에서는 생략. */
@@ -779,17 +792,16 @@ function counselOwnerAsRoster(studentId: string): RosterStudent | undefined {
 }
 
 export default function StudentDetailView(props: StudentDetailViewProps) {
-  if (props.academic) return <AcademicStudentContent key={props.studentId} {...props} />
-  return <StudentDetailContent key={`${props.studentId}:${props.role}`} {...props} />
+  return <AcademicStudentContent key={`${props.studentId}:${props.role}`} {...props} />
 }
 
 /** The same public detail/modal entry point also accepts never-enrolled academic students. */
 function AcademicStudentContent(props: StudentDetailViewProps) {
   const { studentId } = props
-  const [data, setData] = useState<AcademicStudentDetail | null>(null)
+  const [data, setData] = useState<AcademicStudentDetail | null | undefined>(undefined)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
-  const [tab, setTab] = useState<'counsel' | 'program'>('counsel')
+  const [tab, setTab] = useState<'counsel' | 'program'>(props.initialTab === 'program' ? 'program' : 'counsel')
   useEffect(() => {
     let cancelled = false
     setError('')
@@ -798,7 +810,8 @@ function AcademicStudentContent(props: StudentDetailViewProps) {
     return () => { cancelled = true }
   }, [studentId, retry])
   if (error) return <div role="alert">{error}<button type="button" className="admin-btn" onClick={() => setRetry(n => n+1)}>다시 시도</button></div>
-  if (!data) return <p role="status">학생정보를 불러오는 중입니다…</p>
+  if (data === undefined) return <p role="status">학생정보를 불러오는 중입니다…</p>
+  if (data === null) return <StudentDetailContent {...props} />
   // Enrolled, accessible students retain the full shared diagnosis/counsel/roadmap tabs.
   // Academic IDs are integration UIDs; service profiles use aliases. Match the
   // academic student number against authorized profiles, then use their API ID.
@@ -806,7 +819,7 @@ function AcademicStudentContent(props: StudentDetailViewProps) {
   if (serviceStudent) return <StudentDetailContent {...props} studentId={serviceStudent.id} academicData={data} />
   const status = { REQ: '신청', CONFIRMED: '확정', DONE: '완료' }
   return <div className="sdv">
-    <AcademicStudentHeader data={data} />
+    <AcademicStudentHeader data={data} action={props.headerAction} />
     <StudentStatCards stats={academicStudentStats(data)} />
     <div className="admin-tabs" role="tablist" aria-label="학생 활동">
       <button type="button" role="tab" aria-selected={tab==='counsel'} className={`admin-tab${tab==='counsel'?' active':''}`} onClick={() => setTab('counsel')}>상담</button>
@@ -973,6 +986,7 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
 
       {/* 요약 지표 5장은 학생 라운지와 같은 공용 컴포넌트 — 수정은 StudentStatCards 한 곳에서만 */}
       <StudentStatCards stats={stats} />
+      <AiCommentCard studentId={student.id} kind="comprehensive" />
 
       <div className="admin-tabs" role="tablist">
         {visibleTabs.map(t => {
@@ -994,6 +1008,7 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
       {activeTab === 'diagnosis' && <DiagnosisTab student={student} />}
       {activeTab === 'counsel' && <CounselTab studentId={student.id} />}
       {activeTab === 'roadmap' && <RoadmapTab student={student} canEdit={canEdit} counselRequestId={counselRequestId} />}
+      {activeTab === 'roadmap' && <AiCommentCard studentId={student.id} kind="roadmap" />}
       {activeTab === 'program' && <ProgramTab studentId={student.id} academicRecords={academicData?.programs} />}
       {activeTab === 'gap' && <GapTab student={student} radar={radar} />}
       {activeTab === 'growth' && <GrowthTab student={student} />}

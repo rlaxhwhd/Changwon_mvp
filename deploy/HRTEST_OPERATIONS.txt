@@ -1,0 +1,62 @@
+HRTest integration release - 2026-10-01
+
+Deployed images:
+  dreamcatch-api:hrtest-20261001
+  dreamcatch-web:hrtest-20261001
+Only API/web were recreated. DB, SearXNG, RAG, Qdrant and LLM tunnel container IDs
+were unchanged. GPU server was not modified or restarted by this release.
+
+Flow: external test in a new browser tab, then an explicit result import action.
+No iframe, question submission, auto-completion or synthesized diagnosis scores.
+Student identity comes only from the authenticated student's stored student number.
+Routes: Core=base, C2=jinro, C3=deft, C4=ready at
+https://cwnu.hrtest.net/poll_before.asp?jst=...
+Results API: Core=core, C2=cares, C3=deft, C4=ready.
+C1/C5/C6 have no confirmed result/launch integration and remain unavailable.
+
+Core mapping: 진로미탐색형=T1, 진로설정형=T2, 역량성장형=T3,
+취업준비형=T4, 취약관리형=T5, 우수인재형=T6.
+The provider's original label remains in the report; the site's T1 label remains
+진로탐색형. Existing counseling type priority is preserved.
+incomplete=true: INCOMPLETE, no accepted completion, no type/AI/gate credit.
+Unclassified/unknown Core type: REVIEW, preserve scores and show confirmation
+required; no accepted completion, type assignment or diagnosis AI analysis.
+Do not infer why a result is unclassified.
+
+Storage:
+115_hrtest_results.sql and 116_hrtest_type_authority.sql were applied explicitly.
+Unrelated local migrations 110-113 were NOT applied to the company database.
+Existing development records remain untouched. Actual assessments take priority.
+External attempt identity is unique; identical imports do not add attempts.
+Provider score corrections update the same assessment and preserve received
+revisions in dc.hrtest_result_revision. Numeric projection retains NULL as missing.
+The old /development/diagnosis/{test}/complete endpoint now returns HTTP 410.
+
+Secrets: server-only /opt/dreamcatch/ai/secrets/hrtest_key, root:999 mode 0640,
+mounted at /run/secrets/hrtest_key for API uid 10001 / gid 999.
+DC_HRTEST_KEY_FILE points to that mount. Do not copy the key to frontend/local logs.
+The provider only accepts requests from the company's approved public egress IP.
+
+Validation:
+54 backend tests passed, including mapping, counsel priority, review/incomplete
+exclusion, duplicate imports, corrections, score/null preservation and app-role grants.
+Production frontend build passed (existing bundle-size/Vite warnings remain).
+Company database dump restored to dc_company_hrtest_20261001_test; targeted
+migrations and T1 import tested as dc_app, with the synthetic import rolled back.
+Chrome on CentOS: Core external page opens in a separate tab; no iframe.
+Core import HTTP 200 in 670ms; C2 2141ms, C3 176ms, C4 168ms.
+The checked student's completed results were empty in all four APIs. No real
+assessment was submitted or invented to manufacture an end-to-end success.
+The initial API secret-read error was corrected and the same browser action
+retested successfully. No console errors after retest; counseling page also clean.
+LLM /v1/models remained HTTP 200.
+
+Backup: /opt/dreamcatch/ai/hrtest-backup-20261001/
+  before.dump (custom-format PostgreSQL dump), compose.yaml, compose.chatbot.yaml,
+  services-before.json, services-after.json.
+Release: /opt/dreamcatch/ai/hrtest-release-20261001.tar and hrtest-migrations.sql.
+Immediate application rollback: restore the saved Compose files and run
+  docker compose up -d --no-deps api web
+This restores the roadmap-undo-20261001 images. Keep additive tables, columns,
+received revisions and migration records. Do not restore the full DB backup over
+new user activity. A view rollback, if needed, requires a new forward migration.

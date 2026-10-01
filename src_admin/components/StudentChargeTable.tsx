@@ -432,7 +432,7 @@ export default function StudentChargeTable({
         )}
       </section>
       {selectedAcademic && <StudentDetailModal studentId={selectedAcademic.id} role={getActiveUser().role}
-        academic onClose={() => setSelectedAcademic(null)} />}
+        onClose={() => setSelectedAcademic(null)} />}
     </div>
   )
 }

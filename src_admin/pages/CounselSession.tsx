@@ -18,6 +18,7 @@ import { useRoadmap, useStore } from '../../shared/useRoadmapStore'
 import { isCare7 } from '../../src_v2/data/counselTrack'
 import EmptyState from '../components/EmptyState'
 import StudentDetailView, { type TabKey } from '../components/StudentDetailView'
+import AiCommentCard from '../../shared/AiCommentCard'
 import CounselRecordFields from '../components/CounselRecordFields'
 import CounselRecordPreview from '../components/CounselRecordPreview'
 import CounselRecordContext, { type RecordContext } from '../components/CounselRecordContext'
@@ -274,6 +275,7 @@ export default function CounselSession() {
 
         {/* 우측: 상담 기록지 */}
         <section className="admin-card admin-session-right">
+          {targetRequest?.type === '진로취업' && <AiCommentCard studentId={student.id} kind="counsel" counselRequestId={targetRequest.id} />}
           <div className="admin-card-head">
             <h2>
               <LuSquarePen /> 상담 기록지

@@ -23,7 +23,7 @@ import { usePageHead } from '../../components/PageCrumb'
 const T_MAX = 100
 
 /** 수준 → 색 클래스. 결과표(DiagnosisResultReport)와 같은 이름·같은 뜻을 쓴다. */
-const LEVEL_CLASS: Record<FactorLevel | '미등록', string> = { 낮음: 'low', 보통: 'mid', 높음: 'high', 미등록: '' }
+const LEVEL_CLASS: Record<FactorLevel | '미등록', string> = { 매우낮음:'low', 낮음: 'low', 보통: 'mid', 높음: 'high', 매우높음:'high', 미등록: '' }
 
 /* ── 홀로그램 레이더 차트 (Main 스타일 SVG) ──────────────────────── */
 function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
@@ -154,23 +154,14 @@ export default function DiagnosisResultDetail() {
   const testName = module?.name ?? '진단 검사'
 
   const result = getDiagnosisResult(student.id, testId)
-  const rows = result ? getResultRows(result, module) : []
+  const rows = (result ? getResultRows(result, module) : []).filter((row): row is typeof row & {tScore:number} => row.tScore != null)
 
   // 결과지 전체 보기 — CCORE 를 축으로 짜인 결과표라 핵심진단에서만 연다.
   const [reportOpen, setReportOpen] = useState(false)
-  const hasFullReport = testId === 'ccore' && rows.length > 0
+  const hasFullReport = testId === 'ccore' && rows.length > 0 && result?.source !== 'hrtest'
 
-  // AI 분석은 '생성'이다 — 열자마자 보여주지 않고 버튼을 눌러야 만들어진다.
-  // 한 번 만든 뒤에는 다시 접었다 펴도 재생성하지 않는다.
+  // 점수 요약은 화면 계산값이며, 실제 AI 코멘트는 공용 결과표에서 생성한다.
   const [aiOpen, setAiOpen] = useState(false)
-  const [analyzing, setAnalyzing] = useState(false)
-  const [analyzed, setAnalyzed] = useState(false)
-  const runAnalysis = () => {
-    if (analyzing) return
-    if (analyzed) { setAiOpen(v => !v); return }
-    setAnalyzing(true)
-    window.setTimeout(() => { setAnalyzing(false); setAnalyzed(true); setAiOpen(true) }, 1400)
-  }
 
   // 요약은 T점수에서 그대로 뽑는다 — 판정식을 새로 만들지 않는다(CLAUDE.md 14조).
   // 수준(낮음·보통·높음)도 levelOf 한 곳에서만 나온다.
@@ -180,7 +171,7 @@ export default function DiagnosisResultDetail() {
 
   usePageHead(
     `${testName} 결과`,
-    rows.length > 0
+    result?.source === 'hrtest' ? '검사기관이 제공한 영역·요인별 T점수와 수준입니다.' : rows.length > 0
       ? `${rows.length}개 요인의 T점수입니다 · 만점 ${T_MAX}점 (평균 50)`
       : result ? '현재 결과표 항목에 대응하는 점수가 아직 등록되지 않았습니다' : '아직 응시 결과가 등록되지 않았습니다',
   )
@@ -193,7 +184,7 @@ export default function DiagnosisResultDetail() {
         </button>
       </div>
 
-      {rows.length === 0 ? (
+      {rows.length === 0 || result?.source === 'hrtest' ? (
         <div className="dr-card">
           <DiagnosisResultReport studentId={student.id} testId={testId} />
         </div>
@@ -212,18 +203,17 @@ export default function DiagnosisResultDetail() {
             <div className="dr-ai-toggle">
               <button
                 className={aiOpen ? 'dr-ai-btn is-ghost' : 'dr-ai-btn'}
-                onClick={runAnalysis}
-                disabled={analyzing}
+                onClick={() => setAiOpen(value => !value)}
                 aria-expanded={aiOpen}
               >
-                <i className={`fa-solid ${analyzing ? 'fa-spinner fa-spin' : 'fa-robot'}`} />
-                {analyzing ? 'AI가 분석 중…' : `AI 분석결과 ${analyzed && aiOpen ? '접기' : '보기'}`}
+                <i className="fa-solid fa-chart-simple" />
+                {`점수 요약 ${aiOpen ? '접기' : '보기'}`}
               </button>
             </div>
 
-            {aiOpen && !analyzing && best && worst && (
+            {aiOpen && best && worst && (
               <div className="dr-ai-panel">
-                <div className="dr-ai-label"><i className="fa-solid fa-robot" /> AI 분석결과</div>
+                <div className="dr-ai-label"><i className="fa-solid fa-chart-simple" /> 점수 요약</div>
 
                 <dl className="dr-ai-rows">
                   <div>

@@ -341,3 +341,8 @@
   .de-access-heading { align-items: stretch; flex-direction: column; gap: 14px; }
   .de-type-request-btn { width: 100%; }
 }
+.de-start-btn[href] { text-decoration: none; box-sizing: border-box; }
+.de-external-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 12px; padding: 12px 16px 0; }
+.de-external-actions button { padding: 9px 16px; border: 1px solid #d9e0ec; border-radius: 8px; background: #fff; color: #344054; font: inherit; cursor: pointer; }
+.de-external-actions button:disabled { opacity: .6; cursor: wait; }
+.de-external-actions a { font-size: 13px; }

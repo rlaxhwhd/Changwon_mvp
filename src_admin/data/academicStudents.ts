@@ -22,8 +22,8 @@ export interface AcademicStudentDetail extends RosterStudent {
   programs: { id: string; title: string; date: string; completed: boolean }[]
 }
 
-export function fetchAcademicStudentDetail(id: string): Promise<AcademicStudentDetail> {
-  return api(`/academic-students/${encodeURIComponent(id)}`)
+export function fetchAcademicStudentDetail(id: string): Promise<AcademicStudentDetail | null> {
+  return api(`/academic-students/${encodeURIComponent(id)}?optional=true`)
 }
 
 export function academicStudentStats(data: AcademicStudentDetail): StudentStat[] {

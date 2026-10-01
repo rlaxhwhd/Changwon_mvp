@@ -1,0 +1,7 @@
+# Keep the company's deployed schema contract. Unrelated local migrations are
+# intentionally not bundled into this incremental AI release.
+FROM dreamcatch-api:company-session-20260930
+COPY app/main.py app/settings.py app/roadmap_generator.py app/chatbot.py app/chatbot_web.py app/ai_comments.py app/ai_context.py app/rag.py /app/app/
+COPY app/academic_students.py /app/app/
+COPY app/roadmap.py /app/app/
+COPY app/diagnosis.py app/hrtest.py app/hrtest_sync.py app/gates.py /app/app/
