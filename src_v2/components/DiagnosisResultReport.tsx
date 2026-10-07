@@ -1,7 +1,7 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { loadStudentDiagnoses } from '../../shared/diagnosisStore'
 import { getModuleByTestId, type DiagnosisModule } from '../data/careerProcess'
-import { getDiagnosisResult, getResultRows, type DiagnosisResult, type FactorLevel } from '../data/diagnosisResults'
+import { getDiagnosisResult, getResultRows, type DiagnosisResult, type FactorLevel, type ResultRow } from '../data/diagnosisResults'
 import './DiagnosisResultReport.css'
 import AiCommentCard from '../../shared/AiCommentCard'
 import DiagnosisRadar from './DiagnosisRadar'
@@ -102,24 +102,7 @@ export default function DiagnosisResultReport({
   const missing = found.source === 'hrtest' ? [] : module?.factors.filter(factor => !rows.some(row => row.name === factor.name)) ?? []
   const sections = showChart ? getDiagnosisChartSections(found, rows) : [{ id: found.testId, axes: [], rows }]
 
-  return (
-    <div className="drr" style={style}>
-      {(found.source?.includes('fixture') || found.source?.startsWith('development:')) && <p className="drr-empty">기존 개발 검증 이력입니다. 실제 검사 결과가 아닙니다.</p>}
-      {found.source === 'hrtest' && <p className={showChart ? 'drr-source-note' : 'drr-empty'}>검사기관에서 수신한 실제 결과입니다. 결과표의 점수와 수준은 제공된 값을 그대로 표시합니다.</p>}
-      {found.needsReview && <p role="status" className="drr-empty">유형 확인이 필요합니다. 점수는 보존하며 유형 확정·후속 검사 배정·AI 분석은 보류합니다. 담당자에게 확인해 주세요.</p>}
-      {module?.factors.length === 0 && <p className="drr-empty">결과표 항목은 추가 예정입니다.</p>}
-      <div className="drr-banner">
-        <span className="drr-banner-headline">{missing.length || module?.factors.length === 0 ? '결과 항목 확인 필요' : found.headline}</span>
-        <span className="drr-banner-copy">
-          <b>{missing.length ? '현재 항목 기준 점수 미등록' : found.headlineCaption}</b>
-          <small>{found.testedAt} 실시{found.attemptNo > 1 && ` · ${found.attemptNo}회차`}</small>
-        </span>
-      </div>
-
-      {sections.map(section => <section className="drr-result-section" key={section.id}>
-      {section.title && <header className="drr-section-heading"><h3>{section.title}</h3>{section.type && <strong>{section.type}</strong>}</header>}
-      <div className={section.axes.length >= 3 ? 'drr-analysis' : undefined}>
-      {section.axes.length >= 3 && <DiagnosisRadar axes={section.axes} averaged={found.testId === 'ccore'} areaAverage={found.testId === 'c3'} />}
+  const renderTable = (tableRows: ResultRow[]) => (
       <div className="drr-table-wrap">
         <table className="drr-table">
           <thead>
@@ -130,7 +113,7 @@ export default function DiagnosisResultReport({
             </tr>
           </thead>
           <tbody>
-            {section.rows.map(r => (
+            {tableRows.map(r => (
               <tr key={r.name}>
                 <td className="drr-factor">
                   {r.name}
@@ -151,7 +134,32 @@ export default function DiagnosisResultReport({
           </tbody>
         </table>
       </div>
+  )
+
+  return (
+    <div className="drr" style={style}>
+      {(found.source?.includes('fixture') || found.source?.startsWith('development:')) && <p className="drr-empty">기존 개발 검증 이력입니다. 실제 검사 결과가 아닙니다.</p>}
+      {found.source === 'hrtest' && <p className={showChart ? 'drr-source-note' : 'drr-empty'}>검사기관에서 수신한 실제 결과입니다. 결과표의 점수와 수준은 제공된 값을 그대로 표시합니다.</p>}
+      {found.needsReview && <p role="status" className="drr-empty">유형 확인이 필요합니다. 점수는 보존하며 유형 확정·후속 검사 배정·AI 분석은 보류합니다. 담당자에게 확인해 주세요.</p>}
+      {module?.factors.length === 0 && <p className="drr-empty">결과표 항목은 추가 예정입니다.</p>}
+      <div className="drr-banner">
+        <span className="drr-banner-headline">{missing.length || module?.factors.length === 0 ? '결과 항목 확인 필요' : found.headline}</span>
+        <span className="drr-banner-copy">
+          <b>{missing.length ? '현재 항목 기준 점수 미등록' : found.headlineCaption}</b>
+          <small>{found.testedAt} 실시{found.attemptNo > 1 && ` · ${found.attemptNo}회차`}</small>
+        </span>
       </div>
+
+      {sections.map(section => <section className="drr-result-section" key={section.id}>
+      {section.title && <header className="drr-section-heading"><h3>{section.title}</h3>{section.type && <strong>{section.type}</strong>}</header>}
+      <div className={section.axes.length >= 3 ? 'drr-analysis' : undefined}>
+      {section.axes.length >= 3 && <DiagnosisRadar axes={section.axes} averaged={found.testId === 'ccore'} areaAverage={found.testId === 'c3'} />}
+      {renderTable(section.rows)}
+      </div>
+      {!!section.detailRows?.length && <details className="drr-details" key={`${found.studentId}:${found.testId}:${found.attemptNo}:${section.id}`}>
+        <summary><span className="drr-details-show">상세보기</span><span className="drr-details-hide">상세 접기</span><small>하위 항목 {section.detailRows.length}개</small></summary>
+        {renderTable(section.detailRows)}
+      </details>}
       </section>)}
       {missing.length > 0 && <p className="drr-empty">현재 항목에 대응하는 점수가 없습니다. 이전 예시 점수는 새 항목으로 환산하지 않습니다.</p>}
 

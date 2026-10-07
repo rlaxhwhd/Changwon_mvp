@@ -58,9 +58,16 @@ export interface DiagnosisChartSection {
   type?: string | null
   axes: DiagnosisChartAxis[]
   rows: ResultRow[]
+  detailRows?: ResultRow[]
 }
 
 export function getDiagnosisChartSections(result: DiagnosisResult, rows: ResultRow[]): DiagnosisChartSection[] {
+  const isArea = (row: ResultRow) => row.category === 'areas' || row.factorCode?.startsWith('HRTEST_AREAS_') === true
+  if (result.source === 'hrtest' && ['c3', 'c4'].includes(result.testId)) {
+    const summary = rows.filter(isArea)
+    const detailRows = rows.filter(row => !isArea(row))
+    return [{ id: result.testId, axes: getDiagnosisChartAxes(result, summary), rows: summary, detailRows }]
+  }
   if (result.testId !== 'c2' || result.source !== 'hrtest') {
     return [{ id: result.testId, axes: getDiagnosisChartAxes(result, rows), rows }]
   }
@@ -75,6 +82,6 @@ export function getDiagnosisChartSections(result: DiagnosisResult, rows: ResultR
       axes: members.map(row => ({ labels: [row.name], value: row.tScore })), rows: members }
   })
   const remaining = rows.filter(row => !row.factorCode || !used.has(row.factorCode))
-  if (remaining.length) sections.push({ id: 'additional', title: '진로탐색행동 · 진로설계 수준', axes: [], rows: remaining })
+  if (remaining.length) sections.push({ id: 'additional', title: '진로탐색행동 · 진로설계 수준', axes: [], rows: remaining.filter(isArea), detailRows: remaining.filter(row => !isArea(row)) })
   return sections
 }

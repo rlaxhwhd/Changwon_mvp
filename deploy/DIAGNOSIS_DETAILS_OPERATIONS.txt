@@ -1,0 +1,38 @@
+Collapsed diagnosis details - 2026-10-07
+
+Core remains unchanged. External C2 shows its 10 chart-axis scores and two
+additional aggregate scores; 15 other scores start collapsed. C3 shows five
+area scores with 13 subscales collapsed. C4 uses the documented R/E/A/D area
+scores for its four-axis graph/table and collapses the 16 subscales.
+Native details/summary provides keyboard-accessible expand/collapse, labeled
+상세보기 / 상세 접기. It does not fetch or change scores. New result identities
+reset the disclosure. Existing admin reports retain their complete tables.
+
+Validation:
+- Eight Node diagnosis-chart tests passed; changed TS/TSX ESLint passed.
+- Local docker:up built TypeScript/Vite, backed up DB, checked migrations,
+  and started healthy services. No DB changes. Existing Vite warnings remain.
+- Chrome MCP used browser-only synthetic API responses locally, no DB inserts.
+  Desktop 1366px and mobile 390px: default/open/closed rows were C2 12/27/12,
+  C3 5/18/5, C4 4/20/4. Each opened and closed through summary clicks with
+  zero added API calls and no horizontal overflow. No console errors.
+- Core still shows 10 rows, five axes, and no detail toggle.
+- CentOS actual Core smoke test: 31 API requests all HTTP 200, longest 294ms;
+  no console errors or overflow. C2/C3/C4 disclosure behavior was verified
+  locally with fixtures, not with completed provider attempts on CentOS.
+
+Deployment:
+Image dreamcatch-web:diagnosis-details-20261007 derives from the previous
+dreamcatch-web:diagnosis-sections-20261007 and copies validated static files.
+Only web recreated, healthy; API/DB/AI container IDs unchanged. No migrations.
+Existing company migration gap 110-113 remains outside this frontend change.
+Backup/config/container records: /opt/dreamcatch/ai/diagnosis-details-20261007/
+web.tar SHA256:
+021618b55009abfd9f8afca764b4acda05f133c066aa1d05b12ddd652f777b27
+v2.html SHA256 (local and server match):
+a5e044292ee9f23c9931b2e0d35590db02b19e56d9882d0cfecd270391709e4a
+
+Rollback: set only web image in /opt/dreamcatch/compose.yaml back to
+dreamcatch-web:diagnosis-sections-20261007, then from /opt/dreamcatch run:
+docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web
+No data rollback required.

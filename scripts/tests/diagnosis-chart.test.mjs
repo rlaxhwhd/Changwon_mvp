@@ -63,6 +63,21 @@ test('C2 splits the three types into 3/3/4 axes and preserves all other scores i
   assert.deepEqual(sections.map(s => s.axes.length), [3, 3, 4, 0])
   assert.equal(sections[0].type, '경험 지향형')
   assert.deepEqual(sections[0].axes.map(a => a.value), [40, null, 42])
-  assert.equal(sections.flatMap(s => s.rows).length, rows.length)
-  assert.equal(sections.at(-1).rows[0].name, 'explore_expansion')
+  assert.equal(sections.flatMap(s => [...s.rows, ...(s.detailRows ?? [])]).length, rows.length)
+  assert.equal(sections.at(-1).rows.length, 0)
+  assert.equal(sections.at(-1).detailRows[0].name, 'explore_expansion')
 })
+
+for (const [testId, count] of [['c3', 5], ['c4', 4]]) {
+  test(`${testId} keeps area rows visible and subscales in details without dropping nulls`, () => {
+    const rows = [
+      ...Array.from({ length: count }, (_, i) => ({ factorCode: `HRTEST_AREAS_${i}`, category: 'areas', name: `area ${i}`, tScore: i ? 50 : null })),
+      { factorCode: 'HRTEST_SCALES_example', category: 'scales', name: 'detail', tScore: null },
+    ]
+    const section = getDiagnosisChartSections({ testId, source: 'hrtest', factors: [] }, rows)[0]
+    assert.equal(section.rows.length, count)
+    assert.equal(section.rows[0].tScore, null)
+    assert.deepEqual(section.detailRows, [rows.at(-1)])
+    assert.equal(section.axes.length, count)
+  })
+}
