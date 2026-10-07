@@ -1,0 +1,38 @@
+Lounge comprehensive AI comment placement — 2026-10-07
+
+Scope: frontend only. Web image replaced; no API, DB or migration change.
+Images: dreamcatch-web:lounge-ai-comment-20261007.
+Previous image: dreamcatch-web:diagnosis-area-font-20261007 (retained on the server).
+Source commit: 38f0f5b on dev.
+
+Change: the comprehensive AI comment card moves from above the dashboard grid to
+the first position after the career journey card, full width. Its top border is
+removed and replaced by a rotating conic-gradient ring built the same way as the
+counselling CTA (src_v2/components/ui/button-1.css), reusing that button's blue
+stops. Scoped to .al-page .dashboard-grid > .dc-ai-comment, so shared/AiCommentCard.css
+is unchanged and the staff portal card keeps its violet top rule.
+Reduced motion stops the rotation and keeps the gradient ring.
+
+The API stays at student-profile-20261002. Backend changes in the same commit
+(ai_comments.py, chatbot.py, students.py) were deliberately NOT deployed; they
+belong to in-flight work without their own validation record.
+
+Validation:
+- npx tsc -b passed before the commit; the image build runs it again via npm run build.
+- The built image contains the new rule: grep al-ai-neon in /usr/share/nginx/html/assets
+  returns 2 matches, verified both in the local image and in the running container.
+- Local docker stack (npm run docker:up) came up with every service healthy.
+- After deployment the web container reports healthy, /healthz returns ok, and
+  https://127.0.0.1/v2/lounge returns 303 to the demo login as before.
+- API, DB, RAG, Qdrant, SearXNG and tunnel container IDs and uptimes unchanged.
+
+Server audit/backup directory:
+  /opt/dreamcatch/ai/lounge-ai-comment-20261007/
+  compose.before.yaml, containers.before.txt, web.tar
+
+Rollback: restore compose.before.yaml (or sed the web tag back to
+dreamcatch-web:diagnosis-area-font-20261007) and recreate only web with
+docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web.
+Nothing else needs reverting — this deployment wrote no data.
+
+The pre-existing 110-113 migration gap is untouched; the full migrator was not run.
