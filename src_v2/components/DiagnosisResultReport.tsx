@@ -5,7 +5,7 @@ import { getDiagnosisResult, getResultRows, type DiagnosisResult, type FactorLev
 import './DiagnosisResultReport.css'
 import AiCommentCard from '../../shared/AiCommentCard'
 import DiagnosisRadar from './DiagnosisRadar'
-import { getDiagnosisChartAxes } from '../data/diagnosisChart'
+import { getDiagnosisChartSections } from '../data/diagnosisChart'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 진단 상세 결과표 — 학생 포털(src_v2) · 교직원 포털(src_admin) 공용 컴포넌트.
@@ -21,6 +21,7 @@ import { getDiagnosisChartAxes } from '../data/diagnosisChart'
 // ─────────────────────────────────────────────────────────────────────────────
 
 const LEVEL_CLASS: Record<FactorLevel | '미등록', string> = { 매우낮음:'low', 낮음: 'low', 보통: 'mid', 높음: 'high', 매우높음:'high', 미등록: '' }
+const DIAGNOSIS_COLORS: Record<string, number> = { ccore: 1, c2: 2, c3: 3, c4: 4 }
 
 function SparkIcon() {
   return (
@@ -74,7 +75,12 @@ export default function DiagnosisResultReport({
   const found: DiagnosisResult | undefined =
     result ?? (studentId && testId ? getDiagnosisResult(studentId, testId, attemptNo) : undefined)
 
+  const color = showChart ? DIAGNOSIS_COLORS[found?.testId ?? testId ?? ''] : undefined
   const style: CSSProperties = {
+    ...(color ? {
+      '--drr-accent': `var(--diagnosis-${color}, #7C5CFC)`,
+      '--drr-accent-soft': `var(--diagnosis-${color}-soft, #F0EDFF)`,
+    } : {}),
     ...(accent ? { '--drr-accent': accent } : {}),
     ...(accentSoft ? { '--drr-accent-soft': accentSoft } : {}),
   } as CSSProperties
@@ -94,8 +100,7 @@ export default function DiagnosisResultReport({
   const module: DiagnosisModule | undefined = getModuleByTestId(found.testId)
   const rows = getResultRows(found, module)
   const missing = found.source === 'hrtest' ? [] : module?.factors.filter(factor => !rows.some(row => row.name === factor.name)) ?? []
-  const chartAxes = getDiagnosisChartAxes(found, rows)
-  const hasChart = showChart && ['ccore', 'c2', 'c3', 'c4'].includes(found.testId) && chartAxes.length >= 3
+  const sections = showChart ? getDiagnosisChartSections(found, rows) : [{ id: found.testId, axes: [], rows }]
 
   return (
     <div className="drr" style={style}>
@@ -111,8 +116,10 @@ export default function DiagnosisResultReport({
         </span>
       </div>
 
-      <div className={hasChart ? 'drr-analysis' : undefined}>
-      {hasChart && <DiagnosisRadar axes={chartAxes} averaged={found.testId === 'ccore'} />}
+      {sections.map(section => <section className="drr-result-section" key={section.id}>
+      {section.title && <header className="drr-section-heading"><h3>{section.title}</h3>{section.type && <strong>{section.type}</strong>}</header>}
+      <div className={section.axes.length >= 3 ? 'drr-analysis' : undefined}>
+      {section.axes.length >= 3 && <DiagnosisRadar axes={section.axes} averaged={found.testId === 'ccore'} areaAverage={found.testId === 'c3'} />}
       <div className="drr-table-wrap">
         <table className="drr-table">
           <thead>
@@ -123,7 +130,7 @@ export default function DiagnosisResultReport({
             </tr>
           </thead>
           <tbody>
-            {rows.map(r => (
+            {section.rows.map(r => (
               <tr key={r.name}>
                 <td className="drr-factor">
                   {r.name}
@@ -145,6 +152,7 @@ export default function DiagnosisResultReport({
         </table>
       </div>
       </div>
+      </section>)}
       {missing.length > 0 && <p className="drr-empty">현재 항목에 대응하는 점수가 없습니다. 이전 예시 점수는 새 항목으로 환산하지 않습니다.</p>}
 
       {found.comment && missing.length === 0 && rows.length > 0 && (

@@ -31,6 +31,9 @@ export function levelOf(tScore: number): FactorLevel {
 /** 요인 1개의 응시 결과 */
 export interface FactorScore {
   factorCode?: string
+  providerCode?: string
+  group?: string
+  area?: string
   /** 요인명 — DIAGNOSIS_MODULES[].factors[].name 과 일치해야 한다 */
   name: string
   /** T점수 (평균 50 · 표준편차 10). 소수 2자리. */

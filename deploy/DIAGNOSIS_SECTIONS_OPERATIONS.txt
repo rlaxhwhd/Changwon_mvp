@@ -1,0 +1,55 @@
+Diagnosis graph sections and colors - 2026-10-07
+
+Supersedes the C2/C3 axis rules in DIAGNOSIS_CHART_OPERATIONS.txt.
+API contract checked at https://cwnu.hrtest.net/api/docs/ (CARES/DEFT tabs).
+
+C2: three chart/table sections, CLT 3 axes, COT 3 axes, CDT 4 axes.
+Show the provider's learning_type/goal_orientation/decision_type in headings.
+Keep the other 15 subscales and two aggregate scores in the remaining table,
+as explicitly confirmed by the user. Match stable provider codes, not names.
+C3: D/E/F1/F2/T arithmetic means of 2/4/3/2/2 subscales. Aggregate area
+rows are excluded from the calculation; original scores remain in the table.
+A missing required subscale leaves that average empty.
+Core: move the top label above the 100 tick; paired means unchanged.
+C4: per-row axes unchanged. All four result pages use the diagnosis cards'
+existing accent/soft-background CSS tokens.
+
+Validation:
+- Six Node tests passed: Core pairing/zero/missing scores, C3 means with
+  reordered data and missing members, C2 section partition and no lost rows,
+  C4 unchanged axes. Changed TS/TSX files passed ESLint.
+- TypeScript and Vite production build passed. Existing Vite configuration
+  and chunk-size warnings remain.
+- Local docker:up completed build, DB backup, migration check and healthy
+  startup; final presentation refinement rebuilt only web. No schema changes.
+- Chrome MCP desktop 1366px: C2 graphs 3/3/4, tables 3/3/4/17 rows;
+  C3 five means 31.50/40.50/45.00/49.50/55.50 in the synthetic fixture,
+  all 18 original rows retained. Browser-only fetch fixtures, no DB inserts.
+- Chrome mobile 390px: C2 and C3 stack chart/table, show numbered axes with
+  readable HTML keys, no horizontal overflow. Core desktop label/tick gap
+  measured 17.67px. Graph/table colors match diagnosis CSS tokens.
+- C3 SVG rasterized in-browser for visual label inspection. MCP screenshot
+  capture remains unavailable due to workspace-path rejection/stalled capture.
+- CentOS actual Core result checked: 5 axes, 10 original rows, 17.67px top
+  label/tick gap, no overflow or console errors. All 31 observed API requests
+  returned 200, longest 215ms. Existing bootstrap/report diagnosis reads took
+  92/23ms; charts introduce no requests. Largest existing bootstrap response
+  was 1,107,278 decoded bytes. C2/C3 provider end-to-end results were not
+  available for this student; their rendering was validated locally as above.
+
+Deployment:
+Image: dreamcatch-web:diagnosis-sections-20261007
+Base: dreamcatch-web:diagnosis-chart-20261007 (CentOS-compatible nginx).
+Copied locally validated static files. Only web recreated; API/DB/AI container
+IDs unchanged. Web healthy. No migrations; existing company 110-113 migration
+gap remains outside this frontend change.
+Backup/config/container records: /opt/dreamcatch/ai/diagnosis-sections-20261007/
+web.tar SHA256:
+4252251c09f9443ec664075b2c5e77112495b093aae99728f4ecbacf50ce6b32
+v2.html SHA256 (local and CentOS match):
+df6ac0ae97a82cc5e61a985225374d2f7bffc94147ca04e57c05a4447bf60f30
+
+Rollback: set only web image in /opt/dreamcatch/compose.yaml to
+dreamcatch-web:diagnosis-chart-20261007, then from /opt/dreamcatch run:
+docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web
+No data rollback required.

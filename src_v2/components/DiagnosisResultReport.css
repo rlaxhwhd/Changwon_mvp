@@ -25,6 +25,10 @@
 }
 
 .drr-source-note { margin: 0 0 16px; color: var(--drr-sub); font-size: 12px; line-height: 1.6; }
+.drr-result-section + .drr-result-section { margin-top: 28px; }
+.drr-section-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px; margin-bottom: 16px; padding: 12px 16px; border-top: 2px solid var(--drr-accent); background: var(--drr-accent-soft); }
+.drr-section-heading h3 { margin: 0; font-size: 15px; }
+.drr-section-heading strong { color: var(--drr-accent); font-size: 14px; }
 .drr-analysis { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); align-items: center; gap: 24px; }
 .drr-analysis .drr-table th { padding: 9px 12px; }
 .drr-analysis .drr-table td { padding: 9px 12px; }

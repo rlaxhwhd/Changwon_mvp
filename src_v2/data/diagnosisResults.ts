@@ -32,6 +32,7 @@ export function getResultsByStudent(studentId: string): DiagnosisResult[] {
 
 /** 결과표 한 행 — 요인 정의(careerProcess) × 점수(seed) 조인 결과 */
 export interface ResultRow {
+  factorCode?: string
   name: string
   desc?: string
   tScore: number | null
@@ -45,6 +46,7 @@ export interface ResultRow {
  */
 export function getResultRows(result: DiagnosisResult, module?: DiagnosisModule): ResultRow[] {
   if (result.source === 'hrtest') return result.factors.map(f => ({
+    factorCode: f.factorCode,
     name:f.name, desc:f.category === 'areas' ? '영역 점수' : '하위 요인',
     tScore:f.tScore, level:f.level ?? '미등록',
   }))
