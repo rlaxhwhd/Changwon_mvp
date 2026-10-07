@@ -4,6 +4,8 @@ import { getModuleByTestId, type DiagnosisModule } from '../data/careerProcess'
 import { getDiagnosisResult, getResultRows, type DiagnosisResult, type FactorLevel } from '../data/diagnosisResults'
 import './DiagnosisResultReport.css'
 import AiCommentCard from '../../shared/AiCommentCard'
+import DiagnosisRadar from './DiagnosisRadar'
+import { getDiagnosisChartAxes } from '../data/diagnosisChart'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 진단 상세 결과표 — 학생 포털(src_v2) · 교직원 포털(src_admin) 공용 컴포넌트.
@@ -44,6 +46,8 @@ export interface DiagnosisResultReportProps {
   showFactorDesc?: boolean
   /** 결과가 없을 때 문구 */
   emptyMessage?: string
+  /** Student result page: chart on the left, compact score table on the right. */
+  showChart?: boolean
 }
 
 export default function DiagnosisResultReport({
@@ -55,17 +59,16 @@ export default function DiagnosisResultReport({
   accentSoft,
   showFactorDesc = false,
   emptyMessage,
+  showChart = false,
 }: DiagnosisResultReportProps) {
-  const [,setLoaded] = useState(0)
-  const [loadError,setLoadError] = useState('')
-  const [loading,setLoading] = useState(false)
+  const [loaded, setLoaded] = useState<{ studentId: string; error?: string } | null>(null)
+  const loading = !result && !!studentId && loaded?.studentId !== studentId
+  const loadError = loaded?.studentId === studentId ? loaded?.error : undefined
   useEffect(() => {
     if (result || !studentId) return
     let cancelled=false
-    setLoading(true); setLoadError('')
-    loadStudentDiagnoses(studentId).then(() => { if (!cancelled) setLoaded(x => x + 1) })
-      .catch(e => { if (!cancelled) setLoadError(e.message) })
-      .finally(() => { if (!cancelled) setLoading(false) })
+    loadStudentDiagnoses(studentId).then(() => { if (!cancelled) setLoaded({ studentId }) })
+      .catch(e => { if (!cancelled) setLoaded({ studentId, error: e.message }) })
     return () => { cancelled=true }
   },[result,studentId])
   const found: DiagnosisResult | undefined =
@@ -91,11 +94,13 @@ export default function DiagnosisResultReport({
   const module: DiagnosisModule | undefined = getModuleByTestId(found.testId)
   const rows = getResultRows(found, module)
   const missing = found.source === 'hrtest' ? [] : module?.factors.filter(factor => !rows.some(row => row.name === factor.name)) ?? []
+  const chartAxes = getDiagnosisChartAxes(found, rows)
+  const hasChart = showChart && ['ccore', 'c2', 'c3', 'c4'].includes(found.testId) && chartAxes.length >= 3
 
   return (
     <div className="drr" style={style}>
       {(found.source?.includes('fixture') || found.source?.startsWith('development:')) && <p className="drr-empty">기존 개발 검증 이력입니다. 실제 검사 결과가 아닙니다.</p>}
-      {found.source === 'hrtest' && <p className="drr-empty">검사기관에서 수신한 실제 결과입니다. 점수와 수준은 제공된 값을 그대로 표시합니다.</p>}
+      {found.source === 'hrtest' && <p className={showChart ? 'drr-source-note' : 'drr-empty'}>검사기관에서 수신한 실제 결과입니다. 결과표의 점수와 수준은 제공된 값을 그대로 표시합니다.</p>}
       {found.needsReview && <p role="status" className="drr-empty">유형 확인이 필요합니다. 점수는 보존하며 유형 확정·후속 검사 배정·AI 분석은 보류합니다. 담당자에게 확인해 주세요.</p>}
       {module?.factors.length === 0 && <p className="drr-empty">결과표 항목은 추가 예정입니다.</p>}
       <div className="drr-banner">
@@ -106,6 +111,8 @@ export default function DiagnosisResultReport({
         </span>
       </div>
 
+      <div className={hasChart ? 'drr-analysis' : undefined}>
+      {hasChart && <DiagnosisRadar axes={chartAxes} averaged={found.testId === 'ccore'} />}
       <div className="drr-table-wrap">
         <table className="drr-table">
           <thead>
@@ -136,6 +143,7 @@ export default function DiagnosisResultReport({
             </tr>)}
           </tbody>
         </table>
+      </div>
       </div>
       {missing.length > 0 && <p className="drr-empty">현재 항목에 대응하는 점수가 없습니다. 이전 예시 점수는 새 항목으로 환산하지 않습니다.</p>}
 

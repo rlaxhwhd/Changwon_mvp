@@ -186,7 +186,7 @@ export default function DiagnosisResultDetail() {
 
       {rows.length === 0 || result?.source === 'hrtest' ? (
         <div className="dr-card">
-          <DiagnosisResultReport studentId={student.id} testId={testId} />
+          <DiagnosisResultReport studentId={student.id} testId={testId} showChart />
         </div>
       ) : (
         <div className="dr-grid">

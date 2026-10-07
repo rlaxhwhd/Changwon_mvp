@@ -1,0 +1,52 @@
+Diagnosis result charts - 2026-10-07
+
+Student external result pages place the chart on the left and the compact
+original score table on the right. Mobile stacks them; numbered axes and a
+12px HTML key keep long labels readable.
+
+Core uses five arithmetic means approved by the user:
+career_clarity / career_motivation
+competency_readiness / employability_readiness
+job_fit / org_fit
+info_search / personal_branding
+interview / job_strategy
+Pairs use stable HRTest codes. Both scores are required; missing values remain
+gaps. Original scores, levels, types and database records are not changed.
+C2/C3/C4 use one axis per displayed result row. The display range expands for
+scores outside 0-100; 100 is not treated as a maximum possible T score.
+
+Validation:
+- node --experimental-strip-types --test scripts/tests/diagnosis-chart.test.mjs
+  Six tests passed: reordered codes, raw preservation, missing/invalid/zero
+  scores and independent C2/C3/C4 axes.
+- Changed TS/TSX files passed ESLint. TypeScript and production Vite build passed.
+- Local docker:up completed build, backup, migration check and healthy startup.
+  Final visual refinements rebuilt/restarted only the local web service.
+- Local Chrome used browser-only mocked diagnosis/AI read responses, never DB
+  inserts: Core 5 axes/10 rows; C2/C3/C4 4/5/6 axes matching the supplied rows.
+  Desktop 1366px and mobile 390px: no horizontal overflow. Desktop labels fit
+  within the SVG; mobile key had 5 readable rows. No console errors.
+- Core SVG was rasterized in-browser to inspect label layout. MCP screenshot
+  capture was unavailable (workspace-path rejection / stalled capture).
+- CentOS Chrome checked the actual Core result: 5 mean points, 10 unchanged
+  original score rows, chart left/table right, no clipped labels or overflow.
+  All 31 observed API requests returned 200; maximum observed duration 191ms.
+  The existing bootstrap and report each load diagnoses (65/72ms). No added
+  chart API requests; C2/C3/C4 geometry was verified locally with mock responses.
+  No console errors. Existing Vite configuration/bundle-size warnings remain.
+
+Deployment:
+dreamcatch-web:diagnosis-chart-20261007 derives from the previously running
+dreamcatch-web:diagnosis-flow-20261007 and copies locally verified static files.
+Web only recreated; API/DB/AI container IDs remained unchanged. No migrations.
+Company migration versions inspected; existing 110-113 gap remains outside scope.
+Backup and container/config records: /opt/dreamcatch/ai/diagnosis-chart-20261007/
+web.tar SHA256:
+a4263853549a013d550899d8f530b4a0ada8c7efb804632d48145889a9ce5223
+v2.html SHA256 matches local and CentOS:
+abbc706afb38f5df94b466b834e3d2e8cf94c08a0cff690c17470e3d145fedb1
+
+Rollback: set only web image in /opt/dreamcatch/compose.yaml to
+dreamcatch-web:diagnosis-flow-20261007. From /opt/dreamcatch run:
+docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web
+No data rollback is needed for this frontend-only change.
