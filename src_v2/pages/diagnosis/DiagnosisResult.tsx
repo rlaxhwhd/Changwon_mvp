@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import {
@@ -10,6 +10,7 @@ import { importDiagnosis, getModuleStatusFor, getStudentType } from '../../data/
 import { externalDiagnosisLinks, diagnosisAttempts } from '../../../shared/diagnosisStore'
 import NextStepBanner from '../../components/NextStepBanner'
 import { getActiveStudent } from '../../data/students'
+import { getDiagnosisResult } from '../../data/diagnosisResults'
 import './EmploymentTest.css'
 import './DiagnosisProcess.css'
 import { usePageHead } from '../../components/PageCrumb'
@@ -59,16 +60,41 @@ export default function DiagnosisResult() {
   const lockedCount = modulesWithStatus.filter(m => m.status === 'locked').length
 
   const [saving, setSaving] = useState<string | null>(null)
+  const checking = useRef(false)
+  // This remembers the button only; completion still comes from the server.
+  const [actions, setActions] = useState<Record<string, 'start' | 'result'>>({})
+  const actionKey = (testId: string) => `dc:diagnosis-action:${student.id}:${testId}`
+  const actionFor = (testId: string, status: TestStatus) => {
+    const key = actionKey(testId)
+    let saved: string | null = null
+    try { saved = sessionStorage.getItem(key) } catch { /* Storage may be disabled. */ }
+    return actions[key] ?? (saved === 'start' || saved === 'result' ? saved : status === 'done' ? 'result' : 'start')
+  }
+  const setAction = (testId: string, action: 'start' | 'result') => {
+    const key = actionKey(testId)
+    setActions(current => ({ ...current, [key]: action }))
+    try { sessionStorage.setItem(key, action) } catch { /* In-memory state still works. */ }
+  }
   const [saveError,setSaveError] = useState('')
-  const [notice,setNotice] = useState('')
   const importResult = async (testId: string) => {
-    if (saving) return
-    setSaving(testId); setSaveError(''); setNotice('')
+    if (checking.current) return
+    checking.current = true
+    setSaving(testId); setSaveError('')
     try {
       const response = await importDiagnosis(student, testId)
-      setNotice(response.message)
+      const completed = diagnosisAttempts.find(a => a.studentId === student.id &&
+        a.testId === testId && a.isCurrent && a.source === 'hrtest' && a.status === '완료')
+      const result = getDiagnosisResult(student.id, testId)
+      if (response.found > 0 && completed && result?.source === 'hrtest' && result.attemptNo === completed.attemptNo) {
+        setAction(testId, 'result')
+        navigate(`/diagnosis/employment/${testId}`)
+      } else {
+        setAction(testId, 'start')
+        window.alert('진단이 정상적으로 완료되지 않았습니다. 검사시작을 눌러 진단을 완료해 주세요.' +
+          (response.found > 0 ? `\n${response.message}` : ''))
+      }
     } catch (error) { setSaveError(error instanceof Error ? error.message : String(error)) }
-    finally { setSaving(null) }
+    finally { checking.current = false; setSaving(null) }
   }
 
   return (
@@ -76,9 +102,8 @@ export default function DiagnosisResult() {
       {/* 진단이 남은 학생에게는 여기서도 다음 걸음을 짚어 준다(끝난 학생에겐 안 뜬다). */}
       <NextStepBanner />
       <div className="de-access-notice" role="note">
-        외부 검사 사이트가 새 탭으로 열립니다. 학번을 정확히 입력해 응시한 뒤 이 페이지에서 ‘결과 가져오기’를 눌러 주세요.
+        ‘검사시작’을 누르면 외부 검사 사이트가 새 탭으로 열립니다. 학번을 정확히 입력해 진단을 완료한 뒤, 이 페이지로 돌아와 ‘결과보기’를 눌러 주세요.
       </div>
-      {notice && <p role="status" className="de-access-notice">{notice}</p>}
       {saveError && <p role="alert" className="de-access-notice">{saveError}</p>}
 
       <section className="de-hero">
@@ -179,30 +204,35 @@ export default function DiagnosisResult() {
               </div>
             </div>
 
-            {result.status === 'available' && externalDiagnosisLinks[result.testId] ? <a
+            {result.status !== 'locked' && externalDiagnosisLinks[result.testId] && actionFor(result.testId, result.status) === 'start' ? <a
               className="de-start-btn de-start-btn--available"
-              href={externalDiagnosisLinks[result.testId]} target="_blank" rel="noopener noreferrer">
-              검사 시작 <i className="fa-solid fa-arrow-up-right-from-square" aria-label="새 탭" />
+              href={externalDiagnosisLinks[result.testId]} target="_blank" rel="noopener noreferrer"
+              aria-disabled={saving !== null}
+              onClick={event => {
+                if (checking.current) { event.preventDefault(); return }
+                setSaveError('')
+                setAction(result.testId, 'result')
+              }}>
+              검사시작 <i className="fa-solid fa-arrow-up-right-from-square" aria-label="새 탭" />
             </a> : <button
-              className={`de-start-btn de-start-btn--${result.status}`}
-              onClick={() => navigate(`/diagnosis/employment/${result.testId}`)}
-              disabled={result.status !== 'done'}
+              type="button"
+              className={`de-start-btn de-start-btn--${result.status === 'locked' ? 'locked' : 'done'}`}
+              onClick={() => externalDiagnosisLinks[result.testId]
+                ? void importResult(result.testId)
+                : navigate(`/diagnosis/employment/${result.testId}`)}
+              disabled={saving !== null || result.status === 'locked' || (!externalDiagnosisLinks[result.testId] && result.status !== 'done')}
+              aria-busy={saving === result.testId}
             >
-              {result.status === 'done' && <>결과 보기<i className="fa-solid fa-arrow-right" /></>}
-              {result.status === 'available' && <>검사 연동 준비 중</>}
-              {result.status === 'locked' && <><i className="fa-solid fa-lock" />선행 검사 완료 후 응시</>}
+              {saving === result.testId ? '결과 확인 중…' : result.status === 'locked'
+                ? <><i className="fa-solid fa-lock" />선행 검사 완료 후 응시</>
+                : externalDiagnosisLinks[result.testId] || result.status === 'done'
+                  ? <>결과보기<i className="fa-solid fa-arrow-right" /></>
+                  : '검사 연동 준비 중'}
             </button>}
-            {result.status !== 'locked' && externalDiagnosisLinks[result.testId] && <div className="de-external-actions">
-              {result.status === 'done' && !diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.source === 'hrtest') &&
-                <a href={externalDiagnosisLinks[result.testId]} target="_blank" rel="noopener noreferrer">실제 검사 응시 (새 탭)</a>}
-              <button type="button" disabled={saving !== null} onClick={() => void importResult(result.testId)}>
-                {saving === result.testId ? '결과 조회 중…' : '결과 가져오기'}
-              </button>
-            </div>}
             {diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.isCurrent && a.status === '응답 누락') &&
               <p role="status" className="de-recent-date">응답 누락 · 담당자 확인 필요</p>}
             {diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.isCurrent && a.status === '유형 확인 필요') &&
-              <div className="de-external-actions"><span>유형 확인 필요</span><button type="button" onClick={() => navigate(`/diagnosis/employment/${result.testId}`)}>수신 결과 확인</button></div>}
+              <p role="status" className="de-recent-date">유형 확인 필요 · 담당자에게 문의해 주세요.</p>}
 
             <div className="de-recent-date">
               {result.status === 'done' ? (

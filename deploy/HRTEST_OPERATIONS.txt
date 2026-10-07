@@ -6,7 +6,11 @@ Deployed images:
 Only API/web were recreated. DB, SearXNG, RAG, Qdrant and LLM tunnel container IDs
 were unchanged. GPU server was not modified or restarted by this release.
 
-Flow: external test in a new browser tab, then an explicit result import action.
+Flow (updated 2026-10-07): one action per assessment. Start opens the external
+test in a new browser tab and changes the action to View results. View results
+imports current provider results before opening the report. Missing/incomplete
+results show an alert and reset the action to Start. Transport errors retain
+View results for retry. See DIAGNOSIS_FLOW_OPERATIONS.txt for the release checks.
 No iframe, question submission, auto-completion or synthesized diagnosis scores.
 Student identity comes only from the authenticated student's stored student number.
 Routes: Core=base, C2=jinro, C3=deft, C4=ready at

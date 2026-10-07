@@ -51,7 +51,7 @@ services:
       timeout: 5s
       retries: 12
   web:
-    image: dreamcatch-web:hrtest-20261001
+    image: dreamcatch-web:diagnosis-flow-20261007
     restart: unless-stopped
     ports:
       - "${DC_WEB_BIND:-192.168.0.250}:18443:443"

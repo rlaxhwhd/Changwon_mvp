@@ -1,0 +1,44 @@
+Diagnosis single-action flow release - 2026-10-07
+
+Page: /v2/diagnosis/employment
+Start opens the existing external URL and changes the action to View results.
+The action is remembered per student/test in sessionStorage for the current tab.
+View results uses the existing importDiagnosis pipeline: external import,
+diagnosis reload and profile reload. Only a current completed HRTest attempt
+with a matching result opens the report. Empty, incomplete or review results
+show an alert and restore Start. Transport errors preserve View results for retry.
+An in-flight guard prevents duplicate imports. Removed the separate import and
+review action buttons. Existing test availability and server completion rules apply.
+
+Validation:
+- ESLint on the changed page passed; TypeScript and Vite production build passed.
+- Isolated DB regression: 23 HRTest tests passed.
+- npm run docker:up completed build, DB backup, migration check and healthy startup.
+- Local Chrome: one action, external tab opening, label change and reload
+  persistence verified. Double-click produced one real import request.
+- Local provider credentials are intentionally absent: real 502 retained View
+  results and displayed the API error. Browser-only mock responses verified
+  empty/incomplete alerts and reset, plus completed report navigation and scores.
+  Mocks did not write assessments to the database. The synthetic report's AI
+  comment lookup returned 404 because no corresponding DB attempt existed.
+- Clean local reload: 29 API requests, all successful, max observed 153 ms,
+  no console errors. Production build retains existing bundle/Vite warnings.
+- CentOS Chrome: existing completed Core has only View results. Clicking it
+  imports via HTTP 200 (138 ms), refreshes results and opens the report.
+  The tested real response now includes all 10 numeric T scores. No failed
+  requests or console errors in the checked production flow.
+
+Deployment:
+Image dreamcatch-web:diagnosis-flow-20261007 derives from the existing
+dreamcatch-web:ai-comments-20261002 runtime and copies the locally tested static
+files. Web only was recreated. API, DB and AI services retain their containers.
+No schema change. Existing company migration gap 110-113 was not altered.
+Backup/config/container records: /opt/dreamcatch/ai/diagnosis-flow-20261007/
+web.tar SHA256: 7ebae593be4ffe96b31f1fa7860b9e902d83c3416d961028fdab0a09ce056e1f
+v2.html SHA256 matches locally and on CentOS:
+da66eff0876b7a8fa322fc1de9dff6c24ecd73916ac3f3d5db20fea1839f71b0
+
+Rollback: set only the web image in /opt/dreamcatch/compose.yaml back to
+dreamcatch-web:ai-comments-20261002, then from /opt/dreamcatch run:
+docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web
+Retain newly imported diagnosis data; do not restore the full DB dump over it.
