@@ -1,10 +1,11 @@
 import { useEffect, useState, type CSSProperties } from 'react'
 import { loadStudentDiagnoses } from '../../shared/diagnosisStore'
 import { getModuleByTestId, type DiagnosisModule } from '../data/careerProcess'
-import { getDiagnosisResult, getResultRows, type DiagnosisResult, type FactorLevel, type ResultRow } from '../data/diagnosisResults'
+import { getDiagnosisResult, getResultRows, type DiagnosisResult } from '../data/diagnosisResults'
 import './DiagnosisResultReport.css'
 import AiCommentCard from '../../shared/AiCommentCard'
 import DiagnosisRadar from './DiagnosisRadar'
+import DiagnosisScoreTable from './DiagnosisScoreTable'
 import { getDiagnosisChartSections } from '../data/diagnosisChart'
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -20,7 +21,6 @@ import { getDiagnosisChartSections } from '../data/diagnosisChart'
 //   상담사 : .diagnosis-modal 안에 넣어 쓴다
 // ─────────────────────────────────────────────────────────────────────────────
 
-const LEVEL_CLASS: Record<FactorLevel | '미등록', string> = { 매우낮음:'low', 낮음: 'low', 보통: 'mid', 높음: 'high', 매우높음:'high', 미등록: '' }
 const DIAGNOSIS_COLORS: Record<string, number> = { ccore: 1, c2: 2, c3: 3, c4: 4 }
 
 function SparkIcon() {
@@ -102,44 +102,11 @@ export default function DiagnosisResultReport({
   const missing = found.source === 'hrtest' ? [] : module?.factors.filter(factor => !rows.some(row => row.name === factor.name)) ?? []
   const sections = showChart ? getDiagnosisChartSections(found, rows) : [{ id: found.testId, axes: [], rows }]
 
-  const renderTable = (tableRows: ResultRow[]) => (
-      <div className="drr-table-wrap">
-        <table className="drr-table">
-          <thead>
-            <tr>
-              <th scope="col">유형</th>
-              <th scope="col" className="mid">수준</th>
-              <th scope="col" className="num">T점수</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tableRows.map(r => (
-              <tr key={r.name}>
-                <td className="drr-factor">
-                  {r.name}
-                  {(showFactorDesc || found.testId === 'c3') && r.desc && <small>{r.desc}</small>}
-                </td>
-                <td className="mid">
-                  <span className={`drr-level ${LEVEL_CLASS[r.level]}`}>{r.level}</span>
-                </td>
-                <td className="num">
-                  <span className="drr-score">{r.tScore == null ? '점수 없음' : r.tScore.toFixed(2)}</span>
-                </td>
-              </tr>
-            ))}
-            {missing.map(factor => <tr key={factor.name}>
-              <td className="drr-factor">{factor.name}{factor.desc && <small>{factor.desc}</small>}</td>
-              <td className="mid">미등록</td><td className="num">점수 미등록</td>
-            </tr>)}
-          </tbody>
-        </table>
-      </div>
-  )
 
   return (
     <div className="drr" style={style}>
       {(found.source?.includes('fixture') || found.source?.startsWith('development:')) && <p className="drr-empty">기존 개발 검증 이력입니다. 실제 검사 결과가 아닙니다.</p>}
-      {found.source === 'hrtest' && <p className={showChart ? 'drr-source-note' : 'drr-empty'}>검사기관에서 수신한 실제 결과입니다. 결과표의 점수와 수준은 제공된 값을 그대로 표시합니다.</p>}
+      {found.source === 'hrtest' && <p className={showChart ? 'drr-source-note' : 'drr-empty'}>검사기관에서 수신한 실제 결과입니다. 유형별 점수와 수준은 제공된 값을 그대로 표시합니다.</p>}
       {found.needsReview && <p role="status" className="drr-empty">유형 확인이 필요합니다. 점수는 보존하며 유형 확정·후속 검사 배정·AI 분석은 보류합니다. 담당자에게 확인해 주세요.</p>}
       {module?.factors.length === 0 && <p className="drr-empty">결과표 항목은 추가 예정입니다.</p>}
       <div className="drr-banner">
@@ -154,12 +121,10 @@ export default function DiagnosisResultReport({
       {section.title && <header className="drr-section-heading"><h3>{section.title}</h3>{section.type && <strong>{section.type}</strong>}</header>}
       <div className={section.axes.length >= 3 ? 'drr-analysis' : undefined}>
       {section.axes.length >= 3 && <DiagnosisRadar axes={section.axes} averaged={found.testId === 'ccore'} areaAverage={found.testId === 'c3'} />}
-      {renderTable(section.rows)}
+      <DiagnosisScoreTable key={`${found.studentId}:${found.testId}:${found.attemptNo}:${section.id}`}
+        result={found} rows={[...section.rows, ...missing.map(factor => ({ name: factor.name, desc: factor.desc, tScore: null, level: '미등록' as const }))]}
+        detailRows={section.detailRows} showFactorDesc={showFactorDesc} />
       </div>
-      {!!section.detailRows?.length && <details className="drr-details" key={`${found.studentId}:${found.testId}:${found.attemptNo}:${section.id}`}>
-        <summary><span className="drr-details-show">상세보기</span><span className="drr-details-hide">상세 접기</span><small>하위 항목 {section.detailRows.length}개</small></summary>
-        {renderTable(section.detailRows)}
-      </details>}
       </section>)}
       {missing.length > 0 && <p className="drr-empty">현재 항목에 대응하는 점수가 없습니다. 이전 예시 점수는 새 항목으로 환산하지 않습니다.</p>}
 

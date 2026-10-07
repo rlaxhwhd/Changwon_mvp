@@ -14,6 +14,32 @@ const CORE_PAIRS = [
   [['interview', '면접역량'], ['job_strategy', '구직전략']],
 ] as const
 
+const CORE_AREA_NAMES = ['진로', '준비도', '적합성', '브랜딩·네트워크', '취업전략']
+
+export interface DiagnosisTableGroup {
+  id: string
+  name: string
+  summary?: ResultRow
+  rows: ResultRow[]
+}
+
+/** Group by provider identifiers, never by response position or display-name similarity. */
+export function getDiagnosisTableGroups(result: DiagnosisResult, rows: ResultRow[], summary: ResultRow[]): DiagnosisTableGroup[] {
+  const groups = new Map<string, DiagnosisTableGroup>()
+  for (const row of rows) {
+    const factor = result.factors.find(f => f.factorCode === row.factorCode)
+    const coreIndex = result.testId === 'ccore'
+      ? CORE_PAIRS.findIndex(pair => pair.some(([code]) => row.factorCode === `HRTEST_SCALES_${code}`)) : -1
+    const id = coreIndex >= 0 ? `CORE_${coreIndex}` : factor?.area || factor?.group || 'unmapped'
+    const area = summary.find(r => r.factorCode === `HRTEST_AREAS_${id}` || r.factorCode === `DISPLAY_${id}`)
+    const name = coreIndex >= 0 ? CORE_AREA_NAMES[coreIndex]
+      : area?.name ?? CARES_GROUPS.find(g => g.id === id)?.title ?? (id === 'unmapped' ? '영역 미분류' : id)
+    if (!groups.has(id)) groups.set(id, { id, name, summary: area, rows: [] })
+    groups.get(id)!.rows.push(row)
+  }
+  return [...groups.values()]
+}
+
 /** Display-only means approved 2026-10-07; original factors and levels stay intact. */
 export function getDiagnosisChartAxes(result: DiagnosisResult, rows: ResultRow[]): DiagnosisChartAxis[] {
   if (result.testId === 'c3') return DEFT_AREAS.map(area => ({
@@ -63,6 +89,13 @@ export interface DiagnosisChartSection {
 
 export function getDiagnosisChartSections(result: DiagnosisResult, rows: ResultRow[]): DiagnosisChartSection[] {
   const isArea = (row: ResultRow) => row.category === 'areas' || row.factorCode?.startsWith('HRTEST_AREAS_') === true
+  if (result.source === 'hrtest' && result.testId === 'ccore') {
+    const axes = getDiagnosisChartAxes(result, rows)
+    return [{ id: result.testId, axes, rows: axes.map((axis, index) => ({
+      factorCode: `DISPLAY_CORE_${index}`, name: CORE_AREA_NAMES[index],
+      tScore: axis.value, level: '미등록', averaged: true,
+    })), detailRows: rows }]
+  }
   if (result.source === 'hrtest' && ['c3', 'c4'].includes(result.testId)) {
     const summary = rows.filter(isArea)
     const detailRows = rows.filter(row => !isArea(row))

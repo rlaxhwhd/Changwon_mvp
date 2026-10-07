@@ -1,0 +1,43 @@
+Grouped diagnosis score tables - 2026-10-07
+
+Supersedes the disclosure layout in DIAGNOSIS_DETAILS_OPERATIONS.txt.
+The score table's upper-right button switches between area summaries and
+an Area / Type / Level / T-score table. Area cells span their member rows and
+retain the area score. Core defaults to five pair means and expands to ten
+original scores. Names approved: 진로, 준비도, 적합성, 브랜딩·네트워크, 취업전략.
+Core means have no newly inferred level. Other exams use provider area/group
+identifiers and original scores/levels. Admin reports still show all rows.
+Table rounding uses the same locale formatter as the graph.
+
+Validation:
+- Ten Node grouping/chart tests and changed-source ESLint passed.
+- Local docker:up completed TypeScript/Vite build, DB backup, migration check,
+  and healthy startup. No schema/data changes. Existing Vite warnings remain.
+- Chrome MCP, browser-only fixtures, desktop 1366px and mobile 390px:
+  Core rows 5 -> 10 -> 5; C2 12 -> 25 -> 12 (two area scores in merged cells);
+  C3 5 -> 13 -> 5; C4 4 -> 16 -> 4. Headers, row spans, upper-right button,
+  expanded state and no horizontal overflow verified. Toggle initiates no API
+  calls. No console errors. Local actual API responses were HTTP 200; local
+  student has no completed provider result, so all four layouts used fixtures.
+- Actual CentOS Core verified after deployment; C2/C3/C4 provider attempts
+  were not available for real-result verification.
+  Final Core smoke test: 31 API requests, all HTTP 200, longest 201ms,
+  no console errors; graph and summary means match to two decimal places.
+- Pre-existing bootstrap duplicate diagnosis read and large jobs/bootstrap
+  payloads remain outside this score-table change (largest about 1.1 MB).
+
+Deployment:
+Image dreamcatch-web:diagnosis-groups-20261007 uses the CentOS-compatible
+dreamcatch-web:diagnosis-details-20261007 base plus locally validated assets.
+Only web is recreated. API/DB/AI container IDs remain unchanged.
+Migration history checked through 118; existing gap 110-113 not altered.
+DB/config/container backups: /opt/dreamcatch/ai/diagnosis-groups-20261007/
+web.tar SHA256:
+81ef7a97e6ec0e66f24033bd6bb22fb0325646a2d9456b47d57db9e37c328be1
+v2.html SHA256:
+e316914ec834415ace82926923fbb4da3f11e8562fe95679686f3291b5b32f3e
+
+Rollback: set only web image in /opt/dreamcatch/compose.yaml back to
+dreamcatch-web:diagnosis-details-20261007, then from /opt/dreamcatch run:
+docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web
+No data rollback required.

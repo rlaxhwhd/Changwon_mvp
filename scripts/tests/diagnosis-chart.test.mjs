@@ -1,6 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { getDiagnosisChartAxes, getDiagnosisChartSections } from '../../src_v2/data/diagnosisChart.ts'
+import { getDiagnosisChartAxes, getDiagnosisChartSections, getDiagnosisTableGroups } from '../../src_v2/data/diagnosisChart.ts'
 
 const codes = ['career_clarity', 'career_motivation', 'competency_readiness',
   'employability_readiness', 'job_fit', 'org_fit', 'info_search',
@@ -8,6 +8,36 @@ const codes = ['career_clarity', 'career_motivation', 'competency_readiness',
 const makeResult = () => ({
   testId: 'ccore', source: 'hrtest',
   factors: codes.map((code, i) => ({ factorCode: `HRTEST_SCALES_${code}`, name: code, tScore: i * 10 })),
+})
+
+test('Core summary has five means, details preserve all ten source scores and levels', () => {
+  const result = makeResult()
+  const rows = result.factors.map(f => ({ ...f, level: '낮음' }))
+  const section = getDiagnosisChartSections(result, rows)[0]
+  assert.deepEqual(section.rows.map(r => r.tScore), [5, 25, 45, 65, 85])
+  assert.ok(section.rows.every(r => r.averaged && r.level === '미등록'))
+  assert.deepEqual(section.detailRows, rows)
+  const groups = getDiagnosisTableGroups(result, [...rows].reverse(), section.rows)
+  assert.equal(groups.length, 5)
+  assert.ok(groups.every(g => g.rows.length === 2 && g.summary.averaged))
+  assert.equal(groups.find(g => g.name === '진로').summary.tScore, 5)
+  assert.deepEqual(groups.flatMap(g => g.rows).map(r => r.level), Array(10).fill('낮음'))
+  result.factors[0].tScore = null
+  assert.equal(getDiagnosisChartSections(result, rows)[0].rows[0].tScore, null)
+})
+
+test('detail groups use provider area/group IDs, retaining null and unmapped rows', () => {
+  for (const field of ['area', 'group']) {
+    const rows = [{ factorCode: 'HRTEST_SCALES_a', name: 'a', tScore: null }, { factorCode: 'HRTEST_SCALES_b', name: 'b', tScore: 12 }]
+    const result = { testId: 'c4', factors: [{ ...rows[0], [field]: 'R' }, rows[1]] }
+    const summary = [{ factorCode: 'HRTEST_AREAS_R', name: '정보탐색 및 분석', tScore: 50, level: '보통' }]
+    const groups = getDiagnosisTableGroups(result, rows, summary)
+    assert.equal(groups[0].name, summary[0].name)
+    assert.equal(groups[0].summary, summary[0])
+    assert.equal(groups[0].rows[0].tScore, null)
+    assert.equal(groups[1].name, '영역 미분류')
+    assert.deepEqual(groups.flatMap(g => g.rows), rows)
+  }
 })
 
 test('Core matches pairs by stable provider code even when reordered; preserves raw scores', () => {

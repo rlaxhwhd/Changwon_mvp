@@ -34,6 +34,7 @@ export function getResultsByStudent(studentId: string): DiagnosisResult[] {
 export interface ResultRow {
   factorCode?: string
   category?: FactorScore['category']
+  averaged?: boolean
   name: string
   desc?: string
   tScore: number | null
