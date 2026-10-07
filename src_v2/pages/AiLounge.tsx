@@ -80,9 +80,17 @@ export default function AiLounge() {
     <NextStepBanner />
     <section className="welcome reveal"><div><small>{student.major}{student.grade ? ` ${student.grade}학년` : ''}</small><h1>안녕하세요, <span>{studentDisplayName(student.name, student.id)}</span>님.<br />오늘의 커리어 여정을 시작해 볼까요?</h1></div><div className="student-type"><span className="type-copy"><small>나의 진로 유형</small><b>{typeLabel(type)}</b><span>{meta?.goal ?? '진단 결과가 연계되면 유형을 확인할 수 있습니다.'}</span></span></div></section>
     <StudentStatCards stats={stats} />
-    <AiCommentCard studentId={student.id} kind="comprehensive" />
     <div className="dashboard-grid">
       <CareerJourneyCard journey={buildCareerJourney(getPipelineState(student))} title="나의 진로 여정" desc="내 CARE 7+의 현재 위치입니다." className="reveal" id="journey" />
+
+      {/* 종합 코멘트는 여정 바로 다음이다 — 지금 어디에 서 있는지를 본 뒤에 그 해석을 읽는다.
+          격자 안에 두되 전면(1 / -1)으로 깐다. 네온 테두리는 AiLounge.css 가 입힌다. */}
+      {roadmap ? <AiCommentCard studentId={student.id} kind="comprehensive" />
+        : <section className="dc-ai-comment" aria-label="종합 AI 코멘트">
+          <div className="dc-ai-comment-head"><div><strong>종합 AI 코멘트</strong>
+            <p>기록과 참고 자료를 바탕으로 작성하며, 완성된 코멘트는 자동 저장됩니다.</p></div></div>
+          <LockedContent text="CARE 7+ 상담 후 로드맵이 확정되면 종합 AI 코멘트를 확인할 수 있습니다." />
+        </section>}
 
       <Card id="competency" className="competency-card" title="5대 핵심역량" description="비교과 프로그램과 수강 강의활동으로 쌓은 역량입니다.">
         <div className="competency-chart">

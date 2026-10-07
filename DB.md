@@ -621,6 +621,12 @@ CREATE TABLE dc.org_assignment (
 자소서 ID `r1`·`r2` 를 가리키고 그 행은 append-only 라 사후 재매핑이 불가능하다 —
 `dc.job_resume` 은 그 ID 를 보존한다. 자소서 쪽에 AI 결과 역참조 컬럼을 두지 않는다(규칙 3).
 
+2026-10-02 진단·상담·종합·로드맵 AI 코멘트도 기존 `dc.ai_run`·`dc.ai_comment`에 연결했다.
+LLM 생성 후 본문·근거·모델·입력 스냅샷을 원자적으로 저장한 뒤 완료를 반환하고, 화면 진입 시
+최신 저장본을 불러온다. 재생성은 append-only 이력으로 남는다. 학생용과 상담사용 코멘트는
+분리하며 상담사는 학생용 코멘트도 열람한다. 기존 미저장 응답은 소급 복원하지 않는다.
+117/118 마이그레이션·운영 검증·복구는 [AI 코멘트 운영 기록](deploy/AI_COMMENTS_OPERATIONS.txt)을 따른다.
+
 - 마이그레이션 `022_job_operations.sql`(DDL·코드) · `023_job_seed.sql`(파생 시드, `seed.py` 가 다시 돌린다)
 - API `backend/app/jobs.py` · `files.py` · `gates.py` · 테스트 `backend/tests/test_jobs.py`
 - 프론트 정본은 `shared/jobStore.ts`. `dc_jobs` · `dc_job_applications` · `dc_job_app_events` ·

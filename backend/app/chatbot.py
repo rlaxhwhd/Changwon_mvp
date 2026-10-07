@@ -23,6 +23,7 @@ from . import rag
 router = APIRouter(prefix='/chatbot', tags=['chatbot'])
 log = logging.getLogger(__name__)
 _active: set[str] = set()  # API deploys one worker; at most two admitted requests.
+_background: set[asyncio.Task] = set()
 
 
 class Turn(BaseModel):
@@ -243,7 +244,7 @@ async def chat(body: ChatRequest, user=Depends(principal)):
     return stream_reply(identity, lambda progress: run_chat(body, progress))
 
 
-def stream_reply(identity: str, run):
+def stream_reply(identity: str, run, *, persist_after_disconnect=False):
 
     async def stream():
         # Work starts after function-scoped authentication DB connections close.
@@ -265,8 +266,12 @@ def stream_reply(identity: str, run):
                 log.warning('Chatbot request failed: %s', type(exc).__name__)
                 await queue.put(('error', {'message': str(exc) if isinstance(exc, WebToolError)
                                           else 'AI 서버에 연결하거나 답변을 생성하지 못했습니다. 잠시 후 다시 시도해 주세요.'}))
+            finally:
+                _active.discard(identity)
 
         task = asyncio.create_task(produce())
+        _background.add(task)
+        task.add_done_callback(_background.discard)
         try:
             while True:
                 try:
@@ -277,10 +282,10 @@ def stream_reply(identity: str, run):
                 except TimeoutError:
                     yield ': heartbeat\n\n'
         finally:
-            task.cancel()
-            with contextlib.suppress(asyncio.CancelledError):
-                await task
-            _active.discard(identity)
+            if not persist_after_disconnect:
+                task.cancel()
+                with contextlib.suppress(asyncio.CancelledError):
+                    await task
 
     return StreamingResponse(stream(), media_type='text/event-stream', headers={
         'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no',

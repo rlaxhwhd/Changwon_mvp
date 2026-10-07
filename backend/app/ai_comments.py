@@ -1,22 +1,25 @@
-"""Read-only AI drafts, using the same authorization and DTOs as each screen."""
+"""Persisted AI drafts, using the same authorization and DTOs as each screen."""
 import asyncio
 import json
 import time
+import hashlib
+from uuid import uuid4
 from datetime import datetime
 from typing import Literal
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, ConfigDict, Field
+from psycopg.types.json import Jsonb
 
 from . import rag
 from .ai_context import diagnosis_factors, company_goal
-from .auth import principal, student_access
+from .auth import principal, student_access, is_counselor
 from .chatbot import complete, provider_client, stream_reply, WebToolError
 from .counsel import get_request
 from .counsel_records import records, record_dto, SELECT
-from .db import connection
+from .db import connection, pool
 from .diagnosis import student_diagnoses
 from .roadmap import student_roadmap
 from .settings import settings
@@ -113,7 +116,7 @@ async def generate_comment(body: CommentRequest, context, progress):
     sources = await rag.retrieve(labels[body.kind] + ' 근거 강점 보완 실행 과제 자료 부족', body.kind)
     if not sources:
         raise WebToolError('관련 근거 자료를 찾지 못했습니다. 자료를 확인한 후 다시 시도해 주세요.')
-    notices = ['AI 검토용 초안입니다. 상담 기록이나 진단 결과에 자동 저장되지 않습니다.']
+    notices = ['자동 저장된 AI 검토용 초안입니다. 상담사의 확정 의견과 구분해 참고해 주세요.']
     if any('fixture' in item.get('source', '') for item in context.get('diagnoses', [])):
         notices.insert(0, '개발 검증용 예시 진단이 포함되어 있습니다. 실제 학생의 측정 결과가 아닙니다.')
     if any(f.get('definitionStatus') == 'UNMAPPED_FACTOR'
@@ -139,7 +142,7 @@ async def generate_comment(body: CommentRequest, context, progress):
         '확인된 사실, 강점과 보완점, 실행 제안 2~3개, 추가 확인 사항 순으로 900자 이내에 작성한다. '
         '새로운 내용은 제안이라고 표현하고 상담에서 이미 합의했다고 쓰지 않는다. '
         '참고한 내부 지식은 [R1] 형식으로 표시한다. DB 입력에 없는 수치·기관·날짜를 넣지 않는다. '
-        '이 응답은 자동 저장·확정되지 않는 검토용 초안이다. /no_think'
+        '이 응답은 AI 코멘트 이력에 저장되는 검토용 초안이며 상담사의 확정 의견이 아니다. /no_think'
     )
     if body.kind == 'diagnosis' and any(not factor.get('level')
             for result in context.get('diagnoses', []) for factor in result['factors']):
@@ -167,10 +170,112 @@ async def generate_comment(body: CommentRequest, context, progress):
             'generatedAt': datetime.now(ZoneInfo('Asia/Seoul')).isoformat()}
 
 
+KINDS = {'diagnosis': 'DIAGNOSIS_COMMENT', 'comprehensive': 'STUDENT_ANALYSIS',
+         'counsel': 'COUNSEL_COMMENT', 'roadmap': 'ROADMAP_COMMENT'}
+
+
+def context_hash(context):
+    return hashlib.sha256(json.dumps(context, sort_keys=True, ensure_ascii=False,
+                                     separators=(',', ':')).encode()).hexdigest()
+
+
+def subject_key(body):
+    # Stable card identity; student aliases are resolved separately to the canonical UID.
+    return json.dumps([body.testId, body.attemptNo, body.counselRequestId], separators=(',', ':'))
+
+
+def comment_scope(user):
+    if user['kind'] == 'STUDENT':
+        return 'student'
+    if is_counselor(user):
+        return 'counselor'
+    # Professors/assistants have narrower, potentially different record scopes.
+    return 'staff:' + user['intg_uid']
+
+
+def latest_comment(conn, body, uid, scope, context):
+    row = conn.execute('''SELECT r.id,r.created_at,r.input_hash,c.body,c.metadata
+      FROM dc.ai_run r JOIN dc.ai_comment c ON c.run_id=r.id
+      WHERE r.student_uid=%s AND r.kind_code=%s AND r.subject_kind='AI_COMMENT'
+        AND r.subject_id=%s AND r.comment_scope=%s
+      ORDER BY r.created_at DESC,r.id DESC LIMIT 1''',
+      (uid, KINDS[body.kind], subject_key(body), scope)).fetchone()
+    return saved_dto(row, context) if row else None
+
+
+@router.get('/comments')
+def load_comment(response: Response, body: CommentRequest = Query(),
+                 user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    # Loading saved results remains available when the model is offline.
+    context = context_for(conn, user, body)
+    student = student_access(conn, user, body.studentId)
+    own = latest_comment(conn, body, student['intg_uid'], comment_scope(user), context)
+    student_comment = None
+    if is_counselor(user):
+        student_user = conn.execute('SELECT * FROM dc.person WHERE intg_uid=%s', (student['intg_uid'],)).fetchone()
+        try:
+            student_context = context_for(conn, student_user, body)
+            student_comment = latest_comment(conn, body, student['intg_uid'], 'student', student_context)
+        except HTTPException as exc:
+            if exc.status_code not in (403, 404):
+                raise
+    response.headers['Cache-Control'] = 'no-store'
+    return {'comment': own, 'studentComment': student_comment}
+
+
+def saved_dto(row, context):
+    return {**row['metadata'], 'text': row['body'], 'commentId': row['id'],
+            'savedAt': row['created_at'].isoformat(), 'stale': row['input_hash'] != context_hash(context)}
+
+
+def store_comment(conn, body, user, context, reply, scope):
+    student = student_access(conn, user, body.studentId)
+    run_id = 'ai_comment_' + uuid4().hex
+    row = conn.execute('''INSERT INTO dc.ai_run(id,kind_code,student_uid,subject_kind,subject_id,
+      model,requested_by,schema_version,input_hash,input_snapshot,source_ref,comment_scope)
+      VALUES(%s,%s,%s,'AI_COMMENT',%s,%s,%s,1,%s,%s,%s,%s) RETURNING id,created_at,input_hash''',
+      (run_id, KINDS[body.kind], student['intg_uid'], subject_key(body), settings.chatbot_model,
+       user['intg_uid'], context_hash(context), Jsonb(context),
+       Jsonb({'kind': 'RAG_COMMENT', 'commentKind': body.kind}), scope)).fetchone()
+    metadata = {key: reply[key] for key in ('sources', 'notices', 'elapsedMs', 'generatedAt') if key in reply}
+    conn.execute('INSERT INTO dc.ai_comment(run_id,body,metadata) VALUES(%s,%s,%s)',
+                 (run_id, reply['text'], Jsonb(metadata)))
+    return saved_dto({**row, 'metadata': metadata, 'body': reply['text']}, context)
+
+
+def persist_comment(body, user, context, reply, scope):
+    # No connection or transaction is held while RAG/LLM are running.
+    with pool.connection() as conn:
+        conn.execute('SET LOCAL jit = off')
+        fresh_user = conn.execute('SELECT * FROM dc.person WHERE intg_uid=%s', (user['intg_uid'],)).fetchone()
+        if not fresh_user:
+            raise WebToolError('사용자 권한을 확인할 수 없어 저장하지 못했습니다.')
+        if comment_scope(fresh_user) != scope:
+            raise WebToolError('생성 중 권한이 변경되어 저장하지 못했습니다.')
+        # Revalidate the evidence access after a potentially long model request.
+        current = context_for(conn, fresh_user, body)
+        result = store_comment(conn, body, fresh_user, context, reply, scope)
+        result['stale'] = context_hash(current) != context_hash(context)
+    # Pool context commits before returning a successful SSE done event.
+    return result
+
+
+async def generate_and_store(body, user, context, scope, progress):
+    result = await generate_comment(body, context, progress)
+    await progress('완성된 코멘트를 저장하고 있어요.')
+    try:
+        return await asyncio.to_thread(persist_comment, body, user, context, result, scope)
+    except Exception as exc:
+        raise WebToolError('코멘트를 저장하지 못했습니다. 잠시 후 다시 시도해 주세요.') from exc
+
+
 @router.post('/comments')
 def comment(body: CommentRequest, user=Depends(principal, scope='function'),
             conn=Depends(connection, scope='function')):
     if not settings.chatbot_enabled or not settings.rag_enabled:
         raise HTTPException(503, 'AI 근거 검색과 코멘트 서비스를 준비 중입니다.')
     context = context_for(conn, user, body)
-    return stream_reply(str(user['intg_uid']), lambda progress: generate_comment(body, context, progress))
+    scope = comment_scope(user)
+    return stream_reply(str(user['intg_uid']),
+                        lambda progress: generate_and_store(body, user, context, scope, progress),
+                        persist_after_disconnect=True)

@@ -193,6 +193,8 @@ ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration �
 
 ## 5. 변경 체크리스트
 
+2026-10-02 AI 코멘트 저장(117/118): 기존 `ai_run`·`ai_comment`를 재사용한다. `ai_run.comment_scope`와 학생·종류·대상·열람 범위·최신 시각의 부분 인덱스, `ai_comment.metadata`(근거·안내·생성 시각·소요 시간)를 추가한다. 본문·입력 스냅샷·모델·요청자와 함께 하나의 트랜잭션으로 저장하고 기존 append-only 규칙을 유지한다. 상담/로드맵 검토 종류 코드는 별도 데이터 마이그레이션 118에서 등록한다. 학생용과 상담사용 결과를 분리하며 상담사는 학생용 결과도 열람한다. 상세 동작·검증·복구는 [AI 코멘트 운영 기록](deploy/AI_COMMENTS_OPERATIONS.txt)을 따른다.
+
 2026-09-16 퀘스트 성장 추가(090/091): `quest_growth_account`(학생별 XP 누계), `quest_attendance`(학생+출석일 PK), `growth_xp_event`(출처별 지급 원장). 운영 코드 `QUEST_XP_REWARD`, `QUEST_SEMESTER`. 관계·인덱스·권한·API·확정 정책은 [퀘스트 성장 명세](docs/QUEST_GROWTH.md)를 따른다. 관리자 퀘스트 등록 및 비교과 보상 화면은 후속 범위다.
 
 - [ ] ERD 관계 반영

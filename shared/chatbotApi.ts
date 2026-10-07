@@ -1,7 +1,7 @@
 import { apiResponse } from './api'
 
 export type ChatSource = { id: string; title: string; url: string; snippet: string; origin?: string; version?: string }
-export type ChatReply = { text: string; sources: ChatSource[]; notices: string[]; elapsedMs: number }
+export type ChatReply = { text: string; sources: ChatSource[]; notices: string[]; elapsedMs: number; generatedAt?: string; savedAt?: string; commentId?: string; stale?: boolean }
 export type ChatTurn = { role: 'user' | 'assistant'; content: string }
 
 export async function askChatbot(message: string, history: ChatTurn[], signal: AbortSignal,

@@ -91,7 +91,10 @@ def profiles(user=Depends(principal,scope='function'),conn=Depends(connection,sc
         condition='''(EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=s.intg_uid)
           OR EXISTS(SELECT 1 FROM dc.counsel_request q WHERE q.counselor_uid=%s AND q.student_uid=s.intg_uid))'''
         values=[user['intg_uid'],user['intg_uid']]
-    rows=conn.execute('SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid) WHERE (s.detail IS NOT NULL OR p.source IN (\'academic\',\'local\')) AND '+condition+' ORDER BY p.alias',values).fetchall()
+    # An authenticated student's own profile must exist even for a newly created
+    # fixture with no detail/history. Keep the legacy staff roster filter intact.
+    profile_filter = 'true' if user['kind']=='STUDENT' else "(s.detail IS NOT NULL OR p.source IN ('academic','local'))"
+    rows=conn.execute('SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid) WHERE '+profile_filter+' AND '+condition+' ORDER BY p.alias',values).fetchall()
     students=[]
     owners=[]
     for row in rows:

@@ -1,0 +1,54 @@
+Student transfer deployment — 2026-10-02
+
+Scope: user explicitly requested local student 20991231 and all related history
+to be available on CentOS. Exported one row each from dc.person, dc.student,
+dc.fixture_student_login, dc.ai_run and dc.ai_comment. No diagnosis or roadmap
+history existed. Login sessions were excluded; a fresh server login was tested.
+Local data was preserved. No schema migrations were applied.
+
+API: dreamcatch-api:student-profile-20261002, derived from
+dreamcatch-api:ai-comments-20261002 with only app/students.py replaced.
+Build: docker build -f deploy/Dockerfile.student-profile-company
+       -t dreamcatch-api:student-profile-20261002 backend
+The previous server students.py matched the checkout HEAD version by SHA256.
+This deploy includes the already tested own-profile filter fix for a newly
+created fixture with no detail/history. Staff roster filtering stays unchanged.
+
+Validation:
+- Local regression: empty_student_profile or student_login: 5 passed.
+- Local Chrome: own bootstrap profile HTTP 200.
+- Restored production backup to dc_transfer_20261002_test, imported the five
+  rows, then tested the release image against the clone using dc_app:
+  own profile and saved comprehensive comment both loaded successfully.
+- Windows export initially converted LF in the comment body to CRLF. Corrected
+  the exporter to write LF. A separate, hash-guarded correction was tested on
+  the clone and applied to exactly one imported comment. A short exclusive
+  transaction disabled/re-enabled only ai_comment_immutable; it is enabled
+  after commit. All FK/check constraints remained enabled.
+- Production comment: 559 characters; body and metadata MD5 match local.
+- Chrome CentOS: login HTTP 200 (183 ms), main profile HTTP 200 (113 ms),
+  diagnosis HTTP 200 (65 ms), roadmap HTTP 200 (68 ms).
+- Lounge saved comment loaded and rendered, HTTP 200 (46 ms), reload checked.
+- No console errors or failed API requests; no observed request over 1.5 s.
+- Existing main bootstrap program/job payloads remain large (773/482 KB),
+  returned in 242/217 ms; this deployment did not change those endpoints.
+- Only API container recreated. Web, DB, RAG, Qdrant, SearXNG and tunnel
+  container IDs unchanged. GPU server untouched.
+
+Protected server audit/backup directory:
+  /opt/dreamcatch/ai/student-transfer-20261002/
+  before.dump, compose.before.yaml, containers.before.txt,
+  containers.after.txt, import.sql, normalize.sql, verify.yaml, api.tar
+Import is insert-only and intentionally fails on duplicates. Do not rerun it.
+The SQL files contain student data and remain outside version control.
+
+Rollback:
+- API only: restore previous compose image dreamcatch-api:ai-comments-20261002
+  and recreate only api with compose.yaml + compose.chatbot.yaml. This brings
+  back the empty-profile bug for this fixture, so prefer the current image.
+- Data: retain the successful transfer by default. Do not restore the entire
+  production dump over subsequent writes. If reversing is requested, inspect
+  new dependencies and prepare a targeted transactional reversal against a
+  clone; append-only AI records require a reviewed maintenance procedure.
+- Production schema still has the pre-existing 110–113 migration gap; this
+  narrow deployment does not attempt to reconcile it or run the full migrator.

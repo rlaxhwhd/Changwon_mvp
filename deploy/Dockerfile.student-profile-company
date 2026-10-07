@@ -1,0 +1,2 @@
+FROM dreamcatch-api:ai-comments-20261002
+COPY app/students.py /app/app/students.py

@@ -50,6 +50,7 @@ docs/_analysis/06_findings.md
 # 개발자별 로컬 설정 (API 프록시 대상 등)
 .env.local
 .env*.local
+/deploy/secrets/*_local
 
 # 업로드 파일의 로컬 저장 위치(DC_FILE_ROOT 기본값). 운영은 컨테이너 볼륨이다.
 backend/var/

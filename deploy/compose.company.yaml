@@ -18,7 +18,7 @@ services:
       timeout: 3s
       retries: 12
   api:
-    image: dreamcatch-api:hrtest-20261001
+    image: dreamcatch-api:student-profile-20261002
     restart: unless-stopped
     read_only: true
     tmpfs: [/tmp]

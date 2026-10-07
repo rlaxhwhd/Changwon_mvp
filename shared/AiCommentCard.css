@@ -1,15 +1,30 @@
-.dc-ai-comment { margin: 20px 0; padding: 20px; border: 1px solid #dfe5ed; border-radius: 12px; background: #fff; color: #263345; font-size: 14px; line-height: 1.65; }
+.dc-ai-comment { --ai-primary: #7353ea; --ai-deep: #524fa1; --ai-blue: #2f5efb; --ai-magenta: #b853ea; --ai-sky: #00a6ff; margin: 20px 0; padding: 22px; border: 1px solid #e9ebf0; border-top: 3px solid var(--ai-primary); border-radius: 12px; background: #fff; color: #191f28; font-size: 14px; line-height: 1.65; }
 .dc-ai-comment-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
-.dc-ai-comment-head strong { font-size: 16px; }
-.dc-ai-comment-head p { margin: 4px 0 0; color: #627186; }
-.dc-ai-comment button { flex-shrink: 0; padding: 8px 14px; border: 1px solid #d4dce7; border-radius: 8px; background: #f5f7fb; color: #263345; cursor: pointer; font: inherit; }
-.dc-ai-comment button:focus-visible, .dc-ai-comment summary:focus-visible { outline: 2px solid #5368b9; outline-offset: 3px; }
-.dc-ai-comment-result { margin-top: 16px; border-top: 1px solid #e8edf3; padding-top: 16px; }
+.dc-ai-comment-head strong { font-size: 16px; color: var(--ai-deep); }
+.dc-ai-comment-head p { margin: 4px 0 0; color: #66717e; }
+.dc-ai-comment button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; flex-shrink: 0; padding: 8px 16px; border: 1px solid transparent; border-radius: 8px; background: var(--ai-primary); color: #fff; cursor: pointer; font: inherit; font-weight: 600; }
+.dc-ai-comment button:hover:not(:disabled), .dc-ai-comment button:disabled { background: var(--ai-deep); }
+.dc-ai-comment button:disabled { cursor: wait; }
+.dc-ai-comment button:focus-visible, .dc-ai-comment summary:focus-visible { outline: 2px solid var(--ai-blue); outline-offset: 3px; }
+.dc-ai-comment-result { margin-top: 16px; border-top: 1px solid #e9ebf0; padding-top: 16px; }
 .dc-ai-comment-text { white-space: pre-wrap; overflow-wrap: anywhere; }
 .dc-ai-comment details { margin: 16px 0; }
-.dc-ai-comment summary { cursor: pointer; }
-.dc-ai-comment article { margin-top: 12px; padding-left: 12px; border-left: 2px solid #dfe5ed; }
-.dc-ai-comment small { display: block; color: #627186; }
+.dc-ai-comment summary { cursor: pointer; color: var(--ai-deep); }
+.dc-ai-comment article { margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--ai-sky); }
+.dc-ai-comment small { display: block; color: #66717e; }
 .dc-ai-comment article p { margin: 4px 0; }
 .dc-ai-comment [role=alert] { color: #a32d35; }
-@media (max-width: 600px) { .dc-ai-comment-head { flex-direction: column; } }
+.dc-ai-comment-saved { margin: 0 0 12px; color: #1c6027; font-size: 12px; }
+.dc-ai-comment-audience { display: block; margin-bottom: 6px; color: var(--ai-deep); }
+.dc-ai-comment-stale { padding: 10px 12px; background: #f0f1f3; color: #343e4b; border-radius: 6px; }
+.dc-ai-comment-loading { margin-top: 18px; padding: 16px; border-radius: 8px; background: #f0f1f3; }
+.dc-ai-comment-progress { display: flex; align-items: center; gap: 10px; color: var(--ai-deep); }
+.dc-ai-spinner { display: inline-block; flex-shrink: 0; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: dc-ai-spin .85s linear infinite; }
+.dc-ai-comment-skeleton { display: grid; gap: 9px; margin-top: 16px; }
+.dc-ai-comment-skeleton span { display: block; height: 9px; border-radius: 6px; background: #e9ebf0; border-left: 3px solid var(--ai-magenta); animation: dc-ai-pulse 1.6s ease-in-out infinite; }
+.dc-ai-comment-skeleton span:nth-child(2) { width: 88%; border-color: var(--ai-blue); animation-delay: .15s; }
+.dc-ai-comment-skeleton span:nth-child(3) { width: 64%; border-color: var(--ai-sky); animation-delay: .3s; }
+@keyframes dc-ai-spin { to { transform: rotate(360deg); } }
+@keyframes dc-ai-pulse { 50% { opacity: .4; } }
+@media (prefers-reduced-motion: reduce) { .dc-ai-spinner, .dc-ai-comment-skeleton span { animation: none; } }
+@media (max-width: 600px) { .dc-ai-comment { padding: 16px; } .dc-ai-comment-head { flex-direction: column; } .dc-ai-comment-head button { width: 100%; } }

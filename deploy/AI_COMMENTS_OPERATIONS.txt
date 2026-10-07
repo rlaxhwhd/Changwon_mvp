@@ -1,0 +1,61 @@
+AI comments persistence - 2026-10-02
+
+Images: dreamcatch-api:ai-comments-20261002, dreamcatch-web:ai-comments-20261002.
+Previous images: hrtest-20261001. Only API/web require recreation.
+Apply only 117_ai_comment_persistence.sql and 118_ai_comment_kinds.sql.
+Company migrations 110-113 remain intentionally unapplied; do not run all migrations.
+
+All four real LLM comment kinds (diagnosis, counsel, comprehensive, roadmap)
+write existing ai_run + ai_comment atomically before sending SSE done.
+Input snapshot/hash, actual configured model, requester, body, evidence, notices,
+generation timestamp and duration are retained. Regeneration appends a revision.
+Existing fixture AI artifacts are preserved and never treated as new LLM replies.
+No backfill is possible for old in-memory-only responses.
+
+GET /api/v1/ai/comments uses the same card parameters and authorization as POST.
+It returns the latest saved result without contacting RAG or the LLM, including
+when generation is disabled. Changed evidence marks the saved comment stale.
+Students read only student-scope results. Career/psych counselors share counselor
+results and also receive student results, displayed separately in the same card.
+Other staff retain individual scopes plus their existing student/record access.
+No AI text is inserted into human-written counsel_record.comment.
+
+No DB connection is held during the LLM request. Before saving, the current user
+and evidence permissions are revalidated on a fresh short transaction. Save failure
+returns an SSE error, never success. Navigating away leaves an admitted comment
+task running to completion and saving; the existing two-request limit still applies.
+Tasks are in-process: stopping/restarting the API during generation can interrupt
+unfinished work. This is not a persistent job queue.
+
+UI: common AiCommentCard uses supplied #7353ea/#524fa1 primary colors and
+#2f5efb/#b853ea/#00a6ff accents, spinner/skeleton/status text, disabled generation
+button during loading, saved timestamp, stale-data notice and reduced-motion support.
+
+Validation before deployment:
+70 backend tests passed (AI comments, chatbot, HRTest, roadmap generation).
+Production frontend build passed; pre-existing Vite/config and chunk-size warnings.
+Company DB backup restored as dc_company_comments_20261002_test, both migrations
+applied, dc_app save/load verified and synthetic writes rolled back.
+Latest lookup on this small clone: client DB query 1.23 ms, EXPLAIN execution
+0.034 ms. This is a small-snapshot measurement, not a scalability guarantee.
+
+CentOS Chrome validation after deployment:
+Student lounge: real Qwen comprehensive generation HTTP 200, 19,252 ms total,
+19,177 ms RAG/model work, 631 output characters and 3 sources persisted.
+During generation: aria-busy=true, button disabled, spinner and 3 skeleton lines.
+DB independently confirmed model/kind/audience/body length/source count.
+Reload: identical comment ID and text, automatic GET HTTP 200 in 22 ms, 5,198 bytes.
+Counselor student detail: the saved student result renders under its separate
+audience label. Both student and counselor screens have no console errors.
+Initial empty-result GET was 72 ms / 38 bytes. Additional validation GETs were
+manual checks, not duplicate auto-loads from the component.
+API/web healthy. DB/RAG/Qdrant/SearXNG/tunnel container IDs stayed unchanged.
+No failed API requests or requests over 1.5 seconds on the post-generation reload.
+Pre-existing boot payloads outside the comment change: programs 1,108,220 bytes /
+208 ms and jobs 732,625 bytes / 180 ms. Comment response remains 5,198 bytes.
+
+Backup: /opt/dreamcatch/ai/comments-backup-20261002/
+before.dump, compose.yaml, compose.chatbot.yaml, services-before.json.
+Rollback: restore the saved Compose files and recreate only api/web.
+Retain additive columns, codes and saved AI history; do not restore the entire DB
+over new user activity. Future schema changes use new forward migrations.
