@@ -34,7 +34,8 @@
 .drr-details-toggle:focus-visible { outline: 2px solid var(--drr-accent); outline-offset: 3px; }
 .drr-table-note { margin: 10px 0 0; color: var(--drr-sub); font-size: 11px; line-height: 1.6; }
 .drr-table .drr-area { width: 23%; white-space: normal; border-top: 1px solid var(--drr-border); border-right: 1px solid var(--drr-border); vertical-align: middle; line-height: 1.5; }
-.drr-area small { display: block; margin-top: 6px; font-size: 11px; font-weight: 500; }
+.drr-table.drr-table-grouped .drr-area { font-size: 14px; }
+.drr-area small { display: block; margin-top: 6px; font-size: 13px; font-weight: 500; }
 .drr-table-grouped tbody + tbody { border-top: 2px solid var(--drr-border); }
 .drr-table-grouped .drr-factor { line-height: 1.5; overflow-wrap: anywhere; }
 .drr-section-heading { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px 20px; margin-bottom: 16px; padding: 12px 16px; border-top: 2px solid var(--drr-accent); background: var(--drr-accent-soft); }

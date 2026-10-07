@@ -1,0 +1,27 @@
+Diagnosis area typography - 2026-10-07
+
+Expanded score tables: area name 12 -> 14px, area score 11 -> 13px.
+The sizes also apply at mobile widths. No data or API changes.
+
+Validation: npm run docker:up passed TypeScript/Vite build, local DB backup,
+migration check and healthy startup. Chrome MCP verified Core expanded table
+at 1366px and 390px using browser-only local fixtures: computed sizes 14/13px,
+no horizontal overflow. Desktop console had no errors or warnings.
+CentOS actual Core result verified at 1366px: all five area cells 14/13px,
+no horizontal overflow or console errors/warnings; 31 API requests all 200,
+maximum 175ms. Existing duplicate diagnosis reads and bootstrap payloads
+(largest 1,107,278 bytes) are unchanged and outside this CSS change.
+
+Image: dreamcatch-web:diagnosis-area-font-20261007
+CentOS-compatible base: dreamcatch-web:diagnosis-groups-20261007
+Only web recreated; API/DB/AI container IDs unchanged. Web healthy.
+Migration history checked through 118; existing gap 110-113 unchanged.
+Backup directory: /opt/dreamcatch/ai/diagnosis-area-font-20261007/
+Contains prior compose, container list, DB dump and deployment image archive.
+web.tar SHA256:
+c238d4f99541784777abb3986bdc47fe7e25c663fee684685c9aa952db55cab7
+
+Rollback: restore web image dreamcatch-web:diagnosis-groups-20261007 in
+/opt/dreamcatch/compose.yaml and run from /opt/dreamcatch:
+docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web
+No DB rollback required.
