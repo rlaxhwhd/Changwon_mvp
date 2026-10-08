@@ -185,3 +185,15 @@ CentOS 호환 런타임과 의존성도 확인하고, 회사용 이미지를 로
 - 백업 경로는 `/opt/dreamcatch/ai/diagnosis-table-style-20261008/`.
   복구는 웹 태그를 `dreamcatch-web:diagnosis-ui-polish-20261008`로 되돌리고 위 Compose 명령으로 웹만 재기동한다.
   사용자 요청에 따라 브라우저 화면 테스트는 수행하지 않았다.
+
+### 배포 보류: 결과표 컬럼 헤더 14px (2026-10-08)
+
+사용자 후속 지시로 표 상단의 영역·유형·수준·평균 T점수/T점수만 14px로 변경한다.
+`DiagnosisResultReport.css`의 `.drr .drr-table thead th`에만 적용하며,
+본문의 진로명확성 등 항목·점수·수준 배지 글자 크기는 유지한다.
+이 선택자는 작은 화면 상세표의 글자 크기 규칙보다 우선하므로 헤더는 14px를 유지한다.
+
+이 변경은 로컬 이미지 `dreamcatch-web:diagnosis-table-header-20261008`으로만 준비한다.
+서버 전송·배포와 로컬 실행 컨테이너 교체는 보류한다.
+서버의 마지막 배포 태그는 `dreamcatch-web:diagnosis-table-style-20261008`이며,
+추가 변경을 모아 배포하라는 사용자 지시를 받기 전까지 그대로 유지한다.
