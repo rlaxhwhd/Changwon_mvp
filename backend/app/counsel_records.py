@@ -211,6 +211,10 @@ def save_record(request_id:str,body:RecordWrite,user=Depends(principal,scope='fu
     summary=body.template.content() if body.template else body.summary.strip()
     if body.status=='완료':
         validate_completed_template(request,body.template,comment=body.comment,type_locked=request['status_code']=='DONE')
+        from .counsel_template import validate_ai_journal
+        validate_ai_journal(conn, request, body.template)
+    if request['status_code']=='DONE' and body.status!='완료':
+        raise HTTPException(409,'완료된 상담의 기록은 수정 저장으로 저장해 주세요.')
     if body.status=='완료' and not (summary and body.comment.strip()):
         raise HTTPException(422,'상담내용과 공개 코멘트를 입력해 주세요.')
     conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot,template)
@@ -222,4 +226,7 @@ def save_record(request_id:str,body:RecordWrite,user=Depends(principal,scope='fu
     conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',
                  (request_id,user['intg_uid'],'RECORD_UPDATED',Jsonb({'before':{k:existing[k] for k in ('summary','comment','follow_up','version','template')} if existing else None,
                   'after':body.model_dump()})))
+    from .counsel_ai import enqueue_refresh
+    if body.status=='완료':
+        enqueue_refresh(conn, request, user)
     return record_dto(conn.execute(SELECT+' WHERE c.request_id=%s',(request_id,)).fetchone())

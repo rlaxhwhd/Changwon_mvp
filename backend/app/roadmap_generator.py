@@ -103,8 +103,11 @@ def generation_input(conn, student, counsel, target_role):
     # fixture outcomes or certificate numbers are sent to the provider.
     type_row = conn.execute('''SELECT id,student_type FROM dc.current_student_type WHERE student_uid=%s
       ORDER BY decided_at DESC,id DESC LIMIT 1''', (uid,)).fetchone()
-    record = conn.execute('''SELECT summary,follow_up FROM dc.counsel_record
+    record = conn.execute('''SELECT summary,follow_up,template FROM dc.counsel_record
       WHERE request_id=%s AND status_code='DONE' ''', (counsel['id'],)).fetchone()
+    if record:
+        record = {**record, 'aiJournal': (record.get('template') or {}).get('aiJournal', '')}
+        record.pop('template', None)
     snapshot = jsonable_encoder({
         'schemaVersion': 1, 'promptVersion': PROMPT_VERSION,
         'student': {'major': student['major_label'], 'grade': student['grade']},
@@ -113,6 +116,14 @@ def generation_input(conn, student, counsel, target_role):
                         'baseTypeEventId': str(type_row['id']) if type_row else None,
                         'code': type_row['student_type'] if type_row else None},
         'counsel': {'topic': counsel['topic'], 'record': dict(record) if record else None},
+        'diagnosisComments': rows('''SELECT DISTINCT ON (r.subject_id) c.body AS comment
+          FROM dc.ai_run r JOIN dc.ai_comment c ON c.run_id=r.id
+          WHERE r.student_uid=%s AND r.kind_code='DIAGNOSIS_COMMENT'
+          AND r.subject_kind='AI_COMMENT' AND r.comment_scope='student'
+          AND EXISTS(SELECT 1 FROM dc.current_diagnosis_attempt a WHERE a.student_uid=r.student_uid
+            AND a.status_code='DONE' AND a.test_id=r.subject_id::jsonb->>0
+            AND a.attempt_no=(r.subject_id::jsonb->>1)::int)
+          ORDER BY r.subject_id,r.created_at DESC,r.id DESC'''),
         'diagnoses': rows('''SELECT DISTINCT ON (r.test_id) r.test_id,r.tested_at,r.payload
           FROM dc.diagnosis_result r JOIN dc.current_diagnosis_attempt a
           USING(student_uid,test_id,attempt_no) WHERE r.student_uid=%s AND a.status_code='DONE'
@@ -207,6 +218,7 @@ def generate_local_rag(snapshot):
             raise ValueError('No retrieval evidence')
         # Send task-relevant facts, not names/contacts or fixture AI commentary.
         projection = {key: snapshot[key] for key in ('student', 'targetRole', 'typeContext', 'counsel', 'certificates', 'jobInterests')}
+        projection['diagnosisComments'] = snapshot.get('diagnosisComments', [])
         projection['courses'] = snapshot['courses'][-30:]
         projection['courseCount'] = len(snapshot['courses'])
         projection['diagnoses'] = [{key: row.get(key) for key in ('test_id', 'tested_at')} | {

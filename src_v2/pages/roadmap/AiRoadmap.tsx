@@ -194,7 +194,6 @@ export default function AiRoadmap() {
                   같은 판정을 두 군데에 나누어 놓으면 따로 읽힌다. */}
               <section className="air-analysis">
                 <h4>AI 분석</h4>
-                <p>{student.insight}</p>
                 <ul className="air-checks">
                   {getHeadlineCompetency(student).map(item => {
                     const strong = item.type === 'strength'

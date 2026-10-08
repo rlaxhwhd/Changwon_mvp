@@ -78,9 +78,11 @@ def test_first_user_can_request_save_and_complete_counsel_without_json(client, d
     saved = client.put(path + '/record', headers=staff, json={
         'expectedVersion': 0, 'status': '작성중', 'summary': 'Test summary', 'comment': 'Test comment'})
     assert saved.status_code == 200, saved.text
+    from counsel_test_support import counsel_form, generated_journal
     completed = client.post(path + '/complete', headers=staff, json={
         'expectedVersion': confirmed.json()['version'], 'expectedRecordVersion': saved.json()['version'],
-        'summary': 'Test summary', 'comment': 'Test comment'})
+        'summary': 'Test summary', 'comment': 'Test comment',
+        'template': generated_journal(created.json()['id'], counsel_form(None))})
     assert completed.status_code == 200, completed.text
     assert completed.json()['status'] == '완료'
     assert db.execute('SELECT detail FROM dc.student WHERE intg_uid=%s', (uid,)).fetchone()['detail'] is None

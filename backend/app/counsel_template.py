@@ -32,8 +32,8 @@ class CounselTemplate(BaseModel):
     qualitative: QualitativeDiagnosis = Field(default_factory=QualitativeDiagnosis)
     program: TemplateSection = Field(default_factory=TemplateSection)
     application: TemplateSection = Field(default_factory=TemplateSection)
-    # AI is intentionally unavailable. Do not accept fabricated AI output.
-    aiJournal: Literal[''] = ''
+    aiJournal: str = Field('', max_length=20000)
+    aiJournalRunId: str | None = Field(None, max_length=100)
     # Server-owned preserved text when an older journal first adopts this form.
     legacySummary: str = Field('',max_length=20000)
 
@@ -94,3 +94,31 @@ def validate_completed_template(request, template, *, comment, type_locked=False
     sections=[section for section in (template.program,template.application) if section.selected]
     if not sections or any(not section.content.strip() for section in sections):
         raise HTTPException(422, '상담내용을 한 가지 이상 선택하고 선택한 항목의 내용을 모두 입력해 주세요.')
+
+
+def journal_input(template):
+    data = template.storage()
+    return {key: data.get(key) for key in ('channel', 'conductedAt', 'finalType', 'qualitative', 'program', 'application')}
+
+
+def journal_type(conn, request, template):
+    if template.finalType:
+        return template.finalType
+    row = conn.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s ORDER BY decided_at DESC,id DESC LIMIT 1',
+                       (request['student_uid'],)).fetchone()
+    return row['student_type'] if row else None
+
+
+def validate_ai_journal(conn, request, template):
+    if request['legacy_type'] != '진로취업':
+        return
+    if not template or not template.aiJournal.strip() or not template.aiJournalRunId:
+        raise HTTPException(422, '현재 입력으로 AI 상담일지를 생성한 뒤 저장해 주세요.')
+    from .ai_comments import context_hash
+    row = conn.execute('''SELECT input_snapshot FROM dc.ai_run WHERE id=%s
+      AND student_uid=%s AND subject_kind='COUNSEL_JOURNAL' AND subject_id=%s''',
+      (template.aiJournalRunId, request['student_uid'], request['id'])).fetchone()
+    if not row or context_hash(row['input_snapshot']['template']) != context_hash(journal_input(template)):
+        raise HTTPException(422, '상담 입력이 변경되었습니다. AI 상담일지를 다시 생성해 주세요.')
+    if row['input_snapshot'].get('diagnosisType') != journal_type(conn, request, template):
+        raise HTTPException(422, '진단유형이 변경되었습니다. AI 상담일지를 다시 생성해 주세요.')

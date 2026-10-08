@@ -1,4 +1,6 @@
-import { useId } from 'react'
+import { useId, useState } from 'react'
+import { streamAi } from '../../shared/chatbotApi'
+import AiProgressModal from '../../shared/AiProgressModal'
 import { LuLockKeyhole, LuMessageSquareMore, LuSparkles } from 'react-icons/lu'
 import { STUDENT_TYPE_MAP, type StudentType, typeLabel } from '../../src_v2/data/careerProcess'
 import { COUNSEL_CHANNELS, QUALITATIVE_ITEMS, type CounselTemplate } from '../data/schema/counselTemplate'
@@ -14,14 +16,29 @@ interface Props {
   required?: boolean
   care7: boolean
   typeLocked?: boolean
+  requestId?: string
 }
 
 /** 상담 진행·상담일지 작성에서 동일한 템플릿을 편집한다. 저장과 권한은 호출자가 담당한다. */
-export default function CounselRecordFields({ value, onChange, comment, onCommentChange, diagnosisType, disabled, required, care7, typeLocked }: Props) {
+export default function CounselRecordFields({ value, onChange, comment, onCommentChange, diagnosisType, disabled, required, care7, typeLocked, requestId }: Props) {
   const id = useId()
-  const patch = (fields: Partial<CounselTemplate>) => onChange({ ...value, ...fields })
+  const [pending, setPending] = useState(false)
+  const [progress, setProgress] = useState('')
+  const [error, setError] = useState('')
+  const patch = (fields: Partial<CounselTemplate>) => onChange({ ...value, ...fields,
+    ...('aiJournal' in fields ? {} : { aiJournalRunId: null }) })
+  async function generate() {
+    if (pending || !requestId) return
+    setPending(true); setError('')
+    try {
+      const reply = await streamAi('/ai/counsel-journal', { requestId, template: value }, new AbortController().signal, setProgress)
+      onChange({ ...value, aiJournal: reply.text, aiJournalRunId: reply.commentId })
+    } catch (e) { setError(e instanceof Error ? e.message : '상담일지를 생성하지 못했습니다.') }
+    finally { setPending(false) }
+  }
   return (
-    <fieldset className="counsel-template" disabled={disabled}>
+    <fieldset className="counsel-template" disabled={disabled || pending}>
+      <AiProgressModal open={pending} title="AI가 상담일지를 분석 중입니다" progress={progress} />
       <legend className="counsel-template-sr">상담일지 입력</legend>
       {value.legacySummary && <details><summary>기존 양식의 상담내용</summary><p style={{ whiteSpace: 'pre-wrap' }}>{value.legacySummary}</p></details>}
       <div className="counsel-template-meta">
@@ -91,8 +108,9 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
         <section className="counsel-template-card counsel-template-ai">
           <div className="counsel-template-heading"><h3><LuSparkles /> 상담일지 작성 AI</h3><span><LuLockKeyhole /> 학생 비공개</span></div>
           <p className="admin-field-hint">상담유형·정성진단·상담내용을 바탕으로 일지를 작성합니다.</p>
-          <textarea aria-label="AI 상담일지" rows={6} readOnly value={value.aiJournal} placeholder="AI 연결 후 생성된 상담일지가 여기에 표시됩니다." />
-          <div className="counsel-template-ai-footer"><span>AI 연결 준비 중</span><button type="button" className="admin-btn admin-btn-ghost sm" disabled>생성</button></div>
+          <textarea aria-label="AI 상담일지" rows={9} maxLength={20000} value={value.aiJournal} onChange={e => patch({ aiJournal: e.target.value })} placeholder="생성된 상담일지를 검토하고 직접 수정할 수 있습니다." />
+          {error && <p role="alert">{error}</p>}
+          <div className="counsel-template-ai-footer"><span>{value.aiJournalRunId ? '생성 완료 · 본문 수정 가능' : '입력 변경 후에는 다시 생성해 주세요.'}</span><button type="button" className="admin-btn admin-btn-ghost sm" disabled={!requestId || pending} onClick={() => void generate()}>생성하기</button></div>
         </section>
         <section className="counsel-template-card counsel-template-public">
           <div className="counsel-template-heading"><h3><LuMessageSquareMore /> 학생 공개 코멘트 <em className="admin-req-mark">*</em></h3><span>학생에게 공개</span></div>

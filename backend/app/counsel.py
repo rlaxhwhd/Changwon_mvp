@@ -297,6 +297,8 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
             raise HTTPException(422,'저장된 상담 템플릿을 함께 제출해 주세요.')
         if body.expectedRecordVersion is not None and body.expectedRecordVersion != (existing_record['version'] if existing_record else 0):
             raise HTTPException(409,'상담 기록이 변경되었습니다. 다시 조회해 주세요.')
+        from .counsel_template import validate_ai_journal
+        validate_ai_journal(conn, row, body.template)
         if body.template:
             if body.expectedRecordVersion is None:
                 raise HTTPException(422,'상담 기록 버전이 필요합니다.')
@@ -339,6 +341,8 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
           SET summary=excluded.summary,comment=excluded.comment,follow_up=excluded.follow_up,template=COALESCE(excluded.template,dc.counsel_record.template),status_code='DONE',updated_at=now(),version=dc.counsel_record.version+1''',
           (str(uuid4()),request_id,user['intg_uid'],body.summary,body.comment,body.followUp,Jsonb(row['snapshot']),Jsonb(template_storage(body.template,existing_record)) if body.template else None))
         conn.execute("UPDATE dc.counsel_request SET status_code='DONE',completed_at=now() WHERE id=%s",(request_id,))
+        from .counsel_ai import enqueue_refresh
+        enqueue_refresh(conn, row, user)
     conn.execute('UPDATE dc.counsel_request SET version=version+1 WHERE id=%s',(request_id,))
     conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',
                  (request_id,user['intg_uid'],action.upper(),Jsonb({'before':dto(row),'action':body.model_dump(mode='json')})))

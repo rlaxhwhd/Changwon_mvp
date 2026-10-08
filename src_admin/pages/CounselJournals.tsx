@@ -108,6 +108,7 @@ function JournalForm({
       </dl>
 
       <CounselJournalFields record={record} career={career} care7={care7}
+        requestId={source.requestId}
         template={template} setTemplate={setTemplate} summary={summary} setSummary={setSummary}
         comment={comment} setComment={setComment} followUp={followUp} setFollowUp={setFollowUp}
         diagnosisType={context.diagnosisType} typeLocked={context.typeLocked} saving={saving} />

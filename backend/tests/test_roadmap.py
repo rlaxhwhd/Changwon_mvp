@@ -361,8 +361,9 @@ def test_career_counsel_cannot_lose_its_track_and_completes_without_a_plan(clien
     with pool.connection() as conn:
         conn.execute("UPDATE dc.roadmap SET status_code='DRAFT' WHERE student_uid=%s", (uid_of('changwon'),))
     path = '/api/v1/counsel-requests/' + request_id + '/complete'
+    from counsel_test_support import generated_journal
     done = client.post(path, headers=headers('career_kim'),
-                       json={'expectedVersion': 1, 'expectedRecordVersion': 0, 'summary': '검증', 'comment': '공개 코멘트', 'template': counsel_form('T4')})
+                       json={'expectedVersion': 1, 'expectedRecordVersion': 0, 'summary': '검증', 'comment': '공개 코멘트', 'template': generated_journal(request_id,counsel_form('T4'))})
     assert done.status_code == 200, done.text
     with pool.connection() as conn:
         plan = conn.execute('SELECT status_code FROM dc.roadmap WHERE student_uid=%s', (uid_of('changwon'),)).fetchone()

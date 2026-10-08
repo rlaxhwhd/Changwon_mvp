@@ -6,8 +6,11 @@ import {
   typeLabel,
   type TestStatus,
 } from '../../data/careerProcess'
-import { getModuleStatusFor, getStudentType } from '../../data/pipeline'
-import { externalDiagnosisLinks, diagnosisAttempts } from '../../../shared/diagnosisStore'
+import { getModuleStatusFor, getStudentType, importDiagnosis } from '../../data/pipeline'
+import { getResultsByStudent } from '../../data/diagnosisResults'
+import { ensureDiagnosisComment } from '../../../shared/diagnosisComment'
+import AiProgressModal from '../../../shared/AiProgressModal'
+import { externalDiagnosisLinks, diagnosisAttempts, loadStudentDiagnoses } from '../../../shared/diagnosisStore'
 import NextStepBanner from '../../components/NextStepBanner'
 import { getActiveStudent } from '../../data/students'
 import './EmploymentTest.css'
@@ -47,8 +50,24 @@ export default function DiagnosisResult() {
   usePageHead('진단검사 결과', '1회차 진단은 학생이 자유롭게 실시할 수 있습니다. 재진단과 진단유형 변경은 상담사와 상담 후 진행됩니다.')
   const navigate = useNavigate()
   const [isGuideOpen, setIsGuideOpen] = useState(false)
+  const [evaluating, setEvaluating] = useState(false)
+  const [aiProgress, setAiProgress] = useState('')
+  const [aiError, setAiError] = useState('')
 
   const student = getActiveStudent()
+  async function viewResult(testId: string) {
+    if (evaluating) return
+    setEvaluating(true); setAiError(''); setAiProgress('진단 결과를 확인하고 있습니다.')
+    try {
+      if (['ccore', 'c2', 'c3', 'c4'].includes(testId)) await importDiagnosis(student, testId, true)
+      else await loadStudentDiagnoses(student.id)
+      const result = getResultsByStudent(student.id).find(r => r.testId === testId && r.isCurrent !== false)
+      if (!result || result.needsReview) throw new Error('완료된 진단 결과를 확인할 수 없습니다. 검사 응시 상태를 확인해 주세요.')
+      await ensureDiagnosisComment(student.id, testId, result.attemptNo, setAiProgress)
+      navigate(`/diagnosis/employment/${testId}`)
+    } catch (e) { setAiError(e instanceof Error ? e.message : '진단 코멘트를 저장하지 못했습니다.') }
+    finally { setEvaluating(false) }
+  }
   // 유형은 시드가 아니라 파이프라인이 준다 — C-CORE 를 마치며 주입된 값이 여기로 들어온다.
   const studentType = getStudentType(student)
   // 응시 대상 = 필수진단 CCORE + 내 유형의 후속진단 1종 (PROCESS.md §3)
@@ -75,6 +94,8 @@ export default function DiagnosisResult() {
 
   return (
     <div className="de-wrap">
+      <AiProgressModal open={evaluating} title="AI가 진단 결과를 평가 중입니다" progress={aiProgress} />
+      {aiError && <p role="alert">{aiError}</p>}
       {/* 진단이 남은 학생에게는 여기서도 다음 걸음을 짚어 준다(끝난 학생에겐 안 뜬다). */}
       <NextStepBanner />
       <div className="de-access-notice" role="note">
@@ -189,7 +210,7 @@ export default function DiagnosisResult() {
             </a> : <button
               type="button"
               className={`de-start-btn de-start-btn--${result.status === 'locked' ? 'locked' : 'done'}`}
-              onClick={() => navigate(`/diagnosis/employment/${result.testId}`)}
+              onClick={() => void viewResult(result.testId)}
               disabled={result.status === 'locked' || (!externalDiagnosisLinks[result.testId] && result.status !== 'done')}
             >
               {result.status === 'locked'

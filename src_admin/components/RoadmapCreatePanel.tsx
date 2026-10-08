@@ -13,6 +13,7 @@ import { generateRoadmap } from '../data/roadmap'
 import { isCare7 } from '../../src_v2/data/counselTrack'
 import { roadmapEnvelope } from '../../shared/roadmapStore'
 import { useStore } from '../../shared/useRoadmapStore'
+import { api, queryString } from '../../shared/api'
 import './RoadmapCreatePanel.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -136,6 +137,17 @@ export default function RoadmapCreatePanel({
     [student.id, counselRequestId, regenerate, counselRevision],
   )
   const [generateError, setGenerateError] = useState('')
+  const [aiEvidence, setAiEvidence] = useState<{ aiJournal: string; diagnosisComments: string[] } | null>(null)
+  const [evidenceError, setEvidenceError] = useState('')
+  useEffect(() => {
+    if (!open || !basisRequest) return
+    const abort = new AbortController()
+    setAiEvidence(null); setEvidenceError('')
+    void api<{ aiJournal: string; diagnosisComments: string[] }>(`/ai/roadmap-evidence/${encodeURIComponent(student.id)}?${queryString({ requestId: basisRequest.id })}`, { signal: abort.signal })
+      .then(result => { if (!abort.signal.aborted) setAiEvidence(result) })
+      .catch(e => { if (!abort.signal.aborted) setEvidenceError(e instanceof Error ? e.message : 'AI 근거를 불러오지 못했습니다.') })
+    return () => abort.abort()
+  }, [open, student.id, basisRequest?.id, counselRevision])
   const temporary = roadmapEnvelope(student.id)?.capabilities.providerSource === 'development-template'
 
   const handleGenerate = async () => {
@@ -230,7 +242,8 @@ export default function RoadmapCreatePanel({
             </dl>
             <section className="air-analysis">
               <h4>AI 분석</h4>
-              <p>{student.insight || '분석 코멘트가 아직 없습니다. 진단을 마치면 채워집니다.'}</p>
+              {evidenceError && <p role="alert">{evidenceError}</p>}
+              <p style={{ whiteSpace: 'pre-wrap' }}>{aiEvidence ? [...aiEvidence.diagnosisComments, aiEvidence.aiJournal].filter(Boolean).join('\n\n') || '저장된 진단 코멘트와 AI 상담일지가 없습니다.' : '저장된 AI 분석 자료를 확인하고 있습니다.'}</p>
               {/* 대표 역량이 없으면(점수 0인 신입생) 줄을 긋지 않는다 — 빈 구분선만 남는다. */}
               {getHeadlineCompetency(student).length > 0 && (
               <ul className="air-checks">

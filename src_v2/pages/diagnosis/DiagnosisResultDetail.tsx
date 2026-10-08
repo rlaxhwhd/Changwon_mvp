@@ -7,6 +7,8 @@ import { getModuleByTestId } from '../../data/careerProcess'
 import { getDiagnosisResult, getResultsByStudent, getResultRows, type FactorLevel } from '../../data/diagnosisResults'
 import { loadStudentDiagnoses } from '../../../shared/diagnosisStore'
 import { importDiagnosis } from '../../data/pipeline'
+import { ensureDiagnosisComment } from '../../../shared/diagnosisComment'
+import AiProgressModal from '../../../shared/AiProgressModal'
 import './DiagnosisResultDetail.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -162,6 +164,7 @@ function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; t
   const [attemptNo, setAttemptNo] = useState<number>()
   const [refreshing, setRefreshing] = useState(false)
   const [notice, setNotice] = useState('')
+  const [aiProgress, setAiProgress] = useState('')
   const refreshGuard = useRef(false)
   const refresh = async () => {
     if (refreshGuard.current) return
@@ -169,6 +172,8 @@ function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; t
     setRefreshing(true); setError(''); setNotice('')
     try {
       const response = await importDiagnosis(getActiveStudent(), testId)
+      const next = getResultsByStudent(studentId).find(r => r.testId === testId && r.isCurrent !== false)
+      if (next && !next.needsReview) await ensureDiagnosisComment(studentId, testId, next.attemptNo, setAiProgress)
       setAttemptNo(undefined)
       setNotice(response.incomplete ? response.message : response.imported
         ? `${response.imported}개의 새 응시 결과를 저장했습니다.`
@@ -180,9 +185,12 @@ function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; t
   const initialRequest = useRef<Promise<unknown> | null>(null)
   useEffect(() => {
     let cancelled = false
-    initialRequest.current ??= external
+    initialRequest.current ??= (external
       ? importDiagnosis(getActiveStudent(), testId, true)
-      : loadStudentDiagnoses(studentId)
+      : loadStudentDiagnoses(studentId)).then(async () => {
+        const next = getResultsByStudent(studentId).find(r => r.testId === testId && r.isCurrent !== false && (!external || r.source === 'hrtest'))
+        if (next && !next.needsReview) await ensureDiagnosisComment(studentId, testId, next.attemptNo, setAiProgress)
+      })
     initialRequest.current.then(() => {
       if (cancelled) return
       const history = getResultsByStudent(studentId).filter(r => r.testId === testId && (!external || r.source === 'hrtest'))
@@ -198,6 +206,16 @@ function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; t
   }, [studentId, testId, external, navigate])
   const module = getModuleByTestId(testId)
   const testName = module?.name ?? '진단 검사'
+  async function selectAttempt(number: number) {
+    const selected = getDiagnosisResult(studentId, testId, number)
+    if (!selected || refreshing) return
+    setRefreshing(true); setError('')
+    try {
+      if (!selected.needsReview) await ensureDiagnosisComment(studentId, testId, number, setAiProgress)
+      setAttemptNo(number)
+    } catch (e) { setError(e instanceof Error ? e.message : '진단 코멘트를 저장하지 못했습니다.') }
+    finally { setRefreshing(false) }
+  }
 
   const history = getResultsByStudent(studentId).filter(r => r.testId === testId && (!external || r.source === 'hrtest'))
   const result = loaded ? (attemptNo == null
@@ -227,13 +245,14 @@ function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; t
 
   return (
     <div className="dr-wrap">
+      <AiProgressModal open={(!loaded && !error) || refreshing} title="AI가 진단 결과를 평가 중입니다" progress={aiProgress} />
       <div className="dr-header">
         <button className="dr-back-btn" onClick={() => navigate('/diagnosis/employment')} aria-label="뒤로 가기">
           <i className="fa-solid fa-arrow-left" />
         </button>
         {loaded && history.length > 0 && <label className="dr-attempt-picker">
           진단 이력
-          <select aria-label="진단 회차" value={result?.attemptNo ?? ''} onChange={event => setAttemptNo(Number(event.target.value))}>
+          <select aria-label="진단 회차" value={result?.attemptNo ?? ''} onChange={event => void selectAttempt(Number(event.target.value))}>
             {history.map(item => <option key={item.attemptNo} value={item.attemptNo}>
               {item.attemptNo}회차 · {item.testedAt.slice(0, 10)}{item.isCurrent ? ' · 최신 결과' : ''}
             </option>)}

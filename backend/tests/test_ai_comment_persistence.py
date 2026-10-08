@@ -14,13 +14,17 @@ def done(response):
     return next(json.loads(frame.split('data: ', 1)[1]) for frame in frames if 'event: done' in frame)
 
 
-@pytest.mark.parametrize('kind', ['diagnosis', 'counsel', 'comprehensive', 'roadmap'])
+@pytest.mark.parametrize('kind', ['diagnosis', 'comprehensive', 'roadmap'])
 def test_roundtrip_all_kinds_student_and_counselor_visibility(client, enabled, monkeypatch, kind):
     body = {'studentId': 'chaewon', 'kind': kind}
     path = '/api/v1/ai/comments'
     student = done(client.post(path, headers=headers('chaewon'), json=body))
-    staff = done(client.post(path, headers=headers('career_kim'), json=body))
-    assert student['commentId'] != staff['commentId']
+    if kind == 'comprehensive':
+        assert client.post(path, headers=headers('career_kim'), json=body).status_code == 429
+        staff = student
+    else:
+        staff = done(client.post(path, headers=headers('career_kim'), json=body))
+    assert (student['commentId'] == staff['commentId']) == (kind != 'roadmap')
     # Retrieval must never call the model, even if the model is disabled.
     calls = len(enabled)
     monkeypatch.setattr(settings, 'chatbot_enabled', False)
@@ -31,7 +35,10 @@ def test_roundtrip_all_kinds_student_and_counselor_visibility(client, enabled, m
     staff_get = client.get(path, headers=headers('career_kim'), params=body)
     assert staff_get.status_code == 200, staff_get.text
     assert staff_get.json()['comment']['commentId'] == staff['commentId']
-    assert staff_get.json()['studentComment']['commentId'] == student['commentId']
+    if kind == 'roadmap':
+        assert staff_get.json()['studentComment']['commentId'] == student['commentId']
+    else:
+        assert staff_get.json()['studentComment'] is None
     assert len(enabled) == calls
     assert client.get(path, headers=headers('changwon'), params=body).status_code == 404
     assert client.get(path, params=body).status_code == 401
@@ -42,7 +49,7 @@ def test_failed_save_does_not_report_generation_success(client, enabled, monkeyp
         raise RuntimeError('sensitive database detail')
     monkeypatch.setattr(ai_comments, 'persist_comment', fail)
     response = client.post('/api/v1/ai/comments', headers=headers('chaewon'),
-                           json={'studentId': 'chaewon', 'kind': 'comprehensive'})
+                           json={'studentId': 'chaewon', 'kind': 'roadmap'})
     assert 'event: error' in response.text and 'event: done' not in response.text
     assert 'sensitive database detail' not in response.text
 

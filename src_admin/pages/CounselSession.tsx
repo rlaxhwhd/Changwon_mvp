@@ -19,7 +19,6 @@ import { useRoadmap, useStore } from '../../shared/useRoadmapStore'
 import { isCare7 } from '../../src_v2/data/counselTrack'
 import EmptyState from '../components/EmptyState'
 import StudentDetailView, { type TabKey } from '../components/StudentDetailView'
-import AiCommentCard from '../../shared/AiCommentCard'
 import CounselRecordFields from '../components/CounselRecordFields'
 import CounselRecordPreview from '../components/CounselRecordPreview'
 import CounselRecordContext, { type RecordContext } from '../components/CounselRecordContext'
@@ -135,6 +134,7 @@ function RecordForm({
       {career ? <>
         {existing?.summary && !existing.template && <details className="admin-editor-hint"><summary>기존 상담내용 확인</summary><p style={{ whiteSpace: 'pre-wrap' }}>{existing.summary}</p><p>기존 기록을 참고해 아래 항목으로 나누어 작성해 주세요.</p></details>}
         <CounselRecordFields value={template} onChange={setTemplate} comment={comment} onCommentChange={setComment}
+          requestId={request.id}
           diagnosisType={context.diagnosisType} care7={care7} disabled={saving} typeLocked={context.typeLocked} required />
       </> : <>
       <label className="admin-field">
@@ -297,7 +297,6 @@ function CounselSessionContent({ studentId }: { studentId?: string }) {
 
         {/* 우측: 상담 기록지 */}
         <section className="admin-card admin-session-right">
-          {targetRequest?.type === '진로취업' && <AiCommentCard studentId={student.id} kind="counsel" counselRequestId={targetRequest.id} />}
           <div className="admin-card-head">
             <h2>
               <LuSquarePen /> 상담 기록지

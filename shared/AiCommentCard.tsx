@@ -9,14 +9,18 @@ type Props = {
   testId?: string
   attemptNo?: number
   counselRequestId?: string
+  readOnly?: boolean
 }
-const labels = { diagnosis: '진단 결과 AI 코멘트', counsel: '상담 AI 코멘트', comprehensive: '종합 AI 코멘트', roadmap: '로드맵 AI 검토' }
+const labels = { diagnosis: '진단 결과 AI 코멘트', counsel: '상담현황 AI 코멘트', comprehensive: '종합 AI 코멘트', roadmap: '로드맵 AI 검토' }
 
 export default function AiCommentCard(props: Props) {
   return <Comment key={JSON.stringify(props)} {...props} />
 }
 
 function Comment(props: Props) {
+  const { readOnly, ...request } = props
+  const [canGenerate, setCanGenerate] = useState(false)
+  const [refreshPending, setRefreshPending] = useState(false)
   const [reply, setReply] = useState<ChatReply | null>(null)
   const [studentReply, setStudentReply] = useState<ChatReply | null>(null)
   const [progress, setProgress] = useState('')
@@ -27,27 +31,36 @@ function Comment(props: Props) {
   useEffect(() => () => controller.current?.abort(), [])
   useEffect(() => {
     const abort = new AbortController()
-    void api<{ comment: ChatReply | null; studentComment: ChatReply | null }>(`/ai/comments?${queryString(props)}`, { signal: abort.signal })
-      .then(result => { if (!abort.signal.aborted) { setReply(result.comment); setStudentReply(result.studentComment) } })
+    let timer: ReturnType<typeof setTimeout> | undefined
+    function load() {
+    void api<{ comment: ChatReply | null; studentComment: ChatReply | null; canGenerate: boolean; refreshPending: boolean }>(`/ai/comments?${queryString(request)}`, { signal: abort.signal })
+      .then(result => { if (!abort.signal.aborted) {
+        setError(''); setReply(result.comment); setStudentReply(result.studentComment); setCanGenerate(result.canGenerate); setRefreshPending(result.refreshPending)
+        if (result.refreshPending) timer = setTimeout(load, 10000)
+      } })
       .catch(e => { if (!abort.signal.aborted) setError(e instanceof Error ? e.message : '저장된 코멘트를 불러오지 못했습니다.') })
       .finally(() => { if (!abort.signal.aborted) setLoading(false) })
-    return () => abort.abort()
+    }
+    load()
+    return () => { abort.abort(); clearTimeout(timer) }
   }, [])
   async function generate() {
     if (controller.current) return
     const abort = new AbortController()
     controller.current = abort
     setPending(true); setError(''); setProgress('근거 자료를 확인하고 있어요.')
-    try { setReply(await streamAi('/ai/comments', props, abort.signal, setProgress)) }
+    try { setReply(await streamAi('/ai/comments', request, abort.signal, setProgress)); if (props.kind === 'comprehensive') setCanGenerate(false) }
     catch (e) { setError(abort.signal.aborted ? '생성을 중지했습니다.' : e instanceof Error ? e.message : '코멘트를 생성하지 못했습니다.') }
     finally { controller.current = null; setPending(false); setProgress('') }
   }
   return <section className="dc-ai-comment" aria-label={labels[props.kind]} aria-busy={pending || loading}>
     <div className="dc-ai-comment-head"><div><strong>{labels[props.kind]}</strong>
       <p>기록과 참고 자료를 바탕으로 작성하며, 완성된 코멘트는 자동 저장됩니다.</p></div>
-      <button type="button" disabled={pending || loading} onClick={() => void generate()}>
+      {!readOnly && (props.kind === 'comprehensive' || props.kind === 'roadmap') && <button type="button" disabled={pending || loading || !canGenerate} onClick={() => void generate()}>
         {pending ? <><span className="dc-ai-spinner" aria-hidden="true" /> 생성 중</> : loading ? '불러오는 중' : reply ? '다시 생성' : '코멘트 생성'}
-      </button></div>
+      </button>}</div>
+    {props.kind === 'comprehensive' && reply && !canGenerate && <small>종합 코멘트는 하루 한 번 생성할 수 있습니다.</small>}
+    {refreshPending && <p role="status">저장된 상담일지로 전체 상담현황 분석을 갱신하고 있습니다.</p>}
     {(pending || loading) && <div className="dc-ai-comment-loading" role="status" aria-live="polite">
       <div className="dc-ai-comment-progress"><span className="dc-ai-spinner" aria-hidden="true" /><span>{pending ? progress : '저장된 코멘트를 불러오고 있어요.'}</span></div>
       <div className="dc-ai-comment-skeleton" aria-hidden="true"><span /><span /><span /></div>
@@ -62,7 +75,7 @@ function CommentResult({ reply, label }: { reply: ChatReply; label?: string }) {
   return <div className="dc-ai-comment-result">
       {label && <strong className="dc-ai-comment-audience">{label}</strong>}
       {reply.savedAt && <p className="dc-ai-comment-saved">저장됨 · {new Date(reply.savedAt).toLocaleString('ko-KR')}</p>}
-      {reply.stale && <p className="dc-ai-comment-stale">생성 이후 참고 기록이 변경되었습니다. 최신 기록으로 다시 생성할 수 있습니다.</p>}
+      {reply.stale && <p className="dc-ai-comment-stale">생성 이후 참고 기록이 변경되었습니다.</p>}
       <div className="dc-ai-comment-text">{reply.text.split(/(\*\*[^*\n]+\*\*)/g).map((part, index) =>
         part.startsWith('**') && part.endsWith('**') ? <strong key={index}>{part.slice(2, -2)}</strong> : part)}</div>
       <details><summary>참고 근거 {reply.sources.length}개</summary>

@@ -17,6 +17,7 @@ export interface CounselTemplate {
   program: { selected: boolean; content: string }
   application: { selected: boolean; content: string }
   aiJournal: string
+  aiJournalRunId?: string | null
   legacySummary?: string
 }
 
@@ -44,5 +45,6 @@ export function counselTemplateErrors(template: CounselTemplate, care7: boolean,
   if (care7 && !typeLocked && !template.finalType) errors.push('상담 후 최종 유형을 선택해 주세요.')
   const sections = [template.program, template.application].filter(section => section.selected)
   if (!sections.length || sections.some(section => !section.content.trim())) errors.push('상담내용을 한 가지 이상 선택하고 선택한 항목의 내용을 모두 입력해 주세요.')
+  if (!template.aiJournal.trim() || !template.aiJournalRunId) errors.push('현재 입력으로 AI 상담일지를 생성해 주세요.')
   return errors
 }

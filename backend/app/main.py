@@ -1,4 +1,6 @@
 from contextlib import asynccontextmanager
+import asyncio
+from contextlib import suppress
 from pathlib import Path
 
 from fastapi import Depends, FastAPI, Header, Request
@@ -10,6 +12,7 @@ from .academic import router as academic_router
 from .quests import router as quests_router
 from .chatbot import router as chatbot_router
 from .ai_comments import router as ai_comments_router
+from .counsel_ai import router as counsel_ai_router, refresh_worker
 from .student_login import router as student_login_router
 from .academic_directory import router as academic_directory_router
 from .department_assignments import router as department_assignments_router
@@ -52,9 +55,13 @@ async def lifespan(app):
     if not settings.development_token_file or not Path(settings.development_token_file).is_file():
         raise RuntimeError('DC_DEVELOPMENT_TOKEN_FILE is required.')
     pool.open(wait=True)
+    worker = asyncio.create_task(refresh_worker())
     try:
         yield
     finally:
+        worker.cancel()
+        with suppress(asyncio.CancelledError):
+            await worker
         pool.close()
 
 
@@ -76,6 +83,7 @@ app.include_router(academic_router, prefix='/api/v1')
 app.include_router(quests_router, prefix='/api/v1')
 app.include_router(chatbot_router, prefix='/api/v1')
 app.include_router(ai_comments_router, prefix='/api/v1')
+app.include_router(counsel_ai_router, prefix='/api/v1')
 app.include_router(student_login_router, prefix='/api/v1')
 app.include_router(academic_directory_router, prefix='/api/v1')
 app.include_router(department_assignments_router, prefix='/api/v1')

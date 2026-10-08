@@ -6,7 +6,7 @@ import pytest
 from app.gates import diagnosis_gate
 
 
-from counsel_test_support import counsel_form as form
+from counsel_test_support import counsel_form as form, generated_journal
 
 
 def complete(client, draft, data=None, **changes):
@@ -15,6 +15,8 @@ def complete(client, draft, data=None, **changes):
                 summary='ignored client summary', comment='PUBLIC COMMENT',
                 expectedRoadmapVersion=plan['roadmapVersion'], expectedRoadmapLockVersion=plan['version'])
     body.update(changes)
+    if body.get('template'):
+        body['template'] = generated_journal(request_id, body['template'])
     return client.post(f'/api/v1/counsel-requests/{request_id}/complete', headers=headers('career_kim'), json=body)
 
 
@@ -64,7 +66,7 @@ def test_latest_diagnosis_does_not_override_counsel_type(client, db, draft):
     path=f'/api/v1/counsel-requests/{request_id}/record'
     edit=dict(expectedVersion=record['version'],summary='Notes',comment='Revised public comment',status='완료',template=changed)
     assert client.put(path,headers=headers('career_kim'),json=edit).status_code==409
-    edit['template']=form('T2')
+    edit['template']=generated_journal(request_id,form('T2'))
     assert client.put(path,headers=headers('career_kim'),json=edit).status_code==200
     assert db.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s',(uid,)).fetchone()['student_type']=='T2'
 
@@ -97,6 +99,7 @@ def test_new_care7_counsel_requires_retest_then_updates_type(client,db,draft):
     uid=db.execute('SELECT student_uid FROM dc.counsel_request WHERE id=%s',(new_id,)).fetchone()['student_uid']
     db.execute('UPDATE dc.roadmap SET counsel_request_id=%s WHERE student_uid=%s',(new_id,uid))
     body=dict(expectedVersion=1,expectedRecordVersion=0,template=form('T3'),summary='Notes',comment='Public')
+    body['template']=generated_journal(new_id,body['template'])
     path=f'/api/v1/counsel-requests/{new_id}/complete'
     response=client.post(path,headers=headers('career_kim'),json=body)
     assert response.status_code==409,response.text

@@ -59,7 +59,7 @@ def test_missing_valid_scores_never_trigger_model_interpretation(client, monkeyp
 
 def test_comment_minimizes_identity_and_is_read_only(client, enabled):
     response = client.post('/api/v1/ai/comments', headers=headers('career_kim'),
-                           json={'studentId': 'chaewon', 'kind': 'comprehensive'})
+                           json={'studentId': 'chaewon', 'kind': 'diagnosis'})
     assert response.status_code == 200, response.text
     assert 'event: done' in response.text
     context = json.dumps(enabled[0], ensure_ascii=False)
@@ -71,8 +71,12 @@ def test_comment_minimizes_identity_and_is_read_only(client, enabled):
 def test_student_context_excludes_counselor_private_fields(client, enabled):
     response = client.post('/api/v1/ai/comments', headers=headers('chaewon'),
                            json={'studentId': 'chaewon', 'kind': 'counsel'})
-    assert response.status_code == 200, response.text
-    for record in enabled[0]['counsel']:
+    assert response.status_code == 403, response.text
+    assert not enabled
+    with pool.connection() as conn:
+        user = conn.execute("SELECT * FROM dc.person WHERE alias='chaewon'").fetchone()
+        context = ai_comments.context_for(conn, user, ai_comments.CommentRequest(studentId='chaewon', kind='counsel'))
+    for record in context['counsel']:
         assert not record.get('summary') and not record.get('followUp')
 
 

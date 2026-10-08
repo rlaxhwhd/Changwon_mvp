@@ -3,7 +3,7 @@
 첫 로드맵은 완료된 상담에서만 나므로(2026-09-18) 여기서는 확정된 재상담으로 재생성한 초안을 쓴다 —
 그 재상담의 완료가 초안을 함께 확정한다."""
 import pytest
-from counsel_test_support import counsel_form
+from counsel_test_support import counsel_form, generated_journal
 from app.db import connection
 from app.main import app
 from test_api import headers
@@ -34,6 +34,8 @@ def complete(client, draft, actor='career_kim', **changes):
                 expectedRoadmapVersion=plan['roadmapVersion'],
                 expectedRoadmapLockVersion=plan['version'])
     body.update(changes)
+    if body.get('template'):
+        body['template'] = generated_journal(request_id, body['template'])
     return client.post(f'/api/v1/counsel-requests/{request_id}/complete',
                        headers=headers(actor), json=body)
 

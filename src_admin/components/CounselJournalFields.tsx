@@ -6,6 +6,7 @@ import type { StudentType } from '../../src_v2/data/careerProcess'
 
 interface Props {
   record?: CounselRecord
+  requestId?: string
   career: boolean
   care7: boolean
   template: CounselTemplate
@@ -23,13 +24,14 @@ interface Props {
 }
 
 /** Shared journal layout for viewing and editing; persistence belongs to the caller. */
-export default function CounselJournalFields({ record, career, care7, template, setTemplate,
+export default function CounselJournalFields({ record, requestId, career, care7, template, setTemplate,
   summary, setSummary, comment, setComment, followUp, setFollowUp,
   diagnosisType, typeLocked, saving = false, readOnly = false }: Props) {
   return <fieldset className="counsel-journal-fields" disabled={readOnly || saving} aria-label="상담일지">
       {career ? <>
         {record?.summary && !record.template && <details className="admin-editor-hint"><summary>기존 상담내용 확인</summary><p style={{ whiteSpace: 'pre-wrap' }}>{record.summary}</p><p>기존 기록을 참고해 아래 항목으로 나누어 작성해 주세요.</p></details>}
         <CounselRecordFields value={template} onChange={setTemplate} comment={comment} onCommentChange={setComment}
+          requestId={requestId ?? record?.requestId}
           diagnosisType={diagnosisType} care7={care7} disabled={saving} typeLocked={typeLocked} required />
       </> : <>
       <label className="admin-field">

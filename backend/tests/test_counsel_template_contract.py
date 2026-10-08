@@ -23,7 +23,7 @@ def test_selected_sections_and_private_ai_placeholder():
     {'conductedAt': '2026-02-30T14:00'}, {'conductedAt': '2026-09-17'},
     {'conductedAt': '20260917T1400'}, {'channel': '비대면'},
     {'finalType': 'T7'}, {'qualitative': {'motivation': '최상'}},
-    {'qualitative': {'invented': '상'}}, {'aiJournal': 'Pretend AI generated text'},
+    {'qualitative': {'invented': '상'}}, {'aiJournal': 'x' * 20001},
     {'program': {'content': 'x' * 9001}},
 ])
 def test_invalid_template(fields):
