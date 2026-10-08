@@ -1,4 +1,5 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
+import { api, ApiError } from '../../shared/api'
 import type { CSSProperties, ReactNode } from 'react'
 import { fetchAcademicStudentDetail, academicStudentStats, type AcademicStudentDetail } from '../data/academicStudents'
 import type { IconType } from 'react-icons'
@@ -556,14 +557,14 @@ function GrowthTab({ student }: { student: StudentData }) {
   useGrowth(student.id)
   const journal = loadJournalEntries(student.id)
   const stats: { label: string; value: string; icon: IconType; tint: string }[] = [
-    { label: '레벨(XP)', value: `Lv.${s.xpLevel}`, icon: LuStar, tint: 'violet' },
-    { label: '비교과 이수', value: `${s.programs}건`, icon: LuBoxes, tint: 'mint' },
-    { label: '상담 누적', value: `${s.counsel}회`, icon: LuMessagesSquare, tint: 'sky' },
-    { label: '출석일', value: `${s.attendanceDays}일`, icon: LuCalendarCheck, tint: 'blue' },
+    { label: '레벨(XP)', value: s.xpLevel == null ? '—' : `Lv.${s.xpLevel}`, icon: LuStar, tint: 'violet' },
+    { label: '비교과 이수', value: s.programs == null ? '—' : `${s.programs}건`, icon: LuBoxes, tint: 'mint' },
+    { label: '상담 누적', value: s.counsel == null ? '—' : `${s.counsel}회`, icon: LuMessagesSquare, tint: 'sky' },
+    { label: '출석일', value: s.attendanceDays == null ? '—' : `${s.attendanceDays}일`, icon: LuCalendarCheck, tint: 'blue' },
     { label: '성장일지', value: growthState(student.id) ? `${journal.length}편` : '—', icon: LuBook, tint: 'amber' },
-    { label: '일일미션 출석률', value: `${s.lectureAttendanceRate}%`, icon: LuListChecks, tint: 'mint' },
-    { label: '프로젝트', value: `${s.projects}건`, icon: LuWorkflow, tint: 'violet' },
-    { label: '공모전', value: `${s.contests}회`, icon: LuTrophy, tint: 'coral' },
+    { label: '일일미션 출석률', value: s.lectureAttendanceRate == null ? '—' : `${s.lectureAttendanceRate}%`, icon: LuListChecks, tint: 'mint' },
+    { label: '프로젝트', value: s.projects == null ? '—' : `${s.projects}건`, icon: LuWorkflow, tint: 'violet' },
+    { label: '공모전', value: s.contests == null ? '—' : `${s.contests}회`, icon: LuTrophy, tint: 'coral' },
   ]
 
 
@@ -801,7 +802,6 @@ function AcademicStudentContent(props: StudentDetailViewProps) {
   const [data, setData] = useState<AcademicStudentDetail | null | undefined>(undefined)
   const [error, setError] = useState('')
   const [retry, setRetry] = useState(0)
-  const [tab, setTab] = useState<'counsel' | 'program'>(props.initialTab === 'program' ? 'program' : 'counsel')
   useEffect(() => {
     let cancelled = false
     setError('')
@@ -817,19 +817,55 @@ function AcademicStudentContent(props: StudentDetailViewProps) {
   // academic student number against authorized profiles, then use their API ID.
   const serviceStudent = STUDENTS.find(s => s.studentNo === data.studentNo)
   if (serviceStudent) return <StudentDetailContent {...props} studentId={serviceStudent.id} academicData={data} />
-  const status = { REQ: '신청', CONFIRMED: '확정', DONE: '완료' }
+  return <AcademicServiceDetail {...props} academicData={data} />
+}
+
+/** Fetch the existing scoped profile even when bootstrap omitted an empty fixture. */
+function AcademicServiceDetail(props: StudentDetailViewProps & { academicData: AcademicStudentDetail }) {
+  const [profile, setProfile] = useState<StudentData | null | undefined>(undefined)
+  const [error, setError] = useState('')
+  const [tab, setTab] = useState<TabKey>(props.initialTab ?? 'diagnosis')
+  useEffect(() => {
+    let cancelled = false
+    api<StudentData>(`/students/${encodeURIComponent(props.studentId)}`)
+      .then(value => { if (!cancelled) setProfile(value) })
+      .catch(e => {
+        if (cancelled) return
+        if (e instanceof ApiError && e.status === 404) setProfile(null)
+        else setError(e.message)
+      })
+    return () => { cancelled = true }
+  }, [props.studentId])
+  useEffect(() => { if (props.initialTab) setTab(props.initialTab) }, [props.initialTab])
+  if (error) return <p role="alert">{error}</p>
+  if (profile === undefined) return <p role="status">학생 상세정보를 불러오는 중입니다…</p>
+  if (profile) return <StudentDetailContent {...props} studentId={profile.id} profile={profile} />
+  // No accessible service profile: keep the same navigation without reading scoped activities.
   return <div className="sdv">
-    <AcademicStudentHeader data={data} action={props.headerAction} />
-    <StudentStatCards stats={academicStudentStats(data)} />
-    <div className="admin-tabs" role="tablist" aria-label="학생 활동">
-      <button type="button" role="tab" aria-selected={tab==='counsel'} className={`admin-tab${tab==='counsel'?' active':''}`} onClick={() => setTab('counsel')}>상담</button>
-      <button type="button" role="tab" aria-selected={tab==='program'} className={`admin-tab${tab==='program'?' active':''}`} onClick={() => setTab('program')}>비교과 활동</button>
-    </div>
-    <section className="admin-card" role="tabpanel" aria-label={tab==='counsel'?'상담':'비교과 활동'}>
-      <p className="admin-page-desc">현재 연결된 기록입니다. 외부 상담·비교과 이력은 연계 전입니다.</p>
-      {tab==='counsel' ? (data.counsels.length ? <ul>{data.counsels.map(c => <li key={c.id}>{c.date} · {c.type} · {status[c.status]}</li>)}</ul> : <p>상담 기록 없음</p>)
-        : (data.programs.length ? <ul>{data.programs.map(p => <li key={p.id}>{p.date} · {p.title} · {p.completed?'이수':'미이수'}</li>)}</ul> : <p>비교과 활동 없음</p>)}
-    </section>
+    <AcademicStudentHeader data={props.academicData} action={props.headerAction} />
+    <StudentStatCards stats={academicStudentStats(props.academicData)} />
+    <StudentDetailTabs activeTab={tab} onChange={setTab} />
+    {tab === 'program' ? <ProgramTab studentId={props.studentId} academicRecords={props.academicData.programs} />
+      : tab === 'counsel' && props.academicData.counsels.length ? <section className="admin-card" role="tabpanel">
+        <ul>{props.academicData.counsels.map(c => <li key={c.id}>
+          {c.date} · {c.type} · {{ REQ: '신청', CONFIRMED: '확정', DONE: '완료' }[c.status]}
+        </li>)}</ul>
+      </section>
+      : <section className="admin-card" role="tabpanel">
+        <EmptyState title={TABS.find(t => t.key === tab)?.label} message="연결된 기록이 없습니다." />
+      </section>}
+  </div>
+}
+
+function StudentDetailTabs({ activeTab, onChange }: { activeTab: TabKey; onChange: (tab: TabKey) => void }) {
+  return <div className="admin-tabs" role="tablist" aria-label="학생 활동">
+    {TABS.map(t => {
+      const Icon = t.icon
+      return <button key={t.key} type="button" role="tab" aria-selected={activeTab === t.key}
+        className={`admin-tab${activeTab === t.key ? ' active' : ''}`} onClick={() => onChange(t.key)}>
+        <Icon /> {t.label}
+      </button>
+    })}
   </div>
 }
 
@@ -857,7 +893,7 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
   </>
 }
 
-function StudentDetailContent({ studentId, role, headerAction, initialTab, counselRequestId, academicData }: StudentDetailViewProps & { academicData?: AcademicStudentDetail }) {
+function StudentDetailContent({ studentId, role, headerAction, initialTab, counselRequestId, academicData, profile }: StudentDetailViewProps & { academicData?: AcademicStudentDetail; profile?: StudentData }) {
   useStore('dc_roadmap_changed')
   useStore('dc:counsel-updated')
   useStore('dc:diagnosis-updated')
@@ -877,7 +913,7 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
   },[studentId])
   const canEdit = role === 'career' || role === 'psych'
 
-  const student = STUDENTS.find(s => s.id === studentId)
+  const student = profile ?? STUDENTS.find(s => s.id === studentId)
 
   const visibleTabs = useMemo(
     () => TABS,
@@ -988,22 +1024,7 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
       <StudentStatCards stats={stats} />
       <AiCommentCard studentId={student.id} kind="comprehensive" />
 
-      <div className="admin-tabs" role="tablist">
-        {visibleTabs.map(t => {
-          const Icon = t.icon
-          return (
-            <button
-              key={t.key}
-              role="tab"
-              aria-selected={activeTab === t.key}
-              className={`admin-tab${activeTab === t.key ? ' active' : ''}`}
-              onClick={() => setTab(t.key)}
-            >
-              <Icon /> {t.label}
-            </button>
-          )
-        })}
-      </div>
+      <StudentDetailTabs activeTab={activeTab} onChange={setTab} />
 
       {activeTab === 'diagnosis' && <DiagnosisTab student={student} />}
       {activeTab === 'counsel' && <CounselTab studentId={student.id} />}
