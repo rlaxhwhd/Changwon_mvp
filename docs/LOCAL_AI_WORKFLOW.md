@@ -141,3 +141,29 @@ CentOS 호환 런타임과 의존성도 확인하고, 회사용 이미지를 로
 - 본문 559자와 모델명·근거가 로컬 PostgreSQL에 저장됨을 별도로 확인.
 - Chrome 새로고침 후 동일 본문 복원, 저장본 조회 200·31ms, 실패 요청과 콘솔 오류 없음.
 - 이번 구성 작업에서 CentOS 서비스·DB 또는 GPU 서버 설정을 변경하지 않았다.
+
+## 2026-10-08 진단 디자인 변경 웹 배포
+
+- Claude 커밋 `140b518`의 수준 배지 폭 통일과 Core 레이더 제목 제거를
+  `dreamcatch-web:diagnosis-ui-polish-20261008`로 CentOS에 반영했다.
+  사용자가 브라우저 화면 테스트를 하지 말라고 명시하여 해당 검증은 생략했다.
+- 준비된 `web.tar`의 로컬·서버 SHA256은
+  `858508e9c5d4b6eae795fa4e29b08bd168278077abf094b50c8ee09a8dc42e46`로 일치했다.
+  서버 실행 `v2.html` SHA256은
+  `876e7cef9081e3f504fd84c28d082026dc835de801a427f6fece9c98a958b07a`,
+  `admin.html`은 `11ef3ceef60551e66e5f390afebc3e0349f4265dd28d1f041bac36567a2370da`로
+  로컬 배포 이미지와 일치한다. Docker load 이후 이미지 ID는 환경 사이에 달랐으므로
+  아카이브 및 실제 배포 파일 해시로 무결성을 확인했다.
+- `/opt/dreamcatch/compose.yaml`의 웹 태그만 갱신하고 기존 `compose.chatbot.yaml`과 함께
+  `up -d --no-deps web`으로 교체했다. 웹·API·DB 모두 healthy, 웹 `healthz`는 `ok`.
+  API·DB 컨테이너 ID는 배포 전후 동일하다. API·DB 자료·마이그레이션 변경은 없다.
+- 백업은 `/opt/dreamcatch/ai/diagnosis-ui-polish-20261008/`에 Compose 원본과 이전 웹 이미지,
+  컨테이너 ID·HTML 해시·전송 아카이브를 보관했다.
+  복구는 웹 태그를 `dreamcatch-web:diagnosis-history-20261008`로 되돌린 뒤
+  `/opt/dreamcatch`에서 다음 명령으로 웹만 재기동한다.
+
+  ```sh
+  docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web
+  ```
+
+브라우저에서 새 디자인이 표시되는지와 콘솔·실제 화면 API 동작은 사용자가 직접 확인한다.
