@@ -211,3 +211,24 @@ CentOS 호환 런타임과 의존성도 확인하고, 회사용 이미지를 로
 이전 헤더 14px 및 동의서 스타일 변경과 함께 웹 이미지
 `dreamcatch-web:student-detail-tabs-20261008`을 준비한다.
 사용자 지시에 따라 화면 테스트, 서버 전송·배포, 실행 컨테이너 교체는 보류한다.
+
+### 배포 완료: 대기 웹 변경 일괄 반영 (2026-10-08)
+
+후속 사용자 일괄 배포 지시로 위 배포 보류 상태를 해제했다.
+서버 웹에 `dreamcatch-web:student-detail-tabs-20261008`을 배포했다.
+`c30cbe2` 결과표 헤더 14px, Claude `20c7116` 상담 동의서 중앙 정렬·블루 색상,
+`6272af4` 학생 상세 공용 탭 수정이 모두 포함된다.
+원격 `origin/dev`와 로컬 HEAD가 `6272af4`로 일치하고 추가 런타임 변경이 없음을 확인했다.
+로컬 TypeScript·Vite·Docker 빌드를 통과한 이미지를 사용했다.
+
+- 아카이브 SHA256: `5ae406527f84b2ce9086bddd9f7b4cd46afaea1e64f66a69c55e64644758c042`
+- 서버 `v2.html`: `65a844719fc60e9da6515fccb173c868c17f999ae0b20a4619e49483fcaa6104`
+- 서버 `admin.html`: `58f12b31aa73b48dc277a848214493aa55476598f3dcdf5df51ce7b51a8ea73d`
+- 백업: `/opt/dreamcatch/ai/student-detail-tabs-20261008/`
+
+서버 아카이브와 HTML 해시가 로컬 배포 이미지와 일치한다.
+웹·API·DB는 running/healthy이며 웹 healthz는 ok다.
+API·DB 컨테이너 ID는 배포 전후 동일하고 데이터·마이그레이션 변경은 없다.
+복구는 웹 태그를 `dreamcatch-web:diagnosis-table-style-20261008`로 되돌리고
+`docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web`을 실행한다.
+사용자 지시로 브라우저 화면 테스트는 하지 않았다. 화면 동작 확인은 사용자 확인 범위다.
