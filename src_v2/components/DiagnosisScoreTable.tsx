@@ -18,8 +18,7 @@ export default function DiagnosisScoreTable({ result, rows, detailRows = [], sho
   const averaged = rows.some(row => row.averaged)
   const cells = (row: ResultRow) => <>
     <td className="drr-factor">{row.name}{showFactorDesc && row.desc && <small>{row.desc}</small>}</td>
-    <td className="mid">{row.averaged ? <span title="영역 평균의 수준은 별도로 판정하지 않습니다">—</span>
-      : <span className={`drr-level ${LEVEL_CLASS[row.level]}`}>{row.level}</span>}</td>
+    <td className="mid"><span className={`drr-level ${LEVEL_CLASS[row.level]}`}>{row.level}</span></td>
     <td className="num"><span className="drr-score">{scoreText(row.tScore)}</span></td>
   </>
   return <div className="drr-scores">
@@ -42,7 +41,7 @@ export default function DiagnosisScoreTable({ result, rows, detailRows = [], sho
             {expanded && index === 0 && <th className="drr-area" scope="rowgroup" rowSpan={group.rows.length}>
               {group.name}
               {group.summary && <small>{group.summary.averaged ? '평균 ' : 'T점수 '}{scoreText(group.summary.tScore)}
-                {!group.summary.averaged && <> · {group.summary.level}</>}
+                {' · '}{group.summary.level}
               </small>}
             </th>}
             {cells(row)}

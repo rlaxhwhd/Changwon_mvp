@@ -1,10 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import CRAReport from '../../components/CRAReport'
 import DiagnosisResultReport from '../../components/DiagnosisResultReport'
 import { getActiveStudent } from '../../data/students'
 import { getModuleByTestId } from '../../data/careerProcess'
-import { getDiagnosisResult, getResultRows, type FactorLevel } from '../../data/diagnosisResults'
+import { getDiagnosisResult, getResultsByStudent, getResultRows, type FactorLevel } from '../../data/diagnosisResults'
+import { loadStudentDiagnoses } from '../../../shared/diagnosisStore'
+import { importDiagnosis } from '../../data/pipeline'
 import './DiagnosisResultDetail.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -147,13 +149,60 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
 }
 
 export default function DiagnosisResultDetail() {
-  const navigate = useNavigate()
   const { testId = 'ccore' } = useParams()
   const student = getActiveStudent()
+  return <DiagnosisResultDetailView key={`${student.id}:${testId}`} studentId={student.id} testId={testId} />
+}
+
+function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; testId: string }) {
+  const navigate = useNavigate()
+  const external = ['ccore', 'c2', 'c3', 'c4'].includes(testId)
+  const [loaded, setLoaded] = useState(false)
+  const [error, setError] = useState('')
+  const [attemptNo, setAttemptNo] = useState<number>()
+  const [refreshing, setRefreshing] = useState(false)
+  const [notice, setNotice] = useState('')
+  const refreshGuard = useRef(false)
+  const refresh = async () => {
+    if (refreshGuard.current) return
+    refreshGuard.current = true
+    setRefreshing(true); setError(''); setNotice('')
+    try {
+      const response = await importDiagnosis(getActiveStudent(), testId)
+      setAttemptNo(undefined)
+      setNotice(response.incomplete ? response.message : response.imported
+        ? `${response.imported}개의 새 응시 결과를 저장했습니다.`
+        : response.updated ? '저장된 응시 결과의 변경 내용을 반영했습니다.'
+        : '새로 완료된 응시 결과가 없습니다. 기존 결과를 표시합니다.')
+    } catch (e) { setError(e instanceof Error ? e.message : String(e)) }
+    finally { refreshGuard.current = false; setRefreshing(false) }
+  }
+  const initialRequest = useRef<Promise<unknown> | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    initialRequest.current ??= external
+      ? importDiagnosis(getActiveStudent(), testId, true)
+      : loadStudentDiagnoses(studentId)
+    initialRequest.current.then(() => {
+      if (cancelled) return
+      const history = getResultsByStudent(studentId).filter(r => r.testId === testId && (!external || r.source === 'hrtest'))
+      if (external && !history.length) {
+        try { sessionStorage.setItem(`dc:diagnosis-action:${studentId}:${testId}`, 'start') } catch { /* Optional storage. */ }
+        window.alert('진단이 정상적으로 완료되지 않았습니다. 검사시작을 눌러 진단을 완료해 주세요.')
+        navigate('/diagnosis/employment', { replace: true })
+        return
+      }
+      setLoaded(true)
+    }).catch(e => { if (!cancelled) setError(e instanceof Error ? e.message : String(e)) })
+    return () => { cancelled = true }
+  }, [studentId, testId, external, navigate])
   const module = getModuleByTestId(testId)
   const testName = module?.name ?? '진단 검사'
 
-  const result = getDiagnosisResult(student.id, testId)
+  const history = getResultsByStudent(studentId).filter(r => r.testId === testId && (!external || r.source === 'hrtest'))
+  const result = loaded ? (attemptNo == null
+    ? history.find(r => r.isCurrent) ?? history[0]
+    : getDiagnosisResult(studentId, testId, attemptNo)) : undefined
   const rows = (result ? getResultRows(result, module) : []).filter((row): row is typeof row & {tScore:number} => row.tScore != null)
 
   // 결과지 전체 보기 — CCORE 를 축으로 짜인 결과표라 핵심진단에서만 연다.
@@ -182,11 +231,27 @@ export default function DiagnosisResultDetail() {
         <button className="dr-back-btn" onClick={() => navigate('/diagnosis/employment')} aria-label="뒤로 가기">
           <i className="fa-solid fa-arrow-left" />
         </button>
+        {loaded && history.length > 0 && <label className="dr-attempt-picker">
+          진단 이력
+          <select aria-label="진단 회차" value={result?.attemptNo ?? ''} onChange={event => setAttemptNo(Number(event.target.value))}>
+            {history.map(item => <option key={item.attemptNo} value={item.attemptNo}>
+              {item.attemptNo}회차 · {item.testedAt.slice(0, 10)}{item.isCurrent ? ' · 최신 결과' : ''}
+            </option>)}
+          </select>
+        </label>}
+        {external && loaded && <button className="dr-history-btn" disabled={refreshing} aria-busy={refreshing} onClick={() => void refresh()}>
+          {refreshing ? '새 결과 확인 중…' : '새 응시 결과 확인'}
+        </button>}
       </div>
+      {loaded && error && <p role="alert">{error}</p>}
+      {notice && <p role="status">{notice}</p>}
 
-      {rows.length === 0 || result?.source === 'hrtest' ? (
+      {!loaded ? <div className="dr-card" role={error ? 'alert' : 'status'}>
+        {error || '저장된 결과를 확인 중입니다. 결과가 없으면 검사기관에서 조회합니다…'}
+        {error && <button className="dr-history-btn" onClick={() => window.location.reload()}>다시 시도</button>}
+      </div> : rows.length === 0 || result?.source === 'hrtest' ? (
         <div className="dr-card">
-          <DiagnosisResultReport studentId={student.id} testId={testId} showChart />
+          <DiagnosisResultReport result={result} showChart />
         </div>
       ) : (
         <div className="dr-grid">

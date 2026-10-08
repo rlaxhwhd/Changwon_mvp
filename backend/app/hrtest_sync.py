@@ -4,7 +4,7 @@ import json
 from threading import Lock
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg.types.json import Jsonb
 
 from . import hrtest
@@ -99,7 +99,7 @@ def store_results(conn, student, test_id, items):
 
 
 @router.post('/diagnosis/external/{test_id}/import')
-def import_results(test_id: str, user=Depends(principal, scope='function'),
+def import_results(test_id: str, preferStored: bool = Query(False), user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
     if user['kind'] != 'STUDENT':
         raise HTTPException(403, '학생 본인의 검사 결과만 가져올 수 있습니다.')
@@ -107,6 +107,14 @@ def import_results(test_id: str, user=Depends(principal, scope='function'),
         raise HTTPException(409, '아직 외부 검사 결과 연동이 제공되지 않는 검사입니다.')
     student = student_access(conn, user, user['intg_uid'])
     uid, number = student['intg_uid'], student['student_no']
+    if preferStored:
+        saved = conn.execute('''SELECT count(*) AS n FROM dc.diagnosis_result r
+          JOIN dc.diagnosis_attempt a USING(student_uid,test_id,attempt_no)
+          WHERE r.student_uid=%s AND r.test_id=%s AND r.source='hrtest'
+          AND a.status_code IN ('DONE','REVIEW')''', (uid, test_id)).fetchone()['n']
+        if saved:
+            return dict(found=saved, imported=0, updated=0, unchanged=saved,
+                        incomplete=0, needsReview=0, cached=True, message='저장된 검사 결과입니다.')
     # End authentication reads before external I/O; never hold a DB transaction across it.
     conn.commit()
     with _guard:
@@ -124,7 +132,7 @@ def import_results(test_id: str, user=Depends(principal, scope='function'),
             raise HTTPException(409, '학번이 변경되었습니다. 다시 로그인한 뒤 조회해 주세요.')
         result = store_results(conn, student, test_id, items)
         conn.commit()
-        return {**result, 'found': len(items), 'message':
+        return {**result, 'found': len(items), 'cached': False, 'message':
                 '완료된 검사 결과가 없습니다. 응시 완료 및 입력한 학번을 확인한 뒤 다시 가져와 주세요.'
                 if not items else '응답 누락 결과가 있습니다. 정상 완료 및 AI 분석에서 제외했습니다. 담당자에게 확인해 주세요.'
                 if result['incomplete'] else '유형 확인이 필요한 결과가 있습니다. 유형 확정과 AI 분석을 보류했습니다.'

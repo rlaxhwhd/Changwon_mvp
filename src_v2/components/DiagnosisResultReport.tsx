@@ -6,7 +6,7 @@ import './DiagnosisResultReport.css'
 import AiCommentCard from '../../shared/AiCommentCard'
 import DiagnosisRadar from './DiagnosisRadar'
 import DiagnosisScoreTable from './DiagnosisScoreTable'
-import { getDiagnosisChartSections } from '../data/diagnosisChart'
+import { getDiagnosisChartSections, summaryLevel } from '../data/diagnosisChart'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // 진단 상세 결과표 — 학생 포털(src_v2) · 교직원 포털(src_admin) 공용 컴포넌트.
@@ -100,20 +100,24 @@ export default function DiagnosisResultReport({
   const module: DiagnosisModule | undefined = getModuleByTestId(found.testId)
   const rows = getResultRows(found, module)
   const missing = found.source === 'hrtest' ? [] : module?.factors.filter(factor => !rows.some(row => row.name === factor.name)) ?? []
-  const sections = showChart ? getDiagnosisChartSections(found, rows) : [{ id: found.testId, axes: [], rows }]
+  const sections = showChart ? getDiagnosisChartSections(found, rows).map(section => ({ ...section,
+    rows: found.source === 'hrtest' ? section.rows.map(row => ({ ...row, level: summaryLevel(row.tScore) })) : section.rows,
+  })) : [{ id: found.testId, axes: [], rows }]
 
 
   return (
     <div className="drr" style={style}>
       {(found.source?.includes('fixture') || found.source?.startsWith('development:')) && <p className="drr-empty">기존 개발 검증 이력입니다. 실제 검사 결과가 아닙니다.</p>}
-      {found.source === 'hrtest' && <p className={showChart ? 'drr-source-note' : 'drr-empty'}>검사기관에서 수신한 실제 결과입니다. 유형별 점수와 수준은 제공된 값을 그대로 표시합니다.</p>}
+      {found.source === 'hrtest' && <p className={showChart ? 'drr-source-note' : 'drr-empty'}>검사기관에서 수신한 실제 결과입니다. {showChart
+        ? '요약 수준은 40점 이하 낮음, 40점 초과~60점 이하 보통, 60점 초과 높음입니다. 상세 수준은 검사기관 제공값입니다.'
+        : '유형별 점수와 수준은 제공된 값을 그대로 표시합니다.'}</p>}
       {found.needsReview && <p role="status" className="drr-empty">유형 확인이 필요합니다. 점수는 보존하며 유형 확정·후속 검사 배정·AI 분석은 보류합니다. 담당자에게 확인해 주세요.</p>}
       {module?.factors.length === 0 && <p className="drr-empty">결과표 항목은 추가 예정입니다.</p>}
       <div className="drr-banner">
         <span className="drr-banner-headline">{missing.length || module?.factors.length === 0 ? '결과 항목 확인 필요' : found.headline}</span>
         <span className="drr-banner-copy">
           <b>{missing.length ? '현재 항목 기준 점수 미등록' : found.headlineCaption}</b>
-          <small>{found.testedAt} 실시{found.attemptNo > 1 && ` · ${found.attemptNo}회차`}</small>
+          <small>{found.testedAt} 실시 · {found.attemptNo}회차</small>
         </span>
       </div>
 

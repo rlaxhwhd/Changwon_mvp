@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import {
@@ -6,11 +6,10 @@ import {
   typeLabel,
   type TestStatus,
 } from '../../data/careerProcess'
-import { importDiagnosis, getModuleStatusFor, getStudentType } from '../../data/pipeline'
+import { getModuleStatusFor, getStudentType } from '../../data/pipeline'
 import { externalDiagnosisLinks, diagnosisAttempts } from '../../../shared/diagnosisStore'
 import NextStepBanner from '../../components/NextStepBanner'
 import { getActiveStudent } from '../../data/students'
-import { getDiagnosisResult } from '../../data/diagnosisResults'
 import './EmploymentTest.css'
 import './DiagnosisProcess.css'
 import { usePageHead } from '../../components/PageCrumb'
@@ -59,8 +58,6 @@ export default function DiagnosisResult() {
   const availableCount = modulesWithStatus.filter(m => m.status === 'available').length
   const lockedCount = modulesWithStatus.filter(m => m.status === 'locked').length
 
-  const [saving, setSaving] = useState<string | null>(null)
-  const checking = useRef(false)
   // This remembers the button only; completion still comes from the server.
   const [actions, setActions] = useState<Record<string, 'start' | 'result'>>({})
   const actionKey = (testId: string) => `dc:diagnosis-action:${student.id}:${testId}`
@@ -75,27 +72,6 @@ export default function DiagnosisResult() {
     setActions(current => ({ ...current, [key]: action }))
     try { sessionStorage.setItem(key, action) } catch { /* In-memory state still works. */ }
   }
-  const [saveError,setSaveError] = useState('')
-  const importResult = async (testId: string) => {
-    if (checking.current) return
-    checking.current = true
-    setSaving(testId); setSaveError('')
-    try {
-      const response = await importDiagnosis(student, testId)
-      const completed = diagnosisAttempts.find(a => a.studentId === student.id &&
-        a.testId === testId && a.isCurrent && a.source === 'hrtest' && a.status === '완료')
-      const result = getDiagnosisResult(student.id, testId)
-      if (response.found > 0 && completed && result?.source === 'hrtest' && result.attemptNo === completed.attemptNo) {
-        setAction(testId, 'result')
-        navigate(`/diagnosis/employment/${testId}`)
-      } else {
-        setAction(testId, 'start')
-        window.alert('진단이 정상적으로 완료되지 않았습니다. 검사시작을 눌러 진단을 완료해 주세요.' +
-          (response.found > 0 ? `\n${response.message}` : ''))
-      }
-    } catch (error) { setSaveError(error instanceof Error ? error.message : String(error)) }
-    finally { checking.current = false; setSaving(null) }
-  }
 
   return (
     <div className="de-wrap">
@@ -104,7 +80,6 @@ export default function DiagnosisResult() {
       <div className="de-access-notice" role="note">
         ‘검사시작’을 누르면 외부 검사 사이트가 새 탭으로 열립니다. 학번을 정확히 입력해 진단을 완료한 뒤, 이 페이지로 돌아와 ‘결과보기’를 눌러 주세요.
       </div>
-      {saveError && <p role="alert" className="de-access-notice">{saveError}</p>}
 
       <section className="de-hero">
         <div className="de-hero-visual" aria-label="AI 홀로그램 진단 이미지">
@@ -207,23 +182,17 @@ export default function DiagnosisResult() {
             {result.status !== 'locked' && externalDiagnosisLinks[result.testId] && actionFor(result.testId, result.status) === 'start' ? <a
               className="de-start-btn de-start-btn--available"
               href={externalDiagnosisLinks[result.testId]} target="_blank" rel="noopener noreferrer"
-              aria-disabled={saving !== null}
-              onClick={event => {
-                if (checking.current) { event.preventDefault(); return }
-                setSaveError('')
+              onClick={() => {
                 setAction(result.testId, 'result')
               }}>
               검사시작 <i className="fa-solid fa-arrow-up-right-from-square" aria-label="새 탭" />
             </a> : <button
               type="button"
               className={`de-start-btn de-start-btn--${result.status === 'locked' ? 'locked' : 'done'}`}
-              onClick={() => externalDiagnosisLinks[result.testId]
-                ? void importResult(result.testId)
-                : navigate(`/diagnosis/employment/${result.testId}`)}
-              disabled={saving !== null || result.status === 'locked' || (!externalDiagnosisLinks[result.testId] && result.status !== 'done')}
-              aria-busy={saving === result.testId}
+              onClick={() => navigate(`/diagnosis/employment/${result.testId}`)}
+              disabled={result.status === 'locked' || (!externalDiagnosisLinks[result.testId] && result.status !== 'done')}
             >
-              {saving === result.testId ? '결과 확인 중…' : result.status === 'locked'
+              {result.status === 'locked'
                 ? <><i className="fa-solid fa-lock" />선행 검사 완료 후 응시</>
                 : externalDiagnosisLinks[result.testId] || result.status === 'done'
                   ? <>결과보기<i className="fa-solid fa-arrow-right" /></>

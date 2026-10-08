@@ -1,6 +1,12 @@
 import type { DiagnosisResult } from './schema/diagnosisResult'
 import type { ResultRow } from './diagnosisResults'
 
+/** Student summary bands; provider levels in detailed rows remain unchanged. */
+export function summaryLevel(score: number | null): ResultRow['level'] {
+  if (score == null || !Number.isFinite(score)) return '미등록'
+  return score <= 40 ? '낮음' : score <= 60 ? '보통' : '높음'
+}
+
 export interface DiagnosisChartAxis {
   labels: string[]
   value: number | null

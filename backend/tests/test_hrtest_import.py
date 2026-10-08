@@ -33,6 +33,9 @@ def test_hrtest_import_preserves_history_deduplicates_and_refreshes(client, monk
     first = client.post(path, headers=head)
     assert first.status_code == 200, first.text
     assert first.json()['imported'] == 1
+    cached = client.post(path+'?preferStored=true', headers=head)
+    assert cached.status_code == 200 and cached.json()['cached'] is True
+    assert calls == [('ccore', student['student_no'])]
     again = client.post(path, headers=head)
     assert again.status_code == 200 and again.json()['unchanged'] == 1
     assert calls == [('ccore', student['student_no'])] * 2
@@ -103,6 +106,7 @@ def test_hrtest_current_result_uses_completion_time_not_import_order(client,monk
     path='/api/v1/diagnosis/external/ccore/import'
     assert client.post(path,headers=head).status_code==200
     received['attempt_id']=800
+    received['scales'][0]['t_score']=22
     received['types']['overall']='취업준비형'
     received['completed_at']='2026-09-01T09:10:00'
     received['started_at']='2026-09-01T09:00:00'
@@ -111,6 +115,11 @@ def test_hrtest_current_result_uses_completion_time_not_import_order(client,monk
     data=client.get('/api/v1/diagnosis/students/chaewon',headers=head).json()
     current=next(r for r in data['results'] if r['testId']=='ccore' and r['isCurrent'])
     assert current['externalAttemptId']==801
+    history=[r for r in data['results'] if r['testId']=='ccore' and r['source']=='hrtest']
+    assert {r['externalAttemptId'] for r in history} >= {800,801}
+    assert len({r['attemptNo'] for r in history}) == len(history)
+    scores={r['externalAttemptId']:r['factors'][0]['tScore'] for r in history}
+    assert scores[800] == 22 and scores[801] == 0
     with pool.connection() as conn:
         assert conn.execute("SELECT student_type FROM dc.student_type_event WHERE student_uid=(SELECT intg_uid FROM dc.person WHERE alias='chaewon') AND source='hrtest' ORDER BY decided_at DESC,id DESC LIMIT 1").fetchone()['student_type']=='T3'
 
@@ -157,3 +166,32 @@ def test_hrtest_unclassified_preserves_scores_but_blocks_type_and_ai(client,db):
     received['types']['overall']='진로미탐색형'
     hrtest_sync.store_results(db,student,'ccore',[received])
     assert db.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s',(uid,)).fetchone()['student_type']=='T1'
+
+
+def test_db_first_does_not_accept_development_or_incomplete_results(client, monkeypatch):
+    head = headers('jiwoo')
+    path = '/api/v1/diagnosis/external/c4/import?preferStored=true'
+    received = item()
+    received.update(attempt_id=9901, incomplete=True, missing_items=[1])
+    calls = []
+    def fetch(*args):
+        calls.append(args)
+        return [deepcopy(received)]
+    monkeypatch.setattr(hrtest, 'fetch_results', fetch)
+    first = client.post(path, headers=head)
+    assert first.status_code == 200 and first.json()['cached'] is False
+    received.update(incomplete=False, missing_items=[])
+    second = client.post(path, headers=head)
+    assert second.status_code == 200 and second.json()['updated'] == 1
+    assert len(calls) == 2
+    def unavailable(*args):
+        raise AssertionError('Stored results must not depend on the external API')
+    monkeypatch.setattr(hrtest, 'fetch_results', unavailable)
+    third = client.post(path, headers=head)
+    assert third.status_code == 200 and third.json()['cached'] is True
+    assert client.post(path).status_code == 401
+    assert client.post(path, headers=headers('career_kim')).status_code == 403
+    monkeypatch.setattr(hrtest, 'fetch_results', lambda *_: [])
+    other = client.post(path, headers=headers('changwon'))
+    # A different student must never receive this student's stored result.
+    assert other.status_code == 200 and other.json()['found'] == 0 and not other.json()['cached']

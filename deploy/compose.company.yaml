@@ -18,7 +18,7 @@ services:
       timeout: 3s
       retries: 12
   api:
-    image: dreamcatch-api:parity-20261008
+    image: dreamcatch-api:diagnosis-history-20261008
     restart: unless-stopped
     read_only: true
     tmpfs: [/tmp]
@@ -51,7 +51,7 @@ services:
       timeout: 5s
       retries: 12
   web:
-    image: dreamcatch-web:lounge-ai-comment-20261007
+    image: dreamcatch-web:diagnosis-history-20261008
     restart: unless-stopped
     ports:
       - "${DC_WEB_BIND:-192.168.0.250}:18443:443"

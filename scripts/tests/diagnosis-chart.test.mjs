@@ -1,6 +1,11 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
-import { getDiagnosisChartAxes, getDiagnosisChartSections, getDiagnosisTableGroups } from '../../src_v2/data/diagnosisChart.ts'
+import { getDiagnosisChartAxes, getDiagnosisChartSections, getDiagnosisTableGroups, summaryLevel } from '../../src_v2/data/diagnosisChart.ts'
+
+test('summary levels include boundary values, decimals and missing scores', () => {
+  assert.deepEqual([0, 39.99, 40, 40.01, 41, 60, 60.01, 61, 100, null, NaN].map(summaryLevel),
+    ['낮음', '낮음', '낮음', '보통', '보통', '보통', '높음', '높음', '높음', '미등록', '미등록'])
+})
 
 const codes = ['career_clarity', 'career_motivation', 'competency_readiness',
   'employability_readiness', 'job_fit', 'org_fit', 'info_search',

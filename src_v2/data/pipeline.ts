@@ -98,10 +98,10 @@ export function getPipelineState(student: StudentData): PipelineState {
  * 응시 시점 스냅샷(학번·이름·학과·학년)을 같이 저장한다 — 현행 EP_PRM_APP 패턴
  * 계승(CLAUDE.md 2조). 학적이 바뀌어도 "응시 당시" 소속으로 집계가 재현돼야 한다.
  */
-export async function importDiagnosis(student: StudentData, testId: string) {
-  const response = await api<{found:number; imported:number; updated:number; unchanged:number; incomplete:number; message:string}>(
-    '/diagnosis/external/'+encodeURIComponent(testId)+'/import', {method:'POST'})
-  await Promise.all([loadStudentDiagnoses(student.id),loadProfiles()])
+export async function importDiagnosis(student: StudentData, testId: string, preferStored = false) {
+  const response = await api<{found:number; imported:number; updated:number; unchanged:number; incomplete:number; cached:boolean; message:string}>(
+    '/diagnosis/external/'+encodeURIComponent(testId)+'/import'+(preferStored ? '?preferStored=true' : ''), {method:'POST'})
+  await Promise.all([loadStudentDiagnoses(student.id), ...(!response.cached ? [loadProfiles()] : [])])
   return response
 }
 
