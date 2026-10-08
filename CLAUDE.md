@@ -12,6 +12,8 @@
 
 > **코드 탐색·재사용:** `graft-changwon` MCP와 [Graft 스킬](.claude/skills/graft/SKILL.md)로 기존 공통 구현·호출 관계를 확인한다. [설치 및 CLI 대체 경로](docs/GRAFT_SETUP.md)를 참고한다.
 
+> **★ Claude 세션은 배포하지 않는다** <span>(2026-10-08 사용자 확정)</span>: Claude Code 세션은 작업·검증 후 **커밋·푸시까지만** 한다. CentOS 서버 배포(이미지 전송·교체)는 하지 않는다 — 이 세션의 자동 권한 검사가 서버 SSH 접속을 막는다. 배포가 필요한 변경이면 배포 범위와 준비물(이미지 태그·해시·되돌리는 방법)을 Atlas 공유 기억에 남기고 사용자에게 알린다.
+
 국립창원대학교 역량개발관리시스템 **드림캐치(DREAMCATCH)** — 현행 운영 시스템의 **고도화** 프로젝트.
 React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 **뷰포트 — `src_v2/`(학생) 모바일 반응형 · `src_admin/`(교직원) 데스크톱 전용(min-width 1280px)** <span>(2026-09-08)</span>
