@@ -29,8 +29,8 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: var(--color-primary);
-  color: #fff;
+  background: var(--blue-soft);
+  color: var(--blue);
   font-size: 16px;
   font-weight: 700;
 }
@@ -119,9 +119,11 @@
 }
 
 .ccm-answer label {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  min-width: 84px;
   padding: 7px 16px;
   border: 1.5px solid var(--color-border);
   border-radius: 999px;
@@ -133,21 +135,30 @@
   transition: all 0.15s;
 }
 
+/* 라디오는 접근성용으로만 남기고 흐름에서 빼서 글자를 버튼 중앙에 둔다 */
 .ccm-answer label input {
-  appearance: none;
-  -webkit-appearance: none;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
   margin: 0;
+  opacity: 0;
+  cursor: pointer;
 }
 
 .ccm-answer label:hover {
-  border-color: var(--color-border);
+  border-color: var(--blue-border);
+}
+
+.ccm-answer label:has(input:focus-visible) {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
 }
 
 .ccm-answer label.on {
-  background: var(--color-cta);
-  border-color: var(--color-primary);
-  color: #fff;
-  box-shadow: 0 6px 14px var(--cta-shadow);
+  background: var(--blue-soft);
+  border-color: var(--blue-border);
+  color: var(--blue);
 }
 
 /* ── 안내사항 ────────────────────────────────────────────────────── */
@@ -232,7 +243,7 @@
 }
 
 .ccm-signature-input:focus {
-  border-color: var(--color-primary);
+  border-color: var(--blue);
 }
 
 .ccm-warn {
@@ -281,19 +292,19 @@
 }
 
 .ccm-btn-primary {
-  background: var(--color-cta);
-  border: none;
-  color: #fff;
-  box-shadow: 0 10px 22px var(--cta-shadow);
+  background: var(--blue-soft);
+  border: 1.5px solid var(--blue-border);
+  color: var(--blue);
 }
 
 .ccm-btn-primary:hover:not(:disabled) {
-  background: #1b46e8;
+  border-color: var(--blue);
 }
 
 .ccm-btn-primary:disabled {
-  background: #c5cee0;
-  box-shadow: none;
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-sub);
   cursor: not-allowed;
 }
 
