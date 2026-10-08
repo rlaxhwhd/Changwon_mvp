@@ -46,7 +46,7 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false }: 
 
   return (
     <figure className="drr-chart">
-      <figcaption><strong>{areaAverage ? '영역별 평균 T점수' : averaged ? '요인 쌍별 평균 T점수' : '요인별 T점수'}</strong><span>점선 기준: 평균 50</span></figcaption>
+      <figcaption>{!averaged || areaAverage ? <strong>{areaAverage ? '영역별 평균 T점수' : '요인별 T점수'}</strong> : null}<span>점선 기준: 평균 50</span></figcaption>
       <svg viewBox="0 0 520 420" role="img" aria-labelledby={titleId}>
         <title id={titleId}>{axes.map(a => `${a.labels.join(' / ')}: ${formatScore(a.value)}`).join('; ')}</title>
         {ticks.map(t => <polygon key={t} className="drr-chart-grid" points={ring(t)} />)}
