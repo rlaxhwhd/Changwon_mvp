@@ -232,3 +232,31 @@ API·DB 컨테이너 ID는 배포 전후 동일하고 데이터·마이그레이
 복구는 웹 태그를 `dreamcatch-web:diagnosis-table-style-20261008`로 되돌리고
 `docker compose -f compose.yaml -f compose.chatbot.yaml up -d --no-deps web`을 실행한다.
 사용자 지시로 브라우저 화면 테스트는 하지 않았다. 화면 동작 확인은 사용자 확인 범위다.
+
+### 첫 이용자의 상담 진행 지원 (2026-10-08)
+
+학생 존재·접근 권한과 선택적인 `dc.student.detail` JSON을 분리한다.
+`/bootstrap/profiles`는 기존 권한 범위 안의 서비스 학생을 상세 JSON 유무로 제외하지 않는다.
+개별 학생 응답은 기존 값을 유지하며 누락된 컬렉션만 빈 기본값으로 제공한다.
+빈 기본값은 응답에서 구성하고 DB에 더미 JSON·진단·상담 이력을 생성하지 않는다.
+상담 진행 화면은 공통 `loadStudentProfile`로 기존 권한 검사 API를 개별 조회한다.
+로딩·조회 실패·재시도를 구분하며, 실패한 조회에서 이전 캐시로 상담을 진행하지 않는다.
+상세 공용 화면도 같은 로더를 사용한다.
+
+직전 테스트 계정에 임시로 채운 로컬 JSON은 marker와 빈 내용을 확인해 NULL로 복원했다.
+해당 임시 SQL 파일은 제거했으며 서버에는 이 임시 JSON을 적용하지 않았다.
+새 격리 DB 회귀 6개 통과: NULL JSON 새 이용자의 상담 신청→확정→기록 저장→완료,
+빈 프로필 조회, 부분 JSON 기본값, 미배정 교직원 조회 차단 및 기존 상담 게이트.
+최종 TypeScript/Vite·로컬 Docker API/웹 및 회사용 API/웹 이미지 빌드가 통과했다.
+서버 배포 태그는 `dreamcatch-{api,web}:first-user-counsel-20261008`이다.
+백업·복구 기준은 `/opt/dreamcatch/ai/first-user-counsel-20261008/`이며,
+API는 `diagnosis-history-20261008`, 웹은 `student-detail-tabs-20261008`로 되돌릴 수 있다.
+스키마 변경이나 마이그레이션 추가는 없으며 브라우저 화면 테스트 생략 지시는 유지한다.
+
+서버 배포 완료 후 웹·API·DB running/healthy, healthz ok를 확인했다.
+release parity는 로컬·서버 63개 앱 파일·118개 마이그레이션·스키마 MATCH다.
+서버 대상 테스트 계정은 NULL JSON 그대로 상담사 bootstrap과 개별 학생 조회에 포함됨을
+읽기 전용 백엔드 함수 호출로 확인했고 기존 상담 신청 1건을 보존했다.
+묶음 SHA256은 `56165edf054184584c9a830945211aa2e98efa6d41959cb3fcd932dfcf903730`이며,
+실행 웹의 v2/admin HTML 해시도 로컬 배포 이미지와 일치한다.
+실제 브라우저 상담 버튼·화면 동작은 사용자가 직접 확인한다.

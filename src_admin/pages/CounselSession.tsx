@@ -1,6 +1,6 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
 import { LuArrowLeft, LuCheck, LuChevronRight, LuClipboardCheck, LuFileText, LuQuote, LuSquarePen, LuUserX } from 'react-icons/lu'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { getActiveCounselor, getActiveCounselorId } from '../data/counselors'
 import { handledRequestTypes } from '../data/schema/counselor'
@@ -12,6 +12,7 @@ import type { CounselRequest } from '../data/counselRequests'
 import { buildRecord, upsertRecord } from '../data/counselRecords'
 import type { CounselRecord } from '../data/counselRecords'
 import { STUDENTS } from '../../src_v2/data/students'
+import { loadStudentProfile } from '../../shared/profileStore'
 import type { StudentData } from '../../src_v2/data/students'
 import { roadmapEnvelope } from '../../shared/roadmapStore'
 import { useRoadmap, useStore } from '../../shared/useRoadmapStore'
@@ -197,16 +198,33 @@ function RecordForm({
 
 export default function CounselSession() {
   const { studentId } = useParams<{ studentId: string }>()
+  return <CounselSessionContent key={studentId} studentId={studentId} />
+}
+
+function CounselSessionContent({ studentId }: { studentId?: string }) {
   const counselor = getActiveCounselor()
   const myType = handledRequestTypes(counselor.role)[0]
 
-  const student = STUDENTS.find(s => s.id === studentId)
+  const [student, setStudent] = useState<StudentData | undefined>(() => STUDENTS.find(s => s.id === studentId))
+  const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState('')
+  const [retry, setRetry] = useState(0)
+  useEffect(() => {
+    let cancelled = false
+    setLoading(true)
+    setLoadError('')
+    if (!studentId) { setLoading(false); return }
+    loadStudentProfile(studentId).then(value => { if (!cancelled) setStudent(value) })
+      .catch(error => { if (!cancelled) { setStudent(undefined); setLoadError(error.message) } })
+      .finally(() => { if (!cancelled) setLoading(false) })
+    return () => { cancelled = true }
+  }, [studentId, retry])
 
   // 이 학생의 내 담당 상담 중 진행 대상 = 확정 → 대기 → 최근 완료(로드맵을 마저 만들러 돌아온 경우) → 나머지.
   // 대상은 페이지를 연 시점에 한 번 고정한다 — 완료 처리 뒤 다른 대기 건으로 넘어가 버리면
   // 로드맵 생성 근거(counselRequestId)와 기록지가 방금 끝낸 상담을 잃는다.
   useStore('dc:counsel-updated')
-  const mine = getCounselRequests().filter(r => r.studentId === studentId)
+  const mine = getCounselRequests().filter(r => r.studentId === (student?.id ?? studentId))
   const [targetId] = useState(() => (
     mine.find(r => r.status === '확정') ??
     mine.find(r => r.status === '대기') ??
@@ -221,6 +239,10 @@ export default function CounselSession() {
     document.querySelector('.admin-session-left')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
+  if (loading) return <p role="status">학생 정보를 불러오는 중입니다…</p>
+  if (loadError) return <section className="admin-card"><p role="alert">{loadError}</p>
+    <button type="button" className="admin-btn" onClick={() => setRetry(n => n + 1)}>다시 시도</button>
+    <Link to="/counsel/requests" className="admin-btn">접수함</Link></section>
   if (!student) {
     return (
       <div className="admin-page">

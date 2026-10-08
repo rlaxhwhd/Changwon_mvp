@@ -12,6 +12,15 @@ export function studentProfiles(): StudentData[] { return profiles }
 export function counselOwnerProfiles(): CounselOwner[] { return owners }
 export function setStudentChoices(value: StudentChoice[]): void { choices = value }
 
+/** Scoped individual lookup; never infer existence from bootstrap or JSON history. */
+export async function loadStudentProfile(identity: string): Promise<StudentData> {
+  const profile = await api<StudentData>(`/students/${encodeURIComponent(identity)}`)
+  const index = profiles.findIndex(p => p.id === profile.id)
+  if (index < 0) profiles.push(profile)
+  else profiles.splice(index, 1, profile)
+  return profile
+}
+
 export async function loadProfiles(): Promise<void> {
   const result = await api<{ students: StudentData[]; counselOwners: CounselOwner[]; starStudentKeys: string[] }>('/bootstrap/profiles')
   setStarStudentKeys(result.starStudentKeys)

@@ -1,5 +1,6 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
-import { api, ApiError } from '../../shared/api'
+import { ApiError } from '../../shared/api'
+import { loadStudentProfile } from '../../shared/profileStore'
 import type { CSSProperties, ReactNode } from 'react'
 import { fetchAcademicStudentDetail, academicStudentStats, type AcademicStudentDetail } from '../data/academicStudents'
 import type { IconType } from 'react-icons'
@@ -827,7 +828,7 @@ function AcademicServiceDetail(props: StudentDetailViewProps & { academicData: A
   const [tab, setTab] = useState<TabKey>(props.initialTab ?? 'diagnosis')
   useEffect(() => {
     let cancelled = false
-    api<StudentData>(`/students/${encodeURIComponent(props.studentId)}`)
+    loadStudentProfile(props.studentId)
       .then(value => { if (!cancelled) setProfile(value) })
       .catch(e => {
         if (cancelled) return
