@@ -44,7 +44,8 @@
 .drr-analysis { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 1fr); align-items: center; gap: 24px; }
 .drr-analysis .drr-table th { padding: 9px 12px; }
 .drr-analysis .drr-table td { padding: 9px 12px; }
-.drr-analysis .drr-table .mid { width: 66px; }
+.drr-analysis .drr-table th.mid,
+.drr-analysis .drr-table td.mid { width: 92px; }
 .drr-analysis .drr-table .num { width: 62px; }
 .drr-analysis .drr-level { padding: 3px 8px; }
 .drr-chart { min-width: 0; width: 100%; max-width: 560px; justify-self: center; margin: 0; }
@@ -114,6 +115,10 @@
   text-align: left;
   white-space: nowrap;
 }
+.drr-table thead th {
+  background: #6548CF;
+  color: #FFFFFF;
+}
 .drr-table th.num,
 .drr-table td.num { text-align: right }
 .drr-table th.mid,
@@ -141,11 +146,13 @@
   width: 86px;
 }
 
-/* 수준 배지 — 낮음/보통/높음 3단 */
+/* 수준 배지 — 매우낮음/낮음/보통/높음/매우높음 모두 같은 폭 */
 .drr-level {
   display: inline-block;
   box-sizing: border-box;
-  min-width: calc(2em + 20px); /* '높음' 폭에 맞춰 3단 배지 폭 통일 */
+  width: 68px;
+  min-width: 68px;
+  max-width: 68px;
   text-align: center;
   padding: 3px 10px;
   border-radius: 999px;
@@ -212,6 +219,7 @@
 @container (max-width: 480px) {
   .drr-table-grouped th, .drr-table-grouped td,
   .drr-analysis .drr-table-grouped th, .drr-analysis .drr-table-grouped td { padding: 9px 6px; font-size: 11px; }
-  .drr-table-grouped .drr-level { font-size: 10px; padding: 3px 5px; }
-  .drr-analysis .drr-table-grouped .mid, .drr-analysis .drr-table-grouped .num { width: auto; }
+  .drr-table-grouped .drr-level { width: 52px; min-width: 52px; max-width: 52px; font-size: 10px; padding: 3px 5px; }
+  .drr-analysis .drr-table-grouped th.mid, .drr-analysis .drr-table-grouped td.mid,
+  .drr-analysis .drr-table-grouped .num { width: auto; }
 }
