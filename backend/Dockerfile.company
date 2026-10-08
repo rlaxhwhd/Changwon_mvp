@@ -1,0 +1,6 @@
+# CentOS7-compatible runtime, with the complete application and migration set.
+ARG COMPANY_API_BASE=dreamcatch-api:student-profile-20261002
+FROM ${COMPANY_API_BASE}
+COPY app/ /app/app/
+COPY migrations/ /app/migrations/
+COPY scripts/release_parity.py /app/scripts/release_parity.py
