@@ -623,9 +623,14 @@ CREATE TABLE dc.org_assignment (
 
 2026-10-02 진단·상담·종합·로드맵 AI 코멘트도 기존 `dc.ai_run`·`dc.ai_comment`에 연결했다.
 LLM 생성 후 본문·근거·모델·입력 스냅샷을 원자적으로 저장한 뒤 완료를 반환하고, 화면 진입 시
-최신 저장본을 불러온다. 재생성은 append-only 이력으로 남는다. 학생용과 상담사용 코멘트는
-분리하며 상담사는 학생용 코멘트도 열람한다. 기존 미저장 응답은 소급 복원하지 않는다.
+최신 저장본을 불러온다. 재생성은 append-only 이력으로 남는다. 2026-10-08 최종 결정으로
+진단·종합 코멘트는 학생과 관리자가 같은 학생 범위 저장본을 열람한다. 기존 미저장 응답은 소급 복원하지 않는다.
 117/118 마이그레이션·운영 검증·복구는 [AI 코멘트 운영 기록](deploy/AI_COMMENTS_OPERATIONS.txt)을 따른다.
+
+119는 학생별 상담현황 AI 분석 자동 갱신을 위한 durable queue, 120은 학생+KST 날짜의
+종합 코멘트 생성 예약이다. 진로취업 상담만 AI 상담일지 생성 receipt와 입력 해시를 정식 저장 시
+검증한다. 임시저장·생성 본문 직접 수정은 허용하고 상담 입력 수정 후에는 재생성이 필요하다.
+최종 규칙은 `PROCESS.md`, 최신 배포 및 복구 기록은 `docs/LOCAL_AI_WORKFLOW.md`를 따른다.
 
 - 마이그레이션 `022_job_operations.sql`(DDL·코드) · `023_job_seed.sql`(파생 시드, `seed.py` 가 다시 돌린다)
 - API `backend/app/jobs.py` · `files.py` · `gates.py` · 테스트 `backend/tests/test_jobs.py`

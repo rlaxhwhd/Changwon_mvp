@@ -260,3 +260,26 @@ release parity는 로컬·서버 63개 앱 파일·118개 마이그레이션·�
 묶음 SHA256은 `56165edf054184584c9a830945211aa2e98efa6d41959cb3fcd932dfcf903730`이며,
 실행 웹의 v2/admin HTML 해시도 로컬 배포 이미지와 일치한다.
 실제 브라우저 상담 버튼·화면 동작은 사용자가 직접 확인한다.
+
+### AI 최종 프로세스 서버 배포 완료 (2026-10-08)
+
+구현 커밋 `ce25311`을 `origin/dev`에 푸시하고, 회사용 전체 소스 빌드의
+`dreamcatch-{api,web,rag}:ai-process-20261008`을 배포했다. 서버 업무 데이터는 유지하며
+119·120만 PostgreSQL 트랜잭션으로 적용했고 DB 컨테이너 ID가 배포 전후 동일하다.
+환경별 비밀은 교체하지 않았다.
+
+- 로컬 관련 테스트 69개 통과, 타입·Vite·Docker 빌드 통과.
+- 실제 LLM+RAG의 4항목 상담일지 생성과 격리 DB API 저장·완료·자동 이력 분석 검증 통과.
+- 전체 회귀의 기존 실패 12개는 이전 HEAD에서도 동일하게 재현되어 이번 배포 범위에서 미해결.
+- 서버 API·웹·DB·RAG 모두 running/healthy. API·웹·RAG health 응답 정상.
+- release parity: 로컬·서버 소스 64개, 마이그레이션 120개와 DB 구조 MATCH.
+- 배포 묶음 SHA256: `9ca8782a0c1bec433492146bc76275f8923e6d138effdc2a18de4c3e391678c6`.
+- 서버 v2 HTML: `ed01bad9075177b43e409c20e821bceac1228647b1ff78f9ecbd73f32877bbc7`.
+- 서버 admin HTML: `569f37bde8569f8e6f5a225ebfc3aca6e109bc5ef7e69e51266a8f358b903c4f`.
+- RAG corpus: `221cf3e462c148c9495edf33b60d75136186297f03b917e333fe23aacea1e2ae`, 9개 문서, 로컬 이미지와 일치.
+
+백업 경로는 `/opt/dreamcatch/ai/ai-process-20261008/`이며 `before.dump`의 목차 검증,
+기존 compose 구성·이미지 목록·DB ID·배포 전 parity를 보관했다. 같은 경로의 `rollback.sh`는
+API·웹을 `first-user-counsel-20261008`, RAG를 `20261001`로 되돌리고 추가 테이블·업무 데이터는 유지한다.
+전체 DB 복원은 이후 업무 기록을 덮어쓰므로 단순 이미지 롤백에 사용하지 않는다.
+사용자의 명시적 지시로 브라우저 화면을 열거나 화면 테스트는 수행하지 않았다.
