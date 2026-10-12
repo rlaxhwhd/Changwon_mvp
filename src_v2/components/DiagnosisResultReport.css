@@ -116,10 +116,12 @@
   white-space: nowrap;
 }
 .drr .drr-table thead th {
-  background: #6548CF;
+  background: color-mix(in srgb, var(--drr-accent) 70%, #000);
   color: #FFFFFF;
   font-size: 14px;
 }
+
+.drr-chart-named .drr-chart-label { display: block; font-size: 16px; }
 .drr-table th.num,
 .drr-table td.num { text-align: right }
 .drr-table th.mid,

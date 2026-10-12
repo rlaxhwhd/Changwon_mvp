@@ -5,9 +5,10 @@ interface Props {
   axes: DiagnosisChartAxis[]
   averaged: boolean
   areaAverage?: boolean
+  namedAxes?: boolean
 }
 
-export default function DiagnosisRadar({ axes, averaged, areaAverage = false }: Props) {
+export default function DiagnosisRadar({ axes, averaged, areaAverage = false, namedAxes = false }: Props) {
   const titleId = useId()
   const formatScore = (value: number | null) => value == null ? '점수 없음' : value.toLocaleString('ko-KR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   const values = axes.map(axis => axis.value).filter((v): v is number => v != null && Number.isFinite(v))
@@ -17,7 +18,7 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false }: 
   // 0–100 is the usual display range, not a maximum allowed T score.
   const min = Math.min(0, Math.floor(Math.min(...values) / 25) * 25)
   const max = Math.max(100, Math.ceil(Math.max(...values) / 25) * 25)
-  const cx = 260, cy = 210, radius = 132
+  const cx = 260, cy = 210, radius = namedAxes ? 120 : 132
   const point = (i: number, ratio: number) => {
     const angle = i * 2 * Math.PI / axes.length - Math.PI / 2
     return { x: cx + radius * ratio * Math.cos(angle), y: cy + radius * ratio * Math.sin(angle) }
@@ -38,14 +39,15 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false }: 
     const lines: string[] = []
     for (const word of words) {
       const last = lines.length - 1
-      if (last >= 0 && `${lines[last]} ${word}`.length <= 9) lines[last] += ` ${word}`
-      else lines.push(...(word.match(/.{1,9}/gu) ?? [word]))
+      const limit = namedAxes ? 6 : 9
+      if (last >= 0 && `${lines[last]} ${word}`.length <= limit) lines[last] += ` ${word}`
+      else lines.push(...(word.match(new RegExp(`.{1,${limit}}`, 'gu')) ?? [word]))
     }
     return lines
   }
 
   return (
-    <figure className="drr-chart">
+    <figure className={`drr-chart${namedAxes ? ' drr-chart-named' : ''}`}>
       <figcaption>{!averaged || areaAverage ? <strong>{areaAverage ? '영역별 평균 T점수' : '요인별 T점수'}</strong> : null}<span>점선 기준: 평균 50</span></figcaption>
       <svg viewBox="0 0 520 420" role="img" aria-labelledby={titleId}>
         <title id={titleId}>{axes.map(a => `${a.labels.join(' / ')}: ${formatScore(a.value)}`).join('; ')}</title>
@@ -67,16 +69,17 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false }: 
           const p = point(i, 1.14)
           const dx = p.x - cx
           const lines = axis.labels.flatMap(wrapLabel)
-          const labelY = i === 0 ? p.y - 14 - (lines.length - 1) * 16 : p.y - (lines.length - 1) * 8
+          const lineHeight = namedAxes ? 20 : 16
+          const labelY = i === 0 ? p.y - 14 - (lines.length - 1) * lineHeight : p.y - (lines.length - 1) * lineHeight / 2
           return <g key={i}><text x={p.x} y={labelY}
             textAnchor={Math.abs(dx) < 5 ? 'middle' : dx > 0 ? 'start' : 'end'} className="drr-chart-label">
-            {lines.map((line, j) => <tspan key={j} x={p.x} dy={j ? 16 : 0}>{line}</tspan>)}
-          </text><text x={p.x} y={p.y} textAnchor="middle" className="drr-chart-axis-number" aria-hidden="true">{i + 1}</text></g>
+            {lines.map((line, j) => <tspan key={j} x={p.x} dy={j ? lineHeight : 0}>{line}</tspan>)}
+          </text>{!namedAxes && <text x={p.x} y={p.y} textAnchor="middle" className="drr-chart-axis-number" aria-hidden="true">{i + 1}</text>}</g>
         })}
       </svg>
-      <ol className="drr-chart-axis-key">
+      {!namedAxes && <ol className="drr-chart-axis-key">
         {axes.map((axis, i) => <li key={i}><span>{axis.labels.join(' / ')}</span><b>{formatScore(axis.value)}</b></li>)}
-      </ol>
+      </ol>}
       {(averaged || areaAverage) && <p className="drr-chart-note">각 축은 {areaAverage ? '해당 영역의 하위 요인' : '2개 요인'} T점수의 평균입니다. 표에는 원래 점수를 표시합니다.</p>}
       {values.length < axes.length && <p className="drr-chart-note">미제공 점수가 있는 축은 그래프에서 비워 두었습니다.</p>}
     </figure>

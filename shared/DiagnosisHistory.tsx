@@ -23,7 +23,7 @@ export default function DiagnosisHistory({ results, studentId, testId }: {
             <time dateTime={result.testedAt}>{result.testedAt.slice(0, 10)}</time>
             {result.isCurrent && <span>최신 결과</span>}
           </header>
-          <DiagnosisResultReport result={result} showChart collapseComments />
+          <DiagnosisResultReport result={result} showChart collapseComments namedChartAxes />
         </article>)}
       </div>}
   </section>

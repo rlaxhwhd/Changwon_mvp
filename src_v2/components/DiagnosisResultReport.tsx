@@ -22,6 +22,10 @@ import { getDiagnosisChartSections, summaryLevel } from '../data/diagnosisChart'
 // ─────────────────────────────────────────────────────────────────────────────
 
 const DIAGNOSIS_COLORS: Record<string, number> = { ccore: 1, c2: 2, c3: 3, c4: 4 }
+const DIAGNOSIS_PALETTE: Record<number, [string, string]> = {
+  1: ['#7c5cfc', '#f0edff'], 2: ['#356dff', '#eaf0ff'],
+  3: ['#20b486', '#e5f8f2'], 4: ['#f5a524', '#fff6df'],
+}
 
 function SparkIcon() {
   return (
@@ -51,6 +55,8 @@ export interface DiagnosisResultReportProps {
   showChart?: boolean
   /** 이력 비교에서는 코멘트를 펼칠 때만 조회한다. */
   collapseComments?: boolean
+  /** 이력 카드에서는 좁은 화면에서도 실제 축명을 그래프에 표시한다. */
+  namedChartAxes?: boolean
 }
 
 export default function DiagnosisResultReport({
@@ -64,6 +70,7 @@ export default function DiagnosisResultReport({
   emptyMessage,
   showChart = false,
   collapseComments = false,
+  namedChartAxes = false,
 }: DiagnosisResultReportProps) {
   const [loaded, setLoaded] = useState<{ studentId: string; error?: string } | null>(null)
   const loading = !result && !!studentId && loaded?.studentId !== studentId
@@ -81,8 +88,8 @@ export default function DiagnosisResultReport({
   const color = showChart ? DIAGNOSIS_COLORS[found?.testId ?? testId ?? ''] : undefined
   const style: CSSProperties = {
     ...(color ? {
-      '--drr-accent': `var(--diagnosis-${color}, #7C5CFC)`,
-      '--drr-accent-soft': `var(--diagnosis-${color}-soft, #F0EDFF)`,
+      '--drr-accent': `var(--diagnosis-${color}, ${DIAGNOSIS_PALETTE[color][0]})`,
+      '--drr-accent-soft': `var(--diagnosis-${color}-soft, ${DIAGNOSIS_PALETTE[color][1]})`,
     } : {}),
     ...(accent ? { '--drr-accent': accent } : {}),
     ...(accentSoft ? { '--drr-accent-soft': accentSoft } : {}),
@@ -127,7 +134,7 @@ export default function DiagnosisResultReport({
       {sections.map(section => <section className="drr-result-section" key={section.id}>
       {section.title && <header className="drr-section-heading"><h3>{section.title}</h3>{section.type && <strong>{section.type}</strong>}</header>}
       <div className={section.axes.length >= 3 ? 'drr-analysis' : undefined}>
-      {section.axes.length >= 3 && <DiagnosisRadar axes={section.axes} averaged={found.testId === 'ccore'} areaAverage={found.testId === 'c3'} />}
+      {section.axes.length >= 3 && <DiagnosisRadar axes={section.axes} averaged={found.testId === 'ccore'} areaAverage={found.testId === 'c3'} namedAxes={namedChartAxes} />}
       <DiagnosisScoreTable key={`${found.studentId}:${found.testId}:${found.attemptNo}:${section.id}`}
         result={found} rows={[...section.rows, ...missing.map(factor => ({ name: factor.name, desc: factor.desc, tScore: null, level: '미등록' as const }))]}
         detailRows={section.detailRows} showFactorDesc={showFactorDesc} />
