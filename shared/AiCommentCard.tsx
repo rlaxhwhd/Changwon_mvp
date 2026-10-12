@@ -66,6 +66,7 @@ function Comment(props: Props) {
       <div className="dc-ai-comment-skeleton" aria-hidden="true"><span /><span /><span /></div>
     </div>}
     {error && <p role="alert">{error}</p>}
+    {!loading && !pending && !error && !reply && !studentReply && props.kind === 'diagnosis' && <p role="status">이 회차에 저장된 AI 코멘트가 없습니다.</p>}
     {reply && <CommentResult reply={reply} label={studentReply ? '상담사용 코멘트' : undefined} />}
     {studentReply && <CommentResult reply={studentReply} label="학생에게 표시되는 코멘트" />}
   </section>

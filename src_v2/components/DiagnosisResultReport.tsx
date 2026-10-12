@@ -1,4 +1,4 @@
-import { useEffect, useState, type CSSProperties } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import { loadStudentDiagnoses } from '../../shared/diagnosisStore'
 import { getModuleByTestId, type DiagnosisModule } from '../data/careerProcess'
 import { getDiagnosisResult, getResultRows, type DiagnosisResult } from '../data/diagnosisResults'
@@ -49,6 +49,8 @@ export interface DiagnosisResultReportProps {
   emptyMessage?: string
   /** Student result page: chart on the left, compact score table on the right. */
   showChart?: boolean
+  /** 이력 비교에서는 코멘트를 펼칠 때만 조회한다. */
+  collapseComments?: boolean
 }
 
 export default function DiagnosisResultReport({
@@ -61,6 +63,7 @@ export default function DiagnosisResultReport({
   showFactorDesc = false,
   emptyMessage,
   showChart = false,
+  collapseComments = false,
 }: DiagnosisResultReportProps) {
   const [loaded, setLoaded] = useState<{ studentId: string; error?: string } | null>(null)
   const loading = !result && !!studentId && loaded?.studentId !== studentId
@@ -132,6 +135,7 @@ export default function DiagnosisResultReport({
       </section>)}
       {missing.length > 0 && <p className="drr-empty">현재 항목에 대응하는 점수가 없습니다. 이전 예시 점수는 새 항목으로 환산하지 않습니다.</p>}
 
+      <ResultComments key={`${found.studentId}:${found.testId}:${found.attemptNo}`} collapsed={collapseComments}>
       {found.comment && missing.length === 0 && rows.length > 0 && (
         <aside className="drr-comment">
           <span className="drr-comment-icon"><SparkIcon /></span>
@@ -142,6 +146,17 @@ export default function DiagnosisResultReport({
         </aside>
       )}
       {!found.needsReview && <AiCommentCard studentId={studentId ?? found.studentId} kind="diagnosis" testId={found.testId} attemptNo={found.attemptNo} />}
+      {found.needsReview && <p className="drr-table-note">유형 확인 후 AI 코멘트를 확인할 수 있습니다.</p>}
+      </ResultComments>
     </div>
   )
+}
+
+function ResultComments({ collapsed, children }: { collapsed: boolean; children: ReactNode }) {
+  const [visited, setVisited] = useState(false)
+  if (!collapsed) return <>{children}</>
+  return <details className="drr-comment-disclosure" onToggle={event => { if (event.currentTarget.open) setVisited(true) }}>
+    <summary>AI 코멘트 · 해석 보기</summary>
+    {visited && children}
+  </details>
 }

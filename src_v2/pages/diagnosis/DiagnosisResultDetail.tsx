@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import CRAReport from '../../components/CRAReport'
 import DiagnosisResultReport from '../../components/DiagnosisResultReport'
+import DiagnosisAttemptSelect from '../../../shared/DiagnosisAttemptSelect'
 import { getActiveStudent } from '../../data/students'
 import { getModuleByTestId } from '../../data/careerProcess'
 import { getDiagnosisResult, getResultsByStudent, getResultRows, type FactorLevel } from '../../data/diagnosisResults'
@@ -252,15 +253,12 @@ function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; t
         </button>
         {loaded && history.length > 0 && <label className="dr-attempt-picker">
           진단 이력
-          <select aria-label="진단 회차" value={result?.attemptNo ?? ''} onChange={event => void selectAttempt(Number(event.target.value))}>
-            {history.map(item => <option key={item.attemptNo} value={item.attemptNo}>
-              {item.attemptNo}회차 · {item.testedAt.slice(0, 10)}{item.isCurrent ? ' · 최신 결과' : ''}
-            </option>)}
-          </select>
+          <DiagnosisAttemptSelect attempts={history} value={result?.attemptNo} disabled={refreshing} onChange={number => void selectAttempt(number)} />
         </label>}
         {external && loaded && <button className="dr-history-btn" disabled={refreshing} aria-busy={refreshing} onClick={() => void refresh()}>
           {refreshing ? '새 결과 확인 중…' : '새 응시 결과 확인'}
         </button>}
+        {loaded && <button className="dr-history-btn" disabled={refreshing} onClick={() => navigate(`/diagnosis/employment/${testId}/history`)}>전체 결과 이력</button>}
       </div>
       {loaded && error && <p role="alert">{error}</p>}
       {notice && <p role="status">{notice}</p>}

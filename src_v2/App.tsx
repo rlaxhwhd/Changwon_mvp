@@ -25,6 +25,7 @@ import RoadmapStatus from './pages/growth/RoadmapStatus'
 // 진단센터: /diagnosis/employment 한 화면만 — 콘텐츠는 기존 DiagnosisResult 사용
 import DiagnosisResult from './pages/diagnosis/DiagnosisResult'
 import DiagnosisResultDetail from './pages/diagnosis/DiagnosisResultDetail'
+import DiagnosisResultHistory from './pages/diagnosis/DiagnosisResultHistory'
 
 // 전문상담
 import CareerCounsel from './pages/counsel/CareerCounsel'
@@ -91,6 +92,7 @@ const router = createBrowserRouter(
         { path: '/diagnosis',            element: <Navigate to="/diagnosis/employment" replace /> },
         { path: '/diagnosis/employment',           element: <DiagnosisResult /> },
         { path: '/diagnosis/employment/:testId',   element: <DiagnosisResultDetail /> },
+        { path: '/diagnosis/employment/:testId/history', element: <DiagnosisResultHistory /> },
         // 옛 경로는 employment로 리다이렉트해 외부 링크·즐겨찾기 유지
         { path: '/diagnosis/result',               element: <Navigate to="/diagnosis/employment" replace /> },
         { path: '/diagnosis/result/:testId',       element: <Navigate to="/diagnosis/employment" replace /> },

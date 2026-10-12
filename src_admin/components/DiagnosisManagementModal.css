@@ -56,3 +56,7 @@
 .dmm-strong { font-weight: 700; }
 
 .dmm-result { padding-top: 20px; border-top: 1px solid var(--border); }
+.admin-modal.dmm-modal-history { width: min(100%, 1680px); max-width: 1680px; }
+.dmm-table-wrap { overflow-x: auto; }
+.dmm-table td { vertical-align: middle; }
+.dmm-table .diagnosis-attempt-select { min-width: 170px; }

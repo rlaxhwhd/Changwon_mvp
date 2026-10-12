@@ -1,0 +1,35 @@
+.diagnosis-attempt-select {
+  max-width: 100%; min-height: 38px; padding: 8px 30px 8px 10px;
+  border: 1px solid var(--color-border, #E2E6EC); border-radius: 8px;
+  background: var(--color-surface, #fff); color: var(--color-text, #1D2433);
+  font: inherit; font-size: 13px; cursor: pointer;
+}
+.diagnosis-attempt-select:focus-visible,
+.diagnosis-history-track:focus-visible { outline: 2px solid var(--color-primary, #7C5CFC); outline-offset: 3px; }
+.diagnosis-history { min-width: 0; width: 100%; }
+.diagnosis-history-heading { margin-bottom: 16px; }
+.diagnosis-history-heading h3 { margin: 0; font-size: 18px; font-weight: 800; }
+.diagnosis-history-heading h3 span { margin-left: 8px; font-size: 13px; color: var(--color-text-secondary, #5F6B7A); }
+.diagnosis-history-heading p { margin: 8px 0 0; font-size: 13px; line-height: 1.6; color: var(--color-text-secondary, #5F6B7A); }
+.diagnosis-history-track {
+  display: flex; align-items: flex-start; gap: 20px; overflow-x: auto;
+  padding: 2px 2px 20px; overscroll-behavior-x: contain; scroll-snap-type: x proximity;
+}
+.diagnosis-history-attempt {
+  flex: 0 0 min(520px, 100%); min-width: 0; box-sizing: border-box; padding: 20px;
+  border: 1px solid var(--color-border, #E2E6EC); border-radius: 12px;
+  background: var(--color-surface, #fff); scroll-snap-align: start;
+}
+.diagnosis-history-attempt-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border, #E2E6EC); }
+.diagnosis-history-attempt-head strong { font-size: 20px; font-weight: 800; }
+.diagnosis-history-attempt-head time { font-size: 13px; color: var(--color-text-secondary, #5F6B7A); }
+.diagnosis-history-attempt-head > span { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--color-primary, #7C5CFC); }
+.diagnosis-history-attempt .drr-banner { flex-wrap: wrap; }
+.diagnosis-history-attempt .drr-banner-headline { white-space: normal; }
+.diagnosis-history-empty { padding: 28px 16px; text-align: center; color: var(--color-text-secondary, #5F6B7A); }
+.diagnosis-result-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 20px; }
+.diagnosis-result-toolbar label { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 700; }
+@media (max-width: 600px) {
+  .diagnosis-history-attempt { padding: 14px; }
+  .diagnosis-history-track { gap: 12px; }
+}

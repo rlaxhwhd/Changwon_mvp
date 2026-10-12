@@ -29,6 +29,9 @@ import {
 } from '../data/studentDetail'
 import { getStarTrack, STAR_TRACK_LABEL, STAR_TRACK_META } from '../../src_v2/data/starTrack'
 import DiagnosisResultReport from '../../src_v2/components/DiagnosisResultReport'
+import DiagnosisAttemptSelect from '../../shared/DiagnosisAttemptSelect'
+import DiagnosisHistory from '../../shared/DiagnosisHistory'
+import { useDiagnosisHistory } from '../../shared/useDiagnosisHistory'
 import RoadmapAxisBoard from '../../src_v2/components/RoadmapAxisBoard'
 import CareerJourneyCard from '../../src_v2/components/CareerJourneyCard'
 // 레이더 좌표 계산은 학생 화면과 같은 한 벌만 둔다 — 기본 클래스 이름(radar/grid/axis/
@@ -218,6 +221,11 @@ function DiagnosisTab({ student }: { student: StudentData }) {
 /** 진단 상세 결과 모달 — 껍데기(헤더·닫기)만 admin 이 갖고,
  *  본문 결과표는 학생 포털과 공유하는 DiagnosisResultReport 가 그린다. */
 function DiagnosisDetailModal({ card, studentId, onClose }: { card: DiagnosisCard; studentId: string; onClose: () => void }) {
+  const { data, error, retry } = useDiagnosisHistory(studentId)
+  const [attemptNo, setAttemptNo] = useState(card.attemptNo)
+  const [showHistory, setShowHistory] = useState(false)
+  const history = data?.results.filter(result => result.testId === card.module.testId) ?? []
+  const result = history.find(item => item.attemptNo === attemptNo) ?? history.find(item => item.isCurrent) ?? history[0]
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
@@ -229,7 +237,7 @@ function DiagnosisDetailModal({ card, studentId, onClose }: { card: DiagnosisCar
       <button className="diagnosis-modal-backdrop" type="button" aria-label="진단 상세 닫기" onClick={onClose} />
       {/* 검사 색은 다이얼로그 전체가 상속한다 — 막대·수치·코멘트 테두리가 모두 --diagnosis-color 를 쓴다 */}
       <section
-        className="diagnosis-dialog"
+        className={`diagnosis-dialog${showHistory ? ' diagnosis-dialog-history' : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="sdvDiagTitle"
@@ -243,16 +251,16 @@ function DiagnosisDetailModal({ card, studentId, onClose }: { card: DiagnosisCar
           <button className="diagnosis-modal-close" type="button" aria-label="닫기" onClick={onClose}><LuX /></button>
         </header>
         <div className="diagnosis-modal-content">
-          {/* 결과표는 학생 포털과 같은 공용 컴포넌트를 쓴다 — 여기서 다시 만들지 않는다.
-              검사별 색만 넘겨 카드 색과 맞춘다. */}
-          <DiagnosisResultReport
-            studentId={studentId}
-            testId={card.module.testId}
-            attemptNo={card.attemptNo}
-            accent={`var(--${card.tint})`}
-            accentSoft={`var(--${card.tint}-bg)`}
-            showFactorDesc
-          />
+          {error ? <div role="alert"><p>{error}</p><button className="admin-btn admin-btn-ghost" onClick={retry}>다시 시도</button></div> : !data ? <p role="status">진단 이력을 불러오는 중입니다.</p> : <>
+            <div className="diagnosis-result-toolbar">
+              <label>응시 이력 <DiagnosisAttemptSelect attempts={history} value={result?.attemptNo} onChange={number => { setAttemptNo(number); setShowHistory(false) }} /></label>
+              <button className="admin-btn admin-btn-ghost" onClick={() => setShowHistory(value => !value)} aria-pressed={showHistory}>
+                {showHistory ? '회차별 결과로 돌아가기' : '전체 결과 이력'}
+              </button>
+            </div>
+            {showHistory ? <DiagnosisHistory results={history} studentId={data.studentId} testId={card.module.testId} /> :
+              <DiagnosisResultReport result={result} accent={`var(--${card.tint})`} accentSoft={`var(--${card.tint}-bg)`} showChart showFactorDesc />}
+          </>}
         </div>
       </section>
     </div>

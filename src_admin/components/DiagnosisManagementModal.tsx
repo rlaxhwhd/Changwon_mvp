@@ -5,6 +5,8 @@ import { api } from '../../shared/api'
 import { loadStudentDiagnoses, type RetakeState } from '../../shared/diagnosisStore'
 import { getModuleByTestId } from '../../src_v2/data/careerProcess'
 import DiagnosisResultReport from '../../src_v2/components/DiagnosisResultReport'
+import DiagnosisAttemptSelect from '../../shared/DiagnosisAttemptSelect'
+import DiagnosisHistory from '../../shared/DiagnosisHistory'
 import type { RosterStudent } from '../data/studentRoster'
 import './DiagnosisManagementModal.css'
 
@@ -16,6 +18,8 @@ export default function DiagnosisManagementModal({ student, onClose }: { student
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
   const [selected, setSelected] = useState<string>()
+  const [attemptsByTest, setAttemptsByTest] = useState<Record<string, number>>({})
+  const [historyTest, setHistoryTest] = useState<string>()
   useEffect(() => {
     let live = true
     loadStudentDiagnoses(student.id).then(value => { if (live) setData(value) }).catch(e => { if (live) setError(e.message) })
@@ -33,7 +37,7 @@ export default function DiagnosisManagementModal({ student, onClose }: { student
   }
   const result = data?.results.find(r => `${r.testId}:${r.attemptNo}` === selected)
   const tests = [...new Set(data?.attempts.map(a => a.testId) ?? [])]
-  return <AdminModal title={`${student.name} · 진단 관리`} size="xl" onClose={onClose}>
+  return <AdminModal title={`${student.name} · 진단 관리`} size="xl" className={historyTest ? 'dmm-modal-history' : ''} onClose={onClose}>
     <div className="dmm">
       <p className="dmm-banner"><LuInfo aria-hidden />기존 진단 결과는 보존됩니다. 재응시 허용은 다음 진단 1회에 적용됩니다.</p>
       {error && <p className="dmm-banner is-error" role="alert"><LuTriangleAlert aria-hidden />{error}</p>}
@@ -67,21 +71,38 @@ export default function DiagnosisManagementModal({ student, onClose }: { student
           <h3 className="dmm-section-title"><LuClipboardList aria-hidden />응시 이력</h3>
           <div className="dmm-table-wrap">
             <table className="dmm-table">
-              <thead><tr><th>진단</th><th>회차</th><th>응시일</th><th>상태</th><th className="dmm-col-action">결과</th></tr></thead>
-              <tbody>{data.attempts.map(a => {
+              <thead><tr><th>진단</th><th>회차</th><th>응시일</th><th>상태</th><th className="dmm-col-action">결과</th><th className="dmm-col-action">전체 결과 이력</th></tr></thead>
+              <tbody>{tests.map(test => {
+                const attempts = data.attempts.filter(a => a.testId === test).sort((a, b) => b.attemptNo - a.attemptNo)
+                const a = attempts.find(item => item.attemptNo === attemptsByTest[test]) ?? attempts[0]
                 const key = `${a.testId}:${a.attemptNo}`
-                return <tr key={a.id} className={key === selected ? 'is-selected' : undefined}>
-                  <td className="dmm-strong">{getModuleByTestId(a.testId)?.name ?? a.testId}</td><td>{a.attemptNo}회</td>
+                const showResult = () => { setSelected(key); setHistoryTest(undefined) }
+                return <tr key={test} className={!historyTest && key === selected ? 'is-selected' : undefined}>
+                  <td className="dmm-strong">{getModuleByTestId(a.testId)?.name ?? a.testId}</td>
+                  <td><DiagnosisAttemptSelect label={`${getModuleByTestId(test)?.name ?? test} 응시 회차`} value={a.attemptNo}
+                    attempts={attempts.map(item => ({ ...item, testedAt: item.completedAt || item.startedAt }))}
+                    onChange={number => {
+                      setAttemptsByTest(previous => ({ ...previous, [test]: number }))
+                      setSelected(`${test}:${number}`); setHistoryTest(undefined)
+                    }} /></td>
                   <td>{day(a.completedAt || a.startedAt || '') || '—'}</td><td><span className="admin-tag">{a.status}</span></td>
-                  <td className="dmm-col-action"><button className="admin-btn sm admin-btn-ghost" type="button" disabled={!data.results.some(r => r.testId === a.testId && r.attemptNo === a.attemptNo)} onClick={() => setSelected(key)}>
-                    {key === selected ? '보는 중' : '결과 보기'}
+                  <td className="dmm-col-action"><button className="admin-btn sm admin-btn-ghost" type="button" disabled={!data.results.some(r => r.testId === a.testId && r.attemptNo === a.attemptNo)} onClick={showResult}>
+                    {!historyTest && key === selected ? '보는 중' : '결과 보기'}
                   </button></td>
+                  <td className="dmm-col-action"><button className="admin-btn sm admin-btn-ghost" type="button"
+                    disabled={!data.results.some(r => r.testId === test)} aria-pressed={historyTest === test}
+                    onClick={() => setHistoryTest(test)}>전체 결과 이력</button></td>
                 </tr>
               })}</tbody>
             </table>
           </div>
         </section>
-        {result && <section className="dmm-section dmm-result"><DiagnosisResultReport result={result} showChart /></section>}
+        {historyTest ? <section className="dmm-section dmm-result">
+          <div><button className="admin-btn sm admin-btn-ghost" type="button" onClick={() => setHistoryTest(undefined)}>회차별 결과로 돌아가기</button></div>
+          <DiagnosisHistory results={data.results} studentId={data.studentId} testId={historyTest} />
+        </section> : selected && <section className="dmm-section dmm-result">
+          {result ? <DiagnosisResultReport result={result} showChart /> : <p className="dmm-empty">이 회차는 아직 결과가 등록되지 않았습니다.</p>}
+        </section>}
       </>}
     </div>
   </AdminModal>

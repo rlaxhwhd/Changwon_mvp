@@ -857,6 +857,7 @@
 .sdv .diagnosis-modal.open .diagnosis-dialog {
       transform: none
     }
+.sdv .diagnosis-modal .diagnosis-dialog.diagnosis-dialog-history { width: min(1680px, 100%); }
 .sdv .diagnosis-modal-header {
       padding: 16px 20px;
       border-bottom: 1px solid var(--border);

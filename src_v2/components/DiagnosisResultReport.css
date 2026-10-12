@@ -200,6 +200,10 @@
   line-height: 1.75;
 }
 
+.drr-comment-disclosure { margin-top: 20px; border-top: 1px solid var(--drr-border); }
+.drr-comment-disclosure > summary { padding: 16px 4px; cursor: pointer; color: var(--drr-accent); font-size: 14px; font-weight: 800; }
+.drr-comment-disclosure > summary:focus-visible { outline: 2px solid var(--drr-accent); outline-offset: 2px; }
+
 /* ── 결과 없음 ─────────────────────────────────────────────────────────── */
 .drr-empty {
   padding: 36px 20px;

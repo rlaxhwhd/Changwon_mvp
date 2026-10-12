@@ -7,9 +7,10 @@ type AdminModalProps = {
   title: string
   onClose: () => void
   size?: 'md' | 'lg' | 'xl'
+  className?: string
 }
 
-export default function AdminModal({ children, title, onClose, size = 'lg' }: AdminModalProps) {
+export default function AdminModal({ children, title, onClose, size = 'lg', className = '' }: AdminModalProps) {
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') onClose()
@@ -21,7 +22,7 @@ export default function AdminModal({ children, title, onClose, size = 'lg' }: Ad
   return (
     <div className="admin-modal-overlay" role="presentation" onMouseDown={onClose}>
       <section
-        className={`admin-modal admin-modal-${size}`}
+        className={`admin-modal admin-modal-${size} ${className}`}
         role="dialog"
         aria-modal="true"
         aria-label={title}
