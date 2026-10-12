@@ -39,7 +39,7 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false, na
     const lines: string[] = []
     for (const word of words) {
       const last = lines.length - 1
-      const limit = namedAxes ? 6 : 9
+      const limit = namedAxes ? 7 : 9
       if (last >= 0 && `${lines[last]} ${word}`.length <= limit) lines[last] += ` ${word}`
       else lines.push(...(word.match(new RegExp(`.{1,${limit}}`, 'gu')) ?? [word]))
     }
