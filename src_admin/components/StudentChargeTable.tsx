@@ -2,7 +2,7 @@ import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useExportSelection } from '../../shared/useExportSelection'
 import PageNumbers from '../../shared/components/PageNumbers'
 import {
-  LuChevronLeft, LuChevronRight, LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuSparkles, LuStar, LuTriangleAlert,
+  LuChevronLeft, LuChevronRight, LuClipboardCheck, LuFilter, LuFrown, LuLoaderCircle, LuSearch, LuSparkles, LuStar, LuTriangleAlert,
 } from 'react-icons/lu'
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
@@ -376,7 +376,7 @@ export default function StudentChargeTable({
                       <span className={studentTypeClass(s.studentType)}><b>{s.studentType}</b>{typeLabel(s.studentType)}</span>
                     </span>
                     {diagnosis && <>
-                      <span><button type="button" className="admin-btn sm" onClick={e => { e.stopPropagation(); setDiagnosisStudent(s) }}>진단 관리</button></span>
+                      <span><button type="button" className="admin-btn sm admin-btn-ghost diagnosis-manage-btn" onClick={e => { e.stopPropagation(); setDiagnosisStudent(s) }}><LuClipboardCheck aria-hidden />진단 관리</button></span>
                       <span className="admin-roster-cell">{s.gpa ?? '—'}</span>
                     </>}
                     <span className="admin-roster-cell">

@@ -1,0 +1,58 @@
+/* 진단 관리 팝업 — admin 토큰만 사용(새 색 없음) */
+.dmm { display: flex; flex-direction: column; gap: 20px; }
+
+.dmm-banner {
+  display: flex; align-items: center; gap: 8px; margin: 0;
+  padding: 12px 16px; border-radius: var(--radius-md);
+  background: var(--muted); color: var(--text-sub); font-size: 13px; font-weight: 600;
+}
+.dmm-banner svg { flex: none; width: 16px; height: 16px; }
+.dmm-banner.is-ok { background: var(--green-bg); color: var(--on-green); }
+.dmm-banner.is-error { background: var(--red-bg); color: var(--on-red); }
+
+.dmm-section { display: flex; flex-direction: column; gap: 12px; }
+.dmm-section-title { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 16px; font-weight: 800; color: var(--text); }
+.dmm-section-title svg { width: 18px; height: 18px; color: var(--primary); }
+.dmm-empty { margin: 0; padding: 24px; text-align: center; color: var(--text-cap); font-size: 13px; }
+
+/* ── 재응시 허용 카드 ── */
+.dmm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--gap-set); }
+.dmm-card {
+  display: flex; flex-direction: column; align-items: stretch; gap: 8px;
+  padding: 16px 18px; text-align: left; font: inherit; cursor: pointer;
+  background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  transition: border-color .15s, background .15s, transform .15s;
+}
+.dmm-card:hover:not(:disabled) { border-color: var(--primary-light); background: var(--sel); transform: translateY(-1px); }
+.dmm-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dmm-card:disabled { cursor: default; }
+.dmm-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dmm-card-head strong { font-size: 15px; font-weight: 800; color: var(--text); }
+.dmm-chip { flex: none; padding: 3px 10px; border-radius: var(--radius-pill); background: var(--muted); color: var(--text-sub); font-size: 12px; font-weight: 700; }
+.dmm-card-meta { display: flex; align-items: center; gap: 6px; color: var(--text-sub); font-size: 13px; }
+.dmm-card-meta svg { flex: none; width: 14px; height: 14px; }
+.dmm-card-cta {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px;
+  padding: 9px 12px; border-radius: var(--radius-sm);
+  background: var(--primary-soft); color: var(--primary); font-size: 13px; font-weight: 800;
+}
+.dmm-card:hover:not(:disabled) .dmm-card-cta { background: var(--primary); color: #fff; }
+.dmm-card-cta svg { width: 15px; height: 15px; }
+
+.dmm-card.is-pending { border-color: var(--orange); background: var(--yellow-bg); }
+.dmm-card.is-pending .dmm-chip { background: var(--orange-bg); color: var(--on-orange); }
+.dmm-card.is-approved { border-color: var(--sel-line); background: var(--sel); }
+.dmm-card.is-approved .dmm-chip { background: var(--green-bg); color: var(--on-green); }
+.dmm-card.is-approved .dmm-card-cta { background: transparent; color: var(--on-green); }
+
+/* ── 응시 이력 ── */
+.dmm-table-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+.dmm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.dmm-table th { padding: 11px 16px; background: var(--muted); color: var(--text-sub); font-size: 12px; font-weight: 800; text-align: left; }
+.dmm-table td { padding: 11px 16px; border-top: 1px solid var(--divider); color: var(--text); }
+.dmm-table tbody tr:hover { background: var(--bg-page); }
+.dmm-table tbody tr.is-selected { background: var(--sel); }
+.dmm-table .dmm-col-action { width: 1%; text-align: right; white-space: nowrap; }
+.dmm-strong { font-weight: 700; }
+
+.dmm-result { padding-top: 20px; border-top: 1px solid var(--border); }

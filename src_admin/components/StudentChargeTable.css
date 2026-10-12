@@ -19,9 +19,7 @@
 .admin-charge-roster.diagnosis-management-roster.has-export-selection .admin-roster-row {
   grid-template-columns: 36px 42px 1.15fr 1.1fr 60px 1.35fr 96px 60px 70px 1fr;
 }
-.diagnosis-management-history { width: 100%; border-collapse: collapse; margin-block: 20px; }
-.diagnosis-management-history th, .diagnosis-management-history td { padding: 12px; text-align: left; border-bottom: 1px solid var(--color-border); }
-.diagnosis-management-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-block: 16px; }
+.diagnosis-manage-btn svg { width: 14px; height: 14px; }
 .admin-charge-roster.has-export-selection .admin-roster-head,
 .admin-charge-roster.has-export-selection .admin-roster-row {
   grid-template-columns: 36px 52px 1.1fr 1.4fr 0.6fr 1.4fr 0.8fr 1fr;
