@@ -135,7 +135,7 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
         const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
         return (
           <text key={i} x={x} y={y} textAnchor={anchor} dominantBaseline="middle"
-            fontSize="11" fill="#4B5563" fontFamily="Pretendard, sans-serif" fontWeight="700">
+            fontSize="14" fill="#4B5563" fontFamily="Pretendard, sans-serif" fontWeight="700">
             {ax.label}
           </text>
         )
