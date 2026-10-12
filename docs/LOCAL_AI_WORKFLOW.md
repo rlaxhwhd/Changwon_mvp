@@ -1,5 +1,13 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-10-12 진단 관리 팝업 디자인 배포
+
+- Claude 작업 `diagnosis.manage-modal-style-20261012`, 코드 `2339807`을 로컬 Docker 및 CentOS 웹에 반영했다. 진단 관리 버튼 테두리·아이콘, 재응시 카드, 안내 배너, 이력 선택 강조 및 `보는 중` 표시를 포함한다.
+- 로컬 `.env.docker.local`과 `compose.yaml`·`compose.ai.yaml`로 웹 TypeScript/Vite/Docker 빌드 및 기동 성공. Chrome MCP에서 버튼 11개, 카드·이력 각 2개, 결과 그래프, 선택 표시와 가로 넘침 없음을 확인했다. 관련 API 모두 200, 목록/메타데이터 512/509ms, 이력 33ms, 콘솔 오류·경고 없음. 기존 Vite 설정 호환성 및 큰 청크 경고는 남아 있다.
+- 서버 웹 이미지 `dreamcatch-web:diagnosis-modal-style-20261012` 정상 실행(healthy). 기존 CentOS 호환 웹 이미지를 기반으로 로컬 검증 산출물을 포함했다. API·DB 컨테이너 ID는 배포 전후 동일하며, `release_parity.py`로 코드·마이그레이션 123개·DB 구조 일치를 재확인했다. 마이그레이션이나 업무 데이터 변경은 없다.
+- 서버 Chrome MCP에서도 목록 버튼, 재응시 카드·이력 각 2개, 결과 그래프와 선택 강조가 정상이다. 관련 API 모두 200, 목록/메타데이터 각 1회 415/413ms(1,108/764B), 이력 68ms(2,030B). 실패 요청·콘솔 오류·경고·가로 넘침 없음. 실제 재응시 승인(쓰기)은 실행하지 않았다.
+- 백업·복구: `/opt/dreamcatch/ai/diagnosis-modal-style-20261012/compose.before.yaml`, `rollback.sh`. 이전 웹 `dreamcatch-web:diagnosis-retake-20261012`로 복구한다. 아카이브 SHA256 `b4e1f349f0725eb3f078b8fbb01b61e042c0521fdc0fe8907516f7a7cf58af22` 전송 후 일치 확인. 서버 `admin.html` SHA256 `f84274c1e417c528fe09f76b2461daa95f09faeb0661b6cd69c36bc3865bae43` 및 `v2.html` 체크섬이 배포 이미지와 일치한다.
+
 ## 2026-10-12 진단 관리·재응시 검증 및 CentOS 배포
 
 - `/admin/diagnosis/manage`: 진단 응시 학생 목록, 요청 대기 필터, 회차별 결과 팝업과 재응시 승인. 기존 학생 목록을 재사용하고 진로·심리상담사 공용 권한을 적용했다.
