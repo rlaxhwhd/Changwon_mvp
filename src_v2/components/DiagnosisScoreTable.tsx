@@ -49,6 +49,5 @@ export default function DiagnosisScoreTable({ result, rows, detailRows = [], sho
         </tbody>)}
       </table>
     </div>
-    {averaged && <p className="drr-table-note">영역 점수는 하위 2항목의 T점수 평균입니다. 유형별 점수와 수준은 상세보기에서 확인할 수 있습니다.</p>}
   </div>
 }

@@ -48,7 +48,7 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false, na
 
   return (
     <figure className={`drr-chart${namedAxes ? ' drr-chart-named' : ''}`}>
-      <figcaption>{!averaged || areaAverage ? <strong>{areaAverage ? '영역별 평균 T점수' : '요인별 T점수'}</strong> : null}<span>점선 기준: 평균 50</span></figcaption>
+      {(!averaged || areaAverage) && <figcaption><strong>{areaAverage ? '영역별 평균 T점수' : '요인별 T점수'}</strong></figcaption>}
       <svg viewBox="0 0 520 420" role="img" aria-labelledby={titleId}>
         <title id={titleId}>{axes.map(a => `${a.labels.join(' / ')}: ${formatScore(a.value)}`).join('; ')}</title>
         {ticks.map(t => <polygon key={t} className="drr-chart-grid" points={ring(t)} />)}
@@ -79,8 +79,6 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false, na
       {!namedAxes && <ol className="drr-chart-axis-key">
         {axes.map((axis, i) => <li key={i}><span>{axis.labels.join(' / ')}</span><b>{formatScore(axis.value)}</b></li>)}
       </ol>}
-      {(averaged || areaAverage) && <p className="drr-chart-note">각 축은 {areaAverage ? '해당 영역의 하위 요인' : '2개 요인'} T점수의 평균입니다. 표에는 원래 점수를 표시합니다.</p>}
-      {values.length < axes.length && <p className="drr-chart-note">미제공 점수가 있는 축은 그래프에서 비워 두었습니다.</p>}
     </figure>
   )
 }

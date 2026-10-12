@@ -232,8 +232,7 @@ function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; t
 
   usePageHead(
     `${testName} 결과`,
-    result?.source === 'hrtest' ? '검사기관이 제공한 영역·요인별 T점수와 수준입니다.' : rows.length > 0
-      ? `${rows.length}개 요인의 T점수입니다 · 만점 ${T_MAX}점 (평균 50)`
+    result?.source === 'hrtest' || rows.length > 0 ? ''
       : result ? '현재 결과표 항목에 대응하는 점수가 아직 등록되지 않았습니다' : '아직 응시 결과가 등록되지 않았습니다',
   )
 
@@ -268,7 +267,6 @@ function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; t
           <div className="dr-card">
             <div className="dr-card-head">
               <h2><i className="fa-solid fa-chart-area" /> 요인별 T점수</h2>
-              <span className="dr-scale-note">만점 {T_MAX}점 · 평균 50</span>
             </div>
 
             <div className="dr-radar-box">
