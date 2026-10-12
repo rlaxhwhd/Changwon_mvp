@@ -57,6 +57,8 @@ export interface DiagnosisResultReportProps {
   collapseComments?: boolean
   /** 이력 카드에서는 좁은 화면에서도 실제 축명을 그래프에 표시한다. */
   namedChartAxes?: boolean
+  /** 회차 헤더가 있는 전체 이력에서는 중복 결과 배너를 생략한다. */
+  showBanner?: boolean
 }
 
 export default function DiagnosisResultReport({
@@ -71,6 +73,7 @@ export default function DiagnosisResultReport({
   showChart = false,
   collapseComments = false,
   namedChartAxes = false,
+  showBanner = true,
 }: DiagnosisResultReportProps) {
   const [loaded, setLoaded] = useState<{ studentId: string; error?: string } | null>(null)
   const loading = !result && !!studentId && loaded?.studentId !== studentId
@@ -120,13 +123,13 @@ export default function DiagnosisResultReport({
       {(found.source?.includes('fixture') || found.source?.startsWith('development:')) && <p className="drr-empty">기존 개발 검증 이력입니다. 실제 검사 결과가 아닙니다.</p>}
       {found.needsReview && <p role="status" className="drr-empty">유형 확인이 필요합니다. 점수는 보존하며 유형 확정·후속 검사 배정·AI 분석은 보류합니다. 담당자에게 확인해 주세요.</p>}
       {module?.factors.length === 0 && <p className="drr-empty">결과표 항목은 추가 예정입니다.</p>}
-      <div className="drr-banner">
+      {showBanner && <div className="drr-banner">
         <span className="drr-banner-headline">{missing.length || module?.factors.length === 0 ? '결과 항목 확인 필요' : found.headline}</span>
         <span className="drr-banner-copy">
           <b>{missing.length ? '현재 항목 기준 점수 미등록' : found.headlineCaption}</b>
           <small>{found.testedAt} 실시 · {found.attemptNo}회차</small>
         </span>
-      </div>
+      </div>}
 
       {sections.map(section => <section className="drr-result-section" key={section.id}>
       {section.title && <header className="drr-section-heading"><h3>{section.title}</h3>{section.type && <strong>{section.type}</strong>}</header>}
