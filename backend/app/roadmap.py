@@ -382,6 +382,18 @@ def check_counsel_basis(conn, uid, request_id, lock=True, initial=False):
         fail(422, 'INVALID_COUNSEL_BASIS', '확정된 상담 예약에서만 로드맵을 만듭니다.')
     if initial and row['status_code'] != 'DONE':
         fail(422, 'INVALID_COUNSEL_BASIS', '상담일지를 저장 후 완료 처리한 뒤 로드맵을 만들 수 있습니다.')
+    cycle = conn.execute('''SELECT q.status,a.completed_at FROM dc.diagnosis_retake q
+      LEFT JOIN dc.diagnosis_attempt a ON a.id=q.completed_attempt_id
+      LEFT JOIN dc.roadmap r ON r.student_uid=q.student_uid
+      WHERE q.student_uid=%s AND q.test_id='ccore' AND q.status IN ('APPROVED','COMPLETED')
+        AND (q.status='APPROVED' OR r.student_uid IS NULL OR NOT r.confirmed OR r.version IS NOT DISTINCT FROM q.roadmap_version)
+      ORDER BY q.id DESC LIMIT 1''', (uid,)).fetchone()
+    if cycle:
+        from .gates import diagnosis_gate
+        _, reasons = diagnosis_gate(conn, uid)
+        after_diagnosis = row['completed_at'] if row['status_code'] == 'DONE' else row['requested_at']
+        if cycle['status'] != 'COMPLETED' or reasons or not after_diagnosis or after_diagnosis <= cycle['completed_at']:
+            fail(409, 'RETEST_COUNSEL_REQUIRED', '재진단과 유형별 후속진단을 마친 뒤 새 CARE 7+ 상담에서 로드맵을 생성해 주세요.')
     return row
 
 

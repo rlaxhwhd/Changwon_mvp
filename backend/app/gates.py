@@ -71,14 +71,16 @@ def diagnosis_gate(conn, uid):
     완료 판정은 completed_at IS NOT NULL 하나로 통일한다. status_code='DONE' 과
     두 벌로 두면 상담 게이트와 취업 게이트가 어긋난다.
     """
-    row = conn.execute('''SELECT c.* FROM dc.current_student_type t
-      JOIN dc.student_type_code c ON c.code=t.student_type
-      WHERE t.student_uid=%s ORDER BY t.decided_at DESC,t.id DESC LIMIT 1''', (uid,)).fetchone()
+    from .diagnosis_retake import diagnostic_type
+    row = conn.execute('SELECT * FROM dc.student_type_code WHERE code=%s', (diagnostic_type(conn, uid),)).fetchone()
     if not row:
         return None, [reason('TYPE_REQUIRED')]
     done = {r['test_id'].upper() for r in conn.execute(
         'SELECT test_id FROM dc.current_diagnosis_attempt WHERE student_uid=%s AND completed_at IS NOT NULL',
         (uid,)).fetchall()}
+    approved = {r['test_id'].upper() for r in conn.execute(
+        "SELECT test_id FROM dc.diagnosis_retake WHERE student_uid=%s AND status='APPROVED'", (uid,)).fetchall()}
+    done -= approved
     reasons = []
     if 'CCORE' not in done:
         reasons.append(reason('CORE_REQUIRED'))

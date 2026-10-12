@@ -106,6 +106,12 @@ def test_new_care7_counsel_requires_retest_then_updates_type(client,db,draft):
     assert db.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s',(uid,)).fetchone()['student_type']=='T2'
     db.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source,decided_at) VALUES (%s,'T4','diagnosis',clock_timestamp())",(uid,))
     assert db.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s',(uid,)).fetchone()['student_type']=='T2'
+    # A type event alone is not a completed retest. The new contract requires
+    # an actual completed Core attempt, including when the result type is unchanged.
+    assert client.post(path,headers=headers('career_kim'),json=body).status_code==409
+    db.execute('''INSERT INTO dc.diagnosis_attempt(id,student_uid,test_id,attempt_no,status_code,started_at,completed_at,payload)
+      SELECT %s,%s,'ccore',COALESCE(max(attempt_no),0)+1,'DONE',clock_timestamp(),clock_timestamp(),'{}'::jsonb
+      FROM dc.diagnosis_attempt WHERE student_uid=%s AND test_id='ccore' ''',(str(uuid4()),uid,uid))
     response=client.post(path,headers=headers('career_kim'),json=body)
     assert response.status_code==200,response.text
     assert db.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s',(uid,)).fetchone()['student_type']=='T3'

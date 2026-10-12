@@ -26,6 +26,7 @@ import { queryAcademicStudents, fetchAcademicStudentMetadata, downloadAcademicSt
 import type { RosterStudent } from '../data/studentRoster'
 import { useMetadata } from '../../shared/useMetadata'
 import './StudentChargeTable.css'
+import DiagnosisManagementModal from './DiagnosisManagementModal'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 상담사 학생 목록 표 (담당·전체 공유) — 번호·학생·학과·학년·진단 유형·학적·IAP 이행률.
@@ -56,6 +57,7 @@ const FOCUS_BUTTONS: { focus: FocusFilter; label: string; tone: string; count: (
 
 interface StudentChargeTableProps {
   academic?: boolean
+  diagnosis?: boolean
   departments: string[]
   title: string
   /** 생략하면 머리글 설명(범위 · 총원 · 하위 계층)을 그리지 않는다. */
@@ -74,7 +76,7 @@ interface StudentChargeTableProps {
 }
 
 export default function StudentChargeTable({
-  departments, title, scopeLabel, mode = 'roster', onPickStudent, refreshKey = 0, academic = false,
+  departments, title, scopeLabel, mode = 'roster', onPickStudent, refreshKey = 0, academic = false, diagnosis = false,
 }: StudentChargeTableProps) {
   useMetadata()
   const navigate = useNavigate()
@@ -102,6 +104,8 @@ export default function StudentChargeTable({
   const [exporting, setExporting] = useState(false)
   const [exportError, setExportError] = useState('')
   const [selectedAcademic, setSelectedAcademic] = useState<RosterStudent | null>(null)
+  const [diagnosisStudent, setDiagnosisStudent] = useState<RosterStudent | null>(null)
+  const [retakePending, setRetakePending] = useState(false)
   const [page, setPage] = useState(1)
 
   // 필터 옵션·헤더 집계는 전체 집합에서(현재 페이지가 아니라). DB 전환 시 별도 집계 엔드포인트.
@@ -114,13 +118,13 @@ export default function StudentChargeTable({
   useEffect(() => {
     let cancelled = false
     setMetadataError(null)
-    const metadataRequest = academic ? fetchAcademicStudentMetadata() : fetchRosterMetadata(departments)
+    const metadataRequest = academic ? fetchAcademicStudentMetadata(diagnosis) : fetchRosterMetadata(departments)
     metadataRequest.then(value => {
       if (!cancelled) setMetadata(value)
     }).catch((error: Error) => { if (!cancelled) setMetadataError(error) })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deptKey, refreshKey, metadataRetry, academic])
+  }, [deptKey, refreshKey, metadataRetry, academic, diagnosis])
   const { options, summary } = metadata
 
   // 서버(목업) 조회 — useListData가 useEffect+레이스 cleanup을 담당. DB 전환 시 훅 내부만 교체.
@@ -130,6 +134,8 @@ export default function StudentChargeTable({
     q: query,
     departments,
     filters: {
+      diagnosed: diagnosis ? 'Y' : undefined,
+      retakePending: diagnosis && retakePending ? 'Y' : undefined,
       major: major === ALL ? undefined : major,
       grade: grade === ALL ? undefined : grade,
       studentType: type === ALL ? undefined : type,
@@ -314,6 +320,7 @@ export default function StudentChargeTable({
       </form>
 
       <div className="admin-toolbar">
+        {diagnosis && <label><input type="checkbox" checked={retakePending} onChange={e => { setRetakePending(e.target.checked); setPage(1) }} /> 재검사 요청 대기만 보기</label>}
         <span className="admin-toolbar-count">
           검색 결과 {totalCount}명
           {/* 걸린 필터를 결과 줄에도 적는다 — 인원이 갑자기 줄어든 이유가 보여야 한다.
@@ -339,13 +346,14 @@ export default function StudentChargeTable({
           <EmptyState icon={LuFrown} message="조건에 맞는 학생이 없습니다." />
         ) : (
           <>
-            <div className={`admin-roster admin-charge-roster${academic ? " has-export-selection" : ""}`}>
+            <div className={`admin-roster admin-charge-roster${academic ? " has-export-selection" : ""}${diagnosis ? ' diagnosis-management-roster' : ''}`}>
               <div className="admin-roster-head">
                 {academic && <span>{selection.header}</span>}<span>번호</span>
                 <span>학생</span>
                 <span>학과</span>
                 <span>학년</span>
                 <span>진단 유형</span>
+                {diagnosis && <><span>진단 관리</span><span>학점</span></>}
                 <span>학적</span>
                 <span>{isRoadmap ? '로드맵' : 'IAP 이행률'}</span>
               </div>
@@ -367,6 +375,10 @@ export default function StudentChargeTable({
                       {/* 유형은 '코드 → 라벨' 순서로 읽는다 (T3 역량성장형) */}
                       <span className={studentTypeClass(s.studentType)}><b>{s.studentType}</b>{typeLabel(s.studentType)}</span>
                     </span>
+                    {diagnosis && <>
+                      <span><button type="button" className="admin-btn sm" onClick={e => { e.stopPropagation(); setDiagnosisStudent(s) }}>진단 관리</button></span>
+                      <span className="admin-roster-cell">{s.gpa ?? '—'}</span>
+                    </>}
                     <span className="admin-roster-cell">
                       <span className={enrollStatusClass(s.status)}>{s.status}</span>
                     </span>
@@ -433,6 +445,7 @@ export default function StudentChargeTable({
       </section>
       {selectedAcademic && <StudentDetailModal studentId={selectedAcademic.id} role={getActiveUser().role}
         onClose={() => setSelectedAcademic(null)} />}
+      {diagnosisStudent && <DiagnosisManagementModal student={diagnosisStudent} onClose={() => { setDiagnosisStudent(null); refetch() }} />}
     </div>
   )
 }

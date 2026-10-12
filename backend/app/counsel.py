@@ -330,8 +330,8 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
         # Draft saves and later journal edits must never alter this decision.
         if is_care7_request(row) and body.finalType:
             previous=conn.execute("SELECT decided_at FROM dc.current_student_type WHERE student_uid=%s AND source='counsel'",(row['student_uid'],)).fetchone()
-            if previous and not conn.execute('''SELECT 1 FROM dc.student_type_event
-              WHERE student_uid=%s AND source<>'counsel' AND decided_at>%s LIMIT 1''',
+            if previous and not conn.execute('''SELECT 1 FROM dc.diagnosis_attempt
+              WHERE student_uid=%s AND test_id='ccore' AND status_code='DONE' AND completed_at>%s LIMIT 1''',
               (row['student_uid'],previous['decided_at'])).fetchone():
                 raise HTTPException(409,'기존 상담 유형을 다시 확정하려면 재진단을 먼저 완료해 주세요.')
             conn.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source,actor_uid,decided_at) VALUES (%s,%s,'counsel',%s,clock_timestamp())",

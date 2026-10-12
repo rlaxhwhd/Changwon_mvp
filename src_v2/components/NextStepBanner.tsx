@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { diagnosisRetakes, loadStudentDiagnoses } from '../../shared/diagnosisStore'
 import { HANDOFF_TOTAL, getNextAction } from '../data/careerProcess'
 import { getPipelineState } from '../data/pipeline'
 import { getActiveStudent } from '../data/students'
@@ -15,7 +17,29 @@ import GradientButton from './ui/button-1'
 
 export default function NextStepBanner() {
   const student = getActiveStudent()
-  const next = getNextAction(getPipelineState(student))
+  const [, update] = useState(0)
+  useEffect(() => {
+    const changed = () => update(n => n + 1)
+    const refresh = () => { void loadStudentDiagnoses(student.id).catch(() => {}) }
+    window.addEventListener('dc:diagnosis-updated', changed)
+    window.addEventListener('dc_roadmap_changed', refresh)
+    window.addEventListener('dc:counsel-updated', refresh)
+    if (!diagnosisRetakes[student.id]) refresh()
+    return () => {
+      window.removeEventListener('dc:diagnosis-updated', changed)
+      window.removeEventListener('dc_roadmap_changed', refresh)
+      window.removeEventListener('dc:counsel-updated', refresh)
+    }
+  }, [student.id])
+  const guide = diagnosisRetakes[student.id]?.guide
+  const next = guide ? {
+    step: { core: 1, followup: 2, counsel: 3, roadmap: 4 }[guide.stage],
+    title: { core: 'C-CORE 재진단을 시작하세요', followup: '새 유형에 맞는 후속진단을 진행하세요', counsel: '재진단 후 CARE 7+ 상담을 신청하세요', roadmap: '새 로드맵 확정을 기다리는 중입니다' }[guide.stage],
+    detail: '재진단 → 유형별 후속진단 → 상담 → 새 로드맵 순서로 다음 단계를 준비합니다.',
+    ctaPath: guide.stage === 'counsel' ? '/counsel/career' : guide.stage === 'roadmap' ? '/roadmap/ai' : '/diagnosis/employment',
+    ctaLabel: guide.stage === 'counsel' ? '상담 신청하기' : guide.stage === 'roadmap' ? '로드맵 확인' : '진단 진행하기',
+    secondary: undefined,
+  } : getNextAction(getPipelineState(student))
   if (!next) return null
 
   return (

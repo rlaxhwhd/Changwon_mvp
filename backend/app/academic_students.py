@@ -60,6 +60,10 @@ def authorize(conn, user):
 
 def filters(request, q):
     where, values = [], []
+    if request.query_params.get('filters.diagnosed') == 'Y':
+        where.append("EXISTS(SELECT 1 FROM dc.diagnosis_attempt a WHERE a.student_uid=roster.intg_uid AND a.status_code IN ('DONE','REVIEW','INCOMPLETE'))")
+    if request.query_params.get('filters.retakePending') == 'Y':
+        where.append("EXISTS(SELECT 1 FROM dc.diagnosis_retake q WHERE q.student_uid=roster.intg_uid AND q.status='PENDING')")
     contact = request.query_params.get('filters.contact')
     if contact in STAGES:
         where.append('intg_uid IN (' + CONTACT_CTE + ' SELECT intg_uid FROM contact WHERE ' + STAGES[contact] + ')')
@@ -92,9 +96,14 @@ def filters(request, q):
 
 
 @router.get('/academic-students/metadata')
-def metadata(user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+def metadata(diagnosed: bool = False, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
     authorize(conn, user)
-    row = conn.execute(ROSTER + f''' SELECT count(*) AS total,
+    roster = ROSTER
+    if diagnosed:
+        roster = ROSTER.replace('), roster AS (', '), all_roster AS (') + ''', roster AS (
+          SELECT * FROM all_roster r WHERE EXISTS(SELECT 1 FROM dc.diagnosis_attempt a
+          WHERE a.student_uid=r.intg_uid AND a.status_code IN ('DONE','REVIEW','INCOMPLETE')))'''
+    row = conn.execute(roster + f''' SELECT count(*) AS total,
       count(*) FILTER(WHERE tier='하위') AS "focusCount",
       count(*) FILTER(WHERE {HIGH}) AS "highRiskCount",
       count(*) FILTER(WHERE {CORE}) AS "coreCareCount",count(*) FILTER(WHERE star) AS "starCount",count(*) FILTER(WHERE {PARTICIPANT}) AS "care7Count",

@@ -6,8 +6,8 @@ import {
 } from './careerProcess'
 import { isCare7 } from './counselTrack'
 import { getDiagnosisResult } from './diagnosisResults'
-import { getStudentCounselRequests, getStudentType } from './students'
-import { diagnosisAttempts, loadStudentDiagnoses } from '../../shared/diagnosisStore'
+import { getStudentCounselRequests, getStudentType as getConfirmedStudentType } from './students'
+import { diagnosisAttempts, diagnosisRetakes, loadStudentDiagnoses } from '../../shared/diagnosisStore'
 import { api } from '../../shared/api'
 import { loadProfiles } from '../../shared/profileStore'
 import type { StudentData, StudentTypeEvent } from './students'
@@ -20,7 +20,9 @@ import { hasConfirmedRoadmap } from '../../src_admin/data/roadmapGenerated'
 
 // 유형 조회·이벤트 타입은 students.ts 가 갖는다 — 두 포털이 같은 답을 봐야 하기 때문이다.
 // 여기서 다시 정의하지 않고 그대로 다시 내보낸다.
-export { getStudentType }
+export function getStudentType(student: StudentData) {
+  return diagnosisRetakes[student.id]?.diagnosticType ?? getConfirmedStudentType(student)
+}
 export type { StudentTypeEvent }
 
 // ── 읽기 ────────────────────────────────────────────────────────────────
@@ -32,6 +34,7 @@ export function getAttempts(studentId: string): DiagnosisAttempt[] {
 
 /** 해당 검사를 완료했는가. */
 export function isTestDone(studentId: string, testId: string): boolean {
+  if (diagnosisRetakes[studentId]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')) return false
   return getAttempts(studentId).some(a => a.testId === testId && a.isCurrent !== false && a.status === '완료')
 }
 
@@ -43,6 +46,7 @@ export function isTestDone(studentId: string, testId: string): boolean {
  * 박힌 기존 데모 학생은 진단을 마치고 들어온 것으로 다룬다(그 학생들의 화면을 바꾸지 않는다).
  */
 export function getModuleStatusFor(student: StudentData, module: DiagnosisModule): TestStatus {
+  if (diagnosisRetakes[student.id]?.requests.some(q => q.testId === module.testId && q.status === 'APPROVED')) return 'available'
   const isDone = (m: DiagnosisModule) =>
     isTestDone(student.id, m.testId)
 

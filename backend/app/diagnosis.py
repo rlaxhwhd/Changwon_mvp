@@ -23,6 +23,8 @@ def attempt_dto(row):
 @router.get('/diagnosis/students/{identity}')
 def student_diagnoses(identity: str,user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
     student=student_access(conn,user,identity)
+    from .diagnosis_retake import state
+    retake = state(conn, student['intg_uid'])
     rows=conn.execute('''SELECT a.*,p.alias,p.name,s.student_no,s.major_label,s.grade FROM dc.diagnosis_attempt a
       JOIN dc.person p ON p.intg_uid=a.student_uid JOIN dc.student s ON s.intg_uid=a.student_uid
       WHERE a.student_uid=%s AND a.status_code IN ('DONE','STARTED','INCOMPLETE','REVIEW') ORDER BY a.attempt_no DESC,a.test_id''',(student['intg_uid'],)).fetchall()
@@ -53,7 +55,7 @@ def student_diagnoses(identity: str,user=Depends(principal,scope='function'),con
         result['payload']['isCurrent']=current.get(result['test_id'])==result['attempt_no']
     return {'studentId':student['alias'],'attempts':[attempt_dto(r) for r in rows],
             'results':[{**r['payload'],'source':r['source']} for r in results],'comments':comments,
-            'externalTests':LAUNCH_URLS}
+            'externalTests':LAUNCH_URLS, 'retake': retake}
 
 
 def conditions(request,user):

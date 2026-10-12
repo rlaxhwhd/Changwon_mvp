@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import {
   getRequiredTests,
+  getModuleByTestId,
   typeLabel,
   type TestStatus,
 } from '../../data/careerProcess'
@@ -10,7 +11,8 @@ import { getModuleStatusFor, getStudentType, importDiagnosis } from '../../data/
 import { getResultsByStudent } from '../../data/diagnosisResults'
 import { ensureDiagnosisComment } from '../../../shared/diagnosisComment'
 import AiProgressModal from '../../../shared/AiProgressModal'
-import { externalDiagnosisLinks, diagnosisAttempts, loadStudentDiagnoses } from '../../../shared/diagnosisStore'
+import { externalDiagnosisLinks, diagnosisAttempts, diagnosisRetakes, loadStudentDiagnoses } from '../../../shared/diagnosisStore'
+import { api } from '../../../shared/api'
 import NextStepBanner from '../../components/NextStepBanner'
 import { getActiveStudent } from '../../data/students'
 import './EmploymentTest.css'
@@ -47,7 +49,7 @@ const GUIDE_ITEMS = [
 ]
 
 export default function DiagnosisResult() {
-  usePageHead('진단검사 결과', '1회차 진단은 학생이 자유롭게 실시할 수 있습니다. 재진단과 진단유형 변경은 상담사와 상담 후 진행됩니다.')
+  usePageHead('진단검사 결과', '상담사 승인 또는 로드맵 50% 달성 후 재진단하고, 상담을 통해 새 로드맵을 준비합니다.')
   const navigate = useNavigate()
   const [isGuideOpen, setIsGuideOpen] = useState(false)
   const [evaluating, setEvaluating] = useState(false)
@@ -55,12 +57,49 @@ export default function DiagnosisResult() {
   const [aiError, setAiError] = useState('')
 
   const student = getActiveStudent()
+  const [, update] = useState(0)
+  const [requesting, setRequesting] = useState(false)
+  const [requestNotice, setRequestNotice] = useState('')
+  useEffect(() => {
+    const changed = () => update(n => n + 1)
+    window.addEventListener('dc:diagnosis-updated', changed)
+    return () => window.removeEventListener('dc:diagnosis-updated', changed)
+  }, [])
+  const retake = diagnosisRetakes[student.id]
+  const coreRequest = retake?.requests.find(q => q.testId === 'ccore' && q.status !== 'COMPLETED')
+  async function requestRetake() {
+    if (requesting) return
+    setRequesting(true); setAiError('')
+    try {
+      await api('/diagnosis/retake-request', { method: 'POST' })
+      await loadStudentDiagnoses(student.id)
+      setRequestNotice('재검사 요청이 접수되었습니다. 상담사가 확인 후 승인합니다.')
+    } catch (e) { setAiError(e instanceof Error ? e.message : '요청하지 못했습니다.') }
+    finally { setRequesting(false) }
+  }
+  async function launchTest(testId: string) {
+    if (evaluating) return
+    const popup = window.open('about:blank', '_blank')
+    if (popup) popup.opener = null
+    setEvaluating(true); setAiError(''); setAiProgress('응시 권한을 확인하고 있습니다.')
+    try {
+      const { url } = await api<{url: string}>(`/diagnosis/external/${testId}/launch`, { method: 'POST' })
+      if (!popup) throw new Error('팝업을 허용한 후 다시 검사시작을 눌러 주세요.')
+      popup.location.href = url
+      setAction(testId, 'result')
+    } catch (e) { popup?.close(); setAiError(e instanceof Error ? e.message : '검사를 열지 못했습니다.') }
+    finally { setEvaluating(false) }
+  }
   async function viewResult(testId: string) {
     if (evaluating) return
     setEvaluating(true); setAiError(''); setAiProgress('진단 결과를 확인하고 있습니다.')
     try {
-      if (['ccore', 'c2', 'c3', 'c4'].includes(testId)) await importDiagnosis(student, testId, true)
+      const awaitingRetake = retake?.requests.some(q => q.testId === testId && q.status === 'APPROVED')
+      if (['ccore', 'c2', 'c3', 'c4'].includes(testId)) await importDiagnosis(student, testId, !awaitingRetake)
       else await loadStudentDiagnoses(student.id)
+      if (awaitingRetake && diagnosisRetakes[student.id]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')) {
+        throw new Error('새로 완료한 재진단 결과가 아직 없습니다. 응시를 완료한 뒤 다시 확인해 주세요.')
+      }
       const result = getResultsByStudent(student.id).find(r => r.testId === testId && r.isCurrent !== false)
       if (!result || result.needsReview) throw new Error('완료된 진단 결과를 확인할 수 없습니다. 검사 응시 상태를 확인해 주세요.')
       await ensureDiagnosisComment(student.id, testId, result.attemptNo, setAiProgress)
@@ -72,14 +111,17 @@ export default function DiagnosisResult() {
   const studentType = getStudentType(student)
   // 응시 대상 = 필수진단 CCORE + 내 유형의 후속진단 1종 (PROCESS.md §3)
   // 학년으로 배정하지 않는다. 전 모듈을 나열하지도 않는다.
-  const modulesWithStatus = getRequiredTests(studentType).map(m => ({ ...m, status: getModuleStatusFor(student, m) }))
+  const required = getRequiredTests(studentType)
+  const extra = (retake?.requests ?? []).filter(q => q.status === 'APPROVED' && !required.some(m => m.testId === q.testId))
+    .map(q => getModuleByTestId(q.testId)).filter((m): m is NonNullable<typeof m> => !!m)
+  const modulesWithStatus = [...required, ...extra].map(m => ({ ...m, status: getModuleStatusFor(student, m) }))
   const doneCount = modulesWithStatus.filter(m => m.status === 'done').length
   const availableCount = modulesWithStatus.filter(m => m.status === 'available').length
   const lockedCount = modulesWithStatus.filter(m => m.status === 'locked').length
 
   // This remembers the button only; completion still comes from the server.
   const [actions, setActions] = useState<Record<string, 'start' | 'result'>>({})
-  const actionKey = (testId: string) => `dc:diagnosis-action:${student.id}:${testId}`
+  const actionKey = (testId: string) => `dc:diagnosis-action:${student.id}:${testId}:${retake?.requests.find(q => q.testId === testId && q.status === 'APPROVED')?.id ?? 'first'}`
   const actionFor = (testId: string, status: TestStatus) => {
     const key = actionKey(testId)
     let saved: string | null = null
@@ -96,6 +138,7 @@ export default function DiagnosisResult() {
     <div className="de-wrap">
       <AiProgressModal open={evaluating} title="AI가 진단 결과를 평가 중입니다" progress={aiProgress} />
       {aiError && <p role="alert">{aiError}</p>}
+      {requestNotice && <p role="status">{requestNotice}</p>}
       {/* 진단이 남은 학생에게는 여기서도 다음 걸음을 짚어 준다(끝난 학생에겐 안 뜬다). */}
       <NextStepBanner />
       <div className="de-access-notice" role="note">
@@ -117,11 +160,11 @@ export default function DiagnosisResult() {
           <button
             className="de-type-request-btn"
             type="button"
-            disabled
-            title="진단유형 변경 신청 절차를 연결 중입니다."
+            disabled={requesting || !!coreRequest}
+            onClick={() => void requestRetake()}
           >
-            <i className="fa-solid fa-lock" />
-            진단유형 수정 신청 준비 중
+            <i className="fa-solid fa-rotate" />
+            {requesting ? '요청 중…' : coreRequest?.status === 'PENDING' ? '재검사 요청 승인 대기' : coreRequest?.status === 'APPROVED' ? '재검사 응시 가능' : '진단유형 재검사 요청'}
           </button>
         </div>
 
@@ -139,8 +182,8 @@ export default function DiagnosisResult() {
             <span className="de-access-icon"><i className="fa-solid fa-lock" /></span>
             <div>
               <small>2회차 이상 재진단</small>
-              <strong>상담사 승인 전 잠금</strong>
-              <p>상담 진행 후 상담사가 응시 권한을 열 수 있습니다.</p>
+              <strong>{coreRequest?.status === 'APPROVED' ? '재응시 가능' : '상담사 승인 또는 이행률 50%'}</strong>
+              <p>상담사 승인 또는 로드맵 50% 달성 시 C-CORE 재진단을 진행합니다.</p>
             </div>
           </article>
 
@@ -156,7 +199,7 @@ export default function DiagnosisResult() {
 
         <div className="de-access-notice" role="note">
           <i className="fa-solid fa-circle-info" />
-          <span>재진단 및 진단유형 변경은 상담사와 상담 및 논의 후 진행 가능합니다.</span>
+          <span>재진단 후 새 유형에 맞는 후속진단과 CARE 7+ 상담을 진행하고 새 로드맵을 확정합니다.</span>
         </div>
 
       </section>
@@ -200,14 +243,11 @@ export default function DiagnosisResult() {
               </div>
             </div>
 
-            {result.status !== 'locked' && externalDiagnosisLinks[result.testId] && actionFor(result.testId, result.status) === 'start' ? <a
+            {result.status !== 'locked' && externalDiagnosisLinks[result.testId] && retake?.permissions[result.testId] && actionFor(result.testId, result.status) === 'start' ? <button
               className="de-start-btn de-start-btn--available"
-              href={externalDiagnosisLinks[result.testId]} target="_blank" rel="noopener noreferrer"
-              onClick={() => {
-                setAction(result.testId, 'result')
-              }}>
+              type="button" disabled={evaluating} onClick={() => void launchTest(result.testId)}>
               검사시작 <i className="fa-solid fa-arrow-up-right-from-square" aria-label="새 탭" />
-            </a> : <button
+            </button> : <button
               type="button"
               className={`de-start-btn de-start-btn--${result.status === 'locked' ? 'locked' : 'done'}`}
               onClick={() => void viewResult(result.testId)}

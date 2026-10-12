@@ -95,6 +95,8 @@ def store_results(conn, student, test_id, items):
         if code and (not previous or previous['student_type'] != code):
             conn.execute('''INSERT INTO dc.student_type_event(student_uid,student_type,source,actor_uid)
               VALUES(%s,%s,'hrtest',%s)''', (uid,code,uid))
+    from .diagnosis_retake import complete_permissions
+    complete_permissions(conn, uid, test_id)
     return dict(imported=imported, updated=updated, unchanged=unchanged, incomplete=incomplete, needsReview=review)
 
 

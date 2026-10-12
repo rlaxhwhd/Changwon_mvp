@@ -9,8 +9,8 @@ export function queryAcademicStudents(params: ListParams): Promise<Paginated<Ros
   return api(`/academic-students?${queryString(params)}`)
 }
 
-export function fetchAcademicStudentMetadata(): Promise<RosterMetadata> {
-  return api('/academic-students/metadata')
+export function fetchAcademicStudentMetadata(diagnosed = false): Promise<RosterMetadata> {
+  return api('/academic-students/metadata' + (diagnosed ? '?diagnosed=true' : ''))
 }
 
 export interface AcademicStudentDetail extends RosterStudent {

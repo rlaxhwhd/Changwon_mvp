@@ -17,6 +17,7 @@ import CounselJournals from './pages/CounselJournals'
 import CounselRecordPrint from './pages/CounselRecordPrint'
 import CounselStats from './pages/CounselStats'
 import DiagnosisStatus from './pages/DiagnosisStatus'
+import DiagnosisManagement from './pages/DiagnosisManagement'
 import GroupCounsels from './pages/GroupCounsels'
 import PsychTests from './pages/PsychTests'
 import SmsBlacklist from './pages/SmsBlacklist'
@@ -157,6 +158,7 @@ const router = createBrowserRouter(
                 { path: '/counsel/groups', element: <GroupCounsels /> },
                 { path: '/counsel/stats', element: <CounselStats /> },
                 { path: '/diagnosis/status', element: <DiagnosisStatus /> },
+                { path: '/diagnosis/manage', element: <DiagnosisManagement /> },
                 { path: '/students', element: <Navigate to="/students/all" replace /> },
                 // '/students/all' 은 반드시 ':id' 보다 위에 — 아래로 내려가면 id='all' 로 잡힌다.
                 { path: '/students/all', element: <StudentAll /> },

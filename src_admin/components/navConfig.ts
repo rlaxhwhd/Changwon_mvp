@@ -92,11 +92,12 @@ const ALL_SECTIONS: NavSection[] = [
   {
     id: 'diagnosis',
     label: '진단 관리',
-    // CARE 7+ 진단은 진로 경로다 — 심리상담사는 보지 않는다(058).
+    // Shared diagnosis workspace for both counselor roles (099, 123).
     basePaths: ['/diagnosis'],
     icon: LuClipboardCheck,
     children: [
       { label: '검사 현황', path: '/diagnosis/status', icon: LuClipboardCheck },
+      { menuCode: 'diagnosis.manage', label: '진단 관리', path: '/diagnosis/manage', icon: LuClipboardCheck },
     ],
   },
   {

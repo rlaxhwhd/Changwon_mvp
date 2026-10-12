@@ -71,10 +71,9 @@ def test_stale_or_invalid_completion_changes_nothing(client, db, draft, changes)
     assert state(db, draft[0]) == before
 
 
-def test_other_counselor_cannot_finalize(client, db, draft):
-    before = state(db, draft[0])
-    assert complete(client, draft, actor='career_park').status_code in (403, 404)
-    assert state(db, draft[0]) == before
+def test_all_counselors_can_finalize_shared_work(client, db, draft):
+    assert complete(client, draft, actor='career_park').status_code == 200
+    assert state(db, draft[0])['counsel'] == 'DONE'
 
 
 def test_other_counsel_basis_cannot_finalize(client, db, draft):
@@ -95,9 +94,8 @@ def test_record_failure_rolls_back_plan_confirmation(client, db, draft):
     assert state(db, draft[0]) == before
 
 
-def test_plan_confirmation_permission_is_required(client, db, draft):
+def test_shared_counselor_capability_does_not_depend_on_legacy_assignment_grants(client, db, draft):
     db.execute("DELETE FROM dc.menu_auth WHERE role_code='career' AND menu_code='roadmap.0'")
     db.execute("DELETE FROM dc.auth_user WHERE person_uid=(SELECT intg_uid FROM dc.person WHERE alias='career_kim')")
-    before = state(db, draft[0])
-    assert complete(client, draft).status_code == 403
-    assert state(db, draft[0]) == before
+    assert complete(client, draft).status_code == 200
+    assert state(db, draft[0])['plan'] == 'CONFIRMED'
