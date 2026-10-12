@@ -18,7 +18,7 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false, na
   // 0–100 is the usual display range, not a maximum allowed T score.
   const min = Math.min(0, Math.floor(Math.min(...values) / 25) * 25)
   const max = Math.max(100, Math.ceil(Math.max(...values) / 25) * 25)
-  const cx = 260, cy = 210, radius = namedAxes ? 120 : 132
+  const cx = 260, cy = 210, radius = 120
   const point = (i: number, ratio: number) => {
     const angle = i * 2 * Math.PI / axes.length - Math.PI / 2
     return { x: cx + radius * ratio * Math.cos(angle), y: cy + radius * ratio * Math.sin(angle) }
@@ -33,15 +33,24 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false, na
   const complete = points.every(p => p !== null)
   // A missing score is a gap, never zero or a one-member average.
   const path = points.map((p, i) => p ? `${i === 0 || !points[i - 1] ? 'M' : 'L'}${p.x},${p.y}` : '').join(' ') + (complete ? ' Z' : '')
-  const wrapLabel = (label: string) => {
-    if (/^[A-Za-z ]+$/.test(label)) return [label]
+  // Reserve space using the 14px label font; spaces and Latin letters are
+  // narrower than Korean glyphs, so character counts are not a useful limit.
+  const labelWidth = (label: string) => Array.from(label).reduce((width, char) =>
+    width + (/\s/u.test(char) ? 4 : /[\u0000-\u00ff]/u.test(char) ? 9 : 14), 0)
+  const wrapLabel = (label: string, availableWidth: number) => {
     const words = label.replace(/\s+및\s+/g, '·').split(/\s+/)
     const lines: string[] = []
     for (const word of words) {
       const last = lines.length - 1
-      const limit = namedAxes ? 7 : 9
-      if (last >= 0 && `${lines[last]} ${word}`.length <= limit) lines[last] += ` ${word}`
-      else lines.push(...(word.match(new RegExp(`.{1,${limit}}`, 'gu')) ?? [word]))
+      if (last >= 0 && labelWidth(`${lines[last]} ${word}`) <= availableWidth) lines[last] += ` ${word}`
+      else {
+        let line = ''
+        for (const char of word) {
+          if (line && labelWidth(line + char) > availableWidth) { lines.push(line); line = '' }
+          line += char
+        }
+        if (line) lines.push(line)
+      }
     }
     return lines
   }
@@ -67,7 +76,9 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false, na
         {axes.map((axis, i) => {
           const p = point(i, 1.14)
           const dx = p.x - cx
-          const lines = axis.labels.flatMap(wrapLabel)
+          const availableWidth = Math.abs(dx) < 5 ? 2 * Math.min(p.x - 8, 512 - p.x)
+            : dx > 0 ? 512 - p.x : p.x - 8
+          const lines = axis.labels.flatMap(label => wrapLabel(label, availableWidth))
           const lineHeight = namedAxes ? 20 : 16
           const labelY = i === 0 ? p.y - 14 - (lines.length - 1) * lineHeight : p.y - (lines.length - 1) * lineHeight / 2
           return <g key={i}><text x={p.x} y={labelY}
