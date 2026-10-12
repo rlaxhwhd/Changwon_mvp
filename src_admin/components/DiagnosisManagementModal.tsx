@@ -39,10 +39,11 @@ export default function DiagnosisManagementModal({ student, onClose }: { student
   const tests = [...new Set(data?.attempts.map(a => a.testId) ?? [])]
   return <AdminModal title={`${student.name} · 진단 관리`} size="xl" className={historyTest ? 'dmm-modal-history' : ''} onClose={onClose}>
     <div className="dmm">
-      <p className="dmm-banner"><LuInfo aria-hidden />기존 진단 결과는 보존됩니다. 재응시 허용은 다음 진단 1회에 적용됩니다.</p>
+      {!historyTest && <p className="dmm-banner"><LuInfo aria-hidden />기존 진단 결과는 보존됩니다. 재응시 허용은 다음 진단 1회에 적용됩니다.</p>}
       {error && <p className="dmm-banner is-error" role="alert"><LuTriangleAlert aria-hidden />{error}</p>}
       {notice && <p className="dmm-banner is-ok" role="status"><LuCircleCheck aria-hidden />{notice}</p>}
       {!data ? <p className="dmm-empty">진단 이력을 불러오는 중입니다.</p> : <>
+        {!historyTest && <>
         <section className="dmm-section">
           <h3 className="dmm-section-title"><LuRotateCcw aria-hidden />재응시 허용</h3>
           {tests.length === 0 ? <p className="dmm-empty">응시한 진단이 없습니다.</p> : <div className="dmm-cards">
@@ -97,8 +98,16 @@ export default function DiagnosisManagementModal({ student, onClose }: { student
             </table>
           </div>
         </section>
-        {historyTest ? <section className="dmm-section dmm-result">
-          <div><button className="admin-btn sm admin-btn-ghost" type="button" onClick={() => setHistoryTest(undefined)}>회차별 결과로 돌아가기</button></div>
+        </>}
+        {historyTest ? <section className="dmm-section">
+          <nav className="dmm-history-nav" aria-label="진단 결과 이력 선택">
+            <button className="admin-btn sm admin-btn-ghost" type="button" onClick={() => setHistoryTest(undefined)}>회차별 결과로 돌아가기</button>
+            <div className="dmm-history-tests">
+              {tests.filter(test => data.results.some(item => item.testId === test)).map(test =>
+                <button key={test} className="admin-btn sm admin-btn-ghost" type="button" aria-pressed={historyTest === test}
+                  onClick={() => setHistoryTest(test)}>{getModuleByTestId(test)?.name ?? test}</button>)}
+            </div>
+          </nav>
           <DiagnosisHistory results={data.results} studentId={data.studentId} testId={historyTest} />
         </section> : selected && <section className="dmm-section dmm-result">
           {result ? <DiagnosisResultReport result={result} showChart /> : <p className="dmm-empty">이 회차는 아직 결과가 등록되지 않았습니다.</p>}

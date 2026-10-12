@@ -57,7 +57,6 @@ export default function DiagnosisRadar({ axes, averaged, areaAverage = false, na
           const p = point(i, 1)
           return <line key={i} className="drr-chart-grid" x1={cx} y1={cy} x2={p.x} y2={p.y} />
         })}
-        {ticks.map(t => <text key={t} className="drr-chart-tick" x={cx + 7} y={cy - radius * ratio(t) - 4}>{t}</text>)}
         <g className="drr-chart-series">
           <path d={path} className={complete ? 'is-complete' : undefined} />
           {points.map((p, i) => p && <circle key={i} cx={p.x} cy={p.y} r="4" tabIndex={0}

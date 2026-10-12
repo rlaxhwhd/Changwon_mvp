@@ -60,3 +60,6 @@
 .dmm-table-wrap { overflow-x: auto; }
 .dmm-table td { vertical-align: middle; }
 .dmm-table .diagnosis-attempt-select { min-width: 170px; }
+.dmm-history-nav { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+.dmm-history-tests { display: flex; flex-wrap: wrap; gap: 8px; }
+.dmm-history-tests button[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }

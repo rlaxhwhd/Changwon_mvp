@@ -111,13 +111,6 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
         return <line key={i} x1={cx} y1={cy} x2={o.x} y2={o.y} stroke="#C7D2FE" strokeWidth="0.8" strokeOpacity="0.6" />
       })}
 
-      {/* 눈금 숫자 — 만점이 100 이라는 것이 차트 안에서 읽혀야 한다 */}
-      {gridLevels.map(lv => (
-        <text key={`tick-${lv}`} x={cx + 5} y={cy - r * lv} dominantBaseline="middle"
-          fontSize="10" fill="#9AA3B2" fontFamily="Pretendard, sans-serif">
-          {lv * T_MAX}
-        </text>
-      ))}
 
       {/* 홀로그램 데이터 채우기 */}
       <path d={dataPath} fill="url(#dr-holo-main)" fillOpacity="0.55" />
@@ -142,7 +135,7 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
         const anchor = x < cx - 4 ? 'end' : x > cx + 4 ? 'start' : 'middle'
         return (
           <text key={i} x={x} y={y} textAnchor={anchor} dominantBaseline="middle"
-            fontSize="13" fill="#4B5563" fontFamily="Pretendard, sans-serif" fontWeight="700">
+            fontSize="11" fill="#4B5563" fontFamily="Pretendard, sans-serif" fontWeight="700">
             {ax.label}
           </text>
         )
