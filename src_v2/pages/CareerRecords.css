@@ -1,0 +1,7 @@
+.career-records { display: grid; gap: 16px; }
+.career-records h2 { margin-bottom: 12px; }
+.career-records p + p { margin-top: 10px; }
+.career-records a { text-decoration: underline; text-underline-offset: 3px; }
+.career-records summary { cursor: pointer; padding: 8px 0; line-height: 1.7; }
+.career-records li { margin: 8px 0; }
+.career-records ul { padding-left: 20px; }

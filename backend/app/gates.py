@@ -75,9 +75,8 @@ def diagnosis_gate(conn, uid):
     row = conn.execute('SELECT * FROM dc.student_type_code WHERE code=%s', (diagnostic_type(conn, uid),)).fetchone()
     if not row:
         return None, [reason('TYPE_REQUIRED')]
-    done = {r['test_id'].upper() for r in conn.execute(
-        'SELECT test_id FROM dc.current_diagnosis_attempt WHERE student_uid=%s AND completed_at IS NOT NULL',
-        (uid,)).fetchall()}
+    from .care7_cycle import completed_tests
+    done = {test.upper() for test in completed_tests(conn, uid)}
     approved = {r['test_id'].upper() for r in conn.execute(
         "SELECT test_id FROM dc.diagnosis_retake WHERE student_uid=%s AND status='APPROVED'", (uid,)).fetchall()}
     done -= approved
@@ -91,24 +90,23 @@ def diagnosis_gate(conn, uid):
 
 def employment_gate(conn, uid):
     """취업지원 게이트 — 진단 + CARE 7+ 상담 완료 + 확정된 로드맵."""
+    from .care7_cycle import annual_status
+    annual = annual_status(conn, uid)
+    if annual['eligible']:
+        from .diagnosis_retake import current_type
+        return {'eligible': True, 'reasons': [], 'studentType': current_type(conn, uid)}
     type_row, reasons = diagnosis_gate(conn, uid)
-    if not care7_completed(conn, uid):
+    if not annual['counselDone']:
         reasons.append(reason('CARE7_REQUIRED'))
-    if not confirmed_roadmap(conn, uid):
+    if not annual['roadmapConfirmed']:
         reasons.append(reason('ROADMAP_CONFIRMATION_REQUIRED'))
     return {'eligible': not reasons, 'reasons': reasons,
             'studentType': type_row['code'] if type_row else None}
 
 
 def program_gate(conn, uid):
-    """비교과(역량강화) 게이트 — 확정된 로드맵이 있어야 신청할 수 있다.
-
-    재생성 중에는 구계획이 스냅샷으로 넘어가고 현재 계획이 DRAFT 이므로 여기서 잠긴다
-    (04-decisions Q1). 잠긴 화면은 빈 화면이 아니라 사유와 다음 경로를 받는다.
-
-    ⚠ 진단·CARE7 까지 서버에서 요구하지는 않는다. 그 두 조건은 지금까지 비교과 신청에
-      서버 게이트가 없어 한 번도 강제된 적이 없고, 이번 승인 범위는 「확정 전까지 잠근다」다.
-      확대는 별건이다(05-implementation.md 의 잔여 위험).
-    """
-    reasons = [] if confirmed_roadmap(conn, uid) else [reason('ROADMAP_CONFIRMATION_REQUIRED')]
+    """해당 연도 완료 자격. 연중 재진단/재생성은 자격을 취소하지 않는다."""
+    from .care7_cycle import annual_status
+    annual = annual_status(conn, uid)
+    reasons = [] if annual['eligible'] else [reason('CORE_REQUIRED' if annual['renewalRequired'] and not annual['coreDone'] else 'ROADMAP_CONFIRMATION_REQUIRED')]
     return {'eligible': not reasons, 'reasons': reasons}

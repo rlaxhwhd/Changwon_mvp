@@ -8,8 +8,8 @@
      고쳐도 오른다. 클라이언트는 둘 다 보내고 서버는 둘 다 검사한다.
   ② 계획은 언제나 1벌이다. 재생성은 구계획을 스냅샷으로 얼린 뒤 15칸을 새로 만들고
      아무것도 이월하지 않는다(PROCESS.md §6-6). 확정본과 초안을 동시에 보관하지 않는다.
-  ③ 학생에게는 확정된 계획만 보인다. 재생성 중에는 DRAFT 라 비교과·취업지원이 함께 잠긴다 —
-     그 잠금 판정은 gates.py 한 곳에서만 한다(CLAUDE.md 13조).
+  ③ 학생에게는 확정된 계획만 보인다. 해당 연도 CARE7+를 완료했다면 재생성 중에도
+     메뉴 접근을 유지한다. 연도별 잠금 판정은 gates.py에서 한다.
   ④ 15칸의 내용은 우리가 만들지 않는다. 이미 승인된 산출물(provider)을 받아 채택할 뿐이고,
      없으면 503 이다. 문구를 채우거나 학년·학과로 추정하지 않는다(CLAUDE.md 14조).
   ⑤ 프로그램 칸은 비교과가 정본이다. 상태·프로그램·편입·만료는 편집 DTO 에서 받지 않는다.
@@ -382,6 +382,18 @@ def check_counsel_basis(conn, uid, request_id, lock=True, initial=False):
         fail(422, 'INVALID_COUNSEL_BASIS', '확정된 상담 예약에서만 로드맵을 만듭니다.')
     if initial and row['status_code'] != 'DONE':
         fail(422, 'INVALID_COUNSEL_BASIS', '상담일지를 저장 후 완료 처리한 뒤 로드맵을 만들 수 있습니다.')
+    from .care7_cycle import annual_status, completed_tests, year_start
+    annual = annual_status(conn, uid)
+    if year_start().year >= 2027 and not annual['eligible']:
+        done = completed_tests(conn, uid)
+        from .diagnosis_retake import diagnostic_type
+        rule = conn.execute('SELECT lower(follow_up_test) AS test FROM dc.student_type_code WHERE code=%s',
+                            (diagnostic_type(conn, uid),)).fetchone()
+        required = ('ccore', rule['test'] if rule else None)
+        basis = max((done[test] for test in required if test in done), default=year_start())
+        if (not annual['followUpDone'] or row['status_code'] != 'DONE'
+                or not row['completed_at'] or row['completed_at'] < basis):
+            fail(409, 'ANNUAL_COUNSEL_REQUIRED', '올해 진단과 후속진단을 마친 뒤 완료한 CARE 7+ 상담으로 새 로드맵을 생성해 주세요.')
     cycle = conn.execute('''SELECT q.status,a.completed_at FROM dc.diagnosis_retake q
       LEFT JOIN dc.diagnosis_attempt a ON a.id=q.completed_attempt_id
       LEFT JOIN dc.roadmap r ON r.student_uid=q.student_uid
@@ -856,11 +868,16 @@ def transition(identity: str, action: str, body: Transition,
     if previous not in allowed:
         fail(409, 'INVALID_TRANSITION', '지금 상태에서 할 수 없는 전이입니다.')
     if target == 'CONFIRMED':
+        from .care7_cycle import year_start
+        if year_start().year >= 2027:
+            check_counsel_basis(conn, uid, row['counsel_request_id'])
         # 3축 15칸은 DB 의 지연 제약이 최종 보증한다. 여기서는 사람이 읽을 오류로 먼저 거른다.
         counts = conn.execute('''SELECT axis,count(*)::int AS n FROM dc.roadmap_item
           WHERE student_uid=%s AND origin_code='BASE' GROUP BY axis''', (uid,)).fetchall()
         if len(counts) != 3 or any(c['n'] != BASE_CELLS for c in counts):
             fail(422, 'INVALID_AXIS_COUNT', '확정하려면 3축 각각 기본 5칸이 필요합니다.')
+    from .care7_cycle import annual_status
+    annual_status(conn, uid)
     row = conn.execute('''UPDATE dc.roadmap SET status_code=%s,
       confirmed_at=CASE WHEN %s='CONFIRMED' THEN now() END,
       confirmed_by=CASE WHEN %s='CONFIRMED' THEN %s END,
@@ -868,6 +885,7 @@ def transition(identity: str, action: str, body: Transition,
       (target, target, target, user['intg_uid'], user['intg_uid'], uid)).fetchone()
     plan_event(conn, user, uid, row['version'], event, {'status': target}, before={'status': previous},
                lock_before=body.expectedVersion, lock_after=row['lock_version'], reason_text=body.reason)
+    annual_status(conn, uid)
     result = plan_dto(conn, uid, row, as_of(conn), capabilities_for(conn, user, student, row))
     return remember(conn, user, route, idempotency_key, digest, result)
 
@@ -1071,6 +1089,8 @@ def create_request(identity: str, body: NewRequest, idempotency_key: str = Heade
     row = lock_plan(conn, uid, lock=False)
     if not row or not row['confirmed']:
         fail(409, 'INVALID_TRANSITION', '확정된 로드맵이 있어야 변경을 요청할 수 있습니다.')
+    if not program_gate(conn, uid)['eligible']:
+        fail(403, 'ANNUAL_CARE7_REQUIRED', '올해 CARE 7+ 과정을 완료한 뒤 변경을 요청해 주세요.')
     check_versions(row, body.expectedRoadmapVersion, body.expectedVersion)
     if body.targetItemId:
         get_item(conn, uid, body.targetItemId, lock=False)

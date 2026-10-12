@@ -35,7 +35,7 @@ export default function NextStepBanner() {
   const next = guide ? {
     step: { core: 1, followup: 2, counsel: 3, roadmap: 4 }[guide.stage],
     title: { core: 'C-CORE 재진단을 시작하세요', followup: '새 유형에 맞는 후속진단을 진행하세요', counsel: '재진단 후 CARE 7+ 상담을 신청하세요', roadmap: '새 로드맵 확정을 기다리는 중입니다' }[guide.stage],
-    detail: '재진단 → 유형별 후속진단 → 상담 → 새 로드맵 순서로 다음 단계를 준비합니다.',
+    detail: guide.annual ? '새해 CARE 7+ 과정을 다시 완료해 주세요. 이전 활동 기록은 계속 확인할 수 있습니다.' : '재진단 → 유형별 후속진단 → 상담 → 새 로드맵 순서로 다음 단계를 준비합니다.',
     ctaPath: guide.stage === 'counsel' ? '/counsel/career' : guide.stage === 'roadmap' ? '/roadmap/ai' : '/diagnosis/employment',
     ctaLabel: guide.stage === 'counsel' ? '상담 신청하기' : guide.stage === 'roadmap' ? '로드맵 확인' : '진단 진행하기',
     secondary: undefined,

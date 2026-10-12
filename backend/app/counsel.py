@@ -341,6 +341,8 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
           SET summary=excluded.summary,comment=excluded.comment,follow_up=excluded.follow_up,template=COALESCE(excluded.template,dc.counsel_record.template),status_code='DONE',updated_at=now(),version=dc.counsel_record.version+1''',
           (str(uuid4()),request_id,user['intg_uid'],body.summary,body.comment,body.followUp,Jsonb(row['snapshot']),Jsonb(template_storage(body.template,existing_record)) if body.template else None))
         conn.execute("UPDATE dc.counsel_request SET status_code='DONE',completed_at=now() WHERE id=%s",(request_id,))
+        from .care7_cycle import annual_status
+        annual_status(conn, row['student_uid'])
         from .counsel_ai import enqueue_refresh
         enqueue_refresh(conn, row, user)
     conn.execute('UPDATE dc.counsel_request SET version=version+1 WHERE id=%s',(request_id,))

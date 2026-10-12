@@ -22,6 +22,14 @@ def current_type(conn, uid):
 
 
 def diagnostic_type(conn, uid):
+    from .care7_cycle import year_start, completed_tests
+    if year_start().year >= 2027:
+        if 'ccore' not in completed_tests(conn, uid):
+            return None
+        result = conn.execute('''SELECT r.payload FROM dc.current_diagnosis_attempt a
+          JOIN dc.diagnosis_result r USING(student_uid,test_id,attempt_no)
+          WHERE a.student_uid=%s AND a.test_id='ccore' AND a.status_code='DONE' ''', (uid,)).fetchone()
+        return CORE_TYPES.get(result['payload'].get('providerTypes', {}).get('overall')) if result else None
     # A new Core opens its follow-up immediately, before the next consultation
     # publishes a final type. Completed earlier cycles keep counseling authority.
     cycle = conn.execute('''SELECT a.payload FROM dc.diagnosis_retake q
@@ -47,6 +55,10 @@ def notify(conn, uid, origin, key, title, route):
 
 def ensure_progress(conn, uid):
     lock_student(conn, uid)
+    from .care7_cycle import year_start, completed_tests
+    if year_start().year >= 2027:
+        if not conn.execute('SELECT 1 FROM dc.care7_annual_access WHERE student_uid=%s AND year=%s', (uid, year_start().year)).fetchone():
+            return
     plan = conn.execute('SELECT version FROM dc.roadmap WHERE student_uid=%s AND confirmed FOR SHARE', (uid,)).fetchone()
     if not plan or current_type(conn, uid) not in ('T1','T2','T3','T4','T6'):
         return
@@ -69,16 +81,20 @@ def ensure_progress(conn, uid):
 
 
 def state(conn, uid):
+    from .care7_cycle import annual_status, completed_tests
+    annual = annual_status(conn, uid)
     ensure_progress(conn, uid)
     requests = conn.execute('''SELECT q.*,p.name AS approver_name FROM dc.diagnosis_retake q
       LEFT JOIN dc.person p ON p.intg_uid=q.approved_by WHERE q.student_uid=%s ORDER BY q.id DESC''', (uid,)).fetchall()
     code = diagnostic_type(conn, uid)
     rule = conn.execute('SELECT lower(follow_up_test) AS test FROM dc.student_type_code WHERE code=%s', (code,)).fetchone()
     followup = rule['test'] if rule else None
-    done = {r['test_id'] for r in conn.execute('SELECT test_id FROM dc.current_diagnosis_attempt WHERE student_uid=%s AND status_code=\'DONE\'', (uid,)).fetchall()}
+    done = set(completed_tests(conn, uid))
     approved = {q['test_id'] for q in requests if q['status'] == 'APPROVED'}
     tests = {'ccore', *([followup] if followup else []), *approved}
     permissions = {test: test in approved or (test not in done and (test == 'ccore' or test == followup and 'ccore' in done)) for test in tests}
+    if annual['renewalRequired'] and 'ccore' not in done:
+        permissions = {test: test == 'ccore' for test in tests}
     guide = None
     core = next((q for q in requests if q['test_id'] == 'ccore' and q['status'] != 'PENDING'), None)
     if core:
@@ -92,7 +108,10 @@ def state(conn, uid):
               (core['completed_attempt_id'], uid)).fetchone():
                 stage = 'roadmap'
             guide = {'stage': stage, 'requestId': core['id']}
-    return {'diagnosticType': code, 'followUpTest': followup, 'permissions': permissions, 'guide': guide,
+    if annual['renewalRequired']:
+        stage = 'core' if not annual['coreDone'] else 'followup' if not annual['followUpDone'] else 'counsel' if not annual['counselDone'] else 'roadmap'
+        guide = {'stage': stage, 'requestId': None, 'annual': True}
+    return {'diagnosticType': code, 'followUpTest': followup, 'permissions': permissions, 'guide': guide, 'annual': annual,
             'requests': [{'id': q['id'], 'testId': q['test_id'], 'status': q['status'], 'source': q['source'],
                           'requestedAt': q['requested_at'], 'approvedAt': q['approved_at'], 'approvedBy': q['approver_name']} for q in requests]}
 
@@ -156,3 +175,23 @@ def complete_permissions(conn, uid, test_id):
       FROM dc.current_diagnosis_attempt a WHERE q.student_uid=%s AND q.test_id=%s
       AND q.status='APPROVED' AND a.student_uid=q.student_uid AND a.test_id=q.test_id
       AND a.status_code='DONE' AND a.started_at>=q.approved_at AND a.completed_at>=q.approved_at''', (uid, test_id))
+
+
+@router.get('/students/{identity}/care7-history')
+def care7_history(identity: str, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    """Previously confirmed plans remain readable; never expose draft/editor notes."""
+    student = student_access(conn, user, identity)
+    uid = student['intg_uid']
+    plans = []
+    row = conn.execute('SELECT * FROM dc.roadmap WHERE student_uid=%s AND confirmed', (uid,)).fetchone()
+    if row:
+        cells = conn.execute('SELECT axis,title,status FROM dc.roadmap_item WHERE student_uid=%s ORDER BY axis,position,id', (uid,)).fetchall()
+        plans.append({'version': row['version'], 'confirmedAt': row['confirmed_at'], 'targetRole': row['target_role'], 'cells': cells})
+    for snapshot in conn.execute('SELECT version,payload FROM dc.roadmap_snapshot WHERE student_uid=%s ORDER BY version DESC', (uid,)).fetchall():
+        payload = snapshot['payload']
+        if payload.get('status') != 'CONFIRMED':
+            continue
+        plans.append({'version': snapshot['version'], 'confirmedAt': payload.get('confirmedAt'),
+                      'targetRole': payload.get('targetRole'),
+                      'cells': [{key: cell.get(key) for key in ('axis', 'title', 'status')} for cell in payload.get('cells', [])]})
+    return {'plans': plans}

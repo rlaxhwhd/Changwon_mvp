@@ -1,4 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { diagnosisRetakes, loadStudentDiagnoses } from '../../shared/diagnosisStore'
+import { getActiveStudent } from '../data/students'
 import GNB from './GNB'
 import ScrollToTop from './ScrollToTop'
 import SiteFooter from './SiteFooter'
@@ -8,13 +11,35 @@ import { IconSprite } from './Icon'
 // 시안 골격 — topbar(sticky) → main(1440px 가운데 정렬) → site-footer.
 // 좌측 사이드바 없음. 푸터는 전 페이지 공통이라 여기 한 곳에만 둔다.
 export default function Layout() {
+  const [, update] = useState(0)
+  const studentId = getActiveStudent().id
+  useEffect(() => {
+    let pending = false
+    let lastAttempt = 0
+    const changed = () => update(n => n + 1)
+    const refresh = () => {
+      const year = Number(new Intl.DateTimeFormat('en', { timeZone: 'Asia/Seoul', year: 'numeric' }).format(new Date()))
+      if (pending || (diagnosisRetakes[studentId]?.annual?.year ?? 0) >= year || Date.now() - lastAttempt < 30_000) return
+      pending = true
+      lastAttempt = Date.now()
+      void loadStudentDiagnoses(studentId).finally(() => { pending = false }).catch(() => {})
+    }
+    const timer = window.setInterval(refresh, 1000)
+    window.addEventListener('focus', refresh)
+    window.addEventListener('dc:diagnosis-updated', changed)
+    return () => {
+      clearInterval(timer)
+      window.removeEventListener('focus', refresh)
+      window.removeEventListener('dc:diagnosis-updated', changed)
+    }
+  }, [studentId])
   const { pathname } = useLocation()
   const section = pathname.startsWith('/diagnosis') ? 'diagnosis'
     : pathname.startsWith('/counsel') ? 'counsel'
       : pathname.startsWith('/roadmap') ? 'roadmap'
         : pathname.startsWith('/growth') ? 'growth'
           : pathname.startsWith('/jobs') ? 'jobs'
-            : pathname.startsWith('/mypage') ? 'mypage'
+            : pathname.startsWith('/mypage') || pathname.startsWith('/records') ? 'mypage'
               : pathname.startsWith('/lounge') ? 'lounge'
                 : 'main'
 

@@ -34,6 +34,8 @@ export function getAttempts(studentId: string): DiagnosisAttempt[] {
 
 /** 해당 검사를 완료했는가. */
 export function isTestDone(studentId: string, testId: string): boolean {
+  const annual = diagnosisRetakes[studentId]?.annual
+  if (annual && annual.year >= 2027 && !annual.completedTests.includes(testId)) return false
   if (diagnosisRetakes[studentId]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')) return false
   return getAttempts(studentId).some(a => a.testId === testId && a.isCurrent !== false && a.status === '완료')
 }
@@ -61,6 +63,7 @@ export function getModuleStatusFor(student: StudentData, module: DiagnosisModule
 /** 게이팅 판정에 먹일 상태를 조립한다. 화면은 이 함수만 부른다. */
 export function getPipelineState(student: StudentData): PipelineState {
   const studentType = getStudentType(student)
+  const annual = diagnosisRetakes[student.id]?.annual
 
   // Completion is determined by persisted attempts, never by the existence of a type.
 
@@ -68,6 +71,8 @@ export function getPipelineState(student: StudentData): PipelineState {
   const followUpModule = followUp ? DIAGNOSIS_MODULES.find(m => m.id === followUp) : undefined
 
   return {
+    menuEligible: annual?.eligible,
+    renewalRequired: annual?.renewalRequired,
     coreDone: isTestDone(student.id, 'ccore'),
     studentType,
     followUpDone: (followUpModule ? isTestDone(student.id, followUpModule.testId) : false),
@@ -80,17 +85,14 @@ export function getPipelineState(student: StudentData): PipelineState {
     //   · 일반 진로취업 상담은 파이프라인 밖이라 몇 번을 받아도 열지 않는다.
     //   · 심리·교수 상담도 마찬가지다(전에는 종류를 안 가려서 심리 상담 1건이
     //     로드맵을 열고 있었다 — 유형 확정도 로드맵 생성도 없는 상담이다).
-    counselDone: getStudentCounselRequests(student.id).some(
+    counselDone: annual && annual.year >= 2027 ? annual.counselDone : getStudentCounselRequests(student.id).some(
       r => r.status === '완료' && r.type === '진로취업' && isCare7(r.careTrack),
     ),
     // 시드 로드맵을 받고 들어온 학생과, 상담사가 방금 만들어 준 학생 둘 다 열려야 한다.
     // 시드만 보면 생성 직후에도 로드맵·역량강화·취업지원이 잠긴 채로 남는다.
     //
-    // ★ 「있다」가 아니라 「확정됐다」를 본다(04-decisions Q1). 초안은 열지 않는다 —
-    //   재생성 중에는 계획이 행으로는 있어도 학생에게 열린 계획이 아니다.
-    //   존재로 판정하면 서버(gates.py)는 거절하는데 화면만 열려, 학생이 잠긴 줄
-    //   모르고 신청까지 갔다가 마지막에 막힌다. 술어는 서버와 한 벌이어야 한다.
-    roadmapConfirmed: hasConfirmedRoadmap(student.id),
+    // 현재 진행 안내용 상태. 이미 획득한 연도별 메뉴 자격은 menuEligible로 별도 유지한다.
+    roadmapConfirmed: annual && annual.year >= 2027 ? annual.roadmapConfirmed : hasConfirmedRoadmap(student.id),
   }
 }
 

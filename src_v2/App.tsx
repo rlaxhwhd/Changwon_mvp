@@ -5,6 +5,7 @@ import Landing from './pages/Landing'
 // 순차 게이팅은 라우트 한 곳에서 건다 — 화면은 자기가 잠겼는지 알 필요가 없다(CLAUDE.md 13조).
 import StageGate from './components/StageGate'
 import Main from './pages/Main'
+import CareerRecords from './pages/CareerRecords'
 
 // AI 커리어 라운지
 import AiLounge from './pages/AiLounge'
@@ -70,6 +71,7 @@ const router = createBrowserRouter(
 
         // AI 커리어 라운지
         { path: '/lounge', element: <AiLounge /> },
+        { path: '/records', element: <CareerRecords /> },
 
         // STAR 트랙 (선발형) — 주 메뉴가 아니라 상단바 STAR 표식으로 들어온다
         { path: '/star', element: <StarTrack /> },
@@ -132,7 +134,7 @@ const router = createBrowserRouter(
         // 마이페이지
         { path: '/mypage',           element: <Navigate to={getActiveStudent().grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'} replace /> },
         { path: '/mypage/portfolio',  element: getActiveStudent().grade >= 4 ? <Portfolio /> : <Navigate to="/growth" replace /> },
-        { path: '/mypage/programs',   element: <StageGate stage="growth" title="비교과 프로그램 현황"><MyPrograms /></StageGate> },
+        { path: '/mypage/programs',   element: <MyPrograms /> },
         { path: '/mypage/programs/:id/survey/:phase', element: <StageGate stage="growth" title="비교과 조사"><ProgramSurvey /></StageGate> },
         { path: '/mypage/applications', element: <MyApplications /> },
         { path: '/mypage/notices',    element: <Navigate to="/jobs/notices" replace /> },

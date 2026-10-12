@@ -4,6 +4,8 @@
 대상 schema: `dc`  
 실행 가능한 DDL 정본: `backend/migrations/*.sql`
 
+2026-10-12 연도별 CARE 7+ 자격(124): `dc.care7_annual_access`는 `(student_uid, year)` 기본키와 학생 FK, 근거 로드맵 버전, 자격 기록 시각을 보관한다. 앱에는 SELECT/INSERT만 허용하며 연중 재진단은 기존 행을 변경하지 않는다. 1월 1일에는 새 연도 행의 유무로 판정하므로 일괄 삭제·스케줄러가 필요 없다. 125는 기존 학생 메뉴 인덱스를 유지하면서 `stu-mypage.4` 기록 메뉴를 추가한다. 복구는 앱을 먼저 되돌리고 추가 테이블의 자격 기록을 보존한다.
+
 이 문서는 ERD, 이름 규칙, DDL 변경 순서를 소유한다. 컬럼의 정확한 type/default/constraint는 migration SQL이 최종 근거다. 스키마를 바꾸는 작업은 migration과 이 문서를 한 커밋에서 함께 갱신한다.
 
 2026-09-30 비교과 공고 연결(110): `program.notice_at`은 예약 공개 시각(`timestamptz`),

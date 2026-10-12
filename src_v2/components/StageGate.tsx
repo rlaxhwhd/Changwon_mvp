@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react'
+import { useEffect, useState, type ReactElement } from 'react'
 import { getStageAccess } from '../data/careerProcess'
 import type { Stage } from '../data/careerProcess'
 import { getPipelineState } from '../data/pipeline'
@@ -22,6 +22,12 @@ export interface StageGateProps {
 }
 
 export default function StageGate({ stage, title, children }: StageGateProps) {
+  const [, update] = useState(0)
+  useEffect(() => {
+    const changed = () => update(value => value + 1)
+    window.addEventListener('dc:diagnosis-updated', changed)
+    return () => window.removeEventListener('dc:diagnosis-updated', changed)
+  }, [])
   const state = getPipelineState(getActiveStudent())
   if (getStageAccess(state)[stage] === 'locked') {
     return <StageLockNotice stage={stage} state={state} title={title} />

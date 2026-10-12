@@ -25,6 +25,8 @@ def sanitized(item):
 def store_results(conn, student, test_id, items):
     uid = student['intg_uid']
     conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))', ('diagnosis:'+uid,))
+    from .care7_cycle import annual_status
+    annual_status(conn, uid)
     imported = updated = unchanged = incomplete = review = 0
     for item in items:
         body = sanitized(item)

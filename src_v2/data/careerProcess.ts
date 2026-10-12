@@ -427,6 +427,9 @@ export const STAGE_LABEL: Record<Stage, string> = {
  * 그 유형이 정해 준 후속진단 Cn 을 한 번 더 봐야 상담이 열린다(PROCESS.md).
  */
 export interface PipelineState {
+  /** 연중 재진단 진행과 별개인 서버의 해당 연도 완료 자격. */
+  menuEligible?: boolean
+  renewalRequired?: boolean
   /** C-CORE 핵심진단 완료 여부 */
   coreDone: boolean
   /** C-CORE 결과로 나온 유형. 없으면 아직 유형이 없다 — 우리가 계산하지 않는다. */
@@ -455,9 +458,9 @@ export function getStageAccess(state: PipelineState): Record<Stage, 'open' | 'lo
     //   것은 진로·취업 상담 화면 안의 「CARE 7+ 연계 상담」 카드 하나뿐이고, 그 잠금은
     //   그 화면이 isDiagnosisDone 으로 직접 판정한다.
     counsel: 'open',
-    roadmap: diagnosisDone && counselDone ? 'open' : 'locked',
-    growth: diagnosisDone && counselDone && roadmapConfirmed ? 'open' : 'locked',
-    employment: diagnosisDone && counselDone && roadmapConfirmed ? 'open' : 'locked',
+    roadmap: state.menuEligible || (!state.renewalRequired && diagnosisDone && counselDone) ? 'open' : 'locked',
+    growth: (state.menuEligible ?? (diagnosisDone && counselDone && roadmapConfirmed)) ? 'open' : 'locked',
+    employment: (state.menuEligible ?? (diagnosisDone && counselDone && roadmapConfirmed)) ? 'open' : 'locked',
   }
 }
 
