@@ -209,6 +209,8 @@
   font-size: var(--fs-body);
   line-height: 1.6;
   font-weight: 500;
+  /* 설명이 한 줄인 카드도 C-CORE(두 줄)와 상단 색 영역 높이가 같도록 두 줄을 확보한다 */
+  min-height: calc(2em * 1.6);
 }
 
 .de-card-image {
