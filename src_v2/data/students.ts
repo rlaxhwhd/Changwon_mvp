@@ -119,6 +119,8 @@ export interface StudentCounselRequest {
   status: CounselRequestStatus
   method: CounselMethod
   topic: string
+  /** CARE 7+ 신청 때 학생이 적은 희망기업(선택). 미입력·다른 트랙은 null. */
+  desiredCompany?: string | null
   /** 신청 일시 (ISO 8601) */
   requestedAt: string
   /** 미지정이면 투영단계에서 유형별 기본배정 파생(counselors 단일소스). 재배정 시 명시값 저장. */

@@ -20,6 +20,8 @@ export interface SubmitCounselInput {
   /** 상담 목적 (CounselReserveModal 입력값) */
   purpose: string
   topicCode?: string
+  /** CARE 7+ 신청의 희망기업(선택). 서버는 다른 트랙에서 받지 않는다. */
+  desiredCompany?: string
   /** 학생이 고른 상담사 id (counselors 단일소스 Counselor.id) — 그 상담사에게 배정된다. */
   counselorId: string
   /** 학생이 고른 희망일 ISO (YYYY-MM-DD, Day.iso) — slot.date */
@@ -74,6 +76,7 @@ async function createRequest(body: object): Promise<void> {
 export async function submitCounselRequest(input: SubmitCounselInput): Promise<void> {
   await createRequest({
     type: input.type, careTrack: input.careTrack, method: '대면', topic: input.purpose, topicCode: input.topicCode,
+    ...(input.desiredCompany ? { desiredCompany: input.desiredCompany } : {}),
     assignedCounselorId: input.counselorId,
     slot: { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place ?? '' },
   })

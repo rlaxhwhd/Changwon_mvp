@@ -130,6 +130,7 @@ function RecordForm({
       <div className="admin-record-topic">
         <LuQuote /> {request.topic}
       </div>
+      {request.desiredCompany && <p className="admin-record-company"><b>희망기업</b> {request.desiredCompany}</p>}
 
       {career ? <>
         {existing?.summary && !existing.template && <details className="admin-editor-hint"><summary>기존 상담내용 확인</summary><p style={{ whiteSpace: 'pre-wrap' }}>{existing.summary}</p><p>기존 기록을 참고해 아래 항목으로 나누어 작성해 주세요.</p></details>}

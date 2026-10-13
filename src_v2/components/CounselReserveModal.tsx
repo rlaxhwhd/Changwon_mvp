@@ -37,6 +37,8 @@ interface Props {
   room: string
   phone: string
   topicOptions?: { code: string; label: string }[]
+  /** 희망기업(선택) 입력칸을 보일지 — CARE 7+ 신청에서만 켠다. */
+  companyInput?: boolean
   /** 신청 완료 안내 — 넘기면 제출 후 이 모달이 완료 화면으로 바뀐다.
    *  이때 부모는 모달을 닫지 않는다(닫으면 완료 화면이 안 보인다). */
   completion?: { title: string; desc: string }
@@ -46,7 +48,7 @@ interface Props {
    * 읽기 모드 — 제출된 신청서를 그대로 보여 준다(상담사가 상담 전에 읽는 화면).
    */
   submitted?: { purpose: string }
-  onSubmit?: (purpose: string, topicCode?: string) => void | Promise<void>
+  onSubmit?: (purpose: string, topicCode?: string, desiredCompany?: string) => void | Promise<void>
 }
 
 export default function CounselReserveModal({
@@ -59,6 +61,7 @@ export default function CounselReserveModal({
   room,
   phone,
   topicOptions,
+  companyInput = false,
   completion,
   student,
   submitted,
@@ -78,20 +81,21 @@ export default function CounselReserveModal({
   const readOnly = Boolean(submitted)
   const [purpose, setPurpose] = useState('')
   const [topicCode, setTopicCode] = useState('')
+  const [desiredCompany, setDesiredCompany] = useState('')
   const [done, setDone] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
 
   const canSubmit = purpose.trim().length > 0 && (!topicOptions || topicOptions.some(topic => topic.code === topicCode))
 
-  const reset = () => { setPurpose(''); setTopicCode(''); setDone(false) }
+  const reset = () => { setPurpose(''); setTopicCode(''); setDesiredCompany(''); setDone(false) }
 
   const handleSubmit = async () => {
     if (!canSubmit || !onSubmit || saving) return
     setSaving(true)
     setSaveError('')
     try {
-      await onSubmit(purpose.trim(), topicCode || undefined)
+      await onSubmit(purpose.trim(), topicCode || undefined, (companyInput && desiredCompany.trim()) || undefined)
       if (completion) setDone(true)
       else reset()
     } catch (error) {
@@ -193,6 +197,14 @@ export default function CounselReserveModal({
           <option value="">상담 주제를 선택하세요</option>
           {topicOptions.map(topic => <option key={topic.code} value={topic.code}>{topic.label}</option>)}
         </select>
+      </div>}
+      {!readOnly && companyInput && <div className="crm-section">
+        <label htmlFor="crm-company" className="crm-section-title">
+          <i className="fa-regular fa-building" /> 희망기업 <span className="crm-optional">(선택)</span>
+        </label>
+        <input id="crm-company" className="crm-textarea crm-input" type="text" maxLength={200} value={desiredCompany}
+          onChange={e => setDesiredCompany(e.target.value)} disabled={saving}
+          placeholder="지원을 생각하는 기업이 있다면 적어 주세요. 예) 한국항공우주산업" />
       </div>}
       <div className="crm-actions">
         {readOnly ? (

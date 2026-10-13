@@ -46,6 +46,8 @@ export interface CounselRequest {
   method: CounselMethod
   /** 신청 사유/주제 */
   topic: string
+  /** CARE 7+ 신청 때 학생이 적은 희망기업(선택) */
+  desiredCompany?: string | null
   /** 신청 일시 (ISO 8601) */
   requestedAt: string
   /** 확정된 상담 슬롯 (확정/완료 시). 대기/취소면 미정. */

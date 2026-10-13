@@ -115,10 +115,13 @@ export default function RoadmapCreatePanel({
   const data = useMemo(
     () => (snap ? deriveSkillTree(snap, student, getStudentCounselRequests(student.id)) : null),
     [snap, student])
+  // 기록 저장은 상담 스토어를 다시 읽고 dc:counsel-updated 를 낸다. 그 신호에 묶지 않으면
+  // 같은 화면에서 방금 저장한 코멘트가 생성 재료에 안 보인다(다른 화면을 다녀와야 보였다).
+  const counselRevision = useStore('dc:counsel-updated')
   // 코멘트를 아직 안 쓴 회차가 섞이므로 '코멘트가 있는' 최신 1건을 고른다.
   const lastComment = useMemo(
     () => getRecordsByStudent(student.id).find(r => r.comment?.trim()),
-    [student.id],
+    [student.id, counselRevision],
   )
   const capability = roadmapEnvelope(student.id)?.capabilities
   const canGenerate = regenerate ? capability?.canRegenerate : capability?.canGenerate
@@ -126,7 +129,6 @@ export default function RoadmapCreatePanel({
   // 근거로 요구하므로 여기서 어느 상담인지 고른다 — 근거 없이는 생성할 수 없다.
   // 첫 로드맵은 **완료된** 상담에서만 난다(상담 완료 → 생성 → 확정). 재생성은 확정된
   // 재상담에서도 미리 만들 수 있고, 그 상담의 완료가 초안을 함께 확정한다.
-  const counselRevision = useStore('dc:counsel-updated')
   const basisRequest = useMemo(
     () => getStudentCounselRequests(student.id)
       .filter(request => (counselRequestId ? request.id === counselRequestId : request.assignedCounselorId === getActiveCounselorId())
@@ -139,6 +141,18 @@ export default function RoadmapCreatePanel({
   const [generateError, setGenerateError] = useState('')
   const [aiEvidence, setAiEvidence] = useState<{ aiJournal: string; diagnosisComments: string[] } | null>(null)
   const [evidenceError, setEvidenceError] = useState('')
+  // AI 분석은 진단 코멘트 여러 건 + AI 상담일지라 길다 — 10줄만 보이고 펼쳐서 본다.
+  const analysisText = aiEvidence
+    ? [...aiEvidence.diagnosisComments, aiEvidence.aiJournal].filter(Boolean).join('\n\n') || '저장된 진단 코멘트와 AI 상담일지가 없습니다.'
+    : '저장된 AI 분석 자료를 확인하고 있습니다.'
+  const analysisRef = useRef<HTMLParagraphElement>(null)
+  const [analysisOpen, setAnalysisOpen] = useState(false)
+  const [analysisLong, setAnalysisLong] = useState(false)
+  useEffect(() => {
+    const el = analysisRef.current
+    if (!el || analysisOpen) return
+    setAnalysisLong(el.scrollHeight > el.clientHeight + 1)
+  }, [analysisText, analysisOpen, open])
   useEffect(() => {
     if (!open || !basisRequest) return
     const abort = new AbortController()
@@ -243,7 +257,13 @@ export default function RoadmapCreatePanel({
             <section className="air-analysis">
               <h4>AI 분석</h4>
               {evidenceError && <p role="alert">{evidenceError}</p>}
-              <p style={{ whiteSpace: 'pre-wrap' }}>{aiEvidence ? [...aiEvidence.diagnosisComments, aiEvidence.aiJournal].filter(Boolean).join('\n\n') || '저장된 진단 코멘트와 AI 상담일지가 없습니다.' : '저장된 AI 분석 자료를 확인하고 있습니다.'}</p>
+              <p ref={analysisRef} id="rcp-ai-analysis" className={`air-analysis-text${analysisOpen ? '' : ' is-clamped'}`}>{analysisText}</p>
+              {(analysisLong || analysisOpen) && (
+                <button type="button" className="air-analysis-more" aria-expanded={analysisOpen} aria-controls="rcp-ai-analysis"
+                  onClick={() => setAnalysisOpen(value => !value)}>
+                  {analysisOpen ? '접기' : '펼쳐 보기'}
+                </button>
+              )}
               {/* 대표 역량이 없으면(점수 0인 신입생) 줄을 긋지 않는다 — 빈 구분선만 남는다. */}
               {getHeadlineCompetency(student).length > 0 && (
               <ul className="air-checks">

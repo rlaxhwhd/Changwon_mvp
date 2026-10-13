@@ -1098,6 +1098,8 @@ input, textarea, select { font-family: var(--font); }
   font-size: 14px; font-weight: 700; color: var(--color-text);
 }
 .admin-record-topic svg { color: var(--color-primary); margin-right: 6px; }
+.admin-record-company { margin: 8px 2px 0; font-size: 13px; color: var(--color-text); overflow-wrap: anywhere; }
+.admin-record-company b { margin-right: 8px; color: var(--color-text-secondary); font-weight: 700; }
 
 /* ─── 상담일지 대장 ──────────────────────────────────────────────────── */
 .admin-journal-roster { overflow-x: auto; }

@@ -385,13 +385,15 @@ export default function CareerCounsel() {
         room="학생회관 2층 진로취업상담실"
         phone="055-213-3214"
         topicOptions={track === 'care7' ? currentType ? getTopicsForType(currentType) : [] : undefined}
+        companyInput={track === 'care7'}
         completion={{
           title: '상담 신청이 완료되었습니다',
           desc: '상담사가 신청 내용을 확인한 뒤 일정을 확정합니다. 확정 결과는 마이페이지 상담현황에서 볼 수 있습니다.',
         }}
-        onSubmit={async (purpose, topicCode) => {
+        onSubmit={async (purpose, topicCode, desiredCompany) => {
           await submitCounselRequest({
             topicCode,
+            desiredCompany,
             type: '진로취업',
             careTrack: track,
             purpose,

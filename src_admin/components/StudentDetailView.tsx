@@ -1038,7 +1038,6 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
       {activeTab === 'diagnosis' && <DiagnosisTab student={student} />}
       {activeTab === 'counsel' && <CounselTab studentId={student.id} />}
       {activeTab === 'roadmap' && <RoadmapTab student={student} canEdit={canEdit} counselRequestId={counselRequestId} />}
-      {activeTab === 'roadmap' && <AiCommentCard studentId={student.id} kind="roadmap" />}
       {activeTab === 'program' && <ProgramTab studentId={student.id} academicRecords={academicData?.programs} />}
       {activeTab === 'gap' && <GapTab student={student} radar={radar} />}
       {activeTab === 'growth' && <GrowthTab student={student} />}

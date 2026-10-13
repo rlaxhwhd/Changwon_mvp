@@ -59,6 +59,7 @@ export function getCounselRequests(): CounselRequest[] {
         status: r.status,
         method: r.method,
         topic: r.topic,
+        desiredCompany: r.desiredCompany ?? null,
         requestedAt: r.requestedAt,
         slot: r.slot,
         assignedCounselorId: r.assignedCounselorId ?? defaultAssigneeFor(type),

@@ -707,6 +707,7 @@ DB로 바꿀 때 **화면을 한 줄도 고치지 않는 것**이 이 seam의 �
 | `method` | `ON_OFF_TTYPE` | 대면/비대면 |
 | `topic` | `CONSULTTITLE` | 상담 제목 |
 | `careerTopicCodes` | — | 해당 유형의 4개 주제 코드 (`A01`~`A24`, §7-10). **`careTrack='care7'`에만 적용** — 일반 상담은 자유 입력(`topic`), 심리·교수상담은 해당 없음 |
+| `desiredCompany` | — | 학생이 신청 때 적은 **희망기업(선택, 200자)**. `dc.counsel_request.desired_company`(126). **`careTrack='care7'`에서만 받는다** — 다른 트랙은 422. 비우면 NULL. 상담 접수함 처리 팝업·상담 진행 화면에 표시 <span>(2026-10-13)</span> |
 | `finalStudentType` | — | C-CORE 결과와 후속진단을 바탕으로 상담 중 최종 확정한 6유형. **`care7`에만 적용** — 일반 상담은 유형을 확정하지 않는다 |
 | `roadmapId` | — | 같은 오프라인 상담에서 생성한 확정 로드맵. **`care7` 완료 시 필수** — 일반 상담에서는 로드맵을 만들지 않으므로 항상 비어 있다 |
 | `requestBody` | `CONSULTINFO` | 학생이 쓴 신청 내용 |

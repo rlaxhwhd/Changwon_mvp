@@ -50,6 +50,8 @@ class CreateRequest(BaseModel):
     assignedProfessorId: str | None=None
     slot: Slot | None=None
     intake: list[IntakeAnswer]=Field(default_factory=list,max_length=30)
+    # CARE 7+ 신청에서만 받는 선택 입력. 빈 문자열은 미입력으로 본다.
+    desiredCompany: str | None=Field(default=None,max_length=200)
 
 
 class Action(BaseModel):
@@ -99,7 +101,8 @@ def dto(row):
             'studentStatus':row['snapshot'].get('enrollmentStatus','재학'),
             'type':row['legacy_type'],'typeCode':row['type_code'],'careTrack':row['care_track'],
             'status':LABELS[row['status_code']],'method':'비대면' if row['method_code']=='ONLINE' else '대면',
-            'topic':row['topic'],'topicCode':row['topic_code'],'requestedAt':row['requested_at'].isoformat(),'version':row['version']}
+            'topic':row['topic'],'topicCode':row['topic_code'],'desiredCompany':row.get('desired_company'),
+            'requestedAt':row['requested_at'].isoformat(),'version':row['version']}
     if row['counselor_alias']:
         result['professorId' if row['type_code']=='PROF' else 'assignedCounselorId']=row['counselor_alias']
     # 교수 발의 기록(origin=PROF_RECORD)은 상담일만 있고 예약 시각이 없다.
@@ -206,6 +209,9 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
             raise HTTPException(422,'사용 가능한 진로 상담 주제를 선택해 주세요.')
         if current_type and topic['payload'].get('type')!=current_type['code']:
             raise HTTPException(422,'현재 학생 유형에 해당하는 상담 주제를 선택해 주세요.')
+    desired_company=(body.desiredCompany or '').strip() or None
+    if desired_company and body.careTrack!='care7':
+        raise HTTPException(422,'희망기업은 CARE 7+ 상담 신청에서만 입력할 수 있습니다.')
     allowed={'진로취업':{'CAREER','JOB',None},'심리':{'PSY',None},'교수':{'PROF',None}}
     if body.typeCode not in allowed[body.type]:
         raise HTTPException(422,'상담 종류 코드가 일치하지 않습니다.')
@@ -223,12 +229,12 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
         snapshot['topicLabel']=topic['label']
     request_id=str(uuid4())
     conn.execute('''INSERT INTO dc.counsel_request(id,student_uid,counselor_uid,type_code,legacy_type,care_track,status_code,
-      method_code,topic,topic_code,requested_at,slot_date,slot_start,slot_end,place,intake,snapshot,source_payload)
-      VALUES (%s,%s,%s,%s,%s,%s,'REQ',%s,%s,%s,now(),%s,%s,%s,%s,%s,%s,%s)''',
+      method_code,topic,topic_code,requested_at,slot_date,slot_start,slot_end,place,intake,snapshot,source_payload,desired_company)
+      VALUES (%s,%s,%s,%s,%s,%s,'REQ',%s,%s,%s,now(),%s,%s,%s,%s,%s,%s,%s,%s)''',
       (request_id,user['intg_uid'],assignee['intg_uid'],body.typeCode or COUNSEL_TYPE_CODE[body.type],body.type,body.careTrack,
        'ONLINE' if body.method=='비대면' else 'OFFLINE',body.topic,body.topicCode,body.slot.date if body.slot else None,
        body.slot.start if body.slot else None,body.slot.end if body.slot else None,body.slot.place if body.slot else None,
-       Jsonb([a.model_dump() for a in body.intake]),Jsonb(snapshot),Jsonb(body.model_dump(mode='json'))))
+       Jsonb([a.model_dump() for a in body.intake]),Jsonb(snapshot),Jsonb(body.model_dump(mode='json')),desired_company))
     conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',(request_id,user['intg_uid'],'REQUESTED',Jsonb({})))
     result=dto(get_request(conn,user,request_id))
     conn.execute('INSERT INTO dc.idempotency(actor_uid,route,key,request_hash,response) VALUES (%s,%s,%s,%s,%s)',
