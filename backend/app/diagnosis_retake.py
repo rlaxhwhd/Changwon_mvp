@@ -1,5 +1,7 @@
 """Persistent retest permissions and the roadmap → diagnosis → counsel cycle."""
 from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, ConfigDict
+from typing import Literal
 from .auth import principal, student_access, is_counselor
 from .db import connection
 from .hrtest import CORE_TYPES, LAUNCH_URLS
@@ -116,22 +118,31 @@ def state(conn, uid):
                           'requestedAt': q['requested_at'], 'approvedAt': q['approved_at'], 'approvedBy': q['approver_name']} for q in requests]}
 
 
+class RetakeRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    testId: Literal['ccore', 'c1', 'c2', 'c3', 'c4', 'c5', 'c6'] = 'ccore'
+
+
 @router.post('/diagnosis/retake-request', status_code=201)
-def request_retake(user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+def request_retake(body: RetakeRequest | None = None, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
     if user['kind'] != 'STUDENT':
         raise HTTPException(403, '학생 본인만 요청할 수 있습니다.')
     uid = user['intg_uid']
+    test_id = body.testId if body else 'ccore'
     lock_student(conn, uid)
     ensure_progress(conn, uid)
-    if not conn.execute("SELECT 1 FROM dc.diagnosis_attempt WHERE student_uid=%s AND test_id='ccore' AND status_code='DONE'", (uid,)).fetchone():
-        raise HTTPException(409, '첫 C-CORE 진단을 먼저 완료해 주세요.')
+    if not conn.execute('''SELECT 1 FROM dc.diagnosis_attempt WHERE student_uid=%s AND test_id=%s
+      AND (status_code='DONE' OR (%s AND status_code IN ('REVIEW','INCOMPLETE')))''',
+      (uid, test_id, test_id != 'ccore')).fetchone():
+        raise HTTPException(409, '첫 C-CORE 진단을 먼저 완료해 주세요.' if test_id == 'ccore' else '응시 이력이 있는 진단만 재검사를 요청할 수 있습니다.')
     row = conn.execute('''INSERT INTO dc.diagnosis_retake(student_uid,test_id,roadmap_version,source,status)
-      VALUES(%s,'ccore',(SELECT version FROM dc.roadmap WHERE student_uid=%s),'STUDENT','PENDING')
-      ON CONFLICT DO NOTHING RETURNING id''', (uid, uid)).fetchone()
+      VALUES(%s,%s,(SELECT version FROM dc.roadmap WHERE student_uid=%s),'STUDENT','PENDING')
+      ON CONFLICT DO NOTHING RETURNING id''', (uid, test_id, uid)).fetchone()
     if row:
         counselors = conn.execute("SELECT intg_uid FROM dc.staff WHERE role_code IN ('career','psych')").fetchall()
         for counselor in counselors:
-            notify(conn, counselor['intg_uid'], 'diagnosis-request', row['id'], '진단유형 재검사 요청이 접수되었습니다', '/diagnosis/manage')
+            title = '진단유형 재검사 요청이 접수되었습니다' if test_id == 'ccore' else f'C-{test_id[1:]} 재검사 요청이 접수되었습니다'
+            notify(conn, counselor['intg_uid'], 'diagnosis-request', row['id'], title, '/diagnosis/manage')
     return state(conn, uid)
 
 

@@ -14,6 +14,7 @@ import AiProgressModal from '../../../shared/AiProgressModal'
 import { externalDiagnosisLinks, diagnosisAttempts, diagnosisRetakes, loadStudentDiagnoses } from '../../../shared/diagnosisStore'
 import { api } from '../../../shared/api'
 import NextStepBanner from '../../components/NextStepBanner'
+import DiagnosisStartButton from '../../components/DiagnosisStartButton'
 import { getActiveStudent } from '../../data/students'
 import './EmploymentTest.css'
 import './DiagnosisProcess.css'
@@ -90,13 +91,13 @@ export default function DiagnosisResult() {
   }, [])
   const retake = diagnosisRetakes[student.id]
   const coreRequest = retake?.requests.find(q => q.testId === 'ccore' && q.status !== 'COMPLETED')
-  async function requestRetake() {
+  async function requestRetake(testId = 'ccore') {
     if (requesting) return
     setRequesting(true); setAiError('')
     try {
-      await api('/diagnosis/retake-request', { method: 'POST' })
+      await api('/diagnosis/retake-request', { method: 'POST', body: JSON.stringify({ testId }) })
       await loadStudentDiagnoses(student.id)
-      setRequestNotice('재검사 요청이 접수되었습니다. 상담사가 확인 후 승인합니다.')
+      setRequestNotice(`${getModuleByTestId(testId)?.name ?? testId} 재검사 요청이 접수되었습니다. 상담사가 확인 후 승인합니다.`)
     } catch (e) { setAiError(e instanceof Error ? e.message : '요청하지 못했습니다.') }
     finally { setRequesting(false) }
   }
@@ -290,11 +291,12 @@ export default function DiagnosisResult() {
             </div>
 
             <div className="de-card-actions">
-              <button className="de-start-btn" type="button"
-                disabled={evaluating || result.status === 'locked' || !externalDiagnosisLinks[result.testId] || !retake?.permissions[result.testId]}
-                onClick={() => void launchTest(result.testId)}>
-                검사시작 <i className="fa-solid fa-arrow-up-right-from-square" aria-label="새 탭" />
-              </button>
+              <DiagnosisStartButton testId={result.testId}
+                canStart={result.status !== 'locked' && !!externalDiagnosisLinks[result.testId] && !!retake?.permissions[result.testId]}
+                retestRequired={result.status !== 'locked' && !!externalDiagnosisLinks[result.testId]
+                  && !!retake && !retake.permissions[result.testId] && diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.status === '완료')}
+                pending={retake?.requests.some(q => q.testId === result.testId && q.status === 'PENDING') ?? false} busy={evaluating || requesting}
+                onStart={() => void launchTest(result.testId)} onRequest={() => void requestRetake(result.testId)} />
               <button type="button"
                 className={`de-start-btn${checks[checkKey(result.testId)]?.state === 'missing' || result.status === 'locked' ? ' de-result-locked' : ''}`}
                 disabled={evaluating || result.status === 'locked' || !checks[checkKey(result.testId)] || checks[checkKey(result.testId)].state === 'missing'}

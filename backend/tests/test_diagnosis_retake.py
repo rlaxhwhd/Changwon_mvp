@@ -94,26 +94,61 @@ def test_t5_no_automatic_grant_and_first_attempt_no_request(client, db):
     assert client.post('/api/v1/diagnosis/retake-request', headers=headers('jiwoo')).status_code == 409
 
 
-def test_concurrent_requests_and_approvals_are_single_use(client):
+@pytest.mark.parametrize('test_id', ['ccore', 'c3'])
+def test_concurrent_requests_and_approvals_are_single_use(client, test_id):
     uid = 'retake-' + uuid4().hex
     with pool.connection() as conn:
         conn.execute("INSERT INTO dc.person(intg_uid,alias,name,kind,source) VALUES(%s,%s,'Retake concurrency fixture','STUDENT','fixture')", (uid, uid))
         conn.execute("INSERT INTO dc.student(intg_uid,student_no,major_label,grade) VALUES(%s,%s,'Test',1)", (uid, uuid4().hex[:18]))
-        conn.execute("INSERT INTO dc.diagnosis_attempt(id,student_uid,test_id,attempt_no,status_code,started_at,completed_at,payload) VALUES(%s,%s,'ccore',1,'DONE',now(),now(),'{}')", (uuid4().hex, uid))
+        conn.execute("INSERT INTO dc.diagnosis_attempt(id,student_uid,test_id,attempt_no,status_code,started_at,completed_at,payload) VALUES(%s,%s,%s,1,'DONE',now(),now(),'{}')", (uuid4().hex, uid, test_id))
     def request(_):
-        return client.post('/api/v1/diagnosis/retake-request', headers=headers(uid))
+        return client.post('/api/v1/diagnosis/retake-request', headers=headers(uid),
+                           **({'json': {'testId': test_id}} if test_id != 'ccore' else {}))
     with ThreadPoolExecutor(max_workers=2) as executor:
         responses = list(executor.map(request, range(2)))
     assert all(r.status_code == 201 for r in responses)
     assert responses[0].json()['requests'][0]['id'] == responses[1].json()['requests'][0]['id']
     def approve(actor):
-        return client.post(f'/api/v1/diagnosis/students/{uid}/retakes/ccore', headers=headers(actor))
+        return client.post(f'/api/v1/diagnosis/students/{uid}/retakes/{test_id}', headers=headers(actor))
     with ThreadPoolExecutor(max_workers=2) as executor:
         responses = list(executor.map(approve, ('career_kim', 'psych_lee')))
     assert all(r.status_code == 200 for r in responses)
     with pool.connection() as conn:
         assert conn.execute('SELECT count(*) AS n FROM dc.diagnosis_retake WHERE student_uid=%s', (uid,)).fetchone()['n'] == 1
         assert conn.execute("SELECT count(*) AS n FROM dc.notification WHERE recipient_uid=%s AND source_kind='diagnosis-approved'", (uid,)).fetchone()['n'] == 1
+
+
+def test_followup_request_approval_and_completion_preserve_other_tests(client, db):
+    who = student(db)
+    uid = who['intg_uid']
+    result(db, who, test='c3')
+    assert not state(db, uid)['permissions']['c3']
+    first = client.post('/api/v1/diagnosis/retake-request', headers=headers('chaewon'), json={'testId': 'c3'})
+    assert first.status_code == 201, first.text
+    request = next(q for q in first.json()['requests'] if q['testId'] == 'c3')
+    assert request['status'] == 'PENDING'
+    assert not any(q['testId'] == 'ccore' for q in first.json()['requests'])
+    assert first.json()['annual']['eligible']
+    second = client.post('/api/v1/diagnosis/retake-request', headers=headers('chaewon'), json={'testId': 'c3'})
+    assert next(q['id'] for q in second.json()['requests'] if q['testId'] == 'c3') == request['id']
+    notices = db.execute("SELECT title FROM dc.notification WHERE source_kind='diagnosis-request' AND source_id=%s", (str(request['id']),)).fetchall()
+    assert len(notices) == 8 and all('C-3' in row['title'] for row in notices)
+    assert client.post('/api/v1/diagnosis/external/c3/launch', headers=headers('chaewon')).status_code == 403
+    approved = client.post('/api/v1/diagnosis/students/chaewon/retakes/c3', headers=headers('career_park'))
+    assert approved.status_code == 200 and approved.json()['permissions']['c3']
+    assert client.post('/api/v1/diagnosis/external/c3/launch', headers=headers('chaewon')).status_code == 200
+    result(db, who, test='c3', future=True)
+    data = state(db, uid)
+    assert next(q['status'] for q in data['requests'] if q['testId'] == 'c3') == 'COMPLETED'
+    assert not data['permissions']['c3'] and data['annual']['eligible']
+
+
+def test_followup_request_validation_and_student_only(client, db):
+    url = '/api/v1/diagnosis/retake-request'
+    assert client.post(url, headers=headers('career_kim'), json={'testId': 'c3'}).status_code == 403
+    assert client.post(url, headers=headers('chaewon'), json={'testId': 'unknown'}).status_code == 422
+    assert client.post(url, headers=headers('chaewon'), json={'testId': 'c3', 'studentId': 'jiwoo'}).status_code == 422
+    assert client.post(url, headers=headers('jiwoo'), json={'testId': 'c3'}).status_code == 409
 
 
 def test_diagnosed_roster_and_metadata_use_same_filter(client, db):
