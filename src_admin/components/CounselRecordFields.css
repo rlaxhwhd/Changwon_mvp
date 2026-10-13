@@ -1,4 +1,5 @@
-.counsel-template { border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 18px; color: var(--admin-text, #243247); }
+/* 기록지는 상담 진행 우측 380px 패널처럼 좁은 칸에도 들어간다 — 뷰포트가 아니라 자기 폭으로 배치를 고른다 */
+.counsel-template { container-type: inline-size; border: 0; padding: 0; margin: 0; min-width: 0; display: grid; gap: 18px; color: var(--admin-text, #243247); }
 .counsel-template-sr { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
 .counsel-template-meta, .counsel-template-type, .counsel-template-notes, .counsel-template-content { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 16px; }
 .counsel-template-meta { align-items: start; }
@@ -46,5 +47,11 @@
 .counsel-record-preview-block { margin-top: 20px; }
 .counsel-record-preview-block h3 { font-size: 14px; }
 .counsel-record-preview-block p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; line-height: 1.7; }
-@media (max-width: 1100px) { .admin-session-right .counsel-template-meta, .admin-session-right .counsel-template-notes, .admin-session-right .counsel-template-ratings { grid-template-columns: 1fr; } }
+@container (max-width: 560px) {
+  .counsel-template-meta, .counsel-template-type, .counsel-template-notes, .counsel-template-ratings, .counsel-template-content { grid-template-columns: 1fr; }
+  .counsel-template-ratings { gap: 10px; }
+  .counsel-template-rating legend { white-space: nowrap; }
+  .counsel-template-ai-footer { flex-wrap: wrap; gap: 8px 12px; }
+  .counsel-template-ai-footer > :last-child { margin-left: auto; }
+}
 @media (max-width: 600px) { .counsel-template-meta, .counsel-template-type, .counsel-template-notes, .counsel-template-ratings, .counsel-template-content { grid-template-columns: 1fr; } .counsel-template-card { padding: 14px; } }
