@@ -51,6 +51,13 @@ def test_register_dry_run_login_profile_and_empty_history(client, number):
     head = {**headers(number), 'X-DC-Portal': 'student'}
     login = client.post('/api/v1/auth/student/login', headers=head, json={'studentNo': number, 'password': '!'})
     assert login.status_code == 200, login.text
+    bootstrap = client.get('/api/v1/bootstrap/profiles', headers=head)
+    assert bootstrap.status_code == 200, bootstrap.text
+    boot = bootstrap.json()
+    assert [row['id'] for row in boot['students']] == [number]
+    assert boot['students'][0]['grade'] == 3
+    assert boot['students'][0]['phases'] == []
+    assert boot['counselOwners'] == []
     profile = client.get(f'/api/v1/students/{number}', headers=head)
     assert profile.status_code == 200, profile.text
     data = profile.json()

@@ -97,7 +97,9 @@ def profiles(user=Depends(principal,scope='function'),conn=Depends(connection,sc
     owners=[]
     for row in rows:
         data=profile(conn,row)
-        if 'phases' in (row['detail'] or {}) or row['detail'] is None:
+        # The signed-in student's bootstrap must include their own full profile,
+        # even when optional detail contains only academic fields and no history.
+        if user['kind']=='STUDENT' or 'phases' in (row['detail'] or {}) or row['detail'] is None:
             students.append(data)
         else:
             owners.append(data)
