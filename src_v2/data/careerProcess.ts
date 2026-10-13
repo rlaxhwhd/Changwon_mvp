@@ -395,6 +395,13 @@ export function getRequiredTests(type?: StudentType | null): DiagnosisModule[] {
   return followUp ? [core, followUp] : [core]
 }
 
+/** 표시 목록은 현재 필수 검사와 과거 이력을 합친다. 응시 대상 판정과 구분한다. */
+export function getVisibleDiagnosisModules(type: StudentType | null, recordedTestIds: Iterable<string>): DiagnosisModule[] {
+  const required = getRequiredTests(type)
+  const ids = new Set(recordedTestIds)
+  return [...required, ...DIAGNOSIS_MODULES.filter(m => ids.has(m.testId) && !required.some(r => r.testId === m.testId))]
+}
+
 /** 모듈 진행 상태: 완료시각이 있으면 done, 선행검사가 모두 done이면 available, 아니면 locked */
 export function getModuleStatus(
   module: DiagnosisModule,

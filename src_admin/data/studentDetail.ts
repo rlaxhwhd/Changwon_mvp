@@ -14,7 +14,7 @@ import type { StudentStat } from '../../src_v2/components/StudentStatCards'
 import { getCompetencyAxes, getCompetencyOverall } from '../../src_v2/data/competency'
 import type { CompetencyAxisView } from '../../src_v2/data/competency'
 import {
-  DIAGNOSIS_MODULES, getRequiredTests, buildCareerJourney,
+  getVisibleDiagnosisModules, buildCareerJourney,
   type CareerJourney, type DiagnosisModule, type StudentType,
 } from '../../src_v2/data/careerProcess'
 import { getPipelineState } from '../../src_v2/data/pipeline'
@@ -87,7 +87,7 @@ const TEST_TINT: Record<string, string> = {
 
 /**
  * 학생이 봐야 할 검사 목록 × 응시 이력 병합.
- * 대상 검사는 getRequiredTests(유형) — CCORE + 그 유형의 후속진단만. 전체 7종을 늘어놓지 않는다.
+ * 현재 필수 검사와 과거 응시 이력을 함께 표시한다.
  */
 export function getDiagnosisCards(studentId: string, type: StudentType | null): DiagnosisCard[] {
   const attempts = getAttemptsByStudent(studentId)
@@ -97,8 +97,7 @@ export function getDiagnosisCards(studentId: string, type: StudentType | null): 
     if (!prev || a.attemptNo > prev.attemptNo) latest.set(a.testId, a)
   }
 
-  const required = getRequiredTests(type)
-  const modules = required.length > 0 ? required : DIAGNOSIS_MODULES.filter(m => m.id === 'CCORE')
+  const modules = getVisibleDiagnosisModules(type, latest.keys())
 
   return modules.map(module => {
     const a = latest.get(module.testId)

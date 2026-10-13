@@ -100,6 +100,7 @@ def test_concurrent_requests_and_approvals_are_single_use(client, test_id):
     with pool.connection() as conn:
         conn.execute("INSERT INTO dc.person(intg_uid,alias,name,kind,source) VALUES(%s,%s,'Retake concurrency fixture','STUDENT','fixture')", (uid, uid))
         conn.execute("INSERT INTO dc.student(intg_uid,student_no,major_label,grade) VALUES(%s,%s,'Test',1)", (uid, uuid4().hex[:18]))
+        conn.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source) VALUES(%s,'T3','counsel')", (uid,))
         conn.execute("INSERT INTO dc.diagnosis_attempt(id,student_uid,test_id,attempt_no,status_code,started_at,completed_at,payload) VALUES(%s,%s,%s,1,'DONE',now(),now(),'{}')", (uuid4().hex, uid, test_id))
     def request(_):
         return client.post('/api/v1/diagnosis/retake-request', headers=headers(uid),
@@ -141,6 +142,21 @@ def test_followup_request_approval_and_completion_preserve_other_tests(client, d
     data = state(db, uid)
     assert next(q['status'] for q in data['requests'] if q['testId'] == 'c3') == 'COMPLETED'
     assert not data['permissions']['c3'] and data['annual']['eligible']
+
+
+def test_old_followup_remains_readable_but_student_cannot_request_after_type_change(client, db):
+    who = student(db)
+    uid = who['intg_uid']
+    result(db, who, test='c3')
+    db.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source) VALUES(%s,'T4','counsel')", (uid,))
+    response = client.get('/api/v1/diagnosis/students/chaewon', headers=headers('chaewon'))
+    assert response.status_code == 200
+    assert any(r['testId'] == 'c3' for r in response.json()['results'])
+    assert response.json()['retake']['followUpTest'] == 'c4'
+    assert client.post('/api/v1/diagnosis/retake-request', headers=headers('chaewon'), json={'testId': 'c3'}).status_code == 409
+    assert client.post('/api/v1/diagnosis/external/c3/launch', headers=headers('chaewon')).status_code == 403
+    result(db, who, test='c4')
+    assert client.post('/api/v1/diagnosis/retake-request', headers=headers('chaewon'), json={'testId': 'c4'}).status_code == 201
 
 
 def test_followup_request_validation_and_student_only(client, db):

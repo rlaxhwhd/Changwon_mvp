@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import {
   getRequiredTests,
+  getVisibleDiagnosisModules,
   getModuleByTestId,
   typeLabel,
   type TestStatus,
@@ -126,12 +127,14 @@ export default function DiagnosisResult() {
   }
   // 유형은 시드가 아니라 파이프라인이 준다 — C-CORE 를 마치며 주입된 값이 여기로 들어온다.
   const studentType = getStudentType(student)
-  // 응시 대상 = 필수진단 CCORE + 내 유형의 후속진단 1종 (PROCESS.md §3)
-  // 학년으로 배정하지 않는다. 전 모듈을 나열하지도 않는다.
+  // 과거 이력은 표시하되 현재 필수 검사와 응시 권한을 구분한다.
   const required = getRequiredTests(studentType)
-  const extra = (retake?.requests ?? []).filter(q => q.status === 'APPROVED' && !required.some(m => m.testId === q.testId))
-    .map(q => getModuleByTestId(q.testId)).filter((m): m is NonNullable<typeof m> => !!m)
-  const modulesWithStatus = [...required, ...extra].map(m => ({ ...m, status: getModuleStatusFor(student, m) }))
+  const approved = (retake?.requests ?? []).filter(q => q.status === 'APPROVED').map(q => q.testId)
+  const modulesWithStatus = getVisibleDiagnosisModules(studentType, [
+    ...diagnosisAttempts.filter(a => a.studentId === student.id).map(a => a.testId),
+    ...getResultsByStudent(student.id).map(r => r.testId), ...approved,
+  ]).map(m => ({ ...m, historyOnly: !required.some(r => r.testId === m.testId) && !approved.includes(m.testId),
+    status: getModuleStatusFor(student, m) }))
   const doneCount = modulesWithStatus.filter(m => m.status === 'done').length
   const availableCount = modulesWithStatus.filter(m => m.status === 'available').length
   const lockedCount = modulesWithStatus.filter(m => m.status === 'locked').length
@@ -139,7 +142,7 @@ export default function DiagnosisResult() {
   const [checks, setChecks] = useState<Record<string, ResultCheck>>({})
   const pendingChecks = useRef<Partial<Record<string, Promise<ResultCheck>>>>({})
   const checkKey = (testId: string) => `${student.id}:${testId}:${retake?.requests.find(q => q.testId === testId && q.status === 'APPROVED')?.id ?? 'stored'}`
-  const targets = retake ? modulesWithStatus.filter(m => m.status !== 'locked').map(m => checkKey(m.testId)).join('|') : ''
+  const targets = retake ? modulesWithStatus.filter(m => m.historyOnly || m.status !== 'locked').map(m => checkKey(m.testId)).join('|') : ''
   useEffect(() => {
     let cancelled = false
     let running = false
@@ -286,22 +289,22 @@ export default function DiagnosisResult() {
 
             <div className="de-card-actions">
               <DiagnosisStartButton testId={result.testId}
-                canStart={result.status !== 'locked' && !!externalDiagnosisLinks[result.testId] && !!retake?.permissions[result.testId]}
-                retestRequired={result.status !== 'locked' && !!externalDiagnosisLinks[result.testId]
+                canStart={!result.historyOnly && result.status !== 'locked' && !!externalDiagnosisLinks[result.testId] && !!retake?.permissions[result.testId]}
+                retestRequired={!result.historyOnly && result.status !== 'locked' && !!externalDiagnosisLinks[result.testId]
                   && !!retake && !retake.permissions[result.testId] && diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.status === '완료')}
                 pending={retake?.requests.some(q => q.testId === result.testId && q.status === 'PENDING') ?? false} busy={evaluating || requesting}
                 onStart={() => void launchTest(result.testId)} onRequest={() => void requestRetake(result.testId)} />
               <button type="button"
-                className={`de-start-btn${checks[checkKey(result.testId)]?.state === 'missing' || result.status === 'locked' ? ' de-result-locked' : ''}`}
-                disabled={evaluating || result.status === 'locked' || !checks[checkKey(result.testId)] || checks[checkKey(result.testId)].state === 'missing'}
+                className={`de-start-btn${checks[checkKey(result.testId)]?.state === 'missing' || !result.historyOnly && result.status === 'locked' ? ' de-result-locked' : ''}`}
+                disabled={evaluating || !result.historyOnly && result.status === 'locked' || !checks[checkKey(result.testId)] || checks[checkKey(result.testId)].state === 'missing'}
                 aria-describedby={`result-state-${result.testId}`}
                 onClick={() => void (checks[checkKey(result.testId)]?.state === 'error' ? retryResult(result.testId) : viewResult(result.testId))}>
                 <span className="de-result-label">결과보기</span>
-                <i className={`fa-solid ${checks[checkKey(result.testId)]?.state === 'missing' || result.status === 'locked' ? 'fa-lock' : 'fa-arrow-right'}`} />
+                <i className={`fa-solid ${checks[checkKey(result.testId)]?.state === 'missing' || !result.historyOnly && result.status === 'locked' ? 'fa-lock' : 'fa-arrow-right'}`} />
               </button>
             </div>
             <p id={`result-state-${result.testId}`} className="de-result-state" role="status">
-              {result.status === 'locked' ? '선행 검사 완료 후 응시할 수 있습니다.'
+              {result.historyOnly ? '과거 진단 기록입니다. 결과 조회만 가능합니다.' : result.status === 'locked' ? '선행 검사 완료 후 응시할 수 있습니다.'
                 : !checks[checkKey(result.testId)] ? '결과 유무를 확인하고 있습니다.'
                 : checks[checkKey(result.testId)].state === 'error' ? '조회하지 못했습니다. 결과보기를 눌러 다시 확인해 주세요.'
                 : checks[checkKey(result.testId)].message}

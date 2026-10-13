@@ -126,7 +126,7 @@ function CardHead({ title, desc, action }: { title: string; desc?: string; actio
 function DiagnosisTab({ student }: { student: StudentData }) {
   const type = getStudentTypeMeta(student)
   const studentType = getStudentType(student)
-  const cards = useMemo(() => getDiagnosisCards(student.id, studentType), [student.id, studentType])
+  const cards = getDiagnosisCards(student.id, studentType)
   const [openCard, setOpenCard] = useState<DiagnosisCard | null>(null)
 
   return (
@@ -134,7 +134,7 @@ function DiagnosisTab({ student }: { student: StudentData }) {
       {/* 두 카드는 높이를 맞춘다 — 진단 결과 카드가 진단 유형 카드 높이를 따라간다. */}
       <div className="dashboard-grid grid-stretch">
         <section data-slot="card" className="diagnosis-card col-7">
-          <CardHead title="진단 결과" desc={`${typeLabel(studentType)} 대상 진단 ${cards.length}종의 응시 현황입니다. 카드를 누르면 상세 결과가 열립니다.`} />
+          <CardHead title="진단 결과" desc={`현재 대상 및 과거 진단 ${cards.length}종의 응시 현황입니다. 카드를 누르면 상세 결과가 열립니다.`} />
           <div data-slot="card-content">
             <div className="diagnosis-result-grid">
               {cards.map(c => (

@@ -130,7 +130,9 @@ def request_retake(body: RetakeRequest | None = None, user=Depends(principal, sc
     uid = user['intg_uid']
     test_id = body.testId if body else 'ccore'
     lock_student(conn, uid)
-    ensure_progress(conn, uid)
+    current = state(conn, uid)
+    if test_id != 'ccore' and test_id != current['followUpTest']:
+        raise HTTPException(409, '현재 유형의 후속진단만 재검사를 요청할 수 있습니다. 과거 진단은 결과를 확인해 주세요.')
     if not conn.execute('''SELECT 1 FROM dc.diagnosis_attempt WHERE student_uid=%s AND test_id=%s
       AND (status_code='DONE' OR (%s AND status_code IN ('REVIEW','INCOMPLETE')))''',
       (uid, test_id, test_id != 'ccore')).fetchone():
