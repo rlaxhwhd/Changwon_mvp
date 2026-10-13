@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import {
@@ -23,6 +23,29 @@ const STATUS_LABEL: Record<TestStatus, string> = {
   done: '완료',
   available: '응시 가능',
   locked: '잠금',
+}
+
+type ResultCheck = { state: 'ready' | 'missing' | 'error'; message?: string }
+const EXTERNAL_TESTS = ['ccore', 'c2', 'c3', 'c4']
+
+async function checkResult(student: ReturnType<typeof getActiveStudent>, testId: string): Promise<ResultCheck> {
+  try {
+    const approved = diagnosisRetakes[student.id]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')
+    if (EXTERNAL_TESTS.includes(testId)) await importDiagnosis(student, testId, !approved)
+    else await loadStudentDiagnoses(student.id)
+    if (diagnosisRetakes[student.id]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')) {
+      return { state: 'missing', message: '새로 완료한 재진단 결과가 아직 없습니다.' }
+    }
+    const result = getResultsByStudent(student.id).find(r => r.testId === testId && r.isCurrent !== false
+      && (!EXTERNAL_TESTS.includes(testId) || r.source === 'hrtest'))
+    const incomplete = diagnosisAttempts.some(a => a.studentId === student.id && a.testId === testId
+      && a.attemptNo === result?.attemptNo && a.status === '응답 누락')
+    return result && !incomplete && !result.needsReview ? { state: 'ready' }
+      : { state: 'missing', message: result?.needsReview ? '유형 확인이 필요합니다. 담당자에게 문의해 주세요.'
+        : incomplete ? '응답 누락이 있습니다. 검사를 완료해 주세요.' : '완료된 검사 결과가 없습니다.' }
+  } catch (e) {
+    return { state: 'error', message: e instanceof Error ? e.message : '결과를 조회하지 못했습니다.' }
+  }
 }
 
 const GUIDE_ITEMS = [
@@ -86,7 +109,6 @@ export default function DiagnosisResult() {
       const { url } = await api<{url: string}>(`/diagnosis/external/${testId}/launch`, { method: 'POST' })
       if (!popup) throw new Error('팝업을 허용한 후 다시 검사시작을 눌러 주세요.')
       popup.location.href = url
-      setAction(testId, 'result')
     } catch (e) { popup?.close(); setAiError(e instanceof Error ? e.message : '검사를 열지 못했습니다.') }
     finally { setEvaluating(false) }
   }
@@ -119,19 +141,43 @@ export default function DiagnosisResult() {
   const availableCount = modulesWithStatus.filter(m => m.status === 'available').length
   const lockedCount = modulesWithStatus.filter(m => m.status === 'locked').length
 
-  // This remembers the button only; completion still comes from the server.
-  const [actions, setActions] = useState<Record<string, 'start' | 'result'>>({})
-  const actionKey = (testId: string) => `dc:diagnosis-action:${student.id}:${testId}:${retake?.requests.find(q => q.testId === testId && q.status === 'APPROVED')?.id ?? 'first'}`
-  const actionFor = (testId: string, status: TestStatus) => {
-    const key = actionKey(testId)
-    let saved: string | null = null
-    try { saved = sessionStorage.getItem(key) } catch { /* Storage may be disabled. */ }
-    return actions[key] ?? (saved === 'start' || saved === 'result' ? saved : status === 'done' ? 'result' : 'start')
-  }
-  const setAction = (testId: string, action: 'start' | 'result') => {
-    const key = actionKey(testId)
-    setActions(current => ({ ...current, [key]: action }))
-    try { sessionStorage.setItem(key, action) } catch { /* In-memory state still works. */ }
+  const [checks, setChecks] = useState<Record<string, ResultCheck>>({})
+  const pendingChecks = useRef<Partial<Record<string, Promise<ResultCheck>>>>({})
+  const checkKey = (testId: string) => `${student.id}:${testId}:${retake?.requests.find(q => q.testId === testId && q.status === 'APPROVED')?.id ?? 'stored'}`
+  const targets = retake ? modulesWithStatus.filter(m => m.status !== 'locked').map(m => checkKey(m.testId)).join('|') : ''
+  useEffect(() => {
+    let cancelled = false
+    let running = false
+    let lastCheck = 0
+    const refresh = async (force = false) => {
+      if (running || force && Date.now() - lastCheck < 3000) return
+      running = true
+      lastCheck = Date.now()
+      for (const key of targets.split('|').filter(Boolean)) {
+        if (cancelled) break
+        const testId = key.split(':')[1]
+        if (force && pendingChecks.current[key]) {
+          if ((await pendingChecks.current[key]).state === 'ready') continue
+          delete pendingChecks.current[key]
+        }
+        const request = pendingChecks.current[key] ??= checkResult(getActiveStudent(), testId)
+        const value = await request
+        if (!cancelled) setChecks(current => ({ ...current, [key]: value }))
+      }
+      running = false
+    }
+    void refresh()
+    const focus = () => { void refresh(true) }
+    window.addEventListener('focus', focus)
+    return () => { cancelled = true; window.removeEventListener('focus', focus) }
+  }, [targets])
+  async function retryResult(testId: string) {
+    const key = checkKey(testId)
+    delete pendingChecks.current[key]
+    setChecks(current => { const next = { ...current }; delete next[key]; return next })
+    const request = pendingChecks.current[key] = checkResult(student, testId)
+    const value = await request
+    setChecks(current => ({ ...current, [key]: value }))
   }
 
   return (
@@ -142,7 +188,7 @@ export default function DiagnosisResult() {
       {/* 진단이 남은 학생에게는 여기서도 다음 걸음을 짚어 준다(끝난 학생에겐 안 뜬다). */}
       <NextStepBanner />
       <div className="de-access-notice" role="note">
-        ‘검사시작’을 누르면 외부 검사 사이트가 새 탭으로 열립니다. 학번을 정확히 입력해 진단을 완료한 뒤, 이 페이지로 돌아와 ‘결과보기’를 눌러 주세요.
+        ‘검사시작’을 누르면 외부 검사 사이트가 새 탭으로 열립니다. 학번을 정확히 입력해 진단을 완료한 뒤 돌아오면 결과를 확인합니다. 저장된 결과나 검사기관 결과가 있어야 ‘결과보기’가 열립니다.
       </div>
 
       <section className="de-hero">
@@ -243,22 +289,27 @@ export default function DiagnosisResult() {
               </div>
             </div>
 
-            {result.status !== 'locked' && externalDiagnosisLinks[result.testId] && retake?.permissions[result.testId] && actionFor(result.testId, result.status) === 'start' ? <button
-              className="de-start-btn de-start-btn--available"
-              type="button" disabled={evaluating} onClick={() => void launchTest(result.testId)}>
-              검사시작 <i className="fa-solid fa-arrow-up-right-from-square" aria-label="새 탭" />
-            </button> : <button
-              type="button"
-              className={`de-start-btn de-start-btn--${result.status === 'locked' ? 'locked' : 'done'}`}
-              onClick={() => void viewResult(result.testId)}
-              disabled={result.status === 'locked' || (!externalDiagnosisLinks[result.testId] && result.status !== 'done')}
-            >
-              {result.status === 'locked'
-                ? <><i className="fa-solid fa-lock" />선행 검사 완료 후 응시</>
-                : externalDiagnosisLinks[result.testId] || result.status === 'done'
-                  ? <>결과보기<i className="fa-solid fa-arrow-right" /></>
-                  : '검사 연동 준비 중'}
-            </button>}
+            <div className="de-card-actions">
+              <button className="de-start-btn" type="button"
+                disabled={evaluating || result.status === 'locked' || !externalDiagnosisLinks[result.testId] || !retake?.permissions[result.testId]}
+                onClick={() => void launchTest(result.testId)}>
+                검사시작 <i className="fa-solid fa-arrow-up-right-from-square" aria-label="새 탭" />
+              </button>
+              <button type="button"
+                className={`de-start-btn${checks[checkKey(result.testId)]?.state === 'missing' || result.status === 'locked' ? ' de-result-locked' : ''}`}
+                disabled={evaluating || result.status === 'locked' || !checks[checkKey(result.testId)] || checks[checkKey(result.testId)].state === 'missing'}
+                aria-describedby={`result-state-${result.testId}`}
+                onClick={() => void (checks[checkKey(result.testId)]?.state === 'error' ? retryResult(result.testId) : viewResult(result.testId))}>
+                <span className="de-result-label">결과보기</span>
+                <i className={`fa-solid ${checks[checkKey(result.testId)]?.state === 'missing' || result.status === 'locked' ? 'fa-lock' : 'fa-arrow-right'}`} />
+              </button>
+            </div>
+            <p id={`result-state-${result.testId}`} className="de-result-state" role="status">
+              {result.status === 'locked' ? '선행 검사 완료 후 응시할 수 있습니다.'
+                : !checks[checkKey(result.testId)] ? '결과 유무를 확인하고 있습니다.'
+                : checks[checkKey(result.testId)].state === 'error' ? '조회하지 못했습니다. 결과보기를 눌러 다시 확인해 주세요.'
+                : checks[checkKey(result.testId)].message}
+            </p>
             {diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.isCurrent && a.status === '응답 누락') &&
               <p role="status" className="de-recent-date">응답 누락 · 담당자 확인 필요</p>}
             {diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.isCurrent && a.status === '유형 확인 필요') &&

@@ -325,6 +325,12 @@
 
 .de-start-btn--locked:hover { opacity: 1; }
 
+.de-card-actions { display: flex; gap: 10px; padding: 0 20px; }
+.de-card-actions .de-start-btn { flex: 1; min-width: 0; width: auto; max-width: none; margin: 0; padding: 0 10px; }
+.de-card-actions .de-start-btn:disabled { background: var(--color-surface); border-color: var(--color-border); color: var(--color-text-muted); cursor: not-allowed; }
+.de-result-locked .de-result-label { filter: blur(1px); opacity: .65; }
+.de-result-state { min-height: 20px; margin: 10px 20px 0; color: var(--color-text-sub); font-size: 13px; line-height: 1.5; }
+
 @media (max-width: 980px) {
   .de-access-grid { grid-template-columns: 1fr; }
   .de-proc-banner { flex-wrap: wrap; gap: 12px; }

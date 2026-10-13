@@ -189,7 +189,6 @@ function DiagnosisResultDetailView({ studentId, testId }: { studentId: string; t
       if (cancelled) return
       const history = getResultsByStudent(studentId).filter(r => r.testId === testId && (!external || r.source === 'hrtest'))
       if (external && !history.length) {
-        try { sessionStorage.setItem(`dc:diagnosis-action:${studentId}:${testId}`, 'start') } catch { /* Optional storage. */ }
         window.alert('진단이 정상적으로 완료되지 않았습니다. 검사시작을 눌러 진단을 완료해 주세요.')
         navigate('/diagnosis/employment', { replace: true })
         return
