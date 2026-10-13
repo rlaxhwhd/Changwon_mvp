@@ -69,6 +69,13 @@ export default function ProgramDetail() {
       .finally(() => setSaving(false))
   }
 
+  if (!program) return (
+    <div role={loadError ? 'alert' : 'status'}>
+      <p>{loadError || '프로그램을 불러오는 중…'}</p>
+      {loadError && <button type="button" onClick={() => setRevision(v => v + 1)}>다시 시도</button>}
+    </div>
+  )
+
   return (
     <>
       <ProgramNotice

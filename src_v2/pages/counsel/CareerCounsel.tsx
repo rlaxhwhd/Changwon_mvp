@@ -1,7 +1,7 @@
 import CounselSlotPicker from '../../components/CounselSlotPicker'
 import { useSlotPicker } from '../../hooks/useSlotPicker'
 import { slotAvailable } from '../../../shared/counselOperationsStore'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
@@ -27,19 +27,18 @@ interface SelectedSlot {
   time: string
 }
 
-// 상담사 = 단일소스(src_admin) 투영. 화면에 하드코딩하지 않는다.
-const counselors: CounselorCard[] = getCounselorCards('career')
-
 // 이번 주 월~금 (공용 유틸 — 화면에 날짜 하드코딩 금지)
 const days: Day[] = getCounselWeek()
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
-function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
+function getCounselorsForSlot(counselors: CounselorCard[], dayIndex: number, timeIndex: number) {
   return counselors.filter(c => slotAvailable(c.id, days[dayIndex].iso, times[timeIndex]))
 }
 
 export default function CareerCounsel() {
+  // Route data is loaded after module import; read the shared store at render.
+  const counselors = getCounselorCards('career')
   const mobileSlots = useSlotPicker()
   useMetadata()
   const currentType = getStudentType(getActiveStudent())
@@ -101,18 +100,15 @@ export default function CareerCounsel() {
   const activeCounselor = counselors.find(counselor => counselor.id === selectedCounselor) ?? counselors[0]
   const canReserve = !!selectedSlot && !!selectedCounselor
   const isAllMode = false
-  const slotCounselors = useMemo(
-    () => days.map((_, dayIndex) => times.map((__, timeIndex) => getCounselorsForSlot(dayIndex, timeIndex))),
-    [],
-  )
-  const filteredCounselors = useMemo(() => {
+  const slotCounselors = days.map((_, dayIndex) => times.map((__, timeIndex) => getCounselorsForSlot(counselors, dayIndex, timeIndex)))
+  const filteredCounselors = (() => {
     if (!selectedSlot) return []
     const dayIndex = days.findIndex(day => day.key === selectedSlot.day.key)
     const timeIndex = times.indexOf(selectedSlot.time)
     return (slotCounselors[dayIndex]?.[timeIndex] ?? []).filter(counselor =>
       slotAvailable(counselor.id, selectedSlot.day.iso, selectedSlot.time),
     )
-  }, [selectedSlot, slotCounselors])
+  })()
 
   const getStatus = (dayKey: string, time: string): SlotStatus => {
     if (selectedSlot?.day.key === dayKey && selectedSlot.time === time && !isAllMode) return 'selected'

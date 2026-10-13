@@ -1,7 +1,7 @@
 import CounselSlotPicker from '../../components/CounselSlotPicker'
 import { useSlotPicker } from '../../hooks/useSlotPicker'
 import { slotAvailable } from '../../../shared/counselOperationsStore'
-import { useMemo, useState } from 'react'
+import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
 import CounselConsentModal from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
@@ -21,19 +21,18 @@ interface SelectedSlot {
   time: string
 }
 
-// 상담사 = 단일소스(src_admin) 투영. 화면에 하드코딩하지 않는다.
-const counselors: CounselorCard[] = getCounselorCards('psych')
-
 // 이번 주 월~금 (공용 유틸 — 화면에 날짜 하드코딩 금지)
 const days: Day[] = getCounselWeek()
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
-function getCounselorsForSlot(dayIndex: number, timeIndex: number) {
+function getCounselorsForSlot(counselors: CounselorCard[], dayIndex: number, timeIndex: number) {
   return counselors.filter(c => slotAvailable(c.id, days[dayIndex].iso, times[timeIndex]))
 }
 
 export default function PsychCounsel() {
+  // Route data is loaded after module import; read the shared store at render.
+  const counselors = getCounselorCards('psych')
   const mobileSlots = useSlotPicker()
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
   usePageHead('상담 신청', '상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.')
@@ -50,19 +49,16 @@ export default function PsychCounsel() {
   }
 
   const activeCounselor = counselors.find(counselor => counselor.id === selectedCounselor) ?? counselors[0]
-  const slotCounselors = useMemo(
-    () => days.map((_, dayIndex) => times.map((__, timeIndex) => getCounselorsForSlot(dayIndex, timeIndex))),
-    [],
-  )
+  const slotCounselors = days.map((_, dayIndex) => times.map((__, timeIndex) => getCounselorsForSlot(counselors, dayIndex, timeIndex)))
   // 고른 시간에 자리가 남은 상담사만 추린다 — 예약 완료된 상담사는 후보에서 뺀다.
-  const filteredCounselors = useMemo(() => {
+  const filteredCounselors = (() => {
     if (!selectedSlot) return []
     const dayIndex = days.findIndex(day => day.key === selectedSlot.day.key)
     const timeIndex = times.indexOf(selectedSlot.time)
     return (slotCounselors[dayIndex]?.[timeIndex] ?? []).filter(counselor =>
       slotAvailable(counselor.id, selectedSlot.day.iso, selectedSlot.time),
     )
-  }, [selectedSlot, slotCounselors])
+  })()
 
   const canReserve = !!selectedSlot && !!selectedCounselor
 

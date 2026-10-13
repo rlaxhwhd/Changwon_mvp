@@ -9,15 +9,12 @@ import { loadCounselRequests, loadCounselRecords } from './counselStore'
 import { loadStudentRoster } from '../src_admin/data/studentRoster'
 import { loadAdvisorAssigns } from '../src_admin/data/advisorAssigns'
 import { loadPsychTests } from '../src_admin/data/psychTests'
-import { loadMainPopups } from '../src_v2/data/popups'
 import { loadProfessorCounselStats } from '../src_admin/data/profCounselRecords'
 import { loadPrograms } from './programStore'
-import { jobCapability, loadApplications, loadCapability, loadPostings, loadWishlist } from './jobStore'
-import { loadResumes } from '../src_v2/pages/jobs/resumeMock'
+import { jobCapability, loadApplications, loadCapability, loadPostings } from './jobStore'
 import { loadProfiles, setStudentChoices, type StudentChoice } from './profileStore'
 import { loadRoadmap, loadRoadmapCapability, loadRoadmapRequests, roadmapCapability } from './roadmapStore'
-import { loadGrowth, loadWishlist as loadProgramWishlist } from './growthStore'
-import { counselorProfiles, loadCounselorProfiles, loadSchedule, loadGroups, loadPublicSlots } from './counselOperationsStore'
+import { counselorProfiles, loadCounselorProfiles, loadSchedule, loadGroups } from './counselOperationsStore'
 import type { Counselor } from '../src_admin/data/schema/counselor'
 import { loadNotices, loadNotificationSummary, loadCounselEvents } from './communicationsStore'
 import { loadDepartments } from './departmentStore'
@@ -44,6 +41,15 @@ export async function initializeData(): Promise<void> {
       }
       throw error
     }
+    // GNB and StageGate use these stores on every student page. Feature data is
+    // loaded by the matching route before its synchronous selectors render.
+    const student = localStorage.getItem('dc_active_student')!
+    await Promise.all([
+      loadProfiles(), loadMetadata(), loadStudentDiagnoses(student),
+      loadCounselRequests(), loadRoadmap(student), loadNotificationSummary(),
+    ])
+    applyMetadata()
+    return
   }
   const identities = await api<{ students: StudentChoice[]; staff: StaffUser[] }>('/development/identities')
   setStaffProfiles(identities.staff)
@@ -64,7 +70,7 @@ export async function initializeData(): Promise<void> {
                        loadCounselorProfiles(), loadNotices(), loadNotificationSummary(), loadCounselEvents(),
                        loadDepartments(), loadProfessorGroups(), ...(admin ? [loadStaffDirectory(activeStaff), loadStudentRoster(departments),
                          ...(staff && ['assistant', 'professor'].includes(staff.role)
-                           ? [loadAdvisorAssigns(departments), loadProfessorCounselStats(departments)] : [])] : [loadMainPopups()])])
+                           ? [loadAdvisorAssigns(departments), loadProfessorCounselStats(departments)] : [])] : [])])
     applyMetadata()
     // 채용의 개인 자료(지원·찜·자소서)는 학생 본인 것만 서버가 내려준다.
     // 교직원은 담당 범위의 지원만 받는다 — 관리 권한이 없으면 그 목록도 없다.
@@ -80,14 +86,6 @@ export async function initializeData(): Promise<void> {
       // 심리상담사·시스템관리자의 부팅이 403 으로 끊긴다 — 화면 전체가 사용 불가가 된다.
       // 배지는 서버 summary 를 읽는다. 전체 목록을 받아 세지 않는다.
       if (roadmapCapability().canManageRequests) await loadRoadmapRequests()
-    } else {
-      const student = localStorage.getItem('dc_active_student')!
-      await Promise.all([loadApplications('mine'), loadWishlist(), loadResumes(),
-                         loadPublicSlots(),
-                         loadStudentDiagnoses(student),
-                         // 로드맵·성장·비교과 찜은 본인 것만 서버가 내려준다.
-                         loadRoadmap(student), loadGrowth(student), loadProgramWishlist(),
-                         loadRoadmapRequests()])
     }
   }
 }
