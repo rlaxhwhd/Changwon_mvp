@@ -12,6 +12,21 @@ from test_psych_referrals import db  # noqa: F401 -- isolated rollback fixture
 from uuid import uuid4
 
 
+def test_hrtest_stored_result_read_survives_retake_approval_and_provider_failure(client, db, monkeypatch):
+    student = db.execute("SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid) WHERE p.alias='chaewon'").fetchone()
+    hrtest_sync.store_results(db, student, 'ccore', [item()])
+    approved = client.post('/api/v1/diagnosis/students/chaewon/retakes/ccore', headers=headers('career_kim'))
+    assert approved.status_code == 200
+    def fail(*_):
+        pytest.fail('Reading stored results must not contact the external provider, even during an approved retake')
+    monkeypatch.setattr(hrtest, 'fetch_results', fail)
+    response = client.post('/api/v1/diagnosis/external/ccore/import?preferStored=true', headers=headers('chaewon'))
+    assert response.status_code == 200 and response.json()['cached']
+    data = client.get('/api/v1/diagnosis/students/chaewon', headers=headers('chaewon')).json()
+    assert any(r['testId'] == 'ccore' and r['isCurrent'] and r['source'] == 'hrtest' for r in data['results'])
+    assert next(q['status'] for q in data['retake']['requests'] if q['testId'] == 'ccore') == 'APPROVED'
+
+
 def test_hrtest_import_preserves_history_deduplicates_and_refreshes(client, monkeypatch):
     original_store=hrtest_sync.store_results
     def as_app(conn,*args):

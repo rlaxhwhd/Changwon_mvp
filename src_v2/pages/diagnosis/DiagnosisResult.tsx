@@ -31,17 +31,15 @@ const EXTERNAL_TESTS = ['ccore', 'c2', 'c3', 'c4']
 
 async function checkResult(student: ReturnType<typeof getActiveStudent>, testId: string): Promise<ResultCheck> {
   try {
-    const approved = diagnosisRetakes[student.id]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')
-    if (EXTERNAL_TESTS.includes(testId)) await importDiagnosis(student, testId, !approved)
+    if (EXTERNAL_TESTS.includes(testId)) await importDiagnosis(student, testId, true)
     else await loadStudentDiagnoses(student.id)
-    if (diagnosisRetakes[student.id]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')) {
-      return { state: 'missing', message: '새로 완료한 재진단 결과가 아직 없습니다.' }
-    }
+    const approved = diagnosisRetakes[student.id]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')
     const result = getResultsByStudent(student.id).find(r => r.testId === testId && r.isCurrent !== false
       && (!EXTERNAL_TESTS.includes(testId) || r.source === 'hrtest'))
     const incomplete = diagnosisAttempts.some(a => a.studentId === student.id && a.testId === testId
       && a.attemptNo === result?.attemptNo && a.status === '응답 누락')
-    return result && !incomplete && !result.needsReview ? { state: 'ready' }
+    return result && !incomplete && !result.needsReview ? { state: 'ready', message: approved
+      ? '기존 결과를 확인할 수 있습니다. 새 검사 완료 후 결과 페이지에서 새 응시 결과를 확인해 주세요.' : undefined }
       : { state: 'missing', message: result?.needsReview ? '유형 확인이 필요합니다. 담당자에게 문의해 주세요.'
         : incomplete ? '응답 누락이 있습니다. 검사를 완료해 주세요.' : '완료된 검사 결과가 없습니다.' }
   } catch (e) {
@@ -117,12 +115,8 @@ export default function DiagnosisResult() {
     if (evaluating) return
     setEvaluating(true); setAiError(''); setAiProgress('진단 결과를 확인하고 있습니다.')
     try {
-      const awaitingRetake = retake?.requests.some(q => q.testId === testId && q.status === 'APPROVED')
-      if (['ccore', 'c2', 'c3', 'c4'].includes(testId)) await importDiagnosis(student, testId, !awaitingRetake)
+      if (EXTERNAL_TESTS.includes(testId)) await importDiagnosis(student, testId, true)
       else await loadStudentDiagnoses(student.id)
-      if (awaitingRetake && diagnosisRetakes[student.id]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')) {
-        throw new Error('새로 완료한 재진단 결과가 아직 없습니다. 응시를 완료한 뒤 다시 확인해 주세요.')
-      }
       const result = getResultsByStudent(student.id).find(r => r.testId === testId && r.isCurrent !== false)
       if (!result || result.needsReview) throw new Error('완료된 진단 결과를 확인할 수 없습니다. 검사 응시 상태를 확인해 주세요.')
       await ensureDiagnosisComment(student.id, testId, result.attemptNo, setAiProgress)
