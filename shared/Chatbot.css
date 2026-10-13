@@ -14,7 +14,7 @@
 .dc-chat-head > div { flex: 1; min-width: 0; }
 .dc-chat-head strong { display: block; font-size: 15px; font-weight: 750; line-height: 1.5; }
 .dc-chat-head small { display: block; color: #626b79; font-size: 11px; line-height: 1.7; }
-.dc-chat-head button { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 36px; border: none; border-radius: 8px; background: #f4f6f9; color: #475165; font-size: 17px; }
+.dc-chat-head button { display: grid; place-items: center; flex-shrink: 0; width: 32px; height: 36px; border: none; background: transparent; color: #475165; font-size: 17px; }
 .dc-chat-body { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 20px 16px; display: flex; flex-direction: column; gap: 16px; background: #f7f8fb; }
 .dc-chat-welcome { padding: 15px 4px 6px; }
 .dc-chat-eyebrow { display: block; font-size: 12px; font-weight: 700; color: var(--chat-accent); margin-bottom: 12px; }
