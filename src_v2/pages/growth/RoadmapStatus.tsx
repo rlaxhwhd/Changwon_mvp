@@ -2,7 +2,7 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { getActiveStudent, getStudentTypeMeta } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
-// 로드맵은 새로 그리지 않는다 — /roadmap/skill-tree · 상담사 편집기와 같은 공용 3축 보드다.
+// 로드맵은 새로 그리지 않는다 — 상담사 편집기와 같은 공용 3축 보드다.
 import RoadmapAxisBoard from '../../components/RoadmapAxisBoard'
 import { ROADMAP_AXIS_MAP } from '../../data/schema/roadmap'
 // 로드맵 1개의 정본은 교직원 포털의 읽기 모델이다(base ⊕ 상담사 override ⊕ 프로그램 편입분).
@@ -15,7 +15,7 @@ import { usePageHead } from '../../components/PageCrumb'
 
 /**
  * /v2/growth/roadmap-status
- * 3축 로드맵(/roadmap/skill-tree)의 이행 현황 대시보드.
+ * 3축 로드맵의 이행 현황 대시보드(학생 로드맵 보기 화면).
  *
  * 중요 — 이 화면은 학생용 "읽기 전용 (read-only)" 뷰입니다.
  * 로드맵 자체는 상담사가 학생과 협의 후 종합 데이터(상담기록·진단결과·학과·진로목표·

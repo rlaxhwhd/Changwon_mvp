@@ -29,7 +29,6 @@ export default function StageLockNotice({ stage, state, title }: StageLockNotice
     <section className="lock-notice" role="status">
       <span className="lock-notice-icon" aria-hidden="true"><i className="fa-solid fa-lock" /></span>
       <h2>{name}은 아직 열리지 않았습니다</h2>
-      <Link to="/records">이전 진단·상담·로드맵 기록 보기</Link>
 
       {next ? (
         <>

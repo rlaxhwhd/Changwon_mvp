@@ -13,6 +13,8 @@ export interface NavChild {
    * 메뉴도 같이 사라져야 한다 — 안 그러면 눌러도 아무 데도 안 가는 링크가 된다.
    */
   requiresStage?: Stage
+  /** 미완성 화면 — 메뉴에 자물쇠·「준비중」을 붙이고, 라우트는 ComingSoon 을 그린다(App.tsx). */
+  comingSoon?: boolean
   children?: NavChild[]
 }
 
@@ -75,9 +77,12 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'roadmap',
     label: '진로취업 로드맵',
     basePaths: ['/roadmap'],
+    // 로드맵 보기 화면은 /growth/roadmap-status 하나다(옛 /roadmap/skill-tree 삭제).
+    path: '/growth/roadmap-status',
     icon: 'route',
     children: [
       { label: 'AI 진로로드맵', path: '/roadmap/ai', icon: 'fa-route' },
+      // 삭제된 화면 — DB 메뉴 코드(stu-roadmap.1)가 인덱스로 붙으므로 자리는 남기고 getVisibleNavChildren 이 뺀다.
       { label: 'AI 직무 로드맵', path: '/roadmap/skill-tree', icon: 'fa-sitemap' },
       { label: '로드맵 수정요청', path: '/roadmap/request', icon: 'fa-pen-to-square' },
       { label: '최종 로드맵', path: '/roadmap/final', icon: 'fa-bullseye' },
@@ -116,14 +121,15 @@ export const NAV_SECTIONS: NavSection[] = [
     children: [
       { label: '교내 채용공고', path: '/jobs', icon: 'fa-building-user' },
       { label: '외부 채용공고', path: '/jobs/external', icon: 'fa-globe' },
-      { label: 'AI 맞춤채용', path: '/jobs/joblist', icon: 'fa-briefcase' },
+      { label: 'AI 맞춤채용', path: '/jobs/joblist', icon: 'fa-briefcase', comingSoon: true },
       {
         label: 'AI 자소서/면접',
         path: '/jobs/home',
         icon: 'fa-file-lines',
+        comingSoon: true,
         children: [
-          { label: 'AI 자소서 생성', path: '/jobs/home/resume', icon: 'fa-wand-magic-sparkles' },
-          { label: 'AI 컨설팅', path: '/jobs/home/consulting', icon: 'fa-magnifying-glass-chart' },
+          { label: 'AI 자소서 생성', path: '/jobs/home/resume', icon: 'fa-wand-magic-sparkles', comingSoon: true },
+          { label: 'AI 컨설팅', path: '/jobs/home/consulting', icon: 'fa-magnifying-glass-chart', comingSoon: true },
         ],
       },
       { label: '공지사항', path: '/jobs/notices', icon: 'fa-bullhorn' },
@@ -138,8 +144,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open', minGrade: 4 },
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
       { label: '추천채용 지원 내역', path: '/mypage/applications', icon: 'fa-file-signature' },
-      { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check' },
-      { label: '나의 활동 기록', path: '/records', icon: 'fa-clock-rotate-left' },
+      { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check', comingSoon: true },
+      { label: '나의 활동 기록', path: '/records', icon: 'fa-clock-rotate-left', comingSoon: true },
     ],
   },
 ]
@@ -168,7 +174,7 @@ export function getVisibleNavChildren(
   access?: Record<Stage, 'open' | 'locked'>,
 ): NavChild[] {
   return children
-    .filter(child => child.path !== '/roadmap/ai' && child.path !== '/roadmap/final')
+    .filter(child => child.path !== '/roadmap/ai' && child.path !== '/roadmap/final' && child.path !== '/roadmap/skill-tree')
     .filter(child => child.minGrade === undefined || grade >= child.minGrade)
     .filter(child => !access || !child.requiresStage || access[child.requiresStage] === 'open')
     .map(child => ({

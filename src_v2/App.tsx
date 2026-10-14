@@ -6,8 +6,9 @@ import Chatbot from '../shared/Chatbot'
 import Landing from './pages/Landing'
 // 순차 게이팅은 라우트 한 곳에서 건다 — 화면은 자기가 잠겼는지 알 필요가 없다(CLAUDE.md 13조).
 import StageGate from './components/StageGate'
+// 미완성 화면은 라우트에서 준비중 안내로 대신한다 — 메뉴 표시는 navConfig 의 comingSoon.
+import ComingSoon from './components/ComingSoon'
 import Main from './pages/Main'
-import CareerRecords from './pages/CareerRecords'
 
 // AI 커리어 라운지
 import AiLounge from './pages/AiLounge'
@@ -35,16 +36,9 @@ import CareerCounsel from './pages/counsel/CareerCounsel'
 import PsychCounsel from './pages/counsel/PsychCounsel'
 import ProfessorCounsel from './pages/counsel/ProfessorCounsel'
 
-// 경력개발 로드맵
-import AiRoadmap from './pages/roadmap/AiRoadmap'
-import AiJobs from './pages/roadmap/AiJobs'
-import AiResume from './pages/roadmap/AiResume'
-
 // 취업지원
 import JobSupport from './pages/jobs/JobSupport'
 import JobDetail from './pages/jobs/JobDetail'
-import JobsHome from './pages/jobs/JobsHome'
-import AiConsulting from './pages/jobs/AiConsulting'
 import Notices from './pages/jobs/Notices'
 
 // STAR 트랙 — 선발된 학생만 들어오는 별도 트랙. GNB 우측 STAR 표식이 진입점이다.
@@ -56,7 +50,6 @@ import MyPrograms from './pages/mypage/MyPrograms'
 import ProgramSurvey from './pages/mypage/ProgramSurvey'
 import MyApplications from './pages/mypage/MyApplications'
 import CounselStatus from './pages/mypage/CounselStatus'
-import Attendance from './pages/mypage/Attendance'
 import { getActiveStudent } from './data/students'
 
 const router = createBrowserRouter(
@@ -75,7 +68,7 @@ const router = createBrowserRouter(
 
         // AI 커리어 라운지
         { path: '/lounge', loader: studentPageLoader('programs', 'growth'), element: <AiLounge /> },
-        { path: '/records', element: <CareerRecords /> },
+        { path: '/records', element: <ComingSoon title="나의 활동 기록" /> },
 
         // STAR 트랙 (선발형) — 주 메뉴가 아니라 상단바 STAR 표식으로 들어온다
         { path: '/star', loader: studentPageLoader('growth'), element: <StarTrack /> },
@@ -92,7 +85,7 @@ const router = createBrowserRouter(
         { path: '/growth/journal',      element: <GrowthJournal /> },
         { path: '/growth/journal/new',  element: <GrowthJournalForm /> },
         { path: '/growth/journal/:entryId/edit', element: <GrowthJournalForm /> },
-        { path: '/growth/skill-tree',   element: <Navigate to="/roadmap/skill-tree" replace /> },
+        { path: '/growth/skill-tree',   element: <Navigate to="/growth/roadmap-status" replace /> },
 
         // 진단 센터
         { path: '/diagnosis',            element: <Navigate to="/diagnosis/employment" replace /> },
@@ -112,11 +105,11 @@ const router = createBrowserRouter(
         { path: '/counsel/professor', loader: studentPageLoader('professors', 'slots'), element: <ProfessorCounsel /> },
 
         // 경력개발 로드맵 — 상담에서 만들어진다. 상담 전에는 볼 것이 없다.
-        { path: '/roadmap',             element: <Navigate to="/roadmap/skill-tree" replace /> },
-        { path: '/roadmap/ai',          element: <Navigate to="/roadmap/skill-tree" replace /> },
-        { path: '/roadmap/skill-tree',  loader: studentPageLoader('counselRecords'), element: <StageGate stage="roadmap" title="경력개발 로드맵"><AiRoadmap /></StageGate> },
+        //   로드맵 보기는 /growth/roadmap-status(같은 3축 보드) 하나다 — 옛 /roadmap/skill-tree 는 삭제됐다.
+        { path: '/roadmap',             element: <Navigate to="/growth/roadmap-status" replace /> },
+        { path: '/roadmap/ai',          element: <Navigate to="/growth/roadmap-status" replace /> },
         { path: '/roadmap/request',     element: <StageGate stage="roadmap" title="로드맵 변경 요청"><RoadmapRequest /></StageGate> },
-        { path: '/roadmap/final',       element: <Navigate to="/roadmap/skill-tree" replace /> },
+        { path: '/roadmap/final',       element: <Navigate to="/growth/roadmap-status" replace /> },
         // 구 경로 → 신 경로 (취업지원 하위로 이동)
         { path: '/roadmap/jobs',        element: <Navigate to="/jobs/joblist" replace /> },
         { path: '/roadmap/resume',      element: <Navigate to="/jobs/home" replace /> },
@@ -124,10 +117,10 @@ const router = createBrowserRouter(
         // 취업지원 — 로드맵이 확정돼야 열린다(PROCESS.md §2).
         { path: '/jobs',                 loader: studentPageLoader('jobs', 'jobWishlist'), element: <StageGate stage="employment" title="취업지원"><JobSupport scope="internal" /></StageGate> },
         { path: '/jobs/external',        loader: studentPageLoader('jobs', 'jobWishlist'), element: <StageGate stage="employment" title="취업지원"><JobSupport scope="external" /></StageGate> },
-        { path: '/jobs/joblist',         element: <StageGate stage="employment" title="AI 맞춤채용"><AiJobs /></StageGate> },
-        { path: '/jobs/home',            loader: studentPageLoader('resumes'), element: <StageGate stage="employment" title="취업지원"><JobsHome /></StageGate> },
-        { path: '/jobs/home/resume',     loader: studentPageLoader('resumes'), element: <StageGate stage="employment" title="AI 자소서"><AiResume /></StageGate> },
-        { path: '/jobs/home/consulting', loader: studentPageLoader('resumes'), element: <StageGate stage="employment" title="AI 면접 코칭"><AiConsulting /></StageGate> },
+        { path: '/jobs/joblist',         element: <ComingSoon title="AI 맞춤채용" /> },
+        { path: '/jobs/home',            element: <ComingSoon title="AI 자소서/면접" /> },
+        { path: '/jobs/home/resume',     element: <ComingSoon title="AI 자소서 생성" /> },
+        { path: '/jobs/home/consulting', element: <ComingSoon title="AI 컨설팅" /> },
         { path: '/jobs/resume',          element: <Navigate to="/jobs/home" replace /> },
         // 공지사항: /mypage/notices 에서 취업지원 하위로 옮겼다(기존 경로는 하위 호환용 리다이렉트).
         // ⚠ '/jobs/:id' 보다 위에 둔다 — 정적 세그먼트가 먼저 읽히게 해 공고 상세로 새지 않게 한다.
@@ -147,7 +140,7 @@ const router = createBrowserRouter(
         // 신청 결과를 못 보면 신청 완료 안내가 잠긴 화면을 가리키게 된다.
         { path: '/counsel/record',    loader: studentPageLoader('counselRecords', 'counselors', 'professors'), element: <CounselStatus /> },
         { path: '/mypage/counsel',    element: <Navigate to="/counsel/record" replace /> },
-        { path: '/mypage/attendance', element: <Attendance /> },
+        { path: '/mypage/attendance', element: <ComingSoon title="출석 기록" /> },
         { path: '/mypage/mission',    element: <Navigate to="/growth/mission-log" replace /> },
       ],
     },

@@ -11,6 +11,12 @@ import { getPipelineState } from '../data/pipeline'
 import { api } from '../../shared/api'
 import { clearNotificationCache } from '../../shared/communicationsStore'
 
+/** 미완성 메뉴 표식 — 눌러도 막지 않는다. 도착 화면(ComingSoon)이 같은 안내를 한다. */
+function ComingSoonTag({ item }: { item: NavChild }) {
+  if (!item.comingSoon) return null
+  return <span className="nav-soon"><i className="fa-solid fa-lock" aria-hidden="true" />준비중</span>
+}
+
 /** 드롭다운/모바일 하위 링크 — 중첩(depth 1)까지 평탄화해 렌더한다. */
 function SubLinks({
   items,
@@ -29,19 +35,21 @@ function SubLinks({
         <div key={child.path}>
           <Link
             to={child.path}
-            className={`${className}${child.path === activeChildPath ? ' active' : ''}`}
+            className={`${className}${child.path === activeChildPath ? ' active' : ''}${child.comingSoon ? ' is-soon' : ''}`}
             onClick={onNavigate}
           >
             {child.label}
+            <ComingSoonTag item={child} />
           </Link>
           {child.children?.map(sub => (
             <Link
               key={sub.path}
               to={sub.path}
-              className={`${className} depth-1${sub.path === activeChildPath ? ' active' : ''}`}
+              className={`${className} depth-1${sub.path === activeChildPath ? ' active' : ''}${sub.comingSoon ? ' is-soon' : ''}`}
               onClick={onNavigate}
             >
               {sub.label}
+              <ComingSoonTag item={sub} />
             </Link>
           ))}
         </div>

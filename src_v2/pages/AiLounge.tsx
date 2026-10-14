@@ -140,7 +140,7 @@ export default function AiLounge() {
                     <div className="goal-plan-head-copy"><b>{axis.label}</b><span>{axis.desc}</span></div>
                   </div>
                   <div className="goal-task-list">
-                    {a.cells.map(c => <Link key={c.id} className={`goal-task${c.status === 'DONE' ? ' is-complete' : ''}`} to="/roadmap/skill-tree">
+                    {a.cells.map(c => <Link key={c.id} className={`goal-task${c.status === 'DONE' ? ' is-complete' : ''}`} to="/growth/roadmap-status">
                       <span className="goal-task-icon"><Icon id={c.status === 'DONE' ? 'i-check' : look.icon} /></span>
                       <span className="goal-task-copy"><b>{c.title}</b></span>
                       <span className={`goal-task-status${c.status === 'DONE' ? '' : ' planned'}`}>{c.status === 'DONE' ? '완료' : '예정'}</span>
@@ -154,7 +154,7 @@ export default function AiLounge() {
               <div className="goal-coach-copy"><b>로드맵 진행</b>
                 <p>전체 {roadmap.progress.total}칸 중 {roadmap.progress.done}칸을 마쳤습니다. 남은 항목 {tasks.length}개는 로드맵에서 자세히 볼 수 있습니다.</p>
               </div>
-              <div className="goal-coach-actions"><Link className="button" to="/roadmap/skill-tree">로드맵 전체 보기</Link></div>
+              <div className="goal-coach-actions"><Link className="button" to="/growth/roadmap-status">로드맵 전체 보기</Link></div>
             </aside>
           </div>
         </div>}

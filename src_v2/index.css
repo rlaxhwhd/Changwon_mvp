@@ -479,6 +479,25 @@ select:focus-visible {
 
 .nav-dropdown-link.depth-1 { padding-left: 26px; }
 
+/* 준비중 메뉴(navConfig comingSoon) — 데스크톱 드롭다운·모바일 메뉴 공용 */
+.nav-dropdown-link.is-soon,
+.mobile-sublink.is-soon { color: var(--subtle-foreground, #98a2b3); }
+.nav-soon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--muted, #f1f3f6);
+  color: var(--muted-foreground, #5f6b7a);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 16px;
+  vertical-align: 1px;
+}
+.nav-soon i { font-size: 9px; }
+
 /* 우측 액션 */
 .topbar-right {
   flex: 0 0 auto;
