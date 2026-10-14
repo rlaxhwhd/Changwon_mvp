@@ -1,5 +1,7 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
-import { useEffect, useReducer, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useReducer, useState, type CSSProperties, type ReactNode } from 'react'
+import { api } from '../../shared/api'
+import type { QuestDashboard } from '../../shared/quests'
 import { Link } from 'react-router-dom'
 import { useMetadata } from '../../shared/useMetadata'
 import { getActiveStudent, getStudentType, getStudentTypeMeta, type CounselRequestType, type StudentCounselRequest } from '../data/students'
@@ -68,7 +70,22 @@ export default function AiLounge() {
   const student = getActiveStudent()
   const type = getStudentType(student)
   const meta = getStudentTypeMeta(student)
-  const { stats, diagnosis, requests, roadmap, access } = getLoungeData(student)
+  const [quest, setQuest] = useState<{ studentId: string; data: QuestDashboard | null; error: string } | null>(null)
+  const currentQuest = quest?.studentId === student.id ? quest : null
+  const { stats, diagnosis, requests, roadmap, access } = getLoungeData(student, currentQuest?.data ?? null, currentQuest?.error ?? '')
+  const levelUnlocked = !!roadmap
+  useEffect(() => {
+    if (!levelUnlocked) return
+    const abort = new AbortController()
+    const load = () => {
+      api<QuestDashboard>('/quests/dashboard', { signal: abort.signal })
+        .then(data => { if (!abort.signal.aborted) setQuest({ studentId: student.id, data, error: '' }) })
+        .catch(() => { if (!abort.signal.aborted) setQuest({ studentId: student.id, data: null, error: '성장 기록을 불러오지 못했습니다. 새로고침해 주세요.' }) })
+    }
+    load()
+    window.addEventListener('focus', load)
+    return () => { abort.abort(); window.removeEventListener('focus', load) }
+  }, [student.id, levelUnlocked])
   const growth = getGrowthRecords(student.id)
   const tasks = roadmap?.axes.flatMap(a => a.cells.filter(c => c.status !== 'DONE').map(c => ({ ...c, axis: a.axis }))) ?? []
   const active = requests.filter(r => r.status !== '취소')

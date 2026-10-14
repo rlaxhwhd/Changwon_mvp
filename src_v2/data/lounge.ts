@@ -5,9 +5,10 @@ import { getStageAccess } from './careerProcess'
 import { getDiagnosisCardViews, getPipelineState } from './pipeline'
 import { getStudentCounselRequests, type StudentData } from './students'
 import { counselBucketChannels } from './counselTrack'
+import { questLevelStat, type QuestDashboard } from '../../shared/quests'
 
 /** All records come from authenticated PostgreSQL API stores. */
-export function getLoungeData(student: StudentData) {
+export function getLoungeData(student: StudentData, quest: QuestDashboard | null = null, questError = '') {
   const diagnosis = getDiagnosisCardViews(student)
   const done = diagnosis.filter(c => c.status === 'done').length
   const requests = getStudentCounselRequests(student.id)
@@ -22,7 +23,7 @@ export function getLoungeData(student: StudentData) {
     { kind:'counsel', kicker:'CARE 7+', label:'상담 현황', total:String(active.length), unit:'건', foot:'전체 누적 · 취소 제외', channels:counselBucketChannels(active) },
     { kind:'roadmap', kicker:'CARE 7+', label:'로드맵 이행률', value:String(roadmap?.progress.pct ?? 0), unit:'%', pct:roadmap?.progress.pct ?? 0, foot:roadmap ? `완료 ${roadmap.progress.done} / 전체 ${roadmap.progress.total}칸` : '', lockedReason:roadmap ? undefined : '상담 후 로드맵이 확정되면 확인할 수 있습니다.' },
     { kind:'program', label:'비교과 이수', value:String(completed), unit:`/${applications.length}`, pct:applications.length ? Math.round(completed/applications.length*100) : 0, foot:'전체 신청 대비 이수', lockedReason:access.growth !== 'open' && applications.length === 0 ? '로드맵 확정 후 비교과 이수를 확인할 수 있습니다.' : undefined },
-    { kind:'level', label:'성장 레벨', levelUnit:'', level:'', tierLabel:'', tier:'', xp:'', xpFoot:'', pct:0, lockedReason:'성장 레벨·XP 연계 준비 중입니다.' },
+    { ...questLevelStat(quest, questError), lockedReason: roadmap ? undefined : '로드맵 확정 후 성장 레벨을 확인할 수 있습니다.' },
   ]
   return {stats, diagnosis, requests, roadmap, access}
 }

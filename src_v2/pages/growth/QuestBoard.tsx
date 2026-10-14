@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../../shared/api'
 import { missionError } from '../../../shared/missions'
-import type { QuestDashboard, QuestPeriod } from '../../../shared/quests'
+import { questLevelStat, type QuestDashboard, type QuestPeriod } from '../../../shared/quests'
 import Modal from '../../components/Modal'
 import StudentStatCards, { type StudentStat } from '../../components/StudentStatCards'
 import QuestGrowthChart from '../../components/QuestGrowthChart'
@@ -62,10 +62,7 @@ export default function QuestBoard() {
       foot: data ? item.id === 'DAILY' ? `완료 보상 ${data.rules[item.id].xp.toLocaleString()} XP` : '퀘스트별 설정된 XP 지급' : '기록 불러오는 중' }
   })
   stats.push({ kind: 'counsel', label: '연속 출석', kicker: '꾸준한 성장', total: data ? String(data.attendance.streak) : '—', unit: '일', foot: attended ? '오늘 출석 완료' : '오늘도 출석을 이어가세요', channels: [] },
-    { kind: 'level', label: '성장 레벨', levelUnit: 'LV', level: data ? String(data.level) : '—',
-      tierLabel: data?.grade ? `${data.grade}학년 성장 목표` : '학년 정보 확인 필요', tier: data?.levelCap ? `최대 LV ${data.levelCap}` : '',
-      xp: data ? `${data.xpInLevel.toLocaleString()} / ${data.xpPerLevel.toLocaleString()} XP` : '— / 1,000 XP',
-      xpFoot: data?.atCap ? '학년 목표 달성' : '다음 레벨까지', pct: data ? data.xpInLevel / data.xpPerLevel * 100 : 0 })
+    questLevelStat(data, error))
   async function checkIn() {
     if (busy || attended || !data) return
     setSaving(true); setError(''); setMessage('')
