@@ -1,5 +1,12 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-10-14 학교 공개 전 준비중 화면 — CentOS 웹 배포 완료
+
+- `39e8837`의 로컬 Docker 웹을 CentOS 호환 이미지 `dreamcatch-web:pre-release-20261014`로 배포했다. API는 기존 `history-cards-20261013` 그대로이며 백엔드 소스 차이와 신규 DB 마이그레이션은 없다. 기존 마이그레이션 126건, 웹·API healthy, nginx 설정 검사 통과.
+- 서버 Chrome에서 `/` → `/login?type=internal`, 준비중 경로 6개(`/jobs/joblist`, `/jobs/home`, `/jobs/home/resume`, `/jobs/home/consulting`, `/mypage/attendance`, `/records`; 학생 경로는 `/v2` 접두사), `/v2/roadmap/ai` → `/v2/growth/roadmap-status`를 확인했다. 검사한 각 페이지의 실패 요청과 가로 넘침은 없었다. 서버 index/v2 HTML SHA256은 로컬 Docker와 일치했다.
+- 배포 파일 SHA256: `07c110372922c3ad2ce8b9cee6bd1ab205e64ecea96e87155ed4efc13dd0223b`. `/opt/dreamcatch/ai/pre-release-20261014/`에 웹 이미지와 배포 전 compose 두 파일을 보관했다. 복구 시 웹 태그를 직전 `dreamcatch-web:history-cards-20261013`으로 되돌리고 web만 재기동한다. 업무 데이터·환경별 비밀은 변경하지 않았다.
+- 메인의 AI 추천 채용공고 샘플 카드는 이번 커밋에 남아 있으며 전체 보기만 준비중 화면으로 연결된다. 이번 배포에서 추가 구현하지 않았다.
+
 ## 2026-10-14 요청 테스트 학생 데이터만 서버 반영
 
 - 사용자 지정 합성 계정 한 명의 학사 미러·로그인 연결·서비스 학생 정보와 입학년도·어학 요약·기관 확인 자격 2건을 서버에 반영했다. 계정 식별자와 인증정보는 기록하지 않는다. 앱 이미지와 스키마 마이그레이션은 변경하지 않았다.
