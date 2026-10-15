@@ -216,6 +216,10 @@ def programs(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100)
         where.append('''(SELECT student_type FROM dc.current_student_type WHERE student_uid=%s
           ORDER BY decided_at DESC,id DESC LIMIT 1)=ANY(care_types)''')
         values.append(user['intg_uid'])
+        # 참가대상 학년도 맞춘다. 학년을 지정하지 않은 프로그램은 전 학년 대상이다.
+        where.append('''(cardinality(target_grades)=0 OR
+          (SELECT grade::text FROM dc.student WHERE intg_uid=%s)=ANY(target_grades))''')
+        values.append(user['intg_uid'])
         where.append("""status_code='RECRUITING' AND (apply_end IS NULL OR
           (apply_end + COALESCE(apply_end_time,'23:59:59.999999'::time)) AT TIME ZONE 'Asia/Seoul' >= now())""")
     if category:

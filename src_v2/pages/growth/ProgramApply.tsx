@@ -90,7 +90,7 @@ export default function ProgramApply() {
             </span>
             <h2>{studentDisplayName(profile.name, profile.id)}님께 추천</h2>
             <p>
-              나의 CARE 7+ 진단유형에 맞는 비교과 프로그램을 신청 마감일이 가까운 순서로 보여드립니다.
+              내 학년과 CARE 7+ 진단유형에 맞는 비교과 프로그램을 신청 마감일이 가까운 순서로 보여드립니다.
             </p>
           </div>
 
@@ -102,7 +102,7 @@ export default function ProgramApply() {
               </div>
               <p className="pr-reco-loading-title">{studentDisplayName(profile.name, profile.id)}님에게 맞는 프로그램을 찾고 있어요</p>
               <p className="pr-reco-loading-sub">
-                CARE 7+ 진단유형에 맞는 프로그램을 조회 중입니다…
+                학년과 CARE 7+ 진단유형에 맞는 프로그램을 조회 중입니다…
               </p>
               <div className="pr-reco-loading-bar">
                 <div className="pr-reco-loading-fill" />
@@ -138,7 +138,7 @@ export default function ProgramApply() {
                       <i className="fa-solid fa-lock" />
                     </span>
                     <h4>AI 맞춤 추천이 잠겨 있어요</h4>
-                    <p>나의 CARE 7+ 진단유형에 맞는 비교과 프로그램을 확인해 보세요.</p>
+                    <p>내 학년과 CARE 7+ 진단유형에 맞는 비교과 프로그램을 확인해 보세요.</p>
                     <button type="button" className="pr-reco-cta" onClick={handleUnlock}>
                       <i className="fa-solid fa-wand-magic-sparkles" />
                       나에게 맞는 비교과 프로그램 보기
