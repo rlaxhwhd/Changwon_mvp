@@ -3,6 +3,7 @@
 .cs-page { color: var(--foreground); }
 .cs-layout { display: grid; grid-template-columns: minmax(0, 1fr) 296px; gap: 16px; align-items: start; }
 .cs-main-column, .cs-sidebar { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.cs-main-column > .dc-ai-comment { margin: 0; }
 .cs-panel, .cs-stats { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); }
 .cs-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); padding: 24px 8px; }
 .cs-stat { display: flex; gap: 14px; align-items: center; padding: 0 20px; min-width: 0; }

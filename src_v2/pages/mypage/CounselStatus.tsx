@@ -35,8 +35,9 @@ export default function CounselStatus() {
       time: r.slot?.start ?? '',
     }
   })
-  return <CounselHistory rows={rows} onCancel={cancelCounselRequest} sidebarFooter={
-    <><AiCommentCard studentId={getActiveStudentId()} kind="counsel" readOnly />
-    <section className="cs-booking"><Icon name="calendar" /><h2>상담이 필요하신가요?</h2><p>진로와 취업, 대학생활에 대한 고민을<br />전문 상담사와 함께 이야기해 보세요.</p><Link to="/counsel">상담 예약하기 <Icon name="arrow" /></Link></section></>
+  return <CounselHistory rows={rows} onCancel={cancelCounselRequest}
+    mainFooter={<AiCommentCard studentId={getActiveStudentId()} kind="counsel" readOnly />}
+    sidebarFooter={
+    <section className="cs-booking"><Icon name="calendar" /><h2>상담이 필요하신가요?</h2><p>진로와 취업, 대학생활에 대한 고민을<br />전문 상담사와 함께 이야기해 보세요.</p><Link to="/counsel">상담 예약하기 <Icon name="arrow" /></Link></section>
   } />
 }

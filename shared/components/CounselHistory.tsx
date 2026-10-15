@@ -31,9 +31,10 @@ interface Props {
   onCancel?: (id: string, reason: string) => Promise<void>
   detailActions?: (row: CounselHistoryRow) => ReactNode
   sidebarFooter?: ReactNode
+  mainFooter?: ReactNode
 }
 /** Presentation and local filters only. Each portal owns data scope and write permissions. */
-export default function CounselHistory({ rows, showStudent = false, onCancel, detailActions, sidebarFooter, onExport, onOpenDetail }: Props) {
+export default function CounselHistory({ rows, showStudent = false, onCancel, detailActions, sidebarFooter, mainFooter, onExport, onOpenDetail }: Props) {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => {
     const timer = window.setInterval(() => setNow(Date.now()), 60000)
@@ -134,6 +135,7 @@ export default function CounselHistory({ rows, showStudent = false, onCancel, de
             <select aria-label="페이지당 상담 수" value={pageSize} onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}>{[10, 20, 50].map(n => <option value={n} key={n}>{n}개씩 보기</option>)}</select>
           </div>
         </section>
+        {mainFooter}
       </div>
       <aside className="cs-sidebar" aria-label="상담 일정">
         <HistoryCalendar today={today} selectedDate={selectedDate} onSelect={chooseDate} marks={calendarMarks} title="상담 캘린더" scheduledLabel="상담 예정" doneLabel="상담 완료" />
