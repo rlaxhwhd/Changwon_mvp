@@ -16,7 +16,7 @@ ROUTES = {
     'CORE_REQUIRED': '/diagnosis/employment',
     'FOLLOWUP_REQUIRED': '/diagnosis/employment',
     'CARE7_REQUIRED': '/counsel/career',
-    'ROADMAP_CONFIRMATION_REQUIRED': '/growth/roadmap-status',
+    'ROADMAP_CONFIRMATION_REQUIRED': '/roadmap/status',
 }
 MESSAGES = {
     'TYPE_REQUIRED': '상담에서 학생 유형을 먼저 확정해야 합니다.',

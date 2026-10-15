@@ -77,13 +77,13 @@ export const NAV_SECTIONS: NavSection[] = [
     id: 'roadmap',
     label: '진로취업 로드맵',
     basePaths: ['/roadmap'],
-    // 로드맵 보기 화면은 /growth/roadmap-status 하나다(옛 /roadmap/skill-tree 삭제).
-    path: '/growth/roadmap-status',
+    // 로드맵 보기 화면은 /roadmap/status(로드맵 진행 현황) 하나다(옛 /roadmap/skill-tree 삭제).
+    path: '/roadmap/status',
     icon: 'route',
     children: [
       { label: 'AI 진로로드맵', path: '/roadmap/ai', icon: 'fa-route' },
-      // 삭제된 화면 — DB 메뉴 코드(stu-roadmap.1)가 인덱스로 붙으므로 자리는 남기고 getVisibleNavChildren 이 뺀다.
-      { label: 'AI 직무 로드맵', path: '/roadmap/skill-tree', icon: 'fa-sitemap' },
+      // stu-roadmap.1 — 삭제된 AI 직무 로드맵 자리를 로드맵 진행 현황이 이어받았다(127 마이그레이션이 라벨을 바꾼다).
+      { label: '로드맵 진행 현황', path: '/roadmap/status', icon: 'fa-route' },
       { label: '로드맵 수정요청', path: '/roadmap/request', icon: 'fa-pen-to-square' },
       { label: '최종 로드맵', path: '/roadmap/final', icon: 'fa-bullseye' },
     ],
@@ -105,6 +105,7 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: 'target',
     children: [
       { label: '홈대시보드', path: '/growth', icon: 'fa-house' },
+      // stu-growth.1 — 로드맵 진행 현황은 진로취업 로드맵으로 옮겼다. 127 마이그레이션이 메뉴를 끈다(인덱스 자리만 유지).
       { label: '로드맵 진행 현황', path: '/growth/roadmap-status', icon: 'fa-route' },
       { label: '퀘스트보드', path: '/growth/quest', icon: 'fa-list-check' },
       { label: '오늘의 성장퀘스트', path: '/growth/mission', icon: 'fa-bullseye' },
@@ -174,7 +175,7 @@ export function getVisibleNavChildren(
   access?: Record<Stage, 'open' | 'locked'>,
 ): NavChild[] {
   return children
-    .filter(child => child.path !== '/roadmap/ai' && child.path !== '/roadmap/final' && child.path !== '/roadmap/skill-tree')
+    .filter(child => child.path !== '/roadmap/ai' && child.path !== '/roadmap/final')
     .filter(child => child.minGrade === undefined || grade >= child.minGrade)
     .filter(child => !access || !child.requiresStage || access[child.requiresStage] === 'open')
     .map(child => ({

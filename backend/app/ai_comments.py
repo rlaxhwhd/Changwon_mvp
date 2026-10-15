@@ -308,9 +308,15 @@ def load_comment(response: Response, body: CommentRequest = Query(),
     response.headers['Cache-Control'] = 'no-store'
     refresh = conn.execute('SELECT revision>processed_revision AS pending FROM dc.counsel_ai_refresh WHERE student_uid=%s',
                            (student['intg_uid'],)).fetchone() if body.kind == 'counsel' and not body.counselRequestId else None
+    view_only = counselor_view_only(body, user)
     return {'comment': own, 'studentComment': student_comment,
-            'refreshPending': bool(refresh and refresh['pending']),
-            'canGenerate': body.kind != 'counsel' and generation_available(conn, body, student['intg_uid'])}
+            'refreshPending': bool(refresh and refresh['pending']), 'viewOnly': view_only,
+            'canGenerate': body.kind != 'counsel' and not view_only and generation_available(conn, body, student['intg_uid'])}
+
+
+def counselor_view_only(body, user):
+    """종합 AI 코멘트는 학생이 만든다 — 상담사는 학생 상세에서 조회만 한다(2026-10-15 사용자 확정)."""
+    return body.kind == 'comprehensive' and is_counselor(user)
 
 
 def saved_dto(row, context):
@@ -385,6 +391,8 @@ def comment(body: CommentRequest, user=Depends(principal, scope='function'),
         raise HTTPException(503, 'AI 근거 검색과 코멘트 서비스를 준비 중입니다.')
     context = context_for(conn, user, body)
     uid = student_access(conn, user, body.studentId)['intg_uid']
+    if counselor_view_only(body, user):
+        raise HTTPException(403, '상담사는 종합 AI 코멘트를 조회만 할 수 있습니다.')
     if not generation_available(conn, body, uid):
         raise HTTPException(429, '종합 AI 코멘트는 하루 한 번 생성할 수 있습니다.')
     if body.kind == 'counsel' and user['kind'] == 'STUDENT':

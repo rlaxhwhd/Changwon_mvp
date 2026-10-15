@@ -131,19 +131,19 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
             </div>
 
             {/* CARE 7+ 참여학생 요약 */}
-            <Link to="/students/all" className="card sm assign">
+            {/* 두 칸이 각자 다른 곳으로 간다 — 참여학생은 CARE 7+ 필터가 걸린 학생 목록, 상담기록은 상담일지 목록. */}
+            <div className="card sm assign">
               <span className="rounded s-green"><Ico id="users" /></span>
-              <div className="unit">
+              <Link to="/students/all?focus=care7" className="unit">
                 <div className="k">CARE 7+ 참여학생</div>
                 <div className="v">{hello.studentCount}<u>명</u></div>
-              </div>
+              </Link>
               <div className="sep" />
-              <div className="unit">
+              <Link to="/counsel/records" className="unit">
                 <div className="k">상담기록</div>
                 <div className="v">{hello.recordCount}<u>건</u></div>
-              </div>
-              <span className="go"><Ico id="chev" /></span>
-            </Link>
+              </Link>
+            </div>
 
             <div className="card sm risk">
               <div className="risk-hd"><span className="rounded s-red"><Ico id="alert" /></span>

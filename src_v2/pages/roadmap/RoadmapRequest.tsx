@@ -102,7 +102,7 @@ export default function RoadmapRequest() {
             <button type="button" className="rr-btn-ghost" onClick={() => { setDone(false); setTitle(''); setReason(''); setPicked(new Set()) }}>
               다른 요청 작성
             </button>
-            <button type="button" className="rr-btn-primary" onClick={() => navigate('/growth/roadmap-status')}>
+            <button type="button" className="rr-btn-primary" onClick={() => navigate('/roadmap/status')}>
               로드맵으로 돌아가기
             </button>
           </div>
@@ -198,7 +198,7 @@ export default function RoadmapRequest() {
             {error && <p className="rr-error" role="alert">{error}</p>}
 
             <div className="rr-actions">
-              <Link to="/growth/roadmap-status" className="rr-btn-ghost">취소</Link>
+              <Link to="/roadmap/status" className="rr-btn-ghost">취소</Link>
               <button
                 type="button"
                 className="rr-btn-primary"

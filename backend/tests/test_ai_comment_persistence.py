@@ -20,7 +20,10 @@ def test_roundtrip_all_kinds_student_and_counselor_visibility(client, enabled, m
     path = '/api/v1/ai/comments'
     student = done(client.post(path, headers=headers('chaewon'), json=body))
     if kind == 'comprehensive':
-        assert client.post(path, headers=headers('career_kim'), json=body).status_code == 429
+        # 상담사는 종합 코멘트를 조회만 한다 — 생성 요청은 하루 한도 판정 전에 거부된다.
+        assert client.post(path, headers=headers('career_kim'), json=body).status_code == 403
+        listed = client.get(path, headers=headers('career_kim'), params=body).json()
+        assert listed['viewOnly'] is True and listed['canGenerate'] is False
         staff = student
     else:
         staff = done(client.post(path, headers=headers('career_kim'), json=body))

@@ -25,7 +25,7 @@ import './StarTrack.css'
 /** 좌측 레일 — 아직 없는 화면은 링크로 만들지 않는다(누르면 아무데도 안 가는 메뉴 금지). */
 const RAIL: { icon: string; label: string; to?: string }[] = [
   { icon: 'fa-gauge-high', label: '대시보드', to: '/star' },
-  { icon: 'fa-diagram-project', label: '로드맵', to: '/growth/roadmap-status' },
+  { icon: 'fa-diagram-project', label: '로드맵', to: '/roadmap/status' },
   { icon: 'fa-coins', label: '마일리지' },
   { icon: 'fa-comments', label: '상담 내역', to: '/counsel/record' },
   { icon: 'fa-book', label: '교과 관리' },

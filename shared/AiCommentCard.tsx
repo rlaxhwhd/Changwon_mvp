@@ -20,6 +20,8 @@ export default function AiCommentCard(props: Props) {
 function Comment(props: Props) {
   const { readOnly, ...request } = props
   const [canGenerate, setCanGenerate] = useState(false)
+  // 서버가 정한다 — 상담사는 종합 코멘트를 조회만 한다(생성 버튼은 보이되 비활성).
+  const [viewOnly, setViewOnly] = useState(false)
   const [refreshPending, setRefreshPending] = useState(false)
   const [reply, setReply] = useState<ChatReply | null>(null)
   const [studentReply, setStudentReply] = useState<ChatReply | null>(null)
@@ -33,9 +35,9 @@ function Comment(props: Props) {
     const abort = new AbortController()
     let timer: ReturnType<typeof setTimeout> | undefined
     function load() {
-    void api<{ comment: ChatReply | null; studentComment: ChatReply | null; canGenerate: boolean; refreshPending: boolean }>(`/ai/comments?${queryString(request)}`, { signal: abort.signal })
+    void api<{ comment: ChatReply | null; studentComment: ChatReply | null; canGenerate: boolean; viewOnly?: boolean; refreshPending: boolean }>(`/ai/comments?${queryString(request)}`, { signal: abort.signal })
       .then(result => { if (!abort.signal.aborted) {
-        setError(''); setReply(result.comment); setStudentReply(result.studentComment); setCanGenerate(result.canGenerate); setRefreshPending(result.refreshPending)
+        setError(''); setReply(result.comment); setStudentReply(result.studentComment); setCanGenerate(result.canGenerate); setViewOnly(!!result.viewOnly); setRefreshPending(result.refreshPending)
         if (result.refreshPending) timer = setTimeout(load, 10000)
       } })
       .catch(e => { if (!abort.signal.aborted) setError(e instanceof Error ? e.message : '저장된 코멘트를 불러오지 못했습니다.') })
@@ -59,7 +61,8 @@ function Comment(props: Props) {
       {!readOnly && (props.kind === 'comprehensive' || props.kind === 'roadmap') && <button type="button" disabled={pending || loading || !canGenerate} onClick={() => void generate()}>
         {pending ? <><span className="dc-ai-spinner" aria-hidden="true" /> 생성 중</> : loading ? '불러오는 중' : reply ? '다시 생성' : '코멘트 생성'}
       </button>}</div>
-    {props.kind === 'comprehensive' && reply && !canGenerate && <small>종합 코멘트는 하루 한 번 생성할 수 있습니다.</small>}
+    {viewOnly ? <small>상담사는 종합 AI 코멘트를 조회만 할 수 있습니다. 코멘트는 학생이 생성합니다.</small>
+      : props.kind === 'comprehensive' && reply && !canGenerate && <small>종합 코멘트는 하루 한 번 생성할 수 있습니다.</small>}
     {refreshPending && <p role="status">저장된 상담일지로 전체 상담현황 분석을 갱신하고 있습니다.</p>}
     {(pending || loading) && <div className="dc-ai-comment-loading" role="status" aria-live="polite">
       <div className="dc-ai-comment-progress"><span className="dc-ai-spinner" aria-hidden="true" /><span>{pending ? progress : '저장된 코멘트를 불러오고 있어요.'}</span></div>

@@ -14,7 +14,7 @@ import './RoadmapStatus.css'
 import { usePageHead } from '../../components/PageCrumb'
 
 /**
- * /v2/growth/roadmap-status
+ * /v2/roadmap/status
  * 3축 로드맵의 이행 현황 대시보드(학생 로드맵 보기 화면).
  *
  * 중요 — 이 화면은 학생용 "읽기 전용 (read-only)" 뷰입니다.

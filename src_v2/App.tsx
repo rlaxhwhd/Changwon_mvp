@@ -79,13 +79,14 @@ const router = createBrowserRouter(
         { path: '/growth/program',      loader: studentPageLoader('programs', 'programWishlist'), element: <StageGate stage="growth" title="비교과 프로그램"><ProgramApply /></StageGate> },
         { path: '/growth/program/:id',  loader: studentPageLoader('departments', 'programWishlist'), element: <StageGate stage="growth" title="비교과 프로그램"><ProgramDetail /></StageGate> },
         { path: '/growth/quest',        element: <StageGate stage="growth" title="퀘스트 보드"><QuestBoard /></StageGate> },
-        { path: '/growth/roadmap-status', element: <StageGate stage="roadmap" title="로드맵 진행 현황"><RoadmapStatus /></StageGate> },
+        // 로드맵 진행 현황은 「진로취업 로드맵」 하위로 옮겼다(/roadmap/status) — 옛 주소는 리다이렉트.
+        { path: '/growth/roadmap-status', element: <Navigate to="/roadmap/status" replace /> },
         { path: '/growth/mission',      element: <TodayGrowthMission /> },
         { path: '/growth/mission-log',  element: <GrowthMissionLog /> },
         { path: '/growth/journal',      element: <GrowthJournal /> },
         { path: '/growth/journal/new',  element: <GrowthJournalForm /> },
         { path: '/growth/journal/:entryId/edit', element: <GrowthJournalForm /> },
-        { path: '/growth/skill-tree',   element: <Navigate to="/growth/roadmap-status" replace /> },
+        { path: '/growth/skill-tree',   element: <Navigate to="/roadmap/status" replace /> },
 
         // 진단 센터
         { path: '/diagnosis',            element: <Navigate to="/diagnosis/employment" replace /> },
@@ -105,11 +106,12 @@ const router = createBrowserRouter(
         { path: '/counsel/professor', loader: studentPageLoader('professors', 'slots'), element: <ProfessorCounsel /> },
 
         // 경력개발 로드맵 — 상담에서 만들어진다. 상담 전에는 볼 것이 없다.
-        //   로드맵 보기는 /growth/roadmap-status(같은 3축 보드) 하나다 — 옛 /roadmap/skill-tree 는 삭제됐다.
-        { path: '/roadmap',             element: <Navigate to="/growth/roadmap-status" replace /> },
-        { path: '/roadmap/ai',          element: <Navigate to="/growth/roadmap-status" replace /> },
+        //   로드맵 보기는 /roadmap/status(로드맵 진행 현황, 3축 보드) 하나다 — 옛 /roadmap/skill-tree 는 삭제됐다.
+        { path: '/roadmap',             element: <Navigate to="/roadmap/status" replace /> },
+        { path: '/roadmap/ai',          element: <Navigate to="/roadmap/status" replace /> },
+        { path: '/roadmap/status',      element: <StageGate stage="roadmap" title="로드맵 진행 현황"><RoadmapStatus /></StageGate> },
         { path: '/roadmap/request',     element: <StageGate stage="roadmap" title="로드맵 변경 요청"><RoadmapRequest /></StageGate> },
-        { path: '/roadmap/final',       element: <Navigate to="/growth/roadmap-status" replace /> },
+        { path: '/roadmap/final',       element: <Navigate to="/roadmap/status" replace /> },
         // 구 경로 → 신 경로 (취업지원 하위로 이동)
         { path: '/roadmap/jobs',        element: <Navigate to="/jobs/joblist" replace /> },
         { path: '/roadmap/resume',      element: <Navigate to="/jobs/home" replace /> },

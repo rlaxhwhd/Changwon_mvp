@@ -270,7 +270,7 @@ export default function GrowthHome() {
           {!confirmedPlan ? <p className="gh-empty">상담 후 로드맵이 확정되면 이행할 항목이 여기에 표시됩니다.</p>
             : pendingCells.length === 0 ? <p className="gh-empty">로드맵의 모든 항목을 이행했습니다.</p>
             : <ul className="gh-pending-list">{pendingCells.map(cell => <li key={cell.id}><span>{axisLabel(cell.axis)}</span><strong>{cell.title}</strong></li>)}</ul>}
-          {confirmedPlan && <Link className="gh-pending-link" to="/growth/roadmap-status">로드맵 진행 현황 보기 <i className="fa-solid fa-arrow-right" /></Link>}
+          {confirmedPlan && <Link className="gh-pending-link" to="/roadmap/status">로드맵 진행 현황 보기 <i className="fa-solid fa-arrow-right" /></Link>}
           {!isSenior && <div className="gh-document-policy"><i className="fa-solid fa-lock" /><p><strong>이력서·취업 포트폴리오는 4학년부터 제공됩니다.</strong><span>1~3학년은 진단, 비교과 활동, 로드맵 이행 기록에 집중합니다.</span></p></div>}
         </aside>
       </section>
