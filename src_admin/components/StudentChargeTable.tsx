@@ -118,13 +118,13 @@ export default function StudentChargeTable({
   useEffect(() => {
     let cancelled = false
     setMetadataError(null)
-    const metadataRequest = academic ? fetchAcademicStudentMetadata(diagnosis) : fetchRosterMetadata(departments)
+    const metadataRequest = academic ? fetchAcademicStudentMetadata(diagnosis) : fetchRosterMetadata(departments, undefined, undefined, isRoadmap)
     metadataRequest.then(value => {
       if (!cancelled) setMetadata(value)
     }).catch((error: Error) => { if (!cancelled) setMetadataError(error) })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [deptKey, refreshKey, metadataRetry, academic, diagnosis])
+  }, [deptKey, refreshKey, metadataRetry, academic, diagnosis, isRoadmap])
   const { options, summary } = metadata
 
   // 서버(목업) 조회 — useListData가 useEffect+레이스 cleanup을 담당. DB 전환 시 훅 내부만 교체.
@@ -134,6 +134,7 @@ export default function StudentChargeTable({
     q: query,
     departments,
     filters: {
+      roadmapReady: isRoadmap ? 'Y' : undefined,
       diagnosed: diagnosis ? 'Y' : undefined,
       retakePending: diagnosis && retakePending ? 'Y' : undefined,
       major: major === ALL ? undefined : major,

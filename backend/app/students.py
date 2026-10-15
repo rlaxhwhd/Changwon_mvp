@@ -121,6 +121,38 @@ def scope(request,user):
     values=[user['intg_uid']]
     if is_counselor(user):
         where, values = ['true'], []
+    if request.query_params.get('filters.roadmapReady') == 'Y':
+        from .care7_cycle import year_start
+        from .gates import CAREER_REQUEST, CARE7_TRACK
+        start = year_start()
+        # Filter before pagination and reuse it for metadata. A completed general
+        # or psychological consultation is not a CARE7 roadmap basis.
+        where.append(f'''EXISTS (
+          SELECT 1 FROM dc.student_type_code rule
+          JOIN LATERAL (
+            SELECT max(completed_at) AS at FROM dc.diagnosis_attempt
+            WHERE student_uid=v.intg_uid AND test_id='ccore' AND status_code='DONE'
+              AND completed_at IS NOT NULL AND (%s OR (started_at >= %s AND completed_at >= %s))
+          ) core ON core.at IS NOT NULL
+          JOIN LATERAL (
+            SELECT max(completed_at) AS at FROM dc.diagnosis_attempt
+            WHERE student_uid=v.intg_uid AND test_id=lower(rule.follow_up_test) AND status_code='DONE'
+              AND completed_at IS NOT NULL AND (%s OR (started_at >= %s AND completed_at >= core.at))
+          ) followup ON followup.at IS NOT NULL
+          WHERE rule.code=v.student_type
+            AND NOT EXISTS (SELECT 1 FROM dc.diagnosis_retake q WHERE q.student_uid=v.intg_uid
+              AND q.status='APPROVED' AND q.test_id IN ('ccore',lower(rule.follow_up_test)))
+            AND EXISTS (SELECT 1 FROM dc.counsel_request c
+              WHERE student_uid=v.intg_uid AND {CAREER_REQUEST} AND {CARE7_TRACK} AND status_code='DONE'
+                AND (%s OR completed_at >= greatest(core.at,followup.at))
+                AND NOT EXISTS (
+                  SELECT 1 FROM dc.diagnosis_retake q JOIN dc.diagnosis_attempt a ON a.id=q.completed_attempt_id
+                  LEFT JOIN dc.roadmap r ON r.student_uid=q.student_uid
+                  WHERE q.student_uid=v.intg_uid AND q.test_id='ccore' AND q.status='COMPLETED'
+                    AND (r.student_uid IS NULL OR NOT r.confirmed OR r.version IS NOT DISTINCT FROM q.roadmap_version)
+                    AND (c.completed_at IS NULL OR c.completed_at <= a.completed_at)
+                )))''')
+        values.extend([start.year < 2027, start, start, start.year < 2027, start, start.year < 2027])
     departments=request.query_params.getlist('departments')
     if departments:
         where.append('major_label=ANY(%s)')

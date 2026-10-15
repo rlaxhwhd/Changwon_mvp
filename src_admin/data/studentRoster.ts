@@ -302,8 +302,8 @@ export function getRosterSummary(departments: string[] = [], studentIds?: string
   return (metadataCache.get(rosterScopeKey(departments, studentIds)) ?? emptyMetadata).summary
 }
 
-export async function fetchRosterMetadata(departments: string[] = [], studentIds?: string[], professorId?: string): Promise<RosterMetadata> {
-  const result = await api<RosterMetadata>(`/students/metadata?${queryString({ departments, studentIds, professorId })}`)
-  if (!professorId) metadataCache.set(rosterScopeKey(departments, studentIds), result)
+export async function fetchRosterMetadata(departments: string[] = [], studentIds?: string[], professorId?: string, roadmapReady = false): Promise<RosterMetadata> {
+  const result = await api<RosterMetadata>(`/students/metadata?${queryString({ departments, studentIds, professorId, filters: roadmapReady ? { roadmapReady: 'Y' } : undefined })}`)
+  if (!professorId && !roadmapReady) metadataCache.set(rosterScopeKey(departments, studentIds), result)
   return result
 }

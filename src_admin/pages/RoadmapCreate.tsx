@@ -28,7 +28,7 @@ export default function RoadmapCreate() {
       <StudentChargeTable
         departments={[]}
         title="로드맵 생성"
-        scopeLabel="전 학과 · 로드맵이 없으면 생성, 있으면 이행률"
+        scopeLabel="진단·CARE 7+ 상담 완료 학생 · 로드맵이 없으면 생성, 있으면 이행률"
         mode="roadmap"
         onPickStudent={setOpenId}
         refreshKey={refreshKey}
