@@ -22,7 +22,7 @@ const resources = {
   resumes: loadResumes,
   counselors: loadCounselorProfiles,
   professors: loadProfessorGroups,
-  slots: loadPublicSlots,
+  slots: () => loadPublicSlots(),
   counselRecords: loadCounselRecords,
   departments: loadDepartments,
   notices: loadNotices,

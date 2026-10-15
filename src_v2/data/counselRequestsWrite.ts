@@ -69,8 +69,9 @@ async function createRequest(body: object): Promise<void> {
   })
   pendingKeys.delete(payload)
   storeCounselRequest(saved)
-  const { loadPublicSlots } = await import('../../shared/counselOperationsStore')
-  await loadPublicSlots()
+  // 학생이 보고 있던 주를 다시 읽는다 — 다음 주에서 신청했는데 이번 주로 되돌아가면 안 된다.
+  const { loadPublicSlots, loadedSlotWeek } = await import('../../shared/counselOperationsStore')
+  await loadPublicSlots(loadedSlotWeek() || undefined)
 }
 
 export async function submitCounselRequest(input: SubmitCounselInput): Promise<void> {

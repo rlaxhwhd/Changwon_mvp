@@ -1,5 +1,6 @@
 import CounselSlotPicker from '../../components/CounselSlotPicker'
 import { useSlotPicker } from '../../hooks/useSlotPicker'
+import { useCounselWeek } from '../../hooks/useCounselWeek'
 import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
@@ -9,7 +10,7 @@ import CounselTabs from '../../components/CounselTabs'
 import CounselWeekCard from '../../components/CounselWeekCard'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
 import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
-import { getCounselWeek, type Day } from '../../lib/counselCalendar'
+import { type Day } from '../../lib/counselCalendar'
 import './CareerCounsel.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -21,12 +22,9 @@ interface SelectedSlot {
   time: string
 }
 
-// 이번 주 월~금 (공용 유틸 — 화면에 날짜 하드코딩 금지)
-const days: Day[] = getCounselWeek()
-
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
-function getCounselorsForSlot(counselors: CounselorCard[], dayIndex: number, timeIndex: number) {
+function getCounselorsForSlot(days: Day[], counselors: CounselorCard[], dayIndex: number, timeIndex: number) {
   return counselors.filter(c => slotAvailable(c.id, days[dayIndex].iso, times[timeIndex]))
 }
 
@@ -34,6 +32,9 @@ export default function PsychCounsel() {
   // Route data is loaded after module import; read the shared store at render.
   const counselors = getCounselorCards('psych')
   const mobileSlots = useSlotPicker()
+  // 보고 있는 주(월~금) — 주를 넘기면 그 주의 슬롯을 다시 읽는다.
+  const week = useCounselWeek()
+  const days = week.days
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
   usePageHead('상담 신청', '상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.')
   // 진로취업 화면과 같은 순서로 고른다 — 시간 먼저, 그 시간에 가능한 상담사가 뒤따른다.
@@ -43,13 +44,16 @@ export default function PsychCounsel() {
   const [reserveOpen, setReserveOpen] = useState(false)
   const [consentOpen, setConsentOpen] = useState(false)
 
+  // 고른 칸은 요일 키(mon~fri)로 맞춘다 — 주를 넘기면 다른 주의 같은 요일이 선택돼 보이지 않게 비운다.
+  const moveWeek = (go: () => void) => { setSelectedSlot(null); setSelectedCounselor(''); go() }
+
   const showNotice = (message: string) => {
     setNotice(message)
     window.setTimeout(() => setNotice(''), 1800)
   }
 
   const activeCounselor = counselors.find(counselor => counselor.id === selectedCounselor) ?? counselors[0]
-  const slotCounselors = days.map((_, dayIndex) => times.map((__, timeIndex) => getCounselorsForSlot(counselors, dayIndex, timeIndex)))
+  const slotCounselors = days.map((_, dayIndex) => times.map((__, timeIndex) => getCounselorsForSlot(days, counselors, dayIndex, timeIndex)))
   // 고른 시간에 자리가 남은 상담사만 추린다 — 예약 완료된 상담사는 후보에서 뺀다.
   const filteredCounselors = (() => {
     if (!selectedSlot) return []
@@ -163,7 +167,7 @@ export default function PsychCounsel() {
 
         <main className="cc-calendar-card">
           <div className="cc-calendar-head">
-            <button aria-label="이전 주">
+            <button aria-label="이전 주" onClick={() => moveWeek(week.prevWeek)} disabled={week.isThisWeek}>
               <i className="fa-solid fa-chevron-left" />
             </button>
             <div className="cc-week-title">
@@ -173,17 +177,18 @@ export default function PsychCounsel() {
               <strong>{days[4].date}</strong>
             </div>
             <div className="cc-head-actions">
-              <button aria-label="다음 주">
+              <button aria-label="다음 주" onClick={() => moveWeek(week.nextWeek)}>
                 <i className="fa-solid fa-chevron-right" />
               </button>
-              <button className="cc-this-week">이번 주</button>
+              <button className="cc-this-week" onClick={() => moveWeek(week.thisWeek)} disabled={week.isThisWeek}>이번 주</button>
               <button aria-label="달력 열기">
                 <i className="fa-regular fa-calendar-days" />
               </button>
             </div>
           </div>
 
-          <div className="cc-legend">
+          {week.error && <p className="cc-week-error" role="alert">{week.error}</p>}
+          <div className="cc-legend" aria-busy={week.loading}>
             <span><i className="available" />예약 가능</span>
             <span><i className="reserved" />예약 완료</span>
             <span><i className="selected" />선택됨</span>

@@ -732,6 +732,20 @@
   background: var(--cc-soft);
 }
 
+/* 이번 주에서는 이전 주·이번 주 버튼이 갈 곳이 없다 */
+.cc-calendar-head button:disabled,
+.cc-this-week:disabled {
+  opacity: .4;
+  cursor: default;
+  background: var(--color-bg);
+}
+
+.cc-week-error {
+  margin: 0 0 12px;
+  color: var(--color-danger, #d64545);
+  font-size: 13px;
+}
+
 .cc-legend {
   gap: 16px;
   padding: 0;

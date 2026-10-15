@@ -6,9 +6,20 @@ import { getCounselWeek } from '../src_v2/lib/counselCalendar'
 
 type PublicSlot = { staffId: string; date: string; start: string; end: string; available: boolean }
 let publicSlots: PublicSlot[] = []
-export async function loadPublicSlots(): Promise<void> {
-  const start = getCounselWeek()[0].iso
-  publicSlots = (await api<{ items: PublicSlot[] }>(`/counsel-slots?startDate=${start}&days=5`)).items
+/** 지금 들고 있는 슬롯이 어느 주(월요일 ISO)의 것인지 — 학생 화면이 주를 넘겨 본다. */
+let publicSlotWeek = ''
+let slotTicket = 0
+/** 슬롯을 다시 읽었다 — 상담 신청 화면들이 다시 그린다. */
+export const COUNSEL_SLOTS_EVENT = 'dc:counsel-slots-updated'
+export const loadedSlotWeek = () => publicSlotWeek
+/** start 를 생략하면 이번 주. 주를 빠르게 넘겨도 마지막 요청의 결과만 남긴다. */
+export async function loadPublicSlots(start: string = getCounselWeek()[0].iso): Promise<void> {
+  const ticket = ++slotTicket
+  const items = (await api<{ items: PublicSlot[] }>(`/counsel-slots?startDate=${start}&days=5`)).items
+  if (ticket !== slotTicket) return
+  publicSlots = items
+  publicSlotWeek = start
+  window.dispatchEvent(new Event(COUNSEL_SLOTS_EVENT))
 }
 export function slotAvailable(staffId: string, date: string, start: string): boolean {
   return publicSlots.some(s => s.staffId === staffId && s.date === date && s.start === start && s.available)

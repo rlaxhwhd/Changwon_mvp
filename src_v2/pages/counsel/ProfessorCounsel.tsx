@@ -1,5 +1,6 @@
 import CounselSlotPicker from '../../components/CounselSlotPicker'
 import { useSlotPicker } from '../../hooks/useSlotPicker'
+import { useCounselWeek } from '../../hooks/useCounselWeek'
 import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
@@ -10,7 +11,7 @@ import { findDefaultSelection, type DepartmentGroup } from '../../data/professor
 import { getCounselableProfessorGroups } from '../../data/professorProfilesRead'
 import { submitProfessorCounselRequest } from '../../data/counselRequestsWrite'
 import { getActiveStudent } from '../../data/students'
-import { getCounselWeek, type Day } from '../../lib/counselCalendar'
+import { type Day } from '../../lib/counselCalendar'
 import './CareerCounsel.css'
 import './ProfessorCounsel.css'
 import { usePageHead } from '../../components/PageCrumb'
@@ -25,9 +26,6 @@ interface SelectedSlot {
 
 // 학과별 교수 = 단일소스(professors.ts) 투영. 화면에 하드코딩하지 않는다.
 // 기본 선택은 활성 학생의 학과(major)로 파생한다(본인 학과가 먼저 열림).
-
-// 이번 주 월~금 (공용 유틸 — 화면에 날짜 하드코딩 금지)
-const days: Day[] = getCounselWeek()
 
 const times = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00']
 
@@ -48,6 +46,9 @@ export default function ProfessorCounsel() {
 
 function ProfessorCounselForm({ professorGroups }: { professorGroups: DepartmentGroup[] }) {
   const mobileSlots = useSlotPicker()
+  // 보고 있는 주(월~금) — 주를 넘기면 그 주의 슬롯을 다시 읽는다.
+  const week = useCounselWeek()
+  const days = week.days
   const defaultSelection = findDefaultSelection(getActiveStudent().major, professorGroups)
   const [selectedGroupName, setSelectedGroupName] = useState(defaultSelection.groupName)
   const selectedGroup = professorGroups.find(group => group.name === selectedGroupName) ?? professorGroups[0]
@@ -68,6 +69,9 @@ function ProfessorCounselForm({ professorGroups }: { professorGroups: Department
   const activeProfessor = professors.find(professor => professor.id === selectedProfessorId) ?? professors[0]
   const onlineTopic = `${selectedDivision} ${activeProfessor.name} 교수님께 온라인 상담을 신청합니다.`
   const [onlineContent, setOnlineContent] = useState('')
+
+  // 고른 칸은 요일 키(mon~fri)로 맞춘다 — 주를 넘기면 다른 주의 같은 요일이 선택돼 보이지 않게 비운다.
+  const moveWeek = (go: () => void) => { setSelectedSlot(null); go() }
 
   const updateGroup = (groupName: string) => {
     const nextGroup = professorGroups.find(group => group.name === groupName) ?? professorGroups[0]
@@ -234,7 +238,7 @@ function ProfessorCounselForm({ professorGroups }: { professorGroups: Department
             ) : (
               <div className="pc-offline-calendar">
                 <div className="cc-calendar-head">
-                  <button aria-label="이전 주">
+                  <button aria-label="이전 주" onClick={() => moveWeek(week.prevWeek)} disabled={week.isThisWeek}>
                     <i className="fa-solid fa-chevron-left" />
                   </button>
                   <div className="cc-week-title">
@@ -244,14 +248,15 @@ function ProfessorCounselForm({ professorGroups }: { professorGroups: Department
                     <strong>{days[4].date}</strong>
                   </div>
                   <div className="cc-head-actions">
-                    <button aria-label="다음 주">
+                    <button aria-label="다음 주" onClick={() => moveWeek(week.nextWeek)}>
                       <i className="fa-solid fa-chevron-right" />
                     </button>
-                    <button className="cc-this-week">이번 주</button>
+                    <button className="cc-this-week" onClick={() => moveWeek(week.thisWeek)} disabled={week.isThisWeek}>이번 주</button>
                   </div>
                 </div>
 
-                <div className="cc-legend">
+                {week.error && <p className="cc-week-error" role="alert">{week.error}</p>}
+                <div className="cc-legend" aria-busy={week.loading}>
                   <span><i className="available" />예약 가능</span>
                   <span><i className="reserved" />예약 완료</span>
                   <span><i className="selected" />선택됨</span>
