@@ -456,3 +456,10 @@ API·웹을 `first-user-counsel-20261008`, RAG를 `20261001`로 되돌리고 추
 - 서버 Chrome `/admin/roadmap/create` 대상 5행/유형미정 없음, 목록 API 200/36ms. 학생 비교과 추천 버튼 200/31ms, 요청 1회. 서버 프로그램은 삭제 상태라 추천은 빈 목록이며 실제 추천 항목 선별은 격리 회귀에서 검증했다. 목록 및 관련 통계 모두 0 유지, 두 화면 실패 요청·콘솔 오류 없음.
 - 백업·복구: `/opt/dreamcatch/ai/roster-recommend-20261015/`에 서버 내부 DB 백업과 목차, Compose 두 파일, 배포·감사 자료 보관. API·웹 모두 `activity-menu-20261015`로 되돌려 복구 가능하며 DB 전체 복원은 하지 않는다. 운영 DB 다운로드 없음.
 - 이미지 묶음 SHA256 `8c4ed6755a389d3dff9a263d0eca78157b35c93c6090a9c6b196fbf37aa0afca`. 로컬/서버 웹 HTML 해시 일치: v2 `7e51f28dce02baec2935ddde6caeb8c9238f4265a89d3d97e4dfcd1f33c58775`, admin `08dd456d133d240a250973872e47c1f4935cfc1ad270a3a4c6f8123cf2694a90`.
+# 상담 캘린더·성장 기록·AI 카드 웹 배포 (2026-10-15)
+
+- `c48659a`, `8c1adf5`, `9617ef1`을 웹 `dreamcatch-web:counsel-growth-20261015`로 배포했다. API `roster-recommend-20261015`와 DB127 및 업무 데이터는 유지했다.
+- 로컬 Docker 빌드 성공, Chrome 활동 기록 3→16건 펼치기·상담 AI 카드 메인 하단 확인. 서버 Chrome 활동 기록 3→13건, AI 카드 메인 열/카드 폭 모두 1080px 확인.
+- 서버 진로·심리·교수상담에서 다음 주 이동 시 2026-10-19 공개 슬롯 요청 각 200(72/46/70ms), 실패 요청·콘솔 오류 없음. 실제 상담 신청 제출은 하지 않았다.
+- 서버 웹/API healthy, nginx 정상. release parity 소스66/마이그레이션127/스키마 MATCH. 웹 HTML 로컬/서버 일치: v2 `c991b16a517757772683b17fe3654d8d0c812f8713a88da3138f9566c1b75ed1`, admin `a460194eebc73bf886b169e8ade5251c1aa633f5e512f8dccc275d2e73b4d435`.
+- 백업 `/opt/dreamcatch/ai/counsel-growth-20261015/`에 Compose 두 파일 및 이미지 묶음 보관. 묶음 SHA256 `be5c9b965cc21f4e8fd103708d6a608810b8dbccbcb9cc0fad4a09853a725b1d`. 복구는 웹 태그를 `roster-recommend-20261015`로 되돌려 웹만 재기동한다.
