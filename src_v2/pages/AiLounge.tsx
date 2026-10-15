@@ -14,7 +14,7 @@ import AiCommentCard from '../../shared/AiCommentCard'
 import { LockedContent } from '../components/LockedContent'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
 import { getCompetencyAxes } from '../data/competency'
-import { getGrowthRecords } from '../data/growthRecords'
+import { useActivityLog } from '../data/activityLog'
 import { getLoungeData } from '../data/lounge'
 import { useWeeklyTodos } from '../../shared/useWeeklyTodos'
 import { ROADMAP_AXIS_MAP, type RoadmapAxis } from '../data/schema/roadmap'
@@ -86,7 +86,8 @@ export default function AiLounge() {
     window.addEventListener('focus', load)
     return () => { abort.abort(); window.removeEventListener('focus', load) }
   }, [student.id, levelUnlocked])
-  const growth = getGrowthRecords(student.id)
+  const activity = useActivityLog(student.id, 10)
+  const growth = activity.items ?? []
   const tasks = roadmap?.axes.flatMap(a => a.cells.filter(c => c.status !== 'DONE').map(c => ({ ...c, axis: a.axis }))) ?? []
   const active = requests.filter(r => r.status !== '취소')
   const agenda = useWeeklyTodos(student.id)
@@ -196,16 +197,17 @@ export default function AiLounge() {
       <section data-slot="card" className="recommend-card gh-shell reveal" id="recommend">
         <article className="gh-card gh-archive">
           <header className="gh-card-head">
-            <div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>내 성장에 저장한 활동 기록입니다.</p></div>
-            <div className="gh-head-actions"><Link to="/growth/journal">성장 기록 보기</Link></div>
+            <div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>이 플랫폼에서의 최근 활동이 자동으로 기록됩니다.</p></div>
+            <div className="gh-head-actions"><Link to="/growth">전체 기록 보기</Link></div>
           </header>
           {access.growth !== 'open' && growth.length === 0 ? <LockedContent text="CARE 7+ 진행 후 쌓인 성장 활동을 확인할 수 있습니다." />
             : <div className="gh-timeline">
-              {growth.map((r, i) => <div className="gh-timeline-item" key={`${r.date}-${r.title}-${i}`}>
+              {activity.error && <p className="gh-empty" role="alert">{activity.error}</p>}
+              {growth.map(r => <div className="gh-timeline-item" key={r.key}>
                 <time>{r.date}</time><span className={`gh-timeline-dot is-${r.tone}`} />
-                <div><span>{r.type}</span><strong>{r.title}</strong><p>{r.description}</p></div>
+                <div><span>{r.type}</span><strong>{r.title}</strong>{r.action && <p>{r.action}</p>}</div>
               </div>)}
-              {growth.length === 0 && <p className="gh-empty">아직 기록된 성장 활동이 없습니다.</p>}
+              {activity.items?.length === 0 && <p className="gh-empty">아직 기록된 활동이 없습니다.</p>}
             </div>}
         </article>
       </section>

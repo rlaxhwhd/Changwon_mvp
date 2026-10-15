@@ -119,7 +119,7 @@ export default function Chatbot() {
           <h2>함께 다음 단계를<br />찾아볼까요?</h2>
           <p>자격증 일정은 웹에서 확인하고,<br />진로·취업 준비는 대화로 풀어보세요.</p>
           <div className="dc-chat-suggestions">
-            {['정보처리기사 일정 알려줘', '면접 준비는 어떻게 시작할까?', '나에게 맞는 진로를 찾고 싶어'].map(question =>
+            {['면접 준비는 어떻게 시작할까?', '나에게 맞는 진로를 찾고 싶어'].map(question =>
               <button type="button" key={question} onClick={() => void send(question)}>{question}<LuArrowUpRight aria-hidden="true" /></button>)}
           </div>
         </div>}

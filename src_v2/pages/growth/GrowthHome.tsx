@@ -8,8 +8,10 @@ import { Link } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import { getActiveStudent } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
-import { RECORD_CATEGORY_LABEL, createGrowthRecord, deleteGrowthRecord, getGrowthRecords,
-         updateGrowthRecord, type GrowthRecordCategory } from '../../data/growthRecords'
+// 성장 활동 기록은 손으로 쓰지 않는다 — 플랫폼에서 일어난 일을 서버가 모아 준 로그다.
+import { useActivityLog } from '../../data/activityLog'
+import { axisLabel } from '../../data/schema/roadmap'
+import { roadmapEnvelope } from '../../../shared/roadmapStore'
 // 스킬 후보·분류는 사전 단일소스에서 온다 — 여기에 스킬명·분류 리터럴을 두지 않는다.
 import { catalogOptions, catalogText } from '../../data/growthInputCatalog'
 import GrowthCatalogPicker from '../../components/GrowthCatalogPicker'
@@ -18,8 +20,6 @@ import { useMetadata } from '../../../shared/useMetadata'
 import { createGrowthEntry, deleteGrowthEntry, growthEntries, updateGrowthEntry } from '../../../shared/growthStore'
 import type { GrowthEntry } from '../../../shared/growthStore'
 import { useGrowth, useRoadmap } from '../../../shared/useRoadmapStore'
-// 「이번 주 실행」은 라운지와 같은 셀렉터에서 읽는다 — 확정 로드맵의 미완료 칸이 여기서 나온다.
-import { useWeeklyTodos } from '../../../shared/useWeeklyTodos'
 import './GrowthHome.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -27,7 +27,7 @@ interface Project { id: string; title: string; role: string; period: string; des
                     stack: string[]; result: string }
 interface Skill { id: string; name: string; level: number; category: string }
 interface Qualification { id: string; title: string; detail: string; date: string; icon: string }
-type EditorKind = 'project' | 'skill' | 'qualification' | 'record'
+type EditorKind = 'project' | 'skill' | 'qualification'
 
 const text = (content: Record<string, unknown>, field: string): string =>
   typeof content[field] === 'string' ? content[field] as string : ''
@@ -58,7 +58,7 @@ interface EditorState {
 }
 
 const EDITOR_LABEL: Record<EditorKind, string> = {
-  project: '프로젝트', skill: '스킬', qualification: '자격·어학', record: '성장 활동',
+  project: '프로젝트', skill: '스킬', qualification: '자격·어학',
 }
 
 export default function GrowthHome() {
@@ -76,7 +76,7 @@ export default function GrowthHome() {
   const projects = projectRows.map(toProject)
   const skills = skillRows.map(toSkill)
   const qualifications = certRows.map(toQualification)
-  const growthRecords = getGrowthRecords(student.id)
+  const activity = useActivityLog(student.id)
   const [editor, setEditor] = useState<EditorState | null>(null)
   // 저장 실패는 사실대로 보여 준다 — 성공 토스트를 먼저 띄우거나 로컬로 되돌리지 않는다.
   const [error, setError] = useState('')
@@ -84,19 +84,20 @@ export default function GrowthHome() {
   const isSenior = student.grade >= 4
   const strengths = student.strengthWeakness.filter(item => item.type === 'strength')
   const completedPhases = student.phases.filter(phase => phase.status === 'done').length
-  const activePhase = student.phases.find(phase => phase.status === 'active')
   // 목표는 확정 로드맵이 덮어쓴 값(targetRole·targetCompany)이 정본이다 — 시드 전용 finalRoadmap 을 읽지 않는다.
   const goalRole = student.targetRole || '미정'
   const goalCompany = student.targetCompany?.name || '미정'
-  const weeklyAgenda = useWeeklyTodos(student.id)
-  const nextAction = weeklyAgenda.items.find(item => !item.done && !item.closed)
+  // 다음에 채울 기록 = 확정 로드맵에서 아직 이행하지 않은 칸. 라운지 「목표 달성 계획」과 같은 정본이다.
+  const plan = roadmapEnvelope(student.id)?.roadmap
+  const confirmedPlan = plan?.confirmed ? plan : null
+  const pendingCells = confirmedPlan?.axes.flatMap(axis => axis.cells
+    .filter(cell => cell.status !== 'DONE').map(cell => ({ ...cell, axis: axis.axis }))) ?? []
 
   const openCreate = (kind: EditorKind) => {
     const defaults: Record<EditorKind, Record<string, string>> = {
       project: { title: '', role: '', period: '', description: '', stack: '', result: '' },
       skill: { name: '', category: skillCategories[0]?.code ?? '', level: '3' },
       qualification: { qualificationKind: 'CERTIFICATE', title: '', detail: '', date: '', scoreText: '', language: '', certificateNumber: '', description: '' },
-      record: { date: '', category: 'PROGRAM', title: '', description: '' },
     }
     setError('')
     setEditor({ kind, index: null, fields: defaults[kind] })
@@ -112,14 +113,10 @@ export default function GrowthHome() {
       const item = skills[index]
       setEditor({ kind, index, fields: { name: item.name, category: item.category,
                                          level: String(item.level) } })
-    } else if (kind === 'qualification') {
+    } else {
       const row = certRows[index]
       setEditor({ kind, index, fields: { qualificationKind: row.kind, title: row.title, detail: text(row.content, 'issuer'), date: dateOf(row),
         scoreText: text(row.content, 'scoreText'), language: text(row.content, 'language'), certificateNumber: text(row.content, 'certificateNumber'), description: text(row.content, 'description') } })
-    } else {
-      const item = growthRecords[index]
-      setEditor({ kind, index, fields: { date: item.date, category: item.category, title: item.title,
-                                         description: item.description } })
     }
   }
 
@@ -133,7 +130,6 @@ export default function GrowthHome() {
     if (kind === 'project') run(deleteGrowthEntry(student.id, projectRows[index]))
     if (kind === 'skill') run(deleteGrowthEntry(student.id, skillRows[index]))
     if (kind === 'qualification') run(deleteGrowthEntry(student.id, certRows[index]))
-    if (kind === 'record') run(deleteGrowthRecord(student.id, growthRecords[index].id))
   }
 
   const updateField = (name: string, value: string) => {
@@ -160,19 +156,13 @@ export default function GrowthHome() {
       } else if (kind === 'skill') {
         await write({ kind: 'SKILL', title: fields.name.trim(), categoryCode: fields.category,
                     content: { level: Math.min(5, Math.max(1, Number(fields.level))) } }, skillRows)
-      } else if (kind === 'qualification') {
+      } else {
         const qualificationKind = fields.qualificationKind === 'LANGUAGE' ? 'LANGUAGE' : 'CERTIFICATE'
         await write({ kind: qualificationKind, title: fields.title.trim(), occurredOn: fields.date || null,
           datePrecision: fields.date ? 'DAY' : 'UNKNOWN',
           content: qualificationKind === 'LANGUAGE'
             ? { language: fields.language.trim(), testName: fields.title.trim(), scoreText: fields.scoreText.trim(), issuer: fields.detail.trim(), description: fields.description.trim() }
             : { issuer: fields.detail.trim(), scoreText: fields.scoreText.trim(), certificateNumber: fields.certificateNumber.trim(), description: fields.description.trim() } }, certRows)
-      } else {
-        const record = { date: fields.date, category: fields.category as GrowthRecordCategory,
-                         title: fields.title.trim(), description: fields.description.trim() }
-        await (index === null
-          ? createGrowthRecord(student.id, record)
-          : updateGrowthRecord(student.id, growthRecords[index].id, record))
       }
       setEditor(null)
     } catch (cause) {
@@ -266,17 +256,21 @@ export default function GrowthHome() {
         </article>
 
         <article className="gh-card gh-archive">
-          <header className="gh-card-head"><div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>진단, 비교과, 로드맵 이행이 하나의 성장 서사로 축적됩니다.</p></div><div className="gh-head-actions"><Link to="/mypage/programs">활동 전체 보기</Link><button type="button" className="gh-add-btn" onClick={() => openCreate('record')}><i className="fa-solid fa-plus" /> 활동 기록</button></div></header>
+          <header className="gh-card-head"><div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>진단, 상담, 로드맵 이행, 비교과, 자격·프로젝트 등록이 자동으로 기록됩니다.</p></div></header>
           <div className="gh-timeline">
-            {growthRecords.map((record, index) => <div className="gh-timeline-item" key={record.id}><time>{record.date}</time><span className={`gh-timeline-dot is-${record.tone}`} /><div><span>{record.type}</span><strong>{record.title}</strong><p>{record.description}</p></div><div className="gh-item-actions"><button type="button" onClick={() => openEdit('record', index)} aria-label={`${record.title} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('record', index, record.title)} aria-label={`${record.title} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div>)}
-            {growthRecords.length === 0 && <p className="gh-empty">아직 기록된 성장 활동이 없습니다.</p>}
+            {activity.error && <p className="gh-empty" role="alert">{activity.error}</p>}
+            {!activity.items && !activity.error && <p className="gh-empty" role="status">불러오는 중입니다.</p>}
+            {activity.items?.map(item => <div className="gh-timeline-item" key={item.key}><time>{item.date}</time><span className={`gh-timeline-dot is-${item.tone}`} /><div><span>{item.type}</span><strong>{item.title}</strong>{item.action && <p>{item.action}</p>}</div></div>)}
+            {activity.items?.length === 0 && <p className="gh-empty">아직 기록된 활동이 없습니다.</p>}
           </div>
         </article>
 
         <aside className="gh-card gh-next">
-          <header className="gh-card-head"><div><span className="gh-section-kicker">NEXT CHAPTER</span><h2>다음에 채울 기록</h2></div></header>
-          <div className="gh-current-phase"><small>현재 로드맵 단계</small><strong>{activePhase?.title ?? '역량개발'}</strong><span>{activePhase?.period ?? '이번 학기'}</span></div>
-          <div className="gh-next-action"><span>이번 주 실행</span><h3>{nextAction?.title ?? '비교과 활동을 시작해 보세요'}</h3><p>{nextAction?.sub ?? '새로운 경험은 성장 기록의 다음 근거가 됩니다.'}</p><Link to={nextAction?.to ?? '/growth/program'}>실행 항목 보기 <i className="fa-solid fa-arrow-right" /></Link></div>
+          <header className="gh-card-head"><div><span className="gh-section-kicker">NEXT CHAPTER</span><h2>다음에 채울 기록</h2><p>로드맵에서 아직 이행하지 않은 항목입니다.</p></div></header>
+          {!confirmedPlan ? <p className="gh-empty">상담 후 로드맵이 확정되면 이행할 항목이 여기에 표시됩니다.</p>
+            : pendingCells.length === 0 ? <p className="gh-empty">로드맵의 모든 항목을 이행했습니다.</p>
+            : <ul className="gh-pending-list">{pendingCells.map(cell => <li key={cell.id}><span>{axisLabel(cell.axis)}</span><strong>{cell.title}</strong></li>)}</ul>}
+          {confirmedPlan && <Link className="gh-pending-link" to="/growth/roadmap-status">로드맵 진행 현황 보기 <i className="fa-solid fa-arrow-right" /></Link>}
           {!isSenior && <div className="gh-document-policy"><i className="fa-solid fa-lock" /><p><strong>이력서·취업 포트폴리오는 4학년부터 제공됩니다.</strong><span>1~3학년은 진단, 비교과 활동, 로드맵 이행 기록에 집중합니다.</span></p></div>}
         </aside>
       </section>
@@ -324,14 +318,6 @@ export default function GrowthHome() {
                 <label><span>취득일·응시일</span><input required type="date" value={editor.fields.date} onChange={event => updateField('date', event.target.value)} /></label>
                 {editor.fields.qualificationKind === 'CERTIFICATE' && <label><span>자격번호 · 선택</span><input maxLength={100} value={editor.fields.certificateNumber} onChange={event => updateField('certificateNumber', event.target.value)} /></label>}
                 <label><span>추가 설명 · 선택</span><textarea maxLength={10000} rows={2} placeholder="세부 분야나 활용 경험을 적어주세요." value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
-              </>
-            )}
-            {editor.kind === 'record' && (
-              <>
-                <div className="gh-form-row"><label><span>활동일</span><input required type="date" value={editor.fields.date} onChange={event => updateField('date', event.target.value)} /></label><label><span>활동 유형</span><select value={editor.fields.category} onChange={event => updateField('category', event.target.value)}>{(Object.keys(RECORD_CATEGORY_LABEL) as GrowthRecordCategory[]).map(code => <option key={code} value={code}>{RECORD_CATEGORY_LABEL[code]}</option>)}</select></label></div>
-                <GrowthCatalogPicker label="활동 예시" options={catalogOptions('GROWTH_ACTIVITY_EXAMPLE')} onPick={item => setEditor(current => current ? { ...current, fields: { ...current.fields, title: item.label, category: catalogText(item, 'categoryCode') || 'ETC' } } : current)} />
-                <label><span>활동명</span><input required value={editor.fields.title} onChange={event => updateField('title', event.target.value)} /></label>
-                <label><span>성장 기록</span><textarea required maxLength={10000} placeholder="목표·문제 → 내가 맡은 역할과 행동 → 결과 → 배운 점 순서로 작성해 보세요." rows={4} value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
               </>
             )}
             </fieldset>

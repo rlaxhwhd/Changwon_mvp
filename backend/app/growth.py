@@ -460,6 +460,52 @@ def growth_events(identity: str, page: int = Query(1, ge=1), pageSize: int = Que
     return dict(items=items, totalCount=total, page=page, pageSize=pageSize)
 
 
+# ── 활동 로그 ─────────────────────────────────────────────────────────────
+# 「성장 활동 기록」 카드는 학생이 손으로 쓰는 기록이 아니라 이 플랫폼에서 일어난 일을
+# 시간순으로 보여 주는 로그다. 새 테이블을 두지 않고 각 도메인 정본의 시각을 읽어 합친다
+# (파생값은 원본에 넣지 않는다, CLAUDE.md 3조). 라벨은 화면이 kind 코드로 붙인다.
+# 상담 행이 들어 있어 심리상담 열람 범위 규칙과 겹치므로 학생 본인만 읽는다.
+ACTIVITY_LOG_SQL = '''
+SELECT * FROM (
+  SELECT 'DIAGNOSIS_DONE' AS kind, completed_at AS at, test_id AS title, test_id AS ref
+    FROM dc.diagnosis_attempt WHERE student_uid=%(uid)s AND status_code='DONE' AND completed_at IS NOT NULL
+  UNION ALL
+  SELECT 'COUNSEL_REQUEST', requested_at, coalesce(nullif(topic,''),legacy_type), legacy_type
+    FROM dc.counsel_request WHERE student_uid=%(uid)s AND requested_at IS NOT NULL
+  UNION ALL
+  SELECT 'COUNSEL_DONE', completed_at, coalesce(nullif(topic,''),legacy_type), legacy_type
+    FROM dc.counsel_request WHERE student_uid=%(uid)s AND status_code='DONE' AND completed_at IS NOT NULL
+  UNION ALL
+  SELECT 'ROADMAP_'||action_code, occurred_at, coalesce(after_value->>'targetRole',''), roadmap_version::text
+    FROM dc.roadmap_event WHERE student_uid=%(uid)s AND action_code IN ('CREATE','REGENERATE','CONFIRM')
+  UNION ALL
+  SELECT 'ROADMAP_ITEM_DONE', completed_at, title, axis
+    FROM dc.roadmap_item WHERE student_uid=%(uid)s AND completed_at IS NOT NULL
+  UNION ALL
+  SELECT 'PROGRAM_APPLY', a.applied_at, p.title, p.id::text
+    FROM dc.program_apply a JOIN dc.program p ON p.id=a.program_id
+    WHERE a.student_uid=%(uid)s AND a.cancelled_at IS NULL AND a.applied_at IS NOT NULL
+  UNION ALL
+  SELECT 'PROGRAM_COMPLETE', coalesce((SELECT max(e.changed_at) FROM dc.program_apply_event e
+      WHERE e.program_id=a.program_id AND e.student_uid=a.student_uid AND e.action='OUTCOME'), a.updated_at), p.title, p.id::text
+    FROM dc.program_apply a JOIN dc.program p ON p.id=a.program_id
+    WHERE a.student_uid=%(uid)s AND a.outcome_code='COMPLETED'
+  UNION ALL
+  SELECT 'GROWTH_'||kind_code, created_at, title, id::text
+    FROM dc.growth_entry WHERE student_uid=%(uid)s AND deleted_at IS NULL
+      AND kind_code IN ('JOURNAL','PROJECT','SKILL','CERTIFICATE','LANGUAGE','AWARD')
+) log WHERE at IS NOT NULL ORDER BY at DESC, kind LIMIT %(limit)s'''
+
+
+@router.get('/students/{identity}/growth/activity-log')
+def activity_log(identity: str, limit: int = Query(30, ge=1, le=100),
+                 user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    student, owner = resolve_student(conn, user, identity)
+    require_owner(owner, '활동 로그 조회')
+    rows = conn.execute(ACTIVITY_LOG_SQL, {'uid': student['intg_uid'], 'limit': limit}).fetchall()
+    return {'items': jsonable_encoder(rows)}
+
+
 # ── 첨부 ─────────────────────────────────────────────────────────────────
 
 @router.post('/growth-files', status_code=201)

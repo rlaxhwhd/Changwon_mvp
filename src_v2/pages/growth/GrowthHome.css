@@ -125,14 +125,13 @@
 .gh-timeline-item:has(.gh-timeline-dot.is-amber) > div > span { color: var(--amber-ink); }
 .gh-timeline-item strong { display: block; font-size: 14px; } .gh-timeline-item p { margin: 5px 0 0; color: var(--gh-sub); font-size: 12px; line-height: 1.5; }
 .gh-next { border-color: var(--mint-border); background: linear-gradient(145deg, #fff 0%, var(--mint-soft) 100%); }
-.gh-current-phase { padding: 16px; border-radius: 11px; background: var(--gh-soft); }
-.gh-current-phase small, .gh-current-phase strong, .gh-current-phase span { display: block; }
-.gh-current-phase small { color: var(--gh-ink); font-size: 12px; font-weight: 850; }
-.gh-current-phase strong { margin-top: 7px; font-size: 14px; } .gh-current-phase span { margin-top: 4px; color: var(--gh-sub); font-size: 12px; }
-.gh-next-action { padding: 20px 2px 2px; } .gh-next-action > span { color: var(--gh-ink); font-size: 12px; font-weight: 850; }
-.gh-next-action h3 { margin: 7px 0 6px; font-size: 14px; line-height: 1.45; }
-.gh-next-action p { margin: 0 0 14px; color: var(--gh-sub); font-size: 12px; line-height: 1.6; }
-.gh-next-action a { display: inline-flex; align-items: center; gap: 7px; color: var(--gh-ink); font-size: 12px; font-weight: 850; }
+/* 다음에 채울 기록 — 확정 로드맵에서 아직 이행하지 않은 칸 */
+.gh-pending-list { margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; list-style: none; max-height: 420px; overflow-y: auto; }
+.gh-pending-list li { padding: 12px 14px; border-radius: 11px; background: var(--gh-soft); }
+.gh-pending-list span, .gh-pending-list strong { display: block; }
+.gh-pending-list span { color: var(--gh-ink); font-size: 12px; font-weight: 850; }
+.gh-pending-list strong { margin-top: 4px; font-size: 14px; line-height: 1.45; overflow-wrap: anywhere; }
+.gh-pending-link { margin-top: 14px; display: inline-flex; align-items: center; gap: 7px; color: var(--gh-ink); font-size: 12px; font-weight: 850; }
 .gh-document-policy { margin-top: 18px; padding: 13px; display: flex; gap: 10px; align-items: flex-start; border-top: 1px solid var(--mint-border); color: var(--gh-sub); }
 .gh-document-policy > i { margin-top: 3px; color: var(--gh-ink); } .gh-document-policy p { margin: 0; }
 .gh-document-policy strong, .gh-document-policy span { display: block; }
