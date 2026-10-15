@@ -10,7 +10,7 @@
 
 > **모든 세션 공통 작업 원칙:** 작업 전에 루트 [AGENTS.md](AGENTS.md)를 읽고 적용한다. 불확실한 사항·분기 질문, Chrome MCP 네트워크·콘솔 검증, DB 스킬·성능 리뷰에 대한 사용자 확정 지침의 정본이다.
 
-> **코드 탐색·재사용:** `graft-changwon` MCP와 [Graft 스킬](.claude/skills/graft/SKILL.md)로 기존 공통 구현·호출 관계를 확인한다. [설치 및 CLI 대체 경로](docs/GRAFT_SETUP.md)를 참고한다.
+> **★ 모든 작업은 Graft 로 시작한다** <span>(2026-10-15 사용자 확정 — Claude·Codex 공통)</span>: 코드를 찾거나 고치는 **모든 작업**에서 grep·파일 통독보다 먼저 `graft-changwon` MCP를 쓴다 — 기존 구현 찾기(`graft_find_code`), 수정 전 호출자·영향 범위(`graft_trace_calls`), 파일 구조(`graft_file_api`). 같은 체크아웃의 같은 그래프를 Codex 도 쓴다. 절차·예외(HTTP·SQL·동적 호출은 직접 검증)는 [AGENTS.md「Graft 코드 관계 탐색 및 재사용」](AGENTS.md)과 [Graft 스킬](.claude/skills/graft/SKILL.md), MCP가 안 보이면 [CLI 대체 경로](docs/GRAFT_SETUP.md).
 
 > **★ Claude 세션은 배포하지 않는다** <span>(2026-10-08 사용자 확정)</span>: Claude Code 세션은 작업·검증 후 **커밋·푸시까지만** 한다. CentOS 서버 배포(이미지 전송·교체)는 하지 않는다 — 이 세션의 자동 권한 검사가 서버 SSH 접속을 막는다. 배포가 필요한 변경이면 배포 범위와 준비물(이미지 태그·해시·되돌리는 방법)을 Atlas 공유 기억에 남기고 사용자에게 알린다.
 
