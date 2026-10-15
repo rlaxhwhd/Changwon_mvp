@@ -10,6 +10,7 @@ import { getActiveStudent } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
 // 성장 활동 기록은 손으로 쓰지 않는다 — 플랫폼에서 일어난 일을 서버가 모아 준 로그다.
 import { useActivityLog } from '../../data/activityLog'
+import ActivityTimeline from '../../components/ActivityTimeline'
 import { axisLabel } from '../../data/schema/roadmap'
 import { roadmapEnvelope } from '../../../shared/roadmapStore'
 // 스킬 후보·분류는 사전 단일소스에서 온다 — 여기에 스킬명·분류 리터럴을 두지 않는다.
@@ -257,12 +258,7 @@ export default function GrowthHome() {
 
         <article className="gh-card gh-archive">
           <header className="gh-card-head"><div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>진단, 상담, 로드맵 이행, 비교과, 자격·프로젝트 등록이 자동으로 기록됩니다.</p></div></header>
-          <div className="gh-timeline">
-            {activity.error && <p className="gh-empty" role="alert">{activity.error}</p>}
-            {!activity.items && !activity.error && <p className="gh-empty" role="status">불러오는 중입니다.</p>}
-            {activity.items?.map(item => <div className="gh-timeline-item" key={item.key}><time>{item.date}</time><span className={`gh-timeline-dot is-${item.tone}`} /><div><span>{item.type}</span><strong>{item.title}</strong>{item.action && <p>{item.action}</p>}</div></div>)}
-            {activity.items?.length === 0 && <p className="gh-empty">아직 기록된 활동이 없습니다.</p>}
-          </div>
+          <ActivityTimeline items={activity.items} error={activity.error} />
         </article>
 
         <aside className="gh-card gh-next">
