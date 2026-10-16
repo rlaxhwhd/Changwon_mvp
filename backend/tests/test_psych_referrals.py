@@ -28,7 +28,7 @@ def db(client):
 
 def create(client, **changes):
     return client.post('/api/v1/psych-referrals', headers=headers('career_kim'), json={
-        'studentId': 'chaewon', 'counselorId': 'psych_lee', 'reasonCode': 'STRESS', **changes})
+        'studentId': 'chaewon', 'counselorId': 'psych_lee', 'reasonCode': 'BEHAVIOR_HABIT', **changes})
 
 
 def transition(client, row, action, who='psych_lee'):
@@ -40,7 +40,7 @@ def test_workflow_and_immutable_history(client, db):
     response = create(client)
     assert response.status_code == 201, response.text
     row = response.json()
-    assert row['reason'] == '스트레스·생활관리 어려움'
+    assert row['reason'] == '행동·습관'
     assert row['status'] == 'PENDING'
     inbox = client.get('/api/v1/psych-referrals', headers=headers('psych_lee')).json()
     assert row['id'] in [r['id'] for r in inbox['items']]
@@ -54,7 +54,7 @@ def test_workflow_and_immutable_history(client, db):
     assert done.json()['completedAt']
     notifications = db.execute("SELECT source_id,body FROM dc.notification WHERE source_kind='PSYCH_REFERRAL' AND source_id LIKE %s", (row['id']+':%',)).fetchall()
     assert len(notifications) == 3
-    assert all('스트레스' not in n['body'] for n in notifications)
+    assert all('행동·습관' not in n['body'] for n in notifications)
     assert db.execute('SELECT count(*) AS n FROM dc.psych_referral_event WHERE referral_id=%s', (row['id'],)).fetchone()['n'] == 3
     with pytest.raises(psycopg.Error), db.transaction():
         db.execute('DELETE FROM dc.psych_referral_event WHERE referral_id=%s', (row['id'],))
@@ -109,12 +109,14 @@ def test_scope_reason_and_recipient_validation(client, db):
 
 def test_options_and_search_and_psych_cannot_send(client, db):
     options = client.get('/api/v1/psych-referrals/options', headers=headers('career_kim')).json()
-    assert len(options['reasons']) == 5
+    assert [(r['code'], r['label']) for r in options['reasons']] == [
+        ('ADJUSTMENT', '적응문제'), ('RELATIONSHIP', '대인관계'), ('PERSONALITY_EMOTION', '성격·정서'),
+        ('BEHAVIOR_HABIT', '행동·습관'), ('EXISTENTIAL', '실존문제')]
     assert 'psych_lee' in [r['id'] for r in options['counselors']]
     assert client.get('/api/v1/psych-referrals/students?q=', headers=headers('career_kim')).json()['items'] == []
     assert client.get('/api/v1/psych-referrals/students?q=a', headers=headers('psych_lee')).status_code == 403
     assert client.post('/api/v1/psych-referrals', headers=headers('psych_lee'), json={
-        'studentId': 'chaewon', 'counselorId': 'psych_lee', 'reasonCode': 'STRESS'}).status_code == 403
+        'studentId': 'chaewon', 'counselorId': 'psych_lee', 'reasonCode': 'BEHAVIOR_HABIT'}).status_code == 403
 
 
 def test_status_filter_and_page_validation(client, db):
