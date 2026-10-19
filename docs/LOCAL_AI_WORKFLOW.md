@@ -474,3 +474,11 @@ API·웹을 `first-user-counsel-20261008`, RAG를 `20261001`로 되돌리고 추
 - 서버 Chrome `/admin/counsel/sessions` 9행·메뉴 표시·진행 화면 이동 확인. 목록 요청 200/82ms, 진입 후 갱신 200/59ms로 총 2회(기존 초기화와 화면 갱신). 심리 사유 5개 200/28ms, 진행 화면 관련 조회 200/11~74ms. 검사한 화면 콘솔 오류·경고/실패 요청/가로 넘침 없음. 실제 상담 저장·완료 처리는 실행하지 않았다. 공통 초기 로딩의 프로그램 약565KB·채용 약733KB 응답은 남아 있다.
 - 기존 제약: 같은 학생에게 확정 상담이 여러 건이면 진행 URL이 학생 ID만 받아 첫 확정 건이 열린다. 배포 전부터 LLM 터널은 unhealthy이며 이번 웹·DB 변경으로 해결하지 않았다. AI 생성 동작은 이번 검증 대상이 아니다.
 - 백업·감사·이미지는 `/opt/dreamcatch/ai/counsel-sessions-20261019/`에 접근 제한 보관. 이미지 묶음 SHA256 `c2a433192e687cdca15e7876b75ddb95e7b376179c3c64253ce0d50bbf551126`. 복구는 Compose 백업의 API `roster-recommend-20261015`·웹 `counsel-growth-20261015`로 되돌린다. DB129 이력·업무 데이터는 유지하며 메뉴/사유 원복이 필요하면 백업을 근거로 새 보정 마이그레이션을 작성한다. 전체 DB 덮어쓰기나 적용된 마이그레이션 수정은 하지 않는다.
+
+# 관리자 종합 AI 코멘트 접기 웹 배포 (2026-10-19)
+
+- `c7a2fb9`를 웹 `dreamcatch-web:ai-comment-clamp-20261019`로 배포했다. 사용자 지시로 이번 배포의 회귀테스트는 생략했다. 로컬 TypeScript·Vite·Docker 빌드는 통과했고 API·DB 컨테이너 ID는 유지됐다.
+- 로컬·서버 Chrome 학생상세 종합 코멘트의 5줄 115px → 더보기 370px → 접기 전환 확인. 서버 콘솔 오류·경고/실패 API/가로 넘침 없음. AI 생성이나 DB 쓰기는 실행하지 않았다.
+- 웹·API·DB healthy, nginx 검사 정상, 기존 소스66·마이그레이션129·DB 구조 MATCH. 배포 전부터 unhealthy인 LLM 터널은 그대로다.
+- 로컬/서버 HTML SHA256 일치: admin `eb1bc615810fad7c3b0eb2eecf4ab785c5967d3d7c54abc403c0ebfbc1388916`, v2 `aab2b29f08070ded1ec4eed59eff38951cf42cc7dafe576b53da29f9f5821149`.
+- 백업 `/opt/dreamcatch/ai/ai-comment-clamp-20261019/`에 Compose 원본·이미지·컨테이너 ID 보관. 묶음 SHA256 `0f87e18206cbfea5be2725472d95a4b7e850a5b0eddcd77c47cd7592b01c36fe`. 복구는 웹을 직전 `counsel-sessions-20261019` 태그로 되돌려 web만 재기동한다.
