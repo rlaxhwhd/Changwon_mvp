@@ -25,7 +25,8 @@ export type CareTrack = 'general' | 'care7'
  */
 export const CARE_TRACK_LABEL: Record<CareTrack, { staff: string; student: string }> = {
   general: { staff: '일반', student: '일반 진로·취업 상담' },
-  care7: { staff: 'CARE 7+ 연계', student: 'CARE 7+ 연계 상담' },
+  // 학생 화면 표기는 「CARE+ 7」(2026-10-19 사용자 확정). 교직원 배지는 그대로 둔다.
+  care7: { staff: 'CARE 7+ 연계', student: 'CARE+ 7 연계 상담' },
 }
 
 /**

@@ -158,15 +158,7 @@ export default function CareerCounsel() {
         <CounselTabs />
 
         <section className="cc-track-choice" aria-label="상담 종류 선택">
-          <article className="cc-track-card">
-            <h2>{CARE_TRACK_LABEL.general.student}</h2>
-            <p>진로·취업 관련 어떤 고민이든 상담받을 수 있습니다.</p>
-            <small>진단 없이 바로 상담 신청</small>
-            <button type="button" className="cc-track-cta" onClick={() => setTrack('general')}>
-              신청하기
-            </button>
-          </article>
-
+          {/* CARE+ 7 연계 상담이 왼쪽(2026-10-19 사용자 확정) */}
           <article className={`cc-track-card${care7Open ? '' : ' is-locked'}`}>
             <h2>
               {CARE_TRACK_LABEL.care7.student}
@@ -187,6 +179,15 @@ export default function CareerCounsel() {
                 {next?.ctaLabel ?? '진단센터로 가기'}
               </Link>
             )}
+          </article>
+
+          <article className="cc-track-card">
+            <h2>{CARE_TRACK_LABEL.general.student}</h2>
+            <p>진로·취업 관련 어떤 고민이든 상담받을 수 있습니다.</p>
+            <small>진단 없이 바로 상담 신청</small>
+            <button type="button" className="cc-track-cta" onClick={() => setTrack('general')}>
+              신청하기
+            </button>
           </article>
         </section>
       </div>
