@@ -1164,6 +1164,18 @@ input, textarea, select { font-family: var(--font); }
   font-style: normal; font-size: 13px; font-weight: 800; white-space: nowrap;
   font-variant-numeric: tabular-nums; color: var(--color-primary);
 }
+/* 상담 진행 대장 — 상담일지 대장과 같은 골격(체크 칸 없음) */
+.admin-session-roster { overflow-x: auto; }
+.admin-session-roster .admin-roster-head,
+.admin-session-roster .admin-roster-row {
+  min-width: 1180px;
+  gap: 10px;
+  grid-template-columns: 48px 96px 92px 104px 1fr 96px 88px 1.5fr 72px 128px;
+}
+.admin-session-roster .admin-roster-head { text-align: center; }
+.admin-session-roster .admin-roster-cell { align-items: center; text-align: center; }
+.admin-session-roster .admin-roster-cell .admin-chip,
+.admin-session-roster .admin-roster-cell .admin-type-tag { align-self: center; }
 .admin-journal-roster .admin-journal-actions { flex-direction: row; justify-content: center; gap: 6px; }
 /* 작성 패널 — 상담 개요(읽기전용) + 입력 항목 */
 .admin-journal-brief {

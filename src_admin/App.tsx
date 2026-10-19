@@ -14,6 +14,7 @@ import Home from './pages/Home'
 import CounselRequests from './pages/CounselRequests'
 import CounselSession from './pages/CounselSession'
 import CounselJournals from './pages/CounselJournals'
+import CounselSessions from './pages/CounselSessions'
 import CounselRecordPrint from './pages/CounselRecordPrint'
 import CounselStats from './pages/CounselStats'
 import DiagnosisStatus from './pages/DiagnosisStatus'
@@ -152,6 +153,7 @@ const router = createBrowserRouter(
               children: [
                 { path: '/counsel/requests', element: <CounselRequests /> },
                 { path: '/counsel/psych-referrals', element: <PsychReferrals /> },
+                { path: '/counsel/sessions', element: <CounselSessions /> },
                 { path: '/counsel/session/:studentId', element: <CounselSession /> },
                 { path: '/counsel/journals', element: <CounselJournals /> },
                 { path: '/counsel/records', element: <CounselHistory /> },

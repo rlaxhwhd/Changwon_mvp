@@ -1,5 +1,5 @@
 import type { IconType } from 'react-icons'
-import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardCheck, LuClock, LuContact, LuFileText, LuGlobe, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlus, LuRoute, LuSearch, LuSettings, LuSparkles, LuTable, LuUsers, LuUsersRound, LuUserX } from 'react-icons/lu'
+import { LuBrain, LuBuilding2, LuCalendarDays, LuChartNoAxesColumn, LuClipboardCheck, LuClock, LuContact, LuFileText, LuGlobe, LuGraduationCap, LuHeadset, LuHouse, LuIdCard, LuInbox, LuList, LuPlay, LuPlus, LuRoute, LuSearch, LuSettings, LuSparkles, LuTable, LuUsers, LuUsersRound, LuUserX } from 'react-icons/lu'
 // ─────────────────────────────────────────────────────────────────────────
 // 교직원(백오피스) 포털 네비 단일 소스 — 상담사·교수·조교·시스템관리자 공용.
 // ★ 어느 역할에 보이는지는 여기서 정하지 않는다 — DB `dc.menu_auth`(현행 SY_MENU_AUTH 계승)가 정본이고
@@ -117,6 +117,8 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '추가 심리상담신청', path: '/counsel/psych-records/new', icon: LuPlus },
       { label: '심리상담센터 연계', path: '/counsel/psych-referrals', icon: LuBrain },
       { label: '상담기록', path: '/counsel/records', icon: LuClipboardCheck },
+      // 확정된 상담을 모아 상담 진행 화면으로 보내는 대장(counsel.9, 129).
+      { label: '상담 진행', path: '/counsel/sessions', icon: LuPlay },
     ],
   },
   {
