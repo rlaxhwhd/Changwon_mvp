@@ -160,24 +160,22 @@ export default function CareerCounsel() {
         <section className="cc-track-choice" aria-label="상담 종류 선택">
           {/* CARE+ 7 연계 상담이 왼쪽(2026-10-19 사용자 확정) */}
           <article className={`cc-track-card cc-track-card-care7${care7Open ? '' : ' is-locked'}`}>
-            <h2>
-              {CARE_TRACK_LABEL.care7.student}
-              {!care7Open && <i className="fa-solid fa-lock" aria-hidden="true" />}
-            </h2>
-            <p>진단 결과를 바탕으로 나의 유형을 확정하고, 그 자리에서 경력개발 로드맵을 만듭니다.</p>
-            <small>
-              {care7Open
-                ? '진단 2종 완료 · 상담을 신청합니다'
-                : 'C-CORE 핵심진단과 후속진단을 마쳐야 신청할 수 있습니다'}
-            </small>
-            {care7Open ? (
-              <button type="button" className="cc-track-cta" onClick={() => setTrack('care7')}>
+            <div className="cc-track-content" inert={!care7Open} aria-hidden={!care7Open}>
+              <h2>{CARE_TRACK_LABEL.care7.student}</h2>
+              <p>진단 결과를 바탕으로 나의 유형을 확정하고, 그 자리에서 경력개발 로드맵을 만듭니다.</p>
+              <small>진단 2종 완료 · 상담을 신청합니다</small>
+              <button type="button" className="cc-track-cta" disabled={!care7Open} onClick={() => setTrack('care7')}>
                 신청하기
               </button>
-            ) : (
-              <Link className="cc-track-cta" to={next?.ctaPath ?? '/diagnosis/employment'}>
-                {next?.ctaLabel ?? '진단센터로 가기'}
-              </Link>
+            </div>
+            {!care7Open && (
+              <div className="cc-track-lock" role="status">
+                <strong><i className="fa-solid fa-lock" aria-hidden="true" /> {CARE_TRACK_LABEL.care7.student}</strong>
+                <p>C-CORE 핵심진단과 후속진단을 완료해야 신청할 수 있습니다.</p>
+                <Link className="cc-track-cta" to={next?.ctaPath ?? '/diagnosis/employment'}>
+                  {next?.ctaLabel ?? '진단센터로 가기'}
+                </Link>
+              </div>
             )}
           </article>
 

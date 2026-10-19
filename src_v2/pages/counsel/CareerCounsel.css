@@ -85,7 +85,7 @@
   gap: 8px;
   padding: 24px;
   border: 1px solid var(--cc-line);
-  border-radius: var(--radius-md);
+  border-radius: 20px;
   background: var(--color-bg);
   box-shadow: var(--shadow-sm);
 }
@@ -122,14 +122,42 @@
   cursor: pointer;
 }
 
-/* 잠긴 카드 — 설명은 그대로 읽히고 CTA 만 「다음에 할 일」로 바뀐다. */
-.cc-track-card.is-locked { border-style: dashed; box-shadow: none; }
-.cc-track-card.is-locked h2 { color: var(--color-text-muted); }
-.cc-track-card.is-locked .cc-track-cta {
-  border-color: var(--cc-line);
-  background: transparent;
-  color: var(--cc-ink);
+.cc-track-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
 }
+
+/* 실제 신청 버튼은 비활성·inert 처리하고, 진단 안내만 조작할 수 있다. */
+.cc-track-card.is-locked .cc-track-content {
+  filter: blur(3px);
+  opacity: .45;
+  pointer-events: none;
+  user-select: none;
+}
+
+.cc-track-lock {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 20px;
+  background: rgb(239 247 255 / 65%);
+  text-align: center;
+}
+
+.cc-track-lock strong { color: #073cce; font-size: 17px; }
+.cc-track-lock strong i { margin-right: 5px; }
+.cc-track-card .cc-track-lock p { font-size: 13px; word-break: keep-all; }
+.cc-track-lock .cc-track-cta { margin-top: 0; }
 
 /* 제공된 CARE+ 7 이미지의 투명 여백을 카드 바깥으로 보내 배경을 채운다. */
 .cc-track-card.cc-track-card-care7 {
