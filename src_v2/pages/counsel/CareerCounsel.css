@@ -152,7 +152,6 @@
 }
 
 .cc-track-card.cc-track-card-care7 h2 {
-  padding-right: 70px;
   color: #073cce;
   font-size: 20px;
 }
@@ -160,25 +159,6 @@
 .cc-track-card-care7 h2 i { color: #3766cb; }
 .cc-track-card-care7 p { color: #43546a; font-weight: 600; }
 .cc-track-card-care7 small { color: #245cff; }
-
-.cc-track-priority {
-  position: absolute;
-  top: 12px;
-  right: 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 12px;
-  border-radius: var(--radius-pill);
-  background: #2861ff;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1.4;
-  box-shadow: 0 2px 6px rgb(39 104 255 / 15%);
-}
-
-.cc-track-priority i { color: #ffe487; font-size: 13px; }
 
 .cc-track-card.cc-track-card-care7 .cc-track-cta {
   min-height: 36px;
