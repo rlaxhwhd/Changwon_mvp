@@ -8,6 +8,9 @@
 .dc-ai-comment button:focus-visible, .dc-ai-comment summary:focus-visible { outline: 2px solid var(--ai-blue); outline-offset: 3px; }
 .dc-ai-comment-result { margin-top: 16px; border-top: 1px solid #e9ebf0; padding-top: 16px; }
 .dc-ai-comment-text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.dc-ai-comment-text.is-clamped { display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+.dc-ai-comment .dc-ai-comment-more { min-height: 0; margin-top: 8px; padding: 2px 0; background: none; color: var(--ai-primary); font-size: 13px; }
+.dc-ai-comment .dc-ai-comment-more:hover { background: none; color: var(--ai-deep); text-decoration: underline; }
 .dc-ai-comment details { margin: 16px 0; }
 .dc-ai-comment summary { cursor: pointer; color: var(--ai-deep); }
 .dc-ai-comment article { margin-top: 12px; padding-left: 12px; border-left: 2px solid var(--ai-sky); }

@@ -1031,7 +1031,7 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
 
       {/* 요약 지표 5장은 학생 라운지와 같은 공용 컴포넌트 — 수정은 StudentStatCards 한 곳에서만 */}
       <StudentStatCards stats={stats} />
-      <AiCommentCard studentId={student.id} kind="comprehensive" />
+      <AiCommentCard studentId={student.id} kind="comprehensive" clampLines={5} />
 
       <StudentDetailTabs activeTab={activeTab} onChange={setTab} />
 

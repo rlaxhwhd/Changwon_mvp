@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { streamAi, type ChatReply } from './chatbotApi'
 import './AiCommentCard.css'
 import { api, queryString } from './api'
@@ -10,6 +10,8 @@ type Props = {
   attemptNo?: number
   counselRequestId?: string
   readOnly?: boolean
+  /** 본문을 이 줄 수까지만 보여 주고 나머지는 「더보기」로 편다(교직원 학생상세처럼 좁은 자리). */
+  clampLines?: number
 }
 const labels = { diagnosis: '진단 결과 AI 코멘트', counsel: '상담현황 AI 코멘트', comprehensive: '종합 AI 코멘트', roadmap: '로드맵 AI 검토' }
 
@@ -18,7 +20,7 @@ export default function AiCommentCard(props: Props) {
 }
 
 function Comment(props: Props) {
-  const { readOnly, ...request } = props
+  const { readOnly, clampLines, ...request } = props
   const [canGenerate, setCanGenerate] = useState(false)
   // 서버가 정한다 — 상담사는 종합 코멘트를 조회만 한다(생성 버튼은 보이되 비활성).
   const [viewOnly, setViewOnly] = useState(false)
@@ -70,18 +72,37 @@ function Comment(props: Props) {
     </div>}
     {error && <p role="alert">{error}</p>}
     {!loading && !pending && !error && !reply && !studentReply && props.kind === 'diagnosis' && <p role="status">이 회차에 저장된 AI 코멘트가 없습니다.</p>}
-    {reply && <CommentResult reply={reply} label={studentReply ? '상담사용 코멘트' : undefined} />}
-    {studentReply && <CommentResult reply={studentReply} label="학생에게 표시되는 코멘트" />}
+    {reply && <CommentResult reply={reply} label={studentReply ? '상담사용 코멘트' : undefined} clampLines={clampLines} />}
+    {studentReply && <CommentResult reply={studentReply} label="학생에게 표시되는 코멘트" clampLines={clampLines} />}
   </section>
 }
 
-function CommentResult({ reply, label }: { reply: ChatReply; label?: string }) {
+function CommentResult({ reply, label, clampLines }: { reply: ChatReply; label?: string; clampLines?: number }) {
+  const textRef = useRef<HTMLDivElement>(null)
+  const [expanded, setExpanded] = useState(false)
+  const [overflowing, setOverflowing] = useState(false)
+  // 넘침은 글자 수로 어림잡지 않고 실제 렌더 높이로 판정한다 — 카드 폭이 화면마다 다르다.
+  // 펼친 동안에는 판정하지 않는다(풀린 높이로 재면 버튼이 사라진다).
+  useLayoutEffect(() => {
+    const element = textRef.current
+    if (!clampLines || !element || expanded) return
+    const measure = () => setOverflowing(element.scrollHeight > element.clientHeight + 1)
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [clampLines, expanded, reply.text])
+  const clamped = !!clampLines && !expanded
   return <div className="dc-ai-comment-result">
       {label && <strong className="dc-ai-comment-audience">{label}</strong>}
       {reply.savedAt && <p className="dc-ai-comment-saved">저장됨 · {new Date(reply.savedAt).toLocaleString('ko-KR')}</p>}
       {reply.stale && <p className="dc-ai-comment-stale">생성 이후 참고 기록이 변경되었습니다.</p>}
-      <div className="dc-ai-comment-text">{reply.text.split(/(\*\*[^*\n]+\*\*)/g).map((part, index) =>
+      <div ref={textRef} className={`dc-ai-comment-text${clamped ? ' is-clamped' : ''}`}
+        style={clamped ? { WebkitLineClamp: clampLines, lineClamp: clampLines } : undefined}>{reply.text.split(/(\*\*[^*\n]+\*\*)/g).map((part, index) =>
         part.startsWith('**') && part.endsWith('**') ? <strong key={index}>{part.slice(2, -2)}</strong> : part)}</div>
+      {clampLines && (overflowing || expanded) && <button type="button" className="dc-ai-comment-more" aria-expanded={expanded} onClick={() => setExpanded(value => !value)}>
+        {expanded ? '접기' : '더보기'}
+      </button>}
       <details><summary>참고 근거 {reply.sources.length}개</summary>
         {reply.sources.map(source => <article key={source.id}>
           <strong>[{source.id}] {source.title}</strong><small>{source.origin}</small><p>{source.snippet}</p>
