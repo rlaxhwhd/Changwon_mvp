@@ -482,3 +482,12 @@ API·웹을 `first-user-counsel-20261008`, RAG를 `20261001`로 되돌리고 추
 - 웹·API·DB healthy, nginx 검사 정상, 기존 소스66·마이그레이션129·DB 구조 MATCH. 배포 전부터 unhealthy인 LLM 터널은 그대로다.
 - 로컬/서버 HTML SHA256 일치: admin `eb1bc615810fad7c3b0eb2eecf4ab785c5967d3d7c54abc403c0ebfbc1388916`, v2 `aab2b29f08070ded1ec4eed59eff38951cf42cc7dafe576b53da29f9f5821149`.
 - 백업 `/opt/dreamcatch/ai/ai-comment-clamp-20261019/`에 Compose 원본·이미지·컨테이너 ID 보관. 묶음 SHA256 `0f87e18206cbfea5be2725472d95a4b7e850a5b0eddcd77c47cd7592b01c36fe`. 복구는 웹을 직전 `counsel-sessions-20261019` 태그로 되돌려 web만 재기동한다.
+
+# 상담 선택 카드 디자인 누적 배포 (2026-10-19)
+
+- `daac096`까지 웹 `dreamcatch-web:career-cards-20261019`로 배포했다. `ad0866c` CARE+ 7 표기·왼쪽 배치, `77c772b` 제공 배경이미지·파란 강조, `cb0b427` 중요·왕관 제거, `aab09b8` 진단 미완료 블러·잠금과 두 카드 radius 20px, `daac096` 일반 상담 텍스트·신청 버튼 가운데 정렬을 포함한다.
+- 기존 `isDiagnosisDone` 조건과 `getNextAction`을 유지한다. 미완료 시 신청 버튼은 disabled·inert 처리하고 잠금 안내와 진단 이동만 제공한다. 별도 API·DB 변경은 없다.
+- 로컬 TypeScript·Vite·Docker 빌드·웹 반영 완료. 사용자의 화면 검증 생략 지시를 따라 이번 로컬/서버 Chrome 검증은 하지 않았다. 디자인 변경에 별도 회귀테스트는 추가하지 않았다.
+- 서버 웹·API·DB healthy, nginx 검사 정상. API `counsel-sessions-20261019`와 DB 컨테이너 ID는 배포 전후 동일하다. release parity 소스66·마이그레이션129·DB 구조 MATCH. 기존 LLM 터널 unhealthy 상태는 남아 있다.
+- 로컬/서버 HTML SHA256 일치: admin `6855cb6f6628825083797e791fb814f6bd4869699bb24c5384855f346ae04b21`, v2 `278df0341af7f9b5600b55fd68ea381a36cab73a1d11f0054f4489272ae00f4c`.
+- 백업 `/opt/dreamcatch/ai/career-cards-20261019/`에 Compose 두 파일·이미지 묶음·API/DB 컨테이너 ID 보관. 묶음 SHA256 `9915c244062c284357b3cb32524e82972e37efc23abe957f9fe4eb5ac3017652`. 복구는 웹 태그를 `ai-comment-clamp-20261019`로 되돌려 web만 재기동한다. 서버는 기동 유지했다.
