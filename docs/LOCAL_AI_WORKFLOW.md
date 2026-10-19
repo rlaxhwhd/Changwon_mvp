@@ -491,3 +491,10 @@ API·웹을 `first-user-counsel-20261008`, RAG를 `20261001`로 되돌리고 추
 - 서버 웹·API·DB healthy, nginx 검사 정상. API `counsel-sessions-20261019`와 DB 컨테이너 ID는 배포 전후 동일하다. release parity 소스66·마이그레이션129·DB 구조 MATCH. 기존 LLM 터널 unhealthy 상태는 남아 있다.
 - 로컬/서버 HTML SHA256 일치: admin `6855cb6f6628825083797e791fb814f6bd4869699bb24c5384855f346ae04b21`, v2 `278df0341af7f9b5600b55fd68ea381a36cab73a1d11f0054f4489272ae00f4c`.
 - 백업 `/opt/dreamcatch/ai/career-cards-20261019/`에 Compose 두 파일·이미지 묶음·API/DB 컨테이너 ID 보관. 묶음 SHA256 `9915c244062c284357b3cb32524e82972e37efc23abe957f9fe4eb5ac3017652`. 복구는 웹 태그를 `ai-comment-clamp-20261019`로 되돌려 web만 재기동한다. 서버는 기동 유지했다.
+
+## 같은 날 후속: 배경 교체·일반 상담 좌측 정렬
+
+- `c5fec3d`의 배경 `/care7+2.png` 교체와 `9cf9cec`의 일반 상담 텍스트·버튼 좌측 정렬 및 제목 20px을 웹 `career-cards-v2-20261019`로 배포했다. 이전 가운데 정렬을 사용자 요청으로 대체했으며 진단 블러·잠금은 유지한다.
+- 로컬 TypeScript·Vite·Docker 빌드·웹 반영 완료. 사용자 지시로 화면 검증은 생략했다. API·DB 컨테이너 ID 유지, 웹·API·DB healthy, nginx 정상, 소스66·마이그레이션129·DB 구조 MATCH. 기존 LLM 터널 unhealthy 상태는 그대로다.
+- 로컬/서버 HTML 해시 일치: admin `6855cb6f6628825083797e791fb814f6bd4869699bb24c5384855f346ae04b21`, v2 `9d9323894ef80479ca1ff50bca5fc69e71ff0131489df19f7948ac75ce07b5b0`.
+- 백업 `/opt/dreamcatch/ai/career-cards-v2-20261019/`, 이미지 묶음 SHA256 `f47c8987fc3353a097f2616dc84280e69d2de1a6e069a329ffbe8f652b40d242`. 복구는 웹을 직전 `career-cards-20261019`로 되돌리고 web만 재기동한다.
