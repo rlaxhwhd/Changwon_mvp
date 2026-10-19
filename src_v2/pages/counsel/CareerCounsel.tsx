@@ -159,7 +159,8 @@ export default function CareerCounsel() {
 
         <section className="cc-track-choice" aria-label="상담 종류 선택">
           {/* CARE+ 7 연계 상담이 왼쪽(2026-10-19 사용자 확정) */}
-          <article className={`cc-track-card${care7Open ? '' : ' is-locked'}`}>
+          <article className={`cc-track-card cc-track-card-care7${care7Open ? '' : ' is-locked'}`}>
+            <span className="cc-track-priority"><i className="fa-solid fa-crown" aria-hidden="true" /> 중요</span>
             <h2>
               {CARE_TRACK_LABEL.care7.student}
               {!care7Open && <i className="fa-solid fa-lock" aria-hidden="true" />}

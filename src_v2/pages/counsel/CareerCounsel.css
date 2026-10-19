@@ -131,6 +131,66 @@
   color: var(--cc-ink);
 }
 
+/* 제공된 CARE+ 7 이미지의 투명 여백을 카드 바깥으로 보내 배경을 채운다. */
+.cc-track-card.cc-track-card-care7 {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid #b7d5ff;
+  border-radius: 20px;
+  background: #eef7ff;
+  box-shadow: 0 2px 8px rgb(39 104 255 / 10%);
+}
+
+.cc-track-card-care7::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: url('/care7+.png') center 48% / 106% 148% no-repeat;
+  pointer-events: none;
+}
+
+.cc-track-card.cc-track-card-care7 h2 {
+  padding-right: 70px;
+  color: #073cce;
+  font-size: 20px;
+}
+
+.cc-track-card-care7 h2 i { color: #3766cb; }
+.cc-track-card-care7 p { color: #43546a; font-weight: 600; }
+.cc-track-card-care7 small { color: #245cff; }
+
+.cc-track-priority {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: var(--radius-pill);
+  background: #2861ff;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.4;
+  box-shadow: 0 2px 6px rgb(39 104 255 / 15%);
+}
+
+.cc-track-priority i { color: #ffe487; font-size: 13px; }
+
+.cc-track-card.cc-track-card-care7 .cc-track-cta {
+  min-height: 36px;
+  border-color: transparent;
+  background: #1753ff;
+  color: #fff;
+  transition: background 160ms ease;
+}
+
+.cc-track-card.cc-track-card-care7 .cc-track-cta:hover { background: #1042d8; }
+.cc-track-card-care7 .cc-track-cta:focus-visible { outline: 3px solid #073cce; outline-offset: 3px; }
+
 /* ── 예약 화면 상단 — 지금 무엇을 신청하는 중인가 ────────────────────────── */
 .cc-track-bar {
   display: flex;
