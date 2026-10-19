@@ -463,3 +463,14 @@ API·웹을 `first-user-counsel-20261008`, RAG를 `20261001`로 되돌리고 추
 - 서버 진로·심리·교수상담에서 다음 주 이동 시 2026-10-19 공개 슬롯 요청 각 200(72/46/70ms), 실패 요청·콘솔 오류 없음. 실제 상담 신청 제출은 하지 않았다.
 - 서버 웹/API healthy, nginx 정상. release parity 소스66/마이그레이션127/스키마 MATCH. 웹 HTML 로컬/서버 일치: v2 `c991b16a517757772683b17fe3654d8d0c812f8713a88da3138f9566c1b75ed1`, admin `a460194eebc73bf886b169e8ade5251c1aa633f5e512f8dccc275d2e73b4d435`.
 - 백업 `/opt/dreamcatch/ai/counsel-growth-20261015/`에 Compose 두 파일 및 이미지 묶음 보관. 묶음 SHA256 `be5c9b965cc21f4e8fd103708d6a608810b8dbccbcb9cc0fad4a09853a725b1d`. 복구는 웹 태그를 `roster-recommend-20261015`로 되돌려 웹만 재기동한다.
+
+# 상담 진행 대장·심리 연계 사유 배포 (2026-10-19)
+
+- 사용자 지정 `97241e6`과 선행 `7046004`를 포함하여 API·웹 `dreamcatch-{api,web}:counsel-sessions-20261019`로 배포했다. API 로직은 직전 배포와 동일하며 회사용 이미지에 전체 마이그레이션을 포함했다. 서버 DB127에서 128·129만 적용했다.
+- 로컬 TypeScript·Vite·Docker 빌드, 격리 DB 메뉴·심리 연계 회귀 10개 통과(507개 제외). 기존 실패로 기록된 `test_scope_reason_and_recipient_validation`, `test_staff_requires_both_menu_and_student_scope`는 이번 재실행에서 제외했으며 해결됐다고 주장하지 않는다. 로컬 Chrome 대장 6행·상담 진행 이동·사유 5개 확인, 콘솔 오류 없음.
+- 서버 내부 `before.dump` 목차 검증 후 별도 `dc_deploy_counsel_sessions_20261019_test` DB에 복원하여 128·129를 먼저 검증했다. 기존 127개 체크섬 일치, `release_parity.py` 소스66·마이그레이션129·DB 구조 MATCH. 운영 DB는 다운로드하지 않았다.
+- 적용 전후 148개 업무 테이블 해시 비교에서 변경은 `menu`, `menu_auth`, `metadata_revision`, `psych_referral_reason`, `schema_migration`뿐이다. 메타데이터 버전은 기존 메뉴 트리거에 의해 갱신된다. 기존 비교과 프로그램 2건을 포함한 나머지 데이터는 보존됐다.
+- 서버 웹·API·DB healthy, nginx 검사 통과. 로컬/서버 HTML SHA256: admin `0bc77bfc073cd4f19c5cf87257ac7b668f7f50bef3cbc5ef86638969d7fc600f`, v2 `fa8718efd96ca2a205d135aea1b40e9f66e84bca3d1f63d29012c2af17ae10ec`.
+- 서버 Chrome `/admin/counsel/sessions` 9행·메뉴 표시·진행 화면 이동 확인. 목록 요청 200/82ms, 진입 후 갱신 200/59ms로 총 2회(기존 초기화와 화면 갱신). 심리 사유 5개 200/28ms, 진행 화면 관련 조회 200/11~74ms. 검사한 화면 콘솔 오류·경고/실패 요청/가로 넘침 없음. 실제 상담 저장·완료 처리는 실행하지 않았다. 공통 초기 로딩의 프로그램 약565KB·채용 약733KB 응답은 남아 있다.
+- 기존 제약: 같은 학생에게 확정 상담이 여러 건이면 진행 URL이 학생 ID만 받아 첫 확정 건이 열린다. 배포 전부터 LLM 터널은 unhealthy이며 이번 웹·DB 변경으로 해결하지 않았다. AI 생성 동작은 이번 검증 대상이 아니다.
+- 백업·감사·이미지는 `/opt/dreamcatch/ai/counsel-sessions-20261019/`에 접근 제한 보관. 이미지 묶음 SHA256 `c2a433192e687cdca15e7876b75ddb95e7b376179c3c64253ce0d50bbf551126`. 복구는 Compose 백업의 API `roster-recommend-20261015`·웹 `counsel-growth-20261015`로 되돌린다. DB129 이력·업무 데이터는 유지하며 메뉴/사유 원복이 필요하면 백업을 근거로 새 보정 마이그레이션을 작성한다. 전체 DB 덮어쓰기나 적용된 마이그레이션 수정은 하지 않는다.
