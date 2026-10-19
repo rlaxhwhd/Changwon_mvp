@@ -179,7 +179,7 @@ export default function CareerCounsel() {
             )}
           </article>
 
-          <article className="cc-track-card">
+          <article className="cc-track-card cc-track-card-general">
             <h2>{CARE_TRACK_LABEL.general.student}</h2>
             <p>진로·취업 관련 어떤 고민이든 상담받을 수 있습니다.</p>
             <small>진단 없이 바로 상담 신청</small>
