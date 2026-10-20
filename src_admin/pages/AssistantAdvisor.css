@@ -1,0 +1,11 @@
+.admin-modal.advisor-assign-modal { width: min(100%, 1000px); max-width: 1000px; }
+.advisor-professor-filters { align-items: end; }
+.advisor-professor-filters .admin-search { flex: 1; min-width: 180px; }
+.advisor-professor-list { max-height: 340px; overflow: auto; border: 1px solid var(--border); }
+.advisor-professor-list table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.advisor-professor-list th, .advisor-professor-list td { padding: 10px 12px; text-align: center; border-bottom: 1px solid var(--border); }
+.advisor-professor-list th { position: sticky; top: 0; background: var(--muted); z-index: 1; }
+.advisor-professor-list tr.selected { background: var(--sel); }
+.advisor-professor-list input { accent-color: var(--green); width: 17px; height: 17px; cursor: pointer; }
+.advisor-assigned-date { margin-top: 20px; max-width: 220px; }
+@media (max-width: 600px) { .advisor-professor-list table { min-width: 560px; } }

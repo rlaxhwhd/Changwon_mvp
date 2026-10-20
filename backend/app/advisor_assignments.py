@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from pydantic import BaseModel, Field
 from psycopg.errors import UniqueViolation
+from psycopg.types.json import Jsonb
 
 from .auth import principal, require_staff
 from .db import connection
@@ -187,11 +188,8 @@ def assign(body:AssignBody,idempotency_key:str=Header(alias='Idempotency-Key',mi
         fail(403,'OUT_OF_SCOPE','담당 학과 학생만 배정할 수 있습니다.')
     professor=conn.execute('''SELECT s.intg_uid,p.alias,p.name FROM dc.staff s JOIN dc.person p USING(intg_uid)
       WHERE (p.alias=%s OR s.intg_uid=%s) AND s.role_code='professor' ''',(body.professorId,body.professorId)).fetchone()
-    if not professor or not conn.execute('''SELECT 1 FROM dc.org_assignment WHERE staff_uid=%s AND role_code='professor'
-      AND (college_code,dept_code)=(%s,%s) AND is_active AND valid_from<=CURRENT_DATE AND (valid_to IS NULL OR valid_to>=CURRENT_DATE)
-      UNION ALL SELECT 1 FROM dc.department_assignment_student_scope WHERE staff_uid=%s AND student_uid=%s AND role_code='professor' ''',
-      (professor['intg_uid'],student['college_code'],student['dept_code'],professor['intg_uid'],student['intg_uid'])).fetchone():
-        fail(422,'PROFESSOR_DEPT_MISMATCH','학생 학과의 교수만 배정할 수 있습니다.')
+    if not professor:
+        fail(422,'INVALID_PROFESSOR','등록된 교수만 배정할 수 있습니다.')
     conn.execute("SELECT pg_advisory_xact_lock(hashtextextended('advisor:'||%s,0))",(student['intg_uid'],))
     existing=conn.execute("SELECT a.*,sp.alias student_alias,pp.alias professor_alias,pp.name professor_name,bp.alias by_alias FROM dc.advisor_assignment a JOIN dc.person sp ON sp.intg_uid=a.student_uid JOIN dc.person pp ON pp.intg_uid=a.professor_uid JOIN dc.person bp ON bp.intg_uid=a.assigned_by_uid WHERE a.id=md5('advisor-request:'||%s)::uuid",(idempotency_key,)).fetchone()
     if existing: return dto(existing)
@@ -200,7 +198,7 @@ def assign(body:AssignBody,idempotency_key:str=Header(alias='Idempotency-Key',mi
     try:
         row=conn.execute('''INSERT INTO dc.advisor_assignment(id,student_uid,professor_uid,assigned_by_uid,assigned_on,snapshot)
           VALUES(md5('advisor-request:'||%s)::uuid,%s,%s,%s,%s,%s) RETURNING *''',
-          (idempotency_key,student['intg_uid'],professor['intg_uid'],user['intg_uid'],body.assignedAt,snapshot)).fetchone()
+          (idempotency_key,student['intg_uid'],professor['intg_uid'],user['intg_uid'],body.assignedAt,Jsonb(snapshot))).fetchone()
     except UniqueViolation: fail(409,'ALREADY_ASSIGNED','이미 전담교수가 배정된 학생입니다.')
     return dto({**row,'student_alias':student['alias'],'professor_alias':professor['alias'],'professor_name':professor['name'],'by_alias':user['alias']})
 

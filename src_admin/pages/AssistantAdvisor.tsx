@@ -2,6 +2,8 @@ import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useExportSelection } from '../../shared/useExportSelection'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { useState } from 'react'
+import { PROFESSOR_GROUPS } from '../../src_v2/data/professors'
+import './AssistantAdvisor.css'
 import {
   LuChevronLeft,
   LuChevronRight,
@@ -15,8 +17,6 @@ import {
   assignAdvisor,
   getAdvisorTabCounts,
   getAssignYearOptions,
-  getProfessorAdvisorCounts,
-  professorsOfMajor,
   queryAdvisorRoster,
 } from '../data/advisorAssigns'
 import type { AdvisorRosterRow, AdvisorTab } from '../data/advisorAssigns'
@@ -49,6 +49,8 @@ export default function AssistantAdvisor() {
   const [selected, setSelected] = useState<AdvisorRosterRow | null>(null)
   const [error, setError] = useState('')
   const options = getRosterFilterOptions(departments)
+  const grades = [...new Set([1, ...options.grades])].sort((a, b) => a - b)
+  const statuses = [...new Set(['재학', '휴학', '졸업', ...options.statuses])]
   const years = getAssignYearOptions(departments)
   const counts = getAdvisorTabCounts(departments)
   const params = {
@@ -201,14 +203,14 @@ export default function AssistantAdvisor() {
           <span>학년</span>
           <select value={grade} onChange={event => change(setGrade)(event.target.value)}>
             <option value={ALL}>{ALL}</option>
-            {options.grades.map(item => <option key={item} value={item}>{item}학년</option>)}
+            {grades.map(item => <option key={item} value={item}>{item}학년</option>)}
           </select>
         </label>
         <label className="admin-select">
           <span>학적</span>
           <select value={status} onChange={event => change(setStatus)(event.target.value)}>
             <option value={ALL}>{ALL}</option>
-            {options.statuses.map(item => <option key={item}>{item}</option>)}
+            {statuses.map(item => <option key={item}>{item}</option>)}
           </select>
         </label>
         <label className="admin-select">
@@ -247,7 +249,7 @@ export default function AssistantAdvisor() {
               </div>
               {result.items.map((row, index) => (
                 <div key={row.id} className="admin-roster-row">
-                  <span>{selection.checkbox(row, row.name)}</span><span className="admin-roster-cell">{start + index + 1}</span>
+                  <span>{selection.checkbox(row, row.name)}</span><span className="admin-roster-cell">{result.totalCount - start - index}</span>
                   <span className="admin-roster-cell">{row.studentNo}</span>
                   <span className="admin-roster-cell"><strong>{studentDisplayName(row.name, row.id)}</strong></span>
                   <span className="admin-roster-cell">{collegeOf(row.major)} {row.major}</span>
@@ -308,60 +310,86 @@ function AssignModal({
   student: AdvisorRosterRow
   error: string
   onClose: () => void
-  onConfirm: (professorId: string, assignedAt: string) => void
+  onConfirm: (professorId: string, assignedAt: string) => Promise<void>
 }) {
-  const professors = professorsOfMajor(student.major)
-  const [professorId, setProfessorId] = useState(professors[0]?.id ?? '')
+  const [college, setCollege] = useState(ALL)
+  const [major, setMajor] = useState(ALL)
+  const [query, setQuery] = useState('')
+  const [search, setSearch] = useState('')
+  const [professorId, setProfessorId] = useState('')
+  const [saving, setSaving] = useState(false)
   const [assignedAt, setAssignedAt] = useState(new Date().toISOString().slice(0, 10))
-  const activeCounts = getProfessorAdvisorCounts(student.major)
+  const entries = PROFESSOR_GROUPS.flatMap(group =>
+    Object.entries(group.divisions).flatMap(([department, professors]) =>
+      professors.map(professor => ({ ...professor, college: group.name, department }))))
+  const majors = [...new Set(entries.filter(p => college === ALL || p.college === college).map(p => p.department))]
+  const filtered = entries.filter(p =>
+    (college === ALL || p.college === college) && (major === ALL || p.department === major) &&
+    `${p.id} ${p.name}`.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
+  // Joint appointments produce multiple directory entries; select a professor once by ID.
+  const visibleIds = new Set(filtered.map(p => p.id))
+  const professors = [...new Map(filtered.map(p => [p.id, p])).values()]
+  const clearSelection = () => setProfessorId('')
 
   return (
-    <AdminModal title="교수 배정" size="md" onClose={onClose}>
+    <AdminModal title="교수 배정" size="lg" className="advisor-assign-modal" onClose={onClose}>
       <dl className="admin-kv">
         <div><dt>학생</dt><dd>{studentDisplayName(student.name, student.id)}</dd></div>
         <div><dt>학번</dt><dd>{student.studentNo}</dd></div>
         <div><dt>소속</dt><dd>{student.major}</dd></div>
         <div><dt>학년</dt><dd>{student.grade}학년</dd></div>
       </dl>
-      {professors.length === 0 ? (
-        <EmptyState icon={LuFrown} message="해당 학과의 교수 정보가 없습니다." />
-      ) : (
-        <>
-          <div className="admin-form-grid">
-            <label className="admin-field admin-field-full">
-              <span>교수</span>
-              <select value={professorId} onChange={event => setProfessorId(event.target.value)}>
-                {professors.map(professor => (
-                  <option key={professor.id} value={professor.id}>
-                    {professor.name} ({professor.major}) · 배정 {activeCounts.get(professor.id) ?? 0}명
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="admin-field">
-              <span>배정일</span>
-              <input
-                type="date"
-                value={assignedAt}
-                onChange={event => setAssignedAt(event.target.value)}
-              />
-            </label>
-          </div>
-          {error && <p className="admin-field-hint">{error}</p>}
-          <div className="admin-form-actions">
-            <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>
-              취소
-            </button>
-            <button
-              type="button"
-              className="admin-btn admin-btn-primary"
-              onClick={() => onConfirm(professorId, assignedAt)}
-            >
-              배정 확정
-            </button>
-          </div>
-        </>
-      )}
+      <form className="admin-filterbar advisor-professor-filters" onSubmit={event => {
+        event.preventDefault(); setSearch(query); clearSelection()
+      }}>
+        <label className="admin-select">
+          <span>대학</span>
+          <select value={college} onChange={event => { setCollege(event.target.value); setMajor(ALL); clearSelection() }}>
+            <option value={ALL}>{ALL}</option>
+            {PROFESSOR_GROUPS.map(group => <option key={group.name}>{group.name}</option>)}
+          </select>
+        </label>
+        <label className="admin-select">
+          <span>학과</span>
+          <select value={major} onChange={event => { setMajor(event.target.value); clearSelection() }}>
+            <option value={ALL}>{ALL}</option>
+            {majors.map(item => <option key={item}>{item}</option>)}
+          </select>
+        </label>
+        <div className="admin-search">
+          <LuSearch aria-hidden="true" />
+          <input aria-label="교수 사번 또는 이름" placeholder="사번·이름 검색" value={query} onChange={event => setQuery(event.target.value)} />
+        </div>
+        <button type="submit" className="admin-btn admin-btn-primary">검색</button>
+      </form>
+      <p className="admin-field-hint" aria-live="polite">검색 결과 {professors.length}명</p>
+      <div className="advisor-professor-list">
+        <table>
+          <thead><tr><th scope="col">선택</th><th scope="col">이름</th><th scope="col">사번</th><th scope="col">대학</th><th scope="col">학과</th></tr></thead>
+          <tbody>
+            {professors.map(professor => (
+              <tr key={professor.id} className={professorId === professor.id ? 'selected' : ''}>
+                <td><input type="radio" name="advisor-professor" aria-label={`${professor.name} (${professor.id}) 선택`}
+                  checked={professorId === professor.id} onChange={() => setProfessorId(professor.id)} disabled={saving} /></td>
+                <td>{professor.name}</td><td>{professor.id}</td><td>{professor.college}</td><td>{professor.department}</td>
+              </tr>
+            ))}
+            {professors.length === 0 && <tr><td colSpan={5}>조건에 맞는 교수가 없습니다.</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      <label className="admin-field advisor-assigned-date">
+        <span>배정일</span>
+        <input type="date" value={assignedAt} onChange={event => setAssignedAt(event.target.value)} disabled={saving} />
+      </label>
+      {error && <p className="admin-field-hint" role="alert">{error}</p>}
+      <div className="admin-form-actions">
+        <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose} disabled={saving}>닫기</button>
+        <button type="button" className="admin-btn admin-btn-primary" disabled={saving || !visibleIds.has(professorId) || !assignedAt}
+          onClick={async () => { setSaving(true); try { await onConfirm(professorId, assignedAt) } finally { setSaving(false) } }}>
+          {saving ? '배정 중…' : '배정 확정'}
+        </button>
+      </div>
     </AdminModal>
   )
 }
