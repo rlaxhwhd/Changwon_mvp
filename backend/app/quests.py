@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import principal
 from .db import connection
-from .quest_management import router as management_router, progress, semester_on
+from .quest_management import router as management_router, progress
 
 router = APIRouter()
 router.include_router(management_router)
@@ -34,13 +34,15 @@ def reward_rules(conn):
 
 
 def active_semester(conn, day):
-    """The yearly instance (e.g. 2026-2) of the month/day 1학기·2학기 term that contains `day`."""
-    return semester_on(conn, day)
+    """The semester registered in 코드관리 → 학기 운영 일정 (QUEST_SEMESTER) that contains `day`."""
+    return conn.execute("""SELECT code,label,payload FROM dc.code_item WHERE group_code='QUEST_SEMESTER'
+      AND is_active AND payload->>'startDate'<=%s AND payload->>'endDate'>=%s
+      ORDER BY code LIMIT 1""", (day.isoformat(),day.isoformat())).fetchone()
 
 
 def growth_sums(conn, uid, grade, semester):
     """XP granted in the given semester and in the given grade, both derived from the ledger.
-    The semester is summed by its date range so later month/day edits and pre-131 rows stay consistent."""
+    The semester is summed by its date range so later date edits keep the total consistent."""
     start, end = (semester['payload']['startDate'], semester['payload']['endDate']) if semester else (None, None)
     return conn.execute('''SELECT coalesce(sum(granted_xp) FILTER (WHERE earned_on BETWEEN %s::date AND %s::date),0)::bigint AS semester,
       coalesce(sum(granted_xp) FILTER (WHERE grade=%s),0)::bigint AS grade

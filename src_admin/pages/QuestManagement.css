@@ -23,10 +23,3 @@
 .qm-page .mm-table td { vertical-align:top; }
 @media(max-width:1000px) { .qm-compose,.qm-filter-grid { grid-template-columns:1fr; } }
 @media(max-width:600px) { .qm-form-row { grid-template-columns:1fr; } .qm-tabs button { padding:12px; } .qm-save { flex-wrap:wrap; } }
-.qm-terms { display:grid; gap:16px; margin-bottom:20px; }
-.qm-term-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; }
-.qm-term .rdp-root { --rdp-accent-color:var(--primary,#157A52); --rdp-accent-background-color:var(--primary-soft,#DFF5EA); --rdp-day-height:36px; --rdp-day-width:36px; --rdp-day_button-height:34px; --rdp-day_button-width:34px; }
-.qm-term .rdp-root { margin:8px 0 4px; }
-.qm-term .rdp-months { gap:24px; }
-.qm-term-range { color:var(--primary,#157A52); font-size:15px; white-space:nowrap; }
-@media(max-width:1500px) { .qm-term-grid { grid-template-columns:1fr; } }

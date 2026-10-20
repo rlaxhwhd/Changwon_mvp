@@ -1,0 +1,4 @@
+.semester-range { --rdp-accent-color: var(--primary, #157A52); --rdp-accent-background-color: var(--primary-soft, #DFF5EA); margin: 8px 0 12px; }
+.semester-range .rdp-root { --rdp-accent-color: var(--primary, #157A52); --rdp-accent-background-color: var(--primary-soft, #DFF5EA); --rdp-day-height: 36px; --rdp-day-width: 36px; --rdp-day_button-height: 34px; --rdp-day_button-width: 34px; }
+.semester-range .rdp-months { gap: 24px; }
+.semester-range-value { margin: 0 0 4px; color: var(--primary, #157A52); font-weight: 700; }

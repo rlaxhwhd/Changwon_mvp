@@ -10,8 +10,6 @@ from app.db import pool
 from test_api import headers
 
 DAY = date(2030, 9, 2)  # Monday
-TERMS = {'FIRST': {'start': '03-01', 'end': '06-30'}, 'SECOND': {'start': '09-01', 'end': '12-31'}}
-SEMESTER_KEY = '2030-2'
 
 
 @pytest.fixture
@@ -21,11 +19,8 @@ def learner(client, monkeypatch):
     with pool.connection() as conn:
         conn.execute("INSERT INTO dc.person(intg_uid,alias,name,kind,source) VALUES(%s,%s,'Quest test','STUDENT','fixture')", (uid,uid))
         conn.execute("INSERT INTO dc.student(intg_uid,student_no,major_label,grade) VALUES(%s,%s,'Test',1)", (uid,uid))
-        terms = conn.execute("SELECT code,is_active,payload FROM dc.code_item WHERE group_code='QUEST_TERM'").fetchall()
-        # 월/일 학기 — 매년 1학기 03-01~06-30, 2학기 09-01~12-31 (DAY 2030-09-02 는 2030-2)
-        for code, period in TERMS.items():
-            conn.execute("UPDATE dc.code_item SET is_active=true,payload=%s WHERE group_code='QUEST_TERM' AND code=%s", (Jsonb(period), code))
-        reward =conn.execute("SELECT payload FROM dc.code_item WHERE group_code='QUEST_XP_REWARD' AND code='DAILY'").fetchone()['payload']
+        conn.execute("INSERT INTO dc.code_item(group_code,code,label,payload) VALUES('QUEST_SEMESTER',%s,'Test semester',%s)", (uid,Jsonb({'startDate':'2030-09-01','endDate':'2030-12-31'})))
+        reward = conn.execute("SELECT payload FROM dc.code_item WHERE group_code='QUEST_XP_REWARD' AND code='DAILY'").fetchone()['payload']
     yield uid
     with pool.connection() as conn:
         conn.execute('DELETE FROM dc.growth_xp_event WHERE student_uid=%s', (uid,))
@@ -33,8 +28,7 @@ def learner(client, monkeypatch):
         conn.execute('DELETE FROM dc.quest_growth_account WHERE student_uid=%s', (uid,))
         conn.execute('DELETE FROM dc.student WHERE intg_uid=%s', (uid,))
         conn.execute('DELETE FROM dc.person WHERE intg_uid=%s', (uid,))
-        for term in terms:
-            conn.execute("UPDATE dc.code_item SET is_active=%s,payload=%s WHERE group_code='QUEST_TERM' AND code=%s", (term['is_active'], Jsonb(term['payload']), term['code']))
+        conn.execute("DELETE FROM dc.code_item WHERE group_code='QUEST_SEMESTER' AND code=%s", (uid,))
         conn.execute("UPDATE dc.code_item SET payload=%s WHERE group_code='QUEST_XP_REWARD' AND code='DAILY'", (Jsonb(reward),))
 
 
@@ -82,35 +76,42 @@ def test_cap_and_future_program_service(client, learner, monkeypatch):
         with pool.connection() as conn:
             conn.execute('SET LOCAL ROLE dc_app')
             return quests.grant_xp(conn,learner,source_type='PROGRAM',source_key=key,title='Test completion',amount=amount,day=day)
-    # 학기는 월/일 기간에서 연도별로 계산된다 — DAY=2030-2, spring=2031-1, fall=2031-2
-    # 학기 상한 12,500 XP
-    assert award('sem-1',12000)['grantedXp'] == 12000
-    assert award('sem-1-cap',1000)['grantedXp'] == 500
-    assert award('sem-1-over',200)['grantedXp'] == 0
-    g = state(client,learner)['growth']
-    assert (g['semester']['xp'],g['semester']['level'],g['semester']['tier']['code'],g['semester']['nextTier']) == (12500,12.5,'BEST',None)
-    assert (g['grade']['level'],g['grade']['maxLevel'],g['cumulative']['level']) == (12,25,12)
-    # 학기 밖(방학)은 지급 0
-    assert award('vacation',200,date(2031,1,10))['grantedXp'] == 0
-    # 다음 학기에 학년 상한 25,000 XP
-    assert award('sem-2',12500,spring)['grantedXp'] == 12500
-    assert award('sem-2-over',100,spring)['grantedXp'] == 0
-    monkeypatch.setattr(quests,'today_kst',lambda: spring)
-    s = state(client,learner)
-    assert (s['level'],s['levelCap'],s['xpInLevel'],s['atCap'],s['totalXp']) == (25,25,1000,True,25000)
-    # 진급하면 학년 레벨은 0부터 다시 쌓이고, 누적은 이어진다
     with pool.connection() as conn:
-        conn.execute('UPDATE dc.student SET grade=2 WHERE intg_uid=%s',(learner,))
-    assert award('sem-1-over',200) == {'grantedXp':0,'duplicate':True}
-    assert award('grade-2',200,fall)['grantedXp'] == 200
-    monkeypatch.setattr(quests,'today_kst',lambda: fall)
-    g = state(client,learner)['growth']
-    assert (g['semester']['xp'],g['grade']['grade'],g['grade']['xp'],g['cumulative']['xp']) == (200,2,200,25200)
-    assert g['semester']['tier'] is None and g['semester']['nextTier']['code'] == 'BASIC'
-    # 누적 상한 100 LV
-    with pool.connection() as conn:
-        conn.execute('UPDATE dc.quest_growth_account SET total_xp=99900 WHERE student_uid=%s',(learner,))
-    assert award('total-cap',500,fall)['grantedXp'] == 100
+        for suffix, start, end in (('_B','2031-03-01','2031-06-30'),('_C','2031-09-01','2031-12-31')):
+            conn.execute("INSERT INTO dc.code_item(group_code,code,label,payload) VALUES('QUEST_SEMESTER',%s,'Test semester',%s)",
+                         (learner+suffix,Jsonb({'startDate':start,'endDate':end})))
+    try:
+        # 학기 상한 12,500 XP
+        assert award('sem-1',12000)['grantedXp'] == 12000
+        assert award('sem-1-cap',1000)['grantedXp'] == 500
+        assert award('sem-1-over',200)['grantedXp'] == 0
+        g = state(client,learner)['growth']
+        assert (g['semester']['xp'],g['semester']['level'],g['semester']['tier']['code'],g['semester']['nextTier']) == (12500,12.5,'BEST',None)
+        assert (g['grade']['level'],g['grade']['maxLevel'],g['cumulative']['level']) == (12,25,12)
+        # 학기 밖(방학)은 지급 0
+        assert award('vacation',200,date(2031,1,10))['grantedXp'] == 0
+        # 다음 학기에 학년 상한 25,000 XP
+        assert award('sem-2',12500,spring)['grantedXp'] == 12500
+        assert award('sem-2-over',100,spring)['grantedXp'] == 0
+        monkeypatch.setattr(quests,'today_kst',lambda: spring)
+        s = state(client,learner)
+        assert (s['level'],s['levelCap'],s['xpInLevel'],s['atCap'],s['totalXp']) == (25,25,1000,True,25000)
+        # 진급하면 학년 레벨은 0부터 다시 쌓이고, 누적은 이어진다
+        with pool.connection() as conn:
+            conn.execute('UPDATE dc.student SET grade=2 WHERE intg_uid=%s',(learner,))
+        assert award('sem-1-over',200) == {'grantedXp':0,'duplicate':True}
+        assert award('grade-2',200,fall)['grantedXp'] == 200
+        monkeypatch.setattr(quests,'today_kst',lambda: fall)
+        g = state(client,learner)['growth']
+        assert (g['semester']['xp'],g['grade']['grade'],g['grade']['xp'],g['cumulative']['xp']) == (200,2,200,25200)
+        assert g['semester']['tier'] is None and g['semester']['nextTier']['code'] == 'BASIC'
+        # 누적 상한 100 LV
+        with pool.connection() as conn:
+            conn.execute('UPDATE dc.quest_growth_account SET total_xp=99900 WHERE student_uid=%s',(learner,))
+        assert award('total-cap',500,fall)['grantedXp'] == 100
+    finally:
+        with pool.connection() as conn:
+            conn.execute("DELETE FROM dc.code_item WHERE group_code='QUEST_SEMESTER' AND code IN (%s,%s)",(learner+'_B',learner+'_C'))
 
 
 def test_new_upper_grade_student_starts_at_zero(client, learner):
@@ -121,7 +122,7 @@ def test_new_upper_grade_student_starts_at_zero(client, learner):
     assert client.post('/api/v1/quests/attendance',headers=headers(learner)).json()['grantedXp'] == 50
     with pool.connection() as conn:
         row = conn.execute('SELECT grade,semester_code,level_cap FROM dc.growth_xp_event WHERE student_uid=%s',(learner,)).fetchone()
-    assert (row['grade'],row['semester_code'],row['level_cap']) == (3,SEMESTER_KEY,25)
+    assert (row['grade'],row['semester_code'],row['level_cap']) == (3,learner,25)
 
 
 def test_concurrent_attendance(client, learner):
@@ -150,6 +151,15 @@ def test_reward_codes_validation_and_snapshots(client, learner, monkeypatch):
     assert s['totalXp']==125 and [x['xp'] for x in s['graph'][-2:]]==[50,75]
 
 
+def test_semester_validation(client, learner):
+    path='/api/v1/system/code-groups/QUEST_SEMESTER/items/YEAR2030_2'
+    body=dict(expectedVersion=0,label='Overlap',sortOrder=0,isActive=True,
+              payload={'startDate':'2030-09-02','endDate':'2030-12-30'},reason='Test')
+    assert client.put(path,headers=headers('system-admin'),json=body).status_code==422
+    for start,end in [('20300902','20301230'),('2030-11-01','2030-09-01'),('bad','2030-09-02')]:
+        assert client.put(path,headers=headers('system-admin'),json={**body,'payload':{'startDate':start,'endDate':end}}).status_code==422
+
+
 def test_unknown_grade_does_not_guess_cap(client, learner):
     with pool.connection() as conn:
         conn.execute('UPDATE dc.student SET grade=NULL WHERE intg_uid=%s',(learner,))
@@ -158,21 +168,19 @@ def test_unknown_grade_does_not_guess_cap(client, learner):
     assert s['levelCap'] is None and s['totalXp']==0 and not s['attendance']['today']
 
 
-def test_month_day_terms(client, learner, monkeypatch):
-    """학기는 연도 없이 월/일로 설정하고 매년 반복한다 (2026-10-20 사용자 확정)."""
-    h = headers('system-admin')
-    items = {t['code']: t for t in client.get('/api/v1/system/quests/terms', headers=h).json()['items']}
-    assert items['SECOND']['start'] == '09-01' and items['SECOND']['configured']
-    assert client.get('/api/v1/system/quests/terms', headers=headers(learner)).status_code == 403
-    body = dict(expectedVersion=items['SECOND']['version'], start='09-01', end='02-28')
-    for bad in ({'start': '02-30'}, {'end': '13-01'}, {'start': '2030-09-01'}, {'end': '09-01'}, {'start': '05-01'}):
-        assert client.put('/api/v1/system/quests/terms/SECOND', headers=h, json={**body, **bad}).status_code == 422
-    assert client.put('/api/v1/system/quests/terms/SECOND', headers=h, json={**body, 'expectedVersion': 999}).status_code == 409
-    saved = client.put('/api/v1/system/quests/terms/SECOND', headers=h, json=body)
-    assert saved.status_code == 200, saved.text
-    # 끝이 시작보다 앞이면 다음 해에 끝난다 — 2031-01-10 은 2030학년도 2학기
-    monkeypatch.setattr(quests, 'today_kst', lambda: date(2031, 1, 10))
-    s = state(client, learner)
-    assert s['semester'] == {'code': '2030-2', 'label': '2030학년도 2학기', 'startDate': '2030-09-01', 'endDate': '2031-02-28'}
-    semesters = client.get('/api/v1/system/quests/options', headers=h).json()['semesters']
-    assert {'code': '2031-1', 'label': '2031학년도 1학기', 'payload': {'startDate': '2031-03-01', 'endDate': '2031-06-30'}} in semesters
+def test_semester_code_is_generated(client, learner):
+    """새 학기 코드는 화면이 학년도·학기로 만든다(YEAR2030_1) — 수기 코드는 거부한다."""
+    body=dict(expectedVersion=0,label='2031학년도 1학기',sortOrder=0,isActive=True,
+              payload={'startDate':'2031-03-01','endDate':'2031-08-15'},reason='Test')
+    for code in ('MANUAL_CODE','YEAR2031_3','YEAR31_1'):
+        assert client.put(f'/api/v1/system/code-groups/QUEST_SEMESTER/items/{code}',headers=headers('system-admin'),json=body).status_code==422
+
+
+def test_daily_xp_during_vacation_inside_semester(client, learner, monkeypatch):
+    """방학이어도 등록된 학기 기간 안이면 일일 퀘스트 XP를 준다(2026-10-20 사용자 확정)."""
+    with pool.connection() as conn:
+        conn.execute("UPDATE dc.code_item SET payload=%s WHERE group_code='QUEST_SEMESTER' AND code=%s",
+                     (Jsonb({'startDate':'2030-08-16','endDate':'2031-02-28'}),learner))
+    monkeypatch.setattr(quests,'today_kst',lambda: date(2031,1,6))  # 겨울방학 월요일
+    assert client.post('/api/v1/quests/attendance',headers=headers(learner)).json()['grantedXp'] == 50
+    assert state(client,learner)['growth']['semester']['xp'] == 50

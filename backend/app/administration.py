@@ -1,5 +1,6 @@
 """Audited operational configuration. Menu visibility never grants data access."""
 import json
+import re
 from datetime import date
 from uuid import UUID
 
@@ -82,6 +83,9 @@ def save_item(group: str, code: str, data: CodeChange,
         if not isinstance(data.payload.get('goal',''),str) or len(data.payload.get('goal',''))>2000:
             raise HTTPException(422, '상담 목표를 확인하세요.')
     elif group=='QUEST_SEMESTER':
+        # 코드는 화면이 학년도·학기로 자동 생성한다(YEAR2026_1) — 새 항목은 이 형식만 받는다.
+        if not before and not re.fullmatch(r'YEAR\d{4}_[12]', code):
+            raise HTTPException(422, '학기 코드는 학년도와 학기로 자동 생성됩니다. 학년도와 학기를 선택하세요.')
         try:
             start = date.fromisoformat(data.payload['startDate'])
             end = date.fromisoformat(data.payload['endDate'])
@@ -145,6 +149,13 @@ def save_item(group: str, code: str, data: CodeChange,
     conn.execute('''INSERT INTO dc.code_item_event(group_code,code,action,before,after,reason,changed_by)
       VALUES(%s,%s,%s,%s,%s,%s,%s)''',
       (group,code,action,Jsonb(jsonable_encoder(before)),Jsonb(jsonable_encoder(after)),data.reason,user['intg_uid']))
+    if group=='QUEST_SEMESTER' and before and before['payload']!=data.payload:
+        # 학기 퀘스트는 학기 기간을 따로 정하지 않는다 — 시작 전·완료 이력 없는 편성은 학기 기간을 따라간다.
+        from .quests import today_kst
+        conn.execute("""UPDATE dc.quest_assignment a SET starts_on=%s,ends_on=%s,updated_at=now(),version=version+1
+          WHERE period='SEMESTER' AND period_key=%s AND NOT (published AND starts_on<=%s)
+          AND NOT EXISTS(SELECT 1 FROM dc.quest_completion c WHERE c.assignment_id=a.id)""",
+          (data.payload['startDate'],data.payload['endDate'],code,today_kst()))
     return after
 
 

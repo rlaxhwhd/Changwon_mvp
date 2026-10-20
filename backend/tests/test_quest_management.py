@@ -8,7 +8,7 @@ from app import quests, missions
 from app.db import pool
 from app.quest_management import activity_counts
 from test_api import headers
-from test_quests import SEMESTER_KEY, learner  # noqa: F401; isolated student/semester fixture
+from test_quests import learner  # noqa: F401; isolated student/semester fixture
 
 
 def definition(client, **changes):
@@ -117,9 +117,9 @@ def test_semester_schedule_selection_and_locked_schedule(client, learner):
     h = headers('system-admin')
     q = definition(client)
     draft = client.put('/api/v1/system/quests/assignments/0', headers=h,
-                       json=schedule(q, SEMESTER_KEY, period='SEMESTER', published=False)).json()
+                       json=schedule(q, learner, period='SEMESTER', published=False)).json()
     url = f"/api/v1/system/quests/assignments/{draft['id']}/schedule"
-    body = dict(expectedVersion=1, periodKey=SEMESTER_KEY, reason='학기 일정 적용')
+    body = dict(expectedVersion=1, periodKey=learner, reason='학기 일정 적용')
     assert client.put(url, headers=h, json={**body, 'periodKey': 'NOT_REGISTERED'}).status_code == 422
     assert client.put(url, headers=h, json=body).status_code == 200
     rows = client.get('/api/v1/system/quests/schedules?period=SEMESTER', headers=h).json()['items']
@@ -157,7 +157,7 @@ def test_nonmatching_and_semester_assignment(client, learner):
     h = headers('system-admin')
     response = client.put('/api/v1/system/quests/assignments/0', headers=h, json=schedule(q, audience='FILTERED', grades=[2]))
     assert response.status_code == 200
-    response = client.put('/api/v1/system/quests/assignments/0', headers=h, json=schedule(q, SEMESTER_KEY, period='SEMESTER'))
+    response = client.put('/api/v1/system/quests/assignments/0', headers=h, json=schedule(q, learner, period='SEMESTER'))
     assert response.status_code == 200, response.text
     state = client.post('/api/v1/quests/sync', headers=headers(learner)).json()
     assert len(state['assigned']) == 1 and state['assigned'][0]['period'] == 'SEMESTER'
@@ -243,3 +243,27 @@ def test_mission_threshold_snapshot_and_daily_award(client, learner, monkeypatch
         assert conn.execute('SELECT total_xp FROM dc.quest_growth_account WHERE student_uid=%s',(learner,)).fetchone()['total_xp'] == 50
         conn.execute('DELETE FROM dc.mission_attempt WHERE student_uid=%s',(learner,))
     assert client.put(f'/api/v1/system/missions/weeks/{monday}/TOEIC',headers=h,json={**body,'questPassCount':3}).status_code == 422
+
+
+def test_semester_assignment_follows_semester_dates(client, learner):
+    """학기 퀘스트는 구간을 따로 정하지 않는다 — 시작 전 편성은 학기 기간 수정을 따라간다."""
+    h, code = headers('system-admin'), 'YEAR2033_1'
+    url = f'/api/v1/system/code-groups/QUEST_SEMESTER/items/{code}'
+    body = dict(expectedVersion=0, label='2033학년도 1학기', sortOrder=0, isActive=True,
+                payload={'startDate': '2033-03-01', 'endDate': '2033-08-15'}, reason='학기 등록')
+    try:
+        assert client.put(url, headers=h, json=body).status_code == 200
+        q = definition(client)
+        draft = client.put('/api/v1/system/quests/assignments/0', headers=h,
+                           json=schedule(q, code, period='SEMESTER', published=False)).json()
+        assert (draft['starts_on'], draft['ends_on']) == ('2033-03-01', '2033-08-15')
+        changed = {**body, 'expectedVersion': 1, 'payload': {'startDate': '2033-03-01', 'endDate': '2033-08-31'}, 'reason': '종료일 연장'}
+        assert client.put(url, headers=h, json=changed).status_code == 200
+        rows = client.get(f'/api/v1/system/quests/assignments?period=SEMESTER&periodKey={code}', headers=h).json()['items']
+        assert [(r['id'], r['starts_on'], r['ends_on']) for r in rows] == [(draft['id'], '2033-03-01', '2033-08-31')]
+    finally:
+        with pool.connection() as conn:
+            conn.execute("DELETE FROM dc.quest_assignment_item WHERE assignment_id IN (SELECT id FROM dc.quest_assignment WHERE period_key=%s)", (code,))
+            conn.execute("DELETE FROM dc.quest_assignment WHERE period_key=%s", (code,))
+            # 변경 이력은 append-only 라 항목을 지우지 않고 비활성화한다.
+            conn.execute("UPDATE dc.code_item SET is_active=false WHERE group_code='QUEST_SEMESTER' AND code=%s", (code,))

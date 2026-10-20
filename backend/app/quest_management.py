@@ -1,11 +1,9 @@
 """Activity catalog and disjoint, versioned monthly/semester assignments."""
-import re
-from calendar import isleap, monthrange
+from calendar import monthrange
 from datetime import date, timedelta
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, model_validator
 
 from .administration import administrator, audit
@@ -59,96 +57,9 @@ class Assignment(BaseModel):
         return self
 
 
-# ── 학기 기간: 연도 없이 1학기·2학기의 월/일로 정하고 매년 반복한다(2026-10-20 사용자 확정) ──
-TERM_NUMBER = {'FIRST': 1, 'SECOND': 2}
-MONTH_DAY = r'^(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])$'
-
-
-def term_rows(conn):
-    return conn.execute("SELECT code,label,version,is_active,payload FROM dc.code_item WHERE group_code='QUEST_TERM' ORDER BY sort_order").fetchall()
-
-
-def on_year(year, month_day):
-    month, day = int(month_day[:2]), int(month_day[3:])
-    if month == 2 and day == 29 and not isleap(year):
-        day = 28
-    return date(year, month, day)
-
-
-def term_instance(term, year):
-    """The semester that starts in `year`. A range whose end precedes its start ends next year."""
-    start, end = term['payload']['start'], term['payload']['end']
-    return dict(code=f"{year}-{TERM_NUMBER[term['code']]}", label=f"{year}학년도 {term['label']}",
-                payload=dict(startDate=on_year(year, start).isoformat(),
-                             endDate=on_year(year + (end < start), end).isoformat()))
-
-
-def semester_instances(conn, years):
-    terms = [t for t in term_rows(conn) if t['is_active'] and t['payload'].get('start')]
-    return sorted((term_instance(t, y) for y in years for t in terms), key=lambda s: s['payload']['startDate'])
-
-
-def semester_on(conn, day):
-    key = day.isoformat()
-    return next((s for s in semester_instances(conn, (day.year - 1, day.year))
-                 if s['payload']['startDate'] <= key <= s['payload']['endDate']), None)
-
-
-def semester_by_key(conn, key):
-    match = re.fullmatch(r'(\d{4})-([12])', key)
-    if not match:
-        return None
-    code = {1: 'FIRST', 2: 'SECOND'}[int(match[2])]
-    term = next((t for t in term_rows(conn) if t['code'] == code and t['is_active'] and t['payload'].get('start')), None)
-    return term_instance(term, int(match[1])) if term else None
-
-
-class TermChange(BaseModel):
-    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
-    expectedVersion: StrictInt = Field(ge=1)
-    start: str = Field(pattern=MONTH_DAY)
-    end: str = Field(pattern=MONTH_DAY)
-
-
-@router.get('/system/quests/terms')
-def terms(user=Depends(administrator, scope='function'), conn=Depends(connection, scope='function')):
-    return dict(items=[dict(code=t['code'], label=t['label'], version=t['version'],
-                            configured=bool(t['is_active'] and t['payload'].get('start')),
-                            start=t['payload'].get('start'), end=t['payload'].get('end')) for t in term_rows(conn)])
-
-
-@router.put('/system/quests/terms/{code}')
-def save_term(code: Literal['FIRST', 'SECOND'], data: TermChange, user=Depends(administrator, scope='function'),
-              conn=Depends(connection, scope='function')):
-    for value in (data.start, data.end):
-        try:
-            on_year(2024, value)  # leap year: 02-29 is a valid month/day
-        except ValueError:
-            raise HTTPException(422, '존재하는 월/일을 선택하세요.') from None
-    if data.start == data.end:
-        raise HTTPException(422, '학기 시작일과 종료일을 다르게 선택하세요.')
-    before = conn.execute("SELECT * FROM dc.code_item WHERE group_code='QUEST_TERM' AND code=%s FOR UPDATE", (code,)).fetchone()
-    if not before or before['version'] != data.expectedVersion:
-        raise HTTPException(409, '학기 기간이 변경되었습니다. 다시 조회하세요.')
-    mine = dict(code=code, label=before['label'], payload=dict(start=data.start, end=data.end))
-    other = next((t for t in term_rows(conn) if t['code'] != code and t['is_active'] and t['payload'].get('start')), None)
-    if other:
-        spans = [(date.fromisoformat(s['payload']['startDate']), date.fromisoformat(s['payload']['endDate']))
-                 for y in (2025, 2026, 2027) for s in (term_instance(mine, y), term_instance(other, y))]
-        if any(a[0] <= b[1] and b[0] <= a[1] for i, a in enumerate(spans) for b in spans[i + 1:]):
-            raise HTTPException(422, '1학기와 2학기 기간이 겹칩니다.')
-    after = conn.execute('''UPDATE dc.code_item SET payload=%s,is_active=true,version=version+1,updated_at=now(),updated_by=%s
-      WHERE group_code='QUEST_TERM' AND code=%s RETURNING code,label,version,payload,is_active''',
-      (Jsonb(dict(start=data.start, end=data.end)), user['intg_uid'], code)).fetchone()
-    audit(conn, user, 'quest_term', code, before, after, f"{before['label']} 기간 설정")
-    return dict(code=code, label=after['label'], version=after['version'], configured=True, start=data.start, end=data.end)
-
-
 @router.get('/system/quests/options')
 def options(user=Depends(administrator, scope='function'), conn=Depends(connection, scope='function')):
-    from .quests import today_kst
-    year = today_kst().year
-    semesters = semester_instances(conn, (year - 1, year, year + 1))
+    semesters = conn.execute("SELECT code,label,payload FROM dc.code_item WHERE group_code='QUEST_SEMESTER' AND is_active ORDER BY payload->>'startDate'").fetchall()
     types = conn.execute("SELECT code,label FROM dc.code_item WHERE group_code='STUDENT_TYPE' AND is_active ORDER BY sort_order,code").fetchall()
     return dict(activities=ACTIVITIES, semesters=semesters, studentTypes=types)
 
@@ -215,10 +126,10 @@ def period_dates(conn, period, key):
             return start, start.replace(day=monthrange(start.year, start.month)[1])
         except ValueError:
             raise HTTPException(422, '운영 월을 선택하세요.')
-    semester = semester_by_key(conn, key)
-    if not semester:
-        raise HTTPException(422, '학기 편성 탭에서 1학기·2학기 기간을 먼저 설정하세요.')
-    return date.fromisoformat(semester['payload']['startDate']), date.fromisoformat(semester['payload']['endDate'])
+    row = conn.execute("SELECT payload FROM dc.code_item WHERE group_code='QUEST_SEMESTER' AND code=%s AND is_active FOR SHARE", (key,)).fetchone()
+    if not row:
+        raise HTTPException(422, '코드관리에서 운영 학기를 먼저 등록하세요.')
+    return date.fromisoformat(row['payload']['startDate']), date.fromisoformat(row['payload']['endDate'])
 
 
 def audiences_overlap(left, right):
