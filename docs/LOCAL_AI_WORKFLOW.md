@@ -514,3 +514,13 @@ API·웹을 `first-user-counsel-20261008`, RAG를 `20261001`로 되돌리고 추
 - API/web/DB healthy;nginx valid. Matching local/server HTML SHA256:admin6855cb6f6628825083797e791fb814f6bd4869699bb24c5384855f346ae04b21;v2 0b35a3d4319ab0450e72dabf82ec3e01433019070f25e18de1ec3ce4349056e4.
 - Local/server Chrome code management verified semester and tier groups. Server semester list200/22ms/options200/11ms;console errors/warnings0. Only one inactive QA semester exists. Actual semester dates await user input;no invented schedule,no production attendance/XP mutations. XP remains disabled until an active actual semester is registered.
 - Backup/image/audits:/opt/dreamcatch/ai/quest-growth-20261020/. Archive SHA256:7c6f7ca8cd5f23477d4423590e1c016f079c77eac0a7f91b6991a8d81ede7c70. Rollback API to counsel-sessions-20261019 and web to career-lock-left-20261019;retain DB130/business records. Existing unhealthy LLM tunnel remains unresolved. Server remains running.
+
+## 누적 퀘스트·조교 배정 변경 배포 (2026-10-20)
+
+- `825b661`까지 `origin/dev`와 로컬 HEAD 일치를 확인하고 API·웹 `quest-catalog-20261020`으로 배포했다. `877fb6b`, 이를 대체한 `5b6a36f` 학년도별 학기 등록, `e66caa0` 타 학과 교수 배정·조교 필터, `825b661` 퀘스트 활동17종을 포함한다. 최종 학기 설정은 코드관리의 `QUEST_SEMESTER`이며 중간 월/일 반복 설정은 폐기됐다.
+- 로컬 Docker 빌드·DB 백업·133 확인·기동 완료. 새 격리 DB에서 관련 회귀64개 통과(460개 제외, 경고3개). 이전에 확인된 무관한 `test_roadmap` 실패는 이번 선택에서 제외했다.
+- 서버 기존130개 체크섬 일치, 서버 내부 백업을 별도 `dc_deploy_quest_catalog_20261020_test`에 복원해131~133 리허설 후 운영에 적용했다. 소스66·마이그레이션133·DB 구조 MATCH. 148개 테이블 대조에서 metadata_revision/schema_migration만 변경됐고 기존 업무 데이터와 비교과2건은 보존됐다.
+- API·웹·DB healthy, nginx 정상. 로컬/서버 HTML 해시 일치: admin `102f4289acd3230bc439e302041bcc7f061367e41c4747b9910de93e0338f93e`, v2 `779b178758b0bde708a38e3d5d7e881840d39836f0a203f49b9fad87bc449f9f`.
+- 로컬/서버 Chrome에서 퀘스트 활동 그룹·상담 세부 기준, 학기 달력·자동 코드, 조교 학과·학년·학적·배정년도 필터 확인. 확인 화면 콘솔 오류·경고와 가로 넘침 없음. 서버 퀘스트 options39ms/목록27ms, 조교 roster62ms. 초기 조교 summary/counsel-summary는 각4회 호출(276~306ms)이 남아 있으며 최적화하지 않았다. 운영에 테스트 퀘스트·배정·학기를 저장하지 않았다.
+- 서버 실제 학기는 여전히 미등록(비활성 QA1건만 존재). 코드관리에서 실제 학기를 등록해야 XP 지급이 가능하다. 로컬 테스트 학기·퀘스트를 서버로 복사하지 않았다. 기존 LLM 터널 unhealthy 상태는 미해결이며 서버는 기동 유지했다.
+- 백업·복구 자료 `/opt/dreamcatch/ai/quest-catalog-20261020/`, 이미지 묶음 SHA256 `2ba5d98dce1887e1ae0d0aeee58d4fe526a6ee487049242542e18425117045f6`. API·웹은 직전 `quest-growth-20261020`으로 복구 가능하고 DB133 및 업무 기록은 유지한다. 새 활동17종 정의가 운영에 등록된 이후에는 이전 API가 처리하지 못하는 활동이 있을 수 있으므로 롤백 전 호환성 확인이 필요하다.
