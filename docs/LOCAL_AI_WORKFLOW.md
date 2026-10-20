@@ -504,3 +504,13 @@ API·웹을 `first-user-counsel-20261008`, RAG를 `20261001`로 되돌리고 추
 - `05df067`의 잠금 안내 문구·진단 이동 버튼 좌측 정렬 및 안쪽 여백 24px을 웹 `career-lock-left-20261019`로 배포했다. 로컬 TypeScript·Vite·Docker 빌드·반영 완료. 사용자 지시로 화면 검증은 생략했다.
 - 웹·API·DB healthy, nginx 정상, API·DB 컨테이너 ID 유지, 소스66·마이그레이션129·DB 구조 MATCH. 로컬/서버 admin HTML은 위와 동일하며 v2 SHA256은 `65ff55ef0949bec512970c05ddc479b2b4034bbedd6344130a168f4e4c72651c`로 일치한다. 기존 LLM 터널 unhealthy는 유지된다.
 - 백업 `/opt/dreamcatch/ai/career-lock-left-20261019/`, 이미지 묶음 SHA256 `2a4643b7a16a24394e8dbc0e7604cec5750426a16f12d3fe77c89e99622d2e01`. 복구는 웹을 직전 `career-cards-v2-20261019`로 되돌려 web만 재기동한다.
+
+
+# Semester growth deployment (2026-10-20)
+
+- Deployed ad04b8e and accumulated web changes as dreamcatch-{api,web}:quest-growth-20261020. Server already had migrations128/129; verified all129 checksums and applied only130.
+- Local Docker build/backup/migration/start passed. Isolated related regression:41 passed,2 previously documented test_roadmap request failures reproduced;475 deselected,3 warnings.
+- Server-internal backup restored into dc_deploy_quest_growth_20261020_test before migration rehearsal. release_parity:66 application files,130 migrations,schema MATCH. Of148 table hashes, only code_group/code_item/metadata_revision/schema_migration changed. Business data,including2 programs,preserved.
+- API/web/DB healthy;nginx valid. Matching local/server HTML SHA256:admin6855cb6f6628825083797e791fb814f6bd4869699bb24c5384855f346ae04b21;v2 0b35a3d4319ab0450e72dabf82ec3e01433019070f25e18de1ec3ce4349056e4.
+- Local/server Chrome code management verified semester and tier groups. Server semester list200/22ms/options200/11ms;console errors/warnings0. Only one inactive QA semester exists. Actual semester dates await user input;no invented schedule,no production attendance/XP mutations. XP remains disabled until an active actual semester is registered.
+- Backup/image/audits:/opt/dreamcatch/ai/quest-growth-20261020/. Archive SHA256:7c6f7ca8cd5f23477d4423590e1c016f079c77eac0a7f91b6991a8d81ede7c70. Rollback API to counsel-sessions-20261019 and web to career-lock-left-20261019;retain DB130/business records. Existing unhealthy LLM tunnel remains unresolved. Server remains running.
