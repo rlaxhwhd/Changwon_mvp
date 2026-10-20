@@ -11,7 +11,11 @@ from .quest_management import router as management_router, progress
 router = APIRouter()
 router.include_router(management_router)
 XP_PER_LEVEL = 1000
+# 2026-10-20 사용자 확정 — 학기 0~12.5 LV · 학년 0~25 LV(학년마다 0부터) · 누적 최대 100 LV.
+SEMESTER_CAP_XP = 12500
 LEVELS_PER_GRADE = 25
+GRADE_CAP_XP = LEVELS_PER_GRADE * XP_PER_LEVEL
+TOTAL_CAP_XP = 100000
 
 
 def today_kst():
@@ -35,6 +39,36 @@ def active_semester(conn, day):
       ORDER BY code LIMIT 1""", (day.isoformat(),day.isoformat())).fetchone()
 
 
+def growth_sums(conn, uid, grade, semester_code):
+    """XP granted in the given semester and in the given grade, both derived from the ledger."""
+    return conn.execute('''SELECT coalesce(sum(granted_xp) FILTER (WHERE semester_code=%s),0)::bigint AS semester,
+      coalesce(sum(granted_xp) FILTER (WHERE grade=%s),0)::bigint AS grade
+      FROM dc.growth_xp_event WHERE student_uid=%s''', (semester_code, grade, uid)).fetchone()
+
+
+def semester_tiers(conn):
+    return [dict(code=r['code'], label=r['label'], minXp=r['payload']['minXp']) for r in conn.execute(
+        "SELECT code,label,payload FROM dc.code_item WHERE group_code='QUEST_SEMESTER_TIER' AND is_active ORDER BY (payload->>'minXp')::int").fetchall()]
+
+
+def growth_levels(conn, uid, grade, semester, total):
+    """학기·학년·누적 성장 레벨. 장학금·주요 보상은 학기 레벨, 누적은 대학생활 전체 성장 이력이다."""
+    sums = growth_sums(conn, uid, grade, semester['code'] if semester else None)
+    tiers = semester_tiers(conn)
+    sem_xp = int(sums['semester']) if semester else 0
+    reached = [t for t in tiers if t['minXp'] <= sem_xp]
+    return dict(
+        semester=dict(code=semester['code'], label=semester['label'], xp=sem_xp,
+                      level=SEMESTER_CAP_XP / XP_PER_LEVEL if sem_xp >= SEMESTER_CAP_XP else sem_xp // XP_PER_LEVEL,
+                      maxLevel=SEMESTER_CAP_XP / XP_PER_LEVEL, maxXp=SEMESTER_CAP_XP,
+                      tier=reached[-1] if reached else None,
+                      nextTier=next((t for t in tiers if t['minXp'] > sem_xp), None)) if semester else None,
+        grade=dict(grade=grade, xp=int(sums['grade']), level=int(sums['grade']) // XP_PER_LEVEL,
+                   maxLevel=LEVELS_PER_GRADE, maxXp=GRADE_CAP_XP) if grade and grade > 0 else None,
+        cumulative=dict(xp=total, level=total // XP_PER_LEVEL, maxLevel=TOTAL_CAP_XP // XP_PER_LEVEL, maxXp=TOTAL_CAP_XP),
+        tiers=tiers)
+
+
 def grant_xp(conn, uid, *, source_type, source_key, title, amount, day, reward_code=None, reward_version=None):
     """Internal integration point. Caller must validate completion in this same transaction.
 
@@ -47,16 +81,22 @@ def grant_xp(conn, uid, *, source_type, source_key, title, amount, day, reward_c
     student = conn.execute('SELECT grade FROM dc.student WHERE intg_uid=%s', (uid,)).fetchone()
     if not student or not student['grade'] or student['grade'] < 1:
         raise HTTPException(409, '학년 정보 확인 후 XP를 적립할 수 있습니다.')
-    cap = student['grade'] * LEVELS_PER_GRADE
+    grade = student['grade']
     conn.execute('INSERT INTO dc.quest_growth_account(student_uid) VALUES(%s) ON CONFLICT DO NOTHING', (uid,))
     account = conn.execute('SELECT total_xp FROM dc.quest_growth_account WHERE student_uid=%s FOR UPDATE', (uid,)).fetchone()
     previous = conn.execute('SELECT granted_xp FROM dc.growth_xp_event WHERE student_uid=%s AND source_type=%s AND source_key=%s', (uid,source_type,source_key)).fetchone()
     if previous:
         return dict(grantedXp=previous['granted_xp'], duplicate=True)
-    granted = min(amount, max(0,cap * XP_PER_LEVEL-account['total_xp']))
+    # Every XP belongs to a registered semester; outside one nothing is granted.
+    semester = active_semester(conn, day)
+    code = semester['code'] if semester else None
+    sums = growth_sums(conn, uid, grade, code)
+    room = min(GRADE_CAP_XP - sums['grade'], TOTAL_CAP_XP - account['total_xp'])
+    room = min(room, SEMESTER_CAP_XP - sums['semester']) if semester else 0
+    granted = min(amount, max(0, room))
     conn.execute('''INSERT INTO dc.growth_xp_event(student_uid,source_type,source_key,title,reward_code,
-      reward_version,requested_xp,granted_xp,level_cap,earned_on) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
-      (uid,source_type,source_key,title,reward_code,reward_version,amount,granted,cap,day))
+      reward_version,requested_xp,granted_xp,level_cap,earned_on,grade,semester_code) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
+      (uid,source_type,source_key,title,reward_code,reward_version,amount,granted,LEVELS_PER_GRADE,day,grade,code))
     conn.execute('UPDATE dc.quest_growth_account SET total_xp=total_xp+%s,updated_at=now() WHERE student_uid=%s', (granted,uid))
     return dict(grantedXp=granted, duplicate=False)
 
@@ -106,7 +146,7 @@ def dashboard_data(month, user, conn, assigned=None):
     account = conn.execute('SELECT total_xp FROM dc.quest_growth_account WHERE student_uid=%s', (uid,)).fetchone()
     total = account['total_xp'] if account else 0
     grade = student['grade']
-    cap = grade * LEVELS_PER_GRADE if grade and grade>0 else None
+    cap = LEVELS_PER_GRADE if grade and grade>0 else None
     attendance = conn.execute('SELECT attended_on FROM dc.quest_attendance WHERE student_uid=%s AND attended_on>=%s AND attended_on<%s ORDER BY attended_on', (uid,start,end)).fetchall()
     # Date islands let a missing today retain yesterday's streak until the day ends.
     streak = conn.execute('''WITH recent AS (
@@ -121,7 +161,9 @@ def dashboard_data(month, user, conn, assigned=None):
       FROM dc.growth_xp_event WHERE student_uid=%s AND earned_on BETWEEN %s AND %s GROUP BY earned_on''', (uid,graph_start,day)).fetchall()}
     graph = [dict(date=graph_start+timedelta(days=i),xp=amounts.get(graph_start+timedelta(days=i),0)) for i in range(30)]
     semester = active_semester(conn,day)
-    at_cap = cap is not None and total >= cap*XP_PER_LEVEL
+    growth = growth_levels(conn, uid, grade, semester, total)
+    grade_xp = growth['grade']['xp'] if growth['grade'] else 0
+    at_cap = cap is not None and grade_xp >= GRADE_CAP_XP
     if assigned is None:
         assigned = progress(conn, uid, day)
     toeic = conn.execute('''SELECT coalesce(bool_or((result->>'questPassed')::boolean),false) AS done,
@@ -138,8 +180,8 @@ def dashboard_data(month, user, conn, assigned=None):
     rules['DAILY']['quota'] = 2
     for period in ('MONTHLY','SEMESTER'):
         rules[period]['quota'] = sum(i['period']==period for i in assigned)
-    return dict(today=day,grade=grade,totalXp=total,level=total//XP_PER_LEVEL,levelCap=cap,
-                xpInLevel=1000 if at_cap else total%XP_PER_LEVEL,xpPerLevel=XP_PER_LEVEL,atCap=at_cap,
+    return dict(today=day,grade=grade,totalXp=total,level=grade_xp//XP_PER_LEVEL,levelCap=cap,growth=growth,
+                xpInLevel=XP_PER_LEVEL if at_cap else grade_xp%XP_PER_LEVEL,xpPerLevel=XP_PER_LEVEL,atCap=at_cap,
                 attendance=dict(today=attended,streak=streak,dates=[r['attended_on'] for r in attendance]),
                 graph=graph,rules=rules,dailyCompleted=completed['DAILY'],completed=completed,
                 assigned=assigned,toeic=dict(done=toeic['done'],correct=toeic['correct'],threshold=toeic_week['quest_pass_count'] if toeic_week else None),

@@ -154,3 +154,10 @@
 .qb-chart-details table { border-collapse: collapse; width: 100%; }
 .qb-chart-details th, .qb-chart-details td { padding: 6px 0; text-align: left; border-bottom: 1px solid var(--qb-border); }
 .qb-chart-details th:last-child, .qb-chart-details td:last-child { text-align: right; }
+.qb-growth-levels { flex-basis: 100%; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin: 0; }
+.qb-growth-levels > div { border: 1px solid var(--qb-border); border-radius: 10px; padding: 10px 12px; }
+.qb-growth-levels dt { color: var(--qb-sub); font-size: 12px; }
+.qb-growth-levels dd { margin: 4px 0 0; font-size: 13px; }
+.qb-growth-levels strong { font-size: 16px; }
+.qb-growth-summary .qb-growth-tier { color: var(--blue); font-weight: 600; }
+@media (max-width: 640px) { .qb-growth-levels { grid-template-columns: 1fr; } }

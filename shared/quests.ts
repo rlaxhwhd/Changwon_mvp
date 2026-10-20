@@ -9,6 +9,13 @@ export function questLevelStat(data: QuestDashboard | null, error = ''): LevelSt
     pct: data && data.xpPerLevel > 0 ? data.xpInLevel / data.xpPerLevel * 100 : 0 }
 }
 
+/** 출석 XP 안내 — 학기 일정 미등록·주말을 구분해 왜 0 XP인지 밝힌다(메인·퀘스트 보드 공용). */
+export function attendanceXpNote(data: QuestDashboard) {
+  if (data.attendanceRewardEligible) return `출석 보상 ${data.rules.DAILY.xp.toLocaleString()} XP`
+  if (!data.semester) return '학기 일정이 아직 등록되지 않아 XP가 지급되지 않습니다. 출석은 기록됩니다.'
+  return '학기 중 평일에 XP가 지급됩니다. 오늘은 출석 기록만 남겨요.'
+}
+
 export type QuestPeriod = 'DAILY' | 'MONTHLY' | 'SEMESTER'
 export interface QuestReward { label: string; xp: number; quota: number; cyclesPerSemester: number; version: number }
 export interface QuestGrowthDay { date: string; xp: number }
@@ -22,4 +29,13 @@ export interface QuestDashboard {
   completed: Record<QuestPeriod, number>
   semester: { code: string; label: string; startDate: string; endDate: string } | null
   attendanceRewardEligible: boolean
+  /** 학기 0~12.5 · 학년 0~25(학년마다 0부터) · 누적 최대 100 LV — 서버 원장에서 파생 */
+  growth: {
+    semester: GrowthLevel & { code: string; label: string; tier: SemesterTier | null; nextTier: SemesterTier | null } | null
+    grade: GrowthLevel & { grade: number } | null
+    cumulative: GrowthLevel
+    tiers: SemesterTier[]
+  }
 }
+export interface GrowthLevel { xp: number; level: number; maxLevel: number; maxXp: number }
+export interface SemesterTier { code: string; label: string; minXp: number }

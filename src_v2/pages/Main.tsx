@@ -1,4 +1,5 @@
 import { useQuestDashboard } from '../../shared/useQuestDashboard'
+import { attendanceXpNote } from '../../shared/quests'
 import { Link } from 'react-router-dom'
 import CareerPopup from '../components/CareerPopup'
 import CareerJourneyCard from '../components/CareerJourneyCard'
@@ -120,7 +121,7 @@ export default function Main() {
                 aria-pressed={attended}
                 disabled={loading || saving || attended || !quests}
                 onClick={() => void checkIn()}
-              >{saving ? '기록 중…' : attended ? '오늘 출석 완료' : '출석하기'}</button>{quests && <p>{quests.attendanceRewardEligible ? `출석 보상 ${quests.rules.DAILY.xp} XP` : '학기 중 평일에 XP가 지급됩니다.'}</p>}{error && <p role="alert">{error} <button onClick={reload}>다시 조회</button></p>}{message && <p role="status">{message}</p>}</div></div>
+              >{saving ? '기록 중…' : attended ? '오늘 출석 완료' : '출석하기'}</button>{quests && <p>{attendanceXpNote(quests)}</p>}{error && <p role="alert">{error} <button onClick={reload}>다시 조회</button></p>}{message && <p role="status">{message}</p>}</div></div>
             </div>
           </section>
 

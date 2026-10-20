@@ -69,21 +69,60 @@ def test_weekend_and_vacation_no_xp(client, learner, monkeypatch):
     assert state(client,learner)['totalXp'] == 0
 
 
-def test_cap_and_future_program_service(client, learner):
-    def award(key, amount):
+def test_cap_and_future_program_service(client, learner, monkeypatch):
+    """학기 12.5 LV · 학년 25 LV(학년마다 0부터) · 누적 100 LV 상한 (2026-10-20 사용자 확정)."""
+    spring, fall = date(2031,3,3), date(2031,9,1)
+    def award(key, amount, day=DAY):
         with pool.connection() as conn:
             conn.execute('SET LOCAL ROLE dc_app')
-            return quests.grant_xp(conn,learner,source_type='PROGRAM',source_key=key,title='Test completion',amount=amount,day=DAY)
-    assert award('before-cap',24980)['grantedXp'] == 24980
-    assert award('at-cap',200)['grantedXp'] == 20
-    assert award('over-cap',200)['grantedXp'] == 0
-    s = state(client,learner)
-    assert (s['level'],s['totalXp'],s['xpInLevel'],s['atCap']) == (25,25000,1000,True)
+            return quests.grant_xp(conn,learner,source_type='PROGRAM',source_key=key,title='Test completion',amount=amount,day=day)
     with pool.connection() as conn:
-        conn.execute('UPDATE dc.student SET grade=2 WHERE intg_uid=%s',(learner,))
-    assert award('over-cap',200) == {'grantedXp':0,'duplicate':True}
-    assert award('new-completion',200)['grantedXp'] == 200
-    assert state(client,learner)['totalXp'] == 25200
+        for suffix, start, end in (('_B','2031-03-01','2031-06-30'),('_C','2031-09-01','2031-12-31')):
+            conn.execute("INSERT INTO dc.code_item(group_code,code,label,payload) VALUES('QUEST_SEMESTER',%s,'Test semester',%s)",
+                         (learner+suffix,Jsonb({'startDate':start,'endDate':end})))
+    try:
+        # 학기 상한 12,500 XP
+        assert award('sem-1',12000)['grantedXp'] == 12000
+        assert award('sem-1-cap',1000)['grantedXp'] == 500
+        assert award('sem-1-over',200)['grantedXp'] == 0
+        g = state(client,learner)['growth']
+        assert (g['semester']['xp'],g['semester']['level'],g['semester']['tier']['code'],g['semester']['nextTier']) == (12500,12.5,'BEST',None)
+        assert (g['grade']['level'],g['grade']['maxLevel'],g['cumulative']['level']) == (12,25,12)
+        # 학기 밖(방학)은 지급 0
+        assert award('vacation',200,date(2031,1,10))['grantedXp'] == 0
+        # 다음 학기에 학년 상한 25,000 XP
+        assert award('sem-2',12500,spring)['grantedXp'] == 12500
+        assert award('sem-2-over',100,spring)['grantedXp'] == 0
+        monkeypatch.setattr(quests,'today_kst',lambda: spring)
+        s = state(client,learner)
+        assert (s['level'],s['levelCap'],s['xpInLevel'],s['atCap'],s['totalXp']) == (25,25,1000,True,25000)
+        # 진급하면 학년 레벨은 0부터 다시 쌓이고, 누적은 이어진다
+        with pool.connection() as conn:
+            conn.execute('UPDATE dc.student SET grade=2 WHERE intg_uid=%s',(learner,))
+        assert award('sem-1-over',200) == {'grantedXp':0,'duplicate':True}
+        assert award('grade-2',200,fall)['grantedXp'] == 200
+        monkeypatch.setattr(quests,'today_kst',lambda: fall)
+        g = state(client,learner)['growth']
+        assert (g['semester']['xp'],g['grade']['grade'],g['grade']['xp'],g['cumulative']['xp']) == (200,2,200,25200)
+        assert g['semester']['tier'] is None and g['semester']['nextTier']['code'] == 'BASIC'
+        # 누적 상한 100 LV
+        with pool.connection() as conn:
+            conn.execute('UPDATE dc.quest_growth_account SET total_xp=99900 WHERE student_uid=%s',(learner,))
+        assert award('total-cap',500,fall)['grantedXp'] == 100
+    finally:
+        with pool.connection() as conn:
+            conn.execute("DELETE FROM dc.code_item WHERE group_code='QUEST_SEMESTER' AND code IN (%s,%s)",(learner+'_B',learner+'_C'))
+
+
+def test_new_upper_grade_student_starts_at_zero(client, learner):
+    with pool.connection() as conn:
+        conn.execute('UPDATE dc.student SET grade=3 WHERE intg_uid=%s',(learner,))
+    s = state(client,learner)
+    assert (s['level'],s['levelCap'],s['growth']['grade']['level'],s['growth']['cumulative']['level']) == (0,25,0,0)
+    assert client.post('/api/v1/quests/attendance',headers=headers(learner)).json()['grantedXp'] == 50
+    with pool.connection() as conn:
+        row = conn.execute('SELECT grade,semester_code,level_cap FROM dc.growth_xp_event WHERE student_uid=%s',(learner,)).fetchone()
+    assert (row['grade'],row['semester_code'],row['level_cap']) == (3,learner,25)
 
 
 def test_concurrent_attendance(client, learner):

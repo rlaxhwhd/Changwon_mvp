@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../../../shared/api'
 import { missionError } from '../../../shared/missions'
-import { questLevelStat, type QuestDashboard, type QuestPeriod } from '../../../shared/quests'
+import { attendanceXpNote, questLevelStat, type QuestDashboard, type QuestPeriod } from '../../../shared/quests'
 import Modal from '../../components/Modal'
 import StudentStatCards, { type StudentStat } from '../../components/StudentStatCards'
 import QuestGrowthChart from '../../components/QuestGrowthChart'
@@ -73,9 +73,8 @@ export default function QuestBoard() {
     } catch (reason) { setError(missionError(reason)) }
     finally { setSaving(false) }
   }
-  const attendanceNote = data?.attendanceRewardEligible
-    ? `오늘 출석하면 ${data.rules.DAILY.xp.toLocaleString()} XP · 학년 상한까지 적립`
-    : '학기 중 평일에 XP가 지급됩니다. 오늘은 출석 기록만 남겨요.'
+  const attendanceNote = data ? attendanceXpNote(data) : ''
+  const growth = data?.growth
   return <div className="qb-page" aria-busy={loading}>
     <header className="qb-toolbar"><div><small className="qb-welcome-meta">{student.major}{student.grade ? ` ${student.grade}학년` : ''} · {year}.{String(month).padStart(2, '0')}.{String(day).padStart(2, '0')}</small><h2><span>{studentDisplayName(student.name, student.id)}</span>님의 성장 퀘스트<br />오늘의 작은 실천을 시작해 볼까요?</h2></div><button className="qb-button" onClick={() => setGuide(true)}><i className="fa-regular fa-circle-question" aria-hidden="true" /> 퀘스트 가이드</button></header>
     {error && <div className="qb-error" role="alert">{error}<button className="qb-text-button" onClick={() => setRevision(value => value + 1)}>다시 불러오기</button></div>}
@@ -95,7 +94,15 @@ export default function QuestBoard() {
           </ul> : data?.assigned.some(q => q.period === period) ? <ul className="qb-quest-list">{data.assigned.filter(q => q.period === period).map(q => <li key={`${q.assignment_id}-${q.quest_id}`} className={q.done ? 'is-done' : ''}><span className="qb-quest-symbol" aria-hidden="true"><i className={`fa-solid ${q.done ? 'fa-check' : 'fa-flag'}`} /></span><div className="qb-quest-copy"><span className="qb-subtle">{q.done ? '완료' : '진행 중'} · {q.xp.toLocaleString()} XP</span><h3>{q.title}</h3><p>{q.description}</p><p>{Math.min(q.current, q.target_count)} / {q.target_count} 달성{q.done ? ` · 지급 ${q.granted_xp ?? 0} XP` : ''}</p></div></li>)}</ul> : <div className="qb-empty"><i className="fa-regular fa-clipboard" aria-hidden="true" /><h3>배정된 {periods.find(item => item.id === period)?.label}가 없습니다</h3><p>관리자가 해당 기간과 학생 대상에 맞춰 게시하면 이곳에 표시됩니다.</p></div>}
 
         </div>
-        {data && <div className="qb-growth-summary"><span>지금까지 쌓은 경험치</span><strong>{data.totalXp.toLocaleString()} XP</strong><p>1,000 XP마다 레벨이 올라갑니다. 학년별 상한을 초과한 XP는 이월되지 않습니다.</p></div>}
+        {growth && <div className="qb-growth-summary">
+          <dl className="qb-growth-levels">
+            <div><dt>현재 성장</dt><dd>{growth.grade ? <>{growth.grade.grade}학년 <strong>LV {growth.grade.level}</strong> / {growth.grade.maxLevel}</> : '학년 정보 확인 필요'}</dd></div>
+            <div><dt>이번 학기</dt><dd>{growth.semester ? <>{growth.semester.label} <strong>LV {growth.semester.level}</strong> / {growth.semester.maxLevel}</> : '학기 일정 미등록'}</dd></div>
+            <div><dt>누적 성장</dt><dd><strong>{growth.cumulative.level}</strong> / {growth.cumulative.maxLevel}LV</dd></div>
+          </dl>
+          {growth.semester && <p className="qb-growth-tier">{growth.semester.tier ? `학기 보상 단계 · ${growth.semester.tier.label}` : '아직 학기 보상 단계에 도달하지 않았어요'}{growth.semester.nextTier ? ` — 다음 「${growth.semester.nextTier.label}」까지 ${(growth.semester.nextTier.minXp - growth.semester.xp).toLocaleString()} XP` : ''}</p>}
+          <p>1,000 XP마다 레벨이 올라갑니다. 학기 레벨은 0~12.5, 학년 레벨은 0~25이며 학년이 바뀌면 0부터 다시 시작합니다. 장학금·주요 보상은 이번 학기 레벨로 판정하고, 누적 성장은 대학생활 전체 성장 기록입니다.</p>
+        </div>}
       </section>
       <aside className="qb-side">
         <section data-slot="card" className="qb-panel qb-attendance" aria-labelledby="qb-attendance-title"><div className="qb-panel-heading" data-slot="card-header"><div><h2 id="qb-attendance-title" data-slot="card-title">출석체크</h2><p data-slot="card-description">매일의 시작을 달력에 남겨보세요.</p></div><span className="qb-subtle">한국 시간 기준</span></div>
@@ -114,6 +121,6 @@ export default function QuestBoard() {
     </div>
     <footer className="qb-bottom"><span>오늘의 경험을 포트폴리오의 재료로 남겨보세요.</span><Link to="/growth">나의 성장 기록으로 <i className="fa-solid fa-arrow-right" aria-hidden="true" /></Link></footer>
     <p className="qb-feedback" role="status">{message}</p>
-    <Modal open={guide} onClose={() => setGuide(false)} title="퀘스트 가이드"><div className="qb-guide-content"><ol><li><h3>기간별 퀘스트</h3><p>일일 퀘스트는 출석체크와 TOEIC 영단어 두 개입니다. 월간·학기 퀘스트는 관리자가 학생 대상별로 편성하며 실제 활동 기록으로 완료를 확인합니다.</p></li><li><h3>매일 출석하기</h3><p>한국 시간 기준 하루 한 번 출석할 수 있습니다. 하루를 빠뜨리면 연속 기록이 끊깁니다. 오늘 체크 전에는 어제까지의 기록을 유지합니다. 학기 중 평일에만 출석 XP가 지급됩니다.</p></li><li><h3>경험치와 레벨</h3><p>LV 0부터 시작해 1,000 XP마다 레벨이 올라갑니다. 학년별 누적 상한은 1학년 LV 25, 2학년 LV 50, 3학년 LV 75, 4학년 LV 100입니다. 상한 초과분은 적립하지 않습니다. XP 보상이 변경돼도 이미 받은 XP는 유지됩니다.</p></li><li><h3>나의 성장 확인</h3><p>그래프는 실제 지급된 일별 XP를 보여줍니다. 일일 퀘스트는 학기 중 평일에 XP가 지급됩니다. 월간·학기 퀘스트는 메인이나 보드에 접속할 때 활동 기록을 확인해 보상을 반영합니다. 상한 초과분은 적립하지 않습니다.</p></li></ol><button className="qb-button qb-button--primary" onClick={() => setGuide(false)}>확인했어요</button></div></Modal>
+    <Modal open={guide} onClose={() => setGuide(false)} title="퀘스트 가이드"><div className="qb-guide-content"><ol><li><h3>기간별 퀘스트</h3><p>일일 퀘스트는 출석체크와 TOEIC 영단어 두 개입니다. 월간·학기 퀘스트는 관리자가 학생 대상별로 편성하며 실제 활동 기록으로 완료를 확인합니다.</p></li><li><h3>매일 출석하기</h3><p>한국 시간 기준 하루 한 번 출석할 수 있습니다. 하루를 빠뜨리면 연속 기록이 끊깁니다. 오늘 체크 전에는 어제까지의 기록을 유지합니다. 학기 중 평일에만 출석 XP가 지급됩니다.</p></li><li><h3>경험치와 레벨</h3><p>1,000 XP마다 레벨이 올라갑니다. 학기 레벨은 0~12.5(12,500 XP), 학년 레벨은 0~25(25,000 XP)이며 매 학년 0부터 다시 시작합니다. 처음 가입한 고학년도 그 학년 LV 0에서 시작합니다. 누적 성장 레벨은 학년별 성장을 합산해 최대 100 LV까지 기록합니다. 상한 초과분은 적립하지 않고, XP 보상이 변경돼도 이미 받은 XP는 유지됩니다.</p></li><li><h3>학기 성장 보상</h3><p>장학금과 주요 보상은 이번 학기 성장 레벨로 판정합니다. {(growth?.tiers ?? []).map(t => `${t.minXp / 1000}LV ${t.label}`).join(' · ')}</p></li><li><h3>나의 성장 확인</h3><p>그래프는 실제 지급된 일별 XP를 보여줍니다. 일일 퀘스트는 학기 중 평일에 XP가 지급됩니다. 월간·학기 퀘스트는 메인이나 보드에 접속할 때 활동 기록을 확인해 보상을 반영합니다. 상한 초과분은 적립하지 않습니다.</p></li></ol><button className="qb-button qb-button--primary" onClick={() => setGuide(false)}>확인했어요</button></div></Modal>
   </div>
 }
