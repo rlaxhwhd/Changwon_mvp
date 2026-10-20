@@ -50,6 +50,7 @@
 .qb-quest-symbol { display: grid; place-items: center; width: 42px; height: 42px; flex-shrink: 0; background: var(--blue-soft); color: var(--blue); border-radius: 10px; }
 .qb-quest-list .is-done .qb-quest-symbol { background: var(--teal-soft); color: var(--teal-ink); }
 .qb-quest-copy { flex: 1; min-width: 0; }
+.qb-quest-start { align-self: center; flex-shrink: 0; min-height: 36px; padding: 8px 14px; }
 .qb-quest-copy h3 { margin-top: 6px; font-size: 14px; font-weight: 700; line-height: 1.5; }
 .qb-quest-copy p { margin-top: 5px; color: var(--qb-sub); font-size: 13px; line-height: 1.7; }
 .qb-row-actions { display: flex; justify-content: space-between; flex-wrap: wrap; align-items: center; gap: 14px; margin-top: 16px; font-size: 12px; }

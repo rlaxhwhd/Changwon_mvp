@@ -14,6 +14,15 @@ import './QuestBoard.css'
 const periods: { id: QuestPeriod; label: string }[] = [
   { id: 'DAILY', label: '일일 퀘스트' }, { id: 'MONTHLY', label: '월간 퀘스트' }, { id: 'SEMESTER', label: '학기 퀘스트' },
 ]
+// 퀘스트 활동(서버 quest_management.ACTIVITIES 코드) → 그 활동을 하러 가는 학생 화면. 완료 판정은 서버 집계가 한다.
+const activityPath: Record<string, string> = {
+  ATTENDANCE: '/growth/quest', DIAGNOSIS: '/diagnosis/employment',
+  COUNSEL: '/counsel/career', COUNSEL_CAREER: '/counsel/career', COUNSEL_PROF: '/counsel/professor', GROUP_COUNSEL: '/counsel/career',
+  ROADMAP_ITEM: '/roadmap/status', PROGRAM: '/growth/program', CERTIFICATE: '/growth',
+  GROWTH_RECORD: '/growth', GROWTH_JOURNAL: '/growth/journal', GROWTH_PROJECT: '/growth',
+  MISSION_TOEIC: '/growth/mission', MISSION_NCS_GSAT: '/growth/mission',
+  RESUME_WRITE: '/jobs/home/resume', AI_RESUME: '/jobs/home', JOB_APPLY: '/jobs',
+}
 const dayKey = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date())
 
 export default function QuestBoard() {
@@ -91,7 +100,7 @@ export default function QuestBoard() {
           {period === 'DAILY' ? <ul className="qb-quest-list">
             <li className={attended ? 'is-done' : ''}><span className="qb-quest-symbol" aria-hidden="true"><i className={`fa-solid ${attended ? 'fa-check' : 'fa-calendar-check'}`} /></span><div className="qb-quest-copy"><span className="qb-subtle">일일 · 1 / 2</span><h3>오늘의 출석 남기기</h3><p>{attendanceNote}</p><div className="qb-row-actions"><button className="qb-text-button" disabled={busy || attended || !data} onClick={checkIn}>{saving ? '기록 중…' : attended ? '오늘 출석 완료' : '출석체크'}</button></div></div></li>
             <li className={data?.toeic.done ? 'is-done' : ''}><span className="qb-quest-symbol" aria-hidden="true"><i className={`fa-solid ${data?.toeic.done ? 'fa-check' : 'fa-book'}`} /></span><div className="qb-quest-copy"><span className="qb-subtle">일일 · 2 / 2</span><h3>TOEIC 영단어 맞추기</h3><p>{data?.toeic.done ? '오늘의 영단어 퀘스트를 완료했습니다.' : data?.toeic.threshold ? `${data.toeic.threshold}개 이상 정답이면 완료 · 오늘 최고 ${data.toeic.correct}개 정답` : '오늘의 TOEIC 미션 게시를 기다리고 있습니다.'}</p><div className="qb-row-actions"><Link className="qb-text-button" to="/growth/mission">영단어 학습하기</Link></div></div></li>
-          </ul> : data?.assigned.some(q => q.period === period) ? <ul className="qb-quest-list">{data.assigned.filter(q => q.period === period).map(q => <li key={`${q.assignment_id}-${q.quest_id}`} className={q.done ? 'is-done' : ''}><span className="qb-quest-symbol" aria-hidden="true"><i className={`fa-solid ${q.done ? 'fa-check' : 'fa-flag'}`} /></span><div className="qb-quest-copy"><span className="qb-subtle">{q.done ? '완료' : '진행 중'} · {q.xp.toLocaleString()} XP</span><h3>{q.title}</h3><p>{q.description}</p><p>{Math.min(q.current, q.target_count)} / {q.target_count} 달성{q.done ? ` · 지급 ${q.granted_xp ?? 0} XP` : ''}</p></div></li>)}</ul> : <div className="qb-empty"><i className="fa-regular fa-clipboard" aria-hidden="true" /><h3>배정된 {periods.find(item => item.id === period)?.label}가 없습니다</h3><p>관리자가 해당 기간과 학생 대상에 맞춰 게시하면 이곳에 표시됩니다.</p></div>}
+          </ul> : data?.assigned.some(q => q.period === period) ? <ul className="qb-quest-list">{data.assigned.filter(q => q.period === period).map(q => <li key={`${q.assignment_id}-${q.quest_id}`} className={q.done ? 'is-done' : ''}><span className="qb-quest-symbol" aria-hidden="true"><i className={`fa-solid ${q.done ? 'fa-check' : 'fa-flag'}`} /></span><div className="qb-quest-copy"><span className="qb-subtle">{q.done ? '완료' : '진행 중'} · {q.xp.toLocaleString()} XP</span><h3>{q.title}</h3><p>{q.description}</p><p>{Math.min(q.current, q.target_count)} / {q.target_count} 달성{q.done ? ` · 지급 ${q.granted_xp ?? 0} XP` : ''}</p></div>{!q.done && activityPath[q.activity] && <Link className="qb-button qb-quest-start" to={activityPath[q.activity]}>시작하기</Link>}</li>)}</ul> : <div className="qb-empty"><i className="fa-regular fa-clipboard" aria-hidden="true" /><h3>배정된 {periods.find(item => item.id === period)?.label}가 없습니다</h3><p>관리자가 해당 기간과 학생 대상에 맞춰 게시하면 이곳에 표시됩니다.</p></div>}
 
         </div>
         {growth && <div className="qb-growth-summary">
