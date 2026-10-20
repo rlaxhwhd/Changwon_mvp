@@ -11,7 +11,7 @@ import { addExcludedSlot, getExcludedHours, removeExcludedSlot } from '../data/e
 import { WEEKDAY_LABEL, WEEKDAY_ORDER, type WeekdayKey } from '../data/schema/availability'
 import { getActiveUser } from '../data/staff'
 
-export default function ProfessorSchedule() {
+export default function ProfessorSchedule({ embedded = false }: { embedded?: boolean }) {
   const user = getActiveUser()
   const slots = getExcludedHours(user.id)
   const [weekday, setWeekday] = useState<WeekdayKey>(1)
@@ -30,11 +30,11 @@ export default function ProfessorSchedule() {
   const add = () => { if (valid) void run(() => addExcludedSlot(user.id, weekday, start, end)) }
 
   return (
-    <div className="admin-page">
+    <div className={embedded ? '' : 'admin-page'}>
       {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
       <header className="admin-page-head">
         <div>
-          <h1 className="admin-page-title">상담 제한일정</h1>
+          <h2 className="admin-page-title">상담 제한일정</h2>
           <p className="admin-page-desc">
             {user.name} 교수님은 기본적으로 모든 시간대에 상담이 가능합니다. 불가 시간대만 등록하세요.
           </p>

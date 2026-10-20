@@ -193,18 +193,11 @@ const ALL_SECTIONS: NavSection[] = [
     basePaths: ['/professor/counsel'],
     icon: LuHeadset,
     children: [
-      { label: '신청 접수', path: '/professor/counsel/requests', icon: LuInbox },
-      { label: '상담 기록', path: '/professor/counsel/records', icon: LuClipboardCheck },
-    ],
-  },
-  {
-    id: 'prof-setup',
-    label: '상담 설정',
-    basePaths: ['/professor/schedule', '/professor/profile'],
-    icon: LuSettings,
-    children: [
-      { label: '상담 제한일정', path: '/professor/schedule', icon: LuClock },
-      { label: '상담 노출 설정', path: '/professor/profile', icon: LuIdCard },
+      { label: '신청접수', path: '/professor/counsel/requests', icon: LuInbox },
+      { label: '오프라인 상담현황', path: '/professor/counsel/offline', icon: LuClipboardCheck },
+      { label: '온라인 상담현황', path: '/professor/counsel/online', icon: LuGlobe },
+      { label: '상담실적', path: '/professor/counsel/stats', icon: LuChartNoAxesColumn },
+      { label: '상담 설정', path: '/professor/counsel/settings', icon: LuSettings },
     ],
   },
 

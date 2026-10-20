@@ -9,7 +9,7 @@ import { useState } from 'react'
 import { getProfessorCounselProfile, updateProfessorCounselProfile } from '../data/professorProfiles'
 import { getActiveUser } from '../data/staff'
 
-export default function ProfessorProfile() {
+export default function ProfessorProfile({ embedded = false }: { embedded?: boolean }) {
   const user = getActiveUser()
   const profile = getProfessorCounselProfile(user.id)
   const [accept, setAccept] = useState(profile.accept)
@@ -20,10 +20,10 @@ export default function ProfessorProfile() {
   const dirty = accept !== profile.accept || officeHours !== profile.officeHours || intro !== profile.intro
 
   return (
-    <div className="admin-page">
+    <div className={embedded ? '' : 'admin-page'}>
       <header className="admin-page-head">
         <div>
-          <h1 className="admin-page-title">상담 노출 설정</h1>
+          <h2 className="admin-page-title">상담 노출 설정</h2>
           <p className="admin-page-desc">{user.name} 교수님의 학생 상담 신청 화면 노출을 설정합니다.</p>
         </div>
       </header>

@@ -41,6 +41,7 @@ CONTENT_TYPES = {
 }
 ALLOWED['PROGRAM_ATTACHMENT'] = ALLOWED['ATTACHMENT']
 ALLOWED['PROGRAM_APPLICATION_ATTACHMENT'] = ALLOWED['ATTACHMENT']
+ALLOWED['COUNSEL_ATTACHMENT'] = ALLOWED['ATTACHMENT']
 
 
 def root() -> Path:
@@ -107,7 +108,8 @@ def store(conn, user, slot: str, name: str, data: bytes):
     file_id = uuid4().hex
     owner_kind = {'LOGO': 'JOB_POSTING', 'ATTACHMENT': 'JOB_POSTING',
                   'RESUME': 'JOB_APPLICATION_ATTEMPT', 'PORTFOLIO_ATTACHMENT': 'GROWTH_ENTRY',
-                  'PROGRAM_ATTACHMENT': 'PROGRAM', 'PROGRAM_APPLICATION_ATTACHMENT': 'PROGRAM_APPLICATION'}[slot]
+                  'PROGRAM_ATTACHMENT': 'PROGRAM', 'PROGRAM_APPLICATION_ATTACHMENT': 'PROGRAM_APPLICATION',
+                  'COUNSEL_ATTACHMENT': 'COUNSEL_REQUEST'}[slot]
     path = location(file_id)
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(data)

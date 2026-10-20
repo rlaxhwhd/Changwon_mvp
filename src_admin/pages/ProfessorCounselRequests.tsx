@@ -266,7 +266,7 @@ export default function ProfessorCounselRequests() {
                       <button
                         type="button"
                         className="admin-btn admin-btn-primary sm"
-                        onClick={() => navigate(`/professor/counsel/records?requestId=${row.id}`)}
+                        onClick={() => navigate(`/professor/counsel/${row.method === '비대면' ? 'online' : 'offline'}/${row.id}`)}
                       >
                         기록 작성
                       </button>

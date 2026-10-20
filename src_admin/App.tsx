@@ -1,7 +1,7 @@
 import CounselHistory from './pages/CounselHistory'
 import MissionManagement from './pages/MissionManagement'
 import QuestManagement from './pages/QuestManagement'
-import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, Outlet, useSearchParams } from 'react-router-dom'
 import Layout from './components/Layout'
 import Chatbot from '../shared/Chatbot'
 import Login from './pages/Login'
@@ -54,8 +54,9 @@ import ProfessorAdvisees from './pages/ProfessorAdvisees'
 import ProfessorStudents from './pages/ProfessorStudents'
 import ProfessorCounselRequests from './pages/ProfessorCounselRequests'
 import ProfessorCounselRecords from './pages/ProfessorCounselRecords'
-import ProfessorSchedule from './pages/ProfessorSchedule'
-import ProfessorProfile from './pages/ProfessorProfile'
+import ProfessorCounselSettings from './pages/ProfessorCounselSettings'
+import ProfessorCounselDetail from './pages/ProfessorCounselDetail'
+import ProfessorCounselStats from './pages/ProfessorCounselStats'
 import NotReady from './pages/NotReady'
 import { getActiveUser } from './data/staff'
 import type { StaffRole } from './data/schema/staff'
@@ -92,6 +93,12 @@ function RoleSettings() {
   const role = getActiveUser().role
   if (role === 'career' || role === 'psych') return <SettingsProfile />
   return <NotReady title="내 프로필" />
+}
+
+function ProfessorRecordRedirect() {
+  const [params] = useSearchParams()
+  const requestId = params.get('requestId')
+  return <Navigate to={requestId ? `/professor/counsel/offline/${encodeURIComponent(requestId)}` : '/professor/counsel/offline'} replace />
 }
 
 const router = createBrowserRouter(
@@ -224,9 +231,15 @@ const router = createBrowserRouter(
                 { path: '/professor/advisees', element: <ProfessorAdvisees /> },
                 { path: '/professor/students', element: <ProfessorStudents /> },
                 { path: '/professor/counsel/requests', element: <ProfessorCounselRequests /> },
-                { path: '/professor/counsel/records', element: <ProfessorCounselRecords /> },
-                { path: '/professor/schedule', element: <ProfessorSchedule /> },
-                { path: '/professor/profile', element: <ProfessorProfile /> },
+                { path: '/professor/counsel/records', element: <ProfessorRecordRedirect /> },
+                { path: '/professor/counsel/offline', element: <ProfessorCounselRecords key="offline" channel="offline" /> },
+                { path: '/professor/counsel/online', element: <ProfessorCounselRecords key="online" channel="online" /> },
+                { path: '/professor/counsel/offline/:requestId', element: <ProfessorCounselDetail key="offline-detail" channel="offline" /> },
+                { path: '/professor/counsel/online/:requestId', element: <ProfessorCounselDetail key="online-detail" channel="online" /> },
+                { path: '/professor/counsel/stats', element: <ProfessorCounselStats /> },
+                { path: '/professor/counsel/settings', element: <ProfessorCounselSettings /> },
+                { path: '/professor/schedule', element: <Navigate to="/professor/counsel/settings" replace /> },
+                { path: '/professor/profile', element: <Navigate to="/professor/counsel/settings" replace /> },
               ],
             },
 

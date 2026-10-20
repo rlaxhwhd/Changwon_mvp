@@ -1,11 +1,11 @@
 from uuid import uuid4
 
-from datetime import date
+from datetime import date, time
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from fastapi.encoders import jsonable_encoder
 from psycopg.types.json import Jsonb
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 from typing import Literal
 
 from .auth import principal, require_staff
@@ -81,6 +81,20 @@ class ProfessorRecord(BaseModel):
     method:Literal['대면','비대면']
     date:date
     summary:str=Field(min_length=1,max_length=20000)
+    title:str=Field(default='상담보고서',min_length=1,max_length=200)
+    start:time | None=None
+    end:time | None=None
+    place:str=Field(default='',max_length=200)
+    fileIds:list[str]=Field(default_factory=list,max_length=10)
+    publicComment:str=Field(default='',max_length=20000)
+
+    @model_validator(mode='after')
+    def valid_times(self):
+        if (self.start is None)!=(self.end is None) or (self.start and self.start>=self.end):
+            raise ValueError('상담 시작·종료 시각을 올바르게 입력하세요.')
+        if not self.summary.strip() or not self.title.strip():
+            raise ValueError('제목과 상담내용을 입력하세요.')
+        return self
 
 
 class PsychRecord(BaseModel):
@@ -93,8 +107,10 @@ class PsychRecord(BaseModel):
     summary:str=Field(min_length=1,max_length=20000)
 
 
-def direct_record(conn,user,route,idempotency_key,student,*,type_code,legacy_type,topic,topic_code,method,day,summary,origin):
+def direct_record(conn,user,route,idempotency_key,student,*,type_code,legacy_type,topic,topic_code,method,day,summary,origin,
+                  title=None,start=None,end=None,place='',file_ids=(),public_comment=''):
     '''상담사 발의 기록 — 신청(DONE)+기록+REQUESTED/COMPLETE 이벤트를 한 트랜잭션에 만든다.'''
+    conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',(user['intg_uid']+route+idempotency_key,))
     saved=conn.execute('SELECT response FROM dc.idempotency WHERE actor_uid=%s AND route=%s AND key=%s',(user['intg_uid'],route,idempotency_key)).fetchone()
     if saved: return saved['response']
     snapshot={**student['roster'],**(student['detail'] or {})}
@@ -102,15 +118,19 @@ def direct_record(conn,user,route,idempotency_key,student,*,type_code,legacy_typ
     snapshot.update(name=student['name'],studentNo=student['student_no'],major=student['major_label'],grade=student['grade'])
     request_id=str(uuid4())
     conn.execute('''INSERT INTO dc.counsel_request(id,student_uid,counselor_uid,type_code,legacy_type,status_code,method_code,topic,topic_code,
-      requested_at,slot_date,intake,snapshot,source_payload,completed_at)
-      VALUES (%s,%s,%s,%s,%s,'DONE',%s,%s,%s,%s,%s,'[]',%s,%s,%s)''',
+      requested_at,slot_date,intake,snapshot,source_payload,completed_at,slot_start,slot_end,place)
+      VALUES (%s,%s,%s,%s,%s,'DONE',%s,%s,%s,%s,%s,'[]',%s,%s,%s,%s,%s,%s)''',
       (request_id,student['intg_uid'],user['intg_uid'],type_code,legacy_type,'ONLINE' if method=='비대면' else 'OFFLINE',topic,topic_code,
-       day,day,Jsonb(snapshot),Jsonb({'origin':origin,'method':method,'date':day.isoformat()}),day))
+       day,day,Jsonb(snapshot),Jsonb({'origin':origin,'method':method,'date':day.isoformat(),'reportTitle':title}),day,start,end,place))
     conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot)
-      VALUES (%s,%s,%s,%s,'','','DONE',now(),now(),%s)''',(str(uuid4()),request_id,user['intg_uid'],summary.strip(),Jsonb(snapshot)))
+      VALUES (%s,%s,%s,%s,%s,'','DONE',now(),now(),%s)''',(str(uuid4()),request_id,user['intg_uid'],summary.strip(),public_comment.strip(),Jsonb(snapshot)))
     for kind in ('REQUESTED','COMPLETE'):
         conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',
                      (request_id,user['intg_uid'],kind,Jsonb({'origin':origin})))
+    if file_ids:
+        from . import files
+        for file_id in set(file_ids):
+            files.claim(conn,user,file_id,'COUNSEL_REQUEST',request_id,'COUNSEL_ATTACHMENT')
     result=record_dto(conn.execute(SELECT+' WHERE c.request_id=%s',(request_id,)).fetchone())
     conn.execute('INSERT INTO dc.idempotency(actor_uid,route,key,request_hash,response) VALUES (%s,%s,%s,%s,%s)',
                  (user['intg_uid'],route,idempotency_key,request_id,Jsonb(jsonable_encoder(result))))
@@ -132,7 +152,9 @@ def professor_record(body:ProfessorRecord,idempotency_key:str=Header(alias='Idem
     if not category:
         raise HTTPException(422,'상담 분류 코드가 올바르지 않습니다.')
     return direct_record(conn,user,'counsel-records/professor',idempotency_key,student,type_code='PROF',legacy_type='교수',
-                         topic=category['label'],topic_code=category['code'],method=body.method,day=body.date,summary=body.summary,origin='PROF_RECORD')
+                         topic=category['label'],topic_code=category['code'],method=body.method,day=body.date,summary=body.summary,origin='PROF_RECORD',
+                         title=body.title.strip(),start=body.start,end=body.end,place=body.place.strip(),file_ids=body.fileIds,
+                         public_comment=body.summary if body.method=='비대면' else '')
 
 
 @router.post('/counsel-records/psych',status_code=201)

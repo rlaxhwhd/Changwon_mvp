@@ -42,6 +42,7 @@ from .counsel_operations import router as counsel_operations_router
 from .communications import router as communications_router
 from .staff import router as staff_router
 from .advisor_assignments import router as advisor_assignments_router
+from .professor_counsel_manage import router as professor_counsel_manage_router, file_router as professor_counsel_files_router
 from .db import pool
 from .settings import settings
 from .auth import validate_development_token
@@ -113,6 +114,8 @@ app.include_router(counsel_operations_router, prefix='/api/v1')
 app.include_router(communications_router, prefix='/api/v1')
 app.include_router(staff_router, prefix='/api/v1')
 app.include_router(advisor_assignments_router, prefix='/api/v1')
+app.include_router(professor_counsel_manage_router, prefix='/api/v1')
+app.include_router(professor_counsel_files_router, prefix='/api/v1')
 
 
 @app.get('/api/v1/health')
