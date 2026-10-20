@@ -508,6 +508,14 @@ API·웹을 `first-user-counsel-20261008`, RAG를 `20261001`로 되돌리고 추
 
 # Semester growth deployment (2026-10-20)
 
+## Quest start button follow-up deployment (2026-10-20, 6ae0af4)
+
+- Deployed web-only `dreamcatch-web:quest-start-20261020`: monthly/semester incomplete quests link to their activity page. API remains `quest-catalog-20261020`; DB remains migration133. API/DB container IDs were unchanged.
+- Local Docker web build reused matching successful TypeScript/Vite build layers. Source matches6ae0af4. Prior implementation session recorded local Chrome button verification; this deployment's test student was blocked by diagnosis prerequisites, so authenticated quest-button interaction was not repeated.
+- Server web/API/DB healthy, nginx valid, release parity application/migrations/schema MATCH. Local/server admin SHA256 `102f4289acd3230bc439e302041bcc7f061367e41c4747b9910de93e0338f93e`; v2 `7c9077d371b25d652c4c4124ee73425382af344133d56dc92aec1b49dc9ad9ec`.
+- Server Chrome entry and new App asset returned200, new button class/path present, no console errors/warnings on login redirect. No production quest or XP records were created for verification. Existing LLM tunnel remains unhealthy.
+- Compose backup and image archive: `/opt/dreamcatch/ai/quest-start-20261020/`. Archive SHA256 `05983db13b2c24e0e4f930d22ac1f4f40694005c67bb8f654986a1bab94ac4e0`. Rollback: restore web tag `quest-catalog-20261020` and recreate only web. Server remains running.
+
 - Deployed ad04b8e and accumulated web changes as dreamcatch-{api,web}:quest-growth-20261020. Server already had migrations128/129; verified all129 checksums and applied only130.
 - Local Docker build/backup/migration/start passed. Isolated related regression:41 passed,2 previously documented test_roadmap request failures reproduced;475 deselected,3 warnings.
 - Server-internal backup restored into dc_deploy_quest_growth_20261020_test before migration rehearsal. release_parity:66 application files,130 migrations,schema MATCH. Of148 table hashes, only code_group/code_item/metadata_revision/schema_migration changed. Business data,including2 programs,preserved.
