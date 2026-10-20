@@ -11,6 +11,12 @@ type Tab = 'POOL' | 'DAILY' | 'MONTHLY' | 'SEMESTER'
 const today = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date())
 const toggle = <T,>(items: T[], value: T) => items.includes(value) ? items.filter(x => x !== value) : [...items, value]
 
+/** 풀·편성 목록의 완료 조건 문구 — 「상담 · 교수 상담 완료 2회」 */
+function activityText(options: QuestOptions, code: string, target: number) {
+  const a = options.activities.find(x => x.code === code)
+  return a ? `${a.groupLabel} · ${a.label} ${target}${a.unit}` : `${code} ${target}회`
+}
+
 function DefinitionEditor({ item, options, onClose, onSaved }: {
   item: QuestDefinition | null; options: QuestOptions; onClose: () => void; onSaved: () => void
 }) {
@@ -31,12 +37,16 @@ function DefinitionEditor({ item, options, onClose, onSaved }: {
     } catch (reason) { setError(missionError(reason)) } finally { setBusy(false) }
   }
   const source = options.activities.find(x => x.code === activity)
+  // 상위 그룹 → 세부 판정 기준. 그룹에 기준이 하나뿐이면 세부 선택은 숨긴다.
+  const groups = [...new Map(options.activities.map(a => [a.group, a.groupLabel])).entries()]
+  const details = options.activities.filter(a => a.group === source?.group)
   return <section className="mm-editor"><div className="mm-heading"><h2>{item ? '퀘스트 수정' : '새 퀘스트 등록'}</h2><button className="admin-btn admin-btn-ghost" disabled={busy} onClick={onClose}>닫기</button></div>
     <form onSubmit={save}><fieldset disabled={busy} className="mm-fields">
       <label>퀘스트 제목<input autoFocus required maxLength={200} value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 비교과 프로그램 3회 수료하기" /></label>
       <label>학생에게 보여줄 설명<textarea rows={3} maxLength={3000} value={description} onChange={e => setDescription(e.target.value)} /></label>
-      <div className="qm-form-row"><label>자동 판정 활동<select value={activity} onChange={e => setActivity(e.target.value)}>{options.activities.map(a => <option key={a.code} value={a.code}>{a.label}</option>)}</select></label>
-        <label>목표 횟수<input required type="number" min={1} max={1000} step={1} value={target || ''} onChange={e => setTarget(Number(e.target.value))} /></label>
+      <div className="qm-form-row qm-activity-row"><label>활동 그룹<select value={source?.group ?? ''} onChange={e => setActivity(options.activities.find(a => a.group === e.target.value)?.code ?? activity)}>{groups.map(([code, label]) => <option key={code} value={code}>{label}</option>)}</select></label>
+        {details.length > 1 && <label>판정 기준<select value={activity} onChange={e => setActivity(e.target.value)}>{details.map(a => <option key={a.code} value={a.code}>{a.label}</option>)}</select></label>}
+        <label>{`목표 횟수 (${source?.unit ?? '회'})`}<input required type="number" min={1} max={1000} step={1} value={target || ''} onChange={e => setTarget(Number(e.target.value))} /></label>
         <label>완료 보상 XP<input required type="number" min={0} max={100000} step={1} value={xp} onChange={e => setXp(Number(e.target.value))} /></label></div>
       <p className="qm-rule">{source?.note} 선택한 운영 기간에 {target || '—'}{source?.unit} 달성하면 완료됩니다.</p>
       <label className="mm-check"><input type="checkbox" checked={active} onChange={e => setActive(e.target.checked)} />편성에서 사용할 수 있도록 활성화</label>
@@ -68,7 +78,7 @@ function Pool({ options, selection, onToggle, onEdit, revision }: {
   return <section className="mm-panel"><div className="mm-heading"><div><span className="mm-kicker">재사용 가능한 활동</span><h2>퀘스트 풀 <small>{data?.totalCount ?? 0}개</small></h2></div>{onEdit && <button className="admin-btn admin-btn-primary" onClick={() => onEdit(null)}>퀘스트 등록</button>}</div>
     <form className="mm-search" onSubmit={e => { e.preventDefault(); setQ(search); setPage(1) }}><input aria-label="퀘스트 검색" placeholder="퀘스트 제목 검색" maxLength={100} value={search} onChange={e => setSearch(e.target.value)} /><button className="admin-btn admin-btn-ghost">검색</button></form>
     {error ? <p className="mm-error" role="alert">{error}<button onClick={() => setRetry(x => x + 1)}>다시 조회</button></p> : loading ? <p className="mm-empty" role="status">퀘스트를 불러오는 중입니다.</p> : <>
-      <div className="mm-table-scroll"><table className="mm-table"><thead><tr><th scope="col">퀘스트 / 완료 조건</th><th scope="col">XP</th><th scope="col">{onToggle ? '선택' : '관리'}</th></tr></thead><tbody>{data?.items.map(item => <tr key={item.id}><td><strong>{item.title}</strong><span>{options.activities.find(a => a.code === item.activity)?.label} {item.target_count}회</span>{!item.is_active && <small>사용 중지</small>}</td><td className="qm-nowrap">{item.xp.toLocaleString()}</td><td>{onToggle ? <input type="checkbox" aria-label={`${item.title} 편성 선택`} checked={selection?.some(x => x.id === item.id) ?? false} disabled={(selection?.length ?? 0) >= 30 && !selection?.some(x => x.id === item.id)} onChange={() => onToggle(item)} /> : <button className="admin-btn admin-btn-ghost" onClick={() => onEdit?.(item)}>수정</button>}</td></tr>)}</tbody></table></div>
+      <div className="mm-table-scroll"><table className="mm-table"><thead><tr><th scope="col">퀘스트 / 완료 조건</th><th scope="col">XP</th><th scope="col">{onToggle ? '선택' : '관리'}</th></tr></thead><tbody>{data?.items.map(item => <tr key={item.id}><td><strong>{item.title}</strong><span>{activityText(options, item.activity, item.target_count)}</span>{!item.is_active && <small>사용 중지</small>}</td><td className="qm-nowrap">{item.xp.toLocaleString()}</td><td>{onToggle ? <input type="checkbox" aria-label={`${item.title} 편성 선택`} checked={selection?.some(x => x.id === item.id) ?? false} disabled={(selection?.length ?? 0) >= 30 && !selection?.some(x => x.id === item.id)} onChange={() => onToggle(item)} /> : <button className="admin-btn admin-btn-ghost" onClick={() => onEdit?.(item)}>수정</button>}</td></tr>)}</tbody></table></div>
       {!data?.items.length && <div className="mm-empty">{q ? '검색 결과가 없습니다.' : '아직 등록된 퀘스트가 없습니다. 퀘스트 풀에서 활동과 완료 조건을 등록하세요.'}</div>}
       <div className="mm-pagination"><button disabled={page <= 1} onClick={() => setPage(p => p - 1)}>이전</button><PageNumbers page={page} pages={Math.ceil((data?.totalCount ?? 0) / 20)} onChange={setPage} /><button disabled={page * 20 >= (data?.totalCount ?? 0)} onClick={() => setPage(p => p + 1)}>다음</button></div>
     </>}
@@ -106,7 +116,7 @@ function AssignmentEditor({ period, periodKey, item, options, onClose, onSaved }
       {frozen && <p className="qm-rule">시작된 편성은 조건과 XP를 유지합니다. 게시 여부만 변경할 수 있습니다.</p>}
       <div className="qm-compose">{!frozen && <Pool options={options} selection={selected} onToggle={q => setSelected(previous => previous.some(x => x.id === q.id) ? previous.filter(x => x.id !== q.id) : [...previous, q])} revision={0} />}
         <section className="mm-panel"><div className="mm-heading"><div><span className="mm-kicker">학생에게 표시할 내용</span><h2>선택한 퀘스트 <small>{selected.length} / 30</small></h2></div><strong className="qm-total">{selected.reduce((sum, q) => sum + q.xp, 0).toLocaleString()} XP</strong></div>
-          <ol className="mm-selected">{selected.map((q, index) => <li key={q.id}><span className="mm-number">{index + 1}</span><div><strong>{q.title}</strong><p>{options.activities.find(a => a.code === q.activity)?.label} {q.target_count}회 · {q.xp.toLocaleString()} XP</p><p>{q.description}</p></div>{!frozen && <button className="admin-btn admin-btn-ghost" aria-label={`${q.title} 제외`} onClick={() => setSelected(selected.filter(x => x.id !== q.id))}>제외</button>}</li>)}</ol>
+          <ol className="mm-selected">{selected.map((q, index) => <li key={q.id}><span className="mm-number">{index + 1}</span><div><strong>{q.title}</strong><p>{activityText(options, q.activity, q.target_count)} · {q.xp.toLocaleString()} XP</p><p>{q.description}</p></div>{!frozen && <button className="admin-btn admin-btn-ghost" aria-label={`${q.title} 제외`} onClick={() => setSelected(selected.filter(x => x.id !== q.id))}>제외</button>}</li>)}</ol>
           {!selected.length && <p className="mm-empty">왼쪽 퀘스트 풀에서 활동을 선택하세요.</p>}
           <p className="mm-hint">선택한 월·학기의 활동 기록을 집계합니다. 완료 보상은 퀘스트마다 한 번 지급되며 학년별 XP 상한이 적용됩니다.</p>
         </section></div>

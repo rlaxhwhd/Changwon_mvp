@@ -11,15 +11,30 @@ from .db import connection
 
 router = APIRouter()
 Period = Literal['MONTHLY', 'SEMESTER']
-Activity = Literal['ATTENDANCE', 'PROGRAM', 'COUNSEL', 'CERTIFICATE', 'AI_RESUME', 'JOB_APPLY']
+# 퀘스트 풀의 판정 활동 — 상위 그룹 → 세부 판정 기준. 관리자는 고르기만 하고 횟수·XP를 입력한다.
+# 각 코드는 activity_counts 의 서버 기록 집계 하나와 1:1이다(2026-10-20 사용자 확정). 심리상담은 판정 대상이 아니다.
 ACTIVITIES = [
-    dict(code='ATTENDANCE', label='출석체크', unit='일', note='출석체크 버튼으로 저장된 날짜를 집계합니다.'),
-    dict(code='PROGRAM', label='비교과 프로그램 수료', unit='회', note='수료 상태이며 수료 처리 이력이 있는 프로그램을 집계합니다.'),
-    dict(code='COUNSEL', label='상담 완료', unit='회', note='완료 상태이며 완료 일시가 있는 상담을 집계합니다.'),
-    dict(code='CERTIFICATE', label='자격증 획득', unit='개', note='취득일이 있고 검증된 자격증만 집계합니다.'),
-    dict(code='AI_RESUME', label='AI 자기소개서 평가', unit='회', note='평가 결과가 저장된 AI 자기소개서 실행을 집계합니다.'),
-    dict(code='JOB_APPLY', label='채용공고 지원', unit='건', note='실제 제출된 공고를 집계합니다. 취소된 지원은 제외합니다.'),
+    dict(group='ATTENDANCE', groupLabel='출석', code='ATTENDANCE', label='출석체크', unit='일', note='출석체크 버튼으로 저장된 날짜를 집계합니다.'),
+    dict(group='DIAGNOSIS', groupLabel='진단', code='DIAGNOSIS', label='진단 검사 완료', unit='회', note='완료 상태이며 완료 일시가 있는 진단 응시를 집계합니다.'),
+    dict(group='COUNSEL', groupLabel='상담', code='COUNSEL', label='상담 완료 (진로·취업 + 교수)', unit='회', note='완료 상태이며 완료 일시가 있는 진로·취업 상담과 교수 상담을 집계합니다. 심리상담은 제외합니다.'),
+    dict(group='COUNSEL', groupLabel='상담', code='COUNSEL_CAREER', label='진로·취업 상담 완료', unit='회', note='완료 처리된 진로·취업 상담(일반·CARE 7+)을 집계합니다.'),
+    dict(group='COUNSEL', groupLabel='상담', code='COUNSEL_PROF', label='교수 상담 완료', unit='회', note='완료 처리된 교수 상담(교수 직접 기록 포함)을 집계합니다.'),
+    dict(group='COUNSEL', groupLabel='상담', code='GROUP_COUNSEL', label='집단상담 참여', unit='회', note='진행 완료된 집단상담 중 출석으로 체크된 회차를 상담일 기준으로 집계합니다.'),
+    dict(group='ROADMAP', groupLabel='로드맵', code='ROADMAP_ITEM', label='로드맵 칸 완료', unit='칸', note='완료 처리된 로드맵 칸을 완료 일시 기준으로 집계합니다.'),
+    dict(group='PROGRAM', groupLabel='비교과', code='PROGRAM', label='비교과 프로그램 수료', unit='회', note='수료 상태이며 수료 처리 이력이 있는 프로그램을 집계합니다.'),
+    dict(group='CERTIFICATE', groupLabel='자격증', code='CERTIFICATE', label='자격증 획득', unit='개', note='취득일이 있고 검증된 자격증만 집계합니다. 학생이 성장 기록에 직접 적은 자격증은 세지 않습니다.'),
+    dict(group='GROWTH', groupLabel='성장일지', code='GROWTH_RECORD', label='성장 기록 작성 (전체)', unit='건', note='나의 성장에 등록한 기록(경험일지·프로젝트·기술·자격증·어학·수상 등)을 등록 일시 기준으로 집계합니다. 삭제한 기록은 제외합니다.'),
+    dict(group='GROWTH', groupLabel='성장일지', code='GROWTH_JOURNAL', label='성장경험일지 작성', unit='건', note='성장경험일지 등록을 등록 일시 기준으로 집계합니다. 삭제한 기록은 제외합니다.'),
+    dict(group='GROWTH', groupLabel='성장일지', code='GROWTH_PROJECT', label='프로젝트 등록', unit='건', note='프로젝트 등록을 등록 일시 기준으로 집계합니다. 삭제한 기록은 제외합니다.'),
+    dict(group='MISSION', groupLabel='학습미션', code='MISSION_TOEIC', label='TOEIC 영단어 통과', unit='일', note='이수 기준 이상 맞힌 TOEIC 미션 제출을 하루 1회로 집계합니다.'),
+    dict(group='MISSION', groupLabel='학습미션', code='MISSION_NCS_GSAT', label='NCS·GSAT 주간 미션 제출', unit='주', note='제출한 NCS·GSAT 주간 미션을 주 1회로 집계합니다.'),
+    dict(group='RESUME', groupLabel='자소서', code='RESUME_WRITE', label='자기소개서 작성', unit='건', note='저장한 자기소개서를 작성 일시 기준으로 집계합니다. 삭제한 자기소개서는 제외합니다.'),
+    dict(group='RESUME', groupLabel='자소서', code='AI_RESUME', label='AI 자기소개서 평가', unit='회', note='평가 결과가 저장된 AI 자기소개서 실행을 집계합니다.'),
+    dict(group='JOB', groupLabel='채용지원', code='JOB_APPLY', label='채용공고 지원', unit='건', note='실제 제출된 공고를 집계합니다. 취소된 지원은 제외합니다.'),
 ]
+Activity = Literal['ATTENDANCE', 'DIAGNOSIS', 'COUNSEL', 'COUNSEL_CAREER', 'COUNSEL_PROF', 'GROUP_COUNSEL', 'ROADMAP_ITEM',
+                   'PROGRAM', 'CERTIFICATE', 'GROWTH_RECORD', 'GROWTH_JOURNAL', 'GROWTH_PROJECT',
+                   'MISSION_TOEIC', 'MISSION_NCS_GSAT', 'RESUME_WRITE', 'AI_RESUME', 'JOB_APPLY']
 
 
 class Definition(BaseModel):
@@ -239,16 +254,36 @@ def student_assignments(conn, uid, day):
 def activity_counts(conn, uid, start, end, activities=None):
     """One aggregate per activity, shared by all items in a period; no per-quest scans."""
     args = (uid, start, end + timedelta(days=1))
+    since = until = "(%s::date::timestamp AT TIME ZONE 'Asia/Seoul')"
+    counsel = ("SELECT count(*) n FROM dc.counsel_request WHERE student_uid=%s AND status_code='DONE' AND type_code {} "
+               "AND completed_at>=" + since + " AND completed_at<" + until)
+    growth = ("SELECT count(*) n FROM dc.growth_entry WHERE student_uid=%s AND deleted_at IS NULL {} "
+              "AND created_at>=" + since + " AND created_at<" + until)
+    mission = ("SELECT count(DISTINCT {}) n FROM dc.mission_attempt WHERE student_uid=%s AND kind='{}' AND submitted_at IS NOT NULL {} "
+               "AND submitted_at>=" + since + " AND submitted_at<" + until)
     queries = {
         'ATTENDANCE': 'SELECT count(*) n FROM dc.quest_attendance WHERE student_uid=%s AND attended_on>=%s AND attended_on<%s',
-        'COUNSEL': "SELECT count(*) n FROM dc.counsel_request WHERE student_uid=%s AND status_code='DONE' AND completed_at>=(%s::date::timestamp AT TIME ZONE 'Asia/Seoul') AND completed_at<(%s::date::timestamp AT TIME ZONE 'Asia/Seoul')",
-        'CERTIFICATE': 'SELECT count(*) n FROM dc.student_cert WHERE intg_uid=%s AND verified AND acquired_dt>=%s AND acquired_dt<%s',
-        'AI_RESUME': "SELECT count(*) n FROM dc.ai_run r WHERE student_uid=%s AND kind_code='RESUME_REVIEW' AND created_at>=(%s::date::timestamp AT TIME ZONE 'Asia/Seoul') AND created_at<(%s::date::timestamp AT TIME ZONE 'Asia/Seoul') AND EXISTS(SELECT 1 FROM dc.ai_score s WHERE s.run_id=r.id)",
-        'JOB_APPLY': "SELECT count(*) n FROM dc.job_application WHERE student_uid=%s AND status<>'CANCELED' AND record_origin='LIVE' AND applied_at>=(%s::date::timestamp AT TIME ZONE 'Asia/Seoul') AND applied_at<(%s::date::timestamp AT TIME ZONE 'Asia/Seoul')",
+        'DIAGNOSIS': "SELECT count(*) n FROM dc.diagnosis_attempt WHERE student_uid=%s AND status_code='DONE' AND completed_at>=" + since + " AND completed_at<" + until,
+        # 심리상담(PSY)은 어떤 상담 퀘스트에서도 세지 않는다.
+        'COUNSEL': counsel.format("IN ('CAREER','PROF')"),
+        'COUNSEL_CAREER': counsel.format("='CAREER'"),
+        'COUNSEL_PROF': counsel.format("='PROF'"),
+        'GROUP_COUNSEL': """SELECT count(*) n FROM dc.group_counsel_member m JOIN dc.group_counsel g ON g.id=m.group_id
+          WHERE m.student_uid=%s AND m.attended AND g.status='DONE' AND g.session_date>=%s AND g.session_date<%s""",
+        'ROADMAP_ITEM': "SELECT count(*) n FROM dc.roadmap_item WHERE student_uid=%s AND status='DONE' AND completed_at>=" + since + " AND completed_at<" + until,
         'PROGRAM': """SELECT count(*) n FROM dc.program_apply a WHERE a.student_uid=%s AND a.outcome_code='COMPLETED'
           AND (SELECT min(e.changed_at) FROM dc.program_apply_event e WHERE e.student_uid=a.student_uid
             AND e.program_id=a.program_id AND e.action='OUTCOME' AND e.after_value->>'outcomeStatus'='COMPLETED')
           BETWEEN (%s::date::timestamp AT TIME ZONE 'Asia/Seoul') AND (%s::date::timestamp AT TIME ZONE 'Asia/Seoul') - interval '1 microsecond'""",
+        'CERTIFICATE': 'SELECT count(*) n FROM dc.student_cert WHERE intg_uid=%s AND verified AND acquired_dt>=%s AND acquired_dt<%s',
+        'GROWTH_RECORD': growth.format(''),
+        'GROWTH_JOURNAL': growth.format("AND kind_code='JOURNAL'"),
+        'GROWTH_PROJECT': growth.format("AND kind_code='PROJECT'"),
+        'MISSION_TOEIC': mission.format("(submitted_at AT TIME ZONE 'Asia/Seoul')::date", 'TOEIC', "AND (result->>'questPassed')::boolean"),
+        'MISSION_NCS_GSAT': mission.format('week_id', 'NCS_GSAT', ''),
+        'RESUME_WRITE': "SELECT count(*) n FROM dc.job_resume WHERE student_uid=%s AND deleted_at IS NULL AND created_at>=" + since + " AND created_at<" + until,
+        'AI_RESUME': "SELECT count(*) n FROM dc.ai_run r WHERE student_uid=%s AND kind_code='RESUME_REVIEW' AND created_at>=" + since + " AND created_at<" + until + " AND EXISTS(SELECT 1 FROM dc.ai_score s WHERE s.run_id=r.id)",
+        'JOB_APPLY': "SELECT count(*) n FROM dc.job_application WHERE student_uid=%s AND status<>'CANCELED' AND record_origin='LIVE' AND applied_at>=" + since + " AND applied_at<" + until,
     }
     return {key: conn.execute(sql, args).fetchone()['n'] for key, sql in queries.items() if activities is None or key in activities}
 

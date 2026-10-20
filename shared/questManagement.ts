@@ -15,7 +15,8 @@ export interface QuestAssignment {
   items: QuestAssignmentItem[]
 }
 export interface QuestOptions {
-  activities: { code: string; label: string; unit: string; note: string }[]
+  /** 판정 활동 — 상위 그룹(group) → 세부 판정 기준(code). 서버 quest_management.ACTIVITIES 가 정본 */
+  activities: { group: string; groupLabel: string; code: string; label: string; unit: string; note: string }[]
   semesters: { code: string; label: string; payload: { startDate: string; endDate: string } }[]
   studentTypes: { code: string; label: string }[]
 }

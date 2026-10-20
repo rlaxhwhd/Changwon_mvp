@@ -22,4 +22,5 @@
 .qm-page .mm-table td:first-child { min-width:180px; }
 .qm-page .mm-table td { vertical-align:top; }
 @media(max-width:1000px) { .qm-compose,.qm-filter-grid { grid-template-columns:1fr; } }
-@media(max-width:600px) { .qm-form-row { grid-template-columns:1fr; } .qm-tabs button { padding:12px; } .qm-save { flex-wrap:wrap; } }
+@media(max-width:600px) { .qm-form-row, .qm-activity-row { grid-template-columns:1fr; } .qm-tabs button { padding:12px; } .qm-save { flex-wrap:wrap; } }
+.qm-activity-row { grid-template-columns:1fr 1.4fr 1fr 1fr; }

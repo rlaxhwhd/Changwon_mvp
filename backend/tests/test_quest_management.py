@@ -6,7 +6,7 @@ from psycopg.types.json import Jsonb
 import pytest
 from app import quests, missions
 from app.db import pool
-from app.quest_management import activity_counts
+from app.quest_management import ACTIVITIES, activity_counts
 from test_api import headers
 from test_quests import learner  # noqa: F401; isolated student/semester fixture
 
@@ -166,7 +166,7 @@ def test_nonmatching_and_semester_assignment(client, learner):
 def test_activity_sources_empty_and_verified_certificate(client, learner):
     with pool.connection() as conn:
         counts = activity_counts(conn, learner, date(2030,9,1), date(2030,9,30))
-    assert set(counts) == {'ATTENDANCE','COUNSEL','PROGRAM','CERTIFICATE','AI_RESUME','JOB_APPLY'}
+    assert set(counts) == {a['code'] for a in ACTIVITIES} and len(counts) == 17
     assert sum(counts.values()) == 0
 
 
@@ -195,8 +195,8 @@ def test_real_activity_evidence_dates_and_incomplete_records(client, learner):
         conn.execute("""INSERT INTO dc.job_application(id,posting_id,student_uid,current_attempt_no,status,applied_at)
           VALUES(%s,%s,%s,1,'APPLIED','2030-09-02T00:00:00+09')""",(application,posting,learner))
         conn.execute('INSERT INTO dc.job_application_attempt(id,application_id,attempt_no) VALUES(%s,%s,1)',('attempt-'+application,application))
-        values = activity_counts(conn,learner,date(2030,9,2),date(2030,9,2))
-        assert values == dict(ATTENDANCE=0,PROGRAM=1,COUNSEL=1,CERTIFICATE=1,AI_RESUME=1,JOB_APPLY=1)
+        values = activity_counts(conn,learner,date(2030,9,2),date(2030,9,2),{'ATTENDANCE','PROGRAM','COUNSEL','COUNSEL_CAREER','CERTIFICATE','AI_RESUME','JOB_APPLY'})
+        assert values == dict(ATTENDANCE=0,PROGRAM=1,COUNSEL=1,COUNSEL_CAREER=1,CERTIFICATE=1,AI_RESUME=1,JOB_APPLY=1)
         assert not any(activity_counts(conn,learner,date(2030,9,3),date(2030,9,30)).values())
         conn.execute("UPDATE dc.job_application SET status='CANCELED',canceled_at=now() WHERE id=%s",(application,))
         assert activity_counts(conn,learner,date(2030,9,1),date(2030,9,30),{'JOB_APPLY'})['JOB_APPLY'] == 0
@@ -267,3 +267,47 @@ def test_semester_assignment_follows_semester_dates(client, learner):
             conn.execute("DELETE FROM dc.quest_assignment WHERE period_key=%s", (code,))
             # 변경 이력은 append-only 라 항목을 지우지 않고 비활성화한다.
             conn.execute("UPDATE dc.code_item SET is_active=false WHERE group_code='QUEST_SEMESTER' AND code=%s", (code,))
+
+
+def test_new_activity_sources(client, learner):
+    """2026-10-20 판정 활동 확대 — 심리상담 제외, 미완료·삭제·중복 풀이는 세지 않는다."""
+    period = (date(2030,9,1), date(2030,9,30))
+    def count(*codes):
+        return activity_counts(conn, learner, *period, set(codes))
+    with pool.connection() as conn, conn.transaction(force_rollback=True):
+        actor = conn.execute("SELECT intg_uid FROM dc.person WHERE alias='system-admin'").fetchone()['intg_uid']
+        # 상담: 심리는 어떤 상담 퀘스트에도 세지 않는다
+        for kind in ('PSY', 'PROF'):
+            conn.execute("""INSERT INTO dc.counsel_request(id,student_uid,type_code,legacy_type,status_code,method_code,care_track,
+              topic,requested_at,snapshot,source_payload,completed_at) VALUES(%s,%s,%s,'x','DONE','ONLINE',NULL,
+              'Test','2030-09-01T00:00:00+09','{}','{}','2030-09-03T10:00:00+09')""", ('quest-'+kind+uuid4().hex, learner, kind))
+        assert count('COUNSEL','COUNSEL_CAREER','COUNSEL_PROF') == dict(COUNSEL=1, COUNSEL_CAREER=0, COUNSEL_PROF=1)
+        # 진단: 완료만
+        for no, status, done in ((1,'DONE','2030-09-04T10:00:00+09'), (2,'IN_PROGRESS',None)):
+            conn.execute("""INSERT INTO dc.diagnosis_attempt(id,student_uid,test_id,attempt_no,status_code,completed_at,payload)
+              VALUES(%s,%s,'TEST',%s,%s,%s,'{}')""", ('quest-dx-'+uuid4().hex, learner, no, status, done))
+        assert count('DIAGNOSIS') == dict(DIAGNOSIS=1)
+        # 집단상담: 진행 완료 + 출석만
+        staff = conn.execute("SELECT intg_uid FROM dc.staff LIMIT 1").fetchone()['intg_uid']
+        for status, attended in (('DONE', True), ('DONE', False), ('PLANNED', True)):
+            gid = 'quest-gc-'+uuid4().hex
+            conn.execute("""INSERT INTO dc.group_counsel(id,counselor_uid,kind,title,topic,session_date,start_time,end_time,place,capacity,status,summary,comment)
+              VALUES(%s,%s,'CAREER','T','T','2030-09-05','10:00','11:00','R',10,%s,'s','c')""", (gid, staff, status))
+            conn.execute("INSERT INTO dc.group_counsel_member(group_id,student_uid,snapshot,attended) VALUES(%s,%s,'{}',%s)", (gid, learner, attended))
+        assert count('GROUP_COUNSEL') == dict(GROUP_COUNSEL=1)
+        # 학습미션: TOEIC 은 통과한 날 1회, NCS·GSAT 는 주 1회
+        for kind in ('TOEIC', 'NCS_GSAT'):
+            week = conn.execute("""INSERT INTO dc.mission_week(week_start,kind,title,items,updated_by) VALUES('2030-09-02',%s,'T','[]',%s)
+              ON CONFLICT(week_start,kind) DO UPDATE SET title=EXCLUDED.title RETURNING id""", (kind, actor)).fetchone()['id']
+            for at, passed in (('2030-09-03T09:00:00+09', True), ('2030-09-03T20:00:00+09', True), ('2030-09-04T09:00:00+09', False)):
+                conn.execute("""INSERT INTO dc.mission_attempt(student_uid,week_id,week_version,title,kind,items,answers,result,submitted_at)
+                  VALUES(%s,%s,1,'T',%s,'[]','{}',%s,%s)""", (learner, week, kind, Jsonb({'questPassed': passed}), at))
+        assert count('MISSION_TOEIC','MISSION_NCS_GSAT') == dict(MISSION_TOEIC=1, MISSION_NCS_GSAT=1)
+        # 자소서 작성: 삭제 제외
+        for deleted in (False, True):
+            conn.execute("""INSERT INTO dc.job_resume(id,student_uid,title,content,origin,created_at,deleted_at,deleted_by)
+              VALUES(%s,%s,'T','C','USER','2030-09-06T10:00:00+09',%s,%s)""",
+              ('quest-rs-'+uuid4().hex, learner, '2030-09-07T00:00:00+09' if deleted else None, actor if deleted else None))
+        assert count('RESUME_WRITE') == dict(RESUME_WRITE=1)
+        # 기간 밖은 0
+        assert not any(activity_counts(conn, learner, date(2030,10,1), date(2030,10,31)).values())

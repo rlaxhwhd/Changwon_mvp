@@ -21,14 +21,29 @@
 
 ## 활동의 판정 근거
 
-| 활동 | 인정하는 서버 기록 / 기간 기준 |
-|---|---|
-| 출석 | `quest_attendance.attended_on`, 날짜당 1회 |
-| 비교과 수료 | 현재 `program_apply.outcome_code=COMPLETED`이고 OUTCOME 이벤트의 `after_value.outcomeStatus=COMPLETED`가 존재, 최초 수료 처리 일시 |
-| 상담 완료 | `counsel_request.status_code=DONE`이고 `completed_at`이 존재, 완료 일시 |
-| 자격증 | `student_cert.verified=true`, 취득일 `acquired_dt` |
-| AI 자기소개서 | `ai_run.kind_code=RESUME_REVIEW`이며 `ai_score` 결과가 존재, 실행 일시 |
-| 채용 지원 | 실제 LIVE 지원, 현재 CANCELED 제외, 공고별 `applied_at` |
+**2026-10-20 확장(사용자 확정, migration 133):** 퀘스트 풀 등록은 **상위 그룹 → 세부 판정 기준 → 목표 횟수 → 완료 XP** 순서다. 그룹·기준은 서버 `quest_management.ACTIVITIES`가 정본이며 관리자가 문구로 만들지 않는다. 기준마다 아래 집계 하나가 1:1로 대응한다. **심리상담은 어떤 퀘스트에서도 판정하지 않는다**(기존 `COUNSEL`도 심리 제외로 바뀜). XP 값은 관리자가 퀘스트마다 직접 정한다.
+
+| 그룹 | 판정 기준 (코드) | 인정하는 서버 기록 / 기간 기준 |
+|---|---|---|
+| 출석 | 출석체크 `ATTENDANCE` | `quest_attendance.attended_on`, 날짜당 1회 |
+| 진단 | 진단 검사 완료 `DIAGNOSIS` | `diagnosis_attempt.status_code=DONE`, `completed_at` |
+| 상담 | 상담 완료(진로·취업+교수) `COUNSEL` | `counsel_request.status_code=DONE`, `type_code IN (CAREER,PROF)`, `completed_at` |
+| | 진로·취업 상담 완료 `COUNSEL_CAREER` | 위와 같고 `type_code=CAREER` |
+| | 교수 상담 완료 `COUNSEL_PROF` | 위와 같고 `type_code=PROF`(교수 직접 기록 포함) |
+| | 집단상담 참여 `GROUP_COUNSEL` | `group_counsel.status=DONE` + `group_counsel_member.attended`, `session_date` |
+| 로드맵 | 로드맵 칸 완료 `ROADMAP_ITEM` | `roadmap_item.status=DONE`, `completed_at` |
+| 비교과 | 프로그램 수료 `PROGRAM` | 현재 `program_apply.outcome_code=COMPLETED`이고 OUTCOME 이벤트의 `after_value.outcomeStatus=COMPLETED`가 존재, 최초 수료 처리 일시 |
+| 자격증 | 자격증 획득 `CERTIFICATE` | `student_cert.verified=true`, 취득일 `acquired_dt` (학생 자가 입력 성장 기록 제외) |
+| 성장일지 | 성장 기록 작성(전체) `GROWTH_RECORD` | `growth_entry` 삭제 제외, `created_at` |
+| | 성장경험일지 작성 `GROWTH_JOURNAL` | 위와 같고 `kind_code=JOURNAL` |
+| | 프로젝트 등록 `GROWTH_PROJECT` | 위와 같고 `kind_code=PROJECT` |
+| 학습미션 | TOEIC 영단어 통과 `MISSION_TOEIC` | `mission_attempt` TOEIC `result.questPassed`, 한국 날짜당 1회 |
+| | NCS·GSAT 주간 미션 제출 `MISSION_NCS_GSAT` | `mission_attempt` NCS_GSAT 제출, 주(week)당 1회 — 통과 기준이 없어 제출로 판정 |
+| 자소서 | 자기소개서 작성 `RESUME_WRITE` | `job_resume` 삭제 제외, `created_at` |
+| | AI 자기소개서 평가 `AI_RESUME` | `ai_run.kind_code=RESUME_REVIEW`이며 `ai_score` 결과가 존재, 실행 일시 |
+| 채용지원 | 채용공고 지원 `JOB_APPLY` | 실제 LIVE 지원, 현재 CANCELED 제외, 공고별 `applied_at` |
+
+자소서·채용지원 학생 화면은 2026-10-20 현재 '준비중'이지만 사용자 요청으로 풀에서 선택 가능하다(화면을 열면 바로 판정된다). 성장일지는 학생이 직접 쓰는 기록이라 '작성 여부'만 판정한다.
 
 날짜 경계는 한국 시간이다. 월간은 선택한 달, 학기는 코드관리 `QUEST_SEMESTER`에 등록한 학년도별 학기 기간을 사용한다. 과거 상담에 완료 일시가 없거나 비교과 수료 이벤트가 없으면 날짜를 추정하지 않는다. AI 서비스의 새로운 실행 기능이나 자격증 검증 기능 자체를 이번 작업에서 만들지는 않았다.
 
