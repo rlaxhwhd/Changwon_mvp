@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from .auth import principal
 from .db import connection
-from .quest_management import router as management_router, progress
+from .quest_management import router as management_router, progress, semester_on
 
 router = APIRouter()
 router.include_router(management_router)
@@ -34,16 +34,17 @@ def reward_rules(conn):
 
 
 def active_semester(conn, day):
-    return conn.execute("""SELECT code,label,payload FROM dc.code_item WHERE group_code='QUEST_SEMESTER'
-      AND is_active AND payload->>'startDate'<=%s AND payload->>'endDate'>=%s
-      ORDER BY code LIMIT 1""", (day.isoformat(),day.isoformat())).fetchone()
+    """The yearly instance (e.g. 2026-2) of the month/day 1학기·2학기 term that contains `day`."""
+    return semester_on(conn, day)
 
 
-def growth_sums(conn, uid, grade, semester_code):
-    """XP granted in the given semester and in the given grade, both derived from the ledger."""
-    return conn.execute('''SELECT coalesce(sum(granted_xp) FILTER (WHERE semester_code=%s),0)::bigint AS semester,
+def growth_sums(conn, uid, grade, semester):
+    """XP granted in the given semester and in the given grade, both derived from the ledger.
+    The semester is summed by its date range so later month/day edits and pre-131 rows stay consistent."""
+    start, end = (semester['payload']['startDate'], semester['payload']['endDate']) if semester else (None, None)
+    return conn.execute('''SELECT coalesce(sum(granted_xp) FILTER (WHERE earned_on BETWEEN %s::date AND %s::date),0)::bigint AS semester,
       coalesce(sum(granted_xp) FILTER (WHERE grade=%s),0)::bigint AS grade
-      FROM dc.growth_xp_event WHERE student_uid=%s''', (semester_code, grade, uid)).fetchone()
+      FROM dc.growth_xp_event WHERE student_uid=%s''', (start, end, grade, uid)).fetchone()
 
 
 def semester_tiers(conn):
@@ -53,7 +54,7 @@ def semester_tiers(conn):
 
 def growth_levels(conn, uid, grade, semester, total):
     """학기·학년·누적 성장 레벨. 장학금·주요 보상은 학기 레벨, 누적은 대학생활 전체 성장 이력이다."""
-    sums = growth_sums(conn, uid, grade, semester['code'] if semester else None)
+    sums = growth_sums(conn, uid, grade, semester)
     tiers = semester_tiers(conn)
     sem_xp = int(sums['semester']) if semester else 0
     reached = [t for t in tiers if t['minXp'] <= sem_xp]
@@ -90,7 +91,7 @@ def grant_xp(conn, uid, *, source_type, source_key, title, amount, day, reward_c
     # Every XP belongs to a registered semester; outside one nothing is granted.
     semester = active_semester(conn, day)
     code = semester['code'] if semester else None
-    sums = growth_sums(conn, uid, grade, code)
+    sums = growth_sums(conn, uid, grade, semester)
     room = min(GRADE_CAP_XP - sums['grade'], TOTAL_CAP_XP - account['total_xp'])
     room = min(room, SEMESTER_CAP_XP - sums['semester']) if semester else 0
     granted = min(amount, max(0, room))

@@ -48,7 +48,8 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
   const [saving, setSaving] = useState(false)
   const [reload, setReload] = useState(0)
   const definition = groups.find(x => x.group_code === group)
-  const [showSemesterCodes, setShowSemesterCodes] = useState(false)
+  // 연도별 학기 일정 코드는 131 이후 쓰지 않는다 — 학기 기간은 퀘스트 관리 → 학기 편성(월/일)에서 정한다.
+  const showSemesterCodes = false
 
   useEffect(() => {
     let cancelled = false
@@ -83,7 +84,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
       {tab === 'notices' && <NoticeManagement rows={data.items as unknown as (Notice & { version: number })[]} saved={() => setReload(n => n + 1)} />}
       {tab === 'codes' && <>
         <label>코드 그룹 <select value={group} onChange={e => { setGroup(e.target.value); setPage(1) }}>{groups.map(g => <option key={g.group_code} value={g.group_code}>{g.label} ({g.group_code})</option>)}</select></label>
-        {group === 'QUEST_SEMESTER' && loadedGroup === group && <><QuestSchedulePicker /><button className="btn btn-secondary" aria-expanded={showSemesterCodes} onClick={() => setShowSemesterCodes(v => !v)}>기본 학기 일정 관리 {showSemesterCodes ? '닫기' : '열기'}</button></>}
+        {group === 'QUEST_SEMESTER' && loadedGroup === group && <><QuestSchedulePicker /><p>학기 기간(1학기·2학기 월/일, 매년 반복)은 퀘스트 관리 → 학기 편성에서 설정합니다. 연도별 학기 일정 코드는 더 이상 XP·편성 기준이 아닙니다.</p></>}
         {(group !== 'QUEST_SEMESTER' || showSemesterCodes) && <>
         <p>{group === 'QUEST_XP_REWARD' ? '일일·월간·학기 퀘스트의 지급 XP를 수정할 수 있습니다. 변경 전 지급 이력은 유지됩니다.' : definition?.managed_by === 'STRUCTURAL' ? '상태 전이에 사용하는 구조 코드입니다. 조회만 가능합니다.' : definition?.fixed_codes ? '코드값은 고정입니다. 명칭과 정렬을 수정할 수 있습니다.' : '항목을 추가하거나 수정할 수 있습니다. 폐지한 항목은 이력 보존을 위해 비활성 상태로 남습니다.'}</p>
         {definition?.managed_by === 'OPERATIONAL' && !definition.fixed_codes && <button className="btn btn-primary" onClick={() => edit({ group_code: group, code: '', label: '', sort_order: 0, is_active: true, payload: group === 'COUNSEL_TOPIC' ? {type:'T1',goal:''} : {}, version: 0 })}>항목 추가</button>}

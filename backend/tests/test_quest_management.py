@@ -8,7 +8,7 @@ from app import quests, missions
 from app.db import pool
 from app.quest_management import activity_counts
 from test_api import headers
-from test_quests import learner  # noqa: F401; isolated student/semester fixture
+from test_quests import SEMESTER_KEY, learner  # noqa: F401; isolated student/semester fixture
 
 
 def definition(client, **changes):
@@ -117,9 +117,9 @@ def test_semester_schedule_selection_and_locked_schedule(client, learner):
     h = headers('system-admin')
     q = definition(client)
     draft = client.put('/api/v1/system/quests/assignments/0', headers=h,
-                       json=schedule(q, learner, period='SEMESTER', published=False)).json()
+                       json=schedule(q, SEMESTER_KEY, period='SEMESTER', published=False)).json()
     url = f"/api/v1/system/quests/assignments/{draft['id']}/schedule"
-    body = dict(expectedVersion=1, periodKey=learner, reason='학기 일정 적용')
+    body = dict(expectedVersion=1, periodKey=SEMESTER_KEY, reason='학기 일정 적용')
     assert client.put(url, headers=h, json={**body, 'periodKey': 'NOT_REGISTERED'}).status_code == 422
     assert client.put(url, headers=h, json=body).status_code == 200
     rows = client.get('/api/v1/system/quests/schedules?period=SEMESTER', headers=h).json()['items']
@@ -157,7 +157,7 @@ def test_nonmatching_and_semester_assignment(client, learner):
     h = headers('system-admin')
     response = client.put('/api/v1/system/quests/assignments/0', headers=h, json=schedule(q, audience='FILTERED', grades=[2]))
     assert response.status_code == 200
-    response = client.put('/api/v1/system/quests/assignments/0', headers=h, json=schedule(q, learner, period='SEMESTER'))
+    response = client.put('/api/v1/system/quests/assignments/0', headers=h, json=schedule(q, SEMESTER_KEY, period='SEMESTER'))
     assert response.status_code == 200, response.text
     state = client.post('/api/v1/quests/sync', headers=headers(learner)).json()
     assert len(state['assigned']) == 1 and state['assigned'][0]['period'] == 'SEMESTER'

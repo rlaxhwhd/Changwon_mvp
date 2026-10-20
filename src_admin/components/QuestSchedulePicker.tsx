@@ -84,7 +84,7 @@ export default function QuestSchedulePicker() {
           {period === 'MONTHLY' ? <><label>운영 월 <input type="month" required value={periodKey} onChange={e => setPeriodKey(e.target.value)} /></label><p>선택한 월의 1일부터 마지막 날까지 운영합니다.</p></> : <>
             <label>운영 학기 <select required value={periodKey} onChange={e => setPeriodKey(e.target.value)}><option value="">학기를 선택하세요</option>{!semester && periodKey && <option value={periodKey} disabled>현재 학기 ({periodKey}) · 사용 불가</option>}{options?.semesters.map(s => <option key={s.code} value={s.code}>{s.label} · {s.payload.startDate} ~ {s.payload.endDate}</option>)}</select></label>
             {semester && <p>지정할 일정: {semester.payload.startDate} ~ {semester.payload.endDate}</p>}
-            {!options?.semesters.length && <p>아래 ‘기본 학기 일정 관리’에서 학기를 먼저 등록하세요.</p>}
+            {!options?.semesters.length && <p>퀘스트 관리 → 학기 편성에서 1학기·2학기 기간(월/일)을 먼저 설정하세요.</p>}
           </>}
           <label className="qs-reason">변경 사유 <input required maxLength={1000} value={reason} onChange={e => setReason(e.target.value)} /></label>
           <button className="btn btn-primary" type="submit" disabled={!periodKey || !reason.trim() || (period === 'SEMESTER' && !semester)}>{saving ? '저장 중…' : '운영 일정 저장'}</button>
