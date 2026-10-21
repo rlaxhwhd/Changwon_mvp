@@ -51,6 +51,11 @@
 .professor-home-requests th, .professor-home-requests td { padding: 12px 8px; }
 .professor-home-requests td.professor-home-empty { padding: 40px 8px; color: var(--color-text-secondary); }
 .professor-home-requests tbody tr:has(.professor-home-empty):hover { background: none; }
+.professor-link-btn { border: 0; background: none; padding: 0; font: inherit; }
+.professor-request-advisee { margin-left: 6px; color: var(--primary); font-weight: 600; }
+.professor-request-table td.professor-request-topic { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.professor-request-actions { white-space: nowrap; }
+.professor-request-actions .admin-btn + .admin-btn { margin-left: 6px; }
 @media (max-width: 700px) {
   .professor-personal-grid { grid-template-columns: 90px minmax(0, 1fr); }
   .professor-personal-wide { grid-column: auto; }

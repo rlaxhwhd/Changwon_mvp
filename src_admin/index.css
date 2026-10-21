@@ -2695,8 +2695,6 @@ input, textarea, select { font-family: var(--font); }
   .counsel-request-table-head > div { flex-wrap: wrap; justify-content: flex-end; }
 }
 
-.admin-profreq-roster .admin-roster-head,
-.admin-profreq-roster .admin-roster-row { grid-template-columns: 46px 1.4fr .7fr .65fr 1.5fr 1.1fr .7fr 1fr; }
 .admin-profrec-roster .admin-roster-head,
 .admin-profrec-roster .admin-roster-row { grid-template-columns: 46px .8fr 1.1fr 1.2fr 1fr 1.6fr .7fr; }
 .admin-td-ellipsis { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

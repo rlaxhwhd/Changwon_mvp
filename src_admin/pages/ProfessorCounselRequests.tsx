@@ -22,9 +22,9 @@ import {
 import type { ProfCounselRequestRow, ProfReqTab } from '../data/profCounselRequests'
 import { totalPages } from '../data/query'
 import { getActiveUser } from '../data/staff'
-import { enrollStatusClass } from '../data/studentRoster'
 import { useListData } from '../hooks/useListData'
 import { useAsyncAction } from '../../shared/useAsyncAction'
+import './ProfessorCounsel.css'
 
 const PAGE_SIZE = 10
 const tabs: ProfReqTab[] = ['전체', '대기', '확정', '완료', '취소']
@@ -201,81 +201,62 @@ export default function ProfessorCounselRequests() {
       <section className="admin-card">
         {data.items.length === 0 ? <EmptyState message="접수된 교수상담 신청이 없습니다." /> : (
           <>
-            <div className="admin-roster admin-profreq-roster">
-              <div className="admin-roster-head">
-                <span>#</span><span>학생</span><span>학적</span><span>방식</span>
-                <span>주제</span><span>신청/일정</span><span>상태</span><span>관리</span>
-              </div>
-              {data.items.map((row, index) => (
-                <div className="admin-roster-row" key={row.id}>
-                  <span className="admin-roster-cell">{startIndex + index + 1}</span>
-                  <span className="admin-roster-cell">
-                    <strong>{studentDisplayName(row.studentName, row.studentId)}</strong>
-                    <small>{row.studentNo} · {row.studentMajor}</small>
-                    {row.isAdvisee && <span className="admin-tag admin-tag-soft">지도</span>}
-                    <button
-                      type="button"
-                      className="admin-btn admin-btn-ghost sm"
-                      onClick={() => setViewing(row)}
-                    >
-                      정보보기
-                    </button>
-                  </span>
-                  <span className="admin-roster-cell">
-                    <span className={enrollStatusClass(row.enrollmentStatus)}>{row.enrollmentStatus}</span>
-                  </span>
-                  <span className="admin-roster-cell"><span className="admin-tag">{row.method}</span></span>
-                  <span className="admin-roster-cell admin-td-ellipsis" title={row.topic}>{row.topic}</span>
-                  <span className="admin-roster-cell">
-                    <small>{formatRelativeTime(row.requestedAt)} 신청</small><br />
-                    {row.slot ? `${row.slot.date} ${row.slot.start}–${row.slot.end}` : '일정 미정'}
-                  </span>
-                  <span className="admin-roster-cell">
-                    <span
-                      className={`counsel-status-badge is-${
-                        row.status === '대기'
-                          ? 'waiting'
-                          : row.status === '확정'
-                            ? 'confirmed'
-                            : row.status === '완료'
-                              ? 'complete'
-                              : 'cancelled'
-                      }`}
-                    >
-                      {row.status}
-                    </span>
-                  </span>
-                  <span className="admin-roster-cell">
-                    {row.status === '대기' && <>
-                      <button type="button" className="admin-btn admin-btn-primary sm" onClick={() => setConfirming(row)}>
-                        접수·일정
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-btn admin-btn-ghost sm"
-                        disabled={saving}
-                        onClick={() => reject(row)}
-                      >
-                        거절
-                      </button>
-                    </>}
-                    {row.status === '확정' && <>
-                      <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => setConfirming(row)}>
-                        일정 변경
-                      </button>
-                      <button
-                        type="button"
-                        className="admin-btn admin-btn-primary sm"
-                        onClick={() => navigate(`/professor/counsel/${row.method === '비대면' ? 'online' : 'offline'}/${row.id}`)}
-                      >
-                        기록 작성
-                      </button>
-                    </>}
-                    {row.status === '완료' && <strong className="admin-advisor-name">기록 완료</strong>}
-                    {row.status === '취소' && '—'}
-                  </span>
-                </div>
-              ))}
+            <div className="professor-report-table-wrap">
+              <table className="professor-report-table professor-request-table">
+                <thead>
+                  <tr>{['번호', '이름', '학번', '소속', '학적', '방식', '주제', '신청일시', '상담일정', '상태', '관리'].map(h => <th scope="col" key={h}>{h}</th>)}</tr>
+                </thead>
+                <tbody>
+                  {data.items.map((row, index) => (
+                    <tr key={row.id}>
+                      <td>{startIndex + index + 1}</td>
+                      <td>
+                        <button type="button" className="professor-report-link professor-link-btn" onClick={() => setViewing(row)}>
+                          {studentDisplayName(row.studentName, row.studentId)}
+                        </button>
+                        {row.isAdvisee && <small className="professor-request-advisee">지도</small>}
+                      </td>
+                      <td>{row.studentNo}</td>
+                      <td>{row.studentMajor}</td>
+                      <td>{row.enrollmentStatus}</td>
+                      <td>{row.method}</td>
+                      <td className="professor-request-topic" title={row.topic}>{row.topic}</td>
+                      <td>{formatRelativeTime(row.requestedAt)}</td>
+                      <td>{row.slot ? `${row.slot.date} ${row.slot.start}–${row.slot.end}` : '일정 미정'}</td>
+                      <td>{row.status}</td>
+                      <td className="professor-request-actions">
+                        {row.status === '대기' && <>
+                          <button type="button" className="admin-btn admin-btn-primary sm" onClick={() => setConfirming(row)}>
+                            접수·일정
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn-ghost sm"
+                            disabled={saving}
+                            onClick={() => reject(row)}
+                          >
+                            거절
+                          </button>
+                        </>}
+                        {row.status === '확정' && <>
+                          <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => setConfirming(row)}>
+                            일정 변경
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-btn admin-btn-primary sm"
+                            onClick={() => navigate(`/professor/counsel/${row.method === '비대면' ? 'online' : 'offline'}/${row.id}`)}
+                          >
+                            기록 작성
+                          </button>
+                        </>}
+                        {row.status === '완료' && '기록 완료'}
+                        {row.status === '취소' && '—'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
             {pages > 1 && (
               <div className="admin-pagination">
