@@ -8,7 +8,6 @@ import { loadStudentDiagnoses } from './diagnosisStore'
 import { loadCounselRequests, loadCounselRecords } from './counselStore'
 import { loadStudentRoster } from '../src_admin/data/studentRoster'
 import { loadAdvisorAssigns } from '../src_admin/data/advisorAssigns'
-import { loadPsychTests } from '../src_admin/data/psychTests'
 import { loadProfessorCounselStats } from '../src_admin/data/profCounselRecords'
 import { loadPrograms } from './programStore'
 import { jobCapability, loadApplications, loadCapability, loadPostings } from './jobStore'
@@ -79,8 +78,6 @@ export async function initializeData(): Promise<void> {
       const staff = identities.staff.find(s => s.id === staffId)
       if (staff && ['career', 'psych', 'professor'].includes(staff.role)) await loadSchedule(staffId)
       if (staff && ['career', 'psych'].includes(staff.role)) await loadGroups()
-      // 심리검사 결과는 심리상담사 전용이다(다른 역할은 서버가 403).
-      if (staff && ['career', 'psych'].includes(staff.role)) await loadPsychTests()
       if (jobCapability().canManageApplicants) await loadApplications('managed')
       // 변경 요청함은 진로상담사 전용이다(menu roadmap.1). 가드 없이 부르면 교수·조교·
       // 심리상담사·시스템관리자의 부팅이 403 으로 끊긴다 — 화면 전체가 사용 불가가 된다.

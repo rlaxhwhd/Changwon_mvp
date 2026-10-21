@@ -102,7 +102,9 @@ const router = createBrowserRouter(
         // 요구하는 것은 CareerCounsel 안의 「CARE 7+ 연계 상담」 카드 하나뿐이다.
         { path: '/counsel',           element: <Navigate to="/counsel/career" replace /> },
         { path: '/counsel/career',    loader: studentPageLoader('counselors', 'slots'), element: <CareerCounsel /> },
-        { path: '/counsel/psych',     loader: studentPageLoader('counselors', 'slots'), element: <PsychCounsel /> },
+        { path: '/counsel/psych',     loader: studentPageLoader('counselors', 'slots'), element: <PsychCounsel key="counsel" /> },
+        // 오프라인 심리검사 신청 — 심리상담과 같은 상담사 일정표를 쓴다(key 로 두 화면의 선택 상태를 분리).
+        { path: '/counsel/psych-test', loader: studentPageLoader('counselors', 'slots'), element: <PsychCounsel key="test" mode="test" /> },
         { path: '/counsel/professor', loader: studentPageLoader('professors', 'slots'), element: <ProfessorCounsel /> },
 
         // 경력개발 로드맵 — 상담에서 만들어진다. 상담 전에는 볼 것이 없다.

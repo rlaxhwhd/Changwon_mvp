@@ -3,13 +3,13 @@ CARE 7+ 진단(diagnosis.py)과는 다른 도메인이라 유형·로드맵과 �
 from datetime import date
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field
 from typing import Literal
 
 from .auth import principal, require_staff
-from .counsel import get_request, visibility
+from .counsel import dto as counsel_dto, get_request, visibility
 from .db import connection
 
 router=APIRouter()
@@ -52,7 +52,8 @@ def dto(row):
 
 def require_psych(user):
     require_staff(user)
-    if user['profile'].get('role') not in ('career','psych'):
+    # 진로취업상담사와 상담 데이터를 공유하지 않는다(2026-10-21) — 심리검사도 심리상담사 업무다.
+    if user['profile'].get('role')!='psych':
         raise HTTPException(403,'심리상담사만 심리검사 결과를 다룰 수 있습니다.')
 
 
@@ -64,11 +65,62 @@ def psych_tests(user=Depends(principal,scope='function'),conn=Depends(connection
     return {'items':[dto(r) for r in rows]}
 
 
+# 검사관리(심리검사 현황) — 학생의 심리검사 신청(topic_code=검사 종류, 140)과, 그 전부터 상담 건에 붙어 있던 결과.
+TEST_BASE=''' FROM dc.counsel_request r JOIN dc.person p ON p.intg_uid=r.student_uid
+ JOIN dc.student_list v ON v.intg_uid=r.student_uid
+ LEFT JOIN dc.code_item k ON k.group_code=r.topic_group AND k.code=r.topic_code'''
+TEST_TARGET=("r.legacy_type='심리' AND (r.topic_code IS NOT NULL OR EXISTS("
+             "SELECT 1 FROM dc.psych_test_result t WHERE t.request_id=r.id))")
+TEST_STATUS={'신청':('REQ','CONFIRMED'),'완료':('DONE',),'취소':('NO_SHOW','CANCEL_UNKNOWN','CANCEL_STU','CANCEL_CNS')}
+
+
+def is_test_request(request):
+    return request['legacy_type']=='심리' and request['topic_code'] is not None
+
+
+@router.get('/psych-tests/requests')
+def psych_test_requests(page:int=Query(1,ge=1),pageSize:int=Query(10,ge=1,le=100),
+                        status:Literal['','신청','완료','취소']='',testCode:str='',q:str=Query('',max_length=200),
+                        user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
+    require_psych(user)
+    condition,values=visibility(user)
+    where=[condition,TEST_TARGET]
+    if status:
+        where.append('r.status_code=ANY(%s)'); values.append(list(TEST_STATUS[status]))
+    if testCode:
+        where.append('r.topic_code=%s'); values.append(testCode)
+    if q.strip():
+        where.append("concat_ws(' ',p.name,v.student_no) ILIKE %s")
+        values.append('%'+q.strip().replace('%','\\%').replace('_','\\_')+'%')
+    clause=' AND '.join(where)
+    total=conn.execute('SELECT count(*) n'+TEST_BASE+' WHERE '+clause,values).fetchone()['n']
+    rows=conn.execute('''SELECT r.id,r.version,r.status_code,r.method_code,r.topic,r.topic_code,r.requested_at,r.slot_date,r.slot_start,
+      r.snapshot,p.alias,p.name,v.student_no,v.college_name,v.major_label,v.grade,v.status AS enrollment_status,k.label AS test_label'''
+      +TEST_BASE+' WHERE '+clause+' ORDER BY r.requested_at DESC,r.id DESC LIMIT %s OFFSET %s',values+[pageSize,(page-1)*pageSize]).fetchall()
+    results={row['request_id']:dto(row) for row in conn.execute(SELECT+' WHERE t.request_id=ANY(%s)',([r['id'] for r in rows],)).fetchall()}
+    items=[]
+    for row in rows:
+        slot={'date':row['slot_date'].isoformat(),'start':row['slot_start'].strftime('%H:%M')} if row['slot_date'] and row['slot_start'] else None
+        items.append({'requestId':row['id'],'requestVersion':row['version'],'studentId':row['alias'],
+                      'studentName':row['snapshot'].get('name') or row['name'],'studentNo':row['student_no'],
+                      'college':row['college_name'],'major':row['snapshot'].get('major') or row['major_label'],
+                      'grade':row['snapshot'].get('grade') or row['grade'],'enrollmentStatus':row['enrollment_status'],
+                      'testCode':row['topic_code'],'testLabel':row['test_label'],'purpose':row['topic'],
+                      'method':'온라인' if row['method_code']=='ONLINE' else '오프라인',
+                      'requestedAt':row['requested_at'].isoformat(),'slot':slot,
+                      'status':next((label for label,codes in TEST_STATUS.items() if row['status_code'] in codes),row['status_code']),
+                      'result':results.get(row['id'])})
+    return dict(items=items,totalCount=total,page=page,pageSize=pageSize)
+
+
 @router.put('/psych-tests/{request_id}')
 def save_psych_test(request_id:str,body:PsychTestWrite,user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
     require_psych(user)
     request=get_request(conn,user,request_id,lock=True)
-    if request['legacy_type']!='심리' or request['status_code'] not in ('CONFIRMED','DONE'):
+    # 심리검사 신청은 오프라인에서 검사를 마친 뒤 신청 상태 그대로 결과를 적는다(심리검사 현황 화면의 「결과작성」).
+    test_request=is_test_request(request)
+    writable=('REQ','CONFIRMED','DONE') if test_request else ('CONFIRMED','DONE')
+    if request['legacy_type']!='심리' or request['status_code'] not in writable:
         raise HTTPException(422,'확정되거나 완료된 심리상담 건에만 결과를 작성할 수 있습니다.')
     if body.testCode=='ETC' and not (body.testNameEtc or '').strip():
         raise HTTPException(422,'기타 검사는 검사명을 입력해 주세요.')
@@ -95,4 +147,9 @@ def save_psych_test(request_id:str,body:PsychTestWrite,user=Depends(principal,sc
           interpretation,opinion,open_to_student,status_code,snapshot) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)''',
           (row_id,request_id,request['student_uid'],user['intg_uid'],body.testCode,body.testNameEtc,body.testedAt,scales,
            body.interpretation.strip(),body.opinion.strip(),body.openToStudent,status,Jsonb(snapshot)))
+    # 검사 신청은 결과 작성 완료가 곧 신청 완료다 — 상태 전이는 다른 전이처럼 counsel_event 에 남긴다.
+    if test_request and status=='DONE' and request['status_code']!='DONE':
+        conn.execute("UPDATE dc.counsel_request SET status_code='DONE',completed_at=now(),version=version+1 WHERE id=%s",(request_id,))
+        conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',
+                     (request_id,user['intg_uid'],'COMPLETE',Jsonb({'before':counsel_dto(request),'source':'psych_test_result'})))
     return dto(conn.execute(SELECT+' WHERE t.id=%s',(row_id,)).fetchone())

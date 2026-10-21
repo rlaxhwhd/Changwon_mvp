@@ -113,14 +113,18 @@ const ALL_SECTIONS: NavSection[] = [
       { label: '집단상담', path: '/counsel/groups', icon: LuUsersRound },
       { label: '심리검사 결과', path: '/counsel/psych-tests', icon: LuBrain },
       { label: '상담 통계', path: '/counsel/stats', icon: LuChartNoAxesColumn },
-      // 학생 신청 없이 남기는 심리상담 기록 — 교수 발의 기록과 같은 방식(counsel.6).
-      { label: '추가 심리상담신청', path: '/counsel/psych-records/new', icon: LuPlus },
+      // 학생이 남긴 추가 심리상담신청 게시판(counsel.6, 140) — 심리상담사 전용.
+      { label: '추가 심리상담신청', path: '/counsel/psych-board', icon: LuPlus },
       { label: '심리상담센터 연계', path: '/counsel/psych-referrals', icon: LuBrain },
       { label: '상담기록', path: '/counsel/records', icon: LuClipboardCheck },
       // 확정된 상담을 모아 상담 진행 화면으로 보내는 대장(counsel.9, 129).
       { label: '상담 진행', path: '/counsel/sessions', icon: LuPlay },
+      // 심리상담사 메뉴의 「상담현황」 — 상담기록 화면을 쓴다(counsel.10, 140).
+      { label: '상담현황', path: '/counsel/records', icon: LuClipboardCheck },
     ],
   },
+  // 심리상담사 검사관리 — 오프라인 심리검사 신청·결과(psy-tests, 140). 진단 관리(CARE 7+)와 다르다.
+  { id: 'psy-tests', label: '검사관리', basePaths: ['/psych'], path: '/psych/tests', icon: LuBrain, children: [] },
   {
     id: 'students',
     label: '학생 관리',

@@ -11,6 +11,8 @@ import CounselWeekCard from '../../components/CounselWeekCard'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
 import { getCounselorCards, type CounselorCard } from '../../data/counselorsRead'
 import { type Day } from '../../lib/counselCalendar'
+import { catalogOptions } from '../../data/growthInputCatalog'
+import PsychExtraRequestModal from '../../components/PsychExtraRequestModal'
 import './CareerCounsel.css'
 import { usePageHead } from '../../components/PageCrumb'
 
@@ -28,15 +30,23 @@ function getCounselorsForSlot(days: Day[], counselors: CounselorCard[], dayIndex
   return counselors.filter(c => slotAvailable(c.id, days[dayIndex].iso, times[timeIndex]))
 }
 
-export default function PsychCounsel() {
+/** 심리상담 예약 화면. mode='test' 는 같은 일정표로 오프라인 심리검사를 신청한다 —
+ *  검사도 심리상담사가 상담센터에서 진행하므로 상담사의 같은 시간대를 쓴다(신청은 심리상담 신청 + 검사 종류 코드). */
+export default function PsychCounsel({ mode = 'counsel' }: { mode?: 'counsel' | 'test' }) {
+  const testMode = mode === 'test'
   // Route data is loaded after module import; read the shared store at render.
   const counselors = getCounselorCards('psych')
+  const testKinds = catalogOptions('PSYCH_TEST_KIND')
+  const [testCode, setTestCode] = useState('')
+  const [extraOpen, setExtraOpen] = useState(false)
   const mobileSlots = useSlotPicker()
   // 보고 있는 주(월~금) — 주를 넘기면 그 주의 슬롯을 다시 읽는다.
   const week = useCounselWeek()
   const days = week.days
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
-  usePageHead('상담 신청', '상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.')
+  usePageHead(testMode ? '심리검사 신청' : '상담 신청',
+    testMode ? '받고 싶은 검사를 고르고, 상담사와 날짜·시간을 선택해 주세요. 검사는 심리상담센터에서 오프라인으로 진행합니다.'
+      : '상담사를 선택하고 원하는 날짜와 시간을 선택해 주세요.')
   // 진로취업 화면과 같은 순서로 고른다 — 시간 먼저, 그 시간에 가능한 상담사가 뒤따른다.
   const [selectedCounselor, setSelectedCounselor] = useState<CounselorId>('')
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null)
@@ -64,11 +74,12 @@ export default function PsychCounsel() {
     )
   })()
 
-  const canReserve = !!selectedSlot && !!selectedCounselor
+  const canReserve = !!selectedSlot && !!selectedCounselor && (!testMode || !!testCode)
+  const testLabel = testKinds.find(kind => kind.code === testCode)?.label ?? ''
 
   const openReserve = () => {
     if (!canReserve) {
-      showNotice('상담사와 날짜·시간을 먼저 선택해주세요')
+      showNotice(testMode ? '검사와 상담사, 날짜·시간을 먼저 선택해주세요' : '상담사와 날짜·시간을 먼저 선택해주세요')
       return
     }
     setConsentOpen(true)
@@ -149,20 +160,39 @@ export default function PsychCounsel() {
             ))}
           </div>
 
+          {testMode && (
+            <fieldset className="cc-test-kinds">
+              <legend>검사 선택</legend>
+              {testKinds.map(kind => (
+                <label key={kind.code} className={testCode === kind.code ? 'active' : ''}>
+                  <input type="radio" name="psych-test-kind" value={kind.code} checked={testCode === kind.code} onChange={() => setTestCode(kind.code)} />
+                  {kind.label}
+                </label>
+              ))}
+            </fieldset>
+          )}
+
           {canReserve && (
             <section className="cc-reservation-summary" aria-label="예약 정보 요약">
               <strong>예약 정보 요약</strong>
               <dl>
+                {testMode && <div><dt>검사</dt><dd>{testLabel}</dd></div>}
                 <div><dt>상담사</dt><dd>{activeCounselor.name} {activeCounselor.title}</dd></div>
                 <div><dt>일정</dt><dd>{selectedSlot.day.date} {selectedSlot.time}</dd></div>
-                <div><dt>상담 방식</dt><dd>대면 또는 화상 선택</dd></div>
+                <div><dt>{testMode ? '검사 방식' : '상담 방식'}</dt><dd>{testMode ? '오프라인 (심리상담센터)' : '대면 또는 화상 선택'}</dd></div>
               </dl>
             </section>
           )}
 
           <button className="cc-reserve-btn cc-reserve-panel" onClick={openReserve} disabled={!canReserve}>
-            상담 예약하기
+            {testMode ? '심리검사 신청하기' : '상담 예약하기'}
           </button>
+          {/* 자리가 모두 마감됐을 때 희망 일정을 남기는 길 — 심리상담사 게시판으로 간다. */}
+          {!testMode && (
+            <button type="button" className="cc-extra-request" onClick={() => setExtraOpen(true)}>
+              추가 심리상담신청
+            </button>
+          )}
         </aside>
 
         <main className="cc-calendar-card">
@@ -257,15 +287,19 @@ export default function PsychCounsel() {
           await submitCounselRequest({
             type: '심리',
             purpose,
+            topicCode: testMode ? testCode : undefined,
             counselorId: activeCounselor.id,
             slotDate: selectedSlot?.day.iso ?? '',
             time: selectedSlot?.time ?? '',
             place: '학생생활관 1층 심리상담센터',
           })
           setReserveOpen(false)
-          showNotice('상담 예약이 신청되었습니다')
+          showNotice(testMode ? '심리검사가 신청되었습니다' : '상담 예약이 신청되었습니다')
         }}
       />
+
+      <PsychExtraRequestModal open={extraOpen} onClose={() => setExtraOpen(false)}
+        onSaved={() => { setExtraOpen(false); showNotice('추가 심리상담신청이 접수되었습니다') }} />
     </div>
   )
 }

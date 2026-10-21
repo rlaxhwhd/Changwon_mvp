@@ -13,6 +13,7 @@ import { useStore } from '../../shared/useRoadmapStore'
 import { getRequestsByAssignee, markNoShow, refreshCounselRequests } from '../data/counselRequests'
 import { useAsyncAction } from '../../shared/useAsyncAction'
 import { getActiveCounselor, getCounselorById } from '../data/counselors'
+import { getActiveUser } from '../data/staff'
 import './CounselHistory.css'
 
 export default function CounselHistory() {
@@ -43,7 +44,8 @@ export default function CounselHistory() {
     }
   })
   return <div className="admin-page admin-counsel-history">
-    <header className="admin-page-head"><div><h1 className="admin-page-title">상담기록</h1><p className="admin-page-desc">내가 담당한 상담 일정과 기록을 한눈에 확인합니다.</p></div></header>
+    {/* 같은 화면을 심리상담사 메뉴에서는 「상담현황」(counsel.10)으로 부른다. */}
+    <header className="admin-page-head"><div><h1 className="admin-page-title">{getActiveUser().role === 'psych' ? '상담현황' : '상담기록'}</h1><p className="admin-page-desc">내가 담당한 상담 일정과 기록을 한눈에 확인합니다.</p></div></header>
     {error && <p role="alert">{error}</p>}
     {loading && <p role="status">상담기록을 불러오는 중입니다.</p>}
     <CounselHistoryView rows={rows} showStudent onExport={downloadCounselHistoryCsv} onOpenDetail={setDetail} sidebarFooter={<section className="cs-booking"><h2>상담일지 관리</h2><p>상담내용과 학생 공개 코멘트는<br />상담일지에서 작성하고 관리할 수 있습니다.</p><Link to="/counsel/journals">상담일지 바로가기</Link></section>} />

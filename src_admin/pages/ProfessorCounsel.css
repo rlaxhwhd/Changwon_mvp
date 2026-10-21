@@ -62,3 +62,20 @@
   .professor-report-detail { padding: 16px; }
   .professor-report-datetime { grid-template-columns: 1fr; }
 }
+
+/* 심리상담사 — 검사관리(심리검사 현황)·추가 심리상담신청 게시판. 표는 교수 화면과 같은 report-table 을 쓴다. */
+.admin-page-actions { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
+.psych-test-table td.professor-home-empty,
+.psych-extra-table td.professor-home-empty { padding: 40px 8px; color: var(--color-text-secondary); }
+.psych-test-table td.psych-test-belongs { max-width: 220px; }
+.psych-test-view,
+.psych-extra-create { background: var(--orange); border-color: var(--orange); color: #fff; }
+.psych-test-view:hover,
+.psych-extra-create:hover { filter: brightness(.95); }
+.psych-extra-table td.psych-extra-title { max-width: none; }
+.psych-extra-table td.psych-extra-title .professor-link-btn { cursor: pointer; }
+.psych-extra-table td.psych-extra-title .professor-link-btn:hover { text-decoration: underline; }
+.psych-extra-wait { color: var(--on-orange); font-weight: 600; }
+.psych-extra-section { margin: 20px 0 8px; font-size: 15px; font-weight: 700; }
+.psych-extra-body { min-height: 120px; padding: 14px; border: 1px solid var(--border); border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.admin-toolbar .psych-extra-create { margin-left: auto; }

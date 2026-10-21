@@ -1,25 +1,34 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
-import { useMemo, useState } from 'react'
-import { LuBrain, LuEye, LuEyeOff, LuPlus, LuTrash2 } from 'react-icons/lu'
+import { useState } from 'react'
+import { LuPlus, LuTrash2 } from 'react-icons/lu'
 import AdminModal from '../components/AdminModal'
-import EmptyState from '../components/EmptyState'
-import { getPsychTestRows, getPsychTestSummary, loadPsychTests, upsertPsychTest } from '../data/psychTests'
-import type { PsychTestRow } from '../data/psychTests'
-import { PSYCH_TEST_TYPES, psychTestLabel } from '../data/schema/psychTest'
+import PageNumbers from '../../shared/components/PageNumbers'
+import { codeItems } from '../../shared/metadataStore'
+import { queryPsychTestRequests, upsertPsychTest } from '../data/psychTests'
+import type { PsychTestFilters, PsychTestRequest } from '../data/psychTests'
+import { PSYCH_TEST_TYPES } from '../data/schema/psychTest'
 import type { PsychTestScale, PsychTestStatus } from '../data/schema/psychTest'
-import { getActiveUser } from '../data/staff'
-import { enrollStatusClass } from '../data/studentRoster'
+import { useListData } from '../hooks/useListData'
 import { useAsyncAction } from '../../shared/useAsyncAction'
 import { ApiError } from '../../shared/api'
+import './ProfessorCounsel.css'
 
+const PAGE_SIZE = 10
 const today = () => new Date().toISOString().slice(0, 10)
+const initialFilters: PsychTestFilters = { status: '', testCode: '', q: '' }
+const dateOf = (iso: string) => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date(iso)).replaceAll('-', '.')
+const testName = (row: PsychTestRequest) => row.testLabel ?? (row.result ? (row.result.testNameEtc ?? PSYCH_TEST_TYPES.find(t => t.code === row.result!.testCode)?.label) : null) ?? '-'
+const belongs = (row: PsychTestRequest) => [row.college, row.major].filter(Boolean).join(' ')
+// 신청한 검사가 결과 검사 종류에 그대로 있으면 미리 고른다(마음검진처럼 묶음 검사는 상담사가 고른다).
+const defaultResultCode = (row: PsychTestRequest) =>
+  PSYCH_TEST_TYPES.some(t => t.code === row.testCode) ? row.testCode! : PSYCH_TEST_TYPES[0].code
 
 /** 결과 작성 모달 — 척도 구성은 검사도구마다 달라 자유 배열로 받는다(우리가 채점하지 않는다). */
-function ResultModal({ row, onClose, onSaved, onReload }: { row: PsychTestRow; onClose: () => void; onSaved: () => void; onReload: () => void }) {
+function ResultModal({ row, onClose, onSaved }: { row: PsychTestRequest; onClose: () => void; onSaved: () => void }) {
   const prev = row.result
-  const [testCode, setTestCode] = useState(prev?.testCode ?? PSYCH_TEST_TYPES[0].code)
+  const [testCode, setTestCode] = useState(prev?.testCode ?? defaultResultCode(row))
   const [testNameEtc, setTestNameEtc] = useState(prev?.testNameEtc ?? '')
-  const [testedAt, setTestedAt] = useState(prev?.testedAt ?? row.request.slot?.date ?? today())
+  const [testedAt, setTestedAt] = useState(prev?.testedAt ?? row.slot?.date ?? today())
   const [scales, setScales] = useState<PsychTestScale[]>(prev?.scales ?? [{ label: '', score: 0 }])
   const [interpretation, setInterpretation] = useState(prev?.interpretation ?? '')
   const [opinion, setOpinion] = useState(prev?.opinion ?? '')
@@ -38,7 +47,7 @@ function ResultModal({ row, onClose, onSaved, onReload }: { row: PsychTestRow; o
     if (status === '완료' && !valid) return
     run(async () => {
       try {
-        await upsertPsychTest(row.request.id, {
+        await upsertPsychTest(row.requestId, {
           expectedVersion: prev?.version ?? 0,
           testCode,
           testNameEtc: testCode === 'ETC' ? testNameEtc.trim() : undefined,
@@ -61,13 +70,13 @@ function ResultModal({ row, onClose, onSaved, onReload }: { row: PsychTestRow; o
     <AdminModal title="심리검사 결과 작성" size="lg" onClose={onClose}>
       <div className="counsel-profile-heading">
         <div>
-          <strong>{studentDisplayName(row.request.studentName, row.request.studentId)}</strong>
-          <span>{row.request.studentNo}</span>
+          <strong>{studentDisplayName(row.studentName, row.studentId)}</strong>
+          <span>{row.studentNo}</span>
         </div>
-        <span className={enrollStatusClass(row.request.studentEnrollmentStatus)}>{row.request.studentEnrollmentStatus}</span>
+        <span className="admin-chip">{row.enrollmentStatus}</span>
       </div>
       <p className="admin-field-hint">
-        {row.request.studentMajor} {row.studentGrade > 0 && `${row.studentGrade}학년`} · 상담 주제 “{row.request.topic}”
+        {belongs(row)} {row.grade ? `${row.grade}학년` : ''} · 신청 검사 「{testName(row)}」{row.purpose && ` · 요청 내용 “${row.purpose}”`}
       </p>
 
       <div className="counsel-request-detail-grid">
@@ -98,9 +107,7 @@ function ResultModal({ row, onClose, onSaved, onReload }: { row: PsychTestRow; o
             <LuPlus /> 척도 추가
           </button>
         </div>
-        <p className="admin-field-hint">
-          이 시스템은 채점하지 않습니다. 외부 검사도구의 결과를 그대로 옮겨 적습니다.
-        </p>
+        <p className="admin-field-hint">이 시스템은 채점하지 않습니다. 오프라인 검사도구의 결과를 그대로 옮겨 적습니다.</p>
         {scales.map((scale, index) => (
           <div className="admin-scale-row" key={index}>
             <input value={scale.label} onChange={event => updateScale(index, { label: event.target.value })} placeholder="척도명" />
@@ -128,11 +135,8 @@ function ResultModal({ row, onClose, onSaved, onReload }: { row: PsychTestRow; o
 
       {error && <p className="admin-field-hint" role="alert">{error}</p>}
       {conflict && <div>
-        <p className="admin-field-hint">작성한 내용은 아직 저장되지 않았습니다. 아래 버튼을 누르면 현재 입력 내용이 최신 저장 결과로 바뀝니다.</p>
-        <button type="button" className="admin-btn admin-btn-ghost" disabled={saving}
-          onClick={() => run(async () => { await loadPsychTests(); onReload() })}>
-          {saving ? '처리 중…' : '최신 결과 불러오기'}
-        </button>
+        <p className="admin-field-hint">작성한 내용은 아직 저장되지 않았습니다. 창을 닫고 목록에서 최신 결과를 다시 열어 주세요.</p>
+        <button type="button" className="admin-btn admin-btn-ghost" onClick={onSaved}>닫고 최신 결과 보기</button>
       </div>}
       <div className="admin-form-actions">
         <button type="button" className="admin-btn admin-btn-ghost" onClick={onClose}>닫기</button>
@@ -143,86 +147,122 @@ function ResultModal({ row, onClose, onSaved, onReload }: { row: PsychTestRow; o
   )
 }
 
+const CSV_HEAD = ['번호', '이름', '학번', '소속', '학년', '심리검사', '검사방법', '신청일시', '상담일시', '상태']
+const csvCell = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`
+
+/** 검사관리 = 심리검사 현황. 학생이 신청한 오프라인 심리검사와 결과 작성 상태를 본다. */
 export default function PsychTests() {
-  const user = getActiveUser()
-  // 저장 뒤 스토어가 바뀌면 다시 읽는다 — 화면은 동기 셀렉터만 구독한다.
-  const [revision, setRevision] = useState(0)
-  const rows = useMemo(() => getPsychTestRows(user.id), [user.id, revision])
-  const summary = useMemo(() => getPsychTestSummary(user.id), [user.id, revision])
-  const [target, setTarget] = useState<PsychTestRow | null>(null)
+  const [draft, setDraft] = useState<PsychTestFilters>(initialFilters)
+  const [filters, setFilters] = useState<PsychTestFilters>(initialFilters)
+  const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [target, setTarget] = useState<PsychTestRequest | null>(null)
+  const [message, setMessage] = useState('')
+  const { data, isLoading, error, refetch } = useListData(queryPsychTestRequests, { ...filters, page, pageSize: PAGE_SIZE })
+  const kinds = codeItems.filter(item => item.group_code === 'PSYCH_TEST_KIND' && item.is_active).sort((a, b) => a.sort_order - b.sort_order)
+  const pages = Math.max(1, Math.ceil(data.totalCount / PAGE_SIZE))
+  const numberOf = (index: number) => data.totalCount - (data.page - 1) * PAGE_SIZE - index
+  const allChecked = data.items.length > 0 && data.items.every(row => selected.has(row.requestId))
+  const toggle = (id: string) => setSelected(old => { const next = new Set(old); if (next.has(id)) next.delete(id); else next.add(id); return next })
+
+  // 체크한 행이 있으면 그 행만, 없으면 지금 조건의 전체 명단을 내려받는다(100건씩 나눠 받는다).
+  const download = async () => {
+    setMessage('')
+    try {
+      let rows: PsychTestRequest[] = data.items.filter(row => selected.has(row.requestId))
+      if (!rows.length) {
+        for (let p = 1; p === 1 || rows.length < data.totalCount; p += 1) {
+          const chunk = await queryPsychTestRequests({ ...filters, page: p, pageSize: 100 })
+          rows.push(...chunk.items)
+          if (!chunk.items.length) break
+        }
+      }
+      const body = [CSV_HEAD, ...rows.map((row, index) => [index + 1, row.studentName, row.studentNo, belongs(row), row.grade ?? '', testName(row),
+        row.method, dateOf(row.requestedAt), row.slot ? `${row.slot.date} ${row.slot.start}` : '', row.status])]
+        .map(line => line.map(csvCell).join(',')).join('\r\n')
+      const url = URL.createObjectURL(new Blob([`﻿${body}`], { type: 'text/csv;charset=utf-8' }))
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = `심리검사현황_${today().replaceAll('-', '')}.csv`
+      anchor.click()
+      URL.revokeObjectURL(url)
+    } catch (cause) {
+      setMessage(cause instanceof Error ? cause.message : '명단을 내려받지 못했습니다.')
+    }
+  }
 
   return (
-    <div className="admin-page">
+    <div className="admin-page professor-counsel-page">
       <header className="admin-page-head">
         <div>
-          <h1 className="admin-page-title">심리검사 결과</h1>
-          <p className="admin-page-desc">확정·완료된 심리상담 건의 검사 결과를 작성하고 열람합니다.</p>
-          <p className="admin-field-hint">
-            심리검사는 <strong>상담 신청 절차 안에서만</strong> 이루어집니다. 이 시스템은 채점하지 않으며, CARE 7+ 진단·유형과는 무관합니다.
-          </p>
+          <h1 className="admin-page-title">심리검사 현황</h1>
+          <p className="admin-page-desc">학생이 신청한 오프라인 심리검사를 확인하고, 검사 후 결과를 작성합니다. 결과 작성 완료가 곧 신청 완료입니다.</p>
+        </div>
+        <div className="admin-page-actions">
+          <button type="button" className="admin-btn psych-test-view" onClick={download}>명단 다운로드</button>
+          {/* 학교 SMS 발송 연동이 아직 없다(backend/app/sms.py 경계만 있음) — 보내는 척하지 않는다. */}
+          <button type="button" className="admin-btn admin-btn-ghost" disabled title="학교 SMS 연동 후 사용할 수 있습니다.">SMS발송</button>
+          <button type="button" className="admin-btn admin-btn-ghost" disabled title="학교 SMS 연동 후 사용할 수 있습니다.">SMS전체 발송</button>
         </div>
       </header>
 
-      <div className="admin-statsum">
-        {([
-          ['검사 대상', `${summary.target}건`, '확정·완료 심리상담'],
-          ['작성 완료', `${summary.done}건`, ''],
-          ['임시 저장', `${summary.draft}건`, ''],
-          ['미작성', `${summary.none}건`, ''],
-        ] as const).map(([label, value, hint]) => (
-          <div className="admin-statsum-card" key={label}>
-            <span>{label}</span>
-            <strong>{value}</strong>
-            {hint && <small>{hint}</small>}
-          </div>
-        ))}
-      </div>
+      <form className="professor-report-filters" onSubmit={event => { event.preventDefault(); setFilters({ ...draft }); setPage(1); setSelected(new Set()) }}>
+        <div className="admin-filterbar">
+          <label className="admin-select"><span>심리검사</span>
+            <select value={draft.testCode} onChange={e => setDraft(old => ({ ...old, testCode: e.target.value }))}>
+              <option value="">전체</option>{kinds.map(kind => <option key={kind.code} value={kind.code}>{kind.label}</option>)}
+            </select>
+          </label>
+          <label className="admin-select"><span>상태</span>
+            <select value={draft.status} onChange={e => setDraft(old => ({ ...old, status: e.target.value as PsychTestFilters['status'] }))}>
+              <option value="">전체</option><option>신청</option><option>완료</option><option>취소</option>
+            </select>
+          </label>
+          <div className="admin-search"><input aria-label="학생 검색어" placeholder="이름 / 학번 입력" value={draft.q} onChange={e => setDraft(old => ({ ...old, q: e.target.value }))} /></div>
+          <button className="admin-btn admin-btn-primary" type="submit">검색</button>
+          <button className="admin-btn admin-btn-ghost" type="button" onClick={() => { setDraft(initialFilters); setFilters(initialFilters); setPage(1); setSelected(new Set()) }}>초기화</button>
+        </div>
+      </form>
+      {(message || error) && <p role="alert" className="admin-form-hint-warn">{message || error?.message}</p>}
 
-      <div className="admin-card-head"><h2>검사 대상 목록</h2></div>
+      <div className="admin-toolbar">
+        <span className="admin-toolbar-count" aria-live="polite">총 {data.totalCount}건{selected.size > 0 && ` · ${selected.size}건 선택`}{isLoading && ' · 불러오는 중…'}</span>
+      </div>
       <section className="admin-card">
-        {rows.length === 0 ? (
-          <EmptyState icon={LuBrain} message="확정된 심리상담이 없습니다. 신청 접수함에서 일정을 확정하면 여기에 나타납니다." />
-        ) : (
-          <div className="admin-roster admin-psych-roster">
-            <div className="admin-roster-head">
-              <span>학번</span><span>이름</span><span>학과</span><span>상담일</span>
-              <span>검사 종류</span><span>실시일</span><span>상태</span><span>공개</span><span>작성</span>
-            </div>
-            {rows.map(row => (
-              <div className="admin-roster-row" key={row.request.id}>
-                <span className="admin-roster-cell">{row.request.studentNo}</span>
-                <span className="admin-roster-cell"><strong>{studentDisplayName(row.request.studentName, row.request.studentId)}</strong></span>
-                <span className="admin-roster-cell">{row.request.studentMajor}</span>
-                <span className="admin-roster-cell">{row.request.slot?.date ?? '—'}</span>
-                <span className="admin-roster-cell">
-                  {row.result ? (row.result.testNameEtc ?? psychTestLabel(row.result.testCode)) : '—'}
-                </span>
-                <span className="admin-roster-cell">{row.result?.testedAt ?? '—'}</span>
-                <span className="admin-roster-cell">
-                  <span className={`admin-chip ${row.result?.status === '완료' ? 'admin-chip-done' : row.result ? 'admin-chip-ok' : 'admin-chip-wait'}`}>
-                    {row.result?.status ?? '미작성'}
-                  </span>
-                </span>
-                <span className="admin-roster-cell">
-                  {row.result ? (row.result.openToStudent ? <LuEye aria-label="공개" /> : <LuEyeOff aria-label="비공개" />) : '—'}
-                </span>
-                <span className="admin-roster-cell">
-                  <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => setTarget(row)}>
-                    {row.result ? '열람·수정' : '결과 작성'}
-                  </button>
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+        <div className="professor-report-table-wrap"><table className="professor-report-table psych-test-table">
+          <thead><tr>
+            <th scope="col"><input type="checkbox" aria-label="이 페이지 전체 선택" checked={allChecked}
+              onChange={() => setSelected(old => { const next = new Set(old); data.items.forEach(row => allChecked ? next.delete(row.requestId) : next.add(row.requestId)); return next })} /></th>
+            {['번호', '이름', '학번', '소속', '학년', '심리검사', '검사방법', '신청일시', '상담일시', '상태', '결과관리'].map(h => <th scope="col" key={h}>{h}</th>)}
+          </tr></thead>
+          <tbody>{!data.items.length ? <tr><td colSpan={12} className="professor-home-empty">{isLoading ? '불러오는 중…' : '심리검사 신청 내역이 없습니다.'}</td></tr>
+            : data.items.map((row, index) => <tr key={row.requestId}>
+              <td><input type="checkbox" aria-label={`${row.studentName} 선택`} checked={selected.has(row.requestId)} onChange={() => toggle(row.requestId)} /></td>
+              <td>{numberOf(index)}</td>
+              <td>{studentDisplayName(row.studentName, row.studentId)}</td>
+              <td>{row.studentNo}</td>
+              <td className="psych-test-belongs">{belongs(row)}</td>
+              <td>{row.grade ?? '-'}</td>
+              <td>{testName(row)}</td>
+              <td>{row.method}</td>
+              <td>{dateOf(row.requestedAt)}</td>
+              <td>{row.slot ? <>{row.slot.date}<br />{row.slot.start}</> : '-'}</td>
+              <td>{row.status}</td>
+              <td>{row.status === '취소' ? '-' : row.result?.status === '완료'
+                ? <button type="button" className="admin-btn sm psych-test-view" onClick={() => setTarget(row)}>조회</button>
+                : <button type="button" className="admin-btn admin-btn-primary sm" onClick={() => setTarget(row)}>{row.result ? '이어쓰기' : '결과작성'}</button>}</td>
+            </tr>)}</tbody>
+        </table></div>
+        {pages > 1 && <div className="admin-pagination">
+          <button className="admin-page-btn" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>이전</button>
+          <PageNumbers page={page} pages={pages} onChange={setPage} />
+          <span className="admin-page-info">{page} / {pages} 페이지</span>
+          <button className="admin-page-btn" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>다음</button>
+        </div>}
       </section>
 
-      {target && <ResultModal key={`${target.request.id}:${revision}`} row={target} onClose={() => setTarget(null)}
-        onSaved={() => { setTarget(null); setRevision(n => n + 1) }}
-        onReload={() => {
-          setTarget(getPsychTestRows(user.id).find(row => row.request.id === target.request.id) ?? null)
-          setRevision(n => n + 1)
-        }} />}
+      {target && <ResultModal key={target.requestId} row={target} onClose={() => setTarget(null)}
+        onSaved={() => { setTarget(null); refetch() }} />}
     </div>
   )
 }

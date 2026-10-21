@@ -1,0 +1,30 @@
+.pxr { display: flex; flex-direction: column; gap: 14px; }
+.pxr-notice { display: flex; gap: 8px; align-items: flex-start; margin: 0; color: var(--color-text-sub); font-size: 14px; line-height: 1.5; }
+.pxr-notice i { margin-top: 3px; }
+.pxr-section { margin: 4px 0 -6px; font-size: 15px; font-weight: 700; color: var(--color-text); }
+.pxr-field { display: grid; grid-template-columns: 110px minmax(0, 1fr); align-items: center; gap: 12px; }
+.pxr-field span { font-weight: 600; text-align: center; }
+.pxr-field em { color: var(--color-danger, #e5484d); font-style: normal; margin-left: 2px; }
+.pxr-field input,
+.pxr-field textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm, 8px);
+  font: inherit;
+  background: var(--color-bg);
+}
+.pxr-field-body { align-items: start; }
+.pxr-field-body span { padding-top: 10px; }
+.pxr-field textarea { resize: vertical; min-height: 180px; }
+.pxr-error { margin: 0; color: var(--color-danger, #e5484d); font-size: 14px; }
+.pxr-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.pxr-actions button { height: 42px; padding: 0 20px; border-radius: var(--radius-md); font-weight: 700; }
+.pxr-cancel { border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); }
+.pxr-submit { border: 0; background: var(--amber); color: var(--color-text); }
+.pxr-submit:disabled { opacity: .5; cursor: not-allowed; }
+@media (max-width: 600px) {
+  .pxr-field { grid-template-columns: 1fr; gap: 6px; }
+  .pxr-field span { text-align: left; }
+  .pxr-field-body span { padding-top: 0; }
+}

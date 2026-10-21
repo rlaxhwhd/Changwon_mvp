@@ -74,8 +74,12 @@ def visibility(user):
     if user['kind']=='STUDENT':
         return 'r.student_uid=%s',[user['intg_uid']]
     kind=user['profile'].get('role')
-    if kind in ('career', 'psych'):
-        return 'true', []
+    # 심리상담사와 진로취업상담사는 서로의 상담(신청·일지·기록)을 보지 않는다(2026-10-21 사용자 지시).
+    # 진로취업상담사는 교수상담 실적을 포함해 심리 외 전체를 계속 본다.
+    if kind=='psych':
+        return "r.legacy_type='심리'", []
+    if kind=='career':
+        return "r.legacy_type<>'심리'", []
     if kind=='assistant':
         # 조교는 담당 학과 학생의 교수상담(실적 통계)만 본다 — SPEC §3-4 전담교수 상담 실적.
         return "r.legacy_type='교수' AND EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=r.student_uid)",[user['intg_uid']]
@@ -204,9 +208,11 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
         raise HTTPException(422,'유형별 상담 주제를 선택해 주세요.')
     topic=None
     if body.topicCode:
-        topic=conn.execute("SELECT * FROM dc.code_item WHERE group_code='COUNSEL_TOPIC' AND code=%s AND is_active FOR SHARE",(body.topicCode,)).fetchone()
-        if body.type!='진로취업' or not topic:
-            raise HTTPException(422,'사용 가능한 진로 상담 주제를 선택해 주세요.')
+        # 진로취업은 상담 주제, 심리는 심리검사 신청의 검사 종류(140)다 — topic_group 생성식과 같은 갈래.
+        group={'진로취업':'COUNSEL_TOPIC','심리':'PSYCH_TEST_KIND'}.get(body.type)
+        topic=group and conn.execute("SELECT * FROM dc.code_item WHERE group_code=%s AND code=%s AND is_active FOR SHARE",(group,body.topicCode)).fetchone()
+        if not topic:
+            raise HTTPException(422,'사용 가능한 진로 상담 주제를 선택해 주세요.' if body.type=='진로취업' else '사용 가능한 심리검사를 선택해 주세요.')
         if current_type and topic['payload'].get('type')!=current_type['code']:
             raise HTTPException(422,'현재 학생 유형에 해당하는 상담 주제를 선택해 주세요.')
     desired_company=(body.desiredCompany or '').strip() or None

@@ -23,7 +23,7 @@ import GroupCounsels from './pages/GroupCounsels'
 import PsychTests from './pages/PsychTests'
 import SmsBlacklist from './pages/SmsBlacklist'
 import PsychReferrals from './pages/PsychReferrals'
-import PsychCounselRecordNew from './pages/PsychCounselRecordNew'
+import PsychExtraRequests from './pages/PsychExtraRequests'
 import StudentAll from './pages/StudentAll'
 import StudentDetail from './pages/StudentDetail'
 import RoadmapRequests from './pages/RoadmapRequests'
@@ -177,12 +177,14 @@ const router = createBrowserRouter(
               ],
             },
 
-            // ── 심리 전용 [psych] — 심리검사 결과 작성 ──
+            // ── 심리 전용 [psych] — 검사관리(심리검사 현황)·추가 심리상담신청 게시판 ──
             {
               element: <RequireRole roles={['psych']} />,
               children: [
-                { path: '/counsel/psych-tests', element: <PsychTests /> },
-                { path: '/counsel/psych-records/new', element: <PsychCounselRecordNew /> },
+                { path: '/psych/tests', element: <PsychTests /> },
+                { path: '/counsel/psych-tests', element: <Navigate to="/psych/tests" replace /> },
+                { path: '/counsel/psych-board', element: <PsychExtraRequests /> },
+                { path: '/counsel/psych-records/new', element: <Navigate to="/counsel/psych-board" replace /> },
               ],
             },
 

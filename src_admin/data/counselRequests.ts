@@ -9,7 +9,6 @@
 // 화면은 이 로더의 셀렉터만 구독하고 리터럴을 박지 않는다.
 // ─────────────────────────────────────────────────────────────────────────
 import type {
-  CounselMethod,
   CounselRequest,
   CounselRequestStatus,
   CounselRequestType,
@@ -17,9 +16,7 @@ import type {
 } from './schema/counselRequest'
 import { handledRequestTypes } from './schema/counselor'
 import { getCounselorByRole } from './counselors'
-import { api } from '../../shared/api'
-import { loadCounselEvents } from '../../shared/communicationsStore'
-import { counselRequests, loadCounselRecords, loadCounselRequests, performCounselAction } from '../../shared/counselStore'
+import { counselRequests, loadCounselRequests, performCounselAction } from '../../shared/counselStore'
 import { getCounselOwnerById, STUDENTS } from '../../src_v2/data/students'
 import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
 import { studentLiteOf } from './studentRoster'
@@ -311,16 +308,6 @@ export async function markNoShow(id: string): Promise<void> {
 export async function reassignRequest(id: string, counselorId: string, reason?: string): Promise<void> {
   await performCounselAction(id, 'reassign', { assigneeId: counselorId, reason: reason ?? '' })
 }
-/** 추가 심리상담신청 — 학생 신청 없이 상담사가 남기는 심리상담 기록. 서버가 신청(완료)+기록을 한 트랜잭션으로 만든다(교수 발의 기록과 같은 방식). */
-export async function addPsychCounselRecord(
-  input: { studentId: string; topic: string; method: CounselMethod; date: string; summary: string },
-): Promise<void> {
-  await api('/counsel-records/psych', {
-    method: 'POST', headers: { 'Idempotency-Key': crypto.randomUUID() }, body: JSON.stringify(input),
-  })
-  await Promise.all([loadCounselRequests(), loadCounselRecords(), loadCounselEvents()])
-}
-
 export type {
   CounselRequest,
   CounselRequestStatus,

@@ -25,6 +25,7 @@ from .counsel_dashboard import router as counsel_dashboard_router
 from .psych_referrals import router as psych_referrals_router
 from .counsel_records import router as record_router
 from .psych_tests import router as psych_tests_router
+from .psych_extra_requests import router as psych_extra_requests_router
 from .administration import router as administration_router
 from .metadata import router as metadata_router
 from .diagnosis import router as diagnosis_router
@@ -98,6 +99,7 @@ app.include_router(counsel_dashboard_router, prefix='/api/v1')
 app.include_router(psych_referrals_router, prefix='/api/v1')
 app.include_router(record_router, prefix='/api/v1')
 app.include_router(psych_tests_router, prefix='/api/v1')
+app.include_router(psych_extra_requests_router, prefix='/api/v1')
 app.include_router(administration_router, prefix='/api/v1')
 app.include_router(metadata_router, prefix='/api/v1')
 app.include_router(diagnosis_router, prefix='/api/v1')

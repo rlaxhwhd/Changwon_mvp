@@ -85,7 +85,8 @@ def test_general_track_cannot_write_care7_assessment(client,db,draft):
     response=client.put(path,headers=headers('career_park'),json=body)
     assert response.status_code==200,response.text
     body['expectedVersion']=response.json()['version']
-    assert client.put(path,headers=headers('psych_lee'),json=body).status_code==200
+    # 심리상담사는 진로취업 상담 기록을 보지 못한다(2026-10-21 사용자 지시).
+    assert client.put(path,headers=headers('psych_lee'),json=body).status_code==404
 
 
 def test_new_care7_counsel_requires_retest_then_updates_type(client,db,draft):

@@ -1,0 +1,26 @@
+/* 두 SPA 공용 — admin :root 에 없는 토큰이 있어 모든 var() 에 폴백을 둔다. */
+.pxw-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  border-top: 2px solid var(--primary, #7c5cfc);
+  font-size: 14px;
+}
+.pxw-table th,
+.pxw-table td {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  overflow-wrap: anywhere;
+}
+.pxw-table th {
+  width: 18%;
+  background: var(--bg-subtle, #f7f8fb);
+  color: var(--text, #1f2937);
+  font-weight: 600;
+}
+/* 정렬은 shared/tableAlignment.css 의 전역 정책(가운데)을 따른다. */
+.pxw-table td { color: var(--text-sub, #4b5563); }
+@media (max-width: 600px) {
+  .pxw-table th { width: 22%; padding: 10px 6px; }
+  .pxw-table td { padding: 10px 8px; }
+}

@@ -71,6 +71,8 @@ export const NAV_SECTIONS: NavSection[] = [
       { label: '심리상담', path: '/counsel/psych', icon: 'fa-heart' },
       { label: '지도교수상담', path: '/counsel/professor', icon: 'fa-user-tie' },
       { label: '상담 현황', path: '/counsel/record', icon: 'fa-clipboard-list' },
+      // stu-counsel.4 (140) — 표시 순서는 DB sort_order 가 정한다(심리상담 바로 뒤).
+      { label: '심리검사 신청', path: '/counsel/psych-test', icon: 'fa-clipboard-check' },
     ],
   },
   {
