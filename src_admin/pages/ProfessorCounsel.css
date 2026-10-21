@@ -49,6 +49,8 @@
 .professor-home-list-head { display: flex; justify-content: space-between; align-items: flex-end; }
 .professor-home-requests { min-width: 560px; }
 .professor-home-requests th, .professor-home-requests td { padding: 12px 8px; }
+.professor-home-requests td.professor-home-empty { padding: 40px 8px; color: var(--color-text-secondary); }
+.professor-home-requests tbody tr:has(.professor-home-empty):hover { background: none; }
 @media (max-width: 700px) {
   .professor-personal-grid { grid-template-columns: 90px minmax(0, 1fr); }
   .professor-personal-wide { grid-column: auto; }

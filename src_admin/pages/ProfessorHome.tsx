@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { LuChevronLeft, LuChevronRight } from 'react-icons/lu'
 import { studentDisplayName } from '../../shared/studentDisplayName'
-import EmptyState from '../components/EmptyState'
 import ProfessorMonthlyTable from '../components/ProfessorMonthlyTable'
 import { loadMonthlyCounselStats, loadProfessorHome } from '../data/professorCounselManage'
 import type { MonthlyCounselStats, ProfessorHome as HomeData, ProfessorHomeRequest } from '../data/professorCounselManage'
@@ -15,11 +14,13 @@ const requestedAt = (value: string) => new Intl.DateTimeFormat('sv-SE', {
   timeZone: 'Asia/Seoul', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hourCycle: 'h23',
 }).format(new Date(value)).replaceAll('-', '.')
 
-function RequestTable({ channel, items }: { channel: 'online' | 'offline'; items: ProfessorHomeRequest[] }) {
-  if (!items.length) return <EmptyState message="상담신청 내역이 없습니다." />
+const REQUEST_COLUMNS = ['이름', '학번', '소속', '학년', '신청일시', '상태']
+function RequestTable({ channel, items }: { channel: 'online' | 'offline'; items?: ProfessorHomeRequest[] }) {
+  // 내역이 없어도 컬럼명은 보이게 — 빈 상태·로딩은 표 안의 한 행으로 표시한다.
+  const message = !items ? '불러오는 중…' : !items.length ? '상담신청 내역이 없습니다.' : ''
   return <div className="professor-report-table-wrap"><table className="professor-report-table professor-home-requests">
-    <thead><tr>{['이름', '학번', '소속', '학년', '신청일시', '상태'].map(h => <th scope="col" key={h}>{h}</th>)}</tr></thead>
-    <tbody>{items.map(row => <tr key={row.id}>
+    <thead><tr>{REQUEST_COLUMNS.map(h => <th scope="col" key={h}>{h}</th>)}</tr></thead>
+    <tbody>{message ? <tr><td colSpan={REQUEST_COLUMNS.length} className="professor-home-empty">{message}</td></tr> : items!.map(row => <tr key={row.id}>
       <td><Link className="professor-report-link" to={row.statusCode === 'REQ' ? '/professor/counsel/requests' : `/professor/counsel/${channel}/${row.id}`}>
         {studentDisplayName(row.name, row.studentId)}</Link></td>
       <td>{row.studentNo}</td><td>{[row.college, row.major].filter(Boolean).join(' ')}</td><td>{row.grade}</td>
@@ -86,14 +87,14 @@ export default function ProfessorHome() {
           <h2 className="professor-home-title">온라인 상담신청 내역 <span>미답변 : <b>{home?.online.unanswered ?? 0}</b> 건</span></h2>
           <Link to="/professor/counsel/online" className="admin-btn admin-btn-ghost sm">더보기</Link>
         </div>
-        {home && <RequestTable channel="online" items={home.online.items} />}
+        <RequestTable channel="online" items={home?.online.items} />
       </section>
       <section>
         <div className="professor-home-list-head">
           <h2 className="professor-home-title">오프라인 상담신청 내역 <span>금주 상담신청 : <b>{home?.offline.thisWeek ?? 0}</b> 건</span></h2>
           <Link to="/professor/counsel/offline" className="admin-btn admin-btn-ghost sm">더보기</Link>
         </div>
-        {home && <RequestTable channel="offline" items={home.offline.items} />}
+        <RequestTable channel="offline" items={home?.offline.items} />
       </section>
     </div>
   </div>
