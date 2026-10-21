@@ -30,6 +30,7 @@ const KPI_META: Record<string, { icon: string; to?: string }> = {
   today: { icon: 'cal' },
   intake: { icon: 'clip', to: '/counsel/requests' },
   roadmap: { icon: 'route', to: '/roadmap/requests' },
+  psychTests: { icon: 'doc', to: '/psych/tests' },
   record: { icon: 'pen', to: '/counsel/journals' },
 }
 

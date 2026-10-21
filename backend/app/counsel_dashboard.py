@@ -68,6 +68,13 @@ def dashboard(request: Request, response: Response, user=Depends(principal, scop
         roadmap = conn.execute(f'''SELECT count(*) AS total,
           count(*) FILTER(WHERE r.status_code='REQ') AS pending
           FROM dc.roadmap_request r WHERE {scope}''', params).fetchone()
+    psych_tests = None
+    if role == 'psych':
+        # 오프라인 심리검사 신청(topic_code=PSYCH_TEST_KIND) — 검사관리 「신청」·「완료」와 같은 상태 구분.
+        psych_tests = conn.execute(f'''SELECT
+          count(*) FILTER(WHERE r.status_code IN ('REQ','CONFIRMED','DONE')) AS total,
+          count(*) FILTER(WHERE r.status_code IN ('REQ','CONFIRMED')) AS pending
+          FROM dc.counsel_request r WHERE {condition} AND r.topic_code IS NOT NULL''', values).fetchone()
     programs = []
     program_count = 0
     if role == 'career':
@@ -84,7 +91,8 @@ def dashboard(request: Request, response: Response, user=Depends(principal, scop
     return {'refDate': day, 'role': role, 'counts': counts, 'distribution': distribution,
             'uncontacted': contact_summary(conn),
             'timeline': [dto(r) for r in timeline], 'intake': [dto(r) for r in intake],
-            'programs': programs, 'programCount': program_count, 'roadmap': roadmap}
+            'programs': programs, 'programCount': program_count, 'roadmap': roadmap,
+            'psychTests': psych_tests}
 
 
 @router.get('/counsel-dashboard/requests/{request_id}')

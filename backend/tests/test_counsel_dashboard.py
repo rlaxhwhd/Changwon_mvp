@@ -192,6 +192,17 @@ def test_psych_does_not_receive_career_data(client, db):
     assert client.get('/api/v1/counsel-dashboard/requests/'+other, headers=headers('psych_lee')).status_code == 404
 
 
+def test_psych_home_counts_own_test_applications(client, db):
+    before = home(client, 'psych_lee')['psychTests']
+    tests = [request_row(db, owner='psych_lee', status=s) for s in ('REQ', 'CONFIRMED', 'DONE', 'CANCEL_STU')]
+    request_row(db, owner='psych_lee')  # 검사 없는 일반 심리상담은 세지 않는다.
+    other = request_row(db, owner='psych_han')  # 다른 상담사의 검사는 세지 않는다.
+    db.execute("UPDATE dc.counsel_request SET topic_code='MBTI' WHERE id=ANY(%s)", (tests+[other],))
+    after = home(client, 'psych_lee')['psychTests']
+    assert after == {'total': before['total']+3, 'pending': before['pending']+2}
+    assert home(client)['psychTests'] is None
+
+
 @pytest.mark.parametrize('identity', ['chaewon', 'prof_cse_1', 'admin'])
 def test_non_counselor_cannot_read_home(client, db, identity):
     # Resolve an actual non-counselor identity without depending on fixture aliases.

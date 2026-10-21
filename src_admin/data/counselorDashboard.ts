@@ -22,6 +22,7 @@ export interface Dashboard {
   programs: { id: string; title: string; category: string; capacity: number; applied: number; todayCount: number }[]
   programCount: number
   roadmap: { total: number; pending: number } | null
+  psychTests: { total: number; pending: number } | null
 }
 
 interface BriefingData {
@@ -104,6 +105,11 @@ export function getKpis(data: Dashboard) {
   if (data.roadmap) {
     const { total, pending } = data.roadmap
     cards.splice(2, 0, { key: 'roadmap', name: '로드맵 변경요청', value: pending, unit: '건', ratio: pct(total - pending, total), detail: `${total - pending} / ${total} 처리`, tint: 's-red', solid: 'b-red' })
+  }
+  // 심리상담사는 로드맵 카드 대신 심리검사 신청을 접수 대기 자리(두 번째)에 둔다.
+  if (data.psychTests) {
+    const { total, pending } = data.psychTests
+    cards.splice(1, 0, { key: 'psychTests', name: '심리검사 신청', value: pending, unit: '건', ratio: pct(total - pending, total), detail: `${total - pending} / ${total} 완료`, tint: 's-blue', solid: 'b-blue' })
   }
   return cards
 }
