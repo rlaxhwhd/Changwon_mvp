@@ -203,7 +203,7 @@ const ALL_SECTIONS: NavSection[] = [
 
   {
     id: 'prof-home',
-    label: '마이홈',
+    label: '마이페이지',
     basePaths: ['/professor/home'],
     path: '/professor/home',
     icon: LuHouse,

@@ -2,7 +2,7 @@ import type { MonthlyCounselStats } from '../data/professorCounselManage'
 
 const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 
-/** 교수 상담 월별 온라인·오프라인 건수 표 — 상담실적·마이홈 공용. */
+/** 교수 상담 월별 온라인·오프라인 건수 표 — 상담실적·마이페이지 공용. */
 export default function ProfessorMonthlyTable({ stats }: { stats: MonthlyCounselStats }) {
   const month = (m: number) => stats.months.find(row => row.month === m) ?? { month: m, online: 0, offline: 0 }
   return <div className="professor-report-table-wrap"><table className="professor-report-table professor-monthly-table">

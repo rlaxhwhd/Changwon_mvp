@@ -145,7 +145,8 @@ def test_professor_menu_order(client):
     assert not any(m['menu_code']=='prof-setup' and m['is_active'] for m in menus)
     codes={m['menu_code'] for m in menus if m['is_active']}
     assert 'prof-home' in codes and 'settings' not in codes
-    assert next(m for m in menus if m['menu_code']=='prof-home')['route']=='/professor/home'
+    home=next(m for m in menus if m['menu_code']=='prof-home')
+    assert home['route']=='/professor/home' and home['label']=='마이페이지'
     career={m['menu_code'] for m in client.get('/api/v1/metadata',headers=headers('career_kim')).json()['menus']}
     assert 'settings' in career
 

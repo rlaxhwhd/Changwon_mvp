@@ -49,7 +49,7 @@ export default function ProfessorHome() {
   const unassigned = home?.grades.reduce((sum, g) => sum + g.unassigned, 0) ?? 0
   const dash = <td className="professor-home-na">-</td>
   return <div className="admin-page professor-counsel-page professor-home">
-    <header className="admin-page-head"><h1 className="admin-page-title">마이홈</h1></header>
+    <header className="admin-page-head"><h1 className="admin-page-title">마이페이지</h1></header>
     {error && <p role="alert" className="admin-form-hint-warn">{error}</p>}
 
     <h2 className="professor-home-title">학과학생 현황</h2>
