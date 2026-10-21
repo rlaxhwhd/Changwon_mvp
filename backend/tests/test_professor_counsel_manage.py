@@ -51,7 +51,16 @@ def test_professor_lists_filters_stats_and_public_answer(client,db,scope):
     assert client.get(endpoint,headers=headers('cse-1'),params=dict(channel='offline',dateFrom='2026-11-01',dateTo='2026-10-01')).status_code==422
     stats=client.get(endpoint+'/stats',headers=headers('cse-1'),params=dict(dateFrom='2026-10-20',dateTo='2026-10-20'))
     assert stats.status_code==200,stats.text
-    assert stats.json()['total']>=2
+    october=next(m for m in stats.json()['months'] if m['month']==10)
+    assert len(stats.json()['months'])==12 and october['online']>=1 and october['offline']>=1
+    assert stats.json()['total']==stats.json()['online']+stats.json()['offline']>=2
+    records=client.get(endpoint+'/stats/records',headers=headers('cse-1'),
+                       params=dict(dateFrom='2026-10-20',dateTo='2026-10-20',sort='name',order='asc',pageSize=100))
+    assert records.status_code==200,records.text
+    assert records.json()['totalCount']==stats.json()['total']
+    assert {row['id'],online['id']}<={r['id'] for r in records.json()['items']}
+    assert client.get(endpoint+'/stats/records',headers=headers('cse-1'),params=dict(q='no-such-unique-student')).json()['totalCount']==0
+    assert client.get(endpoint+'/stats/records',headers=headers('asst_kim')).status_code==403
     public=client.get('/api/v1/counsel-records',headers=headers('chaewon'),params=dict(studentId='chaewon',pageSize=100)).json()['items']
     assert next(r for r in public if r['requestId']==online['id'])['comment']=='Public answer unique'
     assert next(r for r in public if r['requestId']==online['id'])['summary']==''

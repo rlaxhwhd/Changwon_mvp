@@ -80,18 +80,47 @@ def options(user=Depends(principal,scope='function'),conn=Depends(connection,sco
     return {'organizations':rows}
 
 
-@router.get('/stats')
-def stats(dateFrom:date|None=None,dateTo:date|None=None,user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
-    professor(user)
+def stats_where(user,dateFrom,dateTo,college,major,grade,q):
     if dateFrom and dateTo and dateFrom>dateTo: raise HTTPException(422,'조회 기간을 확인하세요.')
     where=[OWN,"r.status_code='DONE'","c.status_code='DONE'"]; values=[user['intg_uid']]
+    for value,column in ((college,'v.college_name'),(major,'v.major_label'),(grade,'v.grade')):
+        if value: where.append(column+'=%s'); values.append(value)
     if dateFrom: where.append('r.slot_date>=%s'); values.append(dateFrom)
     if dateTo: where.append('r.slot_date<=%s'); values.append(dateTo)
-    rows=conn.execute('''SELECT COALESCE(r.topic_code,'ETC') AS category,
-      count(*) FILTER(WHERE r.method_code='OFFLINE') AS offline,
-      count(*) FILTER(WHERE r.method_code='ONLINE') AS online,count(*) AS total'''+BASE+
-      ' WHERE '+' AND '.join(where)+' GROUP BY COALESCE(r.topic_code,\'ETC\') ORDER BY category',values).fetchall()
-    return {'items':rows,'total':sum(row['total'] for row in rows)}
+    if q.strip():
+        where.append("concat_ws(' ',p.name,v.student_no) ILIKE %s")
+        values.append('%'+q.strip().replace('%','\\%').replace('_','\\_')+'%')
+    return ' AND '.join(where),values
+
+
+@router.get('/stats')
+def stats(dateFrom:date|None=None,dateTo:date|None=None,college:str='',major:str='',grade:int|None=Query(None,ge=1,le=6),
+          q:str=Query('',max_length=200),user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
+    professor(user)
+    condition,values=stats_where(user,dateFrom,dateTo,college,major,grade,q)
+    # Months are calendar months of the counseling date; a range spanning years sums the same month.
+    rows=conn.execute('''SELECT m.month,
+      count(r.id) FILTER(WHERE r.method_code='ONLINE') AS online,
+      count(r.id) FILTER(WHERE r.method_code='OFFLINE') AS offline
+      FROM generate_series(1,12) m(month) LEFT JOIN (SELECT r.id,r.method_code,r.slot_date'''+BASE+' WHERE '+condition+
+      ''') r ON extract(month FROM r.slot_date)=m.month GROUP BY m.month ORDER BY m.month''',values).fetchall()
+    return {'months':rows,'online':sum(r['online'] for r in rows),'offline':sum(r['offline'] for r in rows),
+            'total':sum(r['online']+r['offline'] for r in rows)}
+
+
+@router.get('/stats/records')
+def stats_records(page:int=Query(1,ge=1),pageSize:int=Query(10,ge=1,le=100),sort:Literal['date','name']='date',
+                  order:Literal['asc','desc']='desc',dateFrom:date|None=None,dateTo:date|None=None,college:str='',major:str='',
+                  grade:int|None=Query(None,ge=1,le=6),q:str=Query('',max_length=200),
+                  user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
+    professor(user)
+    condition,values=stats_where(user,dateFrom,dateTo,college,major,grade,q)
+    direction=' ASC' if order=='asc' else ' DESC'
+    ordering={'date':'r.slot_date'+direction+' NULLS LAST,p.name','name':'p.name'+direction+',r.slot_date DESC'}[sort]
+    total=conn.execute('SELECT count(*) n'+BASE+' WHERE '+condition,values).fetchone()['n']
+    rows=conn.execute('SELECT '+FIELDS+BASE+' WHERE '+condition+' ORDER BY '+ordering+
+                      ',r.id DESC LIMIT %s OFFSET %s',values+[pageSize,(page-1)*pageSize]).fetchall()
+    return dict(items=[item(row) for row in rows],totalCount=total,page=page,pageSize=pageSize)
 
 
 def owned_request(conn,user,request_id,lock=False):

@@ -37,3 +37,14 @@ export async function deleteProfessorReport(row: ProfessorReport): Promise<void>
   await api(`/professor-counsel/${encodeURIComponent(row.id)}?expectedVersion=${row.requestVersion}`, { method: 'DELETE' })
   await Promise.allSettled([loadCounselRecords(), loadCounselRequests()])
 }
+
+export interface StatsFilters { college: string; major: string; grade: string; dateFrom: string; dateTo: string; q: string }
+export interface MonthlyCounselStats { months: { month: number; online: number; offline: number }[]; online: number; offline: number; total: number }
+export type StatsSort = { sort: 'date' | 'name'; order: 'asc' | 'desc' }
+const statsQuery = (params: object) => queryString(Object.fromEntries(Object.entries(params).filter(([, value]) => value !== '')))
+export function loadMonthlyCounselStats(filters: StatsFilters): Promise<MonthlyCounselStats> {
+  return api(`/professor-counsel/stats?${statsQuery(filters)}`)
+}
+export function queryCounselStatsRecords(params: StatsFilters & StatsSort & { page: number; pageSize: number }): Promise<Paginated<ProfessorReport>> {
+  return api(`/professor-counsel/stats/records?${statsQuery(params)}`)
+}

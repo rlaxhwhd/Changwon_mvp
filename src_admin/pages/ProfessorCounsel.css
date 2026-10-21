@@ -22,13 +22,16 @@
 .professor-report-files { list-style: none; padding: 0; }
 .professor-report-files li { display: flex; gap: 12px; align-items: center; margin: 8px 0; }
 .professor-counsel-settings > div { margin-bottom: 32px; }
-.professor-stats-totals { display: flex; gap: 48px; padding: 24px 0; }
-.professor-stats-totals strong { margin-left: 12px; font-size: 24px; }
-.professor-stats-table { min-width: 480px; }
+.professor-stats-card { margin-bottom: 28px; }
+.professor-monthly-table { min-width: 960px; }
+.professor-monthly-table tbody th, .professor-monthly-table tfoot th { background: var(--muted); font-weight: 600; border-top: 0; }
+.professor-monthly-table tfoot th, .professor-monthly-table tfoot td { font-weight: 700; }
+.professor-stats-records { min-width: 900px; }
+.professor-sort-btn { display: inline-flex; gap: 6px; align-items: center; border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
+.professor-sort-btn span { font-size: 10px; color: var(--primary); }
 @media (max-width: 700px) {
   .professor-personal-grid { grid-template-columns: 90px minmax(0, 1fr); }
   .professor-personal-wide { grid-column: auto; }
   .professor-report-detail { padding: 16px; }
-  .professor-stats-totals { gap: 20px; flex-wrap: wrap; }
   .professor-report-datetime { grid-template-columns: 1fr; }
 }
