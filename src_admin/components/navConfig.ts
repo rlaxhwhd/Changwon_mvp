@@ -201,6 +201,15 @@ const ALL_SECTIONS: NavSection[] = [
     ],
   },
 
+  {
+    id: 'prof-home',
+    label: '마이홈',
+    basePaths: ['/professor/home'],
+    path: '/professor/home',
+    icon: LuHouse,
+    children: [],
+  },
+
   // ── 조교 (SPEC §3-2) ────────────────────────────────────────────────
   {
     id: 'asst-students',

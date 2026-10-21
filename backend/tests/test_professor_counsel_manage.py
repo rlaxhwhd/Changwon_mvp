@@ -143,3 +143,28 @@ def test_professor_menu_order(client):
     children=sorted((m for m in menus if m['parent_code']=='prof-counsel' and m['is_active']),key=lambda m:m['sort_order'])
     assert [m['label'] for m in children]==['신청접수','오프라인 상담현황','온라인 상담현황','상담실적','상담 설정']
     assert not any(m['menu_code']=='prof-setup' and m['is_active'] for m in menus)
+    codes={m['menu_code'] for m in menus if m['is_active']}
+    assert 'prof-home' in codes and 'settings' not in codes
+    assert next(m for m in menus if m['menu_code']=='prof-home')['route']=='/professor/home'
+    career={m['menu_code'] for m in client.get('/api/v1/metadata',headers=headers('career_kim')).json()['menus']}
+    assert 'settings' in career
+
+
+def test_professor_home_department_and_request_summary(client,db,scope):
+    endpoint='/api/v1/professor-counsel/home'
+    before=client.get(endpoint,headers=headers('cse-1'))
+    assert before.status_code==200,before.text
+    online=create(client,method='비대면'); offline=create(client)
+    today=db.execute("SELECT (now() AT TIME ZONE 'Asia/Seoul')::date d").fetchone()['d']
+    # Student-made requests, not professor-written records: drop the PROF_RECORD origin.
+    db.execute("""UPDATE dc.counsel_request SET source_payload=source_payload-'origin',status_code='REQ',completed_at=NULL
+      WHERE id=%s""",(online['id'],))
+    db.execute("UPDATE dc.counsel_request SET source_payload=source_payload-'origin',slot_date=%s WHERE id=%s",(today,offline['id']))
+    after=client.get(endpoint,headers=headers('cse-1')).json()
+    assert after['online']['unanswered']==before.json()['online']['unanswered']+1
+    assert after['offline']['thisWeek']==before.json()['offline']['thisWeek']+1
+    assert after['online']['items'][0]['id']==online['id'] and after['online']['items'][0]['status']=='대기'
+    assert after['offline']['items'][0]['id']==offline['id'] and len(after['offline']['items'])<=5
+    assert {'grade','assigned','unassigned'}<=set(after['grades'][0]) if after['grades'] else True
+    assert after['semester']['term'] in (1,2)
+    assert client.get(endpoint,headers=headers('asst_kim')).status_code==403

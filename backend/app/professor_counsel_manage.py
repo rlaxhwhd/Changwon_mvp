@@ -1,5 +1,6 @@
 """Professor-owned counseling lists and versioned report editing."""
-from datetime import date
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, Response
@@ -121,6 +122,51 @@ def stats_records(page:int=Query(1,ge=1),pageSize:int=Query(10,ge=1,le=100),sort
     rows=conn.execute('SELECT '+FIELDS+BASE+' WHERE '+condition+' ORDER BY '+ordering+
                       ',r.id DESC LIMIT %s OFFSET %s',values+[pageSize,(page-1)*pageSize]).fetchall()
     return dict(items=[item(row) for row in rows],totalCount=total,page=page,pageSize=pageSize)
+
+
+HOME_REQUEST="""r.legacy_type='교수' AND r.counselor_uid=%s
+ AND COALESCE(r.source_payload->>'origin','')<>'PROF_RECORD'"""
+
+
+def semester_of(day):
+    # 1학기 3~8월, 2학기 9월~이듬해 2월.
+    if 3<=day.month<=8: return day.year,1
+    return (day.year if day.month>=9 else day.year-1),2
+
+
+@router.get('/home')
+def home(user=Depends(principal,scope='function'),conn=Depends(connection,scope='function')):
+    professor(user)
+    today=datetime.now(ZoneInfo('Asia/Seoul')).date()
+    monday=today-timedelta(days=today.weekday())
+    # 학과학생 = 학과 배정(조직·학과담당)으로 열람 범위에 든 재학생. 다른 학과의 지도학생은 빼고,
+    # 전담 여부는 담당 교수와 무관하게 활성 전담교수 배정이 있는지로 센다.
+    grades=conn.execute('''SELECT v.grade,count(a.id) AS assigned,count(*)-count(a.id) AS unassigned
+      FROM dc.student_list v LEFT JOIN dc.advisor_assignment a ON a.student_uid=v.intg_uid AND a.released_at IS NULL
+      WHERE v.status='재학' AND EXISTS(SELECT 1 FROM dc.staff_student_scope g
+        WHERE g.staff_uid=%s AND g.student_uid=v.intg_uid AND g.source<>'advisor_assignment')
+      GROUP BY v.grade ORDER BY v.grade''',(user['intg_uid'],)).fetchall()
+    counts=conn.execute('''SELECT
+      count(*) FILTER(WHERE r.method_code='ONLINE' AND r.status_code IN ('REQ','CONFIRMED')) AS unanswered,
+      count(*) FILTER(WHERE r.method_code='OFFLINE' AND r.status_code IN ('REQ','CONFIRMED','DONE')
+        AND r.slot_date BETWEEN %s AND %s) AS this_week
+      FROM dc.counsel_request r WHERE '''+HOME_REQUEST,(monday,monday+timedelta(days=6),user['intg_uid'])).fetchone()
+    rows=conn.execute('''SELECT q.*,p.alias AS student_id,p.name,v.student_no,v.college_name,v.major_label,v.grade,
+      (SELECT label FROM dc.code_item WHERE group_code='COUNSEL_STATUS' AND code=q.status_code) AS status_label
+      FROM (SELECT r.id,r.student_uid,r.method_code,r.status_code,r.requested_at,
+        row_number() OVER(PARTITION BY r.method_code ORDER BY r.requested_at DESC,r.id DESC) AS n
+        FROM dc.counsel_request r WHERE '''+HOME_REQUEST+''') q
+      JOIN dc.person p ON p.intg_uid=q.student_uid JOIN dc.student_list v ON v.intg_uid=q.student_uid
+      WHERE q.n<=5 ORDER BY q.requested_at DESC,q.id DESC''',(user['intg_uid'],)).fetchall()
+    def request(row):
+        return dict(id=row['id'],studentId=row['student_id'],name=row['name'],studentNo=row['student_no'],
+                    college=row['college_name'],major=row['major_label'],grade=row['grade'],
+                    requestedAt=row['requested_at'],statusCode=row['status_code'],status=row['status_label'] or row['status_code'])
+    year,term=semester_of(today)
+    return dict(semester=dict(year=year,term=term),
+                grades=[dict(grade=g['grade'],assigned=g['assigned'],unassigned=g['unassigned']) for g in grades],
+                online=dict(unanswered=counts['unanswered'],items=[request(r) for r in rows if r['method_code']=='ONLINE']),
+                offline=dict(thisWeek=counts['this_week'],items=[request(r) for r in rows if r['method_code']=='OFFLINE']))
 
 
 def owned_request(conn,user,request_id,lock=False):

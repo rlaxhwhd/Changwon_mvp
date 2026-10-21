@@ -57,6 +57,7 @@ import ProfessorCounselRecords from './pages/ProfessorCounselRecords'
 import ProfessorCounselSettings from './pages/ProfessorCounselSettings'
 import ProfessorCounselDetail from './pages/ProfessorCounselDetail'
 import ProfessorCounselStats from './pages/ProfessorCounselStats'
+import ProfessorHome from './pages/ProfessorHome'
 import NotReady from './pages/NotReady'
 import { getActiveUser } from './data/staff'
 import type { StaffRole } from './data/schema/staff'
@@ -83,7 +84,7 @@ function RequireRole({ roles }: { roles: StaffRole[] }) {
 function RoleHome() {
   const role = getActiveUser().role
   if (role === 'admin') return <Navigate to="/system" replace />
-  if (role === 'professor') return <Navigate to="/professor/advisees" replace />
+  if (role === 'professor') return <Navigate to="/professor/home" replace />
   if (role === 'assistant') return <Navigate to="/assistant/students" replace />
   return <Home />
 }
@@ -228,6 +229,7 @@ const router = createBrowserRouter(
             {
               element: <RequireRole roles={['professor']} />,
               children: [
+                { path: '/professor/home', element: <ProfessorHome /> },
                 { path: '/professor/advisees', element: <ProfessorAdvisees /> },
                 { path: '/professor/students', element: <ProfessorStudents /> },
                 { path: '/professor/counsel/requests', element: <ProfessorCounselRequests /> },

@@ -4,13 +4,13 @@ import { api } from '../../shared/api'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { studentDisplayName } from '../../shared/studentDisplayName'
 import EmptyState from '../components/EmptyState'
+import ProfessorMonthlyTable from '../components/ProfessorMonthlyTable'
 import { loadMonthlyCounselStats, queryCounselStatsRecords } from '../data/professorCounselManage'
 import type { MonthlyCounselStats, StatsFilters, StatsSort } from '../data/professorCounselManage'
 import { useListData } from '../hooks/useListData'
 import './ProfessorCounsel.css'
 
 const PAGE_SIZE = 10
-const MONTHS = Array.from({ length: 12 }, (_, i) => i + 1)
 const year = new Date().getFullYear()
 const initialFilters: StatsFilters = { college: '', major: '', grade: '', dateFrom: `${year}-01-01`, dateTo: `${year}-12-31`, q: '' }
 const emptyStats: MonthlyCounselStats = { months: [], online: 0, offline: 0, total: 0 }
@@ -42,7 +42,6 @@ export default function ProfessorCounselStats() {
   const colleges = [...new Set(organizations.map(o => o.college).filter((c): c is string => !!c))]
   const majors = [...new Set(organizations.filter(o => !draft.college || o.college === draft.college).map(o => o.major))]
   const change = (key: keyof StatsFilters, value: string) => setDraft(old => ({ ...old, [key]: value, ...(key === 'college' ? { major: '' } : {}) }))
-  const month = (m: number) => stats.months.find(row => row.month === m) ?? { month: m, online: 0, offline: 0 }
   const toggleSort = (key: StatsSort['sort']) => {
     setSort(old => ({ sort: key, order: old.sort === key && old.order === 'desc' ? 'asc' : 'desc' })); setPage(1)
   }
@@ -79,14 +78,7 @@ export default function ProfessorCounselStats() {
       </div>
     </form>
     {(message || error) && <p role="alert" className="admin-form-hint-warn">{message || error?.message}</p>}
-    <section className="admin-card professor-stats-card"><div className="professor-report-table-wrap"><table className="professor-report-table professor-monthly-table">
-      <thead><tr><th scope="col">구분</th>{MONTHS.map(m => <th scope="col" key={m}>{m}월</th>)}<th scope="col">총계</th></tr></thead>
-      <tbody>
-        <tr><th scope="row">온라인</th>{MONTHS.map(m => <td key={m}>{month(m).online}</td>)}<td>{stats.online}</td></tr>
-        <tr><th scope="row">오프라인</th>{MONTHS.map(m => <td key={m}>{month(m).offline}</td>)}<td>{stats.offline}</td></tr>
-      </tbody>
-      <tfoot><tr><th scope="row">합계</th>{MONTHS.map(m => <td key={m}>{month(m).online + month(m).offline}</td>)}<td>{stats.total}</td></tr></tfoot>
-    </table></div></section>
+    <section className="admin-card professor-stats-card"><ProfessorMonthlyTable stats={stats} /></section>
     <div className="admin-toolbar">
       <span className="admin-toolbar-count" aria-live="polite">총 {data.totalCount}건{isLoading && ' · 불러오는 중…'}</span>
     </div>

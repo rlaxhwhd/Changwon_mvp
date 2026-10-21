@@ -48,3 +48,15 @@ export function loadMonthlyCounselStats(filters: StatsFilters): Promise<MonthlyC
 export function queryCounselStatsRecords(params: StatsFilters & StatsSort & { page: number; pageSize: number }): Promise<Paginated<ProfessorReport>> {
   return api(`/professor-counsel/stats/records?${statsQuery(params)}`)
 }
+
+export interface ProfessorHomeRequest {
+  id: string; studentId: string; name: string; studentNo: string; college: string | null; major: string
+  grade: number; requestedAt: string; statusCode: string; status: string
+}
+export interface ProfessorHome {
+  semester: { year: number; term: 1 | 2 }
+  grades: { grade: number | null; assigned: number; unassigned: number }[]
+  online: { unanswered: number; items: ProfessorHomeRequest[] }
+  offline: { thisWeek: number; items: ProfessorHomeRequest[] }
+}
+export function loadProfessorHome(): Promise<ProfessorHome> { return api('/professor-counsel/home') }
