@@ -15,8 +15,6 @@ interface Props {
   setSummary: (value: string) => void
   comment: string
   setComment: (value: string) => void
-  followUp: string
-  setFollowUp: (value: string) => void
   diagnosisType: StudentType | null
   typeLocked: boolean
   saving?: boolean
@@ -25,7 +23,7 @@ interface Props {
 
 /** Shared journal layout for viewing and editing; persistence belongs to the caller. */
 export default function CounselJournalFields({ record, requestId, career, care7, template, setTemplate,
-  summary, setSummary, comment, setComment, followUp, setFollowUp,
+  summary, setSummary, comment, setComment,
   diagnosisType, typeLocked, saving = false, readOnly = false }: Props) {
   return <fieldset className="counsel-journal-fields" disabled={readOnly || saving} aria-label="상담일지">
       {career ? <>
@@ -56,17 +54,6 @@ export default function CounselJournalFields({ record, requestId, career, care7,
       </label>
 
       </>}
-
-      <label className="admin-field">
-        <span>후속 조치</span>
-        <input
-          type="text"
-          value={followUp}
-          disabled={saving}
-          onChange={e => setFollowUp(e.target.value)}
-          placeholder="예: 이력서 첨삭 재상담 권고"
-        />
-      </label>
 
       <div className="admin-field">
         <span>첨부파일</span>

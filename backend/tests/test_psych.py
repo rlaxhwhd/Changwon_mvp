@@ -158,6 +158,6 @@ def test_psych_menu_is_separate_from_career(client):
         return {m['menu_code'] for m in client.get('/api/v1/metadata', headers=headers(identity)).json()['menus'] if m['is_active']}
     psych, career = active('psych_lee'), active('career_kim')
     # 'home' 등 공통 메뉴는 다른 테스트(역할 메뉴 치환)가 바꿀 수 있어 140 이 정한 항목만 본다.
-    assert {'psy-tests', 'counsel', 'counsel.0', 'counsel.10', 'counsel.5', 'counsel.6', 'counsel.7', 'students', 'students.1'} <= psych
-    assert not psych & {'diagnosis', 'diagnosis.0', 'roadmap', 'counsel.2', 'counsel.8', 'counsel.9'}
+    assert {'psy-tests', 'counsel', 'counsel.0', 'counsel.10', 'counsel.2', 'counsel.5', 'counsel.6', 'counsel.7', 'students', 'students.1'} <= psych
+    assert not psych & {'diagnosis', 'diagnosis.0', 'roadmap', 'counsel.8', 'counsel.9'}
     assert {'diagnosis', 'counsel.2', 'counsel.8', 'counsel.9'} <= career and not career & {'psy-tests', 'counsel.6', 'counsel.10'}

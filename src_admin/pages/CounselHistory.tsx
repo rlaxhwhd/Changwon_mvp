@@ -62,9 +62,9 @@ export default function CounselHistory() {
         <CounselJournalFields record={context.record} career={detail.type === '진로취업'}
           care7={isCare7(detailRequest?.careTrack)}
           template={context.record.template ?? emptyCounselTemplate(detail.method, detail.date, detail.time)}
-          summary={context.record.summary} comment={context.record.comment} followUp={context.record.followUp ?? ''}
+          summary={context.record.summary} comment={context.record.comment}
           diagnosisType={context.diagnosisType} typeLocked={context.typeLocked}
-          setTemplate={() => {}} setSummary={() => {}} setComment={() => {}} setFollowUp={() => {}} readOnly />
+          setTemplate={() => {}} setSummary={() => {}} setComment={() => {}} readOnly />
       </> : <p role="status">작성된 상담일지가 없습니다.</p>}</CounselRecordContext>
       {noShow.error && <p role="alert" className="admin-form-hint-warn">{noShow.error}</p>}
       <div className="admin-form-actions"><Link className="admin-btn admin-btn-ghost" to="/counsel/journals">상담일지 작성·관리</Link>

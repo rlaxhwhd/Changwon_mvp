@@ -59,7 +59,8 @@ function JournalForm({
   const [current, setCurrent] = useState(record)
   const [summary, setSummary] = useState(record?.summary ?? '')
   const [comment, setComment] = useState(record?.comment ?? '')
-  const [followUp, setFollowUp] = useState(record?.followUp ?? '')
+  // 후속 조치 입력란은 없앴다(2026-10-21). 예전에 쓴 값은 저장할 때 그대로 둔다.
+  const followUp = record?.followUp ?? ''
   const [justSaved, setJustSaved] = useState(false)
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -110,7 +111,7 @@ function JournalForm({
       <CounselJournalFields record={record} career={career} care7={care7}
         requestId={source.requestId}
         template={template} setTemplate={setTemplate} summary={summary} setSummary={setSummary}
-        comment={comment} setComment={setComment} followUp={followUp} setFollowUp={setFollowUp}
+        comment={comment} setComment={setComment}
         diagnosisType={context.diagnosisType} typeLocked={context.typeLocked} saving={saving} />
 
       {formErrors.length > 0 && <p className="admin-form-hint">{formErrors.join(' ')}</p>}

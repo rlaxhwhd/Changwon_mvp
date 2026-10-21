@@ -5,11 +5,11 @@ import HistoryCalendar, { type HistoryDayMark } from './HistoryCalendar'
 import { useEffect, useState, type ReactNode } from 'react'
 import { useAsyncAction } from '../useAsyncAction'
 import { COUNSEL_TYPE_LABEL, COUNSEL_TYPE_ORDER, type CounselTypeKey } from '../../src_v2/data/counsel'
-import { LuMessageSquare, LuCheck, LuCalendarDays, LuClock, LuSearch, LuX, LuChevronLeft, LuChevronRight, LuArrowRight, LuDownload } from 'react-icons/lu'
+import { LuMessageSquare, LuSearch, LuX, LuChevronLeft, LuChevronRight, LuArrowRight, LuDownload } from 'react-icons/lu'
 import Modal from '../../src_v2/components/Modal'
 import './CounselHistory.css'
 
-const icons = { message: LuMessageSquare, check: LuCheck, calendar: LuCalendarDays, clock: LuClock, search: LuSearch, x: LuX, 'chevron-left': LuChevronLeft, 'chevron-right': LuChevronRight, arrow: LuArrowRight, download: LuDownload }
+const icons = { message: LuMessageSquare, search: LuSearch, x: LuX, 'chevron-left': LuChevronLeft, 'chevron-right': LuChevronRight, arrow: LuArrowRight, download: LuDownload }
 type IconName = keyof typeof icons
 function Icon({ name }: { name: IconName }) { const Glyph = icons[name]; return <Glyph className="icon" aria-hidden="true" /> }
 type Status = '대기' | '확정' | '완료' | '불참' | '취소'
@@ -60,11 +60,11 @@ export default function CounselHistory({ rows, showStudent = false, onCancel, de
     완료: rows.filter(r => r.status === '완료').length, 취소: rows.filter(r => r.status === '취소').length,
   }
   const latest = rows.filter(r => r.status === '완료' && r.date).map(r => r.date).sort().at(-1) ?? ''
-  const stats: { label: string; value: string; icon: IconName }[] = [
-    { label: '총 상담 건수', value: `${counts.전체}건`, icon: 'message' },
-    { label: '완료된 상담', value: `${counts.완료}건`, icon: 'check' },
-    { label: '예정된 상담', value: `${counts.예정}건`, icon: 'calendar' },
-    { label: '최근 상담일', value: latest ? prettyDate(latest) : '—', icon: 'clock' },
+  const stats: { label: string; value: string }[] = [
+    { label: '총 상담 건수', value: `${counts.전체}건` },
+    { label: '완료된 상담', value: `${counts.완료}건` },
+    { label: '예정된 상담', value: `${counts.예정}건` },
+    { label: '최근 상담일', value: latest ? prettyDate(latest) : '—' },
   ]
   const invalidRange = !!from && !!until && from > until
   const filtered = rows.filter(r => {
@@ -102,7 +102,7 @@ export default function CounselHistory({ rows, showStudent = false, onCancel, de
     <div className="cs-layout">
       <div className="cs-main-column">
         <section className="cs-stats" aria-label="상담 요약">
-          {stats.map(stat => <div className="cs-stat" key={stat.label}><Icon name={stat.icon} /><div><p>{stat.label}</p><strong>{stat.value}</strong></div></div>)}
+          {stats.map(stat => <div className="cs-stat" key={stat.label}><div><p>{stat.label}</p><strong>{stat.value}</strong></div></div>)}
         </section>
         <section className="cs-history cs-panel" aria-label="상담 내역">
           <div className="cs-tabs" role="group" aria-label="상담 상태">
