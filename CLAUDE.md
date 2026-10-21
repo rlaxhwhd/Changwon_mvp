@@ -12,7 +12,9 @@
 
 > **★ 모든 작업은 Graft 로 시작한다** <span>(2026-10-15 사용자 확정 — Claude·Codex 공통)</span>: 코드를 찾거나 고치는 **모든 작업**에서 grep·파일 통독보다 먼저 `graft-changwon` MCP를 쓴다 — 기존 구현 찾기(`graft_find_code`), 수정 전 호출자·영향 범위(`graft_trace_calls`), 파일 구조(`graft_file_api`). 같은 체크아웃의 같은 그래프를 Codex 도 쓴다. 절차·예외(HTTP·SQL·동적 호출은 직접 검증)는 [AGENTS.md「Graft 코드 관계 탐색 및 재사용」](AGENTS.md)과 [Graft 스킬](.claude/skills/graft/SKILL.md), MCP가 안 보이면 [CLI 대체 경로](docs/GRAFT_SETUP.md).
 
-> **★ Claude 세션은 배포하지 않는다** <span>(2026-10-08 사용자 확정)</span>: Claude Code 세션은 작업·검증 후 **커밋·푸시까지만** 한다. CentOS 서버 배포(이미지 전송·교체)는 하지 않는다 — 이 세션의 자동 권한 검사가 서버 SSH 접속을 막는다. 배포가 필요한 변경이면 배포 범위와 준비물(이미지 태그·해시·되돌리는 방법)을 Atlas 공유 기억에 남기고 사용자에게 알린다.
+> **★ 배포는 로컬 Docker까지만** <span>(2026-10-21 사용자 확정 — 2026-10-08 「커밋·푸시까지만」 지침을 대체)</span>: 모든 작업은 검증 후 `npm run docker:up`으로 **로컬 Docker에 반영**하고 커밋·푸시한다. **CentOS 서버 배포는 하지 않는다** — 사용자가 그 작업에서 명시적으로 지시한 경우만 예외. 정본은 [AGENTS.md「개발·검증·배포 순서」](AGENTS.md).
+>
+> **★ API·DB 작업은 Chrome MCP 개발자 도구로 측정하며 설계한다** <span>(2026-10-21 사용자 확정)</span>: 구현 전에 대상 화면의 네트워크를 열어 불필요·중복 API 호출과 응답 시간·크기를 확인하고 그 근거로 설계한다. 구현 후 로컬 Docker에서 같은 동작을 재측정해 비교한다. 정본은 [AGENTS.md「2. Chrome MCP 기반 웹 검증」](AGENTS.md).
 
 국립창원대학교 역량개발관리시스템 **드림캐치(DREAMCATCH)** — 현행 운영 시스템의 **고도화** 프로젝트.
 React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
