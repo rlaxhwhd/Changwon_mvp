@@ -1,5 +1,14 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-10-21 누적 심리상담 화면 배포
+
+- 공유 기억 대신 원격 Git을 fetch해 `origin/dev=74e6a1b`를 확인했다. 직전 `4606ba6` 이후 `3276d3f`, `65e0d93`, `fd99f96`, `74e6a1b` 전체를 API·웹 `psych-pages-20261021`로 배포하고140·141을 적용했다. 화면 정렬, 심리상담 전용 메뉴·검사 신청·추가 신청·상담일지 및 홈 검사 신청 카드를 포함한다.
+- 로컬 `npm run docker:up`의 빌드·백업·141 확인·기동 완료. 백업 `_workspace/db-backups/local-before-migrate-20261021081058801.dump`. 새 격리 DB `dc_regression_20261021081044_4a5476_test` 관련 회귀63개 통과·1개 실패·471개 제외·경고3개. 실패는 `test_psych_referrals.py::test_scope_reason_and_recipient_validation`의 예상404/실제201로,127 이전 및129 배포에도 기록된 기존 실패다. 이번에 과거 코드를 새로 실행해 비교한 것은 아니며 전체 통과로 간주하지 않는다.
+- 서버 기존139개 체크섬 일치·DB/Compose 백업 후 서버 내부 `dc_deploy_psych_pages_20261021_test`로 복원해140·141 리허설을 통과했다. 소스68개·마이그레이션141개·구조 MATCH,149개 테이블.140이 counsel_request.topic_group을 재생성하므로 단순 테이블 해시는 변경된다. 이 컬럼을 제외한 상담39건의 행 수·해시는 복원 전후 및 운영 적용 전후 모두 일치했다. 그 외 변경은 code_group/code_item/menu/menu_auth/metadata_revision/schema_migration이며 기존 업무·비교과2건을 보존했다. 신규 psych_extra_request는 운영 테스트 데이터를 넣지 않았다.
+- 로컬 Chrome: 심리 홈 카드, 검사현황21ms/1089B, 추가 신청25ms/249B 정상. 서버 Chrome: 홈에 검사 카드 없음→있음, dashboard200은 배포 전89ms/772B→후86ms/809B(속도 개선 주장 아님). 검사현황200/51ms/50B, 추가 신청200/37ms/50B, 학생 `/v2/counsel/psych-test`의4개 검사 종류·시간표·슬롯200/46ms/143792B 확인. 각 신규 목록은1회 호출, 확인 화면 콘솔 오류·경고 및 가로 넘침 없음. 신청·검사 결과 저장 등 운영 쓰기는 실행하지 않았다. 기존 관리자 초기 일괄조회는 남아 있다.
+- API·웹·DB healthy, nginx 정상. 로컬/서버 HTML SHA256: admin `5f1a1caf855ee53fe3a21389053f0acd24380023ff7f626de49487cc3714bc61`, v2 `edb801297c72c6f26eea54bc33cd94bcccebf919779ead13295f481705871750`. LLM 터널 healthy 관측, 모델 생성은 미검증.
+- 백업·Compose·이미지·대조 결과 `/opt/dreamcatch/ai/psych-pages-20261021/`, 이미지 묶음 SHA256 `af2b5a526353ced172def0fb509d96bd65ce0614eddca7659dc4a78d3bd52281`. 이전 API `professor-home-20261021`, 웹 `professor-tables-20261021`. 코드 복구는 새 보정 마이그레이션으로 메뉴 권한을 복원해야 하며 DB141·업무 기록을 보존한다. PSY 검사 신청이 쌓인 뒤 topic_group을 되돌리면 새 topic_code와 FK가 맞지 않을 수 있으므로140의 복구 주석과 실제 데이터 호환성을 먼저 확인한다. 서버는 기동 유지했다.
+
 ## 2026-10-15 활동 로그·메뉴·상담사 코멘트 권한 배포
 
 - `d2f7e0a`, `65d0083`을 API·웹 `activity-menu-20261015`로 배포했다. 서버 DB 백업과 기존 126개 체크섬 대조 후 `127_menu_roadmap_status_and_labels.sql`만 적용했다. 업무 데이터와 환경별 비밀을 유지했다.
