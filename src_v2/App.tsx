@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, useParams } from 'react-router-dom'
 import Layout from './components/Layout'
 import PageDataError from './components/PageDataError'
 import { studentPageLoader } from '../shared/studentPageData'
@@ -17,6 +17,8 @@ import AiLounge from './pages/AiLounge'
 import GrowthHome from './pages/growth/GrowthHome'
 import ProgramApply from './pages/growth/ProgramApply'
 import ProgramDetail from './pages/growth/ProgramDetail'
+import MyPrograms from './pages/growth/MyPrograms'
+import ProgramSurvey from './pages/growth/ProgramSurvey'
 import RoadmapRequest from './pages/roadmap/RoadmapRequest'
 import QuestBoard from './pages/growth/QuestBoard'
 import GrowthJournal from './pages/growth/GrowthJournal'
@@ -46,11 +48,14 @@ import StarTrack from './pages/star/StarTrack'
 
 // 마이페이지
 import Portfolio from './pages/mypage/Portfolio'
-import MyPrograms from './pages/mypage/MyPrograms'
-import ProgramSurvey from './pages/mypage/ProgramSurvey'
 import MyApplications from './pages/mypage/MyApplications'
 import CounselStatus from './pages/mypage/CounselStatus'
 import { getActiveStudent } from './data/students'
+
+function LegacySurveyRedirect() {
+  const { id = '', phase = '' } = useParams()
+  return <Navigate to={`/growth/program/${encodeURIComponent(id)}/survey/${phase}`} replace />
+}
 
 const router = createBrowserRouter(
   [
@@ -77,6 +82,9 @@ const router = createBrowserRouter(
         //   ⚠ 성장일지·미션은 게이팅 밖이다. 진단 전에도 기록은 남길 수 있어야 한다.
         { path: '/growth',              element: <StageGate stage="growth" title="내 성장"><GrowthHome /></StageGate> },
         { path: '/growth/program',      loader: studentPageLoader('programs', 'programWishlist'), element: <StageGate stage="growth" title="비교과 프로그램"><ProgramApply /></StageGate> },
+        // 비교과 신청 현황·조사 — 마이페이지에서 비교과 프로그램 하위로 옮겼다(2026-10-22). 정적 세그먼트라 :id 보다 먼저 읽힌다.
+        { path: '/growth/program/status', element: <MyPrograms /> },
+        { path: '/growth/program/:id/survey/:phase', element: <StageGate stage="growth" title="비교과 조사"><ProgramSurvey /></StageGate> },
         { path: '/growth/program/:id',  loader: studentPageLoader('departments', 'programWishlist'), element: <StageGate stage="growth" title="비교과 프로그램"><ProgramDetail /></StageGate> },
         { path: '/growth/quest',        element: <StageGate stage="growth" title="퀘스트 보드"><QuestBoard /></StageGate> },
         // 로드맵 진행 현황은 「진로취업 로드맵」 하위로 옮겼다(/roadmap/status) — 옛 주소는 리다이렉트.
@@ -133,10 +141,11 @@ const router = createBrowserRouter(
         { path: '/jobs/:id',             loader: studentPageLoader('jobs', 'jobWishlist', 'jobCapability', 'applications'), element: <StageGate stage="employment" title="채용공고 상세"><JobDetail /></StageGate> },
 
         // 마이페이지
-        { path: '/mypage',           element: <Navigate to={getActiveStudent().grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'} replace /> },
+        { path: '/mypage',           element: <Navigate to={getActiveStudent().grade >= 4 ? '/mypage/portfolio' : '/mypage/applications'} replace /> },
         { path: '/mypage/portfolio',  element: getActiveStudent().grade >= 4 ? <Portfolio /> : <Navigate to="/growth" replace /> },
-        { path: '/mypage/programs',   element: <MyPrograms /> },
-        { path: '/mypage/programs/:id/survey/:phase', element: <StageGate stage="growth" title="비교과 조사"><ProgramSurvey /></StageGate> },
+        // 옛 경로 — 이미 발송된 알림·즐겨찾기가 가리킨다.
+        { path: '/mypage/programs',   element: <Navigate to="/growth/program/status" replace /> },
+        { path: '/mypage/programs/:id/survey/:phase', element: <LegacySurveyRedirect /> },
         { path: '/mypage/applications', loader: studentPageLoader('jobs', 'applications'), element: <MyApplications /> },
         { path: '/mypage/notices',    element: <Navigate to="/jobs/notices" replace /> },
         // 상담 현황: 라우팅을 /counsel/record로 이동 (기존 /mypage/counsel은 하위 호환용 리다이렉트)

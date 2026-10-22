@@ -143,5 +143,5 @@ test('specialized routes retain their synchronous selector dependencies', () => 
   assert.deepEqual(routes.get('/jobs/:id'), ['jobs', 'jobWishlist', 'jobCapability', 'applications'])
   assert.deepEqual(routes.get('/mypage/applications'), ['jobs', 'applications'])
   assert.deepEqual(routes.get('/jobs/notices'), ['notices'])
-  for (const path of ['/diagnosis/employment', '/growth/mission', '/records', '/mypage/programs']) assert.deepEqual(routes.get(path), [])
+  for (const path of ['/diagnosis/employment', '/growth/mission', '/records', '/growth/program/status']) assert.deepEqual(routes.get(path), [])
 })

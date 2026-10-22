@@ -133,6 +133,13 @@ def test_role_menu_visibility_is_replaced_per_role(client):
     assert events[0]['entity']=='menu_auth' and events[0]['entity_id']=='professor' and 'jobs' in events[1]['after_value']['menuCodes']
 
 
+def test_student_program_status_menu_moved_under_programs(client):
+    menus={m['menu_code']:m for m in client.get('/api/v1/metadata',headers=headers('chaewon')).json()['menus']}
+    moved=menus['stu-program-apply.1']
+    assert moved['route']=='/growth/program/status' and moved['is_active']
+    assert not menus['stu-mypage.1']['is_active']
+
+
 def test_student_metadata_follows_student_role_menus(client):
     head=headers('system-admin')
     student=next(r for r in client.get('/api/v1/system/auth-roles',headers=head).json() if r['role_code']=='student')

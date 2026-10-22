@@ -98,6 +98,8 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: 'calendar',
     children: [
       { label: '비교과 프로그램', path: '/growth/program', icon: 'fa-clipboard-list' },
+      // stu-program-apply.1 — 마이페이지에서 옮겨 왔다(142 마이그레이션).
+      { label: '비교과프로그램 현황', path: '/growth/program/status', icon: 'fa-list-check' },
     ],
   },
   {
@@ -145,6 +147,7 @@ export const NAV_SECTIONS: NavSection[] = [
     icon: 'user',
     children: [
       { label: '포트폴리오', path: '/mypage/portfolio', icon: 'fa-folder-open', minGrade: 4 },
+      // stu-mypage.1 — 비교과 프로그램 하위로 옮겼다. 142 마이그레이션이 메뉴를 끈다(인덱스 자리만 유지).
       { label: '비교과프로그램 현황', path: '/mypage/programs', icon: 'fa-clipboard-list' },
       { label: '추천채용 지원 내역', path: '/mypage/applications', icon: 'fa-file-signature' },
       { label: '출석 기록', path: '/mypage/attendance', icon: 'fa-calendar-check', comingSoon: true },

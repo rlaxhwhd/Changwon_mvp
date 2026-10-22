@@ -76,7 +76,7 @@ def weekly_items(conn, uid, day):
         if not is_open and not row['submitted_at']:
             sub += ' · '+reason
         add(f"survey:{row['id']}:{phase}", SURVEY_LABELS[phase]+' · '+row['title'], sub,
-            opened, f"/mypage/programs/{quote(row['id'], safe='')}/survey/{phase}", bool(row['submitted_at']), not is_open)
+            opened, f"/growth/program/{quote(row['id'], safe='')}/survey/{phase}", bool(row['submitted_at']), not is_open)
     items.sort(key=lambda item: (item['date'], item['id']))
     return dict(items=items, weekStart=start.isoformat(), weekEnd=end.isoformat(), today=day.isoformat())
 

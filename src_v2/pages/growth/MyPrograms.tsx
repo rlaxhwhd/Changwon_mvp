@@ -33,7 +33,7 @@ function SurveyCell({ program: p, column }: { program: AppliedProgram; column: t
   if (p[column.doneKey]) return <span className="mp-survey-complete" aria-label={`${column.label} 설문 완료`}>O</span>
   if (!enabled) return <span className="mp-survey-muted">설문없음</span>
   if (myProgramSurveys(p).some(s => s.phase === column.phase && !s.done)) {
-    return <Link className="mp-survey-link" to={`/mypage/programs/${encodeURIComponent(p.id)}/survey/${column.phase}`}
+    return <Link className="mp-survey-link" to={`/growth/program/${encodeURIComponent(p.id)}/survey/${column.phase}`}
       aria-label={`${p.title} ${column.label} 설문 진행`}>설문 진행</Link>
   }
   const upcoming = !p.cancelledAt && !p.outcome && ['PENDING', 'SELECTED'].includes(p.selection)
@@ -148,7 +148,7 @@ export default function MyPrograms() {
     <section className="cs-booking"><Icon name="calendar"/><h2>새로운 경험을 시작해 보세요</h2><p>진로와 취업에 도움이 되는<br/>다양한 비교과 프로그램을 만나보세요.</p><Link to="/growth/program">프로그램 찾아보기 <Icon name="arrow"/></Link></section>
   </aside></div>
   <Modal open={!!detail} onClose={()=>setDetail(null)} title="프로그램 참여 내역" size="md">{detail&&<div className="cs-detail"><span className={`cs-status cs-status--${tone(detail.status)}`}>{detail.status}</span><h3>{detail.title}</h3><dl><div><dt>분류</dt><dd>{detail.category}</dd></div><div><dt>담당자</dt><dd>{detail.hostDept}</dd></div><div><dt>운영 기간</dt><dd>{detail.startDate || '일정 미정'}{detail.endDate ? ` ~ ${detail.endDate}` : ''}</dd></div><div><dt>신청일</dt><dd>{iso(detail.appliedAt)}</dd></div><div><dt>운영 회차</dt><dd>{detail.sessions}회</dd></div></dl><section className="cs-public-comment"><h4>프로그램 소개</h4><p>{detail.description}</p></section><dl><div><dt>장소</dt><dd>{detail.location || '미등록'}</dd></div><div><dt>출석</dt><dd>{attendanceLabel(detail.attendance)}</dd></div></dl>
-    {myProgramSurveys(detail).length > 0 && <section className="cs-public-comment mp-surveys"><h4>조사 참여</h4><ul>{myProgramSurveys(detail).map(s => <li key={s.phase}><span>{s.label}</span>{s.done ? <span className="cs-status cs-status--done">제출 완료</span> : <Link className="cs-button" to={`/mypage/programs/${detail.id}/survey/${s.phase}`} onClick={()=>setDetail(null)}>응답하기 <Icon name="arrow"/></Link>}</li>)}</ul></section>}
+    {myProgramSurveys(detail).length > 0 && <section className="cs-public-comment mp-surveys"><h4>조사 참여</h4><ul>{myProgramSurveys(detail).map(s => <li key={s.phase}><span>{s.label}</span>{s.done ? <span className="cs-status cs-status--done">제출 완료</span> : <Link className="cs-button" to={`/growth/program/${detail.id}/survey/${s.phase}`} onClick={()=>setDetail(null)}>응답하기 <Icon name="arrow"/></Link>}</li>)}</ul></section>}
     <button type="button" className="cs-button" onClick={()=>setDetail(null)}>확인</button></div>}</Modal>
   </div>
 }

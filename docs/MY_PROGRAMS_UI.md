@@ -1,6 +1,6 @@
 # 학생 비교과 현황
 
-대상: `/v2/mypage/programs`. 2026-09-21 실제 데이터 연결.
+대상: `/v2/growth/program/status`(2026-10-22 `/v2/mypage/programs` 에서 이동). 2026-09-21 실제 데이터 연결.
 
 - 예시 8개 삭제. `GET /api/v1/programs/mine?page=1&pageSize=100`을 사용한다. 서버 인증 학생의 `program_apply.student_uid`로 범위를 제한한다. 다른 학생 ID를 입력하는 계약은 없다. 교직원 요청은 403.
 - 기존 정규화된 `dc.program`과 `dc.program_apply`, 학생별 `program_apply_student` 인덱스를 재사용한다. 신규 테이블/마이그레이션은 필요 없다. 관리자의 선발·이수 기록과 학생의 신청·취소가 기존 저장 API를 통해 같은 테이블에 반영된다.

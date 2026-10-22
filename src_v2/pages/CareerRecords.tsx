@@ -35,7 +35,7 @@ export default function CareerRecords() {
     <section className="dr-card">
       <h2>상담·참여 기록</h2>
       <p><Link to="/counsel/record">상담 기록 보기</Link></p>
-      <p><Link to="/mypage/programs">비교과 참여 기록 보기</Link></p>
+      <p><Link to="/growth/program/status">비교과 참여 기록 보기</Link></p>
       <p><Link to="/mypage/applications">채용 지원 기록 보기</Link></p>
     </section>
     <section className="dr-card">

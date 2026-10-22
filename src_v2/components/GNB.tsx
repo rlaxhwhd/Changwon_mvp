@@ -67,7 +67,7 @@ export default function GNB() {
   const activeId = activeStudent.id
   // 라운지 하위메뉴는 그 페이지의 카드로 가는 앵커다 — 카드가 감춰지면 메뉴도 같이 빠져야 한다.
   const stageAccess = getStageAccess(getPipelineState(activeStudent))
-  const myPagePath = activeStudent.grade >= 4 ? '/mypage/portfolio' : '/mypage/programs'
+  const myPagePath = activeStudent.grade >= 4 ? '/mypage/portfolio' : '/mypage/applications'
 
   const [profileOpen, setProfileOpen] = useState(false)
   const [logoutError, setLogoutError] = useState('')

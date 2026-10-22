@@ -21,7 +21,7 @@ export default function ProgramParticipationActions({ participation: p, notice =
       : <span className={`cs-status cs-status--${tone}`}>{label}</span>}
     {pending.map(s => <Link key={s.phase}
       className={notice ? 'jd-apply-btn' : 'program-survey-action'}
-      to={`/mypage/programs/${encodeURIComponent(p.id)}/survey/${s.phase}`}>
+      to={`/growth/program/${encodeURIComponent(p.id)}/survey/${s.phase}`}>
       {surveyLabels[s.phase]}
     </Link>)}
   </div>

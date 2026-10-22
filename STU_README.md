@@ -118,7 +118,7 @@ index.html  ──(meta refresh)──▶  /v2
 | 라우트 | 페이지 | 내용 |
 |---|---|---|
 | `/mypage/portfolio` | Portfolio | 포트폴리오 (스킬·자격증·어학·자소서·이력서·프로젝트) |
-| `/mypage/programs` | MyPrograms | 비교과프로그램 신청 현황 |
+| `/growth/program/status` | MyPrograms | 비교과프로그램 신청 현황 (2026-10-22 마이페이지에서 이동) |
 | `/mypage/attendance` | Attendance | 출석 기록 (일일미션 TOEIC 10단어 정·오답) |
 
 ### 🔁 하위 호환 리다이렉트
