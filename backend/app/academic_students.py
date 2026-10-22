@@ -49,6 +49,41 @@ ROSTER = '''WITH service AS MATERIALIZED (
 )'''
 
 
+def roster_query(diagnosed=False):
+    """Diagnosis filters need identity/type/STAR, not per-student activity totals."""
+    if not diagnosed:
+        return ROSTER
+    academic = ROSTER[ROSTER.index('), roster AS ('):]
+    return '''WITH diagnosed_students AS MATERIALIZED (
+      SELECT DISTINCT student_uid AS intg_uid FROM dc.diagnosis_attempt
+      WHERE status_code IN ('DONE','REVIEW','INCOMPLETE')
+    ), academic_population AS MATERIALIZED (
+      SELECT a.* FROM dc.student_login_source a JOIN diagnosed_students d USING(intg_uid)
+    ), service AS MATERIALIZED (
+      SELECT s.intg_uid,t.student_type,c.label AS type_label,c.tier_label AS tier,
+        0 AS progress,0 AS program_count,0 AS counsel_count,false AS has_roadmap,
+        st.student_uid IS NOT NULL AS star
+      FROM diagnosed_students ds JOIN dc.student s USING(intg_uid)
+      LEFT JOIN dc.current_student_type t ON t.student_uid=s.intg_uid
+      LEFT JOIN dc.student_type_code c ON c.code=t.student_type
+      LEFT JOIN dc.star_track st ON st.student_uid=s.intg_uid
+    ''' + academic.replace('FROM dc.student_login_source a', 'FROM academic_population a')
+
+
+# Applied only after pagination (or selection for export), in the same SQL snapshot.
+PAGE_METRICS = '''LEFT JOIN LATERAL (
+  SELECT COALESCE(v.progress,0) AS progress,COALESCE(v.has_roadmap,false) AS has_roadmap,
+    COALESCE(v.counsel_count,0) AS counsel_count,
+    COALESCE(v.program_count,0) + (SELECT count(*) FROM dc.student_program_history h
+      WHERE h.intg_uid=p.intg_uid AND h.completed AND NOT EXISTS(
+        SELECT 1 FROM dc.program_apply a WHERE a.student_uid=h.intg_uid AND a.program_id=h.program_id)) AS program_count
+  FROM dc.student_list v WHERE v.intg_uid=p.intg_uid
+) metrics ON true'''
+
+
+RETAKE_PENDING = "EXISTS(SELECT 1 FROM dc.diagnosis_retake q WHERE q.student_uid=roster.intg_uid AND q.status='PENDING')"
+
+
 def authorize(conn, user):
     require_staff(user)
     if not conn.execute(MENU_PREDICATE, ('students.1', user['intg_uid'], user['intg_uid'])).fetchone()['ok']:
@@ -63,7 +98,7 @@ def filters(request, q):
     if request.query_params.get('filters.diagnosed') == 'Y':
         where.append("EXISTS(SELECT 1 FROM dc.diagnosis_attempt a WHERE a.student_uid=roster.intg_uid AND a.status_code IN ('DONE','REVIEW','INCOMPLETE'))")
     if request.query_params.get('filters.retakePending') == 'Y':
-        where.append("EXISTS(SELECT 1 FROM dc.diagnosis_retake q WHERE q.student_uid=roster.intg_uid AND q.status='PENDING')")
+        where.append(RETAKE_PENDING)
     contact = request.query_params.get('filters.contact')
     if contact in STAGES:
         where.append('intg_uid IN (' + CONTACT_CTE + ' SELECT intg_uid FROM contact WHERE ' + STAGES[contact] + ')')
@@ -98,22 +133,20 @@ def filters(request, q):
 @router.get('/academic-students/metadata')
 def metadata(diagnosed: bool = False, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
     authorize(conn, user)
-    roster = ROSTER
-    if diagnosed:
-        roster = ROSTER.replace('), roster AS (', '), all_roster AS (') + ''', roster AS (
-          SELECT * FROM all_roster r WHERE EXISTS(SELECT 1 FROM dc.diagnosis_attempt a
-          WHERE a.student_uid=r.intg_uid AND a.status_code IN ('DONE','REVIEW','INCOMPLETE')))'''
+    roster = roster_query(diagnosed)
+    pending = RETAKE_PENDING if diagnosed else 'false'
     row = conn.execute(roster + f''' SELECT count(*) AS total,
       count(*) FILTER(WHERE tier='하위') AS "focusCount",
       count(*) FILTER(WHERE {HIGH}) AS "highRiskCount",
       count(*) FILTER(WHERE {CORE}) AS "coreCareCount",count(*) FILTER(WHERE star) AS "starCount",count(*) FILTER(WHERE {PARTICIPANT}) AS "care7Count",
+      count(*) FILTER(WHERE {pending}) AS "retakePendingCount",
       ARRAY(SELECT major_label FROM roster GROUP BY major_label ORDER BY major_label) AS majors,
       ARRAY(SELECT college_name FROM roster WHERE college_name IS NOT NULL GROUP BY college_name ORDER BY college_name) AS colleges,
       ARRAY(SELECT grade FROM roster WHERE grade IS NOT NULL GROUP BY grade ORDER BY grade) AS grades,
       ARRAY(SELECT student_type FROM roster WHERE student_type IS NOT NULL GROUP BY student_type ORDER BY student_type) AS types,
       ARRAY(SELECT tier FROM roster WHERE tier IS NOT NULL GROUP BY tier ORDER BY tier) AS tiers,
       ARRAY(SELECT status FROM roster GROUP BY status ORDER BY status) AS statuses FROM roster''').fetchone()
-    return {'summary': {k: row[k] for k in ('total','focusCount','highRiskCount','coreCareCount','starCount','care7Count')},
+    return {'summary': {k: row[k] for k in ('total','focusCount','highRiskCount','coreCareCount','starCount','care7Count','retakePendingCount')},
             'options': {k: row[k] or [] for k in ('majors','colleges','grades','types','tiers','statuses')}}
 
 
@@ -123,12 +156,18 @@ def students(request: Request, page: int = Query(1, ge=1), pageSize: int = Query
              conn=Depends(connection, scope='function')):
     authorize(conn, user)
     condition, values = filters(request, q)
+    diagnosed = request.query_params.get('filters.diagnosed') == 'Y'
+    items = 'to_jsonb(p)'
+    joins = ''
+    if diagnosed:
+        joins = PAGE_METRICS
+        items = "to_jsonb(p) || jsonb_build_object('progress',COALESCE(metrics.progress,0),'has_roadmap',COALESCE(metrics.has_roadmap,false),'program_count',COALESCE(metrics.program_count,0),'counsel_count',COALESCE(metrics.counsel_count,0))"
     # Count and page share one snapshot; ties remain stable between pages.
-    result = conn.execute(ROSTER + f''', filtered AS MATERIALIZED (
+    result = conn.execute(roster_query(diagnosed) + f''', filtered AS MATERIALIZED (
       SELECT * FROM roster WHERE {condition}
-    ), paged AS (SELECT * FROM filtered ORDER BY name NULLS LAST,student_no,intg_uid LIMIT %s OFFSET %s)
+    ), paged AS MATERIALIZED (SELECT * FROM filtered ORDER BY name NULLS LAST,student_no,intg_uid LIMIT %s OFFSET %s)
     SELECT (SELECT count(*) FROM filtered) AS total,
-      COALESCE((SELECT jsonb_agg(to_jsonb(p) ORDER BY name NULLS LAST,student_no,intg_uid) FROM paged p),'[]'::jsonb) AS items''',
+      COALESCE((SELECT jsonb_agg({items} ORDER BY p.name NULLS LAST,p.student_no,p.intg_uid) FROM paged p {joins}),'[]'::jsonb) AS items''',
       [*values, pageSize, (page-1)*pageSize]).fetchone()
     readable = {r['student_uid'] for r in conn.execute('''SELECT student_uid FROM dc.staff_student_scope
       WHERE staff_uid=%s AND student_uid=ANY(%s) UNION SELECT student_uid FROM dc.counsel_request
@@ -156,12 +195,17 @@ def export(request: Request, body: StudentExportSelection, q: str = Query('', ma
     condition, values = filters(request, q)
     condition += ' AND intg_uid = ANY(%s)'
     values.append(list(dict.fromkeys(body.ids)))
+    diagnosed = request.query_params.get('filters.diagnosed') == 'Y'
+    counts = 'COALESCE(metrics.counsel_count,0) AS counsel_count,COALESCE(metrics.program_count,0) AS program_count' if diagnosed else 'p.counsel_count,p.program_count'
     # Export selected matching rows, independent of the current page. Server cursor and
     # spooled ZIP keep the full roster out of application memory.
     with conn.cursor(name='academic_student_export') as cursor:
-        cursor.execute(ROSTER + f''' SELECT student_no,name,college_name,major_label,academic_level,
-          grade,status,sex,graduation_month,gpa,type_label,counsel_count,program_count
-          FROM roster WHERE {condition} ORDER BY name NULLS LAST,student_no,intg_uid''', values)
+        cursor.execute(roster_query(diagnosed) + f''', selected AS MATERIALIZED (
+          SELECT * FROM roster WHERE {condition}
+        ) SELECT p.student_no,p.name,p.college_name,p.major_label,p.academic_level,
+          p.grade,p.status,p.sex,p.graduation_month,p.gpa,p.type_label,{counts}
+          FROM selected p {PAGE_METRICS if diagnosed else ''}
+          ORDER BY p.name NULLS LAST,p.student_no,p.intg_uid''', values)
         output = workbook(['학번','이름','대학','학과','학부/대학원','학년','학적','성별','졸업년월',
                            '학점','진단 유형','완료 상담횟수(현재 시스템)','비교과 이수(현재 시스템)'],
                           (row.values() for row in cursor))

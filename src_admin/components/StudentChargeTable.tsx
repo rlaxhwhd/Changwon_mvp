@@ -220,8 +220,8 @@ export default function StudentChargeTable({
         <span className="admin-focus-filter-label">학생 분류</span>
         <button
           type="button"
-          className={`admin-focus-btn${focus ? '' : ' is-on'}`}
-          onClick={() => { setSearchParams(new URLSearchParams(), { replace: true }); setPage(1) }}
+          className={`admin-focus-btn${focus || retakePending ? '' : ' is-on'}`}
+          onClick={() => { setSearchParams(new URLSearchParams(), { replace: true }); setRetakePending(false); setPage(1) }}
         >
           전체 <em>{summary.total}</em>
         </button>
@@ -239,6 +239,17 @@ export default function StudentChargeTable({
             </button>
           </span>
         ))}
+        {diagnosis && <span className="admin-focus-slot">
+          <i className="admin-focus-sep" aria-hidden="true" />
+          <button
+            type="button"
+            className={`admin-focus-btn is-sky${retakePending ? ' is-on' : ''}`}
+            aria-pressed={retakePending}
+            onClick={() => { setRetakePending(value => !value); setPage(1) }}
+          >
+            재검사 요청 대기 <em>{summary.retakePendingCount ?? 0}</em>
+          </button>
+        </span>}
       </div>
 
       {/* 필터/검색 — 옵션은 전체 조회 집합에서 파생 */}
@@ -321,9 +332,9 @@ export default function StudentChargeTable({
       </form>
 
       <div className="admin-toolbar">
-        {diagnosis && <label><input type="checkbox" checked={retakePending} onChange={e => { setRetakePending(e.target.checked); setPage(1) }} /> 재검사 요청 대기만 보기</label>}
         <span className="admin-toolbar-count">
           검색 결과 {totalCount}명
+          {retakePending && <span className="admin-toolbar-filter"><LuFilter /> 재검사 요청 대기만 보는 중</span>}
           {/* 걸린 필터를 결과 줄에도 적는다 — 인원이 갑자기 줄어든 이유가 보여야 한다.
               경고색(집중관리 배지)을 쓰지 않는다. 핵심관리대상은 경고가 아니다. */}
           {focus && <span className="admin-toolbar-filter">
@@ -446,7 +457,7 @@ export default function StudentChargeTable({
       </section>
       {selectedAcademic && <StudentDetailModal studentId={selectedAcademic.id} role={getActiveUser().role}
         onClose={() => setSelectedAcademic(null)} />}
-      {diagnosisStudent && <DiagnosisManagementModal student={diagnosisStudent} onClose={() => { setDiagnosisStudent(null); refetch() }} />}
+      {diagnosisStudent && <DiagnosisManagementModal student={diagnosisStudent} onClose={() => { setDiagnosisStudent(null); refetch(); setMetadataRetry(n => n + 1) }} />}
     </div>
   )
 }
