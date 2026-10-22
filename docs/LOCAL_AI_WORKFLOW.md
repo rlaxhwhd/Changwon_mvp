@@ -1,5 +1,13 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-10-22 사용자 요청: 진단 조회 필터 이전 이미지로 로컬 복원
+
+- 현재 이미지를 제외한 최신 보관 API·웹 `psych-pages-20261021`로 복원했다. 실행 이미지 ID는 API `c5c59bed5bcb`, 웹 `8da0f35a3175`; 애플리케이션 소스(`backend/app`, `src_admin`, `src_v2`)는 `74e6a1b`와 일치한다. 이 이미지 기준으로 맞추면서 이후 emSign 패치 및 개인 활동 화면 변경도 되돌렸다.
+- 기존 커밋은 로컬 `backup/before-image-rollback-20261022` 브랜치, 미커밋 진단 필터 및 미완료 빌드/조회 수정은 `backup: diagnosis filter and unfinished build fixes before requested image rollback 20261022` Git stash에 보관했다. 기존 API·웹·RAG 이미지는 `before-rollback-20261022` 태그로 보관했다.
+- 재빌드 없이 보관 이미지를 실행하는 `npm run docker:up -- --no-build` 경로를 추가했다. DB 백업·마이그레이션 확인 절차는 유지한다. 이번 백업은 `_workspace/db-backups/local-before-migrate-20261022061938397.dump`; 기존 DB와 볼륨을 유지했고 서버에는 배포하지 않았다.
+- 로컬 API·웹·DB·RAG·SearXNG healthy. Chrome `localhost:8080/admin/diagnosis/manage`에서 기존 재검사 대기 체크박스 확인, 메타데이터 HTTP 200/334ms/464B 및 목록 HTTP 200/357ms/4298B, 콘솔 오류·경고 없음. 이는 복원 직후 관측치이며 이전 쿼리의 간헐적 타임아웃까지 해결됐다는 의미는 아니다.
+- Atlas 기억 도구는 이 세션에서 제공되지 않아 공유 기억 조회·저장을 수행하지 못했다.
+
 ## 2026-10-21 누적 심리상담 화면 배포
 
 - 공유 기억 대신 원격 Git을 fetch해 `origin/dev=74e6a1b`를 확인했다. 직전 `4606ba6` 이후 `3276d3f`, `65e0d93`, `fd99f96`, `74e6a1b` 전체를 API·웹 `psych-pages-20261021`로 배포하고140·141을 적용했다. 화면 정렬, 심리상담 전용 메뉴·검사 신청·추가 신청·상담일지 및 홈 검사 신청 카드를 포함한다.

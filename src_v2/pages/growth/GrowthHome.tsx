@@ -35,12 +35,6 @@ const text = (content: Record<string, unknown>, field: string): string =>
 
 const dateOf = (entry: GrowthEntry): string => entry.occurredOn ?? entry.dateText ?? ''
 
-// 일자가 명시된 기존 기간만 날짜 선택기에 채운다. 월 단위 기록에 임의의 일자를 붙이지 않는다.
-function periodDates(period: string): { startDate: string; endDate: string } {
-  const match = /^(\d{4}-\d{2}-\d{2})\s*~\s*(\d{4}-\d{2}-\d{2})$/.exec(period.trim())
-  return { startDate: match?.[1] ?? '', endDate: match?.[2] ?? '' }
-}
-
 function toProject(entry: GrowthEntry): Project {
   return { id: entry.id, title: entry.title, role: text(entry.content, 'role'),
            period: text(entry.content, 'periodText'), description: text(entry.content, 'description'),
@@ -65,11 +59,11 @@ interface EditorState {
 }
 
 const EDITOR_LABEL: Record<EditorKind, string> = {
-  project: '활동', skill: '스킬', qualification: '자격·어학',
+  project: '프로젝트', skill: '스킬', qualification: '자격·어학',
 }
 
 export default function GrowthHome() {
-  usePageHead('나의 성장 기록', '개인 활동, 보유 기술, 자격·어학과 활동 경험을 기록해 포트폴리오를 준비합니다.')
+  usePageHead('나의 성장 기록', '프로젝트, 보유 기술, 자격·어학과 활동 경험을 기록해 포트폴리오를 준비합니다.')
   useMetadata()
   const skillCategories = catalogOptions('GROWTH_SKILL_CATEGORY')
   const skillOptions = catalogOptions('GROWTH_SKILL_OPTION').filter(item => skillCategories.some(category => category.code === catalogText(item, 'categoryCode')))
@@ -102,7 +96,7 @@ export default function GrowthHome() {
 
   const openCreate = (kind: EditorKind) => {
     const defaults: Record<EditorKind, Record<string, string>> = {
-      project: { title: '', role: '', startDate: '', endDate: '', period: '', description: '', stack: '', result: '' },
+      project: { title: '', role: '', period: '', description: '', stack: '', result: '' },
       skill: { name: '', category: skillCategories[0]?.code ?? '', level: '3' },
       qualification: { qualificationKind: 'CERTIFICATE', title: '', detail: '', date: '', scoreText: '', language: '', certificateNumber: '', description: '' },
     }
@@ -113,7 +107,7 @@ export default function GrowthHome() {
   const openEdit = (kind: EditorKind, index: number) => {
     if (kind === 'project') {
       const item = projects[index]
-      setEditor({ kind, index, fields: { title: item.title, role: item.role, period: item.period, ...periodDates(item.period),
+      setEditor({ kind, index, fields: { title: item.title, role: item.role, period: item.period,
                                          description: item.description, stack: item.stack.join(', '),
                                          result: item.result } })
     } else if (kind === 'skill') {
@@ -147,10 +141,6 @@ export default function GrowthHome() {
     event.preventDefault()
     if (!editor || saving) return
     const { kind, index, fields } = editor
-    if (kind === 'project' && (!fields.startDate || !fields.endDate || fields.endDate < fields.startDate)) {
-      setError('활동 시작일과 종료일을 확인해 주세요. 종료일은 시작일보다 빠를 수 없습니다.')
-      return
-    }
     setSaving(true); setError('')
     // 자기신고다(source_kind=SELF_REPORTED). 서버는 verified 같은 권한 필드를 받지 않는다.
     const write = (input: Parameters<typeof createGrowthEntry>[1], rows: GrowthEntry[]) =>
@@ -160,7 +150,7 @@ export default function GrowthHome() {
     try {
       if (kind === 'project') {
         await write({ kind: 'PROJECT', title: fields.title.trim(),
-                    content: { role: fields.role.trim(), periodText: `${fields.startDate} ~ ${fields.endDate}`,
+                    content: { role: fields.role.trim(), periodText: fields.period.trim(),
                                description: fields.description.trim(), result: fields.result.trim(),
                                stack: fields.stack.split(',').map(item => item.trim()).filter(Boolean) } },
                    projectRows)
@@ -218,15 +208,15 @@ export default function GrowthHome() {
       <section className="gh-portfolio-grid" aria-label="개인 성장 기록">
         <article className="gh-card gh-projects">
           <header className="gh-card-head">
-            <div><span className="gh-section-kicker">PERSONAL ACTIVITIES</span><h2>개인 활동</h2><p>활동을 나열하지 않고 내가 맡은 역할과 결과가 보이도록 정리했습니다.</p></div>
-            <div className="gh-head-actions"><span className="gh-count">{projects.length}개</span><button type="button" className="gh-add-btn" onClick={() => openCreate('project')}><i className="fa-solid fa-plus" /> 활동 등록</button></div>
+            <div><span className="gh-section-kicker">SELECTED WORK</span><h2>대표 프로젝트와 성과</h2><p>활동을 나열하지 않고 내가 맡은 역할과 결과가 보이도록 정리했습니다.</p></div>
+            <div className="gh-head-actions"><span className="gh-count">{projects.length}개</span><button type="button" className="gh-add-btn" onClick={() => openCreate('project')}><i className="fa-solid fa-plus" /> 프로젝트 등록</button></div>
           </header>
           <div className="gh-project-list">
             {projects.map((project, index) => (
               <section className="gh-project" key={project.id}>
                 {/* 띠에는 제목이 들어간다. 그림 아이콘은 프로젝트마다 index 로 골라 박아 둔
                     것이라(등록한 세 번째 프로젝트부터는 고를 것도 없었다) 걷어냈다. */}
-                <div className={`gh-project-visual tone-${index + 1}`}><span>ACTIVITY 0{index + 1}</span><h3>{project.title}</h3></div>
+                <div className={`gh-project-visual tone-${index + 1}`}><span>PROJECT 0{index + 1}</span><h3>{project.title}</h3></div>
                 <div className="gh-project-body">
                   <div className="gh-project-meta"><span>{project.period}</span><b>{project.result}</b></div>
                   <div className="gh-item-actions"><button type="button" onClick={() => openEdit('project', index)} aria-label={`${project.title} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('project', index, project.title)} aria-label={`${project.title} 삭제`}><i className="fa-regular fa-trash-can" /></button></div>
@@ -235,7 +225,7 @@ export default function GrowthHome() {
                 </div>
               </section>
             ))}
-            {projects.length === 0 && <p className="gh-empty">등록된 개인 활동이 없습니다. 첫 활동을 추가해 보세요.</p>}
+            {projects.length === 0 && <p className="gh-empty">등록된 프로젝트가 없습니다. 첫 프로젝트를 추가해 보세요.</p>}
           </div>
         </article>
 
@@ -267,7 +257,7 @@ export default function GrowthHome() {
         </article>
 
         <article className="gh-card gh-archive">
-          <header className="gh-card-head"><div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>진단, 상담, 로드맵 이행, 비교과, 자격·개인 활동 등록이 자동으로 기록됩니다.</p></div></header>
+          <header className="gh-card-head"><div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>진단, 상담, 로드맵 이행, 비교과, 자격·프로젝트 등록이 자동으로 기록됩니다.</p></div></header>
           <ActivityTimeline items={activity.items} error={activity.error} />
         </article>
 
@@ -293,16 +283,12 @@ export default function GrowthHome() {
             <fieldset disabled={saving} className="gh-editor-fields">
             {editor.kind === 'project' && (
               <>
-                <label><span>활동명</span><input required maxLength={200} placeholder="예: 지역 상권 분석, 동아리 운영, 봉사 활동" value={editor.fields.title} onChange={event => updateField('title', event.target.value)} /></label>
-                <label><span>담당 역할</span><input required maxLength={200} placeholder="예: 팀장, 데이터 분석, 기구 설계" value={editor.fields.role} onChange={event => updateField('role', event.target.value)} /></label>
-                <div className="gh-form-row" role="group" aria-label="활동 기간">
-                  <label><span>활동 시작일</span><input required type="date" max={editor.fields.endDate || undefined} value={editor.fields.startDate} onChange={event => updateField('startDate', event.target.value)} /></label>
-                  <label><span>활동 종료일</span><input required type="date" min={editor.fields.startDate || undefined} value={editor.fields.endDate} onChange={event => updateField('endDate', event.target.value)} /></label>
-                </div>
-                {editor.fields.period && !periodDates(editor.fields.period).startDate && <p className="gh-period-hint">기존 활동 기간: {editor.fields.period}. 수정하려면 시작일과 종료일을 선택해 주세요.</p>}
+                <GrowthCatalogPicker label="프로젝트 예시" options={catalogOptions('GROWTH_PROJECT_EXAMPLE')} onPick={item => updateField('title', item.label)} />
+                <label><span>프로젝트명</span><input required maxLength={200} placeholder="예: 지역 상권 매출 분석 프로젝트" value={editor.fields.title} onChange={event => updateField('title', event.target.value)} /></label>
+                <div className="gh-form-row"><label><span>담당 역할</span><input required maxLength={200} placeholder="예: 팀장, 데이터 분석, 기구 설계" value={editor.fields.role} onChange={event => updateField('role', event.target.value)} /></label><label><span>활동 기간</span><input required placeholder="2026.03 ~ 2026.06" value={editor.fields.period} onChange={event => updateField('period', event.target.value)} /></label></div>
                 <label><span>성과</span><input required placeholder="수상, 배포, 사용자 수 등" value={editor.fields.result} onChange={event => updateField('result', event.target.value)} /></label>
                 <label><span>사용 기술</span><input required placeholder="React, TypeScript, Figma" value={editor.fields.stack} onChange={event => updateField('stack', event.target.value)} /><small>쉼표로 구분해 주세요.</small></label>
-                <label><span>활동 설명</span><textarea required maxLength={10000} placeholder="목표·문제 → 내가 맡은 역할과 행동 → 결과 → 배운 점 순서로 작성해 보세요." rows={4} value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
+                <label><span>프로젝트 설명</span><textarea required maxLength={10000} placeholder="목표·문제 → 내가 맡은 역할과 행동 → 결과 → 배운 점 순서로 작성해 보세요." rows={4} value={editor.fields.description} onChange={event => updateField('description', event.target.value)} /></label>
               </>
             )}
             {editor.kind === 'skill' && (

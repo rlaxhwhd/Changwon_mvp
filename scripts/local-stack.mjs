@@ -4,6 +4,8 @@ import { randomBytes } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 
 const command = process.argv[2] ?? 'up'
+// Explicit rollback: use locally tagged images while retaining backup/migration steps.
+const noBuild = process.argv.includes('--no-build')
 if (!['up', 'down', 'logs', 'ps', 'migrate'].includes(command)) throw new Error('Unknown local-stack command')
 const envFile = '.env.docker.local'
 if (!existsSync(envFile)) throw new Error('Run npm run docker:bootstrap first.')
@@ -22,7 +24,7 @@ if (ai && ['up', 'migrate'].includes(command)) {
   }
 }
 if (['up', 'migrate'].includes(command)) {
-  compose(['build', 'api', ...(command === 'up' ? ['web', ...(ai ? ['rag', 'searxng'] : [])] : [])])
+  if (!noBuild) compose(['build', 'api', ...(command === 'up' ? ['web', ...(ai ? ['rag'] : [])] : [])])
   compose(['up', '-d', '--wait', 'db'])
   const stamp = new Date().toISOString().replace(/[^0-9]/g, '')
   const backup = `/tmp/local-before-migrate-${stamp}.dump`
@@ -31,6 +33,6 @@ if (['up', 'migrate'].includes(command)) {
   compose(['cp', `db:${backup}`, `_workspace/db-backups/local-before-migrate-${stamp}.dump`])
   // Never reseed an existing database during a routine code update.
   compose(['--profile', 'bootstrap', 'run', '--rm', '--no-deps', 'bootstrap', 'python', '-m', 'app.migrate'])
-  if (command === 'up') compose(['up', '-d', '--wait', '--wait-timeout', '240'])
+  if (command === 'up') compose(['up', '-d', ...(noBuild ? ['--no-build', '--pull', 'never'] : []), '--wait', '--wait-timeout', '240'])
 } else if (command === 'logs') compose(['logs', '--tail', '100', '-f'])
 else compose([command])

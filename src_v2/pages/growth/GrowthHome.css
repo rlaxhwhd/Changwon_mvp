@@ -149,7 +149,6 @@
 .gh-editor-form label { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
 .gh-editor-form label > span { color: var(--gh-text); font-size: 12px; font-weight: 800; }
 .gh-editor-form label > small { color: var(--gh-sub); font-size: 12px; }
-.gh-period-hint { margin: 0; color: var(--gh-sub); font-size: 12px; line-height: 1.6; }
 .gh-editor-form input, .gh-editor-form select, .gh-editor-form textarea { width: 100%; border: 1px solid var(--gh-border); border-radius: 9px; background: #fff; color: var(--gh-text); font: inherit; font-size: 12px; outline: none; }
 .gh-editor-form input, .gh-editor-form select { height: 42px; padding: 0 12px; }
 .gh-editor-form textarea { padding: 11px 12px; resize: vertical; line-height: 1.6; }
