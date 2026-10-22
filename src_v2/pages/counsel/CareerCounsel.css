@@ -177,7 +177,7 @@
   position: absolute;
   z-index: -1;
   inset: 0;
-  background: url('/care7+2.png') center 48% / 106% 148% no-repeat;
+  background: url('/care7+2.png') center 48% / calc(106% + 1px) 148% no-repeat;
   pointer-events: none;
 }
 
