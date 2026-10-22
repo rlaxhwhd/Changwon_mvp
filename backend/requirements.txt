@@ -3,6 +3,7 @@ uvicorn==0.52.4
 psycopg[binary,pool]==3.3.5
 pydantic-settings==2.15.0
 httpx>=0.27,<1
+certifi>=2026.10.19
 nh3==0.3.7
 Pillow==12.3.0
 pypdf==6.19.0

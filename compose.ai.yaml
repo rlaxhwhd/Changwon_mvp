@@ -64,7 +64,8 @@ services:
       timeout: 5s
       retries: 6
   searxng:
-    image: searxng/searxng@sha256:a07a5cd2da2c63d66e559f9e4d3a3db106cfc6c32fb0ac70abe91cc28bcd7350
+    image: dreamcatch-searxng:local
+    build: ./deploy/searxng
     restart: unless-stopped
     user: "977:977"
     read_only: true

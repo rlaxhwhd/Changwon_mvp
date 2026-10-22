@@ -22,7 +22,7 @@ if (ai && ['up', 'migrate'].includes(command)) {
   }
 }
 if (['up', 'migrate'].includes(command)) {
-  compose(['build', 'api', ...(command === 'up' ? ['web', ...(ai ? ['rag'] : [])] : [])])
+  compose(['build', 'api', ...(command === 'up' ? ['web', ...(ai ? ['rag', 'searxng'] : [])] : [])])
   compose(['up', '-d', '--wait', 'db'])
   const stamp = new Date().toISOString().replace(/[^0-9]/g, '')
   const backup = `/tmp/local-before-migrate-${stamp}.dump`
