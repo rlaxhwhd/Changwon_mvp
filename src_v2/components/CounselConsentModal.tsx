@@ -7,11 +7,20 @@ import './CounselConsentModal.css'
 /** 동의서 서식 — 진로취업(취업전략센터)과 심리상담·심리검사(학생상담센터)가 다르다. */
 export type ConsentForm = 'career' | 'psych'
 
+/** 신청과 함께 서버에 남는 동의 기록(dc.counsel_consent, 146). 문구를 바꾸면 version 을 서버
+ *  backend/app/counsel_consent.py FORMS 와 함께 올린다. */
+export interface CounselConsent {
+  form: 'CAREER' | 'PSYCH'
+  version: string
+  answers: Record<string, 'yes' | 'no'>
+  signature: string
+}
+
 interface Props {
   open: boolean
   onClose: () => void
   /** 동의 완료 후 다음 단계로 진행 (오프라인은 예약 모달, 온라인은 바로 신청) */
-  onAgree: () => void
+  onAgree: (consent: CounselConsent) => void
   /** 신청자 이름 (기본: 현재 활성 학생) */
   applicantName?: string
   /** 기본은 진로취업 상담 동의서 */
@@ -28,6 +37,8 @@ interface ConsentItem {
 }
 
 interface ConsentFormContent {
+  code: CounselConsent['form']
+  version: string
   title: string
   items: ConsentItem[]
   info?: React.ReactNode
@@ -36,6 +47,8 @@ interface ConsentFormContent {
 }
 
 const CAREER: ConsentFormContent = {
+  code: 'CAREER',
+  version: '2026-10-26',
   title: '상담 신청 동의서',
   items: [
     {
@@ -141,6 +154,8 @@ const CAREER: ConsentFormContent = {
 
 // 학생상담센터 [붙임 9] 상담 및 개인정보 수집·이용 동의서 원문(2026-10-26 사용자 제공).
 const PSYCH: ConsentFormContent = {
+  code: 'PSYCH',
+  version: '2026-10-26',
   title: '상담 및 개인정보 수집·이용 동의서',
   items: [
     {
@@ -312,7 +327,10 @@ export default function CounselConsentModal({ open, onClose, onAgree, applicantN
 
   const handleSubmit = () => {
     if (!canSubmit) return
-    onAgree()
+    onAgree({
+      form: content.code, version: content.version, signature: signature.trim(),
+      answers: Object.fromEntries(content.items.map(item => [item.id, answers[item.id] ?? 'no'])) as CounselConsent['answers'],
+    })
   }
 
   return (

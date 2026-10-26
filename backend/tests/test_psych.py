@@ -3,7 +3,7 @@ from datetime import date
 from concurrent.futures import ThreadPoolExecutor
 from uuid import uuid4
 
-from test_api import headers
+from test_api import consent, headers
 
 
 def psych_body():
@@ -89,7 +89,8 @@ def apply_psych_test(client, code='MBTI'):
         for hour in range(9, 18):
             body = {'type': '심리', 'typeCode': 'PSY', 'topic': '검사를 받고 싶습니다', 'topicCode': code,
                     'assignedCounselorId': 'psych_lee',
-                    'slot': {'date': day.isoformat(), 'start': f'{hour:02d}:00', 'end': f'{hour + 1:02d}:00', 'place': '심리상담센터'}}
+                    'slot': {'date': day.isoformat(), 'start': f'{hour:02d}:00', 'end': f'{hour + 1:02d}:00', 'place': '심리상담센터'},
+                    'consent': consent('PSYCH')}
             response = client.post('/api/v1/counsel-requests', headers={**headers('jiwoo'), 'Idempotency-Key': str(uuid4())}, json=body)
             if response.status_code == 201:
                 return response.json()
@@ -103,7 +104,7 @@ def test_psych_test_application_result_completes_request(client):
     # 심리 신청의 검사 종류는 PSYCH_TEST_KIND 에서만 고른다(진로 상담 주제 코드는 거부).
     bad = client.post('/api/v1/counsel-requests', headers={**headers('jiwoo'), 'Idempotency-Key': str(uuid4())},
                       json={'type': '심리', 'typeCode': 'PSY', 'topic': 'x', 'topicCode': 'A01', 'assignedCounselorId': 'psych_lee',
-                            'slot': {**created['slot'], 'place': ''}})
+                            'slot': {**created['slot'], 'place': ''}, 'consent': consent('PSYCH')})
     assert bad.status_code == 422
     listing = client.get('/api/v1/psych-tests/requests', params={'testCode': 'MBTI', 'pageSize': 100}, headers=headers('psych_lee'))
     assert listing.status_code == 200, listing.text

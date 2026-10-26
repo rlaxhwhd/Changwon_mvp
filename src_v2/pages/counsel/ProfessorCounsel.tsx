@@ -4,7 +4,7 @@ import { useCounselWeek } from '../../hooks/useCounselWeek'
 import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
-import CounselConsentModal from '../../components/CounselConsentModal'
+import CounselConsentModal, { type CounselConsent } from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import CounselTabs from '../../components/CounselTabs'
 import { findDefaultSelection, type DepartmentGroup } from '../../data/professors'
@@ -64,6 +64,7 @@ function ProfessorCounselForm({ professorGroups }: { professorGroups: Department
   const [notice, setNotice] = useState('')
   const [reserveOpen, setReserveOpen] = useState(false)
   const [consentOpen, setConsentOpen] = useState(false)
+  const [consent, setConsent] = useState<CounselConsent | null>(null)
   const [consentMode, setConsentMode] = useState<CounselMode>('online')
   const [onlineSubject, setOnlineSubject] = useState('학업 및 진로 상담')
   const activeProfessor = professors.find(professor => professor.id === selectedProfessorId) ?? professors[0]
@@ -118,11 +119,13 @@ function ProfessorCounselForm({ professorGroups }: { professorGroups: Department
     setConsentOpen(true)
   }
 
-  const handleConsentAgree = async () => {
+  const handleConsentAgree = async (agreed: CounselConsent) => {
+    setConsent(agreed)
     setConsentOpen(false)
     if (consentMode === 'online') {
       try {
       await submitProfessorCounselRequest({
+        consent: agreed,
         professorId: activeProfessor.id,
         topic: `${onlineSubject}: ${onlineContent || onlineTopic}`,
         method: '비대면',
@@ -325,8 +328,10 @@ function ProfessorCounselForm({ professorGroups }: { professorGroups: Department
         room={activeProfessor.room}
         phone="055-213-3500"
         onSubmit={async purpose => {
+          if (!consent) throw new Error('상담 신청 동의서에 먼저 동의해 주세요.')
           if (selectedSlot) {
             await submitProfessorCounselRequest({
+              consent,
               professorId: activeProfessor.id,
               topic: purpose,
               method: '대면',

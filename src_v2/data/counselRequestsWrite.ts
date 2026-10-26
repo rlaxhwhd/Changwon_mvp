@@ -11,6 +11,7 @@ import { api } from '../../shared/api'
 import { performCounselAction, storeCounselRequest, type StoredCounselRequest } from '../../shared/counselStore'
 import type { CounselMethod, CounselRequestType } from './students'
 import type { CareTrack } from './counselTrack'
+import type { CounselConsent } from '../components/CounselConsentModal'
 
 export interface SubmitCounselInput {
   /** 상담 유형 — 호출 페이지가 지정 (CareerCounsel → 진로취업 / PsychCounsel → 심리) */
@@ -30,6 +31,8 @@ export interface SubmitCounselInput {
   time: string
   /** 대면 장소 (slot.place) */
   place?: string
+  /** 신청 전에 받은 동의서 응답 — 서버가 신청과 함께 저장한다 */
+  consent: CounselConsent
 }
 
 export interface SubmitProfCounselInput {
@@ -45,6 +48,8 @@ export interface SubmitProfCounselInput {
   time?: string
   /** 오프라인 연구실 또는 비대면 안내 장소다. */
   place?: string
+  /** 신청 전에 받은 동의서 응답 — 서버가 신청과 함께 저장한다 */
+  consent: CounselConsent
 }
 
 /** 'HH:mm' → 1시간 뒤 'HH:mm' (상담 슬롯은 1시간 단위). */
@@ -80,6 +85,7 @@ export async function submitCounselRequest(input: SubmitCounselInput): Promise<v
     ...(input.desiredCompany ? { desiredCompany: input.desiredCompany } : {}),
     assignedCounselorId: input.counselorId,
     slot: { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place ?? '' },
+    consent: input.consent,
   })
 }
 
@@ -90,6 +96,7 @@ export async function submitProfessorCounselRequest(input: SubmitProfCounselInpu
     slot: input.slotDate && input.time
       ? { date: input.slotDate, start: input.time, end: oneHourLater(input.time), place: input.place ?? '' }
       : null,
+    consent: input.consent,
   })
 }
 

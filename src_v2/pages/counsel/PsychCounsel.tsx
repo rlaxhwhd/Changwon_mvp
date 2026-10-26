@@ -4,7 +4,7 @@ import { useCounselWeek } from '../../hooks/useCounselWeek'
 import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useState } from 'react'
 import CounselReserveModal from '../../components/CounselReserveModal'
-import CounselConsentModal from '../../components/CounselConsentModal'
+import CounselConsentModal, { type CounselConsent } from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import CounselTabs from '../../components/CounselTabs'
 import CounselWeekCard from '../../components/CounselWeekCard'
@@ -53,6 +53,7 @@ export default function PsychCounsel({ mode = 'counsel' }: { mode?: 'counsel' | 
   const [notice, setNotice] = useState('')
   const [reserveOpen, setReserveOpen] = useState(false)
   const [consentOpen, setConsentOpen] = useState(false)
+  const [consent, setConsent] = useState<CounselConsent | null>(null)
 
   // 고른 칸은 요일 키(mon~fri)로 맞춘다 — 주를 넘기면 다른 주의 같은 요일이 선택돼 보이지 않게 비운다.
   const moveWeek = (go: () => void) => { setSelectedSlot(null); setSelectedCounselor(''); go() }
@@ -85,7 +86,8 @@ export default function PsychCounsel({ mode = 'counsel' }: { mode?: 'counsel' | 
     setConsentOpen(true)
   }
 
-  const handleConsentAgree = () => {
+  const handleConsentAgree = (agreed: CounselConsent) => {
+    setConsent(agreed)
     setConsentOpen(false)
     setReserveOpen(true)
   }
@@ -285,7 +287,9 @@ export default function PsychCounsel({ mode = 'counsel' }: { mode?: 'counsel' | 
         room="학생생활관 1층 심리상담센터"
         phone="055-213-2025"
         onSubmit={async purpose => {
+          if (!consent) throw new Error('상담 신청 동의서에 먼저 동의해 주세요.')
           await submitCounselRequest({
+            consent,
             type: '심리',
             purpose,
             topicCode: testMode ? testCode : undefined,

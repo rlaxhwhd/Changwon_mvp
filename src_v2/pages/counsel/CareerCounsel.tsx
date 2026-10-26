@@ -5,7 +5,7 @@ import { slotAvailable } from '../../../shared/counselOperationsStore'
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import CounselReserveModal from '../../components/CounselReserveModal'
-import CounselConsentModal from '../../components/CounselConsentModal'
+import CounselConsentModal, { type CounselConsent } from '../../components/CounselConsentModal'
 import IapSummaryBanner from '../../components/IapSummaryBanner'
 import CounselTabs from '../../components/CounselTabs'
 import CounselWeekCard from '../../components/CounselWeekCard'
@@ -64,6 +64,7 @@ export default function CareerCounsel() {
   const [notice, setNotice] = useState('')
   const [reserveOpen, setReserveOpen] = useState(false)
   const [consentOpen, setConsentOpen] = useState(false)
+  const [consent, setConsent] = useState<CounselConsent | null>(null)
   // 이번에 연 예약 모달에서 실제로 신청까지 갔는지 — 취소로 닫은 경우와 구분한다.
   const [submitted, setSubmitted] = useState(false)
 
@@ -83,7 +84,8 @@ export default function CareerCounsel() {
     setConsentOpen(true)
   }
 
-  const handleConsentAgree = () => {
+  const handleConsentAgree = (agreed: CounselConsent) => {
+    setConsent(agreed)
     setConsentOpen(false)
     setReserveOpen(true)
   }
@@ -395,7 +397,9 @@ export default function CareerCounsel() {
           desc: '상담사가 신청 내용을 확인한 뒤 일정을 확정합니다. 확정 결과는 마이페이지 상담현황에서 볼 수 있습니다.',
         }}
         onSubmit={async (purpose, topicCode, desiredCompany) => {
+          if (!consent) throw new Error('상담 신청 동의서에 먼저 동의해 주세요.')
           await submitCounselRequest({
+            consent,
             topicCode,
             desiredCompany,
             type: '진로취업',

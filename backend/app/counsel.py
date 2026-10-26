@@ -14,6 +14,7 @@ from .db import connection
 from .gates import COUNSEL_TYPE_CODE, diagnosis_gate, is_care7_request
 from .counsel_template import CounselTemplate, validate_template_scope, validate_completed_template, template_storage
 from .psych_journal import PsychJournal, psych_storage, validate_completed_psych, validate_psych_scope
+from .counsel_consent import Consent, store_consent, validate_consent
 
 router=APIRouter()
 LABELS={'REQ':'대기','CONFIRMED':'확정','DONE':'완료','NO_SHOW':'불참','CANCEL_UNKNOWN':'취소','CANCEL_STU':'취소','CANCEL_CNS':'취소'}
@@ -53,6 +54,8 @@ class CreateRequest(BaseModel):
     intake: list[IntakeAnswer]=Field(default_factory=list,max_length=30)
     # CARE 7+ 신청에서만 받는 선택 입력. 빈 문자열은 미입력으로 본다.
     desiredCompany: str | None=Field(default=None,max_length=200)
+    # 신청 화면의 동의서 응답(146) — 학생 신청에 필수. 신청 행의 source_payload 에는 넣지 않는다.
+    consent: Consent | None=None
 
 
 class Action(BaseModel):
@@ -200,6 +203,7 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
             raise HTTPException(409,'같은 요청 키로 다른 내용을 저장할 수 없습니다.')
         return saved['response']
     student=student_access(conn,user,user['intg_uid'])
+    validate_consent(body.type,body.consent)
     assignee=resolve_assignee(conn,body.assignedCounselorId or body.assignedProfessorId,body.type)
     if body.type=='진로취업' and body.careTrack not in ('general','care7'):
         raise HTTPException(422,'일반 상담 또는 CARE 7+를 선택해 주세요.')
@@ -242,7 +246,8 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
       (request_id,user['intg_uid'],assignee['intg_uid'],body.typeCode or COUNSEL_TYPE_CODE[body.type],body.type,body.careTrack,
        'ONLINE' if body.method=='비대면' else 'OFFLINE',body.topic,body.topicCode,body.slot.date if body.slot else None,
        body.slot.start if body.slot else None,body.slot.end if body.slot else None,body.slot.place if body.slot else None,
-       Jsonb([a.model_dump() for a in body.intake]),Jsonb(snapshot),Jsonb(body.model_dump(mode='json')),desired_company))
+       Jsonb([a.model_dump() for a in body.intake]),Jsonb(snapshot),Jsonb(body.model_dump(mode='json',exclude={'consent'})),desired_company))
+    store_consent(conn,request_id,user['intg_uid'],body.consent)
     conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',(request_id,user['intg_uid'],'REQUESTED',Jsonb({})))
     result=dto(get_request(conn,user,request_id))
     conn.execute('INSERT INTO dc.idempotency(actor_uid,route,key,request_hash,response) VALUES (%s,%s,%s,%s,%s)',

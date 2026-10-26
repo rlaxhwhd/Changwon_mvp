@@ -17,7 +17,7 @@ from fastapi import HTTPException
 from app.db import pool
 from app.jobs import JOB_CONTENT_MAX_CHARS, PostingBody, PostingUpdate, plus_one_month
 from pydantic import ValidationError
-from test_api import headers
+from test_api import consent, headers
 from security_fixtures import pdf_bytes
 
 
@@ -127,7 +127,7 @@ def test_care_gate_for_counsel_still_works_after_extraction(client):
     day = (datetime.now() + timedelta(days=40)).date().isoformat()
     body = {'type': '진로취업', 'careTrack': 'care7', 'method': '대면', 'topic': 'gate check',
             'assignedCounselorId': 'career_kim', 'topicCode': 'A01',
-            'slot': {'date': day, 'start': '09:00', 'end': '10:00', 'place': 'T'}}
+            'slot': {'date': day, 'start': '09:00', 'end': '10:00', 'place': 'T'}, 'consent': consent()}
     # jiwoo 는 확정 유형이 없다 → 유형 확정 요구로 거절된다.
     refused = client.post('/api/v1/counsel-requests', headers={**headers('jiwoo'), **key()}, json=body)
     assert refused.status_code == 409 and '유형' in refused.json()['detail']

@@ -11,13 +11,19 @@ def headers(identity):
     return {'X-DC-Identity':identity,'X-DC-Token':Path(settings.development_token_file).read_text().strip()}
 
 
+def consent(form='CAREER'):
+    # 신청 화면의 동의서 응답(146) — 학생 신청에 필수다.
+    from app.counsel_consent import FORMS
+    return {'form':form,'version':FORMS[form]['version'],'answers':{k:'yes' for k in FORMS[form]['items']},'signature':'테스트'}
+
+
 def request_body(offset=0,care='general'):
     # Match the seeded counselor's Monday/Wednesday/Friday availability.
     base=(datetime.now()+timedelta(days=30)).date()
     days=[base+timedelta(days=n) for n in range(365) if (base+timedelta(days=n)).weekday() in (0,2,4)]
     day=days[offset].isoformat()
     return {'type':'진로취업','careTrack':care,'method':'대면','topic':'Integration test',
-            'assignedCounselorId':'career_kim','slot':{'date':day,'start':'14:00','end':'15:00','place':'Test'}}
+            'assignedCounselorId':'career_kim','slot':{'date':day,'start':'14:00','end':'15:00','place':'Test'},'consent':consent()}
 
 
 def test_storage_and_scope(client):
