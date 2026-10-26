@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { api } from '../../shared/api'
-import { loadNotices } from '../../shared/communicationsStore'
 import { NOTICE_CATEGORIES, NOTICE_CATEGORY_LABEL, type Notice } from '../../src_v2/data/notices'
 
 type Row = Notice & { version: number }
@@ -13,7 +12,7 @@ export default function NoticeManagement({ rows, saved }: { rows: Row[]; saved: 
   const run = async (action: () => Promise<unknown>) => {
     if (saving) return
     setSaving(true); setError('')
-    try { await action(); await loadNotices(); setEditing(null); saved() }
+    try { await action(); setEditing(null); saved() }
     catch (e) { setError((e as Error).message) }
     finally { setSaving(false) }
   }

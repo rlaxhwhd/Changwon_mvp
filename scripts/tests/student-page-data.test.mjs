@@ -71,21 +71,42 @@ test('unauthenticated boot redirects before any feature fetch', async () => {
   assert.deepEqual(calls, [['redirect', '/login']])
 })
 
-test('admin bootstrap retains its role-scoped data loads', async () => {
+test('admin bootstrap loads only data every staff page reads', async () => {
   const staff = { id: 'staff-test', role: 'career', departments: [] }
   const { exports, calls, storage, context } = moduleUnderTest('shared/bootstrap.ts', {
     './api:api': async path => { assert.equal(path, '/development/identities'); return { students: [], staff: [staff] } },
-    './jobStore:jobCapability': () => ({ canManageApplicants: true }),
-    './roadmapStore:roadmapCapability': () => ({ canManageRequests: true }),
   })
   context.location.pathname = '/admin/diagnosis/manage'
   storage.set('dc_active_staff', staff.id)
   await exports.initializeData()
-  for (const name of ['loadPrograms', 'loadPostings', 'loadStaffDirectory', 'loadStudentRoster', 'loadSchedule', 'loadGroups', 'loadPsychTests', 'loadRoadmapRequests']) {
+  for (const name of ['loadProfiles', 'loadCounselRequests', 'loadCounselRecords', 'loadMetadata', 'loadCounselorProfiles', 'loadNotificationSummary']) {
     assert.ok(calls.some(c => c[0] === name), name)
   }
+  // 화면 전용 자료는 라우트 로더(src_admin/data/staffPageData.ts)가 받는다(2026-10-26).
+  for (const name of ['loadPrograms', 'loadPostings', 'loadApplications', 'loadRoadmapRequests', 'loadSchedule', 'loadGroups',
+    'loadStudentRoster', 'loadCounselEvents', 'loadDepartments', 'loadNotices', 'loadProfessorGroups', 'loadStudentDiagnoses']) {
+    assert.ok(!calls.some(c => c[0] === name), name)
+  }
+})
+
+test('staff route loader respects role and capability before calling guarded lists', async () => {
+  let role = 'career'
+  let canManage = true
+  const { exports, calls } = moduleUnderTest('src_admin/data/staffPageData.ts', {
+    './staff:getActiveUser': () => ({ id: 'staff-test', role, departments: [] }),
+    '../../shared/jobStore:jobCapability': () => ({ canManageApplicants: canManage }),
+  })
+  await exports.staffPageLoader(['career'], 'jobs', 'applications')()
+  assert.ok(calls.some(c => c[0] === 'loadPostings'))
   assert.deepEqual(calls.find(c => c[0] === 'loadApplications'), ['loadApplications', 'managed'])
-  assert.ok(!calls.some(c => c[0] === 'loadStudentDiagnoses'))
+  calls.length = 0
+  canManage = false
+  await exports.staffPageLoader(['career'], 'applications')()
+  assert.ok(calls.some(c => c[0] === 'loadCapability') && !calls.some(c => c[0] === 'loadApplications'))
+  calls.length = 0
+  role = 'psych'
+  await exports.staffPageLoader(['career'], 'jobs', 'applications')()
+  assert.deepEqual(calls, [], 'the role guard redirects; the loader must not fetch first')
 })
 
 test('program list route loads programs and wishlist, never jobs, resumes or slots', async () => {

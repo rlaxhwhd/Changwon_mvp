@@ -6,7 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { StaffUser } from './schema/staff'
 import { getAssignedDeptNames } from './deptAssigns'
-import { activeStaffDetail, directoryStaff } from '../../shared/staffDirectoryStore'
+import { activeStaffDetail } from '../../shared/staffDirectoryStore'
 
 /** 교수 = 교직원 공통 신원 + 교수 도메인 필드 */
 export interface Professor extends StaffUser {
@@ -19,7 +19,8 @@ export interface Professor extends StaffUser {
 
 export function getProfessorById(id: string | undefined): Professor | undefined {
   if (!id) return undefined
-  return (activeStaffDetail?.id === id ? activeStaffDetail : directoryStaff.find(p => p.role === 'professor' && p.id === id)) as Professor | undefined
+  // 본인 상세만 적재한다 — 호출자도 로그인한 교수 본인의 id 만 넘긴다(professorProfiles).
+  return (activeStaffDetail?.id === id ? activeStaffDetail : undefined) as Professor | undefined
 }
 
 /**

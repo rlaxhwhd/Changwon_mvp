@@ -88,12 +88,6 @@ export interface DiagnosisStatusRow {
 
 
 
-const retakeRows: DiagnosisStatusRow[] = []
-export function getRetakeRows(_departments: string[]): DiagnosisStatusRow[] { return retakeRows }
-export async function loadRetakeNotifications() {
-  const response = await api<Paginated<DiagnosisStatusRow>>('/diagnosis/status?filters.retake=Y&pageSize=100')
-  retakeRows.splice(0,retakeRows.length,...response.items)
-}
 
 export interface DiagnosisStatusParams extends ListParams {
   departments?: string[]

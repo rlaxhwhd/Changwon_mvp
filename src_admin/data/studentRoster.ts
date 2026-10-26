@@ -71,36 +71,24 @@ export interface RosterMetadata {
   options: { majors: string[]; colleges?: string[]; grades: number[]; types: StudentType[]; tiers: RosterTier[]; statuses: EnrollStatus[] }
   summary: { total: number; focusCount: number; highRiskCount: number; coreCareCount: number; starCount: number; care7Count: number; retakePendingCount?: number }
 }
-export interface RosterDistribution {
-  total: number
-  groups: { key: string | null; label: string; count: number; avgProgress: number }[]
-  risk: { base: number; high: number; core: number; star: number }
-}
 const emptyMetadata: RosterMetadata = {
   options: { majors: [], grades: [], types: [], tiers: [], statuses: [] },
   summary: { total: 0, focusCount: 0, highRiskCount: 0, coreCareCount: 0, starCount: 0, care7Count: 0 },
 }
 const metadataCache = new Map<string, RosterMetadata>()
-const distributionCache = new Map<string, RosterDistribution>()
 export const rosterScopeKey = (departments: string[] = [], studentIds?: string[]) =>
   JSON.stringify([[...departments].sort(), studentIds === undefined ? null : [...studentIds].sort()])
+/** 화면이 읽는 범위만 — 담당 학과 전체와 학과 하나씩. 학과가 없을 때만 전체([])를 쓴다. */
 export function rosterScopes(departments: string[]): string[][] {
-  return [...new Map([[], departments, ...departments.map(d => [d])].map(scope => [rosterScopeKey(scope), scope])).values()]
+  const scopes = departments.length ? [departments, ...departments.map(d => [d])] : [[]]
+  return [...new Map(scopes.map(scope => [rosterScopeKey(scope), scope])).values()]
 }
 export async function loadStudentRoster(departments: string[] = []): Promise<void> {
-  byId.clear(); metadataCache.clear(); distributionCache.clear()
+  byId.clear(); metadataCache.clear()
   await Promise.all(rosterScopes(departments).map(async scope => {
-    const [metadata, distribution] = await Promise.all([
-      fetchRosterMetadata(scope),
-      api<RosterDistribution>(`/students/summary?${queryString({ departments: scope, groupBy: 'type' })}`),
-    ])
-    metadataCache.set(rosterScopeKey(scope), metadata)
-    distributionCache.set(rosterScopeKey(scope), distribution)
+    metadataCache.set(rosterScopeKey(scope), await fetchRosterMetadata(scope))
   }))
   window.dispatchEvent(new Event(ROSTER_EVENT))
-}
-export function getRosterDistribution(departments: string[]): RosterDistribution {
-  return distributionCache.get(rosterScopeKey(departments)) ?? { total: 0, groups: [], risk: { base: 0, high: 0, core: 0, star: 0 } }
 }
 export async function loadRosterStudent(studentId: string): Promise<RosterStudent | undefined> {
   const result = await queryStudentRoster({ studentIds: [studentId], pageSize: 1 })

@@ -6,18 +6,11 @@ import { codeItems, factorDefinitions, METADATA_EVENT } from './metadataStore'
 import { applyProcessMetadata, DIAGNOSIS_MODULES } from '../src_v2/data/careerProcess'
 import { loadStudentDiagnoses } from './diagnosisStore'
 import { loadCounselRequests, loadCounselRecords } from './counselStore'
-import { loadStudentRoster } from '../src_admin/data/studentRoster'
-import { loadAdvisorAssigns } from '../src_admin/data/advisorAssigns'
-import { loadProfessorCounselStats } from '../src_admin/data/profCounselRecords'
-import { loadPrograms } from './programStore'
-import { jobCapability, loadApplications, loadCapability, loadPostings } from './jobStore'
 import { loadProfiles, setStudentChoices, type StudentChoice } from './profileStore'
-import { loadRoadmap, loadRoadmapCapability, loadRoadmapRequests, roadmapCapability } from './roadmapStore'
-import { counselorProfiles, loadCounselorProfiles, loadSchedule, loadGroups } from './counselOperationsStore'
+import { loadRoadmap } from './roadmapStore'
+import { counselorProfiles, loadCounselorProfiles } from './counselOperationsStore'
 import type { Counselor } from '../src_admin/data/schema/counselor'
-import { loadNotices, loadNotificationSummary, loadCounselEvents } from './communicationsStore'
-import { loadDepartments } from './departmentStore'
-import { loadProfessorGroups, loadStaffDirectory } from './staffDirectoryStore'
+import { loadNotificationSummary } from './communicationsStore'
 
 export async function initializeData(): Promise<void> {
   const applyMetadata = () => {
@@ -59,30 +52,13 @@ export async function initializeData(): Promise<void> {
     if (!first) throw new Error('등록된 학생 계정이 없습니다.')
     localStorage.setItem('dc_active_student', first.id)
   }
-  if (!admin || localStorage.getItem('dc_active_staff')) {
-    const activeStaff = admin ? localStorage.getItem('dc_active_staff') ?? undefined : undefined
-    const staff = identities.staff.find(s => s.id === activeStaff)
-    const departments: string[] = staff && 'departments' in staff && Array.isArray(staff.departments)
-      ? staff.departments.filter((item): item is string => typeof item === 'string') : []
+  if (localStorage.getItem('dc_active_staff')) {
+    // 부팅은 모든 화면이 쓰는 것만 받는다(2026-10-26) — 상단바 메뉴·알림 배지, 그리고
+    // 여러 화면의 학생 상세 모달이 함께 읽는 학생 프로필·상담 신청·상담 기록·상담사 프로필.
+    // 비교과·채용공고·지원·로드맵 요청·일정·집단상담·학과 등 화면 전용 자료는
+    // 그 화면의 라우트 로더(src_admin/data/staffPageData.ts)가 받는다.
     await Promise.all([loadProfiles(), loadCounselRequests(), loadCounselRecords(), loadMetadata(),
-                       loadPrograms(), loadPostings(), loadCapability(), loadRoadmapCapability(),
-                       loadCounselorProfiles(), loadNotices(), loadNotificationSummary(), loadCounselEvents(),
-                       loadDepartments(), loadProfessorGroups(), ...(admin ? [loadStaffDirectory(activeStaff), loadStudentRoster(departments),
-                         ...(staff && ['assistant', 'professor'].includes(staff.role)
-                           ? [loadAdvisorAssigns(departments), loadProfessorCounselStats(departments)] : [])] : [])])
+                       loadCounselorProfiles(), loadNotificationSummary()])
     applyMetadata()
-    // 채용의 개인 자료(지원·찜·자소서)는 학생 본인 것만 서버가 내려준다.
-    // 교직원은 담당 범위의 지원만 받는다 — 관리 권한이 없으면 그 목록도 없다.
-    if (admin) {
-      const staffId = localStorage.getItem('dc_active_staff')!
-      const staff = identities.staff.find(s => s.id === staffId)
-      if (staff && ['career', 'psych', 'professor'].includes(staff.role)) await loadSchedule(staffId)
-      if (staff && ['career', 'psych'].includes(staff.role)) await loadGroups()
-      if (jobCapability().canManageApplicants) await loadApplications('managed')
-      // 변경 요청함은 진로상담사 전용이다(menu roadmap.1). 가드 없이 부르면 교수·조교·
-      // 심리상담사·시스템관리자의 부팅이 403 으로 끊긴다 — 화면 전체가 사용 불가가 된다.
-      // 배지는 서버 summary 를 읽는다. 전체 목록을 받아 세지 않는다.
-      if (roadmapCapability().canManageRequests) await loadRoadmapRequests()
-    }
   }
 }

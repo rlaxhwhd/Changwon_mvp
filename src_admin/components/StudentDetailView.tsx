@@ -1,6 +1,7 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
 import { ApiError } from '../../shared/api'
 import { loadStudentProfile } from '../../shared/profileStore'
+import { loadPrograms } from '../../shared/programStore'
 import type { CSSProperties, ReactNode } from 'react'
 import { fetchAcademicStudentDetail, academicStudentStats, type AcademicStudentDetail } from '../data/academicStudents'
 import type { IconType } from 'react-icons'
@@ -451,7 +452,17 @@ function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentDa
 // ── 탭 ④: 비교과 프로그램 ──────────────────────────────────────────────────
 
 function ProgramTab({ studentId, academicRecords }: { studentId: string; academicRecords?: AcademicStudentDetail['programs'] }) {
-  const summary = useMemo(() => getStudentPrograms(studentId), [studentId])
+  // 비교과 전체 목록은 부팅에서 받지 않는다 — 학사 기록이 없는 학생의 이 탭을 열 때만 받는다(2026-10-26).
+  const [loaded, setLoaded] = useState<{ id: string; error: string } | null>(null)
+  useEffect(() => {
+    if (academicRecords) return
+    let alive = true
+    loadPrograms().then(
+      () => { if (alive) setLoaded({ id: studentId, error: '' }) },
+      (e: unknown) => { if (alive) setLoaded({ id: studentId, error: e instanceof Error ? e.message : '비교과 목록을 불러오지 못했습니다.' }) })
+    return () => { alive = false }
+  }, [studentId, academicRecords])
+  const summary = useMemo(() => getStudentPrograms(studentId), [studentId, loaded])
 
   if (academicRecords) return <section data-slot="card">
     <CardHead title="비교과 활동" desc="현재 연결된 비교과 신청·이수 기록입니다." />
@@ -460,6 +471,8 @@ function ProgramTab({ studentId, academicRecords }: { studentId: string; academi
       <tbody>{academicRecords.map(p => <tr key={p.id}><td>{p.title}</td><td>{p.date}</td><td>{p.completed?'이수':'미이수'}</td></tr>)}</tbody>
     </table></div> : <p className="sdv-empty">비교과 활동 없음</p>}</div>
   </section>
+  if (!loaded || loaded.id !== studentId) return <p className="sdv-empty" role="status">비교과 신청 내역을 불러오는 중입니다…</p>
+  if (loaded.error) return <p className="sdv-empty" role="alert">{loaded.error}</p>
 
   return (
     <div className="dashboard-grid">

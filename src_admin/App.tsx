@@ -60,6 +60,8 @@ import ProfessorCounselStats from './pages/ProfessorCounselStats'
 import ProfessorHome from './pages/ProfessorHome'
 import NotReady from './pages/NotReady'
 import { getActiveUser } from './data/staff'
+import { staffPageLoader } from './data/staffPageData'
+import PageDataError from './components/PageDataError'
 import type { StaffRole } from './data/schema/staff'
 
 /** 로그인 게이트 — 지금은 통과시킨다.
@@ -107,11 +109,14 @@ const router = createBrowserRouter(
     { path: '/login', element: <Login /> },
     {
       element: <RequireLogin />,
+      // 화면 전용 자료는 라우트 로더가 받는다(staffPageData) — 실패하면 빈 화면 대신 다시 시도.
+      errorElement: <PageDataError />,
+      hydrateFallbackElement: <div className="admin-page" role="status">화면을 불러오는 중…</div>,
       children: [
         // 인쇄면 — 레이아웃(GNB·사이드바) 밖에 두어 화면 그대로가 인쇄물이 된다.
         // 다건(?ids=)을 :recordId 보다 먼저 둔다 — 'print'가 id로 잡히지 않게.
-        { path: '/counsel/records/print', element: <CounselRecordPrint /> },
-        { path: '/counsel/records/:recordId/print', element: <CounselRecordPrint /> },
+        { path: '/counsel/records/print', loader: staffPageLoader(['career', 'psych'], 'counselEvents'), element: <CounselRecordPrint /> },
+        { path: '/counsel/records/:recordId/print', loader: staffPageLoader(['career', 'psych'], 'counselEvents'), element: <CounselRecordPrint /> },
         {
           element: <Layout />,
           children: [
@@ -125,7 +130,7 @@ const router = createBrowserRouter(
               children: [
                 { path: '/systems', element: <Navigate to="/system" replace /> },
                 { path: '/blacklists', element: <Navigate to="/blacklists/programs" replace /> },
-                { path: '/blacklists/programs', element: <ProgramBlacklist /> },
+                { path: '/blacklists/programs', loader: staffPageLoader(['admin'], 'departments'), element: <ProgramBlacklist /> },
                 { path: '/blacklists/sms', element: <SmsBlacklist /> },
                 { path: '/programs/blacklist', element: <Navigate to="/blacklists/programs" replace /> },
                 { path: '/quests/missions', element: <MissionManagement /> },
@@ -159,13 +164,13 @@ const router = createBrowserRouter(
             {
               element: <RequireRole roles={['career', 'psych']} />,
               children: [
-                { path: '/counsel/requests', element: <CounselRequests /> },
+                { path: '/counsel/requests', loader: staffPageLoader(['career', 'psych'], 'counselEvents', 'schedule'), element: <CounselRequests /> },
                 { path: '/counsel/psych-referrals', element: <PsychReferrals /> },
                 { path: '/counsel/sessions', element: <CounselSessions /> },
                 { path: '/counsel/session/:studentId', element: <CounselSession /> },
                 { path: '/counsel/journals', element: <CounselJournals /> },
                 { path: '/counsel/records', element: <CounselHistory /> },
-                { path: '/counsel/groups', element: <GroupCounsels /> },
+                { path: '/counsel/groups', loader: staffPageLoader(['career', 'psych'], 'groups'), element: <GroupCounsels /> },
                 { path: '/counsel/stats', element: <CounselStats /> },
                 { path: '/diagnosis/status', element: <DiagnosisStatus /> },
                 { path: '/diagnosis/manage', element: <DiagnosisManagement /> },
@@ -173,7 +178,7 @@ const router = createBrowserRouter(
                 // '/students/all' 은 반드시 ':id' 보다 위에 — 아래로 내려가면 id='all' 로 잡힌다.
                 { path: '/students/all', element: <StudentAll /> },
                 { path: '/students/:id', element: <StudentDetail /> },
-                { path: '/settings/availability', element: <SettingsAvailability /> },
+                { path: '/settings/availability', loader: staffPageLoader(['career', 'psych'], 'schedule'), element: <SettingsAvailability /> },
               ],
             },
 
@@ -192,34 +197,34 @@ const router = createBrowserRouter(
             {
               element: <RequireRole roles={['career']} />,
               children: [
-                { path: '/roadmap/requests', element: <RoadmapRequests /> },
-                { path: '/roadmap/progress', element: <RoadmapProgress /> },
+                { path: '/roadmap/requests', loader: staffPageLoader(['career'], 'roadmapRequests'), element: <RoadmapRequests /> },
+                { path: '/roadmap/progress', loader: staffPageLoader(['career'], 'departments'), element: <RoadmapProgress /> },
                 // ⚠ '/roadmap/create' 는 반드시 ':studentId' 보다 위에 — 아래로 내려가면
                 //   studentId='create' 인 학생을 찾다가 「찾을 수 없습니다」로 떨어진다.
                 { path: '/roadmap/create', element: <RoadmapCreate /> },
                 { path: '/roadmap/:studentId', element: <RoadmapEditor /> },
-                { path: '/jobs', element: <JobList scope="internal" /> },
-                { path: '/jobs/external', element: <JobList scope="external" /> },
+                { path: '/jobs', loader: staffPageLoader(['career'], 'jobs', 'applications'), element: <JobList scope="internal" /> },
+                { path: '/jobs/external', loader: staffPageLoader(['career'], 'jobs', 'applications'), element: <JobList scope="external" /> },
                 { path: '/jobs/new', element: <JobForm /> },
                 // 고정 경로는 ':id' 보다 위에 — 아래로 내려가면 id='manage' 로 잡힌다.
-                { path: '/jobs/manage', element: <JobManage /> },
+                { path: '/jobs/manage', loader: staffPageLoader(['career'], 'jobs', 'applications'), element: <JobManage /> },
                 // 지원자관리는 :id/edit 보다 먼저 둔다 — 'applicants'가 :id 로 먹히지 않도록.
-                { path: '/jobs/applicants', element: <JobApplicantsList /> },
-                { path: '/jobs/applicants/:jobId', element: <JobApplicants /> },
-                { path: '/jobs/:id/edit', element: <JobForm /> },
-                { path: '/jobs/:id', element: <JobView /> },
-                { path: '/programs', element: <ProgramList /> },
-                { path: '/programs/manage', element: <ProgramManage /> },
+                { path: '/jobs/applicants', loader: staffPageLoader(['career'], 'jobs', 'applications'), element: <JobApplicantsList /> },
+                { path: '/jobs/applicants/:jobId', loader: staffPageLoader(['career'], 'jobs', 'applications'), element: <JobApplicants /> },
+                { path: '/jobs/:id/edit', loader: staffPageLoader(['career'], 'jobs'), element: <JobForm /> },
+                { path: '/jobs/:id', loader: staffPageLoader(['career'], 'jobs'), element: <JobView /> },
+                { path: '/programs', loader: staffPageLoader(['career'], 'programs'), element: <ProgramList /> },
+                { path: '/programs/manage', loader: staffPageLoader(['career'], 'programs', 'departments'), element: <ProgramManage /> },
                 { path: '/programs/new', element: <ProgramForm /> },
-                { path: '/programs/:id/notice', element: <ProgramNoticeView /> },
+                { path: '/programs/:id/notice', loader: staffPageLoader(['career'], 'programs'), element: <ProgramNoticeView /> },
                 {
                   path: '/programs/:id',
                   element: <ProgramShell />,
                   children: [
                     { index: true, element: <Navigate to="edit" replace /> },
                     { path: 'edit', element: <ProgramForm /> },
-                    { path: 'applicants', element: <ProgramDetail mode="applicants" /> },
-                    { path: 'selected', element: <ProgramDetail mode="selected" /> },
+                    { path: 'applicants', loader: staffPageLoader(['career'], 'departments'), element: <ProgramDetail mode="applicants" /> },
+                    { path: 'selected', loader: staffPageLoader(['career'], 'departments'), element: <ProgramDetail mode="selected" /> },
                     { path: 'satisfaction', element: <ProgramSatisfaction /> },
                     { path: 'survey', element: <ProgramSurveyStats /> },
                   ],
@@ -241,7 +246,7 @@ const router = createBrowserRouter(
                 { path: '/professor/counsel/offline/:requestId', element: <ProfessorCounselDetail key="offline-detail" channel="offline" /> },
                 { path: '/professor/counsel/online/:requestId', element: <ProfessorCounselDetail key="online-detail" channel="online" /> },
                 { path: '/professor/counsel/stats', element: <ProfessorCounselStats /> },
-                { path: '/professor/counsel/settings', element: <ProfessorCounselSettings /> },
+                { path: '/professor/counsel/settings', loader: staffPageLoader(['professor'], 'staffDetail', 'schedule'), element: <ProfessorCounselSettings /> },
                 { path: '/professor/schedule', element: <Navigate to="/professor/counsel/settings" replace /> },
                 { path: '/professor/profile', element: <Navigate to="/professor/counsel/settings" replace /> },
               ],
@@ -252,8 +257,8 @@ const router = createBrowserRouter(
               element: <RequireRole roles={['assistant']} />,
               children: [
                 { path: '/assistant/students', element: <AssistantStudents /> },
-                { path: '/assistant/advisor', element: <AssistantAdvisor /> },
-                { path: '/assistant/advisor/records', element: <AssistantAdvisorRecords /> },
+                { path: '/assistant/advisor', loader: staffPageLoader(['assistant'], 'roster', 'advisorAssigns', 'professorGroups', 'departments'), element: <AssistantAdvisor /> },
+                { path: '/assistant/advisor/records', loader: staffPageLoader(['assistant'], 'roster', 'advisorAssigns', 'professorStats'), element: <AssistantAdvisorRecords /> },
                 { path: '/assistant/companies', element: <NotReady title="학과 추천기업 관리" /> },
               ],
             },

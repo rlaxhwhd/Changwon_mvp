@@ -34,11 +34,10 @@ ADMIN_BOOT_ROUTES = (
     '/api/v1/counsel-requests?page=1&pageSize=100',
     '/api/v1/counsel-records?page=1&pageSize=100',
     '/api/v1/metadata',
-    '/api/v1/programs?page=1&pageSize=100',
-    '/api/v1/jobs?page=1&pageSize=100',
-    '/api/v1/jobs/capabilities',
-    '/api/v1/roadmap/capabilities',
+    '/api/v1/counselor-profiles',
+    '/api/v1/notifications/summary',
 )
+# 화면 전용 자료(비교과·채용·로드맵 요청 등)는 2026-10-26 부터 라우트 로더(src_admin/data/staffPageData.ts)가 받는다.
 
 # 역할마다 한 명씩. 「진로상담사만 된다」가 아니라 **전 역할이 부팅된다**를 검증한다.
 STAFF_BY_ROLE = {'career': 'career_choi', 'psych': 'psych_han', 'professor': 'acc-1',
@@ -129,14 +128,14 @@ def test_roadmap_request_queue_is_capability_gated(client):
     assert allowed['canManageRequests'] is True and denied['canManageRequests'] is False
     # 권한 없는 역할이 실제로 부르면 403 이다 — 그래서 부르기 전에 걸러야 한다.
     assert client.get('/api/v1/roadmap-requests', headers=headers('acc-1')).status_code == 403
-    # 부팅 로더가 가드하고 있는지 소스로 확인한다. 서버만 보면 이 결함을 다시 놓친다.
-    source = io.open(ROOT / 'shared/bootstrap.ts', encoding='utf-8').read()
+    # 로더가 가드하고 있는지 소스로 확인한다. 서버만 보면 이 결함을 다시 놓친다.
+    # 2026-10-26 부터 변경 요청함은 부팅이 아니라 그 화면의 라우트 로더가 읽는다.
+    assert 'loadRoadmapRequests' not in io.open(ROOT / 'shared/bootstrap.ts', encoding='utf-8').read()
+    source = io.open(ROOT / 'src_admin/data/staffPageData.ts', encoding='utf-8').read()
     calls = [line.strip() for line in source.splitlines() if 'loadRoadmapRequests()' in line]
-    assert calls, 'bootstrap 이 변경 요청을 더 이상 읽지 않는다면 이 테스트를 함께 고쳐라'
-    admin_calls = [line for line in calls if not line.startswith('loadRoadmapRequests')]
-    assert admin_calls, '가드 없는 호출만 남았다'
-    assert any(re.search(r'roadmapCapability\(\)\.canManageRequests', line) for line in admin_calls), \
-        '교직원 부팅의 loadRoadmapRequests 호출에 capability 가드가 없다 — 전 역할이 403 으로 멈춘다'
+    assert calls, '라우트 로더가 변경 요청을 더 이상 읽지 않는다면 이 테스트를 함께 고쳐라'
+    assert all(re.search(r'roadmapCapability\(\)\.canManageRequests', line) for line in calls), \
+        '변경 요청함 로더에 capability 가드가 없다 — 권한 없는 역할이 403 으로 화면을 못 연다'
 
 
 def test_student_gate_reads_confirmed_not_merely_present(client):

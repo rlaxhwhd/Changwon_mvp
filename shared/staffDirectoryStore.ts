@@ -14,7 +14,6 @@ export interface StaffDetail extends StaffUser {
 }
 
 export const professorGroups: DepartmentGroup[] = []
-export const directoryStaff: StaffUser[] = []
 export let activeStaffDetail: StaffDetail | undefined
 
 export async function loadProfessorGroups(): Promise<void> {
@@ -22,11 +21,9 @@ export async function loadProfessorGroups(): Promise<void> {
   professorGroups.splice(0, professorGroups.length, ...rows)
 }
 
-export async function loadStaffDirectory(identity?: string): Promise<void> {
-  const roles = ['professor', 'assistant', 'career', 'psych'] as const
-  const lists = await Promise.all(roles.map(role => api<StaffUser[]>(`/staff?role=${role}`)))
-  directoryStaff.splice(0, directoryStaff.length, ...lists.flat())
-  activeStaffDetail = identity ? await api<StaffDetail>(`/staff/${identity}`) : undefined
+/** 로그인한 교직원 본인의 상세(버전·배정·상담 프로필). 역할별 명단은 읽는 화면이 없어 받지 않는다(2026-10-26). */
+export async function loadActiveStaffDetail(identity: string): Promise<void> {
+  activeStaffDetail = await api<StaffDetail>(`/staff/${encodeURIComponent(identity)}`)
 }
 
 export async function saveProfessorProfile(identity: string, patch: { accept: boolean; officeHours: string; intro: string }): Promise<void> {
@@ -35,5 +32,4 @@ export async function saveProfessorProfile(identity: string, patch: { accept: bo
     method: 'PUT', body: JSON.stringify({ expectedVersion: activeStaffDetail.version, ...patch }),
   })
   activeStaffDetail = { ...activeStaffDetail, version: result.version, officeHours: patch.officeHours, counselProfile: { ...patch } }
-  await loadProfessorGroups()
 }
