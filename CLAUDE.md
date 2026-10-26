@@ -8,13 +8,13 @@
 - 현재 사용자 지시와 최신 원본 코드·확정 문서를 우선한다. 과거 기억과 충돌하면 원본을 확인하고, 확인되지 않은 내용은 불확실하다고 표시한다. 비밀정보·인증정보·학생 개인정보는 저장하지 않는다.
 - 공유 기억 도구가 없거나 호출에 실패하면 저장·조회했다고 말하지 말고 최종 응답에 미수행 범위를 알린다. 공유 기억을 별도 기억 파일로 복제하지 않으며, 인계 문서는 사용자가 요청한 경우에만 만든다.
 
-> **모든 세션 공통 작업 원칙:** 작업 전에 루트 [AGENTS.md](AGENTS.md)를 읽고 적용한다. 불확실한 사항·분기 질문, Chrome MCP 네트워크·콘솔 검증, DB 스킬·성능 리뷰에 대한 사용자 확정 지침의 정본이다.
+> **모든 세션 공통 작업 원칙:** 작업 전에 루트 [AGENTS.md](AGENTS.md)를 읽고 적용한다. 불확실한 사항·분기 질문, 브라우저 네트워크·콘솔 검증, DB 스킬·성능 리뷰에 대한 사용자 확정 지침의 정본이다.
 
 > **★ 모든 작업은 Graft 로 시작한다** <span>(2026-10-15 사용자 확정 — Claude·Codex 공통)</span>: 코드를 찾거나 고치는 **모든 작업**에서 grep·파일 통독보다 먼저 `graft-changwon` MCP를 쓴다 — 기존 구현 찾기(`graft_find_code`), 수정 전 호출자·영향 범위(`graft_trace_calls`), 파일 구조(`graft_file_api`). 같은 체크아웃의 같은 그래프를 Codex 도 쓴다. 절차·예외(HTTP·SQL·동적 호출은 직접 검증)는 [AGENTS.md「Graft 코드 관계 탐색 및 재사용」](AGENTS.md)과 [Graft 스킬](.claude/skills/graft/SKILL.md), MCP가 안 보이면 [CLI 대체 경로](docs/GRAFT_SETUP.md).
 
 > **★ 배포는 로컬 Docker까지만** <span>(2026-10-21 사용자 확정 — 2026-10-08 「커밋·푸시까지만」 지침을 대체)</span>: 모든 작업은 검증 후 `npm run docker:up`으로 **로컬 Docker에 반영**하고 커밋·푸시한다. **CentOS 서버 배포는 하지 않는다** — 사용자가 그 작업에서 명시적으로 지시한 경우만 예외. 정본은 [AGENTS.md「개발·검증·배포 순서」](AGENTS.md).
 >
-> **★ API·DB 작업은 Chrome MCP 개발자 도구로 측정하며 설계한다** <span>(2026-10-21 사용자 확정)</span>: 구현 전에 대상 화면의 네트워크를 열어 불필요·중복 API 호출과 응답 시간·크기를 확인하고 그 근거로 설계한다. 구현 후 로컬 Docker에서 같은 동작을 재측정해 비교한다. 정본은 [AGENTS.md「2. Chrome MCP 기반 웹 검증」](AGENTS.md).
+> **★ API·DB 작업은 ego-browser 로 측정하며 설계한다** <span>(2026-10-21 사용자 확정 · 2026-10-26 Chrome → ego-browser)</span>: 구현 전에 대상 화면의 네트워크를 열어 불필요·중복 API 호출과 응답 시간·크기를 확인하고 그 근거로 설계한다. 구현 후 로컬 Docker에서 같은 동작을 재측정해 비교한다. 정본은 [AGENTS.md「2. 웹 검증」](AGENTS.md) — 도구는 아래 「웹 브라우징은 ego-browser」를 따른다.
 
 국립창원대학교 역량개발관리시스템 **드림캐치(DREAMCATCH)** — 현행 운영 시스템의 **고도화** 프로젝트.
 React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
@@ -217,7 +217,7 @@ tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
 
 ### 디자인 가드레일
 
-- 렌더 후 시각 리뷰·drift 감사 → gstack `/design-review` + `/browse`
+- 렌더 후 시각 리뷰·drift 감사 → gstack `/design-review` + ego-browser
 - 레퍼런스 참조 → MengTo/Skills(설치 아님): `~/.claude/refs/MengTo-Skills/agent-skills/`에서 해당 SKILL.md만 Read
 - `ui-ux-pro-max`·MengTo의 landing/style 생성류는 **직접 디자인 생성에 쓰지 않는다**(아이디어만, DESIGN.md 토큰으로 환원)
 
@@ -227,28 +227,26 @@ tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
 
 ## gstack
 
-`~/.claude/skills/gstack`에 설치된 스킬 모음. 이 프로젝트는 테스트 러너가 없으므로 **시각 검증·QA를 gstack에 의존한다.**
+`~/.claude/skills/gstack`에 설치된 스킬 모음. 이 프로젝트는 테스트 러너가 없으므로 **시각 검증·QA를 gstack 스킬 + ego-browser 로 한다.**
 
-### ★ 웹 브라우징은 `/browse` + chrome-devtools MCP 병행 <span>(2026-09-11)</span>
+### ★ 웹 브라우징은 ego-browser <span>(2026-10-26 사용자 확정 — 2026-09-11 「`/browse` + chrome-devtools MCP」를 대체)</span>
 
-**렌더 확인·스크린샷·QA·스크래핑·조작은 gstack `/browse` 가 기본 경로다.**
-**`mcp__plugin_ecc_chrome-devtools__*` 는 진단 전용으로 함께 쓴다** — 화면을 띄운 뒤 콘솔 오류
-(`list_console_messages`)·네트워크 요청/응답·실패(`list_network_requests`·`get_network_request`)·
-성능 트레이스(`performance_start_trace`/`stop_trace`/`analyze_insight`)·Lighthouse(`lighthouse_audit`)
-를 확인한다. 화면 검증을 「보였다」로 끝내지 말고 **콘솔 오류 0 · 실패 요청 0 · 느린 API 여부**까지 본다.
-같은 origin 이면 `evaluate_script` 안에서 숨긴 iframe 으로 여러 역할·경로를 한 번에 돌 수 있다(2026-09-11 5역할 11화면 검증 방식).
+**렌더 확인·스크린샷·QA·조작·네트워크/콘솔 진단은 모두 ego-browser(ego lite)로 한다.** 브라우저 작업 전에 `ego-browser` 스킬을 읽고,
+`ego-browser skill` 출력(설치된 버전의 사용 안내)을 따른다. 출력 끝에 `[ego-browser:skill] end of guide` 줄이 없으면 잘린 것이니 파일로 저장해 나눠 읽는다.
+화면 검증을 「보였다」로 끝내지 말고 **콘솔 오류 0 · 실패 요청 0 · 느린 API 여부**까지 본다.
+같은 origin 이면 페이지 안 스크립트로 숨긴 iframe 을 띄워 여러 역할·경로를 한 번에 돌 수 있다(2026-09-11 5역할 11화면 검증 방식).
 
-**`mcp__claude-in-chrome__*` 도구는 절대 사용하지 않는다.**
+**Chrome 계열 브라우저 도구(chrome-devtools MCP · claude-in-chrome · gstack `/browse`)는 쓰지 않는다.**
+쿠키·캐시·저장소를 지우기 전에는 스킬의 `references/clearing-state.md` 를 먼저 읽는다 — 브라우저 프로필 전체에 미칠 수 있다.
 
-> ⚠️ `_workspace` 함정 — browse/스크린샷 도구의 크롬 프로필 덤프가 vite dev를 hang시킨다.
+> ⚠️ `_workspace` 함정 — 브라우저·스크린샷 도구의 프로필 덤프가 vite dev를 hang시킨다.
 > `.gitignore`·vite `watch.ignored` mitigation을 유지할 것.
-> ⚠️ chrome-devtools MCP 가 "browser is already running" 을 내면 `chrome-devtools-mcp` 프로필을 잡은 이전 세션의 Chrome 이 남은 것이다 — 그 프로세스만 종료한다.
 
 ### 사용 가능한 스킬
 
 `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`,
 `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`,
-`/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`,
+`/land-and-deploy`, `/canary`, `/benchmark`, `/qa`,
 `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`,
 `/setup-gbrain`, `/retro`, `/investigate`, `/document-release`, `/document-generate`,
 `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`,
