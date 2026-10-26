@@ -1,7 +1,7 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
 import { LuArrowLeft, LuCheck, LuChevronRight, LuClipboardCheck, LuFileText, LuQuote, LuSquarePen, LuUserX } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getActiveCounselor, getActiveCounselorId } from '../data/counselors'
 import { handledRequestTypes } from '../data/schema/counselor'
 import {
@@ -217,6 +217,7 @@ function CounselSessionContent({ studentId }: { studentId?: string }) {
   const targetRequest = mine.find(r => r.id === targetId)
   // 완료 처리 직후 로드맵 진행 탭을 연다 — 새로고침 없이 같은 화면에서 이어진다.
   const [detailTab, setDetailTab] = useState<TabKey | undefined>()
+  const navigate = useNavigate()
   const openRoadmapTab = () => {
     setDetailTab('roadmap')
     document.querySelector('.admin-session-left')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -285,10 +286,11 @@ function CounselSessionContent({ studentId }: { studentId?: string }) {
               <LuSquarePen /> 상담 기록지
             </h2>
           </div>
-          {/* key 에 상태를 넣어 완료 직후 기록·유형 잠금을 서버에서 다시 읽고 폼을 새로 연다. */}
+          {/* key 에 상태를 넣어 완료 직후 기록·유형 잠금을 서버에서 다시 읽고 폼을 새로 연다.
+              완료 후 로드맵 탭은 진로취업만 연다 — 심리상담은 로드맵이 없으니 홈으로 돌아간다(2026-10-26). */}
           {targetRequest ? (
             <CounselRecordContext key={`${targetRequest.id}:${targetRequest.status}`} requestId={targetRequest.id}>
-              {context => <RecordForm request={targetRequest} student={student} context={context} onCompleted={openRoadmapTab} />}
+              {context => <RecordForm request={targetRequest} student={student} context={context} onCompleted={targetRequest.type === '진로취업' ? openRoadmapTab : () => navigate('/')} />}
             </CounselRecordContext>
           ) : (
             <EmptyState
