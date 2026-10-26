@@ -3,6 +3,8 @@
 .psych-referrals .admin-form-field input,
 .psych-referrals .admin-form-field select { min-height: 38px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-bg); color: var(--color-text); font: inherit; }
 .psych-referrals .admin-filterbar { margin: 16px 0; }
+.psych-referrals .referral-student { display: flex; align-items: center; gap: 8px; }
+.psych-referrals .referral-student > span { flex: 1; min-height: 38px; padding: 8px 12px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-section-bg); color: var(--color-text); font-weight: 400; }
 .psych-referrals .referral-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
 .psych-referrals .referral-table-wrap { overflow-x: auto; }
 .psych-referrals .referral-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }

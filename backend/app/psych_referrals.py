@@ -43,20 +43,7 @@ def options(user=Depends(principal, scope='function'), conn=Depends(connection, 
       'counselors': conn.execute("SELECT p.alias AS id,p.name FROM dc.staff s JOIN dc.person p USING(intg_uid) WHERE s.role_code='psych' ORDER BY p.name,p.alias").fetchall() if kind == 'career' else []}
 
 
-@router.get('/psych-referrals/students')
-def students(q: str = Query('', max_length=100), user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    if role(conn, user) != 'career':
-        raise HTTPException(403, '진로취업상담사만 연계 학생을 선택할 수 있습니다.')
-    if not q.strip():
-        return {'items': []}
-    return {'items': conn.execute('''SELECT p.alias AS id,p.name,s.student_no AS "studentNo",s.major_label AS major
-      FROM dc.student s JOIN dc.person p USING(intg_uid)
-      WHERE (strpos(p.name,%s)>0 OR strpos(s.student_no,%s)>0) AND
-      (EXISTS(SELECT 1 FROM dc.staff_student_scope x WHERE x.staff_uid=%s AND x.student_uid=s.intg_uid)
-       OR EXISTS(SELECT 1 FROM dc.counsel_request x WHERE x.counselor_uid=%s AND x.student_uid=s.intg_uid))
-      ORDER BY p.name,s.student_no LIMIT 30''', (q.strip(), q.strip(), user['intg_uid'], user['intg_uid'])).fetchall()}
-
-
+# 연계 학생 검색은 별도 API 가 없다 — 담당 학생 개념이 없어(2026-10-26) 학생 목록과 같은 GET /students 를 쓴다.
 @router.get('/psych-referrals')
 def listing(response: Response, page: int = Query(1, ge=1), status: Literal['PENDING','IN_PROGRESS','DONE','CANCELLED'] | None = None,
             user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):

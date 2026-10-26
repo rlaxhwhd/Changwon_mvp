@@ -20,6 +20,11 @@ interface StudentPickerProps {
   professorId?: string
   /** 이미 선택된 학생 id — 목록에서 '추가됨'으로 표시하고 재선택을 막는다. */
   excludeIds?: string[]
+  /** false 면 학적 상태와 무관하게 전체 학생을 조회한다. */
+  enrolledOnly?: boolean
+  pickLabel?: string
+  /** 행을 누르면 바로 고른다(한 명만 고르는 화면). */
+  pickOnRowClick?: boolean
   onPick: (student: RosterStudent) => void
   onClose: () => void
 }
@@ -29,7 +34,7 @@ interface StudentPickerProps {
  * 단독 화면인 학생 목록(`/students`)과 달리 **다른 화면에서 학생을 고를 때** 쓰는 모달이다.
  * 조회는 학생 로스터 단일소스(queryStudentRoster)를 그대로 쓴다.
  */
-export default function StudentPicker({ title = '학생 검색', departments = [], professorId, excludeIds = [], onPick, onClose }: StudentPickerProps) {
+export default function StudentPicker({ title = '학생 검색', departments = [], professorId, excludeIds = [], enrolledOnly = true, pickLabel = '추가', pickOnRowClick = false, onPick, onClose }: StudentPickerProps) {
   const [query, setQuery] = useState('')
   const [major, setMajor] = useState(ALL)
   const [grade, setGrade] = useState(ALL)
@@ -54,7 +59,7 @@ export default function StudentPicker({ title = '학생 검색', departments = [
     filters: {
       major: major === ALL ? undefined : major,
       grade: grade === ALL ? undefined : grade,
-      status: '재학',
+      status: enrolledOnly ? '재학' : undefined,
     },
   })
   const pages = totalPages(result)
@@ -62,14 +67,14 @@ export default function StudentPicker({ title = '학생 검색', departments = [
   return (
     <AdminModal title={title} size="lg" onClose={onClose}>
       {(metadataError || error) && <p role="alert">{metadataError || error?.message}</p>}
-      <p className="admin-field-hint">재학생만 조회됩니다.</p>
+      <p className="admin-field-hint">{enrolledOnly ? '재학생만 조회됩니다.' : '전체 학생에서 조회합니다.'}</p>
       <div className="admin-filterbar">
         <div className="admin-search">
           <LuSearch />
           <input
             value={query}
             onChange={event => { setQuery(event.target.value); setPage(1) }}
-            placeholder="이름·학과 검색"
+            placeholder="이름·학번·학과 검색"
           />
         </div>
         <label className="admin-select">
@@ -98,7 +103,9 @@ export default function StudentPicker({ title = '학생 검색', departments = [
             <span>학번</span><span>이름</span><span>학과</span><span>학년</span><span>학적</span><span>선택</span>
           </div>
           {result.items.map(student => (
-            <div className="admin-roster-row" key={student.id}>
+            <div className="admin-roster-row" key={student.id}
+              style={pickOnRowClick && !picked.has(student.id) ? { cursor: 'pointer' } : undefined}
+              onClick={pickOnRowClick && !picked.has(student.id) ? () => onPick(student) : undefined}>
               <span className="admin-roster-cell">{student.studentNo}</span>
               <span className="admin-roster-cell"><strong>{studentDisplayName(student.name, student.id, student.star)}</strong></span>
               <span className="admin-roster-cell">{student.major}</span>
@@ -110,7 +117,7 @@ export default function StudentPicker({ title = '학생 검색', departments = [
                 {picked.has(student.id) ? (
                   <small className="admin-field-hint">추가됨</small>
                 ) : (
-                  <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => onPick(student)}>추가</button>
+                  <button type="button" className="admin-btn admin-btn-ghost sm" onClick={event => { event.stopPropagation(); onPick(student) }}>{pickLabel}</button>
                 )}
               </span>
             </div>

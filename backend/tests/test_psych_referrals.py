@@ -102,9 +102,10 @@ def test_scope_reason_and_recipient_validation(client, db):
     new = 'referral-student-' + uuid4().hex
     db.execute("INSERT INTO dc.person VALUES(%s,%s,'Unscoped','STUDENT','local','{}',1)", (new, new))
     db.execute("INSERT INTO dc.student(intg_uid,student_no,major_label) VALUES(%s,%s,'test')", (new, new))
-    assert create(client, studentId=new).status_code == 404
-    search = client.get('/api/v1/psych-referrals/students?q=Unscoped', headers=headers('career_kim')).json()
-    assert search['items'] == []
+    # 담당 학생 개념이 없다(2026-10-26) — 배정·상담 이력이 없는 학생도 학생 목록 검색(GET /students)으로 찾아 연계한다.
+    search = client.get('/api/v1/students?q=Unscoped', headers=headers('career_kim')).json()
+    assert new in [s['id'] for s in search['items']]
+    assert create(client, studentId=new).status_code == 201
 
 
 def test_options_and_search_and_psych_cannot_send(client, db):
@@ -113,8 +114,6 @@ def test_options_and_search_and_psych_cannot_send(client, db):
         ('ADJUSTMENT', '적응문제'), ('RELATIONSHIP', '대인관계'), ('PERSONALITY_EMOTION', '성격·정서'),
         ('BEHAVIOR_HABIT', '행동·습관'), ('EXISTENTIAL', '실존문제')]
     assert 'psych_lee' in [r['id'] for r in options['counselors']]
-    assert client.get('/api/v1/psych-referrals/students?q=', headers=headers('career_kim')).json()['items'] == []
-    assert client.get('/api/v1/psych-referrals/students?q=a', headers=headers('psych_lee')).status_code == 403
     assert client.post('/api/v1/psych-referrals', headers=headers('psych_lee'), json={
         'studentId': 'chaewon', 'counselorId': 'psych_lee', 'reasonCode': 'BEHAVIOR_HABIT'}).status_code == 403
 

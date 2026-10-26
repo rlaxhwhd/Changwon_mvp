@@ -150,7 +150,7 @@ function ProfessorCounselForm({ professorGroups }: { professorGroups: Department
 
       <section className="cc-hero">
         <div className="cc-breadcrumb">
-          <span>상담센터</span>
+          <span>학생상담센터</span>
           <i className="fa-solid fa-chevron-right" />
           <span>교수상담</span>
           <i className="fa-solid fa-chevron-right" />

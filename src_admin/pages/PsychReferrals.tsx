@@ -3,8 +3,9 @@ import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useRef, useState } from 'react'
 import { LuArrowRightLeft, LuRefreshCw, LuSearch } from 'react-icons/lu'
 import EmptyState from '../components/EmptyState'
+import StudentPicker from '../components/StudentPicker'
 import { getActiveUser } from '../data/staff'
-import { findReferralStudents, loadReferralOptions, loadReferrals, REFERRAL_STATUS, sendReferral, updateReferral } from '../data/psychReferrals'
+import { loadReferralOptions, loadReferrals, REFERRAL_STATUS, sendReferral, updateReferral } from '../data/psychReferrals'
 import type { Referral, ReferralList, ReferralOptions, ReferralStudent } from '../data/psychReferrals'
 import './PsychReferrals.css'
 
@@ -24,17 +25,12 @@ function ReferralPage() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [busy, setBusy] = useState(false)
-  const [q, setQ] = useState('')
-  const [students, setStudents] = useState<ReferralStudent[]>([])
-  const [searched, setSearched] = useState(false)
-  const [searching, setSearching] = useState(false)
-  const [studentId, setStudentId] = useState('')
+  const [student, setStudent] = useState<ReferralStudent | null>(null)
+  const [picking, setPicking] = useState(false)
   const [counselorId, setCounselorId] = useState('')
   const [reasonCode, setReasonCode] = useState('')
-  const searchController = useRef<AbortController | null>(null)
   const mutation = useRef(false)
 
-  useEffect(() => () => searchController.current?.abort(), [])
   useEffect(() => {
     const controller = new AbortController()
     let running = false
@@ -53,18 +49,6 @@ function ReferralPage() {
     window.addEventListener('focus', visible)
     return () => { controller.abort(); clearInterval(timer); window.removeEventListener('focus', visible) }
   }, [page, filter, revision])
-
-  async function search() {
-    searchController.current?.abort()
-    const controller = new AbortController()
-    searchController.current = controller
-    setSearching(true); setStudentId(''); setStudents([]); setSearched(false); setError('')
-    try {
-      const result = await findReferralStudents(q.trim(), controller.signal)
-      if (!controller.signal.aborted) { setStudents(result.items); setSearched(true) }
-    } catch (e) { if (!controller.signal.aborted) setError(message(e)) }
-    finally { if (!controller.signal.aborted) setSearching(false) }
-  }
 
   async function act(work: () => Promise<unknown>, success: string) {
     if (mutation.current) return
@@ -93,22 +77,26 @@ function ReferralPage() {
       {data && <div className="admin-statsum">{Object.entries(REFERRAL_STATUS).map(([key, label]) => <div className="admin-statsum-card" key={key}><span>{label}</span><strong>{data.counts[key as keyof typeof REFERRAL_STATUS] ?? 0}건</strong></div>)}</div>}
       {career && <section className="admin-card referral-form">
         <div className="admin-card-head"><h2><LuArrowRightLeft />학생 연계하기</h2></div>
-        <p className="admin-field-hint">담당 범위의 학생을 검색한 뒤 심리상담사와 연계 사유를 선택해 주세요.</p>
-        <form className="admin-filterbar" onSubmit={e => { e.preventDefault(); void search() }}>
-          <label className="admin-form-field">학생 검색<input value={q} onChange={e => { searchController.current?.abort(); setSearching(false); setQ(e.target.value); setStudentId(''); setStudents([]); setSearched(false) }} placeholder="이름 또는 학번" maxLength={100} /></label>
-          <button className="admin-btn admin-btn-ghost" disabled={searching || !q.trim()}><LuSearch />{searching ? '검색 중' : '검색'}</button>
-        </form>
-        {searched && <p className="admin-field-hint" role="status">{students.length ? `${students.length}명 조회 · 최대 30명까지 표시합니다. 이름이나 학번으로 검색 범위를 좁힐 수 있습니다.` : '검색 결과가 없습니다. 학생 이름·학번과 담당 범위를 확인해 주세요.'}</p>}
-        <form onSubmit={e => { e.preventDefault(); void act(async () => { await sendReferral({ studentId, counselorId, reasonCode }); setStudentId(''); setReasonCode('') }, '심리상담사에게 연계를 요청했습니다.') }}>
+        <p className="admin-field-hint">학생을 검색해 고른 뒤 심리상담사와 연계 사유를 선택해 주세요.</p>
+        <form onSubmit={e => { e.preventDefault(); if (student) void act(async () => { await sendReferral({ studentId: student.id, counselorId, reasonCode }); setStudent(null); setReasonCode('') }, '심리상담사에게 연계를 요청했습니다.') }}>
           <div className="admin-form-grid">
-            <label className="admin-form-field">연계 학생<select aria-label="연계 학생" required value={studentId} onChange={e => setStudentId(e.target.value)}><option value="">학생을 검색하고 선택해 주세요</option>{students.map(s => <option key={s.id} value={s.id}>{studentDisplayName(s.name, s.id)} · {s.studentNo} · {s.major}</option>)}</select></label>
+            <div className="admin-form-field">연계 학생
+              <div className="referral-student">
+                <span aria-live="polite">{student ? `${studentDisplayName(student.name, student.id)} · ${student.studentNo} · ${student.major}` : '학생을 검색해 선택해 주세요'}</span>
+                <button type="button" className="admin-btn admin-btn-ghost" onClick={() => setPicking(true)}><LuSearch />학생 검색</button>
+              </div>
+            </div>
             <label className="admin-form-field">담당 심리상담사<select aria-label="담당 심리상담사" required value={counselorId} onChange={e => setCounselorId(e.target.value)}><option value="">상담사 선택</option>{options.counselors.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
             <label className="admin-form-field">연계 사유<select aria-label="연계 사유" required value={reasonCode} onChange={e => setReasonCode(e.target.value)}><option value="">사유 선택</option>{options.reasons.map(r => <option key={r.code} value={r.code}>{r.label}</option>)}</select></label>
           </div>
           <p className="admin-field-hint">선택한 사유와 학생 기본정보가 담당 심리상담사에게 전달됩니다. 연계 사유는 진단 결과가 아닙니다.</p>
           {!options.counselors.length && <p role="status">등록된 심리상담사가 없습니다.</p>}
-          <div className="referral-actions"><button className="admin-btn admin-btn-primary" disabled={busy || !studentId || !counselorId || !reasonCode}>{busy ? '처리 중' : '연계 요청'}</button></div>
+          <div className="referral-actions"><button className="admin-btn admin-btn-primary" disabled={busy || !student || !counselorId || !reasonCode}>{busy ? '처리 중' : '연계 요청'}</button></div>
         </form>
+        {/* 담당 학생 개념이 없다 — 학생 목록과 같은 전체 학생 조회(GET /students)를 그대로 쓴다. */}
+        {picking && <StudentPicker title="연계 학생 검색" enrolledOnly={false} pickLabel="선택" pickOnRowClick
+          onPick={picked => { setStudent({ id: picked.id, name: picked.name, studentNo: picked.studentNo, major: picked.major }); setPicking(false) }}
+          onClose={() => setPicking(false)} />}
       </section>}
       <div className="admin-card-head"><h2>{career ? '보낸 연계' : '받은 연계'}</h2>
         <label className="admin-form-field">처리 상태<select aria-label="처리 상태" value={filter} onChange={e => { setFilter(e.target.value); setPage(1); setData(null) }}><option value="">전체</option>{Object.entries(REFERRAL_STATUS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>

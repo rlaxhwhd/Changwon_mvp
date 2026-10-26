@@ -63,7 +63,8 @@ export const NAV_SECTIONS: NavSection[] = [
   },
   {
     id: 'counsel',
-    label: '상담센터',
+    // 상단바 이름은 DB(stu-counsel, 144)가, 경로 표시는 이 라벨이 쓴다 — 둘을 같이 바꾼다.
+    label: '학생상담센터',
     basePaths: ['/counsel'],
     icon: 'message',
     children: [
@@ -237,7 +238,7 @@ export interface CrumbItem {
 
 /**
  * 현재 경로의 상위 계층을 상단바 구성(NAV_SECTIONS)에서 파생한다.
- * 예: '/counsel/career' → [상담센터, 진로취업상담]
+ * 예: '/counsel/career' → [학생상담센터, 진로취업상담]
  *
  * ★ 라벨을 화면에 다시 적지 않는다 — 상단바 이름이 바뀌면 경로 표시도 같이 바뀌어야 한다.
  *   중첩 children(예: 취업지원 > AI 자소서/면접 > AI 자소서 생성)도 조상까지 모두 담는다.

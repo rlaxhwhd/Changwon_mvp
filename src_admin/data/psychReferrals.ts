@@ -17,8 +17,6 @@ export interface ReferralStudent { id: string; name: string; studentNo: string; 
 export const loadReferralOptions = (signal: AbortSignal) => api<ReferralOptions>('/psych-referrals/options', { signal })
 export const loadReferrals = (page: number, status: string, signal: AbortSignal) =>
   api<ReferralList>(`/psych-referrals?page=${page}${status ? `&status=${status}` : ''}`, { signal })
-export const findReferralStudents = (q: string, signal: AbortSignal) =>
-  api<{ items: ReferralStudent[] }>(`/psych-referrals/students?q=${encodeURIComponent(q)}`, { signal })
 export const sendReferral = (body: { studentId: string; counselorId: string; reasonCode: string }) =>
   api<Referral>('/psych-referrals', { method: 'POST', body: JSON.stringify(body) })
 export const updateReferral = (row: Referral, action: 'ACCEPT' | 'COMPLETE' | 'CANCEL') =>

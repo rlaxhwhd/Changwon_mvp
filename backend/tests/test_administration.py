@@ -139,6 +139,7 @@ def test_student_program_status_menu_moved_under_programs(client):
     assert moved['route']=='/program/status' and moved['is_active']
     assert menus['stu-program-apply']['route']==menus['stu-program-apply.0']['route']=='/program'  # 143
     assert not menus['stu-mypage.1']['is_active']
+    assert menus['stu-counsel']['label']=='학생상담센터'  # 144
 
 
 def test_student_metadata_follows_student_role_menus(client):
