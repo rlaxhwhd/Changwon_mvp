@@ -455,7 +455,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 
 | # | 기능 | 현행 | 상태 |
 |---|---|---|---|
-| S10 | 신청 · 내역 · 찜 | `EpMs010L`·`020L` | ✅ `/growth/program`·`/growth/program/status`(비교과프로그램 현황, 2026-10-22 마이페이지에서 이동 — 옛 `/mypage/programs` 는 리다이렉트) — **C-CORE·상담·로드맵 선행 완료 후에만 신청 가능**. 중간계층은 진로탐색·진로설정 카테고리만 신청 |
+| S10 | 신청 · 내역 · 찜 | `EpMs010L`·`020L` | ✅ `/program`·`/program/status`(비교과프로그램 현황, 2026-10-22 마이페이지에서 이동) — 2026-10-26 `/growth/program` 에서 독립, 옛 `/growth/program/*`·`/mypage/programs/*` 는 리다이렉트 — **C-CORE·상담·로드맵 선행 완료 후에만 신청 가능**. 중간계층은 진로탐색·진로설정 카테고리만 신청 |
 | S11 | **그룹형(팀) 신청** | `extMyGroup`·`group_app_popup` | ❌ 현행은 개인형/그룹형 2종, 우리는 개인형만 |
 | S12 | **차수(회차) 선택** | `extStep` (`EP_PRM_STEP`) | ❌ |
 | S13 | **만족도조사 응답** | `EpMs040L`·`040D` | ❌ |

@@ -38,6 +38,7 @@ export default function Layout() {
     : pathname.startsWith('/counsel') ? 'counsel'
       : pathname.startsWith('/roadmap') ? 'roadmap'
         : pathname.startsWith('/growth') ? 'growth'
+          : pathname.startsWith('/program') ? 'program'
           : pathname.startsWith('/jobs') ? 'jobs'
             : pathname.startsWith('/mypage') || pathname.startsWith('/records') ? 'mypage'
               : pathname.startsWith('/lounge') ? 'lounge'

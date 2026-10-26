@@ -18,7 +18,7 @@ const periods: { id: QuestPeriod; label: string }[] = [
 const activityPath: Record<string, string> = {
   ATTENDANCE: '/growth/quest', DIAGNOSIS: '/diagnosis/employment',
   COUNSEL: '/counsel/career', COUNSEL_CAREER: '/counsel/career', COUNSEL_PROF: '/counsel/professor', GROUP_COUNSEL: '/counsel/career',
-  ROADMAP_ITEM: '/roadmap/status', PROGRAM: '/growth/program', CERTIFICATE: '/growth',
+  ROADMAP_ITEM: '/roadmap/status', PROGRAM: '/program', CERTIFICATE: '/growth',
   GROWTH_RECORD: '/growth', GROWTH_JOURNAL: '/growth/journal', GROWTH_PROJECT: '/growth',
   MISSION_TOEIC: '/growth/mission', MISSION_NCS_GSAT: '/growth/mission',
   RESUME_WRITE: '/jobs/home/resume', AI_RESUME: '/jobs/home', JOB_APPLY: '/jobs',

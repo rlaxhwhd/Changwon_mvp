@@ -29,7 +29,7 @@ const RAIL: { icon: string; label: string; to?: string }[] = [
   { icon: 'fa-coins', label: '마일리지' },
   { icon: 'fa-comments', label: '상담 내역', to: '/counsel/record' },
   { icon: 'fa-book', label: '교과 관리' },
-  { icon: 'fa-people-group', label: '비교과 활동', to: '/growth/program' },
+  { icon: 'fa-people-group', label: '비교과 활동', to: '/program' },
   { icon: 'fa-award', label: 'C-PASS 인증' },
   { icon: 'fa-chart-column', label: '성과 리포트' },
   { icon: 'fa-bullhorn', label: '공지사항', to: '/jobs/notices' },
@@ -40,7 +40,7 @@ const TRAITS = ['선발형 트랙', '기업연계', 'C-PASS 마일리지', '우�
 /** 축 아래 「더 보기」 — 갈 곳이 실제로 있는 축만 준다(교과 관리 화면은 아직 없다). */
 const AXIS_MORE: Record<string, { label: string; to: string } | undefined> = {
   AX1: { label: '상담 내역 보기', to: '/counsel/record' },
-  AX3: { label: '비교과 활동 보기', to: '/growth/program' },
+  AX3: { label: '비교과 활동 보기', to: '/program' },
 }
 
 export default function StarTrack() {
@@ -243,7 +243,7 @@ function NotSelected({ name, grade }: { name: string; grade: number }) {
             : `STAR 트랙은 학부 2·3학년만 신청할 수 있습니다. (${name} 학생 ${grade}학년)`}
         </p>
         <div className="st-empty-actions">
-          <Link to="/growth/program" className="st-empty-cta">진로·취업 프로그램에서 신청</Link>
+          <Link to="/program" className="st-empty-cta">진로·취업 프로그램에서 신청</Link>
           <Link to="/jobs/notices" className="st-empty-sub">모집 공고 보기</Link>
         </div>
       </div>

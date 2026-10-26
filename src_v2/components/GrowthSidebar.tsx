@@ -14,7 +14,7 @@ interface Props {
 
 const NAV_ITEMS: GrowthNavItem[] = [
   { label: '홈 대시보드',       path: '/growth',               icon: 'fa-house' },
-  { label: '비교과프로그램 신청', path: '/growth/program',       icon: 'fa-clipboard-list' },
+  { label: '비교과프로그램 신청', path: '/program',       icon: 'fa-clipboard-list' },
   { label: '퀘스트보드',        path: '/growth/quest',          icon: 'fa-list-check' },
   { label: '성장경험일지',       path: '/growth/journal',        icon: 'fa-book-open' },
 ]

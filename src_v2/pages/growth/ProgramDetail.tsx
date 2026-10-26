@@ -80,7 +80,7 @@ export default function ProgramDetail() {
     <>
       <ProgramNotice
         programId={programId}
-        backTo="/growth/program"
+        backTo="/program"
         showWish
         action={program && (
           <>

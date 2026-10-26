@@ -177,7 +177,7 @@
         }
       ],
       "recommendation": "로드맵 3축의 칸을 달성하기 위해 완료한 역량 강화 활동입니다. 자소서·인턴·공모전이 내 성장 활동 축을 견인했습니다.",
-      "nextPath": "/growth/program"
+      "nextPath": "/program"
     },
     {
       "num": 5,
@@ -752,7 +752,7 @@
         "due": "D-7",
         "impactLabel": "매칭률 +3%",
         "linkLabel": "비교과 신청하러 가기",
-        "linkPath": "/growth/program"
+        "linkPath": "/program"
       },
       {
         "id": "a4",

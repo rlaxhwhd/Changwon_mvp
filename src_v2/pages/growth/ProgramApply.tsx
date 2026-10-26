@@ -120,7 +120,7 @@ export default function ProgramApply() {
                       {recommendations.map(item => (
                         <li key={item.id}>
                           <div className="pr-reco-item-top">
-                            <strong><Link to={`/growth/program/${item.id}`}>{item.title}</Link></strong>
+                            <strong><Link to={`/program/${item.id}`}>{item.title}</Link></strong>
                             <span className="pr-reco-tag">{item.endDate ? `마감 ${item.endDate}` : '마감일 미정'}</span>
                           </div>
                           <p>{item.desc}</p>
@@ -191,7 +191,7 @@ export default function ProgramApply() {
         {filtered.length > 0 ? (
           <ProgramCardGrid
             programs={paged}
-            onSelect={id => navigate(`/growth/program/${id}`)}
+            onSelect={id => navigate(`/program/${id}`)}
             wished={wishlist}
             onToggleWish={toggleWish}
           />

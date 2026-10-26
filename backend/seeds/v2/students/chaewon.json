@@ -181,7 +181,7 @@
         }
       ],
       "recommendation": "로드맵 3축의 칸에 1:1로 매핑된 실행 추천입니다. 각 항목 앞 [축 이름 연계] 표시를 따라 진행하세요.",
-      "nextPath": "/growth/program"
+      "nextPath": "/program"
     },
     {
       "num": 5,
@@ -732,7 +732,7 @@
         "due": "D-3",
         "impactLabel": "매칭률 +4%",
         "linkLabel": "신청하러 가기",
-        "linkPath": "/growth/program"
+        "linkPath": "/program"
       },
       {
         "id": "a2",

@@ -118,15 +118,15 @@ def test_selection_and_completion_notify_student_once(client):
     select_and_complete(client, program['id'], 'chaewon')
     select_and_complete(client, program['id'], 'chaewon')  # 재선발해도 알림은 1건
     items = client.get('/api/v1/notifications', headers=headers('chaewon')).json()['items']
-    pre = [n for n in items if n['to'] == f"/growth/program/{program['id']}/survey/PRE"]
+    pre = [n for n in items if n['to'] == f"/program/{program['id']}/survey/PRE"]
     assert len(pre) == 1 and pre[0]['tone'] == 'program' and '사전 역량 진단' in pre[0]['title'] and program['title'] in pre[0]['title']
     # 선발 알림(트리거)은 비교과 프로그램 하위의 신청 현황을 가리킨다(142).
-    assert any(n['to'] == '/growth/program/status' and '선발' in n['title'] for n in items)
+    assert any(n['to'] == '/program/status' and '선발' in n['title'] for n in items)
     select_and_complete(client, program['id'], 'chaewon', complete=True)
     items = client.get('/api/v1/notifications', headers=headers('chaewon')).json()['items']
-    routes = [n['to'] for n in items if n['to'].startswith(f"/growth/program/{program['id']}/survey/")]
+    routes = [n['to'] for n in items if n['to'].startswith(f"/program/{program['id']}/survey/")]
     # 만족도 문항이 아직 없으므로 사후만 알린다
-    assert sorted(routes) == sorted([f"/growth/program/{program['id']}/survey/PRE", f"/growth/program/{program['id']}/survey/POST"])
+    assert sorted(routes) == sorted([f"/program/{program['id']}/survey/PRE", f"/program/{program['id']}/survey/POST"])
     # 조사를 실시하지 않는 프로그램은 알리지 않는다
     silent = new_program(client, competencySurvey=False, competencyAreas=[])
     assert apply_as(client, 'changwon', silent['id']).status_code == 201

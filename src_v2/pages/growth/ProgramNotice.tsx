@@ -20,7 +20,7 @@ import '../../components/JobDetailView.css'
 import './ProgramDetail.css'
 
 // ─────────────────────────────────────────────────────────────────────────
-// 비교과 프로그램 공고 (공용) — 학생 /v2/growth/program/:id 와
+// 비교과 프로그램 공고 (공용) — 학생 /v2/program/:id 와
 // 교직원 /admin/programs/:id/notice 가 같은 화면을 쓴다.
 //
 // 레이아웃·색은 채용공고 상세(JobDetailView)와 같은 것이다:

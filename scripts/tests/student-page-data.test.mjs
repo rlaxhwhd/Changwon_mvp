@@ -14,7 +14,7 @@ function moduleUnderTest(file, overrides = {}) {
   const code = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   const context = {
     exports, console, Promise, Map, Set, Error,
-    location: { pathname: '/v2/growth/program', replace: value => calls.push(['redirect', value]) },
+    location: { pathname: '/v2/program', replace: value => calls.push(['redirect', value]) },
     localStorage: { getItem: key => storage.get(key) ?? null, setItem: (key, value) => storage.set(key, value), removeItem: key => storage.delete(key) },
     window: { addEventListener() {} },
     require(specifier) {
@@ -90,18 +90,18 @@ test('admin bootstrap retains its role-scoped data loads', async () => {
 
 test('program list route loads programs and wishlist, never jobs, resumes or slots', async () => {
   const { exports, calls } = moduleUnderTest('shared/studentPageData.ts')
-  await exports.studentPageLoader(...routes.get('/growth/program'))()
+  await exports.studentPageLoader(...routes.get('/program'))()
   assert.deepEqual(calls.map(c => c[0]).sort(), ['loadPrograms', 'loadWishlist'])
-  assert.deepEqual(routes.get('/growth/program'), ['programs', 'programWishlist'])
+  assert.deepEqual(routes.get('/program'), ['programs', 'programWishlist'])
 })
 
 test('direct program detail loads wishlist/department dependencies without full catalog', () => {
-  assert.deepEqual(routes.get('/growth/program/:id'), ['departments', 'programWishlist'])
+  assert.deepEqual(routes.get('/program/:id'), ['departments', 'programWishlist'])
 })
 
 test('navigating from programs to jobs then back loads each page and refreshes revisits', async () => {
   const { exports, calls } = moduleUnderTest('shared/studentPageData.ts')
-  for (const path of ['/growth/program', '/jobs', '/growth/program']) {
+  for (const path of ['/program', '/jobs', '/program']) {
     await exports.studentPageLoader(...routes.get(path))()
   }
   assert.equal(calls.filter(c => c[0] === 'loadPrograms').length, 2)
@@ -143,5 +143,5 @@ test('specialized routes retain their synchronous selector dependencies', () => 
   assert.deepEqual(routes.get('/jobs/:id'), ['jobs', 'jobWishlist', 'jobCapability', 'applications'])
   assert.deepEqual(routes.get('/mypage/applications'), ['jobs', 'applications'])
   assert.deepEqual(routes.get('/jobs/notices'), ['notices'])
-  for (const path of ['/diagnosis/employment', '/growth/mission', '/records', '/growth/program/status']) assert.deepEqual(routes.get(path), [])
+  for (const path of ['/diagnosis/employment', '/growth/mission', '/records', '/program/status']) assert.deepEqual(routes.get(path), [])
 })

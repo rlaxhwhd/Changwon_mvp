@@ -579,7 +579,7 @@ def notify_survey(conn, program, student_uid, phase):
     conn.execute('''INSERT INTO dc.notification(recipient_uid,source_kind,source_id,tone,title,body,route)
       VALUES(%s,'PROGRAM_SURVEY',%s,'program',%s,%s,%s) ON CONFLICT DO NOTHING''',
       (student_uid, f"{program['id']}:{phase}", f"[{program['title']}] {title}", body,
-       f"/growth/program/{program['id']}/survey/{phase}"))
+       f"/program/{program['id']}/survey/{phase}"))
 
 
 def get_application(conn, program_id, student_uid, lock=True):

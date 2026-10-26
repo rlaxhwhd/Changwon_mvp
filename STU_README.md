@@ -98,7 +98,7 @@ index.html  ──(meta refresh)──▶  /v2
 |---|---|---|
 | `/growth` | GrowthHome | 홈대시보드 (레벨·퀘스트 진행) |
 | `/growth/roadmap-status` | RoadmapStatus | 로드맵 진행 현황 |
-| `/growth/program` · `/growth/program/:id` | ProgramApply · ProgramDetail | 비교과프로그램 신청 (AI 추천) |
+| `/program` · `/program/:id` (2026-10-26 `/growth/program` 에서 이동) | ProgramApply · ProgramDetail | 비교과프로그램 신청 (AI 추천) |
 | `/growth/quest` | QuestBoard | 퀘스트보드 (일·주·학기 퀘스트, 학과/학과내 랭킹) |
 | `/growth/mission` | TodayGrowthMission | 오늘의 성장퀘스트 |
 | `/growth/mission-log` | GrowthMissionLog | 일일퀘스트 기록노트 |
@@ -118,7 +118,7 @@ index.html  ──(meta refresh)──▶  /v2
 | 라우트 | 페이지 | 내용 |
 |---|---|---|
 | `/mypage/portfolio` | Portfolio | 포트폴리오 (스킬·자격증·어학·자소서·이력서·프로젝트) |
-| `/growth/program/status` | MyPrograms | 비교과프로그램 신청 현황 (2026-10-22 마이페이지에서 이동) |
+| `/program/status` | MyPrograms | 비교과프로그램 신청 현황 (2026-10-22 마이페이지에서 이동) |
 | `/mypage/attendance` | Attendance | 출석 기록 (일일미션 TOEIC 10단어 정·오답) |
 
 ### 🔁 하위 호환 리다이렉트

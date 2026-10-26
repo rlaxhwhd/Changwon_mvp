@@ -44,7 +44,7 @@ def weekly_items(conn, uid, day):
       AND p.run_start BETWEEN %s AND %s ORDER BY p.run_start,p.id''', (uid, start, end)).fetchall()
     for row in programs:
         add('program:'+row['id'], '비교과 시작 · '+row['title'], f"{row['sessions']}회차 · 선발된 프로그램",
-            row['run_start'], '/growth/program/'+quote(row['id'], safe=''))
+            row['run_start'], '/program/'+quote(row['id'], safe=''))
 
     # Selection is the PRE opening event. POST/SATISFACTION use the recorded
     # completion notification event, without any read_at / 23-hour condition.
@@ -76,7 +76,7 @@ def weekly_items(conn, uid, day):
         if not is_open and not row['submitted_at']:
             sub += ' · '+reason
         add(f"survey:{row['id']}:{phase}", SURVEY_LABELS[phase]+' · '+row['title'], sub,
-            opened, f"/growth/program/{quote(row['id'], safe='')}/survey/{phase}", bool(row['submitted_at']), not is_open)
+            opened, f"/program/{quote(row['id'], safe='')}/survey/{phase}", bool(row['submitted_at']), not is_open)
     items.sort(key=lambda item: (item['date'], item['id']))
     return dict(items=items, weekStart=start.isoformat(), weekEnd=end.isoformat(), today=day.isoformat())
 

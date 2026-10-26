@@ -1,4 +1,4 @@
-import { createBrowserRouter, RouterProvider, Navigate, useParams } from 'react-router-dom'
+import { createBrowserRouter, RouterProvider, Navigate, useLocation, useParams } from 'react-router-dom'
 import Layout from './components/Layout'
 import PageDataError from './components/PageDataError'
 import { studentPageLoader } from '../shared/studentPageData'
@@ -52,9 +52,11 @@ import MyApplications from './pages/mypage/MyApplications'
 import CounselStatus from './pages/mypage/CounselStatus'
 import { getActiveStudent } from './data/students'
 
-function LegacySurveyRedirect() {
-  const { id = '', phase = '' } = useParams()
-  return <Navigate to={`/growth/program/${encodeURIComponent(id)}/survey/${phase}`} replace />
+/** 옛 비교과 주소(/growth/program/*, /mypage/programs/*)의 나머지 경로를 /program 아래로 그대로 옮긴다. */
+function LegacyProgramRedirect() {
+  const { '*': rest = '' } = useParams()
+  const { search, hash } = useLocation()
+  return <Navigate to={`/program/${rest}${search}${hash}`} replace />
 }
 
 const router = createBrowserRouter(
@@ -78,14 +80,19 @@ const router = createBrowserRouter(
         // STAR 트랙 (선발형) — 주 메뉴가 아니라 상단바 STAR 표식으로 들어온다
         { path: '/star', loader: studentPageLoader('growth'), element: <StarTrack /> },
 
+        // 비교과 프로그램 — 옛 「내 성장」 하위(/growth/program)에서 독립했다(2026-10-26). 게이트는 그대로 역량 강화 단계다.
+        { path: '/program',      loader: studentPageLoader('programs', 'programWishlist'), element: <StageGate stage="growth" title="비교과 프로그램"><ProgramApply /></StageGate> },
+        // 비교과 신청 현황·조사 — 마이페이지에서 비교과 프로그램 하위로 옮겼다(2026-10-22). 정적 세그먼트라 :id 보다 먼저 읽힌다.
+        { path: '/program/status', element: <MyPrograms /> },
+        { path: '/program/:id/survey/:phase', element: <StageGate stage="growth" title="비교과 조사"><ProgramSurvey /></StageGate> },
+        { path: '/program/:id',  loader: studentPageLoader('departments', 'programWishlist'), element: <StageGate stage="growth" title="비교과 프로그램"><ProgramDetail /></StageGate> },
+        // 옛 주소 — 이미 발송된 알림·팝업·즐겨찾기가 가리킨다.
+        { path: '/growth/program',   element: <Navigate to="/program" replace /> },
+        { path: '/growth/program/*', element: <LegacyProgramRedirect /> },
+
         // 역량 강화 — 로드맵이 정한 것을 실행하는 단계라 로드맵 확정 후 열린다.
         //   ⚠ 성장일지·미션은 게이팅 밖이다. 진단 전에도 기록은 남길 수 있어야 한다.
         { path: '/growth',              element: <StageGate stage="growth" title="내 성장"><GrowthHome /></StageGate> },
-        { path: '/growth/program',      loader: studentPageLoader('programs', 'programWishlist'), element: <StageGate stage="growth" title="비교과 프로그램"><ProgramApply /></StageGate> },
-        // 비교과 신청 현황·조사 — 마이페이지에서 비교과 프로그램 하위로 옮겼다(2026-10-22). 정적 세그먼트라 :id 보다 먼저 읽힌다.
-        { path: '/growth/program/status', element: <MyPrograms /> },
-        { path: '/growth/program/:id/survey/:phase', element: <StageGate stage="growth" title="비교과 조사"><ProgramSurvey /></StageGate> },
-        { path: '/growth/program/:id',  loader: studentPageLoader('departments', 'programWishlist'), element: <StageGate stage="growth" title="비교과 프로그램"><ProgramDetail /></StageGate> },
         { path: '/growth/quest',        element: <StageGate stage="growth" title="퀘스트 보드"><QuestBoard /></StageGate> },
         // 로드맵 진행 현황은 「진로취업 로드맵」 하위로 옮겼다(/roadmap/status) — 옛 주소는 리다이렉트.
         { path: '/growth/roadmap-status', element: <Navigate to="/roadmap/status" replace /> },
@@ -144,8 +151,8 @@ const router = createBrowserRouter(
         { path: '/mypage',           element: <Navigate to={getActiveStudent().grade >= 4 ? '/mypage/portfolio' : '/mypage/applications'} replace /> },
         { path: '/mypage/portfolio',  element: getActiveStudent().grade >= 4 ? <Portfolio /> : <Navigate to="/growth" replace /> },
         // 옛 경로 — 이미 발송된 알림·즐겨찾기가 가리킨다.
-        { path: '/mypage/programs',   element: <Navigate to="/growth/program/status" replace /> },
-        { path: '/mypage/programs/:id/survey/:phase', element: <LegacySurveyRedirect /> },
+        { path: '/mypage/programs',   element: <Navigate to="/program/status" replace /> },
+        { path: '/mypage/programs/*', element: <LegacyProgramRedirect /> },
         { path: '/mypage/applications', loader: studentPageLoader('jobs', 'applications'), element: <MyApplications /> },
         { path: '/mypage/notices',    element: <Navigate to="/jobs/notices" replace /> },
         // 상담 현황: 라우팅을 /counsel/record로 이동 (기존 /mypage/counsel은 하위 호환용 리다이렉트)

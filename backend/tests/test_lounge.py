@@ -34,7 +34,7 @@ def program(client, db, *, selected='2026-09-28T01:00:00Z', start='2026-10-02', 
 def notice(db, program_id, phase, at):
     return db.execute('''INSERT INTO dc.notification(recipient_uid,source_kind,source_id,tone,title,body,route,occurred_at)
       VALUES(%s,'PROGRAM_SURVEY',%s,'program','조사','안내',%s,%s) RETURNING id''',
-      (UID, program_id+':'+phase, f'/growth/program/{program_id}/survey/{phase}', at)).fetchone()['id']
+      (UID, program_id+':'+phase, f'/program/{program_id}/survey/{phase}', at)).fetchone()['id']
 
 
 def own_items(db, program_id):

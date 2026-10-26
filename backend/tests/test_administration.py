@@ -136,7 +136,8 @@ def test_role_menu_visibility_is_replaced_per_role(client):
 def test_student_program_status_menu_moved_under_programs(client):
     menus={m['menu_code']:m for m in client.get('/api/v1/metadata',headers=headers('chaewon')).json()['menus']}
     moved=menus['stu-program-apply.1']
-    assert moved['route']=='/growth/program/status' and moved['is_active']
+    assert moved['route']=='/program/status' and moved['is_active']
+    assert menus['stu-program-apply']['route']==menus['stu-program-apply.0']['route']=='/program'  # 143
     assert not menus['stu-mypage.1']['is_active']
 
 

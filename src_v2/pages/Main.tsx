@@ -176,7 +176,7 @@ export default function Main() {
           <section data-slot="card" className="program-card-shell span-12 reveal" id="programs" aria-labelledby="programTitle">
             <header data-slot="card-header">
               <div><h2 data-slot="card-title" id="programTitle">진행 중인 진로·취업 프로그램</h2><p data-slot="card-description">나의 진로 유형과 관심 직무를 바탕으로 선별했어요.</p></div>
-              <Link data-slot="card-action" className="button" to="/growth/program">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
+              <Link data-slot="card-action" className="button" to="/program">전체 보기 <svg className="icon"><use href="#i-arrow" /></svg></Link>
             </header>
             <div data-slot="card-content">
               <div className="program-viewport">

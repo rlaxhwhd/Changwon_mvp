@@ -93,13 +93,13 @@ export const NAV_SECTIONS: NavSection[] = [
   {
     id: 'program-apply',
     label: '비교과 프로그램',
-    basePaths: ['/growth/program'],
-    path: '/growth/program',
+    basePaths: ['/program'],
+    path: '/program',
     icon: 'calendar',
     children: [
-      { label: '비교과 프로그램', path: '/growth/program', icon: 'fa-clipboard-list' },
+      { label: '비교과 프로그램', path: '/program', icon: 'fa-clipboard-list' },
       // stu-program-apply.1 — 마이페이지에서 옮겨 왔다(142 마이그레이션).
-      { label: '비교과프로그램 현황', path: '/growth/program/status', icon: 'fa-list-check' },
+      { label: '비교과프로그램 현황', path: '/program/status', icon: 'fa-list-check' },
     ],
   },
   {

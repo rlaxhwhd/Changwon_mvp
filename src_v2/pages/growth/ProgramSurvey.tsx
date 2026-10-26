@@ -45,7 +45,7 @@ function ProgramSurveyForm({ id, phase }: { id: string; phase: string }) {
     return () => { controller.abort() }
   }, [id, surveyPhase, valid])
 
-  if (!valid) return <div className="cs-page ps-page"><div className="cs-empty"><Icon name="x" /><strong>없는 조사 종류입니다.</strong><Link className="cs-button" to="/growth/program/status">프로그램 현황으로</Link></div></div>
+  if (!valid) return <div className="cs-page ps-page"><div className="cs-empty"><Icon name="x" /><strong>없는 조사 종류입니다.</strong><Link className="cs-button" to="/program/status">프로그램 현황으로</Link></div></div>
 
   const items = form?.areas.flatMap(a => a.items) ?? []
   const scaleItems = items.filter(i => i.kind === 'SCALE')
@@ -55,7 +55,7 @@ function ProgramSurveyForm({ id, phase }: { id: string; phase: string }) {
   const submit = () => action.run(async () => {
     await submitSurvey(id, surveyPhase, answers)
     window.dispatchEvent(new Event(PROGRAM_EVENT))
-    navigate('/growth/program/status', { replace: true })
+    navigate('/program/status', { replace: true })
   })
 
   return (
@@ -85,14 +85,14 @@ function ProgramSurveyForm({ id, phase }: { id: string; phase: string }) {
               <>
                 <p>{remaining > 0 ? `아직 응답하지 않은 문항이 ${remaining}개 있습니다.` : '모든 척도 문항에 응답했습니다. 제출하면 수정할 수 없습니다.'}</p>
                 <div className="ps-actions">
-                  <Link className="cs-button" to="/growth/program/status">나중에 하기</Link>
+                  <Link className="cs-button" to="/program/status">나중에 하기</Link>
                   <button type="button" className="cs-button is-primary" disabled={remaining > 0 || action.saving} onClick={submit}>
                     {action.saving ? '제출 중…' : '제출하기'}
                   </button>
                 </div>
               </>
             ) : (
-              <div className="ps-actions"><Link className="cs-button" to="/growth/program/status">프로그램 현황으로</Link></div>
+              <div className="ps-actions"><Link className="cs-button" to="/program/status">프로그램 현황으로</Link></div>
             )}
           </section>
         </>
