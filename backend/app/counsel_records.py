@@ -12,6 +12,7 @@ from .auth import principal, require_staff
 from .counsel import get_request, visibility
 from .db import connection
 from .counsel_template import CounselTemplate, validate_template_scope, validate_completed_template, template_storage
+from .psych_journal import PsychJournal, psych_storage, validate_completed_psych, validate_psych_scope
 
 router=APIRouter()
 
@@ -25,6 +26,7 @@ def record_dto(row,student=False):
             'counselorId':row['counselor_alias'],'counselorName':row['counselor_name'],
             'summary':'' if student else row['summary'],'comment':row['comment'],
             'template':None if student else row.get('template'),
+            'psychJournal':None if student else row.get('psych_journal'),
             'followUp':'' if student else row['follow_up'],'status':'완료' if row['status_code']=='DONE' else '작성중',
             'createdAt':row['created_at'],'updatedAt':row['updated_at'],'version':row['version'],
             # 교수상담 분류(PROF_COUNSEL_TYPE)는 신청의 topic_code 다. 학생 발의 건은 없을 수 있다.
@@ -212,6 +214,7 @@ class RecordWrite(BaseModel):
     followUp:str=Field('',max_length=10000)
     status:Literal['작성중','완료']
     template:CounselTemplate | None=None
+    psychJournal:PsychJournal | None=None
 
 
 @router.put('/counsel-requests/{request_id}/record')
@@ -224,29 +227,35 @@ def save_record(request_id:str,body:RecordWrite,user=Depends(principal,scope='fu
     if (existing['version'] if existing else 0)!=body.expectedVersion:
         raise HTTPException(409,'다른 사용자가 기록을 변경했습니다. 다시 조회해 주세요.')
     validate_template_scope(request,body.template)
+    validate_psych_scope(request,body.psychJournal)
     if existing and existing.get('template') and not body.template:
         raise HTTPException(422,'저장된 상담 템플릿을 함께 제출해 주세요.')
+    if existing and existing.get('psych_journal') and not body.psychJournal:
+        raise HTTPException(422,'저장된 상담일지 양식을 함께 제출해 주세요.')
     if request['status_code']=='DONE' and body.template:
         fixed_type=(existing.get('template') or {}).get('finalType') if existing else None
         if body.template.finalType != fixed_type:
             raise HTTPException(409,'완료된 상담의 최종 유형은 변경할 수 없습니다. 재진단 후 새 CARE 7+ 상담에서 확정해 주세요.')
-    summary=body.template.content() if body.template else body.summary.strip()
+    summary=body.template.content() if body.template else body.psychJournal.content.strip() if body.psychJournal else body.summary.strip()
     if body.status=='완료':
         validate_completed_template(request,body.template,comment=body.comment,type_locked=request['status_code']=='DONE')
+        validate_completed_psych(request,body.psychJournal)
         from .counsel_template import validate_ai_journal
         validate_ai_journal(conn, request, body.template)
     if request['status_code']=='DONE' and body.status!='완료':
         raise HTTPException(409,'완료된 상담의 기록은 수정 저장으로 저장해 주세요.')
     if body.status=='완료' and not (summary and body.comment.strip()):
         raise HTTPException(422,'상담내용과 공개 코멘트를 입력해 주세요.')
-    conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot,template)
-      VALUES (%s,%s,%s,%s,%s,%s,%s,now(),now(),%s,%s) ON CONFLICT(request_id) DO UPDATE SET
+    conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot,template,psych_journal)
+      VALUES (%s,%s,%s,%s,%s,%s,%s,now(),now(),%s,%s,%s) ON CONFLICT(request_id) DO UPDATE SET
       summary=excluded.summary,comment=excluded.comment,follow_up=excluded.follow_up,status_code=excluded.status_code,
-      template=COALESCE(excluded.template,dc.counsel_record.template),updated_at=now(),version=dc.counsel_record.version+1''',
+      template=COALESCE(excluded.template,dc.counsel_record.template),
+      psych_journal=COALESCE(excluded.psych_journal,dc.counsel_record.psych_journal),updated_at=now(),version=dc.counsel_record.version+1''',
       (str(uuid4()),request_id,user['intg_uid'],summary,body.comment.strip(),body.followUp.strip(),
-       'DONE' if body.status=='완료' else 'DRAFT',Jsonb(request['snapshot']),Jsonb(template_storage(body.template,existing)) if body.template else None))
+       'DONE' if body.status=='완료' else 'DRAFT',Jsonb(request['snapshot']),Jsonb(template_storage(body.template,existing)) if body.template else None,
+       Jsonb(psych_storage(body.psychJournal)) if body.psychJournal else None))
     conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',
-                 (request_id,user['intg_uid'],'RECORD_UPDATED',Jsonb({'before':{k:existing[k] for k in ('summary','comment','follow_up','version','template')} if existing else None,
+                 (request_id,user['intg_uid'],'RECORD_UPDATED',Jsonb({'before':{k:existing[k] for k in ('summary','comment','follow_up','version','template','psych_journal')} if existing else None,
                   'after':body.model_dump()})))
     from .counsel_ai import enqueue_refresh
     if body.status=='완료':

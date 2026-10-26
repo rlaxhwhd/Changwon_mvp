@@ -13,6 +13,7 @@ from .auth import principal, require_staff, student_access
 from .db import connection
 from .gates import COUNSEL_TYPE_CODE, diagnosis_gate, is_care7_request
 from .counsel_template import CounselTemplate, validate_template_scope, validate_completed_template, template_storage
+from .psych_journal import PsychJournal, psych_storage, validate_completed_psych, validate_psych_scope
 
 router=APIRouter()
 LABELS={'REQ':'대기','CONFIRMED':'확정','DONE':'완료','NO_SHOW':'불참','CANCEL_UNKNOWN':'취소','CANCEL_STU':'취소','CANCEL_CNS':'취소'}
@@ -65,6 +66,7 @@ class Action(BaseModel):
     followUp: str=Field('',max_length=10000)
     finalType: Literal['T1','T2','T3','T4','T5','T6'] | None=None
     template: CounselTemplate | None=None
+    psychJournal: PsychJournal | None=None
     expectedRecordVersion: int | None=Field(default=None,ge=0)
     expectedRoadmapVersion: int | None=Field(default=None,ge=1)
     expectedRoadmapLockVersion: int | None=Field(default=None,ge=1)
@@ -304,6 +306,10 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
     elif action=='complete':
         validate_template_scope(row,body.template)
         validate_completed_template(row,body.template,comment=body.comment)
+        validate_psych_scope(row,body.psychJournal)
+        validate_completed_psych(row,body.psychJournal)
+        if body.psychJournal:
+            body.summary=body.psychJournal.content.strip()
         existing_record=conn.execute('SELECT * FROM dc.counsel_record WHERE request_id=%s FOR UPDATE',(request_id,)).fetchone()
         if existing_record and existing_record.get('template') and not body.template:
             raise HTTPException(422,'저장된 상담 템플릿을 함께 제출해 주세요.')
@@ -348,10 +354,12 @@ def act(request_id:str,action:Literal['confirm','cancel','reschedule','reassign'
                 raise HTTPException(409,'기존 상담 유형을 다시 확정하려면 재진단을 먼저 완료해 주세요.')
             conn.execute("INSERT INTO dc.student_type_event(student_uid,student_type,source,actor_uid,decided_at) VALUES (%s,%s,'counsel',%s,clock_timestamp())",
                          (row['student_uid'],body.finalType,user['intg_uid']))
-        conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot,template)
-          VALUES (%s,%s,%s,%s,%s,%s,'DONE',now(),now(),%s,%s) ON CONFLICT(request_id) DO UPDATE
-          SET summary=excluded.summary,comment=excluded.comment,follow_up=excluded.follow_up,template=COALESCE(excluded.template,dc.counsel_record.template),status_code='DONE',updated_at=now(),version=dc.counsel_record.version+1''',
-          (str(uuid4()),request_id,user['intg_uid'],body.summary,body.comment,body.followUp,Jsonb(row['snapshot']),Jsonb(template_storage(body.template,existing_record)) if body.template else None))
+        conn.execute('''INSERT INTO dc.counsel_record(id,request_id,counselor_uid,summary,comment,follow_up,status_code,created_at,updated_at,snapshot,template,psych_journal)
+          VALUES (%s,%s,%s,%s,%s,%s,'DONE',now(),now(),%s,%s,%s) ON CONFLICT(request_id) DO UPDATE
+          SET summary=excluded.summary,comment=excluded.comment,follow_up=excluded.follow_up,template=COALESCE(excluded.template,dc.counsel_record.template),
+          psych_journal=COALESCE(excluded.psych_journal,dc.counsel_record.psych_journal),status_code='DONE',updated_at=now(),version=dc.counsel_record.version+1''',
+          (str(uuid4()),request_id,user['intg_uid'],body.summary,body.comment,body.followUp,Jsonb(row['snapshot']),Jsonb(template_storage(body.template,existing_record)) if body.template else None,
+           Jsonb(psych_storage(body.psychJournal)) if body.psychJournal else None))
         conn.execute("UPDATE dc.counsel_request SET status_code='DONE',completed_at=now() WHERE id=%s",(request_id,))
         from .care7_cycle import annual_status
         annual_status(conn, row['student_uid'])

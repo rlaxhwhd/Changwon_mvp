@@ -10,6 +10,7 @@ import type { CounselMethod, CounselRequestType } from './schema/counselRequest'
 import { api } from '../../shared/api'
 import { counselRecords, storeCounselRecord } from '../../shared/counselStore'
 import type { CounselTemplate } from './schema/counselTemplate'
+import type { PsychJournal } from './schema/psychJournal'
 
 export function getCounselRecords(): CounselRecord[] {
   return [...counselRecords()]
@@ -27,6 +28,11 @@ export function getRecordsByStudent(studentId: string): CounselRecord[] {
     .sort((a, b) => b.date.localeCompare(a.date))
 }
 
+/** 심리상담 일지 회기 기본값 — 이 신청을 뺀 같은 학생의 심리상담 기록 수 + 1. 상담사가 고칠 수 있다. */
+export function nextPsychSession(studentId: string, requestId: string): number {
+  return getCounselRecords().filter(r => r.studentId === studentId && r.type === '심리' && r.requestId !== requestId).length + 1
+}
+
 /** 특정 상담 신청(requestId)에 연결된 기록 1건 */
 export function getRecordByRequest(requestId: string): CounselRecord | undefined {
   return getCounselRecords().find(r => r.requestId === requestId)
@@ -38,7 +44,7 @@ export async function upsertRecord(record: CounselRecord): Promise<CounselRecord
     { method: 'PUT', body: JSON.stringify({
       expectedVersion: record.version ?? 0, summary: record.summary, comment: record.comment,
       followUp: record.followUp ?? '', status: record.status,
-      template: record.template,
+      template: record.template, psychJournal: record.psychJournal,
     }) },
   )
   storeCounselRecord(saved)
@@ -68,7 +74,7 @@ export interface RecordSource {
  */
 export function buildRecord(
   source: RecordSource,
-  fields: { summary: string; comment: string; followUp: string; template?: CounselTemplate | null },
+  fields: { summary: string; comment: string; followUp: string; template?: CounselTemplate | null; psychJournal?: PsychJournal | null },
   status: RecordStatus,
   existing?: CounselRecord,
 ): CounselRecord {
@@ -77,6 +83,7 @@ export function buildRecord(
     ...source,
     version: existing?.version,
     template: fields.template ?? existing?.template,
+    psychJournal: fields.psychJournal ?? existing?.psychJournal,
     id: existing?.id ?? `rec_${source.requestId}_${Date.now().toString(36)}`,
     summary: fields.summary.trim(),
     comment: fields.comment.trim(),

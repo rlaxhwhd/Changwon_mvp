@@ -210,4 +210,6 @@ ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration �
 
 2026-09-16 경험일지 보완(092): 기존 `growth_entry(kind_code=JOURNAL)`·`growth_event`를 학생/상담사/자소서가 공유한다. 학생별/종류별 정렬 인덱스를 추가했다. 권한·API·검증·복구는 [경험일지 연결 명세](docs/GROWTH_JOURNAL.md)를 따른다.
 
+2026-10-26 심리상담 상담일지 양식(145, 로컬 적용 완료): `counsel_record.psych_journal`에 학생상담센터 상담일지 서식을 저장한다. 진로취업 `template`과 분리한다. 규칙은 [상담일지 템플릿 명세](docs/COUNSEL_TEMPLATE.md)「심리상담 상담일지 양식」.
+
 2026-09-17 상담일지 공용 템플릿(093/094, 로컬 적용 완료): `counsel_record.template`에 구조화된 내부 기록을 저장한다. `current_student_type`은 `student_type_event`의 상담 확정 유형을 재진단 결과보다 우선하는 공통 조회 뷰다. 학생 목록·상세·상담·로드맵·취업·비교과의 유형 조회를 통일했다. 권한, 검증, 복구와 확정 입력 정책은 [상담일지 템플릿 명세](docs/COUNSEL_TEMPLATE.md)를 따른다.

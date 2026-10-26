@@ -3,6 +3,7 @@ import AdminModal from '../components/AdminModal'
 import CounselRecordContext from '../components/CounselRecordContext'
 import CounselJournalFields from '../components/CounselJournalFields'
 import { emptyCounselTemplate } from '../data/schema/counselTemplate'
+import { emptyPsychJournal } from '../data/schema/psychJournal'
 import { isCare7 } from '../../src_v2/data/counselTrack'
 import { downloadCounselHistoryCsv } from '../data/counselExport'
 import { useEffect, useState } from 'react'
@@ -62,9 +63,10 @@ export default function CounselHistory() {
         <CounselJournalFields record={context.record} career={detail.type === '진로취업'}
           care7={isCare7(detailRequest?.careTrack)}
           template={context.record.template ?? emptyCounselTemplate(detail.method, detail.date, detail.time)}
-          summary={context.record.summary} comment={context.record.comment}
+          psychJournal={context.record.psychJournal ?? emptyPsychJournal(detail.method, detail.date, detail.time, null, context.record.summary)}
+          setPsychJournal={() => {}} comment={context.record.comment}
           diagnosisType={context.diagnosisType} typeLocked={context.typeLocked}
-          setTemplate={() => {}} setSummary={() => {}} setComment={() => {}} readOnly />
+          setTemplate={() => {}} setComment={() => {}} readOnly />
       </> : <p role="status">작성된 상담일지가 없습니다.</p>}</CounselRecordContext>
       {noShow.error && <p role="alert" className="admin-form-hint-warn">{noShow.error}</p>}
       <div className="admin-form-actions"><Link className="admin-btn admin-btn-ghost" to="/counsel/journals">상담일지 작성·관리</Link>

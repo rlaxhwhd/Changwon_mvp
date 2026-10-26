@@ -6,6 +6,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { CounselRequestType, CounselMethod } from './counselRequest'
 import type { CounselTemplate } from './counselTemplate'
+import type { PsychJournal } from './psychJournal'
 
 /** 상담 진행 상태 — 기록지 자체의 저장 단계 */
 export type RecordStatus = '작성중' | '완료'
@@ -13,6 +14,8 @@ export type RecordStatus = '작성중' | '완료'
 export interface CounselRecord {
   version?: number
   template?: CounselTemplate | null
+  /** 심리상담 상담일지 양식([붙임 14]) — 심리상담 기록에만 있다 */
+  psychJournal?: PsychJournal | null
   /** 기록 id */
   id: string
   /** 연결된 상담 신청 id (CounselRequest.id) */

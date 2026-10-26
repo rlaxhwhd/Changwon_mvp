@@ -13,7 +13,7 @@ import {
   getJournalFilterOptions, getJournalRows, getJournalSummary, JOURNAL_STATUSES, JOURNAL_STATUS_CLASS,
 } from '../data/counselJournals'
 import type { JournalRow, JournalStatus } from '../data/counselJournals'
-import { buildRecord, upsertRecord } from '../data/counselRecords'
+import { buildRecord, nextPsychSession, upsertRecord } from '../data/counselRecords'
 import type { RecordSource } from '../data/counselRecords'
 import type { RecordStatus } from '../data/schema/counselRecord'
 import { toJournalCsv } from '../data/counselExport'
@@ -24,6 +24,7 @@ import CounselRecordPreview from '../components/CounselRecordPreview'
 import CounselJournalBody from '../components/CounselJournalBody'
 import CounselRecordContext, { type RecordContext } from '../components/CounselRecordContext'
 import { counselContent, counselTemplateErrors, emptyCounselTemplate } from '../data/schema/counselTemplate'
+import { emptyPsychJournal, psychJournalErrors } from '../data/schema/psychJournal'
 import { isCare7 } from '../../src_v2/data/counselTrack'
 import { typeLabel } from '../../src_v2/data/careerProcess'
 
@@ -57,7 +58,8 @@ function JournalForm({
   // 방금 저장한 기록을 들고 있어야 한다 — 부모의 row 는 모달이 열린 시점 것이라
   // 이걸 안 잇고 두 번 저장하면 같은 상담에 기록이 두 벌 생긴다(id 가 새로 발급된다).
   const [current, setCurrent] = useState(record)
-  const [summary, setSummary] = useState(record?.summary ?? '')
+  const [psychJournal, setPsychJournal] = useState(() => record?.psychJournal
+    ?? emptyPsychJournal(row.method, row.date, row.time.split('~')[0], nextPsychSession(source.studentId, source.requestId), record?.summary ?? ''))
   const [comment, setComment] = useState(record?.comment ?? '')
   // 후속 조치 입력란은 없앴다(2026-10-21). 예전에 쓴 값은 저장할 때 그대로 둔다.
   const followUp = record?.followUp ?? ''
@@ -66,8 +68,8 @@ function JournalForm({
   const [saveError, setSaveError] = useState('')
 
   // 제출 조건은 상담 진행 화면(CounselSession)과 같다 — 소견과 공개 코멘트 둘 다 필요.
-  const recordSummary = career ? counselContent(template) : summary
-  const formErrors = career ? counselTemplateErrors(template, care7, context.typeLocked, comment) : []
+  const recordSummary = career ? counselContent(template) : psychJournal.content
+  const formErrors = career ? counselTemplateErrors(template, care7, context.typeLocked, comment) : psychJournalErrors(psychJournal, comment)
   const canSubmit = formErrors.length === 0 && recordSummary.trim() !== '' && comment.trim() !== ''
 
   const save = async (status: RecordStatus) => {
@@ -75,7 +77,7 @@ function JournalForm({
     setSaving(true)
     setSaveError('')
     try {
-    const next = buildRecord(source, { summary: recordSummary, comment, followUp, template: career ? template : undefined }, status, current)
+    const next = buildRecord(source, { summary: recordSummary, comment, followUp, template: career ? template : undefined, psychJournal: career ? undefined : psychJournal }, status, current)
     const saved = await upsertRecord(next)
     setCurrent(saved)
     if (saved.template) setTemplate(value => ({ ...value, legacySummary: saved.template?.legacySummary }))
@@ -94,7 +96,7 @@ function JournalForm({
       <div className="admin-editor-hint">
         <LuInfo />
         <span>
-          <strong>상담내용·AI 일지는 내부 기록, 공개 코멘트는 학생에게 보여줄 문구</strong>입니다 — 나누어 작성하세요.
+          <strong>{career ? '상담내용·AI 일지' : '상담일지 양식'}는 내부 기록, 공개 코멘트는 학생에게 보여줄 문구</strong>입니다 — 나누어 작성하세요.
           제출하면 작성상태가 「완료」로 바뀝니다. 첨부파일은 아직 연결되지 않았습니다.
         </span>
       </div>
@@ -110,14 +112,16 @@ function JournalForm({
 
       <CounselJournalFields record={record} career={career} care7={care7}
         requestId={source.requestId}
-        template={template} setTemplate={setTemplate} summary={summary} setSummary={setSummary}
+        template={template} setTemplate={setTemplate}
+        psychJournal={psychJournal} setPsychJournal={setPsychJournal}
+        people={{ counselor: source.counselorName, client: row.studentName, studentNo: row.studentNo }}
         comment={comment} setComment={setComment}
         diagnosisType={context.diagnosisType} typeLocked={context.typeLocked} saving={saving} />
 
       {formErrors.length > 0 && <p className="admin-form-hint">{formErrors.join(' ')}</p>}
       <div className="admin-form-actions">
         {justSaved && <span className="admin-save-hint"><LuCheck /> 임시 저장됨</span>}
-        <CounselRecordPreview template={career ? template : undefined} summary={recordSummary} comment={comment} followUp={followUp} disabled={saving} />
+        <CounselRecordPreview template={career ? template : undefined} psychJournal={career ? undefined : psychJournal} summary={recordSummary} comment={comment} followUp={followUp} disabled={saving} />
         <button type="button" className="admin-btn admin-btn-ghost sm" onClick={onClose}>닫기</button>
         <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => save('작성중')} disabled={saving}>
           임시저장

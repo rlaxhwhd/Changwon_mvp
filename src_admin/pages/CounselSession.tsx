@@ -9,7 +9,7 @@ import {
   completeRequest,
 } from '../data/counselRequests'
 import type { CounselRequest } from '../data/counselRequests'
-import { buildRecord, upsertRecord } from '../data/counselRecords'
+import { buildRecord, nextPsychSession, upsertRecord } from '../data/counselRecords'
 import type { CounselRecord } from '../data/counselRecords'
 import { STUDENTS } from '../../src_v2/data/students'
 import { loadStudentProfile } from '../../shared/profileStore'
@@ -20,9 +20,11 @@ import { isCare7 } from '../../src_v2/data/counselTrack'
 import EmptyState from '../components/EmptyState'
 import StudentDetailView, { type TabKey } from '../components/StudentDetailView'
 import CounselRecordFields from '../components/CounselRecordFields'
+import PsychJournalFields from '../components/PsychJournalFields'
 import CounselRecordPreview from '../components/CounselRecordPreview'
 import CounselRecordContext, { type RecordContext } from '../components/CounselRecordContext'
 import { counselContent, counselTemplateErrors, emptyCounselTemplate } from '../data/schema/counselTemplate'
+import { emptyPsychJournal, psychJournalErrors } from '../data/schema/psychJournal'
 
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -49,7 +51,8 @@ function RecordForm({
   const care7 = career && isCare7(request.careTrack)
   const [template, setTemplate] = useState(() => existing?.template ?? emptyCounselTemplate(request.method, request.slot?.date ?? todayISO(), request.slot?.start))
 
-  const [summary, setSummary] = useState(existing?.summary ?? '')
+  const [psychJournal, setPsychJournal] = useState(() => existing?.psychJournal
+    ?? emptyPsychJournal(request.method, request.slot?.date ?? todayISO(), request.slot?.start, nextPsychSession(student.id, request.id), existing?.summary ?? ''))
   const [comment, setComment] = useState(existing?.comment ?? '')
   const [saved, setSaved] = useState(false)
   const [saving, setSaving] = useState(false)
@@ -58,8 +61,8 @@ function RecordForm({
   // 로드맵을 만들며 학생과 더 나눈 이야기를 코멘트·정성진단에 반영하는 자리다. 최종 유형은 서버가 잠근다.
   const done = request.status === '완료'
 
-  const recordSummary = career ? counselContent(template) : summary
-  const formErrors = career ? counselTemplateErrors(template, care7, context.typeLocked, comment) : []
+  const recordSummary = career ? counselContent(template) : psychJournal.content
+  const formErrors = career ? counselTemplateErrors(template, care7, context.typeLocked, comment) : psychJournalErrors(psychJournal, comment)
   const canComplete = formErrors.length === 0 && recordSummary.trim() !== '' && comment.trim() !== ''
 
   // 조립은 데이터층 한 곳이다 — 상담일지 대장도 같은 함수로 쓴다.
@@ -77,7 +80,7 @@ function RecordForm({
         counselorId,
         counselorName: counselor.name,
       },
-      { summary: recordSummary, comment, followUp: existing?.followUp ?? '', template: career ? template : undefined },
+      { summary: recordSummary, comment, followUp: existing?.followUp ?? '', template: career ? template : undefined, psychJournal: career ? undefined : psychJournal },
       status,
       existing,
     )
@@ -106,7 +109,7 @@ function RecordForm({
       // 재상담으로 미리 재생성해 둔 초안이 이 상담을 가리키면 완료가 그 초안을 함께 확정한다.
       const plan = roadmapEnvelope(student.id)?.roadmap
       const draftForThis = care7 && plan && !plan.confirmed && plan.counselRequestId === request.id ? plan : undefined
-      await completeRequest(request.id, { summary: recordSummary, comment, followUp: existing?.followUp, template: career ? template : undefined, expectedRecordVersion: existing?.version ?? 0 }, care7 ? template.finalType : undefined,
+      await completeRequest(request.id, { summary: recordSummary, comment, followUp: existing?.followUp, template: career ? template : undefined, psychJournal: career ? undefined : psychJournal, expectedRecordVersion: existing?.version ?? 0 }, care7 ? template.finalType : undefined,
         draftForThis ? { expectedRoadmapVersion: draftForThis.roadmapVersion, expectedRoadmapLockVersion: draftForThis.version } : undefined)
       onCompleted()
     } catch (error) {
@@ -138,37 +141,16 @@ function RecordForm({
           requestId={request.id}
           diagnosisType={context.diagnosisType} care7={care7} disabled={saving} typeLocked={context.typeLocked} required />
       </> : <>
-      <label className="admin-field">
-        <span>
-          상담 소견 <em className="admin-req-mark">*</em>
-        </span>
-        <textarea
-          rows={7}
-          value={summary}
-          onChange={e => setSummary(e.target.value)}
-          placeholder="상담 진행 내용, 진단 해석, 논의한 방향을 기록합니다. (내부 기록)"
-        />
-      </label>
-
-      <label className="admin-field">
-        <span>
-          학생 공개 코멘트 <em className="admin-req-mark">*</em>
-        </span>
-        <textarea
-          rows={4}
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          placeholder="학생 상담 현황에 표시될 코멘트입니다. 격려·요약·다음 과제를 담아주세요."
-        />
-        <small className="admin-field-hint">이 코멘트는 학생 화면 '상담 현황'에 노출됩니다.</small>
-      </label>
-
+        {existing?.summary && !existing.psychJournal && <p className="admin-editor-hint">양식 도입 전에 쓴 상담내용을 「상담내용」 칸으로 옮겨 두었습니다. 나머지 항목을 채워 주세요.</p>}
+        <PsychJournalFields value={psychJournal} onChange={setPsychJournal} comment={comment} onCommentChange={setComment}
+          people={{ counselor: counselor.name, client: student.name, studentNo: student.studentNo ?? '' }} disabled={saving} />
+        {formErrors.length > 0 && <p className="admin-form-hint">{formErrors.join(' ')}</p>}
       </>}
 
       <div className="admin-form-actions">
         {saveError && <p role="alert">{saveError}</p>}
         {saved && <span className="admin-save-hint"><LuCheck /> {done ? '저장됨' : '임시 저장됨'}</span>}
-        <CounselRecordPreview template={career ? template : undefined} summary={recordSummary} comment={comment} followUp={existing?.followUp ?? ''} disabled={saving} />
+        <CounselRecordPreview template={career ? template : undefined} psychJournal={career ? undefined : psychJournal} summary={recordSummary} comment={comment} followUp={existing?.followUp ?? ''} disabled={saving} />
         {done ? (
           <button type="button" className="admin-btn admin-btn-primary" disabled={!canComplete || saving} onClick={() => handleSave('완료')}>
             <LuClipboardCheck /> 기록 수정 저장

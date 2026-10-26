@@ -1,5 +1,6 @@
 import { LuMessageSquareMore } from 'react-icons/lu'
 import CounselTemplateSummary from './CounselTemplateSummary'
+import PsychJournalSummary from './PsychJournalSummary'
 import type { CounselRecord } from '../data/schema/counselRecord'
 
 /** Internal journal content shared by the journal register and counseling history. */
@@ -7,6 +8,7 @@ export default function CounselJournalBody({ record }: { record: CounselRecord }
   return (
 <div className="admin-journal-body">
                       <CounselTemplateSummary template={record.template} />
+                      <PsychJournalSummary journal={record.psychJournal} />
                       <div className="admin-record-item-summary">
                         <span className="admin-record-label">상담내용</span>
                         <p>{record.summary || '아직 작성되지 않았습니다.'}</p>

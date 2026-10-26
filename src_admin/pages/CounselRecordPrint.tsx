@@ -8,6 +8,7 @@ import { getCounselStudentProfile, getRequestById } from '../data/counselRequest
 import { getCounselorById } from '../data/counselors'
 import type { CounselRecord } from '../data/schema/counselRecord'
 import CounselTemplateSummary from '../components/CounselTemplateSummary'
+import { formatJournalTime, isRemote, psychMethodLabel } from '../data/schema/psychJournal'
 import '../components/CounselRecordFields.css'
 
 /**
@@ -58,8 +59,46 @@ export default function CounselRecordPrint() {
         </button>
       </div>
 
-      {records.map(record => <RecordSheet key={record.id} record={record} />)}
+      {records.map(record => record.psychJournal
+        ? <PsychRecordSheet key={record.id} record={record} />
+        : <RecordSheet key={record.id} record={record} />)}
     </div>
+  )
+}
+
+/** 심리상담 일지 1장 — 학생상담센터 [붙임 14] 상담일지 서식 그대로 인쇄한다. */
+function PsychRecordSheet({ record }: { record: CounselRecord }) {
+  const journal = record.psychJournal!
+  const profile = getCounselStudentProfile(record.studentId)
+  return (
+    <article className="print-sheet">
+      <header className="print-head">
+        <h1>상담일지 ( {journal.session ?? ' '} ) 회기</h1>
+        <p>국립창원대학교 학생상담센터</p>
+      </header>
+      <table className="print-table">
+        <tbody>
+          <tr>
+            <th>상담일시</th><td>{formatJournalTime(journal.conductedAt) || '—'}</td>
+            <th>상담자</th><td>{record.counselorName}</td>
+          </tr>
+          <tr>
+            <th>내담자</th><td>{studentDisplayName(record.studentName, record.studentId)}</td>
+            <th>학번/직번</th><td>{profile?.studentNo ?? '—'}</td>
+          </tr>
+          <tr><th>상담방법</th><td colSpan={3}>{psychMethodLabel(journal)}</td></tr>
+          {isRemote(journal.method) && <tr><th>비대면 진행사유</th><td colSpan={3} className="print-pre">{journal.remoteReason}</td></tr>}
+          <tr><th>상담내용</th><td colSpan={3} className="print-pre print-tall">{journal.content}</td></tr>
+          <tr><th>위기상황</th><td colSpan={3} className="print-pre">{journal.crisis || '—'}</td></tr>
+          <tr><th>비고</th><td colSpan={3} className="print-pre">{journal.remarks || '—'}</td></tr>
+          <tr><th>다음 상담 약속</th><td colSpan={3}>{formatJournalTime(journal.nextAt) || '—'}</td></tr>
+        </tbody>
+      </table>
+      <footer className="print-sign">
+        <div><span>작성일</span><strong>{record.updatedAt.slice(0, 10)}</strong></div>
+        <div><span>상담자</span><strong>{record.counselorName}</strong><em>(인)</em></div>
+      </footer>
+    </article>
   )
 }
 

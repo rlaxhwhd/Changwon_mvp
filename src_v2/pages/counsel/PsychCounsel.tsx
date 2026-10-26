@@ -272,6 +272,7 @@ export default function PsychCounsel({ mode = 'counsel' }: { mode?: 'counsel' | 
         open={consentOpen}
         onClose={() => setConsentOpen(false)}
         onAgree={handleConsentAgree}
+        form="psych"
       />
 
       <CounselReserveModal

@@ -101,6 +101,52 @@
   line-height: 1.65;
 }
 
+/* 학생상담센터 동의서 — 항목명이 왼쪽 칸인 표와 번호 매긴 규정 */
+.ccm-table-rows th {
+  width: 30%;
+}
+
+/* 전역 표 규칙(text-align: center !important)이 긴 본문을 가운데로 몬다 — 내용 칸만 왼쪽 정렬 */
+.ccm-table-rows td {
+  text-align: left !important;
+}
+
+.ccm-note {
+  margin-top: 12px;
+  font-size: 15px;
+  color: var(--color-text-sub);
+}
+
+.ccm-rules {
+  margin: 0 0 0 20px;
+  padding: 0;
+}
+
+.ccm-rules > li {
+  list-style: decimal;
+  margin-bottom: 10px;
+  color: var(--color-navy);
+  line-height: 1.65;
+}
+
+.ccm-sub {
+  margin: 4px 0 0 18px;
+  padding: 0;
+}
+
+.ccm-sub li {
+  list-style: hangul;
+  color: var(--color-text-sub);
+}
+
+@media (max-width: 600px) {
+  .ccm-table-rows th,
+  .ccm-table-rows td {
+    display: block;
+    width: auto;
+  }
+}
+
 /* ── Answer (예/아니오) ──────────────────────────────────────────── */
 .ccm-answer {
   display: flex;

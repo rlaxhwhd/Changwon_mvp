@@ -1,5 +1,7 @@
 import { LuPaperclip } from 'react-icons/lu'
 import CounselRecordFields from './CounselRecordFields'
+import PsychJournalFields from './PsychJournalFields'
+import type { PsychJournal } from '../data/schema/psychJournal'
 import type { CounselRecord } from '../data/schema/counselRecord'
 import type { CounselTemplate } from '../data/schema/counselTemplate'
 import type { StudentType } from '../../src_v2/data/careerProcess'
@@ -11,19 +13,21 @@ interface Props {
   care7: boolean
   template: CounselTemplate
   setTemplate: (value: CounselTemplate) => void
-  summary: string
-  setSummary: (value: string) => void
   comment: string
   setComment: (value: string) => void
   diagnosisType: StudentType | null
   typeLocked: boolean
   saving?: boolean
   readOnly?: boolean
+  /** 심리상담은 학생상담센터 상담일지 양식으로 쓴다 — career 가 false 일 때 쓰인다 */
+  psychJournal: PsychJournal
+  setPsychJournal: (value: PsychJournal) => void
+  people?: { counselor: string; client: string; studentNo: string }
 }
 
 /** Shared journal layout for viewing and editing; persistence belongs to the caller. */
 export default function CounselJournalFields({ record, requestId, career, care7, template, setTemplate,
-  summary, setSummary, comment, setComment,
+  comment, setComment, psychJournal, setPsychJournal, people,
   diagnosisType, typeLocked, saving = false, readOnly = false }: Props) {
   return <fieldset className="counsel-journal-fields" disabled={readOnly || saving} aria-label="상담일지">
       {career ? <>
@@ -32,27 +36,9 @@ export default function CounselJournalFields({ record, requestId, career, care7,
           requestId={requestId ?? record?.requestId}
           diagnosisType={diagnosisType} care7={care7} disabled={saving} typeLocked={typeLocked} required />
       </> : <>
-      <label className="admin-field">
-        <span>상담 내용 (소견)</span>
-        <textarea
-          rows={5}
-          value={summary}
-          onChange={e => setSummary(e.target.value)}
-          placeholder="상담에서 다룬 내용과 상담사 소견을 기록합니다."
-        />
-      </label>
-
-      <label className="admin-field">
-        <span>학생 공개 코멘트</span>
-        <textarea
-          rows={3}
-          value={comment}
-          onChange={e => setComment(e.target.value)}
-          placeholder="학생 화면 '상담 현황'에 그대로 노출됩니다."
-        />
-        <small className="admin-field-hint">학생이 읽는 문구입니다. 소견과 분리해 작성하세요.</small>
-      </label>
-
+        {record?.summary && !record.psychJournal && <p className="admin-editor-hint">양식 도입 전에 쓴 상담내용을 「상담내용」 칸으로 옮겨 두었습니다. 나머지 항목을 채워 주세요.</p>}
+        <PsychJournalFields value={psychJournal} onChange={setPsychJournal} comment={comment} onCommentChange={setComment}
+          people={people} disabled={saving} />
       </>}
 
       <div className="admin-field">

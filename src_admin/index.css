@@ -2724,6 +2724,8 @@ input, textarea, select { font-family: var(--font); }
 .print-table th { width: 96px; background: var(--color-section-bg); font-weight: 800; color: var(--color-text-secondary); white-space: nowrap; }
 .print-table td { font-weight: 600; color: var(--color-text); }
 .print-table.is-log th { width: auto; text-align: center; }
+.print-table td.print-pre { white-space: pre-wrap; overflow-wrap: anywhere; text-align: left !important; vertical-align: top !important; }
+.print-table td.print-tall { height: 360px; }
 .print-table.is-log td { font-size: 12px; }
 .print-block { margin-top: 18px; }
 .print-block h2 { margin-bottom: 6px; font-size: 13px; font-weight: 800; color: var(--color-title); }

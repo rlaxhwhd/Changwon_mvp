@@ -22,6 +22,7 @@ import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
 import { studentLiteOf } from './studentRoster'
 import { STUDENT_TYPE_MAP } from '../../src_v2/data/careerProcess'
 import type { CounselTemplate } from './schema/counselTemplate'
+import type { PsychJournal } from './schema/psychJournal'
 import type { StudentType, StudentTypeMeta } from '../../src_v2/data/careerProcess'
 
 /** 접수함에 표시하는 상담 유형 — '교수'(예약)는 제외 */
@@ -296,7 +297,7 @@ export async function rescheduleRequest(id: string, slot: CounselSlot): Promise<
   await performCounselAction(id, 'reschedule', { slot })
 }
 export async function completeRequest(
-  id: string, record: { summary: string; comment: string; followUp?: string; template?: CounselTemplate; expectedRecordVersion?: number }, finalType?: StudentType | null,
+  id: string, record: { summary: string; comment: string; followUp?: string; template?: CounselTemplate; psychJournal?: PsychJournal; expectedRecordVersion?: number }, finalType?: StudentType | null,
   roadmap?: { expectedRoadmapVersion: number; expectedRoadmapLockVersion: number },
 ): Promise<void> {
   await performCounselAction(id, 'complete', { ...record, followUp: record.followUp ?? '', finalType, ...roadmap })
