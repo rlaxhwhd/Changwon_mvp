@@ -91,19 +91,18 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
   const perf = getPerformance(data)
 
   // 신청 ID로 구분한다. 같은 학생의 서로 다른 상담를 섞지 않는다.
-  const [openId, setOpenId] = useState<string | null | undefined>(undefined)
-  const activeRequestId = openId === undefined
-    ? timeline.find(t => t.status !== '완료')?.requestId ?? null
-    : timeline.some(t => t.requestId === openId) ? openId : null
+  const [openId, setOpenId] = useState<string | null>(null)
+  const activeRequestId = timeline.some(t => t.requestId === openId) ? openId : null
   const briefingResource = useCounselBriefing(activeRequestId, me.id)
   const briefing = briefingResource.data
-  // 행에 마우스를 올리면 브리핑이 펼쳐진다. 스쳐 지나가는 행마다 조회하지 않게 잠깐 머문 뒤 연다.
+  // 브리핑은 행에 마우스가 올라가 있는 동안만 펼친다. 스쳐 지나가는 행마다 조회하지 않게 잠깐 머문 뒤 연다.
   const hoverTimer = useRef<number | undefined>(undefined)
   const cancelHover = () => window.clearTimeout(hoverTimer.current)
   const hoverOpen = (requestId: string) => {
     cancelHover()
     hoverTimer.current = window.setTimeout(() => setOpenId(requestId), 150)
   }
+  const hoverClose = () => { cancelHover(); setOpenId(null) }
   useEffect(() => cancelHover, [])
 
   // 학생정보 모달 — 상담사 학생관리 상세와 같은 화면(StudentDetailModal 공용)
@@ -234,8 +233,9 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                         key={item.requestId}
                         className={`tl-item${on ? ' on' : ''}${item.status === '완료' ? ' muted' : ''}`}
                         onMouseEnter={() => hoverOpen(item.requestId)}
-                        onMouseLeave={cancelHover}
+                        onMouseLeave={hoverClose}
                         onFocus={() => setOpenId(item.requestId)}
+                        onBlur={e => { if (!e.currentTarget.contains(e.relatedTarget)) hoverClose() }}
                       >
                         <div className="tl-row">
                           <div className="tl-main">
