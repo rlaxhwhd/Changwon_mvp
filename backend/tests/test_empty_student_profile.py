@@ -62,10 +62,18 @@ def test_first_user_can_request_save_and_complete_counsel_without_json(client, d
       VALUES(%s,%s,'First user test','STUDENT','fixture')''', (uid, uid))
     db.execute('''INSERT INTO dc.student(intg_uid,student_no,major_label,grade)
       VALUES(%s,%s,'Test',1)''', (uid, uid))
-    created = client.post('/api/v1/counsel-requests',
+    # 일반 상담도 로드맵 확정 전에는 신청할 수 없다(2026-10-27). 저장·완료 경로는 신청 행을 직접 넣어 검증한다.
+    refused = client.post('/api/v1/counsel-requests',
         headers={**headers(uid), 'Idempotency-Key': str(uuid4())}, json=request_body(6))
-    assert created.status_code == 201, created.text
-    path = '/api/v1/counsel-requests/' + created.json()['id']
+    assert refused.status_code == 409, refused.text
+    request_id, slot = str(uuid4()), request_body(6)['slot']
+    db.execute('''INSERT INTO dc.counsel_request(id,student_uid,counselor_uid,type_code,legacy_type,care_track,status_code,
+      method_code,topic,slot_date,slot_start,slot_end,snapshot,requested_at,source_payload)
+      VALUES(%s,%s,(SELECT intg_uid FROM dc.person WHERE alias='career_kim'),'CAREER','진로취업','general','REQ',
+      'OFFLINE','Test',%s,%s,%s,'{}',now(),'{}')''', (request_id, uid, slot['date'], slot['start'], slot['end']))
+    created = client.get('/api/v1/counsel-requests/' + request_id, headers=headers('career_kim'))
+    assert created.status_code == 200, created.text
+    path = '/api/v1/counsel-requests/' + request_id
     staff = headers('career_kim')
     profile_response = client.get('/api/v1/students/' + uid, headers=staff)
     assert profile_response.status_code == 200, profile_response.text

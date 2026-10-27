@@ -1,8 +1,8 @@
 """Versioned counseling form contract, shared by draft and completion routes."""
 from datetime import datetime
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, field_validator
 from fastapi import HTTPException
 
 from .gates import is_care7_request
@@ -23,6 +23,11 @@ class QualitativeDiagnosis(BaseModel):
     selfUnderstanding: Literal['상', '중', '하'] | None = None
 
 
+# 유형별 상담질문(2026-10-27) — 상담 24주제(COUNSEL_TOPIC A01~A24)마다 상담사가 대면으로 묻고 받은 답변.
+TopicCode = Annotated[str, StringConstraints(pattern=r'^A(0[1-9]|1[0-9]|2[0-4])$')]
+TopicNote = Annotated[str, StringConstraints(max_length=3000)]
+
+
 class CounselTemplate(BaseModel):
     model_config = ConfigDict(extra='forbid')
     schemaVersion: Literal[1] = 1
@@ -30,6 +35,7 @@ class CounselTemplate(BaseModel):
     conductedAt: str = Field('', max_length=16)
     finalType: Literal['T1', 'T2', 'T3', 'T4', 'T5', 'T6'] | None = None
     qualitative: QualitativeDiagnosis = Field(default_factory=QualitativeDiagnosis)
+    topicNotes: dict[TopicCode, TopicNote] = Field(default_factory=dict, max_length=24)
     program: TemplateSection = Field(default_factory=TemplateSection)
     application: TemplateSection = Field(default_factory=TemplateSection)
     aiJournal: str = Field('', max_length=20000)
@@ -59,6 +65,10 @@ class CounselTemplate(BaseModel):
         for key in ('program', 'application'):
             if not data[key]['selected']:
                 data[key]['content'] = ''
+        # 빈 답변은 남기지 않는다. 답변이 없으면 키도 두지 않아 기존 일지·AI 입력 해시와 같다.
+        notes = {code: text.strip() for code, text in data.pop('topicNotes').items() if text.strip()}
+        if notes:
+            data['topicNotes'] = notes
         return data
 
 
@@ -98,7 +108,8 @@ def validate_completed_template(request, template, *, comment, type_locked=False
 
 def journal_input(template):
     data = template.storage()
-    return {key: data.get(key) for key in ('channel', 'conductedAt', 'finalType', 'qualitative', 'program', 'application')}
+    keys = ('channel', 'conductedAt', 'finalType', 'qualitative', 'program', 'application')
+    return {key: data.get(key) for key in keys + (('topicNotes',) if 'topicNotes' in data else ())}
 
 
 def journal_type(conn, request, template):

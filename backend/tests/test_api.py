@@ -74,10 +74,13 @@ def test_idempotency_conflict_version_and_completion(client):
     assert client.post(path+'/cancel',headers=headers('career_kim'),json={'expectedVersion':3,'reason':'closed'}).status_code==409
 
 
-def test_care7_gate_does_not_block_general_counsel(client):
+def test_general_counsel_requires_confirmed_roadmap(client):
+    # 2026-10-27: 진단 전에는 두 상담 모두 잠기고, 일반 상담은 로드맵이 확정된 뒤에 열린다.
     head={**headers('jiwoo'),'Idempotency-Key':str(uuid4())}
     assert client.post('/api/v1/counsel-requests',headers=head,json=request_body(1,'care7')).status_code==409
-    result=client.post('/api/v1/counsel-requests',headers=head,json=request_body(1))
+    refused=client.post('/api/v1/counsel-requests',headers={**headers('jiwoo'),'Idempotency-Key':str(uuid4())},json=request_body(1))
+    assert refused.status_code==409 and '로드맵' in refused.json()['detail'],refused.text
+    result=client.post('/api/v1/counsel-requests',headers={**headers('chaewon'),'Idempotency-Key':str(uuid4())},json=request_body(40))
     assert result.status_code==201,result.text
 
 

@@ -14,6 +14,8 @@ export interface CounselTemplate {
   conductedAt: string
   finalType: StudentType | null
   qualitative: Partial<Record<QualitativeKey, QualitativeRating>>
+  /** 유형별 상담질문 — 상담 주제 코드(A01~A24)별로 상담사가 대면 상담에서 받은 답변. 빈 답변은 서버가 버린다. */
+  topicNotes?: Record<string, string>
   program: { selected: boolean; content: string }
   application: { selected: boolean; content: string }
   aiJournal: string

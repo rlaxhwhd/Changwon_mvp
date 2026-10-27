@@ -112,9 +112,9 @@ const router = createBrowserRouter(
         { path: '/diagnosis/result',               element: <Navigate to="/diagnosis/employment" replace /> },
         { path: '/diagnosis/result/:testId',       element: <Navigate to="/diagnosis/employment" replace /> },
 
-        // 전문상담 — 라우트에 게이트를 두지 않는다. 일반 진로취업·심리·교수 상담은
-        // CARE 7+ 파이프라인 밖이라 진단 없이 신청한다(PROCESS.md §2). 진단 2종을
-        // 요구하는 것은 CareerCounsel 안의 「CARE 7+ 연계 상담」 카드 하나뿐이다.
+        // 전문상담 — 라우트에 게이트를 두지 않는다. 심리·교수 상담은 CARE 7+ 파이프라인
+        // 밖이다. 진로취업 두 카드(CARE 7+ = 진단 2종, 일반 = 로드맵 확정)의 잠금은
+        // CareerCounsel 안에서 판정한다(2026-10-27).
         { path: '/counsel',           element: <Navigate to="/counsel/career" replace /> },
         { path: '/counsel/career',    loader: studentPageLoader('counselors', 'slots'), element: <CareerCounsel /> },
         { path: '/counsel/psych',     loader: studentPageLoader('counselors', 'slots'), element: <PsychCounsel key="counsel" /> },

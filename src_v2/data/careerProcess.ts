@@ -454,16 +454,24 @@ export function isDiagnosisDone(state: PipelineState): boolean {
   return state.coreDone && state.followUpDone
 }
 
+/**
+ * 일반 진로·취업 상담은 확정된 로드맵을 기준으로 받는 상담이다(2026-10-27 사용자 확정).
+ * 진단 → CARE 7+ 상담 → 로드맵 확정이 끝나야 열린다 — 서버 counsel.general_gate 가 쓰는
+ * employment_gate 와 같은 술어라 역량강화·취업지원 개방과 한 판정을 공유한다.
+ */
+export function isGeneralCounselOpen(state: PipelineState): boolean {
+  return getStageAccess(state).employment === 'open'
+}
+
 /** 순차 게이팅 단일 판정. 화면마다 조건을 다시 쓰지 않는다. */
 export function getStageAccess(state: PipelineState): Record<Stage, 'open' | 'locked'> {
   const diagnosisDone = isDiagnosisDone(state)
   const { counselDone, roadmapConfirmed } = state
   return {
     diagnosis: 'open',
-    // ★ 상담센터는 언제나 열린다. 일반 진로취업 상담·심리 상담·교수 상담은 CARE 7+
-    //   파이프라인 밖이라 진단을 요구하지 않는다(PROCESS.md §2). 진단 2종을 요구하는
-    //   것은 진로·취업 상담 화면 안의 「CARE 7+ 연계 상담」 카드 하나뿐이고, 그 잠금은
-    //   그 화면이 isDiagnosisDone 으로 직접 판정한다.
+    // ★ 상담센터는 언제나 열린다 — 심리·교수 상담은 CARE 7+ 파이프라인 밖이다.
+    //   진로·취업 상담 두 카드의 잠금은 그 화면이 isDiagnosisDone(CARE 7+)과
+    //   isGeneralCounselOpen(일반)으로 판정한다(2026-10-27).
     counsel: 'open',
     roadmap: state.menuEligible || (!state.renewalRequired && diagnosisDone && counselDone) ? 'open' : 'locked',
     growth: (state.menuEligible ?? (diagnosisDone && counselDone && roadmapConfirmed)) ? 'open' : 'locked',
@@ -512,13 +520,6 @@ export interface NextAction {
 /** 인계 순서 — 진단(C-CORE) → 진단(후속) → 상담 → 로드맵. 끝나면 null. */
 export const HANDOFF_TOTAL = 4
 
-/** 진단 구간에서 함께 내보내는 보조 안내. 일반 상담은 게이트 밖이라 지금도 신청할 수 있다. */
-const GENERAL_COUNSEL_SECONDARY = {
-  label: '일반 상담 신청하기',
-  path: '/counsel/career',
-  detail: '진단 전에도 진로 고민은 상담할 수 있습니다.',
-}
-
 export function getNextAction(state: PipelineState): NextAction | null {
   const { coreDone, studentType, followUpDone, counselDone, roadmapConfirmed } = state
 
@@ -529,7 +530,6 @@ export function getNextAction(state: PipelineState): NextAction | null {
       detail: '모든 단계의 관문입니다. 이 진단으로 나의 유형이 정해지고, 그 유형이 다음 진단과 상담 주제를 결정합니다.',
       ctaLabel: '핵심진단 응시하기',
       ctaPath: '/diagnosis/employment',
-      secondary: GENERAL_COUNSEL_SECONDARY,
     }
   }
 
@@ -541,7 +541,6 @@ export function getNextAction(state: PipelineState): NextAction | null {
       detail: 'C-CORE 응시는 끝났습니다. 결과 유형이 확정되면 후속진단이 열립니다.',
       ctaLabel: '진단 결과 보기',
       ctaPath: '/diagnosis/employment',
-      secondary: GENERAL_COUNSEL_SECONDARY,
     }
   }
 
@@ -554,7 +553,6 @@ export function getNextAction(state: PipelineState): NextAction | null {
       detail: `${typeLabel(studentType)}으로 분류됐습니다. 이 유형에 맞춘 후속진단 1종을 마치면 상담을 신청할 수 있습니다.`,
       ctaLabel: '후속진단 응시하기',
       ctaPath: `/diagnosis/employment/${followUp.testId}`,
-      secondary: GENERAL_COUNSEL_SECONDARY,
     }
   }
 

@@ -144,3 +144,15 @@ def test_required_assessment_and_comment_on_both_write_routes(client,db,draft,mi
     assert client.put(path,headers=headers('career_kim'),json=body).status_code==422
     body['status']='작성중'
     assert client.put(path,headers=headers('career_kim'),json=body).status_code==200
+
+
+def test_topic_notes_keep_answered_topics_only(client, draft):
+    # 유형별 상담질문(2026-10-27) — 상담사가 주제별로 적은 답변만 남기고, 주제 코드가 아니면 거부한다.
+    request_id, _ = draft
+    path = f'/api/v1/counsel-requests/{request_id}/record'
+    body = dict(expectedVersion=0, summary='ignored', comment='PUBLIC COMMENT', status='작성중',
+                template={**form(), 'topicNotes': {'A05': ' 목표 진로 두 가지를 비교함 ', 'A06': '  '}})
+    assert client.put(path, headers=headers('career_kim'), json={**body, 'template': {**body['template'], 'topicNotes': {'Z99': 'x'}}}).status_code == 422
+    saved = client.put(path, headers=headers('career_kim'), json=body)
+    assert saved.status_code == 200, saved.text
+    assert saved.json()['template']['topicNotes'] == {'A05': '목표 진로 두 가지를 비교함'}

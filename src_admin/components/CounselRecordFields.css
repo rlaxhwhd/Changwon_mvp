@@ -44,6 +44,9 @@
 .counsel-template-summary dl > div { display: flex; gap: 10px; }
 .counsel-template-summary dt { color: #708097; }
 .counsel-template-summary dd { margin: 0; font-weight: 600; }
+.counsel-template-summary .counsel-template-topics { grid-template-columns: 1fr; }
+.counsel-template-summary .counsel-template-topics > div { flex-direction: column; gap: 4px; }
+.counsel-template-summary .counsel-template-topics dd { font-weight: 400; white-space: pre-wrap; overflow-wrap: anywhere; }
 /* 심리상담 상담일지 양식([붙임 14]) — 진로취업 카드 모양을 그대로 쓰고 모자란 입력 칸만 더한다 */
 .counsel-template input[type=number], .counsel-template input[type=text] { width: 100%; box-sizing: border-box; min-width: 0; font: inherit; font-size: 13px; border: 1px solid #d5deeb; border-radius: 6px; padding: 10px; background: #fff; color: inherit; }
 .psych-journal-people { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 8px 16px; margin: 16px 0; padding: 12px 14px; background: #f7f9fc; border-radius: 6px; font-size: 13px; }

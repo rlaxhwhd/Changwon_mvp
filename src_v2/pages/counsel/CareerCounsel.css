@@ -134,7 +134,9 @@
   min-width: 0;
 }
 
-/* 실제 신청 버튼은 비활성·inert 처리하고, 진단 안내만 조작할 수 있다. */
+/* 실제 신청 버튼은 비활성·inert 처리하고, 진단 안내만 조작할 수 있다.
+   잠금 안내(.cc-track-lock)는 잠긴 카드 안에만 덮인다 — 일반 상담 카드도 잠기므로(2026-10-27) 두 카드 공통. */
+.cc-track-card.is-locked { position: relative; overflow: hidden; }
 .cc-track-card.is-locked .cc-track-content {
   filter: blur(3px);
   opacity: .45;

@@ -1,4 +1,4 @@
-import { typeLabel } from '../../src_v2/data/careerProcess'
+import { topicLabel, typeLabel } from '../../src_v2/data/careerProcess'
 import { QUALITATIVE_ITEMS, type CounselTemplate } from '../data/schema/counselTemplate'
 
 /** Read-only assessment reused by preview, journal detail and printing. */
@@ -12,6 +12,10 @@ export default function CounselTemplateSummary({ template }: { template?: Counse
       {template.finalType && <div><dt>상담 확정 유형</dt><dd>{template.finalType} · {typeLabel(template.finalType)}</dd></div>}
       {QUALITATIVE_ITEMS.map(([key, label]) => template.qualitative[key] && <div key={key}><dt>{label}</dt><dd>{template.qualitative[key]}</dd></div>)}
     </dl>
+    {template.topicNotes && Object.keys(template.topicNotes).length > 0 && <section><h3>유형별 상담질문</h3>
+      <dl className="counsel-template-topics">{Object.entries(template.topicNotes).sort(([a], [b]) => a.localeCompare(b)).map(([code, note]) =>
+        <div key={code}><dt>{code} {topicLabel(code)}</dt><dd>{note}</dd></div>)}</dl>
+    </section>}
     {template.aiJournal && <section><h3>AI 상담일지 · 학생 비공개</h3><p>{template.aiJournal}</p></section>}
   </div>
 }

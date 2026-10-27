@@ -1024,12 +1024,22 @@ input, textarea, select { font-family: var(--font); }
 .admin-avail-slots { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* ─── Session (상담 진행) ────────────────────────────────────────────── */
-.admin-session-split { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; }
+.admin-session-split { display: grid; grid-template-columns: minmax(0, 1fr) 380px; gap: 18px; align-items: start; container-type: inline-size; }
 .admin-session-split > * { min-width: 0; }
+.admin-session-right { position: sticky; top: calc(var(--gnb-height) + 24px); z-index: 5; transition: margin-left .25s ease, box-shadow .25s ease; }
+/* 펼침 — 열 폭(380px)은 그대로 두고 왼쪽 여백만 음수로 당겨 화면 폭의 2/3로 넓힌다. 학생 상세는 그대로 아래에 깔린다. */
+.admin-session-right.is-expanded { margin-left: calc(380px - 66.667cqw); box-shadow: -16px 0 32px rgba(15, 23, 42, .12); }
+/* 화살표는 보이는 기록지의 세로 가운데에 머문다(높이 0 의 sticky 레일). */
+.admin-session-toggle-rail { position: sticky; top: calc((100vh + var(--gnb-height)) / 2); height: 0; z-index: 1; }
+.admin-session-toggle { position: absolute; left: calc(-1 * var(--pad) - 15px); transform: translateY(-50%); width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center; padding: 0; border: 1px solid var(--color-border); background: var(--color-bg); color: var(--color-text); cursor: pointer; }
+.admin-session-toggle:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.admin-session-toggle:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
 @media (max-width: 1000px) {
   .admin-session-split { grid-template-columns: minmax(0, 1fr); }
+  .admin-session-right.is-expanded { margin-left: 0; box-shadow: var(--shadow-sm); }
+  .admin-session-toggle-rail { display: none; }
 }
-.admin-session-right { position: sticky; top: calc(var(--gnb-height) + 24px); }
 /* 380px 열 — 버튼 3개를 줄여서 폭 안에 맞추고, 넘치면 다음 줄로 */
 .admin-session-right .admin-form-actions { flex-wrap: wrap; gap: 8px; }
 .admin-session-right .admin-form-actions .admin-btn { flex: 1 1 auto; justify-content: center; padding: 8px 12px; font-size: 13px; }

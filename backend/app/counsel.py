@@ -11,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import principal, require_staff, student_access
 from .db import connection
-from .gates import COUNSEL_TYPE_CODE, diagnosis_gate, is_care7_request
+from .gates import COUNSEL_TYPE_CODE, diagnosis_gate, employment_gate, is_care7_request
 from .counsel_template import CounselTemplate, validate_template_scope, validate_completed_template, template_storage
 from .psych_journal import PsychJournal, psych_storage, validate_completed_psych, validate_psych_scope
 from .counsel_consent import Consent, store_consent, validate_consent
@@ -169,6 +169,13 @@ def care_gate(conn,uid):
     return row
 
 
+def general_gate(conn,uid):
+    """일반 진로·취업 상담은 확정된 로드맵을 기준으로 받는다(2026-10-27 사용자 확정) —
+    진단·CARE 7+ 상담·로드맵 확정을 보는 취업 게이트와 같은 술어를 쓴다."""
+    if not employment_gate(conn,uid)['eligible']:
+        raise HTTPException(409,'일반 진로·취업 상담은 CARE 7+ 상담으로 로드맵이 확정된 뒤 신청할 수 있습니다.')
+
+
 @router.get('/counsel-requests')
 def requests(page:int=Query(1,ge=1),pageSize:int=Query(20,ge=1,le=100),studentId:str|None=None,
              status:str|None=None,user=Depends(principal, scope='function'),conn=Depends(connection, scope='function')):
@@ -210,6 +217,8 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
     if body.type!='진로취업' and body.careTrack=='care7':
         raise HTTPException(422,'CARE 7+는 진로취업 상담에만 적용됩니다.')
     current_type=care_gate(conn,user['intg_uid']) if body.careTrack=='care7' else None
+    if body.careTrack=='general':
+        general_gate(conn,user['intg_uid'])
     if current_type and not body.topicCode:
         raise HTTPException(422,'유형별 상담 주제를 선택해 주세요.')
     topic=None

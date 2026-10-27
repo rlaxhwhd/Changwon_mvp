@@ -2,7 +2,7 @@ import { useId, useState } from 'react'
 import { streamAi } from '../../shared/chatbotApi'
 import AiProgressModal from '../../shared/AiProgressModal'
 import { LuLockKeyhole, LuMessageSquareMore, LuSparkles } from 'react-icons/lu'
-import { STUDENT_TYPE_MAP, type StudentType, typeLabel } from '../../src_v2/data/careerProcess'
+import { STUDENT_TYPE_MAP, type StudentType, getTopicsForType, typeLabel } from '../../src_v2/data/careerProcess'
 import { COUNSEL_CHANNELS, QUALITATIVE_ITEMS, type CounselTemplate } from '../data/schema/counselTemplate'
 import './CounselRecordFields.css'
 
@@ -25,6 +25,8 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
   const [pending, setPending] = useState(false)
   const [progress, setProgress] = useState('')
   const [error, setError] = useState('')
+  // 상담질문 주제는 상담에서 고른 최종 유형을 따르고, 고르기 전에는 최근 진단 유형을 따른다.
+  const topicType = value.finalType ?? diagnosisType ?? null
   const patch = (fields: Partial<CounselTemplate>) => onChange({ ...value, ...fields,
     ...('aiJournal' in fields ? {} : { aiJournalRunId: null }) })
   async function generate() {
@@ -72,6 +74,15 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
         {value.finalType && value.finalType !== diagnosisType && <p className="admin-field-hint">유형이 변경되면 {typeLabel(value.finalType)}의 후속진단도 완료해야 취업지원을 이용할 수 있습니다.</p>}
       </section>
       <section className="counsel-template-card">
+        <div className="counsel-template-heading"><h3>유형별 상담질문</h3><span>{topicType ? `${topicType} · ${typeLabel(topicType)} 상담 주제` : '상담 주제'}</span></div>
+        {topicType ? <div className="counsel-template-content">
+          {getTopicsForType(topicType).map(topic => <label key={topic.code} className="admin-field"><span>{topic.code} {topic.label}</span>
+            <textarea rows={4} maxLength={3000} value={value.topicNotes?.[topic.code] ?? ''}
+              onChange={e => patch({ topicNotes: { ...value.topicNotes, [topic.code]: e.target.value } })} placeholder="상담에서 나눈 학생의 답변을 기록해 주세요." />
+          </label>)}
+        </div> : <p className="counsel-template-empty">진단 결과가 없어 상담 주제를 표시할 수 없습니다.</p>}
+      </section>
+      <section className="counsel-template-card">
         <div className="counsel-template-heading"><h3>정성진단 <em className="admin-req-mark">*</em></h3><span>5개 항목 모두 필수 · 상·중·하 선택</span></div>
         <div className="counsel-template-ratings">
           {QUALITATIVE_ITEMS.map(([key, label]) => <fieldset key={key} className="counsel-template-rating">
@@ -107,7 +118,7 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
       <div className="counsel-template-notes">
         <section className="counsel-template-card counsel-template-ai">
           <div className="counsel-template-heading"><h3><LuSparkles /> 상담일지 작성 AI</h3><span><LuLockKeyhole /> 학생 비공개</span></div>
-          <p className="admin-field-hint">상담유형·정성진단·상담내용을 바탕으로 일지를 작성합니다.</p>
+          <p className="admin-field-hint">상담유형·상담질문·정성진단·상담내용을 바탕으로 일지를 작성합니다.</p>
           <textarea aria-label="AI 상담일지" rows={9} maxLength={20000} value={value.aiJournal} onChange={e => patch({ aiJournal: e.target.value })} placeholder="생성된 상담일지를 검토하고 직접 수정할 수 있습니다." />
           {error && <p role="alert">{error}</p>}
           <div className="counsel-template-ai-footer"><span>{value.aiJournalRunId ? '생성 완료 · 본문 수정 가능' : '입력 변경 후에는 다시 생성해 주세요.'}</span><button type="button" className="admin-btn admin-btn-ghost sm" disabled={!requestId || pending} onClick={() => void generate()}>생성하기</button></div>

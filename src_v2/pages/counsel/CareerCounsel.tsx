@@ -11,7 +11,7 @@ import CounselTabs from '../../components/CounselTabs'
 import CounselWeekCard from '../../components/CounselWeekCard'
 import { submitCounselRequest } from '../../data/counselRequestsWrite'
 import { CARE_TRACK_LABEL, type CareTrack } from '../../data/counselTrack'
-import { getNextAction, isDiagnosisDone, getTopicsForType } from '../../data/careerProcess'
+import { getNextAction, isDiagnosisDone, isGeneralCounselOpen, getTopicsForType } from '../../data/careerProcess'
 import { useMetadata } from '../../../shared/useMetadata'
 import { getPipelineState } from '../../data/pipeline'
 import { getActiveStudent, getStudentType } from '../../data/students'
@@ -47,9 +47,10 @@ export default function CareerCounsel() {
   // 전에는 예약 화면을 그리지 않는다 — 로드맵 생성 여부가 갈린다.
   const [track, setTrack] = useState<CareTrack | null>(null)
   const pipeline = getPipelineState(getActiveStudent())
-  // 진단 2종을 요구하는 것은 CARE 7+ 연계 상담뿐이다. 일반 상담은 게이트 밖이라
-  // 신입생도 바로 신청한다(PROCESS.md §2).
+  // 진단을 마치지 않으면 두 상담 모두 잠긴다(2026-10-27 사용자 확정).
+  // CARE 7+ 연계 = 로드맵 생성·변경 상담(진단 2종 후), 일반 = 확정된 로드맵을 기준으로 한 상담(로드맵 확정 후).
   const care7Open = isDiagnosisDone(pipeline)
+  const generalOpen = isGeneralCounselOpen(pipeline)
 
   // 경로 표시 마지막 칸 — 상단바 항목 이름과 화면 이름이 다르다.
   usePageHead(
@@ -164,8 +165,8 @@ export default function CareerCounsel() {
           <article className={`cc-track-card cc-track-card-care7${care7Open ? '' : ' is-locked'}`}>
             <div className="cc-track-content" inert={!care7Open} aria-hidden={!care7Open}>
               <h2>{CARE_TRACK_LABEL.care7.student}</h2>
-              <p>진단 결과를 바탕으로 나의 유형을 확정하고, 그 자리에서 경력개발 로드맵을 만듭니다.</p>
-              <small>진단 2종 완료 · 상담을 신청합니다</small>
+              <p>진단 결과로 나의 유형을 확정하고 경력개발 로드맵을 만듭니다. 직무나 유형이 바뀌어 로드맵을 다시 세울 때도 신청합니다.</p>
+              <small>진단 2종 완료 · 로드맵 생성·변경</small>
               <button type="button" className="cc-track-cta" disabled={!care7Open} onClick={() => setTrack('care7')}>
                 신청하기
               </button>
@@ -181,13 +182,33 @@ export default function CareerCounsel() {
             )}
           </article>
 
-          <article className="cc-track-card cc-track-card-general">
-            <h2>{CARE_TRACK_LABEL.general.student}</h2>
-            <p>진로·취업 관련 어떤 고민이든 상담받을 수 있습니다.</p>
-            <small>진단 없이 바로 상담 신청</small>
-            <button type="button" className="cc-track-cta" onClick={() => setTrack('general')}>
-              신청하기
-            </button>
+          <article className={`cc-track-card cc-track-card-general${generalOpen ? '' : ' is-locked'}`}>
+            <div className="cc-track-content" inert={!generalOpen} aria-hidden={!generalOpen}>
+              <h2>{CARE_TRACK_LABEL.general.student}</h2>
+              <p>확정된 로드맵을 기준으로 나의 진로·취업 고민을 상담받습니다.</p>
+              <small>로드맵 확정 후 · 상담을 신청합니다</small>
+              <button type="button" className="cc-track-cta" disabled={!generalOpen} onClick={() => setTrack('general')}>
+                신청하기
+              </button>
+            </div>
+            {!generalOpen && (
+              <div className="cc-track-lock" role="status">
+                <strong><i className="fa-solid fa-lock" aria-hidden="true" /> {CARE_TRACK_LABEL.general.student}</strong>
+                <p>{care7Open
+                  ? 'CARE+ 7 연계 상담으로 로드맵이 확정된 뒤 신청할 수 있습니다.'
+                  : 'C-CORE 핵심진단과 후속진단을 완료하고, 로드맵이 확정된 뒤 신청할 수 있습니다.'}</p>
+                {/* 다음 행동이 CARE+ 7 상담 신청이면 이 화면 안에서 그 카드를 연다 — 같은 경로로 링크하지 않는다. */}
+                {care7Open && !pipeline.counselDone ? (
+                  <button type="button" className="cc-track-cta" onClick={() => setTrack('care7')}>
+                    {CARE_TRACK_LABEL.care7.student} 신청하기
+                  </button>
+                ) : (
+                  <Link className="cc-track-cta" to={next?.ctaPath ?? '/diagnosis/employment'}>
+                    {next?.ctaLabel ?? '진단센터로 가기'}
+                  </Link>
+                )}
+              </div>
+            )}
           </article>
         </section>
       </div>
@@ -203,7 +224,7 @@ export default function CareerCounsel() {
         </div>
       )}
 
-      {/* 진단 요약은 CARE 7+ 연계 상담에만 붙는다 — 일반 상담은 진단 전에도 신청한다. */}
+      {/* 진단 요약은 CARE 7+ 연계 상담에만 붙는다 — 일반 상담은 확정된 로드맵을 기준으로 한다. */}
       {track === 'care7' && <IapSummaryBanner note="상담 시 참고할 내 진단 요약 (자동 공유)" />}
 
       <CounselTabs />

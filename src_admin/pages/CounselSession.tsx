@@ -1,5 +1,5 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
-import { LuArrowLeft, LuCheck, LuChevronRight, LuClipboardCheck, LuFileText, LuQuote, LuSquarePen, LuUserX } from 'react-icons/lu'
+import { LuArrowLeft, LuCheck, LuChevronLeft, LuChevronRight, LuClipboardCheck, LuFileText, LuQuote, LuSquarePen, LuUserX } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { getActiveCounselor, getActiveCounselorId } from '../data/counselors'
@@ -218,7 +218,10 @@ function CounselSessionContent({ studentId }: { studentId?: string }) {
   // 완료 처리 직후 로드맵 진행 탭을 연다 — 새로고침 없이 같은 화면에서 이어진다.
   const [detailTab, setDetailTab] = useState<TabKey | undefined>()
   const navigate = useNavigate()
+  // 상담 기록지를 왼쪽으로 펼친다 — 학생 상세는 줄어들지 않고 기록지 아래에 깔린다(2026-10-27).
+  const [recordExpanded, setRecordExpanded] = useState(false)
   const openRoadmapTab = () => {
+    setRecordExpanded(false)
     setDetailTab('roadmap')
     document.querySelector('.admin-session-left')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
@@ -280,7 +283,14 @@ function CounselSessionContent({ studentId }: { studentId?: string }) {
         </aside>
 
         {/* 우측: 상담 기록지 */}
-        <section className="admin-card admin-session-right">
+        <section className={`admin-card admin-session-right${recordExpanded ? ' is-expanded' : ''}`}>
+          <div className="admin-session-toggle-rail">
+            <button type="button" className="admin-session-toggle" aria-expanded={recordExpanded}
+              aria-label={recordExpanded ? '상담 기록지 접기' : '상담 기록지 펼치기'} title={recordExpanded ? '상담 기록지 접기' : '상담 기록지 펼치기'}
+              onClick={() => setRecordExpanded(value => !value)}>
+              {recordExpanded ? <LuChevronRight /> : <LuChevronLeft />}
+            </button>
+          </div>
           <div className="admin-card-head">
             <h2>
               <LuSquarePen /> 상담 기록지
