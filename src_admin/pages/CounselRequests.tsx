@@ -100,7 +100,7 @@ function AssignCounsel({ slot, departments, onClose }: { slot: CounselSlot; depa
     return () => { cancelled = true }
   }, [student])
   const pick = (next: RosterStudent | null) => { setStudent(next); setGates(null); setGateError(''); setTrack('') }
-  if (!student) return <StudentPicker title="상담할 학생 선택" departments={departments} pickLabel="선택" pickOnRowClick onPick={pick} onClose={onClose} />
+  if (!student) return <StudentPicker title="상담할 학생 선택" departments={departments} pickLabel="선택" pickOnRowClick searchOnly onPick={pick} onClose={onClose} />
   const save = () => action.run(async () => {
     if (!track) return
     await assignCounsel({ studentId: student.id, careTrack: track, method, slot: { ...slot, place: place.trim() || undefined } })
