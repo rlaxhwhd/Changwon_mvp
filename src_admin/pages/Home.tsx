@@ -1,6 +1,6 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
 import type { CSSProperties } from 'react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import spriteHtml from './testAdminSprite.html?raw'
 import { getActiveCounselor } from '../data/counselors'
@@ -97,6 +97,14 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
     : timeline.some(t => t.requestId === openId) ? openId : null
   const briefingResource = useCounselBriefing(activeRequestId, me.id)
   const briefing = briefingResource.data
+  // 행에 마우스를 올리면 브리핑이 펼쳐진다. 스쳐 지나가는 행마다 조회하지 않게 잠깐 머문 뒤 연다.
+  const hoverTimer = useRef<number | undefined>(undefined)
+  const cancelHover = () => window.clearTimeout(hoverTimer.current)
+  const hoverOpen = (requestId: string) => {
+    cancelHover()
+    hoverTimer.current = window.setTimeout(() => setOpenId(requestId), 150)
+  }
+  useEffect(() => cancelHover, [])
 
   // 학생정보 모달 — 상담사 학생관리 상세와 같은 화면(StudentDetailModal 공용)
   const [infoId, setInfoId] = useState<string | null>(null)
@@ -225,20 +233,11 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                       <div
                         key={item.requestId}
                         className={`tl-item${on ? ' on' : ''}${item.status === '완료' ? ' muted' : ''}`}
+                        onMouseEnter={() => hoverOpen(item.requestId)}
+                        onMouseLeave={cancelHover}
+                        onFocus={() => setOpenId(item.requestId)}
                       >
-                        <div
-                          className="tl-row"
-                          role="button"
-                          tabIndex={0}
-                          aria-expanded={on}
-                          onClick={() => setOpenId(on ? null : item.requestId)}
-                          onKeyDown={e => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault()
-                              setOpenId(on ? null : item.requestId)
-                            }
-                          }}
-                        >
+                        <div className="tl-row">
                           <div className="tl-main">
                             <div className="tl-head">
                               <span className="time">{item.time}</span>
@@ -257,20 +256,12 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                             </div>
                           </div>
                           <div className="tl-act">
-                            {/* 행 클릭(브리핑 토글)과 겹치지 않게 이벤트를 멈춘다 */}
                             <button
                               type="button"
                               className="btn sm student-info-btn"
-                              onClick={e => { e.stopPropagation(); setInfoId(item.studentId) }}
+                              onClick={() => setInfoId(item.studentId)}
                             >
                               <Ico id="user" /><span>학생정보</span>
-                            </button>
-                            <button
-                              type="button"
-                              className={`btn sm briefing-toggle${on ? ' is-open' : ''}`}
-                              aria-expanded={on}
-                            >
-                              <span>{on ? '브리핑 닫기' : '브리핑 보기'}</span><Ico id="chev" />
                             </button>
                           </div>
                         </div>

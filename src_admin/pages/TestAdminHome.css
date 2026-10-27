@@ -736,20 +736,6 @@
   flex:none;
   margin:0;
 }
-.tadmin .briefing-toggle{
-  min-width:104px;
-  height:36px;
-  padding:0 10px;
-  border-color:var(--border);
-  background:#FFF;
-  color:var(--text-sub);
-  gap:6px;
-  font-size:12px;
-  white-space:nowrap;
-}
-.tadmin .briefing-toggle svg{width:14px;height:14px;transition:transform 180ms ease}
-.tadmin .tl-item.on .briefing-toggle{border-color:var(--sel-line);color:var(--on-teal)}
-.tadmin .tl-item.on .briefing-toggle svg{transform:rotate(-90deg)}
 .tadmin .consultation-guide{
   margin:-8px 0 12px;
   color:var(--text-cap);
@@ -908,7 +894,6 @@
 .tadmin .tl-head > .badge{grid-column:3;grid-row:1;justify-self:end;margin-top:0}
 .tadmin .tl-desc, .tadmin .tl-tags, .tadmin .tl-note{margin-left:60px}
 .tadmin .tl-act{right:8px;bottom:10px;width:auto;margin:0}
-.tadmin .briefing-toggle{width:auto}
 .tadmin .tl-foot{align-items:flex-start;flex-direction:column;gap:8px}
 .tadmin .tl-foot .link{align-self:flex-end}
 .tadmin .inline-briefing{padding:16px}
@@ -1333,7 +1318,6 @@
 .tadmin .tl-note{display:block;overflow-wrap:anywhere}
 .tadmin .tl-note .dot{display:none}
 .tadmin .tl-act{right:12px;bottom:12px;width:auto;margin:0}
-.tadmin .briefing-toggle{width:auto;min-height:36px}
 .tadmin .inline-briefing{margin:8px 0 16px;padding:16px}
 .tadmin .inline-briefing-head{align-items:flex-start;flex-direction:column;gap:8px}
 .tadmin .inline-briefing-title{flex-wrap:wrap}
@@ -1363,9 +1347,10 @@
    여기부터는 손으로 쓴 것 — 시안에 없던 동작을 위한 규칙이라 재스코핑에서 살린다.
    ═════════════════════════════════════════════════════════════════════════ */
 
-/* 오늘의 상담 행 액션이 2개(학생정보 · 브리핑) */
-.tadmin .tl-act{gap:8px}
+/* 오늘의 상담 — 브리핑은 행 hover 로 펼친다(버튼 없음). 행 액션은 학생정보 하나 */
+.tadmin .tl-row{cursor:default}
 .tadmin .student-info-btn{
+  min-width:104px;
   height:36px;
   padding:0 12px;
   border-color:var(--border);
