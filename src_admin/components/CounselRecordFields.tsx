@@ -78,7 +78,7 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
         {topicType ? <div className="counsel-template-content">
           {getTopicsForType(topicType).map(topic => <label key={topic.code} className="admin-field"><span>{topic.code} {topic.label}</span>
             <textarea rows={4} maxLength={3000} value={value.topicNotes?.[topic.code] ?? ''}
-              onChange={e => patch({ topicNotes: { ...value.topicNotes, [topic.code]: e.target.value } })} placeholder="상담에서 나눈 학생의 답변을 기록해 주세요." />
+              onChange={e => patch({ topicNotes: { ...value.topicNotes, [topic.code]: e.target.value } })} placeholder={topic.goal} />
           </label>)}
         </div> : <p className="counsel-template-empty">진단 결과가 없어 상담 주제를 표시할 수 없습니다.</p>}
       </section>
