@@ -32,7 +32,7 @@ interface StudentPickerProps {
   pickLabel?: string
   /** 행을 누르면 바로 고른다(한 명만 고르는 화면). */
   pickOnRowClick?: boolean
-  /** 검색 전용 — 처음엔 목록을 불러오지 않고, 필터는 학적상태·Core 유형만 둔다(상담 등록 학생 추가). */
+  /** 검색 전용 — 검색어·필터를 넣기 전엔 목록을 불러오지 않고, 학과·학년에 학적상태·Core 유형 필터를 더한다(상담 등록 학생 추가). */
   searchOnly?: boolean
   onPick: (student: RosterStudent) => void
   onClose: () => void
@@ -55,16 +55,14 @@ export default function StudentPicker({ title = '학생 검색', departments = [
   const [metadataError, setMetadataError] = useState('')
   const scopeKey = JSON.stringify([departments, professorId])
   useEffect(() => {
-    // 검색 전용 모드는 학과·학년 목록을 쓰지 않는다 — 메타데이터를 부르지 않는다.
-    if (searchOnly) return
     let cancelled = false
     fetchRosterMetadata(departments, undefined, professorId).then(data => { if (!cancelled) setOptions(data.options) })
       .catch(e => { if (!cancelled) setMetadataError(e.message) })
     return () => { cancelled = true }
-  }, [scopeKey, searchOnly])
+  }, [scopeKey])
   const picked = new Set(excludeIds)
-  // 검색 전용 모드는 검색어나 유형을 넣기 전에는 조회하지 않는다.
-  const active = !searchOnly || query.trim() !== '' || studentType !== ALL
+  // 검색 전용 모드는 검색어나 필터(학과·학년·유형)를 넣기 전에는 조회하지 않는다.
+  const active = !searchOnly || query.trim() !== '' || studentType !== ALL || major !== ALL || grade !== ALL
 
   const { data: result, isLoading, error } = useListData(pickerRoster, {
     page,
@@ -73,13 +71,11 @@ export default function StudentPicker({ title = '학생 검색', departments = [
     departments,
     professorId,
     active,
-    filters: searchOnly ? {
-      status,
-      studentType: studentType === ALL ? undefined : studentType,
-    } : {
+    filters: {
       major: major === ALL ? undefined : major,
       grade: grade === ALL ? undefined : grade,
-      status: enrolledOnly ? '재학' : undefined,
+      status: searchOnly ? status : enrolledOnly ? '재학' : undefined,
+      studentType: searchOnly && studentType !== ALL ? studentType : undefined,
     },
   })
   const pages = totalPages(result)
@@ -98,7 +94,21 @@ export default function StudentPicker({ title = '학생 검색', departments = [
             autoFocus={searchOnly}
           />
         </div>
-        {searchOnly ? <>
+        <label className="admin-select">
+          <span>학과</span>
+          <select value={major} onChange={event => { setMajor(event.target.value); setPage(1) }}>
+            <option value={ALL}>{ALL}</option>
+            {options.majors.map(item => <option key={item}>{item}</option>)}
+          </select>
+        </label>
+        <label className="admin-select">
+          <span>학년</span>
+          <select value={grade} onChange={event => { setGrade(event.target.value); setPage(1) }}>
+            <option value={ALL}>{ALL}</option>
+            {options.grades.map(item => <option key={item} value={String(item)}>{item}학년</option>)}
+          </select>
+        </label>
+        {searchOnly && <>
           <label className="admin-select">
             <span>학적상태</span>
             <select value={status} onChange={event => { setStatus(event.target.value as '재학' | '졸업'); setPage(1) }}>
@@ -113,27 +123,10 @@ export default function StudentPicker({ title = '학생 검색', departments = [
               {TYPE_CODES.map(code => <option key={code} value={code}>{code} {typeLabel(code)}</option>)}
             </select>
           </label>
-        </> : <>
-          <label className="admin-select">
-            <span>학과</span>
-            <select value={major} onChange={event => { setMajor(event.target.value); setPage(1) }}>
-              <option value={ALL}>{ALL}</option>
-              {options.majors.map(item => <option key={item}>{item}</option>)}
-            </select>
-          </label>
-          <label className="admin-select">
-            <span>학년</span>
-            <select value={grade} onChange={event => { setGrade(event.target.value); setPage(1) }}>
-              <option value={ALL}>{ALL}</option>
-              {options.grades.map(item => <option key={item} value={String(item)}>{item}학년</option>)}
-            </select>
-          </label>
         </>}
       </div>
 
-      {!active ? (
-        <p className="admin-field-hint">이름이나 학번을 입력하면 검색 결과가 나옵니다.</p>
-      ) : isLoading && result.items.length === 0 ? (
+      {!active ? null : isLoading && result.items.length === 0 ? (
         <div className="admin-loading"><LuLoaderCircle className="admin-spin" /> 불러오는 중…</div>
       ) : result.items.length === 0 ? (
         searchOnly ? <p className="admin-field-hint">조건에 맞는 학생이 없습니다.</p> : <EmptyState icon={LuFrown} message="조건에 맞는 학생이 없습니다." />
