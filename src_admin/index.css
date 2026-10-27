@@ -2436,7 +2436,8 @@ input, textarea, select { font-family: var(--font); }
 .counsel-status-badge.is-waiting { background: var(--state-wait-bg); color: var(--state-wait-ink); }
 .counsel-status-badge.is-confirmed { background: var(--state-fixed-bg); color: var(--state-fixed-ink); }
 .counsel-status-badge.is-complete { background: var(--state-done-bg); color: var(--state-done-ink); }
-.counsel-status-badge.is-cancelled { background: var(--state-cancel-bg); color: var(--state-cancel-ink); }
+/* 취소는 연한 빨강(2026-10-27 사용자 지시) — 회색 토큰(--state-cancel-*)은 상태 탭 글자색이 함께 쓰므로 건드리지 않는다. */
+.counsel-status-badge.is-cancelled { background: var(--red-bg); color: var(--on-red); }
 
 /* 진로취업 상담의 트랙 — 「상담 유형」 배지 아래 둘째 줄.
    유형 배지보다 눌러서 상담 유형이 주값, 트랙이 보조값으로 읽히게 한다. */
