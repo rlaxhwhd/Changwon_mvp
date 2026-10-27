@@ -210,6 +210,8 @@ ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration �
 
 2026-09-16 경험일지 보완(092): 기존 `growth_entry(kind_code=JOURNAL)`·`growth_event`를 학생/상담사/자소서가 공유한다. 학생별/종류별 정렬 인덱스를 추가했다. 권한·API·검증·복구는 [경험일지 연결 명세](docs/GROWTH_JOURNAL.md)를 따른다.
 
+2026-10-27 유형별 상담질문(마이그레이션 없음 — 093 `template` jsonb 재사용): 진로취업 상담일지 `counsel_record.template.topicNotes` = `{주제코드: 답변}`. 키는 `COUNSEL_TOPIC` A01~A24만(그 밖 422), 답변 3000자 이내, 빈 답변·빈 객체는 저장하지 않아 기존 행·AI 입력 해시가 그대로 맞는다. 필수 아님·학생 비공개. 규칙은 [상담일지 템플릿 명세](docs/COUNSEL_TEMPLATE.md)「유형별 상담질문」.
+
 2026-10-26 상담 신청 동의서 기록(146, 로컬 적용 완료): 학생이 상담·심리검사를 신청할 때 동의한 서식(`CAREER` 진로취업·교수 / `PSYCH` 심리상담·심리검사)·버전·항목별 응답·서명·동의 시각을 `dc.counsel_consent`에 신청과 한 트랜잭션으로 남긴다(신청 1건당 1행, UPDATE 금지, 교수 상담 삭제 시 함께 삭제). 학생 신청에는 필수이며 서버가 서식·버전·전 항목 「예」를 검사한다. 원문은 `CounselConsentModal.tsx`, 버전 대조는 `backend/app/counsel_consent.py` FORMS. 동의서 문구의 「5년 보관 후 폐기」 자동 파기는 아직 없다.
 
 2026-10-26 심리상담 상담일지 양식(145, 로컬 적용 완료): `counsel_record.psych_journal`에 학생상담센터 상담일지 서식을 저장한다. 진로취업 `template`과 분리한다. 규칙은 [상담일지 템플릿 명세](docs/COUNSEL_TEMPLATE.md)「심리상담 상담일지 양식」.
