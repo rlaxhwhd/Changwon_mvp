@@ -2650,6 +2650,16 @@ input, textarea, select { font-family: var(--font); }
 }
 .counsel-day-row.is-free .counsel-day-time { color: var(--color-caption); font-weight: 700; }
 .counsel-day-free { padding-top: 3px; color: var(--color-caption); font-size: 12px; }
+.counsel-day-free-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.counsel-day-free-row .counsel-detail-btn { gap: 4px; }
+/* 학생 추가 — 상담유형 선택(잠긴 트랙은 서버 사유를 함께 보인다) */
+.counsel-assign-tracks { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin: 16px 0 8px; padding: 0; border: 0; }
+.counsel-assign-tracks legend { margin-bottom: 6px; font-size: 11px; font-weight: 800; color: var(--color-text-secondary); }
+.counsel-assign-tracks > p { grid-column: 1 / -1; font-size: 12px; }
+.counsel-assign-track { display: flex; flex-wrap: wrap; align-items: center; align-content: flex-start; gap: 4px 8px; padding: 12px 14px; border: 1px solid var(--color-border); border-radius: 12px; cursor: pointer; }
+.counsel-assign-track.is-selected { border-color: var(--color-primary); background: var(--color-primary-bg, #F3F0FF); }
+.counsel-assign-track.is-locked { cursor: not-allowed; background: var(--color-bg, #F7F8FB); color: var(--color-caption); }
+.counsel-assign-track small { flex-basis: 100%; font-size: 11px; line-height: 1.5; }
 .counsel-day-items { display: flex; flex-direction: column; gap: 8px; }
 .counsel-day-item {
   display: flex;

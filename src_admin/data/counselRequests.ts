@@ -16,7 +16,8 @@ import type {
 } from './schema/counselRequest'
 import { handledRequestTypes } from './schema/counselor'
 import { getCounselorByRole } from './counselors'
-import { counselRequests, loadCounselRequests, performCounselAction } from '../../shared/counselStore'
+import { counselRequests, loadCounselRequests, performCounselAction, storeCounselRequest, type StoredCounselRequest } from '../../shared/counselStore'
+import { api } from '../../shared/api'
 import { getCounselOwnerById, STUDENTS } from '../../src_v2/data/students'
 import type { EnrollmentStatus, StudentData } from '../../src_v2/data/students'
 import { studentLiteOf } from './studentRoster'
@@ -308,6 +309,25 @@ export async function markNoShow(id: string): Promise<void> {
 }
 export async function reassignRequest(id: string, counselorId: string, reason?: string): Promise<void> {
   await performCounselAction(id, 'reassign', { assigneeId: counselorId, reason: reason ?? '' })
+}
+
+// ── 상담사가 학생 상담을 잡는다(2026-10-27) ───────────────────────────────
+// 서버가 확정 상태로 만들고 CONFIRM 이벤트로 학생에게 확정 알림을 보낸다. 동의서·사전응답은 없다.
+export type CareTrackGates = Record<'care7' | 'general', { open: boolean; reason?: string }>
+
+/** 학생이 신청할 때와 같은 잠금 판정(care_gate·general_gate)을 서버에서 받는다 — 화면에서 다시 판정하지 않는다. */
+export function fetchCareTrackGates(studentId: string): Promise<CareTrackGates> {
+  return api<CareTrackGates>(`/counsel-track-gates/${encodeURIComponent(studentId)}`)
+}
+
+const assignKeys = new Map<string, string>()
+export async function assignCounsel(input: { studentId: string; careTrack: 'care7' | 'general'; method: '대면' | '비대면'; slot: CounselSlot }): Promise<void> {
+  const payload = JSON.stringify({ ...input, slot: { ...input.slot, place: input.slot.place ?? '' } })
+  const key = assignKeys.get(payload) ?? crypto.randomUUID()
+  assignKeys.set(payload, key)
+  const saved = await api<StoredCounselRequest>('/counsel-requests/staff', { method: 'POST', headers: { 'Idempotency-Key': key }, body: payload })
+  assignKeys.delete(payload)
+  storeCounselRequest(saved)
 }
 export type {
   CounselRequest,

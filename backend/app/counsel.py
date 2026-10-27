@@ -176,6 +176,88 @@ def general_gate(conn,uid):
         raise HTTPException(409,'일반 진로·취업 상담은 CARE 7+ 상담으로 로드맵이 확정된 뒤 신청할 수 있습니다.')
 
 
+def student_snapshot(conn,student):
+    """신청 시점 학생 정보 — 학생 신청과 상담사 등록이 같은 모양으로 남긴다."""
+    detail=student['detail'] or {}
+    current=conn.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s ORDER BY decided_at DESC,id DESC LIMIT 1',(student['intg_uid'],)).fetchone()
+    return {'name':student['name'],'studentNo':student['student_no'],'major':student['major_label'],
+            'grade':student['grade'],'studentType':current['student_type'] if current else None,
+            'enrollmentStatus':detail.get('enrollmentStatus') or '재학'}
+
+
+def require_career(user):
+    require_staff(user)
+    if (user.get('profile') or {}).get('role')!='career':
+        raise HTTPException(403,'진로취업상담사만 상담을 등록할 수 있습니다.')
+
+
+def track_gates(conn,uid):
+    """두 트랙의 잠금 — 학생 신청과 같은 판정(care_gate·general_gate)을 그대로 쓴다."""
+    result={}
+    for track,gate in (('care7',care_gate),('general',general_gate)):
+        try:
+            gate(conn,uid)
+            result[track]={'open':True}
+        except HTTPException as refused:
+            result[track]={'open':False,'reason':refused.detail}
+    return result
+
+
+class StaffAssign(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    studentId: str=Field(min_length=1,max_length=64)
+    careTrack: Literal['general','care7']
+    method: Literal['대면','비대면']='대면'
+    slot: Slot
+
+
+STAFF_ASSIGN_TOPIC={'care7':'상담사 지정 CARE 7+ 상담','general':'상담사 지정 진로·취업 상담'}
+
+
+@router.get('/counsel-track-gates/{student_id}')
+def counsel_track_gates(student_id:str,user=Depends(principal, scope='function'),conn=Depends(connection, scope='function')):
+    require_career(user)
+    student=student_access(conn,user,student_id)
+    return track_gates(conn,student['intg_uid'])
+
+
+@router.post('/counsel-requests/staff',status_code=201)
+def staff_assign(body:StaffAssign,idempotency_key:str=Header(min_length=8,max_length=200),user=Depends(principal, scope='function'),conn=Depends(connection, scope='function')):
+    """상담사가 학생 상담을 잡는다 — 곧바로 확정 상태로 만들고, CONFIRM 이벤트 트리거가 학생에게 확정 알림을 보낸다.
+    사전응답지·동의서는 받지 않는다(2026-10-27 사용자 지시). REQUESTED 이벤트는 남기지 않는다 — 그 트리거는 담당 상담사 본인에게 「새 신청」 알림을 보낸다."""
+    require_career(user)
+    route='POST /counsel-requests/staff'
+    digest=hashlib.sha256(body.model_dump_json().encode()).hexdigest()
+    conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',(user['intg_uid']+route+idempotency_key,))
+    saved=conn.execute('SELECT * FROM dc.idempotency WHERE actor_uid=%s AND route=%s AND key=%s',(user['intg_uid'],route,idempotency_key)).fetchone()
+    if saved:
+        if saved['request_hash']!=digest:
+            raise HTTPException(409,'같은 요청 키로 다른 내용을 저장할 수 없습니다.')
+        return saved['response']
+    student=student_access(conn,user,body.studentId)
+    gate=track_gates(conn,student['intg_uid'])[body.careTrack]
+    if not gate['open']:
+        raise HTTPException(409,gate['reason'])
+    check_slot(conn,user['intg_uid'],student['intg_uid'],body.slot)
+    topic=STAFF_ASSIGN_TOPIC[body.careTrack]
+    payload={'type':'진로취업','careTrack':body.careTrack,'method':body.method,'topic':topic,
+             'slot':{'date':body.slot.date.isoformat(),'start':body.slot.start.strftime('%H:%M'),
+                     'end':body.slot.end.strftime('%H:%M'),'place':body.slot.place},'intake':[],'origin':'CNS_ASSIGN'}
+    request_id=str(uuid4())
+    conn.execute('''INSERT INTO dc.counsel_request(id,student_uid,counselor_uid,type_code,legacy_type,care_track,status_code,
+      method_code,topic,requested_at,slot_date,slot_start,slot_end,place,intake,snapshot,source_payload)
+      VALUES (%s,%s,%s,%s,'진로취업',%s,'CONFIRMED',%s,%s,now(),%s,%s,%s,%s,'[]',%s,%s)''',
+      (request_id,student['intg_uid'],user['intg_uid'],COUNSEL_TYPE_CODE['진로취업'],body.careTrack,
+       'ONLINE' if body.method=='비대면' else 'OFFLINE',topic,body.slot.date,body.slot.start,body.slot.end,body.slot.place,
+       Jsonb(student_snapshot(conn,student)),Jsonb(payload)))
+    conn.execute('INSERT INTO dc.counsel_event(request_id,actor_uid,kind,payload) VALUES (%s,%s,%s,%s)',
+                 (request_id,user['intg_uid'],'CONFIRM',Jsonb({'origin':'CNS_ASSIGN','action':{'slot':payload['slot']}})))
+    result=dto(get_request(conn,user,request_id))
+    conn.execute('INSERT INTO dc.idempotency(actor_uid,route,key,request_hash,response) VALUES (%s,%s,%s,%s,%s)',
+                 (user['intg_uid'],route,idempotency_key,digest,Jsonb(result)))
+    return result
+
+
 @router.get('/counsel-requests')
 def requests(page:int=Query(1,ge=1),pageSize:int=Query(20,ge=1,le=100),studentId:str|None=None,
              status:str|None=None,user=Depends(principal, scope='function'),conn=Depends(connection, scope='function')):
@@ -240,11 +322,7 @@ def create(body:CreateRequest,idempotency_key:str=Header(min_length=8,max_length
         check_slot(conn,assignee['intg_uid'],user['intg_uid'],body.slot)
     elif body.type!='교수' or body.method!='비대면':
         raise HTTPException(422,'상담 예약 시간이 필요합니다.')
-    detail=student['detail'] or {}
-    current=conn.execute('SELECT student_type FROM dc.current_student_type WHERE student_uid=%s ORDER BY decided_at DESC,id DESC LIMIT 1',(student['intg_uid'],)).fetchone()
-    snapshot={'name':student['name'],'studentNo':student['student_no'],'major':student['major_label'],
-              'grade':student['grade'],'studentType':current['student_type'] if current else None,
-              'enrollmentStatus':detail.get('enrollmentStatus') or '재학'}
+    snapshot=student_snapshot(conn,student)
     if topic:
         snapshot['topicCode']=topic['code']
         snapshot['topicLabel']=topic['label']
