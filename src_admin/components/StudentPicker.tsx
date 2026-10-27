@@ -45,6 +45,8 @@ interface StudentPickerProps {
  */
 export default function StudentPicker({ title = '학생 검색', departments = [], professorId, excludeIds = [], enrolledOnly = true, pickLabel = '추가', pickOnRowClick = false, searchOnly = false, onPick, onClose }: StudentPickerProps) {
   const [query, setQuery] = useState('')
+  // 검색 전용 모드에서 입력 중인 검색어 — 제출해야 query 로 적용된다.
+  const [draft, setDraft] = useState('')
   const [major, setMajor] = useState(ALL)
   const [grade, setGrade] = useState(ALL)
   // searchOnly 전용 필터 — 학적상태(재학/졸업)와 Core 유형(T1~T6)
@@ -84,16 +86,15 @@ export default function StudentPicker({ title = '학생 검색', departments = [
     <AdminModal title={title} size="lg" onClose={onClose}>
       {(metadataError || error) && <p role="alert">{metadataError || error?.message}</p>}
       {!searchOnly && <p className="admin-field-hint">{enrolledOnly ? '재학생만 조회됩니다.' : '전체 학생에서 조회합니다.'}</p>}
-      <div className="admin-filterbar">
-        <div className="admin-search">
+      <div className={searchOnly ? 'admin-picker-filters' : 'admin-filterbar'}>
+        {!searchOnly && <div className="admin-search">
           <LuSearch />
           <input
             value={query}
             onChange={event => { setQuery(event.target.value); setPage(1) }}
-            placeholder={searchOnly ? '이름·학번 검색' : '이름·학번·학과 검색'}
-            autoFocus={searchOnly}
+            placeholder="이름·학번·학과 검색"
           />
-        </div>
+        </div>}
         <label className="admin-select">
           <span>학과</span>
           <select value={major} onChange={event => { setMajor(event.target.value); setPage(1) }}>
@@ -125,6 +126,16 @@ export default function StudentPicker({ title = '학생 검색', departments = [
           </label>
         </>}
       </div>
+      {/* 검색 전용 — 글자마다 조회하지 않고 Enter·검색 버튼으로 검색어를 적용한다. */}
+      {searchOnly && (
+        <form className="admin-picker-search" onSubmit={event => { event.preventDefault(); setQuery(draft.trim()); setPage(1) }}>
+          <div className="admin-search">
+            <LuSearch />
+            <input value={draft} onChange={event => setDraft(event.target.value)} placeholder="이름·학번 검색" autoFocus />
+          </div>
+          <button type="submit" className="admin-btn admin-btn-primary"><LuSearch /> 검색</button>
+        </form>
+      )}
 
       {!active ? null : isLoading && result.items.length === 0 ? (
         <div className="admin-loading"><LuLoaderCircle className="admin-spin" /> 불러오는 중…</div>

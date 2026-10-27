@@ -83,6 +83,9 @@ function ReassignAction({ request, onClose }: { request: CounselRequest; onClose
  * 완료하면 서버가 곧바로 확정하고 학생에게 확정 알림을 보낸다. 동의서·사전응답은 받지 않는다.
  * 상담유형 잠금은 학생 신청과 같은 서버 판정을 받아 그대로 보여 준다.
  */
+// 학생 추가 팝업의 상담유형 표기(2026-10-27 사용자 지시) — 공용 트랙 라벨(CARE_TRACK_LABEL)은 그대로 둔다.
+const ASSIGN_TRACK_LABEL = { care7: 'CARE+ 7', general: '진로취업상담-일반' } as const
+
 function AssignCounsel({ slot, departments, onClose }: { slot: CounselSlot; departments: string[]; onClose: () => void }) {
   const action = useAsyncAction()
   const [student, setStudent] = useState<RosterStudent | null>(null)
@@ -126,7 +129,7 @@ function AssignCounsel({ slot, departments, onClose }: { slot: CounselSlot; depa
           {gates && (['care7', 'general'] as const).map(key => (
             <label key={key} className={`counsel-assign-track${gates[key].open ? '' : ' is-locked'}${track === key ? ' is-selected' : ''}`}>
               <input type="radio" name="assign-track" value={key} checked={track === key} disabled={!gates[key].open} onChange={() => setTrack(key)} />
-              <strong>{CARE_TRACK_LABEL[key].staff}</strong>
+              <strong>{ASSIGN_TRACK_LABEL[key]}</strong>
               {!gates[key].open && <small>{gates[key].reason}</small>}
             </label>
           ))}
