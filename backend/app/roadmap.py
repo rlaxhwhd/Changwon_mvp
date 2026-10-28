@@ -27,7 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .auth import principal, require_staff
 from .db import connection
-from .roadmap_generator import available, provider_name, generate_outcome, unavailable
+from .roadmap_generator import available, provider_name, generate_outcome, unavailable, recommend_jobs
 from .gates import is_care7_request, program_gate
 # 멱등 저장과 메뉴 권한 술어는 채용에서 이미 확정된 것을 그대로 쓴다(CLAUDE.md 12조).
 from .jobs import MENU_PREDICATE, idempotent, remember
@@ -540,6 +540,27 @@ def generation_before(conn, uid, row):
     return jsonable_encoder({'previous': previous,
         'axes': conn.execute('SELECT * FROM dc.roadmap_axis WHERE student_uid=%s ORDER BY axis', (uid,)).fetchall(),
         'items': conn.execute('SELECT * FROM dc.roadmap_item WHERE student_uid=%s ORDER BY axis,position', (uid,)).fetchall()})
+
+
+class JobRecommend(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    counselRequestId: str = Field(min_length=1, max_length=200)
+
+
+@router.post('/students/{identity}/roadmap/job-recommendations')
+def job_recommendations(identity: str, body: JobRecommend, user=Depends(principal, scope='function'),
+                        conn=Depends(connection, scope='function')):
+    """AI 추천직무 5개 — 생성과 같은 권한·상담 근거를 요구하고 아무것도 저장하지 않는다(화면 캐시 전용)."""
+    student = resolve_student(conn, user, identity)
+    require_plan_staff(conn, user)
+    # 추천은 생성이 아니라 참고 자료다 — 재검사 주기 같은 생성 게이트는 생성 버튼이 맡고,
+    # 여기서는 이 학생의 확정·완료된 CARE 7+ 상담인지만 확인한다.
+    counsel = conn.execute('SELECT * FROM dc.counsel_request WHERE id=%s AND student_uid=%s',
+                           (body.counselRequestId, student['intg_uid'])).fetchone()
+    if not counsel or not is_care7_request(counsel) or counsel['status_code'] not in ('CONFIRMED', 'DONE'):
+        fail(422, 'INVALID_COUNSEL_BASIS', '확정된 CARE 7+ 상담에서 추천직무를 받을 수 있습니다.')
+    # LLM 대기 동안 읽기 트랜잭션을 잡고 있지 않는다(generate 와 같은 이유).
+    return recommend_jobs(conn, student, counsel, before_network=conn.commit)
 
 
 @router.post('/students/{identity}/roadmap/generate', status_code=201)

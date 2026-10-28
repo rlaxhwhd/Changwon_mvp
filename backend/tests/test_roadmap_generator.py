@@ -43,6 +43,43 @@ def test_local_rag_validates_draft_and_keeps_evidence(client, monkeypatch):
     assert generator.provider_name() == 'local-rag'
 
 
+def test_job_recommendations_rank_by_fit_without_identity(client, monkeypatch):
+    monkeypatch.setattr(settings, 'chatbot_enabled', True)
+    monkeypatch.setattr(settings, 'rag_enabled', True)
+    monkeypatch.setattr(generator.rag, 'retrieve_sync', lambda query, kind: [{'id': 'R1', 'title': 'Criteria', 'snippet': 'fit'}])
+    jobs = [{'title': f'Job {i}', 'fit': fit, 'reasons': ['Course evidence', 'Project evidence']}
+            for i, fit in enumerate((40, 90, 65, 72, 81))]
+    real_client = httpx.Client
+    calls = []
+    def handler(request):
+        calls.append(json.loads(request.content))
+        return httpx.Response(200, json={'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps({'jobs': jobs})}}]})
+    monkeypatch.setattr(generator.httpx, 'Client', lambda **kw: real_client(transport=httpx.MockTransport(handler)))
+    counsel_id = care7_request('changwon')
+    with pool.connection() as conn:
+        uid = conn.execute("SELECT intg_uid FROM dc.person WHERE alias='changwon'").fetchone()['intg_uid']
+        conn.execute('''INSERT INTO dc.growth_entry(id,student_uid,kind_code,title,content) VALUES
+          ('test_job_rec_project',%s,'PROJECT','Sensor dashboard','{"role":"backend","stack":"FastAPI"}'),
+          ('test_job_rec_cert',%s,'CERTIFICATE','Engineer cert','{"certificateNumber":"SECRET-123"}')''', (uid, uid))
+    try:
+        path = '/api/v1/students/changwon/roadmap/job-recommendations'
+        response = client.post(path, headers=headers('career_kim'), json={'counselRequestId': counsel_id})
+        assert response.status_code == 200, response.text
+        assert [job['fit'] for job in response.json()['jobs']] == [90, 81, 72, 65, 40]
+        sent = calls[0]['messages'][1]['content']
+        evidence = json.loads(sent)['studentEvidence']
+        assert {row['title'] for row in evidence['growthRecords']} >= {'Sensor dashboard', 'Engineer cert'}
+        assert 'SECRET-123' not in sent and uid not in sent and 'changwon' not in sent
+        assert calls[0]['response_format']['json_schema']['name'] == 'job_recommendation'
+        # 직무 4개만 오면 502 — 형식이 틀린 추천을 화면에 내지 않는다.
+        jobs.pop()
+        assert client.post(path, headers=headers('career_kim'), json={'counselRequestId': counsel_id}).status_code == 502
+        assert client.post(path, headers=headers('chaewon'), json={'counselRequestId': counsel_id}).status_code in (403, 404)
+    finally:
+        with pool.connection() as conn:
+            conn.execute("DELETE FROM dc.growth_entry WHERE id IN ('test_job_rec_project','test_job_rec_cert')")
+
+
 @pytest.fixture
 def provider(monkeypatch):
     monkeypatch.setattr(settings, 'roadmap_provider', 'openai-compatible')

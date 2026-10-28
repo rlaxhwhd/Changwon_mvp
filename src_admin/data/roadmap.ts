@@ -26,6 +26,7 @@ import type {
   RoadmapProgress,
 } from '../../src_v2/data/schema/roadmap'
 import type { AxisOrigin } from './schema/roadmapEdit'
+import { api } from '../../shared/api'
 
 /** 화면이 구독하는 로드맵 1개 */
 export interface StudentRoadmap {
@@ -114,6 +115,26 @@ export async function generateRoadmap(studentId: string, counselRequestId: strin
   const current = roadmapEnvelope(studentId)?.roadmap
   if (current) await regeneratePlan(studentId, counselRequestId, reason, targetRole)
   else await generatePlan(studentId, counselRequestId, targetRole)
+  jobRecommendationCache.delete(studentId)
+}
+
+/** AI 추천직무 1건 — 적합도(0~100) 높은 순으로 서버가 정렬해 준다. */
+export interface JobRecommendation { title: string; fit: number; reasons: string[] }
+
+// 추천직무는 DB 에 저장하지 않는다(사용자 확정 2026-10-28) — 이 탭의 메모리에만 두어
+// 같은 세션에서 화면을 다시 열면 그대로 보이고, 로드맵 생성이 끝나면 지운다. 새로고침하면 사라진다.
+const jobRecommendationCache = new Map<string, JobRecommendation[]>()
+
+export function cachedJobRecommendations(studentId: string): JobRecommendation[] | null {
+  return jobRecommendationCache.get(studentId) ?? null
+}
+
+export async function recommendJobs(studentId: string, counselRequestId: string): Promise<JobRecommendation[]> {
+  const result = await api<{ jobs: JobRecommendation[] }>(
+    `/students/${encodeURIComponent(studentId)}/roadmap/job-recommendations`,
+    { method: 'POST', body: JSON.stringify({ counselRequestId }) })
+  jobRecommendationCache.set(studentId, result.jobs)
+  return result.jobs
 }
 
 /** 로드맵 이행률(%) — 목록·KPI·브리핑이 전부 이 한 곳을 쓴다. 로드맵이 없으면 0. */

@@ -271,5 +271,29 @@
 .rcp-target-input { display: grid; gap: 12px; }
 .rcp-target-input input { width: 100%; box-sizing: border-box; padding: 12px 14px; border: 1px solid var(--line, #dce2ea); border-radius: 8px; font: inherit; }
 .rcp-target-input label { font-weight: 600; }
-.rcp-target-input p { margin: 0; color: var(--muted, #64748b); }
+/* .rcp 안의 --muted 는 배경색이라 글자가 거의 안 보였다 — 보조 글자색 토큰을 쓴다. */
+.rcp-target-input p { margin: 0; color: var(--muted-foreground, #64748b); }
 .rcp-target-input button { justify-self: start; }
+
+/* 목표 직무 직접 입력(왼쪽) · AI 추천직무(오른쪽) 반반 */
+.rcp-target-row { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.rcp-job-rec { display: grid; gap: 12px; }
+.rcp-job-rec button.admin-btn-primary { justify-self: start; }
+.rcp .rcp-job-rec-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rcp .rcp-job-rec-head h4 { margin: 0; }
+.rcp .rcp-job-rec-head h4 .air-icon { color: var(--violet); }
+.rcp-job-rec-note { margin: 0; font-size: 12.5px; line-height: 1.6; color: var(--muted-foreground, #64748b); }
+.rcp-job-list { display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.rcp .rcp-job {
+  display: grid; gap: 3px; width: 100%;
+  padding: 10px 12px; text-align: left;
+  border: 1px solid var(--border); border-radius: var(--radius-md, 10px);
+  background: var(--card); font-family: inherit; cursor: pointer;
+}
+.rcp .rcp-job:hover { border-color: var(--violet); }
+.rcp .rcp-job:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+.rcp .rcp-job.is-on { border-color: var(--violet); background: var(--violet-soft); }
+.rcp .rcp-job-title { display: flex; align-items: baseline; gap: 8px; font-size: 13.5px; font-weight: 800; color: var(--foreground); }
+.rcp .rcp-job-fit { font-size: 12px; font-weight: 800; color: var(--violet); white-space: nowrap; }
+.rcp .rcp-job-reason { font-size: 12px; font-weight: 500; line-height: 1.5; color: var(--muted-foreground); }
+.rcp .rcp-job-reason::before { content: '· '; }

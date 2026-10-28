@@ -9,7 +9,7 @@ import { deriveSkillTree } from '../../src_v2/data/academic'
 import type { CourseRow } from '../../src_v2/data/academic'
 import { getActiveCounselorId } from '../data/counselors'
 import { getRecordsByStudent } from '../data/counselRecords'
-import { generateRoadmap } from '../data/roadmap'
+import { cachedJobRecommendations, generateRoadmap, recommendJobs, type JobRecommendation } from '../data/roadmap'
 import { isCare7 } from '../../src_v2/data/counselTrack'
 import { roadmapEnvelope } from '../../shared/roadmapStore'
 import { useStore } from '../../shared/useRoadmapStore'
@@ -180,6 +180,22 @@ export default function RoadmapCreatePanel({
     } finally {
       generating.current = false
       setPhase('flow')
+    }
+  }
+
+  // AI 추천직무 — 같은 탭 세션에서는 메모리 캐시로 다시 보인다(생성 완료 시 비워진다).
+  const [jobs, setJobs] = useState<JobRecommendation[] | null>(() => cachedJobRecommendations(student.id))
+  const [recommending, setRecommending] = useState(false)
+  const [recommendError, setRecommendError] = useState('')
+  const handleRecommend = async () => {
+    if (recommending || !basisRequest) return
+    setRecommending(true); setRecommendError('')
+    try {
+      setJobs(await recommendJobs(student.id, basisRequest.id))
+    } catch (cause) {
+      setRecommendError(cause instanceof Error ? cause.message : 'AI 추천직무를 받지 못했습니다. 다시 시도해 주세요.')
+    } finally {
+      setRecommending(false)
     }
   }
 
@@ -357,18 +373,59 @@ export default function RoadmapCreatePanel({
           <p>생성이 끝나면 3축 15칸 초안을 DB에 저장합니다. 잠시 기다려 주세요.</p>
         </div>
       ) : (
-        <div className="air-flow-card rcp-target-input">
-          <h4><AirIcon name="target" />목표 직무 직접 입력</h4>
-          <label htmlFor={`rcp-target-${student.id}`}>목표 직무</label>
-          <input id={`rcp-target-${student.id}`} value={targetRole} maxLength={200}
-            placeholder="예: 자동차 부품 품질관리 엔지니어"
-            onChange={event => { setTargetRole(event.target.value); setGenerateError('') }} />
-          <p>직무명과 희망 업무를 자유롭게 입력하세요. 입력한 내용은 AI 로드맵 생성의 기준으로 사용됩니다.</p>
-          <button type="button" className="admin-btn admin-btn-primary"
-            disabled={!targetRole.trim() || !canGenerate || !basisRequest}
-            onClick={() => { void handleGenerate() }}>AI 분석 · 로드맵 생성 및 저장</button>
-          {!canGenerate && <p>로드맵 생성 서비스 설정을 확인해 주세요.</p>}
-          {!basisRequest && <p>완료된 CARE 7+ 상담이 필요합니다.</p>}
+        <div className="rcp-target-row">
+          <div className="air-flow-card rcp-target-input">
+            <h4><AirIcon name="target" />목표 직무 직접 입력</h4>
+            <label htmlFor={`rcp-target-${student.id}`}>목표 직무</label>
+            <input id={`rcp-target-${student.id}`} value={targetRole} maxLength={200}
+              placeholder="예: 자동차 부품 품질관리 엔지니어"
+              onChange={event => { setTargetRole(event.target.value); setGenerateError('') }} />
+            <p>직무명과 희망 업무를 자유롭게 입력하세요. 입력한 내용은 AI 로드맵 생성의 기준으로 사용됩니다.</p>
+            <button type="button" className="admin-btn admin-btn-primary"
+              disabled={!targetRole.trim() || !canGenerate || !basisRequest}
+              onClick={() => { void handleGenerate() }}>AI 분석 · 로드맵 생성 및 저장</button>
+            {!canGenerate && <p>로드맵 생성 서비스 설정을 확인해 주세요.</p>}
+            {!basisRequest && <p>완료된 CARE 7+ 상담이 필요합니다.</p>}
+          </div>
+
+          <div className="air-flow-card rcp-job-rec">
+            <div className="rcp-job-rec-head">
+              <h4><AirIcon name="spark" />AI 추천직무</h4>
+              {jobs && (
+                <button type="button" className="admin-btn sm" disabled={recommending || !basisRequest}
+                  onClick={() => { void handleRecommend() }}>재추천</button>
+              )}
+            </div>
+            {recommending ? (
+              <p className="rcp-job-rec-note" role="status" aria-live="polite">
+                전공·수강·자격·어학·진단·상담·성장 기록을 분석해 직무를 고르고 있습니다.
+              </p>
+            ) : jobs ? (
+              <ol className="rcp-job-list">
+                {jobs.map(job => (
+                  <li key={job.title}>
+                    {/* 고르면 왼쪽 목표 직무 칸에 채운다 — 상담사가 다듬어 생성한다. */}
+                    <button type="button" className={`rcp-job${targetRole.trim() === job.title ? ' is-on' : ''}`}
+                      aria-pressed={targetRole.trim() === job.title}
+                      onClick={() => { setTargetRole(job.title); setGenerateError('') }}>
+                      <span className="rcp-job-title">{job.title}<b className="rcp-job-fit">적합도 {job.fit}%</b></span>
+                      {job.reasons.slice(0, 3).map(reason => <span key={reason} className="rcp-job-reason">{reason}</span>)}
+                    </button>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <>
+                <p className="rcp-job-rec-note">
+                  학생의 전공·수강 내역·자격증·어학·진단 유형·상담 코멘트·성장 기록을 바탕으로 AI가 직무 5개를 적합도 순으로 추천합니다.
+                  이름·학번·연락처 등 개인정보는 보내지 않습니다.
+                </p>
+                <button type="button" className="admin-btn admin-btn-primary" disabled={!basisRequest}
+                  onClick={() => { void handleRecommend() }}>AI 추천직무 받기</button>
+              </>
+            )}
+            {recommendError && <p className="air-pick-error" role="alert">{recommendError}</p>}
+          </div>
         </div>
       )}
 
