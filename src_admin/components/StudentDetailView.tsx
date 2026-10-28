@@ -909,6 +909,7 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
       <div><dt>학부/대학원</dt><dd>{data.academicLevel || '없음'}</dd></div>
       <div><dt>학년 / 학적</dt><dd>{data.grade == null ? '없음' : `${data.grade}학년`} / {data.status}</dd></div>
       <div><dt>성별</dt><dd>{data.sex || '없음'}</dd></div>
+      <div><dt>외국인</dt><dd>{data.foreigner == null ? '없음' : data.foreigner ? '예' : '아니오'}</dd></div>
       <div><dt>졸업년월</dt><dd>{data.graduationMonth || '없음'}</dd></div>
       <div><dt>학점</dt><dd>{data.gpa ?? '없음'}</dd></div>
     </dl>

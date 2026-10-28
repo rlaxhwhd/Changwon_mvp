@@ -1554,12 +1554,16 @@
   background: var(--pink-soft);
 }
 
-.sdv .sdv-idbar.sdv-academic-idbar { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); }
-.sdv .sdv-idbar.sdv-academic-idbar > div { border-left: 1px solid var(--border); border-top: 0; }
-.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(4n + 1) { border-left: 0; }
-.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(n + 5) { border-top: 1px solid var(--border); }
+/* 학사 식별 바 — 윗줄 4칸(학번·대학·학과·학부/대학원), 아랫줄 5칸(학년/학적·성별·외국인·졸업년월·학점).
+   줄마다 칸 너비를 같게 하려고 20열 격자에서 윗줄은 5열씩, 아랫줄은 4열씩 차지한다. */
+.sdv .sdv-idbar.sdv-academic-idbar { grid-auto-flow: row; grid-template-columns: repeat(20, minmax(0, 1fr)); }
+.sdv .sdv-idbar.sdv-academic-idbar > div { grid-column: span 5; border-left: 1px solid var(--border); border-top: 0; }
+.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(n + 5) { grid-column: span 4; border-top: 1px solid var(--border); }
+.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(1),
+.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(5) { border-left: 0; }
 @media (max-width: 600px) {
   .sdv .sdv-idbar.sdv-academic-idbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sdv .sdv-idbar.sdv-academic-idbar > div, .sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(n + 5) { grid-column: auto; border-left: 1px solid var(--border); }
   .sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(2n + 1) { border-left: 0; }
   .sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(n + 3) { border-top: 1px solid var(--border); }
 }

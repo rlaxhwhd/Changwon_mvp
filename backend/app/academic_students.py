@@ -141,7 +141,8 @@ def metadata(diagnosed: bool = False, user=Depends(principal, scope='function'),
       count(*) FILTER(WHERE {CORE}) AS "coreCareCount",count(*) FILTER(WHERE star) AS "starCount",count(*) FILTER(WHERE {PARTICIPANT}) AS "care7Count",
       count(*) FILTER(WHERE {pending}) AS "retakePendingCount",
       ARRAY(SELECT major_label FROM roster GROUP BY major_label ORDER BY major_label) AS majors,
-      ARRAY(SELECT college_name FROM roster WHERE college_name IS NOT NULL GROUP BY college_name ORDER BY college_name) AS colleges,
+      ARRAY(SELECT college_name FROM (SELECT college_name COLLATE "C" AS college_name FROM roster WHERE college_name IS NOT NULL GROUP BY 1) g
+        ORDER BY college_name COLLATE "default") AS colleges,
       ARRAY(SELECT grade FROM roster WHERE grade IS NOT NULL GROUP BY grade ORDER BY grade) AS grades,
       ARRAY(SELECT student_type FROM roster WHERE student_type IS NOT NULL GROUP BY student_type ORDER BY student_type) AS types,
       ARRAY(SELECT tier FROM roster WHERE tier IS NOT NULL GROUP BY tier ORDER BY tier) AS tiers,
@@ -257,8 +258,11 @@ def detail(identity: str, optional: bool = False, user=Depends(principal, scope=
         WHERE a.student_uid=h.intg_uid AND a.program_id=h.program_id)
       ORDER BY date DESC,id''', (identity,identity)).fetchall()
     diagnoses = conn.execute("SELECT count(*) AS n FROM dc.diagnosis_attempt WHERE student_uid=%s AND status_code='DONE'", (identity,)).fetchone()['n']
+    # 외국인 여부는 상세에서만 쓰여 목록용 roster 에 넣지 않고 한 행만 읽는다. Y/N 밖의 값은 미상(None).
+    foreigner = conn.execute('SELECT foreigner_code FROM dc.academic_student_details WHERE intg_uid=%s', (identity,)).fetchone()
+    foreigner = {'Y': True, 'N': False}.get(foreigner['foreigner_code'] if foreigner else None)
     return dict(id=identity,studentNo=row['student_no'],name=row['name'],major=row['major_label'],star=row['star'],
       collegeName=row['college_name'],grade=row['grade'],academicLevel=row['academic_level'],
-      status=row['status'],sex=row['sex'],graduationMonth=row['graduation_month'],gpa=row['gpa'],
+      status=row['status'],sex=row['sex'],foreigner=foreigner,graduationMonth=row['graduation_month'],gpa=row['gpa'],
       studentType=row['student_type'],diagnosisCount=diagnoses,counsels=counsels,programs=programs,
       progress=row['progress'],hasRoadmap=row['has_roadmap'])

@@ -130,6 +130,9 @@ def test_unenrolled_detail_and_excel_share_filters(client, db, academic_rows):
     assert r.json()['gpa']=='3.75'
     assert r.json()['counsels']==[] and r.json()['programs']==[]
     assert r.json()['diagnosisCount']==0
+    for code, expected in (('Y', True), ('N', False), (None, None)):
+        db.execute('UPDATE academic.v_usr_inf SET for_yn=%s WHERE intg_uid=%s', (code, uid))
+        assert client.get('/api/v1/academic-students/'+uid,headers=headers('career_kim')).json()['foreigner'] is expected
     assert client.get('/api/v1/academic-students/'+uid,headers=headers('chaewon')).status_code==403
     # Excel strings preserve leading zeroes and cannot execute formula-like names.
     db.execute("UPDATE academic.v_usr_inf SET usr_nm='=1+1',login_id='00123' WHERE intg_uid=%s",(uid,))

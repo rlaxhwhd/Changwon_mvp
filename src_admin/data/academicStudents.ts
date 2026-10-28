@@ -15,6 +15,8 @@ export function fetchAcademicStudentMetadata(diagnosed = false): Promise<RosterM
 
 export interface AcademicStudentDetail extends RosterStudent {
   sex: string
+  /** 학사 for_yn — Y/N 밖의 값은 null(미상). */
+  foreigner: boolean | null
   graduationMonth: string | null
   diagnosisCount: number
   /** careTrack 은 진로취업 행에만 있다 — 심리·교수 상담은 null 로 온다. */
