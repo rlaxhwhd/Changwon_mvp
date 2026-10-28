@@ -68,7 +68,7 @@ export const ROSTER_EVENT = 'dc:roster-updated'
 
 const byId = new Map<string, RosterStudent>()
 export interface RosterMetadata {
-  options: { majors: string[]; colleges?: string[]; grades: number[]; types: StudentType[]; tiers: RosterTier[]; statuses: EnrollStatus[] }
+  options: { majors: string[]; colleges?: string[]; collegeMajors?: Record<string, string[]>; grades: number[]; types: StudentType[]; tiers: RosterTier[]; statuses: EnrollStatus[] }
   summary: { total: number; focusCount: number; highRiskCount: number; coreCareCount: number; starCount: number; care7Count: number; retakePendingCount?: number }
 }
 const emptyMetadata: RosterMetadata = {

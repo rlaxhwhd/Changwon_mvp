@@ -29,6 +29,10 @@ def test_diagnosed_metadata_matches_original_population_and_all_options(client, 
                            ('grades', 'grade'), ('types', 'student_type'),
                            ('tiers', 'tier'), ('statuses', 'status')]:
         assert metadata['options'][option] == sorted({r[column] for r in expected if r[column] is not None})
+    pairs = {}
+    for r in expected:
+        if r['college_name'] is not None: pairs.setdefault(r['college_name'], set()).add(r['major_label'])
+    assert metadata['options']['collegeMajors'] == {college: sorted(majors) for college, majors in pairs.items()}
     listing = client.get('/api/v1/academic-students', headers=headers('career_kim'),
                          params={'filters.diagnosed': 'Y'})
     assert listing.status_code == 200

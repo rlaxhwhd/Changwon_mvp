@@ -155,6 +155,8 @@ export default function ProgramBlacklist() {
     colleges: getCollegeOptions(summary.majors).map(c => c.name),
     majors: summary.majors,
   }), [summary.majors])
+  // 대학을 고르면 학과 목록도 그 대학 소속 학과로 좁힌다.
+  const majorOptions = college !== ALL ? options.majors.filter(m => majorsOfCollege(college).includes(m)) : options.majors
 
   // 단대를 고르면 그 단대의 학과 목록으로 펼쳐 보낸다(서버는 학과로만 거른다).
   const majors = major !== ALL ? [major] : college !== ALL ? majorsOfCollege(college) : undefined
@@ -226,13 +228,13 @@ export default function ProgramBlacklist() {
       {/* 검색·필터 카드 */}
       <form className="blk-filter" onSubmit={e => e.preventDefault()}>
         <div className="blk-filter-row">
-          <select className="blk-field" value={college} onChange={e => onFilter(setCollege)(e.target.value)} aria-label="대학">
+          <select className="blk-field" value={college} onChange={e => { onFilter(setCollege)(e.target.value); setMajor(ALL) }} aria-label="대학">
             <option value={ALL}>대학</option>
             {options.colleges.map(c => <option key={c} value={c}>{c}</option>)}
           </select>
           <select className="blk-field" value={major} onChange={e => onFilter(setMajor)(e.target.value)} aria-label="학과">
             <option value={ALL}>학과</option>
-            {options.majors.map(m => <option key={m} value={m}>{m}</option>)}
+            {majorOptions.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
           <select className="blk-field" value={ptsMin} onChange={e => onFilter(setPtsMin)(e.target.value)} aria-label="벌점점수">
             <option value={ALL}>벌점점수</option>

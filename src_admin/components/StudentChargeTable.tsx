@@ -126,6 +126,8 @@ export default function StudentChargeTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deptKey, refreshKey, metadataRetry, academic, diagnosis, isRoadmap])
   const { options, summary } = metadata
+  // 대학을 고르면 학과 목록을 그 대학 소속 학과로 좁힌다.
+  const majorOptions = college !== ALL && options.collegeMajors ? options.collegeMajors[college] ?? [] : options.majors
 
   // 서버(목업) 조회 — useListData가 useEffect+레이스 cleanup을 담당. DB 전환 시 훅 내부만 교체.
   const listParams = {
@@ -276,7 +278,7 @@ export default function StudentChargeTable({
           </select>
         </label>}
         {academic && <label className="admin-select"><span>대학</span>
-          <select value={college} onChange={e => onFilter(setCollege)(e.target.value)}>
+          <select value={college} onChange={e => { onFilter(setCollege)(e.target.value); setMajor(ALL) }}>
             <option value={ALL}>{ALL}</option>
             {(options.colleges ?? []).map(c => <option key={c} value={c}>{c}</option>)}
           </select>
@@ -285,7 +287,7 @@ export default function StudentChargeTable({
           <span>학과</span>
           <select value={major} onChange={e => onFilter(setMajor)(e.target.value)}>
             <option value={ALL}>{ALL}</option>
-            {options.majors.map(m => <option key={m} value={m}>{m}</option>)}
+            {majorOptions.map(m => <option key={m} value={m}>{m}</option>)}
           </select>
         </label>
         <label className="admin-select">

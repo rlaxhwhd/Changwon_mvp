@@ -145,9 +145,14 @@ def metadata(diagnosed: bool = False, user=Depends(principal, scope='function'),
       ARRAY(SELECT grade FROM roster WHERE grade IS NOT NULL GROUP BY grade ORDER BY grade) AS grades,
       ARRAY(SELECT student_type FROM roster WHERE student_type IS NOT NULL GROUP BY student_type ORDER BY student_type) AS types,
       ARRAY(SELECT tier FROM roster WHERE tier IS NOT NULL GROUP BY tier ORDER BY tier) AS tiers,
-      ARRAY(SELECT status FROM roster GROUP BY status ORDER BY status) AS statuses FROM roster''').fetchone()
+      ARRAY(SELECT status FROM roster GROUP BY status ORDER BY status) AS statuses,
+      (SELECT json_object_agg(college_name, majors) FROM (SELECT college_name, array_agg(major_label ORDER BY major_label) AS majors
+        FROM (SELECT college_name COLLATE "C" AS college_name, major_label COLLATE "C" AS major_label
+          FROM roster WHERE college_name IS NOT NULL GROUP BY 1,2) p GROUP BY college_name) c) AS "collegeMajors" FROM roster''').fetchone()
+    # collegeMajors — 대학을 고르면 학과 목록을 그 대학 소속으로 좁힌다. 학과 트리 이름 매칭이 아니라 학적 행의 (대학, 학과) 쌍이다.
+    # 9만 행을 기본(한국어) 정렬로 묶으면 5초 넘게 걸려 "C" 정렬로 묶는다(2026-10-28 측정 +5.8s → +0.1s).
     return {'summary': {k: row[k] for k in ('total','focusCount','highRiskCount','coreCareCount','starCount','care7Count','retakePendingCount')},
-            'options': {k: row[k] or [] for k in ('majors','colleges','grades','types','tiers','statuses')}}
+            'options': {**{k: row[k] or [] for k in ('majors','colleges','grades','types','tiers','statuses')}, 'collegeMajors': row['collegeMajors'] or {}}}
 
 
 @router.get('/academic-students')
