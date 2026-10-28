@@ -11,6 +11,7 @@ from .auth import principal, require_staff, is_counselor, student_access
 from .db import connection
 from .jobs import MENU_PREDICATE
 from .students import HIGH, CORE
+from .quests import XP_PER_LEVEL, LEVELS_PER_GRADE, GRADE_CAP_XP
 from .xlsx_export import workbook
 from .student_contact import CONTACT_CTE, STAGES
 
@@ -261,7 +262,17 @@ def detail(identity: str, optional: bool = False, user=Depends(principal, scope=
     # 외국인 여부는 상세에서만 쓰여 목록용 roster 에 넣지 않고 한 행만 읽는다. Y/N 밖의 값은 미상(None).
     foreigner = conn.execute('SELECT foreigner_code FROM dc.academic_student_details WHERE intg_uid=%s', (identity,)).fetchone()
     foreigner = {'Y': True, 'N': False}.get(foreigner['foreigner_code'] if foreigner else None)
-    return dict(id=identity,studentNo=row['student_no'],name=row['name'],major=row['major_label'],star=row['star'],
+    # 성장 레벨 — 학생 라운지(/quests/dashboard)와 같은 학년 기준 값. 학년 XP 는 원장에서 파생한다.
+    grade_xp = conn.execute('''SELECT s.grade,coalesce(sum(e.granted_xp),0)::bigint AS xp FROM dc.student s
+      LEFT JOIN dc.growth_xp_event e ON e.student_uid=s.intg_uid AND e.grade=s.grade
+      WHERE s.intg_uid=%s GROUP BY s.grade''', (identity,)).fetchone()
+    q_grade = grade_xp['grade'] if grade_xp and grade_xp['grade'] else row['grade']
+    q_xp = int(grade_xp['xp']) if grade_xp else 0
+    q_cap = LEVELS_PER_GRADE if q_grade and q_grade > 0 else None
+    at_cap = q_cap is not None and q_xp >= GRADE_CAP_XP
+    quest = dict(grade=q_grade, level=q_xp // XP_PER_LEVEL, levelCap=q_cap, atCap=at_cap,
+                 xpInLevel=XP_PER_LEVEL if at_cap else q_xp % XP_PER_LEVEL, xpPerLevel=XP_PER_LEVEL)
+    return dict(quest=quest,id=identity,studentNo=row['student_no'],name=row['name'],major=row['major_label'],star=row['star'],
       collegeName=row['college_name'],grade=row['grade'],academicLevel=row['academic_level'],
       status=row['status'],sex=row['sex'],foreigner=foreigner,graduationMonth=row['graduation_month'],gpa=row['gpa'],
       studentType=row['student_type'],diagnosisCount=diagnoses,counsels=counsels,programs=programs,

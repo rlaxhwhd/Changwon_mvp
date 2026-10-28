@@ -1,6 +1,9 @@
 import type { LevelStat } from '../src_v2/components/StudentStatCards'
 
-export function questLevelStat(data: QuestDashboard | null, error = ''): LevelStat {
+/** 학년 성장 레벨 카드에 필요한 값 — 학생 라운지(대시보드)와 교직원 학생 상세가 같이 쓴다. */
+export type QuestLevel = Pick<QuestDashboard, 'grade' | 'level' | 'levelCap' | 'xpInLevel' | 'xpPerLevel' | 'atCap'>
+
+export function questLevelStat(data: QuestLevel | null, error = ''): LevelStat {
   return { kind: 'level', label: '성장 레벨', levelUnit: 'LV', level: data ? String(data.level) : '—',
     tierLabel: data ? data.grade ? `${data.grade}학년 성장 목표` : '학년 정보 확인 필요' : '',
     tier: data?.levelCap ? `최대 LV ${data.levelCap}` : '',

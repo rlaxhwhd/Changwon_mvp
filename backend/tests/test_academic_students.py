@@ -130,6 +130,10 @@ def test_unenrolled_detail_and_excel_share_filters(client, db, academic_rows):
     assert r.json()['gpa']=='3.75'
     assert r.json()['counsels']==[] and r.json()['programs']==[]
     assert r.json()['diagnosisCount']==0
+    # 성장 레벨 카드 — XP 이력이 없는 학생은 LV 0 · 0/1000 XP 로 온다(라운지 대시보드와 같은 키).
+    quest=r.json()['quest']
+    assert (quest['level'],quest['xpInLevel'],quest['xpPerLevel'],quest['atCap'])==(0,0,1000,False)
+    assert quest['levelCap']==(25 if quest['grade'] else None)
     for code, expected in (('Y', True), ('N', False), (None, None)):
         db.execute('UPDATE academic.v_usr_inf SET for_yn=%s WHERE intg_uid=%s', (code, uid))
         assert client.get('/api/v1/academic-students/'+uid,headers=headers('career_kim')).json()['foreigner'] is expected

@@ -3,6 +3,7 @@ import type { ListParams, Paginated } from './query'
 import type { RosterMetadata, RosterStudent } from './studentRoster'
 import type { StudentStat } from '../../src_v2/components/StudentStatCards'
 import { typeLabel } from '../../src_v2/data/careerProcess'
+import { questLevelStat, type QuestLevel } from '../../shared/quests'
 import { counselBucketChannels, type CareTrack } from '../../src_v2/data/counselTrack'
 
 export function queryAcademicStudents(params: ListParams): Promise<Paginated<RosterStudent>> {
@@ -22,6 +23,8 @@ export interface AcademicStudentDetail extends RosterStudent {
   /** careTrack 은 진로취업 행에만 있다 — 심리·교수 상담은 null 로 온다. */
   counsels: { id: string; type: string; status: 'REQ' | 'CONFIRMED' | 'DONE'; date: string; careTrack: CareTrack | null }[]
   programs: { id: string; title: string; date: string; completed: boolean }[]
+  /** 학년 성장 레벨 — 학생 라운지와 같은 값(서버 XP 원장 파생). */
+  quest: QuestLevel
 }
 
 export function fetchAcademicStudentDetail(id: string): Promise<AcademicStudentDetail | null> {
@@ -45,7 +48,7 @@ export function academicStudentStats(data: AcademicStudentDetail): StudentStat[]
     { kind: 'program', label: '비교과 활동', value: data.programs.length ? String(data.programs.length) : '없음',
       unit: data.programs.length ? '건' : '', pct: data.programs.length ? Math.round(completed/data.programs.length*100) : 0, hideMeter: !data.programs.length,
       foot: data.programs.length ? `이수 ${completed}건` : '활동 기록 없음' },
-    { kind: 'course', label: '학점', value: data.gpa ?? '없음', pct: 0, hideMeter: true, foot: '학사 DB 제공 평점' },
+    questLevelStat(data.quest),
   ]
 }
 
