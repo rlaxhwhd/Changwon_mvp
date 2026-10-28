@@ -69,3 +69,17 @@
   .counsel-template-ai-footer > :last-child { margin-left: auto; }
 }
 @media (max-width: 600px) { .counsel-template-meta, .counsel-template-type, .counsel-template-notes, .counsel-template-ratings, .counsel-template-content { grid-template-columns: 1fr; } .counsel-template-card { padding: 14px; } }
+/* 진단결과 유형 변경 확인 — 세 항목을 모두 확인해야 확정 버튼이 열린다 */
+.type-change-modal .admin-modal-head h2 { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); }
+.type-change-head { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 20px; }
+.type-change-icon { flex: none; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font-size: 24px; }
+.type-change-head h3 { margin: 4px 0 8px; font-size: 18px; font-weight: 700; }
+.type-change-head p { margin: 0; font-size: 13px; line-height: 1.6; color: #52647e; }
+.type-change-checks { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.type-change-checks li { display: flex; align-items: center; gap: 14px; padding: 16px 18px; border: 1px solid #dfe5ee; border-radius: 10px; }
+.type-change-num { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: var(--primary-soft); color: var(--primary); font-weight: 700; }
+.type-change-checks p { flex: 1; margin: 0; font-size: 13px; line-height: 1.6; }
+.type-change-checks label { flex: none; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #52647e; cursor: pointer; white-space: nowrap; }
+.type-change-checks input { width: 18px; height: 18px; accent-color: var(--primary); }
+.type-change-actions { display: grid; grid-template-columns: 1fr 1.6fr; gap: 12px; margin-top: 22px; }
+.type-change-actions button { min-height: 44px; }

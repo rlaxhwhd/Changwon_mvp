@@ -1,7 +1,8 @@
-import { useId, useState } from 'react'
+import { useId, useState, type ReactNode } from 'react'
 import { streamAi } from '../../shared/chatbotApi'
 import AiProgressModal from '../../shared/AiProgressModal'
-import { LuLockKeyhole, LuMessageSquareMore, LuSparkles } from 'react-icons/lu'
+import AdminModal from './AdminModal'
+import { LuClipboardPen, LuLockKeyhole, LuMessageSquareMore, LuSparkles } from 'react-icons/lu'
 import { STUDENT_TYPE_MAP, type StudentType, getTopicsForType, typeLabel } from '../../src_v2/data/careerProcess'
 import { COUNSEL_CHANNELS, QUALITATIVE_ITEMS, type CounselTemplate } from '../data/schema/counselTemplate'
 import './CounselRecordFields.css'
@@ -29,6 +30,12 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
   const topicType = value.finalType ?? diagnosisType ?? null
   const patch = (fields: Partial<CounselTemplate>) => onChange({ ...value, ...fields,
     ...('aiJournal' in fields ? {} : { aiJournalRunId: null }) })
+  // 진단 유형과 다른 유형을 고르면 확인 절차를 거친 뒤에만 반영한다(재진단 → 상담 유형 변경).
+  const [pendingType, setPendingType] = useState<StudentType | null>(null)
+  function selectType(next: StudentType | null) {
+    if (next && diagnosisType && next !== diagnosisType && next !== value.finalType) setPendingType(next)
+    else patch({ finalType: next })
+  }
   async function generate() {
     if (pending || !requestId) return
     setPending(true); setError('')
@@ -38,7 +45,9 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
     } catch (e) { setError(e instanceof Error ? e.message : '상담일지를 생성하지 못했습니다.') }
     finally { setPending(false) }
   }
-  return (
+  return (<>
+    {pendingType && <TypeChangeConfirm onCancel={() => setPendingType(null)}
+      onConfirm={() => { patch({ finalType: pendingType }); setPendingType(null) }} />}
     <fieldset className="counsel-template" disabled={disabled || pending}>
       <AiProgressModal open={pending} title="AI가 상담일지를 분석 중입니다" progress={progress} />
       <legend className="counsel-template-sr">상담일지 입력</legend>
@@ -64,7 +73,7 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
         <div className="counsel-template-type">
           <div><span className="counsel-template-caption">최근 진단 결과</span><strong>{diagnosisType ? `${diagnosisType} · ${typeLabel(diagnosisType)}` : '진단 결과 없음'}</strong></div>
           {care7 && <label className="admin-field"><span>상담 후 최종 유형 {required && <em className="admin-req-mark">*</em>}</span>
-            <select disabled={typeLocked} value={value.finalType ?? ''} onChange={e => patch({ finalType: (e.target.value || null) as StudentType | null })}>
+            <select disabled={typeLocked} value={value.finalType ?? ''} onChange={e => selectType((e.target.value || null) as StudentType | null)}>
               <option value="">{typeLocked ? '기존 일지에 저장된 유형 없음' : '최종 유형 선택'}</option>
               {Object.values(STUDENT_TYPE_MAP).map(type => <option key={type.code} value={type.code}>{type.code} · {type.label}</option>)}
             </select>
@@ -132,5 +141,38 @@ export default function CounselRecordFields({ value, onChange, comment, onCommen
         </section>
       </div>
     </fieldset>
+  </>)
+}
+
+const TYPE_CHANGE_CHECKS: ReactNode[] = [
+  <>학생의 <strong>현재 상황이 변경할 진단결과 유형</strong>에 해당하는 <strong>조건에 부합함</strong>을 확인하였습니다.</>,
+  <>본 <strong>진단결과 유형 변경</strong>은 학생과의 상담을 통해 <strong>결정된 사안</strong>임을 확인합니다.</>,
+  <>진단결과 유형 변경에 따른 프로그램 참여 자격 및 관련 안내사항을 <strong>학생에게 충분히 설명</strong>하였습니다.</>,
+]
+
+/** 진단결과 유형 변경 확인 — 세 항목을 모두 확인해야 변경을 확정할 수 있다. */
+function TypeChangeConfirm({ onCancel, onConfirm }: { onCancel: () => void; onConfirm: () => void }) {
+  const [checked, setChecked] = useState(() => TYPE_CHANGE_CHECKS.map(() => false))
+  return (
+    <AdminModal title="진단결과 유형 변경 확인" size="md" className="type-change-modal" onClose={onCancel}>
+      <div className="type-change-head">
+        <span className="type-change-icon"><LuClipboardPen aria-hidden="true" /></span>
+        <div>
+          <h3>진단결과 유형 변경 확인</h3>
+          <p>학생의 진단결과 유형을 변경하기 전에 아래 내용을 확인해 주세요.<br />본 변경은 상담사의 판단에 따라 이루어지며, 확인 절차 후 최종 반영됩니다.</p>
+        </div>
+      </div>
+      <ol className="type-change-checks">
+        {TYPE_CHANGE_CHECKS.map((text, index) => <li key={index}>
+          <span className="type-change-num">{index + 1}</span>
+          <p>{text}</p>
+          <label><input type="checkbox" checked={checked[index]} onChange={e => setChecked(checked.map((v, i) => i === index ? e.target.checked : v))} />확인합니다.</label>
+        </li>)}
+      </ol>
+      <div className="type-change-actions">
+        <button type="button" className="counsel-outline-btn" onClick={onCancel}>취소</button>
+        <button type="button" className="counsel-primary-btn" disabled={!checked.every(Boolean)} onClick={onConfirm}>진단결과 유형 변경 확정</button>
+      </div>
+    </AdminModal>
   )
 }
