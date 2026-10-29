@@ -7,8 +7,9 @@
   ① 인가는 require_staff 가 아니라 메뉴 권한이다. 채용 메뉴는 career 에만 부여돼
      있고 dc.auth_user 에는 개발 시스템관리자 한 명뿐이라, auth_user 검사만 하면
      전 상담사가 403 이 된다(metadata.py 의 메뉴 술어를 그대로 나눠 쓴다).
-  ② 학생 범위는 dc.staff_student_scope 만 본다. auth.student_access 의
-     "과거 상담 담당이면 허용" 우회 경로를 채용으로 가져오지 않는다.
+  ② 학생 범위는 상담사(career·psych)면 전 학생, 그 밖의 교직원은 dc.staff_student_scope
+     만 본다. auth.student_access 의 "과거 상담 담당이면 허용" 우회 경로를 채용으로
+     가져오지 않는다.
   ③ 통계·CSV 에도 목록과 같은 범위 술어를 건다. 비교과 통계의 범위 누락
      (programs.py:121)을 계승하지 않는다.
   ④ 「채용시 마감」은 최초 등록(또는 다른 모드→ON_HIRE 전환) 때 한 번만 계산한다.
@@ -26,7 +27,7 @@ from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from . import files
-from .auth import principal, require_staff
+from .auth import is_counselor, principal, require_staff
 from .html_security import clean_html
 from .db import connection
 from .gates import employment_gate
@@ -83,9 +84,13 @@ def require_manage(conn, user, menu_code=MANAGE_MENU):
 
 
 def scope_condition(user, alias='a'):
-    """모든 지원 SQL 이 쓰는 하나의 범위 술어. 목록·상세·이력·통계·CSV 에서 빠지지 않는다."""
+    """모든 지원 SQL 이 쓰는 하나의 범위 술어. 목록·상세·이력·통계·CSV 에서 빠지지 않는다.
+    상담사(career·psych)는 학생·로드맵 화면과 같이 전 학생이다 — 학사 미러 학생은
+    staff_student_scope 에 없어 지원자가 0명으로 보였다(2026-10-29)."""
     if user['kind'] == 'STUDENT':
         return f'{alias}.student_uid=%s', [user['intg_uid']]
+    if is_counselor(user):
+        return 'true', []
     return (f'''EXISTS(SELECT 1 FROM dc.staff_student_scope g
       WHERE g.staff_uid=%s AND g.student_uid={alias}.student_uid)''', [user['intg_uid']])
 
@@ -98,7 +103,7 @@ def resolve_student(conn, user, identity):
         raise HTTPException(404, '학생을 찾을 수 없습니다.')
     if user['kind'] == 'STUDENT' and user['intg_uid'] != student['intg_uid']:
         raise HTTPException(404, '학생을 찾을 수 없습니다.')
-    if user['kind'] == 'STAFF' and not conn.execute(
+    if user['kind'] == 'STAFF' and not is_counselor(user) and not conn.execute(
             'SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
             (user['intg_uid'], student['intg_uid'])).fetchone():
         raise HTTPException(404, '학생을 찾을 수 없습니다.')
@@ -1299,8 +1304,9 @@ def download(file_id: str, user=Depends(principal, scope='function'),
                 raise HTTPException(404, '파일을 찾을 수 없습니다.')
         else:
             require_manage(conn, user, APPLICANT_MENU)
-            if not conn.execute('SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
-                                (user['intg_uid'], owner['student_uid'])).fetchone():
+            if not is_counselor(user) and not conn.execute(
+                    'SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
+                    (user['intg_uid'], owner['student_uid'])).fetchone():
                 raise HTTPException(404, '파일을 찾을 수 없습니다.')
             conn.execute('''INSERT INTO dc.job_access_event(actor_uid,action,target_kind,target_id,
               filter_hash,row_count) VALUES(%s,'VIEW_DOCUMENT','FILE',%s,%s,1)''',

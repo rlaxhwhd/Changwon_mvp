@@ -85,6 +85,16 @@ def test_scope_is_what_gates_a_managing_staff_not_the_menu_alone(client):
     assert seen >= 1, '교직원 열람이 감사되지 않았다'
 
 
+def test_counselors_see_every_applicant_other_staff_stay_scoped():
+    """학사 미러 학생은 staff_student_scope 에 없다 — 상담사 범위를 거기에 묶으면
+    학생 화면엔 지원이 있는데 상담사 지원자 관리는 0명이 된다(2026-10-29)."""
+    from app.jobs import scope_condition
+    for role in ('career', 'psych'):
+        assert scope_condition({'kind': 'STAFF', 'intg_uid': 'x', 'profile': {'role': role}}) == ('true', [])
+    condition, values = scope_condition({'kind': 'STAFF', 'intg_uid': 'prof', 'profile': {'role': 'professor'}})
+    assert 'staff_student_scope' in condition and values == ['prof']
+
+
 def test_students_cannot_read_each_others_applications_resumes_or_wishlists(client):
     """⑤ 파일 밖의 개인정보도 같은 술어로 막히는지."""
     posting = new_posting(client)
