@@ -174,6 +174,19 @@ const ALL_SECTIONS: NavSection[] = [
     ],
   },
 
+  // 홈에서 옮겨 온 통계 카드(148). 전체통계는 메뉴 자리만 있다(NotReady).
+  {
+    id: 'stats',
+    label: '통계 현황',
+    basePaths: ['/stats'],
+    path: '/stats/personal',
+    icon: LuChartNoAxesColumn,
+    children: [
+      { label: '개인통계', path: '/stats/personal', icon: LuChartNoAxesColumn },
+      { label: '전체통계', path: '/stats/overall', icon: LuChartNoAxesColumn },
+    ],
+  },
+
   // ── 교수 (SPEC §3-5) ────────────────────────────────────────────────
   {
     id: 'prof-advisees',

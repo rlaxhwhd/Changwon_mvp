@@ -162,3 +162,5 @@ def test_psych_menu_is_separate_from_career(client):
     assert {'psy-tests', 'counsel', 'counsel.0', 'counsel.10', 'counsel.2', 'counsel.5', 'counsel.6', 'counsel.7', 'students', 'students.1'} <= psych
     assert not psych & {'diagnosis', 'diagnosis.0', 'roadmap', 'counsel.8', 'counsel.9'}
     assert {'diagnosis', 'counsel.2', 'counsel.8', 'counsel.9'} <= career and not career & {'psy-tests', 'counsel.6', 'counsel.10'}
+    # 통계 현황(148) — 개인통계·전체통계는 두 상담사 역할 공통
+    assert {'stats', 'stats.0', 'stats.1'} <= psych & career

@@ -5,8 +5,8 @@ import { Link } from 'react-router-dom'
 import spriteHtml from './testAdminSprite.html?raw'
 import { getActiveCounselor } from '../data/counselors'
 import {
-  getHelloSummary, getKpis, getTypeDistribution,
-  getTodayTimeline, getIntake, getMyPrograms, getPerformance,
+  getHelloSummary, getKpis,
+  getTodayTimeline, getIntake, getMyPrograms,
   useCounselDashboard, useCounselBriefing, type Dashboard,
 } from '../data/counselorDashboard'
 import EmptyState from '../components/EmptyState'
@@ -32,11 +32,6 @@ const KPI_META: Record<string, { icon: string; to?: string }> = {
   roadmap: { icon: 'route', to: '/roadmap/requests' },
   psychTests: { icon: 'doc', to: '/psych/tests' },
   record: { icon: 'pen', to: '/counsel/journals' },
-}
-
-/** 성과 지표 4행의 아이콘 — key 는 getPerformance() 가 정한다 */
-const PERF_ICON: Record<string, string> = {
-  progress: 'chart', record: 'doc', confirm: 'clip', roadmap: 'route',
 }
 
 function bar(v: number): CSSProperties {
@@ -81,14 +76,10 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
   const isCareer = me.role === 'career'
 
   const hello = getHelloSummary(data)
-  const [contactTab, setContactTab] = useState<'diagnosis' | 'counsel' | 'roadmap'>('diagnosis')
-  const contactLabels = { diagnosis: '진단을 완료하지 않은 학생', counsel: '진단 완료 후 상담을 완료하지 않은 학생', roadmap: '진단·상담 완료 후 로드맵이 생성되지 않은 학생' }
   const kpis = getKpis(data)
-  const dist = getTypeDistribution(data)
   const timeline = getTodayTimeline(data)
   const intake = getIntake(data)
   const programs = getMyPrograms(data)
-  const perf = getPerformance(data)
 
   // 신청 ID로 구분한다. 같은 학생의 서로 다른 상담를 섞지 않는다.
   const [openId, setOpenId] = useState<string | null>(null)
@@ -138,37 +129,7 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
               </div>
             </div>
 
-            {/* CARE 7+ 참여학생 요약 */}
-            {/* 두 칸이 각자 다른 곳으로 간다 — 참여학생은 CARE 7+ 필터가 걸린 학생 목록, 상담기록은 상담일지 목록. */}
-            <div className="card sm assign">
-              <span className="rounded s-green"><Ico id="users" /></span>
-              <Link to="/students/all?focus=care7" className="unit">
-                <div className="k">CARE 7+ 참여학생</div>
-                <div className="v">{hello.studentCount}<u>명</u></div>
-              </Link>
-              <div className="sep" />
-              <Link to="/counsel/records" className="unit">
-                <div className="k">상담기록</div>
-                <div className="v">{hello.recordCount}<u>건</u></div>
-              </Link>
-            </div>
-
-            <div className="card sm risk">
-              <div className="risk-hd"><span className="rounded s-red"><Ico id="alert" /></span>
-                <div><div className="k">미접촉자 현황</div><div className="s">재학생 {data.uncontacted.total.toLocaleString()}명 기준</div></div>
-              </div>
-              <div className="admin-tabs" role="tablist" aria-label="미접촉 단계">
-                {(['diagnosis', 'counsel', 'roadmap'] as const).map((key, index) => <button key={key} type="button" role="tab"
-                  aria-selected={contactTab === key} className={`admin-tab${contactTab === key ? ' active' : ''}`} onClick={() => setContactTab(key)}>
-                  {['진단', '상담', '로드맵'][index]}</button>)}
-              </div>
-              <div role="tabpanel" aria-label={contactLabels[contactTab]}>
-                <p>{contactLabels[contactTab]}</p>
-                <Link to={`/students/all?contact=${contactTab}`} className="risk-row">
-                  <span className="v">{data.uncontacted[contactTab].toLocaleString()}<u>명</u></span><span>학생 목록 보기 →</span>
-                </Link>
-              </div>
-            </div>
+            {/* CARE 7+ 참여학생·상담기록, 미접촉자 현황, 유형 분포, 나의 성과 지표는 통계 현황 › 개인통계로 옮겼다(2026-10-29, 148). */}
 
             {/* KPI 4장 */}
             <div className="kpis">
@@ -183,33 +144,6 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                 </>
                 return meta.to ? <Link key={k.key} to={meta.to} className="card sm kpi">{content}</Link> : <div key={k.key} className="card sm kpi">{content}</div>
               })}
-            </div>
-
-            {/* 유형 분포 */}
-            <div className="card">
-              <div className="card-hd"><h2>CARE 7+ 참여학생 유형 분포</h2></div>
-              <div className="donut-wrap">
-                <div className="donut" style={{ background: dist.gradient }}>
-                  <div className="mid">
-                    <div className="k">전체</div>
-                    <div className="v">{dist.total}<u>명</u></div>
-                  </div>
-                </div>
-                <div className="legend">
-                  {dist.slices.map(s => (
-                    <div key={s.code ?? 'unassigned'} className="lg">
-                      <span className={`sw ${s.swatch}`} style={!s.code ? { background: 'var(--text-cap)' } : undefined} />
-                      <span className="cd">{s.code}</span>
-                      <span className="nm">{s.label}</span>
-                      <span className="n">{s.count}명</span>
-                      <span className="p">{s.ratio}%</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <p className="cap note">
-                유형은 진단 완료 학생에게만 부여되며, 로드맵 생성과 비교과 프로그램 노출의 기준이 됩니다.
-              </p>
             </div>
           </div>
 
@@ -381,24 +315,6 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                 </div>
               </div>
             )}
-
-            {/* 성과 지표 */}
-            <div className="card">
-              <div className="card-hd"><h2>나의 성과 지표</h2></div>
-              {perf.map(row => (
-                <div key={row.key} className="perf">
-                  <div className="row">
-                    <span className={`ico ${row.tint}`}><Ico id={PERF_ICON[row.key]} /></span>
-                    <span className="nm">{row.name}</span>
-                    <span className={`v ${row.ink}`}>{row.value}<u>%</u></span>
-                  </div>
-                  <div className="bar"><i className={row.solid} style={bar(row.value)} /></div>
-                </div>
-              ))}
-              <div className="foot-link">
-                <Link to="/counsel/stats" className="link">성과 리포트 보기<Ico id="chev" /></Link>
-              </div>
-            </div>
           </div>
 
         </div>
