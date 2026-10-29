@@ -1403,6 +1403,10 @@
 .tadmin .kpis-top .kpi .name{margin-top:0;padding-right:42px}
 .tadmin .kpis-top .kpi .num{margin:0}
 .tadmin .kpis-top .kpi .ratio{margin-top:0}
+/* 그래프 색은 카드 순서대로 — v2/lounge 카드와 같은 세 색 */
+.tadmin .kpis-top .kpi:nth-child(1) .bar i{background:#20B486}
+.tadmin .kpis-top .kpi:nth-child(2) .bar i{background:#17A9E6}
+.tadmin .kpis-top .kpi:nth-child(3) .bar i{background:#356DFF}
 @media (min-width:720px){
   .tadmin .grid, .tadmin .col, .tadmin .col-right{gap:16px}
 }
