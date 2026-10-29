@@ -1395,12 +1395,28 @@
   color: var(--text-cap);
 }
 
-/* ── 2026-10-29 홈 재배치 — KPI 3장은 중앙 열 오늘의 상담 위, 아이콘 없이 170px ── */
-.tadmin .kpis.kpis-top{grid-template-columns:repeat(3,minmax(0,1fr))}
-.tadmin .kpis-top .kpi{height:170px;display:flex;flex-direction:column;justify-content:space-between}
-.tadmin .kpis-top .kpi .name{margin-top:0}
+/* ── 2026-10-29 홈 재배치 — 첫 줄(인사·KPI 3장·상담접수함)은 모두 175px, 간격은 그리드와 같은 16px ── */
+.tadmin .kpis.kpis-top{grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.tadmin .kpis-top .kpi{position:relative;height:175px;display:flex;flex-direction:column;justify-content:space-between}
+.tadmin .kpis-top .kpi .ico{position:absolute;top:16px;right:16px;width:34px;height:34px;border-radius:10px}
+.tadmin .kpis-top .kpi .ico svg{width:17px;height:17px}
+.tadmin .kpis-top .kpi .name{margin-top:0;padding-right:42px}
 .tadmin .kpis-top .kpi .num{margin:0}
 .tadmin .kpis-top .kpi .ratio{margin-top:0}
+@media (min-width:720px){
+  .tadmin .grid, .tadmin .col, .tadmin .col-right{gap:16px}
+}
+.tadmin .card.hello{height:175px;min-height:0;padding:22px 24px}
+.tadmin .card.hello h1{font-size:24px;line-height:1.35}
+.tadmin .card.hello .under{margin:10px 0 0}
+.tadmin .card.hello .facts{left:24px;right:24px;bottom:20px}
+.tadmin .card.hello .sprig{width:70px;height:82px;right:10px;bottom:auto;top:16px}
+.tadmin .card.intake-card{height:175px;display:flex;flex-direction:column}
+.tadmin .intake-card .card-hd{margin-bottom:4px}
+.tadmin .intake-card .intake-list{flex:1;min-height:0;overflow-y:auto}
+.tadmin .intake-card .intake{padding:6px 0}
+.tadmin .intake-card .foot-link{margin-top:4px;padding-top:4px}
+.tadmin .intake-empty{font-size:12.5px;color:var(--text-cap);margin:8px 0 0}
 @media (max-width:719px){
   .tadmin .kpis.kpis-top{grid-template-columns:minmax(0,1fr)}
 }

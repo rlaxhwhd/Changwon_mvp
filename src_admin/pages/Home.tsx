@@ -25,12 +25,12 @@ function Ico({ id }: { id: string }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><use href={`#i-${id}`} /></svg>
 }
 
-/** KPI 카드 3장의 목적지 — key 는 getKpis() 가 정한다. 아이콘은 뺐다(2026-10-29). */
-const KPI_TO: Record<string, string> = {
-  intake: '/counsel/requests',
-  roadmap: '/roadmap/requests',
-  psychTests: '/psych/tests',
-  record: '/counsel/journals',
+/** KPI 카드 3장의 아이콘(카드 우측 상단)·목적지 — key 는 getKpis() 가 정한다 */
+const KPI_META: Record<string, { icon: string; to: string }> = {
+  intake: { icon: 'clip', to: '/counsel/requests' },
+  roadmap: { icon: 'route', to: '/roadmap/requests' },
+  psychTests: { icon: 'doc', to: '/psych/tests' },
+  record: { icon: 'pen', to: '/counsel/journals' },
 }
 
 /** 비교과 현황은 마감 임박 5개를 먼저 보이고 나머지는 펼친다. */
@@ -176,17 +176,19 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
 
           {/* ========== 중앙 ========== */}
           <div className="col">
-            {/* KPI 3장 — 오늘의 상담 위, 아이콘 없이 170px */}
+            {/* KPI 3장 — 오늘의 상담 위, 175px, 아이콘은 카드 우측 상단 */}
             <div className="kpis kpis-top">
               {kpis.map(k => {
-                const to = KPI_TO[k.key]
-                const content = <>
+                const meta = KPI_META[k.key]
+                return (
+                  <Link key={k.key} to={meta.to} className="card sm kpi">
+                    <span className={`ico ${k.tint}`}><Ico id={meta.icon} /></span>
                     <div className="name">{k.name}</div>
                     <div className="num">{k.value}<u>{k.unit}</u></div>
                     <div className="bar"><i className={k.solid} style={bar(k.ratio)} /></div>
                     <div className="ratio">{k.detail}</div>
-                </>
-                return to ? <Link key={k.key} to={to} className="card sm kpi">{content}</Link> : <div key={k.key} className="card sm kpi">{content}</div>
+                  </Link>
+                )
               })}
             </div>
 
@@ -296,14 +298,15 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
           {/* ========== 우측 ========== */}
           <div className="col col-right">
 
-            {/* 상담접수함 */}
-            <div className="card">
+            {/* 상담접수함 — 175px 고정, 목록은 카드 안에서 스크롤 */}
+            <div className="card intake-card">
               <div className="card-hd">
                 <h2>상담접수함</h2>
                 <div className="right"><span className="badge s-purple">{data.counts.pending}건</span></div>
               </div>
+              <div className="intake-list">
               {intake.length === 0 ? (
-                <EmptyState message="대기 중인 신청이 없습니다." />
+                <p className="intake-empty">대기 중인 신청이 없습니다.</p>
               ) : (
                 intake.map((row, i) => (
                   <Link
@@ -320,6 +323,7 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                   </Link>
                 ))
               )}
+              </div>
               <div className="foot-link">
                 <Link to="/counsel/requests" className="link">전체 보기<Ico id="chev" /></Link>
               </div>
