@@ -193,7 +193,7 @@ export default function RoadmapEditorPanel({ studentId, showGoalSummary = true, 
           <div>
             <span className="admin-record-label">목표 직무</span>
             <strong>{student.targetRole}</strong>
-            <small>{student.targetCompany.name} 기준</small>
+            <small>희망 기업 · {composed?.targetCompany || student.targetCompany?.name || '미입력'}</small>
           </div>
           <div className="admin-rme-meter">
             <span className="admin-record-label">이행률</span>

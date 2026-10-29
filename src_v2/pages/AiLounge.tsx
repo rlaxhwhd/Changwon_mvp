@@ -146,7 +146,7 @@ export default function AiLounge() {
         {roadmap && <div className="goal-overview">
           <article className="goal-core"><small>목표 직무</small>
             <h3>{roadmap.targetRole || '목표 직무 미등록'}</h3>
-            <p>IAP 실행 · 핵심역량 수행 · 내 성장 활동 3축의 실행을 하나의 로드맵으로 관리합니다.</p>
+            <p>희망 기업 · {student.targetCompany?.name || '미입력'}</p>
             <div className="goal-number">{roadmap.progress.pct}<span>% 전체 진척도</span></div>
           </article>
           <div className="goal-plan">
