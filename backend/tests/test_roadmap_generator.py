@@ -33,7 +33,7 @@ def test_local_rag_validates_draft_and_keeps_evidence(client, monkeypatch):
         calls.append(json.loads(request.content))
         return httpx.Response(200, json={'choices': [{'finish_reason': 'stop', 'message': {'content': json.dumps(outcome())}}]})
     monkeypatch.setattr(generator.httpx, 'Client', lambda **kw: real_client(transport=httpx.MockTransport(handler)))
-    snapshot = {'student': {'major': 'IT', 'grade': 3}, 'targetRole': 'Backend engineer', 'typeContext': {},
+    snapshot = {'student': {'major': 'IT', 'grade': 3}, 'targetRole': 'Backend engineer', 'targetCompany': '', 'typeContext': {},
                 'counsel': {}, 'certificates': [], 'jobInterests': [], 'courses': [], 'diagnoses': []}
     result = generator.generate_local_rag(snapshot)
     assert len(result['axes']) == 3 and all(len(axis['cells']) == 5 for axis in result['axes'])

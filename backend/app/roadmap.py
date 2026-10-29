@@ -363,6 +363,8 @@ class Generate(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     counselRequestId: str = Field(min_length=1, max_length=200)
     targetRole: str | None = Field(default=None, min_length=1, max_length=200)
+    # 희망 기업(선택, 2026-10-29) — 입력하면 그 기업 기준으로 칸을 추천하고 계획에 {name} 으로 남긴다.
+    targetCompany: str | None = Field(default=None, min_length=1, max_length=200)
     expectedRoadmapVersion: int = Field(ge=0)
     expectedVersion: int = Field(ge=0)
     reason: str = Field(default='', max_length=2000)
@@ -407,6 +409,11 @@ def check_counsel_basis(conn, uid, request_id, lock=True, initial=False):
         if cycle['status'] != 'COMPLETED' or reasons or not after_diagnosis or after_diagnosis <= cycle['completed_at']:
             fail(409, 'RETEST_COUNSEL_REQUIRED', '재진단과 유형별 후속진단을 마친 뒤 새 CARE 7+ 상담에서 로드맵을 생성해 주세요.')
     return row
+
+
+def target_company(body, source):
+    """상담사가 입력한 희망 기업이 정본이다 — 모델이 바꿔 쓴 이름을 저장하지 않는다."""
+    return {'name': body.targetCompany} if body.targetCompany else source['targetCompany']
 
 
 def adopt_run(conn, user, student, counsel, source, target_role, generation):
@@ -580,7 +587,7 @@ def generate(identity: str, body: Generate, idempotency_key: str = Header(min_le
     if body.expectedRoadmapVersion or body.expectedVersion:
         fail(409, 'VERSION_CONFLICT', '아직 계획이 없습니다.', currentRoadmapVersion=0, currentVersion=0)
     counsel = check_counsel_basis(conn, uid, body.counselRequestId, lock=False, initial=True)
-    source = generate_outcome(conn, student, counsel, body.targetRole, before_network=conn.commit)
+    source = generate_outcome(conn, student, counsel, body.targetRole, body.targetCompany, before_network=conn.commit)
     # The read-only input transaction ends before LLM I/O (production idle limit
     # is shorter than inference). Reacquire idempotency and authorization after
     # inference; competing duplicate calls can adopt only one saved result.
@@ -600,7 +607,7 @@ def generate(identity: str, body: Generate, idempotency_key: str = Header(min_le
     run_id, suggestions = adopt_run(conn, user, student, counsel, source, target_role, generation)
     row = conn.execute('''INSERT INTO dc.roadmap(student_uid,target_role,target_company,version,status_code,
       basis_kind,counsel_request_id,ai_run_id,created_by,updated_by,generation_undo) VALUES(%s,%s,%s,%s,'DRAFT','COUNSEL',%s,%s,%s,%s,'{"previous":null}')
-      RETURNING *''', (uid, target_role, Jsonb(source['targetCompany']), generation, counsel['id'], run_id,
+      RETURNING *''', (uid, target_role, Jsonb(target_company(body, source)), generation, counsel['id'], run_id,
       user['intg_uid'], user['intg_uid'])).fetchone()
     write_plan_body(conn, source, uid, suggestions)
     transaction_id = uuid4()
@@ -633,7 +640,7 @@ def regenerate(identity: str, body: Regenerate, idempotency_key: str = Header(mi
         fail(404, 'NOT_FOUND', '계획이 없습니다.')
     check_versions(row, body.expectedRoadmapVersion, body.expectedVersion)
     counsel = check_counsel_basis(conn, uid, body.counselRequestId, lock=False)
-    source = generate_outcome(conn, student, counsel, body.targetRole, before_network=conn.commit)
+    source = generate_outcome(conn, student, counsel, body.targetRole, body.targetCompany, before_network=conn.commit)
     conn.execute('SET LOCAL jit=off')
     digest, saved = idempotent(conn, user, route, idempotency_key, identity + body.model_dump_json())
     if saved:
@@ -660,7 +667,7 @@ def regenerate(identity: str, body: Regenerate, idempotency_key: str = Header(mi
     row = conn.execute('''UPDATE dc.roadmap SET version=%s,status_code='DRAFT',target_role=%s,target_company=%s,
       basis_kind='COUNSEL',counsel_request_id=%s,ai_run_id=%s,confirmed_at=NULL,confirmed_by=NULL,
       lock_version=lock_version+1,updated_at=now(),updated_by=%s,generation_undo=%s WHERE student_uid=%s RETURNING *''',
-      (generation, target_role, Jsonb(source['targetCompany']), counsel['id'], run_id,
+      (generation, target_role, Jsonb(target_company(body, source)), counsel['id'], run_id,
        user['intg_uid'], Jsonb(undo) if undo else None, uid)).fetchone()
     write_plan_body(conn, source, uid, suggestions)
     event_id = plan_event(conn, user, uid, generation, 'REGENERATE',

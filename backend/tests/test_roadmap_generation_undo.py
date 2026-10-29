@@ -16,7 +16,7 @@ def setup(client, db, monkeypatch):
       FROM dc.person WHERE alias='career_kim' ''', (request, uid))
     monkeypatch.setattr(roadmap, 'available', lambda student: True)
     calls = []
-    def generate(conn, student, counsel, target, before_network=None):
+    def generate(conn, student, counsel, target, target_company=None, before_network=None):
         calls.append(target)
         return {**outcome(), 'targetRole': target}
     monkeypatch.setattr(roadmap, 'generate_outcome', generate)

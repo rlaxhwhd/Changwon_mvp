@@ -182,10 +182,12 @@ def test_regeneration_snapshots_and_carries_nothing_forward(client):
     response = client.post('/api/v1/students/jiwoo/roadmap/regenerate', headers=KEY('career_kim'),
                            json={'counselRequestId': care7_request('jiwoo'),
                                  'expectedRoadmapVersion': generation, 'expectedVersion': plan['version'],
-                                 'reason': '목표 직무 변경'})
+                                 'reason': '목표 직무 변경', 'targetCompany': 'LG CNS'})
     assert response.status_code == 200, response.text
     fresh = response.json()
     assert fresh['roadmapVersion'] == generation + 1 and fresh['status'] == 'DRAFT'
+    # 입력한 희망 기업이 계획의 기업명이 된다 — 모델 산출물의 요약 문자열이 아니다.
+    assert fresh['targetCompany'] == {'name': 'LG CNS'}
     cells = [c for axis in fresh['axes'] for c in axis['cells']]
     assert len(cells) == 15 and all(c['status'] == 'TODO' for c in cells)
     assert not [c for c in cells if c['origin'] == 'AUTO_PROGRAM'], '구세대 프로그램 칸이 이월됐다'
@@ -201,6 +203,19 @@ def test_regeneration_snapshots_and_carries_nothing_forward(client):
     assert plan_of(client, 'jiwoo')['roadmap'] is None
     client.post('/api/v1/students/jiwoo/roadmap/confirm', headers=KEY('career_kim'),
                 json={'expectedRoadmapVersion': fresh['roadmapVersion'], 'expectedVersion': fresh['version']})
+
+
+def test_target_company_reaches_rag_query_and_model_input(monkeypatch):
+    """희망 기업은 RAG 검색어와 모델에 보내는 학생 근거에 함께 들어간다."""
+    from fastapi import HTTPException
+    from app import roadmap_generator
+    queries = []
+    monkeypatch.setattr(roadmap_generator.rag, 'retrieve_sync', lambda query, kind: queries.append(query) or [])
+    snapshot = {'student': {}, 'targetRole': '백엔드 개발자', 'targetCompany': 'LG CNS', 'typeContext': {},
+                'counsel': {}, 'certificates': [], 'jobInterests': [], 'courses': [], 'diagnoses': []}
+    with pytest.raises(HTTPException):  # 근거가 없으면 생성하지 않는다(검색어만 확인)
+        roadmap_generator.generate_local_rag(snapshot)
+    assert '백엔드 개발자' in queries[0] and '희망 기업 LG CNS' in queries[0]
 
 
 def test_confirmation_requires_three_axes_of_five_base_cells(client):

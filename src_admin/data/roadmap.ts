@@ -43,6 +43,8 @@ export interface StudentRoadmap {
   status: RoadmapStatusCode
   confirmed: boolean
   targetRole: string
+  /** 희망 기업명 — 상담사가 입력했을 때만({name}) 있다. 모델이 쓴 요약 문자열은 기업명이 아니다. */
+  targetCompany: string | null
   meta: {
     /** 편집 잠금 토큰 — 세대와 다른 수다 */
     version: number
@@ -56,6 +58,11 @@ export interface StudentRoadmap {
 /** 이 학생의 계획을 서버에서 읽어 둔다. 화면 진입·식별자 변경 때 부른다. */
 export function primeRoadmap(studentId: string): void {
   ensureRoadmap(studentId)
+}
+
+function companyName(value: unknown): string | null {
+  const name = value && typeof value === 'object' ? (value as { name?: unknown }).name : null
+  return typeof name === 'string' && name.trim() ? name : null
 }
 
 function toStudentRoadmap(studentId: string, plan: RoadmapPlanDTO,
@@ -77,6 +84,7 @@ function toStudentRoadmap(studentId: string, plan: RoadmapPlanDTO,
     status: plan.status,
     confirmed: plan.confirmed,
     targetRole: plan.targetRole,
+    targetCompany: companyName(plan.targetCompany),
     meta: {
       version: plan.version,
       updatedAt: plan.updatedAt,
@@ -111,10 +119,10 @@ export function getStudentRoadmap(studentId: string): StudentRoadmap | null {
  * 15칸의 내용은 승인된 산출물(provider)에서 오고, 없으면 503 이다(CLAUDE.md 14조).
  */
 export async function generateRoadmap(studentId: string, counselRequestId: string,
-                                      targetRole?: string, reason = ''): Promise<void> {
+                                      targetRole?: string, reason = '', targetCompany?: string): Promise<void> {
   const current = roadmapEnvelope(studentId)?.roadmap
-  if (current) await regeneratePlan(studentId, counselRequestId, reason, targetRole)
-  else await generatePlan(studentId, counselRequestId, targetRole)
+  if (current) await regeneratePlan(studentId, counselRequestId, reason, targetRole, [], targetCompany)
+  else await generatePlan(studentId, counselRequestId, targetRole, targetCompany)
   jobRecommendationCache.delete(studentId)
 }
 

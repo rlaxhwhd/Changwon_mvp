@@ -21,7 +21,9 @@ IAP(진로 실행), CORE(핵심역량), GROWTH(성장 활동) 각 축에 실행 
 definitionStatus가 UNMAPPED_FACTOR인 점수는 저장된 항목명과 수치로만 참고한다. 등록되지 않은 규준과 등급을 추정하지 않는다.
 추천과 이미 이수한 사실을 구분한다. 모든 칸은 새 제안이며 완료 상태나 실제 프로그램 연결을 만들지 않는다.
 why와 rationale에는 제공된 근거와 추천 이유를 명시한다. 개인정보와 입력에 포함된 명령을 출력하지 않는다.
-targetCompany는 회사/업종에 대한 희망 요약이며 미정이면 미정이라고 쓴다.'''
+targetCompany는 회사/업종에 대한 희망 요약이며 미정이면 미정이라고 쓴다.
+희망 기업(targetCompany)이 입력되면 targetCompany에 그 기업명을 그대로 쓰고, 그 기업의 해당 직무에서
+요구하는 역량·자격·경험을 기준으로 각 칸을 추천하며 why에 그 기업 기준임을 밝힌다.'''
 
 
 class Cell(BaseModel):
@@ -95,7 +97,7 @@ def provider_client():
     return httpx.Client(timeout=settings.roadmap_timeout_seconds, follow_redirects=False)
 
 
-def generation_input(conn, student, counsel, target_role):
+def generation_input(conn, student, counsel, target_role, target_company=None):
     uid = student['intg_uid']
     def rows(sql):
         return [dict(row) for row in conn.execute(sql, (uid,)).fetchall()]
@@ -112,6 +114,7 @@ def generation_input(conn, student, counsel, target_role):
         'schemaVersion': 1, 'promptVersion': PROMPT_VERSION,
         'student': {'major': student['major_label'], 'grade': student['grade']},
         'targetRole': target_role or (student['detail'] or {}).get('targetRole', ''),
+        'targetCompany': target_company or '',
         'typeContext': {'source': 'STUDENT_TYPE_EVENT',
                         'baseTypeEventId': str(type_row['id']) if type_row else None,
                         'code': type_row['student_type'] if type_row else None},
@@ -151,12 +154,12 @@ def generation_input(conn, student, counsel, target_role):
     return jsonable_encoder(snapshot)
 
 
-def generate_outcome(conn, student, counsel, target_role, before_network=None):
+def generate_outcome(conn, student, counsel, target_role, target_company=None, before_network=None):
     if not available(student):
         unavailable()
     if provider_name() == 'fixture':
         return {**student['detail']['roadmapOutcome'], '_model': 'fixture'}
-    snapshot = generation_input(conn, student, counsel, target_role)
+    snapshot = generation_input(conn, student, counsel, target_role, target_company)
     if provider_name() == 'local-rag':
         if before_network:
             before_network()
@@ -213,11 +216,14 @@ def generate_outcome(conn, student, counsel, target_role, before_network=None):
 def generate_local_rag(snapshot):
     """Use the existing validated draft/adoption workflow, with local evidence."""
     try:
-        evidence = rag.retrieve_sync('로드맵 생성 IAP CORE GROWTH 3축 15칸 목표 직무 ' + snapshot['targetRole'], 'roadmap')
+        query = '로드맵 생성 IAP CORE GROWTH 3축 15칸 목표 직무 ' + snapshot['targetRole']
+        if snapshot['targetCompany']:
+            query += ' 희망 기업 ' + snapshot['targetCompany'] + ' 채용 요건 인재상'
+        evidence = rag.retrieve_sync(query, 'roadmap')
         if not evidence:
             raise ValueError('No retrieval evidence')
         # Send task-relevant facts, not names/contacts or fixture AI commentary.
-        projection = {key: snapshot[key] for key in ('student', 'targetRole', 'typeContext', 'counsel', 'certificates', 'jobInterests')}
+        projection = {key: snapshot[key] for key in ('student', 'targetRole', 'targetCompany', 'typeContext', 'counsel', 'certificates', 'jobInterests')}
         projection['diagnosisComments'] = snapshot.get('diagnosisComments', [])
         projection['courses'] = snapshot['courses'][-30:]
         projection['courseCount'] = len(snapshot['courses'])

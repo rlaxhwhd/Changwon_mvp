@@ -9,7 +9,7 @@ import { deriveSkillTree } from '../../src_v2/data/academic'
 import type { CourseRow } from '../../src_v2/data/academic'
 import { getActiveCounselorId } from '../data/counselors'
 import { getRecordsByStudent } from '../data/counselRecords'
-import { cachedJobRecommendations, generateRoadmap, recommendJobs, type JobRecommendation } from '../data/roadmap'
+import { cachedJobRecommendations, generateRoadmap, getStudentRoadmap, recommendJobs, type JobRecommendation } from '../data/roadmap'
 import { isCare7 } from '../../src_v2/data/counselTrack'
 import { roadmapEnvelope } from '../../shared/roadmapStore'
 import { useStore } from '../../shared/useRoadmapStore'
@@ -100,6 +100,7 @@ export default function RoadmapCreatePanel({
   const [snap, setSnap] = useState<AcademicSnapshot | null>(null)
   const [loaded, setLoaded] = useState(false)
   const [targetRole, setTargetRole] = useState(roadmapEnvelope(student.id)?.roadmap?.targetRole ?? '')
+  const [targetCompany, setTargetCompany] = useState(getStudentRoadmap(student.id)?.targetCompany ?? '')
   const generating = useRef(false)
 
   // 학사 스냅샷은 펼칠 때 한 번만 읽는다(리포지토리가 async 라 화면이 비동기 흐름이다).
@@ -173,7 +174,7 @@ export default function RoadmapCreatePanel({
     setGenerateError('')
     setPhase('generating')
     try {
-      await generateRoadmap(student.id, basisRequest.id, role, `상담 ${counselorName}`)
+      await generateRoadmap(student.id, basisRequest.id, role, `상담 ${counselorName}`, targetCompany.trim() || undefined)
       onGenerated()
     } catch (cause) {
       setGenerateError(cause instanceof Error ? cause.message : '로드맵을 만들지 못했습니다. 다시 시도해 주세요.')
@@ -369,7 +370,7 @@ export default function RoadmapCreatePanel({
       {phase === 'generating' ? (
         <div className="air-run" role="status" aria-live="polite" aria-busy="true">
           <h4>AI가 맞춤형 로드맵을 생성하고 있습니다</h4>
-          <p>{targetRole.trim()} 기준으로 진단·상담·수강 정보와 내부 근거를 검토하고 있습니다.</p>
+          <p>{[targetCompany.trim(), targetRole.trim()].filter(Boolean).join(' ')} 기준으로 진단·상담·수강 정보와 내부 근거를 검토하고 있습니다.</p>
           <p>생성이 끝나면 3축 15칸 초안을 DB에 저장합니다. 잠시 기다려 주세요.</p>
         </div>
       ) : (
@@ -380,7 +381,11 @@ export default function RoadmapCreatePanel({
             <input id={`rcp-target-${student.id}`} value={targetRole} maxLength={200}
               placeholder="예: 자동차 부품 품질관리 엔지니어"
               onChange={event => { setTargetRole(event.target.value); setGenerateError('') }} />
-            <p>직무명과 희망 업무를 자유롭게 입력하세요. 입력한 내용은 AI 로드맵 생성의 기준으로 사용됩니다.</p>
+            <label htmlFor={`rcp-company-${student.id}`}>희망 기업 (선택)</label>
+            <input id={`rcp-company-${student.id}`} value={targetCompany} maxLength={200}
+              placeholder="예: LG CNS"
+              onChange={event => { setTargetCompany(event.target.value); setGenerateError('') }} />
+            <p>직무명과 희망 업무를 자유롭게 입력하세요. 희망 기업을 입력하면 그 기업의 직무 요건에 맞춰 로드맵 활동을 추천합니다.</p>
             <button type="button" className="admin-btn admin-btn-primary"
               disabled={!targetRole.trim() || !canGenerate || !basisRequest}
               onClick={() => { void handleGenerate() }}>AI 분석 · 로드맵 생성 및 저장</button>

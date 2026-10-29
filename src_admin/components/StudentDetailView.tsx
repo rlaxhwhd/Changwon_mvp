@@ -422,7 +422,7 @@ function RoadmapTab({ student, canEdit, counselRequestId }: { student: StudentDa
             <article className="goal-core" style={{ marginBottom: 16 }}>
               <small>목표 직무</small>
               <h3>{plan.role}</h3>
-              <p>{plan.company} 기준 · IAP 실행 · 핵심역량 수행 · 내 성장 활동 3축을 하나의 로드맵으로 관리합니다.</p>
+              <p>희망 기업 · {plan.company ?? '미입력'}</p>
               <div className="goal-number">{plan.progress}<span>% 이행률 · {plan.done}/{plan.total}칸</span></div>
             </article>
 

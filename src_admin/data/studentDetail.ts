@@ -254,7 +254,8 @@ export function getStudentPrograms(studentId: string): StudentProgramSummary {
 export interface GoalPlan {
   /** 목표 직무 */
   role: string
-  company: string
+  /** 희망 기업 — 입력하지 않았으면 null */
+  company: string | null
   /** 전체 이행률 % — 수행 완료 칸 ÷ 살아 있는 전체 칸 (PROCESS.md §6-5) */
   progress: number
   done: number
@@ -294,7 +295,8 @@ export function getGoalPlan(student: StudentData): GoalPlan | null {
   // 로드맵 3축의 기준이 목표 직무이기 때문이다.
   return {
     role: roadmap.targetRole || student.targetCompany.role || '목표 직무 미정',
-    company: student.targetCompany.name || '목표 기업 미정',
+    // 희망 기업은 초안부터 계획이 갖는다 — 학생 프로필 값은 확정된 계획에서만 채워진다.
+    company: roadmap.targetCompany || student.targetCompany.name || null,
     progress: roadmap.progress.pct,
     done: roadmap.progress.done,
     total: roadmap.progress.total,

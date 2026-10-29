@@ -158,16 +158,16 @@ function versions(studentId: string): { expectedRoadmapVersion: number; expected
 }
 
 export async function generatePlan(studentId: string, counselRequestId: string,
-                                   targetRole?: string): Promise<void> {
+                                   targetRole?: string, targetCompany?: string): Promise<void> {
   await send(`/students/${encodeURIComponent(studentId)}/roadmap/generate`, 'POST',
-    { counselRequestId, targetRole, expectedRoadmapVersion: 0, expectedVersion: 0 })
+    { counselRequestId, targetRole, targetCompany, expectedRoadmapVersion: 0, expectedVersion: 0 })
   await refresh(studentId)
 }
 
 export async function regeneratePlan(studentId: string, counselRequestId: string, reason: string,
-                                     targetRole?: string, requests: RequestRef[] = []): Promise<void> {
+                                     targetRole?: string, requests: RequestRef[] = [], targetCompany?: string): Promise<void> {
   await send(`/students/${encodeURIComponent(studentId)}/roadmap/regenerate`, 'POST',
-    { counselRequestId, targetRole, reason, requests, ...versions(studentId) })
+    { counselRequestId, targetRole, targetCompany, reason, requests, ...versions(studentId) })
   await refresh(studentId)
 }
 
