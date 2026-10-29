@@ -6,6 +6,8 @@ import type { CounselIntakeAnswer } from '../../src_v2/data/counselIntake'
 import { STUDENT_TYPES, type StudentType } from '../../src_v2/data/careerProcess'
 import { isCare7 } from '../../src_v2/data/counselTrack'
 import { TYPE_TINT, typeColorVar, typeSwatchClass } from './studentRoster'
+import { jobDdayLabel } from './jobsSource'
+import type { JobPosting } from './schema/job'
 
 export interface Dashboard {
   uncontacted: { total: number; diagnosis: number; counsel: number; roadmap: number }
@@ -19,10 +21,25 @@ export interface Dashboard {
   }
   timeline: StoredCounselRequest[]
   intake: StoredCounselRequest[]
-  programs: { id: string; title: string; category: string; capacity: number; applied: number; todayCount: number }[]
+  /** 모집중 비교과 전체, 마감 임박 순(진로상담사만) */
+  programs: { id: string; title: string; category: string; capacity: number; applied: number; todayCount: number; applyEnd: string | null }[]
   programCount: number
   roadmap: { total: number; pending: number } | null
   psychTests: { total: number; pending: number } | null
+  /** 마감 전 교내 공고 — 추천·일반 각 최대 4건(진로상담사만, 아니면 null) */
+  jobs: {
+    recommended: DashboardJob[]
+    general: DashboardJob[]
+    recommendedTotal: number
+    generalTotal: number
+  } | null
+}
+
+interface DashboardJob {
+  id: string; company: string; role: string
+  deadlineMode: JobPosting['deadlineMode']; deadline: string | null
+  /** 추천채용만 — 담당 범위 지원자 수 */
+  applicants?: { total: number; open: number; passed: number }
 }
 
 interface BriefingData {
@@ -97,19 +114,19 @@ export function getHelloSummary(data: Dashboard) {
 
 export function getKpis(data: Dashboard) {
   const c = data.counts
+  // '오늘 상담' 카드는 뺐다(2026-10-29) — 인사 카드와 오늘의 상담 목록이 같은 수를 보여 준다.
   const cards = [
-    { key: 'today', name: '오늘 상담', value: c.today, unit: '건', ratio: pct(c.todayDone, c.today), detail: `${c.todayDone} / ${c.today} 완료`, tint: 's-green', solid: 'b-green' },
     { key: 'intake', name: '접수 대기', value: c.pending, unit: '건', ratio: pct(c.confirmed, c.pending + c.confirmed), detail: `${c.confirmed} / ${c.pending + c.confirmed} 확정`, tint: 's-orange', solid: 'b-orange' },
     { key: 'record', name: '상담일지 미작성', value: c.done - c.recorded, unit: '건', ratio: pct(c.recorded, c.done), detail: `${c.recorded} / ${c.done} 작성`, tint: 's-purple', solid: 'b-purple' },
   ]
   if (data.roadmap) {
     const { total, pending } = data.roadmap
-    cards.splice(2, 0, { key: 'roadmap', name: '로드맵 변경요청', value: pending, unit: '건', ratio: pct(total - pending, total), detail: `${total - pending} / ${total} 처리`, tint: 's-red', solid: 'b-red' })
+    cards.splice(1, 0, { key: 'roadmap', name: '로드맵 변경요청', value: pending, unit: '건', ratio: pct(total - pending, total), detail: `${total - pending} / ${total} 처리`, tint: 's-red', solid: 'b-red' })
   }
-  // 심리상담사는 로드맵 카드 대신 심리검사 신청을 접수 대기 자리(두 번째)에 둔다.
+  // 심리상담사는 로드맵 카드 대신 심리검사 신청을 접수 대기 앞(첫 번째)에 둔다.
   if (data.psychTests) {
     const { total, pending } = data.psychTests
-    cards.splice(1, 0, { key: 'psychTests', name: '심리검사 신청', value: pending, unit: '건', ratio: pct(total - pending, total), detail: `${total - pending} / ${total} 완료`, tint: 's-blue', solid: 'b-blue' })
+    cards.splice(0, 0, { key: 'psychTests', name: '심리검사 신청', value: pending, unit: '건', ratio: pct(total - pending, total), detail: `${total - pending} / ${total} 완료`, tint: 's-blue', solid: 'b-blue' })
   }
   return cards
 }
@@ -168,9 +185,17 @@ export function getIntake(data: Dashboard) {
     status: r.status, tint: colors[i % colors.length] }))
 }
 
-export function getMyPrograms(data: Dashboard) {
+export function getRecruitingPrograms(data: Dashboard) {
   return data.programs.map((p, i) => ({ ...p, code: p.id.toUpperCase(), ratio: pct(p.applied, p.capacity),
     solid: ['b-teal', 'b-blue', 'b-purple'][i % 3], tint: ['s-teal', 's-blue', 's-purple'][i % 3] }))
+}
+
+/** 홈 채용공고 현황 — 마감 라벨은 공고 목록과 같은 jobDdayLabel 을 쓴다. */
+export function getJobBoard(data: Dashboard) {
+  if (!data.jobs) return null
+  const row = (j: DashboardJob) => ({ ...j,
+    dday: jobDdayLabel({ effectiveStatus: 'POSTED', deadlineMode: j.deadlineMode, deadline: j.deadline ?? undefined } as JobPosting) })
+  return { ...data.jobs, recommended: data.jobs.recommended.map(row), general: data.jobs.general.map(row) }
 }
 
 export function getPerformance(data: Dashboard) {

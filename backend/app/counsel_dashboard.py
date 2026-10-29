@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from .auth import principal, require_staff
 from .counsel import SELECT, dto
 from .db import connection
+from .jobs import APPLICANT_MENU, scope_condition as job_scope
 from .roadmap import has_menu, PLAN_MENU, REQUEST_MENU, scope_condition
 from .students import summary as student_summary
 from .student_contact import contact_summary
@@ -76,23 +77,52 @@ def dashboard(request: Request, response: Response, user=Depends(principal, scop
           count(*) FILTER(WHERE r.status_code IN ('REQ','CONFIRMED')) AS pending
           FROM dc.counsel_request r WHERE {condition} AND r.topic_code IS NOT NULL''', values).fetchone()
     programs = []
-    program_count = 0
+    jobs = None
     if role == 'career':
-        # created_by is identity-based. A display name or empty personal list
-        # must never fall back to every program in the system.
-        program_count = conn.execute('SELECT count(*) AS n FROM dc.program WHERE created_by=%s',
-                                     (user['intg_uid'],)).fetchone()['n']
-        programs = conn.execute('''SELECT p.id,p.title,p.category_code AS category,p.capacity,
+        # 모집중 비교과 전체(2026-10-29) — 학생 「신청 가능」과 같은 술어, 마감 임박 순.
+        programs = conn.execute('''SELECT p.id,p.title,p.category_code AS category,p.capacity,p.apply_end AS "applyEnd",
           (SELECT count(*) FROM dc.program_apply a WHERE a.program_id=p.id AND a.cancelled_at IS NULL) AS applied,
           (SELECT count(*) FROM dc.program_apply a WHERE a.program_id=p.id AND a.cancelled_at IS NULL
            AND (a.applied_at AT TIME ZONE 'Asia/Seoul')::date=%s) AS "todayCount"
-          FROM dc.program p WHERE p.created_by=%s ORDER BY p.created_at DESC,p.id LIMIT 3''',
-          (day, user['intg_uid'])).fetchall()
+          FROM dc.program p WHERE p.status_code='RECRUITING' AND (p.apply_end IS NULL OR
+           (p.apply_end + COALESCE(p.apply_end_time,'23:59:59.999999'::time)) AT TIME ZONE 'Asia/Seoul' >= now())
+          ORDER BY p.apply_end NULLS LAST,p.id LIMIT 50''', (day,)).fetchall()
+        jobs = recruiting_jobs(conn, user, day)
     return {'refDate': day, 'role': role, 'counts': counts, 'distribution': distribution,
             'uncontacted': contact_summary(conn),
             'timeline': [dto(r) for r in timeline], 'intake': [dto(r) for r in intake],
-            'programs': programs, 'programCount': program_count, 'roadmap': roadmap,
-            'psychTests': psych_tests}
+            'programs': programs, 'programCount': len(programs), 'roadmap': roadmap,
+            'psychTests': psych_tests, 'jobs': jobs}
+
+
+def recruiting_jobs(conn, user, day):
+    """교내(직접 등록) 공고 중 마감 전인 것 — jobs.effective_status 가 POSTED 인 조건과 같다.
+    추천채용은 지원자관리 메뉴 권한이 있으면 담당 범위 지원자 수를 함께 준다."""
+    rows = conn.execute('''SELECT j.id,j.company_name_snapshot AS company,j.role,j.recruit_type,
+      j.deadline_mode AS "deadlineMode",j.deadline_date AS deadline
+      FROM dc.job_posting j WHERE j.source='manual' AND j.deleted_at IS NULL AND j.stored_status='POSTED'
+      AND (j.deadline_mode='ALWAYS' OR j.deadline_date>=%s)
+      ORDER BY j.posted_at DESC NULLS LAST,j.id''', (day,)).fetchall()
+    recommended = [r for r in rows if r['recruit_type'] == 'RECOMMENDATION']
+    general = [r for r in rows if r['recruit_type'] != 'RECOMMENDATION']
+    applicants = {}
+    if recommended and has_menu(conn, user, APPLICANT_MENU):
+        condition, values = job_scope(user)
+        applicants = {r['postingId']: r for r in conn.execute(f'''SELECT a.posting_id AS "postingId",
+          count(*)::int AS total,
+          count(*) FILTER(WHERE a.status IN ('APPLIED','IN_PROGRESS'))::int AS open,
+          count(*) FILTER(WHERE a.status='PASSED')::int AS passed
+          FROM dc.job_application a WHERE {condition} AND a.posting_id=ANY(%s) GROUP BY a.posting_id''',
+          [*values, [r['id'] for r in recommended[:4]]]).fetchall()}
+
+    def item(r):
+        out = {k: r[k] for k in ('id', 'company', 'role', 'deadlineMode', 'deadline')}
+        if r['recruit_type'] == 'RECOMMENDATION':
+            a = applicants.get(r['id'], {'total': 0, 'open': 0, 'passed': 0})
+            out['applicants'] = {k: a[k] for k in ('total', 'open', 'passed')}
+        return out
+    return {'recommended': [item(r) for r in recommended[:4]], 'general': [item(r) for r in general[:4]],
+            'recommendedTotal': len(recommended), 'generalTotal': len(general)}
 
 
 @router.get('/counsel-dashboard/requests/{request_id}')

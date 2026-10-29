@@ -215,16 +215,31 @@ def test_non_counselor_cannot_read_home(client, db, identity):
     assert response.status_code == 403
 
 
-def test_program_ownership_never_falls_back_to_other_creators(client, db):
-    before = home(client)
-    assert all(p['id'] for p in before['programs'])
-    # Seed programs have creator identity even when the display manager is changed.
-    program = db.execute('SELECT id FROM dc.program LIMIT 1').fetchone()
-    assert program
-    db.execute('UPDATE dc.program SET created_by=%s,manager=%s WHERE id=%s',
-               (uid(db, 'career_kim'), 'Unrelated display name', program['id']))
-    own = home(client)
-    assert own['programCount'] >= 1
-    assert program['id'] not in {p['id'] for p in home(client, 'career_park')['programs']}
-    db.execute('UPDATE dc.program SET created_by=NULL WHERE id=%s', (program['id'],))
-    assert home(client)['programCount'] == own['programCount']-1
+def test_home_lists_recruiting_programs_by_deadline_regardless_of_creator(client, db):
+    # 2026-10-29: 내가 등록한 것이 아니라 모집중 전체, 마감 임박 순.
+    first, second = [r['id'] for r in db.execute('SELECT id FROM dc.program ORDER BY id LIMIT 2').fetchall()]
+    db.execute("UPDATE dc.program SET status_code='RECRUITING',apply_end='2098-01-01',created_by=NULL WHERE id=%s", (first,))
+    db.execute("UPDATE dc.program SET status_code='RECRUITING',apply_end='2097-01-01',created_by=NULL WHERE id=%s", (second,))
+    ids = [p['id'] for p in home(client)['programs']]
+    assert ids.index(second) < ids.index(first)
+    db.execute("UPDATE dc.program SET status_code='CLOSED' WHERE id=%s", (first,))
+    result = home(client)
+    assert first not in {p['id'] for p in result['programs']} and result['programCount'] == len(result['programs'])
+    assert home(client, 'psych_lee')['jobs'] is None
+
+
+def test_home_jobs_split_internal_open_postings_with_recommended_applicants(client, db):
+    # 교내(manual) 공고는 회사가 있어야 한다(posting_manual_company) — 시드 외부 공고를 교내로 바꿔 쓴다.
+    db.execute("INSERT INTO dc.company(id,display_name) VALUES('company_dashboard_test','Dashboard test company')")
+    db.execute("UPDATE dc.job_posting SET company_id='company_dashboard_test' WHERE id IN ('job_seed_nexon','job_seed_nhn','job_seed_coupang')")
+    db.execute("UPDATE dc.job_posting SET source='manual',deadline_mode='ALWAYS',deadline_date=NULL,deadline_raw=NULL WHERE id='job_seed_nexon'")
+    db.execute("UPDATE dc.job_posting SET source='manual',deadline_date=%s WHERE id='job_seed_nhn'", (DAY + timedelta(days=1),))
+    db.execute("UPDATE dc.job_posting SET source='manual',deadline_date=%s WHERE id='job_seed_coupang'", (DAY - timedelta(days=1),))
+    db.execute("""INSERT INTO dc.job_application(id,posting_id,student_uid,current_attempt_no,status,applied_at)
+      VALUES(%s,'job_seed_nexon',%s,1,'APPLIED',now())""", (str(uuid4()), uid(db, 'chaewon')))
+    jobs = home(client)['jobs']
+    # 외부(job_seed_lgcns 등)·마감 지난 공고(coupang)는 빠진다.
+    assert [j['id'] for j in jobs['recommended']] == ['job_seed_nexon']
+    assert [j['id'] for j in jobs['general']] == ['job_seed_nhn']
+    assert jobs['recommended'][0]['applicants'] == {'total': 1, 'open': 1, 'passed': 0}
+    assert 'applicants' not in jobs['general'][0]

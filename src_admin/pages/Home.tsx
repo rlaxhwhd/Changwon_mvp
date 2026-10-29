@@ -6,7 +6,7 @@ import spriteHtml from './testAdminSprite.html?raw'
 import { getActiveCounselor } from '../data/counselors'
 import {
   getHelloSummary, getKpis,
-  getTodayTimeline, getIntake, getMyPrograms,
+  getTodayTimeline, getIntake, getRecruitingPrograms, getJobBoard,
   useCounselDashboard, useCounselBriefing, type Dashboard,
 } from '../data/counselorDashboard'
 import EmptyState from '../components/EmptyState'
@@ -25,14 +25,16 @@ function Ico({ id }: { id: string }) {
   return <svg viewBox="0 0 24 24" aria-hidden="true"><use href={`#i-${id}`} /></svg>
 }
 
-/** KPI 카드 4장의 아이콘·목적지 — key 는 getKpis() 가 정한다 */
-const KPI_META: Record<string, { icon: string; to?: string }> = {
-  today: { icon: 'cal' },
-  intake: { icon: 'clip', to: '/counsel/requests' },
-  roadmap: { icon: 'route', to: '/roadmap/requests' },
-  psychTests: { icon: 'doc', to: '/psych/tests' },
-  record: { icon: 'pen', to: '/counsel/journals' },
+/** KPI 카드 3장의 목적지 — key 는 getKpis() 가 정한다. 아이콘은 뺐다(2026-10-29). */
+const KPI_TO: Record<string, string> = {
+  intake: '/counsel/requests',
+  roadmap: '/roadmap/requests',
+  psychTests: '/psych/tests',
+  record: '/counsel/journals',
 }
+
+/** 비교과 현황은 마감 임박 5개를 먼저 보이고 나머지는 펼친다. */
+const PROGRAM_PREVIEW = 5
 
 function bar(v: number): CSSProperties {
   return { '--v': `${Math.min(100, Math.max(0, v))}%` } as CSSProperties
@@ -79,7 +81,10 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
   const kpis = getKpis(data)
   const timeline = getTodayTimeline(data)
   const intake = getIntake(data)
-  const programs = getMyPrograms(data)
+  const programs = getRecruitingPrograms(data)
+  const jobs = getJobBoard(data)
+  const [programsOpen, setProgramsOpen] = useState(false)
+  const shownPrograms = programsOpen ? programs : programs.slice(0, PROGRAM_PREVIEW)
 
   // 신청 ID로 구분한다. 같은 학생의 서로 다른 상담를 섞지 않는다.
   const [openId, setOpenId] = useState<string | null>(null)
@@ -131,24 +136,60 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
 
             {/* CARE 7+ 참여학생·상담기록, 미접촉자 현황, 유형 분포, 나의 성과 지표는 통계 현황 › 개인통계로 옮겼다(2026-10-29, 148). */}
 
-            {/* KPI 4장 */}
-            <div className="kpis">
+            {/* 비교과프로그램 현황 — 모집중 전체, 마감 임박 순. 진로상담사 전용 */}
+            {isCareer && (
+              <div className="card">
+                <div className="card-hd">
+                  <h2>비교과프로그램 현황</h2>
+                  <div className="right"><span className="badge s-green">모집중 {data.programCount}개</span></div>
+                </div>
+                {programs.length === 0 ? (
+                  <EmptyState message="모집 중인 프로그램이 없습니다." />
+                ) : (
+                  shownPrograms.map(p => (
+                    <Link key={p.id} to={`/programs/${p.id}`} className="prog">
+                      <span className="id">
+                        <span className="code">{p.code}</span>
+                        <span className={`badge ${p.tint}`}>{categoryLabel(p.category)}</span>
+                        <span className="today">오늘 <b>{p.todayCount}</b>명 신청</span>
+                      </span>
+                      <span className="nm">{p.title}</span>
+                      <span className="row">
+                        <span className="lb">신청 / 모집{p.applyEnd ? ` · ${p.applyEnd} 마감` : ''}</span>
+                        <span className="n">{p.applied}<u> / {p.capacity}명</u></span>
+                      </span>
+                      <span className="bar"><i className={p.solid} style={bar(p.ratio)} /></span>
+                    </Link>
+                  ))
+                )}
+                <div className="foot-link">
+                  {programs.length > PROGRAM_PREVIEW && (
+                    <button type="button" className="link" aria-expanded={programsOpen} onClick={() => setProgramsOpen(v => !v)}>
+                      {programsOpen ? '접기' : `${programs.length - PROGRAM_PREVIEW}개 더 펼치기`}
+                    </button>
+                  )}
+                  <Link to="/programs" className="link">전체 보기<Ico id="chev" /></Link>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* ========== 중앙 ========== */}
+          <div className="col">
+            {/* KPI 3장 — 오늘의 상담 위, 아이콘 없이 170px */}
+            <div className="kpis kpis-top">
               {kpis.map(k => {
-                const meta = KPI_META[k.key]
+                const to = KPI_TO[k.key]
                 const content = <>
-                    <span className={`ico ${k.tint}`}><Ico id={meta.icon} /></span>
                     <div className="name">{k.name}</div>
                     <div className="num">{k.value}<u>{k.unit}</u></div>
                     <div className="bar"><i className={k.solid} style={bar(k.ratio)} /></div>
                     <div className="ratio">{k.detail}</div>
                 </>
-                return meta.to ? <Link key={k.key} to={meta.to} className="card sm kpi">{content}</Link> : <div key={k.key} className="card sm kpi">{content}</div>
+                return to ? <Link key={k.key} to={to} className="card sm kpi">{content}</Link> : <div key={k.key} className="card sm kpi">{content}</div>
               })}
             </div>
-          </div>
 
-          {/* ========== 중앙 ========== */}
-          <div className="col">
             <div className="card lg today-counsel">
               <div className="card-hd">
                 <h2>오늘의 상담</h2>
@@ -284,35 +325,45 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
               </div>
             </div>
 
-            {/* 내가 등록한 비교과 프로그램 — 진로상담사 전용 */}
-            {isCareer && (
-              <div className="card">
-                <div className="card-hd">
-                  <h2>내가 등록한 비교과 프로그램</h2>
-                  <div className="right"><span className="badge s-green">{data.programCount}개</span></div>
-                </div>
-                {programs.length === 0 ? (
-                  <EmptyState message="등록한 프로그램이 없습니다." />
-                ) : (
-                  programs.map(p => (
-                    <Link key={p.id} to={`/programs/${p.id}`} className="prog">
-                      <span className="id">
-                        <span className="code">{p.code}</span>
-                        <span className={`badge ${p.tint}`}>{categoryLabel(p.category)}</span>
-                        <span className="today">오늘 <b>{p.todayCount}</b>명 신청</span>
-                      </span>
-                      <span className="nm">{p.title}</span>
-                      <span className="row">
-                        <span className="lb">신청 / 모집</span>
-                        <span className="n">{p.applied}<u> / {p.capacity}명</u></span>
-                      </span>
-                      <span className="bar"><i className={p.solid} style={bar(p.ratio)} /></span>
-                    </Link>
-                  ))
-                )}
-                <div className="foot-link">
-                  <Link to="/programs" className="link">전체 보기<Ico id="chev" /></Link>
-                </div>
+            {/* 채용공고 현황 — 마감 전 교내 공고를 추천·일반으로 가른다. 진로상담사 전용 */}
+            {jobs && (
+              <div className="card job-board">
+                <div className="card-hd"><h2>채용공고 현황</h2></div>
+                <section aria-label="추천 채용 현황">
+                  <h3>추천 채용 <span>{jobs.recommendedTotal}건</span></h3>
+                  {jobs.recommended.length === 0 ? <p className="job-empty">진행 중인 추천 채용이 없습니다.</p> : (
+                    <ul>
+                      {jobs.recommended.map(j => (
+                        <li key={j.id}>
+                          <Link to={`/jobs/applicants/${j.id}`} className="job-row">
+                            <span className="job-nm"><b>{j.company}</b> {j.role}</span>
+                            <span className="job-dday">{j.dday}</span>
+                            {j.applicants && (
+                              <span className="job-app">지원 {j.applicants.total} · 진행 {j.applicants.open} · 합격 {j.applicants.passed}</span>
+                            )}
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="foot-link"><Link to="/jobs" className="link">더보기<Ico id="chev" /></Link></div>
+                </section>
+                <section aria-label="일반 채용 현황">
+                  <h3>일반 채용 <span>{jobs.generalTotal}건</span></h3>
+                  {jobs.general.length === 0 ? <p className="job-empty">진행 중인 일반 채용이 없습니다.</p> : (
+                    <ul>
+                      {jobs.general.map(j => (
+                        <li key={j.id}>
+                          <Link to={`/jobs/${j.id}`} className="job-row">
+                            <span className="job-nm"><b>{j.company}</b> {j.role}</span>
+                            <span className="job-dday">{j.dday}</span>
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  <div className="foot-link"><Link to="/jobs" className="link">더보기<Ico id="chev" /></Link></div>
+                </section>
               </div>
             )}
           </div>
