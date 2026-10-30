@@ -9,7 +9,7 @@ export interface RetakeState {
   permissions: Record<string, boolean>
   guide: { stage: 'core' | 'followup' | 'counsel' | 'roadmap'; requestId: number | null; annual?: boolean } | null
   annual?: { year: number; startsAt: string; eligible: boolean; coreDone: boolean; followUpDone: boolean; counselDone: boolean; roadmapConfirmed: boolean; completedTests: string[]; renewalRequired: boolean }
-  requests: { id: number; testId: string; status: 'PENDING' | 'APPROVED' | 'COMPLETED'; source: string; requestedAt: string; approvedAt: string | null; approvedBy: string | null }[]
+  requests: { id: number; testId: string; status: 'PENDING' | 'APPROVED' | 'COMPLETED' | 'CANCELLED'; source: string; requestedAt: string; approvedAt: string | null; approvedBy: string | null; cancelledAt?: string | null; cancelledBy?: string | null }[]
 }
 export const diagnosisRetakes: Record<string, RetakeState> = {}
 

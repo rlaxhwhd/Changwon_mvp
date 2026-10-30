@@ -89,7 +89,7 @@ export default function DiagnosisResult() {
     return () => window.removeEventListener('dc:diagnosis-updated', changed)
   }, [])
   const retake = diagnosisRetakes[student.id]
-  const coreRequest = retake?.requests.find(q => q.testId === 'ccore' && q.status !== 'COMPLETED')
+  const coreRequest = retake?.requests.find(q => q.testId === 'ccore' && (q.status === 'PENDING' || q.status === 'APPROVED'))
   async function requestRetake(testId = 'ccore') {
     if (requesting) return
     setRequesting(true); setAiError('')
@@ -133,7 +133,7 @@ export default function DiagnosisResult() {
   const modulesWithStatus = getVisibleDiagnosisModules(studentType, [
     ...diagnosisAttempts.filter(a => a.studentId === student.id).map(a => a.testId),
     ...getResultsByStudent(student.id).map(r => r.testId), ...approved,
-  ]).map(m => ({ ...m, historyOnly: !required.some(r => r.testId === m.testId) && !approved.includes(m.testId),
+  ]).map(m => ({ ...m, historyOnly: !required.some(r => r.testId === m.testId),
     status: getModuleStatusFor(student, m) }))
   const doneCount = modulesWithStatus.filter(m => m.status === 'done').length
   const availableCount = modulesWithStatus.filter(m => m.status === 'available').length

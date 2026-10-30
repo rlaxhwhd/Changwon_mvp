@@ -35,6 +35,16 @@ export default function DiagnosisManagementModal({ student, onClose }: { student
     } catch (e) { setError(e instanceof Error ? e.message : '승인하지 못했습니다.') }
     finally { setBusy(false) }
   }
+  async function cancelApproval(testId: string, requestId: number) {
+    if (busy) return
+    setBusy(true); setError(''); setNotice('')
+    try {
+      const retake = await api<RetakeState>(`/diagnosis/students/${encodeURIComponent(student.id)}/retakes/${testId}/${requestId}`, { method: 'DELETE' })
+      setData(previous => previous ? { ...previous, retake } : previous)
+      setNotice('재응시 허용을 취소했습니다. 기존 진단 결과는 보존됩니다.')
+    } catch (e) { setError(e instanceof Error ? e.message : '허용을 취소하지 못했습니다.') }
+    finally { setBusy(false) }
+  }
   const result = data?.results.find(r => `${r.testId}:${r.attemptNo}` === selected)
   const tests = [...new Set(data?.attempts.map(a => a.testId) ?? [])]
   return <AdminModal title={`${student.name} · 진단 관리`} size="xl" className={historyTest ? 'dmm-modal-history' : ''} onClose={onClose}>
@@ -48,22 +58,32 @@ export default function DiagnosisManagementModal({ student, onClose }: { student
           <h3 className="dmm-section-title"><LuRotateCcw aria-hidden />재응시 허용</h3>
           {tests.length === 0 ? <p className="dmm-empty">응시한 진단이 없습니다.</p> : <div className="dmm-cards">
             {tests.map(test => {
-              const request = data.retake.requests.find(q => q.testId === test && q.status !== 'COMPLETED')
+              const request = data.retake.requests.find(q => q.testId === test && (q.status === 'PENDING' || q.status === 'APPROVED'))
               const attempts = data.attempts.filter(a => a.testId === test)
               const latest = attempts.reduce((n, a) => Math.max(n, a.attemptNo), 0)
               const last = attempts.map(a => a.completedAt || a.startedAt || '').sort().pop()
               const approved = request?.status === 'APPROVED'
               const pending = request?.status === 'PENDING'
-              return <button type="button" key={test} className={`dmm-card${approved ? ' is-approved' : pending ? ' is-pending' : ''}`}
-                disabled={busy || approved} onClick={() => void approve(test)}>
+              const cancelled = data.retake.requests.find(q => q.testId === test)
+              const lastCancelled = !request && cancelled?.status === 'CANCELLED' ? cancelled : undefined
+              const currentTest = test === 'ccore' || test === data.retake.followUpTest
+              return <div key={test} className={`dmm-card${approved && currentTest ? ' is-approved' : pending && currentTest ? ' is-pending' : ''}`}>
                 <span className="dmm-card-head">
                   <strong>{getModuleByTestId(test)?.name ?? test}</strong>
-                  <span className="dmm-chip">{approved ? '허용됨' : pending ? '요청 대기' : '응시 완료'}</span>
+                  <span className="dmm-chip">{!currentTest ? '과거 진단' : approved ? '허용됨' : pending ? '요청 대기' : lastCancelled ? '허용 취소됨' : '응시 완료'}</span>
                 </span>
                 <span className="dmm-card-meta">{latest}회 응시{last ? ` · 최근 ${day(last)}` : ''}</span>
                 {pending && <span className="dmm-card-meta"><LuClock aria-hidden />학생 요청 {new Date(request.requestedAt).toLocaleString('ko-KR')} · 모든 상담사 처리 가능</span>}
-                <span className="dmm-card-cta">{approved ? <><LuCircleCheck aria-hidden />재응시 허용됨</> : pending ? '요청 승인하기' : '재응시 허용하기'}</span>
-              </button>
+                {lastCancelled?.cancelledAt && <span className="dmm-card-meta">허용 취소 {day(lastCancelled.cancelledAt)} · {lastCancelled.cancelledBy}</span>}
+                {!currentTest && <span className="dmm-card-meta">현재 후속진단 대상이 아닙니다. 결과 조회만 가능합니다.</span>}
+                {approved ? <>
+                  {currentTest && <span className="dmm-card-meta"><LuCircleCheck aria-hidden />재응시 허용됨</span>}
+                  <button type="button" className="dmm-card-cta is-cancel" disabled={busy}
+                    aria-label={`${getModuleByTestId(test)?.name ?? test} 허용 취소`}
+                    onClick={() => void cancelApproval(test, request.id)}>허용 취소</button>
+                </> : <button type="button" className="dmm-card-cta" disabled={busy || !currentTest}
+                  onClick={() => void approve(test)}>{!currentTest ? '재응시 불가' : pending ? '요청 승인하기' : '재응시 허용하기'}</button>}
+              </div>
             })}
           </div>}
         </section>

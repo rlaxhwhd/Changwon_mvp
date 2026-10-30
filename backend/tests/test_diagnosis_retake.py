@@ -199,3 +199,73 @@ def test_old_counsel_cannot_bypass_retest_roadmap_cycle(client, db):
     with pytest.raises(HTTPException) as error:
         check_counsel_basis(db, uid, old['id'])
     assert error.value.detail['code'] == 'RETEST_COUNSEL_REQUIRED'
+
+
+def test_stale_followup_approval_cannot_bypass_new_core_type(client, db):
+    who = student(db)
+    uid = who['intg_uid']
+    result(db, who, test='c3')
+    approved = client.post('/api/v1/diagnosis/students/chaewon/retakes/c3', headers=headers('career_kim'))
+    assert approved.status_code == 200, approved.text
+    assert approved.json()['permissions']['c3']
+    assert client.post('/api/v1/diagnosis/students/chaewon/retakes/ccore', headers=headers('career_kim')).status_code == 200
+    result(db, who, kind='우수인재형', future=True)
+    data = state(db, uid)
+    assert data['followUpTest'] == 'c6' and data['permissions']['c6']
+    assert not data['permissions']['c3']
+    # The old grant still exists for audit/cancellation, but can never launch.
+    assert any(q['testId'] == 'c3' and q['status'] == 'APPROVED' for q in data['requests'])
+    assert client.post('/api/v1/diagnosis/external/c3/launch', headers=headers('chaewon')).status_code == 403
+    assert client.post('/api/v1/diagnosis/students/chaewon/retakes/c3', headers=headers('career_park')).status_code == 409
+    assert client.post('/api/v1/diagnosis/retake-request', headers=headers('chaewon'), json={'testId':'c3'}).status_code == 409
+    readable = client.get('/api/v1/diagnosis/students/chaewon', headers=headers('chaewon')).json()
+    assert any(r['testId'] == 'c3' for r in readable['results'])
+    grant = next(q for q in data['requests'] if q['testId'] == 'c3' and q['status'] == 'APPROVED')
+    assert client.delete(f"/api/v1/diagnosis/students/chaewon/retakes/c3/{grant['id']}", headers=headers('career_kim')).status_code == 200
+    completed = next(q for q in data['requests'] if q['testId'] == 'ccore' and q['status'] == 'COMPLETED')
+    assert client.delete(f"/api/v1/diagnosis/students/chaewon/retakes/ccore/{completed['id']}", headers=headers('career_kim')).status_code == 409
+
+
+def test_cancel_approval_preserves_history_and_does_not_cancel_new_grant(client, db):
+    who = student(db)
+    uid = who['intg_uid']
+    result(db, who, test='c3')
+    before = db.execute('SELECT count(*) AS n FROM dc.diagnosis_attempt WHERE student_uid=%s', (uid,)).fetchone()['n']
+    response = client.post('/api/v1/diagnosis/students/chaewon/retakes/c3', headers=headers('career_kim'))
+    assert response.status_code == 200, response.text
+    grant = next(q for q in response.json()['requests'] if q['testId'] == 'c3' and q['status'] == 'APPROVED')
+    path = f"/api/v1/diagnosis/students/chaewon/retakes/c3/{grant['id']}"
+    assert client.delete(path, headers=headers('chaewon')).status_code == 403
+    assert client.delete(path, headers=headers('kor-1')).status_code == 403
+    assert client.delete(path.replace('/c3/', '/c4/'), headers=headers('career_kim')).status_code == 409
+    cancelled = client.delete(path, headers=headers('psych_lee'))
+    assert cancelled.status_code == 200, cancelled.text
+    row = next(q for q in cancelled.json()['requests'] if q['id'] == grant['id'])
+    assert row['status'] == 'CANCELLED' and row['cancelledAt'] and row['cancelledBy']
+    assert row['approvedAt'] == grant['approvedAt'] and row['approvedBy'] == grant['approvedBy']
+    assert not cancelled.json()['permissions']['c3']
+    assert client.post('/api/v1/diagnosis/external/c3/launch', headers=headers('chaewon')).status_code == 403
+    assert db.execute('SELECT count(*) AS n FROM dc.diagnosis_attempt WHERE student_uid=%s', (uid,)).fetchone()['n'] == before
+    again = client.post('/api/v1/diagnosis/students/chaewon/retakes/c3', headers=headers('career_park'))
+    assert again.status_code == 200, again.text
+    new = next(q for q in again.json()['requests'] if q['testId'] == 'c3' and q['status'] == 'APPROVED')
+    assert new['id'] != grant['id']
+    stale = client.delete(path, headers=headers('career_kim'))
+    assert stale.status_code == 200 and stale.json()['permissions']['c3']
+    assert next(q for q in stale.json()['requests'] if q['id'] == new['id'])['status'] == 'APPROVED'
+    assert db.execute("SELECT count(*) AS n FROM dc.notification WHERE source_kind='diagnosis-approval-cancelled' AND source_id=%s", (str(grant['id']),)).fetchone()['n'] == 1
+
+
+def test_cancel_progress_core_is_not_automatically_reapproved(client, db):
+    who = student(db)
+    uid = who['intg_uid']
+    result(db, who)
+    db.execute("UPDATE dc.roadmap_item SET status='DONE',completion_source_code='LEGACY' WHERE student_uid=%s", (uid,))
+    data = state(db, uid)
+    grant = next(q for q in data['requests'] if q['testId'] == 'ccore' and q['status'] == 'APPROVED')
+    path = f"/api/v1/diagnosis/students/chaewon/retakes/ccore/{grant['id']}"
+    response = client.delete(path, headers=headers('career_kim'))
+    assert response.status_code == 200, response.text
+    assert not response.json()['permissions']['ccore']
+    assert not state(db, uid)['permissions']['ccore']
+    assert not any(q['id'] == grant['id'] and q['status'] != 'CANCELLED' for q in state(db, uid)['requests'])

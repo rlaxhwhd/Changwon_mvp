@@ -36,7 +36,8 @@ export function getAttempts(studentId: string): DiagnosisAttempt[] {
 export function isTestDone(studentId: string, testId: string): boolean {
   const annual = diagnosisRetakes[studentId]?.annual
   if (annual && annual.year >= 2027 && !annual.completedTests.includes(testId)) return false
-  if (diagnosisRetakes[studentId]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')) return false
+  if (diagnosisRetakes[studentId]?.permissions[testId]
+    && diagnosisRetakes[studentId]?.requests.some(q => q.testId === testId && q.status === 'APPROVED')) return false
   return getAttempts(studentId).some(a => a.testId === testId && a.isCurrent !== false && a.status === '완료')
 }
 
@@ -48,11 +49,13 @@ export function isTestDone(studentId: string, testId: string): boolean {
  * 박힌 기존 데모 학생은 진단을 마치고 들어온 것으로 다룬다(그 학생들의 화면을 바꾸지 않는다).
  */
 export function getModuleStatusFor(student: StudentData, module: DiagnosisModule): TestStatus {
-  if (diagnosisRetakes[student.id]?.requests.some(q => q.testId === module.testId && q.status === 'APPROVED')) return 'available'
+  const retake = diagnosisRetakes[student.id]
+  if (retake?.permissions[module.testId]) return 'available'
   const isDone = (m: DiagnosisModule) =>
     isTestDone(student.id, m.testId)
 
   if (isDone(module)) return 'done'
+  if (retake) return 'locked'
   const ready = module.requires.every(id => {
     const req = DIAGNOSIS_MODULES.find(x => x.id === id)
     return req ? isDone(req) : false

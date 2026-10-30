@@ -19,13 +19,10 @@
 .dmm-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: var(--gap-set); }
 .dmm-card {
   display: flex; flex-direction: column; align-items: stretch; gap: 8px;
-  padding: 16px 18px; text-align: left; font: inherit; cursor: pointer;
+  padding: 16px 18px; text-align: left; font: inherit;
   background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg);
   transition: border-color .15s, background .15s, transform .15s;
 }
-.dmm-card:hover:not(:disabled) { border-color: var(--primary-light); background: var(--sel); transform: translateY(-1px); }
-.dmm-card:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-.dmm-card:disabled { cursor: default; }
 .dmm-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .dmm-card-head strong { font-size: 15px; font-weight: 800; color: var(--text); }
 .dmm-chip { flex: none; padding: 3px 10px; border-radius: var(--radius-pill); background: var(--muted); color: var(--text-sub); font-size: 12px; font-weight: 700; }
@@ -34,16 +31,19 @@
 .dmm-card-cta {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px;
   padding: 9px 12px; border-radius: var(--radius-sm);
+  border: 0; font-family: inherit; cursor: pointer;
   background: var(--primary-soft); color: var(--primary); font-size: 13px; font-weight: 800;
 }
-.dmm-card:hover:not(:disabled) .dmm-card-cta { background: var(--primary); color: #fff; }
+.dmm-card-cta:hover:not(:disabled) { background: var(--primary); color: #fff; }
+.dmm-card-cta:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+.dmm-card-cta:disabled { cursor: default; background: var(--muted); color: var(--text-cap); }
+.dmm-card .dmm-card-cta.is-cancel { background: var(--red-bg); color: var(--on-red); }
 .dmm-card-cta svg { width: 15px; height: 15px; }
 
 .dmm-card.is-pending { border-color: var(--orange); background: var(--yellow-bg); }
 .dmm-card.is-pending .dmm-chip { background: var(--orange-bg); color: var(--on-orange); }
 .dmm-card.is-approved { border-color: var(--sel-line); background: var(--sel); }
 .dmm-card.is-approved .dmm-chip { background: var(--green-bg); color: var(--on-green); }
-.dmm-card.is-approved .dmm-card-cta { background: transparent; color: var(--on-green); }
 
 /* ── 응시 이력 ── */
 .dmm-table-wrap { border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }

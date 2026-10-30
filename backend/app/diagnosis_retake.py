@@ -86,19 +86,21 @@ def state(conn, uid):
     from .care7_cycle import annual_status, completed_tests
     annual = annual_status(conn, uid)
     ensure_progress(conn, uid)
-    requests = conn.execute('''SELECT q.*,p.name AS approver_name FROM dc.diagnosis_retake q
-      LEFT JOIN dc.person p ON p.intg_uid=q.approved_by WHERE q.student_uid=%s ORDER BY q.id DESC''', (uid,)).fetchall()
+    requests = conn.execute('''SELECT q.*,p.name AS approver_name,c.name AS canceller_name FROM dc.diagnosis_retake q
+      LEFT JOIN dc.person p ON p.intg_uid=q.approved_by
+      LEFT JOIN dc.person c ON c.intg_uid=q.cancelled_by WHERE q.student_uid=%s ORDER BY q.id DESC''', (uid,)).fetchall()
     code = diagnostic_type(conn, uid)
     rule = conn.execute('SELECT lower(follow_up_test) AS test FROM dc.student_type_code WHERE code=%s', (code,)).fetchone()
     followup = rule['test'] if rule else None
     done = set(completed_tests(conn, uid))
     approved = {q['test_id'] for q in requests if q['status'] == 'APPROVED'}
     tests = {'ccore', *([followup] if followup else []), *approved}
-    permissions = {test: test in approved or (test not in done and (test == 'ccore' or test == followup and 'ccore' in done)) for test in tests}
+    permissions = {test: (test == 'ccore' or test == followup) and
+                   (test in approved or (test not in done and (test == 'ccore' or 'ccore' in done))) for test in tests}
     if annual['renewalRequired'] and 'ccore' not in done:
         permissions = {test: test == 'ccore' for test in tests}
     guide = None
-    core = next((q for q in requests if q['test_id'] == 'ccore' and q['status'] != 'PENDING'), None)
+    core = next((q for q in requests if q['test_id'] == 'ccore' and q['status'] in ('APPROVED','COMPLETED')), None)
     if core:
         plan = conn.execute('SELECT * FROM dc.roadmap WHERE student_uid=%s', (uid,)).fetchone()
         finished = core['status'] == 'COMPLETED' and plan and plan['confirmed'] and plan['version'] != core['roadmap_version']
@@ -115,7 +117,8 @@ def state(conn, uid):
         guide = {'stage': stage, 'requestId': None, 'annual': True}
     return {'diagnosticType': code, 'followUpTest': followup, 'permissions': permissions, 'guide': guide, 'annual': annual,
             'requests': [{'id': q['id'], 'testId': q['test_id'], 'status': q['status'], 'source': q['source'],
-                          'requestedAt': q['requested_at'], 'approvedAt': q['approved_at'], 'approvedBy': q['approver_name']} for q in requests]}
+                          'requestedAt': q['requested_at'], 'approvedAt': q['approved_at'], 'approvedBy': q['approver_name'],
+                          'cancelledAt': q['cancelled_at'], 'cancelledBy': q['canceller_name']} for q in requests]}
 
 
 class RetakeRequest(BaseModel):
@@ -154,6 +157,10 @@ def approve(identity: str, test_id: str, user=Depends(principal, scope='function
     student = student_access(conn, user, identity)
     uid = student['intg_uid']
     lock_student(conn, uid)
+    code = diagnostic_type(conn, uid)
+    rule = conn.execute('SELECT lower(follow_up_test) AS test FROM dc.student_type_code WHERE code=%s', (code,)).fetchone()
+    if test_id != 'ccore' and test_id != (rule['test'] if rule else None):
+        raise HTTPException(409, '현재 유형의 후속진단만 재응시를 허용할 수 있습니다. 과거 진단은 결과를 확인해 주세요.')
     if not conn.execute('SELECT 1 FROM dc.diagnosis_attempt WHERE student_uid=%s AND test_id=%s AND status_code IN (\'DONE\',\'REVIEW\',\'INCOMPLETE\')', (uid, test_id)).fetchone():
         raise HTTPException(409, '응시 이력이 있는 진단만 재응시를 허용할 수 있습니다.')
     row = conn.execute('''SELECT * FROM dc.diagnosis_retake WHERE student_uid=%s AND test_id=%s
@@ -167,6 +174,24 @@ def approve(identity: str, test_id: str, user=Depends(principal, scope='function
           VALUES(%s,%s,(SELECT version FROM dc.roadmap WHERE student_uid=%s),'COUNSELOR','APPROVED',clock_timestamp(),%s) RETURNING id''',
           (uid, test_id, uid, user['intg_uid'])).fetchone()
     notify(conn, uid, 'diagnosis-approved', row['id'], '진단 재응시가 승인되었습니다', '/diagnosis/employment')
+    return state(conn, uid)
+
+
+@router.delete('/diagnosis/students/{identity}/retakes/{test_id}/{request_id}')
+def cancel_approval(identity: str, test_id: str, request_id: int, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    require_counselor(user)
+    student = student_access(conn, user, identity)
+    uid = student['intg_uid']
+    lock_student(conn, uid)
+    # Include the displayed grant ID: a stale modal must never cancel a newer grant.
+    row = conn.execute('''SELECT id,status FROM dc.diagnosis_retake
+      WHERE id=%s AND student_uid=%s AND test_id=%s FOR UPDATE''', (request_id, uid, test_id)).fetchone()
+    if not row or row['status'] not in ('APPROVED','CANCELLED'):
+        raise HTTPException(409, '취소할 재응시 허용이 없습니다. 진단 이력을 다시 조회해 주세요.')
+    if row['status'] == 'APPROVED':
+        conn.execute('''UPDATE dc.diagnosis_retake SET status='CANCELLED',cancelled_at=clock_timestamp(),cancelled_by=%s
+          WHERE id=%s''', (user['intg_uid'], row['id']))
+        notify(conn, uid, 'diagnosis-approval-cancelled', row['id'], '진단 재응시 허용이 취소되었습니다', '/diagnosis/employment')
     return state(conn, uid)
 
 

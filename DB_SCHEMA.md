@@ -4,6 +4,8 @@
 대상 schema: `dc`  
 실행 가능한 DDL 정본: `backend/migrations/*.sql`
 
+2026-10-30 재응시 허용 취소(149): `dc.diagnosis_retake`에 `CANCELLED` 상태와 `cancelled_at`·`cancelled_by`(교직원 FK)를 추가한다. 이미 완료된 건은 취소하지 않으며, 승인 시각·승인자·진단 이력은 보존한다. 기존 열린 요청 부분 UNIQUE는 PENDING/APPROVED에만 적용되어 취소 후 새 요청을 허용한다. 학생 단위 트랜잭션 잠금과 승인 ID 조건으로 재허용·취소의 경쟁을 제어한다. 이전 앱으로 복구할 때 취소 기록과 추가 컬럼은 유지하고, CANCELLED 행이 있는 상태에서 구 CHECK 제약을 복원하지 않는다.
+
 2026-10-12 연도별 CARE 7+ 자격(124): `dc.care7_annual_access`는 `(student_uid, year)` 기본키와 학생 FK, 근거 로드맵 버전, 자격 기록 시각을 보관한다. 앱에는 SELECT/INSERT만 허용하며 연중 재진단은 기존 행을 변경하지 않는다. 1월 1일에는 새 연도 행의 유무로 판정하므로 일괄 삭제·스케줄러가 필요 없다. 125는 기존 학생 메뉴 인덱스를 유지하면서 `stu-mypage.4` 기록 메뉴를 추가한다. 복구는 앱을 먼저 되돌리고 추가 테이블의 자격 기록을 보존한다.
 
 이 문서는 ERD, 이름 규칙, DDL 변경 순서를 소유한다. 컬럼의 정확한 type/default/constraint는 migration SQL이 최종 근거다. 스키마를 바꾸는 작업은 migration과 이 문서를 한 커밋에서 함께 갱신한다.
