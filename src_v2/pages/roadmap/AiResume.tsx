@@ -43,6 +43,15 @@ export default function AiResume() {
   const [filterTab, setFilterTab] = useState('전체')
   const [title, setTitle] = useState('')
   const [application, setApplication] = useState(emptyApplication)
+  const [step, setStep] = useState<1 | 2>(1)
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null)
+  const goToStep = (next: 1 | 2) => {
+    setStep(next)
+    window.requestAnimationFrame(() => {
+      stepHeadingRef.current?.focus({ preventScroll: true })
+      stepHeadingRef.current?.scrollIntoView({ block: 'start' })
+    })
+  }
   const [text, setText] = useState('')
   const [showHelper, setShowHelper] = useState(true)
   // 일지 ID 는 서버가 발급한 문자열이다 — 학생마다 1,2,3… 이던 숫자는 학생 간에 겹쳤다.
@@ -91,8 +100,7 @@ export default function AiResume() {
     if (resume.categoryCode) setActiveCategory(resume.categoryCode)
     setDraftState('done')
     setOpenResume(null)
-    // editor 카드로 스크롤
-    document.querySelector('.rs-editor-card')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    goToStep(2)
   }
 
   const handleDeleteResume = (id: string) => {
@@ -134,6 +142,35 @@ export default function AiResume() {
   return (
     <div className="rs-wrap">
       <main className="rs-main">
+        <nav className="rs-steps" aria-label="자소서 작성 단계">
+          <ol>
+            <li aria-current={step === 1 ? 'step' : undefined} className={step === 1 ? 'active' : 'complete'}>
+              <span>1</span> 지원정보 입력
+            </li>
+            <li aria-current={step === 2 ? 'step' : undefined} className={step === 2 ? 'active' : ''}>
+              <span>2</span> 자소서 작성
+            </li>
+          </ol>
+        </nav>
+        <h2 className="rs-step-heading" ref={stepHeadingRef} tabIndex={-1}>
+          {step === 1 ? '지원정보 입력' : '자소서 작성'}
+        </h2>
+
+        <section className="rs-editor-card rs-step-panel rs-application-step" hidden={step !== 1} aria-label="1단계 지원정보 입력">
+          <ResumeApplicationFields value={application} onChange={setApplication} />
+          <div className="rs-step-actions">
+            <button type="button" className="rs-primary-btn" onClick={() => goToStep(2)}>
+              다음: 자소서 작성 <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+            </button>
+          </div>
+        </section>
+
+        <div className="rs-step-panel" hidden={step !== 2}>
+        <div className="rs-step-back">
+          <button type="button" className="rs-outline-btn" onClick={() => goToStep(1)}>
+            <i className="fa-solid fa-arrow-left" aria-hidden="true" /> 이전: 지원정보
+          </button>
+        </div>
         <header className="rs-header">
           <div className="rs-header-actions">
             <button><i className="fa-regular fa-circle-question" /> 작성 가이드</button>
@@ -162,8 +199,6 @@ export default function AiResume() {
               />
             </label>
           </div>
-
-          <ResumeApplicationFields value={application} onChange={setApplication} />
 
           <div className="rs-editor-head">
             <div>
@@ -292,6 +327,7 @@ export default function AiResume() {
           )}
         </section>
 
+        </div>
       </main>
 
       <aside className="rs-right">
