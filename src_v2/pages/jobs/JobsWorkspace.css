@@ -1,0 +1,67 @@
+/* 라운지의 공통 서체·중립색·파랑/민트 토큰을 자소서 작업 화면에 적용한다. */
+.jobs-workspace {
+  --color-primary: color-mix(in srgb, var(--blue) 80%, var(--foreground));
+  --color-primary-bg: var(--blue-soft);
+  --color-primary-light: var(--sky);
+  --color-cta: var(--foreground);
+  --color-text-muted: var(--muted-foreground);
+  --color-warning: var(--amber-ink);
+  font-family: var(--font);
+  color: var(--foreground);
+  font-size: var(--fs-body);
+  line-height: 1.6;
+}
+.jobs-workspace :is(button, input, select, textarea) { font-family: var(--font); }
+.jobs-workspace :is(h2, h3, strong) { font-weight: 700; letter-spacing: -.02em; }
+.jobs-workspace :is(button, select) { font-size: var(--fs-body); font-weight: 600; }
+.jobs-workspace :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
+.jobs-workspace button { transition: background .15s, border-color .15s, color .15s; }
+.jobs-workspace button:disabled { cursor: not-allowed; }
+.jobs-workspace :is(.rs-application-choice legend, .rs-application-text, .rs-keyword-field > label, .rs-steps li) { font-size: var(--fs-body); font-weight: 600; }
+.jobs-workspace .rs-step-heading { font-size: var(--fs-lead); }
+.jobs-workspace :is(.rs-application-heading h2, .rs-editor-head h2, .rs-section-head h2, .rs-doc-head h2, .rs-helper-head span, .jh-section-head h2) { font-size: var(--fs-card); }
+.jobs-workspace :is(.rs-editor-head p, .rs-section-head p, .rs-journal-item p, .rs-doc-meta, .rs-doc-preview, .rs-doc-bottom, .jh-section-head p, .jh-resume-meta, .jh-resume-foot, .ac-card-desc, .ac-pick-meta, .ac-grade-comment, .ac-suggest li) { font-size: var(--fs-body); }
+.jobs-workspace :is(.rs-editor-head > span, .rs-category-select span, .rs-title-input > span, .rs-section-head > span, .rs-journal-item small, .ac-pick-date, .ac-badge) { font-size: var(--fs-meta); font-weight: 500; }
+.jobs-workspace :is(.rs-title-input > input, .rs-category-select select, .rs-editor-card textarea) { font-size: var(--fs-body); font-weight: 400; }
+.jobs-workspace .rs-category-select { margin-bottom: 0; }
+.jobs-workspace :is(.rs-doc-card h3, .rs-journal-item strong, .ac-pick-title) { font-size: var(--fs-card); font-weight: 700; }
+.jobs-workspace :is(.rs-primary-btn, .rs-consult-btn, .rs-save-btn, .rs-step-actions button, .rs-step-back button, .ac-btn-primary, .ac-btn-ghost) { min-height: 42px; height: auto; padding: 10px 16px; font-size: var(--fs-body); font-weight: 600; box-shadow: none; }
+.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary) { background: var(--foreground); color: var(--card); }
+.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):hover:not(:disabled) { background: var(--muted-foreground); }
+.jobs-workspace .rs-consult-btn { border: 1px solid var(--border); color: var(--foreground); background: var(--card); }
+.jobs-workspace .rs-consult-btn:hover:not(:disabled) { background: var(--muted); box-shadow: none; }
+.jobs-workspace :is(.rs-consult-btn, .rs-save-btn):disabled { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); box-shadow: none; }
+.jobs-workspace .rs-save-btn { background: var(--mint-ink); border-color: var(--mint-ink); }
+.jobs-workspace .rs-save-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--mint-ink) 85%, var(--foreground)); border-color: var(--mint-ink); box-shadow: none; }
+.jobs-workspace .rs-editor-actions { flex-wrap: wrap; }
+.jobs-workspace :is(.rs-doc-tabs button.active, .rs-status.writing) { color: var(--color-primary); background: var(--blue-soft); border-color: var(--blue-border); }
+.jobs-workspace .rs-section-head > span { color: var(--mint-ink); background: var(--mint-soft); }
+.jobs-workspace :is(.rs-attached-list span, .rs-keyword-list li) { color: var(--mint-ink); background: var(--mint-soft); font-weight: 500; }
+.jobs-workspace :is(.rs-keyword-input button, .rs-helper-head) { color: var(--foreground); background: var(--muted); }
+.jobs-workspace .rs-helper-head i { color: var(--muted-foreground); }
+.jobs-workspace :is(.rs-doc-card--button:hover, .rs-title-input > input:focus) { box-shadow: none; }
+.jobs-workspace .rs-step-heading { scroll-margin-top: calc(var(--topbar-h) + 76px); }
+.jobs-workspace .rs-steps li.active > span { background: var(--color-primary); }
+.jobs-workspace .jh-resume-badge { color: var(--color-primary); background: var(--blue-soft); }
+.jobs-workspace .jh-action--create { background: var(--foreground); box-shadow: none; }
+.jobs-workspace .jh-action--consult { background: var(--mint-ink); box-shadow: none; }
+.jobs-workspace .jh-action-text strong { font-size: var(--fs-sub); font-weight: 700; }
+.jobs-workspace .jh-action-text small { font-size: var(--fs-body); font-weight: 400; }
+.jobs-workspace .ac-card-title { font-size: var(--fs-sub); font-weight: 700; }
+.jobs-workspace .ac-header h1 i { color: var(--color-primary); }
+.jobs-workspace .ac-badge { background: var(--muted); color: var(--muted-foreground); border-radius: 6px; }
+.jobs-workspace .ac-pick-item.active { background: var(--blue-soft); border-color: var(--blue-border); }
+.jobs-workspace .ac-pick-item { align-items: flex-start; }
+.jobs-workspace .ac-pick-radio { margin-top: 4px; }
+.jobs-workspace .ac-pick-head { justify-content: space-between; flex-wrap: wrap; }
+.jobs-workspace .ac-btn-primary:disabled { background: var(--muted); color: var(--muted-foreground); }
+.jobs-workspace .ac-score-box { background: var(--blue-soft); color: var(--color-primary); }
+.jobs-workspace :is(.ac-summary-value, .ac-suggest h3, .ac-loading p) { font-size: var(--fs-card); font-weight: 700; }
+.jobs-workspace :is(.ac-summary-label, .ac-score-label) { font-size: var(--fs-meta); font-weight: 500; }
+.jobs-workspace .ac-preview-notice { padding: 12px 16px; margin-bottom: 20px; background: var(--muted); color: var(--muted-foreground); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: var(--fs-body); }
+.jobs-workspace .ac-empty { display: grid; justify-items: center; gap: 12px; padding: 36px 16px; text-align: center; color: var(--muted-foreground); }
+.jobs-workspace .ac-empty h3 { color: var(--foreground); font-size: var(--fs-card); }
+@media (max-width: 768px) {
+  .jobs-workspace .ac-card { padding: 20px 16px; }
+  .jobs-workspace .ac-actions { flex-wrap: wrap; }
+}

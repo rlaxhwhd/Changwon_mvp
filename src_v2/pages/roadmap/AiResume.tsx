@@ -8,6 +8,7 @@ import {
 } from '../jobs/resumeMock'
 import { useMetadata } from '../../../shared/useMetadata'
 import './AiResume.css'
+import '../jobs/JobsWorkspace.css'
 import { useGrowth } from '../../../shared/useRoadmapStore'
 import GrowthLoadNotice from '../../../shared/GrowthLoadNotice'
 import { usePageHead } from '../../components/PageCrumb'
@@ -61,6 +62,8 @@ export default function AiResume() {
   const [, bumpList] = useState(0)
   const savedList = getAllResumes()
   const [saveError, setSaveError] = useState('')
+  const [saving, setSaving] = useState(false)
+  const saveInFlight = useRef(false)
   const [openResume, setOpenResume] = useState<SavedResume | null>(null)
   const studentId = getActiveStudentId()
   useGrowth(studentId)
@@ -73,9 +76,13 @@ export default function AiResume() {
   const categoryLabelOf = (code: string) => categories.find(c => c.code === code)?.label ?? code
 
   // id·작성일은 서버가 부여한다. 같은 문서를 다시 저장하면 회차가 아니라 수정이다.
-  const saveResume = (content: string) => {
+  const saveResume = async (content: string) => {
+    if (!content.trim() || saveInFlight.current) return null
+    saveInFlight.current = true
+    setSaving(true)
     setSaveError('')
-    void upsertUserResume({
+    try {
+      const saved = await upsertUserResume({
       id: resumeIdRef.current ?? undefined,
       title: title.trim() || `${categoryLabelOf(activeCategory)} 자소서 초안`,
       company: application.company.trim(),
@@ -83,12 +90,17 @@ export default function AiResume() {
       position: application.position.trim(),
       categoryCode: activeCategory,
       content,
-    }).then(saved => {
+      })
       resumeIdRef.current = saved.id
       bumpList(x => x + 1)
-    }).catch((cause: unknown) => {
+      return saved
+    } catch (cause: unknown) {
       setSaveError(cause instanceof Error ? cause.message : '저장하지 못했습니다.')
-    })
+      return null
+    } finally {
+      saveInFlight.current = false
+      setSaving(false)
+    }
   }
 
   const handleEditResume = (resume: SavedResume) => {
@@ -114,9 +126,9 @@ export default function AiResume() {
     })
   }
 
-  const handleGoConsulting = () => {
-    saveResume(text)  // 사용자가 수정한 최종본으로 갱신
-    navigate('/jobs/home/consulting')
+  const handleGoConsulting = async () => {
+    const saved = await saveResume(text)
+    if (saved) navigate(`/jobs/home/consulting?resumeId=${encodeURIComponent(saved.id)}`)
   }
   const attachedEntries = journalEntries.filter(entry => attachedIds.includes(entry.id))
 
@@ -140,7 +152,7 @@ export default function AiResume() {
   }
 
   return (
-    <div className="rs-wrap">
+    <div className="rs-wrap jobs-workspace">
       <main className="rs-main">
         <nav className="rs-steps" aria-label="자소서 작성 단계">
           <ol>
@@ -245,21 +257,20 @@ export default function AiResume() {
               <i className="fa-solid fa-wand-magic-sparkles" />
               AI 초안 받기 · 연동 준비 중
             </button>
-            {draftState === 'done' && (
-              <button type="button" className="rs-consult-btn" onClick={handleGoConsulting}>
-                <i className="fa-solid fa-magnifying-glass-chart" /> 이 자소서로 AI 컨설팅
+              <button type="button" className="rs-consult-btn" onClick={handleGoConsulting} disabled={!text.trim() || saving}>
+                <i className="fa-solid fa-magnifying-glass-chart" /> 저장 후 AI 컨설팅
               </button>
-            )}
             <button
               type="button"
               className="rs-save-btn"
               onClick={() => saveResume(text)}
-              disabled={!text.trim()}
+              disabled={!text.trim() || saving}
             >
-              <i className="fa-regular fa-floppy-disk" /> 저장
+              <i className="fa-regular fa-floppy-disk" /> {saving ? '저장 중…' : '저장'}
             </button>
           </div>
           <p id="rs-generation-notice" className="rs-application-hint">AI 생성은 Deepresume 연동 후 이용할 수 있습니다. 직접 작성한 자소서는 저장할 수 있습니다.</p>
+          {saveError && <p className="rs-keyword-error" role="alert">{saveError}</p>}
         </section>
 
         <section className="rs-journal-card">

@@ -4,6 +4,7 @@ import Modal from '../../components/Modal'
 import { deleteUserResume, getAllResumes, type SavedResume } from './resumeMock'
 import { useJobStore } from '../../../shared/useJobStore'
 import './JobsHome.css'
+import './JobsWorkspace.css'
 import { usePageHead } from '../../components/PageCrumb'
 
 /* ── AI 자소서/인터뷰 홈 ─────────────────────────────────────────── */
@@ -21,7 +22,7 @@ export default function JobsHome() {
   }
 
   return (
-    <div className="jh-wrap">
+    <div className="jh-wrap jobs-workspace">
       {/* 헤더 */}
       {/* 작성된 자소서 */}
       <div className="jh-section-head">

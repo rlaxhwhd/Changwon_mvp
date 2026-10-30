@@ -1,7 +1,8 @@
-import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { getAllResumes } from './resumeMock'
+import { useState, useSyncExternalStore } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
+import { getAllResumes, RESUME_EVENT } from './resumeMock'
 import './AiConsulting.css'
+import './JobsWorkspace.css'
 import { usePageHead } from '../../components/PageCrumb'
 
 interface Evaluation {
@@ -28,18 +29,25 @@ const MOCK_EVALUATION: Evaluation = {
 
 const scoreColor = (s: number) => (s >= 85 ? '#16A34A' : s >= 75 ? 'var(--color-primary)' : 'var(--color-warning)')
 
+function subscribeResumes(onChange: () => void) {
+  window.addEventListener(RESUME_EVENT, onChange)
+  return () => window.removeEventListener(RESUME_EVENT, onChange)
+}
+
 export default function AiConsulting() {
   usePageHead('AI 컨설팅', '작성된 자소서를 AI가 항목별로 분석하고 평가합니다.')
   const navigate = useNavigate()
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const [params] = useSearchParams()
+  const resumes = useSyncExternalStore(subscribeResumes, getAllResumes)
+  const [selectedId, setSelectedId] = useState<string | null>(() =>
+    resumes.find(resume => resume.id === params.get('resumeId'))?.id ?? (resumes.length === 1 ? resumes[0].id : null))
   const [evaluating, setEvaluating] = useState(false)
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null)
 
-  const resumes = useMemo(() => getAllResumes(), [])
   const selected = resumes.find(resume => resume.id === selectedId)
 
   const startEval = () => {
-    if (!selectedId) return
+    if (!selected || evaluating) return
     setEvaluating(true)
     window.setTimeout(() => {
       setEvaluation(MOCK_EVALUATION)
@@ -53,13 +61,14 @@ export default function AiConsulting() {
   }
 
   return (
-    <div className="ac-wrap">
+    <div className="ac-wrap jobs-workspace">
       {/* 헤더 */}
       <header className="ac-header">
         <button className="ac-back-btn" onClick={() => navigate('/jobs/home')} aria-label="홈으로">
           <i className="fa-solid fa-arrow-left" />
         </button>
       </header>
+      <p className="ac-preview-notice">현재는 컨설팅 화면을 확인할 수 있는 예시 결과를 제공합니다. 실제 AI 평가 연동은 준비 중입니다.</p>
 
       {/* ── 자소서 선택 ── */}
       {!evaluation && !evaluating && (
@@ -68,12 +77,18 @@ export default function AiConsulting() {
           <p className="ac-card-desc">평가를 진행할 자소서를 하나 선택해 주세요.</p>
 
           <div className="ac-pick-list">
+            {resumes.length === 0 && <div className="ac-empty">
+              <h3>저장된 자소서가 없습니다.</h3>
+              <p>자기소개서를 작성하고 저장하면 이곳에서 선택할 수 있습니다.</p>
+              <button type="button" className="ac-btn-primary" onClick={() => navigate('/jobs/home/resume')}>자소서 작성하기</button>
+            </div>}
             {resumes.map(resume => {
               const active = selectedId === resume.id
               return (
                 <button
                   key={resume.id}
                   className={`ac-pick-item${active ? ' active' : ''}`}
+                  aria-pressed={active}
                   onClick={() => setSelectedId(resume.id)}
                 >
                   <span className={`ac-pick-radio${active ? ' active' : ''}`}>
@@ -83,7 +98,7 @@ export default function AiConsulting() {
                     <div className="ac-pick-head">
                       <span className="ac-badge">{resume.categoryLabel}</span>
                       <span className="ac-pick-date">
-                        <i className="fa-solid fa-calendar" /> {resume.createdAt}
+                        <i className="fa-solid fa-calendar" /> {resume.createdAt.slice(0, 10)}
                       </span>
                     </div>
                     <h3 className="ac-pick-title">{resume.title}</h3>
@@ -99,9 +114,9 @@ export default function AiConsulting() {
 
           <div className="ac-actions">
             <button className="ac-btn-ghost" onClick={() => navigate('/jobs/home')}>취소</button>
-            <button className="ac-btn-primary" disabled={!selectedId} onClick={startEval}>
-              <i className="fa-solid fa-play" /> AI 평가 시작
-            </button>
+            {resumes.length > 0 && <button className="ac-btn-primary" disabled={!selected} onClick={startEval}>
+              <i className="fa-solid fa-play" /> 평가 예시 보기
+            </button>}
           </div>
         </div>
       )}
@@ -110,8 +125,8 @@ export default function AiConsulting() {
       {evaluating && (
         <div className="ac-card ac-loading">
           <div className="ac-spinner" />
-          <p>AI가 자소서를 분석하고 있습니다...</p>
-          <span>논리적 구성, 직무 연관성, 차별화 포인트 등을 종합 분석합니다</span>
+          <p>컨설팅 평가 예시를 불러오고 있습니다.</p>
+          <span>실제 자기소개서에 대한 분석 결과가 아닌 화면 확인용 예시입니다.</span>
         </div>
       )}
 
@@ -119,7 +134,7 @@ export default function AiConsulting() {
       {evaluation && selected && (
         <div className="ac-card">
           <h2 className="ac-card-title">
-            <i className="fa-solid fa-clipboard-check" /> AI 컨설팅 평가 결과
+            <i className="fa-solid fa-clipboard-check" /> AI 컨설팅 평가 예시
           </h2>
 
           <div className="ac-summary">
