@@ -3,9 +3,10 @@
   --color-primary: color-mix(in srgb, var(--blue) 80%, var(--foreground));
   --color-primary-bg: var(--blue-soft);
   --color-primary-light: var(--sky);
-  --color-cta: var(--foreground);
+  --color-cta: var(--color-primary);
   --color-text-muted: var(--muted-foreground);
   --color-warning: var(--amber-ink);
+  --button-mint-ink: color-mix(in srgb, var(--mint-ink) 85%, var(--foreground));
   font-family: var(--font);
   color: var(--foreground);
   font-size: var(--fs-body);
@@ -15,7 +16,7 @@
 .jobs-workspace :is(h2, h3, strong) { font-weight: 700; letter-spacing: -.02em; }
 .jobs-workspace :is(button, select) { font-size: var(--fs-body); font-weight: 600; }
 .jobs-workspace :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
-.jobs-workspace button { transition: background .15s, border-color .15s, color .15s; }
+.jobs-workspace button { transition: background .18s, border-color .18s, color .18s, box-shadow .18s, transform .18s; }
 .jobs-workspace button:disabled { cursor: not-allowed; }
 .jobs-workspace :is(.rs-application-choice legend, .rs-application-text, .rs-keyword-field > label, .rs-steps li) { font-size: var(--fs-body); font-weight: 600; }
 .jobs-workspace .rs-step-heading { font-size: var(--fs-lead); }
@@ -26,13 +27,20 @@
 .jobs-workspace .rs-category-select { margin-bottom: 0; }
 .jobs-workspace :is(.rs-doc-card h3, .rs-journal-item strong, .ac-pick-title) { font-size: var(--fs-card); font-weight: 700; }
 .jobs-workspace :is(.rs-primary-btn, .rs-consult-btn, .rs-save-btn, .rs-step-actions button, .rs-step-back button, .ac-btn-primary, .ac-btn-ghost) { min-height: 42px; height: auto; padding: 10px 16px; font-size: var(--fs-body); font-weight: 600; box-shadow: none; }
-.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary) { background: var(--foreground); color: var(--card); }
-.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):hover:not(:disabled) { background: var(--muted-foreground); }
-.jobs-workspace .rs-consult-btn { border: 1px solid var(--border); color: var(--foreground); background: var(--card); }
-.jobs-workspace .rs-consult-btn:hover:not(:disabled) { background: var(--muted); box-shadow: none; }
+.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary) { background: var(--color-primary); color: var(--card); border: 1px solid var(--color-primary); border-radius: 10px; box-shadow: 0 3px 8px color-mix(in srgb, var(--blue) 12%, transparent); }
+.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 88%, var(--foreground)); transform: translateY(-1px); box-shadow: 0 5px 12px color-mix(in srgb, var(--blue) 18%, transparent); }
+.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+.jobs-workspace .rs-consult-btn { border: 1px solid var(--mint-border); color: var(--button-mint-ink); background: var(--mint-soft); border-radius: 10px; }
+.jobs-workspace .rs-consult-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--mint-soft) 88%, var(--mint)); border-color: var(--mint-ink); box-shadow: none; }
 .jobs-workspace :is(.rs-consult-btn, .rs-save-btn):disabled { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); box-shadow: none; }
-.jobs-workspace .rs-save-btn { background: var(--mint-ink); border-color: var(--mint-ink); }
-.jobs-workspace .rs-save-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--mint-ink) 85%, var(--foreground)); border-color: var(--mint-ink); box-shadow: none; }
+.jobs-workspace .rs-save-btn { background: var(--card); color: var(--button-mint-ink); border: 1px solid var(--mint-border); border-radius: 10px; }
+.jobs-workspace .rs-save-btn:hover:not(:disabled) { background: var(--mint-soft); border-color: var(--mint-ink); box-shadow: none; }
+.jobs-workspace :is(.rs-outline-btn, .ac-btn-ghost) { color: var(--muted-foreground); background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+.jobs-workspace :is(.rs-outline-btn, .ac-btn-ghost):hover:not(:disabled) { color: var(--color-primary); background: var(--blue-soft); border-color: var(--blue-border); }
+.jobs-workspace .rs-journal-item button { background: var(--card); color: var(--color-primary); border: 1px solid var(--blue-border); border-radius: 8px; }
+.jobs-workspace .rs-journal-item button:hover:not(:disabled) { background: var(--blue-soft); border-color: var(--color-primary); }
+.jobs-workspace .rs-journal-item button:disabled { color: var(--muted-foreground); background: var(--muted); border-color: var(--border); }
+.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):disabled { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); box-shadow: none; opacity: 1; }
 .jobs-workspace .rs-editor-actions { flex-wrap: wrap; }
 .jobs-workspace :is(.rs-doc-tabs button.active, .rs-status.writing) { color: var(--color-primary); background: var(--blue-soft); border-color: var(--blue-border); }
 .jobs-workspace .rs-section-head > span { color: var(--mint-ink); background: var(--mint-soft); }
@@ -43,8 +51,17 @@
 .jobs-workspace .rs-step-heading { scroll-margin-top: calc(var(--topbar-h) + 76px); }
 .jobs-workspace .rs-steps li.active > span { background: var(--color-primary); }
 .jobs-workspace .jh-resume-badge { color: var(--color-primary); background: var(--blue-soft); }
-.jobs-workspace .jh-action--create { background: var(--foreground); box-shadow: none; }
-.jobs-workspace .jh-action--consult { background: var(--mint-ink); box-shadow: none; }
+.jobs-workspace .jh-action { border: 1px solid; border-radius: 14px; padding: 22px 24px; box-shadow: none; filter: none; }
+.jobs-workspace .jh-action--create { background: var(--blue-soft); border-color: var(--blue-border); color: var(--color-primary); }
+.jobs-workspace .jh-action--consult { background: var(--mint-soft); border-color: var(--mint-border); color: var(--button-mint-ink); }
+.jobs-workspace .jh-action-icon { width: 46px; height: 46px; border-radius: 12px; background: var(--card); font-size: 20px; }
+.jobs-workspace .jh-action-text strong { color: var(--foreground); }
+.jobs-workspace .jh-action-text small { color: var(--muted-foreground); }
+.jobs-workspace .jh-action-arrow { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--card); font-size: 15px; }
+.jobs-workspace .jh-action:hover { transform: translateY(-2px); filter: none; }
+.jobs-workspace .jh-action--create:hover { border-color: var(--color-primary); box-shadow: 0 6px 18px color-mix(in srgb, var(--blue) 9%, transparent); }
+.jobs-workspace .jh-action--consult:hover { border-color: var(--mint-ink); box-shadow: 0 6px 18px color-mix(in srgb, var(--mint) 9%, transparent); }
+.jobs-workspace .jh-action:active { transform: translateY(0); box-shadow: none; }
 .jobs-workspace .jh-action-text strong { font-size: var(--fs-sub); font-weight: 700; }
 .jobs-workspace .jh-action-text small { font-size: var(--fs-body); font-weight: 400; }
 .jobs-workspace .ac-card-title { font-size: var(--fs-sub); font-weight: 700; }
@@ -54,7 +71,6 @@
 .jobs-workspace .ac-pick-item { align-items: flex-start; }
 .jobs-workspace .ac-pick-radio { margin-top: 4px; }
 .jobs-workspace .ac-pick-head { justify-content: space-between; flex-wrap: wrap; }
-.jobs-workspace .ac-btn-primary:disabled { background: var(--muted); color: var(--muted-foreground); }
 .jobs-workspace .ac-score-box { background: var(--blue-soft); color: var(--color-primary); }
 .jobs-workspace :is(.ac-summary-value, .ac-suggest h3, .ac-loading p) { font-size: var(--fs-card); font-weight: 700; }
 .jobs-workspace :is(.ac-summary-label, .ac-score-label) { font-size: var(--fs-meta); font-weight: 500; }
@@ -64,4 +80,9 @@
 @media (max-width: 768px) {
   .jobs-workspace .ac-card { padding: 20px 16px; }
   .jobs-workspace .ac-actions { flex-wrap: wrap; }
+  .jobs-workspace .jh-action { padding: 18px; gap: 12px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .jobs-workspace button, .jobs-workspace .jh-action-arrow { transition: none; }
+  .jobs-workspace :is(.jh-action, .rs-primary-btn, .ac-btn-primary):hover { transform: none; }
 }
