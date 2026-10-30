@@ -132,10 +132,9 @@ export const NAV_SECTIONS: NavSection[] = [
         label: 'AI 자소서/면접',
         path: '/jobs/home',
         icon: 'fa-file-lines',
-        comingSoon: true,
         children: [
-          { label: 'AI 자소서 생성', path: '/jobs/home/resume', icon: 'fa-wand-magic-sparkles', comingSoon: true },
-          { label: 'AI 컨설팅', path: '/jobs/home/consulting', icon: 'fa-magnifying-glass-chart', comingSoon: true },
+          { label: 'AI 자소서 생성', path: '/jobs/home/resume', icon: 'fa-wand-magic-sparkles' },
+          { label: 'AI 컨설팅', path: '/jobs/home/consulting', icon: 'fa-magnifying-glass-chart' },
         ],
       },
       { label: '공지사항', path: '/jobs/notices', icon: 'fa-bullhorn' },

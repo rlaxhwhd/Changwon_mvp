@@ -40,6 +40,9 @@ import ProfessorCounsel from './pages/counsel/ProfessorCounsel'
 
 // 취업지원
 import JobSupport from './pages/jobs/JobSupport'
+import JobsHome from './pages/jobs/JobsHome'
+import AiResume from './pages/roadmap/AiResume'
+import AiConsulting from './pages/jobs/AiConsulting'
 import JobDetail from './pages/jobs/JobDetail'
 import Notices from './pages/jobs/Notices'
 
@@ -137,9 +140,9 @@ const router = createBrowserRouter(
         { path: '/jobs',                 loader: studentPageLoader('jobs', 'jobWishlist'), element: <StageGate stage="employment" title="취업지원"><JobSupport scope="internal" /></StageGate> },
         { path: '/jobs/external',        loader: studentPageLoader('jobs', 'jobWishlist'), element: <StageGate stage="employment" title="취업지원"><JobSupport scope="external" /></StageGate> },
         { path: '/jobs/joblist',         element: <ComingSoon title="AI 맞춤채용" /> },
-        { path: '/jobs/home',            element: <ComingSoon title="AI 자소서/면접" /> },
-        { path: '/jobs/home/resume',     element: <ComingSoon title="AI 자소서 생성" /> },
-        { path: '/jobs/home/consulting', element: <ComingSoon title="AI 컨설팅" /> },
+        { path: '/jobs/home',            loader: studentPageLoader('resumes'), element: <JobsHome /> },
+        { path: '/jobs/home/resume',     loader: studentPageLoader('resumes'), element: <AiResume /> },
+        { path: '/jobs/home/consulting', loader: studentPageLoader('resumes'), element: <AiConsulting /> },
         { path: '/jobs/resume',          element: <Navigate to="/jobs/home" replace /> },
         // 공지사항: /mypage/notices 에서 취업지원 하위로 옮겼다(기존 경로는 하위 호환용 리다이렉트).
         // ⚠ '/jobs/:id' 보다 위에 둔다 — 정적 세그먼트가 먼저 읽히게 해 공고 상세로 새지 않게 한다.
