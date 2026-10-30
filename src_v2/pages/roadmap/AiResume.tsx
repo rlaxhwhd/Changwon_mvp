@@ -11,6 +11,11 @@ import './AiResume.css'
 import { useGrowth } from '../../../shared/useRoadmapStore'
 import GrowthLoadNotice from '../../../shared/GrowthLoadNotice'
 import { usePageHead } from '../../components/PageCrumb'
+import ResumeApplicationFields, { type ResumeApplication } from './ResumeApplicationFields'
+
+const emptyApplication: ResumeApplication = {
+  occupation: '', industry: '', companyType: '', position: '', company: '', experience: '', keywords: [],
+}
 
 // 자소서 분야 선택지는 여기 배열이 아니라 DB(dc.code_item JOB_RESUME_CATEGORY)가 정본이다.
 // 관리자가 항목을 더하면 배포 없이 나타난다(DB.md §8-5 · CLAUDE.md 규칙 4).
@@ -27,15 +32,6 @@ function makeJournalSnippet(entry: Entry) {
   ].join('\n')
 }
 
-// 사용자가 제공한 시연용 자소서 초안 — 실제 AI 응답으로 가정
-const AI_DRAFT_SAMPLE = `카페 매장에서 아르바이트를 하며 고객 응대와 매장 운영 흐름을 개선한 경험이 있습니다. 주말 피크 시간대에는 주문이 한꺼번에 몰리면서 대기 시간이 길어졌고, 이로 인해 고객 불만이 반복적으로 발생했습니다. 저는 단순히 바쁜 상황으로만 넘기기보다, 어떤 지점에서 고객이 불편을 느끼는지 직접 확인해보고자 했습니다.
-
-먼저 혼잡 시간대의 주문 동선과 고객 문의 내용을 관찰하고 기록했습니다. 그 결과, 고객들이 메뉴 선택 과정에서 비슷한 질문을 반복하고, 키오스크 이용 방법을 몰라 주문이 지연되는 경우가 많다는 점을 파악했습니다. 이후 자주 묻는 메뉴 정보를 메뉴판 상단에 배치하고, 키오스크 주변에 간단한 안내 문구를 추가하는 방안을 정리해 점장님께 제안했습니다.
-
-개선 후에는 고객들이 메뉴와 주문 방법을 더 빠르게 이해할 수 있었고, 주말 평균 대기 시간도 줄어들었습니다. 또한 신규 아르바이트생들도 고객에게 주문 방법을 안내하는 데 익숙해지는 시간이 짧아졌습니다.
-
-이 경험을 통해 고객 응대는 친절한 말투뿐 아니라, 고객이 불편을 느끼기 전에 미리 안내하고 흐름을 정리하는 것에서 시작된다는 점을 배웠습니다. 앞으로도 현장의 문제를 세심하게 관찰하고, 작은 개선이라도 실질적인 변화를 만들 수 있도록 적극적으로 행동하겠습니다.`
-
 type DraftState = 'idle' | 'loading' | 'done'
 
 export default function AiResume() {
@@ -46,6 +42,7 @@ export default function AiResume() {
   const [activeCategory, setActiveCategory] = useState<string>('MOTIVE')
   const [filterTab, setFilterTab] = useState('전체')
   const [title, setTitle] = useState('')
+  const [application, setApplication] = useState(emptyApplication)
   const [text, setText] = useState('')
   const [showHelper, setShowHelper] = useState(true)
   // 일지 ID 는 서버가 발급한 문자열이다 — 학생마다 1,2,3… 이던 숫자는 학생 간에 겹쳤다.
@@ -62,7 +59,7 @@ export default function AiResume() {
   // 세션 내에서 자소서 id 유지 → 재생성 시 컨설팅 목록의 같은 항목을 덮어씀
   const resumeIdRef = useRef<string | null>(null)
 
-  const charLimit = Math.max(1000, AI_DRAFT_SAMPLE.length + 200)
+  const charLimit = 1000
 
   const categoryLabelOf = (code: string) => categories.find(c => c.code === code)?.label ?? code
 
@@ -72,9 +69,9 @@ export default function AiResume() {
     void upsertUserResume({
       id: resumeIdRef.current ?? undefined,
       title: title.trim() || `${categoryLabelOf(activeCategory)} 자소서 초안`,
-      company: '지원 예정',
-      jobType: 'IT/SW',
-      position: '미정',
+      company: application.company.trim(),
+      jobType: application.occupation,
+      position: application.position.trim(),
       categoryCode: activeCategory,
       content,
     }).then(saved => {
@@ -90,6 +87,7 @@ export default function AiResume() {
     resumeIdRef.current = resume.id
     setTitle(resume.title)
     setText(resume.content)
+    setApplication({ ...emptyApplication, company: resume.company, occupation: resume.jobType, position: resume.position })
     if (resume.categoryCode) setActiveCategory(resume.categoryCode)
     setDraftState('done')
     setOpenResume(null)
@@ -106,17 +104,6 @@ export default function AiResume() {
     }).catch((cause: unknown) => {
       setSaveError(cause instanceof Error ? cause.message : '삭제하지 못했습니다.')
     })
-  }
-
-  const handleGenerateDraft = () => {
-    if (draftState === 'loading') return
-    setDraftState('loading')
-    window.setTimeout(() => {
-      setText(AI_DRAFT_SAMPLE)
-      setDraftState('done')
-      // AI 초안 완성 시 자동 저장 → Consulting 페이지 목록에 즉시 노출
-      saveResume(AI_DRAFT_SAMPLE)
-    }, 2600)
   }
 
   const handleGoConsulting = () => {
@@ -176,9 +163,11 @@ export default function AiResume() {
             </label>
           </div>
 
+          <ResumeApplicationFields value={application} onChange={setApplication} />
+
           <div className="rs-editor-head">
             <div>
-              <h2>{activeCategory}</h2>
+              <h2>{categoryLabelOf(activeCategory)}</h2>
               <p>지원한 기업과 직무에 대한 관심, 본인의 경험과 연결되는 지점을 작성해보세요.</p>
             </div>
             <span>{text.length} / {charLimit.toLocaleString()}자</span>
@@ -188,7 +177,8 @@ export default function AiResume() {
             <textarea
               value={text}
               onChange={event => setText(event.target.value.slice(0, charLimit))}
-              placeholder="자유롭게 작성하거나 성장일지 경험을 첨부해 AI 초안을 받아보세요."
+              aria-label="자기소개서 내용"
+              placeholder="자유롭게 작성하거나 성장일지 경험을 첨부해 자기소개서를 준비해 보세요."
             />
 
             {draftState === 'loading' && (
@@ -214,11 +204,11 @@ export default function AiResume() {
             <button
               type="button"
               className="rs-primary-btn"
-              onClick={handleGenerateDraft}
-              disabled={draftState === 'loading'}
+              disabled
+              aria-describedby="rs-generation-notice"
             >
               <i className="fa-solid fa-wand-magic-sparkles" />
-              {draftState === 'loading' ? '생성 중…' : draftState === 'done' ? 'AI 초안 다시 받기' : 'AI 초안 받기'}
+              AI 초안 받기 · 연동 준비 중
             </button>
             {draftState === 'done' && (
               <button type="button" className="rs-consult-btn" onClick={handleGoConsulting}>
@@ -234,6 +224,7 @@ export default function AiResume() {
               <i className="fa-regular fa-floppy-disk" /> 저장
             </button>
           </div>
+          <p id="rs-generation-notice" className="rs-application-hint">AI 생성은 Deepresume 연동 후 이용할 수 있습니다. 직접 작성한 자소서는 저장할 수 있습니다.</p>
         </section>
 
         <section className="rs-journal-card">
