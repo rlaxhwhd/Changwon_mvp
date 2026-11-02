@@ -66,7 +66,7 @@ export default function ProfessorCounselStats() {
           <option value="">전체</option>{majors.map(m => <option key={m}>{m}</option>)}
         </select></label>
         <label className="admin-select"><span>학년</span><select value={draft.grade} onChange={e => change('grade', e.target.value)}>
-          <option value="">전체</option>{[1, 2, 3, 4].map(g => <option key={g} value={g}>{g}학년</option>)}
+          <option value="">전체</option>{[1, 2, 3, 4, 5].map(g => <option key={g} value={g}>{g}학년</option>)}
         </select></label>
         <label className="admin-select"><span>기간 시작</span><input type="date" value={draft.dateFrom} onChange={e => change('dateFrom', e.target.value)} /></label>
         <label className="admin-select"><span>기간 종료</span><input type="date" value={draft.dateTo} onChange={e => change('dateTo', e.target.value)} /></label>

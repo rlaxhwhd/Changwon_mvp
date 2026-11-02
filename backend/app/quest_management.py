@@ -55,7 +55,7 @@ class Assignment(BaseModel):
     period: Period
     periodKey: str = Field(min_length=1, max_length=64)
     audience: Literal['ALL', 'FILTERED']
-    grades: list[Literal[1, 2, 3, 4]] = Field(default_factory=list, max_length=4)
+    grades: list[Literal[1, 2, 3, 4, 5]] = Field(default_factory=list, max_length=5)  # 5년제(건축학과) 5학년 포함 — 150
     studentTypes: list[Literal['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'UNDIAGNOSED']] = Field(default_factory=list, max_length=7)
     questIds: list[StrictInt] = Field(min_length=1, max_length=30)
     published: bool = False

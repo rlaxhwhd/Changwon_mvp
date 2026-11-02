@@ -294,7 +294,7 @@ export default function StudentChargeTable({
           <span>학년</span>
           <select value={grade} onChange={e => onFilter(setGrade)(e.target.value)}>
             <option value={ALL}>{ALL}</option>
-            {(academic ? [1, 2, 3, 4] : options.grades).map(g => <option key={g} value={String(g)}>{g}학년</option>)}
+            {(academic ? [1, 2, 3, 4, 5] : options.grades).map(g => <option key={g} value={String(g)}>{g}학년</option>)}
           </select>
         </label>
         <label className="admin-select">

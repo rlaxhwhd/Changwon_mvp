@@ -63,6 +63,16 @@ def test_target_overlap_and_all_filters(client):
     assert client.put(url, headers=head, json=schedule(q, '2091-02', audience='FILTERED')).status_code == 422
 
 
+def test_five_year_programs_can_target_fifth_grade(client):
+    # 건축학과 등 5년제 5학년 — API(Literal)와 DB CHECK(150) 모두 5를 받고 6은 거절한다.
+    q = definition(client)
+    url = '/api/v1/system/quests/assignments/0'
+    head = headers('system-admin')
+    saved = client.put(url, headers=head, json=schedule(q, '2092-01', audience='FILTERED', grades=[5]))
+    assert saved.status_code == 200, saved.text
+    assert client.put(url, headers=head, json=schedule(q, '2092-02', audience='FILTERED', grades=[6])).status_code == 422
+
+
 def test_concurrent_overlapping_assignment(client):
     q = definition(client)
     def write(_):

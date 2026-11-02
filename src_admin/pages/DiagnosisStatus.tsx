@@ -211,7 +211,7 @@ export default function DiagnosisStatus() {
           <span>학년</span>
           <select value={grade} onChange={event => reset(setGrade)(event.target.value)}>
             <option value={ALL}>{ALL}</option>
-            {[1, 2, 3, 4].map(item => <option key={item} value={String(item)}>{item}학년</option>)}
+            {[1, 2, 3, 4, 5].map(item => <option key={item} value={String(item)}>{item}학년</option>)}
           </select>
         </label>
         <label className="admin-check">
