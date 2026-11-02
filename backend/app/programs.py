@@ -76,7 +76,9 @@ WRITABLE = ('title,summary,detail,category_code,status_code,apply_start,apply_en
             'run_start_time,run_end_time,application_questions')
 # 프로그램이 선택한 게시본. 해당 종류의 응답이 들어오면 고정한다.
 PIN_COLUMNS = 'competency_form_id,satisfaction_form_id'
-PROGRAM_COLUMNS = 'id,' + WRITABLE + ',' + PIN_COLUMNS + ',created_at,version'
+# 유효 신청 수 — 학생 목록의 인기순 정렬용 합계(학생은 신청자 명단을 못 보므로 서버가 센다).
+APPLY_COUNT = '''(SELECT count(*) FROM dc.program_apply a WHERE a.program_id=program.id AND a.cancelled_at IS NULL) AS apply_count'''
+PROGRAM_COLUMNS = 'id,' + WRITABLE + ',' + PIN_COLUMNS + ',created_at,version,' + APPLY_COUNT
 
 
 def today():
@@ -113,7 +115,7 @@ def program_dto(row, applicants, attachments=None, managers=None):
         # 이 프로그램이 붙잡은 설문지 — 수정 화면의 영역 선택지가 최신이 아니라 이 버전을 따라야 한다.
         'competencyFormId': row['competency_form_id'], 'satisfactionFormId': row['satisfaction_form_id'],
         'includeInStats': row['include_in_stats'], 'createdAt': row['created_at'],
-        'version': row['version'], 'applicants': applicants,
+        'version': row['version'], 'applicants': applicants, 'applyCount': row['apply_count'],
         'noticeAt': row['notice_at'], 'startTime': row['apply_start_time'], 'endTime': row['apply_end_time'],
         'runStartTime': row['run_start_time'], 'runEndTime': row['run_end_time'],
         'applicationQuestions': row['application_questions'], 'attachments': attachments or [],

@@ -98,6 +98,17 @@ def test_student_file_ownership_and_answer_types(client):
     assert upload(client, 'chaewon').status_code == 403
 
 
+def test_apply_count_is_a_total_without_exposing_applicants(client):
+    """학생 목록 인기순 — 다른 학생 신청은 명단 없이 합계로만 보인다."""
+    p = new_program(client)
+    assert p['applyCount'] == 0
+    assert apply_as(client, 'chaewon', p['id']).status_code == 201
+    listed = client.get('/api/v1/programs', params={'q': p['title'], 'pageSize': 100}, headers=headers('changwon')).json()
+    item = next(i for i in listed['items'] if i['id'] == p['id'])
+    assert item['applyCount'] == 1 and item['applicants'] == []
+    assert client.get(f"/api/v1/programs/{p['id']}", headers=headers('career_kim')).json()['applyCount'] == 1
+
+
 def test_delete_program_and_protected_history(client):
     p = new_program(client)
     assert client.delete(f"/api/v1/programs/{p['id']}", headers=headers('chaewon')).status_code == 403

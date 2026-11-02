@@ -238,6 +238,8 @@ export interface Program {
   includeInStats?: boolean
   /** 신청자 목록 (출석 포함) */
   applicants: ProgramApplicant[]
+  /** 취소되지 않은 신청 수 — 서버 합계(학생은 신청자 명단 없이 인기순을 이 값으로 정렬한다) */
+  applyCount: number
   /** 등록 일시 (ISO 8601) */
   createdAt: string
   /** 낙관적 잠금용 버전 — 저장 시 서버가 대조한다. */
@@ -245,7 +247,7 @@ export interface Program {
 }
 
 /** 새 프로그램 폼 초기값 */
-export function blankProgram(): Omit<Program, 'id' | 'applicants' | 'createdAt'> {
+export function blankProgram(): Omit<Program, 'id' | 'applicants' | 'applyCount' | 'createdAt'> {
   return {
     title: '',
     desc: '',

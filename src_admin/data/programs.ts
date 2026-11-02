@@ -89,8 +89,22 @@ export async function queryPrograms(params: ListParams = {}): Promise<Paginated<
 
 /** 상단고정(pinned) 우선 → 최신순 정렬. 목록 노출 시 이 순서를 사용한다. */
 export function sortByPriority(list: Program[]): Program[] {
+  return sortPrograms(list, 'latest')
+}
+
+/** 학생 목록의 정렬 선택 — 최신순(등록일) · 기간순(신청 마감 가까운 순) · 인기순(유효 신청 많은 순). */
+export type ProgramOrder = 'latest' | 'deadline' | 'popular'
+
+/**
+ * 어느 순서든 상단고정이 먼저다(등록일과 무관하게 최상단 노출). 동률은 최신순.
+ * 기간순은 신청 가능한 공고를 마감일 오름차순으로, 마감일 없는 상시 공고를 그 뒤에, 마감·종료 공고를 맨 뒤에 둔다.
+ */
+export function sortPrograms(list: Program[], order: ProgramOrder): Program[] {
+  const deadline = (p: Program) => (isProgramClosed(p) ? '2' : p.endDate ? `0${p.endDate}` : '1')
   return [...list].sort((a, b) => {
     if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
+    if (order === 'deadline' && deadline(a) !== deadline(b)) return deadline(a).localeCompare(deadline(b))
+    if (order === 'popular' && a.applyCount !== b.applyCount) return b.applyCount - a.applyCount
     return b.createdAt.localeCompare(a.createdAt)
   })
 }
@@ -106,7 +120,7 @@ export function countPrograms(): Record<ProgramStatus, number> & { total: number
   }
 }
 
-type ProgramInput = Omit<Program, 'id' | 'applicants' | 'createdAt' | 'version'>
+type ProgramInput = Omit<Program, 'id' | 'applicants' | 'applyCount' | 'createdAt' | 'version'>
 
 /** 새 프로그램 등록 — id·createdAt 은 서버가 부여한다. */
 export async function addProgram(input: ProgramInput): Promise<Program> {
@@ -120,7 +134,7 @@ export async function updateProgram(id: string, patch: Partial<ProgramInput>): P
   const current = getProgramById(id)
   if (!current) throw new Error('프로그램을 찾을 수 없습니다.')
   const rest = Object.fromEntries(Object.entries({ ...current, ...patch })
-    .filter(([key]) => !['applicants', 'createdAt', 'id', 'version'].includes(key)))
+    .filter(([key]) => !['applicants', 'applyCount', 'createdAt', 'id', 'version'].includes(key)))
   await api(`/programs/${encodeURIComponent(id)}`, {
     method: 'PUT', body: JSON.stringify({ ...rest, expectedVersion: current.version }),
   })

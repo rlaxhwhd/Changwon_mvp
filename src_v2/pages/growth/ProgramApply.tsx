@@ -8,7 +8,8 @@ import { getActiveStudent } from '../../data/students'
 import { getWishlist, toggleWish as toggleWishStore } from '../../data/wishlist'
 import { useStore } from '../../../shared/useRoadmapStore'
 import { GROWTH_EVENT } from '../../../shared/growthStore'
-import { getPrograms, sortByPriority } from '../../../src_admin/data/programs'
+import { getPrograms, sortPrograms } from '../../../src_admin/data/programs'
+import type { ProgramOrder } from '../../../src_admin/data/programs'
 import { programCategories, categoryLabel } from '../../../src_admin/data/schema/program'
 import type { ProgramCategory } from '../../../src_admin/data/schema/program'
 import ProgramCardGrid from './ProgramCardGrid'
@@ -29,7 +30,8 @@ export default function ProgramApply() {
   const profile = getActiveStudent()
   const [activeTab, setActiveTab] = useState<Category>('전체')
   const [page, setPage] = useState(1)
-  const programs = useMemo<ProgramCardVM[]>(() => sortByPriority(getPrograms()).map(program => ({
+  const [order, setOrder] = useState<ProgramOrder>('latest')
+  const programs = useMemo<ProgramCardVM[]>(() => sortPrograms(getPrograms(), order).map(program => ({
     id: program.id,
     title: program.title,
     desc: program.desc,
@@ -42,7 +44,7 @@ export default function ProgramApply() {
     runEndDate: program.runEndDate,
     capacity: program.capacity,
     image: program.image,
-  })), [])
+  })), [order])
   // 찜은 서버가 정본이다(dc.program_wishlist) — 저장 뒤 스토어가 다시 읽어 발행한다.
   const wishRevision = useStore(GROWTH_EVENT)
   const wishlist = useMemo(() => new Set(getWishlist()), [wishRevision])
@@ -180,10 +182,18 @@ export default function ProgramApply() {
               찜 목록 보기
               {wishlist.size > 0 && <span className="pa-wish-count">{wishlist.size}</span>}
             </button>
-            <select className="pa-sort-select" aria-label="정렬">
-              <option>기간순</option>
-              <option>최신순</option>
-              <option>인기순</option>
+            <select
+              className="pa-sort-select"
+              aria-label="정렬"
+              value={order}
+              onChange={event => {
+                setOrder(event.target.value as ProgramOrder)
+                setPage(1)
+              }}
+            >
+              <option value="latest">최신순</option>
+              <option value="deadline">기간순</option>
+              <option value="popular">인기순</option>
             </select>
           </div>
         </div>
