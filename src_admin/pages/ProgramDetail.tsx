@@ -165,7 +165,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
             <span className="admin-stat-icon"><LuUsers /></span>
             <div className="admin-stat-body">
               <span className="admin-stat-label">신청자</span>
-              <span className="admin-stat-value">{applicants.length}<em>명</em></span>
+              <span className="admin-stat-value">{program.applyCount}<em>명</em></span>
             </div>
           </div>
           <div className="admin-stat-card">

@@ -37,6 +37,7 @@ export function getProgramById(id: string): Program | undefined {
 /** 신청을 받을 수 있는가 — 상태와 마감일 둘 다 본다(상태만 믿으면 지난 공고가 열려 있다). */
 export function isProgramClosed(program: Program): boolean {
   if (program.status !== 'RECRUITING') return true
+  if (program.selectionMethod === 'FIRST_COME' && program.applyCount >= program.capacity) return true
   if (program.endDate && program.endTime && Date.now() > new Date(`${program.endDate}T${program.endTime}+09:00`).getTime()) return true
   return programDdayLabel(program) === '마감'
 }

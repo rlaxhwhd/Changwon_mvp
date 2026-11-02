@@ -17,7 +17,7 @@ export default function ProgramParticipationActions({ participation: p, notice =
     ? 'cancel' : p.outcome === 'COMPLETED' ? 'done' : 'scheduled'
 
   return <div className={`program-participation${notice ? ' program-participation--notice' : ''}`}>
-    {notice ? pending.length === 0 && <button type="button" className="jd-apply-btn" disabled>{label}</button>
+    {notice && pending.length === 0 ? <button type="button" className="jd-apply-btn" disabled>{label}</button>
       : <span className={`cs-status cs-status--${tone}`}>{label}</span>}
     {pending.map(s => <Link key={s.phase}
       className={notice ? 'jd-apply-btn' : 'program-survey-action'}

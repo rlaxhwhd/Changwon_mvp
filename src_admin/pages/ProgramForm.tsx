@@ -120,8 +120,8 @@ export default function ProgramForm() {
   const [targets, setTargets] = useState<string[]>(existing?.targetStatuses ?? [])
   const [grades, setGrades] = useState<string[]>(existing?.targetGrades ?? [])
   const [limitCount, setLimitCount] = useState(existing ? String(existing.capacity) : '100')
-  const [selectCount, setSelectCount] = useState('30')
-  const [selectMethod, setSelectMethod] = useState<'선착순' | '심사'>('선착순')
+  const [selectCount, setSelectCount] = useState(existing ? String(existing.selectionCapacity ?? existing.capacity) : '30')
+  const [selectMethod, setSelectMethod] = useState<'FIRST_COME' | 'REVIEW'>(existing?.selectionMethod ?? (existing ? 'REVIEW' : 'FIRST_COME'))
   const [certificate, setCertificate] = useState<'발급' | '미발급'>('발급')
   const [completeHours, setCompleteHours] = useState('2')
   // 기존 글을 불러온다 — 예전에는 항상 빈 값으로 시작해서, 수정하려고 열면
@@ -173,7 +173,7 @@ export default function ProgramForm() {
 
   const targetSummary = targets.map(code => codeLabel('PROGRAM_TARGET_STATUS', code)).join(', ')
     + (grades.length ? ` (${grades.map(code => codeLabel('PROGRAM_TARGET_GRADE', code)).join(', ')})` : '')
-  const capacityLabel = `${selectCount || '-'}명 / ${limitCount || '-'}명 (${selectMethod === '선착순' ? '선착순 선발' : '심사 후 선발'})`
+  const capacityLabel = `${selectCount || '-'}명 / ${limitCount || '-'}명 (${selectMethod === 'FIRST_COME' ? '선착순 선발' : '심사 후 선발'})`
 
   const canSave = title.trim() !== '' && applyStartDate !== '' && applyEndDate !== '' && managerName !== '' && majorCat !== '' && minorCat !== '' && targets.length > 0 && grades.length > 0 && !saved
     && !saving && !uploading && (!editing || !!surveyLocks) && (!satisfaction || !!satisfactionFormId) && (!competency || !!competencyFormId)
@@ -183,6 +183,10 @@ export default function ProgramForm() {
     setSaveError('')
     if (Boolean(noticeDate) !== Boolean(noticeTime)) {
       setSaveError('공고 날짜와 시간을 함께 입력해 주세요.'); return
+    }
+    if (![limitCount, selectCount].every(v => v.trim() !== '' && Number.isInteger(Number(v)) && Number(v) >= 0 && Number(v) <= 100000)
+        || Number(selectCount) > Number(limitCount)) {
+      setSaveError('모집·선발 인원을 확인해 주세요. 선발 인원은 모집 인원 이하여야 합니다.'); return
     }
     setSaving(true)
     const payload = {
@@ -210,7 +214,9 @@ export default function ProgramForm() {
       sessions: Math.max(1, Number(sessions) || 1),
       manager: managerName,
       managerIds,
-      capacity: Number(limitCount) || Number(selectCount) || 20,
+      capacity: Number(limitCount),
+      selectionCapacity: Number(selectCount),
+      selectionMethod: selectMethod,
       location: place.trim(),
       status: existing?.status ?? 'RECRUITING',
       pinned,
@@ -549,8 +555,8 @@ export default function ProgramForm() {
                 <div className="pf-field">
                   <span className="pf-label">선발 방식 <span className="pf-req">*</span></span>
                   <div className="pf-radio-row">
-                    <label className="pf-radio"><input type="radio" name="selectMethod" checked={selectMethod === '선착순'} onChange={() => setSelectMethod('선착순')} /> 선착순 선발</label>
-                    <label className="pf-radio"><input type="radio" name="selectMethod" checked={selectMethod === '심사'} onChange={() => setSelectMethod('심사')} /> 심사 후 선발</label>
+                    <label className="pf-radio"><input type="radio" name="selectMethod" checked={selectMethod === 'FIRST_COME'} onChange={() => setSelectMethod('FIRST_COME')} /> 선착순 선발</label>
+                    <label className="pf-radio"><input type="radio" name="selectMethod" checked={selectMethod === 'REVIEW'} onChange={() => setSelectMethod('REVIEW')} /> 심사 후 선발</label>
                   </div>
                 </div>
 

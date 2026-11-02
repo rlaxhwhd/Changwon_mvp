@@ -204,7 +204,7 @@ export default function ProgramManage() {
                   <span className="admin-roster-cell">{program.sessions}회</span>
                   <span className="admin-roster-cell"><small>{period(program)}</small></span>
                   <span className="admin-roster-cell">{program.capacity}명</span>
-                  <span className="admin-roster-cell">{program.applicants.length}명</span>
+                  <span className="admin-roster-cell">{program.applyCount}명</span>
                   <span><span className={`admin-chip ${statusClass(operationStatus)}`}>{operationStatus}</span></span>
                   <span className="admin-roster-cell">{program.manager || '미지정'}</span>
                 </div>

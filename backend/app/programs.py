@@ -73,11 +73,11 @@ WRITABLE = ('title,summary,detail,category_code,status_code,apply_start,apply_en
             'manager,fiscal_year,location,image,capacity,pinned,roadmap_entry,care_types,satisfaction_survey,'
             'competency_survey,competency_areas,include_in_stats,'
             'middle_category_code,target_statuses,target_grades,notice_at,apply_start_time,apply_end_time,'
-            'run_start_time,run_end_time,application_questions')
+            'run_start_time,run_end_time,application_questions,selection_method,selection_capacity')
 # 프로그램이 선택한 게시본. 해당 종류의 응답이 들어오면 고정한다.
 PIN_COLUMNS = 'competency_form_id,satisfaction_form_id'
 # 유효 신청 수 — 학생 목록의 인기순 정렬용 합계(학생은 신청자 명단을 못 보므로 서버가 센다).
-APPLY_COUNT = '''(SELECT count(*) FROM dc.program_apply a WHERE a.program_id=program.id AND a.cancelled_at IS NULL) AS apply_count'''
+APPLY_COUNT = '''COALESCE((SELECT c.applied FROM dc.program_application_counts c WHERE c.program_id=program.id),0) AS apply_count'''
 PROGRAM_COLUMNS = 'id,' + WRITABLE + ',' + PIN_COLUMNS + ',created_at,version,' + APPLY_COUNT
 
 
@@ -110,6 +110,7 @@ def program_dto(row, applicants, attachments=None, managers=None):
         'runStartDate': row['run_start'], 'runEndDate': row['run_end'],
         'sessions': row['sessions'], 'manager': row['manager'], 'fiscalYear': row['fiscal_year'],
         'capacity': row['capacity'], 'image': row['image'], 'location': row['location'],
+        'selectionMethod': row['selection_method'], 'selectionCapacity': row['selection_capacity'],
         'pinned': row['pinned'], 'satisfactionSurvey': row['satisfaction_survey'],
         'competencySurvey': row['competency_survey'], 'competencyAreas': row['competency_areas'],
         # 이 프로그램이 붙잡은 설문지 — 수정 화면의 영역 선택지가 최신이 아니라 이 버전을 따라야 한다.
@@ -262,13 +263,10 @@ def statistics(user=Depends(principal, scope='function'), conn=Depends(connectio
       count(*) FILTER(WHERE status_code='RECRUITING')::int AS recruiting,
       COALESCE(sum(capacity),0)::int AS capacity FROM dc.program WHERE include_in_stats''').fetchone()
     rows = conn.execute('''SELECT p.id,p.title,p.category_code,p.status_code,p.capacity,
-      count(a.*)::int AS applied,
-      count(*) FILTER(WHERE a.selection_code='SELECTED')::int AS selected,
-      count(*) FILTER(WHERE a.attendance_code='PRESENT')::int AS attended,
-      count(*) FILTER(WHERE a.outcome_code='COMPLETED')::int AS completed,
-      count(*) FILTER(WHERE a.attendance_code='NO_SHOW' OR a.outcome_code='ABSENT')::int AS absent
-      FROM dc.program p LEFT JOIN dc.program_apply a ON a.program_id=p.id AND a.cancelled_at IS NULL
-      WHERE p.include_in_stats GROUP BY p.id ORDER BY p.created_at DESC,p.id''').fetchall()
+      COALESCE(c.applied,0) AS applied,COALESCE(c.selected,0) AS selected,
+      COALESCE(c.attended,0) AS attended,COALESCE(c.completed,0) AS completed,COALESCE(c.absent,0) AS absent
+      FROM dc.program p LEFT JOIN dc.program_application_counts c ON c.program_id=p.id
+      WHERE p.include_in_stats ORDER BY p.created_at DESC,p.id''').fetchall()
     return {'summary': {**summary, 'applied': sum(r['applied'] for r in rows),
                         'completed': sum(r['completed'] for r in rows)},
             'programs': rows}
@@ -320,6 +318,8 @@ class ProgramBody(BaseModel):
     managerIds: list[str] | None = Field(default=None, max_length=50)
     fiscalYear: str = Field(default='', max_length=10)
     capacity: int = Field(ge=0, le=100000)
+    selectionMethod: str = Field(default='REVIEW', pattern='^(REVIEW|FIRST_COME)$')
+    selectionCapacity: int | None = Field(default=None, ge=0, le=100000)
     image: str | None = Field(default=None, max_length=2000000)
     location: str = Field(default='', max_length=200)
     pinned: bool = False
@@ -341,6 +341,8 @@ class ProgramBody(BaseModel):
 
     @model_validator(mode='after')
     def consistent(self):
+        if self.selectionCapacity is not None and self.selectionCapacity > self.capacity:
+            raise ValueError('선발 인원은 모집 인원을 초과할 수 없습니다.')
         if self.noticeAt is not None and self.noticeAt.tzinfo is None:
             raise ValueError('공고일시에는 시간대가 필요합니다.')
         for start, end, start_time, end_time in (
@@ -381,7 +383,7 @@ def program_values(body: ProgramBody):
             body.competencySurvey, body.competencyAreas, body.includeInStats,
             body.middleCategory, body.targetStatuses, body.targetGrades, body.noticeAt,
             body.startTime, body.endTime, body.runStartTime, body.runEndTime,
-            Jsonb([q.model_dump() for q in body.applicationQuestions]))
+            Jsonb([q.model_dump() for q in body.applicationQuestions]),body.selectionMethod,body.selectionCapacity)
 
 
 def check_category(conn, code):
@@ -477,7 +479,8 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
     before = get_program(conn, program_id, lock=True)
     # A client predating these fields must not silently erase saved notice/question data.
     for field, column in (('noticeAt', 'notice_at'), ('startTime', 'apply_start_time'),
-                          ('endTime', 'apply_end_time'), ('runStartTime', 'run_start_time'),
+                          ('endTime', 'apply_end_time'), ('selectionMethod', 'selection_method'),
+                          ('selectionCapacity', 'selection_capacity'), ('runStartTime', 'run_start_time'),
                           ('runEndTime', 'run_end_time'), ('applicationQuestions', 'application_questions')):
         if field not in body.model_fields_set:
             value = before[column]
@@ -508,9 +511,9 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
             or sorted(before['care_types']) != sorted(body.careTypes)
             or before['apply_end'] != body.endDate):
         raise HTTPException(409, '이미 로드맵에 편입된 프로그램의 편입 조건·마감일은 바꿀 수 없습니다.')
-    selected = conn.execute("SELECT count(*) AS n FROM dc.program_apply WHERE program_id=%s AND selection_code='SELECTED'",
+    selected = conn.execute("SELECT count(*) AS n FROM dc.program_apply WHERE program_id=%s AND selection_code='SELECTED' AND cancelled_at IS NULL",
                             (program_id,)).fetchone()['n']
-    if body.capacity < selected:
+    if (body.selectionCapacity if body.selectionCapacity is not None else body.capacity) < selected:
         raise HTTPException(422, f'이미 선발된 {selected}명보다 적은 정원으로 줄일 수 없습니다.')
     assignments = ','.join(f'{column}=%s' for column in WRITABLE.split(','))
     row = conn.execute(f'''UPDATE dc.program SET {assignments},competency_form_id=%s,satisfaction_form_id=%s,
@@ -521,6 +524,10 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
     enroll_program(conn, user, row)
     sync_attachments(conn, user, program_id, body.attachmentFileIds)
     sync_managers(conn, program_id, managers)
+    # 저장하지 않았던 예전 선착순 선택은 복구할 수 없다. 관리자가 명시적으로 방식을
+    # 바꾼 때만 기존 대기를 신청 순으로 선발한다. 일반 수정은 수동 결정을 되돌리지 않는다.
+    if before['selection_method'] != 'FIRST_COME' and row['selection_method'] == 'FIRST_COME':
+        select_waiting(conn, user, row)
     return program_dto(row, applicants_of(conn, user, [program_id])[program_id],
                        attachments_of(conn, [program_id])[program_id], managers)
 
@@ -595,6 +602,48 @@ def get_application(conn, program_id, student_uid, lock=True):
     return row
 
 
+def selection_limit(program):
+    return program['selection_capacity'] if program['selection_capacity'] is not None else program['capacity']
+
+
+def change_selection(conn, user, program, before, selection, reason=''):
+    """수동·자동 선발의 이력·시각·사전 설문 알림을 같은 트랜잭션에서 처리한다.
+
+    호출자는 program 행 잠금 아래에서 정원을 확인해야 한다.
+    """
+    if before['outcome_code'] and selection != 'SELECTED':
+        raise HTTPException(409, '이수 결과가 있는 신청은 선발을 해제할 수 없습니다. 결과를 먼저 되돌리세요.')
+    row = conn.execute('''UPDATE dc.program_apply SET selection_code=%s,
+      selected_at=CASE WHEN %s='SELECTED' THEN COALESCE(selected_at,now()) ELSE NULL END,
+      version=version+1,updated_at=now(),updated_by=%s WHERE program_id=%s AND student_uid=%s RETURNING *''',
+      (selection, selection, user['intg_uid'], program['id'], before['student_uid'])).fetchone()
+    after = applicant_dto({**row, 'alias': before['alias'], 'name': before['name'],
+                           'major_label': before['major_label']})
+    record(conn, user, program['id'], before['student_uid'], 'SELECTION', applicant_dto(before), after, reason)
+    if selection == 'SELECTED':
+        notify_survey(conn, program, before['student_uid'], 'PRE')
+    return after
+
+
+def selected_count(conn, program_id):
+    return conn.execute('''SELECT COALESCE((SELECT selected FROM dc.program_application_counts
+      WHERE program_id=%s),0) AS n''', (program_id,)).fetchone()['n']
+
+
+def select_waiting(conn, user, program):
+    """선착순 신청·방식 변경 시 기존 대기를 신청 순으로 편입한다. 호출자는 공고 행을 잠근다."""
+    remaining = max(0, selection_limit(program) - selected_count(conn, program['id']))
+    if not remaining:
+        return {}
+    rows = conn.execute('''SELECT a.*,p.alias,p.name,s.major_label FROM dc.program_apply a
+      JOIN dc.person p ON p.intg_uid=a.student_uid JOIN dc.student s ON s.intg_uid=a.student_uid
+      WHERE a.program_id=%s AND a.selection_code='PENDING' AND a.cancelled_at IS NULL
+        AND a.outcome_code IS NULL
+      ORDER BY a.applied_at,a.student_uid LIMIT %s FOR UPDATE OF a''', (program['id'], remaining)).fetchall()
+    return {before['student_uid']: change_selection(conn, user, program, before, 'SELECTED', '선착순 신청 순 자동 선발')
+            for before in rows}
+
+
 class ApplyBody(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     studentId: str | None = None
@@ -637,6 +686,13 @@ def apply(program_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
     if conn.execute('SELECT 1 FROM dc.program_apply WHERE program_id=%s AND student_uid=%s',
                     (program_id, student['intg_uid'])).fetchone():
         raise HTTPException(409, '이미 신청한 프로그램입니다.')
+    if program['selection_method'] == 'FIRST_COME':
+        # FOR UPDATE가 기다린 동안 다른 신청이 커밋될 수 있다. 잠금 SELECT에 딸린
+        # 집계 스냅샷을 재사용하지 않고 잠금 획득 후 새 statement로 정원을 읽는다.
+        applied = conn.execute('''SELECT COALESCE((SELECT applied FROM dc.program_application_counts
+          WHERE program_id=%s),0) AS n''', (program_id,)).fetchone()['n']
+        if applied >= program['capacity']:
+            raise HTTPException(409, f"모집 정원 {program['capacity']}명이 마감되었습니다.")
     # 신청 시점 학적을 복사해 둔다(CLAUDE.md 규칙 2) — 학과 개편 뒤에도 명단이 흔들리지 않는다.
     answer_snapshot, answer_files = validate_answers(conn, user, program, body.answers)
     snapshot = {'studentName': student['name'], 'studentMajor': student['major_label'],
@@ -651,6 +707,9 @@ def apply(program_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
     result = applicant_dto({**row, 'alias': student['alias'], 'name': student['name'],
                             'major_label': student['major_label']})
     record(conn, user, program_id, student['intg_uid'], 'APPLY', None, result)
+    if program['selection_method'] == 'FIRST_COME':
+        # 빈 자리가 생긴 뒤 새 신청이 들어와도 기존 대기보다 앞서 선발되지 않는다.
+        result = select_waiting(conn, user, program).get(student['intg_uid'], result)
     notify_application(conn, program, student)
     conn.execute('INSERT INTO dc.idempotency(actor_uid,route,key,request_hash,response) VALUES(%s,%s,%s,%s,%s)',
                  (user['intg_uid'], route, idempotency_key, digest, Jsonb(jsonable_encoder(result))))
@@ -735,25 +794,14 @@ def set_selection(program_id: str, body: SelectionBody, user=Depends(principal, 
     students = resolve_students(conn, user, body.studentIds)
     if body.selection == 'SELECTED':
         already = conn.execute('''SELECT count(*) AS n FROM dc.program_apply WHERE program_id=%s
-          AND selection_code='SELECTED' AND student_uid<>ALL(%s)''',
+          AND selection_code='SELECTED' AND cancelled_at IS NULL AND student_uid<>ALL(%s)''',
           (program_id, [s['intg_uid'] for s in students])).fetchone()['n']
-        if already + len(students) > program['capacity']:
-            raise HTTPException(409, f"정원 {program['capacity']}명을 넘겨 선발할 수 없습니다.")
+        if already + len(students) > selection_limit(program):
+            raise HTTPException(409, f"선발 정원 {selection_limit(program)}명을 넘겨 선발할 수 없습니다.")
     results = []
     for student in students:
         before = get_application(conn, program_id, student['intg_uid'])
-        if before['outcome_code'] and body.selection != 'SELECTED':
-            raise HTTPException(409, '이수 결과가 있는 신청은 선발을 해제할 수 없습니다. 결과를 먼저 되돌리세요.')
-        row = conn.execute('''UPDATE dc.program_apply SET selection_code=%s,
-          selected_at=CASE WHEN %s='SELECTED' THEN COALESCE(selected_at,now()) ELSE NULL END,
-          version=version+1,updated_at=now(),updated_by=%s WHERE program_id=%s AND student_uid=%s RETURNING *''',
-          (body.selection, body.selection, user['intg_uid'], program_id, student['intg_uid'])).fetchone()
-        after = applicant_dto({**row, 'alias': student['alias'], 'name': student['name'],
-                               'major_label': student['major_label']})
-        record(conn, user, program_id, student['intg_uid'], 'SELECTION', applicant_dto(before), after, body.reason)
-        if body.selection == 'SELECTED':
-            notify_survey(conn, program, student['intg_uid'], 'PRE')
-        results.append(after)
+        results.append(change_selection(conn, user, program, before, body.selection, body.reason))
     return results
 
 

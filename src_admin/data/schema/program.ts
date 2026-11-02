@@ -218,6 +218,10 @@ export interface Program {
   fiscalYear: string
   /** 정원 */
   capacity: number
+  /** 신청 순 자동 선발 / 심사 후 수동 선발. 기존 공고는 REVIEW로 보존된다. */
+  selectionMethod?: 'FIRST_COME' | 'REVIEW'
+  /** null은 기존 공고 호환: 모집 정원(capacity)을 선발 상한으로 사용한다. */
+  selectionCapacity?: number | null
   /** 프로그램 썸네일 경로 */
   image?: string
   /** 진행 장소 */

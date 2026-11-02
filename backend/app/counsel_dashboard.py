@@ -81,10 +81,11 @@ def dashboard(request: Request, response: Response, user=Depends(principal, scop
     if role == 'career':
         # 모집중 비교과 전체(2026-10-29) — 학생 「신청 가능」과 같은 술어, 마감 임박 순.
         programs = conn.execute('''SELECT p.id,p.title,p.category_code AS category,p.capacity,p.apply_end AS "applyEnd",
-          (SELECT count(*) FROM dc.program_apply a WHERE a.program_id=p.id AND a.cancelled_at IS NULL) AS applied,
+          COALESCE(c.applied,0) AS applied,
           (SELECT count(*) FROM dc.program_apply a WHERE a.program_id=p.id AND a.cancelled_at IS NULL
-           AND (a.applied_at AT TIME ZONE 'Asia/Seoul')::date=%s) AS "todayCount"
-          FROM dc.program p WHERE p.status_code='RECRUITING' AND (p.apply_end IS NULL OR
+           AND a.selection_code<>'CANCELLED' AND (a.applied_at AT TIME ZONE 'Asia/Seoul')::date=%s) AS "todayCount"
+          FROM dc.program p LEFT JOIN dc.program_application_counts c ON c.program_id=p.id
+          WHERE p.status_code='RECRUITING' AND (p.apply_end IS NULL OR
            (p.apply_end + COALESCE(p.apply_end_time,'23:59:59.999999'::time)) AT TIME ZONE 'Asia/Seoul' >= now())
           ORDER BY p.apply_end NULLS LAST,p.id LIMIT 50''', (day,)).fetchall()
         jobs = recruiting_jobs(conn, user, day)

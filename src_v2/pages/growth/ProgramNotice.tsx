@@ -14,6 +14,7 @@ import { typeLabel } from '../../data/careerProcess'
 import { isWished as isWishedStore, toggleWish as toggleWishStore } from '../../data/wishlist'
 import { useStore } from '../../../shared/useRoadmapStore'
 import { GROWTH_EVENT } from '../../../shared/growthStore'
+import { PROGRAM_EVENT } from '../../../shared/programStore'
 // 채용공고 상세와 같은 껍데기를 쓴다 — 학생이 보는 두 공고가 서로 다른 화면일 이유가 없다.
 // 클래스 접두사가 jd- 인 것은 그 파일이 먼저 생겼기 때문이고, 스타일은 공용이다.
 import '../../components/JobDetailView.css'
@@ -55,6 +56,7 @@ function periodOf(start?: string, end?: string, startTime?: string | null, endTi
 }
 
 export default function ProgramNotice({ programId, backTo, action, showWish = false }: Props) {
+  useStore(PROGRAM_EVENT)
   const program = getProgramById(programId)
   const [fileError, setFileError] = useState('')
   // 찜은 서버가 정본이다 — 로컬 상태로 낙관적 표시를 하지 않는다.
@@ -78,7 +80,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
   // 상단 태그·상태 줄은 저장값이 아니라 보정된 상태를 쓴다 — 한 화면이 두 말을 하면 안 된다.
   const statusLabel = programStatusLabel(noticeStatusLabel(program))
   const categoryText = categoryLabel(program.category)
-  const applied = program.applicants.length
+  const applied = program.applyCount
 
   const chips = [
     categoryText,
@@ -101,6 +103,8 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
     { label: '접수기간', value: periodOf(program.startDate, program.endDate, program.startTime, program.endTime) },
     { label: '운영기간', value: periodOf(program.runStartDate, program.runEndDate, program.runStartTime, program.runEndTime) },
     { label: '정원', value: `${program.capacity}명` },
+    { label: '선발 방식', value: program.selectionMethod === 'FIRST_COME' ? '선착순 선발' : '심사 후 선발' },
+    { label: '선발 인원', value: `${program.selectionCapacity ?? program.capacity}명` },
     { label: '신청현황', value: `${applied}명 / ${program.capacity}명` },
     // 로드맵에 칸이 생기는 프로그램만 알린다 — 학생이 이행률에 잡히는지가 달라진다.
     program.roadmapEntry && program.roadmapEntry !== 'NONE'
