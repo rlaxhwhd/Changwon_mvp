@@ -1,7 +1,9 @@
-"""Small, dependency-free OOXML writer. Text cells never become Excel formulas."""
+"""Small, dependency-free OOXML writer (and first-sheet reader). Text cells never become Excel formulas."""
+from io import BytesIO
 from tempfile import SpooledTemporaryFile
+from xml.etree import ElementTree
 from xml.sax.saxutils import escape
-from zipfile import ZipFile, ZIP_DEFLATED
+from zipfile import BadZipFile, ZipFile, ZIP_DEFLATED
 import re
 
 SHEET_CT = 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml'
@@ -51,3 +53,63 @@ def workbook_sheets(sheets):
     except BaseException:
         output.close()
         raise
+
+
+MAIN_NS = '{http://schemas.openxmlformats.org/spreadsheetml/2006/main}'
+REL_NS = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'
+PART_LIMIT = 32*1024*1024
+
+
+def read_rows(data: bytes, max_rows: int = 20000):
+    """첫 시트를 문자열 행 리스트로 읽는다. 숫자 셀은 엑셀이 저장한 값(v) 그대로다 — 해석은 호출자가 한다.
+
+    ValueError 메시지는 사용자에게 그대로 보여 줄 수 있는 문장이다.
+    """
+    try:
+        book = ZipFile(BytesIO(data))
+    except BadZipFile:
+        raise ValueError('엑셀(.xlsx) 파일만 올릴 수 있습니다.') from None
+    with book:
+        def part(name):
+            try:
+                info = book.getinfo(name)
+            except KeyError:
+                return None
+            if info.file_size > PART_LIMIT:  # 압축 폭탄 — 풀기 전에 선언 크기로 거절한다.
+                raise ValueError('엑셀 파일이 너무 큽니다.')
+            return ElementTree.fromstring(book.read(name))
+        workbook_xml, rels = part('xl/workbook.xml'), part('xl/_rels/workbook.xml.rels')
+        sheet = workbook_xml.find(f'{MAIN_NS}sheets/{MAIN_NS}sheet') if workbook_xml is not None else None
+        if sheet is None or rels is None:
+            raise ValueError('엑셀(.xlsx) 파일만 올릴 수 있습니다.')
+        target = next((r.get('Target') for r in rels if r.get('Id') == sheet.get(REL_NS + 'id')), '')
+        target = target.lstrip('/') if target.startswith('/') else 'xl/' + target
+        strings_xml = part('xl/sharedStrings.xml')
+        strings = [''.join(t.text or '' for t in si.iter(MAIN_NS + 't')) for si in strings_xml] if strings_xml is not None else []
+        sheet_xml = part(target)
+        if sheet_xml is None:
+            raise ValueError('엑셀 시트를 찾을 수 없습니다.')
+        rows = []
+        for row in sheet_xml.iter(MAIN_NS + 'row'):
+            if len(rows) >= max_rows:
+                raise ValueError(f'한 번에 {max_rows}행까지 올릴 수 있습니다.')
+            values = {}
+            for position, cell in enumerate(row.findall(MAIN_NS + 'c')):
+                ref = re.match(r'[A-Z]+', cell.get('r') or '')
+                column = position
+                if ref:
+                    column = 0
+                    for letter in ref.group():
+                        column = column*26 + ord(letter) - 64
+                    column -= 1
+                kind = cell.get('t')
+                if kind == 'inlineStr':
+                    text = ''.join(t.text or '' for t in cell.iter(MAIN_NS + 't'))
+                else:
+                    v = cell.find(MAIN_NS + 'v')
+                    text = v.text or '' if v is not None else ''
+                    if kind == 's' and text.isdigit() and int(text) < len(strings):
+                        text = strings[int(text)]
+                values[column] = text.strip()
+            rows.append([values.get(i, '') for i in range(max(values, default=-1) + 1)])
+        return rows

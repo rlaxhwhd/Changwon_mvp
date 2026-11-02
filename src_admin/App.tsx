@@ -9,6 +9,7 @@ import SystemManagement from './pages/SystemManagement'
 import SurveyForms from './pages/SurveyForms'
 import DepartmentAssignments from './pages/DepartmentAssignments'
 import CompanyMembers from './pages/CompanyMembers'
+import EmploymentForecast from './pages/EmploymentForecast'
 import { hasActiveSession } from './data/session'
 import Home from './pages/Home'
 import CounselRequests from './pages/CounselRequests'
@@ -150,8 +151,9 @@ const router = createBrowserRouter(
                 { path: '/members/professors', element: <DepartmentAssignments key="professor" role="professor" /> },
                 { path: '/members/companies', element: <CompanyMembers /> },
                 { path: '/notices', element: <SystemManagement key="notices" tab="notices" /> },
+                { path: '/forecast', element: <EmploymentForecast /> },
                 ...[
-                  ['/forecast', '취업예측분석시스템'], ['/diagnosis', '진단관리'], ['/counsel', '상담관리'],
+                  ['/diagnosis', '진단관리'], ['/counsel', '상담관리'],
                   ['/extracurricular', '비교과프로그램관리'], ['/companies', '기업정보플랫폼'],
                   ['/system/groups', '그룹관리'], ['/system/auth', '권한관리'], ['/system/boards', '게시판관리'], ['/system/banners', '배너관리'],
                   ['/system/popups', '팝업관리'], ['/system/access-log', '사용자 접속이력'],

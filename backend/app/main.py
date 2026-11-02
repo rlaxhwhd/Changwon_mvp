@@ -48,6 +48,7 @@ from .db import pool
 from .settings import settings
 from .auth import validate_development_token
 from .demo_access import router as demo_access_router
+from .employment_report import router as employment_report_router
 from .db import connection
 
 
@@ -118,6 +119,7 @@ app.include_router(staff_router, prefix='/api/v1')
 app.include_router(advisor_assignments_router, prefix='/api/v1')
 app.include_router(professor_counsel_manage_router, prefix='/api/v1')
 app.include_router(professor_counsel_files_router, prefix='/api/v1')
+app.include_router(employment_report_router, prefix='/api/v1')
 
 
 @app.get('/api/v1/health')

@@ -2812,3 +2812,22 @@ input, textarea, select { font-family: var(--font); }
 .admin-picker-roster .admin-roster-head, .admin-picker-roster .admin-roster-row { grid-template-columns: 1fr 0.8fr 1.2fr 0.5fr 0.7fr 0.7fr; }
 .admin-picker-roster .admin-roster-head, .admin-picker-roster .admin-roster-cell { align-items: center; text-align: center; }
 .admin-picker-roster .admin-roster-cell .admin-enroll { align-self: center; }
+
+/* 취업예측분석시스템(/forecast) — 목록·양식은 교수 상담 표(ProfessorCounsel.css)를 재사용하고 여기엔 차이만 둔다. */
+.forecast-filters { display: flex; flex-direction: column; gap: 10px; margin-bottom: 14px; }
+.forecast-month-range { display: grid; grid-template-columns: repeat(2, auto) auto repeat(2, auto); column-gap: 6px; align-items: center; }
+.forecast-month-range > span:first-child { grid-column: 1 / -1; }
+.forecast-actions { display: flex; gap: 8px; margin-left: auto; }
+.forecast-table { min-width: 1400px; }
+.forecast-table th:first-child, .forecast-table td:first-child { width: 40px; padding-inline: 8px; }
+.forecast-picker-table { min-width: 0; margin-top: 12px; }
+.forecast-picker-row { cursor: pointer; }
+.forecast-form { margin-bottom: 16px; }
+.forecast-form input, .forecast-form select { height: 36px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: 8px; font: inherit; background: #fff; }
+.forecast-form .forecast-month-input { width: 180px; }
+.forecast-form .forecast-company { flex: 1; min-width: 160px; }
+.forecast-required { margin-left: 3px; color: var(--color-danger); font-style: normal; }
+.forecast-unknown-btn { background: var(--color-warning); color: #fff; }
+.forecast-form-actions { display: flex; justify-content: center; gap: 8px; }
+.forecast-upload-errors { margin: 0 0 12px; padding: 12px 16px 12px 32px; max-height: 180px; overflow-y: auto; border: 1px solid var(--color-danger); border-radius: 8px; font-size: 13px; }
+.forecast-upload-errors strong { margin-right: 6px; }
