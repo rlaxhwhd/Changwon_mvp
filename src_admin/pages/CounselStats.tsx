@@ -1,9 +1,9 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { LuChartNoAxesColumn, LuDownload, LuFrown } from 'react-icons/lu'
 import EmptyState from '../components/EmptyState'
 import { getActiveCounselor } from '../data/counselors'
-import { getCounselStats, PERIOD_OPTIONS, toStatsCsv } from '../data/counselStats'
-import type { Bucket, PeriodPreset, StatsScope } from '../data/counselStats'
+import { defaultStatsRange, getCounselStats, toStatsCsv } from '../data/counselStats'
+import type { Bucket, StatsScope } from '../data/counselStats'
 import { handledRequestTypes } from '../data/schema/counselor'
 
 const SCOPES: { value: StatsScope; label: string }[] = [
@@ -31,18 +31,39 @@ function BucketList({ items, empty, limit }: { items: Bucket[]; empty: string; l
   )
 }
 
+/**
+ * 날짜 칸 — 표시는 YYYY.MM.DD, 값은 YYYY-MM-DD. 브라우저 날짜 칸은 로케일대로 그려
+ * 형식이 들쭉날쭉하므로 투명하게 덮고, 누르면 달력(showPicker)을 연다.
+ */
+function DotDateInput({ label, value, min, max, onChange }: {
+  label: string; value: string; min?: string; max?: string; onChange: (value: string) => void
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+  return (
+    <span className="admin-dot-date">
+      <input
+        ref={ref} type="date" aria-label={label} value={value} min={min} max={max} required
+        onClick={() => ref.current?.showPicker?.()}
+        onChange={event => { if (event.target.value) onChange(event.target.value) }}
+      />
+      <span aria-hidden="true">{value.replaceAll('-', '.')}</span>
+    </span>
+  )
+}
+
 export default function CounselStats() {
   const counselor = getActiveCounselor()
   const myType = handledRequestTypes(counselor.role)[0]
   const [scope, setScope] = useState<StatsScope>('mine')
-  const [period, setPeriod] = useState<PeriodPreset>('6')
+  const [range, setRange] = useState(defaultStatsRange)
 
   // 내 상담 범위는 내가 다루는 유형으로 한정한다. 전체 범위는 전 유형을 본다.
   const stats = getCounselStats({
     counselorId: counselor.id,
     scope,
     type: scope === 'mine' ? myType : undefined,
-    period,
+    from: range.from,
+    to: range.to,
   })
   const { totals } = stats
   const maxMonth = Math.max(...stats.byMonth.map(m => m.requested), 1)
@@ -81,12 +102,14 @@ export default function CounselStats() {
             {SCOPES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
         </label>
-        <label className="admin-select">
+        <div className="admin-select">
           <span>기간</span>
-          <select value={period} onChange={event => setPeriod(event.target.value as PeriodPreset)}>
-            {PERIOD_OPTIONS.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
-          </select>
-        </label>
+          <div className="admin-date-range">
+            <DotDateInput label="시작일" value={range.from} max={range.to} onChange={from => { if (from <= range.to) setRange(r => ({ ...r, from })) }} />
+            <span aria-hidden="true">~</span>
+            <DotDateInput label="종료일" value={range.to} min={range.from} onChange={to => { if (to >= range.from) setRange(r => ({ ...r, to })) }} />
+          </div>
+        </div>
       </div>
 
       {totals.requested === 0 ? (

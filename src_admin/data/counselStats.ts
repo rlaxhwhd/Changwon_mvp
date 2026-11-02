@@ -16,14 +16,16 @@ import { getCounselRecords } from './counselRecords'
 import { getCounselRequests } from './counselRequests'
 import type { CounselRequest, CounselMethod, CounselRequestType } from './schema/counselRequest'
 
-/** 기간 프리셋 — 값은 개월 수, 'all'은 전체 */
-export type PeriodPreset = '3' | '6' | '12' | 'all'
-export const PERIOD_OPTIONS: { value: PeriodPreset; label: string }[] = [
-  { value: '3', label: '최근 3개월' },
-  { value: '6', label: '최근 6개월' },
-  { value: '12', label: '최근 12개월' },
-  { value: 'all', label: '전체 기간' },
-]
+const pad2 = (n: number) => String(n).padStart(2, '0')
+const dayKey = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+
+/** 기본 기간 — 6개월 전 오늘 ~ 오늘 (YYYY-MM-DD, 로컬 날짜) */
+export function defaultStatsRange(): { from: string; to: string } {
+  const today = new Date()
+  const from = new Date(today)
+  from.setMonth(from.getMonth() - 6)
+  return { from: dayKey(from), to: dayKey(today) }
+}
 
 /** 집계 범위 — 내 배정분만 / 전 상담사 */
 export type StatsScope = 'mine' | 'all'
@@ -34,7 +36,9 @@ export interface StatsParams {
   scope: StatsScope
   /** 유형 한정. 미지정이면 전 유형 */
   type?: CounselRequestType
-  period: PeriodPreset
+  /** 신청일 기준 시작·종료일 YYYY-MM-DD (양끝 포함). 비우면 그쪽은 열려 있다 */
+  from?: string
+  to?: string
 }
 
 /** 이름-값 한 줄 (막대/표 공용) */
@@ -52,8 +56,9 @@ export interface MonthBucket {
 }
 
 export interface CounselStats {
-  /** 집계 대상 기간 시작 YYYY-MM-DD (전체 기간이면 undefined) */
+  /** 집계 대상 기간 시작·종료 YYYY-MM-DD (지정하지 않으면 undefined) */
   from?: string
+  to?: string
   totals: {
     requested: number
     waiting: number
@@ -76,25 +81,18 @@ export interface CounselStats {
   byGrade: Bucket[]
 }
 
-/** 기간 프리셋 → 시작일(YYYY-MM-DD). 'all'은 undefined. */
-function periodStart(period: PeriodPreset): string | undefined {
-  if (period === 'all') return undefined
-  const d = new Date()
-  d.setMonth(d.getMonth() - Number(period))
-  return d.toISOString().slice(0, 10)
-}
-
 /** 신청 건의 기준일 — 신청일(YYYY-MM-DD). 기간 필터·월별 집계의 축. */
 function requestDay(r: CounselRequest): string {
   return r.requestedAt.slice(0, 10)
 }
 
 function scopedRequests(params: StatsParams): CounselRequest[] {
-  const from = periodStart(params.period)
+  const { from, to } = params
   return getCounselRequests().filter(r => {
     if (params.type && r.type !== params.type) return false
     if (params.scope === 'mine' && r.assignedCounselorId !== params.counselorId) return false
     if (from && requestDay(r) < from) return false
+    if (to && requestDay(r) > to) return false
     return true
   })
 }
@@ -117,13 +115,12 @@ function leadDays(r: CounselRequest): number | undefined {
   return Number.isFinite(days) && days >= 0 ? days : undefined
 }
 
-/** 최근 12개월 이내 월 키 목록을 만든다(빈 달도 0으로 표시되도록). */
-function monthKeys(requests: CounselRequest[], period: PeriodPreset): string[] {
+/** 기간 안의 월 키 목록을 만든다(빈 달도 0으로 표시되도록). 비운 쪽 끝은 데이터에서 잡는다. */
+function monthKeys(requests: CounselRequest[], from?: string, to?: string): string[] {
   const days = requests.map(requestDay).sort()
   if (days.length === 0) return []
-  const span = period === 'all' ? undefined : Number(period)
-  const last = new Date()
-  const first = span ? new Date(last.getFullYear(), last.getMonth() - (span - 1), 1) : new Date(`${days[0]}T00:00:00`)
+  const first = new Date(`${from ?? days[0]}T00:00:00`)
+  const last = new Date(`${to ?? days[days.length - 1]}T00:00:00`)
   const keys: string[] = []
   for (const d = new Date(first.getFullYear(), first.getMonth(), 1); d <= last; d.setMonth(d.getMonth() + 1)) {
     keys.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
@@ -141,7 +138,7 @@ export function getCounselStats(params: StatsParams): CounselStats {
   const recordedIds = new Set(getCounselRecords().filter(rec => rec.status === '완료').map(rec => rec.requestId))
 
   const byMonthMap = new Map<string, MonthBucket>(
-    monthKeys(requests, params.period).map(key => [key, { key, requested: 0, completed: 0, cancelled: 0 }]),
+    monthKeys(requests, params.from, params.to).map(key => [key, { key, requested: 0, completed: 0, cancelled: 0 }]),
   )
   for (const r of requests) {
     const key = requestDay(r).slice(0, 7)
@@ -153,7 +150,8 @@ export function getCounselStats(params: StatsParams): CounselStats {
   }
 
   return {
-    from: periodStart(params.period),
+    from: params.from,
+    to: params.to,
     totals: {
       requested: requests.length,
       waiting: requests.filter(r => r.status === '대기').length,
