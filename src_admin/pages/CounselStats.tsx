@@ -1,6 +1,8 @@
 import { useRef, useState } from 'react'
 import { LuChartNoAxesColumn, LuDownload, LuFrown } from 'react-icons/lu'
+import { Link } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
+import { getJournalRows, getJournalSummary } from '../data/counselJournals'
 import { getActiveCounselor } from '../data/counselors'
 import { defaultStatsRange, getCounselStats, toStatsCsv } from '../data/counselStats'
 import type { Bucket, StatsScope } from '../data/counselStats'
@@ -66,6 +68,7 @@ export default function CounselStats() {
     to: range.to,
   })
   const { totals } = stats
+  const journal = getJournalSummary(getJournalRows(counselor.id))
   const maxMonth = Math.max(...stats.byMonth.map(m => m.requested), 1)
 
   const download = () => {
@@ -124,7 +127,6 @@ export default function CounselStats() {
               ['완료', `${totals.completed}건`, `완료율 ${totals.completionRate}%`],
               ['취소', `${totals.cancelled}건`, `취소율 ${totals.cancelRate}%`],
               ['평균 소요일', `${totals.avgLeadDays}일`, '신청 → 상담일'],
-              ['기록지 작성률', `${totals.recordedRate}%`, '완료 건 기준'],
             ] as const).map(([label, value, hint]) => (
               <div className="admin-statsum-card" key={label}>
                 <span>{label}</span>
@@ -132,6 +134,12 @@ export default function CounselStats() {
                 <small>{hint}</small>
               </div>
             ))}
+            {/* 옛 홈 KPI 「상담일지 미작성」 — 기간·범위와 무관하게 내 상담일지 대장 기준, 누르면 미작성 목록 */}
+            <Link className="admin-statsum-card is-link" to={`/counsel/journals?status=${encodeURIComponent('미작성')}`}>
+              <span>상담일지 미작성</span>
+              <strong>{journal.미작성}건</strong>
+              <small>{journal.완료} / {journal.total} 작성</small>
+            </Link>
           </div>
 
           <div className="admin-card-head"><h2>월별 추이</h2></div>

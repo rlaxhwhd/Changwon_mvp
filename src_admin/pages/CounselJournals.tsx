@@ -4,7 +4,7 @@ import {
   LuPen, LuPrinter, LuSearch,
 } from 'react-icons/lu'
 import { useEffect, useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
 import StudentDetailModal from '../components/StudentDetailModal'
@@ -151,7 +151,12 @@ export default function CounselJournals() {
   const options = useMemo(() => getJournalFilterOptions(rows), [rows])
 
   const [query, setQuery] = useState('')
-  const [status, setStatus] = useState<JournalStatus | typeof ALL>(ALL)
+  // 상담 통계의 「상담일지 미작성」 카드가 ?status=미작성 으로 들어온다.
+  const [searchParams] = useSearchParams()
+  const [status, setStatus] = useState<JournalStatus | typeof ALL>(() => {
+    const initial = searchParams.get('status') as JournalStatus | null
+    return initial && JOURNAL_STATUSES.includes(initial) ? initial : ALL
+  })
   const [major, setMajor] = useState<string>(ALL)
   const [grade, setGrade] = useState<string>(ALL)
   const [enroll, setEnroll] = useState<EnrollStatus | typeof ALL>(ALL)

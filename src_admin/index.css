@@ -1470,6 +1470,9 @@ input, textarea, select { font-family: var(--font); }
 .admin-statsum-card > span { font-size: 12px; font-weight: 800; color: var(--color-text-secondary); }
 .admin-statsum-card > strong { font-size: 24px; font-weight: 800; color: var(--color-text); line-height: 1.1; }
 .admin-statsum-card > small { font-size: 12px; font-weight: 600; color: var(--color-caption); }
+.admin-statsum-card.is-link { text-decoration: none; cursor: pointer; transition: border-color .15s; }
+.admin-statsum-card.is-link:hover,
+.admin-statsum-card.is-link:focus-visible { border-color: var(--color-primary); outline: none; }
 
 .admin-statsec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
 .admin-statsec-grid .admin-card-head { margin-top: 0; }
