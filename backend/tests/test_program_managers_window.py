@@ -98,6 +98,28 @@ def test_manager_changes_only_affect_future_applications_and_preserve_on_legacy_
     assert sorted(r['alias'] for r in recipients) == ['career_park', 'psych_lee']
 
 
+def test_manager_phones_roundtrip_preserve_and_student_view(client, rollback_programs):
+    program = new_program(client, managerIds=['career_kim', 'career_park'])
+    assert [m['phone'] for m in program['managers']] == [None, None]
+    changed = update(client, program, managerIds=['career_kim', 'career_park'],
+                     managerPhones={'career_kim': ' 055-213-2616 ', 'career_park': ''})
+    assert changed.status_code == 200, changed.text
+    assert [(m['id'], m['phone']) for m in changed.json()['managers']] == [('career_kim', '055-213-2616'), ('career_park', None)]
+    # 연락처를 모르는 클라이언트의 저장은 번호를 지우지 않는다.
+    kept = update(client, changed.json(), title='제목만 수정')
+    assert kept.status_code == 200, kept.text
+    assert kept.json()['managers'][0]['phone'] == '055-213-2616'
+    student = client.get(f"/api/v1/programs/{program['id']}", headers=headers('chaewon')).json()
+    assert student['managers'][0]['phone'] == '055-213-2616'
+    assert set(student['managers'][0]) == {'id', 'name', 'dept', 'phone'}
+
+
+@pytest.mark.parametrize('phones', [{'psych_lee': '055-000-0000'}, {'career_kim': '전화 주세요'}, {'career_kim': '0' * 31}])
+def test_invalid_manager_phones_rejected(client, phones):
+    program = new_program(client, managerIds=['career_kim'])
+    assert update(client, program, managerPhones=phones).status_code == 422
+
+
 @pytest.mark.parametrize('ids', [[], ['career_kim', 'career_kim'], ['chaewon'], ['missing-staff']])
 def test_invalid_managers_rejected(client, ids):
     program = new_program(client, managerIds=['career_kim'])

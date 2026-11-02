@@ -170,6 +170,14 @@ export interface ProgramApplicant {
   version?: number
 }
 
+/** 프로그램 담당자 1명 — 연락처는 프로그램마다 등록 화면에서 입력한다(전산원 교직원 뷰 연동 전). */
+export interface ProgramManager {
+  id: string
+  name: string
+  dept: string
+  phone: string | null
+}
+
 /** 비교과 프로그램 1건 */
 export interface Program {
   noticeAt?: string | null
@@ -214,6 +222,10 @@ export interface Program {
   /** 담당자명 */
   manager: string
   managerIds?: string[]
+  /** 담당자 이름·소속·연락처 — 서버가 실어 준다(학생은 교직원 명단이 없다). 연락처는 미입력이면 null. */
+  managers?: ProgramManager[]
+  /** 저장 요청 전용 — 담당자 id → 연락처. 생략하면 서버가 저장된 번호를 유지한다. */
+  managerPhones?: Record<string, string>
   /** 회계년도 */
   fiscalYear: string
   /** 정원 */

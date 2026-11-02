@@ -22,7 +22,7 @@ from .db import connection
 from .gates import program_gate
 from . import files
 from .program_content import ApplicationQuestion, attachments_of, sync_attachments, validate_answers
-from .program_managers import managers_of, notify_application, resolve_managers, sync_managers
+from .program_managers import manager_dto, managers_of, notify_application, resolve_managers, sync_managers, with_phones
 from .survey_forms import current_form_id
 # 로드맵 쓰기는 전부 roadmap.py 가 한다 — 칸을 두 모듈에서 만들면 규칙이 갈린다.
 from .roadmap import enroll_program, lifecycle_lock, linked_cells, program_expiry
@@ -121,6 +121,8 @@ def program_dto(row, applicants, attachments=None, managers=None):
         'runStartTime': row['run_start_time'], 'runEndTime': row['run_end_time'],
         'applicationQuestions': row['application_questions'], 'attachments': attachments or [],
         'managerIds': [manager['alias'] for manager in managers or []],
+        # 공고의 담당자명·연락처 — 학생은 교직원 명단을 받지 않으므로 서버가 실어 준다.
+        'managers': [manager_dto(manager) for manager in managers or []],
     }
 
 
@@ -316,6 +318,10 @@ class ProgramBody(BaseModel):
     sessions: int = Field(default=1, ge=1, le=999)
     manager: str = Field(default='', max_length=5000)
     managerIds: list[str] | None = Field(default=None, max_length=50)
+    # 담당자별 연락처(id → 번호). 생략하면 저장된 번호를 유지한다.
+    managerPhones: dict[str, str] | None = Field(default=None, max_length=50)
+    # Read-only DTO field accepted for compatibility with existing full-object updates.
+    managers: list[dict] = Field(default_factory=list, max_length=50, exclude=True)
     fiscalYear: str = Field(default='', max_length=10)
     capacity: int = Field(ge=0, le=100000)
     selectionMethod: str = Field(default='REVIEW', pattern='^(REVIEW|FIRST_COME)$')
@@ -450,7 +456,7 @@ def selected_form_id(conn, body, kind, before=None):
 def create_program(body: ProgramBody, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
     require_staff(user)
-    managers = resolve_managers(conn, body)
+    managers = with_phones(conn, body, resolve_managers(conn, body))
     if managers:
         body.manager = ', '.join(row['name'] for row in managers)
     check_program_options(conn, body)
@@ -468,7 +474,7 @@ def create_program(body: ProgramBody, user=Depends(principal, scope='function'),
     enroll_program(conn, user, row)
     sync_attachments(conn, user, row['id'], body.attachmentFileIds)
     sync_managers(conn, row['id'], managers)
-    return program_dto(row, [], attachments_of(conn, [row['id']])[row['id']], managers)
+    return program_dto(row, [], attachments_of(conn, [row['id']])[row['id']], managers_of(conn, [row['id']])[row['id']])
 
 
 @router.put('/programs/{program_id}')
@@ -492,7 +498,7 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
     check_program_options(conn, body, before)
     if before['version'] != body.expectedVersion:
         raise HTTPException(409, '다른 담당자가 변경했습니다. 새로 조회한 뒤 수정하세요.')
-    managers = resolve_managers(conn, body, before)
+    managers = with_phones(conn, body, resolve_managers(conn, body, before), before)
     if managers:
         body.manager = ', '.join(row['name'] for row in managers)
     pins = [selected_form_id(conn, body, kind, before) for kind in ('COMPETENCY', 'SATISFACTION')]
@@ -529,7 +535,7 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
     if before['selection_method'] != 'FIRST_COME' and row['selection_method'] == 'FIRST_COME':
         select_waiting(conn, user, row)
     return program_dto(row, applicants_of(conn, user, [program_id])[program_id],
-                       attachments_of(conn, [program_id])[program_id], managers)
+                       attachments_of(conn, [program_id])[program_id], managers_of(conn, [program_id])[program_id])
 
 
 @router.delete('/programs/{program_id}', status_code=204)

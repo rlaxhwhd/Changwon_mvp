@@ -179,15 +179,19 @@
 .pf-check, .pf-radio { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--pf-text-2); cursor: pointer; }
 .pf-check input, .pf-radio input { width: 18px; height: 18px; accent-color: var(--pf-primary); cursor: pointer; }
 
-/* person chip */
-.pf-chip {
-  display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 10px 0 14px;
-  background: var(--pf-surface); border: 1px solid var(--pf-border); border-radius: 10px;
-  font-size: 14px; color: var(--pf-text-2); max-width: 320px;
+/* 담당자 표 — 이름 · 소속 · 연락처(입력) · 삭제 */
+.pf-manager-table { width: 100%; border-collapse: collapse; font-size: 14px; color: var(--pf-text-2); border-top: 2px solid var(--pf-primary); }
+.pf-manager-table th { background: var(--pf-bg); font-weight: 700; color: var(--pf-text); padding: 10px 12px; border-bottom: 1px solid var(--pf-border); }
+.pf-manager-table td { padding: 8px 12px; border-bottom: 1px solid var(--pf-border); text-align: center; }
+.pf-manager-table td .pf-input { height: 40px; }
+.pf-manager-table th:nth-child(3), .pf-manager-table td:nth-child(3) { width: 40%; }
+.pf-manager-table th:last-child, .pf-manager-table td:last-child { width: 64px; }
+.pf-manager-remove {
+  width: 28px; height: 28px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--pf-primary); color: #fff; border-radius: 6px;
 }
-.pf-chip button { display: inline-flex; color: var(--pf-muted); padding: 4px; border-radius: 6px; }
-.pf-chip button:hover { background: #F3F4F6; color: var(--pf-danger); }
-.pf-chip button svg { width: 15px; height: 15px; }
+.pf-manager-remove:hover { background: var(--pf-primary-hover); }
+.pf-manager-remove svg { width: 16px; height: 16px; }
 .pf-manager-picker .pf-select { flex: 1; min-width: 200px; }
 .pf-manager-picker .pf-btn-outline { flex-shrink: 0; }
 

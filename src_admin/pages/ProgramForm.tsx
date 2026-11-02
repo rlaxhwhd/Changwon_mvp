@@ -1,7 +1,7 @@
 import {
   LuCalendar, LuCalendarClock, LuCalendarRange, LuChevronRight,
   LuCircleHelp, LuClipboardList, LuClock, LuGripVertical, LuHouse, LuImage,
-  LuMapPin, LuPlus, LuSmile, LuTrash2,
+  LuMapPin, LuMinus, LuPlus, LuSmile, LuTrash2,
   LuUpload, LuUserRound, LuUsers, LuX,
 } from 'react-icons/lu'
 import { useEffect, useMemo, useRef, useState } from 'react'
@@ -116,6 +116,9 @@ export default function ProgramForm() {
   const [managerIds, setManagerIds] = useState<string[]>(() => existing
     ? existing.managerIds ?? [] : getActiveUser() ? [getActiveUser().id] : [])
   const [managerChoice, setManagerChoice] = useState('')
+  // 담당자 연락처 — 전산원 교직원 뷰 연동 전이라 새 담당자는 빈 칸에서 시작한다.
+  const [managerPhones, setManagerPhones] = useState<Record<string, string>>(() =>
+    Object.fromEntries((existing?.managers ?? []).map(m => [m.id, m.phone ?? ''])))
   const managerName = managerIds.map(managerId => STAFF_USERS.find(staff => staff.id === managerId)?.name ?? managerId).join(', ')
   const [targets, setTargets] = useState<string[]>(existing?.targetStatuses ?? [])
   const [grades, setGrades] = useState<string[]>(existing?.targetGrades ?? [])
@@ -214,6 +217,7 @@ export default function ProgramForm() {
       sessions: Math.max(1, Number(sessions) || 1),
       manager: managerName,
       managerIds,
+      managerPhones: Object.fromEntries(managerIds.map(managerId => [managerId, managerPhones[managerId]?.trim() ?? ''])),
       capacity: Number(limitCount),
       selectionCapacity: Number(selectCount),
       selectionMethod: selectMethod,
@@ -509,15 +513,29 @@ export default function ProgramForm() {
                     setManagerChoice('')
                   }}>담당자 추가</button>
                 </div>
-                <div className="pf-inline" aria-label="지정된 담당자">
-                  {managerIds.map(managerId => {
-                    const staff = STAFF_USERS.find(person => person.id === managerId)
-                    return <span key={managerId} className="pf-chip">
-                      {staff?.name ?? managerId}
-                      <button type="button" aria-label={`${staff?.name ?? managerId} 담당자 제거`} onClick={() => setManagerIds(ids => ids.filter(value => value !== managerId))}><LuX /></button>
-                    </span>
-                  })}
-                </div>
+                {managerIds.length > 0 && (
+                  <table className="pf-manager-table" aria-label="지정된 담당자">
+                    <thead><tr><th scope="col">이름</th><th scope="col">소속</th><th scope="col">담당자 연락처</th><th scope="col">삭제</th></tr></thead>
+                    <tbody>
+                      {managerIds.map(managerId => {
+                        const staff = STAFF_USERS.find(person => person.id === managerId)
+                        const saved = existing?.managers?.find(m => m.id === managerId)
+                        const name = staff?.name ?? saved?.name ?? managerId
+                        return <tr key={managerId}>
+                          <td>{name}</td>
+                          <td>{staff?.dept || saved?.dept || '-'}</td>
+                          <td>
+                            <input className="pf-input" type="tel" maxLength={30} aria-label={`${name} 연락처`} placeholder="예: 055-213-0000"
+                              value={managerPhones[managerId] ?? ''} onChange={e => setManagerPhones(prev => ({ ...prev, [managerId]: e.target.value }))} />
+                          </td>
+                          <td>
+                            <button type="button" className="pf-manager-remove" aria-label={`${name} 담당자 제거`} onClick={() => setManagerIds(ids => ids.filter(value => value !== managerId))}><LuMinus /></button>
+                          </td>
+                        </tr>
+                      })}
+                    </tbody>
+                  </table>
+                )}
                 {existing?.manager && !existing.managerIds?.length && !managerIds.length && <span className="pf-help">기존 담당자: {existing.manager}. 목록에서 담당자를 지정해 주세요.</span>}
                 <span className="pf-help">학생이 신청하면 지정된 담당자 모두에게 알림이 전달됩니다.</span>
               </div>

@@ -13,7 +13,7 @@ from test_api import headers
 
 
 # 서버가 정하는 값 — 화면(updateProgram)도 이 키들을 떼고 PUT 한다. 본문은 extra='forbid' 다.
-SERVER_OWNED = ('id', 'version', 'createdAt', 'applicants', 'applyCount', 'competencyFormId', 'satisfactionFormId')
+SERVER_OWNED = ('id', 'version', 'createdAt', 'applicants', 'applyCount', 'managers', 'competencyFormId', 'satisfactionFormId')
 
 
 def new_program(client, **overrides):

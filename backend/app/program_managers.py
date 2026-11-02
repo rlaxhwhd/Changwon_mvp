@@ -1,16 +1,38 @@
 """Program manager identities and application notifications in the program transaction."""
+import re
+
 from fastapi import HTTPException
+
+PHONE = re.compile(r'[0-9+() -]{1,30}')
 
 
 def managers_of(conn, program_ids):
     """One batch lookup for a catalog page; no per-program queries."""
     grouped = {program_id: [] for program_id in program_ids}
     if grouped:
-        for row in conn.execute('''SELECT m.program_id,m.staff_uid,p.alias,p.name
+        for row in conn.execute('''SELECT m.program_id,m.staff_uid,m.phone,p.alias,p.name,s.profile->>'dept' AS dept
           FROM dc.program_manager m JOIN dc.person p ON p.intg_uid=m.staff_uid
+          JOIN dc.staff s ON s.intg_uid=m.staff_uid
           WHERE m.program_id=ANY(%s) ORDER BY m.program_id,m.position''', (list(grouped),)).fetchall():
             grouped[row['program_id']].append(row)
     return grouped
+
+
+def manager_dto(row):
+    return {'id': row['alias'], 'name': row['name'], 'dept': row['dept'] or '', 'phone': row['phone']}
+
+
+def with_phones(conn, body, managers, before=None):
+    """Contact numbers per program manager. A client that omits them keeps the saved numbers."""
+    if body.managerPhones is None:
+        saved = {row['staff_uid']: row['phone'] for row in managers_of(conn, [before['id']])[before['id']]} if before else {}
+        return [{**row, 'phone': saved.get(row['staff_uid'])} for row in managers]
+    if set(body.managerPhones) - {row['alias'] for row in managers}:
+        raise HTTPException(422, '지정된 담당자의 연락처만 입력할 수 있습니다.')
+    phones = {alias: phone.strip() or None for alias, phone in body.managerPhones.items()}
+    if any(phone and not PHONE.fullmatch(phone) for phone in phones.values()):
+        raise HTTPException(422, '담당자 연락처는 숫자와 - 로 30자 이내로 입력해 주세요.')
+    return [{**row, 'phone': phones.get(row['alias'])} for row in managers]
 
 
 def resolve_managers(conn, body, before=None):
@@ -39,8 +61,8 @@ def sync_managers(conn, program_id, managers):
     # create/update/apply all hold the same program row lock.
     conn.execute('DELETE FROM dc.program_manager WHERE program_id=%s', (program_id,))
     if managers:
-        conn.cursor().executemany('INSERT INTO dc.program_manager(program_id,staff_uid,position) VALUES(%s,%s,%s)',
-                                 [(program_id, row['staff_uid'], index) for index, row in enumerate(managers)])
+        conn.cursor().executemany('INSERT INTO dc.program_manager(program_id,staff_uid,position,phone) VALUES(%s,%s,%s,%s)',
+                                 [(program_id, row['staff_uid'], index, row.get('phone')) for index, row in enumerate(managers)])
 
 
 def notify_application(conn, program, student):

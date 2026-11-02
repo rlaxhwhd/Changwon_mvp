@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { formatProgramDate, noticeParts } from '../../../shared/programContent'
+import { codeLabel } from '../../../shared/metadataStore'
 import { downloadApiFile } from '../../../shared/api'
 import { safeHtml } from '../../../shared/safeHtml'
 import type { ReactNode } from 'react'
@@ -87,11 +88,23 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
     ...(program.careTypes ?? []).map(typeLabel),
   ]
 
+  // 참가대상 — 등록 화면 요약과 같은 꼴: 「재학생, 휴학생 (1학년, 2학년)」
+  const grades = (program.targetGrades ?? []).map(code => codeLabel('PROGRAM_TARGET_GRADE', code))
+  const target = (program.targetStatuses ?? []).map(code => codeLabel('PROGRAM_TARGET_STATUS', code)).join(', ')
+    + (grades.length ? ` (${grades.join(', ')})` : '')
+  // 담당자명·연락처 — 지정된 담당자가 없는 옛 공고는 저장된 이름 문자열로 대신한다.
+  const managers = program.managers ?? []
+  const phones = managers.filter(m => m.phone)
+    .map(m => (managers.length > 1 ? `${m.name} ${m.phone}` : m.phone ?? '')).join(', ')
+
   // 프로그램 정보
   const infoRows = rows([
     { label: '분류', value: categoryText, chip: true },
     { label: '상태', value: statusLabel },
-    { label: '담당자', value: program.manager },
+    { label: '참가대상', value: target },
+    { label: '신청인원 / 선발인원', value: `${applied}명 / ${program.selectionCapacity ?? program.capacity}명` },
+    { label: '담당자', value: managers.length ? managers.map(m => m.name).join(', ') : program.manager },
+    { label: '담당자 연락처', value: phones },
     { label: '장소', value: program.location },
     { label: '총 회차', value: program.sessions ? `${program.sessions}회` : '' },
     { label: '회계연도', value: program.fiscalYear ? `${program.fiscalYear}년` : '' },
@@ -102,9 +115,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
     { label: '공고일시', value: formatProgramDate(noticeParts(program.noticeAt).date, noticeParts(program.noticeAt).time) },
     { label: '접수기간', value: periodOf(program.startDate, program.endDate, program.startTime, program.endTime) },
     { label: '운영기간', value: periodOf(program.runStartDate, program.runEndDate, program.runStartTime, program.runEndTime) },
-    { label: '정원', value: `${program.capacity}명` },
     { label: '선발 방식', value: program.selectionMethod === 'FIRST_COME' ? '선착순 선발' : '심사 후 선발' },
-    { label: '선발 인원', value: `${program.selectionCapacity ?? program.capacity}명` },
     { label: '신청현황', value: `${applied}명 / ${program.capacity}명` },
     // 로드맵에 칸이 생기는 프로그램만 알린다 — 학생이 이행률에 잡히는지가 달라진다.
     program.roadmapEntry && program.roadmapEntry !== 'NONE'
