@@ -16,7 +16,8 @@ import type { JournalRow, JournalStatus } from '../data/counselJournals'
 import { buildRecord, nextPsychSession, upsertRecord } from '../data/counselRecords'
 import type { RecordSource } from '../data/counselRecords'
 import type { RecordStatus } from '../data/schema/counselRecord'
-import { toJournalCsv } from '../data/counselExport'
+import { toJournalRows } from '../data/counselExport'
+import { downloadXlsx } from '../../shared/xlsx'
 import { studentTypeClass } from '../data/studentRoster'
 import type { EnrollStatus } from '../data/studentRoster'
 import CounselJournalFields from '../components/CounselJournalFields'
@@ -226,16 +227,9 @@ export default function CounselJournals() {
   // 인쇄는 작성된 일지만 — 미작성 행은 인쇄할 서식이 없다.
   const printIds = (checked.size ? targetRows : list).flatMap(r => (r.record ? [r.record.id] : []))
 
-  const downloadCsv = () => {
+  const downloadExcel = () => {
     if (targetRows.length === 0) return
-    const url = URL.createObjectURL(
-      new Blob([`\uFEFF${toJournalCsv(targetRows)}`], { type: 'text/csv;charset=utf-8' }),
-    )
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `상담일지대장_${new Date().toISOString().slice(0, 10).replaceAll('-', '')}.csv`
-    anchor.click()
-    URL.revokeObjectURL(url)
+    downloadXlsx(`상담일지대장_${new Date().toISOString().slice(0, 10).replaceAll('-', '')}.xlsx`, toJournalRows(targetRows))
   }
 
   return (
@@ -339,7 +333,7 @@ export default function CounselJournals() {
             >
               <LuPrinter /> 선택 인쇄 ({printIds.length})
             </Link>
-            <button type="button" className="admin-btn admin-btn-primary sm" onClick={downloadCsv} disabled={!targetRows.length}>
+            <button type="button" className="admin-btn admin-btn-primary sm" onClick={downloadExcel} disabled={!targetRows.length}>
               <LuDownload /> 엑셀 다운로드 ({targetRows.length})
             </button>
           </div>

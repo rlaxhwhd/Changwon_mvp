@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import { getJournalRows, getJournalSummary } from '../data/counselJournals'
 import { getActiveCounselor } from '../data/counselors'
-import { defaultStatsRange, DIAG_TYPE_OPTIONS, getCounselStats, toStatsCsv } from '../data/counselStats'
+import { defaultStatsRange, DIAG_TYPE_OPTIONS, getCounselStats, toStatsRows } from '../data/counselStats'
 import type { Bucket, StatsParams, StatsScope } from '../data/counselStats'
+import { downloadXlsx } from '../../shared/xlsx'
 import { handledRequestTypes } from '../data/schema/counselor'
 
 const SCOPES: { value: StatsScope; label: string }[] = [
@@ -74,13 +75,7 @@ export default function CounselStats() {
   const maxMonth = Math.max(...stats.byMonth.map(m => m.requested), 1)
 
   const download = () => {
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(
-      new Blob([`\uFEFF${toStatsCsv(stats)}`], { type: 'text/csv;charset=utf-8' }),
-    )
-    link.download = `상담통계_${scope === 'mine' ? counselor.name : '전체'}_${new Date().toISOString().slice(0, 10).replaceAll('-', '')}.csv`
-    link.click()
-    URL.revokeObjectURL(link.href)
+    downloadXlsx(`상담통계_${scope === 'mine' ? counselor.name : '전체'}_${new Date().toISOString().slice(0, 10).replaceAll('-', '')}.xlsx`, toStatsRows(stats))
   }
 
   return (
@@ -96,7 +91,7 @@ export default function CounselStats() {
           </p>
         </div>
         <button type="button" className="admin-btn admin-btn-ghost" onClick={download} disabled={totals.requested === 0}>
-          <LuDownload /> CSV 내려받기
+          <LuDownload /> 엑셀 내려받기
         </button>
       </header>
 

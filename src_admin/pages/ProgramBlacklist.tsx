@@ -32,6 +32,7 @@ import { studentNoOf } from '../data/studentRoster'
 import { totalPages } from '../data/query'
 import { useListData } from '../hooks/useListData'
 import { useAsyncAction } from '../../shared/useAsyncAction'
+import { downloadXlsx } from '../../shared/xlsx'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
 import './ProgramBlacklist.css'
@@ -186,7 +187,7 @@ export default function ProgramBlacklist() {
 
   const pageWindow = pageNumbers(page, pages)
 
-  const downloadCsv = async () => {
+  const downloadExcel = async () => {
     if (!selection.count) return
     const rows = selection.rows
     const header = ['번호', '이름', '학번', '대학', '학과', '벌점점수']
@@ -198,15 +199,7 @@ export default function ProgramBlacklist() {
       r.studentMajor,
       String(r.total),
     ])
-    const csv = [header, ...body]
-      .map(row => row.map(v => `"${String(v).replaceAll('"', '""')}"`).join(','))
-      .join('\n')
-    const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }))
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = '블랙리스트.csv'
-    anchor.click()
-    URL.revokeObjectURL(url)
+    downloadXlsx('블랙리스트.xlsx', [header, ...body])
   }
 
   return (
@@ -265,7 +258,7 @@ export default function ProgramBlacklist() {
           총 <em>{result.totalCount}</em> 개
           {isLoading && <LuLoaderCircle className="admin-spin" />}
         </span>
-        <button type="button" className="blk-excel-btn" onClick={downloadCsv} disabled={!selection.count || isLoading}>
+        <button type="button" className="blk-excel-btn" onClick={downloadExcel} disabled={!selection.count || isLoading}>
           <LuDownload /> 엑셀 다운로드 ({selection.count})
         </button>
       </div>

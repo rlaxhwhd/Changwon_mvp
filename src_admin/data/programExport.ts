@@ -1,5 +1,5 @@
 // ─────────────────────────────────────────────────────────────────────────
-// 비교과 프로그램 명단 내보내기(CSV) — 프로그램 관리에서 여러 건을 한 장으로.
+// 비교과 프로그램 명단 내보내기(엑셀 xlsx) — 프로그램 관리에서 여러 건을 한 장으로.
 //
 // 명단 조립은 여기 한 곳이다(CLAUDE.md 규칙 10) — 화면은 행 배열만 받아 파일로 만든다.
 // DB 전환 시 이 함수 하나가 export 엔드포인트 하나가 된다.
@@ -56,9 +56,7 @@ export function getApplicantExportRows(programIds: string[], target: ExportTarge
     )
 }
 
-/** CSV 문자열 (엑셀용 BOM 은 내려받는 쪽에서 붙인다) */
-export function toApplicantCsv(programIds: string[], target: ExportTarget): string {
+/** 엑셀(xlsx) 행 — 머리글 포함 */
+export function toApplicantRows(programIds: string[], target: ExportTarget): string[][] {
   return [HEADER, ...getApplicantExportRows(programIds, target)]
-    .map(row => row.map(v => `"${v.replaceAll('"', '""')}"`).join(','))
-    .join('\n')
 }

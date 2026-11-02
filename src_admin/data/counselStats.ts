@@ -188,9 +188,8 @@ export function getCounselStats(params: StatsParams): CounselStats {
   }
 }
 
-/** 통계 CSV — 화면이 문자열을 조립하지 않도록 여기서 만든다. */
-export function toStatsCsv(stats: CounselStats): string {
-  const escape = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`
+/** 통계 엑셀(xlsx) 행 — 화면이 표를 조립하지 않도록 여기서 만든다. */
+export function toStatsRows(stats: CounselStats): (string | number)[][] {
   const section = (title: string, rows: (string | number)[][]) => [[title], ...rows, []]
   const rows: (string | number)[][] = [
     ...section('요약', [
@@ -210,5 +209,5 @@ export function toStatsCsv(stats: CounselStats): string {
     ...section('학년별', [['학년', '건수'], ...stats.byGrade.map(b => [b.label, b.count])]),
     ...section('학과별', [['학과', '건수'], ...stats.byMajor.map(b => [b.label, b.count])]),
   ]
-  return rows.map(row => row.map(escape).join(',')).join('\n')
+  return rows
 }

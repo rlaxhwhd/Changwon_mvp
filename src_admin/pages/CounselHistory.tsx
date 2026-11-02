@@ -5,7 +5,7 @@ import CounselJournalFields from '../components/CounselJournalFields'
 import { emptyCounselTemplate } from '../data/schema/counselTemplate'
 import { emptyPsychJournal } from '../data/schema/psychJournal'
 import { isCare7 } from '../../src_v2/data/counselTrack'
-import { downloadCounselHistoryCsv } from '../data/counselExport'
+import { downloadCounselHistoryXlsx } from '../data/counselExport'
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import CounselHistoryView, { type CounselHistoryRow } from '../../shared/components/CounselHistory'
@@ -49,7 +49,7 @@ export default function CounselHistory() {
     <header className="admin-page-head"><div><h1 className="admin-page-title">{getActiveUser().role === 'psych' ? '상담현황' : '상담기록'}</h1><p className="admin-page-desc">내가 담당한 상담 일정과 기록을 한눈에 확인합니다.</p></div></header>
     {error && <p role="alert">{error}</p>}
     {loading && <p role="status">상담기록을 불러오는 중입니다.</p>}
-    <CounselHistoryView rows={rows} showStudent onExport={downloadCounselHistoryCsv} onOpenDetail={setDetail} sidebarFooter={<section className="cs-booking"><h2>상담일지 관리</h2><p>상담내용과 학생 공개 코멘트는<br />상담일지에서 작성하고 관리할 수 있습니다.</p><Link to="/counsel/journals">상담일지 바로가기</Link></section>} />
+    <CounselHistoryView rows={rows} showStudent onExport={downloadCounselHistoryXlsx} onOpenDetail={setDetail} sidebarFooter={<section className="cs-booking"><h2>상담일지 관리</h2><p>상담내용과 학생 공개 코멘트는<br />상담일지에서 작성하고 관리할 수 있습니다.</p><Link to="/counsel/journals">상담일지 바로가기</Link></section>} />
     {detail && <AdminModal title={`상담일지 — ${studentDisplayName(detail.studentName, detail.studentNo)}`} size="lg" onClose={() => setDetail(null)}>
       <dl className="admin-journal-brief">
         <div><dt>학생</dt><dd>{studentDisplayName(detail.studentName, detail.studentNo)} · {detail.studentNo}</dd></div>

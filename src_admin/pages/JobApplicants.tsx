@@ -43,6 +43,7 @@ import { JOB_CODE_GROUPS, jobLabelOf } from '../data/schema/job'
 import { enrollStatusClass } from '../data/studentRoster'
 import type { EnrollStatus } from '../data/studentRoster'
 import { useAsyncAction } from '../../shared/useAsyncAction'
+import { downloadXlsx, parseCsv } from '../../shared/xlsx'
 import { useJobStore } from '../../shared/useJobStore'
 import type { ApplicationStatus } from '../data/schema/jobApplication'
 
@@ -111,18 +112,13 @@ export default function JobApplicants() {
     void run(() => rejectApplication(id, reason.trim()))
   }
 
-  const downloadCsv = () => {
+  const downloadExcel = () => {
     if (!jobId || !selection.count) return
     void run(async () => {
       // 명단은 서버가 만든다 — 목록·집계와 같은 필터와 범위를 쓰고 다운로드가 감사된다.
       const body = await fetchJobApplicantCsv({ postingId: jobId }, selection.ids)
       const today = new Date().toISOString().slice(0, 10).replaceAll('-', '')
-      const url = URL.createObjectURL(new Blob([body], { type: 'text/csv;charset=utf-8' }))
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = `${job.company}_지원자현황_${today}.csv`
-      anchor.click()
-      URL.revokeObjectURL(url)
+      downloadXlsx(`${job.company}_지원자현황_${today}.xlsx`, parseCsv(body))
     })
   }
 
@@ -144,7 +140,7 @@ export default function JobApplicants() {
           <button
             type="button"
             className="admin-btn admin-btn-primary"
-            onClick={downloadCsv}
+            onClick={downloadExcel}
             disabled={!selection.count || saving}
           >
             <LuDownload /> {saving ? '처리 중…' : `엑셀 다운로드 (${selection.count})`}

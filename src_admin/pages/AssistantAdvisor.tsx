@@ -2,6 +2,7 @@ import { studentDisplayName } from '../../shared/studentDisplayName'
 import { useExportSelection } from '../../shared/useExportSelection'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { useState } from 'react'
+import { downloadXlsx } from '../../shared/xlsx'
 import { PROFESSOR_GROUPS } from '../../src_v2/data/professors'
 import './AssistantAdvisor.css'
 import {
@@ -87,9 +88,10 @@ export default function AssistantAdvisor() {
     try {
     if (!selection.count) return
     const rows = selection.rows
-    const escape = (value: string | number | undefined) =>
-      `"${String(value ?? '').replaceAll('"', '""')}"`
-    const csv = [
+    downloadXlsx(`전담교수배정_${new Date()
+      .toISOString()
+      .slice(0, 10)
+      .replaceAll('-', '')}.xlsx`, [
       ['학번', '이름', '소속', '학년', '학적', '연락처', '지도교수', '배정일자'],
       ...rows.map(row => [
         row.studentNo,
@@ -101,19 +103,7 @@ export default function AssistantAdvisor() {
         row.advisor?.professorName ?? '',
         row.advisor ? formatDate(row.advisor.assignedAt) : '',
       ]),
-    ]
-      .map(row => row.map(escape).join(','))
-      .join('\n')
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(
-      new Blob([`\uFEFF${csv}`], { type: 'text/csv;charset=utf-8' }),
-    )
-    link.download = `전담교수배정_${new Date()
-      .toISOString()
-      .slice(0, 10)
-      .replaceAll('-', '')}.csv`
-    link.click()
-    URL.revokeObjectURL(link.href)
+    ])
     } catch (caught) { setError(caught instanceof Error ? caught.message : '명단을 내려받지 못했습니다.') }
   }
   const confirmAssign = async (professorId: string, assignedAt: string) => {

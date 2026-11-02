@@ -4,8 +4,9 @@ import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import { getPrograms, sortByPriority, updateProgram, removeProgram } from '../data/programs'
 import AdminModal from '../components/AdminModal'
-import { EXPORT_TARGETS, EXPORT_TARGET_LABEL, getApplicantExportRows, toApplicantCsv } from '../data/programExport'
+import { EXPORT_TARGETS, EXPORT_TARGET_LABEL, getApplicantExportRows, toApplicantRows } from '../data/programExport'
 import type { ExportTarget } from '../data/programExport'
+import { downloadXlsx } from '../../shared/xlsx'
 import type { Program } from '../data/schema/program'
 import { programStatusLabel } from '../data/schema/program'
 
@@ -82,17 +83,10 @@ export default function ProgramManage() {
   // 명단 조립은 데이터층(programExport)이 하고, 여기서는 파일로만 만든다.
   const exportCount = getApplicantExportRows([...checked], target).length
 
-  const downloadCsv = () => {
+  const downloadExcel = () => {
     const ids = [...checked]
     if (ids.length === 0) return
-    const url = URL.createObjectURL(
-      new Blob([`\uFEFF${toApplicantCsv(ids, target)}`], { type: 'text/csv;charset=utf-8' }),
-    )
-    const anchor = document.createElement('a')
-    anchor.href = url
-    anchor.download = `비교과_${EXPORT_TARGET_LABEL[target]}_${today.replaceAll('-', '')}.csv`
-    anchor.click()
-    URL.revokeObjectURL(url)
+    downloadXlsx(`비교과_${EXPORT_TARGET_LABEL[target]}_${today.replaceAll('-', '')}.xlsx`, toApplicantRows(ids, target))
   }
 
   return (
@@ -137,7 +131,7 @@ export default function ProgramManage() {
                 <button
                   type="button"
                   className="admin-btn admin-btn-primary sm"
-                  onClick={downloadCsv}
+                  onClick={downloadExcel}
                   disabled={exportCount === 0}
                 >
                   <LuDownload /> 엑셀 다운로드

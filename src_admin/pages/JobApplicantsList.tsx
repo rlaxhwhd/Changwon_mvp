@@ -13,6 +13,7 @@ import { getRecommendedJobs, summarizeJob } from '../data/jobApplications'
 import { fetchJobApplicantCsv } from '../data/jobApplicationExport'
 import { jobDdayLabel } from '../data/jobsSource'
 import { useAsyncAction } from '../../shared/useAsyncAction'
+import { downloadXlsx, parseCsv } from '../../shared/xlsx'
 
 export default function JobApplicantsList() {
   const navigate = useNavigate()
@@ -47,23 +48,17 @@ export default function JobApplicantsList() {
     ? rows.filter(r => targetIds.includes(r.job.id)).reduce((sum, r) => sum + r.summary.total, 0)
     : 0
 
-  const downloadCsv = () => {
+  const downloadExcel = () => {
     if (!targetIds.length) return
     void run(async () => {
       // 명단은 서버가 만든다 — 목록·집계와 같은 필터, 같은 범위 술어를 쓰고
       // 다운로드 사실이 dc.job_access_event 에 남는다.
       const parts = await Promise.all(targetIds.map(postingId => fetchJobApplicantCsv({ postingId })))
-      // 두 번째 파일부터는 머리글 줄을 뺀다(BOM 도 첫 파일 것만 남긴다).
-      const dropHeader = (part: string) => part.split('\n').slice(1).join('\n')
-      const [first, ...rest] = parts
-      const body = [first, ...rest.map(dropHeader)].join('\n')
+      // 머리글은 첫 파일 것만 쓰고, 모든 파일의 데이터 행을 잇는다.
+      const tables = parts.map(parseCsv)
+      const rows = [tables[0][0] ?? [], ...tables.flatMap(table => table.slice(1))]
       const today = new Date().toISOString().slice(0, 10).replaceAll('-', '')
-      const url = URL.createObjectURL(new Blob([body], { type: 'text/csv;charset=utf-8' }))
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = `추천채용_지원자현황_${today}.csv`
-      anchor.click()
-      URL.revokeObjectURL(url)
+      downloadXlsx(`추천채용_지원자현황_${today}.xlsx`, rows)
     })
   }
 
@@ -82,7 +77,7 @@ export default function JobApplicantsList() {
           <button
             type="button"
             className="admin-btn admin-btn-primary"
-            onClick={downloadCsv}
+            onClick={downloadExcel}
             disabled={exportCount === 0 || saving}
           >
             <LuDownload /> {saving ? '만드는 중…' : `엑셀 다운로드 (${exportCount}명)`}

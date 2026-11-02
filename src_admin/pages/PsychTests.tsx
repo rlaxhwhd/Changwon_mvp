@@ -10,6 +10,7 @@ import { PSYCH_TEST_TYPES } from '../data/schema/psychTest'
 import type { PsychTestScale, PsychTestStatus } from '../data/schema/psychTest'
 import { useListData } from '../hooks/useListData'
 import { useAsyncAction } from '../../shared/useAsyncAction'
+import { downloadXlsx } from '../../shared/xlsx'
 import { ApiError } from '../../shared/api'
 import './ProfessorCounsel.css'
 
@@ -147,8 +148,7 @@ function ResultModal({ row, onClose, onSaved }: { row: PsychTestRequest; onClose
   )
 }
 
-const CSV_HEAD = ['번호', '이름', '학번', '소속', '학년', '심리검사', '검사방법', '신청일시', '상담일시', '상태']
-const csvCell = (value: string | number) => `"${String(value).replaceAll('"', '""')}"`
+const EXPORT_HEAD = ['번호', '이름', '학번', '소속', '학년', '심리검사', '검사방법', '신청일시', '상담일시', '상태']
 
 /** 검사관리 = 심리검사 현황. 학생이 신청한 오프라인 심리검사와 결과 작성 상태를 본다. */
 export default function PsychTests() {
@@ -177,15 +177,8 @@ export default function PsychTests() {
           if (!chunk.items.length) break
         }
       }
-      const body = [CSV_HEAD, ...rows.map((row, index) => [index + 1, row.studentName, row.studentNo, belongs(row), row.grade ?? '', testName(row),
-        row.method, dateOf(row.requestedAt), row.slot ? `${row.slot.date} ${row.slot.start}` : '', row.status])]
-        .map(line => line.map(csvCell).join(',')).join('\r\n')
-      const url = URL.createObjectURL(new Blob([`﻿${body}`], { type: 'text/csv;charset=utf-8' }))
-      const anchor = document.createElement('a')
-      anchor.href = url
-      anchor.download = `심리검사현황_${today().replaceAll('-', '')}.csv`
-      anchor.click()
-      URL.revokeObjectURL(url)
+      downloadXlsx(`심리검사현황_${today().replaceAll('-', '')}.xlsx`, [EXPORT_HEAD, ...rows.map((row, index) => [index + 1, row.studentName, row.studentNo, belongs(row), row.grade ?? '', testName(row),
+        row.method, dateOf(row.requestedAt), row.slot ? `${row.slot.date} ${row.slot.start}` : '', row.status])])
     } catch (cause) {
       setMessage(cause instanceof Error ? cause.message : '명단을 내려받지 못했습니다.')
     }
