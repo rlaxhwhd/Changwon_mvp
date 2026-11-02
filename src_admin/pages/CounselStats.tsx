@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import { getJournalRows, getJournalSummary } from '../data/counselJournals'
 import { getActiveCounselor } from '../data/counselors'
-import { defaultStatsRange, getCounselStats, toStatsCsv } from '../data/counselStats'
-import type { Bucket, StatsScope } from '../data/counselStats'
+import { defaultStatsRange, DIAG_TYPE_OPTIONS, getCounselStats, toStatsCsv } from '../data/counselStats'
+import type { Bucket, StatsParams, StatsScope } from '../data/counselStats'
 import { handledRequestTypes } from '../data/schema/counselor'
 
 const SCOPES: { value: StatsScope; label: string }[] = [
@@ -58,12 +58,14 @@ export default function CounselStats() {
   const myType = handledRequestTypes(counselor.role)[0]
   const [scope, setScope] = useState<StatsScope>('mine')
   const [range, setRange] = useState(defaultStatsRange)
+  const [diagType, setDiagType] = useState<StatsParams['diagType']>(undefined)
 
   // 내 상담 범위는 내가 다루는 유형으로 한정한다. 전체 범위는 전 유형을 본다.
   const stats = getCounselStats({
     counselorId: counselor.id,
     scope,
     type: scope === 'mine' ? myType : undefined,
+    diagType,
     from: range.from,
     to: range.to,
   })
@@ -103,6 +105,13 @@ export default function CounselStats() {
           <span>범위</span>
           <select value={scope} onChange={event => setScope(event.target.value as StatsScope)}>
             {SCOPES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
+          </select>
+        </label>
+        <label className="admin-select">
+          <span>진단유형</span>
+          <select value={diagType ?? ''} onChange={event => setDiagType((event.target.value || undefined) as StatsParams['diagType'])}>
+            <option value="">전체</option>
+            {DIAG_TYPE_OPTIONS.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}
           </select>
         </label>
         <div className="admin-select">
@@ -164,7 +173,7 @@ export default function CounselStats() {
 
           <div className="admin-statsec-grid">
             <section className="admin-card">
-              <div className="admin-card-head"><h2>유형별</h2></div>
+              <div className="admin-card-head"><h2>진단유형별</h2></div>
               <BucketList items={stats.byType} empty="집계 없음" />
             </section>
             <section className="admin-card">

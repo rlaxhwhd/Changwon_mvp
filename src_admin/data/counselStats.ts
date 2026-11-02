@@ -15,6 +15,14 @@
 import { getCounselRecords } from './counselRecords'
 import { getCounselRequests } from './counselRequests'
 import type { CounselRequest, CounselMethod, CounselRequestType } from './schema/counselRequest'
+import { STUDENT_TYPES, typeLabel } from '../../src_v2/data/careerProcess'
+import type { StudentType } from '../../src_v2/data/careerProcess'
+
+/** 진단유형 필터 선택지 — T1~T6 + 유형 미정. 표시명은 typeLabel 에서 파생한다. */
+export const DIAG_TYPE_OPTIONS: { value: StudentType | 'NONE'; label: string }[] = [
+  ...STUDENT_TYPES.map(t => ({ value: t.code, label: `${t.code} ${t.label}` })),
+  { value: 'NONE', label: typeLabel(null) },
+]
 
 const pad2 = (n: number) => String(n).padStart(2, '0')
 const dayKey = (d: Date) => `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
@@ -36,6 +44,8 @@ export interface StatsParams {
   scope: StatsScope
   /** 유형 한정. 미지정이면 전 유형 */
   type?: CounselRequestType
+  /** 진단유형 한정(신청 시점 스냅샷). 'NONE' = 유형 미정. 미지정이면 전 유형 */
+  diagType?: StudentType | 'NONE'
   /** 신청일 기준 시작·종료일 YYYY-MM-DD (양끝 포함). 비우면 그쪽은 열려 있다 */
   from?: string
   to?: string
@@ -91,6 +101,7 @@ function scopedRequests(params: StatsParams): CounselRequest[] {
   return getCounselRequests().filter(r => {
     if (params.type && r.type !== params.type) return false
     if (params.scope === 'mine' && r.assignedCounselorId !== params.counselorId) return false
+    if (params.diagType && (r.studentType ?? 'NONE') !== params.diagType) return false
     if (from && requestDay(r) < from) return false
     if (to && requestDay(r) > to) return false
     return true
@@ -164,7 +175,10 @@ export function getCounselStats(params: StatsParams): CounselStats {
       recordedRate: pct(completed.filter(r => recordedIds.has(r.id)).length, completed.length),
     },
     byMonth: [...byMonthMap.values()].sort((a, b) => a.key.localeCompare(b.key)),
-    byType: tally(requests.map(r => r.type as string)),
+    // 진단유형별 — T1~T6 순서, 유형 미정은 맨 뒤
+    byType: DIAG_TYPE_OPTIONS
+      .map(o => ({ label: o.label, count: requests.filter(r => (r.studentType ?? 'NONE') === o.value).length }))
+      .filter(b => b.count > 0),
     byMethod: tally(requests.map(r => r.method as CounselMethod as string)),
     byMajor: tally(requests.map(r => r.studentMajor)),
     byGrade: tally(requests.map(r => {
@@ -191,7 +205,7 @@ export function toStatsCsv(stats: CounselStats): string {
       ['기록지 작성률(%)', stats.totals.recordedRate],
     ]),
     ...section('월별', [['월', '신청', '완료', '취소'], ...stats.byMonth.map(m => [m.key, m.requested, m.completed, m.cancelled])]),
-    ...section('유형별', [['유형', '건수'], ...stats.byType.map(b => [b.label, b.count])]),
+    ...section('진단유형별', [['진단유형', '건수'], ...stats.byType.map(b => [b.label, b.count])]),
     ...section('방식별', [['방식', '건수'], ...stats.byMethod.map(b => [b.label, b.count])]),
     ...section('학년별', [['학년', '건수'], ...stats.byGrade.map(b => [b.label, b.count])]),
     ...section('학과별', [['학과', '건수'], ...stats.byMajor.map(b => [b.label, b.count])]),
