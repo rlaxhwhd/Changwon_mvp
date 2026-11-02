@@ -212,6 +212,8 @@ export default function EmploymentForecast() {
   const pages = totalPages(data)
   const loadOptions = () => fetchEmploymentOptions().then(setOptions).catch(reason => setMessage(reason.message))
   useEffect(() => { void loadOptions() }, [])
+  // 삭제로 현재 페이지가 사라지면 마지막 페이지로 — 빈 목록에선 페이지 버튼도 그려지지 않는다.
+  useEffect(() => { if (!isLoading && !error && page > pages) setPage(pages) }, [isLoading, error, page, pages])
   const surveyYears = [...new Set([THIS_YEAR, ...options.surveyYears])].sort((a, b) => b - a)
   const change = (patch: Partial<Draft>) => setDraft(old => ({ ...old, ...patch }))
   const refresh = () => { setSelected(new Set()); refetch(); void loadOptions() }

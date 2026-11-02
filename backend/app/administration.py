@@ -206,6 +206,13 @@ def audit(conn,user,entity,key,before,after,reason):
       VALUES(%s,%s,%s,%s,%s,%s)''',(entity,str(key),Jsonb(jsonable_encoder(before)),Jsonb(jsonable_encoder(after)),reason,user['intg_uid']))
 
 
+def audit_many(conn,user,entity,changes,reason):
+    """changes: [(key,before,after)] — 대량 반영(엑셀 업로드)을 행마다 왕복하지 않고 문장 하나로 쌓는다."""
+    conn.execute('''INSERT INTO dc.admin_event(entity,entity_id,before_value,after_value,reason,changed_by)
+      SELECT %s,x->>0,x->1,x->2,%s,%s FROM jsonb_array_elements(%s) x''',
+      (entity,reason,user['intg_uid'],Jsonb([[str(key),before,after] for key,before,after in jsonable_encoder(changes)])))
+
+
 @router.put('/system/org-assignments/{assignment_id}')
 def save_assignment(assignment_id: UUID,data: AssignmentChange,
                     user=Depends(administrator,scope='function'),conn=Depends(connection,scope='function')):

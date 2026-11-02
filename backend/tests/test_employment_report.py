@@ -1,8 +1,12 @@
 """취업예측분석시스템(/admin/forecast) 취업 현황 대장 — 151."""
+from datetime import date
+from io import BytesIO
+from zipfile import ZipFile
+
 import pytest
 
 from app.employment_report import month_cell
-from app.xlsx_export import read_rows, workbook_sheets
+from app.xlsx_export import read_workbook, workbook_sheets
 from test_api import headers
 from test_psych_referrals import db  # noqa: F401
 
@@ -76,7 +80,7 @@ def test_excel_round_trip_and_all_or_nothing_upload(client, db, grads):
     client.post(URL, headers=ADMIN, json=body(grads[0]))
     exported = client.get(URL+'/export', headers=ADMIN, params={'field': 'studentNo', 'q': grads[0]})
     assert exported.status_code == 200
-    rows = read_rows(exported.content)
+    rows, _ = read_workbook(exported.content)
     assert rows[0][:5] == ['조사년도', '졸업년월', '단과대학', '학과(전공)', '학번'] and rows[1][4] == grads[0]
     assert rows[1][1] == '2027.02' and rows[1][9] == '2026.10'
 
@@ -95,6 +99,57 @@ def test_excel_round_trip_and_all_or_nothing_upload(client, db, grads):
     detail = rejected.json()['detail']
     assert [e['row'] for e in detail['errors']] == [3, 4] and '기업분류' in detail['errors'][0]['message']
     assert client.post(URL+'/upload', headers=ADMIN, content=b'not a zip').status_code == 422
+
+
+def rezip(data, name, change):
+    """xlsx 안의 한 파트를 바꿔 다시 묶는다."""
+    source, output = ZipFile(BytesIO(data)), BytesIO()
+    with source, ZipFile(output, 'w') as target:
+        for item in source.namelist():
+            part = source.read(item)
+            target.writestr(item, change(part) if item == name else part)
+    return output.getvalue()
+
+
+HEAD = ['조사년도', '학번', '취업처', '부서/업무', '기업분류', '지역', '취업일자']
+
+
+def test_upload_rejects_overlong_text_instead_of_truncating(client, db, grads):
+    rejected = client.post(URL+'/upload', headers=ADMIN, content=xlsx([HEAD, ['2026', grads[0], 'C'*201, 'Dev', '일반기업', '경남', '2026.10']]))
+    assert rejected.status_code == 422
+    assert '취업처 200자 초과' in rejected.json()['detail']['errors'][0]['message']
+    assert client.get(URL, headers=ADMIN, params={'field': 'studentNo', 'q': grads[0]}).json()['totalCount'] == 0
+
+
+def test_upload_reads_1904_date_system(client, db, grads):
+    serial = (date(2026, 10, 15) - date(1904, 1, 1)).days
+    data = rezip(xlsx([HEAD, ['2026', grads[0], 'Co', 'Dev', '일반기업', '경남', str(serial)]]), 'xl/workbook.xml',
+                 lambda part: part.replace(b'<sheets>', b'<workbookPr date1904="1"/><sheets>'))
+    assert read_workbook(data)[1] is True
+    uploaded = client.post(URL+'/upload', headers=ADMIN, content=data)
+    assert uploaded.status_code == 200, uploaded.text
+    assert client.get(URL, headers=ADMIN, params={'field': 'studentNo', 'q': grads[0]}).json()['items'][0]['employedMonth'] == '2026-10'
+
+
+def test_upload_rejects_corrupt_xml_with_422(client, db, grads):
+    data = rezip(xlsx([HEAD]), 'xl/workbook.xml', lambda part: part[:40])
+    rejected = client.post(URL+'/upload', headers=ADMIN, content=data)
+    assert rejected.status_code == 422 and '손상' in rejected.json()['detail']
+
+
+def test_upload_saves_many_rows_in_bulk(client, db, grads, monkeypatch):
+    """행마다 쿼리를 반복하지 않는다 — 학생 수와 무관하게 쿼리 수가 일정하다."""
+    client.post(URL, headers=ADMIN, json=body(grads[0]))
+    calls = []
+    real = type(db).execute
+    monkeypatch.setattr(type(db), 'execute', lambda self, *a, **k: calls.append(a[0]) or real(self, *a, **k))
+    rows = [HEAD] + [['2026', no, f'Co {no}', 'Dev', '일반기업', '경남', '2026.11'] for no in grads]
+    uploaded = client.post(URL+'/upload', headers=ADMIN, content=xlsx(rows))
+    monkeypatch.undo()
+    assert uploaded.status_code == 200, uploaded.text
+    assert uploaded.json() == {'inserted': 1, 'updated': 1}
+    assert sum('employment_report' in sql for sql in calls) <= 3
+    assert db.execute("SELECT count(*) n FROM dc.admin_event WHERE entity='employment_report' AND reason='취업 현황 엑셀 업로드'").fetchone()['n'] >= 2
 
 
 @pytest.mark.parametrize('text,expected', [

@@ -5,14 +5,17 @@ from urllib.parse import quote
 import re
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.responses import StreamingResponse
+from psycopg.errors import UniqueViolation
+from psycopg.types.json import Jsonb
 from pydantic import BaseModel, Field, field_validator
 
 from .academic_students import ROSTER
-from .administration import administrator, audit
+from .administration import administrator, audit, audit_many
 from .db import connection
 from .files import read_body
-from .xlsx_export import read_rows, workbook_sheets
+from .xlsx_export import read_workbook, workbook_sheets
 
 router = APIRouter()
 
@@ -122,12 +125,15 @@ def students(q: str = Query(min_length=1, max_length=50), user=Depends(administr
     return dict(items=rows)
 
 
+TEXT_LIMIT = 200
+
+
 class Employment(BaseModel):
     surveyYear: int = Field(ge=2000, le=2100)
     studentNo: str = Field(min_length=1, max_length=20)
     graduationMonth: str | None = Field(None, pattern=MONTH)
-    companyName: str = Field(min_length=1, max_length=200)
-    duty: str = Field(min_length=1, max_length=200)
+    companyName: str = Field(min_length=1, max_length=TEXT_LIMIT)
+    duty: str = Field(min_length=1, max_length=TEXT_LIMIT)
     companyTypeCode: str = Field(min_length=1, max_length=40)
     regionCode: str = Field(min_length=1, max_length=40)
     employedMonth: str = Field(pattern=MONTH)
@@ -149,28 +155,39 @@ def check_codes(conn, data):
         raise HTTPException(422, '지역을 선택하세요.')
 
 
+SAVED = ['survey_year', 'intg_uid', 'student_no', 'student_name', 'college_name', 'dept_name', 'sex_code', 'graduation_month',
+         'company_name', 'duty', 'company_type_code', 'region_code', 'employed_month']
+COLUMNS = ','.join(SAVED)
+VALUES = ','.join(f'%({c})s' for c in SAVED)
+
+
+def record(data, student):
+    """저장할 열 — 학생 열은 학사 스냅샷, 졸업년월이 비면 학사 졸업년월."""
+    return dict(survey_year=data.surveyYear, intg_uid=student['intg_uid'], student_no=student['student_no'],
+                student_name=student['name'], college_name=student['college_name'], dept_name=student['major_label'],
+                sex_code=student['sex_code'], graduation_month=data.graduationMonth or student['graduation_month'],
+                company_name=data.companyName, duty=data.duty, company_type_code=data.companyTypeCode,
+                region_code=data.regionCode, employed_month=data.employedMonth)
+
+
 def save(conn, user, report_id, data, student):
-    """report_id 가 None 이면 신규. 같은 조사년도에 같은 학생이 이미 있으면 409."""
-    args = dict(year=data.surveyYear, uid=student['intg_uid'], no=student['student_no'], name=student['name'],
-                college=student['college_name'], dept=student['major_label'], sex=student['sex_code'],
-                grad=data.graduationMonth or student['graduation_month'], company=data.companyName, duty=data.duty,
-                ctype=data.companyTypeCode, region=data.regionCode, employed=data.employedMonth, by=user['intg_uid'], id=report_id)
-    clash = conn.execute('''SELECT id FROM dc.employment_report WHERE survey_year=%(year)s AND intg_uid=%(uid)s
-      AND deleted_at IS NULL AND id IS DISTINCT FROM %(id)s''', args).fetchone()
-    if clash:
-        raise HTTPException(409, f'{data.surveyYear}년 조사에 이미 등록된 학생입니다.')
-    if report_id is None:
-        return None, conn.execute('''INSERT INTO dc.employment_report(survey_year,intg_uid,student_no,student_name,college_name,
-          dept_name,sex_code,graduation_month,company_name,duty,company_type_code,region_code,employed_month,created_by,updated_by)
-          VALUES(%(year)s,%(uid)s,%(no)s,%(name)s,%(college)s,%(dept)s,%(sex)s,%(grad)s,%(company)s,%(duty)s,%(ctype)s,%(region)s,
-          %(employed)s,%(by)s,%(by)s) RETURNING *''', args).fetchone()
-    before = conn.execute('SELECT * FROM dc.employment_report WHERE id=%s AND deleted_at IS NULL FOR UPDATE', (report_id,)).fetchone()
-    if not before:
-        raise HTTPException(404, '취업 현황을 찾을 수 없습니다.')
-    return before, conn.execute('''UPDATE dc.employment_report SET survey_year=%(year)s,intg_uid=%(uid)s,student_no=%(no)s,
-      student_name=%(name)s,college_name=%(college)s,dept_name=%(dept)s,sex_code=%(sex)s,graduation_month=%(grad)s,
-      company_name=%(company)s,duty=%(duty)s,company_type_code=%(ctype)s,region_code=%(region)s,employed_month=%(employed)s,
-      updated_by=%(by)s,updated_at=now() WHERE id=%(id)s RETURNING *''', args).fetchone()
+    """report_id 가 None 이면 신규. 같은 조사년도에 같은 학생이 이미 있으면 409.
+    중복은 UNIQUE 인덱스가 판정한다 — 미리 조회하면 동시 요청이 둘 다 통과한다."""
+    args = dict(record(data, student), by=user['intg_uid'], id=report_id)
+    before = None
+    if report_id is not None:
+        before = conn.execute('SELECT * FROM dc.employment_report WHERE id=%s AND deleted_at IS NULL FOR UPDATE', (report_id,)).fetchone()
+        if not before:
+            raise HTTPException(404, '취업 현황을 찾을 수 없습니다.')
+    try:
+        with conn.transaction():  # 세이브포인트 — 위반 시 바깥 트랜잭션은 살아 있다.
+            if report_id is None:
+                return None, conn.execute(f'''INSERT INTO dc.employment_report({COLUMNS},created_by,updated_by)
+                  VALUES({VALUES},%(by)s,%(by)s) RETURNING *''', args).fetchone()
+            return before, conn.execute(f'''UPDATE dc.employment_report SET ({COLUMNS},updated_by,updated_at)=({VALUES},%(by)s,now())
+              WHERE id=%(id)s RETURNING *''', args).fetchone()
+    except UniqueViolation:
+        raise HTTPException(409, f'{data.surveyYear}년 조사에 이미 등록된 학생입니다.') from None
 
 
 def save_one(conn, user, report_id, data):
@@ -207,16 +224,17 @@ def delete(data: Deletion, user=Depends(administrator, scope='function'), conn=D
 
 
 EXCEL_EPOCH = date(1899, 12, 30)
+EXCEL_EPOCH_1904 = date(1904, 1, 1)  # workbookPr date1904 — 옛 Mac 엑셀 파일
 
 
-def month_cell(text):
+def month_cell(text, date1904=False):
     """'2026.10'·'2026-10'·'202610'·날짜 셀 → 'YYYY-MM'.
     숫자 셀 2026.10 은 엑셀이 2026.1 로 저장한다 — 소수 한 자리 월은 10·11·12월대로 읽는다(1월은 2026.01 로 남는다)."""
     text = text.strip()
     if not text:
         return None
     if re.fullmatch(r'[0-9]{5}(\.0+)?', text) and 20000 <= float(text) <= 80000:  # 날짜 서식 셀(일련번호)
-        day = EXCEL_EPOCH + timedelta(days=int(float(text)))
+        day = (EXCEL_EPOCH_1904 if date1904 else EXCEL_EPOCH) + timedelta(days=int(float(text)))
         return f'{day.year:04d}-{day.month:02d}'
     match = (re.fullmatch(r'([0-9]{4})[.\-/년 ]+([0-9]{1,2})월?(?:[.\-/ ]+[0-9]{1,2}일?)?', text)
              or re.fullmatch(r'([0-9]{4})([0-9]{2})', text))
@@ -234,9 +252,14 @@ REQUIRED = ['조사년도', '학번', '취업처', '부서/업무', '기업분�
 @router.post('/forecast/employments/upload')
 async def upload(request: Request, user=Depends(administrator, scope='function'), conn=Depends(connection, scope='function')):
     """다운로드한 파일을 그대로 다시 올릴 수 있다. 학생 열은 학번으로 학사에서 다시 읽는다.
-    한 행이라도 틀리면 아무것도 저장하지 않고 행별 오류를 돌려준다. 같은 조사년도·학번은 갱신한다."""
+    한 행이라도 틀리면 아무것도 저장하지 않고 행별 오류를 돌려준다. 같은 조사년도·학번은 갱신한다.
+    본문만 비동기로 받고 해석·DB 는 스레드에서 한다 — 이벤트 루프를 막으면 다른 API 가 멈춘다."""
+    return await run_in_threadpool(import_workbook, await read_body(request), user, conn)
+
+
+def import_workbook(data, user, conn):
     try:
-        rows = read_rows(await read_body(request))
+        rows, date1904 = read_workbook(data)
     except ValueError as error:
         raise HTTPException(422, str(error)) from None
     if not rows:
@@ -257,7 +280,7 @@ async def upload(request: Request, user=Depends(administrator, scope='function')
         months = {}
         for name, required in (('졸업년월', False), ('취업일자', True)):
             try:
-                months[name] = month_cell(cell(row, name))
+                months[name] = month_cell(cell(row, name), date1904)
             except ValueError:
                 problems.append(f'{name} 형식(YYYY.MM)')
                 continue
@@ -272,10 +295,11 @@ async def upload(request: Request, user=Depends(administrator, scope='function')
         if not student:
             problems.append('학번(학사 정보 없음)' if no else '학번 누락')
         company, duty = cell(row, '취업처'), cell(row, '부서/업무')
-        if not company:
-            problems.append('취업처 누락')
-        if not duty:
-            problems.append('부서/업무 누락')
+        for name, value in (('취업처', company), ('부서/업무', duty)):  # 등록 화면(Employment)과 같은 한도 — 자르지 않는다.
+            if not value:
+                problems.append(f'{name} 누락')
+            elif len(value) > TEXT_LIMIT:
+                problems.append(f'{name} {TEXT_LIMIT}자 초과')
         ctype = lookup.get(('JOB_COMPANY_TYPE', cell(row, '기업분류')))
         region = lookup.get(('EMPLOYMENT_REGION', cell(row, '지역')))
         if not ctype:
@@ -289,20 +313,24 @@ async def upload(request: Request, user=Depends(administrator, scope='function')
             errors.append(dict(row=number, message=', '.join(problems)))
             continue
         seen[key] = number
-        parsed.append((Employment(surveyYear=year, studentNo=no, graduationMonth=months['졸업년월'], companyName=company[:200],
-                                  duty=duty[:200], companyTypeCode=ctype, regionCode=region, employedMonth=months['취업일자']), student))
+        parsed.append(record(Employment(surveyYear=year, studentNo=no, graduationMonth=months['졸업년월'], companyName=company,
+                                        duty=duty, companyTypeCode=ctype, regionCode=region, employedMonth=months['취업일자']), student))
     if errors:
         raise HTTPException(422, dict(message=f'{len(errors)}개 행에 오류가 있어 저장하지 않았습니다.', errors=errors[:200]))
     if not parsed:
         raise HTTPException(422, '올릴 행이 없습니다.')
-    existing = {(r['survey_year'], r['intg_uid']): r['id'] for r in conn.execute('''SELECT id,survey_year,intg_uid
-      FROM dc.employment_report WHERE deleted_at IS NULL AND intg_uid=ANY(%s)''', ([s['intg_uid'] for _, s in parsed],)).fetchall()}
-    inserted = updated = 0
-    for data, student in parsed:
-        before, row = save(conn, user, existing.get((data.surveyYear, student['intg_uid'])), data, student)
-        audit(conn, user, 'employment_report', row['id'], before, row, '취업 현황 엑셀 업로드')
-        if before is None:
-            inserted += 1
-        else:
-            updated += 1
-    return dict(inserted=inserted, updated=updated)
+    # 일괄 반영 — 기존 행을 잠가 변경 전 값을 얻고, 한 문장 upsert 로 저장한다(동시 등록도 UNIQUE 충돌 없이 갱신).
+    keys = Jsonb([dict(survey_year=r['survey_year'], intg_uid=r['intg_uid']) for r in parsed])
+    before = {(r['survey_year'], r['intg_uid']): r for r in conn.execute('''SELECT r.* FROM dc.employment_report r
+      JOIN jsonb_to_recordset(%s) AS k(survey_year smallint,intg_uid text) USING(survey_year,intg_uid)
+      WHERE r.deleted_at IS NULL FOR UPDATE OF r''', (keys,)).fetchall()}
+    types = ','.join(f'{c} {"smallint" if c == "survey_year" else "text"}' for c in SAVED)
+    saved = conn.execute(f'''INSERT INTO dc.employment_report({COLUMNS},created_by,updated_by)
+      SELECT {COLUMNS},%(by)s,%(by)s FROM jsonb_to_recordset(%(rows)s) AS x({types})
+      ON CONFLICT (survey_year,intg_uid) WHERE deleted_at IS NULL DO UPDATE SET
+      ({COLUMNS},updated_by,updated_at)=({",".join("excluded."+c for c in SAVED)},excluded.updated_by,now())
+      RETURNING *''', dict(rows=Jsonb(parsed), by=user['intg_uid'])).fetchall()
+    changes = [(row['id'], before.get((row['survey_year'], row['intg_uid'])), row) for row in saved]
+    audit_many(conn, user, 'employment_report', changes, '취업 현황 엑셀 업로드')
+    updated = sum(1 for _, old, _ in changes if old is not None)
+    return dict(inserted=len(changes)-updated, updated=updated)

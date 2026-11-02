@@ -5,6 +5,7 @@ from xml.etree import ElementTree
 from xml.sax.saxutils import escape
 from zipfile import BadZipFile, ZipFile, ZIP_DEFLATED
 import re
+import zlib
 
 SHEET_CT = 'application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml'
 SHEET_REL = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet'
@@ -60,10 +61,11 @@ REL_NS = '{http://schemas.openxmlformats.org/officeDocument/2006/relationships}'
 PART_LIMIT = 32*1024*1024
 
 
-def read_rows(data: bytes, max_rows: int = 20000):
-    """첫 시트를 문자열 행 리스트로 읽는다. 숫자 셀은 엑셀이 저장한 값(v) 그대로다 — 해석은 호출자가 한다.
+def read_workbook(data: bytes, max_rows: int = 20000):
+    """첫 시트를 문자열 행 리스트로 읽고 (행, date1904 여부)를 돌려준다.
+    숫자 셀은 엑셀이 저장한 값(v) 그대로다 — 날짜 일련번호 해석은 호출자가 date1904 로 한다.
 
-    ValueError 메시지는 사용자에게 그대로 보여 줄 수 있는 문장이다.
+    ValueError 메시지는 사용자에게 그대로 보여 줄 수 있는 문장이다. 손상된 파일도 ValueError 로 바꾼다.
     """
     try:
         book = ZipFile(BytesIO(data))
@@ -77,8 +79,13 @@ def read_rows(data: bytes, max_rows: int = 20000):
                 return None
             if info.file_size > PART_LIMIT:  # 압축 폭탄 — 풀기 전에 선언 크기로 거절한다.
                 raise ValueError('엑셀 파일이 너무 큽니다.')
-            return ElementTree.fromstring(book.read(name))
+            try:
+                return ElementTree.fromstring(book.read(name))
+            except (ElementTree.ParseError, BadZipFile, zlib.error, EOFError, NotImplementedError):
+                raise ValueError('손상된 엑셀 파일입니다. 엑셀에서 다시 저장한 뒤 올려 주세요.') from None
         workbook_xml, rels = part('xl/workbook.xml'), part('xl/_rels/workbook.xml.rels')
+        props = workbook_xml.find(f'{MAIN_NS}workbookPr') if workbook_xml is not None else None
+        date1904 = props is not None and props.get('date1904', '').lower() in ('1', 'true')
         sheet = workbook_xml.find(f'{MAIN_NS}sheets/{MAIN_NS}sheet') if workbook_xml is not None else None
         if sheet is None or rels is None:
             raise ValueError('엑셀(.xlsx) 파일만 올릴 수 있습니다.')
@@ -112,4 +119,4 @@ def read_rows(data: bytes, max_rows: int = 20000):
                         text = strings[int(text)]
                 values[column] = text.strip()
             rows.append([values.get(i, '') for i in range(max(values, default=-1) + 1)])
-        return rows
+        return rows, date1904
