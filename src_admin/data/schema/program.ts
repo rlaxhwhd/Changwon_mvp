@@ -52,6 +52,7 @@ export const outcomeLabel = (code: string): string => codeLabel('PROGRAM_OUTCOME
 /**
  * 선발자 관리 상태변경 select 의 항목.
  * 'SELECTED'=결과만 해제(선발 유지), 'PENDING'=선발 취소(신청자 관리로 복귀),
+ * 'REJECTED'=탈락(선착순 자동 선발자도 여기서 떨어뜨린다 — 신청자 관리에 탈락으로 남는다),
  * 'REMOVE'=신청 삭제. 불참은 벌점 tier 만큼 항목이 나뉜다
  * (2점은 현행에 없는 신설 tier다 — SPEC.md §7-8 `NOSHOW_2`).
  */
@@ -75,6 +76,7 @@ export function selectedActions(): SelectedAction[] {
   return [
     { value: 'SELECTED', label: selectionLabel('SELECTED'), outcome: null, points: 0, selection: null, remove: false },
     { value: 'PENDING', label: selectionLabel('PENDING'), outcome: null, points: 0, selection: 'PENDING', remove: false },
+    { value: 'REJECTED', label: selectionLabel('REJECTED'), outcome: null, points: 0, selection: 'REJECTED', remove: false },
     { value: 'COMPLETED', label: outcomeLabel('COMPLETED'), outcome: 'COMPLETED', points: 0, selection: null, remove: false },
     { value: 'NOT_COMPLETED', label: outcomeLabel('NOT_COMPLETED'), outcome: 'NOT_COMPLETED', points: 0, selection: null, remove: false },
     { value: 'ATTENDED', label: outcomeLabel('ATTENDED'), outcome: 'ATTENDED', points: 0, selection: null, remove: false },

@@ -95,6 +95,18 @@ def test_first_come_waits_after_selection_limit_and_closes_at_recruitment_limit(
     assert sum(a['selectionStatus'] == 'SELECTED' for a in detail['applicants']) == 1
 
 
+def test_first_come_selected_can_be_rejected_from_selected_list(client):
+    p = new_program(client, capacity=3, selectionMethod='FIRST_COME', selectionCapacity=1)
+    assert apply_as(client, 'chaewon', p['id']).json()['selectionStatus'] == 'SELECTED'
+    rejected = client.post(f"/api/v1/programs/{p['id']}/applications/selection", headers=headers('career_kim'),
+                           json={'studentIds': ['chaewon'], 'selection': 'REJECTED'})
+    assert rejected.status_code == 200, rejected.text
+    # 탈락은 자리를 비운다 — 다음 신청자는 선착순으로 선발된다.
+    assert apply_as(client, 'changwon', p['id']).json()['selectionStatus'] == 'SELECTED'
+    states = {a['studentId']: a['selectionStatus'] for a in read(client, p['id'])['applicants']}
+    assert states == {'chaewon': 'REJECTED', 'changwon': 'SELECTED'}
+
+
 def test_first_come_zero_selection_limit_keeps_applications_pending(client):
     p = new_program(client, selectionMethod='FIRST_COME', selectionCapacity=0)
     assert apply_as(client, 'chaewon', p['id']).json()['selectionStatus'] == 'PENDING'
