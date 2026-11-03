@@ -758,7 +758,7 @@ DB로 바꿀 때 **화면을 한 줄도 고치지 않는 것**이 이 seam의 �
 | `applyId` | `EP_PRM_APP.PRM_APP_SEQ` | |
 | `round` | `PRM_STEP` | |
 | `selectionStatus` | `STATUS` | 신청/선발/탈락/취소/수료/미수료 (§7-3) |
-| `motiveCode` / `routeCode` | `MOTIVE_CD` / `ROUTE_CD` | 지원동기·경로 |
+| `motiveCode` / `routeCode` | `MOTIVE_CD` / `ROUTE_CD` | 지원동기·경로 — `routeCode` 는 구현됨: 코드그룹 `PROGRAM_APPLY_ROUTE`(12개) → `program_apply.apply_route_code`, 라벨은 `apply_path` 에도 저장(155). 지원동기는 아직 자유 입력 |
 | `reflection` | `THKL` | 성찰 |
 | **스냅샷** `snapEnrollStatus`·`snapGrade`·`snapEmail`·`snapPhone` | `HOFC_STA_CD`·`STU_SCHGR`·`EMAIL`·`HP` | **현행이 이미 이 패턴** |
 | `competencyScores[]` | `EP_PRM_RESULT.CAP_PNT1~6` | 참여 결과 = 역량점수 |

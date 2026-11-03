@@ -6,6 +6,7 @@ import { collegeOf } from '../../src_admin/data/colleges'
 import './ProgramApplyModal.css'
 import { questionsAnswered, type ApplicationAnswers, type ApplicationQuestion } from '../../shared/programContent'
 import ProgramApplicationQuestions from '../../shared/components/ProgramApplicationQuestions'
+import { catalogOptions } from '../data/growthInputCatalog'
 
 interface Props {
   open: boolean
@@ -14,7 +15,7 @@ interface Props {
   questions?: ApplicationQuestion[]
   saving?: boolean
   onSubmit: (payload: {
-    path: string
+    routeCode: string
     motive: string
     agree3rd: 'yes' | 'no'
     agreeCollect: 'yes' | 'no'
@@ -46,7 +47,9 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
     college: collegeOf(active.major),
     dept: active.major,
   }
-  const [path, setPath] = useState('')
+  // 지원경로 목록은 코드관리(PROGRAM_APPLY_ROUTE)가 정본이다.
+  const routes = catalogOptions('PROGRAM_APPLY_ROUTE')
+  const [routeCode, setRouteCode] = useState('')
   const [motive, setMotive] = useState('')
   const [agree3rd, setAgree3rd] = useState<YN>('')
   const [agreeCollect, setAgreeCollect] = useState<YN>('')
@@ -56,7 +59,7 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
   const [uploading, setUploading] = useState(false)
 
   const reset = () => {
-    setPath(''); setMotive('')
+    setRouteCode(''); setMotive('')
     setAgree3rd(''); setAgreeCollect(''); setAgreeIdent(''); setAgreeNotice('')
     setAnswers({})
   }
@@ -64,12 +67,17 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
   const handleClose = () => { if (!saving && !uploading) { reset(); onClose() } }
 
   const allAnswered = agree3rd && agreeCollect && agreeIdent && agreeNotice
-  const canSubmit = path.trim() !== '' && motive.trim() !== '' && allAnswered && !saving && !uploading && questionsAnswered(questions, answers)
+  const allAgreed = agree3rd === 'yes' && agreeCollect === 'yes' && agreeIdent === 'yes' && agreeNotice === 'yes'
+  const setAllAgreed = (on: boolean) => {
+    const value: YN = on ? 'yes' : ''
+    setAgree3rd(value); setAgreeCollect(value); setAgreeIdent(value); setAgreeNotice(value)
+  }
+  const canSubmit = routeCode !== '' && motive.trim() !== '' && allAnswered && !saving && !uploading && questionsAnswered(questions, answers)
 
   const handleSubmit = () => {
     if (!canSubmit) return
     onSubmit({
-      path: path.trim(),
+      routeCode,
       motive: motive.trim(),
       agree3rd: agree3rd as 'yes' | 'no',
       agreeCollect: agreeCollect as 'yes' | 'no',
@@ -119,13 +127,15 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
         <label className="pam-section-title" htmlFor="pam-path">
           <i className="fa-regular fa-compass" /> 이 프로그램을 어떻게 알게 되었습니까? <span className="pam-req">*</span>
         </label>
-        <textarea
+        <select
           id="pam-path"
-          className="pam-textarea"
-          value={path}
-          onChange={e => setPath(e.target.value)}
-          placeholder="지원경로를 입력해주세요. (예: 학과 공지, 와글, 친구 추천 등)"
-        />
+          className="pam-select"
+          value={routeCode}
+          onChange={e => setRouteCode(e.target.value)}
+        >
+          <option value="">지원경로를 선택해 주세요</option>
+          {routes.map(item => <option key={item.code} value={item.code}>{item.label}</option>)}
+        </select>
       </div>
 
       {/* ── 지원동기 ── */}
@@ -270,9 +280,10 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
           본인은 위 개인정보 수집·이용·제3자 제공, 불이익 안내의 동의 또는 확인 여부에 대하여
           위와 같이 선택하였음을 확인합니다.
         </p>
-        <p className="pam-sign">
-          신청자: <strong>{studentDisplayName(STUDENT.name, STUDENT.studentId)}</strong> <span className="pam-sign-mark">(서명)</span>
-        </p>
+        <label className="pam-agree-all">
+          <input type="checkbox" checked={allAgreed} onChange={e => setAllAgreed(e.target.checked)} />
+          위 개인정보 제3자 제공·수집·이용·고유식별정보 제공·불이익 안내에 모두 동의합니다 (전체동의)
+        </label>
       </div>
 
       <div className="pam-actions">

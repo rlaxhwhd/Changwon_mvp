@@ -796,6 +796,8 @@ class ApplyBody(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     studentId: str | None = None
     path: str = Field(default='', max_length=500)
+    # 지원경로 — PROGRAM_APPLY_ROUTE 코드. 주면 라벨을 path 에도 남긴다(155).
+    routeCode: str | None = Field(default=None, max_length=40)
     motive: str = Field(default='', max_length=2000)
     consents: dict = Field(default_factory=dict)
     answers: dict[str, str | list[str]] = Field(default_factory=dict, max_length=30)
@@ -845,12 +847,19 @@ def apply(program_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
             raise HTTPException(409, f"모집 정원 {target['capacity']}명이 마감되었습니다.")
     # 신청 시점 학적을 복사해 둔다(CLAUDE.md 규칙 2) — 학과 개편 뒤에도 명단이 흔들리지 않는다.
     answer_snapshot, answer_files = validate_answers(conn, user, program, body.answers)
+    path = body.path
+    if body.routeCode is not None:
+        route_item = conn.execute('''SELECT label FROM dc.code_item
+          WHERE group_code='PROGRAM_APPLY_ROUTE' AND code=%s AND is_active''', (body.routeCode,)).fetchone()
+        if not route_item:
+            raise HTTPException(422, '지원경로를 목록에서 골라 주세요.')
+        path = route_item['label']
     snapshot = {'studentName': student['name'], 'studentMajor': student['major_label'],
                 'studentNo': student['student_no'], 'grade': student['grade'],
-                'path': body.path, 'motive': body.motive, 'applicationAnswers': answer_snapshot}
+                'path': path, 'routeCode': body.routeCode, 'motive': body.motive, 'applicationAnswers': answer_snapshot}
     row = conn.execute('''INSERT INTO dc.program_apply(program_id,student_uid,applied_at,snapshot,apply_path,
-      motive,consents,updated_by,round_no) VALUES(%s,%s,now(),%s,%s,%s,%s,%s,%s) RETURNING *''',
-      (program_id, student['intg_uid'], Jsonb(snapshot), body.path, body.motive,
+      apply_route_code,motive,consents,updated_by,round_no) VALUES(%s,%s,now(),%s,%s,%s,%s,%s,%s,%s) RETURNING *''',
+      (program_id, student['intg_uid'], Jsonb(snapshot), path, body.routeCode, body.motive,
        Jsonb(body.consents), user['intg_uid'], body.round)).fetchone()
     for file_id in sorted(answer_files):
         files.claim(conn, user, file_id, 'PROGRAM_APPLICATION', program_id + ':' + student['intg_uid'], 'PROGRAM_APPLICATION_ATTACHMENT')

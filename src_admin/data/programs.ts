@@ -267,7 +267,7 @@ export async function removeApplicant(programId: string, studentId: string): Pro
 /** 학생 본인의 프로그램 신청 — 동의·지원동기를 함께 남긴다. */
 export async function applyToProgram(
   programId: string,
-    body: { path: string; motive: string; consents: Record<string, string>; answers?: import('../../shared/programContent').ApplicationAnswers; round?: number },
+    body: { routeCode: string; motive: string; consents: Record<string, string>; answers?: import('../../shared/programContent').ApplicationAnswers; round?: number },
 ): Promise<void> {
   await api(`/programs/${encodeURIComponent(programId)}/applications`, {
     method: 'POST',

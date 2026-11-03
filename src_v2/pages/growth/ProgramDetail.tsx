@@ -66,15 +66,15 @@ export default function ProgramDetail() {
   // 서버에 저장된 뒤에만 완료로 표시한다. 마감·중복·정원은 서버가 판정하므로
   // 여기서 미리 성공을 알리면 저장되지 않은 신청이 완료로 보인다.
   const handleApplySubmit = (payload: {
-    path: string; motive: string
+    routeCode: string; motive: string
     agree3rd: 'yes' | 'no'; agreeCollect: 'yes' | 'no'
     agreeIdent: 'yes' | 'no'; agreeNotice: 'yes' | 'no'
     answers: import('../../../shared/programContent').ApplicationAnswers
   }) => {
     if (saving) return
     setSaving(true)
-    const { path, motive, answers, ...consents } = payload
-    applyToProgram(programId, { path, motive, consents, answers, round: applyRound ?? 1 })
+    const { routeCode, motive, answers, ...consents } = payload
+    applyToProgram(programId, { routeCode, motive, consents, answers, round: applyRound ?? 1 })
       .then(() => {
         setApplyOpen(false)
         setApplied(true)
