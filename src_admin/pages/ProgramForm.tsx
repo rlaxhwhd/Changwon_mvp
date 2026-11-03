@@ -14,6 +14,7 @@ import { getActiveUser, STAFF_USERS } from '../data/staff'
 import { QUESTION_TYPES, noticeParts, uploadProgramFile, type ApplicationQuestion, type ProgramFile } from '../../shared/programContent'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
 import { competencySurveyGroups, pinnedSurveyForm, satisfactionSurveySummary } from '../data/schema/program'
+import type { ProgramRound } from '../data/schema/program'
 import { codeItems, codeLabel } from '../../shared/metadataStore'
 import { useMetadata } from '../../shared/useMetadata'
 import { api } from '../../shared/api'
@@ -24,6 +25,8 @@ import type { RoadmapEntry } from '../../src_v2/data/schema/roadmap'
 import './ProgramForm.css'
 
 const FISCAL_YEARS = ['2026', '2027']
+/** 신청 제한 인원·선발 인원의 새 공고 기본값 — 차수 추가 팝업도 같은 값에서 시작한다. */
+const DEFAULT_HEADCOUNT = 50
 const optionsOf = (group: string) => codeItems.filter(item => item.group_code === group && item.is_active).sort((a, b) => a.sort_order - b.sort_order)
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 
@@ -112,7 +115,13 @@ export default function ProgramForm() {
   const [runEndDate, setRunEndDate] = useState(existing?.runEndDate ?? today)
   const [runEndTime, setRunEndTime] = useState(existing ? existing.runEndTime?.slice(0, 5) ?? '' : '17:00')
   const [place, setPlace] = useState(existing?.location ?? '')
-  const [sessions, setSessions] = useState(existing ? String(existing.sessions) : '1')
+  // 2차부터의 차수 — 1차는 위의 접수·운영기간·장소·인원 칸이다. 총회차는 1 + 차수 수다.
+  const [rounds, setRounds] = useState<ProgramRound[]>(existing?.rounds ?? [])
+  const [roundDraft, setRoundDraft] = useState<ProgramRound | null>(null)
+  // 수정 중인 차수의 원래 번호 — null 이면 새 차수 추가다.
+  const [roundOrigin, setRoundOrigin] = useState<number | null>(null)
+  const [roundError, setRoundError] = useState('')
+  const sessions = 1 + rounds.length
   const [managerIds, setManagerIds] = useState<string[]>(() => existing
     ? existing.managerIds ?? [] : getActiveUser() ? [getActiveUser().id] : [])
   const [managerChoice, setManagerChoice] = useState('')
@@ -122,8 +131,8 @@ export default function ProgramForm() {
   const managerName = managerIds.map(managerId => STAFF_USERS.find(staff => staff.id === managerId)?.name ?? managerId).join(', ')
   const [targets, setTargets] = useState<string[]>(existing?.targetStatuses ?? [])
   const [grades, setGrades] = useState<string[]>(existing?.targetGrades ?? [])
-  const [limitCount, setLimitCount] = useState(existing ? String(existing.capacity) : '100')
-  const [selectCount, setSelectCount] = useState(existing ? String(existing.selectionCapacity ?? existing.capacity) : '30')
+  const [limitCount, setLimitCount] = useState(existing ? String(existing.capacity) : String(DEFAULT_HEADCOUNT))
+  const [selectCount, setSelectCount] = useState(existing ? String(existing.selectionCapacity ?? existing.capacity) : String(DEFAULT_HEADCOUNT))
   const [selectMethod, setSelectMethod] = useState<'FIRST_COME' | 'REVIEW'>(existing?.selectionMethod ?? (existing ? 'REVIEW' : 'FIRST_COME'))
   const [certificate, setCertificate] = useState<'발급' | '미발급'>('발급')
   const [completeHours, setCompleteHours] = useState('2')
@@ -214,7 +223,9 @@ export default function ProgramForm() {
       applicationQuestions: extras,
       attachmentFileIds: attachments.map(file => file.id),
       fiscalYear,
-      sessions: Math.max(1, Number(sessions) || 1),
+      sessions,
+      // 읽기 전용 합계·등록자는 서버가 채운다 — 보낼 것은 차수 설정뿐이다.
+      rounds: rounds.map(({ applyCount: _a, selectedCount: _s, createdBy: _b, createdAt: _c, ...round }) => round),
       manager: managerName,
       managerIds,
       managerPhones: Object.fromEntries(managerIds.map(managerId => [managerId, managerPhones[managerId]?.trim() ?? ''])),
@@ -279,6 +290,43 @@ export default function ProgramForm() {
     } catch (error) { setSaveError(error instanceof Error ? error.message : '파일을 올리지 못했습니다.') }
     finally { setUploading(false) }
   }
+
+  /** 차수 팝업 열기 — 새 차수는 비어 있는 다음 번호에서, 장소·선발 방식은 1차 값에서 시작한다. */
+  const openRound = (round?: ProgramRound) => {
+    setRoundError('')
+    setRoundOrigin(round?.round ?? null)
+    setRoundDraft(round ? { ...round } : {
+      round: Math.max(1, ...rounds.map(r => r.round)) + 1,
+      startDate: '', startTime: '', endDate: '', endTime: '',
+      runStartDate: '', runStartTime: '', runEndDate: '', runEndTime: '',
+      location: place.trim(), capacity: DEFAULT_HEADCOUNT, selectionCapacity: DEFAULT_HEADCOUNT, selectionMethod: selectMethod,
+    })
+  }
+  const patchRound = (patch: Partial<ProgramRound>) => setRoundDraft(prev => (prev ? { ...prev, ...patch } : prev))
+  // 팝업의 차수 선택지 — 다른 차수가 쓰지 않는 번호(2차부터). 수정 중인 번호는 남긴다.
+  const roundNumbers = Array.from({ length: Math.max(1, ...rounds.map(r => r.round)) + 1 }, (_, i) => i + 2)
+    .filter(n => n === roundOrigin || !rounds.some(r => r.round === n))
+  /** 팝업 확인 — 저장은 프로그램 저장 때 서버가 한 번에 한다(신청자가 있는 차수 삭제·정원 축소는 서버가 거절). */
+  const saveRound = () => {
+    if (!roundDraft) return
+    const d = roundDraft
+    const headcount = (n: number | null | undefined) => Number.isInteger(n) && (n as number) >= 0 && (n as number) <= 100000
+    if (!d.startDate || !d.endDate) { setRoundError('접수기간 시작일과 종료일을 입력해 주세요.'); return }
+    if (d.endDate < d.startDate) { setRoundError('접수 종료일은 시작일 이후여야 합니다.'); return }
+    if (d.runStartDate && d.runEndDate && d.runEndDate < d.runStartDate) { setRoundError('운영 종료일은 시작일 이후여야 합니다.'); return }
+    if (!headcount(d.capacity) || !headcount(d.selectionCapacity) || (d.selectionCapacity ?? 0) > d.capacity) {
+      setRoundError('신청 제한·선발 인원을 확인해 주세요. 선발 인원은 신청 제한 인원 이하여야 합니다.'); return
+    }
+    const clean: ProgramRound = {
+      ...d, startTime: d.startTime || null, endTime: d.endTime || null,
+      runStartDate: d.runStartDate || null, runEndDate: d.runEndDate || null,
+      runStartTime: d.runStartTime || null, runEndTime: d.runEndTime || null, location: d.location.trim(),
+    }
+    setRounds(prev => [...prev.filter(r => r.round !== roundOrigin), clean].sort((a, b) => a.round - b.round))
+    setRoundDraft(null)
+  }
+  const roundDate = (date?: string | null, time?: string | null) =>
+    date ? <>{date.replaceAll('-', '.')}<br />{time ? time.slice(0, 5) : '00:00'}</> : '—'
 
   return (
     <div className={`pf${editing ? ' pf-embedded' : ''}`}>
@@ -564,9 +612,10 @@ export default function ProgramForm() {
                 <div className="pf-field">
                   <span className="pf-label">총회차 <span className="pf-req">*</span></span>
                   <div className="pf-suffix-wrap">
-                    <input className="pf-input" type="number" min={1} value={sessions} onChange={e => setSessions(e.target.value)} />
+                    <input className="pf-input" type="number" value={sessions} readOnly aria-describedby="pf-sessions-help" />
                     <span className="pf-suffix">회</span>
                   </div>
+                  <span className="pf-help" id="pf-sessions-help">아래 차수 정보의 차수 수입니다.</span>
                 </div>
 
                 {/* 1행 3열: 선발 방식 */}
@@ -596,6 +645,53 @@ export default function ProgramForm() {
                     <label className="pf-radio"><input type="radio" name="certificate" checked={certificate === '미발급'} onChange={() => setCertificate('미발급')} /> 미발급</label>
                   </div>
                 </div>
+              </div>
+
+              {/* 차수 정보 — 운영기간 동안 같은 프로그램을 여러 번 연다. 1차는 위의 기본 칸이다. */}
+              <div className="pf-field">
+                <div className="pf-round-head">
+                  <span className="pf-label">차수 정보</span>
+                  <button type="button" className="pf-btn-outline" disabled={rounds.length >= 998} onClick={() => openRound()}><LuPlus /> 차수 추가</button>
+                </div>
+                <div className="pf-round-scroll">
+                  <table className="pf-round-table" aria-label="비교과 프로그램 차수 정보">
+                    <thead><tr>
+                      <th scope="col">차수</th><th scope="col">신청시작일</th><th scope="col">신청종료일</th>
+                      <th scope="col">행사시작일</th><th scope="col">행사종료일</th><th scope="col">실시장소</th>
+                      <th scope="col">모집</th><th scope="col">선발</th><th scope="col">선착순</th>
+                      <th scope="col">등록자</th><th scope="col">등록일</th><th scope="col">수정</th><th scope="col">삭제</th>
+                    </tr></thead>
+                    <tbody>
+                      <tr>
+                        <td>1</td>
+                        <td>{roundDate(applyStartDate, applyStartTime)}</td><td>{roundDate(applyEndDate, applyEndTime)}</td>
+                        <td>{roundDate(runStartDate, runStartTime)}</td><td>{roundDate(runEndDate, runEndTime)}</td>
+                        <td>{place.trim() || '—'}</td><td>{limitCount || '—'}</td><td>{selectCount || '—'}</td>
+                        <td>{selectMethod === 'FIRST_COME' ? 'Y' : 'N'}</td>
+                        <td>—</td>
+                        <td>{existing ? existing.createdAt.slice(0, 10).replaceAll('-', '.') : '저장 전'}</td>
+                        <td className="pf-round-muted" title="1차는 위의 접수·운영기간, 장소, 인원 칸에서 고칩니다.">기본 정보</td>
+                        <td className="pf-round-locked" title="1차는 삭제할 수 없습니다.">불가</td>
+                      </tr>
+                      {rounds.map(r => (
+                        <tr key={r.round}>
+                          <td>{r.round}</td>
+                          <td>{roundDate(r.startDate, r.startTime)}</td><td>{roundDate(r.endDate, r.endTime)}</td>
+                          <td>{roundDate(r.runStartDate, r.runStartTime)}</td><td>{roundDate(r.runEndDate, r.runEndTime)}</td>
+                          <td>{r.location || '—'}</td><td>{r.capacity}</td><td>{r.selectionCapacity ?? r.capacity}</td>
+                          <td>{r.selectionMethod === 'FIRST_COME' ? 'Y' : 'N'}</td>
+                          <td>{r.createdBy ?? getActiveUser()?.name ?? '—'}</td>
+                          <td>{r.createdAt ? r.createdAt.slice(0, 10).replaceAll('-', '.') : '저장 전'}</td>
+                          <td><button type="button" className="pf-btn pf-btn-primary pf-btn-sm" onClick={() => openRound(r)}>수정</button></td>
+                          <td>{r.applyCount
+                            ? <span className="pf-round-locked" title="신청자가 있는 차수는 삭제할 수 없습니다.">불가</span>
+                            : <button type="button" className="pf-manager-remove" aria-label={`${r.round}차 삭제`} onClick={() => setRounds(prev => prev.filter(x => x.round !== r.round))}><LuX /></button>}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <span className="pf-help">차수마다 접수·운영기간과 인원을 따로 둡니다. 학생은 차수 하나를 골라 신청하고, 변경 내용은 저장할 때 반영됩니다.</span>
               </div>
 
               {/* 첨부 파일 */}
@@ -814,6 +910,71 @@ export default function ProgramForm() {
             <div className="pf-modal-foot">
               <button type="button" className="pf-btn pf-btn-ghost" onClick={() => setExtraOpen(false)}>취소</button>
               <button type="button" className="pf-btn pf-btn-primary" disabled={!extraValid} onClick={() => { setExtras(extraDraft); setExtraOpen(false) }}>설정 적용</button>
+            </div>
+          </div>
+        </AdminModal>
+      )}
+
+      {/* ── 차수 추가·수정 modal ── */}
+      {roundDraft && (
+        <AdminModal title={roundOrigin === null ? '비교과 프로그램 차수 추가' : `${roundOrigin}차 수정`} size="lg" onClose={() => setRoundDraft(null)}>
+          <div className="pf-modal">
+            <dl className="pf-round-form">
+              <dt>차수선택</dt>
+              <dd>
+                <select aria-label="차수" className="pf-select pf-round-narrow" value={roundDraft.round} onChange={e => patchRound({ round: Number(e.target.value) })}>
+                  {roundNumbers.map(n => <option key={n} value={n}>{n}차</option>)}
+                </select>
+              </dd>
+              <dt>접수기간</dt>
+              <dd className="pf-range">
+                <div className="pf-datetime">
+                  <input aria-label="접수 시작일" className="pf-input" type="date" value={roundDraft.startDate} onChange={e => patchRound({ startDate: e.target.value })} />
+                  <input aria-label="접수 시작 시각" className="pf-input" type="time" value={roundDraft.startTime?.slice(0, 5) ?? ''} onChange={e => patchRound({ startTime: e.target.value })} />
+                </div>
+                <span className="pf-range-sep">~</span>
+                <div className="pf-datetime">
+                  <input aria-label="접수 종료일" className="pf-input" type="date" value={roundDraft.endDate} onChange={e => patchRound({ endDate: e.target.value })} />
+                  <input aria-label="접수 종료 시각" className="pf-input" type="time" value={roundDraft.endTime?.slice(0, 5) ?? ''} onChange={e => patchRound({ endTime: e.target.value })} />
+                </div>
+              </dd>
+              <dt>운영기간</dt>
+              <dd className="pf-range">
+                <div className="pf-datetime">
+                  <input aria-label="운영 시작일" className="pf-input" type="date" value={roundDraft.runStartDate ?? ''} onChange={e => patchRound({ runStartDate: e.target.value })} />
+                  <input aria-label="운영 시작 시각" className="pf-input" type="time" value={roundDraft.runStartTime?.slice(0, 5) ?? ''} onChange={e => patchRound({ runStartTime: e.target.value })} />
+                </div>
+                <span className="pf-range-sep">~</span>
+                <div className="pf-datetime">
+                  <input aria-label="운영 종료일" className="pf-input" type="date" value={roundDraft.runEndDate ?? ''} onChange={e => patchRound({ runEndDate: e.target.value })} />
+                  <input aria-label="운영 종료 시각" className="pf-input" type="time" value={roundDraft.runEndTime?.slice(0, 5) ?? ''} onChange={e => patchRound({ runEndTime: e.target.value })} />
+                </div>
+              </dd>
+              <dt>실시장소</dt>
+              <dd><input aria-label="실시장소" className="pf-input" maxLength={100} value={roundDraft.location} onChange={e => patchRound({ location: e.target.value })} /></dd>
+              <dt>신청제한인원</dt>
+              <dd>
+                <div className="pf-suffix-wrap pf-round-narrow">
+                  <input aria-label="신청제한인원" className="pf-input" type="number" min={0} value={Number.isNaN(roundDraft.capacity) ? '' : roundDraft.capacity} onChange={e => patchRound({ capacity: e.target.value === '' ? NaN : Number(e.target.value) })} />
+                  <span className="pf-suffix">명</span>
+                </div>
+              </dd>
+              <dt>선발인원</dt>
+              <dd className="pf-inline">
+                <div className="pf-suffix-wrap pf-round-narrow">
+                  <input aria-label="선발인원" className="pf-input" type="number" min={0} value={roundDraft.selectionCapacity == null || Number.isNaN(roundDraft.selectionCapacity) ? '' : roundDraft.selectionCapacity} onChange={e => patchRound({ selectionCapacity: e.target.value === '' ? NaN : Number(e.target.value) })} />
+                  <span className="pf-suffix">명</span>
+                </div>
+                <label className="pf-check">
+                  <input type="checkbox" checked={roundDraft.selectionMethod === 'FIRST_COME'} onChange={e => patchRound({ selectionMethod: e.target.checked ? 'FIRST_COME' : 'REVIEW' })} />
+                  선착순선발
+                </label>
+              </dd>
+            </dl>
+            {roundError && <p className="pf-thumb-error" role="alert">{roundError}</p>}
+            <div className="pf-modal-foot">
+              <button type="button" className="pf-btn pf-btn-primary" onClick={saveRound}>{roundOrigin === null ? '차수추가' : '수정'}</button>
+              <button type="button" className="pf-btn pf-btn-ghost" onClick={() => setRoundDraft(null)}>닫기</button>
             </div>
           </div>
         </AdminModal>

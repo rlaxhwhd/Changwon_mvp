@@ -16,6 +16,7 @@ import {
   selectionOf,
   pendingApplicants,
   selectedApplicants,
+  programRounds,
 } from '../data/programs'
 import {
   PROGRAM_STATUSES, SELECTION_STATUSES, selectedActions,
@@ -81,10 +82,15 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   const [checkedMode, setCheckedMode] = useState(mode)
   if (checkedMode !== mode) { setCheckedMode(mode); setChecked(new Set()) }
 
+  // 차수가 여럿이면 차수별로 본다(0 = 전체). 학생 추가는 고른 차수로 들어간다.
+  const rounds = programRounds(program)
+  const [roundFilter, setRoundFilter] = useState(0)
+  const inRound = (a: ProgramApplicant) => roundFilter === 0 || (a.round ?? 1) === roundFilter
   const applicants = program.applicants
   const selectedList = selectedApplicants(program)
   // 선발되면 선발자 관리로 넘어간다 — 신청자 관리에는 남지 않는다.
-  const currentList = mode === 'applicants' ? pendingApplicants(program) : selectedList
+  const currentList = (mode === 'applicants' ? pendingApplicants(program) : selectedList).filter(inRound)
+  const addRound = rounds.length === 1 ? 1 : roundFilter
 
   const waitingCount = applicants.filter(a => selectionOf(a) === 'PENDING').length
   const rejectedCount = applicants.filter(a => selectionOf(a) === 'REJECTED').length
@@ -225,11 +231,23 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
           <h2>
             {mode === 'applicants' ? <><LuUsers /> 신청자 관리</> : <><LuUserCheck /> 선발자 관리</>}
           </h2>
-          {mode === 'applicants' && (
-            <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => setPicking(true)}>
-              <LuUserPlus /> 학생 추가
-            </button>
-          )}
+          <div className="admin-card-actions">
+            {rounds.length > 1 && (
+              <label className="admin-select">
+                <span>차수</span>
+                <select value={roundFilter} onChange={e => { setRoundFilter(Number(e.target.value)); setChecked(new Set()) }}>
+                  <option value={0}>전체</option>
+                  {rounds.map(r => <option key={r.round} value={r.round}>{r.round}차</option>)}
+                </select>
+              </label>
+            )}
+            {mode === 'applicants' && (
+              <button type="button" className="admin-btn admin-btn-ghost sm" disabled={addRound === 0}
+                      title={addRound === 0 ? '학생을 넣을 차수를 먼저 고르세요.' : undefined} onClick={() => setPicking(true)}>
+                <LuUserPlus /> {rounds.length > 1 && addRound ? `${addRound}차에 학생 추가` : '학생 추가'}
+              </button>
+            )}
+          </div>
         </div>
 
         {checked.size > 0 && (
@@ -390,7 +408,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
           excludeIds={applicants.map(a => a.studentId)}
           onClose={() => setPicking(false)}
           onPick={student => {
-            run(addApplicant(program.id, { id: student.id, name: student.name, major: student.major }))
+            run(addApplicant(program.id, { id: student.id, name: student.name, major: student.major }, addRound))
           }}
         />
       )}

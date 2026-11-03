@@ -99,7 +99,37 @@ def application_window(program):
         raise HTTPException(409, '신청이 마감된 프로그램입니다.')
 
 
-def program_dto(row, applicants, attachments=None, managers=None):
+def round_dto(row):
+    return {
+        'round': row['round_no'], 'startDate': row['apply_start'], 'startTime': row['apply_start_time'],
+        'endDate': row['apply_end'], 'endTime': row['apply_end_time'],
+        'runStartDate': row['run_start'], 'runStartTime': row['run_start_time'],
+        'runEndDate': row['run_end'], 'runEndTime': row['run_end_time'],
+        'location': row['location'], 'capacity': row['capacity'],
+        'selectionCapacity': row['selection_capacity'], 'selectionMethod': row['selection_method'],
+        # 차수별 인원 — 명단 권한과 무관한 합계라 학생 공고의 「모집인원/정원」에도 쓴다.
+        'applyCount': row['applied'], 'selectedCount': row['selected'],
+        'createdBy': row['creator_name'], 'createdAt': row['created_at'],
+    }
+
+
+def rounds_of(conn, program_ids):
+    """2차부터의 차수. 1차는 공고 행 자체라 여기 없다(154)."""
+    grouped = {pid: [] for pid in program_ids}
+    if not program_ids:
+        return grouped
+    for row in conn.execute('''SELECT r.*,p.name AS creator_name,
+      count(a.student_uid) FILTER(WHERE a.cancelled_at IS NULL AND a.selection_code<>'CANCELLED') AS applied,
+      count(a.student_uid) FILTER(WHERE a.cancelled_at IS NULL AND a.selection_code='SELECTED') AS selected
+      FROM dc.program_round r LEFT JOIN dc.person p ON p.intg_uid=r.created_by
+      LEFT JOIN dc.program_apply a ON a.program_id=r.program_id AND a.round_no=r.round_no
+      WHERE r.program_id=ANY(%s) GROUP BY r.program_id,r.round_no,p.name ORDER BY r.program_id,r.round_no''',
+      (program_ids,)).fetchall():
+        grouped[row['program_id']].append(round_dto(row))
+    return grouped
+
+
+def program_dto(row, applicants, attachments=None, managers=None, rounds=None):
     return {
         'id': row['id'], 'title': row['title'], 'desc': row['summary'], 'detail': row['detail'],
         'category': row['category_code'], 'status': row['status_code'],
@@ -123,6 +153,7 @@ def program_dto(row, applicants, attachments=None, managers=None):
         'managerIds': [manager['alias'] for manager in managers or []],
         # 공고의 담당자명·연락처 — 학생은 교직원 명단을 받지 않으므로 서버가 실어 준다.
         'managers': [manager_dto(manager) for manager in managers or []],
+        'rounds': rounds or [],
     }
 
 
@@ -189,20 +220,23 @@ def my_programs(page: int = Query(1, ge=1), pageSize: int = Query(100, ge=1, le=
     uid = user['intg_uid']
     total = conn.execute('SELECT count(*) AS n FROM dc.program_apply WHERE student_uid=%s',
                          (uid,)).fetchone()['n']
-    rows = conn.execute('''SELECT p.id,p.title,p.summary,p.category_code,p.manager,p.location,
-      p.run_start,p.run_end,p.sessions,a.applied_at,a.cancelled_at,a.selection_code,a.outcome_code,
-      a.attendance_code,
+    # 장소·운영기간은 신청한 차수의 것이다(2차부터는 program_round).
+    rows = conn.execute('''SELECT p.id,p.title,p.summary,p.category_code,p.manager,
+      COALESCE(r.location,p.location) AS location,COALESCE(r.run_start,p.run_start) AS run_start,
+      COALESCE(r.run_end,p.run_end) AS run_end,p.sessions,a.round_no,
+      a.applied_at,a.cancelled_at,a.selection_code,a.outcome_code,a.attendance_code,
       (p.competency_survey AND cardinality(p.competency_areas)>0) AS competency_survey,p.satisfaction_survey,
       EXISTS(SELECT 1 FROM dc.survey_response r WHERE r.program_id=p.id AND r.student_uid=a.student_uid AND r.phase='PRE') AS survey_pre,
       EXISTS(SELECT 1 FROM dc.survey_response r WHERE r.program_id=p.id AND r.student_uid=a.student_uid AND r.phase='POST') AS survey_post,
       EXISTS(SELECT 1 FROM dc.survey_response r WHERE r.program_id=p.id AND r.student_uid=a.student_uid AND r.phase='SATISFACTION') AS survey_satisfaction
       FROM dc.program_apply a JOIN dc.program p ON p.id=a.program_id
+      LEFT JOIN dc.program_round r ON r.program_id=a.program_id AND r.round_no=a.round_no
       WHERE a.student_uid=%s ORDER BY a.applied_at DESC,p.id LIMIT %s OFFSET %s''',
       (uid, pageSize, (page-1)*pageSize)).fetchall()
     return {'totalCount': total, 'items': [{
         'id': r['id'], 'title': r['title'], 'description': r['summary'],
         'category': r['category_code'], 'manager': r['manager'], 'location': r['location'],
-        'startDate': r['run_start'], 'endDate': r['run_end'], 'sessions': r['sessions'],
+        'startDate': r['run_start'], 'endDate': r['run_end'], 'sessions': r['sessions'], 'round': r['round_no'],
         'appliedAt': r['applied_at'], 'cancelledAt': r['cancelled_at'],
         'selection': r['selection_code'], 'outcome': r['outcome_code'], 'attendance': r['attendance_code'],
         # 조사 안내용 — 열림 여부의 정본은 /programs/{id}/survey/{phase} 가 판정한다.
@@ -229,8 +263,11 @@ def programs(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100)
         where.append('''(cardinality(target_grades)=0 OR
           (SELECT grade::text FROM dc.student WHERE intg_uid=%s)=ANY(target_grades))''')
         values.append(user['intg_uid'])
+        # 접수가 남은 차수가 하나라도 있으면 아직 신청할 수 있다(1차는 공고 행, 2차부터 program_round).
         where.append("""status_code='RECRUITING' AND (apply_end IS NULL OR
-          (apply_end + COALESCE(apply_end_time,'23:59:59.999999'::time)) AT TIME ZONE 'Asia/Seoul' >= now())""")
+          (apply_end + COALESCE(apply_end_time,'23:59:59.999999'::time)) AT TIME ZONE 'Asia/Seoul' >= now()
+          OR EXISTS(SELECT 1 FROM dc.program_round r WHERE r.program_id=program.id AND
+            (r.apply_end + COALESCE(r.apply_end_time,'23:59:59.999999'::time)) AT TIME ZONE 'Asia/Seoul' >= now()))""")
     if category:
         where.append('category_code=%s')
         values.append(category)
@@ -249,7 +286,8 @@ def programs(page: int = Query(1, ge=1), pageSize: int = Query(20, ge=1, le=100)
     grouped = applicants_of(conn, user, [r['id'] for r in rows])
     attached = attachments_of(conn, [r['id'] for r in rows])
     managers = managers_of(conn, [r['id'] for r in rows])
-    return dict(items=[program_dto(r, grouped[r['id']], attached[r['id']], managers[r['id']]) for r in rows],
+    rounds = rounds_of(conn, [r['id'] for r in rows])
+    return dict(items=[program_dto(r, grouped[r['id']], attached[r['id']], managers[r['id']], rounds[r['id']]) for r in rows],
                 totalCount=total, page=page, pageSize=pageSize)
 
 
@@ -283,8 +321,13 @@ def program_detail(program_id: str, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
     row = get_program(conn, program_id)
     require_published(row, user)
-    return program_dto(row, applicants_of(conn, user, [program_id])[program_id],
-                       attachments_of(conn, [program_id])[program_id], managers_of(conn, [program_id])[program_id])
+    return full_dto(conn, user, row)
+
+
+def full_dto(conn, user, row):
+    pid = [row['id']]
+    return program_dto(row, applicants_of(conn, user, pid)[row['id']], attachments_of(conn, pid)[row['id']],
+                       managers_of(conn, pid)[row['id']], rounds_of(conn, pid)[row['id']])
 
 
 def survey_response_locks(conn, program_id):
@@ -301,6 +344,48 @@ def program_survey_locks(program_id: str, user=Depends(principal, scope='functio
     require_staff(user)
     get_program(conn, program_id)
     return survey_response_locks(conn, program_id)
+
+
+def check_periods(*periods):
+    """접수·운영 기간 — (시작일, 종료일, 시작시각, 종료시각) 묶음마다 같은 규칙을 본다."""
+    for start, end, start_time, end_time in periods:
+        if any(value is not None and value.tzinfo is not None for value in (start_time, end_time)):
+            raise ValueError('접수·운영 시간은 한국 시간으로 입력해 주세요.')
+        if (start_time and not start) or (end_time and not end):
+            raise ValueError('시간과 날짜를 함께 입력해 주세요.')
+        if start == end and start_time and end_time and start_time > end_time:
+            raise ValueError('종료 시각은 시작 시각 이후여야 합니다.')
+
+
+class RoundBody(BaseModel):
+    """2차부터의 차수 1건. 읽기 전용 DTO 칸(applyCount·createdBy 등)을 그대로 돌려보내도 무시한다."""
+    model_config = ConfigDict(extra='ignore', str_strip_whitespace=True)
+    round: int = Field(ge=2, le=999)
+    startDate: date
+    endDate: date
+    startTime: time | None = None
+    endTime: time | None = None
+    runStartDate: date | None = None
+    runEndDate: date | None = None
+    runStartTime: time | None = None
+    runEndTime: time | None = None
+    location: str = Field(default='', max_length=200)
+    capacity: int = Field(ge=0, le=100000)
+    selectionCapacity: int | None = Field(default=None, ge=0, le=100000)
+    selectionMethod: str = Field(default='REVIEW', pattern='^(REVIEW|FIRST_COME)$')
+
+    @model_validator(mode='after')
+    def consistent(self):
+        label = f'{self.round}차'
+        if self.selectionCapacity is not None and self.selectionCapacity > self.capacity:
+            raise ValueError(f'{label} 선발 인원은 모집 인원을 초과할 수 없습니다.')
+        if self.endDate < self.startDate:
+            raise ValueError(f'{label} 신청 마감일은 시작일 이후여야 합니다.')
+        if self.runEndDate and self.runStartDate and self.runEndDate < self.runStartDate:
+            raise ValueError(f'{label} 운영 종료일은 시작일 이후여야 합니다.')
+        check_periods((self.startDate, self.endDate, self.startTime, self.endTime),
+                      (self.runStartDate, self.runEndDate, self.runStartTime, self.runEndTime))
+        return self
 
 
 class ProgramBody(BaseModel):
@@ -348,6 +433,8 @@ class ProgramBody(BaseModel):
     attachmentFileIds: list[str] | None = Field(default=None, max_length=20)
     # Read-only DTO field accepted for compatibility with existing full-object updates.
     attachments: list[dict] = Field(default_factory=list, max_length=20, exclude=True)
+    # 2차부터의 차수. 생략하면 저장된 차수를 유지한다(옛 클라이언트). 총회차는 1 + 차수 수로 서버가 맞춘다.
+    rounds: list[RoundBody] | None = Field(default=None, max_length=998)
 
     @model_validator(mode='after')
     def consistent(self):
@@ -355,15 +442,10 @@ class ProgramBody(BaseModel):
             raise ValueError('선발 인원은 모집 인원을 초과할 수 없습니다.')
         if self.noticeAt is not None and self.noticeAt.tzinfo is None:
             raise ValueError('공고일시에는 시간대가 필요합니다.')
-        for start, end, start_time, end_time in (
-                (self.startDate, self.endDate, self.startTime, self.endTime),
-                (self.runStartDate, self.runEndDate, self.runStartTime, self.runEndTime)):
-            if any(value is not None and value.tzinfo is not None for value in (start_time, end_time)):
-                raise ValueError('접수·운영 시간은 한국 시간으로 입력해 주세요.')
-            if (start_time and not start) or (end_time and not end):
-                raise ValueError('시간과 날짜를 함께 입력해 주세요.')
-            if start == end and start_time and end_time and start_time > end_time:
-                raise ValueError('종료 시각은 시작 시각 이후여야 합니다.')
+        check_periods((self.startDate, self.endDate, self.startTime, self.endTime),
+                      (self.runStartDate, self.runEndDate, self.runStartTime, self.runEndTime))
+        if self.rounds is not None and len({r.round for r in self.rounds}) != len(self.rounds):
+            raise ValueError('차수 번호가 중복되었습니다.')
         if len({q.id for q in self.applicationQuestions}) != len(self.applicationQuestions):
             raise ValueError('질문 ID가 중복되었습니다.')
         self.desc = clean_html(self.desc) if '<' in self.desc else self.desc
@@ -469,6 +551,7 @@ def create_program(body: ProgramBody, user=Depends(principal, scope='function'),
     # 개설은 여러 학생의 계획을 한 번에 건드린다 → lifecycle 을 exclusive 로 먼저 잡는다.
     # sync_roadmap 안에서 뒤늦게 잡으면 기존 호출부의 program 락과 역전된다.
     lifecycle_lock(conn, exclusive=True)
+    body.sessions = 1 + len(body.rounds or [])
     # 선택한 게시본을 저장한다. 이후 최신 버전이 게시되어도 자동으로 바뀌지 않는다.
     columns = ['id', *WRITABLE.split(','), *PIN_COLUMNS.split(','), 'created_by', 'updated_by']
     row = conn.execute(f'''INSERT INTO dc.program({",".join(columns)})
@@ -478,7 +561,8 @@ def create_program(body: ProgramBody, user=Depends(principal, scope='function'),
     enroll_program(conn, user, row)
     sync_attachments(conn, user, row['id'], body.attachmentFileIds)
     sync_managers(conn, row['id'], managers)
-    return program_dto(row, [], attachments_of(conn, [row['id']])[row['id']], managers_of(conn, [row['id']])[row['id']])
+    sync_rounds(conn, user, row, body.rounds or [])
+    return full_dto(conn, user, row)
 
 
 @router.put('/programs/{program_id}')
@@ -521,10 +605,12 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
             or sorted(before['care_types']) != sorted(body.careTypes)
             or before['apply_end'] != body.endDate):
         raise HTTPException(409, '이미 로드맵에 편입된 프로그램의 편입 조건·마감일은 바꿀 수 없습니다.')
-    selected = conn.execute("SELECT count(*) AS n FROM dc.program_apply WHERE program_id=%s AND selection_code='SELECTED' AND cancelled_at IS NULL",
-                            (program_id,)).fetchone()['n']
+    # 공고 행의 인원·방식은 1차 것이다. 다른 차수의 선발자는 그 차수 정원으로 따로 센다.
+    selected = round_count(conn, program_id, 1, 'SELECTED')
     if (body.selectionCapacity if body.selectionCapacity is not None else body.capacity) < selected:
         raise HTTPException(422, f'이미 선발된 {selected}명보다 적은 정원으로 줄일 수 없습니다.')
+    body.sessions = 1 + (len(body.rounds) if body.rounds is not None else conn.execute(
+        'SELECT count(*) AS n FROM dc.program_round WHERE program_id=%s', (program_id,)).fetchone()['n'])
     assignments = ','.join(f'{column}=%s' for column in WRITABLE.split(','))
     row = conn.execute(f'''UPDATE dc.program SET {assignments},competency_form_id=%s,satisfaction_form_id=%s,
       version=version+1,updated_at=now(),updated_by=%s
@@ -537,9 +623,10 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
     # 저장하지 않았던 예전 선착순 선택은 복구할 수 없다. 관리자가 명시적으로 방식을
     # 바꾼 때만 기존 대기를 신청 순으로 선발한다. 일반 수정은 수동 결정을 되돌리지 않는다.
     if before['selection_method'] != 'FIRST_COME' and row['selection_method'] == 'FIRST_COME':
-        select_waiting(conn, user, row)
-    return program_dto(row, applicants_of(conn, user, [program_id])[program_id],
-                       attachments_of(conn, [program_id])[program_id], managers_of(conn, [program_id])[program_id])
+        select_waiting(conn, user, round_of(conn, row, 1))
+    if body.rounds is not None:
+        sync_rounds(conn, user, row, body.rounds)
+    return full_dto(conn, user, row)
 
 
 @router.delete('/programs/{program_id}', status_code=204)
@@ -635,21 +722,72 @@ def change_selection(conn, user, program, before, selection, reason=''):
     return after
 
 
-def selected_count(conn, program_id):
-    return conn.execute('''SELECT COALESCE((SELECT selected FROM dc.program_application_counts
-      WHERE program_id=%s),0) AS n''', (program_id,)).fetchone()['n']
+ROUND_FIELDS = ('apply_start', 'apply_start_time', 'apply_end', 'apply_end_time', 'run_start', 'run_start_time',
+                'run_end', 'run_end_time', 'location', 'capacity', 'selection_capacity', 'selection_method')
+
+
+def round_of(conn, program, round_no):
+    """신청·선발 판정에 쓰는 차수 — 1차는 공고 행, 2차부터는 program_round 값을 공고 위에 덮는다.
+    제목·설문 설정 등 나머지는 공고 것을 그대로 쓴다(선발 알림·설문이 공고 단위다)."""
+    if round_no == 1:
+        return {**program, 'round_no': 1}
+    row = conn.execute('SELECT * FROM dc.program_round WHERE program_id=%s AND round_no=%s',
+                       (program['id'], round_no)).fetchone()
+    if not row:
+        raise HTTPException(404, f'{round_no}차를 찾을 수 없습니다.')
+    return {**program, **{key: row[key] for key in ROUND_FIELDS}, 'round_no': round_no}
+
+
+def round_count(conn, program_id, round_no, selection=None):
+    """차수의 유효 신청 수(취소 제외). selection 을 주면 그 선발 상태만 센다 — program_application_counts 와 같은 기준."""
+    return conn.execute('''SELECT count(*) AS n FROM dc.program_apply WHERE program_id=%s AND round_no=%s
+      AND cancelled_at IS NULL AND selection_code<>'CANCELLED' AND (%s::text IS NULL OR selection_code=%s)''',
+      (program_id, round_no, selection, selection)).fetchone()['n']
+
+
+def sync_rounds(conn, user, program, rounds):
+    """2차부터의 차수를 요청 목록으로 맞춘다. 호출자는 공고 행을 잠근다.
+    신청자가 있는 차수는 지우지 않고, 선발자보다 적은 선발 정원으로 줄이지 않는다."""
+    program_id = program['id']
+    before = {row['round_no']: row for row in conn.execute(
+        'SELECT * FROM dc.program_round WHERE program_id=%s FOR UPDATE', (program_id,)).fetchall()}
+    wanted = {r.round: r for r in rounds}
+    for round_no in sorted(set(before) - set(wanted)):
+        if conn.execute('SELECT 1 FROM dc.program_apply WHERE program_id=%s AND round_no=%s LIMIT 1',
+                        (program_id, round_no)).fetchone():
+            raise HTTPException(409, f'{round_no}차에 신청자가 있어 삭제할 수 없습니다.')
+        conn.execute('DELETE FROM dc.program_round WHERE program_id=%s AND round_no=%s', (program_id, round_no))
+    for round_no, r in sorted(wanted.items()):
+        if round_no in before:
+            selected = round_count(conn, program_id, round_no, 'SELECTED')
+            if (r.selectionCapacity if r.selectionCapacity is not None else r.capacity) < selected:
+                raise HTTPException(422, f'{round_no}차에 이미 선발된 {selected}명보다 적은 정원으로 줄일 수 없습니다.')
+        values = (r.startDate, r.startTime, r.endDate, r.endTime, r.runStartDate, r.runStartTime,
+                  r.runEndDate, r.runEndTime, r.location, r.capacity, r.selectionCapacity, r.selectionMethod)
+        conn.execute(f'''INSERT INTO dc.program_round(program_id,round_no,{",".join(ROUND_FIELDS)},created_by)
+          VALUES(%s,%s,{",".join(["%s"] * len(ROUND_FIELDS))},%s)
+          ON CONFLICT(program_id,round_no) DO UPDATE SET
+            {",".join(f"{key}=EXCLUDED.{key}" for key in ROUND_FIELDS)},updated_by=%s,updated_at=now()
+          WHERE ({",".join(f"program_round.{key}" for key in ROUND_FIELDS)})
+            IS DISTINCT FROM ({",".join(f"EXCLUDED.{key}" for key in ROUND_FIELDS)})''',
+          (program_id, round_no, *values, user['intg_uid'], user['intg_uid']))
+        # 1차와 같은 규칙 — 심사에서 선착순으로 명시적으로 바꾼 때만 그 차수의 기존 대기를 선발한다.
+        if round_no in before and before[round_no]['selection_method'] != 'FIRST_COME' and r.selectionMethod == 'FIRST_COME':
+            select_waiting(conn, user, round_of(conn, program, round_no))
 
 
 def select_waiting(conn, user, program):
-    """선착순 신청·방식 변경 시 기존 대기를 신청 순으로 편입한다. 호출자는 공고 행을 잠근다."""
-    remaining = max(0, selection_limit(program) - selected_count(conn, program['id']))
+    """선착순 신청·방식 변경 시 그 차수의 기존 대기를 신청 순으로 편입한다.
+    program 은 round_of() 가 만든 차수 값이다. 호출자는 공고 행을 잠근다."""
+    round_no = program['round_no']
+    remaining = max(0, selection_limit(program) - round_count(conn, program['id'], round_no, 'SELECTED'))
     if not remaining:
         return {}
     rows = conn.execute('''SELECT a.*,p.alias,p.name,s.major_label FROM dc.program_apply a
       JOIN dc.person p ON p.intg_uid=a.student_uid JOIN dc.student s ON s.intg_uid=a.student_uid
-      WHERE a.program_id=%s AND a.selection_code='PENDING' AND a.cancelled_at IS NULL
+      WHERE a.program_id=%s AND a.round_no=%s AND a.selection_code='PENDING' AND a.cancelled_at IS NULL
         AND a.outcome_code IS NULL
-      ORDER BY a.applied_at,a.student_uid LIMIT %s FOR UPDATE OF a''', (program['id'], remaining)).fetchall()
+      ORDER BY a.applied_at,a.student_uid LIMIT %s FOR UPDATE OF a''', (program['id'], round_no, remaining)).fetchall()
     return {before['student_uid']: change_selection(conn, user, program, before, 'SELECTED', '선착순 신청 순 자동 선발')
             for before in rows}
 
@@ -661,6 +799,8 @@ class ApplyBody(BaseModel):
     motive: str = Field(default='', max_length=2000)
     consents: dict = Field(default_factory=dict)
     answers: dict[str, str | list[str]] = Field(default_factory=dict, max_length=30)
+    # 신청할 차수. 차수가 하나뿐인 공고는 1차다.
+    round: int = Field(default=1, ge=1, le=999)
 
 
 @router.post('/programs/{program_id}/applications', status_code=201)
@@ -692,34 +832,34 @@ def apply(program_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
     require_published(program, user)
     if program['status_code'] != 'RECRUITING':
         raise HTTPException(409, '모집 중인 프로그램이 아닙니다.')
-    application_window(program)
+    # 기간·정원·선발 방식은 고른 차수의 것이다. 신청은 학생당 공고 하나라 차수도 하나만 고른다.
+    target = round_of(conn, program, body.round)
+    application_window(target)
     if conn.execute('SELECT 1 FROM dc.program_apply WHERE program_id=%s AND student_uid=%s',
                     (program_id, student['intg_uid'])).fetchone():
         raise HTTPException(409, '이미 신청한 프로그램입니다.')
-    if program['selection_method'] == 'FIRST_COME':
+    if target['selection_method'] == 'FIRST_COME':
         # FOR UPDATE가 기다린 동안 다른 신청이 커밋될 수 있다. 잠금 SELECT에 딸린
         # 집계 스냅샷을 재사용하지 않고 잠금 획득 후 새 statement로 정원을 읽는다.
-        applied = conn.execute('''SELECT COALESCE((SELECT applied FROM dc.program_application_counts
-          WHERE program_id=%s),0) AS n''', (program_id,)).fetchone()['n']
-        if applied >= program['capacity']:
-            raise HTTPException(409, f"모집 정원 {program['capacity']}명이 마감되었습니다.")
+        if round_count(conn, program_id, body.round) >= target['capacity']:
+            raise HTTPException(409, f"모집 정원 {target['capacity']}명이 마감되었습니다.")
     # 신청 시점 학적을 복사해 둔다(CLAUDE.md 규칙 2) — 학과 개편 뒤에도 명단이 흔들리지 않는다.
     answer_snapshot, answer_files = validate_answers(conn, user, program, body.answers)
     snapshot = {'studentName': student['name'], 'studentMajor': student['major_label'],
                 'studentNo': student['student_no'], 'grade': student['grade'],
                 'path': body.path, 'motive': body.motive, 'applicationAnswers': answer_snapshot}
     row = conn.execute('''INSERT INTO dc.program_apply(program_id,student_uid,applied_at,snapshot,apply_path,
-      motive,consents,updated_by) VALUES(%s,%s,now(),%s,%s,%s,%s,%s) RETURNING *''',
+      motive,consents,updated_by,round_no) VALUES(%s,%s,now(),%s,%s,%s,%s,%s,%s) RETURNING *''',
       (program_id, student['intg_uid'], Jsonb(snapshot), body.path, body.motive,
-       Jsonb(body.consents), user['intg_uid'])).fetchone()
+       Jsonb(body.consents), user['intg_uid'], body.round)).fetchone()
     for file_id in sorted(answer_files):
         files.claim(conn, user, file_id, 'PROGRAM_APPLICATION', program_id + ':' + student['intg_uid'], 'PROGRAM_APPLICATION_ATTACHMENT')
     result = applicant_dto({**row, 'alias': student['alias'], 'name': student['name'],
                             'major_label': student['major_label']})
     record(conn, user, program_id, student['intg_uid'], 'APPLY', None, result)
-    if program['selection_method'] == 'FIRST_COME':
+    if target['selection_method'] == 'FIRST_COME':
         # 빈 자리가 생긴 뒤 새 신청이 들어와도 기존 대기보다 앞서 선발되지 않는다.
-        result = select_waiting(conn, user, program).get(student['intg_uid'], result)
+        result = select_waiting(conn, user, target).get(student['intg_uid'], result)
     notify_application(conn, program, student)
     conn.execute('INSERT INTO dc.idempotency(actor_uid,route,key,request_hash,response) VALUES(%s,%s,%s,%s,%s)',
                  (user['intg_uid'], route, idempotency_key, digest, Jsonb(jsonable_encoder(result))))
@@ -803,11 +943,17 @@ def set_selection(program_id: str, body: SelectionBody, user=Depends(principal, 
     program = get_program(conn, program_id, lock=True)
     students = resolve_students(conn, user, body.studentIds)
     if body.selection == 'SELECTED':
-        already = conn.execute('''SELECT count(*) AS n FROM dc.program_apply WHERE program_id=%s
-          AND selection_code='SELECTED' AND cancelled_at IS NULL AND student_uid<>ALL(%s)''',
-          (program_id, [s['intg_uid'] for s in students])).fetchone()['n']
-        if already + len(students) > selection_limit(program):
-            raise HTTPException(409, f"선발 정원 {selection_limit(program)}명을 넘겨 선발할 수 없습니다.")
+        # 선발 정원은 차수마다 따로다 — 고른 학생을 차수별로 묶어 그 차수 정원과 비교한다.
+        uids = [s['intg_uid'] for s in students]
+        for group in conn.execute('''SELECT round_no,count(*) AS n FROM dc.program_apply
+          WHERE program_id=%s AND student_uid=ANY(%s) GROUP BY round_no ORDER BY round_no''', (program_id, uids)).fetchall():
+            target = round_of(conn, program, group['round_no'])
+            already = conn.execute('''SELECT count(*) AS n FROM dc.program_apply WHERE program_id=%s AND round_no=%s
+              AND selection_code='SELECTED' AND cancelled_at IS NULL AND student_uid<>ALL(%s)''',
+              (program_id, group['round_no'], uids)).fetchone()['n']
+            if already + group['n'] > selection_limit(target):
+                prefix = f"{group['round_no']}차 " if group['round_no'] > 1 else ''
+                raise HTTPException(409, f"{prefix}선발 정원 {selection_limit(target)}명을 넘겨 선발할 수 없습니다.")
     results = []
     for student in students:
         before = get_application(conn, program_id, student['intg_uid'])

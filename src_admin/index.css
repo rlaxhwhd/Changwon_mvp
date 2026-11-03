@@ -1283,6 +1283,10 @@ input, textarea, select { font-family: var(--font); }
   min-width: 120px;
 }
 .admin-select select:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-bg); }
+/* 카드 머리 오른쪽 도구 — 차수 선택 + 학생 추가(비교과 신청자 관리) */
+.admin-card-actions { display: flex; align-items: center; gap: 10px; }
+.admin-card-actions .admin-select { flex-direction: row; align-items: center; gap: 8px; }
+.admin-card-actions .admin-select select { padding: 6px 10px; min-width: 96px; }
 /* 기간 YYYY.MM.DD ~ YYYY.MM.DD — 네이티브 날짜 칸은 투명하게 덮고 글자만 보인다(상담 통계) */
 .admin-date-range { display: flex; align-items: center; gap: 8px; color: var(--color-text-secondary); font-weight: 700; }
 .admin-dot-date {

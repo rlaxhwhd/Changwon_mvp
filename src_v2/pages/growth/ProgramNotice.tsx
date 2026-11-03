@@ -6,9 +6,9 @@ import { safeHtml } from '../../../shared/safeHtml'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  getProgramById, isProgramClosed, noticeStatusLabel, programDdayLabel,
+  activeRound, getProgramById, isProgramClosed, noticeStatusLabel, programDdayLabel, programRounds,
 } from '../../../src_admin/data/programs'
-import type { Program } from '../../../src_admin/data/schema/program'
+import type { Program, ProgramRound } from '../../../src_admin/data/schema/program'
 import { ROADMAP_ENTRY_LABEL } from '../../data/schema/roadmap'
 import { categoryLabel, programStatusLabel } from '../../../src_admin/data/schema/program'
 import { typeLabel } from '../../data/careerProcess'
@@ -41,6 +41,8 @@ interface Props {
   action?: ReactNode
   /** 「관심 프로그램 담기」 노출 — 학생 전용. */
   showWish?: boolean
+  /** 회차별 프로그램 표의 「진행」 칸 — 학생은 차수마다 신청하기. 없으면 칸을 그리지 않는다. */
+  roundAction?: (round: ProgramRound) => ReactNode
 }
 
 interface Row { label: string; value: string; chip?: boolean }
@@ -56,7 +58,7 @@ function periodOf(start?: string, end?: string, startTime?: string | null, endTi
   return formatProgramDate(start || end, start ? startTime : endTime)
 }
 
-export default function ProgramNotice({ programId, backTo, action, showWish = false }: Props) {
+export default function ProgramNotice({ programId, backTo, action, showWish = false, roundAction }: Props) {
   useStore(PROGRAM_EVENT)
   const program = getProgramById(programId)
   const [fileError, setFileError] = useState('')
@@ -75,9 +77,28 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
     )
   }
 
-  // 마감 판정은 데이터층 한 곳에서 — 목록 카드와 같은 답을 낸다.
+  // 다회차 공고 — 위쪽 요약은 회차 전체를 말하고, 회차별 값은 맨 아래 표가 보여 준다.
+  // 1회차뿐이면 전부 공고 칸(=1차) 그대로다.
+  const rounds = programRounds(program)
+  const multi = rounds.length > 1
+  const current = activeRound(program)
+  const sameOr = (values: string[], fallback: string) => (new Set(values).size === 1 ? values[0] : fallback)
+  const byMoment = (date?: string | null, time?: string | null) => `${date ?? ''}T${time ?? ''}`
+  const first = [...rounds].sort((a, b) => byMoment(a.startDate, a.startTime).localeCompare(byMoment(b.startDate, b.startTime)))[0]
+  const last = [...rounds].sort((a, b) => byMoment(b.endDate, b.endTime).localeCompare(byMoment(a.endDate, a.endTime)))[0]
+  const runs = rounds.filter(r => r.runStartDate || r.runEndDate)
+  const runFirst = [...runs].sort((a, b) => byMoment(a.runStartDate, a.runStartTime).localeCompare(byMoment(b.runStartDate, b.runStartTime)))[0]
+  const runLast = [...runs].sort((a, b) => byMoment(b.runEndDate, b.runEndTime).localeCompare(byMoment(a.runEndDate, a.runEndTime)))[0]
+  const applyPeriod = periodOf(first.startDate, last.endDate, first.startTime, last.endTime)
+  const runPeriod = runFirst ? periodOf(runFirst.runStartDate ?? undefined, runLast.runEndDate ?? undefined, runFirst.runStartTime, runLast.runEndTime) : ''
+  const capacity = rounds.reduce((sum, r) => sum + r.capacity, 0)
+  const selection = rounds.reduce((sum, r) => sum + (r.selectionCapacity ?? r.capacity), 0)
+  const location = sameOr(rounds.map(r => r.location), '회차별 상이')
+  const method = sameOr(rounds.map(r => (r.selectionMethod === 'FIRST_COME' ? '선착순 선발' : '심사 후 선발')), '회차별 상이')
+
+  // 마감 판정은 데이터층 한 곳에서 — 목록 카드와 같은 답을 낸다. 마감일은 지금 열린(또는 다음) 회차의 것이다.
   const closed = isProgramClosed(program)
-  const dday = programDdayLabel(program)
+  const dday = programDdayLabel({ status: program.status, endDate: current.endDate, endTime: current.endTime })
   // 상단 태그·상태 줄은 저장값이 아니라 보정된 상태를 쓴다 — 한 화면이 두 말을 하면 안 된다.
   const statusLabel = programStatusLabel(noticeStatusLabel(program))
   const categoryText = categoryLabel(program.category)
@@ -102,10 +123,10 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
     { label: '분류', value: categoryText, chip: true },
     { label: '상태', value: statusLabel },
     { label: '참가대상', value: target },
-    { label: '신청인원 / 선발인원', value: `${applied}명 / ${program.selectionCapacity ?? program.capacity}명` },
+    { label: '신청인원 / 선발인원', value: `${applied}명 / ${selection}명` },
     { label: '담당자', value: managers.length ? managers.map(m => m.name).join(', ') : program.manager },
     { label: '담당자 연락처', value: phones },
-    { label: '장소', value: program.location },
+    { label: '장소', value: location },
     { label: '총 회차', value: program.sessions ? `${program.sessions}회` : '' },
     { label: '회계연도', value: program.fiscalYear ? `${program.fiscalYear}년` : '' },
   ])
@@ -113,10 +134,10 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
   // 신청 안내
   const applyRows = rows([
     { label: '공고일시', value: formatProgramDate(noticeParts(program.noticeAt).date, noticeParts(program.noticeAt).time) },
-    { label: '접수기간', value: periodOf(program.startDate, program.endDate, program.startTime, program.endTime) },
-    { label: '운영기간', value: periodOf(program.runStartDate, program.runEndDate, program.runStartTime, program.runEndTime) },
-    { label: '선발 방식', value: program.selectionMethod === 'FIRST_COME' ? '선착순 선발' : '심사 후 선발' },
-    { label: '신청현황', value: `${applied}명 / ${program.capacity}명` },
+    { label: '접수기간', value: applyPeriod },
+    { label: '운영기간', value: runPeriod },
+    { label: '선발 방식', value: method },
+    { label: '신청현황', value: `${applied}명 / ${capacity}명` },
     // 로드맵에 칸이 생기는 프로그램만 알린다 — 학생이 이행률에 잡히는지가 달라진다.
     program.roadmapEntry && program.roadmapEntry !== 'NONE'
       ? { label: '로드맵 편입', value: ROADMAP_ENTRY_LABEL[program.roadmapEntry], chip: true }
@@ -127,10 +148,10 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
   const summaryRows = rows([
     { label: '프로그램', value: program.title },
     { label: '분류', value: categoryText },
-    { label: '신청마감', value: formatProgramDate(program.endDate, program.endTime) },
-    { label: '운영기간', value: periodOf(program.runStartDate, program.runEndDate, program.runStartTime, program.runEndTime) },
-    { label: '장소', value: program.location },
-    { label: '정원', value: `${applied} / ${program.capacity}명` },
+    { label: multi ? `신청마감(${current.round}회차)` : '신청마감', value: formatProgramDate(current.endDate, current.endTime) },
+    { label: '운영기간', value: runPeriod },
+    { label: '장소', value: location },
+    { label: '정원', value: `${applied} / ${capacity}명` },
   ])
 
   // 프로그램 내용 = 평문 입력칸(desc). 상세 내용 = 리치에디터 HTML(detail).
@@ -175,15 +196,15 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
             <dl className="jd-hero-stats">
               <div>
                 <dt><Icon name="calendar" />신청마감일</dt>
-                <dd>{formatProgramDate(program.endDate, program.endTime) || '상시'}<em>{closed ? '마감' : dday}</em></dd>
+                <dd>{formatProgramDate(current.endDate, current.endTime) || '상시'}<em>{closed ? '마감' : dday}</em></dd>
               </div>
               <div>
                 <dt><Icon name="users" />정원</dt>
-                <dd>{program.capacity}명<em>신청 {applied}</em></dd>
+                <dd>{capacity}명<em>신청 {applied}</em></dd>
               </div>
               <div>
                 <dt><Icon name="pin" />장소</dt>
-                <dd>{program.location || '미정'}</dd>
+                <dd>{location || '미정'}</dd>
               </div>
             </dl>
           </header>
@@ -211,6 +232,33 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
             <Section title="상세 내용">
               <div className="jd-content" dangerouslySetInnerHTML={{ __html: safeHtml(detail) }} />
             </Section>
+          )}
+
+          {multi && (
+            <section className="jd-sec pn-rounds" id="program-rounds">
+              <h2 className="jd-sec-head"><span>회차별 프로그램</span></h2>
+              <div className="pn-rounds-scroll">
+                <table className="pn-rounds-table">
+                  <thead><tr>
+                    <th scope="col">회차</th><th scope="col">모집인원<br />/정원</th><th scope="col">모집기간</th>
+                    <th scope="col">진행기간</th><th scope="col">운영장소</th>
+                    {roundAction && <th scope="col">진행</th>}
+                  </tr></thead>
+                  <tbody>
+                    {rounds.map(r => (
+                      <tr key={r.round}>
+                        <td>{r.round}</td>
+                        <td>{r.applyCount ?? 0}/{r.capacity}명</td>
+                        <td>{periodOf(r.startDate, r.endDate, r.startTime, r.endTime) || '—'}</td>
+                        <td>{periodOf(r.runStartDate ?? undefined, r.runEndDate ?? undefined, r.runStartTime, r.runEndTime) || '—'}</td>
+                        <td>{r.location || '—'}</td>
+                        {roundAction && <td>{roundAction(r)}</td>}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </section>
           )}
         </main>
 

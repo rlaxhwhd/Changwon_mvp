@@ -16,6 +16,8 @@ export interface ProgramCardVM {
   runEndDate?: string
   capacity: number
   image?: string
+  /** 총회차 — 2 이상이면 썸네일에 「다회차」 라벨을 단다. */
+  sessions?: number
 }
 
 interface Props {
@@ -43,6 +45,7 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
             >
               <div className="pcg-thumb">
                 {program.image ? <img src={program.image} alt="" /> : <i className="fa-solid fa-image" aria-hidden="true" />}
+                {(program.sessions ?? 1) > 1 && <span className="pcg-rounds">다회차 · {program.sessions}회</span>}
               </div>
               <div className="pcg-body">
                 <div className="pcg-badges">

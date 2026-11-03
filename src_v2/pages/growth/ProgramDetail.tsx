@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import ProgramApplyModal from '../../components/ProgramApplyModal'
-import { applyToProgram, getProgramById, isProgramClosed, isProgramUpcoming } from '../../../src_admin/data/programs'
+import {
+  applyToProgram, getProgramById, isProgramClosed, isProgramUpcoming, isRoundClosed, isRoundUpcoming, programRounds,
+} from '../../../src_admin/data/programs'
+import type { ProgramRound } from '../../../src_admin/data/schema/program'
 import ProgramNotice from './ProgramNotice'
 import './ProgramDetail.css'
 import { usePageHead } from '../../components/PageCrumb'
@@ -18,7 +21,10 @@ export default function ProgramDetail() {
   const program = getProgramById(programId)
   const studentId = getActiveStudentId()
   usePageHead(program?.title, '프로그램 내용과 일정을 확인하고 신청합니다.')
-  const [applyOpen, setApplyOpen] = useState(false)
+  // 신청 모달이 신청할 차수 — null 이면 닫혀 있다. 1회차 공고는 늘 1차다.
+  const [applyRound, setApplyRound] = useState<number | null>(null)
+  const applyOpen = applyRound !== null
+  const setApplyOpen = (open: boolean) => setApplyRound(open ? 1 : null)
   const [applied, setApplied] = useState(false)
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -46,6 +52,16 @@ export default function ProgramDetail() {
   // 마감 판정은 데이터층이 한다 — 목록·공고가 같은 답을 낸다.
   const closed = program ? isProgramClosed(program) : true
   const upcoming = program ? isProgramUpcoming(program) : false
+  // 다회차면 회차를 골라 신청한다 — 우측 버튼은 맨 아래 회차별 표로 보낸다.
+  const multi = program ? programRounds(program).length > 1 : false
+  const myRound = program?.applicants.find(a => a.studentId === studentId)?.round ?? null
+  const roundAction = (round: ProgramRound) => {
+    if (!program) return null
+    if (participation) return <span className="pn-round-state">{myRound === round.round ? '신청완료' : '—'}</span>
+    if (isRoundClosed(program, round)) return <span className="pn-round-state">마감</span>
+    if (isRoundUpcoming(round)) return <span className="pn-round-state">접수예정</span>
+    return <button type="button" className="jd-apply-btn" disabled={loading || saving} onClick={() => setApplyRound(round.round)}>신청하기</button>
+  }
 
   // 서버에 저장된 뒤에만 완료로 표시한다. 마감·중복·정원은 서버가 판정하므로
   // 여기서 미리 성공을 알리면 저장되지 않은 신청이 완료로 보인다.
@@ -58,7 +74,7 @@ export default function ProgramDetail() {
     if (saving) return
     setSaving(true)
     const { path, motive, answers, ...consents } = payload
-    applyToProgram(programId, { path, motive, consents, answers })
+    applyToProgram(programId, { path, motive, consents, answers, round: applyRound ?? 1 })
       .then(() => {
         setApplyOpen(false)
         setApplied(true)
@@ -82,6 +98,7 @@ export default function ProgramDetail() {
         programId={programId}
         backTo="/program"
         showWish
+        roundAction={roundAction}
         action={program && (
           <>
             {loadError ? <div role="alert"><p>{loadError}</p><button type="button" className="jd-apply-btn" onClick={() => setRevision(v => v + 1)}>다시 시도</button></div>
@@ -90,9 +107,11 @@ export default function ProgramDetail() {
               type="button"
               className="jd-apply-btn"
               disabled={loading || closed || upcoming || saving}
-              onClick={() => setApplyOpen(true)}
+              onClick={() => (multi
+                ? document.getElementById('program-rounds')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                : setApplyOpen(true))}
             >
-              {loading ? '신청 상태 확인 중…' : closed ? '신청 마감' : upcoming ? '접수 예정' : saving ? '신청 중…' : '신청하기'}
+              {loading ? '신청 상태 확인 중…' : closed ? '신청 마감' : upcoming ? '접수 예정' : saving ? '신청 중…' : multi ? '회차 선택 후 신청' : '신청하기'}
             </button>}
             {applied && (
               <p className="pn-applied-toast" role="status">신청이 완료되었습니다.</p>
@@ -105,7 +124,7 @@ export default function ProgramDetail() {
         <ProgramApplyModal
           open={applyOpen}
           onClose={() => setApplyOpen(false)}
-          programTitle={program.title}
+          programTitle={multi ? `${program.title} (${applyRound}회차)` : program.title}
           questions={program.applicationQuestions}
           saving={saving}
           onSubmit={handleApplySubmit}

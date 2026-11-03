@@ -8,7 +8,7 @@ import { getActiveStudent } from '../../data/students'
 import { getWishlist, toggleWish as toggleWishStore } from '../../data/wishlist'
 import { useStore } from '../../../shared/useRoadmapStore'
 import { GROWTH_EVENT } from '../../../shared/growthStore'
-import { getPrograms, sortPrograms } from '../../../src_admin/data/programs'
+import { activeRound, getPrograms, sortPrograms } from '../../../src_admin/data/programs'
 import type { ProgramOrder } from '../../../src_admin/data/programs'
 import { programCategories, categoryLabel } from '../../../src_admin/data/schema/program'
 import type { ProgramCategory } from '../../../src_admin/data/schema/program'
@@ -31,20 +31,25 @@ export default function ProgramApply() {
   const [activeTab, setActiveTab] = useState<Category>('전체')
   const [page, setPage] = useState(1)
   const [order, setOrder] = useState<ProgramOrder>('latest')
-  const programs = useMemo<ProgramCardVM[]>(() => sortPrograms(getPrograms(), order).map(program => ({
-    id: program.id,
-    title: program.title,
-    desc: program.desc,
-    category: program.category,
-    startDate: program.startDate,
-    endDate: program.endDate,
-    endTime: program.endTime,
-    status: program.status,
-    runStartDate: program.runStartDate,
-    runEndDate: program.runEndDate,
-    capacity: program.capacity,
-    image: program.image,
-  })), [order])
+  // 다회차 공고는 지금 열린(또는 다음) 회차의 기간·정원을 카드에 보인다 — 지난 1차 마감으로 '마감'이 뜨지 않게.
+  const programs = useMemo<ProgramCardVM[]>(() => sortPrograms(getPrograms(), order).map(program => {
+    const round = activeRound(program)
+    return {
+      id: program.id,
+      title: program.title,
+      desc: program.desc,
+      category: program.category,
+      startDate: round.startDate,
+      endDate: round.endDate,
+      endTime: round.endTime,
+      status: program.status,
+      runStartDate: round.runStartDate ?? undefined,
+      runEndDate: round.runEndDate ?? undefined,
+      capacity: round.capacity,
+      image: program.image,
+      sessions: program.sessions,
+    }
+  }), [order])
   // 찜은 서버가 정본이다(dc.program_wishlist) — 저장 뒤 스토어가 다시 읽어 발행한다.
   const wishRevision = useStore(GROWTH_EVENT)
   const wishlist = useMemo(() => new Set(getWishlist()), [wishRevision])

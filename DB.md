@@ -164,7 +164,7 @@ DB 관점에서만 의미 있는 두 가지를 남긴다.
 | 진로설계 (`STU_COURSE_*`) | **1.4만 건** | ❌ 없음 |
 | 이력서 첨삭 (`SS_JOB_RES`) | 워크플로 완비 | ❌ 없음 |
 | 비교과 만족도·참여후기 | 운영 중 | ❌ 없음 |
-| 비교과 그룹형·차수 (`EP_PRM_STEP`) | 운영 중 | ❌ 개인형만 |
+| 비교과 그룹형·차수 (`EP_PRM_STEP`) | 운영 중 | 차수 ✅ `dc.program_round`(154) · 그룹형 ❌ |
 
 **② 우리에게만 있는 것 (이관 대상 없음)** — 진단(`CCORE`·`C1`~`C6`) · **로드맵 1개 3축**(`PROCESS.md` §6) · 로드맵 변경요청함 · 성장경험일지 · 퀘스트/레벨 · 챗봇 · 열람 감사로그 · 상태 변경 이력.
 
@@ -578,7 +578,7 @@ CREATE TABLE dc.org_assignment (
 
 - 마이그레이션 `018_program_operations.sql` · API `backend/app/programs.py` · 테스트 `backend/tests/test_programs.py`
 - 프론트 정본은 `shared/programStore.ts`(부팅 적재 + 동기 셀렉터). `dc_programs` · `dc_penalty_v2` localStorage 는 폐기됐다
-- **차수(step) 테이블은 아직 만들지 않았다.** 화면이 차수를 표시만 하고 차수별 운영·출석 UI 가 없다. 회차별 출석을 받게 되면 `dc.program_step` 을 만들고 `program_apply.round_no` 를 FK 로 바꾼다
+- **차수는 `dc.program_round`(154, 2026-11-03)다.** 1차는 `dc.program` 행 자체, 2차부터 이 테이블에 차수별 접수·운영기간·장소·모집·선발 인원·선착순을 둔다. 총회차(`program.sessions`)는 1 + 행 수로 API 가 맞춘다. 학생은 공고당 신청 1건(PK 유지)이라 차수 하나를 골라 신청하고 `program_apply.round_no` 에 남는다. 마감·정원·선착순 자동 선발은 차수 단위로 판정한다. 신청자가 있는 차수는 지우지 못한다. **아직 없는 것:** 차수별 출석·수료(신청 행 1개에 붙는다), 로드맵 추천 칸 만료는 1차 마감 기준
 
 ### 8-7. 채용·취업 <span>(전형은 데이터, 재지원은 회차, 서류는 파일 · 2026-09-09 결정)</span> ★
 

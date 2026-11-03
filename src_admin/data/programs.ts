@@ -13,6 +13,7 @@ import type {
   Program,
   ProgramStatus,
   ProgramApplicant,
+  ProgramRound,
   AttendanceStatus,
   SelectionStatus,
   OutcomeStatus,
@@ -34,16 +35,49 @@ export function getProgramById(id: string): Program | undefined {
   return getPrograms().find(p => p.id === id)
 }
 
-/** 신청을 받을 수 있는가 — 상태와 마감일 둘 다 본다(상태만 믿으면 지난 공고가 열려 있다). */
-export function isProgramClosed(program: Program): boolean {
-  if (program.status !== 'RECRUITING') return true
-  if (program.selectionMethod === 'FIRST_COME' && program.applyCount >= program.capacity) return true
-  if (program.endDate && program.endTime && Date.now() > new Date(`${program.endDate}T${program.endTime}+09:00`).getTime()) return true
-  return programDdayLabel(program) === '마감'
+/**
+ * 차수 목록 — 1차(공고 칸) + 2차부터(서버 rounds). 화면은 차수를 이 목록 하나로 읽는다.
+ * 1차 신청 수는 서버 합계(applyCount)에서 다른 차수의 신청 수를 뺀 값이다.
+ */
+export function programRounds(program: Program): ProgramRound[] {
+  const extra = program.rounds ?? []
+  const others = extra.reduce((sum, r) => sum + (r.applyCount ?? 0), 0)
+  return [{
+    round: 1, startDate: program.startDate, startTime: program.startTime, endDate: program.endDate, endTime: program.endTime,
+    runStartDate: program.runStartDate, runStartTime: program.runStartTime,
+    runEndDate: program.runEndDate, runEndTime: program.runEndTime,
+    location: program.location, capacity: program.capacity, selectionCapacity: program.selectionCapacity,
+    selectionMethod: program.selectionMethod ?? 'REVIEW',
+    applyCount: Math.max(0, program.applyCount - others), createdAt: program.createdAt,
+  }, ...extra]
 }
 
+/** 이 차수가 신청을 받을 수 있는가 — 상태와 마감일 둘 다 본다(상태만 믿으면 지난 공고가 열려 있다). */
+export function isRoundClosed(program: Program, round: ProgramRound): boolean {
+  if (program.status !== 'RECRUITING') return true
+  if (round.selectionMethod === 'FIRST_COME' && (round.applyCount ?? 0) >= round.capacity) return true
+  return programDdayLabel({ status: program.status, endDate: round.endDate, endTime: round.endTime }) === '마감'
+}
+
+export function isRoundUpcoming(round: Pick<ProgramRound, 'startDate' | 'startTime'>): boolean {
+  return !!round.startDate && Date.now() < new Date(`${round.startDate}T${round.startTime || '00:00:00'}+09:00`).getTime()
+}
+
+/** 지금 신청할 수 있는 차수 → 없으면 곧 열릴 차수 → 없으면 마지막 차수. 목록 카드의 기간·D-day 가 이 차수를 따른다. */
+export function activeRound(program: Program): ProgramRound {
+  const rounds = programRounds(program)
+  return rounds.find(r => !isRoundClosed(program, r) && !isRoundUpcoming(r))
+    ?? rounds.find(r => !isRoundClosed(program, r)) ?? rounds[rounds.length - 1]
+}
+
+/** 신청을 받을 수 있는 차수가 하나도 없으면 마감이다. */
+export function isProgramClosed(program: Program): boolean {
+  return programRounds(program).every(round => isRoundClosed(program, round))
+}
+
+/** 열린 차수 없이 모든 차수가 접수 전이면 접수 예정이다. */
 export function isProgramUpcoming(program: Program): boolean {
-  return !!program.startDate && Date.now() < new Date(`${program.startDate}T${program.startTime || '00:00:00'}+09:00`).getTime()
+  return programRounds(program).every(isRoundUpcoming)
 }
 
 /**
@@ -101,7 +135,10 @@ export type ProgramOrder = 'latest' | 'deadline' | 'popular'
  * 기간순은 신청 가능한 공고를 마감일 오름차순으로, 마감일 없는 상시 공고를 그 뒤에, 마감·종료 공고를 맨 뒤에 둔다.
  */
 export function sortPrograms(list: Program[], order: ProgramOrder): Program[] {
-  const deadline = (p: Program) => (isProgramClosed(p) ? '2' : p.endDate ? `0${p.endDate}` : '1')
+  const deadline = (p: Program) => {
+    const end = activeRound(p).endDate
+    return isProgramClosed(p) ? '2' : end ? `0${end}` : '1'
+  }
   return [...list].sort((a, b) => {
     if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
     if (order === 'deadline' && deadline(a) !== deadline(b)) return deadline(a).localeCompare(deadline(b))
@@ -209,11 +246,12 @@ export async function setApplicantsOutcome(
 export async function addApplicant(
   programId: string,
   student: { id: string; name: string; major: string },
+  round = 1,
 ): Promise<void> {
   await api(`/programs/${encodeURIComponent(programId)}/applications`, {
     method: 'POST',
-    headers: { 'Idempotency-Key': `add:${programId}:${student.id}` },
-    body: JSON.stringify({ studentId: student.id }),
+    headers: { 'Idempotency-Key': `add:${programId}:${student.id}:${round}` },
+    body: JSON.stringify({ studentId: student.id, round }),
   })
   await refreshProgram(programId)
 }
@@ -229,7 +267,7 @@ export async function removeApplicant(programId: string, studentId: string): Pro
 /** 학생 본인의 프로그램 신청 — 동의·지원동기를 함께 남긴다. */
 export async function applyToProgram(
   programId: string,
-    body: { path: string; motive: string; consents: Record<string, string>; answers?: import('../../shared/programContent').ApplicationAnswers },
+    body: { path: string; motive: string; consents: Record<string, string>; answers?: import('../../shared/programContent').ApplicationAnswers; round?: number },
 ): Promise<void> {
   await api(`/programs/${encodeURIComponent(programId)}/applications`, {
     method: 'POST',

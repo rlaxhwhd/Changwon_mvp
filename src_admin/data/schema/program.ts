@@ -180,8 +180,37 @@ export interface ProgramManager {
   phone: string | null
 }
 
+/**
+ * 차수 1건 — 같은 프로그램을 운영기간 안에 여러 번 연다(현행 EP_PRM_STEP).
+ * 1차는 공고 자체의 칸이고, 서버의 `rounds` 에는 2차부터 온다(dc.program_round).
+ * 학생은 차수 하나를 골라 신청하며 정원·선착순은 차수마다 따로다.
+ */
+export interface ProgramRound {
+  round: number
+  startDate: string
+  startTime?: string | null
+  endDate: string
+  endTime?: string | null
+  runStartDate?: string | null
+  runStartTime?: string | null
+  runEndDate?: string | null
+  runEndTime?: string | null
+  location: string
+  capacity: number
+  selectionCapacity?: number | null
+  selectionMethod: 'FIRST_COME' | 'REVIEW'
+  /** 서버 합계(읽기 전용) — 취소를 뺀 신청 수·선발 수 */
+  applyCount?: number
+  selectedCount?: number
+  /** 등록자 이름·등록일(읽기 전용) */
+  createdBy?: string | null
+  createdAt?: string
+}
+
 /** 비교과 프로그램 1건 */
 export interface Program {
+  /** 2차부터의 차수. 총회차(sessions)는 1 + 이 길이로 서버가 맞춘다. */
+  rounds?: ProgramRound[]
   noticeAt?: string | null
   startTime?: string | null
   endTime?: string | null

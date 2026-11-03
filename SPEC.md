@@ -457,7 +457,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 |---|---|---|---|
 | S10 | 신청 · 내역 · 찜 | `EpMs010L`·`020L` | ✅ `/program`·`/program/status`(비교과프로그램 현황, 2026-10-22 마이페이지에서 이동) — 2026-10-26 `/growth/program` 에서 독립, 옛 `/growth/program/*`·`/mypage/programs/*` 는 리다이렉트 — **C-CORE·상담·로드맵 선행 완료 후에만 신청 가능**. 중간계층은 진로탐색·진로설정 카테고리만 신청 |
 | S11 | **그룹형(팀) 신청** | `extMyGroup`·`group_app_popup` | ❌ 현행은 개인형/그룹형 2종, 우리는 개인형만 |
-| S12 | **차수(회차) 선택** | `extStep` (`EP_PRM_STEP`) | ❌ |
+| S12 | **차수(회차) 선택** | `extStep` (`EP_PRM_STEP`) | ✅ 공고 맨 아래 「회차별 프로그램」 표에서 회차별 신청하기 · 목록 카드 「다회차」 라벨 (2026-11-03) |
 | S13 | **만족도조사 응답** | `EpMs040L`·`040D` | ❌ |
 | S14 | **참여후기 게시판** | `/user/poss/pgmPoss*` | ❌ |
 
@@ -493,7 +493,8 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 현재 **진로상담사(`career`)가 겸한다.** 현행은 별도 역할(`Mn`)이고 `EP_PRM.REGID = 세션ID`로 **본인 등록 프로그램만** 본다.
 
 - 🔲 **역할 신설 여부** — 겸한다면 "본인 등록 프로그램만" 범위 규칙을 어떻게 할지
-- ❌ 그룹형 등록 · 차수 관리(`extStep*`) · 선발그룹 관리(`extGroupBindMng`) · 외부인 관리(`EpTb050D`)
+- ✅ 차수 관리(`extStep*`) — 등록·수정 화면 「차수 정보」 표 + 「차수 추가」 팝업, 신청자·선발자 관리 차수 필터 (2026-11-03, `dc.program_round`)
+- ❌ 그룹형 등록 · 선발그룹 관리(`extGroupBindMng`) · 외부인 관리(`EpTb050D`)
 - ❌ 만족도조사 관리(`EpMn050*`, 학생 S13과 짝) · 결과보고서(`EpTb060D`)
 - ❌ 참가대상 설정(부서 `EpMnselectPrmTrgtDept` / 국적 `EpMnsearchNat`) · 달력·월력 뷰 · 푸시 발송
 

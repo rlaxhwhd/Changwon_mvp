@@ -72,6 +72,14 @@
 .pcg-card[data-cat="자격증"] { --pcg-cat-ink: var(--violet);    --pcg-cat-soft: var(--violet-soft); }
 .pcg-card[data-cat="기타"]   { --pcg-cat-ink: var(--color-text-sub); --pcg-cat-soft: var(--color-surface); }
 .pcg-category { background: var(--pcg-cat-soft, var(--color-primary-bg)); color: var(--pcg-cat-ink, var(--color-primary)); }
+/* 다회차 라벨 — 썸네일 왼쪽 위. 이미지 위에서도 읽히게 불투명 면을 준다. */
+.pcg-thumb { position: relative; }
+.pcg-rounds {
+  position: absolute; top: 10px; left: 10px;
+  padding: 4px 9px; border-radius: 999px;
+  background: var(--pcg-cat-ink, var(--color-primary)); color: #fff;
+  font-size: 12px; font-weight: 800; line-height: 1.3;
+}
 .pcg-dday { background: var(--color-surface); color: var(--color-text-sub); }
 .pcg-dday--urgent { background: #FEF2F2; color: var(--color-danger); }
 .pcg-title { overflow: hidden; color: var(--color-navy); font-size: 18px; font-weight: 800; line-height: 1.35; text-overflow: ellipsis; white-space: nowrap; }
