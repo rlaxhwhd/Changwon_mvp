@@ -1,0 +1,20 @@
+.dc-ai-progress {
+  box-sizing: border-box;
+  width: min(480px, calc(100vw - 32px));
+  max-height: calc(100dvh - 48px);
+  margin: auto;
+  padding: 28px;
+  border: 1px solid var(--color-border, #e4e7ec);
+  border-radius: var(--radius-lg, 12px);
+  background: var(--color-bg, #fff);
+  color: var(--color-text, #181c25);
+  box-shadow: var(--shadow-lg, 0 16px 48px rgb(28 36 66 / 18%));
+  font-family: inherit;
+}
+.dc-ai-progress::backdrop { background: rgb(28 36 66 / 40%); }
+.dc-ai-progress h2 { margin: 0 0 20px; font-size: 17px; font-weight: 700; line-height: 1.5; }
+.dc-ai-progress-status { display: flex; align-items: center; gap: 12px; font-size: 14px; line-height: 1.7; }
+.dc-ai-progress p { margin: 14px 0 0; color: var(--color-text-secondary, #64748b); font-size: 13px; line-height: 1.7; }
+.dc-ai-progress-spinner { flex: none; width: 22px; height: 22px; border: 3px solid var(--color-border, #e4e7ec); border-top-color: var(--color-primary, #7c5cfc); border-radius: 50%; animation: dc-ai-progress-spin .85s linear infinite; }
+@keyframes dc-ai-progress-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .dc-ai-progress-spinner { animation: none; } }

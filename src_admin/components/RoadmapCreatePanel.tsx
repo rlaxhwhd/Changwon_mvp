@@ -14,6 +14,7 @@ import { isCare7 } from '../../src_v2/data/counselTrack'
 import { roadmapEnvelope } from '../../shared/roadmapStore'
 import { useStore } from '../../shared/useRoadmapStore'
 import { api, queryString } from '../../shared/api'
+import AiProgressModal from '../../shared/AiProgressModal'
 import './RoadmapCreatePanel.css'
 
 // ─────────────────────────────────────────────────────────────────────────
@@ -189,13 +190,15 @@ export default function RoadmapCreatePanel({
   const [recommending, setRecommending] = useState(false)
   const [recommendError, setRecommendError] = useState('')
   const handleRecommend = async () => {
-    if (recommending || !basisRequest) return
+    if (generating.current || !basisRequest) return
+    generating.current = true
     setRecommending(true); setRecommendError('')
     try {
       setJobs(await recommendJobs(student.id, basisRequest.id))
     } catch (cause) {
       setRecommendError(cause instanceof Error ? cause.message : 'AI 추천직무를 받지 못했습니다. 다시 시도해 주세요.')
     } finally {
+      generating.current = false
       setRecommending(false)
     }
   }
@@ -227,6 +230,12 @@ export default function RoadmapCreatePanel({
 
   return (
     <div className="rcp">
+      <AiProgressModal open={phase === 'generating' || recommending}
+        title={recommending ? 'AI가 추천직무를 분석하고 있습니다' : 'AI가 로드맵을 생성하고 있습니다'}
+        progress={recommending
+          ? '전공·진단·상담·성장 기록을 바탕으로 적합한 직무를 고르고 있습니다.'
+          : '진단·상담·수강 정보를 분석해 맞춤형 로드맵을 만들고 있습니다.'}
+        description={recommending ? '추천이 완료되면 직무 목록을 표시합니다. 잠시 기다려 주세요.' : '로드맵 생성과 저장이 완료되면 결과를 표시합니다. 잠시 기다려 주세요.'} />
       {temporary && <p className="rcp-warn">현재는 <b>개발용 임시 로드맵</b>을 생성합니다. 선택한 직무의 예시이며 RAG·LLM 분석 결과가 아닙니다.</p>}
       {generateError && <p className="air-run-error" role="alert">{generateError}</p>}
       {/* 재생성은 지금 로드맵을 버리는 일이다 — 무엇이 어떻게 되는지 먼저 말한다. */}
