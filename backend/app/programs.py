@@ -13,7 +13,7 @@ from fastapi.encoders import jsonable_encoder
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from .auth import principal, require_staff, student_access
+from .auth import is_counselor, principal, require_staff, student_access
 from .html_security import clean_html
 from .upload_security import safe_image_url
 from .administration import administrator
@@ -61,7 +61,7 @@ def download_program_file(file_id: str, user=Depends(principal, scope='function'
         if not application:
             raise HTTPException(404, '파일을 찾을 수 없습니다.')
         student_access(conn, user, application['student_uid'])
-        if user['kind'] == 'STAFF' and not conn.execute(
+        if user['kind'] == 'STAFF' and not is_counselor(user) and not conn.execute(
                 'SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',
                 (user['intg_uid'], student_uid)).fetchone():
             raise HTTPException(404, '파일을 찾을 수 없습니다.')
@@ -147,9 +147,13 @@ def applicant_dto(row):
 
 
 def applicant_scope(user):
-    """학생은 자기 신청만, 교직원은 담당 범위의 학생만 본다."""
+    """학생은 자기 신청만, 상담사(career·psych)는 전 학생, 그 밖의 교직원은 담당 범위의 학생만 본다.
+    상담사는 로스터·학생 추가 피커에서 전 학생을 고른다 — 학사 미러 학생은 staff_student_scope 에
+    없어 추가·선착순 선발된 신청자가 두 탭 모두에서 사라졌다(2026-11-03, 채용 jobs.scope_condition 과 같은 규칙)."""
     if user['kind'] == 'STUDENT':
         return 'a.student_uid=%s', [user['intg_uid']]
+    if is_counselor(user):
+        return 'true', []
     return ('EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=a.student_uid)',
             [user['intg_uid']])
 

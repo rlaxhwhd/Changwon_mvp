@@ -107,6 +107,18 @@ def test_first_come_selected_can_be_rejected_from_selected_list(client):
     assert states == {'chaewon': 'REJECTED', 'changwon': 'SELECTED'}
 
 
+def test_counselor_sees_added_student_outside_staff_scope(client):
+    # 학사 미러 학생은 staff_student_scope 에 없다. 상담사는 피커에서 전 학생을 고르므로
+    # 추가한 신청자가 명단에서 사라지면 안 된다(채용 지원자 2026-10-29 와 같은 결함).
+    with pool.connection() as conn:
+        assert not conn.execute('''SELECT 1 FROM dc.staff_student_scope g JOIN dc.person s ON s.intg_uid=g.staff_uid
+          JOIN dc.person t ON t.intg_uid=g.student_uid WHERE s.alias='career_kim' AND t.alias='20180001' ''').fetchone()
+    p = new_program(client, selectionMethod='FIRST_COME', selectionCapacity=1)
+    added = apply_as(client, 'career_kim', p['id'], studentId='20180001')
+    assert added.status_code == 201, added.text
+    assert [(a['studentId'], a['selectionStatus']) for a in read(client, p['id'])['applicants']] == [('20180001', 'SELECTED')]
+
+
 def test_first_come_zero_selection_limit_keeps_applications_pending(client):
     p = new_program(client, selectionMethod='FIRST_COME', selectionCapacity=0)
     assert apply_as(client, 'chaewon', p['id']).json()['selectionStatus'] == 'PENDING'
