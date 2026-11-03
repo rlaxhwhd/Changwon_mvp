@@ -8,7 +8,7 @@ import { getActiveStudent } from '../../data/students'
 import { getWishlist, toggleWish as toggleWishStore } from '../../data/wishlist'
 import { useStore } from '../../../shared/useRoadmapStore'
 import { GROWTH_EVENT } from '../../../shared/growthStore'
-import { activeRound, getPrograms, sortPrograms } from '../../../src_admin/data/programs'
+import { activeRound, getPrograms, PROGRAM_ORDERS, sortPrograms } from '../../../src_admin/data/programs'
 import type { ProgramOrder } from '../../../src_admin/data/programs'
 import { programCategories, categoryLabel } from '../../../src_admin/data/schema/program'
 import type { ProgramCategory } from '../../../src_admin/data/schema/program'
@@ -30,7 +30,7 @@ export default function ProgramApply() {
   const profile = getActiveStudent()
   const [activeTab, setActiveTab] = useState<Category>('전체')
   const [page, setPage] = useState(1)
-  const [order, setOrder] = useState<ProgramOrder>('latest')
+  const [order, setOrder] = useState<ProgramOrder>('recommended')
   // 다회차 공고는 지금 열린(또는 다음) 회차의 기간·정원을 카드에 보인다 — 지난 1차 마감으로 '마감'이 뜨지 않게.
   const programs = useMemo<ProgramCardVM[]>(() => sortPrograms(getPrograms(), order).map(program => {
     const round = activeRound(program)
@@ -196,9 +196,7 @@ export default function ProgramApply() {
                 setPage(1)
               }}
             >
-              <option value="latest">최신순</option>
-              <option value="deadline">기간순</option>
-              <option value="popular">인기순</option>
+              {PROGRAM_ORDERS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
             </select>
           </div>
         </div>

@@ -2,8 +2,8 @@ import { useMetadata } from '../../shared/useMetadata'
 import { LuFrown, LuGraduationCap, LuPlus, LuSearch, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getPrograms, countPrograms, sortByPriority } from '../data/programs'
-import type { ProgramStatus } from '../data/programs'
+import { getPrograms, countPrograms, PROGRAM_ORDERS, sortPrograms } from '../data/programs'
+import type { ProgramOrder, ProgramStatus } from '../data/programs'
 import { programCategories, PROGRAM_STATUSES, categoryLabel, programStatusLabel } from '../data/schema/program'
 import type { ProgramCategory } from '../data/schema/program'
 import EmptyState from '../components/EmptyState'
@@ -20,6 +20,7 @@ export default function ProgramList() {
   const [query, setQuery] = useState('')
   const [category, setCategory] = useState<ProgramCategory | typeof ALL>(ALL)
   const [status, setStatus] = useState<ProgramStatus | typeof ALL>(ALL)
+  const [order, setOrder] = useState<ProgramOrder>('recommended')
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -29,8 +30,8 @@ export default function ProgramList() {
       if (q && !`${p.title} ${p.desc} ${p.location}`.toLowerCase().includes(q)) return false
       return true
     })
-    return sortByPriority(filtered)
-  }, [all, query, category, status])
+    return sortPrograms(filtered, order)
+  }, [all, query, category, status, order])
 
   return (
     <div className="admin-page">
@@ -83,6 +84,11 @@ export default function ProgramList() {
 
       <div className="admin-toolbar">
         <span className="admin-toolbar-count">검색 결과 {list.length}건</span>
+        <label className="admin-select admin-toolbar-actions">
+          <select aria-label="정렬" value={order} onChange={e => setOrder(e.target.value as ProgramOrder)}>
+            {PROGRAM_ORDERS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+          </select>
+        </label>
       </div>
 
       <section className="admin-card">

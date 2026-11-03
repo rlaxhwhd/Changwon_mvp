@@ -124,15 +124,23 @@ export async function queryPrograms(params: ListParams = {}): Promise<Paginated<
 
 /** 상단고정(pinned) 우선 → 최신순 정렬. 목록 노출 시 이 순서를 사용한다. */
 export function sortByPriority(list: Program[]): Program[] {
-  return sortPrograms(list, 'latest')
+  return sortPrograms(list, 'recommended')
 }
 
-/** 학생 목록의 정렬 선택 — 최신순(등록일) · 기간순(신청 마감 가까운 순) · 인기순(유효 신청 많은 순). */
-export type ProgramOrder = 'latest' | 'deadline' | 'popular'
+/** 목록 정렬 선택 — 추천순(상단고정 → 최신) · 최신순(등록일) · 마감임박순(신청 마감 가까운 순) · 인기순(유효 신청 많은 순). */
+export type ProgramOrder = 'recommended' | 'latest' | 'deadline' | 'popular'
+
+/** 학생·교직원 목록이 같은 정렬 선택지를 쓴다. */
+export const PROGRAM_ORDERS: { value: ProgramOrder; label: string }[] = [
+  { value: 'recommended', label: '추천순' },
+  { value: 'latest', label: '최신순' },
+  { value: 'deadline', label: '마감임박순' },
+  { value: 'popular', label: '인기순' },
+]
 
 /**
- * 어느 순서든 상단고정이 먼저다(등록일과 무관하게 최상단 노출). 동률은 최신순.
- * 기간순은 신청 가능한 공고를 마감일 오름차순으로, 마감일 없는 상시 공고를 그 뒤에, 마감·종료 공고를 맨 뒤에 둔다.
+ * 상단고정은 추천순에서만 먼저 둔다. 동률은 최신순.
+ * 마감임박순은 신청 가능한 공고를 마감일 오름차순으로, 마감일 없는 상시 공고를 그 뒤에, 마감·종료 공고를 맨 뒤에 둔다.
  */
 export function sortPrograms(list: Program[], order: ProgramOrder): Program[] {
   const deadline = (p: Program) => {
@@ -140,7 +148,7 @@ export function sortPrograms(list: Program[], order: ProgramOrder): Program[] {
     return isProgramClosed(p) ? '2' : end ? `0${end}` : '1'
   }
   return [...list].sort((a, b) => {
-    if (!!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
+    if (order === 'recommended' && !!a.pinned !== !!b.pinned) return a.pinned ? -1 : 1
     if (order === 'deadline' && deadline(a) !== deadline(b)) return deadline(a).localeCompare(deadline(b))
     if (order === 'popular' && a.applyCount !== b.applyCount) return b.applyCount - a.applyCount
     return b.createdAt.localeCompare(a.createdAt)
