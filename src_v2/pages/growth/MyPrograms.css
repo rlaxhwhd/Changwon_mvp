@@ -11,29 +11,20 @@
 .mp-page .cs-history .cs-filter-note,
 .mp-page .cs-history .cs-filter-note button,
 .mp-page .cs-history .cs-pagination,
-.mp-page .cs-history .cs-pagination nav button,
-.mp-page .mp-table, .mp-page .mp-table th { font-size: 14px; }
+.mp-page .cs-history .cs-pagination nav button { font-size: 14px; }
 .mp-page .cs-history .cs-load-state,
 .mp-page .cs-history .cs-empty strong { font-size: 16px; }
 .mp-page .cs-history .cs-empty p { font-size: 15px; }
-.mp-page .mp-table .cs-table-date small,
-.mp-page .mp-table .cs-status,
-.mp-page .mp-table .cs-detail-button { font-size: 13px; }
-.mp-page .mp-table { table-layout: fixed; min-width: 1030px; }
-.mp-table .mp-col-number { width: 40px; }
-.mp-table .mp-col-category { width: 68px; }
-.mp-table .mp-col-manager { width: 76px; }
-.mp-table .mp-col-date { width: 104px; }
-.mp-table .mp-col-status { width: 86px; }
-.mp-table .mp-col-sessions { width: 66px; }
-.mp-table .mp-col-survey { width: 94px; }
-.mp-table .mp-col-detail { width: 76px; }
-.mp-page .mp-table th, .mp-page .mp-table td { padding: 12px 4px; text-align: center; }
-.mp-page .mp-table thead th { padding-block: 9px; }
-.mp-page .mp-table thead tr + tr th { border-top: 1px solid var(--border); }
-.mp-page .mp-table td:nth-child(3) { text-align: left; }
+.mp-page .mp-table { table-layout: fixed; min-width: 1260px; }
+.mp-table .mp-col-number { width: 56px; }
+.mp-table .mp-col-category { width: 84px; }
+.mp-table .mp-col-manager { width: 88px; }
+.mp-table .mp-col-date { width: 120px; }
+.mp-table .mp-col-status { width: 100px; }
+.mp-table .mp-col-sessions { width: 90px; }
+.mp-table .mp-col-survey { width: 100px; }
+.mp-table .mp-col-detail { width: 100px; }
 .mp-page .mp-table .cs-cell-text { min-width: 0; max-width: 100%; }
-.mp-page .mp-table .mp-status-cell { text-align: center; }
 .mp-survey-link { display: inline-flex; align-items: center; justify-content: center; min-height: 28px; padding: 3px 6px; border-radius: 5px; background: var(--blue-soft); color: var(--on-blue, #1a5fcc); font-size: 14px; font-weight: 700; line-height: 1.45; word-break: keep-all; text-decoration: none; }
 .mp-survey-upcoming { color: #F5A524; font-size: 14px; font-weight: 700; }
 .mp-survey-link:hover { background: var(--blue); color: #fff; }

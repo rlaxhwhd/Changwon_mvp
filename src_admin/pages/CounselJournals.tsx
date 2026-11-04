@@ -391,7 +391,7 @@ export default function CounselJournals() {
                     </span>
                     <span className="admin-roster-cell">{r.type}<small>{r.record?.template?.channel ?? r.method}</small></span>
                     {/* 작성된 일지가 있는 행만 펼침 — 미작성은 펼칠 내용이 없다 */}
-                    <span className="admin-roster-cell admin-journal-topic">
+                    <span className="admin-roster-cell dc-cell-long">
                       {r.record ? (
                         <button
                           type="button"

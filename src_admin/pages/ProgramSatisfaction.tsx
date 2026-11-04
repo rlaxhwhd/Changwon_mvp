@@ -100,7 +100,7 @@ export default function ProgramSatisfaction() {
             <div className="pss-area-sum"><span>평균 <b>{fmt(area.avg)}</b></span><span>응답 <b>{area.n}</b></span></div>
           </header>
           <div className="table-wrap">
-            <table className="pss-table">
+            <table className="dc-list-table pss-table">
               <thead>
                 <tr><th>번호</th><th>문항</th><th>평균</th><th>분포</th>{SCORES.map(s => <th key={s}>{s}점</th>)}<th>응답</th></tr>
               </thead>
@@ -108,7 +108,7 @@ export default function ProgramSatisfaction() {
                 {area.items.map((item, j) => (
                   <tr key={item.code}>
                     <td>{j + 1}</td>
-                    <td className="wrap">{item.prompt}</td>
+                    <td className="wrap dc-cell-long">{item.prompt}</td>
                     <td>{fmt(item.avg)}</td>
                     <td><Distribution row={item} /></td>
                     {SCORES.map(s => <td key={s}>{item.distribution[s]}</td>)}

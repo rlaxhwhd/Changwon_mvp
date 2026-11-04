@@ -466,9 +466,9 @@ function ProgramTab({ studentId, academicRecords }: { studentId: string; academi
 
   if (academicRecords) return <section data-slot="card">
     <CardHead title="비교과 활동" desc="현재 연결된 비교과 신청·이수 기록입니다." />
-    <div data-slot="card-content">{academicRecords.length ? <div className="table-wrap"><table>
+    <div data-slot="card-content">{academicRecords.length ? <div className="table-wrap"><table className="dc-list-table">
       <thead><tr><th>프로그램</th><th>신청일</th><th>이수</th></tr></thead>
-      <tbody>{academicRecords.map(p => <tr key={p.id}><td>{p.title}</td><td>{p.date}</td><td>{p.completed?'이수':'미이수'}</td></tr>)}</tbody>
+      <tbody>{academicRecords.map(p => <tr key={p.id}><td className="dc-cell-long">{p.title}</td><td>{p.date}</td><td>{p.completed?'이수':'미이수'}</td></tr>)}</tbody>
     </table></div> : <p className="sdv-empty">비교과 활동 없음</p>}</div>
   </section>
   if (!loaded || loaded.id !== studentId) return <p className="sdv-empty" role="status">비교과 신청 내역을 불러오는 중입니다…</p>
@@ -487,7 +487,7 @@ function ProgramTab({ studentId, academicRecords }: { studentId: string; academi
             <p className="sdv-empty">신청한 비교과 프로그램이 없습니다.<br />학생이 신청하면 이곳에 표시됩니다.</p>
           ) : (
             <div className="table-wrap">
-              <table>
+              <table className="dc-list-table">
                 <thead>
                   <tr>
                     <th>프로그램</th><th>분류</th><th>운영 기간</th><th>신청일</th><th>선발</th><th>출석</th><th>결과</th>
@@ -496,7 +496,7 @@ function ProgramTab({ studentId, academicRecords }: { studentId: string; academi
                 <tbody>
                   {summary.rows.map(r => (
                     <tr key={r.programId}>
-                      <td className="wrap"><b>{r.title}</b></td>
+                      <td className="wrap dc-cell-long"><b>{r.title}</b></td>
                       <td>{categoryLabel(r.category)}</td>
                       <td>{r.period}</td>
                       <td>{r.appliedAt}</td>

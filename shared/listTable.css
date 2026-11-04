@@ -1,0 +1,83 @@
+/* 목록 표 공용 디자인 — 기준은 /professor/home 「학과학생 현황」 표다.
+   <table> 은 dc-list-table 클래스를, div 격자 목록은 아래 헤더·행 클래스를 쓴다.
+   지연 로드되는 페이지 CSS 에 밀리지 않도록 페이지에는 열 폭·배치만 남긴다.
+   정렬은 shared/tableAlignment.css 가 맡는다. */
+.dc-list-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.dc-list-table :is(th, td) {
+  padding: 16px 12px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text, var(--foreground));
+  font-weight: 400;
+}
+.dc-list-table thead th {
+  background: var(--muted);
+  border-top: 2px solid var(--primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+/* 머리글이 두 줄이면 강조선은 맨 윗줄에만 둔다. */
+.dc-list-table thead tr + tr th { border-top: 0; }
+.dc-list-table tbody th {
+  background: var(--muted);
+  font-weight: 600;
+  border-top: 0;
+}
+.dc-list-table tfoot :is(th, td) {
+  background: var(--muted);
+  font-weight: 700;
+}
+.dc-list-table tbody tr:hover { background: var(--sel, var(--muted)); }
+
+/* div 격자 목록 — grid-template-columns 는 각 목록이 갖는다. */
+.admin-roster-head,
+.admin-roster-row,
+.counsel-request-columns,
+.counsel-request-row,
+.blk-thead,
+.blk-row,
+.jb-head,
+.jb-row,
+.rmp-lag-row {
+  padding: 16px 12px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text, var(--foreground));
+  font-family: inherit;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 400;
+}
+.admin-roster-head,
+.counsel-request-columns,
+.blk-thead,
+.jb-head,
+.rmp-lag-row.is-head {
+  background: var(--muted);
+  border-top: 2px solid var(--primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.admin-roster-row:hover,
+.counsel-request-row-wrap:hover,
+.blk-row:hover,
+.jb-row:hover,
+.rmp-lag-row:not(.is-head):hover { background: var(--sel, var(--muted)); }
+/* 상담 신청 행은 펼침 패널까지 한 묶음이라 밑줄을 묶음에 준다. */
+.counsel-request-row { border-bottom: 0; }
+.counsel-request-row-wrap { border-bottom: 1px solid var(--border); }
+
+/* 칸 안의 글자도 14px 이다. 칩·배지·버튼은 색과 모양을 유지하고 아이콘(svg, i)은 크기를 건드리지 않는다.
+   .badge 는 .sdv .badge 처럼 범위가 붙은 배지 규칙보다 앞서려고 넣었다. */
+:is(.dc-list-table :is(th, td), .admin-roster-head, .admin-roster-row, .counsel-request-columns, .counsel-request-row, .blk-thead, .blk-row, .jb-head, .jb-row, .rmp-lag-row)
+  :is(a, b, button, em, input, label, p, select, small, span, strong, textarea, .badge) {
+  font-size: 14px;
+}
+:is(.dc-list-table :is(th, td), .admin-roster-head, .admin-roster-row, .counsel-request-columns, .counsel-request-row, .blk-thead, .blk-row, .jb-head, .jb-row, .rmp-lag-row)
+  :is(b, small, strong) {
+  font-weight: 400;
+}

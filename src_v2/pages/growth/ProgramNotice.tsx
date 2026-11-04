@@ -238,7 +238,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
             <section className="jd-sec pn-rounds" id="program-rounds">
               <h2 className="jd-sec-head"><span>회차별 프로그램</span></h2>
               <div className="pn-rounds-scroll">
-                <table className="pn-rounds-table">
+                <table className="dc-list-table pn-rounds-table">
                   <thead><tr>
                     <th scope="col">회차</th><th scope="col">모집인원<br />/정원</th><th scope="col">모집기간</th>
                     <th scope="col">진행기간</th><th scope="col">운영장소</th>

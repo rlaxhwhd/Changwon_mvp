@@ -123,13 +123,13 @@ export default function MyPrograms() {
       {loading && <p className="cs-load-state" role="status">신청 내역을 불러오는 중입니다.</p>}
       {error && <div className="cs-load-state" role="alert"><p>{error}</p><button type="button" className="cs-button" onClick={()=>setRevision(value=>value+1)}>다시 시도</button></div>}
       <div className="cs-table-scroll" tabIndex={0} role="region" aria-label="프로그램 신청 내역 표">
-        <table className="cs-table mp-table">
+        <table className="dc-list-table cs-table mp-table">
           <colgroup><col className="mp-col-number"/><col className="mp-col-category"/><col/><col className="mp-col-manager"/><col className="mp-col-date"/><col className="mp-col-status"/><col className="mp-col-sessions"/><col className="mp-col-date"/>{surveyColumns.map(s=><col key={s.phase} className="mp-col-survey"/>)}<col className="mp-col-detail"/></colgroup>
           <thead><tr>{['No.','분류','프로그램명','담당자','운영 기간','상태','운영 회차','신청일'].map(h=><th scope="col" rowSpan={2} key={h}>{h}</th>)}<th scope="colgroup" colSpan={3}>설문조사 현황</th><th scope="col" rowSpan={2}>상세</th></tr>
             <tr>{surveyColumns.map(s=><th scope="col" key={s.phase}>{s.label}</th>)}</tr></thead>
           <tbody>{rows.map((p,i)=><tr key={p.id}>
             <td>{filtered.length-(current-1)*size-i}</td><td>{p.category}</td>
-            <td><span className="cs-cell-text" title={p.title}>{p.title}</span></td>
+            <td className="dc-cell-long"><span className="cs-cell-text" title={p.title}>{p.title}</span></td>
             <td><span className="cs-cell-text" title={p.hostDept}>{p.hostDept}</span></td>
             <td className="cs-table-date">{p.startDate || '일정 미정'}{p.endDate && <small>~ {p.endDate}</small>}</td>
             <td className="mp-status-cell"><span className={`cs-status cs-status--${tone(p.status)}`}>{p.status}</span></td>

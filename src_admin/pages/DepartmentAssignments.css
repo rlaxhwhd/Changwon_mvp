@@ -8,19 +8,15 @@
 .da-count { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); margin: 0; }
 .da-count strong { color: var(--color-primary); }
 .da-table-wrap { min-width: 0; max-width: 100%; overflow-x: auto; border: 1px solid var(--color-border); border-radius: var(--radius-lg); background: var(--color-bg); }
-.da-page table { width: 100%; border-collapse: collapse; font-size: 13px; min-width: 1080px; }
-.da-page th { background: var(--color-section-bg); color: var(--color-text-secondary); font-weight: 700; padding: 16px 12px; white-space: nowrap; }
-.da-page td { padding: 16px 12px; text-align: center; line-height: 1.6; }
-.da-page td, .da-page th { border-bottom: 1px solid var(--color-border); vertical-align: middle; }
+.da-page table { min-width: 1080px; }
 .da-page td[rowspan] { background: var(--color-bg); }
-.da-page tbody tr:last-child td { border-bottom: 0; }
 .da-phone { white-space: nowrap; font-variant-numeric: tabular-nums; }
 .da-action, .da-remove { background: none; border: 0; cursor: pointer; color: var(--color-primary); padding: 5px 7px; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; font: inherit; }
-.da-remove { display: block; margin: 2px auto 0; font-size: 12px; }
+.da-remove { display: block; margin: 2px auto 0; }
 .da-action:disabled { color: var(--color-caption); cursor: default; text-decoration: none; }
 .da-page button:focus-visible, .da-page input:focus-visible, .da-page select:focus-visible, .da-page textarea:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 3px; }
 .da-unassigned { color: var(--color-caption); }
-.da-page .da-empty { padding: 60px 20px; color: var(--color-text-secondary); }
+.da-page .da-empty { height: 144px; color: var(--color-text-secondary); }
 .da-pagination { display: flex; justify-content: center; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0; font-size: 13px; }
 .da-search .da-pagination { margin-top: 20px; }
 .da-notice { color: var(--color-primary); background: var(--primary-soft); padding: 12px 16px; border-radius: var(--radius-sm); }

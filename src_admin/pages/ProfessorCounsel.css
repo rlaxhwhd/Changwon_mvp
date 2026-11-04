@@ -3,10 +3,7 @@
 .professor-counsel-page .admin-select input { border: 1px solid var(--border); border-radius: 6px; min-height: 38px; padding: 8px 10px; background: var(--bg-card); font: inherit; }
 .professor-counsel-page .admin-toolbar { display: flex; justify-content: space-between; gap: 16px; align-items: center; }
 .professor-report-table-wrap { overflow-x: auto; }
-.professor-report-table { width: 100%; min-width: 1050px; border-collapse: collapse; font-size: 13px; font-variant-numeric: tabular-nums; }
-.professor-report-table th { background: var(--muted); border-top: 2px solid var(--primary); white-space: nowrap; font-weight: 600; }
-.professor-report-table th, .professor-report-table td { padding: 16px 12px; border-bottom: 1px solid var(--border); text-align: center; }
-.professor-report-table tbody tr:hover { background: var(--sel); }
+.professor-report-table { min-width: 1050px; }
 .professor-report-table td:nth-child(4) { max-width: 190px; }
 .professor-report-link { color: var(--primary); font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 .professor-report-detail { padding: 28px; }
@@ -24,8 +21,6 @@
 .professor-counsel-settings > div { margin-bottom: 32px; }
 .professor-stats-card { margin-bottom: 28px; }
 .professor-monthly-table { min-width: 960px; }
-.professor-monthly-table tbody th, .professor-monthly-table tfoot th { background: var(--muted); font-weight: 600; border-top: 0; }
-.professor-monthly-table tfoot th, .professor-monthly-table tfoot td { font-weight: 700; }
 .professor-stats-records { min-width: 900px; }
 .professor-sort-btn { display: inline-flex; gap: 6px; align-items: center; border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
 .professor-sort-btn span { font-size: 10px; color: var(--primary); }
@@ -38,9 +33,7 @@
 .professor-home-total strong { display: grid; place-items: center; width: 104px; height: 104px; border-radius: 50%; background: var(--primary); color: #fff; font-size: 28px; font-weight: 600; }
 .professor-home-semester { margin: 0 0 12px; font-size: 13px; font-weight: 700; color: var(--primary); }
 .professor-home-grade-table { min-width: 720px; }
-.professor-home-grade-table tbody th, .professor-home-grade-table tfoot th { font-weight: 600; border-top: 0; }
-.professor-home-grade-table tfoot th, .professor-home-grade-table tfoot td { background: var(--muted); font-weight: 700; }
-.professor-home-na { color: var(--color-text-secondary); }
+td.professor-home-na { color: var(--color-text-secondary); }
 .professor-home-year { display: flex; justify-content: center; align-items: center; gap: 14px; padding-bottom: 16px; margin-bottom: 16px; border-bottom: 1px dashed var(--border); font-size: 15px; }
 .professor-home-year strong { font-size: 22px; }
 .professor-home-year button { display: grid; place-items: center; width: 24px; height: 24px; border: 0; border-radius: 50%; background: var(--text); color: #fff; cursor: pointer; }
@@ -48,11 +41,10 @@
 .professor-home-lists { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .professor-home-list-head { display: flex; justify-content: space-between; align-items: flex-end; }
 .professor-home-requests { min-width: 560px; }
-.professor-home-requests th, .professor-home-requests td { padding: 12px 8px; }
-.professor-home-requests td.professor-home-empty { padding: 40px 8px; color: var(--color-text-secondary); }
+.professor-home-requests td.professor-home-empty { height: 104px; color: var(--color-text-secondary); }
 .professor-home-requests tbody tr:has(.professor-home-empty):hover { background: none; }
 .professor-link-btn { border: 0; background: none; padding: 0; font: inherit; }
-.professor-request-advisee { margin-left: 6px; color: var(--primary); font-weight: 600; }
+.professor-request-advisee { margin-left: 6px; color: var(--primary); }
 .professor-request-table td.professor-request-topic { max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .professor-request-actions { white-space: nowrap; }
 .professor-request-actions .admin-btn + .admin-btn { margin-left: 6px; }
@@ -66,7 +58,7 @@
 /* 심리상담사 — 검사관리(심리검사 현황)·추가 심리상담신청 게시판. 표는 교수 화면과 같은 report-table 을 쓴다. */
 .admin-page-actions { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; }
 .psych-test-table td.professor-home-empty,
-.psych-extra-table td.professor-home-empty { padding: 40px 8px; color: var(--color-text-secondary); }
+.psych-extra-table td.professor-home-empty { height: 104px; color: var(--color-text-secondary); }
 .psych-test-table td.psych-test-belongs { max-width: 220px; }
 .psych-test-view,
 .psych-extra-create { background: var(--orange); border-color: var(--orange); color: #fff; }
@@ -75,7 +67,7 @@
 .psych-extra-table td.psych-extra-title { max-width: none; }
 .psych-extra-table td.psych-extra-title .professor-link-btn { cursor: pointer; }
 .psych-extra-table td.psych-extra-title .professor-link-btn:hover { text-decoration: underline; }
-.psych-extra-wait { color: var(--on-orange); font-weight: 600; }
+td.psych-extra-wait { color: var(--on-orange); }
 .psych-extra-section { margin: 20px 0 8px; font-size: 15px; font-weight: 700; }
 .psych-extra-body { min-height: 120px; padding: 14px; border: 1px solid var(--border); border-radius: 8px; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
 .admin-toolbar .psych-extra-create { margin-left: auto; }

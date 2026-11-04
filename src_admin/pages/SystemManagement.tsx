@@ -97,7 +97,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
         {definition?.managed_by === 'OPERATIONAL' && !definition.fixed_codes && <button className="btn btn-primary" onClick={() => edit(group === 'QUEST_SEMESTER'
           ? { group_code: group, ...semesterIdentity(new Date().getFullYear(), 1), sort_order: 0, is_active: true, payload: { startDate: '', endDate: '' }, version: 0 }
           : { group_code: group, code: '', label: '', sort_order: 0, is_active: true, payload: group === 'COUNSEL_TOPIC' ? {type:'T1',goal:''} : {}, version: 0 })}>항목 추가</button>}
-        <table className="data-table"><thead><tr><th>코드</th><th>명칭</th><th>정렬</th><th>사용</th><th>관리</th></tr></thead><tbody>
+        <table className="dc-list-table data-table"><thead><tr><th>코드</th><th>명칭</th><th>정렬</th><th>사용</th><th>관리</th></tr></thead><tbody>
           {(data.items as Item[]).map(item => <tr key={item.code}><td>{item.code}</td><td>{item.label}</td><td>{item.sort_order}</td><td>{item.is_active ? '사용' : '비활성'}</td><td>
             <button className="btn btn-secondary" disabled={definition?.managed_by === 'STRUCTURAL'} onClick={() => edit(item)}>수정</button>{' '}
             <button className="btn btn-secondary" onClick={() => { void api<Page<Record<string, unknown>>>(`/system/code-groups/${group}/items/${item.code}/events`).then(result => setHistory(result.items)).catch(e => setError(e.message)) }}>최근 변경 이력</button>
@@ -137,7 +137,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
         </>
       </>}
       {tab === 'assignments' && <><AssignmentForm saving={saving} run={run} />
-        <table className="data-table"><thead><tr><th>교직원 ID</th><th>단대 / 학과 코드</th><th>역할</th><th>기간</th><th>상태</th><th>관리</th></tr></thead><tbody>{(data.items as Assignment[]).map(row => <tr key={row.id}><td>{row.staff_uid}</td><td>{row.college_code} / {row.dept_code}</td><td>{row.role_code}</td><td>{row.valid_from} ~ {row.valid_to ?? '종료일 없음'}</td><td>{row.is_active ? '활성' : '비활성'}</td><td><AssignmentEnd row={row} saving={saving} run={run} /></td></tr>)}</tbody></table>
+        <table className="dc-list-table data-table"><thead><tr><th>교직원 ID</th><th>단대 / 학과 코드</th><th>역할</th><th>기간</th><th>상태</th><th>관리</th></tr></thead><tbody>{(data.items as Assignment[]).map(row => <tr key={row.id}><td>{row.staff_uid}</td><td>{row.college_code} / {row.dept_code}</td><td>{row.role_code}</td><td>{row.valid_from} ~ {row.valid_to ?? '종료일 없음'}</td><td>{row.is_active ? '활성' : '비활성'}</td><td><AssignmentEnd row={row} saving={saving} run={run} /></td></tr>)}</tbody></table>
       </>}
       {tab === 'menus' && <MenuVisibility />}
       {(tab === 'events' || tab === 'issues') && (data.items as Record<string, unknown>[]).map((row, i) => <details key={String(row.id ?? i)}><summary>{String(row.changed_at ?? row.code)} · {String(row.reason ?? row.detail)}</summary><pre>{JSON.stringify(row,null,2)}</pre></details>)}

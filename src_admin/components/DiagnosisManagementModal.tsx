@@ -91,7 +91,7 @@ export default function DiagnosisManagementModal({ student, onClose }: { student
         <section className="dmm-section">
           <h3 className="dmm-section-title"><LuClipboardList aria-hidden />응시 이력</h3>
           <div className="dmm-table-wrap">
-            <table className="dmm-table">
+            <table className="dc-list-table dmm-table">
               <thead><tr><th>진단</th><th>회차</th><th>응시일</th><th>상태</th><th className="dmm-col-action">결과</th><th className="dmm-col-action">전체 결과 이력</th></tr></thead>
               <tbody>{tests.map(test => {
                 const attempts = data.attempts.filter(a => a.testId === test).sort((a, b) => b.attemptNo - a.attemptNo)

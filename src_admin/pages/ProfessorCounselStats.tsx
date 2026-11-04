@@ -84,7 +84,7 @@ export default function ProfessorCounselStats() {
     </div>
     <section className="admin-card">
       {isLoading && !data.items.length ? <div className="admin-loading">불러오는 중…</div> : !data.items.length ? <EmptyState message="조건에 맞는 상담실적이 없습니다." /> : <>
-        <div className="professor-report-table-wrap"><table className="professor-report-table professor-stats-records">
+        <div className="professor-report-table-wrap"><table className="dc-list-table professor-report-table professor-stats-records">
           <thead><tr>
             <th scope="col">순번</th><th scope="col">대학</th><th scope="col">학부(학과)</th><th scope="col">학년</th>
             {sortHead('name', '학생명')}<th scope="col">상담구분</th><th scope="col">학생구분</th>{sortHead('date', '상담일자')}

@@ -140,7 +140,7 @@ export default function JobApplicantsList() {
                     aria-label={`${job.role} 선택`}
                   />
                 </span>
-                <span className="admin-roster-cell">
+                <span className="admin-roster-cell dc-cell-long">
                   <strong>{job.role}</strong>
                   <small>{job.company}</small>
                 </span>

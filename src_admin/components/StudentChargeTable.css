@@ -17,7 +17,7 @@
 .academic-sex-filter input { accent-color: var(--color-primary); }
 .admin-charge-roster.diagnosis-management-roster.has-export-selection .admin-roster-head,
 .admin-charge-roster.diagnosis-management-roster.has-export-selection .admin-roster-row {
-  grid-template-columns: 36px 42px 1.15fr 1.1fr 60px 1.35fr 96px 60px 70px 1fr;
+  grid-template-columns: 36px 42px 1.15fr 1.1fr 60px 1.35fr 104px 60px 70px 1fr;
 }
 .diagnosis-manage-btn svg { width: 14px; height: 14px; }
 .admin-charge-roster.has-export-selection .admin-roster-head,

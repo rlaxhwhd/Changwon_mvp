@@ -113,12 +113,12 @@ export default function PsychExtraRequests() {
       <button type="button" className="admin-btn psych-extra-create" onClick={() => setCreating(true)}>등록</button>
     </div>
     <section className="admin-card">
-      <div className="professor-report-table-wrap"><table className="professor-report-table psych-extra-table">
+      <div className="professor-report-table-wrap"><table className="dc-list-table professor-report-table psych-extra-table">
         <thead><tr>{['번호', '제목', '작성자', '작성일', '확인유무'].map(h => <th scope="col" key={h}>{h}</th>)}</tr></thead>
         <tbody>{!data.items.length ? <tr><td colSpan={5} className="professor-home-empty">{isLoading ? '불러오는 중…' : '등록된 추가 심리상담신청이 없습니다.'}</td></tr>
           : data.items.map((row, index) => <tr key={row.id}>
             <td>{data.totalCount - (data.page - 1) * PAGE_SIZE - index}</td>
-            <td className="psych-extra-title"><button type="button" className="professor-link-btn" onClick={() => setOpenId(row.id)}>{row.title}</button></td>
+            <td className="psych-extra-title dc-cell-long"><button type="button" className="professor-link-btn" onClick={() => setOpenId(row.id)}>{row.title}</button></td>
             <td>{row.writer}</td>
             <td>{dateOf(row.createdAt)}</td>
             <td className={row.confirmed ? 'psych-extra-done' : 'psych-extra-wait'}>{row.confirmed ? '확인' : '미확인'}</td>

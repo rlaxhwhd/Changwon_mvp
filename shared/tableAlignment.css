@@ -44,3 +44,36 @@ table td.cs-name-cell, table th.cs-name-cell {
   text-align: left !important;
   padding-left: 20px !important;
 }
+
+/* 예외 — 제목·주제·내용처럼 긴 글이 들어가는 본문 칸만 왼쪽 정렬한다. 헤더는 가운데로 둔다. */
+table td.dc-cell-long {
+  text-align: left !important;
+}
+.admin-roster-row > .dc-cell-long,
+.counsel-request-row > .dc-cell-long {
+  align-items: flex-start !important;
+  text-align: left !important;
+}
+.admin-roster-row > .dc-cell-long > *,
+.counsel-request-row > .dc-cell-long > * {
+  align-self: flex-start !important;
+  text-align: left !important;
+}
+
+/* 채용공고 표는 1024px 이하에서 카드형으로 접히므로 표일 때만 가운데로 맞춘다. */
+@media (min-width: 1025px) {
+  .jb-head > *,
+  .jb-row > * {
+    text-align: center !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .jb-row > .dc-cell-long {
+    justify-content: flex-start !important;
+    text-align: left !important;
+  }
+}
+
+.rmp-lag-row > * {
+  text-align: center !important;
+}

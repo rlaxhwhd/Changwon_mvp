@@ -50,7 +50,7 @@ function StaffSearch({ role, target, onClose, onSaved }: { role: Role; target: T
       {error && <p className="da-error" role="alert">{error} <button onClick={() => setRevision(n => n + 1)}>다시 조회</button></p>}
       {loading ? <p role="status">검색 중입니다…</p> : <>
         <p>검색 결과 {data?.totalCount.toLocaleString() ?? 0}명</p>
-        <div className="da-table-wrap"><table><thead><tr><th>이름</th><th>사번</th><th>소속</th><th>휴대폰번호</th><th>관리</th></tr></thead><tbody>
+        <div className="da-table-wrap"><table className="dc-list-table"><thead><tr><th>이름</th><th>사번</th><th>소속</th><th>휴대폰번호</th><th>관리</th></tr></thead><tbody>
           {data?.items.map(person => { const assigned = target.assignments.some(a => a.staff_uid === person.staff_uid); return <tr key={person.staff_uid}><td>{person.name}</td><td>{person.employee_no}</td><td>{person.organization || '—'}</td><td className="da-phone">{person.mobile || '—'}</td><td><button className="da-action" disabled={saving || assigned} onClick={() => void register(person)}>{assigned ? '배정됨' : '등록'}</button></td></tr> })}
           {!data?.items.length && <tr><td colSpan={5} className="da-empty">검색된 {label}가 없습니다.</td></tr>}
         </tbody></table></div>
@@ -97,7 +97,7 @@ export default function DepartmentAssignments({ role }: { role: Role }) {
     {notice && <p className="da-notice" role="status">{notice}</p>}
     {error && <p className="da-error" role="alert">{error}</p>}
     <p className="da-count">총 <strong>{data?.totalCount.toLocaleString() ?? 0}</strong>개 학과·전공</p>
-    <div className="da-table-wrap" aria-busy={loading}><table><caption className="da-sr-only">{label} 학과 배정 현황</caption><thead><tr>{['소속대학', '학부/학과', '전공', '학과코드', '전공코드', `${label}이름 (사번)`, '휴대폰번호', '전화번호', '관리'].map(title => <th key={title} scope="col">{title}</th>)}</tr></thead><tbody>
+    <div className="da-table-wrap" aria-busy={loading}><table className="dc-list-table"><caption className="da-sr-only">{label} 학과 배정 현황</caption><thead><tr>{['소속대학', '학부/학과', '전공', '학과코드', '전공코드', `${label}이름 (사번)`, '휴대폰번호', '전화번호', '관리'].map(title => <th key={title} scope="col">{title}</th>)}</tr></thead><tbody>
       {loading ? <tr><td colSpan={9} className="da-empty">배정 현황을 불러오는 중입니다…</td></tr> : data?.items.map(row => {
         const assigned: (Assignment | null)[] = row.assignments.length ? row.assignments : [null]
         return assigned.map((person, index) => <tr key={`${row.college_code}/${row.dept_code}/${row.major_code}/${person?.id ?? 'empty'}`}>

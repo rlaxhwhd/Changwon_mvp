@@ -1426,11 +1426,7 @@
 }
 
 /* 비교과 표 — 시안 .table-wrap 을 쓰되 셀 배치만 지정 */
-.sdv .table-wrap table { width: 100%; border-collapse: collapse; font-size: 12px }
-.sdv .table-wrap th,
-.sdv .table-wrap td { padding: 12px 14px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap }
-.sdv .table-wrap th { background: var(--muted); color: var(--muted-foreground); font-weight: 800 }
-.sdv .table-wrap tr:last-child td { border-bottom: 0 }
+.sdv .table-wrap td { white-space: nowrap }
 .sdv .table-wrap td.wrap { white-space: normal; word-break: keep-all }
 
 /* 역량 GAP 목록 — 시안 axis-row 를 재사용하되 심각도만 색으로 구분 */

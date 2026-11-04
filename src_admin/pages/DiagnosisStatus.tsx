@@ -255,7 +255,7 @@ export default function DiagnosisStatus() {
                   </span>
                   <span className="admin-roster-cell"><span className={statusClass(row.status)}>{row.status}</span></span>
                   <span className="admin-roster-cell" style={{ whiteSpace: 'nowrap' }}>{formatDate(row.date)}</span>
-                  <span className="admin-roster-cell admin-diag-result">
+                  <span className="admin-roster-cell admin-diag-result dc-cell-long">
                     {row.resultSummary ?? '—'}
                     {row.comment && <small><LuMessageSquareMore /> {row.comment.body}</small>}
                   </span>

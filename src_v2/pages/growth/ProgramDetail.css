@@ -222,17 +222,6 @@
 /* ── 회차별 프로그램 — 다회차 공고 맨 아래. 회차마다 모집인원·기간·장소와 신청 버튼 ──
    교직원 공고 탭(admin)도 같은 컴포넌트를 쓰므로 토큰은 폴백과 함께 쓴다. */
 .pn-rounds-scroll { overflow-x: auto; }
-.pn-rounds-table {
-  width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px;
-  border-top: 2px solid var(--jd-fill, var(--color-primary, #2f9e6e));
-  color: var(--text-2, #3f4654);
-}
-.pn-rounds-table th {
-  padding: 12px 8px; background: var(--surface-2, #f6f7fa); font-weight: 700;
-  color: var(--text, #1d2330); border-bottom: 1px solid var(--jd-line, #e6e8ef); white-space: nowrap;
-}
-.pn-rounds-table td {
-  padding: 14px 8px; text-align: center; border-bottom: 1px solid var(--jd-line, #e6e8ef); line-height: 1.5;
-}
-.pn-rounds-table .jd-apply-btn { width: auto; height: 38px; padding: 0 18px; font-size: 14px; }
-.pn-round-state { color: var(--text-3, #8a91a0); font-weight: 600; }
+.pn-rounds-table { min-width: 640px; }
+.pn-rounds-table .jd-apply-btn { width: auto; height: 38px; padding: 0 18px; }
+.pn-round-state { color: var(--text-3, #8a91a0); }

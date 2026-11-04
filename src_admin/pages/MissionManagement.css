@@ -21,12 +21,10 @@
 .mm-search input { min-width: 0; flex: 1; }
 .mm-search select { width: 90px; }
 .mm-table-scroll { overflow-x: auto; }
-.mm-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; }
-.mm-table th { background: #f6f8fa; padding: 12px 10px; color: var(--mm-sub); font-weight: 600; white-space: nowrap; }
-.mm-table td { padding: 14px 10px; border-bottom: 1px solid var(--mm-border); overflow-wrap: anywhere; }
+.mm-table td { overflow-wrap: anywhere; }
 .mm-table strong, .mm-table td span, .mm-table small { display: block; }
 .mm-table td span { line-height: 1.7; white-space: pre-wrap; }
-.mm-table strong { font-size: 15px; margin-bottom: 4px; }
+.mm-table strong { margin-bottom: 4px; }
 .mm-table small { color: #9b3030; }
 .mm-fields { display: grid; gap: 18px; }
 .mm-selected { list-style: none; margin: 0; padding: 0; max-height: 560px; overflow-y: auto; }
@@ -52,15 +50,14 @@
 .mm-choices > label { display: flex; align-items: center; }
 .mm-page .mm-check { display: flex; align-items: center; gap: 8px; }
 @media (max-width: 1000px) { .mm-layout { grid-template-columns: 1fr; } }
-@media (max-width: 600px) { .mm-heading { align-items: start; flex-wrap: wrap; } .mm-panel, .mm-editor { padding: 16px; } .mm-toolbar { align-items: stretch; } .mm-toolbar label { width: 100%; } .mm-table td { padding: 12px 6px; } }
+@media (max-width: 600px) { .mm-heading { align-items: start; flex-wrap: wrap; } .mm-panel, .mm-editor { padding: 16px; } .mm-toolbar { align-items: stretch; } .mm-toolbar label { width: 100%; } }
 
 .mm-pool-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 10px; margin-bottom: 12px; }
 .mm-pool-filters label { min-width: 100px; }
 .mm-pool-filters label:nth-child(2) { min-width: 135px; }
 .mm-pool-note { margin-bottom: 16px; }
-.mm-table .mm-id { font-variant-numeric: tabular-nums; color: var(--mm-sub); font-size: 12px; }
-.mm-table .mm-count { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.mm-table .mm-difficulty { display: inline-block; min-width: 30px; text-align: center; padding: 4px 7px; border-radius: 5px; font-size: 12px; }
+.mm-table .mm-count { white-space: nowrap; }
+.mm-table .mm-difficulty { display: inline-block; min-width: 30px; text-align: center; padding: 4px 7px; border-radius: 5px; }
 .mm-difficulty.is-low { background: #eaf6ee; color: #35684a; }
 .mm-difficulty.is-medium { background: #edf2fa; color: #3c5989; }
 .mm-difficulty.is-high { background: #fbf0e7; color: #895229; }

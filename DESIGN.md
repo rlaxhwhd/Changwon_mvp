@@ -181,6 +181,9 @@ The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 �
 }
 ```
 
+### List Table
+열 제목이 있는 목록·현황 표는 `/professor/home` 「학과학생 현황」 표가 기준이다 — `shared/listTable.css`(표 안 글자 14px, 강조선 각 SPA `--primary`, 긴 글 본문 칸만 `dc-cell-long` 왼쪽 정렬).
+
 ## 5. Layout Principles
 
 - **Base spacing unit:** `8px` — use multiples (16px, 24px, 32px, etc.)

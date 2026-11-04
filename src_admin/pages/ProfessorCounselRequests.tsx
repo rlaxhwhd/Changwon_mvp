@@ -202,7 +202,7 @@ export default function ProfessorCounselRequests() {
         {data.items.length === 0 ? <EmptyState message="접수된 교수상담 신청이 없습니다." /> : (
           <>
             <div className="professor-report-table-wrap">
-              <table className="professor-report-table professor-request-table">
+              <table className="dc-list-table professor-report-table professor-request-table">
                 <thead>
                   <tr>{['번호', '이름', '학번', '소속', '학적', '방식', '주제', '신청일시', '상담일정', '상태', '관리'].map(h => <th scope="col" key={h}>{h}</th>)}</tr>
                 </thead>
@@ -220,7 +220,7 @@ export default function ProfessorCounselRequests() {
                       <td>{row.studentMajor}</td>
                       <td>{row.enrollmentStatus}</td>
                       <td>{row.method}</td>
-                      <td className="professor-request-topic" title={row.topic}>{row.topic}</td>
+                      <td className="professor-request-topic dc-cell-long" title={row.topic}>{row.topic}</td>
                       <td>{formatRelativeTime(row.requestedAt)}</td>
                       <td>{row.slot ? `${row.slot.date} ${row.slot.start}–${row.slot.end}` : '일정 미정'}</td>
                       <td>{row.status}</td>

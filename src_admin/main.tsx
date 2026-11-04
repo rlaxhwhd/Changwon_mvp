@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { initializeData } from '../shared/bootstrap'
 import './index.css'
+import '../shared/listTable.css'
 import '../shared/tableAlignment.css'
 
 const root = createRoot(document.getElementById('root')!)

@@ -93,7 +93,7 @@ export default function ProgramSurveyStats() {
             </div>
           </header>
           <div className="table-wrap">
-            <table className="pss-table">
+            <table className="dc-list-table pss-table">
               <thead>
                 <tr><th>번호</th><th>문항</th><th>사전</th><th>사후</th><th>비교</th><th>향상률</th><th>응답 쌍</th></tr>
               </thead>
@@ -101,7 +101,7 @@ export default function ProgramSurveyStats() {
                 {area.items.map((item, j) => (
                   <tr key={item.code}>
                     <td>{j + 1}</td>
-                    <td className="wrap">{item.prompt}</td>
+                    <td className="wrap dc-cell-long">{item.prompt}</td>
                     <td>{fmt(item.preAvg)}</td>
                     <td>{fmt(item.postAvg)}</td>
                     <td><ScoreBars row={item} /></td>

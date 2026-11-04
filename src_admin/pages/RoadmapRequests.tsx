@@ -213,7 +213,7 @@ function RequestRow({ req, no, checked, onToggle, nudgedAt, onNudge, onReject }:
       {/* 동명이인은 학번으로만 갈린다 — 이름 옆 보조 텍스트가 아니라 독립 열로 둔다. */}
       <span className="admin-roster-cell">{req.studentNo}</span>
       <span className="admin-roster-cell">{req.studentMajor}</span>
-      <span className="admin-roster-cell admin-rmreq-detail" title={req.reason}>
+      <span className="admin-roster-cell admin-rmreq-detail dc-cell-long" title={req.reason}>
         <b>
           {req.title}
           {req.axis && <span className="admin-tag admin-tag-soft">{axisLabel(req.axis)}</span>}

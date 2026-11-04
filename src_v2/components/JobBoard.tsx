@@ -243,7 +243,7 @@ export default function JobBoard({
       >
         <span className="jb-row-no">{no}</span>
         <span className="jb-row-company">{job.company}</span>
-        <span className="jb-row-title">
+        <span className="jb-row-title dc-cell-long">
           <strong>{job.role}</strong>
           <span className="jc-tags">
             {/* 직종은 아래 '직무' 열로 나갔다 — 여기 남기면 같은 값이 두 번 나온다. */}

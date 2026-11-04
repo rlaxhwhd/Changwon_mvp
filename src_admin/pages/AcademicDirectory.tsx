@@ -53,7 +53,7 @@ export default function AcademicDirectory() {
     </div>
     {error ? <p role="alert">{error} <button onClick={() => setReload(n => n + 1)}>다시 조회</button></p> : loading ? <p role="status">조회 중입니다…</p> : <>
       <p role="status">총 {data.totalCount.toLocaleString()}건</p>
-      <div style={{ overflowX: 'auto' }}><table className="data-table"><thead><tr>{columns[dataset].map(([key, label]) => <th key={key}>{label}</th>)}<th>상세</th></tr></thead>
+      <div style={{ overflowX: 'auto' }}><table className="dc-list-table data-table"><thead><tr>{columns[dataset].map(([key, label]) => <th key={key}>{label}</th>)}<th>상세</th></tr></thead>
         <tbody>{data.items.map((row, index) => <tr key={index}>{columns[dataset].map(([key]) => <td key={key}>{key === 'category' ? labels[String(row[key])] : display(row[key])}</td>)}<td><button className="btn btn-secondary" onClick={() => setSelected(row)}>보기</button></td></tr>)}</tbody></table></div>
       {data.items.length === 0 && <p>조건에 맞는 데이터가 없습니다.</p>}
       <div className="pagination"><PageNumbers page={page} pages={Math.ceil(data.totalCount / 30)} onChange={setPage} /><button className="btn btn-secondary" disabled={page === 1} onClick={() => setPage(n => n - 1)}>이전</button> {page} / {Math.max(1, Math.ceil(data.totalCount / 30))}페이지 <button className="btn btn-secondary" disabled={page * 30 >= data.totalCount} onClick={() => setPage(n => n + 1)}>다음</button></div>

@@ -270,7 +270,7 @@ export default function GroupCounsels() {
               <div className="admin-roster-row" key={session.id}>
                 <span className="admin-roster-cell">{session.date}</span>
                 <span className="admin-roster-cell">{session.start}–{session.end}</span>
-                <span className="admin-roster-cell admin-group-title">
+                <span className="admin-roster-cell admin-group-title dc-cell-long">
                   <strong>{session.title}</strong>
                   <small>{session.topic}</small>
                 </span>

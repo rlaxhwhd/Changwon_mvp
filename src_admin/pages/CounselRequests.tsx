@@ -173,7 +173,7 @@ function TopicCell({ topic, expanded, onToggle }: { topic: string; expanded: boo
   }, [topic])
 
   return (
-    <div className="counsel-request-cell counsel-request-topic-cell">
+    <div className="counsel-request-cell counsel-request-topic-cell dc-cell-long">
       <p ref={ref} className="counsel-request-topic-text">{topic}</p>
       {overflowing && (
         <button type="button" className="counsel-topic-toggle" aria-expanded={expanded} onClick={onToggle}>

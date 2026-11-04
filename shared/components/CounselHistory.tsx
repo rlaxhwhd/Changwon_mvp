@@ -119,12 +119,12 @@ export default function CounselHistory({ rows, showStudent = false, onCancel, de
           {(selectedDate || query || status || type || from || until) && <div className="cs-filter-note"><span>{selectedDate ? `${prettyDate(selectedDate)} 상담 내역` : `검색 결과 ${filtered.length}건`}</span><button type="button" onClick={reset}>필터 초기화 <Icon name="x" /></button></div>}
           {invalidRange && <p className="cs-error" role="alert">종료일을 시작일 이후로 선택해 주세요.</p>}
           <div className="cs-table-scroll" tabIndex={0} role="region" aria-label="상담 내역 표">
-            <table className="cs-table"><thead><tr>{onExport && <th>{selection.header}</th>}{['No.', ...(showStudent ? ['학생'] : []), '상담유형', '상담사', '상담 주제', '상태', '상담일시', '진행 방식', '공개 코멘트', '상세'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
+            <table className="dc-list-table cs-table"><thead><tr>{onExport && <th>{selection.header}</th>}{['No.', ...(showStudent ? ['학생'] : []), '상담유형', '상담사', '상담 주제', '상태', '상담일시', '진행 방식', '공개 코멘트', '상세'].map(h => <th key={h} scope="col">{h}</th>)}</tr></thead>
               <tbody>{pageRows.map((r, i) => <tr key={r.id}>
                 <>{onExport && <td>{selection.checkbox(r, r.studentName ?? r.topic)}</td>}</><td>{filtered.length - (currentPage - 1) * pageSize - i}</td>{showStudent && <td className="cs-name-cell"><strong>{studentDisplayName(r.studentName, r.studentNo)}</strong><small className="cs-student-no">{r.studentNo}</small></td>}<td>{COUNSEL_TYPE_LABEL[r.type]}</td><td>{r.counselor}</td>
-                <td><span className="cs-cell-text" title={r.topic}>{r.topic}</span></td><td><span className={`cs-status cs-status--${tone(r)}`}>{r.status}</span></td>
+                <td className="dc-cell-long"><span className="cs-cell-text" title={r.topic}>{r.topic}</span></td><td><span className={`cs-status cs-status--${tone(r)}`}>{r.status}</span></td>
                 <td className="cs-table-date">{prettyDate(r.date)}{r.time && <small>{r.time}</small>}</td><td>{r.method}</td>
-                <td><span className="cs-cell-text cs-comment" title={r.comment}>{r.comment || '—'}</span></td>
+                <td className="dc-cell-long"><span className="cs-cell-text cs-comment" title={r.comment}>{r.comment || '—'}</span></td>
                 <td><button type="button" className="cs-detail-button" onClick={() => openDetail(r.id)} aria-label={`${r.topic} 상세보기`}>상세보기</button></td>
               </tr>)}</tbody>
             </table>

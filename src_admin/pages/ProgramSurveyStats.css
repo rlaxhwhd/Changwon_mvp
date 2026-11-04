@@ -18,11 +18,8 @@
 .pss-improve.up, .pss-improve.up b, .pss-improve.up strong { color: var(--color-success); }
 .pss-improve.down, .pss-improve.down b, .pss-improve.down strong { color: var(--color-danger); }
 
-.pss-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-.pss-table th, .pss-table td { padding: 9px 10px; border-bottom: 1px solid var(--color-border); text-align: center; white-space: nowrap; }
-.pss-table th { font-size: 12px; font-weight: 700; color: var(--color-text-secondary); background: var(--muted); }
+.pss-table th, .pss-table td { white-space: nowrap; }
 .pss-table td.wrap { white-space: normal; min-width: 320px; } /* 정렬은 shared/tableAlignment.css 정책을 따른다 */
-.pss-table td:last-child { color: var(--color-text-secondary); }
 
 .pss-bars { display: flex; flex-direction: column; gap: 3px; width: 140px; }
 .pss-bars i { display: block; height: 6px; border-radius: var(--radius-pill); background: var(--blue); opacity: .45; }

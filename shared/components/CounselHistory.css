@@ -42,16 +42,12 @@
 .cs-filter-note button { display: inline-flex; gap: 4px; align-items: center; border: 0; background: transparent; color: var(--muted-foreground); font-size: 12px; }
 .cs-filter-note .icon { width: 12px; height: 12px; }
 .cs-table-scroll { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-xs); }
-.cs-table { width: 100%; min-width: 850px; border-collapse: collapse; font-size: 12px; text-align: left; }
-.cs-table th { background: var(--muted); font-size: 12px; font-weight: 700; color: var(--muted-foreground); white-space: nowrap; padding: 14px 10px; }
-.cs-table td { padding: 13px 10px; border-top: 1px solid var(--border); vertical-align: middle; }
-.cs-table td:first-child { color: var(--muted-foreground); text-align: center; font-variant-numeric: tabular-nums; }
+.cs-table { min-width: 850px; }
 .cs-table td:nth-child(2), .cs-table td:nth-child(3), .cs-table td:nth-child(7) { white-space: nowrap; }
-.cs-table tbody tr:hover { background: var(--blue-wash); }
 .cs-cell-text { display: block; max-width: 180px; min-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cs-comment { color: var(--muted-foreground); max-width: 140px; }
-.cs-table-date { white-space: nowrap; font-variant-numeric: tabular-nums; }
-.cs-table-date small { display: block; margin-top: 3px; color: var(--muted-foreground); font-size: 11px; }
+.cs-table-date { white-space: nowrap; }
+.cs-table-date small { display: block; margin-top: 3px; color: var(--muted-foreground); }
 .cs-status { display: inline-flex; width: fit-content; align-items: center; white-space: nowrap; border-radius: 5px; padding: 4px 8px; font-size: 11px; font-weight: 700; line-height: 1.2; }
 .cs-status--scheduled { color: var(--blue); background: var(--blue-soft); }
 .cs-status--done { color: var(--mint-ink); background: var(--mint-soft); }
@@ -153,4 +149,4 @@
   .cs-detail dl { grid-template-columns: 1fr; }
 }
 
-.cs-student-no { display: block; margin-top: 4px; color: var(--muted-foreground); font-size: 11px; font-weight: 400; }
+.cs-student-no { display: block; margin-top: 4px; color: var(--muted-foreground); }

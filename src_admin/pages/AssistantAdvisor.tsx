@@ -354,7 +354,7 @@ function AssignModal({
       </form>
       <p className="admin-field-hint" aria-live="polite">검색 결과 {professors.length}명</p>
       <div className="advisor-professor-list">
-        <table>
+        <table className="dc-list-table">
           <thead><tr><th scope="col">선택</th><th scope="col">이름</th><th scope="col">사번</th><th scope="col">대학</th><th scope="col">학과</th></tr></thead>
           <tbody>
             {professors.map(professor => (

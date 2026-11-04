@@ -165,7 +165,7 @@ export default function CounselSessions() {
                   <span className={studentTypeClass(r.studentType)}>{typeLabel(r.studentType)}</span>
                 </span>
                 <span className="admin-roster-cell">{r.type}<small>{r.method}</small></span>
-                <span className="admin-roster-cell admin-journal-topic">{r.topic}</span>
+                <span className="admin-roster-cell dc-cell-long">{r.topic}</span>
                 <span className="admin-roster-cell">
                   <span className={`admin-chip ${SESSION_TIMING_CLASS[r.timing]}`}>{r.timing}</span>
                 </span>

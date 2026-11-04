@@ -19,8 +19,8 @@ export default function NoticeManagement({ rows, saved }: { rows: Row[]; saved: 
   return <>
     {error && <p role="alert">{error}</p>}
     <button className="btn btn-primary" onClick={() => edit({ id: crypto.randomUUID(), category: 'SYSTEM', title: '', summary: '', postedAt: new Date().toLocaleDateString('en-CA'), pinned: false, body: [], version: 0 })}>공지 작성</button>
-    <table className="data-table"><thead><tr><th>게시일</th><th>분류</th><th>제목</th><th>관리</th></tr></thead><tbody>
-      {rows.map(row => <tr key={row.id}><td>{row.postedAt}</td><td>{NOTICE_CATEGORY_LABEL[row.category]}</td><td>{row.title}</td><td>
+    <table className="dc-list-table data-table"><thead><tr><th>게시일</th><th>분류</th><th>제목</th><th>관리</th></tr></thead><tbody>
+      {rows.map(row => <tr key={row.id}><td>{row.postedAt}</td><td>{NOTICE_CATEGORY_LABEL[row.category]}</td><td className="dc-cell-long">{row.title}</td><td>
         <button className="btn btn-secondary" disabled={saving} onClick={() => edit(row)}>수정</button>{' '}
         <button className="btn btn-secondary" disabled={saving} onClick={() => { void run(() => api(`/notices/${encodeURIComponent(row.id)}?expectedVersion=${row.version}`, { method: 'DELETE' })) }}>게시 중단</button>
       </td></tr>)}

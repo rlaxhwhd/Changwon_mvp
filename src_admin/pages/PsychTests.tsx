@@ -222,7 +222,7 @@ export default function PsychTests() {
         <span className="admin-toolbar-count" aria-live="polite">총 {data.totalCount}건{selected.size > 0 && ` · ${selected.size}건 선택`}{isLoading && ' · 불러오는 중…'}</span>
       </div>
       <section className="admin-card">
-        <div className="professor-report-table-wrap"><table className="professor-report-table psych-test-table">
+        <div className="professor-report-table-wrap"><table className="dc-list-table professor-report-table psych-test-table">
           <thead><tr>
             <th scope="col"><input type="checkbox" aria-label="이 페이지 전체 선택" checked={allChecked}
               onChange={() => setSelected(old => { const next = new Set(old); data.items.forEach(row => allChecked ? next.delete(row.requestId) : next.add(row.requestId)); return next })} /></th>

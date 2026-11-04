@@ -200,7 +200,7 @@ export default function ProgramManage() {
                   </span>
                   <span className="admin-roster-cell">{programs.length - index}</span>
                   <span className="admin-roster-cell">{program.fiscalYear}</span>
-                  <span className="admin-roster-cell"><strong>{program.title}</strong></span>
+                  <span className="admin-roster-cell dc-cell-long"><strong>{program.title}</strong></span>
                   <span className="admin-roster-cell">{program.sessions}회</span>
                   <span className="admin-roster-cell"><small>{period(program)}</small></span>
                   <span className="admin-roster-cell">{program.capacity}명</span>

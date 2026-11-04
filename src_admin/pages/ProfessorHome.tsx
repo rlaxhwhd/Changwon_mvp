@@ -18,7 +18,7 @@ const REQUEST_COLUMNS = ['이름', '학번', '소속', '학년', '신청일시',
 function RequestTable({ channel, items }: { channel: 'online' | 'offline'; items?: ProfessorHomeRequest[] }) {
   // 내역이 없어도 컬럼명은 보이게 — 빈 상태·로딩은 표 안의 한 행으로 표시한다.
   const message = !items ? '불러오는 중…' : !items.length ? '상담신청 내역이 없습니다.' : ''
-  return <div className="professor-report-table-wrap"><table className="professor-report-table professor-home-requests">
+  return <div className="professor-report-table-wrap"><table className="dc-list-table professor-report-table professor-home-requests">
     <thead><tr>{REQUEST_COLUMNS.map(h => <th scope="col" key={h}>{h}</th>)}</tr></thead>
     <tbody>{message ? <tr><td colSpan={REQUEST_COLUMNS.length} className="professor-home-empty">{message}</td></tr> : items!.map(row => <tr key={row.id}>
       <td><Link className="professor-report-link" to={row.statusCode === 'REQ' ? '/professor/counsel/requests' : `/professor/counsel/${channel}/${row.id}`}>
@@ -60,7 +60,7 @@ export default function ProfessorHome() {
       </section>
       <section className="admin-card">
         <p className="professor-home-semester">{home ? `${home.semester.year}학년도 ${home.semester.term}학기` : '불러오는 중…'}</p>
-        <div className="professor-report-table-wrap"><table className="professor-report-table professor-home-grade-table">
+        <div className="professor-report-table-wrap"><table className="dc-list-table professor-report-table professor-home-grade-table">
           <thead><tr>{['구분', '전담 인원', '미전담 인원', '장기결석자', '학사경고자', '진로설계 참여인원', '참여율'].map(h => <th scope="col" key={h}>{h}</th>)}</tr></thead>
           <tbody>{GRADES.map(grade => <tr key={grade}>
             <th scope="row">{grade}학년</th><td>{row(grade).assigned}명</td><td>{row(grade).unassigned}명</td>{dash}{dash}{dash}{dash}

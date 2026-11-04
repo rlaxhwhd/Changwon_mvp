@@ -113,18 +113,9 @@
 .rmp-lag-row {
   display: grid; grid-template-columns: 96px 1fr 148px 190px 72px;
   align-items: center; gap: 12px;
-  padding: 12px 4px;
-  border-bottom: 1px solid var(--color-border);
-  font-size: 13px; color: var(--color-text);
 }
-.rmp-lag-row:last-child { border-bottom: 0; }
-.rmp-lag-row.is-head {
-  padding: 0 4px 10px;
-  color: var(--color-text-secondary); font-size: 12px; font-weight: 700;
-}
-.rmp-lag-row strong { font-weight: 800; }
 .rmp-lag-rate { display: grid; grid-template-columns: 1fr 42px; align-items: center; gap: 10px; }
-.rmp-lag-rate em { font-style: normal; font-size: 13px; font-weight: 800; text-align: right; }
+.rmp-lag-rate em { font-style: normal; text-align: right; }
 
 .rmp-head-note { font-size: 12px; font-weight: 700; color: var(--color-caption); }
 .rmp-empty { padding: 22px 0; text-align: center; font-size: 13px; font-weight: 600; color: var(--color-caption); }

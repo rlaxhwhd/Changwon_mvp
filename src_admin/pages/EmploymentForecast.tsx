@@ -60,7 +60,7 @@ function StudentSearchModal({ initial, onPick, onClose }: { initial: string; onP
       {saving ? <div className="admin-loading"><LuLoaderCircle className="admin-spin" /> 찾는 중…</div>
         : items === null ? <p className="admin-field-hint">학번(앞자리) 또는 이름으로 검색합니다. 재학·졸업생 모두 조회됩니다.</p>
         : items.length === 0 ? <p className="admin-field-hint">조건에 맞는 학생이 없습니다.</p>
-        : <div className="professor-report-table-wrap"><table className="professor-report-table forecast-picker-table">
+        : <div className="professor-report-table-wrap"><table className="dc-list-table professor-report-table forecast-picker-table">
           <thead><tr>{['학번', '이름', '단과대학', '학과', '학적', '졸업년월', '선택'].map(h => <th scope="col" key={h}>{h}</th>)}</tr></thead>
           <tbody>{items.map(s => <tr key={s.studentNo} className="forecast-picker-row" onClick={() => onPick(s)}>
             <td>{s.studentNo}</td><td>{s.name ?? '-'}</td><td>{s.collegeName ?? '-'}</td><td>{s.deptName}</td>
@@ -327,7 +327,7 @@ export default function EmploymentForecast() {
         {data.items.length === 0 ? <EmptyState message={isLoading ? '불러오는 중…' : '등록된 취업 현황이 없습니다.'} /> : (
           <>
             <div className="professor-report-table-wrap">
-              <table className="professor-report-table forecast-table">
+              <table className="dc-list-table professor-report-table forecast-table">
                 <thead>
                   <tr>
                     <th scope="col"><input type="checkbox" aria-label="이 페이지 전체 선택" checked={allChecked}

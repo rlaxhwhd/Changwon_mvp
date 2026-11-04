@@ -74,13 +74,13 @@ export default function ProfessorCounselRecords({ channel }: { channel: CounselC
     </div>
     <section className="admin-card">
       {isLoading && !data.items.length ? <div className="admin-loading">불러오는 중…</div> : !data.items.length ? <EmptyState message="조건에 맞는 상담이 없습니다." /> : <>
-        <div className="professor-report-table-wrap"><table className="professor-report-table">
+        <div className="professor-report-table-wrap"><table className="dc-list-table professor-report-table">
           <thead><tr>{['번호', '성명', '학번', '소속', '학년', '재학상태', '상담제목', '상담구분', '상담일', '신청구분', '상태', '삭제'].map(h => <th scope="col" key={h}>{h}</th>)}</tr></thead>
           <tbody>{data.items.map((row, index) => <tr key={row.id}>
             <td>{data.totalCount - (data.page - 1) * PAGE_SIZE - index}</td>
             <td><Link className="professor-report-link" to={`/professor/counsel/${channel}/${row.id}`}>{studentDisplayName(row.name, row.studentId)}</Link></td>
             <td>{row.studentNo}</td><td>{row.college} {row.major}</td><td>{row.grade}</td><td>{row.enrollmentStatus}</td>
-            <td><Link to={`/professor/counsel/${channel}/${row.id}`}>{row.title}</Link></td>
+            <td className="dc-cell-long"><Link to={`/professor/counsel/${channel}/${row.id}`}>{row.title}</Link></td>
             <td>{PROF_COUNSEL_CATEGORIES.find(c => c.code === row.categoryCode)?.label ?? row.categoryCode}</td>
             <td>{row.date ?? '미정'}</td><td>{row.origin}</td><td>{row.status}</td>
             <td><button type="button" className="admin-btn admin-btn-ghost sm" aria-label={`${row.name} 상담 삭제`} onClick={async () => {

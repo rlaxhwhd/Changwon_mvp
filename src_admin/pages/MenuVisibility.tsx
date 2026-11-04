@@ -125,7 +125,7 @@ export default function MenuVisibility() {
     {role && !role.portal && <p className="mv-empty">{role.description || `${role.label} 역할이 로그인하는 포털이 아직 없습니다.`} 포털이 생기면 그 메뉴가 여기에 나타납니다.</p>}
 
     {role?.portal && <>
-      <table className="data-table mv-table">
+      <table className="dc-list-table data-table mv-table">
         <thead><tr><th className="mv-col-allow">노출</th><th>메뉴</th><th>경로</th><th>상태</th><th>관리</th></tr></thead>
         <tbody>
           {rows.map(({ menu, depth }) => {

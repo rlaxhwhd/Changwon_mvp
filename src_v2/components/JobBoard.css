@@ -85,7 +85,6 @@
 .jc-card.is-static,
 .jb-row.is-static { cursor: default; }
 .jc-card.is-static:hover { border-color: var(--jb-line); box-shadow: none; transform: none; }
-.jb-row.is-static:hover { background: #fff; }
 
 /* 머리 — 로고 칸 + 본문 칸. 로고의 세로 길이 안에 회사명·제목·태그가 들어간다. */
 .jc-head { display: flex; align-items: flex-start; gap: 12px; }
@@ -150,9 +149,9 @@
 .jc-card .jc-dday.is-closed { background: var(--jb-surface); color: var(--jb-sub); border: 1px solid var(--jb-line); }
 .jc-card .jc-star { margin-left: 4px; }
 /* 행(표)에서는 배지가 아니라 글자다 — 열 폭이 고정이라 배지를 넣으면 줄이 밀린다. */
-.jb-row .jc-dday { font-size: 13px; font-weight: 800; color: var(--coral-ink, #dc4444); }
+.jb-row .jc-dday { color: var(--coral-ink, #dc4444); }
 .jb-row .jc-dday.is-closed { color: var(--jb-sub); }
-.jb-row time { font-size: 12px; color: var(--jb-sub); }
+.jb-row time { color: var(--jb-sub); }
 
 /* 기업 구분 — 태그줄의 첫 칸. 공고가 아니라 기업의 값이라 나머지 태그와 다르게 테두리로 그린다. */
 /* 테두리 1px 만큼 세로 여백을 덜어 옆 태그와 같은 높이로 선다. */
@@ -196,36 +195,26 @@
   display: grid;
   grid-template-columns: var(--jb-cols);
   align-items: center; gap: 16px;
-  padding: 14px 16px;
-  border-bottom: 1px solid var(--jb-line);
-}
-.jb-head {
-  padding: 10px 16px;
-  background: #f8f9fa;
-  font-size: 14px; font-weight: 800; color: var(--jb-sub);
 }
 .jb-row {
   width: 100%;
   background: #fff;
-  text-align: left; font: inherit; cursor: pointer;
+  text-align: left; cursor: pointer;
   transition: background 0.14s;
 }
-.jb-row:hover { background: #f8fbff; }
 .jb-row.is-closed { opacity: 0.62; }
 /* 번호는 값이 아니라 자리 표시다 — 가운데로 모아 열이 흔들리지 않게 한다. */
 .jb-head span:first-child,
 .jb-row-no { text-align: center; }
-.jb-row-no { font-size: 13px; font-weight: 700; color: var(--jb-muted); }
-.jb-row-company { font-size: 14px; font-weight: 800; color: var(--jb-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jb-row-company { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .jb-row-title { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.jb-row-title strong { font-size: 14px; font-weight: 800; color: var(--jb-ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.jb-row-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 직무는 배지가 아니라 열 값이다 — 배경을 씌우면 열이 열로 읽히지 않는다. */
 .jb-row-job,
-.jb-row-region { font-size: 13px; color: var(--jb-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.jb-row-salary { font-size: 13px; font-weight: 700; color: var(--jb-sub); }
+.jb-row-region { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 남은 일수(D-N)와 실제 마감일은 같은 열의 위아래다 — 열을 둘로 쪼개면 머리글이 안 맞는다. */
 .jb-row-deadline { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-.jb-row time { font-size: 12px; color: var(--jb-sub); }
+.jb-row time { color: var(--jb-sub); }
 
 /* ── 빈 상태 ──────────────────────────────────────────────────────────── */
 .jb-empty {
