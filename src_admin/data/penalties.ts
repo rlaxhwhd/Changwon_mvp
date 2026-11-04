@@ -10,6 +10,7 @@
 // ─────────────────────────────────────────────────────────────────────────
 import type { StudentPenalty, PenaltyEntry } from './schema/penalty'
 import { api, queryString } from '../../shared/api'
+import { uploadWorkbook } from './xlsxUpload'
 import type { ListParams, Paginated } from './query'
 
 /** 블랙리스트 조회 파라미터 — 단대 선택은 학과 목록으로 펼쳐 보낸다. */
@@ -76,6 +77,12 @@ export async function addManualPenalty(studentId: string, points: number, reason
     method: 'POST', body: JSON.stringify({ kind: 'MANUAL', points: Math.abs(points), reason }),
   })
 }
+
+/** 엑셀 일괄 부여 양식 — 서버(POST /penalties/upload)가 이 머리글로 열을 찾는다. */
+export const PENALTY_UPLOAD_HEADER = ['학번', '벌점', '사유']
+
+/** 엑셀로 여러 학생에게 수동 벌점을 한 번에 부여한다. 한 행이라도 틀리면 아무것도 저장되지 않는다. */
+export const uploadPenalties = (file: File) => uploadWorkbook<{ inserted: number }>('/penalties/upload', file)
 
 /** 벌점 차감/해제 — 음수 이력을 쌓는다. 남은 점수보다 많이 차감하면 서버가 거절한다. */
 export async function waivePenalty(studentId: string, points: number, reason: string): Promise<void> {

@@ -6,7 +6,8 @@ import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
 import { useListData } from '../hooks/useListData'
 import { useAsyncAction } from '../../shared/useAsyncAction'
-import { changeSmsBlock, querySmsBlacklist, searchSmsStudents, smsBlockEvents } from '../data/smsBlacklist'
+import { changeSmsBlock, querySmsBlacklist, searchSmsStudents, smsBlockEvents, SMS_UPLOAD_HEADER, uploadSmsBlocks } from '../data/smsBlacklist'
+import { useExcelBulkUpload } from '../components/ExcelBulkUpload'
 import type { SmsBlockRow } from '../data/smsBlacklist'
 import './ProgramBlacklist.css'
 import './SmsBlacklist.css'
@@ -79,12 +80,26 @@ export default function SmsBlacklist() {
   const [page, setPage] = useState(1)
   const [editing, setEditing] = useState<SmsBlockRow | null | undefined>(undefined)
   const { data, isLoading, error, refetch } = useListData(querySmsBlacklist, { q: search, page, blocked: true })
+  const excel = useExcelBulkUpload({
+    templateName: 'SMS_블랙리스트_등록양식.xlsx',
+    header: SMS_UPLOAD_HEADER,
+    upload: async file => {
+      const result = await uploadSmsBlocks(file)
+      return `엑셀 업로드 완료 — ${result.blocked}명 차단 등록${result.skipped ? `, 이미 차단된 ${result.skipped}명은 건너뜀` : ''}`
+    },
+    onDone: () => { setPage(1); refetch() },
+  })
   return <div className="admin-page blk">
     <header className="admin-page-head"><div><h1 className="admin-page-title">SMS 블랙리스트</h1>
       <p className="admin-page-desc">SMS 수신을 차단할 학생을 관리합니다. 차단 등록·해제 이력은 보관됩니다.</p></div>
-      <button className="admin-btn admin-btn-primary" onClick={() => setEditing(null)}><LuPlus /> 차단 등록</button>
+      <div className="admin-head-actions">
+        {excel.buttons}
+        <button className="admin-btn admin-btn-primary" onClick={() => setEditing(null)}><LuPlus /> 차단 등록</button>
+      </div>
     </header>
-    <div className="admin-editor-hint"><LuInfo /> 등록된 학생은 이 프로젝트의 SMS 발송 대상에서 제외됩니다. 비교과 벌점과는 별도로 관리합니다.</div>
+    <div className="admin-editor-hint"><LuInfo /> 등록된 학생은 이 프로젝트의 SMS 발송 대상에서 제외됩니다. 비교과 벌점과는 별도로 관리합니다.
+      엑셀 양식(학번·사유)으로 여러 학생을 한 번에 차단 등록할 수 있습니다 — 한 행이라도 틀리면 아무것도 저장되지 않습니다.</div>
+    {excel.result}
     <form className="blk-filter" onSubmit={e => { e.preventDefault(); setSearch(query); setPage(1) }}>
       <div className="blk-filter-row"><span className="blk-label">검색조건</span><div className="blk-search">
         <input aria-label="이름·학번·학과 검색" value={query} maxLength={200} onChange={e => setQuery(e.target.value)} placeholder="이름·학번·학과를 입력하세요" /><LuSearch />

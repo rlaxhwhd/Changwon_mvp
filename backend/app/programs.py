@@ -4,11 +4,13 @@
 벌점은 합계를 저장하지 않고 부여·회수 행을 쌓아 합으로 읽는다.
 """
 import hashlib
+import re
 from datetime import date, datetime, time
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
+from fastapi.concurrency import run_in_threadpool
 from fastapi.encoders import jsonable_encoder
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -17,7 +19,7 @@ from .auth import is_counselor, principal, require_staff, student_access
 from .html_security import clean_html
 from .upload_security import safe_image_url
 from .administration import administrator
-from .blacklists import managed_student
+from .blacklists import managed_student, reason_problems, student_sheet
 from .db import connection
 from .gates import program_gate
 from . import files
@@ -1170,3 +1172,29 @@ def add_penalty(identity: str, body: PenaltyBody, user=Depends(administrator, sc
       VALUES(%s,%s,%s,%s,%s)''', (student['intg_uid'], body.kind,
       -body.points if body.kind == 'WAIVE' else body.points, body.reason, user['intg_uid']))
     return penalty_detail(identity, user, conn)
+
+
+def upload_points(text):
+    """'10'·'10.0'(숫자 셀) → 10. 개별 부여(PenaltyBody)와 같은 1~100 한도."""
+    if not re.fullmatch(r'[0-9]+(\.0+)?', text) or not 1 <= int(float(text)) <= 100:
+        return None
+    return int(float(text))
+
+
+@router.post('/penalties/upload', status_code=201)
+async def upload_penalties(request: Request, user=Depends(administrator, scope='function'),
+                           conn=Depends(connection, scope='function')):
+    """엑셀(학번·벌점·사유)로 여러 학생에게 수동 벌점을 한 번에 부여한다 — 행마다 MANUAL 이력 한 건.
+    본문만 비동기로 받고 해석·DB 는 스레드에서 한다."""
+    return await run_in_threadpool(import_penalties, await files.read_body(request), user, conn)
+
+
+def import_penalties(data, user, conn):
+    check = lambda c: ([] if upload_points(c['벌점']) else ['벌점(1~100 정수)']) + reason_problems(c['사유'])
+    parsed = student_sheet(conn, data, ['벌점', '사유'], check)
+    for uid, _ in sorted(parsed, key=lambda p: p[0]):  # 개별 부여와 같은 학생별 잠금, 순서 고정으로 교착 방지
+        conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))', ('penalty:' + uid,))
+    conn.execute('''INSERT INTO dc.penalty_entry(student_uid,kind,points,reason,created_by)
+      SELECT x.uid,'MANUAL',x.points,x.reason,%s FROM jsonb_to_recordset(%s) AS x(uid text,points int,reason text)''',
+      (user['intg_uid'], Jsonb([dict(uid=uid, points=upload_points(c['벌점']), reason=c['사유']) for uid, c in parsed])))
+    return dict(inserted=len(parsed))

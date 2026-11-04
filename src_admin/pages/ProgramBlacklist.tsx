@@ -23,7 +23,10 @@ import {
   queryPenaltyList,
   getPenaltySummary,
   getStudentPenalty,
+  PENALTY_UPLOAD_HEADER,
+  uploadPenalties,
 } from '../data/penalties'
+import { useExcelBulkUpload } from '../components/ExcelBulkUpload'
 import type { StudentPenalty, PenaltyEntry } from '../data/penalties'
 import { penaltyLevel } from '../data/schema/penalty'
 import { collegeOf } from '../data/colleges'
@@ -187,6 +190,13 @@ export default function ProgramBlacklist() {
 
   const pageWindow = pageNumbers(page, pages)
 
+  const excel = useExcelBulkUpload({
+    templateName: '비교과_블랙리스트_등록양식.xlsx',
+    header: PENALTY_UPLOAD_HEADER,
+    upload: async file => `엑셀 업로드 완료 — ${(await uploadPenalties(file)).inserted}명에게 벌점을 부여했습니다.`,
+    onDone: () => { setPage(1); refresh() },
+  })
+
   const downloadExcel = async () => {
     if (!selection.count) return
     const rows = selection.rows
@@ -211,12 +221,15 @@ export default function ProgramBlacklist() {
             비교과 프로그램 신청 후 미참여(노쇼)한 학생의 누적 벌점을 관리합니다. 대상 {summary.total}명 · 누적 {summary.totalPoints}점
           </p>
         </div>
+        <div className="admin-head-actions">{excel.buttons}</div>
       </header>
 
       <div className="admin-editor-hint">
         <LuInfo />
         벌점은 프로그램 상세의 <strong>출석 체크(노쇼)</strong>에서 자동 부여됩니다. 행을 클릭하면 벌점 이력을 확인하고 차감·해제할 수 있습니다. 누적 벌점·사유는 학생 화면에도 반영됩니다.
+        엑셀 양식(학번·벌점·사유)으로 여러 학생에게 벌점을 한 번에 부여할 수 있습니다 — 한 행이라도 틀리면 아무것도 저장되지 않습니다.
       </div>
+      {excel.result}
 
       {/* 검색·필터 카드 */}
       <form className="blk-filter" onSubmit={e => e.preventDefault()}>

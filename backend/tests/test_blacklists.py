@@ -3,6 +3,7 @@ import psycopg
 import pytest
 from app.sms import dispatch_student_sms
 from test_api import headers
+from test_employment_report import xlsx
 from test_psych_referrals import db  # noqa: F401
 
 BASE = '/api/v1/system/sms-blacklist'
@@ -46,6 +47,8 @@ def test_blacklist_admin_access(client, db, actor):
     assert update(client,actor=actor).status_code == 403
     assert client.post('/api/v1/penalties/chaewon/entries',headers=headers(actor),
         json={'kind':'MANUAL','points':1,'reason':'No access'}).status_code == 403
+    for path in (BASE+'/upload','/api/v1/penalties/upload'):
+        assert client.post(path,headers=headers(actor),content=xlsx([['학번','벌점','사유']])).status_code == 403
 
 
 def test_sms_validation_and_provider_failures(client, db):
@@ -71,6 +74,47 @@ def test_program_blacklist_global_admin_scope_and_student_privacy(client, db):
     assert client.get('/api/v1/penalties/chaewon',headers=headers('chaewon')).status_code == 200
     assert client.get('/api/v1/penalties/chaewon',headers=headers('changwon')).status_code == 404
     assert client.get('/api/v1/penalties/chaewon',headers=headers('career_kim')).status_code == 403
+
+
+def student_nos(db, *aliases):
+    return [db.execute('''SELECT s.student_no FROM dc.student s JOIN dc.person p USING(intg_uid)
+      WHERE p.alias=%s''',(a,)).fetchone()['student_no'] for a in aliases]
+
+
+def test_penalty_excel_upload_is_all_or_nothing(client, db):
+    admin = headers('system-admin')
+    a, b = student_nos(db,'chaewon','jiwoo')
+    count = lambda: db.execute("SELECT count(*) AS n FROM dc.penalty_entry WHERE reason LIKE 'Bulk%%'").fetchone()['n']
+    rejected = client.post('/api/v1/penalties/upload',headers=admin,content=xlsx([
+        ['학번','벌점','사유'],[a,'10','Bulk ok'],['00000000','5','Bulk'],[b,'0','Bulk'],[a,'3','Bulk dup'],[b,'2','']]))
+    assert rejected.status_code == 422
+    errors = rejected.json()['detail']['errors']
+    assert [e['row'] for e in errors] == [3,4,5,6]
+    assert '학생 정보 없음' in errors[0]['message'] and '벌점' in errors[1]['message']
+    assert '2행과 중복' in errors[2]['message'] and '사유 누락' in errors[3]['message']
+    assert count() == 0
+    uploaded = client.post('/api/v1/penalties/upload',headers=admin,content=xlsx([
+        ['학번','벌점','사유'],[a,'10','Bulk A'],[b+'.0','5.0','Bulk B']]))
+    assert uploaded.status_code == 201, uploaded.text
+    assert uploaded.json() == {'inserted':2} and count() == 2
+    assert any(e['kind'] == 'MANUAL' and e['points'] == 10 and e['reason'] == 'Bulk A'
+               for e in client.get('/api/v1/penalties/chaewon',headers=admin).json()['entries'])
+    assert client.post('/api/v1/penalties/upload',headers=admin,content=xlsx([['학번','사유'],[a,'x']])).status_code == 422
+    assert client.post('/api/v1/penalties/upload',headers=admin,content=b'not a zip').status_code == 422
+
+
+def test_sms_excel_upload_blocks_and_skips_already_blocked(client, db):
+    admin = headers('system-admin')
+    a, b = student_nos(db,'chaewon','changwon')
+    assert update(client).status_code == 200  # chaewon 은 이미 차단
+    uploaded = client.post(BASE+'/upload',headers=admin,content=xlsx([['학번','사유'],[a,'Bulk'],[b,'Bulk SMS']]))
+    assert uploaded.status_code == 200, uploaded.text
+    assert uploaded.json() == {'blocked':1,'skipped':1}
+    listed = {r['studentId']: r for r in client.get(BASE,headers=admin).json()['items']}
+    assert listed['changwon']['reason'] == 'Bulk SMS' and listed['chaewon']['reason'] == 'Regression test'
+    assert client.get(BASE+'/changwon/events',headers=admin).json()['items'][0]['reason'] == 'Bulk SMS'
+    rejected = client.post(BASE+'/upload',headers=admin,content=xlsx([['학번','사유'],[b,'']]))
+    assert rejected.status_code == 422 and rejected.json()['detail']['errors'][0]['row'] == 2
 
 
 def test_concurrent_sms_registration_rejects_stale_save(client):
