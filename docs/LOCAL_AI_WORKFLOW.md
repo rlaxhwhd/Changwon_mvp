@@ -1,5 +1,15 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-04 비교과 공통 목록·선발 인원 웹 배포
+
+- 원격 dev의 448eb34(학생·관리자 비교과 목록 공통 ProgramBrowser, 대상/상태 필터·검색·정렬·대상 배지·현재 차수 기간)와 3fe0291(카드 및 상세의 신청/선발 정원 공통 계산)를 배포했다. git archive 3fe0291의 깨끗한 소스에서 TypeScript/Vite 빌드를 통과했다. 미커밋 타 작업은 제외했다. 배포 후 fetch에서도 추가 기능 커밋은 없었다.
+- 웹만 program-blacklist-20261104 → program-browser-20261104로 교체했다. API=program-blacklist-20261104, RAG=ai-jobs-20261029 및 DB 155 유지. API 재시작·운영 마이그레이션 실행·업무 데이터 쓰기는 수행하지 않았다. 서버 실행 중인 웹 기반에 새 HTML을 복사해 CentOS 호환성을 유지했다. 기존 Vite native-config 경고는 남는다.
+- npm run docker:up -- --no-build로 로컬 백업 local-before-migrate-20261104055127479.dump 및 전체 healthy를 확인했다. 커밋 API 71개 파일·마이그레이션 파일 체크섬이 로컬 감사와 일치한다. 서버 배포 전후 release_parity.py로 소스/로컬/서버 API·155개 마이그레이션·DB 구조 MATCH를 확인했다. 웹 전용 배포라 별도 DB 복원 리허설·회귀 테스트는 실행하지 않았다.
+- 서버 백업·Compose 원본·이미지·감사 자료: /opt/dreamcatch/ai/program-browser-20261104/. DB pg_dump 백업 목록 검증 완료. web.tar 734071296B, SHA256=a5fe8cbcf59083412a59824919b5aebe119dac3b9c35499453137ac24344506c. 전송 후 체크섬 일치. 최종 웹/API healthy, nginx 정상. 로컬/서버 HTML SHA256 일치: admin=36cf65e1083b10c1c400239c6bdcd7079d0dc3fd4b4fda6fce4134de7a80d2d0, v2=637db9e0bd3859b3e185c316f52810be0f07dd41fb6ca054bc16d2cb8b9ff1db. 복구는 백업 Compose와 이전 웹 program-blacklist-20261104로 한다. 서버는 실행 상태다.
+- EgoLite 로컬 관리자와 실제 학생의 비교과 목록에서 공통 대상/상태 필터·4개 정렬 옵션·학생 찜 버튼을 확인했다. 로컬 관리자 대상 재학생 필터 7→4건, 검색 1건, 최신순 선택 확인. 로컬 관리자/학생 및 서버 관리자 스크린샷을 촬영하고 열어 확인했으며 가로 넘침은 없었다. 네이티브 사용자 메뉴 전환이 안정적으로 작동하지 않아 DOM click으로 데모 역할을 전환한 뒤 실제 화면을 확인했다.
+- 서버 관리자 목록에서 새 필터·졸업생 필터 1건·최신순·대상/다회차 배지를 확인했다. 같은 공고의 카드 1명/30명과 상세 신청인원/선발인원 1명/30명이 일치하고, 상세 신청현황은 모집 정원 기준 1명/99명으로 구분된다. 저장·신청·선발은 실행하지 않았다. 서버 목록 API 200/헤더 수신 93ms는 단회 관측이며 성능 개선 주장은 없다. 로컬/서버 확인 구간 API 실패 및 Runtime 예외 0. 인증서 임시 허용 원복 후 작업 공간 종료 완료.
+- Graft 자동 갱신 후 구조 그래프 동기화 OK. 공통 목록의 두 import와 programSelectionStatus의 ProgramCardGrid/ProgramNotice 호출 관계를 확인했다. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다. 기존 metadata 중복 호출 및 첫 로드맵 생성 취소의 dc_app DELETE 권한 누락은 이번 범위 밖으로 미해결이다.
+
 
 
 
