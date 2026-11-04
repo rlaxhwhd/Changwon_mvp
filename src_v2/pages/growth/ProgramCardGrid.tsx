@@ -1,28 +1,10 @@
-import type { ProgramCategory } from '../../../src_admin/data/schema/program'
+import type { Program } from '../../../src_admin/data/schema/program'
 import { categoryLabel } from '../../../src_admin/data/schema/program'
-import { programDdayLabel } from '../../../src_admin/data/programs'
+import { activeRound, programApplyStatus, programAudiences, programDdayLabel } from '../../../src_admin/data/programs'
 import './ProgramCardGrid.css'
 
-export interface ProgramCardVM {
-  id: string
-  title: string
-  desc: string
-  category: ProgramCategory
-  startDate: string
-  endDate: string
-  endTime?: string | null
-  status?: import('../../../src_admin/data/schema/program').ProgramStatus
-  runStartDate?: string
-  runEndDate?: string
-  /** 공고 상세 신청현황과 같은 값 — programApplyStatus */
-  applyStatus: string
-  image?: string
-  /** 총회차 — 2 이상이면 썸네일에 「다회차」 라벨을 단다. */
-  sessions?: number
-}
-
 interface Props {
-  programs: ProgramCardVM[]
+  programs: Program[]
   onSelect: (id: string) => void
   wished?: Set<string>
   onToggleWish?: (id: string) => void
@@ -33,8 +15,11 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
     <div className="pcg-grid">
       {programs.map(program => {
         const isWished = wished?.has(program.id) ?? false
-        const dDay = programDdayLabel({ ...program, status: program.status ?? 'RECRUITING' })
+        // 다회차 공고는 지금 열린(또는 다음) 회차의 기간을 카드에 보인다 — 지난 1차 마감으로 '마감'이 뜨지 않게.
+        const round = activeRound(program)
+        const dDay = programDdayLabel({ status: program.status, endDate: round.endDate, endTime: round.endTime })
         const isUrgent = dDay === 'D-day' || /^D-[1-5]$/.test(dDay)
+        const audiences = programAudiences(program)
 
         return (
           <article key={program.id} className="pcg-card" data-cat={program.category}>
@@ -47,6 +32,11 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
               <div className="pcg-thumb">
                 {program.image ? <img src={program.image} alt="" /> : <i className="fa-solid fa-image" aria-hidden="true" />}
                 {(program.sessions ?? 1) > 1 && <span className="pcg-rounds">다회차 · {program.sessions}회</span>}
+                {audiences.length > 0 && (
+                  <span className="pcg-audiences">
+                    {audiences.map(a => <span key={a.value} className="pcg-audience">{a.label}</span>)}
+                  </span>
+                )}
               </div>
               <div className="pcg-body">
                 <div className="pcg-badges">
@@ -56,11 +46,11 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
                 <h2 className="pcg-title">{program.title}</h2>
                 <p className="pcg-desc">{program.desc}</p>
                 <div className="pcg-meta">
-                  <span><i className="fa-regular fa-calendar" aria-hidden="true" /> 모집기간 {program.startDate} ~ {program.endDate}</span>
-                  {program.runStartDate && program.runEndDate && (
-                    <span><i className="fa-solid fa-calendar-check" aria-hidden="true" /> 진행기간 {program.runStartDate} ~ {program.runEndDate}</span>
+                  <span><i className="fa-regular fa-calendar" aria-hidden="true" /> 모집기간 {round.startDate} ~ {round.endDate}</span>
+                  {round.runStartDate && round.runEndDate && (
+                    <span><i className="fa-solid fa-calendar-check" aria-hidden="true" /> 진행기간 {round.runStartDate} ~ {round.runEndDate}</span>
                   )}
-                  <span><i className="fa-solid fa-users" aria-hidden="true" /> 모집인원 : {program.applyStatus}</span>
+                  <span><i className="fa-solid fa-users" aria-hidden="true" /> 모집인원 : {programApplyStatus(program)}</span>
                 </div>
               </div>
             </button>

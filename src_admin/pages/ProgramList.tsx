@@ -1,37 +1,17 @@
 import { useMetadata } from '../../shared/useMetadata'
-import { LuFrown, LuGraduationCap, LuPlus, LuSearch, LuUserX } from 'react-icons/lu'
-import { useMemo, useState } from 'react'
+import { LuFrown, LuGraduationCap, LuPlus, LuUserX } from 'react-icons/lu'
+import { useMemo } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getPrograms, countPrograms, PROGRAM_ORDERS, programApplyStatus, sortPrograms } from '../data/programs'
-import type { ProgramOrder, ProgramStatus } from '../data/programs'
-import { programCategories, PROGRAM_STATUSES, categoryLabel, programStatusLabel } from '../data/schema/program'
-import type { ProgramCategory } from '../data/schema/program'
+import { getPrograms, countPrograms } from '../data/programs'
+import { programStatusLabel } from '../data/schema/program'
 import EmptyState from '../components/EmptyState'
-import ProgramCardGrid from '../../src_v2/pages/growth/ProgramCardGrid'
-
-const ALL = '전체'
+import ProgramBrowser from '../../src_v2/pages/growth/ProgramBrowser'
 
 export default function ProgramList() {
   useMetadata()
   const navigate = useNavigate()
   const all = useMemo(() => getPrograms(), [])
   const counts = useMemo(() => countPrograms(), [])
-
-  const [query, setQuery] = useState('')
-  const [category, setCategory] = useState<ProgramCategory | typeof ALL>(ALL)
-  const [status, setStatus] = useState<ProgramStatus | typeof ALL>(ALL)
-  const [order, setOrder] = useState<ProgramOrder>('recommended')
-
-  const list = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    const filtered = all.filter(p => {
-      if (category !== ALL && p.category !== category) return false
-      if (status !== ALL && p.status !== status) return false
-      if (q && !`${p.title} ${p.desc} ${p.location}`.toLowerCase().includes(q)) return false
-      return true
-    })
-    return sortPrograms(filtered, order)
-  }, [all, query, category, status, order])
 
   return (
     <div className="admin-page">
@@ -52,73 +32,18 @@ export default function ProgramList() {
         </div>
       </header>
 
-      <div className="admin-filterbar">
-        <div className="admin-search">
-          <LuSearch />
-          <input
-            type="text"
-            value={query}
-            onChange={e => setQuery(e.target.value)}
-            placeholder="프로그램명·장소 검색"
-          />
-        </div>
-        <label className="admin-select">
-          <span>분류</span>
-          <select value={category} onChange={e => setCategory(e.target.value as ProgramCategory | typeof ALL)}>
-            <option value={ALL}>{ALL}</option>
-            {programCategories().map(c => (
-              <option key={c} value={c}>{categoryLabel(c)}</option>
-            ))}
-          </select>
-        </label>
-        <label className="admin-select">
-          <span>상태</span>
-          <select value={status} onChange={e => setStatus(e.target.value as ProgramStatus | typeof ALL)}>
-            <option value={ALL}>{ALL}</option>
-            {PROGRAM_STATUSES.map(s => (
-              <option key={s} value={s}>{programStatusLabel(s)}</option>
-            ))}
-          </select>
-        </label>
-      </div>
-
-      <div className="admin-toolbar">
-        <span className="admin-toolbar-count">검색 결과 {list.length}건</span>
-        <label className="admin-select admin-toolbar-actions">
-          <select aria-label="정렬" value={order} onChange={e => setOrder(e.target.value as ProgramOrder)}>
-            {PROGRAM_ORDERS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-          </select>
-        </label>
-      </div>
-
-      <section className="admin-card">
-        {all.length === 0 ? (
+      <ProgramBrowser
+        programs={all}
+        onSelect={id => navigate(`/programs/${id}/notice`)}
+        empty={all.length === 0 ? (
           <EmptyState
             icon={LuGraduationCap}
             title="등록된 비교과 프로그램이 없습니다"
             message="프로그램을 등록하면 학생 비교과 신청 화면의 공급 목록에 노출됩니다."
             action={{ label: '프로그램 등록하기', onClick: () => navigate('/programs/new') }}
           />
-        ) : list.length === 0 ? (
-          <EmptyState icon={LuFrown} message="조건에 맞는 프로그램이 없습니다." />
-        ) : (
-          <ProgramCardGrid
-            programs={list.map(program => ({
-              id: program.id,
-              title: program.title,
-              desc: program.desc,
-              category: program.category,
-              startDate: program.startDate,
-              endDate: program.endDate,
-              runStartDate: program.runStartDate,
-              runEndDate: program.runEndDate,
-              applyStatus: programApplyStatus(program),
-              image: program.image,
-            }))}
-            onSelect={id => navigate(`/programs/${id}/notice`)}
-          />
-        )}
-      </section>
+        ) : <EmptyState icon={LuFrown} message="조건에 맞는 프로그램이 없습니다." />}
+      />
     </div>
   )
 }

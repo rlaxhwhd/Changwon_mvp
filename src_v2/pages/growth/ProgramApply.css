@@ -48,63 +48,6 @@
   line-height: 1.5;
 }
 
-/* Filter bar */
-.pa-filter-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-}
-
-.pa-tabs {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.pa-tab {
-  padding: 7px 16px;
-  border-radius: 20px;
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--color-text-sub);
-  border: 1.5px solid var(--color-border);
-  background: var(--color-bg);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-/* 카테고리 칩도 카드 태그와 같은 색을 쓴다(ProgramCardGrid.css 와 짝).
-   순서는 CATEGORIES 상수 그대로다: 전체 · 진로 · 취업 · 어학 · 창업 · 자격증 · 기타.
-   '전체'는 분류가 아니라 해제라 중립(네이비)이다. */
-.pa-tab:nth-child(1) { --pa-ink: var(--color-navy); }
-.pa-tab:nth-child(2) { --pa-ink: var(--blue); }
-.pa-tab:nth-child(3) { --pa-ink: var(--mint-ink); }
-.pa-tab:nth-child(4) { --pa-ink: var(--amber-ink); }
-.pa-tab:nth-child(5) { --pa-ink: var(--coral-ink); }
-.pa-tab:nth-child(6) { --pa-ink: var(--violet); }
-.pa-tab:nth-child(7) { --pa-ink: var(--color-text-sub); }
-
-.pa-tab:hover {
-  border-color: var(--pa-ink);
-  color: var(--pa-ink);
-}
-
-.pa-tab.active {
-  background: var(--pa-ink);
-  border-color: var(--pa-ink);
-  color: var(--color-bg);
-  font-weight: 700;
-}
-
-.pa-filter-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .pa-wish-toggle {
   display: inline-flex;
   align-items: center;
@@ -148,18 +91,6 @@
   font-size: 14px;
   font-weight: 800;
   border-radius: 999px;
-}
-
-.pa-sort-select {
-  padding: 7px 32px 7px 12px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  color: var(--color-text-sub);
-  background: var(--color-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2399A1A9' d='M6 8L1 3h10z'/%3E%3C/svg%3E") no-repeat right 10px center;
-  appearance: none;
-  cursor: pointer;
-  font-family: var(--font);
 }
 
 /* Program list */
@@ -384,49 +315,6 @@
 }
 
 .pa-empty p { font-size: 18px; }
-
-/* Pagination */
-.pa-pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-}
-
-.pa-page-btn {
-  width: 34px;
-  height: 34px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--color-text-sub);
-  background: var(--color-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-
-/* 페이지 이동은 분류가 아니라 위치다 — 카테고리 색을 쓰지 않고 블루 하나로 둔다.
-   보라(--color-cta)를 걷어낸 이유: 이 화면에서 보라는 목록 위 「자격증」 갈래의 색이라
-   페이지 번호까지 보라면 그 갈래가 선택된 것처럼 읽힌다. */
-.pa-page-btn:hover:not(:disabled) {
-  border-color: var(--blue);
-  color: var(--blue);
-}
-
-.pa-page-btn.active {
-  background: var(--blue);
-  border-color: var(--blue);
-  color: var(--color-bg);
-  font-weight: 700;
-}
-
-.pa-page-btn:disabled {
-  opacity: 0.35;
-  cursor: default;
-}
 
 /* Responsive */
 @media (max-width: 768px) {

@@ -62,6 +62,19 @@ export function programApplyStatus(program: Program): string {
   return `${program.applyCount}명 / ${programCapacity(program)}명`
 }
 
+export type ProgramAudience = 'STUDENT' | 'GRADUATE'
+
+/** 목록의 대상 구분 — 공고의 참가대상(PROGRAM_TARGET_STATUS)을 묶어 읽는다. 휴학생은 재적 중이라 재학생 쪽이다. */
+export const PROGRAM_AUDIENCES: { value: ProgramAudience; label: string; statuses: string[] }[] = [
+  { value: 'STUDENT', label: '재학생', statuses: ['ENROLLED', 'LEAVE'] },
+  { value: 'GRADUATE', label: '졸업생', statuses: ['GRADUATED_COMPLETED'] },
+]
+
+/** 이 공고의 대상 구분 — 참가대상을 안 고른 옛 공고는 빈 목록이다. */
+export function programAudiences(program: Program) {
+  return PROGRAM_AUDIENCES.filter(a => a.statuses.some(s => program.targetStatuses?.includes(s)))
+}
+
 /** 이 차수가 신청을 받을 수 있는가 — 상태와 마감일 둘 다 본다(상태만 믿으면 지난 공고가 열려 있다). */
 export function isRoundClosed(program: Program, round: ProgramRound): boolean {
   if (program.status !== 'RECRUITING') return true

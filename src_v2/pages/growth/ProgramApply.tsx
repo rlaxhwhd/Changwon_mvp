@@ -1,5 +1,4 @@
 import { studentDisplayName } from '../../../shared/studentDisplayName'
-import { pageNumbers } from '../../../shared/pagination'
 import { useMetadata } from '../../../shared/useMetadata'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -8,53 +7,22 @@ import { getActiveStudent } from '../../data/students'
 import { getWishlist, toggleWish as toggleWishStore } from '../../data/wishlist'
 import { useStore } from '../../../shared/useRoadmapStore'
 import { GROWTH_EVENT } from '../../../shared/growthStore'
-import { activeRound, getPrograms, PROGRAM_ORDERS, programApplyStatus, sortPrograms } from '../../../src_admin/data/programs'
-import type { ProgramOrder } from '../../../src_admin/data/programs'
-import { programCategories, categoryLabel } from '../../../src_admin/data/schema/program'
-import type { ProgramCategory } from '../../../src_admin/data/schema/program'
-import ProgramCardGrid from './ProgramCardGrid'
-import type { ProgramCardVM } from './ProgramCardGrid'
+import { getPrograms } from '../../../src_admin/data/programs'
+import ProgramBrowser from './ProgramBrowser'
 import './ProgramApply.css'
 import './ProgramReco.css'
 import { usePageHead } from '../../components/PageCrumb'
 
-type Category = '전체' | ProgramCategory
-
-
-
 export default function ProgramApply() {
   useMetadata()
-  const CATEGORIES: Category[] = ['전체', ...programCategories()]
   usePageHead('비교과 프로그램 신청', 'CWNU 학생을 위한 진로·취업 역량 강화 프로그램을 신청하고 XP와 수료증을 획득하세요.')
   const navigate = useNavigate()
   const profile = getActiveStudent()
-  const [activeTab, setActiveTab] = useState<Category>('전체')
-  const [page, setPage] = useState(1)
-  const [order, setOrder] = useState<ProgramOrder>('recommended')
-  // 다회차 공고는 지금 열린(또는 다음) 회차의 기간을 카드에 보인다 — 지난 1차 마감으로 '마감'이 뜨지 않게.
-  const programs = useMemo<ProgramCardVM[]>(() => sortPrograms(getPrograms(), order).map(program => {
-    const round = activeRound(program)
-    return {
-      id: program.id,
-      title: program.title,
-      desc: program.desc,
-      category: program.category,
-      startDate: round.startDate,
-      endDate: round.endDate,
-      endTime: round.endTime,
-      status: program.status,
-      runStartDate: round.runStartDate ?? undefined,
-      runEndDate: round.runEndDate ?? undefined,
-      applyStatus: programApplyStatus(program),
-      image: program.image,
-      sessions: program.sessions,
-    }
-  }), [order])
+  const programs = useMemo(() => getPrograms(), [])
   // 찜은 서버가 정본이다(dc.program_wishlist) — 저장 뒤 스토어가 다시 읽어 발행한다.
   const wishRevision = useStore(GROWTH_EVENT)
   const wishlist = useMemo(() => new Set(getWishlist()), [wishRevision])
   const [showWishOnly, setShowWishOnly] = useState(false)
-  const PAGE_SIZE = 8
 
   // ── AI 맞춤 추천 잠금 상태 (locked → loading → unlocked) ───────
   const [recoState, setRecoState] = useState<'locked' | 'loading' | 'unlocked'>('locked')
@@ -74,17 +42,6 @@ export default function ProgramApply() {
   }
 
   const toggleWish = (id: string) => { void toggleWishStore(id) }
-
-  const filtered = programs.filter(p => {
-    if (showWishOnly && !wishlist.has(p.id)) return false
-    if (activeTab !== '전체' && p.category !== activeTab) return false
-    return true
-  })
-
-  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const pageStart = (currentPage - 1) * PAGE_SIZE
-  const paged = filtered.slice(pageStart, pageStart + PAGE_SIZE)
 
   return (
     <div className="pa-shell">
@@ -158,86 +115,34 @@ export default function ProgramApply() {
           {recoError && <p role="alert">{recoError} 다시 시도해 주세요.</p>}
         </section>
 
-        <div className="pa-filter-bar">
-          <div className="pa-tabs">
-            {CATEGORIES.map(category => (
-              <button
-                key={category}
-                className={`pa-tab${activeTab === category ? ' active' : ''}`}
-                onClick={() => {
-                  setActiveTab(category)
-                  setPage(1)
-                }}
-              >
-                {category === '전체' ? category : categoryLabel(category)}
-              </button>
-            ))}
-          </div>
-          <div className="pa-filter-right">
+        <ProgramBrowser
+          programs={showWishOnly ? programs.filter(p => wishlist.has(p.id)) : programs}
+          onSelect={id => navigate(`/program/${id}`)}
+          wished={wishlist}
+          onToggleWish={toggleWish}
+          actions={(
             <button
               type="button"
               className={`pa-wish-toggle${showWishOnly ? ' active' : ''}`}
-              onClick={() => {
-                setShowWishOnly(prev => !prev)
-                setPage(1)
-              }}
+              onClick={() => setShowWishOnly(prev => !prev)}
               aria-pressed={showWishOnly}
             >
               <i className={showWishOnly ? 'fa-solid fa-heart' : 'fa-regular fa-heart'} />
               찜 목록 보기
               {wishlist.size > 0 && <span className="pa-wish-count">{wishlist.size}</span>}
             </button>
-            <select
-              className="pa-sort-select"
-              aria-label="정렬"
-              value={order}
-              onChange={event => {
-                setOrder(event.target.value as ProgramOrder)
-                setPage(1)
-              }}
-            >
-              {PROGRAM_ORDERS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-            </select>
-          </div>
-        </div>
-
-        {filtered.length > 0 ? (
-          <ProgramCardGrid
-            programs={paged}
-            onSelect={id => navigate(`/program/${id}`)}
-            wished={wishlist}
-            onToggleWish={toggleWish}
-          />
-        ) : (
+          )}
+          empty={(
             <div className="pa-empty">
               <i className="fa-solid fa-box-open" />
               <p>
                 {showWishOnly
                   ? '찜한 공고가 없습니다. 하트 버튼으로 관심 공고를 저장해보세요.'
-                  : '해당 카테고리의 프로그램이 없습니다.'}
+                  : '조건에 맞는 프로그램이 없습니다.'}
               </p>
             </div>
-        )}
-
-        {filtered.length > 0 && (
-          <div className="pa-pagination">
-            <button className="pa-page-btn" disabled={currentPage === 1} onClick={() => setPage(current => Math.max(1, current - 1))}>
-              <i className="fa-solid fa-chevron-left" />
-            </button>
-            {pageNumbers(currentPage, totalPages).map(pageNumber => (
-              <button
-                key={pageNumber}
-                className={`pa-page-btn${currentPage === pageNumber ? ' active' : ''}`}
-                onClick={() => setPage(pageNumber)}
-              >
-                {pageNumber}
-              </button>
-            ))}
-            <button className="pa-page-btn" disabled={currentPage === totalPages} onClick={() => setPage(current => Math.min(totalPages, current + 1))}>
-              <i className="fa-solid fa-chevron-right" />
-            </button>
-          </div>
-        )}
+          )}
+        />
       </div>
     </div>
   )

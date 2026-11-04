@@ -1,0 +1,39 @@
+/* ── ProgramBrowser (pb-) ─────────────────────────────────────────
+   교직원 목록의 필터바·툴바를 옮긴 것이다. 두 포털이 같이 쓰므로 한쪽에만 있는 토큰은 폴백을 둔다
+   (글자 보조색: admin --color-text-secondary · 학생 --color-text-sub). */
+.pb { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+
+.pb-filterbar { display: flex; align-items: flex-end; gap: 12px; flex-wrap: wrap; }
+.pb-search {
+  display: flex; align-items: center; gap: 10px;
+  flex: 1 1 260px; min-width: 220px; max-width: 420px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+.pb-search svg { color: var(--color-text-secondary, var(--color-text-sub)); font-size: 14px; }
+.pb-search input { flex: 1; min-width: 0; border: none; outline: none; font-size: 14px; color: var(--color-text); background: transparent; }
+
+.pb-select { display: flex; flex-direction: column; gap: 5px; }
+.pb-select > span { font-size: 12px; font-weight: 800; color: var(--color-text-secondary, var(--color-text-sub)); }
+.pb-select select {
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: #fff; font-size: 14px; font-weight: 700; color: var(--color-text);
+  min-width: 120px;
+}
+.pb-select select:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-bg); }
+
+.pb-toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.pb-count { font-size: 13px; font-weight: 700; color: var(--color-text-secondary, var(--color-text-sub)); }
+.pb-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }
+
+.pb-card {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 12px);
+  padding: var(--pad, 20px);
+  box-shadow: var(--shadow-sm);
+}
