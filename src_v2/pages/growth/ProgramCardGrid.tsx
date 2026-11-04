@@ -31,7 +31,7 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
             >
               <div className="pcg-thumb">
                 {program.image ? <img src={program.image} alt="" /> : <i className="fa-solid fa-image" aria-hidden="true" />}
-                {(program.sessions ?? 1) > 1 && <span className="pcg-rounds">다회차 · {program.sessions}회</span>}
+                {(program.sessions ?? 1) > 1 && <span className="pcg-rounds">다회차</span>}
                 {audiences.length > 0 && (
                   <span className="pcg-audiences">
                     {audiences.map(a => <span key={a.value} className="pcg-audience">{a.label}</span>)}
