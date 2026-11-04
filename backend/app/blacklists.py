@@ -32,6 +32,7 @@ def student_sheet(conn, data, columns, check):
         if any(v.strip() for v in row):
             cells = {name: row[i].strip() if i < len(row) else '' for name, i in head.items()}
             cells['학번'] = re.sub(r'\.0+$', '', cells['학번'])
+            cells['_row'] = number
             body.append((number, cells))
     if not body:
         raise HTTPException(422, '올릴 행이 없습니다.')

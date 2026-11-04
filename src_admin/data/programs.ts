@@ -19,9 +19,10 @@ import type {
   OutcomeStatus,
   SelectedAction,
 } from './schema/program'
-import { api, queryString } from '../../shared/api'
+import { api, downloadApiFile, queryString } from '../../shared/api'
 import { dropProgram, loadPrograms, programList, refreshProgram } from '../../shared/programStore'
 import type { ListParams, Paginated } from './query'
+import { uploadWorkbook } from './xlsxUpload'
 
 export { PROGRAM_EVENT } from '../../shared/programStore'
 
@@ -294,6 +295,26 @@ export async function addApplicant(
     body: JSON.stringify({ studentId: student.id, round }),
   })
   await refreshProgram(programId)
+}
+
+/** 엑셀(차수·학번)로 명단 등록 — 선발이면 이미 신청한 학생도 선발로 올린다. 행 오류는 UploadRejected 로 온다. */
+export async function uploadApplicants(
+  programId: string,
+  file: File,
+  selection: 'PENDING' | 'SELECTED',
+): Promise<string> {
+  const result = await uploadWorkbook<{ registered: number; skipped: number }>(
+    `/programs/${encodeURIComponent(programId)}/applications/upload?selection=${selection}`, file)
+  await refreshProgram(programId)
+  return `${result.registered}명을 등록했습니다.${result.skipped ? ` 이미 등록된 ${result.skipped}명은 건너뛰었습니다.` : ''}`
+}
+
+/** 화면에 보이는 탭·차수의 신청 첨부파일을 zip 하나로 받는다. round 0 = 전체 차수. */
+export function downloadApplicationFiles(program: Program, selected: boolean, round: number): Promise<void> {
+  return downloadApiFile(
+    `/programs/${encodeURIComponent(program.id)}/applications/files.zip?selected=${selected}&round=${round}`,
+    `${program.title.replace(/[\\/:*?"<>|]/g, '_')}_첨부파일.zip`,
+  )
 }
 
 /** 신청자 1명 삭제 (신청 취소). 노쇼 벌점이 있었다면 서버가 함께 회수한다. */

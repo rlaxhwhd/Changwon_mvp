@@ -602,6 +602,12 @@ input, textarea, select { font-family: var(--font); }
 .admin-stat-label { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
 .admin-stat-value { font-size: 26px; font-weight: 800; color: var(--color-text); line-height: 1; }
 .admin-stat-value em { font-size: 14px; font-weight: 700; color: var(--color-text-secondary); font-style: normal; margin-left: 3px; }
+/* 비교과 신청 현황 — 아래 버튼 줄이 주인공이라 카드는 낮게 둔다. */
+.admin-stat-grid.compact { gap: 10px; }
+.admin-stat-grid.compact .admin-stat-card { height: 64px; gap: 10px; padding: 10px 14px; }
+.admin-stat-grid.compact .admin-stat-icon { width: 34px; height: 34px; font-size: 16px; }
+.admin-stat-grid.compact .admin-stat-value { font-size: 20px; }
+.admin-stat-grid.compact .admin-stat-value em { font-size: 12px; }
 
 /* ─── Cards ──────────────────────────────────────────────────────── */
 .admin-col-2 {
@@ -1781,12 +1787,9 @@ input, textarea, select { font-family: var(--font); }
 .admin-program-info dt svg { color: var(--color-primary); }
 .admin-program-info dd { overflow: hidden; color: var(--color-text); font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .admin-program-status-row {
-  display: flex; align-items: flex-end; gap: 12px; margin-top: 18px; flex-wrap: wrap;
+  display: flex; align-items: flex-end; justify-content: flex-end; gap: 8px; margin-top: 10px; flex-wrap: wrap;
 }
-.admin-program-delete { margin-left: auto; }
-/* 사전·사후 결과 엑셀은 삭제 버튼 바로 왼쪽 — 첫 버튼만 auto 로 밀고 뒤는 붙인다. */
-.admin-program-export { margin-left: auto; }
-.admin-program-export + .admin-program-export, .admin-program-export + .admin-program-delete { margin-left: 0; }
+.admin-program-upload-actions { display: flex; justify-content: center; gap: 8px; }
 
 /* ── 신청자 · 출석 로스터 (5열, 클릭 불가 행) ─────────────────────────── */
 .admin-applicant-roster .admin-roster-head,

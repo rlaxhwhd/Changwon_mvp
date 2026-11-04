@@ -1,7 +1,7 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
 import {
   LuCheck, LuCircleHelp, LuClipboardCheck, LuDownload,
-  LuInfo, LuPaperclip, LuTrash2,
+  LuInfo, LuPaperclip, LuSend, LuTrash2, LuUpload,
   LuUser, LuUserCheck, LuUserPlus, LuUsers, LuUserX,
 } from 'react-icons/lu'
 import { useState } from 'react'
@@ -13,6 +13,8 @@ import {
   setApplicantsStatus,
   setApplicantsOutcome,
   addApplicant,
+  uploadApplicants,
+  downloadApplicationFiles,
   selectionOf,
   pendingApplicants,
   selectedApplicants,
@@ -34,7 +36,10 @@ import { typeLabel } from '../../src_v2/data/careerProcess'
 import EmptyState from '../components/EmptyState'
 import StudentPicker from '../components/StudentPicker'
 import AdminModal from '../components/AdminModal'
+import ProgramRosterUpload from '../components/ProgramRosterUpload'
 import { downloadApiFile } from '../../shared/api'
+import { downloadXlsx } from '../../shared/xlsx'
+import { toRosterRows } from '../data/programExport'
 import type { ProgramApplicant } from '../data/schema/program'
 import { SURVEY_EXPORT_LABEL, downloadSurveyExport, type SurveyPhase } from '../../shared/surveyStore'
 
@@ -74,6 +79,8 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   const [checked, setChecked] = useState<Set<string>>(new Set())
   const [bulkValue, setBulkValue] = useState<string>('SELECTED')
   const [picking, setPicking] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [downloadingFiles, setDownloadingFiles] = useState(false)
   const [exporting, setExporting] = useState<SurveyPhase | null>(null)
   const [answerApplicant, setAnswerApplicant] = useState<ProgramApplicant | null>(null)
   const [answerError, setAnswerError] = useState('')
@@ -91,6 +98,8 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   // 선발되면 선발자 관리로 넘어간다 — 신청자 관리에는 남지 않는다.
   const currentList = (mode === 'applicants' ? pendingApplicants(program) : selectedList).filter(inRound)
   const addRound = rounds.length === 1 ? 1 : roundFilter
+  const listLabel = mode === 'applicants' ? '신청자' : '선발자'
+  const hasFiles = currentList.some(a => a.applicationAnswers?.some(answer => answer.files?.length))
 
   const waitingCount = applicants.filter(a => selectionOf(a) === 'PENDING').length
   const rejectedCount = applicants.filter(a => selectionOf(a) === 'REJECTED').length
@@ -151,6 +160,20 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
       .finally(() => setExporting(null))
   }
 
+  /** 명단은 지금 보고 있는 탭·차수의 목록이다. */
+  const downloadRoster = () => {
+    const title = program.title.replace(/[\\/:*?"<>|]/g, '_')
+    downloadXlsx(`${title}_${listLabel}명단.xlsx`, toRosterRows(program, currentList))
+  }
+
+  const handleDownloadFiles = () => {
+    setDownloadingFiles(true)
+    downloadApplicationFiles(program, mode === 'selected', roundFilter)
+      .catch((error: unknown) =>
+        window.alert(error instanceof Error ? error.message : '첨부파일을 내려받지 못했습니다.'))
+      .finally(() => setDownloadingFiles(false))
+  }
+
   const handleDeleteProgram = () => {
     if (!window.confirm(`'${program.title}' 프로그램을 삭제할까요? 신청자·출석 기록도 함께 사라집니다.`)) return
     removeProgram(program.id)
@@ -166,7 +189,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
         <div className="admin-card-head">
           <h2><LuClipboardCheck /> 신청 현황</h2>
         </div>
-        <div className="admin-stat-grid">
+        <div className="admin-stat-grid compact">
           <div className="admin-stat-card">
             <span className="admin-stat-icon"><LuUsers /></span>
             <div className="admin-stat-body">
@@ -213,13 +236,35 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
           >
             <LuCheck /> 상태 저장
           </button>
+        </div>
+
+        <div className="admin-program-status-row">
+          {/* SMS 발송 기능은 아직 없다 — 버튼 자리만 둔다. */}
+          <button type="button" className="admin-btn admin-btn-ghost sm"><LuSend /> SMS전송</button>
+          <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => setUploading(true)}>
+            <LuUpload /> 엑셀 업로드
+          </button>
+          <button type="button" className="admin-btn admin-btn-ghost sm" disabled={currentList.length === 0} onClick={downloadRoster}>
+            <LuDownload /> 명단 다운로드
+          </button>
+          <button type="button" className="admin-btn admin-btn-ghost sm" disabled={addRound === 0}
+                  title={addRound === 0 ? '학생을 넣을 차수를 먼저 고르세요.' : undefined} onClick={() => setPicking(true)}>
+            <LuUserPlus /> {rounds.length > 1 && addRound ? `${addRound}차에 학생 추가` : '학생 추가'}
+          </button>
+          <button type="button" className="admin-btn admin-btn-ghost sm" disabled={!hasFiles || downloadingFiles}
+                  title={hasFiles ? undefined : '내려받을 첨부파일이 없습니다.'} onClick={handleDownloadFiles}>
+            <LuPaperclip /> {downloadingFiles ? '압축 중…' : '첨부파일 다운로드'}
+          </button>
+        </div>
+
+        <div className="admin-program-status-row">
           {mode === 'selected' && exportPhases.map(phase => (
-            <button key={phase} type="button" className="admin-btn admin-btn-ghost sm admin-program-export"
+            <button key={phase} type="button" className="admin-btn admin-btn-ghost sm"
                     disabled={exporting !== null} onClick={() => handleExport(phase)}>
               <LuDownload /> {exporting === phase ? '엑셀 생성 중…' : `${SURVEY_EXPORT_LABEL[phase]} 결과 엑셀`}
             </button>
           ))}
-          <button className="admin-btn admin-btn-danger-ghost sm admin-program-delete" onClick={handleDeleteProgram}>
+          <button className="admin-btn admin-btn-danger-ghost sm" onClick={handleDeleteProgram}>
             <LuTrash2 /> 프로그램 삭제
           </button>
         </div>
@@ -240,12 +285,6 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                   {rounds.map(r => <option key={r.round} value={r.round}>{r.round}차</option>)}
                 </select>
               </label>
-            )}
-            {mode === 'applicants' && (
-              <button type="button" className="admin-btn admin-btn-ghost sm" disabled={addRound === 0}
-                      title={addRound === 0 ? '학생을 넣을 차수를 먼저 고르세요.' : undefined} onClick={() => setPicking(true)}>
-                <LuUserPlus /> {rounds.length > 1 && addRound ? `${addRound}차에 학생 추가` : '학생 추가'}
-              </button>
             )}
           </div>
         </div>
@@ -404,12 +443,23 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
       </AdminModal>}
       {picking && (
         <StudentPicker
-          title="신청 학생 추가"
+          title={mode === 'applicants' ? '신청 학생 추가' : '선발 학생 추가'}
           excludeIds={applicants.map(a => a.studentId)}
           onClose={() => setPicking(false)}
           onPick={student => {
-            run(addApplicant(program.id, { id: student.id, name: student.name, major: student.major }, addRound))
+            const added = addApplicant(program.id, { id: student.id, name: student.name, major: student.major }, addRound)
+            // 선발자 관리에서 넣은 학생은 신청자 탭으로 가지 않고 바로 선발로 올린다.
+            run(mode === 'selected' ? added.then(() => setApplicantsStatus(program.id, [student.id], 'SELECTED')) : added)
           }}
+        />
+      )}
+      {uploading && (
+        <ProgramRosterUpload
+          title={`비교과프로그램관리 ${listLabel} 엑셀업로드`}
+          templateName={`비교과_${listLabel}_업로드_양식.xlsx`}
+          upload={file => uploadApplicants(program.id, file, mode === 'selected' ? 'SELECTED' : 'PENDING')}
+          onDone={refresh}
+          onClose={() => setUploading(false)}
         />
       )}
     </>

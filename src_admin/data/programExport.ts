@@ -56,6 +56,11 @@ export function getApplicantExportRows(programIds: string[], target: ExportTarge
     )
 }
 
+/** 프로그램 한 건의 명단 행 — 머리글 포함. 신청자·선발자 관리 화면이 보고 있는 목록을 그대로 받는다. */
+export function toRosterRows(program: Program, applicants: ProgramApplicant[]): string[][] {
+  return [HEADER, ...applicants.map(a => rowOf(program, a))]
+}
+
 /** 엑셀(xlsx) 행 — 머리글 포함 */
 export function toApplicantRows(programIds: string[], target: ExportTarget): string[][] {
   return [HEADER, ...getApplicantExportRows(programIds, target)]

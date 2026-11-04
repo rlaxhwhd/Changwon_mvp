@@ -6,12 +6,16 @@
 import hashlib
 import re
 from datetime import date, datetime, time
+from tempfile import SpooledTemporaryFile
+from urllib.parse import quote
 from uuid import uuid4
+from zipfile import ZIP_DEFLATED, ZipFile
 from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request
 from fastapi.concurrency import run_in_threadpool
 from fastapi.encoders import jsonable_encoder
+from fastapi.responses import StreamingResponse
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -794,6 +798,22 @@ def select_waiting(conn, user, program):
             for before in rows}
 
 
+def insert_application(conn, user, program_id, student, round_no, path='', route_code=None, motive='',
+                       consents=None, answers=(), reason=''):
+    """신청 행과 APPLY 이력을 남긴다. 호출자가 공고 행을 잠그고 정원·중복을 판정한다."""
+    snapshot = {'studentName': student['name'], 'studentMajor': student['major_label'],
+                'studentNo': student['student_no'], 'grade': student['grade'],
+                'path': path, 'routeCode': route_code, 'motive': motive, 'applicationAnswers': list(answers)}
+    row = conn.execute('''INSERT INTO dc.program_apply(program_id,student_uid,applied_at,snapshot,apply_path,
+      apply_route_code,motive,consents,updated_by,round_no) VALUES(%s,%s,now(),%s,%s,%s,%s,%s,%s,%s) RETURNING *''',
+      (program_id, student['intg_uid'], Jsonb(snapshot), path, route_code, motive,
+       Jsonb(consents or {}), user['intg_uid'], round_no)).fetchone()
+    result = applicant_dto({**row, 'alias': student['alias'], 'name': student['name'],
+                            'major_label': student['major_label']})
+    record(conn, user, program_id, student['intg_uid'], 'APPLY', None, result, reason)
+    return result
+
+
 class ApplyBody(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     studentId: str | None = None
@@ -856,18 +876,10 @@ def apply(program_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
         if not route_item:
             raise HTTPException(422, '지원경로를 목록에서 골라 주세요.')
         path = route_item['label']
-    snapshot = {'studentName': student['name'], 'studentMajor': student['major_label'],
-                'studentNo': student['student_no'], 'grade': student['grade'],
-                'path': path, 'routeCode': body.routeCode, 'motive': body.motive, 'applicationAnswers': answer_snapshot}
-    row = conn.execute('''INSERT INTO dc.program_apply(program_id,student_uid,applied_at,snapshot,apply_path,
-      apply_route_code,motive,consents,updated_by,round_no) VALUES(%s,%s,now(),%s,%s,%s,%s,%s,%s,%s) RETURNING *''',
-      (program_id, student['intg_uid'], Jsonb(snapshot), path, body.routeCode, body.motive,
-       Jsonb(body.consents), user['intg_uid'], body.round)).fetchone()
+    result = insert_application(conn, user, program_id, student, body.round, path=path, route_code=body.routeCode,
+                                motive=body.motive, consents=body.consents, answers=answer_snapshot)
     for file_id in sorted(answer_files):
         files.claim(conn, user, file_id, 'PROGRAM_APPLICATION', program_id + ':' + student['intg_uid'], 'PROGRAM_APPLICATION_ATTACHMENT')
-    result = applicant_dto({**row, 'alias': student['alias'], 'name': student['name'],
-                            'major_label': student['major_label']})
-    record(conn, user, program_id, student['intg_uid'], 'APPLY', None, result)
     if target['selection_method'] == 'FIRST_COME':
         # 빈 자리가 생긴 뒤 새 신청이 들어와도 기존 대기보다 앞서 선발되지 않는다.
         result = select_waiting(conn, user, target).get(student['intg_uid'], result)
@@ -999,6 +1011,118 @@ def set_outcome(program_id: str, body: OutcomeBody, user=Depends(principal, scop
             notify_survey(conn, program, student['intg_uid'], 'SATISFACTION')
         results.append(after)
     return results
+
+
+def roster_round(text):
+    """'2'·'2.0'(숫자 셀)·'2차' → 2."""
+    match = re.fullmatch(r'([0-9]+)(?:\.0+)?차?', text)
+    return int(match[1]) if match else None
+
+
+@router.post('/programs/{program_id}/applications/upload', status_code=201)
+async def upload_applications(program_id: str, request: Request,
+                              selection: str = Query('PENDING', pattern='^(PENDING|SELECTED)$'),
+                              user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    """엑셀(차수·학번)로 명단을 등록한다. 본문만 비동기로 받고 해석·DB 는 스레드에서 한다."""
+    return await run_in_threadpool(import_applications, program_id, selection, await files.read_body(request), user, conn)
+
+
+def import_applications(program_id, selection, data, user, conn):
+    """담당자가 명단을 직접 넣는 경로라 모집 상태·기간·신청 질문은 보지 않고 정원만 지킨다.
+    SELECTED 면 이미 신청한 학생도 선발로 올린다. 한 행이라도 틀리면 아무것도 저장하지 않는다."""
+    require_staff(user)
+    program = get_program(conn, program_id, lock=True)
+    rounds = {1, *(r['round_no'] for r in conn.execute(
+        'SELECT round_no FROM dc.program_round WHERE program_id=%s', (program_id,)).fetchall())}
+    parsed = student_sheet(conn, data, ['차수'],
+                           lambda c: [] if roster_round(c['차수']) in rounds else ['차수(없는 차수)'])
+    existing = {r['student_uid']: r for r in conn.execute(
+        'SELECT * FROM dc.program_apply WHERE program_id=%s AND student_uid=ANY(%s)',
+        (program_id, [uid for uid, _ in parsed])).fetchall()}
+    errors, added, promoted, skipped = [], [], [], 0
+    for uid, cells in parsed:
+        round_no, before = roster_round(cells['차수']), existing.get(uid)
+        if not before:
+            added.append((uid, round_no))
+        elif before['round_no'] != round_no:
+            errors.append(dict(row=cells['_row'], message=f"이미 {before['round_no']}차에 신청한 학생"))
+        elif before['cancelled_at'] or before['selection_code'] == 'CANCELLED':
+            errors.append(dict(row=cells['_row'], message='신청을 취소한 학생'))
+        elif selection == 'SELECTED' and before['selection_code'] != 'SELECTED':
+            promoted.append((uid, round_no))
+        else:
+            skipped += 1
+    if errors:
+        raise HTTPException(422, dict(message=f'{len(errors)}개 행에 오류가 있어 저장하지 않았습니다.', errors=errors[:200]))
+    touched = sorted({round_no for _, round_no in added + promoted})
+    for round_no in touched:
+        target = round_of(conn, program, round_no)
+        prefix = f'{round_no}차 ' if round_no > 1 else ''
+        if selection == 'SELECTED':
+            count = sum(r == round_no for _, r in added + promoted)
+            if round_count(conn, program_id, round_no, 'SELECTED') + count > selection_limit(target):
+                raise HTTPException(409, f'{prefix}선발 정원 {selection_limit(target)}명을 넘겨 선발할 수 없습니다.')
+        elif target['selection_method'] == 'FIRST_COME':
+            count = sum(r == round_no for _, r in added)
+            if round_count(conn, program_id, round_no) + count > target['capacity']:
+                raise HTTPException(409, f"{prefix}모집 정원 {target['capacity']}명을 넘겨 등록할 수 없습니다.")
+    for uid, round_no in sorted(added):
+        insert_application(conn, user, program_id, student_access(conn, user, uid), round_no, reason='엑셀 업로드')
+    if selection == 'SELECTED':
+        for uid, _ in sorted(added + promoted):
+            change_selection(conn, user, program, get_application(conn, program_id, uid), 'SELECTED', '엑셀 업로드')
+    else:
+        for round_no in touched:
+            target = round_of(conn, program, round_no)
+            if target['selection_method'] == 'FIRST_COME':
+                select_waiting(conn, user, target)
+    return dict(registered=len(added) + len(promoted), skipped=skipped)
+
+
+@router.get('/programs/{program_id}/applications/files.zip')
+def application_files(program_id: str, selected: bool = Query(False), round_no: int = Query(0, alias='round', ge=0, le=999),
+                      user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    """신청 첨부파일 묶음 — 화면 탭(선발 여부)과 차수 필터가 보는 학생의 파일만 담는다. round=0 은 전체 차수."""
+    require_staff(user)
+    program = get_program(conn, program_id)
+    condition, values = applicant_scope(user)
+    rows = conn.execute(f'''SELECT f.id,f.original_name,s.student_no,p.name FROM dc.program_apply a
+      JOIN dc.file_object f ON f.owner_kind='PROGRAM_APPLICATION' AND f.state='READY'
+        AND f.owner_id=a.program_id||':'||a.student_uid
+      JOIN dc.person p ON p.intg_uid=a.student_uid JOIN dc.student s ON s.intg_uid=a.student_uid
+      WHERE a.program_id=%s AND (a.selection_code='SELECTED')=%s AND (%s=0 OR a.round_no=%s) AND ({condition})
+      ORDER BY s.student_no,f.uploaded_at,f.id''', [program_id, selected, round_no, round_no, *values]).fetchall()
+    if not rows:
+        raise HTTPException(404, '내려받을 첨부파일이 없습니다.')
+    output = SpooledTemporaryFile(max_size=4*1024*1024, mode='w+b')
+    try:
+        with ZipFile(output, 'w', ZIP_DEFLATED) as book:
+            used = set()
+            for row in rows:
+                path = files.location(row['id'])
+                if not path.is_file():
+                    raise HTTPException(404, f"파일 본문이 없습니다: {row['original_name']}")
+                name = f"{row['student_no']}_{row['name']}_{files.safe_name(row['original_name'])}"
+                entry, copy = name, 1
+                while entry in used:  # 한 학생이 같은 이름으로 낸 파일이 서로 덮이지 않게 한다.
+                    copy += 1
+                    entry = f'{copy}_{name}'
+                used.add(entry)
+                book.write(path, entry)
+        output.seek(0)
+    except BaseException:
+        output.close()
+        raise
+
+    def chunks():
+        try:
+            while chunk := output.read(64*1024):
+                yield chunk
+        finally:
+            output.close()
+    filename = re.sub(r'[\\/:*?"<>|]', '_', program['title']) + '_첨부파일.zip'
+    return StreamingResponse(chunks(), media_type='application/zip',
+        headers={'Content-Disposition': "attachment; filename*=UTF-8''"+quote(filename), 'Cache-Control': 'no-store'})
 
 
 class AttendanceBody(BaseModel):
