@@ -9,10 +9,15 @@ test('참여율은 (수료+미수료)/선발, 이수율은 수료/(수료+미수
   assert.deepEqual(rates, { selected: 5, participants: 4, completed: 3, participationRate: 80, completionRate: 75 })
 })
 
-test('출석·불참·결과 미입력은 분모의 선발인원에만 들어간다', () => {
+test('참석은 수료 못 한 참여자라 미수료와 같이 참여인원에 들어간다', () => {
+  const rates = programRates(list('COMPLETED', 'NOT_COMPLETED', 'ATTENDED', 'ATTENDED'))
+  assert.deepEqual(rates, { selected: 4, participants: 4, completed: 1, participationRate: 100, completionRate: 25 })
+})
+
+test('불참·결과 미입력은 분모의 선발인원에만 들어간다', () => {
   const rates = programRates(list('COMPLETED', 'ATTENDED', 'ABSENT', null))
-  assert.equal(rates.participationRate, 25)
-  assert.equal(rates.completionRate, 100)
+  assert.equal(rates.participationRate, 50)
+  assert.equal(rates.completionRate, 50)
 })
 
 test('소수 첫째 자리까지 반올림한다', () => {
