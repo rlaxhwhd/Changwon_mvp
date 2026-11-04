@@ -7,6 +7,7 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
   activeRound, getProgramById, isProgramClosed, noticeStatusLabel, programApplyStatus, programCapacity, programDdayLabel, programRounds,
+  programSelectionStatus,
 } from '../../../src_admin/data/programs'
 import type { Program, ProgramRound } from '../../../src_admin/data/schema/program'
 import { ROADMAP_ENTRY_LABEL } from '../../data/schema/roadmap'
@@ -92,7 +93,6 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
   const applyPeriod = periodOf(first.startDate, last.endDate, first.startTime, last.endTime)
   const runPeriod = runFirst ? periodOf(runFirst.runStartDate ?? undefined, runLast.runEndDate ?? undefined, runFirst.runStartTime, runLast.runEndTime) : ''
   const capacity = programCapacity(program)
-  const selection = rounds.reduce((sum, r) => sum + (r.selectionCapacity ?? r.capacity), 0)
   const location = sameOr(rounds.map(r => r.location), '회차별 상이')
   const method = sameOr(rounds.map(r => (r.selectionMethod === 'FIRST_COME' ? '선착순 선발' : '심사 후 선발')), '회차별 상이')
 
@@ -123,7 +123,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
     { label: '분류', value: categoryText, chip: true },
     { label: '상태', value: statusLabel },
     { label: '참가대상', value: target },
-    { label: '신청인원 / 선발인원', value: `${applied}명 / ${selection}명` },
+    { label: '신청인원 / 선발인원', value: programSelectionStatus(program) },
     { label: '담당자', value: managers.length ? managers.map(m => m.name).join(', ') : program.manager },
     { label: '담당자 연락처', value: phones },
     { label: '장소', value: location },

@@ -57,9 +57,18 @@ export function programCapacity(program: Program): number {
   return programRounds(program).reduce((sum, r) => sum + r.capacity, 0)
 }
 
-/** 신청현황 「신청 / 모집」 — 공고 상세와 목록 카드가 같은 값을 쓴다. 심사 후 선발은 신청이 모집을 넘을 수 있다. */
+/** 신청현황 「신청 / 모집」 — 공고 상세의 값. */
 export function programApplyStatus(program: Program): string {
   return `${program.applyCount}명 / ${programCapacity(program)}명`
+}
+
+/**
+ * 「신청 / 선발」 — 공고 상세와 목록 카드가 같은 값을 쓴다.
+ * 모집(신청 제한)을 선발보다 크게 잡아 초과분은 탈락·후보로 두므로 30명 / 22명은 정상이다.
+ */
+export function programSelectionStatus(program: Program): string {
+  const selection = programRounds(program).reduce((sum, r) => sum + (r.selectionCapacity ?? r.capacity), 0)
+  return `${program.applyCount}명 / ${selection}명`
 }
 
 export type ProgramAudience = 'STUDENT' | 'GRADUATE'

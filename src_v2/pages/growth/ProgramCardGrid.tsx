@@ -1,6 +1,6 @@
 import type { Program } from '../../../src_admin/data/schema/program'
 import { categoryLabel } from '../../../src_admin/data/schema/program'
-import { activeRound, programApplyStatus, programAudiences, programDdayLabel } from '../../../src_admin/data/programs'
+import { activeRound, programAudiences, programDdayLabel, programSelectionStatus } from '../../../src_admin/data/programs'
 import './ProgramCardGrid.css'
 
 interface Props {
@@ -50,7 +50,7 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
                   {round.runStartDate && round.runEndDate && (
                     <span><i className="fa-solid fa-calendar-check" aria-hidden="true" /> 진행기간 {round.runStartDate} ~ {round.runEndDate}</span>
                   )}
-                  <span><i className="fa-solid fa-users" aria-hidden="true" /> 모집인원 : {programApplyStatus(program)}</span>
+                  <span><i className="fa-solid fa-users" aria-hidden="true" /> 모집인원 : {programSelectionStatus(program)}</span>
                 </div>
               </div>
             </button>
