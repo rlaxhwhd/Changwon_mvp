@@ -72,24 +72,21 @@
 .pcg-card[data-cat="자격증"] { --pcg-cat-ink: var(--violet);    --pcg-cat-soft: var(--violet-soft); }
 .pcg-card[data-cat="기타"]   { --pcg-cat-ink: var(--color-text-sub); --pcg-cat-soft: var(--color-surface); }
 .pcg-category { background: var(--pcg-cat-soft, var(--color-primary-bg)); color: var(--pcg-cat-ink, var(--color-primary)); }
-/* 다회차 라벨 — 썸네일 왼쪽 위. 이미지 위에서도 읽히게 불투명 면을 준다.
-   라벨 색은 갈래색과 무관하게 고정한다. admin :root 에 --mint-*·--sky-* 가 없어 값을 폴백으로 함께 둔다.
-   테두리는 같은 색 계열 썸네일(이미지 없는 취업 카드 등) 위에서 라벨이 묻히지 않게 한다. */
+/* 썸네일 라벨 — 왼쪽 위 세로 묶음. 다회차가 항상 위, 대상 태그가 그 아래다.
+   이미지 위에서도 읽히게 불투명 면을 주고, 색은 갈래색과 무관하게 고정한다. */
 .pcg-thumb { position: relative; }
+.pcg-tags { position: absolute; top: 10px; left: 10px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 .pcg-rounds {
-  position: absolute; top: 10px; left: 10px;
   padding: 4px 9px; border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--mint-ink, #148262) 35%, transparent);
-  background: var(--mint-soft, #e5f8f2); color: var(--mint-ink, #148262);
+  background: var(--mint-ink, #148262); color: #fff; /* admin :root 에 --mint-ink 가 없어 폴백을 둔다 */
   font-size: 12px; font-weight: 800; line-height: 1.3;
 }
-/* 대상 태그 — 썸네일 오른쪽 위. 다회차 라벨과 같은 꼴이고, 재학생·졸업생 둘 다면 나란히 붙는다. */
-.pcg-audiences { position: absolute; top: 10px; right: 10px; display: flex; gap: 4px; }
+/* 대상 태그 — 다회차 라벨과 같은 꼴이고, 재학생·졸업생 둘 다면 나란히 붙는다. */
+.pcg-audiences { display: flex; gap: 4px; }
 .pcg-audience {
-  --pcg-audience-ink: color-mix(in srgb, var(--sky, #17a9e6) 60%, #0b2b4a); /* --sky-ink 는 12px 글자에 대비가 모자란다 */
   padding: 4px 9px; border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--pcg-audience-ink) 35%, transparent);
-  background: var(--sky-soft, #e7f7fd); color: var(--pcg-audience-ink);
+  /* 비교과 프로그램 보기 버튼 색. --blue 는 admin 에서 값이 달라 직접 쓴다. */
+  background: #356dff; color: #fff;
   font-size: 12px; font-weight: 800; line-height: 1.3;
 }
 .pcg-dday { background: var(--color-surface); color: var(--color-text-sub); }
