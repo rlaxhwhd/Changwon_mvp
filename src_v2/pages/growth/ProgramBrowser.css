@@ -26,6 +26,19 @@
 }
 .pb-select select:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-bg); }
 
+.pb-tabs { display: flex; align-self: center; gap: 6px; flex-wrap: wrap; }
+.pb-tab {
+  padding: 7px 16px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 20px;
+  background: var(--color-bg);
+  font-size: 16px; font-weight: 500; color: var(--color-text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.pb-tab:hover { border-color: var(--color-navy); color: var(--color-navy); }
+.pb-tab.active { background: var(--color-navy); border-color: var(--color-navy); color: var(--color-bg); font-weight: 700; }
+
 .pb-toolbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .pb-count { font-size: 13px; font-weight: 700; color: var(--color-text-secondary, var(--color-text-sub)); }
 .pb-tools { display: flex; align-items: center; gap: 8px; margin-left: auto; }

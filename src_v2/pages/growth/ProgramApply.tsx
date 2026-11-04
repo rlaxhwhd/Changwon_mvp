@@ -120,6 +120,7 @@ export default function ProgramApply() {
           onSelect={id => navigate(`/program/${id}`)}
           wished={wishlist}
           onToggleWish={toggleWish}
+          audienceTabs
           actions={(
             <button
               type="button"

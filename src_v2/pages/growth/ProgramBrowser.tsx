@@ -9,6 +9,7 @@ import ProgramCardGrid from './ProgramCardGrid'
 import './ProgramBrowser.css'
 
 const ALL = '전체'
+const AUDIENCE_TABS: { value: ProgramAudience | typeof ALL; label: string }[] = [{ value: ALL, label: ALL }, ...PROGRAM_AUDIENCES]
 
 interface Props {
   programs: Program[]
@@ -19,10 +20,12 @@ interface Props {
   actions?: ReactNode
   wished?: Set<string>
   onToggleWish?: (id: string) => void
+  /** 대상·상태 선택 상자 대신 대상 태그 버튼을 쓴다(학생). */
+  audienceTabs?: boolean
 }
 
 /** 비교과 공고 목록(검색·필터·정렬·카드) — 학생 /v2/programs 와 교직원 /admin/programs 가 같은 것을 쓴다. */
-export default function ProgramBrowser({ programs, onSelect, empty, actions, wished, onToggleWish }: Props) {
+export default function ProgramBrowser({ programs, onSelect, empty, actions, wished, onToggleWish, audienceTabs }: Props) {
   const [query, setQuery] = useState('')
   const [audience, setAudience] = useState<ProgramAudience | typeof ALL>(ALL)
   const [status, setStatus] = useState<ProgramStatus | typeof ALL>(ALL)
@@ -51,20 +54,38 @@ export default function ProgramBrowser({ programs, onSelect, empty, actions, wis
             placeholder="프로그램명·장소 검색"
           />
         </div>
-        <label className="pb-select">
-          <span>대상</span>
-          <select value={audience} onChange={e => setAudience(e.target.value as ProgramAudience | typeof ALL)}>
-            <option value={ALL}>{ALL}</option>
-            {PROGRAM_AUDIENCES.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
-          </select>
-        </label>
-        <label className="pb-select">
-          <span>상태</span>
-          <select value={status} onChange={e => setStatus(e.target.value as ProgramStatus | typeof ALL)}>
-            <option value={ALL}>{ALL}</option>
-            {PROGRAM_STATUSES.map(s => <option key={s} value={s}>{programStatusLabel(s)}</option>)}
-          </select>
-        </label>
+        {audienceTabs ? (
+          <div className="pb-tabs" role="group" aria-label="대상">
+            {AUDIENCE_TABS.map(a => (
+              <button
+                key={a.value}
+                type="button"
+                className={`pb-tab${audience === a.value ? ' active' : ''}`}
+                aria-pressed={audience === a.value}
+                onClick={() => setAudience(a.value)}
+              >
+                {a.label}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <>
+            <label className="pb-select">
+              <span>대상</span>
+              <select value={audience} onChange={e => setAudience(e.target.value as ProgramAudience | typeof ALL)}>
+                <option value={ALL}>{ALL}</option>
+                {PROGRAM_AUDIENCES.map(a => <option key={a.value} value={a.value}>{a.label}</option>)}
+              </select>
+            </label>
+            <label className="pb-select">
+              <span>상태</span>
+              <select value={status} onChange={e => setStatus(e.target.value as ProgramStatus | typeof ALL)}>
+                <option value={ALL}>{ALL}</option>
+                {PROGRAM_STATUSES.map(s => <option key={s} value={s}>{programStatusLabel(s)}</option>)}
+              </select>
+            </label>
+          </>
+        )}
       </div>
 
       <div className="pb-toolbar">
