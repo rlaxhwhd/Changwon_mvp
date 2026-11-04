@@ -2,7 +2,7 @@ import { useMetadata } from '../../shared/useMetadata'
 import { LuFrown, LuGraduationCap, LuPlus, LuSearch, LuUserX } from 'react-icons/lu'
 import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { getPrograms, countPrograms, PROGRAM_ORDERS, sortPrograms } from '../data/programs'
+import { getPrograms, countPrograms, PROGRAM_ORDERS, programApplyStatus, sortPrograms } from '../data/programs'
 import type { ProgramOrder, ProgramStatus } from '../data/programs'
 import { programCategories, PROGRAM_STATUSES, categoryLabel, programStatusLabel } from '../data/schema/program'
 import type { ProgramCategory } from '../data/schema/program'
@@ -112,7 +112,7 @@ export default function ProgramList() {
               endDate: program.endDate,
               runStartDate: program.runStartDate,
               runEndDate: program.runEndDate,
-              capacity: program.capacity,
+              applyStatus: programApplyStatus(program),
               image: program.image,
             }))}
             onSelect={id => navigate(`/programs/${id}/notice`)}

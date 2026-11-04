@@ -6,7 +6,7 @@ import { safeHtml } from '../../../shared/safeHtml'
 import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import {
-  activeRound, getProgramById, isProgramClosed, noticeStatusLabel, programDdayLabel, programRounds,
+  activeRound, getProgramById, isProgramClosed, noticeStatusLabel, programApplyStatus, programCapacity, programDdayLabel, programRounds,
 } from '../../../src_admin/data/programs'
 import type { Program, ProgramRound } from '../../../src_admin/data/schema/program'
 import { ROADMAP_ENTRY_LABEL } from '../../data/schema/roadmap'
@@ -91,7 +91,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
   const runLast = [...runs].sort((a, b) => byMoment(b.runEndDate, b.runEndTime).localeCompare(byMoment(a.runEndDate, a.runEndTime)))[0]
   const applyPeriod = periodOf(first.startDate, last.endDate, first.startTime, last.endTime)
   const runPeriod = runFirst ? periodOf(runFirst.runStartDate ?? undefined, runLast.runEndDate ?? undefined, runFirst.runStartTime, runLast.runEndTime) : ''
-  const capacity = rounds.reduce((sum, r) => sum + r.capacity, 0)
+  const capacity = programCapacity(program)
   const selection = rounds.reduce((sum, r) => sum + (r.selectionCapacity ?? r.capacity), 0)
   const location = sameOr(rounds.map(r => r.location), '회차별 상이')
   const method = sameOr(rounds.map(r => (r.selectionMethod === 'FIRST_COME' ? '선착순 선발' : '심사 후 선발')), '회차별 상이')
@@ -137,7 +137,7 @@ export default function ProgramNotice({ programId, backTo, action, showWish = fa
     { label: '접수기간', value: applyPeriod },
     { label: '운영기간', value: runPeriod },
     { label: '선발 방식', value: method },
-    { label: '신청현황', value: `${applied}명 / ${capacity}명` },
+    { label: '신청현황', value: programApplyStatus(program) },
     // 로드맵에 칸이 생기는 프로그램만 알린다 — 학생이 이행률에 잡히는지가 달라진다.
     program.roadmapEntry && program.roadmapEntry !== 'NONE'
       ? { label: '로드맵 편입', value: ROADMAP_ENTRY_LABEL[program.roadmapEntry], chip: true }

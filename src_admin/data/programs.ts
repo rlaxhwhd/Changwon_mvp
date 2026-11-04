@@ -52,6 +52,16 @@ export function programRounds(program: Program): ProgramRound[] {
   }, ...extra]
 }
 
+/** 전 차수 모집인원 합계. */
+export function programCapacity(program: Program): number {
+  return programRounds(program).reduce((sum, r) => sum + r.capacity, 0)
+}
+
+/** 신청현황 「신청 / 모집」 — 공고 상세와 목록 카드가 같은 값을 쓴다. 심사 후 선발은 신청이 모집을 넘을 수 있다. */
+export function programApplyStatus(program: Program): string {
+  return `${program.applyCount}명 / ${programCapacity(program)}명`
+}
+
 /** 이 차수가 신청을 받을 수 있는가 — 상태와 마감일 둘 다 본다(상태만 믿으면 지난 공고가 열려 있다). */
 export function isRoundClosed(program: Program, round: ProgramRound): boolean {
   if (program.status !== 'RECRUITING') return true

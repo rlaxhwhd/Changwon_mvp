@@ -14,7 +14,8 @@ export interface ProgramCardVM {
   status?: import('../../../src_admin/data/schema/program').ProgramStatus
   runStartDate?: string
   runEndDate?: string
-  capacity: number
+  /** 공고 상세 신청현황과 같은 값 — programApplyStatus */
+  applyStatus: string
   image?: string
   /** 총회차 — 2 이상이면 썸네일에 「다회차」 라벨을 단다. */
   sessions?: number
@@ -59,7 +60,7 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
                   {program.runStartDate && program.runEndDate && (
                     <span><i className="fa-solid fa-calendar-check" aria-hidden="true" /> 진행기간 {program.runStartDate} ~ {program.runEndDate}</span>
                   )}
-                  <span><i className="fa-solid fa-users" aria-hidden="true" /> 정원 {program.capacity}명</span>
+                  <span><i className="fa-solid fa-users" aria-hidden="true" /> 모집인원 : {program.applyStatus}</span>
                 </div>
               </div>
             </button>
