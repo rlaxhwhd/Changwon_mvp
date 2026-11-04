@@ -5,6 +5,7 @@ import {
   LuUser, LuUserCheck, LuUserPlus, LuUsers, LuUserX,
 } from 'react-icons/lu'
 import { useState } from 'react'
+import type { CSSProperties } from 'react'
 import { Link, useNavigate, useOutletContext } from 'react-router-dom'
 import type { ProgramTabContext } from './ProgramShell'
 import {
@@ -40,6 +41,7 @@ import ProgramRosterUpload from '../components/ProgramRosterUpload'
 import { downloadApiFile } from '../../shared/api'
 import { downloadXlsx } from '../../shared/xlsx'
 import { toRosterRows } from '../data/programExport'
+import { programRates } from '../data/programRates'
 import type { ProgramApplicant } from '../data/schema/program'
 import { SURVEY_EXPORT_LABEL, downloadSurveyExport, type SurveyPhase } from '../../shared/surveyStore'
 
@@ -66,6 +68,19 @@ function outcomeChipClass(outcome: string | undefined): string {
   if (outcome === 'NOT_COMPLETED') return 'admin-chip-done'
   if (outcome === 'ABSENT') return 'admin-chip-cancel'
   return 'admin-chip-wait'
+}
+
+/** 비율 한 개를 원형 그래프로 보이는 정사각형 카드. */
+function RateCard({ label, rate, detail, tone }: { label: string; rate: number; detail: string; tone: 'info' | 'success' }) {
+  return (
+    <div className="admin-program-rate-card">
+      <span className="admin-program-rate-label">{label}</span>
+      <div className={`admin-program-rate-ring ${tone}`} style={{ '--rate': `${rate}%` } as CSSProperties}>
+        <strong>{rate}%</strong>
+      </div>
+      <small>{detail}</small>
+    </div>
+  )
 }
 
 export default function ProgramDetail({ mode }: { mode: Mode }) {
@@ -99,6 +114,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   const currentList = (mode === 'applicants' ? pendingApplicants(program) : selectedList).filter(inRound)
   const addRound = rounds.length === 1 ? 1 : roundFilter
   const listLabel = mode === 'applicants' ? '신청자' : '선발자'
+  const rates = programRates(selectedList)
   const hasFiles = currentList.some(a => a.applicationAnswers?.some(answer => answer.files?.length))
 
   const waitingCount = applicants.filter(a => selectionOf(a) === 'PENDING').length
@@ -189,84 +205,93 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
         <div className="admin-card-head">
           <h2><LuClipboardCheck /> 신청 현황</h2>
         </div>
-        <div className="admin-stat-grid compact">
-          <div className="admin-stat-card">
-            <span className="admin-stat-icon"><LuUsers /></span>
-            <div className="admin-stat-body">
-              <span className="admin-stat-label">신청자</span>
-              <span className="admin-stat-value">{program.applyCount}<em>명</em></span>
+        <div className="admin-program-summary">
+          {mode === 'selected' && (
+            <div className="admin-program-rates">
+              <RateCard label="참여율" rate={rates.participationRate} detail={`참여 ${rates.participants} / 선발 ${rates.selected}명`} tone="info" />
+              <RateCard label="이수율" rate={rates.completionRate} detail={`수료 ${rates.completed} / 참여 ${rates.participants}명`} tone="success" />
             </div>
-          </div>
-          <div className="admin-stat-card">
-            <span className="admin-stat-icon success"><LuUserCheck /></span>
-            <div className="admin-stat-body">
-              <span className="admin-stat-label">선발</span>
-              <span className="admin-stat-value">{selectedList.length}<em>명</em></span>
+          )}
+          <div className="admin-program-summary-main">
+            <div className="admin-stat-grid compact">
+              <div className="admin-stat-card">
+                <span className="admin-stat-icon"><LuUsers /></span>
+                <div className="admin-stat-body">
+                  <span className="admin-stat-label">신청자</span>
+                  <span className="admin-stat-value">{program.applyCount}<em>명</em></span>
+                </div>
+              </div>
+              <div className="admin-stat-card">
+                <span className="admin-stat-icon success"><LuUserCheck /></span>
+                <div className="admin-stat-body">
+                  <span className="admin-stat-label">선발</span>
+                  <span className="admin-stat-value">{selectedList.length}<em>명</em></span>
+                </div>
+              </div>
+              <div className="admin-stat-card">
+                <span className="admin-stat-icon info"><LuCircleHelp /></span>
+                <div className="admin-stat-body">
+                  <span className="admin-stat-label">대기</span>
+                  <span className="admin-stat-value">{waitingCount}<em>명</em></span>
+                </div>
+              </div>
+              <div className="admin-stat-card">
+                <span className="admin-stat-icon accent"><LuUserX /></span>
+                <div className="admin-stat-body">
+                  <span className="admin-stat-label">탈락</span>
+                  <span className="admin-stat-value">{rejectedCount}<em>명</em></span>
+                </div>
+              </div>
             </div>
-          </div>
-          <div className="admin-stat-card">
-            <span className="admin-stat-icon info"><LuCircleHelp /></span>
-            <div className="admin-stat-body">
-              <span className="admin-stat-label">대기</span>
-              <span className="admin-stat-value">{waitingCount}<em>명</em></span>
-            </div>
-          </div>
-          <div className="admin-stat-card">
-            <span className="admin-stat-icon accent"><LuUserX /></span>
-            <div className="admin-stat-body">
-              <span className="admin-stat-label">탈락</span>
-              <span className="admin-stat-value">{rejectedCount}<em>명</em></span>
-            </div>
-          </div>
-        </div>
 
-        <div className="admin-program-status-row">
-          <label className="admin-select">
-            <span>모집 상태</span>
-            <select value={status} onChange={e => setStatus(e.target.value as ProgramStatus)}>
-              {PROGRAM_STATUSES.map(s => (
-                <option key={s} value={s}>{programStatusLabel(s)}</option>
+            <div className="admin-program-status-row">
+              <label className="admin-select">
+                <select aria-label="모집 상태" value={status} onChange={e => setStatus(e.target.value as ProgramStatus)}>
+                  {PROGRAM_STATUSES.map(s => (
+                    <option key={s} value={s}>{programStatusLabel(s)}</option>
+                  ))}
+                </select>
+              </label>
+              <button
+                className="admin-btn admin-btn-ghost sm"
+                disabled={!status || status === program.status}
+                onClick={handleStatusSave}
+              >
+                <LuCheck /> 상태 저장
+              </button>
+            </div>
+
+            <div className="admin-program-status-row">
+              {/* SMS 발송 기능은 아직 없다 — 버튼 자리만 둔다. */}
+              <button type="button" className="admin-btn admin-btn-ghost sm"><LuSend /> SMS전송</button>
+              <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => setUploading(true)}>
+                <LuUpload /> 엑셀 업로드
+              </button>
+              <button type="button" className="admin-btn admin-btn-ghost sm" disabled={currentList.length === 0} onClick={downloadRoster}>
+                <LuDownload /> 명단 다운로드
+              </button>
+              <button type="button" className="admin-btn admin-btn-ghost sm" disabled={addRound === 0}
+                      title={addRound === 0 ? '학생을 넣을 차수를 먼저 고르세요.' : undefined} onClick={() => setPicking(true)}>
+                <LuUserPlus /> {rounds.length > 1 && addRound ? `${addRound}차에 학생 추가` : '학생 추가'}
+              </button>
+              <button type="button" className="admin-btn admin-btn-ghost sm" disabled={!hasFiles || downloadingFiles}
+                      title={hasFiles ? undefined : '내려받을 첨부파일이 없습니다.'} onClick={handleDownloadFiles}>
+                <LuPaperclip /> {downloadingFiles ? '압축 중…' : '첨부파일 다운로드'}
+              </button>
+            </div>
+
+            <div className="admin-program-status-row">
+              {mode === 'selected' && exportPhases.map(phase => (
+                <button key={phase} type="button" className="admin-btn admin-btn-ghost sm"
+                        disabled={exporting !== null} onClick={() => handleExport(phase)}>
+                  <LuDownload /> {exporting === phase ? '엑셀 생성 중…' : `${SURVEY_EXPORT_LABEL[phase]} 결과 엑셀`}
+                </button>
               ))}
-            </select>
-          </label>
-          <button
-            className="admin-btn admin-btn-ghost sm"
-            disabled={!status || status === program.status}
-            onClick={handleStatusSave}
-          >
-            <LuCheck /> 상태 저장
-          </button>
-        </div>
-
-        <div className="admin-program-status-row">
-          {/* SMS 발송 기능은 아직 없다 — 버튼 자리만 둔다. */}
-          <button type="button" className="admin-btn admin-btn-ghost sm"><LuSend /> SMS전송</button>
-          <button type="button" className="admin-btn admin-btn-ghost sm" onClick={() => setUploading(true)}>
-            <LuUpload /> 엑셀 업로드
-          </button>
-          <button type="button" className="admin-btn admin-btn-ghost sm" disabled={currentList.length === 0} onClick={downloadRoster}>
-            <LuDownload /> 명단 다운로드
-          </button>
-          <button type="button" className="admin-btn admin-btn-ghost sm" disabled={addRound === 0}
-                  title={addRound === 0 ? '학생을 넣을 차수를 먼저 고르세요.' : undefined} onClick={() => setPicking(true)}>
-            <LuUserPlus /> {rounds.length > 1 && addRound ? `${addRound}차에 학생 추가` : '학생 추가'}
-          </button>
-          <button type="button" className="admin-btn admin-btn-ghost sm" disabled={!hasFiles || downloadingFiles}
-                  title={hasFiles ? undefined : '내려받을 첨부파일이 없습니다.'} onClick={handleDownloadFiles}>
-            <LuPaperclip /> {downloadingFiles ? '압축 중…' : '첨부파일 다운로드'}
-          </button>
-        </div>
-
-        <div className="admin-program-status-row">
-          {mode === 'selected' && exportPhases.map(phase => (
-            <button key={phase} type="button" className="admin-btn admin-btn-ghost sm"
-                    disabled={exporting !== null} onClick={() => handleExport(phase)}>
-              <LuDownload /> {exporting === phase ? '엑셀 생성 중…' : `${SURVEY_EXPORT_LABEL[phase]} 결과 엑셀`}
-            </button>
-          ))}
-          <button className="admin-btn admin-btn-danger-ghost sm" onClick={handleDeleteProgram}>
-            <LuTrash2 /> 프로그램 삭제
-          </button>
+              <button className="admin-btn admin-btn-danger-ghost sm" onClick={handleDeleteProgram}>
+                <LuTrash2 /> 프로그램 삭제
+              </button>
+            </div>
+          </div>
         </div>
       </section>
 

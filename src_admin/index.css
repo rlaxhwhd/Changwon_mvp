@@ -603,10 +603,10 @@ input, textarea, select { font-family: var(--font); }
 .admin-stat-value { font-size: 26px; font-weight: 800; color: var(--color-text); line-height: 1; }
 .admin-stat-value em { font-size: 14px; font-weight: 700; color: var(--color-text-secondary); font-style: normal; margin-left: 3px; }
 /* 비교과 신청 현황 — 아래 버튼 줄이 주인공이라 카드는 낮게 둔다. */
-.admin-stat-grid.compact { gap: 10px; }
-.admin-stat-grid.compact .admin-stat-card { height: 64px; gap: 10px; padding: 10px 14px; }
-.admin-stat-grid.compact .admin-stat-icon { width: 34px; height: 34px; font-size: 16px; }
-.admin-stat-grid.compact .admin-stat-value { font-size: 20px; }
+.admin-stat-grid.compact { grid-template-columns: repeat(4, 108px); justify-content: flex-end; gap: 10px; }
+.admin-stat-grid.compact .admin-stat-card { height: 64px; gap: 6px; padding: 8px; }
+.admin-stat-grid.compact .admin-stat-icon { width: 28px; height: 28px; font-size: 14px; }
+.admin-stat-grid.compact .admin-stat-value { font-size: 18px; }
 .admin-stat-grid.compact .admin-stat-value em { font-size: 12px; }
 
 /* ─── Cards ──────────────────────────────────────────────────────── */
@@ -1788,6 +1788,26 @@ input, textarea, select { font-family: var(--font); }
 .admin-program-info dd { overflow: hidden; color: var(--color-text); font-size: 14px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
 .admin-program-status-row {
   display: flex; align-items: flex-end; justify-content: flex-end; gap: 8px; margin-top: 10px; flex-wrap: wrap;
+}
+.admin-program-summary { display: flex; align-items: flex-start; gap: 16px; }
+.admin-program-summary-main { flex: 1; min-width: 0; }
+.admin-program-rates { display: flex; flex-shrink: 0; gap: 10px; }
+.admin-program-rate-card {
+  box-sizing: border-box; width: 180px; height: 180px; padding: 12px;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  background: var(--color-bg); border: 1px solid var(--color-border); border-radius: var(--radius-lg);
+}
+.admin-program-rate-label { font-size: 13px; font-weight: 700; color: var(--color-text-secondary); }
+.admin-program-rate-card small { font-size: 12px; color: var(--color-text-secondary); }
+.admin-program-rate-ring {
+  --rate-color: var(--color-info);
+  width: 104px; height: 104px; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--rate-color) var(--rate), var(--color-border) 0);
+}
+.admin-program-rate-ring.success { --rate-color: var(--color-success); }
+.admin-program-rate-ring strong {
+  width: 78px; height: 78px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--color-bg); color: var(--color-text); font-size: 18px; font-weight: 800;
 }
 .admin-program-upload-actions { display: flex; justify-content: center; gap: 8px; }
 
