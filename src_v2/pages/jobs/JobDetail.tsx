@@ -39,8 +39,8 @@ export default function JobDetail() {
 
   // 신원 스냅샷은 서버가 만든다 — 화면이 학번·학과를 실어 보내지 않는다(CLAUDE.md 규칙 2).
   // 실패 사유(게이트 미충족·마감·중복)는 서버가 주고 모달이 그대로 보여 준다.
-  const submitApply = async (fileId: string) => {
-    await applyToJob(job.id, fileId)
+  const submitApply = async (fileId: string, recommenderId: string | null) => {
+    await applyToJob(job.id, fileId, recommenderId)
     setApplyOpen(false)
   }
   void tick

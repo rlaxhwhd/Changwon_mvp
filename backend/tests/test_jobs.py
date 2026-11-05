@@ -59,11 +59,13 @@ def upload_resume(client, identity='chaewon', name='이력서.pdf'):
     return response.json()
 
 
-def apply_as(client, identity, posting, file_id=None, expectedVersion=None):
+def apply_as(client, identity, posting, file_id=None, expectedVersion=None, recommenderId=None):
     body = {'expectedPostingVersion': posting['version'],
             'attachment': {'kind': 'RESUME_FILE', 'fileId': file_id or upload_resume(client, identity)['id']}}
     if expectedVersion:
         body['expectedVersion'] = expectedVersion
+    if recommenderId:
+        body['recommenderId'] = recommenderId
     return client.post(f"/api/v1/jobs/{posting['id']}/applications",
                        headers={**headers(identity), **key()}, json=body)
 
@@ -180,6 +182,29 @@ def test_cancel_then_reapply_keeps_the_previous_attempt(client):
           WHERE application_id=%s ORDER BY attempt_no''', (application['id'],)).fetchall()
     assert [a['attempt_no'] for a in attempts] == [1, 2], '직전 회차 스냅샷이 사라졌다'
     assert attempts[0]['attachment_file_id'] != attempts[1]['attachment_file_id']
+
+
+def test_recommender_is_kept_per_attempt_and_must_be_a_career_counsellor(client):
+    posting = new_posting(client)
+    for wrong in ('psych_yoon', 'cse-2', 'chaewon', 'nobody'):
+        assert apply_as(client, 'chaewon', posting, recommenderId=wrong).status_code == 422, wrong
+    chosen = apply_as(client, 'chaewon', posting, recommenderId='career_kim')
+    assert chosen.status_code == 201, chosen.text
+    attempt = chosen.json()['currentAttempt']
+    assert attempt['recommenderId'] == 'career_kim' and attempt['recommenderName']
+    canceled = client.post(f"/api/v1/job-applications/{chosen.json()['id']}/cancel",
+                           headers=headers('chaewon'), json={'expectedVersion': chosen.json()['version']})
+    # 재지원에서 없음을 고르면 새 회차만 비고, 직전 회차의 선택은 그대로 남는다.
+    again = apply_as(client, 'chaewon', posting, expectedVersion=canceled.json()['version'])
+    assert again.status_code == 201, again.text
+    assert again.json()['currentAttempt']['recommenderId'] is None
+    assert again.json()['currentAttempt']['recommenderName'] is None
+    with pool.connection() as conn:
+        rows = conn.execute('''SELECT t.recommender_uid,t.snap_recommender_name,s.role_code
+          FROM dc.job_application_attempt t LEFT JOIN dc.staff s ON s.intg_uid=t.recommender_uid
+          WHERE t.application_id=%s ORDER BY t.attempt_no''', (chosen.json()['id'],)).fetchall()
+    assert rows[0]['role_code'] == 'career' and rows[0]['snap_recommender_name'] == attempt['recommenderName']
+    assert rows[1]['recommender_uid'] is None and rows[1]['snap_recommender_name'] is None
 
 
 def test_duplicate_closed_and_wrong_transitions_are_refused(client):

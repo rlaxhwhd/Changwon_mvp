@@ -713,7 +713,8 @@ def attempt_dto(row):
             'deptLabel': row['snap_dept_label'], 'studentType': row['snap_student_type'],
             'attachmentKind': row['attachment_kind'], 'attachmentState': row['attachment_state'],
             'attachmentFileId': row['attachment_file_id'], 'attachmentName': row.get('attachment_name'),
-            'legacyFileName': row['legacy_file_name']}
+            'legacyFileName': row['legacy_file_name'],
+            'recommenderId': row.get('recommender_alias'), 'recommenderName': row['snap_recommender_name']}
 
 
 def application_dto(row, attempt=None):
@@ -732,8 +733,10 @@ APPLICATION_SELECT = '''SELECT a.*,p.alias,p.name AS person_name,st.name AS curr
 
 
 def current_attempt(conn, application):
-    row = conn.execute('''SELECT t.*,f.original_name AS attachment_name FROM dc.job_application_attempt t
+    row = conn.execute('''SELECT t.*,f.original_name AS attachment_name,r.alias AS recommender_alias
+      FROM dc.job_application_attempt t
       LEFT JOIN dc.file_object f ON f.id=t.attachment_file_id
+      LEFT JOIN dc.person r ON r.intg_uid=t.recommender_uid
       WHERE t.application_id=%s AND t.attempt_no=%s''',
       (application['id'], application['current_attempt_no'])).fetchone()
     return attempt_dto(row) if row else None
@@ -790,6 +793,7 @@ class ApplyBody(BaseModel):
     expectedPostingVersion: int = Field(ge=1)
     expectedVersion: int | None = Field(default=None, ge=1)
     attachment: Attachment
+    recommenderId: str | None = Field(default=None, min_length=1, max_length=100)
 
 
 @router.post('/jobs/{posting_id}/applications', status_code=201)
@@ -824,6 +828,14 @@ def apply(posting_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
         raise HTTPException(503, '드림캐치 포트폴리오 제출은 아직 준비되지 않았습니다. 개별 이력서를 올려 주세요.')
     if not body.attachment.fileId:
         raise HTTPException(422, '지원 서류를 첨부해 주세요.')
+    # 추천 선생님은 진로취업상담사만 된다. 이름은 목록(/counselor-profiles)의 표시명과 같게 남긴다.
+    recommender = None
+    if body.recommenderId:
+        recommender = conn.execute('''SELECT s.intg_uid,COALESCE(s.profile->>'displayName',p.name) AS name
+          FROM dc.staff s JOIN dc.person p USING(intg_uid) WHERE p.alias=%s AND s.role_code='career' ''',
+          (body.recommenderId,)).fetchone()
+        if not recommender:
+            raise HTTPException(422, '추천 선생님을 다시 선택해 주세요.')
     attempt_no = (existing['current_attempt_no'] + 1) if existing else 1
     attempt_id = 'jatt_' + uuid4().hex[:12]
     if existing:
@@ -835,7 +847,9 @@ def apply(posting_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
           status,applied_at,created_by,updated_by) VALUES(%s,%s,%s,1,'APPLIED',now(),%s,%s) RETURNING *''',
           ('japp_' + uuid4().hex[:12], posting_id, user['intg_uid'], user['intg_uid'],
            user['intg_uid'])).fetchone()
-    snapshot = snapshot_values(conn, student)
+    snapshot = {**snapshot_values(conn, student),
+                'recommender_uid': recommender['intg_uid'] if recommender else None,
+                'snap_recommender_name': recommender['name'] if recommender else None}
     columns = ','.join(snapshot)
     conn.execute(f'''INSERT INTO dc.job_application_attempt(id,application_id,attempt_no,{columns},
       attachment_kind,attachment_file_id,attachment_state,eligibility_evidence,created_by)

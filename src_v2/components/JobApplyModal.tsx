@@ -2,6 +2,7 @@ import { useRef, useState } from 'react'
 import Modal from './Modal'
 import { uploadJobFile } from '../../src_admin/data/jobsSource'
 import { jobCapability } from '../../shared/jobStore'
+import { getCounselorCards } from '../data/counselorsRead'
 import type { ApplyAttachmentKind } from '../../src_admin/data/schema/jobApplication'
 import './JobApplyModal.css'
 
@@ -23,19 +24,20 @@ interface Props {
   onClose: () => void
   company: string
   role: string
-  /** 업로드까지 마친 파일 id 를 넘긴다 — 지원 트랜잭션이 이 파일을 회차에 귀속시킨다. */
-  onSubmit: (fileId: string) => void | Promise<void>
+  /** 업로드까지 마친 파일 id 와 추천 선생님(없음이면 null)을 넘긴다 — 지원 트랜잭션이 회차에 귀속시킨다. */
+  onSubmit: (fileId: string, recommenderId: string | null) => void | Promise<void>
 }
 
 export default function JobApplyModal({ open, onClose, company, role, onSubmit }: Props) {
   const capability = jobCapability()
   const [kind, setKind] = useState<ApplyAttachmentKind | ''>('')
   const [file, setFile] = useState<File | null>(null)
+  const [recommenderId, setRecommenderId] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
 
-  const reset = () => { setKind(''); setFile(null); setError('') }
+  const reset = () => { setKind(''); setFile(null); setRecommenderId(''); setError('') }
   const handleClose = () => { reset(); onClose() }
 
   const portfolioReason = capability.unavailable
@@ -49,7 +51,7 @@ export default function JobApplyModal({ open, onClose, company, role, onSubmit }
     setError('')
     try {
       const stored = await uploadJobFile('RESUME', file)
-      await onSubmit(stored.id)
+      await onSubmit(stored.id, recommenderId || null)
       reset()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '지원하지 못했습니다. 다시 시도해 주세요.')
@@ -96,6 +98,15 @@ export default function JobApplyModal({ open, onClose, company, role, onSubmit }
           </span>
         </button>
       </div>
+
+      {/* 포트폴리오 카드와 같은 폭으로 그 밑에 놓는다. 선택지는 서버 상담사 목록이고 기본은 없음이다. */}
+      <label className="jam-recommender">
+        <span>추천 선생님</span>
+        <select value={recommenderId} onChange={e => setRecommenderId(e.target.value)}>
+          <option value="">없음</option>
+          {getCounselorCards('career').map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </label>
 
       <input
         ref={fileRef}

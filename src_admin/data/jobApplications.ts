@@ -170,8 +170,9 @@ export function getApplication(jobId: string, studentId: string): JobApplication
 /**
  * 학생 지원. 서류(개별 이력서 파일)를 먼저 올려 fileId 를 받은 뒤 부른다.
  * 취소했던 건은 새 행을 만들지 않고 회차를 올린다 — 직전 회차는 그대로 보존된다.
+ * recommenderId 는 추천 선생님(상담사 id)이다. '없음'이면 null.
  */
-export async function applyToJob(jobId: string, fileId: string): Promise<JobApplication> {
+export async function applyToJob(jobId: string, fileId: string, recommenderId: string | null): Promise<JobApplication> {
   const job = getJobById(jobId)
   if (!job) throw new Error('공고를 찾을 수 없습니다.')
   const mine = getApplications().find(a => a.jobId === jobId)
@@ -182,6 +183,7 @@ export async function applyToJob(jobId: string, fileId: string): Promise<JobAppl
       expectedPostingVersion: job.version,
       expectedVersion: mine?.status === 'CANCELED' ? mine.version : undefined,
       attachment: { kind: 'RESUME_FILE', fileId },
+      recommenderId,
     }),
   })
   await refreshApplication(created.id)

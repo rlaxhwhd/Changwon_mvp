@@ -73,6 +73,33 @@
   line-height: 1.5;
 }
 
+/* ─── 추천 선생님 ─── */
+
+/* 두 갈래 카드의 왼쪽 칸과 폭을 맞춘다 — 카드 사이 간격이 12px 이다. */
+.jam-recommender {
+  display: block;
+  width: calc(50% - 6px);
+  margin-top: 12px;
+}
+
+.jam-recommender span {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--color-navy);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.jam-recommender select {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  font-size: 14px;
+}
+
 /* ─── 개별 이력서 ─── */
 
 /* 선택기는 선택 버튼이 대신 연다 — 기본 파일 입력의 생김새를 그대로 두지 않는다. */
@@ -168,4 +195,5 @@
 
 @media (max-width: 900px) {
   .jam-choices { grid-template-columns: 1fr; }
+  .jam-recommender { width: 100%; }
 }

@@ -588,6 +588,7 @@ CREATE TABLE dc.org_assignment (
 |---|---|---|
 | 전형 단계 | `dc.job_stage` (공고별 행) | enum 이 아니다 — 공고마다 단계 수와 이름이 다르고 담당자가 편집한다.<br>교내 절차 2단계(서류 검토·기업 전달)는 `system_key` 로 표시하고 **서버가 편집을 거부**한다. 전역 상수 ID 를 쓰지 않는다 — 그러면 서로 다른 공고의 이력이 같은 단계를 가리킨다 |
 | 제출 회차 | `dc.job_application_attempt` (append-only) | 취소 후 재지원이 있다. 한 행을 덮어쓰면 **직전 제출 스냅샷·서류 귀속·취소 이력이 사라진다**. 지원 1행은 «현재»만 들고 제출은 회차로 쌓는다 |
+| 추천 선생님 | `dc.job_application_attempt.recommender_uid` · `snap_recommender_name` (157) | 지원할 때 학생이 고른 진로취업상담사. NULL 이 «없음»이다. 재지원에서 달라질 수 있어 회차에 둔다. 선생님별 통계는 `recommender_uid` 로 묶고, 표시 이름은 스냅샷을 쓴다 |
 | 서류 파일 | `dc.file_object` + 웹루트 밖 볼륨 | 바이트는 DB 밖에, 메타만 DB 에. 정적 서빙하지 않고 API 가 권한을 확인한 뒤 스트리밍한다 (#41 해소) |
 | 기업 | `dc.company` | `job_company` 가 아니다 — 조교 「학과 추천기업 관리」가 같은 사전을 쓴다. 채용 전용 자산이 아니므로 도메인 이름을 붙이지 않는다 |
 | 열람 감사 | `dc.job_access_event` (append-only) | `dc.admin_event` 에는 before/after 와 NOT NULL `reason` 이 있어 «열람» 사건을 담을 자리가 없다. CSV 본문·자소서 본문·학생 PII 는 넣지 않는다 |

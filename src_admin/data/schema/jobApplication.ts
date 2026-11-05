@@ -132,6 +132,10 @@ export interface JobApplicationAttempt {
   attachmentFileId: string | null
   attachmentName: string | null
   legacyFileName: string | null
+  /** 추천 선생님(상담사 id). 없음이면 null */
+  recommenderId: string | null
+  /** 지원 시점의 추천 선생님 이름 스냅샷 */
+  recommenderName: string | null
 }
 
 // ── 지원 1건 ─────────────────────────────────────────────────────────────────

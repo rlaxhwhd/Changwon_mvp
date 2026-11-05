@@ -148,7 +148,7 @@ const router = createBrowserRouter(
         // ⚠ '/jobs/:id' 보다 위에 둔다 — 정적 세그먼트가 먼저 읽히게 해 공고 상세로 새지 않게 한다.
         { path: '/jobs/notices',         loader: studentPageLoader('notices'), element: <Notices /> },
         // 목록과 같은 게이트를 건다 — 상세 직접 URL 로 순서를 우회할 수 없어야 한다(CLAUDE.md 13조).
-        { path: '/jobs/:id',             loader: studentPageLoader('jobs', 'jobWishlist', 'jobCapability', 'applications'), element: <StageGate stage="employment" title="채용공고 상세"><JobDetail /></StageGate> },
+        { path: '/jobs/:id',             loader: studentPageLoader('jobs', 'jobWishlist', 'jobCapability', 'applications', 'counselors'), element: <StageGate stage="employment" title="채용공고 상세"><JobDetail /></StageGate> },
 
         // 마이페이지
         { path: '/mypage',           element: <Navigate to={getActiveStudent().grade >= 4 ? '/mypage/portfolio' : '/mypage/applications'} replace /> },
