@@ -7,10 +7,9 @@ import JobBoard from '../../src_v2/components/JobBoard'
 import { summarizeJob } from '../data/jobApplications'
 
 /** scope 별 화면 문구 — 교내(직접 등록)와 외부(API 수집) 목록이 같은 컴포넌트를 공유한다. */
-const SCOPE_COPY: Record<JobScope, { title: string; hint: string; emptyTitle: string; emptyMessage: string }> = {
+const SCOPE_COPY: Record<JobScope, { title: string; hint?: string; emptyTitle: string; emptyMessage: string }> = {
   internal: {
     title: '교내 채용공고 목록',
-    hint: '상담사가 직접 등록한 공고입니다. 등록한 공고는 학생 취업지원 > 교내 채용공고 화면에 그대로 노출됩니다.',
     emptyTitle: '등록된 교내 채용공고가 없습니다',
     emptyMessage: '공고를 직접 등록하면 이 목록과 학생 화면에 함께 노출됩니다.',
   },
@@ -46,16 +45,18 @@ export default function JobList({ scope }: { scope: JobScope }) {
         )}
       </header>
 
-      <div className="admin-editor-hint">
-        <LuInfo />
-        {copy.hint}
-      </div>
+      {copy.hint && (
+        <div className="admin-editor-hint">
+          <LuInfo />
+          {copy.hint}
+        </div>
+      )}
 
       {/* 목록 본문은 학생 /v2/jobs 와 같은 컴포넌트다 — 카드 디자인이 갈리지 않는다.
           찜(별)은 학생 전용이라 여기선 끈다.
           카드 클릭 = '보기'(학생 화면에 어떻게 나가는지 확인), 카드 하단 '수정' = 편집 화면.
-          외부 공고는 원본이 외부에 있어 수정 버튼을 주지 않는다.
-          「교내공고 관리」(/jobs/manage)는 그대로 둔다 — 일반채용 행까지 한 번에 다루는 자리다. */}
+          일반채용 행은 수정 버튼이 없어 '보기'의 「공고 수정」으로 간다.
+          외부 공고는 원본이 외부에 있어 수정 버튼을 주지 않는다. */}
       <JobBoard
         applicantCountOf={job => summarizeJob(job.id).total}
         jobs={all}

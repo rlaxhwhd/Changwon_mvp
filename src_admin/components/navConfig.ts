@@ -165,12 +165,10 @@ const ALL_SECTIONS: NavSection[] = [
     path: '/jobs',
     icon: LuBuilding2,
     children: [
+      // 등록·수정은 목록 화면의 버튼으로 간다(jobs.1·jobs.2 메뉴는 156 에서 내렸다).
       { label: '교내 공고 목록', path: '/jobs', icon: LuList },
-      // 목록은 학생이 보는 카드 그대로 '보기', 수정·삭제는 관리 화면에서 — 비교과와 같은 갈래다.
-      { label: '교내공고 관리', path: '/jobs/manage', icon: LuTable },
-      { label: '공고 등록', path: '/jobs/new', icon: LuPlus },
-      { label: '외부 공고 목록', path: '/jobs/external', icon: LuGlobe },
-      { label: '추천채용 지원자관리', path: '/jobs/applicants', icon: LuUsers },
+      { menuCode: 'jobs.3', label: '외부 공고 목록', path: '/jobs/external', icon: LuGlobe },
+      { menuCode: 'jobs.4', label: '추천채용 지원자관리', path: '/jobs/applicants', icon: LuUsers },
     ],
   },
 
