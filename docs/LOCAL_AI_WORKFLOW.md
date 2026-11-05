@@ -1,5 +1,15 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-05 실제 DOCX·HWP 이력서 업로드 API/웹 배포
+
+- 원격 dev의 새 기능 커밋 c38dee6 한 건을 배포했다. 정상 DOCX의 OOXML 관계 URL에 포함된 package 문자열을 내장 객체로 오인하던 검사를 관계 타입 마지막 조각 기준으로 수정하고, HWP의 기본 빈 스크립트 틀과 문서 내부 BMP/EMF/WMF를 허용한다. 실행 스크립트·매크로·내장 객체 거절은 유지한다. 학생 채용 지원 모달에 파일당 10MB 이하 안내를 추가한다. git archive c38dee6의 깨끗한 소스로 빌드했으며 미커밋 타 작업은 제외했다. 마지막 fetch에서도 추가 기능 커밋은 없었다.
+- 격리 DB dc_regression_20261105043522_c9785a_test의 content_security 테스트 29개 통과, 586개 제외, 기존 경고 3개. 정상 OOXML 관계, 빈 HWP 스크립트, 실행 코드·손상 스트림 거절과 기존 파일 업로드 API 경계 검사를 포함한다. TypeScript/Vite 빌드 통과. 기존 native-config·큰 번들 경고는 유지된다. API는 backend/Dockerfile.company의 기존 CentOS 호환 API 기반, 웹은 기존 list-tables-20261105 기반에 새 HTML을 복사했다. API/web=uploads-20261105, RAG=ai-jobs-20261029 유지. 신규 마이그레이션 없이 155 유지.
+- npm run docker:up -- --no-build로 로컬 Docker 반영·백업 local-before-migrate-20261105043810610.dump·전체 healthy를 확인했다. 커밋 소스·실행 로컬 API·회사 이미지의 Python 71개 파일 해시와 마이그레이션 체크섬이 일치한다. 로컬 복원 참조 DB dc_release_uploads_20261105_ref_test 및 서버 복원 DB dc_deploy_uploads_20261105_test에서 코드·155개 마이그레이션·DB 구조 MATCH를 확인했다.
+- 서버 DB·Compose 백업 및 감사/이미지 자료: /opt/dreamcatch/ai/uploads-20261105/. release.tar 983205888B, SHA256=881760a98249059cc0a71037e145c6cbd1b904a0867be7386aa55016e64e8565, 전송 체크섬 일치. 서버 백업을 서버 별도 테스트 DB에 복원한 리허설과 운영 적용 직전·직후 감사에서 전체 152개 테이블 건수·해시 불변을 확인했다. 누락 마이그레이션 없음으로 종료했으며 로컬 업무 데이터를 운영에 복원하지 않았다.
+- 최종 API/web healthy, nginx 정상, 코드·마이그레이션·스키마 MATCH. 로컬/서버 HTML SHA256 일치: admin=60973d49ef21dae70bfe9be78f1209f7bddf18e2e2fbe47b4f52d5014f4e67ca, v2=92810c86c1936074e24c33b02d0afd357005a86b8b4d68a31559c8cdf77d4306. 복구는 Compose 백업 및 이전 API roster-rates-20261104·웹 list-tables-20261105로 한다. 업무 데이터를 보존하며 서버는 실행 상태다.
+- EgoLite로 배포 전 서버 및 배포 후 로컬/서버 학생 채용 목록·상세 조회를 확인했다. 확인한 공고는 모두 마감 상태여서 지원 버튼이 비활성이고, 운영 공고 기간 변경·지원 제출·이력서 업로드는 수행하지 않았다. 새 모달 안내의 실제 펼침 및 유효 파일 업로드는 브라우저에서 미검증이며 파일 판정과 업로드 경계는 위 격리 테스트 범위다. 로컬 상세 확인 구간 HTTP 실패/네트워크 실패/Runtime 예외 0, 서버 배포 후 상세도 동일하다. 서버 jobs 헤더 수신 44.742ms는 단회 관측이며 성능 개선 주장은 없다.
+- 브라우저 창 최소화로 screenshot 촬영이 거절됐고 창 복원 CDP도 No web contents 오류로 실패하여 시각 검증은 미수행이다. snapshot·DOM·네트워크 검증만 수행했으며 임시 인증서 허용을 원복하고 작업 공간을 종료했다. Graft 자동 갱신 후 구조 그래프 동기화 OK, validate_content 공통 저장 경로와 JobApplyModal의 JobDetail 사용 관계 확인. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다. 기존 metadata 중복 요청과 첫 로드맵 생성 취소의 dc_app DELETE 권한 누락은 범위 밖으로 미해결이다.
+
 ## 2026-11-05 공통 목록 표·학생 대상 필터 웹 배포
 
 - 원격 dev의 15681e4(학생 비교과 대상 태그 필터), 88e079a(ATTENDED 참여인원 포함 및 상태 카드 너비), b091088(교수 홈 기준 공통 목록 표 디자인·긴 글 왼쪽 정렬) 3건을 배포했다. git archive b091088의 깨끗한 소스를 사용하고 미커밋 타 작업을 제외했다. 마지막 fetch에서도 추가 기능 커밋은 없었다. 웹=list-tables-20261105, API=roster-rates-20261104 및 RAG=ai-jobs-20261029 유지. API 재시작·운영 마이그레이션 실행·업무 데이터 변경은 수행하지 않았다.
