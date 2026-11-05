@@ -92,7 +92,7 @@ export default function JobApplyModal({ open, onClose, company, role, onSubmit }
           <i className="fa-regular fa-file-lines" />
           <span>
             <strong>개별 이력서 첨부</strong>
-            <small>직접 작성한 이력서 파일을 올립니다 (pdf · doc · docx · hwp · hwpx)</small>
+            <small>직접 작성한 이력서 파일을 올립니다 (pdf · doc · docx · hwp · hwpx, 파일당 10MB 이하)</small>
           </span>
         </button>
       </div>

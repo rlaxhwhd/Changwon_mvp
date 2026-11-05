@@ -8,6 +8,7 @@ from pathlib import PurePosixPath
 import re
 import warnings
 from zipfile import ZipFile
+import zlib
 
 from defusedxml import ElementTree
 from fastapi import HTTPException
@@ -21,6 +22,12 @@ DOCUMENTS = {'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'hwp', 'hwpx'}
 SCRIPT = re.compile(r'\.(?:js|mjs|cjs|jsx|ts|tsx|html?|xhtml|svg|php\d*|phtml|asp|aspx|jsp|py|pyc|sh|bash|ps1|bat|cmd|exe|dll|com|scr|vbs|vbe|wsf|hta|jar|lnk|msi)(?:\.|$)', re.I)
 MAX_EXPANDED = 40 * 1024 * 1024
 MAX_ENTRIES = 1000
+# 문서 안에서만 받는 그림 형식 — Pillow 로 다시 그릴 수 없지만 문서 프로그램이 그림으로만 읽는다.
+DOCUMENT_IMAGES = {'bmp', 'emf', 'wmf'}
+HWP_SCRIPT_STREAMS = {'scripts/defaultjscript', 'scripts/jscriptversion'}
+HWP_EMPTY_SCRIPT = re.compile(r'(?:varDocuments=XHwpDocuments;)?(?:varDocument=Documents\.Active_XHwpDocument;)?'
+                              r'(?:functionOn\w+\(\)\{\})*')
+MAX_HWP_SCRIPT = 64 * 1024
 
 
 def reject():
@@ -86,12 +93,42 @@ def validate_pdf(data: bytes):
         walk(IndirectObject(number, 0, reader))
 
 
+def hwp_script_text(raw: bytes, compressed: bool) -> str:
+    """Scripts/DefaultJScript 의 본문 — (u32 글자 수 + UTF-16) 반복, 0xFFFFFFFF 로 끝난다."""
+    if compressed:
+        inflater = zlib.decompressobj(-15)
+        raw = inflater.decompress(raw, MAX_HWP_SCRIPT)
+        if inflater.unconsumed_tail:
+            reject()
+    parts, at = [], 0
+    while True:
+        size = int.from_bytes(raw[at:at + 4], 'little')
+        at += 4
+        if size == 0xFFFFFFFF:
+            break
+        if at + size * 2 > len(raw):
+            reject()
+        parts.append(raw[at:at + size * 2].decode('utf-16-le'))
+        at += size * 2
+    if at != len(raw):
+        reject()
+    return ''.join(parts)
+
+
+def empty_hwp_script(text: str) -> bool:
+    """한글이 저장하며 넣는 빈 틀인가. 주석과 공백을 뺀 나머지에 실행문이 있으면 거절한다."""
+    # JS 는  ·  도 줄 끝으로 본다 — 주석 뒤에 코드를 숨기지 못하게 같이 끊는다.
+    return bool(HWP_EMPTY_SCRIPT.fullmatch(re.sub(r'\s', '', re.sub(r'//[^\r\n  ]*', '', text))))
+
+
 def validate_ole(data: bytes, ext: str):
     if not olefile.isOleFile(BytesIO(data)):
         reject()
     with olefile.OleFileIO(BytesIO(data), raise_defects=olefile.DEFECT_INCORRECT) as doc:
         paths = ['/'.join(p).lower() for p in doc.listdir()]
-        if any(any(x in p for x in ('vba', 'macros', 'scripts', 'objectpool', 'ole10native', 'encryptedpackage')) for p in paths):
+        # 한글은 스크립트가 없는 문서에도 Scripts 저장소를 만든다. 이 두 스트림만 내용으로 판정한다.
+        checked = [p for p in paths if not (ext == 'hwp' and p in HWP_SCRIPT_STREAMS)]
+        if any(any(x in p for x in ('vba', 'macros', 'scripts', 'objectpool', 'ole10native', 'encryptedpackage')) for p in checked):
             reject()
         expected = {'doc': {'worddocument'}, 'xls': {'workbook', 'book'},
                     'ppt': {'powerpoint document'}, 'hwp': {'fileheader'}}[ext]
@@ -102,7 +139,11 @@ def validate_ole(data: bytes, ext: str):
             if not header.startswith(b'HWP Document File') or len(header) < 40:
                 reject()
             # Password, distribution documents, and script-enabled documents cannot be inspected safely.
-            if int.from_bytes(header[36:40], 'little') & (2 | 4 | 8):
+            attributes = int.from_bytes(header[36:40], 'little')
+            if attributes & (2 | 4 | 8):
+                reject()
+            if 'scripts/defaultjscript' in paths and not empty_hwp_script(
+                    hwp_script_text(doc.openstream('Scripts/DefaultJScript').read(), bool(attributes & 1))):
                 reject()
 
 
@@ -154,10 +195,14 @@ def validate_archive(data: bytes, ext: str, budget: dict, depth: int):
                         reject()
                     if any('macroenabled' in v.lower() or 'vbaproject' in v.lower() for v in node.attrib.values()):
                         reject()
-                    if local == 'relationship' and any(x in node.attrib.get('Type', '').lower() for x in ('oleobject', 'package', 'vbaproject', 'control')):
+                    # Type 끝 조각만 본다 — 모든 OOXML 의 .../package/2006/relationships/... 주소는 내장 패키지가 아니다.
+                    relation = node.attrib.get('Type', '').lower().rsplit('/', 1)[-1]
+                    if local == 'relationship' and (relation == 'package' or any(x in relation for x in ('oleobject', 'vbaproject', 'control'))):
                         reject()
             elif suffix in IMAGES:
                 image_bytes(content, suffix)
+            elif suffix in DOCUMENT_IMAGES:
+                continue
             elif suffix == 'bin':
                 # Printer settings are not executable OLE packages; unknown binary parts fail closed.
                 if 'printersettings/' not in name:

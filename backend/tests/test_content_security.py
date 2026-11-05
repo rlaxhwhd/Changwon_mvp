@@ -1,12 +1,13 @@
 from io import BytesIO
 from zipfile import ZipFile, ZIP_DEFLATED
 import base64
+import zlib
 
 import pytest
 from fastapi import HTTPException
 from PIL import Image
 from app.html_security import clean_html
-from app.upload_security import validate_content
+from app.upload_security import empty_hwp_script, hwp_script_text, validate_content
 from app.programs import ProgramBody
 from pydantic import ValidationError
 from security_fixtures import pdf_bytes
@@ -56,6 +57,61 @@ def test_valid_files_and_image_reencoding():
     assert Image.open(BytesIO(image)).size == (2, 2)
     docx = zipped({'[Content_Types].xml': b'<Types/>', 'word/document.xml': b'<document/>'})
     assert validate_content('resume.docx', docx) == docx
+
+
+def office_rels(relation):
+    return ('<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            f'<Relationship Id="rId1" Type="{relation}" Target="x"/></Relationships>').encode()
+
+
+def office_docx(relation, **extra):
+    return zipped({'[Content_Types].xml': b'<Types/>', 'word/document.xml': b'<document/>',
+                   '_rels/.rels': office_rels(relation), **extra})
+
+
+def test_real_office_relationships_pass_but_embedded_objects_do_not():
+    # 실제 Word 가 저장한 모든 docx 의 관계 주소에 package 가 들어 있다.
+    core = 'http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties'
+    docx = office_docx(core, **{'word/media/image1.emf': b'emf', 'word/media/image2.bmp': b'bmp'})
+    assert validate_content('resume.docx', docx) == docx
+    base = 'http://schemas.openxmlformats.org/officeDocument/2006/relationships/'
+    for relation in ('package', 'oleObject', 'control'):
+        with pytest.raises(HTTPException):
+            validate_content('resume.docx', office_docx(base + relation))
+
+
+def hwp_script(*parts):
+    body = b''.join(len(p).to_bytes(4, 'little') + p.encode('utf-16-le') for p in parts)
+    return body + b'\xff\xff\xff\xff'
+
+
+HWP_HEADER = 'var Documents = XHwpDocuments;\r\nvar Document = Documents.Active_XHwpDocument;\r\n'
+
+
+def test_hwp_default_script_template_is_not_active_content():
+    handlers = 'function OnDocument_New()\r\n{\r\n\t//todo : \r\n}\r\nfunction OnCheckBox1_Click()\r\n{\r\n}\r\n'
+    assert hwp_script_text(hwp_script('', '', '', ''), False) == ''
+    packer = zlib.compressobj(wbits=-15)
+    packed = packer.compress(hwp_script(HWP_HEADER, handlers)) + packer.flush()
+    assert empty_hwp_script(hwp_script_text(packed, True))
+    assert empty_hwp_script('')
+
+
+@pytest.mark.parametrize('code', [
+    'function OnDocument_New()\r\n{\r\n\tnew ActiveXObject("x");\r\n}\r\n',
+    HWP_HEADER + 'void(0);',
+    '//todo void(0)',
+    '/* */void(0)',
+    'function OnDocument_New(){}void(0)',
+])
+def test_hwp_script_with_code_is_refused(code):
+    assert not empty_hwp_script(code)
+
+
+@pytest.mark.parametrize('raw', [b'\x05\x00\x00\x00a', hwp_script('') + b'hidden', b''])
+def test_malformed_hwp_script_is_refused(raw):
+    with pytest.raises(HTTPException):
+        hwp_script_text(raw, False)
 
 
 def test_html_and_thumbnail_boundaries():
