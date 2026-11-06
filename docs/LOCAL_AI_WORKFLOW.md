@@ -1,5 +1,19 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-06 비교과 관리·회사 제출용 포트폴리오 API/웹/158~159 서버 배포
+
+- 원격 dev의 c19a195(비교과 관리 필터·학생 명단 엑셀), d4e1f61·7b4bc4f(설계/리뷰 지침), 55e2265(회사 제출용 포트폴리오)를 확인했다. git archive 55e2265의 깨끗한 소스로 빌드했고 미커밋 타 작업은 제외했다. 최종 fetch에도 새 기능 커밋은 없었다. API/web=portfolio-20261106, RAG=ai-jobs-20261029 유지. 서버 실행 상태 유지.
+- 사용자가 클로드 세션에서 Astra 리뷰를 마쳤다고 알려 중복 실행하지 않았다. `.ai/handoff-db/0010-program-manage-filters/work-order.md`의 필수 교정·팀장 검증 마감 허용 및 반영 기록, `0009-student-portfolio/architecture-review.md`의 ASTRA_APPROVED revision 3와 implementation.md의 팀장 검수를 확인했다. 158은 다른 세션에서 승인 전 로컬 적용 및 주석 체크섬 갱신을 했다고 기록돼 있다. 이번 배포에서는 적용 파일을 변경하지 않고 원격 커밋 체크섬과 서버의 기존 157개 이력 보존을 검증했다.
+- 158은 program.certificate_issued 기본 true와 학사 상세 뷰의 mobile/email을 추가한다. 목록에 연락처를 추가하지 않고 권한 있는 비교과 명단 엑셀에서 사용한다. 159는 포트폴리오 4개 테이블, 불변 제출본·파일 참조·이력 트리거, 파일 owner/slot CHECK 확장, 복합 FK와 인덱스 및 dc_app 권한을 추가한다. 실제 DDL과 API/웹 전체 소스를 회사 이미지에 포함했다.
+- 격리 DB dc_regression_20261106062325_661ef0_test에서 관련 테스트 153 passed, 1 failed, 543 deselected, 기존 경고 3개. 실패는 test_growth.py::test_portfolio_projection_has_no_shared_sample_data의 샘플 이메일 기대값과 NULL 응답 차이다. 이전 배포 커밋 5fe57f7을 별도 깨끗한 소스·격리 DB dc_regression_20261106062627_e6c410_test에서 실행해 같은 실패를 재현했다(1 failed, 615 deselected). 이번 배포에서 이 기존 실패를 수정하거나 전체 통과로 보고하지 않는다. TypeScript/Vite 빌드 통과, 기존 native-config·큰 번들 경고 유지.
+- npm run docker:up -- --no-build 완료, 백업 local-before-migrate-20261106062908387.dump. 실제 로컬 API·커밋 소스·회사 API 파일 해시 및 159개 마이그레이션 체크섬 일치. 로컬 DB 복원 참조 dc_release_portfolio_20261106_ref_test도 검증했다. 로컬 업무 데이터를 서버에 덮어쓰지 않았다.
+- 서버 백업·Compose 원본·이미지·감사 자료: /opt/dreamcatch/ai/portfolio-20261106/. release.tar 1028734464B, SHA256=f1298ab8ae68d2c5d69a70b05f6736d30bd47aaeabaddd2fdd681c293977e4c2, 전송 체크섬 일치. 서버 백업을 dc_deploy_portfolio_20261106_test에 복원해 158·159 적용 및 전체 스키마 일치 확인 후 운영에 적용했다. 리허설과 운영 직전·직후 감사에서 기존 program 값은 새 기본 컬럼 제외 전체 해시 불변·새 값 모두 true, 나머지 기존 업무 테이블 해시 불변, 새 4개 테이블은 빈 상태, 마이그레이션 이력은 기존 체크섬 보존 및 2개 추가만 확인했다. 이후 정상 사용자 활동은 별도다.
+- 최종 API/web healthy, nginx 정상, 코드·159개 마이그레이션·전체 스키마 MATCH. 스키마 비교는 바로 아래 11-05 기록의 세 가지 검증된 직렬화 표현 차이만 동일하게 정규화했고 다른 정의는 생략하지 않았다. 로컬/서버 HTML SHA256: admin=10c092ba2c290d19dbb156502fdc8bb8ac49878c3d53215a0c2d6d475f41f150, v2=4ac67c15f5a6d676d6af5a9f798c3d1f08048f5b3601a4b36119d1e1e7fca6e9.
+- 복구는 백업 Compose와 이전 API/web job-recommender-20261105로 한다. nullable/additive 구조와 새로 생긴 포트폴리오·제출본·첨부·이력은 보존하고 적용된 158·159를 삭제/수정하지 않는다. 새 제출본을 만든 뒤 구조 축소나 이전 앱의 지원 정책 복귀에는 별도 검토가 필요하다.
+- EgoLite 로컬의 세션 만료 401은 재로그인 후 해소됐고, 비교과 관리 필터·그룹 등록 표시 및 미발급 검색 시 0행을 확인했다. 해당 정상 조회 구간 API 모두 200, Runtime 예외 없음. /programs 단일 관측 441ms·전송 약 1.12MB이며 성능 개선율이나 부하 측정은 아니다. 기존 1280px 관리자 최소 너비로 작은 뷰포트에서는 가로 스크롤이 발생해 검색 동작은 1440px CDP 뷰포트로 확인했다. 유효 명단 엑셀 다운로드·운영 포트폴리오 작성/지원 제출은 수행하지 않았다.
+- 서버 실제 학생 로그인 후 포트폴리오 versions 탭의 회사 제출용 목록·새로 만들기 표시를 확인했다. 이 구간 목록 API 40ms/323B, 기존 portfolio projection 46ms/647B 단일 관측, HTTP 오류·네트워크 실패·Runtime 예외 없음. 생성/수정/지원 제출은 누르지 않았다. 서버 스크린샷은 창 최소화로 실패하여 snapshot·DOM·네트워크까지만 검증했다. 로컬 스크린샷은 촬영하고 열어 확인했다. 인증서 임시 허용 원복 및 작업 공간 종료 완료. EgoLite 업데이트 알림이 있었으나 설치는 변경하지 않았다.
+- Graft 구조 자동 갱신 및 current_attempt의 목록·상세·지원·내 지원·전환 호출 관계를 확인했다. 기존 메타데이터/홈 부팅 중복 조회와 첫 로드맵 생성 취소 DELETE 권한 누락은 이번에 수정하지 않았다. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다.
+
 ## 2026-11-05 채용 메뉴 정리·추천 선생님 API/웹/156~157 서버 배포
 
 - 요청 시작 시 원격 최신 d61e8b8(중복 채용 관리/등록 메뉴 및 교내 목록 안내문 제거)을 먼저 배포했다. 진행 중 다른 세션의 484ee8f(채용 지원 회차별 추천 선생님 선택·서버 검증·이름 스냅샷)가 커밋·푸시되어 추가 배포했다. 각 git archive의 깨끗한 소스를 사용했다. 157은 미커밋 상태에서는 제외했고 커밋 확인 후에만 포함했다. 마지막 fetch의 최신 기능 커밋은 484ee8f였다. 최종 API/web=job-recommender-20261105, RAG=ai-jobs-20261029 유지, 마이그레이션 157 적용 완료다.
