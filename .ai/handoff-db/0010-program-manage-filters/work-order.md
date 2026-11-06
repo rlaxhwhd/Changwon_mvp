@@ -17,10 +17,10 @@
 ## 설계
 - 158: `dc.program.certificate_issued boolean NOT NULL DEFAULT true` — 기존 프로그램은 등록 화면 기본값인 발급.
 - 158: `dc.academic_student_details` 끝에 `hp AS mobile`, `email` 추가(147 과 같은 CREATE OR REPLACE).
-- `POST /programs/export` `{programIds, statuses}` — 상담사(career·psych)만, 그 외 403. statuses 가 비면 취소 포함 전체.
-- 학생상태 판정은 현재 상태 하나다. 선발 = 선발이면서 결과 없음, 수료·미수료·참석·불참은 결과 기준, 신청만 취소 제외 전체.
+- `POST /programs/export` `{programIds, statuses}` — 상담사이면서 `programs.1` 메뉴가 있어야 한다, 그 외 403. statuses 가 비면 취소 포함 전체. 내려받기는 `admin_event` 에 건수만 남긴다.
+- 학생상태: 신청 = 취소 제외 전체, 선발 = 결과가 난 학생까지 선발된 학생 전부(사용자 확정), 수료·미수료·참석·불참은 결과 기준.
   서버 `STUDENT_STATES` 와 프론트 `matchesStudentState` 가 같은 판정이다.
-- 선발기준 학년·학적 = 신청 시점 스냅샷. 학적은 스냅샷에 없어 이번에 `studentStatus` 를 더한다. 없는 옛 행은 현재값으로 채운다.
+- 선발기준 학년·학적 = 신청 시점 스냅샷, 현재기준 = 학사(`student_login_source`). 학적은 스냅샷에 없어 이번에 `studentStatus` 를 더한다. 없는 옛 행은 현재값으로 채운다.
 - `certificateIssued` 는 ProgramBody 선택값. 옛 클라이언트가 생략하면 저장값을 유지한다.
 
 ## 범위 밖

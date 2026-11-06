@@ -214,6 +214,8 @@ ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration �
 
 2026-09-16 경험일지 보완(092): 기존 `growth_entry(kind_code=JOURNAL)`·`growth_event`를 학생/상담사/자소서가 공유한다. 학생별/종류별 정렬 인덱스를 추가했다. 권한·API·검증·복구는 [경험일지 연결 명세](docs/GROWTH_JOURNAL.md)를 따른다.
 
+2026-11-06 프로그램 관리 필터·학생 명단(158, 로컬 적용 완료): `dc.program.certificate_issued`(참여 인증서 발급, 기본 true — 기존 행의 true 는 추정값이다)를 더했다. `dc.academic_student_details` 끝에 학사 `hp AS mobile`·`email` 을 붙였다. 연락처는 `POST /programs/export` 만 읽고 목록 응답에는 없다. 호출은 상담사이면서 `programs.1` 메뉴가 있어야 하고 `admin_event(entity=program_student_export)` 에 건수만 남는다. `program_apply.snapshot` 에 학사 기준 `studentStatus` 를 더했다.
+
 2026-10-28 학생 외국인 여부(147, 로컬 적용 완료): `dc.academic_student_details`에 학사 `v_usr_inf.for_yn`을 `foreigner_code`(Y/N)로 덧붙였다(원본 쓰기·권한 확대 없음). `GET /academic-students/{id}`가 `foreigner`(true/false, 그 밖 null)를 내고 학생 상세 모달 식별 바에 표시한다. 목록 roster에는 넣지 않았다. 같은 날 `/academic-students/metadata`에 `options.collegeMajors`(`{대학: [학과]}`, 학적 행의 대학·학과 쌍)를 더했다 — 대학 필터를 고르면 학과 옵션을 좁힌다.
 
 2026-10-27 상담사 상담 등록(마이그레이션 없음): `POST /counsel-requests/staff`(진로취업상담사만) → `counsel_request(type=진로취업, status=CONFIRMED, counselor=본인, source_payload.origin=CNS_ASSIGN, topic=상담사 지정 …, topic_code NULL, intake=[])` + `counsel_event(CONFIRM)` 한 트랜잭션. 학생 알림은 기존 CONFIRM 트리거(「상담 신청이 확정되었습니다」)가 보낸다 — REQUESTED 이벤트는 남기지 않는다(담당 상담사 본인에게 「새 신청」 알림이 가므로). 동의서(`counsel_consent`)·사전응답 없음. 잠금은 학생 신청과 같은 `care_gate`·`general_gate`(`GET /counsel-track-gates/{학생}`), 시간 겹침은 `check_slot`.
