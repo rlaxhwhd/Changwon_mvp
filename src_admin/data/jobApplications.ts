@@ -167,12 +167,17 @@ export function getApplication(jobId: string, studentId: string): JobApplication
 // 모든 전이는 서버가 같은 트랜잭션에서 이력을 남긴다(CLAUDE.md 규칙 11).
 // 화면이 이력을 직접 append 하지 않는다 — 이제 그 경로는 없다.
 
+/** 지원 서류 — 올린 파일이거나, 고른 포트폴리오 한 벌이다. */
+export type ApplyAttachment =
+  | { kind: 'RESUME_FILE'; fileId: string }
+  | { kind: 'PORTFOLIO'; portfolioId: string; expectedPortfolioVersion: number }
+
 /**
- * 학생 지원. 서류(개별 이력서 파일)를 먼저 올려 fileId 를 받은 뒤 부른다.
+ * 학생 지원. 개별 이력서는 파일을 먼저 올려 fileId 를 받은 뒤 부른다.
  * 취소했던 건은 새 행을 만들지 않고 회차를 올린다 — 직전 회차는 그대로 보존된다.
  * recommenderId 는 추천 선생님(상담사 id)이다. '없음'이면 null.
  */
-export async function applyToJob(jobId: string, fileId: string, recommenderId: string | null): Promise<JobApplication> {
+export async function applyToJob(jobId: string, attachment: ApplyAttachment, recommenderId: string | null): Promise<JobApplication> {
   const job = getJobById(jobId)
   if (!job) throw new Error('공고를 찾을 수 없습니다.')
   const mine = getApplications().find(a => a.jobId === jobId)
@@ -182,7 +187,7 @@ export async function applyToJob(jobId: string, fileId: string, recommenderId: s
     body: JSON.stringify({
       expectedPostingVersion: job.version,
       expectedVersion: mine?.status === 'CANCELED' ? mine.version : undefined,
-      attachment: { kind: 'RESUME_FILE', fileId },
+      attachment,
       recommenderId,
     }),
   })
@@ -228,7 +233,9 @@ export function currentStageLabel(application: JobApplication): string {
 export function attachmentLabel(application: JobApplication): string {
   const attempt = application.currentAttempt
   if (!attempt?.attachmentKind) return '미제출'
-  if (attempt.attachmentKind === 'PORTFOLIO') return APPLY_ATTACHMENT_LABEL.PORTFOLIO
+  if (attempt.attachmentKind === 'PORTFOLIO') {
+    return `${APPLY_ATTACHMENT_LABEL.PORTFOLIO}${attempt.attachmentName ? ` · ${attempt.attachmentName}` : ''}`
+  }
   const name = attempt.attachmentName ?? attempt.legacyFileName
   const suffix = attempt.attachmentState === 'AVAILABLE' ? name : `${name ?? ''} (확인 필요)`
   return `${APPLY_ATTACHMENT_LABEL.RESUME_FILE}${suffix ? ` · ${suffix}` : ''}`

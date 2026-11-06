@@ -1,0 +1,61 @@
+/* 포트폴리오 시트 — ResumeSheet.css 의 용지·블록을 그대로 쓰고 항목 표시만 더한다.
+   두 SPA 가 쓴다. admin :root 에 없는 토큰이 있어 폴백을 지우지 말 것. */
+.pfs-paper { max-width: 880px; margin: 0 auto; width: 100%; }
+.pfs-header { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.pfs-identity { display: flex; align-items: flex-start; gap: 16px; min-width: 0; }
+.pfs-photo {
+  flex-shrink: 0;
+  width: 92px; height: 118px;
+  display: grid; place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface, var(--color-section-bg));
+  color: var(--color-text-sub, var(--color-text-secondary));
+  font-size: 12px; text-align: center;
+}
+.pfs-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pfs-contact { grid-template-columns: 1fr; justify-items: end; text-align: right; }
+.pfs-items { display: flex; flex-direction: column; gap: 14px; }
+.pfs-item { break-inside: avoid; }
+.pfs-item-head { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; }
+.pfs-item-head strong { color: var(--color-navy, var(--color-text)); font-size: 16px; font-weight: 700; }
+.pfs-when {
+  margin-left: auto;
+  color: var(--color-text-sub, var(--color-text-secondary));
+  font-size: 14px; font-weight: 700; white-space: nowrap;
+}
+.pfs-verified {
+  display: inline-flex; align-items: center; gap: 4px;
+  color: var(--color-primary);
+  font-size: 13px; font-weight: 800;
+}
+.pfs-meta { display: flex; flex-wrap: wrap; gap: 2px 16px; margin: 4px 0 0; font-size: 14px; }
+.pfs-meta > div { display: inline-flex; gap: 6px; }
+.pfs-meta dt { color: var(--color-text-sub, var(--color-text-secondary)); font-weight: 700; }
+.pfs-meta dd { margin: 0; color: var(--color-text); font-weight: 700; word-break: break-word; }
+.pfs-long { margin-top: 6px; white-space: pre-wrap; word-break: break-word; }
+.pfs-file {
+  display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-top: 6px;
+  color: var(--color-text); font-size: 14px; font-weight: 700;
+}
+.pfs-file i { color: var(--color-primary); }
+.pfs-file-btn {
+  height: 26px; padding: 0 10px;
+  border: 1px solid var(--color-border); border-radius: var(--radius-sm);
+  background: var(--color-bg);
+  color: var(--color-primary);
+  font-size: 13px; font-weight: 700; cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .pfs-header { grid-template-columns: 1fr; }
+  .pfs-contact { justify-items: start; text-align: left; }
+  .pfs-when { margin-left: 0; }
+}
+
+@media print {
+  .topbar, .site-footer, .v2-shell-head, .dc-chat-fab, .pfs-no-print { display: none !important; }
+  .pfs-paper { max-width: none; }
+}

@@ -85,7 +85,7 @@ export const APPLICATION_OPEN_STATUSES: ApplicationStatus[] = ['APPLIED', 'IN_PR
 // 학생은 지원 시 서류를 반드시 하나 낸다 — 서버가 강제한다(규칙 5).
 
 export type ApplyAttachmentKind =
-  | 'PORTFOLIO'    // 드림캐치 포트폴리오 — 학생별 영속 provider 미착수(DB.md §8-3 #4)
+  | 'PORTFOLIO'    // 드림캐치 포트폴리오 — 학생이 고른 한 벌의 회차별 불변 스냅샷
   | 'RESUME_FILE'  // 개별 이력서 파일 — 서버 볼륨에 보관, 권한 확인 후 스트리밍
 
 export const APPLY_ATTACHMENT_KINDS: ApplyAttachmentKind[] = ['PORTFOLIO', 'RESUME_FILE']

@@ -21,13 +21,15 @@ from datetime import date, datetime, timedelta
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
-from fastapi import APIRouter, Depends, Header, HTTPException, Query, Request, Response
+from fastapi import APIRouter, Depends, Header, HTTPException, Path, Query, Request, Response
 from fastapi.encoders import jsonable_encoder
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from . import files
 from .auth import is_counselor, principal, require_staff
+from .portfolio_document import (ID_PATTERN, apply_academic, fail, file_references, load_certs, missing_fields,
+                                 snapshot_document)
 from .html_security import clean_html
 from .db import connection
 from .gates import employment_gate
@@ -225,11 +227,9 @@ def capabilities(user=Depends(principal, scope='function'), conn=Depends(connect
     return {
         'canManage': can_manage(conn, user), 'canManageApplicants': can_manage(conn, user, APPLICANT_MENU),
         'canApplyWithFile': user['kind'] == 'STUDENT',
-        # 포트폴리오 도메인(DB.md §8-3 #4)에 학생별 영속 provider 가 없다. 가짜 제출을 만들지 않는다.
-        'canApplyWithPortfolio': False,
+        'canApplyWithPortfolio': user['kind'] == 'STUDENT',
         'canUseTextResume': user['kind'] == 'STUDENT',
-        'unavailable': [] if user['kind'] != 'STUDENT' else
-            [{'code': 'PORTFOLIO_SERVICE_UNAVAILABLE', 'message': '드림캐치 포트폴리오 제출은 아직 준비 중입니다.'}],
+        'unavailable': [],
     }
 
 
@@ -733,9 +733,12 @@ APPLICATION_SELECT = '''SELECT a.*,p.alias,p.name AS person_name,st.name AS curr
 
 
 def current_attempt(conn, application):
-    row = conn.execute('''SELECT t.*,f.original_name AS attachment_name,r.alias AS recommender_alias
+    # 포트폴리오 회차의 첨부 이름은 제목이다. 목록이 자주 읽으므로 jp.document 는 SELECT 하지 않는다.
+    row = conn.execute('''SELECT t.*,COALESCE(f.original_name,jp.title) AS attachment_name,
+      r.alias AS recommender_alias
       FROM dc.job_application_attempt t
       LEFT JOIN dc.file_object f ON f.id=t.attachment_file_id
+      LEFT JOIN dc.job_attempt_portfolio jp ON jp.attempt_id=t.id
       LEFT JOIN dc.person r ON r.intg_uid=t.recommender_uid
       WHERE t.application_id=%s AND t.attempt_no=%s''',
       (application['id'], application['current_attempt_no'])).fetchone()
@@ -786,6 +789,8 @@ class Attachment(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     kind: str = Field(pattern='^(PORTFOLIO|RESUME_FILE)$')
     fileId: str | None = None
+    portfolioId: str | None = Field(default=None, pattern=ID_PATTERN)
+    expectedPortfolioVersion: int | None = Field(default=None, ge=1)
 
 
 class ApplyBody(BaseModel):
@@ -794,6 +799,42 @@ class ApplyBody(BaseModel):
     expectedVersion: int | None = Field(default=None, ge=1)
     attachment: Attachment
     recommenderId: str | None = Field(default=None, min_length=1, max_length=100)
+
+
+def lock_portfolio(conn, student, attachment):
+    """제출할 포트폴리오를 읽어 잠근다. PUT·삭제는 이 잠금이 풀릴 때까지 기다리므로 확인한 버전과
+    스냅샷 내용이 어긋나지 않는다. 완성 여부는 목록용 컬럼을 믿지 않고 문서로 다시 계산한다."""
+    row = conn.execute('''SELECT * FROM dc.student_portfolio WHERE id=%s AND student_uid=%s
+      AND deleted_at IS NULL FOR SHARE''', (attachment.portfolioId, student['intg_uid'])).fetchone()
+    if not row:
+        fail(404, 'NOT_FOUND', '포트폴리오를 찾을 수 없습니다.')
+    if row['version'] != attachment.expectedPortfolioVersion:
+        fail(409, 'VERSION_CONFLICT', '포트폴리오가 변경됐습니다. 새로 조회한 뒤 지원해 주세요.',
+             currentVersion=row['version'])
+    document = apply_academic(row['document'], student, load_certs(conn, student['intg_uid']))
+    missing = missing_fields(document)
+    if missing:
+        fail(422, 'PORTFOLIO_INCOMPLETE', '포트폴리오의 필수 항목을 채워 주세요.', missing=missing)
+    return row, document
+
+
+def store_portfolio_snapshot(conn, student, attempt_id, row, document):
+    """회차 불변 스냅샷. 뺀 항목은 넣지 않고 참조 파일도 남은 항목에서만 모은다."""
+    uid = student['intg_uid']
+    snapshot = snapshot_document(document)
+    conn.execute('''INSERT INTO dc.job_attempt_portfolio(attempt_id,student_uid,portfolio_id,portfolio_version,
+      title,document) VALUES(%s,%s,%s,%s,%s,%s)''',
+      (attempt_id, uid, row['id'], row['version'], row['title'], Jsonb(snapshot)))
+    photo, attachments = file_references(snapshot)
+    ids = list({*attachments, *([photo] if photo else [])})
+    if not ids:
+        return
+    usable = conn.execute('''SELECT count(*) AS n FROM dc.file_object WHERE id=ANY(%s) AND uploaded_by=%s
+      AND state='READY' ''', (ids, uid)).fetchone()['n']
+    if usable != len(ids):
+        fail(422, 'INVALID_FILE', '사용할 수 없는 파일이 포함되어 있습니다.')
+    conn.execute('''INSERT INTO dc.job_attempt_portfolio_file(attempt_id,file_id)
+      SELECT %s,unnest(%s::text[])''', (attempt_id, ids))
 
 
 @router.post('/jobs/{posting_id}/applications', status_code=201)
@@ -823,10 +864,13 @@ def apply(posting_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
         raise HTTPException(409, '이미 지원한 공고입니다.')
     if existing and existing['version'] != body.expectedVersion:
         raise HTTPException(409, '지원 내역이 변경됐습니다. 새로 조회한 뒤 다시 시도해 주세요.')
-    # 제출 서류. 포트폴리오는 학생별 영속 provider 가 없어 아직 받을 수 없다(DB.md §8-3 #4).
-    if body.attachment.kind == 'PORTFOLIO':
-        raise HTTPException(503, '드림캐치 포트폴리오 제출은 아직 준비되지 않았습니다. 개별 이력서를 올려 주세요.')
-    if not body.attachment.fileId:
+    # 제출 서류. 조합 검사를 모델로 옮기면 마감·중복 409 보다 422 가 먼저 나와 순서가 바뀐다.
+    attachment, portfolio = body.attachment, None
+    if attachment.kind == 'PORTFOLIO':
+        if attachment.fileId or not attachment.portfolioId or attachment.expectedPortfolioVersion is None:
+            raise HTTPException(422, '제출할 포트폴리오를 선택해 주세요.')
+        portfolio = lock_portfolio(conn, student, attachment)
+    elif not attachment.fileId or attachment.portfolioId or attachment.expectedPortfolioVersion is not None:
         raise HTTPException(422, '지원 서류를 첨부해 주세요.')
     # 추천 선생님은 진로취업상담사만 된다. 이름은 목록(/counselor-profiles)의 표시명과 같게 남긴다.
     recommender = None
@@ -852,11 +896,14 @@ def apply(posting_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
                 'snap_recommender_name': recommender['name'] if recommender else None}
     columns = ','.join(snapshot)
     conn.execute(f'''INSERT INTO dc.job_application_attempt(id,application_id,attempt_no,{columns},
-      attachment_kind,attachment_file_id,attachment_state,eligibility_evidence,created_by)
-      VALUES(%s,%s,%s,{",".join(["%s"] * len(snapshot))},'RESUME_FILE',%s,'AVAILABLE',%s,%s)''',
-      (attempt_id, application['id'], attempt_no, *snapshot.values(), body.attachment.fileId,
-       Jsonb(jsonable_encoder(gate)), user['intg_uid']))
-    files.claim(conn, user, body.attachment.fileId, 'JOB_APPLICATION_ATTEMPT', attempt_id, 'RESUME')
+      attachment_kind,attachment_file_id,portfolio_owner_uid,attachment_state,eligibility_evidence,created_by)
+      VALUES(%s,%s,%s,{",".join(["%s"] * len(snapshot))},%s,%s,%s,'AVAILABLE',%s,%s)''',
+      (attempt_id, application['id'], attempt_no, *snapshot.values(), attachment.kind, attachment.fileId,
+       user['intg_uid'] if portfolio else None, Jsonb(jsonable_encoder(gate)), user['intg_uid']))
+    if portfolio:
+        store_portfolio_snapshot(conn, student, attempt_id, *portfolio)
+    else:
+        files.claim(conn, user, attachment.fileId, 'JOB_APPLICATION_ATTEMPT', attempt_id, 'RESUME')
     application_event(conn, user, application, 'REAPPLY' if existing else 'APPLY', attempt_no,
                       from_status=existing['status'] if existing else None, to_status='APPLIED')
     row = conn.execute(APPLICATION_SELECT + ' WHERE a.id=%s', (application['id'],)).fetchone()
@@ -1039,6 +1086,55 @@ def application_detail(application_id: str, user=Depends(principal, scope='funct
                          'role': posting['role'], 'version': posting['version']}
     result['stages'] = [stage_dto(s) for s in flow_stages(conn, row['posting_id'])]
     return result
+
+
+def submitted_portfolio(conn, user, application_id):
+    """제출본 판정. 교직원은 메뉴와 범위로, 학생은 본인 지원으로 get_application 이 나눈다.
+    현재 회차만 본다 — 재지원을 파일로 했으면 이전 회차의 제출본은 열리지 않는다(행은 남는다)."""
+    application = get_application(conn, user, application_id)
+    row = conn.execute('''SELECT t.id AS attempt_id,t.attempt_no,t.submitted_at,jp.title,jp.document,
+      jp.portfolio_version FROM dc.job_application_attempt t
+      JOIN dc.job_attempt_portfolio jp ON jp.attempt_id=t.id
+      WHERE t.application_id=%s AND t.attempt_no=%s''',
+      (application['id'], application['current_attempt_no'])).fetchone()
+    if not row:
+        raise HTTPException(404, '제출된 포트폴리오를 찾을 수 없습니다.')
+    return row
+
+
+def audit_document(conn, user, target_kind, target_id):
+    """제3자 접근 기록이다. 학생의 본인 열람은 쓰지 않는다. 본문·개인정보를 넣지 않는다."""
+    if user['kind'] == 'STAFF':
+        conn.execute('''INSERT INTO dc.job_access_event(actor_uid,action,target_kind,target_id,
+          filter_hash,row_count) VALUES(%s,'VIEW_DOCUMENT',%s,%s,%s,1)''',
+          (user['intg_uid'], target_kind, target_id, hashlib.sha256(target_id.encode()).hexdigest()))
+
+
+@router.get('/job-applications/{application_id}/portfolio')
+def application_portfolio(application_id: str, user=Depends(principal, scope='function'),
+                          conn=Depends(connection, scope='function')):
+    row = submitted_portfolio(conn, user, application_id)
+    prefix = f'/api/v1/job-applications/{application_id}/portfolio/files/'
+    referenced = conn.execute('''SELECT f.* FROM dc.job_attempt_portfolio_file l JOIN dc.file_object f
+      ON f.id=l.file_id WHERE l.attempt_id=%s''', (row['attempt_id'],)).fetchall()
+    audit_document(conn, user, 'JOB_ATTEMPT_PORTFOLIO', row['attempt_id'])
+    return {'attemptNo': row['attempt_no'], 'title': row['title'], 'document': row['document'],
+            'submittedAt': row['submitted_at'], 'version': row['portfolio_version'],
+            'files': {file['id']: files.file_dto(file, prefix) for file in referenced}}
+
+
+@router.get('/job-applications/{application_id}/portfolio/files/{file_id}')
+def application_portfolio_file(application_id: str, file_id: str = Path(pattern=ID_PATTERN),
+                               user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    """파일 소유자가 아니라 지원 회차로 판정한다. 파일의 상태는 보지 않는다 —
+    제출본이 이미 참조한 파일은 나중에 논리삭제돼도 열린다."""
+    row = submitted_portfolio(conn, user, application_id)
+    file = conn.execute('''SELECT f.* FROM dc.job_attempt_portfolio_file l JOIN dc.file_object f ON f.id=l.file_id
+      WHERE l.attempt_id=%s AND l.file_id=%s''', (row['attempt_id'], file_id)).fetchone()
+    if not file:
+        raise HTTPException(404, '파일을 찾을 수 없습니다.')
+    audit_document(conn, user, 'FILE', file_id)
+    return files.stream(file)
 
 
 @router.get('/job-applications/{application_id}/events')

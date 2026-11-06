@@ -11,7 +11,7 @@ export const STUDENT_STALE_MS = 60_000
 /** 한 브라우저 세션에서 연 학생 수만큼만 는다 — 로스터 byId 와 같은 상한으로 오래된 것부터 버린다. */
 const MAX_ENTRIES = 300 * 5
 
-export type StudentDomain = 'diagnosis' | 'roster' | 'growth' | 'roadmap' | 'portfolio'
+export type StudentDomain = 'diagnosis' | 'roster' | 'growth' | 'roadmap' | 'portfolio' | 'portfolios'
 
 /** 요청 시작 시점의 세대 — 완료 시 세대가 바뀌어 있으면 그 사이 무효화가 있었던 것이다. */
 export interface FetchToken { key: string; gen: number; navEpoch: number }

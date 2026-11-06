@@ -1,9 +1,12 @@
 export class ApiError extends Error {
   status: number
-  constructor(status: number, message: string) {
+  /** 서버가 {code,message} 로 준 오류 코드. 없으면 undefined 다. */
+  code?: string
+  constructor(status: number, message: string, code?: string) {
     super(message)
     this.name = 'ApiError'
     this.status = status
+    this.code = code
   }
 }
 
@@ -32,7 +35,8 @@ export async function apiResponse(path: string, init: RequestInit = {}): Promise
     throw new ApiError(response.status,
       typeof error?.detail === 'string' ? error.detail
         : error?.detail && typeof error.detail === 'object' && 'message' in error.detail && typeof error.detail.message === 'string' ? error.detail.message
-        : validationMessages || error?.message || `요청에 실패했습니다. (${response.status})`)
+        : validationMessages || error?.message || `요청에 실패했습니다. (${response.status})`,
+        error?.detail && typeof error.detail === 'object' && 'code' in error.detail && typeof error.detail.code === 'string' ? error.detail.code : undefined)
   }
   return response
 }

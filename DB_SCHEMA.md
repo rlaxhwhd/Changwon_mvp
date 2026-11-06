@@ -4,6 +4,8 @@
 대상 schema: `dc`  
 실행 가능한 DDL 정본: `backend/migrations/*.sql`
 
+2026-11-06 학생 포트폴리오(159, Astra 승인 revision 3 · 구현 완료·`_test` DB 검증, **로컬 개발 DB 미적용**, 정본은 `.ai/handoff-db/0009-student-portfolio/work-order.md`): `student_portfolio`는 학생별 이력서 문서를 여러 벌 둔다(JSONB 한 건, 낙관적 잠금, 논리삭제). 목록이 문서를 읽지 않도록 완성 여부는 `is_complete`로 물질화하며 POST·PUT만 쓰고 제출 판정은 문서로 다시 계산한다. `job_attempt_portfolio`는 회차별 불변 스냅샷이고 `(attempt_id,student_uid)`→`job_application_attempt(id,portfolio_owner_uid)`, `(student_uid,portfolio_id)`→`student_portfolio(student_uid,id)` 복합 FK로 같은 학생임을 보장한다. 이를 위해 회차에 `UNIQUE(id,portfolio_owner_uid)`를 더한다. `job_attempt_portfolio_file`은 스냅샷이 참조한 파일로, 교직원·제출 학생의 파일 권한을 JSONB 스캔 없이 PK로 판정하고 파일 행 삭제를 막는다. `file_object`에 `owner_kind='STUDENT_PORTFOLIO'`(owner_id=학생, 버전끼리 공유)와 슬롯 `PORTFOLIO_PHOTO`·`PORTFOLIO_DOCUMENT`를 더한다. 복구는 앱을 먼저 되돌리고 추가 표·이력을 보존한다.
+
 2026-11-02 비교과 선착순 선발·공통 집계(152): `dc.program.selection_method`는 `REVIEW/FIRST_COME`, `selection_capacity`는 모집 정원 이하의 선발 정원이다(NULL은 기존 모집 정원을 사용). 예전 공고는 선발 방식을 저장하지 않았으므로 REVIEW로 보존하며 임의 선발하지 않는다. 명시적인 심사→선착순 변경은 기존 대기를 신청 순으로 선발 정원까지 처리한다. 선착순 신청은 선발 정원까지 SELECTED, 이후 모집 정원까지 PENDING이며 모집 정원이 차면 거절한다. 공고 행 잠금 획득 뒤 새 SQL로 인원을 읽어 동시 신청을 직렬화한다. `program_application_counts`는 취소 시각이 없고 CANCELLED가 아닌 신청의 집계를 제공하며 홈·목록·상세·통계가 공유한다. 신청자 명단의 학생/담당 범위 권한은 유지한다. 선발 이력·selected_at·사전 설문 알림은 수동 선발과 공통 경로를 사용한다. 복구는 앱을 먼저 되돌리고 추가 열·뷰와 이력을 보존한다.
 
 2026-10-30 재응시 허용 취소(149): `dc.diagnosis_retake`에 `CANCELLED` 상태와 `cancelled_at`·`cancelled_by`(교직원 FK)를 추가한다. 이미 완료된 건은 취소하지 않으며, 승인 시각·승인자·진단 이력은 보존한다. 기존 열린 요청 부분 UNIQUE는 PENDING/APPROVED에만 적용되어 취소 후 새 요청을 허용한다. 학생 단위 트랜잭션 잠금과 승인 ID 조건으로 재허용·취소의 경쟁을 제어한다. 이전 앱으로 복구할 때 취소 기록과 추가 컬럼은 유지하고, CANCELLED 행이 있는 상태에서 구 CHECK 제약을 복원하지 않는다.
@@ -110,6 +112,13 @@ erDiagram
     STUDENT ||--o{ JOB_APPLICATION : "submits"
     JOB_APPLICATION ||--o{ JOB_APPLICATION_ATTEMPT : "retries"
     JOB_APPLICATION ||--o{ JOB_APPLICATION_EVENT : "records"
+
+    STUDENT ||--o{ STUDENT_PORTFOLIO : "owns"
+    STUDENT_PORTFOLIO ||--o{ STUDENT_PORTFOLIO_EVENT : "records"
+    STUDENT_PORTFOLIO ||--o{ JOB_ATTEMPT_PORTFOLIO : "snapshotted"
+    JOB_APPLICATION_ATTEMPT ||--o| JOB_ATTEMPT_PORTFOLIO : "attaches"
+    JOB_ATTEMPT_PORTFOLIO ||--o{ JOB_ATTEMPT_PORTFOLIO_FILE : "references"
+    FILE_OBJECT ||--o{ JOB_ATTEMPT_PORTFOLIO_FILE : "kept by"
 ```
 
 ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration 인덱스와 실제 DDL을 따른다.

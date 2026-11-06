@@ -246,15 +246,15 @@ def test_idempotent_apply_creates_one_row(client):
                        headers={**headers('chaewon'), **identical}, json=other).status_code == 409
 
 
-def test_portfolio_submission_is_not_faked(client):
-    """포트폴리오 provider 가 없다 — 없는 제출을 성공한 것처럼 만들지 않는다(DB.md §8-3 #4)."""
+def test_portfolio_submission_requires_a_chosen_portfolio(client):
+    """포트폴리오 제출은 고른 한 벌과 그 버전이 있어야 한다. 값이 빠지면 지원을 만들지 않는다."""
     posting = new_posting(client)
     response = client.post(f"/api/v1/jobs/{posting['id']}/applications", headers={**headers('chaewon'), **key()},
                            json={'expectedPostingVersion': posting['version'],
                                  'attachment': {'kind': 'PORTFOLIO'}})
-    assert response.status_code == 503
+    assert response.status_code == 422
     assert client.get('/api/v1/jobs/capabilities',
-                      headers=headers('chaewon')).json()['canApplyWithPortfolio'] is False
+                      headers=headers('chaewon')).json()['canApplyWithPortfolio'] is True
 
 
 # ── 전형 단계 ────────────────────────────────────────────────────────────

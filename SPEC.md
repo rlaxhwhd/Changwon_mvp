@@ -466,7 +466,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | # | 기능 | 현행 | 상태 |
 |---|---|---|---|
 | S15 | 채용공고 열람 | `ReMs020L` 외 | ✅ `/jobs` |
-| S16 | **채용 지원 프로세스** | `ReAppD`·`ReAgree`(개인정보동의) | ❌ `APPLICATIONMASTER` **1.7만건 이관 대상인데 지원 경로가 없다** |
+| S16 | **채용 지원 프로세스** | `ReAppD`·`ReAgree`(개인정보동의) | 🔶 지원 경로는 개별 이력서·드림캐치 포트폴리오(159) 두 갈래다. 포트폴리오는 회차별 불변 스냅샷이고 `jobs.4` 권한자와 제출 학생이 열람한다. `APPLICATIONMASTER` 1.7만건 이관과 개인정보동의(`DB.md` #43)는 남았다 |
 | S17 | **MY추천채용** | `ReMs010D`·`MsRd010L` | ❌ |
 | S18 | 채용 카테고리 8종 분화 | 추천/일반/공공기관/인턴십/공모전/교육·박람회/알바/해외 | ⚠️ 우리는 단일 목록 |
 | S19 | **이력서·자소서 첨삭 요청** | `portfolio_resume`·`portfolio_selfHistory` | ❌ `SS_JOB_RES` 워크플로 — 상담사 §3-1-⑤와 짝 |

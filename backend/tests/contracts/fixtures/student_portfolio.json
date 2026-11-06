@@ -1,0 +1,1088 @@
+{
+ "list": {
+  "items": [
+   {
+    "id": "spf_000000000000",
+    "title": "포트폴리오_v1",
+    "updatedAt": "2026-11-06T09:00:00+09:00",
+    "version": 2,
+    "complete": false
+   }
+  ],
+  "limit": 20
+ },
+ "detail": {
+  "id": "spf_000000000000",
+  "title": "포트폴리오_v1",
+  "document": {
+   "schemaVersion": 1,
+   "sections": [
+    {
+     "key": "personal",
+     "enabled": true,
+     "data": {
+      "name": "홍길동",
+      "studentNo": "20211304",
+      "school": "국립창원대학교",
+      "dept": "컴퓨터공학과",
+      "grade": 3,
+      "email": "",
+      "phone": "",
+      "intro": "",
+      "photoFileId": "",
+      "nameEn": "",
+      "birthDate": "",
+      "address": ""
+     }
+    },
+    {
+     "key": "education",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "academic:enrollment",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "schoolName": "",
+        "degree": "",
+        "track": "",
+        "major": "",
+        "additionalMajorType": "",
+        "additionalMajor": "",
+        "status": "",
+        "admissionType": "",
+        "admittedOn": "",
+        "graduatedOn": "",
+        "gpa": "",
+        "gpaScale": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "schoolName": "",
+        "degree": "",
+        "track": "",
+        "major": "",
+        "additionalMajorType": "",
+        "additionalMajor": "",
+        "status": "",
+        "admissionType": "",
+        "admittedOn": "",
+        "graduatedOn": "",
+        "gpa": "",
+        "gpaScale": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "military",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "serviceType": "",
+        "branch": "",
+        "rank": "",
+        "startOn": "",
+        "endOn": "",
+        "dischargeType": "",
+        "exemptionReason": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "training",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "program:p1",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organizer": "",
+        "startOn": "",
+        "endOn": "",
+        "hours": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organizer": "",
+        "startOn": "",
+        "endOn": "",
+        "hours": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "experience",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g1",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organization": "",
+        "role": "",
+        "startOn": "",
+        "endOn": "",
+        "description": "",
+        "result": "",
+        "link": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organization": "",
+        "role": "",
+        "startOn": "",
+        "endOn": "",
+        "description": "",
+        "result": "",
+        "link": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "career",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "company": "",
+        "department": "",
+        "position": "",
+        "employmentType": "",
+        "startOn": "",
+        "endOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "language",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g2",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "language": "",
+        "testName": "",
+        "scoreText": "",
+        "issuer": "",
+        "acquiredOn": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "language": "",
+        "testName": "",
+        "scoreText": "",
+        "issuer": "",
+        "acquiredOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "certificate",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "cert:ct_sqld",
+       "verified": true,
+       "title": "항목 제목",
+       "fields": {
+        "issuer": "",
+        "certNo": "",
+        "scoreText": "",
+        "acquiredOn": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "issuer": "",
+        "certNo": "",
+        "scoreText": "",
+        "acquiredOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "skill",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g3",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "level": 3,
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "level": 3,
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "award",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g4",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "host": "",
+        "rank": "",
+        "awardedOn": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "host": "",
+        "rank": "",
+        "awardedOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "overseas",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "country": "",
+        "purpose": "",
+        "startOn": "",
+        "endOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "volunteer",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organization": "",
+        "startOn": "",
+        "endOn": "",
+        "hours": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "coverLetter",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "resume:r1",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "question": "",
+        "answer": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "question": "",
+        "answer": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "document",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g5",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "fileId": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "fileId": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "specialty",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "careerDescription",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "company": "",
+        "description": ""
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "version": 2,
+  "updatedAt": "2026-11-06T09:00:00+09:00",
+  "complete": false,
+  "missing": [
+   "personal.phone"
+  ],
+  "files": {
+   "<fileId>": {
+    "id": "f0",
+    "name": "photo.png",
+    "size": 1024,
+    "contentType": "image/png",
+    "downloadUrl": "/api/v1/portfolio-files/f0"
+   }
+  }
+ },
+ "created": {
+  "id": "spf_000000000000",
+  "title": "포트폴리오_v1",
+  "version": 2,
+  "updatedAt": "2026-11-06T09:00:00+09:00",
+  "complete": false,
+  "missing": [
+   "personal.phone"
+  ],
+  "notImported": [
+   {
+    "sourceRef": "resume:r1",
+    "title": "자기소개서"
+   }
+  ]
+ },
+ "source": {
+  "personal": {
+   "name": "홍길동",
+   "studentNo": "20211304",
+   "school": "국립창원대학교",
+   "dept": "컴퓨터공학과",
+   "grade": 3,
+   "email": "",
+   "phone": "",
+   "intro": "",
+   "photoFileId": "",
+   "nameEn": "",
+   "birthDate": "",
+   "address": ""
+  },
+  "sections": [
+   {
+    "key": "education",
+    "items": [
+     {
+      "id": "a1b2c3d4",
+      "sourceRef": "academic:enrollment",
+      "verified": false,
+      "title": "항목 제목",
+      "fields": {
+       "schoolName": "",
+       "degree": "",
+       "track": "",
+       "major": "",
+       "additionalMajorType": "",
+       "additionalMajor": "",
+       "status": "",
+       "admissionType": "",
+       "admittedOn": "",
+       "graduatedOn": "",
+       "gpa": "",
+       "gpaScale": ""
+      }
+     }
+    ]
+   },
+   {
+    "key": "training",
+    "items": [
+     {
+      "id": "a1b2c3d4",
+      "sourceRef": "program:p1",
+      "verified": false,
+      "title": "항목 제목",
+      "fields": {
+       "organizer": "",
+       "startOn": "",
+       "endOn": "",
+       "hours": "",
+       "description": ""
+      }
+     }
+    ]
+   },
+   {
+    "key": "experience",
+    "items": [
+     {
+      "id": "a1b2c3d4",
+      "sourceRef": "growth:g1",
+      "verified": false,
+      "title": "항목 제목",
+      "fields": {
+       "organization": "",
+       "role": "",
+       "startOn": "",
+       "endOn": "",
+       "description": "",
+       "result": "",
+       "link": ""
+      }
+     }
+    ]
+   },
+   {
+    "key": "language",
+    "items": [
+     {
+      "id": "a1b2c3d4",
+      "sourceRef": "growth:g2",
+      "verified": false,
+      "title": "항목 제목",
+      "fields": {
+       "language": "",
+       "testName": "",
+       "scoreText": "",
+       "issuer": "",
+       "acquiredOn": "",
+       "description": ""
+      }
+     }
+    ]
+   },
+   {
+    "key": "certificate",
+    "items": [
+     {
+      "id": "a1b2c3d4",
+      "sourceRef": "cert:ct_sqld",
+      "verified": true,
+      "title": "항목 제목",
+      "fields": {
+       "issuer": "",
+       "certNo": "",
+       "scoreText": "",
+       "acquiredOn": "",
+       "description": ""
+      }
+     }
+    ]
+   },
+   {
+    "key": "skill",
+    "items": [
+     {
+      "id": "a1b2c3d4",
+      "sourceRef": "growth:g3",
+      "verified": false,
+      "title": "항목 제목",
+      "fields": {
+       "level": 3,
+       "description": ""
+      }
+     }
+    ]
+   },
+   {
+    "key": "award",
+    "items": [
+     {
+      "id": "a1b2c3d4",
+      "sourceRef": "growth:g4",
+      "verified": false,
+      "title": "항목 제목",
+      "fields": {
+       "host": "",
+       "rank": "",
+       "awardedOn": "",
+       "description": ""
+      }
+     }
+    ]
+   },
+   {
+    "key": "coverLetter",
+    "items": [
+     {
+      "id": "a1b2c3d4",
+      "sourceRef": "resume:r1",
+      "verified": false,
+      "title": "항목 제목",
+      "fields": {
+       "question": "",
+       "answer": ""
+      }
+     }
+    ]
+   },
+   {
+    "key": "document",
+    "items": [
+     {
+      "id": "a1b2c3d4",
+      "sourceRef": "growth:g5",
+      "verified": false,
+      "title": "항목 제목",
+      "fields": {
+       "fileId": "",
+       "description": ""
+      }
+     }
+    ]
+   }
+  ]
+ },
+ "submitted": {
+  "attemptNo": 1,
+  "title": "포트폴리오_v1",
+  "document": {
+   "schemaVersion": 1,
+   "sections": [
+    {
+     "key": "personal",
+     "enabled": true,
+     "data": {
+      "name": "홍길동",
+      "studentNo": "20211304",
+      "school": "국립창원대학교",
+      "dept": "컴퓨터공학과",
+      "grade": 3,
+      "email": "",
+      "phone": "",
+      "intro": "",
+      "photoFileId": "",
+      "nameEn": "",
+      "birthDate": "",
+      "address": ""
+     }
+    },
+    {
+     "key": "education",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "academic:enrollment",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "schoolName": "",
+        "degree": "",
+        "track": "",
+        "major": "",
+        "additionalMajorType": "",
+        "additionalMajor": "",
+        "status": "",
+        "admissionType": "",
+        "admittedOn": "",
+        "graduatedOn": "",
+        "gpa": "",
+        "gpaScale": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "schoolName": "",
+        "degree": "",
+        "track": "",
+        "major": "",
+        "additionalMajorType": "",
+        "additionalMajor": "",
+        "status": "",
+        "admissionType": "",
+        "admittedOn": "",
+        "graduatedOn": "",
+        "gpa": "",
+        "gpaScale": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "military",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "serviceType": "",
+        "branch": "",
+        "rank": "",
+        "startOn": "",
+        "endOn": "",
+        "dischargeType": "",
+        "exemptionReason": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "training",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "program:p1",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organizer": "",
+        "startOn": "",
+        "endOn": "",
+        "hours": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organizer": "",
+        "startOn": "",
+        "endOn": "",
+        "hours": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "experience",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g1",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organization": "",
+        "role": "",
+        "startOn": "",
+        "endOn": "",
+        "description": "",
+        "result": "",
+        "link": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organization": "",
+        "role": "",
+        "startOn": "",
+        "endOn": "",
+        "description": "",
+        "result": "",
+        "link": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "career",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "company": "",
+        "department": "",
+        "position": "",
+        "employmentType": "",
+        "startOn": "",
+        "endOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "language",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g2",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "language": "",
+        "testName": "",
+        "scoreText": "",
+        "issuer": "",
+        "acquiredOn": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "language": "",
+        "testName": "",
+        "scoreText": "",
+        "issuer": "",
+        "acquiredOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "certificate",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "cert:ct_sqld",
+       "verified": true,
+       "title": "항목 제목",
+       "fields": {
+        "issuer": "",
+        "certNo": "",
+        "scoreText": "",
+        "acquiredOn": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "issuer": "",
+        "certNo": "",
+        "scoreText": "",
+        "acquiredOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "skill",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g3",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "level": 3,
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "level": 3,
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "award",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g4",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "host": "",
+        "rank": "",
+        "awardedOn": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "host": "",
+        "rank": "",
+        "awardedOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "overseas",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "country": "",
+        "purpose": "",
+        "startOn": "",
+        "endOn": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "volunteer",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "organization": "",
+        "startOn": "",
+        "endOn": "",
+        "hours": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "coverLetter",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "resume:r1",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "question": "",
+        "answer": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "question": "",
+        "answer": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "document",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": "growth:g5",
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "fileId": "",
+        "description": ""
+       }
+      },
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "fileId": "",
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "specialty",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "description": ""
+       }
+      }
+     ]
+    },
+    {
+     "key": "careerDescription",
+     "enabled": true,
+     "items": [
+      {
+       "id": "a1b2c3d4",
+       "sourceRef": null,
+       "verified": false,
+       "title": "항목 제목",
+       "fields": {
+        "company": "",
+        "description": ""
+       }
+      }
+     ]
+    }
+   ]
+  },
+  "submittedAt": "2026-11-06T09:00:00+09:00",
+  "version": 3,
+  "files": {
+   "<fileId>": {
+    "id": "f0",
+    "name": "photo.png",
+    "size": 1024,
+    "contentType": "image/png",
+    "downloadUrl": "/api/v1/job-applications/japp_0/portfolio/files/f0"
+   }
+  }
+ }
+}

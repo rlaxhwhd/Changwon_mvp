@@ -117,7 +117,8 @@ index.html  ──(meta refresh)──▶  /v2
 ### ⑦ 마이페이지 — `/mypage`
 | 라우트 | 페이지 | 내용 |
 |---|---|---|
-| `/mypage/portfolio` | Portfolio | 포트폴리오 (스킬·자격증·어학·자소서·이력서·프로젝트) |
+| `/mypage/portfolio` | Portfolio | 포트폴리오 (스킬·자격증·어학·자소서·이력서·프로젝트). 전 학년 공개. 「포트폴리오」 탭에서 회사 제출용 문서를 여러 벌 만든다 |
+| `/mypage/applications/:id/portfolio` | SubmittedPortfolio | 지원 때 제출한 포트폴리오 읽기 전용 열람 |
 | `/program/status` | MyPrograms | 비교과프로그램 신청 현황 (2026-10-22 마이페이지에서 이동) |
 | `/mypage/attendance` | Attendance | 출석 기록 (일일미션 TOEIC 10단어 정·오답) |
 

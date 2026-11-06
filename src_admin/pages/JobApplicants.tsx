@@ -347,7 +347,11 @@ export default function JobApplicants() {
                   <span className="admin-request-actions">
                     {/* 서류는 정적 URL 이 아니라 권한을 확인하는 API 경로로 내려온다.
                         열람 사실은 dc.job_access_event 에 남는다. */}
-                    {document ? (
+                    {snap?.attachmentKind === 'PORTFOLIO' ? (
+                      <Link className="admin-btn admin-btn-ghost sm" to={`/jobs/applications/${a.id}/portfolio`}>
+                        <LuFileText /> 제출본 보기
+                      </Link>
+                    ) : document ? (
                       <a className="admin-btn admin-btn-ghost sm" href={document} target="_blank" rel="noreferrer">
                         <LuFileText /> 지원서 받기
                       </a>

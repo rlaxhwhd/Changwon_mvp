@@ -151,6 +151,36 @@
   font-weight: 600;
 }
 
+.jam-portfolio-list { list-style: none; display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; }
+
+.jam-portfolio-list label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-navy);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.jam-portfolio-list label.is-off { color: var(--color-text-sub); cursor: not-allowed; }
+
+.jam-portfolio-list input { accent-color: var(--color-primary); }
+
+.jam-portfolio-list small {
+  display: block;
+  margin: 4px 0 0 14px;
+  color: var(--color-text-sub);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.jam-portfolio-list a,
+.jam-file-picked a { color: var(--color-primary); font-weight: 700; }
+
 /* ─── 하단 버튼 ─── */
 
 .jam-actions {

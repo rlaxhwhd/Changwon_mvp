@@ -1,8 +1,13 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Modal from './Modal'
 import { uploadJobFile } from '../../src_admin/data/jobsSource'
+import type { ApplyAttachment } from '../../src_admin/data/jobApplications'
 import { jobCapability } from '../../shared/jobStore'
+import { PORTFOLIO_EVENT, portfolioList, reloadPortfolios } from '../../shared/portfolioStore'
+import { useStore } from '../../shared/useRoadmapStore'
 import { getCounselorCards } from '../data/counselorsRead'
+import { getActiveStudentId } from '../data/students'
 import type { ApplyAttachmentKind } from '../../src_admin/data/schema/jobApplication'
 import './JobApplyModal.css'
 
@@ -11,8 +16,7 @@ import './JobApplyModal.css'
 //
 // 현행 `ReAppD` 지원 프로세스 대응(SPEC.md §3-6 S16). 서류 없이 지원되던 것을
 // 두 갈래로 나눈다:
-//   ① 드림캐치 포트폴리오 — 학생별 영속 저장소(DB.md §8-3 #4)가 아직 없다.
-//      **없는 제출을 성공한 것처럼 만들지 않는다** — 이유를 적고 비활성으로 둔다.
+//   ① 드림캐치 포트폴리오 — 학생이 만든 한 벌을 고른다. 서버가 회차별 불변 스냅샷으로 남긴다.
 //   ② 개별 이력서 — 실제 파일을 서버 볼륨에 올린다. 저장 이름은 서버가 부여하고
 //      다운로드는 권한을 확인하는 API 로만 나간다(DB.md #41).
 //
@@ -24,8 +28,8 @@ interface Props {
   onClose: () => void
   company: string
   role: string
-  /** 업로드까지 마친 파일 id 와 추천 선생님(없음이면 null)을 넘긴다 — 지원 트랜잭션이 회차에 귀속시킨다. */
-  onSubmit: (fileId: string, recommenderId: string | null) => void | Promise<void>
+  /** 고른 서류와 추천 선생님(없음이면 null)을 넘긴다 — 지원 트랜잭션이 회차에 귀속시킨다. */
+  onSubmit: (attachment: ApplyAttachment, recommenderId: string | null) => void | Promise<void>
 }
 
 export default function JobApplyModal({ open, onClose, company, role, onSubmit }: Props) {
@@ -36,22 +40,37 @@ export default function JobApplyModal({ open, onClose, company, role, onSubmit }
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const fileRef = useRef<HTMLInputElement>(null)
+  const studentId = getActiveStudentId()
+  const [portfolioId, setPortfolioId] = useState('')
+  const [portfolioError, setPortfolioError] = useState('')
+  useStore(PORTFOLIO_EVENT)
+  const portfolios = portfolioList(studentId)
+  const chosen = portfolios.find(row => row.id === portfolioId && row.complete)
 
-  const reset = () => { setKind(''); setFile(null); setRecommenderId(''); setError('') }
+  // 고를 때만 읽는다. 공고 상세를 여는 것만으로 호출을 늘리지 않는다.
+  useEffect(() => {
+    if (kind !== 'PORTFOLIO') return
+    reloadPortfolios(studentId)
+      .then(() => setPortfolioError(''))
+      .catch(() => setPortfolioError('포트폴리오 목록을 불러오지 못했습니다.'))
+  }, [kind, studentId])
+
+  const reset = () => { setKind(''); setFile(null); setPortfolioId(''); setRecommenderId(''); setError('') }
   const handleClose = () => { reset(); onClose() }
 
-  const portfolioReason = capability.unavailable
-    .find(u => u.code === 'PORTFOLIO_SERVICE_UNAVAILABLE')?.message
-    ?? '드림캐치 포트폴리오 제출은 아직 준비 중입니다.'
-  const canSubmit = kind === 'RESUME_FILE' && !!file && !busy
+  const canSubmit = !busy && (kind === 'RESUME_FILE' ? !!file : kind === 'PORTFOLIO' && !!chosen)
 
   const handleSubmit = async () => {
-    if (!canSubmit || !file) return
+    if (!canSubmit) return
     setBusy(true)
     setError('')
     try {
-      const stored = await uploadJobFile('RESUME', file)
-      await onSubmit(stored.id, recommenderId || null)
+      if (kind === 'PORTFOLIO' && chosen) {
+        await onSubmit({ kind, portfolioId: chosen.id, expectedPortfolioVersion: chosen.version }, recommenderId || null)
+      } else if (file) {
+        const stored = await uploadJobFile('RESUME', file)
+        await onSubmit({ kind: 'RESUME_FILE', fileId: stored.id }, recommenderId || null)
+      }
       reset()
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : '지원하지 못했습니다. 다시 시도해 주세요.')
@@ -71,16 +90,15 @@ export default function JobApplyModal({ open, onClose, company, role, onSubmit }
         <button
           type="button"
           role="radio"
-          aria-checked={false}
-          aria-disabled
+          aria-checked={kind === 'PORTFOLIO'}
           disabled={!capability.canApplyWithPortfolio}
-          className="jam-choice"
-          onClick={() => { /* 준비 전이라 고를 수 없다 */ }}
+          className={`jam-choice${kind === 'PORTFOLIO' ? ' is-on' : ''}`}
+          onClick={() => setKind('PORTFOLIO')}
         >
           <i className="fa-regular fa-id-card" />
           <span>
             <strong>드림캐치 포트폴리오 첨부</strong>
-            <small>{portfolioReason}</small>
+            <small>마이페이지에서 만든 포트폴리오 중 하나를 제출합니다</small>
           </span>
         </button>
 
@@ -98,6 +116,43 @@ export default function JobApplyModal({ open, onClose, company, role, onSubmit }
           </span>
         </button>
       </div>
+
+      {kind === 'PORTFOLIO' && (
+        <div className="jam-portfolio">
+          <p className="jam-portfolio-note">
+            <i className="fa-solid fa-circle-info" aria-hidden="true" />
+            제출하면 연락처를 포함한 포트폴리오 내용이 지원자 관리 담당 교직원에게 공개됩니다.
+          </p>
+          {portfolioError && <p className="jam-file-picked" role="alert">{portfolioError}</p>}
+          {portfolios.length === 0 ? (
+            <p className="jam-file-picked">
+              아직 만든 포트폴리오가 없습니다. <Link to="/mypage/portfolio?tab=versions">포트폴리오 만들기</Link>
+            </p>
+          ) : (
+            <ul className="jam-portfolio-list">
+              {portfolios.map(row => (
+                <li key={row.id}>
+                  <label className={!row.complete ? 'is-off' : ''}>
+                    <input
+                      type="radio"
+                      name="jam-portfolio"
+                      disabled={!row.complete}
+                      checked={portfolioId === row.id}
+                      onChange={() => setPortfolioId(row.id)}
+                    />
+                    <span>{row.title}</span>
+                  </label>
+                  {!row.complete && (
+                    <small>
+                      이메일·휴대폰 등 필수 항목이 비어 있습니다. <Link to={`/mypage/portfolio?tab=versions&edit=${row.id}`}>편집하기</Link>
+                    </small>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* 포트폴리오 카드와 같은 폭으로 그 밑에 놓는다. 선택지는 서버 상담사 목록이고 기본은 없음이다. */}
       <label className="jam-recommender">

@@ -38,6 +38,7 @@ from .blacklists import router as blacklists_router
 from .jobs import router as jobs_router
 from .roadmap import router as roadmap_router
 from .growth import router as growth_router
+from .student_portfolio import router as student_portfolio_router
 from .missions import router as missions_router
 from .counsel_operations import router as counsel_operations_router
 from .communications import router as communications_router
@@ -112,6 +113,7 @@ app.include_router(blacklists_router, prefix='/api/v1')
 app.include_router(jobs_router, prefix='/api/v1')
 app.include_router(roadmap_router, prefix='/api/v1')
 app.include_router(growth_router, prefix='/api/v1')
+app.include_router(student_portfolio_router, prefix='/api/v1')
 app.include_router(missions_router, prefix='/api/v1')
 app.include_router(counsel_operations_router, prefix='/api/v1')
 app.include_router(communications_router, prefix='/api/v1')

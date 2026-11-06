@@ -1,5 +1,6 @@
 import { studentDisplayName } from '../../../shared/studentDisplayName'
 import { useMemo, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import Modal from '../../components/Modal'
 import ResumeSheet from '../../components/ResumeSheet'
 import { getActiveStudentId } from '../../data/students'
@@ -14,8 +15,9 @@ import { useGrowth } from '../../../shared/useRoadmapStore'
 import { useEffect } from 'react'
 import './Portfolio.css'
 import { usePageHead } from '../../components/PageCrumb'
+import PortfolioVersions from './portfolio/PortfolioVersions'
 
-type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'resume'
+type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'resume' | 'versions'
 
 /** 아직 읽기 전이거나 아무것도 쓰지 않은 상태. 빈 값은 빈 값이다 — 합성하지 않는다. */
 const EMPTY_PROFILE: ProfileData = {
@@ -40,13 +42,19 @@ const TABS: TabDef[] = [
   { id: 'experience', label: '경험·수상',  icon: 'fa-trophy' },
   { id: 'documents',  label: '자소서',     icon: 'fa-file-lines' },
   { id: 'resume',     label: '이력서',     icon: 'fa-id-badge' },
+  { id: 'versions',   label: '포트폴리오',  icon: 'fa-folder-open' },
 ]
 
 
 /* ── Page ───────────────────────────────────────────────────────── */
 export default function Portfolio() {
   usePageHead('포트폴리오', '스킬·자격증·수상·자소서·이력서를 한 곳에서 관리하고 PDF로 내보낼 수 있어요.')
-  const [tab, setTab] = useState<TabId>('profile')
+  // 지원 모달의 「포트폴리오 만들기·편집」 링크가 이 탭으로 바로 들어온다.
+  const [searchParams] = useSearchParams()
+  const [tab, setTab] = useState<TabId>(searchParams.get('tab') === 'versions' ? 'versions' : 'profile')
+  // 한 번 연 포트폴리오 탭은 숨기기만 한다 — 탭을 옮겨도 쓰던 내용이 남아야 한다.
+  const [versionsOpened, setVersionsOpened] = useState(tab === 'versions')
+  useEffect(() => { if (tab === 'versions') setVersionsOpened(true) }, [tab])
   const studentId = getActiveStudentId()
   // 성장 자료를 고치면 스토어가 서버에서 다시 읽는다 — 그때 포트폴리오도 다시 읽는다.
   const revision = useGrowth(studentId)
@@ -183,6 +191,8 @@ export default function Portfolio() {
             onExportPdf={exportPdf}
           />
         )}
+        {/* 탭을 열 때만 마운트한다 — 다른 탭의 API 호출을 늘리지 않는다. */}
+        {versionsOpened && <div hidden={tab !== 'versions'}><PortfolioVersions studentId={studentId} initialId={searchParams.get('edit')} /></div>}
       </div>
 
       {/* Add Skill Modal */}

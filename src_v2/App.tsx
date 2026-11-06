@@ -52,8 +52,8 @@ import StarTrack from './pages/star/StarTrack'
 // 마이페이지
 import Portfolio from './pages/mypage/Portfolio'
 import MyApplications from './pages/mypage/MyApplications'
+import SubmittedPortfolio from './pages/mypage/SubmittedPortfolio'
 import CounselStatus from './pages/mypage/CounselStatus'
-import { getActiveStudent } from './data/students'
 
 /** 옛 비교과 주소(/growth/program/*, /mypage/programs/*)의 나머지 경로를 /program 아래로 그대로 옮긴다. */
 function LegacyProgramRedirect() {
@@ -151,12 +151,13 @@ const router = createBrowserRouter(
         { path: '/jobs/:id',             loader: studentPageLoader('jobs', 'jobWishlist', 'jobCapability', 'applications', 'counselors'), element: <StageGate stage="employment" title="채용공고 상세"><JobDetail /></StageGate> },
 
         // 마이페이지
-        { path: '/mypage',           element: <Navigate to={getActiveStudent().grade >= 4 ? '/mypage/portfolio' : '/mypage/applications'} replace /> },
-        { path: '/mypage/portfolio',  element: getActiveStudent().grade >= 4 ? <Portfolio /> : <Navigate to="/growth" replace /> },
+        { path: '/mypage',           element: <Navigate to="/mypage/portfolio" replace /> },
+        { path: '/mypage/portfolio',  element: <Portfolio /> },
         // 옛 경로 — 이미 발송된 알림·즐겨찾기가 가리킨다.
         { path: '/mypage/programs',   element: <Navigate to="/program/status" replace /> },
         { path: '/mypage/programs/*', element: <LegacyProgramRedirect /> },
         { path: '/mypage/applications', loader: studentPageLoader('jobs', 'applications'), element: <MyApplications /> },
+        { path: '/mypage/applications/:id/portfolio', element: <SubmittedPortfolio /> },
         { path: '/mypage/notices',    element: <Navigate to="/jobs/notices" replace /> },
         // 상담 현황: 라우팅을 /counsel/record로 이동 (기존 /mypage/counsel은 하위 호환용 리다이렉트)
         // 신청이 가능하면 그 조회도 가능해야 한다 — 일반 상담을 낸 신입생이 자기

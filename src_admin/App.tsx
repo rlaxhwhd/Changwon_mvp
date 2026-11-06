@@ -37,6 +37,7 @@ import JobView from './pages/JobView'
 import JobManage from './pages/JobManage'
 import JobApplicantsList from './pages/JobApplicantsList'
 import JobApplicants from './pages/JobApplicants'
+import JobApplicantPortfolio from './pages/JobApplicantPortfolio'
 import ProgramList from './pages/ProgramList'
 import ProgramManage from './pages/ProgramManage'
 import ProgramForm from './pages/ProgramForm'
@@ -119,6 +120,7 @@ const router = createBrowserRouter(
         // 다건(?ids=)을 :recordId 보다 먼저 둔다 — 'print'가 id로 잡히지 않게.
         { path: '/counsel/records/print', loader: staffPageLoader(['career', 'psych'], 'counselEvents'), element: <CounselRecordPrint /> },
         { path: '/counsel/records/:recordId/print', loader: staffPageLoader(['career', 'psych'], 'counselEvents'), element: <CounselRecordPrint /> },
+        { path: '/jobs/applications/:applicationId/portfolio', element: <JobApplicantPortfolio /> },
         {
           element: <Layout />,
           children: [

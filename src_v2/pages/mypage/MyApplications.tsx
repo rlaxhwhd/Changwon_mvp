@@ -100,6 +100,9 @@ export default function MyApplications() {
                         : APPLICATION_STATUS_LABEL[application.status]}
                     </span>
                     {job && <Link to={`/jobs/${job.id}`} className="ma-link">공고 보기</Link>}
+                    {application.currentAttempt?.attachmentKind === 'PORTFOLIO' && (
+                      <Link to={`/mypage/applications/${application.id}/portfolio`} className="ma-link">제출본 보기</Link>
+                    )}
                     {open && (
                       <button
                         type="button"
