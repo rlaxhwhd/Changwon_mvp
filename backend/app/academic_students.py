@@ -13,7 +13,7 @@ from .jobs import MENU_PREDICATE
 from .students import HIGH, CORE
 from .quests import XP_PER_LEVEL, LEVELS_PER_GRADE, GRADE_CAP_XP
 from .xlsx_export import workbook
-from .student_contact import CONTACT_CTE, STAGES
+from .student_contact import ACADEMIC_GRADE, ACADEMIC_STATUS, CONTACT_CTE, STAGES
 
 router = APIRouter()
 
@@ -33,10 +33,9 @@ ROSTER = '''WITH service AS MATERIALIZED (
     x.sex_code, CASE x.sex_code WHEN '0001' THEN '남자' WHEN '0002' THEN '여자' ELSE '없음' END AS sex,
     CASE WHEN a.hofc_sta_cd='0005' AND x.out_dt ~ '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])$'
       THEN substring(x.out_dt,1,4)||'-'||substring(x.out_dt,5,2) END AS graduation_month,
-    CASE WHEN a.stu_schgr ~ '^[0-9]{1,2}$' THEN a.stu_schgr::int END AS grade,
+    ''' + ACADEMIC_GRADE + ''' AS grade,
     CASE WHEN a.user_ty_cd IN ('1201','1202') THEN '대학원' ELSE '학부' END AS academic_level,
-    CASE a.hofc_sta_cd WHEN '0001' THEN '재학' WHEN '0002' THEN '휴학'
-      WHEN '0003' THEN '제적' WHEN '0004' THEN '수료' WHEN '0005' THEN '졸업' ELSE '미상' END AS status,
+    ''' + ACADEMIC_STATUS + ''' AS status,
     v.student_type,v.type_label,v.tier,x.academic_gpa::text AS gpa,COALESCE(v.progress,0) AS progress,
     COALESCE(v.program_count,0) AS program_count,COALESCE(v.counsel_count,0) AS counsel_count,
     COALESCE(v.star,false) AS star,COALESCE(v.has_roadmap,false) AS has_roadmap

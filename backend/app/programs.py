@@ -6,6 +6,7 @@
 import hashlib
 import re
 from datetime import date, datetime, time
+from itertools import chain
 from tempfile import SpooledTemporaryFile
 from urllib.parse import quote
 from uuid import uuid4
@@ -22,10 +23,13 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from .auth import is_counselor, principal, require_staff, student_access
 from .html_security import clean_html
 from .upload_security import safe_image_url
-from .administration import administrator
+from .xlsx_export import workbook_sheets
+from .administration import administrator, audit
 from .blacklists import managed_student, reason_problems, student_sheet
 from .db import connection
 from .gates import program_gate
+from .jobs import MENU_PREDICATE
+from .student_contact import ACADEMIC_GRADE, ACADEMIC_STATUS
 from . import files
 from .program_content import ApplicationQuestion, attachments_of, sync_attachments, validate_answers
 from .program_managers import manager_dto, managers_of, notify_application, resolve_managers, sync_managers, with_phones
@@ -75,11 +79,13 @@ def download_program_file(file_id: str, user=Depends(principal, scope='function'
 
 NOSHOW_POINTS = 10
 SEOUL = ZoneInfo('Asia/Seoul')
+ACADEMIC_NOW = f'SELECT {ACADEMIC_GRADE} AS grade,{ACADEMIC_STATUS} AS status FROM dc.student_login_source a'
 WRITABLE = ('title,summary,detail,category_code,status_code,apply_start,apply_end,run_start,run_end,sessions,'
             'manager,fiscal_year,location,image,capacity,pinned,roadmap_entry,care_types,satisfaction_survey,'
             'competency_survey,competency_areas,include_in_stats,'
             'middle_category_code,target_statuses,target_grades,notice_at,apply_start_time,apply_end_time,'
-            'run_start_time,run_end_time,application_questions,selection_method,selection_capacity')
+            'run_start_time,run_end_time,application_questions,selection_method,selection_capacity,'
+            'certificate_issued')
 # 프로그램이 선택한 게시본. 해당 종류의 응답이 들어오면 고정한다.
 PIN_COLUMNS = 'competency_form_id,satisfaction_form_id'
 # 유효 신청 수 — 학생 목록의 인기순 정렬용 합계(학생은 신청자 명단을 못 보므로 서버가 센다).
@@ -151,8 +157,8 @@ def program_dto(row, applicants, attachments=None, managers=None, rounds=None):
         'competencySurvey': row['competency_survey'], 'competencyAreas': row['competency_areas'],
         # 이 프로그램이 붙잡은 설문지 — 수정 화면의 영역 선택지가 최신이 아니라 이 버전을 따라야 한다.
         'competencyFormId': row['competency_form_id'], 'satisfactionFormId': row['satisfaction_form_id'],
-        'includeInStats': row['include_in_stats'], 'createdAt': row['created_at'],
-        'version': row['version'], 'applicants': applicants, 'applyCount': row['apply_count'],
+        'includeInStats': row['include_in_stats'], 'certificateIssued': row['certificate_issued'],
+        'createdAt': row['created_at'], 'version': row['version'], 'applicants': applicants, 'applyCount': row['apply_count'],
         'noticeAt': row['notice_at'], 'startTime': row['apply_start_time'], 'endTime': row['apply_end_time'],
         'runStartTime': row['run_start_time'], 'runEndTime': row['run_end_time'],
         'applicationQuestions': row['application_questions'], 'attachments': attachments or [],
@@ -322,6 +328,125 @@ def statistics(user=Depends(principal, scope='function'), conn=Depends(connectio
             'programs': rows}
 
 
+# 프로그램 관리의 학생상태. 화면 필터(src_admin/data/programManageFilter.ts)와 같은 판정이다.
+# 신청은 취소를 뺀 전체, 선발은 결과가 난 학생까지 선발된 학생 전부다(사용자 확정 2026-11-06).
+LIVE_APPLY = "a.cancelled_at IS NULL AND a.selection_code<>'CANCELLED'"
+STUDENT_STATES = {
+    'APPLIED': LIVE_APPLY,
+    'PENDING': LIVE_APPLY + " AND a.selection_code='PENDING'",
+    'SELECTED': LIVE_APPLY + " AND a.selection_code='SELECTED'",
+    'REJECTED': LIVE_APPLY + " AND a.selection_code='REJECTED'",
+    'CANCELLED': f'NOT ({LIVE_APPLY})',
+    'COMPLETED': LIVE_APPLY + " AND a.outcome_code='COMPLETED'",
+    'NOT_COMPLETED': LIVE_APPLY + " AND a.outcome_code='NOT_COMPLETED'",
+    'ATTENDED': LIVE_APPLY + " AND a.outcome_code='ATTENDED'",
+    'ABSENT_3': LIVE_APPLY + " AND a.outcome_code='ABSENT' AND a.absence_points=3",
+    'ABSENT_2': LIVE_APPLY + " AND a.outcome_code='ABSENT' AND a.absence_points=2",
+    'ABSENT_1': LIVE_APPLY + " AND a.outcome_code='ABSENT' AND a.absence_points=1",
+}
+EXPORT_TITLE = '비교과프로그램 관리(선발학생) 목록'
+EXPORT_HEADER = ['번호', '프로그램명', '차수', '운영기간', '이름', '학번', '대학', '학과', '학년(선발기준)', '학적/구분(선발기준)',
+                 '학년(현재기준)', '학적/구분(현재기준)', '휴대전화', 'EMAIL', '상태', '신청일', '성별', '첨부파일', '지원동기',
+                 '모집경로', '개인정보동의여부', '개인정보제3자제공동의']
+CONSENT_LABEL = {'yes': '예', 'no': '아니오'}
+
+
+class StudentExportBody(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    programIds: list[str] = Field(min_length=1, max_length=100000)
+    # 비어 있으면 취소까지 포함한 모든 학생이다.
+    statuses: list[str] = Field(default_factory=list, max_length=len(STUDENT_STATES))
+
+    @model_validator(mode='after')
+    def known_statuses(self):
+        if set(self.statuses) - set(STUDENT_STATES):
+            raise ValueError('학생상태 코드를 확인해 주세요.')
+        return self
+
+
+def export_period(row):
+    def moment(day, clock):
+        return ' '.join(part for part in (day and day.strftime('%Y.%m.%d'), clock and clock.strftime('%H:%M')) if part)
+    start, end = moment(row['run_start'], row['run_start_time']), moment(row['run_end'], row['run_end_time'])
+    return f'{start} ~ {end}' if start or end else ''
+
+
+def export_state(row, labels):
+    if row['cancelled_at'] or row['selection_code'] == 'CANCELLED':
+        return labels['PROGRAM_SELECTION', 'CANCELLED']
+    if not row['outcome_code']:
+        return labels['PROGRAM_SELECTION', row['selection_code']]
+    label = labels['PROGRAM_OUTCOME', row['outcome_code']]
+    return f"{label}(벌점{row['absence_points']}점)" if row['absence_points'] else label
+
+
+def export_row(number, row, labels):
+    snapshot, consents = row['snapshot'] or {}, row['consents'] or {}
+    answers = snapshot.get('applicationAnswers') or []
+    return [number, row['title'], row['round_no'], export_period(row),
+            snapshot.get('studentName') or row['name'], snapshot.get('studentNo') or row['student_no'],
+            row['college_name'] or '', snapshot.get('studentMajor') or row['major_label'] or '',
+            # 스냅샷이 없는 옛 신청은 현재값으로 채운다.
+            snapshot.get('grade') or row['grade'] or '', snapshot.get('studentStatus') or row['student_status'],
+            row['grade'] or '', row['student_status'], row['mobile'] or '', row['email'] or '',
+            export_state(row, labels), row['applied_at'].astimezone(SEOUL).strftime('%Y.%m.%d %H:%M'),
+            {'0001': '남', '0002': '여'}.get(row['sex_code'], ''),
+            'Y' if any(answer.get('files') for answer in answers) else 'N',
+            row['motive'] or '', row['apply_path'] or '',
+            CONSENT_LABEL.get(consents.get('agreeCollect'), ''), CONSENT_LABEL.get(consents.get('agree3rd'), '')]
+
+
+@router.post('/programs/export')
+def export_students(body: StudentExportBody, user=Depends(principal, scope='function'),
+                    conn=Depends(connection, scope='function')):
+    """프로그램 관리의 학생 명단. 연락처가 들어 있어 목록 응답에 싣지 않고, 그 메뉴를 가진 상담사에게만 내준다.
+    메뉴만 보면 관리자가 교수에게 메뉴를 열었을 때 담당 범위 없이 전 학생 명단이 나간다."""
+    uid = user['intg_uid']
+    if not is_counselor(user) or not conn.execute(MENU_PREDICATE, ('programs.1', uid, uid)).fetchone()['ok']:
+        raise HTTPException(403, '프로그램 관리 권한이 없습니다.')
+    labels = {(r['group_code'], r['code']): r['label'] for r in conn.execute(
+        "SELECT group_code,code,label FROM dc.code_item WHERE group_code IN ('PROGRAM_SELECTION','PROGRAM_OUTCOME')").fetchall()}
+    states = ' OR '.join(f'({STUDENT_STATES[code]})' for code in dict.fromkeys(body.statuses)) or 'true'
+    ids = list(dict.fromkeys(body.programIds))
+    with conn.cursor(name='program_student_export') as cursor:
+        # 운영기간은 신청한 차수의 것이다. 시각은 차수에 비어 있어도 1차 값으로 메우지 않는다.
+        cursor.execute(f'''SELECT g.title,a.round_no,a.snapshot,a.consents,a.motive,a.apply_path,a.applied_at,
+          a.cancelled_at,a.selection_code,a.outcome_code,a.absence_points,p.name,s.student_no,s.major_label,
+          COALESCE(h.grade,s.grade) AS grade,COALESCE(h.status,s.detail->>'enrollmentStatus','재학') AS student_status,
+          d.college_name,x.sex_code,
+          COALESCE(x.mobile,s.detail->>'phone') AS mobile,COALESCE(x.email,s.detail->>'email') AS email,
+          COALESCE(r.run_start,g.run_start) AS run_start,COALESCE(r.run_end,g.run_end) AS run_end,
+          CASE WHEN r.program_id IS NULL THEN g.run_start_time ELSE r.run_start_time END AS run_start_time,
+          CASE WHEN r.program_id IS NULL THEN g.run_end_time ELSE r.run_end_time END AS run_end_time
+          FROM unnest(%s::text[]) WITH ORDINALITY o(id,ord) JOIN dc.program_apply a ON a.program_id=o.id
+          JOIN dc.program g ON g.id=a.program_id
+          JOIN dc.person p ON p.intg_uid=a.student_uid JOIN dc.student s ON s.intg_uid=a.student_uid
+          LEFT JOIN dc.program_round r ON r.program_id=a.program_id AND r.round_no=a.round_no
+          LEFT JOIN dc.department d ON (d.college_code,d.dept_code)=(s.college_code,s.dept_code)
+          LEFT JOIN dc.academic_student_details x ON x.intg_uid=a.student_uid
+          LEFT JOIN LATERAL ({ACADEMIC_NOW} WHERE a.intg_uid=s.intg_uid LIMIT 1) h ON true
+          WHERE {states} ORDER BY o.ord,a.round_no,a.applied_at,a.student_uid''', (ids,))
+
+        def rows():
+            nonlocal total
+            for total, row in enumerate(cursor, start=1):
+                yield export_row(total, row, labels)
+        total = 0
+        output = workbook_sheets([(EXPORT_TITLE, [EXPORT_TITLE], chain([EXPORT_HEADER], rows()))])
+    # 연락처가 든 명단이라 누가 언제 받았는지 남긴다. 학번·연락처는 넣지 않는다.
+    audit(conn, user, 'program_student_export', 'students', None,
+          {'programCount': len(ids), 'statuses': body.statuses, 'rowCount': total}, '학생 명단 엑셀 다운로드')
+
+    def chunks():
+        try:
+            while chunk := output.read(64*1024):
+                yield chunk
+        finally:
+            output.close()
+    return StreamingResponse(chunks(), media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Content-Disposition': "attachment; filename*=UTF-8''"+quote('비교과_관리_학생.xlsx'), 'Cache-Control': 'no-store'})
+
+
 @router.get('/programs/{program_id}')
 def program_detail(program_id: str, user=Depends(principal, scope='function'),
                    conn=Depends(connection, scope='function')):
@@ -430,6 +555,7 @@ class ProgramBody(BaseModel):
     satisfactionFormId: int | None = Field(default=None, gt=0)
     competencyAreas: list[str] = Field(default_factory=list, max_length=100)
     includeInStats: bool = True
+    certificateIssued: bool = True
     noticeAt: datetime | None = None
     startTime: time | None = None
     endTime: time | None = None
@@ -481,7 +607,8 @@ def program_values(body: ProgramBody):
             body.competencySurvey, body.competencyAreas, body.includeInStats,
             body.middleCategory, body.targetStatuses, body.targetGrades, body.noticeAt,
             body.startTime, body.endTime, body.runStartTime, body.runEndTime,
-            Jsonb([q.model_dump() for q in body.applicationQuestions]),body.selectionMethod,body.selectionCapacity)
+            Jsonb([q.model_dump() for q in body.applicationQuestions]),body.selectionMethod,body.selectionCapacity,
+            body.certificateIssued)
 
 
 def check_category(conn, code):
@@ -581,7 +708,8 @@ def update_program(program_id: str, body: ProgramUpdate, user=Depends(principal,
     for field, column in (('noticeAt', 'notice_at'), ('startTime', 'apply_start_time'),
                           ('endTime', 'apply_end_time'), ('selectionMethod', 'selection_method'),
                           ('selectionCapacity', 'selection_capacity'), ('runStartTime', 'run_start_time'),
-                          ('runEndTime', 'run_end_time'), ('applicationQuestions', 'application_questions')):
+                          ('runEndTime', 'run_end_time'), ('applicationQuestions', 'application_questions'),
+                          ('certificateIssued', 'certificate_issued')):
         if field not in body.model_fields_set:
             value = before[column]
             setattr(body, field, [ApplicationQuestion(**q) for q in value] if field == 'applicationQuestions' else value)
@@ -801,8 +929,11 @@ def select_waiting(conn, user, program):
 def insert_application(conn, user, program_id, student, round_no, path='', route_code=None, motive='',
                        consents=None, answers=(), reason=''):
     """신청 행과 APPLY 이력을 남긴다. 호출자가 공고 행을 잠그고 정원·중복을 판정한다."""
+    # 학년·학적은 학사가 정본이다. 학사 행이 없는 픽스처 학생만 dc.student 로 대신한다.
+    academic = conn.execute(ACADEMIC_NOW + ' WHERE a.intg_uid=%s LIMIT 1', (student['intg_uid'],)).fetchone() or {}
     snapshot = {'studentName': student['name'], 'studentMajor': student['major_label'],
-                'studentNo': student['student_no'], 'grade': student['grade'],
+                'studentNo': student['student_no'], 'grade': academic.get('grade') or student['grade'],
+                'studentStatus': academic.get('status') or (student.get('detail') or {}).get('enrollmentStatus') or '재학',
                 'path': path, 'routeCode': route_code, 'motive': motive, 'applicationAnswers': list(answers)}
     row = conn.execute('''INSERT INTO dc.program_apply(program_id,student_uid,applied_at,snapshot,apply_path,
       apply_route_code,motive,consents,updated_by,round_no) VALUES(%s,%s,now(),%s,%s,%s,%s,%s,%s,%s) RETURNING *''',

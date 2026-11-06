@@ -9,6 +9,8 @@ import psycopg
 import pytest
 
 from app.db import pool
+from app.programs import EXPORT_HEADER, EXPORT_TITLE
+from app.xlsx_export import read_workbook
 from test_api import headers
 
 
@@ -43,6 +45,78 @@ def test_classification_and_targets_roundtrip(client):
         response = client.put(f"/api/v1/programs/{program['id']}", headers=headers('career_kim'),
                               json={**body, field: invalid})
         assert response.status_code == 422, response.text
+
+
+def test_certificate_flag_roundtrips_and_survives_an_old_client(client):
+    assert new_program(client)['certificateIssued'] is True
+    program = new_program(client, certificateIssued=False)
+    assert program['certificateIssued'] is False
+    body = {key: value for key, value in program.items() if key not in SERVER_OWNED and key != 'certificateIssued'}
+    response = client.put(f"/api/v1/programs/{program['id']}", headers=headers('career_kim'),
+                          json={**body, 'expectedVersion': program['version']})
+    assert response.status_code == 200, response.text
+    assert response.json()['certificateIssued'] is False
+
+
+def exported_states(client, program_id, *statuses):
+    response = client.post('/api/v1/programs/export', headers=headers('career_kim'),
+                           json={'programIds': [program_id], 'statuses': list(statuses)})
+    assert response.status_code == 200, response.text
+    rows, _ = read_workbook(response.content)
+    assert rows[0] == [EXPORT_TITLE] and rows[1] == EXPORT_HEADER
+    return sorted(row[14] for row in rows[2:])
+
+
+def test_student_export_follows_the_student_status_filter(client):
+    program = new_program(client, capacity=5)
+    base = f"/api/v1/programs/{program['id']}/applications"
+    for student in ('chaewon', 'changwon'):
+        assert apply_as(client, student, program['id']).status_code == 201
+    head = headers('career_kim')
+    client.post(base + '/selection', headers=head, json={'studentIds': ['chaewon'], 'selection': 'SELECTED'})
+    assert exported_states(client, program['id'], 'SELECTED') == ['선발']
+    client.post(base + '/outcome', headers=head,
+                json={'studentIds': ['chaewon'], 'outcome': 'ABSENT', 'absencePoints': 2})
+
+    assert exported_states(client, program['id']) == ['대기', '불참(벌점2점)']
+    assert exported_states(client, program['id'], 'APPLIED') == ['대기', '불참(벌점2점)']
+    assert exported_states(client, program['id'], 'ABSENT_2') == ['불참(벌점2점)']
+    assert exported_states(client, program['id'], 'ABSENT_3') == []
+    assert exported_states(client, program['id'], 'PENDING') == ['대기']
+    assert exported_states(client, program['id'], 'SELECTED') == ['불참(벌점2점)'], '결과가 나도 선발된 학생이다'
+
+    with pool.connection() as conn:
+        conn.execute("""UPDATE dc.program_apply SET selection_code='CANCELLED',cancelled_at=now()
+          WHERE program_id=%s AND selection_code='PENDING'""", (program['id'],))
+    assert exported_states(client, program['id']) == ['불참(벌점2점)', '취소'], '미선택이면 취소도 나온다'
+    assert exported_states(client, program['id'], 'APPLIED') == ['불참(벌점2점)']
+    assert exported_states(client, program['id'], 'CANCELLED') == ['취소']
+
+
+def test_student_export_needs_the_manage_menu_and_is_audited(client):
+    program = new_program(client)
+    assert apply_as(client, 'chaewon', program['id']).status_code == 201
+    body = {'programIds': [program['id']], 'statuses': []}
+    for identity in ('chaewon', 'psych_lee', 'acc-1'):
+        assert client.post('/api/v1/programs/export', headers=headers(identity), json=body).status_code == 403, identity
+    assert client.post('/api/v1/programs/export', headers=headers('career_kim'),
+                       json={**body, 'statuses': ['UNKNOWN']}).status_code == 422
+    with pool.connection() as conn:
+        before = conn.execute("SELECT count(*) AS n FROM dc.admin_event WHERE entity='program_student_export'").fetchone()
+    assert client.post('/api/v1/programs/export', headers=headers('career_kim'), json=body).status_code == 200
+    with pool.connection() as conn:
+        events = conn.execute("""SELECT after_value FROM dc.admin_event WHERE entity='program_student_export'
+          ORDER BY changed_at DESC""").fetchall()
+    assert len(events) == list(before.values())[0] + 1
+    assert events[0]['after_value'] == {'programCount': 1, 'statuses': [], 'rowCount': 1}
+
+
+def test_program_lists_carry_no_contact_fields(client):
+    program = new_program(client)
+    assert apply_as(client, 'chaewon', program['id']).status_code == 201
+    for path in ('/api/v1/programs?pageSize=100', f"/api/v1/programs/{program['id']}"):
+        text = client.get(path, headers=headers('career_kim')).text
+        assert '"mobile"' not in text and '"email"' not in text
 
 
 def test_legacy_category_can_be_preserved_but_not_newly_selected(client):

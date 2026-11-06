@@ -1,5 +1,10 @@
 """Academic enrolled-student funnel; account creation is not participation."""
 
+# 학사 학년·학적의 판정 — a 는 dc.student_login_source 다. dc.student 는 첫 로그인 값에서 멈춘다.
+ACADEMIC_GRADE = "CASE WHEN a.stu_schgr ~ '^[0-9]{1,2}$' THEN a.stu_schgr::int END"
+ACADEMIC_STATUS = """CASE a.hofc_sta_cd WHEN '0001' THEN '재학' WHEN '0002' THEN '휴학'
+      WHEN '0003' THEN '제적' WHEN '0004' THEN '수료' WHEN '0005' THEN '졸업' ELSE '미상' END"""
+
 CONTACT_CTE = '''WITH contact AS (
  SELECT a.intg_uid,
  EXISTS(SELECT 1 FROM dc.diagnosis_attempt d WHERE d.student_uid=a.intg_uid

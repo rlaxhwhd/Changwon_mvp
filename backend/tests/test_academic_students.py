@@ -4,7 +4,10 @@ from io import BytesIO
 from zipfile import ZipFile
 from xml.etree import ElementTree
 
+from app.programs import EXPORT_HEADER
+from app.xlsx_export import read_workbook
 from test_api import headers
+from test_programs import apply_as, new_program
 from test_psych_referrals import db  # noqa: F401
 
 
@@ -33,6 +36,27 @@ def test_star_name_markers_match_membership_and_student_scope(client, db):
         detail=client.get('/api/v1/academic-students/'+found['id'],headers=headers('career_kim'))
         assert detail.json()['star'] is True
     assert client.get('/api/v1/bootstrap/profiles',headers=headers('jiwoo')).json()['starStudentKeys']==[]
+
+
+def test_program_export_reads_academic_record_and_keeps_the_application_snapshot(client, db):
+    row = db.execute("""SELECT s.intg_uid,s.student_no,p.name FROM dc.student s JOIN dc.person p USING(intg_uid)
+      WHERE p.alias='chaewon'""").fetchone()
+    db.execute('''INSERT INTO academic.v_usr_inf(intg_uid,login_id,usr_nm,user_ty_cd,orgz_nm)
+      SELECT %s,%s,%s,'1101','Test Major' WHERE NOT EXISTS(SELECT 1 FROM academic.v_usr_inf WHERE intg_uid=%s)''',
+      (row['intg_uid'], row['student_no'], row['name'], row['intg_uid']))
+    change = """UPDATE academic.v_usr_inf SET hofc_sta_cd=%s,stu_schgr=%s,hp='010-0000-0000',
+      email='test@example.test',sex='0002' WHERE intg_uid=%s"""
+    db.execute(change, ('0002', '2', row['intg_uid']))
+    program = new_program(client, capacity=5)
+    assert apply_as(client, 'chaewon', program['id']).status_code == 201
+    db.execute(change, ('0005', '4', row['intg_uid']))
+    response = client.post('/api/v1/programs/export', headers=headers('career_kim'),
+                           json={'programIds': [program['id']], 'statuses': []})
+    assert response.status_code == 200, response.text
+    cells = dict(zip(EXPORT_HEADER, read_workbook(response.content)[0][2]))
+    assert (cells['학년(선발기준)'], cells['학적/구분(선발기준)']) == ('2', '휴학')
+    assert (cells['학년(현재기준)'], cells['학적/구분(현재기준)']) == ('4', '졸업')
+    assert (cells['휴대전화'], cells['EMAIL'], cells['성별']) == ('010-0000-0000', 'test@example.test', '여')
 
 
 def test_care7_filter_matches_confirmed_roadmaps_and_home(client, db):

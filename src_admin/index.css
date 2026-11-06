@@ -1303,6 +1303,15 @@ input, textarea, select { font-family: var(--font); }
 .admin-dot-date input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
 .admin-dot-date:focus-within { border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-bg); }
 
+/* 프로그램 관리 필터 — 줄마다 항목명 + 입력칸이 이어진다 */
+.admin-program-filter { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.admin-program-filter-row { display: flex; align-items: center; gap: 8px 14px; flex-wrap: wrap; }
+.admin-program-filter-row .admin-search { flex: 0 1 260px; }
+.admin-program-filter-label { font-size: 13px; font-weight: 800; color: var(--color-text); }
+.admin-program-filter-submit { margin-left: auto; }
+.admin-program-list-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-size: 13px; color: var(--color-text-secondary); }
+.admin-program-list-bar strong { color: var(--color-danger); }
+
 /* 체크박스형 필터 — .admin-select와 같은 줄에 정렬된다 */
 .admin-check { display: flex; align-items: center; gap: 7px; padding: 9px 0; cursor: pointer; }
 .admin-check input { width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer; }

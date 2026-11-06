@@ -134,7 +134,7 @@ export default function ProgramForm() {
   const [limitCount, setLimitCount] = useState(existing ? String(existing.capacity) : String(DEFAULT_HEADCOUNT))
   const [selectCount, setSelectCount] = useState(existing ? String(existing.selectionCapacity ?? existing.capacity) : String(DEFAULT_HEADCOUNT))
   const [selectMethod, setSelectMethod] = useState<'FIRST_COME' | 'REVIEW'>(existing?.selectionMethod ?? (existing ? 'REVIEW' : 'FIRST_COME'))
-  const [certificate, setCertificate] = useState<'발급' | '미발급'>('발급')
+  const [certificate, setCertificate] = useState<'발급' | '미발급'>(existing?.certificateIssued === false ? '미발급' : '발급')
   const [completeHours, setCompleteHours] = useState('2')
   // 기존 글을 불러온다 — 예전에는 항상 빈 값으로 시작해서, 수정하려고 열면
   // 이미 쓴 상세 내용이 사라진 것처럼 보였다.
@@ -242,6 +242,7 @@ export default function ProgramForm() {
       competencyFormId: competency || surveyLocks?.competency ? competencyFormId : null,
       competencyAreas: competency ? competencyAreas : [],
       includeInStats,
+      certificateIssued: certificate === '발급',
       // 안 고르면 필드를 만들지 않는다 — 빈 문자열이 남으면 공고가 '이미지 있음'으로 읽는다.
       image: thumb || '',
     }

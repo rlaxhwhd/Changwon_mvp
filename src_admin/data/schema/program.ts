@@ -22,6 +22,11 @@ export const programCategories = (): ProgramCategory[] => codeItems
   .sort((a, b) => a.sort_order - b.sort_order)
   .map(item => item.code)
 
+export const programMiddleCategories = (): string[] => codeItems
+  .filter(item => item.group_code === 'PROGRAM_MIDDLE_CATEGORY' && item.is_active)
+  .sort((a, b) => a.sort_order - b.sort_order)
+  .map(item => item.code)
+
 /** 프로그램 모집/운영 상태 — 앱이 값으로 분기하는 **구조 코드**다. */
 export type ProgramStatus = 'RECRUITING' | 'CLOSED' | 'ENDED'
 
@@ -283,6 +288,8 @@ export interface Program {
   satisfactionFormId?: number | null
   /** 통계값 반영 — false면 통계 요청의 참가/수료 인원 집계에서 제외한다 */
   includeInStats?: boolean
+  /** 참여 인증서 발급 여부 */
+  certificateIssued?: boolean
   /** 신청자 목록 (출석 포함) */
   applicants: ProgramApplicant[]
   /** 취소되지 않은 신청 수 — 서버 합계(학생은 신청자 명단 없이 인기순을 이 값으로 정렬한다) */
@@ -317,5 +324,6 @@ export function blankProgram(): Omit<Program, 'id' | 'applicants' | 'applyCount'
     competencySurvey: true,
     competencyAreas: [],
     includeInStats: true,
+    certificateIssued: true,
   }
 }
