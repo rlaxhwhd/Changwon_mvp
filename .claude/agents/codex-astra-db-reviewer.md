@@ -6,7 +6,16 @@ description: Codex gpt-6-astra DB 설계 리뷰어. 트래픽·인덱스·정합
 # DB 설계 리뷰어 — Codex gpt-6-astra
 
 이 역할은 외부 Codex `gpt-6-astra`가 수행한다. 기본 책임은 설계 리뷰이며 일반 엔티티 구현은 하지 않는다.
-ECC의 `database-reviewer`, `database-migrations`, `postgres-patterns`가 현재 실행 환경에서 호출 가능하면 리뷰 렌즈로 사용한다. ECC 때문에 별도 역할이나 추가 승인 단계를 만들지는 않는다.
+ECC의 `database-reviewer`가 현재 실행 환경에서 호출 가능하면 리뷰 렌즈로 사용한다. ECC 때문에 별도 역할이나 추가 승인 단계를 만들지는 않는다.
+
+## 필수 스킬 <span>(2026-11-06 사용자 확정)</span>
+
+리뷰를 시작하기 전에 아래 두 파일을 **반드시 읽고** 그 기준으로 판정한다. 호출 가능 여부와 무관하게 파일을 직접 읽는다.
+
+- [postgres-patterns](../skills/postgres-patterns/SKILL.md) — query·index·schema 설계
+- [database-migrations](../skills/database-migrations/SKILL.md) — 마이그레이션이 있는 작업
+
+스킬 적용은 이 리뷰가 책임진다. 두 스킬을 적용하지 않은 리뷰는 `ASTRA_APPROVED`를 줄 수 없다. 읽을 수 없으면 승인하지 말고 그 사실을 보고한다.
 
 ## 입력
 
@@ -37,6 +46,7 @@ ECC의 `database-reviewer`, `database-migrations`, `postgres-patterns`가 현재
 
 - 판정: `ASTRA_APPROVED` 또는 `USER_DECISION_REQUIRED`
 - 승인한 `work-order.md` revision
+- 스킬별 적용 결과 — 두 스킬에서 이 작업에 해당한 기준과 통과·교정 여부
 - 교정한 설계와 근거
 - 예상 주요 query와 인덱스 대응표
 - 위험·migration·rollback 검토
