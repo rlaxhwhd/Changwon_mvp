@@ -44,10 +44,19 @@ function emptyItem(def: SectionDef): PortfolioItem {
            fields: Object.fromEntries(def.fields.map(field => [field.key, ''])) }
 }
 
-/** 라벨 칸 + 값 칸 한 줄 */
-function Row({ label, htmlFor, children }: { label: string; htmlFor?: string; children: React.ReactNode }) {
+/** 섹션 카드 위의 작은 영문 표시 */
+const SECTION_KICKER: Record<PortfolioSectionKey, string> = {
+  personal: 'PERSONAL', education: 'EDUCATION', military: 'MILITARY', training: 'TRAINING', experience: 'EXPERIENCE',
+  career: 'CAREER', language: 'LANGUAGE', certificate: 'CERTIFICATE', skill: 'SKILLS', award: 'AWARDS', overseas: 'OVERSEAS',
+  volunteer: 'VOLUNTEER', coverLetter: 'COVER LETTER', document: 'DOCUMENTS', specialty: 'SPECIALTY', careerDescription: 'CAREER NOTE',
+}
+/** 섹션 카드 색. 내 성장 화면처럼 카드마다 나눈다. */
+const SECTION_TONES = ['', 'pf-tone-sky', 'pf-tone-mint', 'pf-tone-teal']
+
+/** 라벨 위, 입력 아래. wide 는 전체 폭을 쓴다. */
+function Row({ label, htmlFor, wide, children }: { label: string; htmlFor?: string; wide?: boolean; children: React.ReactNode }) {
   return (
-    <div className="pfe-row">
+    <div className={`pfe-field${wide ? ' pfe-field--wide' : ''}`}>
       <label className="pfe-label" htmlFor={htmlFor}>{label}</label>
       <div className="pfe-value">{children}</div>
     </div>
@@ -105,9 +114,9 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
 
   if (!document || !detail) {
     return (
-      <section className="pf-section">
+      <section className="pfe-main">
         {error ? <p className="pfe-alert" role="alert">{error}</p> : <p className="pfe-desc" role="status">불러오는 중…</p>}
-        <div><button type="button" className="pf-btn pf-btn--ghost" onClick={onClose}>목록으로</button></div>
+        <div><button type="button" className="gh-add-btn" onClick={onClose}>목록으로</button></div>
       </section>
     )
   }
@@ -231,12 +240,12 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
     if (field.kind === 'file') {
       const file = files[String(value)]
       return (
-        <Row key={field.key} label={field.label}>
+        <Row key={field.key} label={field.label} wide>
           <div className="pfe-file">
             <span>{file?.name ?? (item.title && value ? item.title : '선택된 파일이 없습니다.')}</span>
             <button
               type="button"
-              className="pf-edit-btn"
+              className="gh-add-btn"
               onClick={() => { uploadTarget.current = item.id; fileInput.current?.click() }}
             >
               <i className="fa-solid fa-upload" /> 파일 올리기
@@ -263,7 +272,7 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
       )
     }
     return (
-      <Row key={field.key} label={field.label} htmlFor={id}>
+      <Row key={field.key} label={field.label} htmlFor={id} wide={field.kind === 'long'}>
         {field.kind === 'long'
           ? <textarea rows={field.key === 'answer' ? 10 : 4} maxLength={field.key === 'question' ? 2000 : undefined} {...common} />
           : <input type="text" maxLength={field.key === 'link' ? 2000 : 200} {...common} />}
@@ -278,16 +287,17 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
     return (
       <div key={item.id} className="pfe-item">
         <div className="pfe-item-head">
-          {item.verified && <span className="pf-cat-badge"><i className="fa-solid fa-circle-check" /> 인증</span>}
+          {item.verified && <span className="pf-chip pf-chip--mint"><i className="fa-solid fa-circle-check" /> 인증</span>}
           {!fixed && (
-            <button
-              type="button"
-              className="pf-skill-remove"
-              onClick={() => changeSection(def.key, part => ({ ...part, items: part.items.filter(row => row.id !== item.id) }))}
-              aria-label="이 항목 삭제"
-            >
-              <i className="fa-solid fa-xmark" />
-            </button>
+            <div className="gh-item-actions">
+              <button
+                type="button"
+                onClick={() => changeSection(def.key, part => ({ ...part, items: part.items.filter(row => row.id !== item.id) }))}
+                aria-label="이 항목 삭제"
+              >
+                <i className="fa-regular fa-trash-can" />
+              </button>
+            </div>
           )}
         </div>
         <div className="pfe-rows">
@@ -317,7 +327,7 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
         {error && (
           <div className="pfe-alert" role="alert">
             <span>{error}</span>
-            {conflict && <button type="button" className="pf-edit-btn" onClick={reloadLatest}>최신본 다시 불러오기</button>}
+            {conflict && <button type="button" className="gh-add-btn" onClick={reloadLatest}>최신본 다시 불러오기</button>}
           </div>
         )}
         {notImported.length > 0 && (
@@ -328,27 +338,27 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
           </div>
         )}
 
-        <article className="pf-card">
+        <article className="gh-card">
           <div className="pfe-title-bar">
-            <button type="button" className="pf-edit-btn pfe-back" onClick={leave}>
+            <button type="button" className="gh-add-btn" onClick={leave}>
               <i className="fa-solid fa-arrow-left" /> 목록으로
             </button>
-            <div className="pfe-rows pfe-title-row">
+            <div className="pfe-rows">
               <Row label="포트폴리오 이름" htmlFor="pfe-title">
                 <input id="pfe-title" type="text" maxLength={60} value={title} onChange={event => { setTitle(event.target.value); setDirty(true) }} />
               </Row>
             </div>
           </div>
           {detail.missing.length > 0 && (
-            <p className="pfe-hint">제출하려면 {detail.missing.map(key => MISSING_LABEL[key] ?? key).join(', ')}을(를) 채워 저장해 주세요.</p>
+            <p className="pfe-missing">제출하려면 {detail.missing.map(key => MISSING_LABEL[key] ?? key).join(', ')}을(를) 채워 저장해 주세요.</p>
           )}
         </article>
 
-        <article className="pf-card" id="pfe-personal">
-          <header className="pf-card-head">
-            <h3><i className="fa-solid fa-id-card" /> 인적사항 <span className="pfe-badge">필수</span></h3>
-            <div className="pfe-head-actions">
-              <button type="button" className="pf-add-btn" onClick={() => setImporting('personal')}>
+        <article className="gh-card" id="pfe-personal">
+          <header className="gh-card-head">
+            <div><span className="gh-section-kicker">{SECTION_KICKER.personal}</span><h2>인적사항 <span className="pf-chip">필수</span></h2></div>
+            <div className="gh-head-actions">
+              <button type="button" className="gh-add-btn" onClick={() => setImporting('personal')}>
                 <i className="fa-solid fa-rotate" /> 최신 기록 불러오기
               </button>
             </div>
@@ -360,9 +370,9 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
                   ? <ProtectedImage src={files[person.photoFileId].downloadUrl} alt="증명사진" />
                   : <i className="fa-solid fa-user" aria-hidden="true" />}
               </div>
-              <button type="button" className="pf-edit-btn" onClick={() => photoInput.current?.click()}>사진 올리기</button>
+              <button type="button" className="gh-add-btn" onClick={() => photoInput.current?.click()}>사진 올리기</button>
               {person.photoFileId && (
-                <button type="button" className="pf-edit-btn" onClick={() => changePersonal({ photoFileId: '' })}>사진 빼기</button>
+                <button type="button" className="gh-add-btn" onClick={() => changePersonal({ photoFileId: '' })}>사진 빼기</button>
               )}
             </div>
             <div className="pfe-rows">
@@ -383,31 +393,31 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
                   />
                 </Row>
               ))}
-              <Row label="자기소개" htmlFor="pfe-personal-intro">
+              <Row label="자기소개" htmlFor="pfe-personal-intro" wide>
                 <textarea id="pfe-personal-intro" rows={5} maxLength={10000} value={person.intro} onChange={event => changePersonal({ intro: event.target.value })} />
               </Row>
             </div>
           </div>
         </article>
 
-        {shown.map(def => {
+        {shown.map((def, index) => {
           const section = listSection(document, def.key)!
           return (
-            <article key={def.key} className="pf-card" id={`pfe-${def.key}`}>
-              <header className="pf-card-head">
-                <h3>
-                  <i className={`fa-solid ${def.icon}`} /> {def.label}
-                  {def.required && <span className="pfe-badge">필수</span>}
-                </h3>
-                <div className="pfe-head-actions">
+            <article key={def.key} className={`gh-card ${SECTION_TONES[(index + 1) % SECTION_TONES.length]}`} id={`pfe-${def.key}`}>
+              <header className="gh-card-head">
+                <div>
+                  <span className="gh-section-kicker">{SECTION_KICKER[def.key]}</span>
+                  <h2>{def.label}{def.required && <span className="pf-chip">필수</span>}</h2>
+                </div>
+                <div className="gh-head-actions">
                   {def.importable && (
-                    <button type="button" className="pf-add-btn" onClick={() => setImporting(def.key)}>
+                    <button type="button" className="gh-add-btn" onClick={() => setImporting(def.key)}>
                       <i className="fa-solid fa-rotate" /> 최신 기록 불러오기
                     </button>
                   )}
                   <button
                     type="button"
-                    className="pf-add-btn"
+                    className="gh-add-btn"
                     onClick={() => changeSection(def.key, part => ({ ...part, items: [...part.items, emptyItem(def)] }))}
                   >
                     <i className="fa-solid fa-plus" /> 항목 추가
@@ -423,7 +433,7 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
       </div>
 
       <aside className="pfe-panel" aria-label="이력서 항목">
-        <div className="pf-card pfe-panel-card">
+        <div className="gh-card pfe-panel-card">
           <button
             type="button"
             className="pfe-panel-toggle"
@@ -440,7 +450,7 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
                 <li key={def.key}>
                   <span className={enabled ? 'is-on' : ''}>{def.label}</span>
                   {def.required
-                    ? <span className="pfe-badge">필수</span>
+                    ? <span className="pf-chip">필수</span>
                     : (
                       <button
                         type="button"
@@ -455,12 +465,12 @@ export default function PortfolioEditor({ studentId, portfolioId, notImported, o
             })}
           </ul>
           <div className="pfe-panel-actions">
-            <button type="button" className="pf-btn pf-btn--ghost" onClick={() => showPreview(true)}>미리보기</button>
-            <button type="button" className="pf-btn pf-btn--ghost" disabled={saving} onClick={() => void persist()}>
+            <button type="button" className="pfe-btn" onClick={() => showPreview(true)}>미리보기</button>
+            <button type="button" className="pfe-btn" disabled={saving} onClick={() => void persist()}>
               {saving ? '저장 중…' : '임시저장'}
             </button>
             <small className="pfe-saved">{dirty ? '저장하지 않은 변경이 있습니다.' : savedAt ? `마지막 저장 ${timeOf(savedAt)}` : ''}</small>
-            <button type="button" className="pf-btn pf-btn--primary" disabled={saving} onClick={finish}>저장</button>
+            <button type="button" className="pfe-btn pfe-btn--primary" disabled={saving} onClick={finish}>저장</button>
           </div>
         </div>
       </aside>

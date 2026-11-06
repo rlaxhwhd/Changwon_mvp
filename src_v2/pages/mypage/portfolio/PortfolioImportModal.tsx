@@ -90,9 +90,9 @@ export default function PortfolioImportModal({ studentId, sectionKey, document, 
           </li>
         ))}
       </ul>
-      <div className="pf-form-actions">
-        <button type="button" className="pf-btn pf-btn--ghost" onClick={onClose}>닫기</button>
-        <button type="button" className="pf-btn pf-btn--primary" disabled={picked.size === 0} onClick={applyPicked}>선택 항목 넣기</button>
+      <div className="gh-form-actions">
+        <button type="button" onClick={onClose}>닫기</button>
+        <button type="submit" disabled={picked.size === 0} onClick={applyPicked}>선택 항목 넣기</button>
       </div>
     </Modal>
   )

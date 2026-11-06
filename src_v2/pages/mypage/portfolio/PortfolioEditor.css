@@ -1,213 +1,111 @@
-/* 포트폴리오 편집기 (pfe-) — Portfolio.css 의 카드·버튼·탭을 그대로 쓰고 2단 구성과 입력 행만 더한다.
-   값은 전부 기존 토큰이다. 새 색·폰트를 만들지 않는다. */
+/* 포트폴리오 목록·편집기 (pfv-, pfe-) — 카드·버튼·입력 모양은 GrowthHome.css 와 같고, 2단 구성과 입력 격자만 더한다.
+   새 색·폰트를 만들지 않는다. */
 
-.pfe-layout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 16px;
-  align-items: start;
-}
+/* 목록 */
+.pfv-card { cursor: pointer; }
+.pfv-card:hover { border-color: var(--gh-line); }
+.pf-shell .pfv-body { padding: 14px 17px; }
+.pfv-actions { margin-top: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
+.pfv-actions .gh-item-actions { margin-left: auto; }
+.pf-shell .pfv-actions .gh-add-btn:disabled { opacity: .55; cursor: not-allowed; }
 
-.pfe-main { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.pfe-desc { margin-bottom: 14px; color: var(--color-text-sub); font-size: 14px; line-height: 1.6; }
-.pfe-hint { display: block; margin-top: 6px; color: var(--color-text-sub); font-size: 13px; font-weight: 700; }
-.pfe-head-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.pfe-grid { margin-bottom: 0; }
-.pfe-card-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-.pfe-card-actions .pf-edit-btn { margin-top: 10px; height: 32px; padding: 0 10px; font-size: 13px; }
-
-.pf-card h3 .pfe-badge { margin-left: 2px; }
-.pfe-badge {
-  flex-shrink: 0;
-  padding: 2px 9px;
-  background: var(--color-primary-bg);
-  color: var(--color-primary);
-  border-radius: var(--radius-pill);
-  font-size: 12px;
-  font-weight: 800;
-}
+/* 2단 구성 */
+.pfe-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
+.pfe-main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
+.pfe-main .gh-card-head { flex-wrap: wrap; }
+.pfe-main .gh-card-head h2 { display: flex; align-items: center; gap: 6px; }
+.pfe-desc { margin: 0; color: var(--gh-sub); font-size: 12px; line-height: 1.6; }
+.pfe-hint { display: block; margin-top: 6px; color: var(--gh-sub); font-size: 12px; }
+.pfe-missing { margin: 12px 0 0; color: var(--amber-ink); font-size: 12px; line-height: 1.6; }
 
 .pfe-alert,
-.pfe-notice {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  flex-wrap: wrap;
-  padding: 11px 14px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  font-size: 14px;
-  font-weight: 700;
-}
-.pfe-alert { color: var(--color-danger); }
-.pfe-alert .pf-edit-btn { margin-top: 0; }
-.pfe-notice { flex-direction: column; align-items: flex-start; gap: 4px; color: var(--color-text-sub); }
-.pfe-notice strong { color: var(--color-navy); }
+.pfe-notice { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border: 1px solid var(--gh-border); border-radius: 10px; background: #fbfbfd; font-size: 12px; line-height: 1.6; }
+.pfe-alert { margin: 0; color: #dc4444; }
+.pfe-notice { flex-direction: column; align-items: flex-start; gap: 2px; color: var(--gh-sub); }
+.pfe-notice strong { color: var(--gh-text); }
 
-.pfe-title-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
-.pfe-back { margin-top: 0; flex-shrink: 0; }
-.pfe-title-row { flex: 1; min-width: 240px; }
+.pfe-title-bar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
+.pfe-title-bar .pfe-rows { flex: 1; min-width: 240px; grid-template-columns: minmax(0, 1fr); }
+.pfe-title-bar .gh-add-btn { min-height: 42px; }
 
-/* 입력 행 — 라벨 칸 + 값 칸 */
-.pfe-rows {
-  flex: 1;
-  min-width: 0;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.pfe-row { display: grid; grid-template-columns: 148px minmax(0, 1fr); }
-.pfe-row + .pfe-row { border-top: 1px solid var(--color-border); }
-
-.pfe-label {
-  display: flex;
-  align-items: center;
-  padding: 10px 14px;
-  background: var(--color-surface);
-  color: var(--color-navy);
-  font-size: 14px;
-  font-weight: 700;
-}
-
-.pfe-value { padding: 8px 10px; min-width: 0; background: var(--color-bg); }
-
+/* 입력 — 라벨 위, 입력 아래. 짧은 칸은 2칸으로 놓고 긴 글은 전체 폭이다. */
+.pfe-rows { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
+.pfe-field { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
+.pfe-field--wide { grid-column: 1 / -1; }
+.pfe-label { color: var(--gh-text); font-size: 12px; font-weight: 800; }
+.pfe-value { min-width: 0; }
 .pfe-value input[type="text"],
 .pfe-value select,
-.pfe-value textarea {
-  width: 100%;
-  padding: 0 10px;
-  border: 1.5px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg);
-  color: var(--color-navy);
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 600;
-}
+.pfe-value textarea { width: 100%; border: 1px solid var(--gh-border); border-radius: 9px; outline: none; background: #fff; color: var(--gh-text); font: inherit; font-size: 12px; }
 .pfe-value input[type="text"],
-.pfe-value select { height: 40px; }
-.pfe-value textarea { display: block; padding: 8px 10px; line-height: 1.6; resize: vertical; }
+.pfe-value select { height: 42px; padding: 0 12px; }
+.pfe-value textarea { display: block; padding: 11px 12px; line-height: 1.6; resize: vertical; }
 .pfe-value input:focus,
 .pfe-value select:focus,
-.pfe-value textarea:focus {
-  outline: none;
-  border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px var(--color-primary-bg);
-}
+.pfe-value textarea:focus { border-color: var(--gh-accent); box-shadow: 0 0 0 3px var(--gh-accent-soft); }
 .pfe-value input[readonly],
-.pfe-value textarea[readonly] { background: var(--color-surface); color: var(--color-text-sub); }
+.pfe-value textarea[readonly] { background: var(--gh-muted); color: var(--gh-sub); }
 
-.pfe-file { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.pfe-file span { min-width: 0; color: var(--color-text); font-size: 14px; font-weight: 700; word-break: break-all; }
-.pfe-file .pf-edit-btn { margin-top: 0; }
+.pfe-file { min-height: 42px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+.pfe-file span { min-width: 0; color: var(--gh-sub); font-size: 12px; word-break: break-all; }
 .pfe-file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
 
-.pfe-items { display: flex; flex-direction: column; gap: 14px; }
-.pfe-item-head { display: flex; align-items: center; justify-content: flex-end; gap: 8px; min-height: 20px; margin-bottom: 6px; }
-.pfe-item-head .pf-cat-badge { margin-right: auto; display: inline-flex; align-items: center; gap: 4px; }
+.pfe-items { display: flex; flex-direction: column; gap: 12px; }
+.pfe-item { padding: 14px; border: 1px solid var(--gh-border); border-radius: 12px; background: #fff; }
+.pfe-item-head { min-height: 28px; margin-bottom: 8px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+.pfe-item-head .pf-chip { margin-right: auto; }
+.pfe-item-head:empty { display: none; }
 
 .pfe-personal { display: flex; align-items: flex-start; gap: 16px; }
-.pfe-photo-col { display: flex; flex-direction: column; align-items: stretch; gap: 6px; flex-shrink: 0; width: 120px; }
-.pfe-photo-col .pf-edit-btn { margin-top: 0; justify-content: center; height: 32px; padding: 0 8px; font-size: 13px; }
-.pfe-photo {
-  height: 150px;
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface);
-  color: var(--color-text-muted);
-  font-size: 13px;
-  text-align: center;
-}
-.pfe-photo > i { font-size: 36px; }
-.pfe-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.pfe-photo-col { flex-shrink: 0; width: 104px; display: flex; flex-direction: column; gap: 6px; }
+.pfe-photo-col .gh-add-btn { justify-content: center; }
+.pfe-photo { height: 132px; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--gh-border); border-radius: 10px; background: var(--gh-muted); color: var(--gh-sub); }
+.pfe-photo > i { font-size: 28px; }
+.pfe-photo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
 /* 오른쪽 항목 패널 */
 .pfe-panel { position: sticky; top: 88px; max-height: calc(100vh - 104px); overflow-y: auto; }
-.pfe-panel-card { padding: 18px 16px; }
-.pfe-panel-title { margin-bottom: 10px; }
+.pfe-panel-card { padding: 16px; }
+.pfe-panel-title { margin: 0 0 8px; font-size: 14px; font-weight: 800; }
 .pfe-panel-toggle { display: none; }
+.pfe-panel-list { margin: 0; padding: 0; display: flex; flex-direction: column; list-style: none; }
+.pfe-panel-list li { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--gh-border); color: var(--gh-sub); font-size: 12px; }
+.pfe-panel-list li > span.is-on { color: var(--gh-text); font-weight: 700; }
+.pfe-toggle { flex-shrink: 0; padding: 4px 2px; border: 0; background: none; color: var(--gh-accent); font-size: 12px; font-weight: 800; cursor: pointer; }
+.pfe-toggle.is-remove { color: var(--gh-sub); font-weight: 500; }
+.pfe-toggle:hover { text-decoration: underline; }
 
-.pfe-panel-list { list-style: none; display: flex; flex-direction: column; }
-.pfe-panel-list li {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  min-height: 36px;
-  border-bottom: 1px solid var(--color-border);
-  color: var(--color-text-sub);
-  font-size: 14px;
-  font-weight: 700;
-}
-.pfe-panel-list li > span.is-on { color: var(--color-navy); }
+.pfe-panel-actions { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.pfe-btn { min-height: 38px; padding: 0 15px; border: 1px solid var(--gh-border); border-radius: 9px; background: #fff; color: var(--gh-sub); font-size: 12px; font-weight: 800; cursor: pointer; }
+.pfe-btn:hover { border-color: var(--gh-line); color: var(--gh-ink); }
+.pfe-btn:disabled { opacity: .55; cursor: wait; }
+.pfe-btn--primary,
+.pfe-btn--primary:hover { border-color: var(--gh-accent); background: var(--gh-accent); color: #fff; }
+.pfe-saved { min-height: 18px; color: var(--gh-sub); font-size: 12px; text-align: center; }
 
-.pfe-toggle {
-  flex-shrink: 0;
-  height: 26px;
-  padding: 0 8px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-primary);
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.pfe-toggle.is-remove { color: var(--color-text-sub); }
-.pfe-toggle:hover { border-color: var(--color-primary); color: var(--color-primary); }
-
-.pfe-panel-actions { display: flex; flex-direction: column; gap: 8px; margin-top: 14px; }
-.pfe-saved { min-height: 18px; color: var(--color-text-sub); font-size: 13px; font-weight: 700; text-align: center; }
-
-.pfe-import-list { list-style: none; display: flex; flex-direction: column; gap: 6px; max-height: 50vh; overflow-y: auto; margin-bottom: 12px; }
-.pfe-import-list label {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 10px 12px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.pfe-import-list input { margin-top: 4px; accent-color: var(--color-primary); }
+/* 불러오기 모달 */
+.pfe-import-list { max-height: 50vh; margin: 0 0 12px; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; list-style: none; }
+.pfe-import-list label { padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--gh-border); border-radius: 10px; cursor: pointer; }
+.pfe-import-list input { margin-top: 3px; accent-color: var(--gh-accent); }
 .pfe-import-list span { min-width: 0; }
-.pfe-import-list strong { display: block; color: var(--color-navy); font-size: 14px; font-weight: 700; }
-.pfe-import-list small { display: block; margin-top: 2px; color: var(--color-text-sub); font-size: 13px; word-break: break-word; }
+.pfe-import-list strong { display: block; font-size: 14px; font-weight: 800; }
+.pfe-import-list small { display: block; margin-top: 2px; color: var(--gh-sub); font-size: 12px; word-break: break-word; }
 
 @media (max-width: 900px) {
   .pfe-layout { grid-template-columns: minmax(0, 1fr); }
   .pfe-panel { position: static; order: -1; max-height: none; overflow: visible; }
-  .pf-card .pfe-panel-title { display: none; }
-  .pfe-panel-toggle {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: 100%;
-    height: 40px;
-    background: transparent;
-    border: none;
-    color: var(--color-navy);
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-  }
+  .pfe-panel-title { display: none; }
+  .pfe-panel-toggle { width: 100%; height: 36px; padding: 0; display: flex; align-items: center; justify-content: space-between; border: 0; background: none; color: var(--gh-text); font-size: 14px; font-weight: 800; cursor: pointer; }
   .pfe-panel-list { display: none; margin-top: 6px; }
   .pfe-panel-list.is-open { display: flex; }
   .pfe-panel-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
-  .pfe-panel-actions .pf-btn { flex: 1; min-width: 96px; padding: 0 10px; }
+  .pfe-btn { flex: 1; min-width: 96px; padding: 0 10px; }
   .pfe-saved { order: 3; width: 100%; }
 }
 
 @media (max-width: 600px) {
-  .pfe-row { grid-template-columns: minmax(0, 1fr); }
-  .pfe-label { padding: 8px 12px; }
-  .pfe-personal { flex-direction: column; }
+  .pfe-rows { grid-template-columns: minmax(0, 1fr); }
+  .pfe-personal { flex-direction: column; align-items: stretch; }
   .pfe-photo-col { width: 100%; flex-direction: row; flex-wrap: wrap; align-items: center; }
   .pfe-photo { width: 96px; height: 120px; }
 }

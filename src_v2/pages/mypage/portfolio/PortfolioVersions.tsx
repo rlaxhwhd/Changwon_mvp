@@ -77,57 +77,50 @@ export default function PortfolioVersions({ studentId, initialId }: Props) {
   const full = limit !== null && rows.length >= limit
 
   return (
-    <section className="pf-section">
-      {(error || loadError) && <p className="pfe-alert" role="alert">{error || loadError}</p>}
-      <article className="pf-card">
-        <header className="pf-card-head">
-          <h3><i className="fa-solid fa-folder-open" /> 회사 제출용 포트폴리오</h3>
-          <div className="pfe-head-actions">
-            {limit !== null && <span className="pf-doc-count">{rows.length} / {limit}개</span>}
-            <button type="button" className="pf-add-btn" disabled={saving || full} onClick={() => open({ mode: 'create' })}>
+    <section className="gh-portfolio-grid">
+      {(error || loadError) && <p className="pfe-alert pf-span-12" role="alert">{error || loadError}</p>}
+      <article className="gh-card pf-span-12">
+        <header className="gh-card-head">
+          <div>
+            <span className="gh-section-kicker">COMPANY PORTFOLIO</span>
+            <h2>회사 제출용 포트폴리오</h2>
+            <p>기존 기록을 복사해 만들고, 회사마다 항목을 고쳐 여러 개로 관리합니다. 여기서 고친 내용은 원본 기록을 바꾸지 않습니다.</p>
+          </div>
+          <div className="gh-head-actions">
+            {limit !== null && <span className="gh-count">{rows.length} / {limit}개</span>}
+            <button type="button" className="gh-add-btn" disabled={saving || full} onClick={() => open({ mode: 'create' })}>
               <i className="fa-solid fa-plus" /> 새로 만들기
             </button>
           </div>
         </header>
-        <p className="pfe-desc">기존 기록을 복사해 만들고, 회사마다 항목을 고쳐 여러 개로 관리합니다. 여기서 고친 내용은 원본 기록을 바꾸지 않습니다.</p>
 
         {rows.length === 0 ? (
-          <div className="pf-empty">
-            <i className="fa-solid fa-file-circle-plus" />
-            <p>아직 만든 포트폴리오가 없습니다.</p>
-          </div>
+          <p className="gh-empty">아직 만든 포트폴리오가 없습니다. 「새로 만들기」를 누르면 기존 기록이 자동으로 채워집니다.</p>
         ) : (
-          <div className="pf-resume-grid pfe-grid">
-            {rows.map(row => (
-              <article key={row.id} className="pf-resume-card" onClick={() => setEditingId(row.id)}>
-                <div className="pf-resume-top">
-                  <span className="pf-cat-badge">{row.complete ? '제출 가능' : '작성 중'}</span>
-                  <button
-                    type="button"
-                    className="pf-resume-del"
-                    disabled={saving}
-                    onClick={event => { event.stopPropagation(); remove(row) }}
-                    aria-label={`${row.title} 삭제`}
-                  >
-                    <i className="fa-solid fa-trash" />
-                  </button>
+          <div className="gh-project-list">
+            {rows.map((row, index) => (
+              <section key={row.id} className="gh-project pfv-card" onClick={() => setEditingId(row.id)}>
+                <div className={`gh-project-visual tone-${index % 2 + 1}`}>
+                  <span>PORTFOLIO {String(index + 1).padStart(2, '0')}</span>
+                  <h3>{row.title}</h3>
                 </div>
-                <h4 className="pf-resume-title">{row.title}</h4>
-                <div className="pf-resume-foot">
-                  <span><i className="fa-regular fa-calendar" /> {formatDate(row.updatedAt)}</span>
+                <div className="gh-project-body pfv-body">
+                  <div className="gh-project-meta">
+                    <span>{formatDate(row.updatedAt)}</span>
+                    <span className={`pf-chip ${row.complete ? 'pf-chip--mint' : 'pf-chip--amber'}`}>{row.complete ? '제출 가능' : '작성 중'}</span>
+                  </div>
+                  <div className="pfv-actions" onClick={event => event.stopPropagation()}>
+                    <button type="button" className="gh-add-btn" onClick={() => setEditingId(row.id)}>편집</button>
+                    <button type="button" className="gh-add-btn" disabled={saving || full} onClick={() => clone(row)}>복제</button>
+                    <button type="button" className="gh-add-btn" disabled={saving} onClick={() => open({ mode: 'rename', row })}>이름 변경</button>
+                    <div className="gh-item-actions">
+                      <button type="button" disabled={saving} onClick={() => remove(row)} aria-label={`${row.title} 삭제`}>
+                        <i className="fa-regular fa-trash-can" />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="pfe-card-actions" onClick={event => event.stopPropagation()}>
-                  <button type="button" className="pf-edit-btn" onClick={() => setEditingId(row.id)}>
-                    <i className="fa-solid fa-pen" /> 편집
-                  </button>
-                  <button type="button" className="pf-edit-btn" disabled={saving || full} onClick={() => clone(row)}>
-                    <i className="fa-regular fa-copy" /> 복제
-                  </button>
-                  <button type="button" className="pf-edit-btn" disabled={saving} onClick={() => open({ mode: 'rename', row })}>
-                    이름 변경
-                  </button>
-                </div>
-              </article>
+              </section>
             ))}
           </div>
         )}
@@ -139,7 +132,7 @@ export default function PortfolioVersions({ studentId, initialId }: Props) {
         title={dialog?.mode === 'rename' ? '이름 변경' : '새 포트폴리오'}
         size="sm"
       >
-        <form className="pf-form" onSubmit={event => { event.preventDefault(); submitName() }}>
+        <form className="gh-editor-form" onSubmit={event => { event.preventDefault(); submitName() }}>
           <label>
             <span>이름</span>
             <input
@@ -152,9 +145,9 @@ export default function PortfolioVersions({ studentId, initialId }: Props) {
             />
           </label>
           {error && <p className="pfe-alert" role="alert">{error}</p>}
-          <div className="pf-form-actions">
-            <button type="button" className="pf-btn pf-btn--ghost" onClick={() => setDialog(null)}>취소</button>
-            <button type="submit" className="pf-btn pf-btn--primary" disabled={saving}>
+          <div className="gh-form-actions">
+            <button type="button" onClick={() => setDialog(null)}>취소</button>
+            <button type="submit" disabled={saving}>
               {dialog?.mode === 'rename' ? '변경' : '만들기'}
             </button>
           </div>

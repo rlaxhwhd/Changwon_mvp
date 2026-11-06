@@ -13,6 +13,8 @@ import { createGrowthEntry, deleteGrowthEntry, growthEntries, loadPortfolio,
 import type { PortfolioDTO } from '../../../shared/growthStore'
 import { useGrowth } from '../../../shared/useRoadmapStore'
 import { useEffect } from 'react'
+// 이 화면은 내 성장 화면과 같은 표지·카드·폼을 쓴다. 값을 베끼지 않고 그 스타일을 불러온다.
+import '../growth/GrowthHome.css'
 import './Portfolio.css'
 import { usePageHead } from '../../components/PageCrumb'
 import PortfolioVersions from './portfolio/PortfolioVersions'
@@ -28,7 +30,6 @@ const EMPTY_PROFILE: ProfileData = {
 interface TabDef {
   id: TabId
   label: string
-  icon: string
 }
 
 /** 스킬 분류 — DB 코드다(GROWTH_SKILL_CATEGORY). 한글은 표시용 라벨이다. */
@@ -37,12 +38,12 @@ const SKILL_CATEGORY_LABEL: Record<string, string> = {
 }
 
 const TABS: TabDef[] = [
-  { id: 'profile',    label: '기본 정보',  icon: 'fa-id-card' },
-  { id: 'skills',     label: '스킬·자격증', icon: 'fa-screwdriver-wrench' },
-  { id: 'experience', label: '경험·수상',  icon: 'fa-trophy' },
-  { id: 'documents',  label: '자소서',     icon: 'fa-file-lines' },
-  { id: 'resume',     label: '이력서',     icon: 'fa-id-badge' },
-  { id: 'versions',   label: '포트폴리오',  icon: 'fa-folder-open' },
+  { id: 'profile',    label: '기본 정보' },
+  { id: 'skills',     label: '스킬·자격증' },
+  { id: 'experience', label: '경험·수상' },
+  { id: 'documents',  label: '자소서' },
+  { id: 'resume',     label: '이력서' },
+  { id: 'versions',   label: '포트폴리오' },
 ]
 
 
@@ -126,33 +127,51 @@ export default function Portfolio() {
   // 자기소개서는 채용 도메인(dc.job_resume)이 정본이다 — 여기서 지우지 않는다.
   const removeResume = (_id: string) => setError('자기소개서는 취업지원 > 자기소개서에서 관리합니다.')
 
-  return (
-    <div className="pf-wrap">
-      {error && <p className="pf-error" role="alert">{error}</p>}
+  const coverName = profile.name ? `${studentDisplayName(profile.name, profile.studentId)}의 포트폴리오` : '나의 포트폴리오'
+  const coverLine = [profile.dept, profile.grade, profile.studentId].filter(Boolean).join(' · ')
+  const coverTags: [string, number][] = [
+    ['스킬', skills.length], ['자격증', certs.length], ['어학', langs.length],
+    ['수상', awards.length], ['프로젝트', projects.length], ['자소서', resumes.length],
+  ]
 
-      <header className="pf-hero">
-        <div className="pf-hero-actions">
-          <div className="pf-completeness">
-            <span className="pf-completeness-num">{completeness}<small>%</small></span>
-            <span className="pf-completeness-lbl">완성도</span>
-            <div className="pf-completeness-track">
-              <div className="pf-completeness-fill" style={{ width: `${completeness}%` }} />
-            </div>
+  return (
+    <main className="gh-shell pf-shell">
+      <section className="gh-cover" aria-labelledby="portfolio-title">
+        <div className="gh-cover-profile">
+          <div className="gh-avatar" aria-hidden="true">{profile.name.slice(-2)}</div>
+          <div>
+            <span className="gh-eyebrow">CAREER PORTFOLIO</span>
+            <h2 id="portfolio-title">{coverName}</h2>
+            <p>{coverLine}</p>
           </div>
-          <button type="button" className="pf-pdf-btn" onClick={exportPdf}>
+        </div>
+        <div className="gh-cover-copy">
+          <strong>이력서 완성도 {completeness}%</strong>
+          <div className="pf-progress" role="progressbar" aria-label="이력서 완성도" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completeness}>
+            <i style={{ width: `${completeness}%` }} />
+          </div>
+          <div className="gh-cover-tags">
+            {coverTags.map(([label, count]) => <span key={label}>{label} {count}</span>)}
+          </div>
+        </div>
+        <div className="gh-cover-actions">
+          <button type="button" className="gh-primary-action" onClick={exportPdf}>
             <i className="fa-solid fa-file-pdf" /> 이력서 PDF
           </button>
         </div>
-      </header>
+      </section>
+
+      {error && <p className="gh-empty pf-error" role="alert">{error}</p>}
 
       <nav className="pf-tabs" aria-label="포트폴리오 섹션">
         {TABS.map(t => (
           <button
             key={t.id}
+            type="button"
             className={`pf-tab${tab === t.id ? ' active' : ''}`}
             onClick={() => setTab(t.id)}
           >
-            <i className={`fa-solid ${t.icon}`} /> {t.label}
+            {t.label}
           </button>
         ))}
       </nav>
@@ -197,7 +216,7 @@ export default function Portfolio() {
 
       {/* Add Skill Modal */}
       <Modal open={addSkillOpen} onClose={() => setAddSkillOpen(false)} title="스킬 추가" size="sm">
-        <div className="pf-form">
+        <form className="gh-editor-form" onSubmit={event => { event.preventDefault(); addSkill() }}>
           <label>
             <span>스킬 이름</span>
             <input
@@ -222,6 +241,7 @@ export default function Portfolio() {
             <span>숙련도 — {LEVEL_LABELS[skillForm.level]}</span>
             <input
               type="range"
+              className="pf-range"
               min={1}
               max={5}
               step={1}
@@ -232,15 +252,11 @@ export default function Portfolio() {
               {LEVEL_LABELS.slice(1).map(l => <span key={l}>{l}</span>)}
             </div>
           </label>
-          <div className="pf-form-actions">
-            <button type="button" className="pf-btn pf-btn--ghost" onClick={() => setAddSkillOpen(false)}>
-              취소
-            </button>
-            <button type="button" className="pf-btn pf-btn--primary" onClick={addSkill}>
-              추가
-            </button>
+          <div className="gh-form-actions">
+            <button type="button" onClick={() => setAddSkillOpen(false)}>취소</button>
+            <button type="submit">추가</button>
           </div>
-        </div>
+        </form>
       </Modal>
 
       {/* View Resume Modal */}
@@ -251,22 +267,15 @@ export default function Portfolio() {
         size="md"
       >
         {viewResume && (
-          <div className="pf-resume-view">
-            <div className="pf-resume-view-tags">
-              <span className="pf-cat-badge">{viewResume.category}</span>
-              {viewResume.isAi && (
-                <span className="pf-ai-badge"><i className="fa-solid fa-wand-magic-sparkles" /> AI 작성</span>
-              )}
-              <span className="pf-resume-date">
-                <i className="fa-regular fa-calendar" /> {viewResume.updatedAt}
-              </span>
+          <div className="pf-view">
+            <div className="pf-view-tags">
+              <span className="pf-chip">{viewResume.category}</span>
+              {viewResume.isAi && <span className="pf-chip pf-chip--sky">AI 작성</span>}
+              <time>{viewResume.updatedAt}</time>
             </div>
-            <div className="pf-resume-view-info">
-              <span><i className="fa-solid fa-building" /> {viewResume.company}</span>
-              <span><i className="fa-solid fa-briefcase" /> {viewResume.position}</span>
-            </div>
-            <div className="pf-resume-view-content">{viewResume.content}</div>
-            <div className="pf-resume-view-foot">총 {viewResume.content.length}자</div>
+            <p className="pf-view-info">{viewResume.company} · {viewResume.position}</p>
+            <div className="pf-view-content">{viewResume.content}</div>
+            <small>총 {viewResume.content.length}자</small>
           </div>
         )}
       </Modal>
@@ -277,7 +286,7 @@ export default function Portfolio() {
           이력서 PDF 내보내기가 시작되었어요. (브라우저 다운로드 폴더 확인)
         </div>
       )}
-    </div>
+    </main>
   )
 }
 
@@ -292,81 +301,57 @@ function ProfileSection({ profile, onChange }: { profile: ProfileData; onChange:
   const save = () => { onChange(form); setEditing(false) }
 
   return (
-    <section className="pf-section">
-      <div className="pf-profile-card">
-        <div className="pf-profile-avatar">
-          <img className="pf-profile-photo" src="/student-profile.png" alt={`${studentDisplayName(profile.name, profile.studentId)} 프로필`} />
-        </div>
-        <div className="pf-profile-info">
-          <h2>{studentDisplayName(profile.name, profile.studentId)} <small>· {profile.school}</small></h2>
-          <p className="pf-profile-sub">
-            {profile.dept} · {profile.grade} · 학번 {profile.studentId}
-          </p>
-          <p className="pf-profile-intro">{profile.intro}</p>
-        </div>
-      </div>
+    <section className="gh-portfolio-grid">
+      <article className="gh-card pf-span-12">
+        <header className="gh-card-head"><div><span className="gh-section-kicker">INTRODUCTION</span><h2>자기소개</h2></div></header>
+        {profile.intro
+          ? <p className="pf-text">{profile.intro}</p>
+          : <p className="gh-empty">아직 자기소개가 없습니다. 연락처 카드의 「정보 수정」에서 작성할 수 있습니다.</p>}
+      </article>
 
-      <div className="pf-grid pf-grid--2">
-        <article className="pf-card">
-          <h3><i className="fa-solid fa-graduation-cap" /> 학사 정보</h3>
-          <dl className="pf-dl">
-            <div><dt>학교</dt><dd>{profile.school}</dd></div>
-            <div><dt>학과</dt><dd>{profile.dept}</dd></div>
-            <div><dt>학년</dt><dd>{profile.grade}</dd></div>
-            <div><dt>학번</dt><dd>{profile.studentId}</dd></div>
-            <div><dt>GPA</dt><dd><strong>{profile.gpa}</strong></dd></div>
-            <div><dt>주전공</dt><dd>{profile.major}</dd></div>
-          </dl>
-        </article>
+      <article className="gh-card pf-span-6 pf-tone-sky">
+        <header className="gh-card-head"><div><span className="gh-section-kicker">ACADEMIC</span><h2>학사 정보</h2><p>학사 기록에서 가져온 정보입니다.</p></div></header>
+        <dl className="gh-profile-list">
+          <div><dt>학교</dt><dd>{profile.school}</dd></div>
+          <div><dt>학과</dt><dd>{profile.dept}</dd></div>
+          <div><dt>학년</dt><dd>{profile.grade}</dd></div>
+          <div><dt>학번</dt><dd>{profile.studentId}</dd></div>
+          <div><dt>GPA</dt><dd>{profile.gpa}</dd></div>
+          <div><dt>주전공</dt><dd>{profile.major}</dd></div>
+        </dl>
+      </article>
 
-        <article className="pf-card">
-          <header className="pf-card-head">
-            <h3><i className="fa-solid fa-address-book" /> 연락처</h3>
-          </header>
-          {editing ? (
-            <div className="pf-form">
-              <label>
-                <span>이메일</span>
-                <input
-                  type="text"
-                  value={form.email}
-                  onChange={e => setForm({ ...form, email: e.target.value })}
-                />
-              </label>
-              <label>
-                <span>휴대폰</span>
-                <input
-                  type="text"
-                  value={form.phone}
-                  onChange={e => setForm({ ...form, phone: e.target.value })}
-                />
-              </label>
-              <label>
-                <span>자기소개</span>
-                <textarea
-                  rows={4}
-                  value={form.intro}
-                  onChange={e => setForm({ ...form, intro: e.target.value })}
-                />
-              </label>
-              <div className="pf-form-actions">
-                <button type="button" className="pf-btn pf-btn--ghost" onClick={cancel}>취소</button>
-                <button type="button" className="pf-btn pf-btn--primary" onClick={save}>저장</button>
-              </div>
+      <article className="gh-card pf-span-6 pf-tone-mint">
+        <header className="gh-card-head">
+          <div><span className="gh-section-kicker">CONTACT</span><h2>연락처</h2><p>이력서에 표시되는 연락처입니다.</p></div>
+          {!editing && <button type="button" className="gh-add-btn" onClick={startEdit}><i className="fa-solid fa-pen" /> 정보 수정</button>}
+        </header>
+        {editing ? (
+          <form className="gh-editor-form" onSubmit={event => { event.preventDefault(); save() }}>
+            <label>
+              <span>이메일</span>
+              <input type="text" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            </label>
+            <label>
+              <span>휴대폰</span>
+              <input type="text" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+            </label>
+            <label>
+              <span>자기소개</span>
+              <textarea rows={4} value={form.intro} onChange={e => setForm({ ...form, intro: e.target.value })} />
+            </label>
+            <div className="gh-form-actions">
+              <button type="button" onClick={cancel}>취소</button>
+              <button type="submit">저장</button>
             </div>
-          ) : (
-            <>
-              <dl className="pf-dl">
-                <div><dt>이메일</dt><dd>{profile.email}</dd></div>
-                <div><dt>휴대폰</dt><dd>{profile.phone}</dd></div>
-              </dl>
-              <button type="button" className="pf-edit-btn" onClick={startEdit}>
-                <i className="fa-solid fa-pen" /> 정보 수정
-              </button>
-            </>
-          )}
-        </article>
-      </div>
+          </form>
+        ) : (
+          <dl className="gh-profile-list">
+            <div><dt>이메일</dt><dd>{profile.email || '-'}</dd></div>
+            <div><dt>휴대폰</dt><dd>{profile.phone || '-'}</dd></div>
+          </dl>
+        )}
+      </article>
     </section>
   )
 }
@@ -391,37 +376,29 @@ function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: Skil
   }, [skills])
 
   return (
-    <section className="pf-section">
-      <article className="pf-card">
-        <header className="pf-card-head">
-          <h3><i className="fa-solid fa-screwdriver-wrench" /> 보유 스킬</h3>
-          <button type="button" className="pf-add-btn" onClick={onAddSkill}>
-            <i className="fa-solid fa-plus" /> 스킬 추가
-          </button>
+    <section className="gh-portfolio-grid">
+      <article className="gh-card pf-span-12 pf-tone-mint">
+        <header className="gh-card-head">
+          <div><span className="gh-section-kicker">CAPABILITIES</span><h2>보유 스킬</h2><p>프로젝트와 학습 활동으로 쌓은 기술 역량입니다.</p></div>
+          <button type="button" className="gh-add-btn" onClick={onAddSkill}><i className="fa-solid fa-plus" /> 스킬 추가</button>
         </header>
-
+        {skills.length === 0 && <p className="gh-empty">등록된 스킬이 없습니다.</p>}
         {Object.keys(byCategory).map(cat => (
           <div key={cat} className="pf-skill-group">
-            <span className="pf-skill-group-title">{cat}</span>
-            <div className="pf-skill-list">
+            <h3>{SKILL_CATEGORY_LABEL[cat] ?? cat}</h3>
+            <div className="gh-skill-grid">
               {byCategory[cat].map(s => (
-                <div key={s.id} className="pf-skill-chip">
-                  <div className="pf-skill-chip-head">
-                    <span className="pf-skill-name">{s.name}</span>
-                    <span className={`pf-skill-badge lv${s.level}`}>{LEVEL_LABELS[s.level]}</span>
-                    <button
-                      type="button"
-                      className="pf-skill-remove"
-                      onClick={() => onRemoveSkill(s.id)}
-                      aria-label="삭제"
-                    >
-                      <i className="fa-solid fa-xmark" />
-                    </button>
-                  </div>
-                  <div className="pf-skill-bar" title={`숙련도 ${s.level}/5 · ${LEVEL_LABELS[s.level]}`}>
-                    {[1, 2, 3, 4, 5].map(lv => (
-                      <span key={lv} className={`pf-skill-seg${lv <= s.level ? ` on lv${s.level}` : ''}`} />
-                    ))}
+                <div key={s.id} className="gh-skill">
+                  <div><strong>{s.name}</strong><span>{LEVEL_LABELS[s.level]}</span></div>
+                  <div className="gh-skill-controls">
+                    <div className="gh-level" aria-label={`${s.name} 숙련도 ${s.level}/5`}>
+                      {[1, 2, 3, 4, 5].map(lv => <i className={lv <= s.level ? 'filled' : ''} key={lv} />)}
+                    </div>
+                    <div className="gh-item-actions">
+                      <button type="button" onClick={() => onRemoveSkill(s.id)} aria-label={`${s.name} 삭제`}>
+                        <i className="fa-regular fa-trash-can" />
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -430,47 +407,39 @@ function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: Skil
         ))}
       </article>
 
-      <div className="pf-grid pf-grid--2">
-        <article className="pf-card">
-          <header className="pf-card-head">
-            <h3><i className="fa-solid fa-certificate" /> 자격증</h3>
-            <button type="button" className="pf-add-btn-sm">
-              <i className="fa-solid fa-plus" />
-            </button>
-          </header>
-          <ul className="pf-list">
-            {certs.map(c => (
-              <li key={c.id} className="pf-list-item">
-                <div className="pf-list-icon"><i className="fa-solid fa-award" /></div>
-                <div className="pf-list-body">
-                  <strong>{c.name}</strong>
-                  <small>{c.issuer} · {c.acquiredAt}</small>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </article>
+      <article className="gh-card pf-span-6 pf-tone-teal">
+        <header className="gh-card-head">
+          <div><span className="gh-section-kicker">CERTIFICATES</span><h2>자격증</h2></div>
+          <button type="button" className="gh-add-btn" aria-label="자격증 추가"><i className="fa-solid fa-plus" /></button>
+        </header>
+        <div className="gh-qualification-list">
+          {certs.map(c => (
+            <div key={c.id}>
+              <span className="gh-record-icon"><i className="fa-solid fa-award" /></span>
+              <div><strong>{c.name}</strong><small>{c.issuer}</small></div>
+              <time>{c.acquiredAt}</time>
+            </div>
+          ))}
+          {certs.length === 0 && <p className="gh-empty">등록된 자격증이 없습니다.</p>}
+        </div>
+      </article>
 
-        <article className="pf-card">
-          <header className="pf-card-head">
-            <h3><i className="fa-solid fa-language" /> 어학</h3>
-            <button type="button" className="pf-add-btn-sm">
-              <i className="fa-solid fa-plus" />
-            </button>
-          </header>
-          <ul className="pf-list">
-            {langs.map(l => (
-              <li key={l.id} className="pf-list-item">
-                <div className="pf-list-icon"><i className="fa-solid fa-globe" /></div>
-                <div className="pf-list-body">
-                  <strong>{l.name} <span className="pf-lang-score">{l.score}</span></strong>
-                  <small>{l.test} · {l.acquiredAt}</small>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </article>
-      </div>
+      <article className="gh-card pf-span-6 pf-tone-sky">
+        <header className="gh-card-head">
+          <div><span className="gh-section-kicker">LANGUAGES</span><h2>어학</h2></div>
+          <button type="button" className="gh-add-btn" aria-label="어학 추가"><i className="fa-solid fa-plus" /></button>
+        </header>
+        <div className="gh-qualification-list">
+          {langs.map(l => (
+            <div key={l.id}>
+              <span className="gh-record-icon"><i className="fa-solid fa-globe" /></span>
+              <div><strong>{l.name} {l.score}</strong><small>{l.test}</small></div>
+              <time>{l.acquiredAt}</time>
+            </div>
+          ))}
+          {langs.length === 0 && <p className="gh-empty">등록된 어학 성적이 없습니다.</p>}
+        </div>
+      </article>
     </section>
   )
 }
@@ -482,58 +451,53 @@ interface ExperienceSectionProps {
 
 function ExperienceSection({ awards, projects }: ExperienceSectionProps) {
   return (
-    <section className="pf-section">
-      <article className="pf-card">
-        <header className="pf-card-head">
-          <h3><i className="fa-solid fa-trophy" /> 공모전 · 수상</h3>
-          <button type="button" className="pf-add-btn">
-            <i className="fa-solid fa-plus" /> 수상 기록 추가
-          </button>
+    <section className="gh-portfolio-grid">
+      <article className="gh-card pf-span-12 pf-tone-amber">
+        <header className="gh-card-head">
+          <div><span className="gh-section-kicker">AWARDS</span><h2>공모전·수상</h2></div>
+          <button type="button" className="gh-add-btn"><i className="fa-solid fa-plus" /> 수상 기록 추가</button>
         </header>
-        <div className="pf-timeline">
+        <div className="gh-qualification-list">
           {awards.map(a => (
-            <div key={a.id} className="pf-timeline-item">
-              <div className="pf-timeline-dot" />
-              <div className="pf-timeline-body">
-                <div className="pf-timeline-head">
-                  <strong>{a.title}</strong>
-                  <span className="pf-award-rank">{a.rank}</span>
-                </div>
-                <p className="pf-timeline-meta">{a.host} · {a.date}</p>
-                <p className="pf-timeline-desc">{a.description}</p>
-              </div>
+            <div key={a.id}>
+              <span className="gh-record-icon"><i className="fa-solid fa-trophy" /></span>
+              <div><strong>{a.title}</strong><small>{a.host}</small>{a.description && <p>{a.description}</p>}</div>
+              <span className="pf-chip pf-chip--amber">{a.rank}</span>
+              <time>{a.date}</time>
             </div>
           ))}
+          {awards.length === 0 && <p className="gh-empty">등록된 수상 기록이 없습니다.</p>}
         </div>
       </article>
 
-      <article className="pf-card">
-        <header className="pf-card-head">
-          <h3><i className="fa-solid fa-code" /> 프로젝트</h3>
-          <button type="button" className="pf-add-btn">
-            <i className="fa-solid fa-plus" /> 프로젝트 추가
-          </button>
+      <article className="gh-card pf-span-12">
+        <header className="gh-card-head">
+          <div><span className="gh-section-kicker">SELECTED WORK</span><h2>프로젝트</h2></div>
+          <button type="button" className="gh-add-btn"><i className="fa-solid fa-plus" /> 프로젝트 추가</button>
         </header>
-        <div className="pf-project-grid">
-          {projects.map(p => (
-            <div key={p.id} className="pf-project">
-              <div className="pf-project-head">
-                <strong>{p.title}</strong>
-                {p.link && (
-                  <a href={p.link} target="_blank" rel="noopener noreferrer" className="pf-project-link">
-                    <i className="fa-brands fa-github" />
-                  </a>
-                )}
+        <div className="gh-project-list">
+          {projects.map((p, index) => (
+            <section key={p.id} className="gh-project">
+              <div className={`gh-project-visual tone-${index % 2 + 1}`}>
+                <span>PROJECT {String(index + 1).padStart(2, '0')}</span>
+                <h3>{p.title}</h3>
               </div>
-              <p className="pf-project-meta">
-                <span>{p.role}</span><span>·</span><span>{p.period}</span>
-              </p>
-              <p className="pf-project-desc">{p.description}</p>
-              <div className="pf-project-stack">
-                {p.stack.map(s => <span key={s} className="pf-stack-tag">{s}</span>)}
+              <div className="gh-project-body">
+                <div className="gh-project-meta">
+                  <span>{p.period}</span>
+                  {p.link && (
+                    <a href={p.link} target="_blank" rel="noopener noreferrer" aria-label={`${p.title} 링크`}>
+                      <i className="fa-solid fa-arrow-up-right-from-square" />
+                    </a>
+                  )}
+                </div>
+                <strong>{p.role}</strong>
+                <p>{p.description}</p>
+                <div className="gh-tag-list">{p.stack.map(s => <span key={s}>{s}</span>)}</div>
               </div>
-            </div>
+            </section>
           ))}
+          {projects.length === 0 && <p className="gh-empty">등록된 프로젝트가 없습니다.</p>}
         </div>
       </article>
     </section>
@@ -552,80 +516,55 @@ function DocumentsSection({ profile, resumes, onView, onRemove }: DocumentsSecti
   const manualCount = resumes.filter(r => !r.isAi).length
 
   return (
-    <section className="pf-section">
-      <article className="pf-card">
-        <header className="pf-card-head">
-          <h3><i className="fa-solid fa-file-lines" /> 자소서 보관함</h3>
-          <div className="pf-doc-counts">
-            <span className="pf-doc-count pf-doc-count--ai">
-              <i className="fa-solid fa-wand-magic-sparkles" /> AI 작성 {aiCount}
-            </span>
-            <span className="pf-doc-count">
-              <i className="fa-solid fa-pen" /> 직접 작성 {manualCount}
-            </span>
+    <section className="gh-portfolio-grid">
+      <article className="gh-card pf-span-12">
+        <header className="gh-card-head">
+          <div><span className="gh-section-kicker">COVER LETTERS</span><h2>자소서 보관함</h2><p>AI 작성 {aiCount}개 · 직접 작성 {manualCount}개</p></div>
+          <div className="gh-head-actions">
+            <button type="button" className="gh-add-btn"><i className="fa-solid fa-pen" /> 직접 작성하기</button>
+            <button type="button" className="gh-add-btn"><i className="fa-solid fa-wand-magic-sparkles" /> AI로 작성하기</button>
           </div>
         </header>
 
         {resumes.length === 0 ? (
-          <div className="pf-empty">
-            <i className="fa-solid fa-file-circle-plus" />
-            <p>아직 등록된 자소서가 없습니다.</p>
-          </div>
+          <p className="gh-empty">아직 등록된 자소서가 없습니다.</p>
         ) : (
-          <div className="pf-resume-grid">
+          <div className="pf-doc-grid">
             {resumes.map(r => (
-              <article key={r.id} className="pf-resume-card" onClick={() => onView(r)}>
-                <div className="pf-resume-top">
-                  <span className="pf-cat-badge">{r.category}</span>
-                  {r.isAi && (
-                    <span className="pf-ai-badge"><i className="fa-solid fa-wand-magic-sparkles" /> AI</span>
-                  )}
-                  <button
-                    type="button"
-                    className="pf-resume-del"
-                    onClick={e => { e.stopPropagation(); onRemove(r.id) }}
-                    aria-label="삭제"
-                  >
-                    <i className="fa-solid fa-trash" />
-                  </button>
+              <article key={r.id} className="pf-doc" onClick={() => onView(r)}>
+                <div className="pf-doc-top">
+                  <span className="pf-chip">{r.category}</span>
+                  {r.isAi && <span className="pf-chip pf-chip--sky">AI</span>}
+                  <div className="gh-item-actions">
+                    <button
+                      type="button"
+                      onClick={e => { e.stopPropagation(); onRemove(r.id) }}
+                      aria-label="삭제"
+                    >
+                      <i className="fa-regular fa-trash-can" />
+                    </button>
+                  </div>
                 </div>
-                <h4 className="pf-resume-title">{r.title}</h4>
-                <p className="pf-resume-meta">
-                  <span><i className="fa-solid fa-building" /> {r.company}</span>
-                  <span><i className="fa-solid fa-briefcase" /> {r.position}</span>
-                </p>
-                <p className="pf-resume-preview">{r.content}</p>
-                <div className="pf-resume-foot">
-                  <span><i className="fa-regular fa-calendar" /> {r.updatedAt}</span>
-                  <span>{r.content.length}자</span>
-                </div>
+                <h3>{r.title}</h3>
+                <small>{r.company} · {r.position}</small>
+                <p>{r.content}</p>
+                <div className="pf-doc-foot"><span>{r.updatedAt}</span><span>{r.content.length}자</span></div>
               </article>
             ))}
           </div>
         )}
-
-        <div className="pf-doc-actions">
-          <button type="button" className="pf-btn pf-btn--primary">
-            <i className="fa-solid fa-pen" /> 직접 작성하기
-          </button>
-          <button type="button" className="pf-btn pf-btn--ai">
-            <i className="fa-solid fa-wand-magic-sparkles" /> AI로 작성하기
-          </button>
-        </div>
       </article>
 
-      <article className="pf-card pf-resume-summary">
-        <h3><i className="fa-solid fa-id-badge" /> 이력서 요약</h3>
-        <p className="pf-resume-summary-desc">
-          위 정보를 종합해서 만들어진 이력서를 미리 보고, PDF로 내보낼 수 있어요. 우측 상단의 "이력서 PDF" 버튼을 눌러주세요.
-        </p>
-        <div className="pf-resume-summary-grid">
-          <div><strong>기본 정보</strong><span>{studentDisplayName(profile.name, profile.studentId)} · {profile.dept}</span></div>
-          <div><strong>학점</strong><span>{profile.gpa}</span></div>
-          <div><strong>강조 키워드</strong><span>AI · 데이터 · 백엔드 · 풀스택</span></div>
-        </div>
+      <article className="gh-card pf-span-12 pf-tone-teal">
+        <header className="gh-card-head">
+          <div><span className="gh-section-kicker">RESUME</span><h2>이력서 요약</h2><p>위 정보를 종합해서 만들어진 이력서를 미리 보고, PDF로 내보낼 수 있어요. 상단의 「이력서 PDF」 버튼을 눌러주세요.</p></div>
+        </header>
+        <dl className="pf-summary">
+          <div><dt>기본 정보</dt><dd>{studentDisplayName(profile.name, profile.studentId)} · {profile.dept}</dd></div>
+          <div><dt>학점</dt><dd>{profile.gpa}</dd></div>
+          <div><dt>강조 키워드</dt><dd>AI · 데이터 · 백엔드 · 풀스택</dd></div>
+        </dl>
       </article>
     </section>
   )
 }
-
