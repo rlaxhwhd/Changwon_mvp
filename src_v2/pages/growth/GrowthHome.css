@@ -148,8 +148,8 @@
 .gh-pending-list li.is-IAP    { --gh-axis: var(--goal-1); background: var(--goal-1-soft); }
 .gh-pending-list li.is-CORE   { --gh-axis: var(--goal-2); background: var(--goal-2-soft); }
 .gh-pending-list li.is-GROWTH { --gh-axis: var(--goal-3); background: var(--goal-3-soft); }
-.gh-pending-list li[class^="is-"] span,
-.gh-pending-list li[class^="is-"] strong { color: var(--gh-axis); }
+.gh-pending-list li[class^="is-"] span { color: var(--gh-axis); }
+.gh-pending-list li[class^="is-"] strong { color: var(--foreground); }
 .gh-pending-list li { padding: 12px 14px; border-radius: 11px; background: var(--gh-soft); }
 .gh-pending-list span, .gh-pending-list strong { display: block; }
 .gh-pending-list span { color: var(--gh-ink); font-size: 12px; font-weight: 850; }
