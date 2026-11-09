@@ -61,7 +61,8 @@ def test_create_fills_from_records_and_lists_without_the_document(client):
     assert certificates and all(item['verified'] for item in certificates if item['sourceRef'].startswith('cert:'))
     listed = client.get(path(), headers=headers('chaewon')).json()
     assert listed['limit'] == 20
-    assert set(listed['items'][0]) == {'id', 'title', 'updatedAt', 'version', 'complete'}
+    assert set(listed['items'][0]) == {'id', 'title', 'updatedAt', 'version', 'complete', 'representative'}
+    assert listed['items'][0]['representative'] is False
     assert listed['items'][0]['complete'] is dto['complete']
 
 
@@ -217,6 +218,110 @@ def test_drafts_stay_with_the_owner(client):
         for url in (path('chaewon'), path('chaewon', dto['id']), '/api/v1/students/chaewon/portfolio-source'):
             assert client.get(url, headers=headers(identity)).status_code == 403, (identity, url)
         assert client.post(path('chaewon'), headers={**headers(identity), **key()}, json={}).status_code == 403
+
+
+# ── 대표 포트폴리오 (0011) ───────────────────────────────────────────────
+
+def represent(client, dto, value=True, identity='chaewon'):
+    return client.post(path(identity, dto['id']) + '/representative', headers=headers(identity),
+                       json={'representative': value})
+
+
+REPRESENTATIVE = '/api/v1/students/chaewon/representative-portfolio'
+
+
+def representative_flags(client):
+    return {row['id']: row['representative'] for row in client.get(path(), headers=headers('chaewon')).json()['items']}
+
+
+def event_actions(portfolio_id):
+    with pool.connection() as conn:
+        return [row['action'] for row in conn.execute('''SELECT action FROM dc.student_portfolio_event
+          WHERE portfolio_id=%s ORDER BY seq''', (portfolio_id,)).fetchall()]
+
+
+def test_representative_is_one_per_student_and_switching_records_events(client):
+    first, second = create(client), create(client)
+    response = represent(client, first)
+    assert response.status_code == 200 and response.json() == {'id': first['id'], 'representative': True}
+    assert represent(client, first).status_code == 200, '같은 값은 그대로 성공한다'
+    assert representative_flags(client) == {first['id']: True, second['id']: False}
+    represent(client, second)
+    assert representative_flags(client) == {first['id']: False, second['id']: True}
+    assert event_actions(first['id']) == ['CREATE', 'REPRESENT', 'UNREPRESENT']
+    assert event_actions(second['id']) == ['CREATE', 'REPRESENT']
+    # 판을 올리지 않는다 — 열린 편집기가 충돌로 막히면 안 된다.
+    assert client.get(path('chaewon', second['id']), headers=headers('chaewon')).json()['version'] == second['version']
+    represent(client, second, False)
+    assert not any(representative_flags(client).values())
+
+
+def test_deleting_the_representative_clears_it(client):
+    dto = create(client)
+    represent(client, dto)
+    assert client.post(path('chaewon', dto['id']) + '/delete', headers=headers('chaewon'),
+                       json={'expectedVersion': dto['version']}).status_code == 204
+    assert client.get(REPRESENTATIVE, headers=headers('chaewon')).json() is None
+    assert represent(client, dto).status_code == 404
+    assert one('SELECT is_representative FROM dc.student_portfolio WHERE id=%s', dto['id'])['is_representative'] is False
+
+
+def test_only_the_owner_sets_the_representative(client):
+    dto = create(client)
+    assert represent(client, dto, identity='changwon').status_code == 404
+    for identity in ('career_kim', 'system-admin'):
+        assert client.post(path('chaewon', dto['id']) + '/representative', headers=headers(identity),
+                           json={'representative': True}).status_code == 403, identity
+
+
+def test_staff_with_detail_access_read_only_the_representative_and_it_is_audited(client):
+    draft, chosen = create(client), create(client)
+    assert client.get(REPRESENTATIVE, headers=headers('career_kim')).json() is None, '대표가 없으면 null'
+    represent(client, chosen)
+    before = audit_count(chosen['id'])
+    response = client.get(REPRESENTATIVE, headers=headers('career_kim'))
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body['id'] == chosen['id'] and set(body) == {'id', 'title', 'document', 'version', 'updatedAt',
+                                                        'complete', 'missing', 'files'}
+    assert audit_count(chosen['id']) == before + 1
+    assert audit_count(draft['id']) == 0, '대표가 아닌 초안은 열리지 않는다'
+    student = client.get(REPRESENTATIVE, headers=headers('chaewon'))
+    assert student.status_code == 200 and audit_count(chosen['id']) == before + 1, '학생 본인 열람은 감사하지 않는다'
+    assert client.get(REPRESENTATIVE, headers=headers('changwon')).status_code == 404
+    # 초안 경로는 여전히 학생 전용이다.
+    assert client.get(path('chaewon', draft['id']), headers=headers('career_kim')).status_code == 403
+
+
+def test_representative_files_follow_the_current_document(client):
+    photo = upload(client)
+    chosen, other = create(client), create(client)
+    chosen = save(client, chosen, document=with_photo(deepcopy(chosen['document']), photo['id']))
+    other_photo = upload(client)
+    save(client, other, document=with_photo(deepcopy(other['document']), other_photo['id']))
+    represent(client, chosen)
+    body = client.get(REPRESENTATIVE, headers=headers('career_kim')).json()
+    url = body['files'][photo['id']]['downloadUrl']
+    assert url == f"{REPRESENTATIVE}/files/{photo['id']}"
+    assert client.get(url, headers=headers('career_kim')).status_code == 200
+    assert client.get(url, headers=headers('chaewon')).status_code == 200
+    assert client.get(f"{REPRESENTATIVE}/files/{other_photo['id']}", headers=headers('career_kim')).status_code == 404
+    assert client.get(url, headers=headers('changwon')).status_code == 404
+    represent(client, chosen, False)
+    assert client.get(url, headers=headers('career_kim')).status_code == 404, '대표를 내리면 파일도 닫힌다'
+
+
+def test_cover_letter_question_is_the_category_label(client):
+    body = client.get('/api/v1/students/chaewon/portfolio-source', headers=headers('chaewon')).json()
+    letters = next(part for part in body['sections'] if part['key'] == 'coverLetter')['items']
+    assert letters, 'chaewon 시드에 자소서가 있어야 한다'
+    with pool.connection() as conn:
+        labels = {row['id']: row['label'] for row in conn.execute(
+            '''SELECT 'resume:'||r.id AS id,COALESCE(c.label,r.category_label_legacy,'') AS label FROM dc.job_resume r
+               LEFT JOIN dc.code_item c ON (c.group_code,c.code)=('JOB_RESUME_CATEGORY',r.category_code)
+               JOIN dc.person p ON p.intg_uid=r.student_uid WHERE p.alias='chaewon' AND r.deleted_at IS NULL''').fetchall()}
+    for item in letters:
+        assert item['fields']['question'] == (labels[item['sourceRef']] or item['title'])
 
 
 # ── 동시성 ───────────────────────────────────────────────────────────────

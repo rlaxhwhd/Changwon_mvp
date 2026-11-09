@@ -208,7 +208,7 @@ export default function GrowthHome() {
       <section className="gh-portfolio-grid" aria-label="개인 성장 기록">
         <article className="gh-card gh-projects">
           <header className="gh-card-head">
-            <div><span className="gh-section-kicker">SELECTED WORK</span><h2>대표 프로젝트와 성과</h2><p>활동을 나열하지 않고 내가 맡은 역할과 결과가 보이도록 정리했습니다.</p></div>
+            <div><span className="gh-section-kicker">SELECTED WORK</span><h2>수상, 공모전, 외부활동, 개인활동</h2><p>활동을 나열하지 않고 내가 맡은 역할과 결과가 보이도록 정리했습니다.</p></div>
             <div className="gh-head-actions"><span className="gh-count">{projects.length}개</span><button type="button" className="gh-add-btn" onClick={() => openCreate('project')}><i className="fa-solid fa-plus" /> 프로젝트 등록</button></div>
           </header>
           <div className="gh-project-list">

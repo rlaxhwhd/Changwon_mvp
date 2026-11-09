@@ -11,6 +11,16 @@
 .pfv-open > span { margin-top: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
 .pfv-open time { color: var(--pf-sub); font-size: 12px; }
 .pfv-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+/* 대표로 지정된 줄의 버튼 — 앰버 별로 지금 대표임을 알린다. */
+.pfv-actions .pf-action.is-on { border-color: var(--amber-border); background: var(--amber-soft); color: var(--amber-ink); }
+.pfv-actions .pf-action:not(.is-on) .fa-star { color: var(--amber); }
+
+/* 대표 포트폴리오 — 패널 안의 용지는 테두리를 겹치지 않는다. */
+.pfv-representative .pfs-paper { padding: 8px 4px 0; border: 0; border-radius: 0; box-shadow: none; }
+@media print {
+  .pfv-representative { padding: 0; border: 0; box-shadow: none; }
+  .pfv-representative::before { display: none; }
+}
 
 /* ── 편집기 2단 구성 ─────────────────────────────────────────────── */
 .pfe-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }

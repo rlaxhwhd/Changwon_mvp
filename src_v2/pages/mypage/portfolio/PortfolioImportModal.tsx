@@ -85,7 +85,13 @@ export default function PortfolioImportModal({ studentId, sectionKey, document, 
           <li key={item.id}>
             <label>
               <input type="checkbox" checked={picked.has(item.id)} onChange={() => togglePick(item.id)} />
-              <span><strong>{item.title || label}</strong></span>
+              <span>
+                <strong>{item.title || label}</strong>
+                {/* 자소서는 문항·답변이 그대로 들어간다 — 무엇이 들어갈지 고르기 전에 보여 준다. */}
+                {sectionKey === 'coverLetter' && (
+                  <small>문항: {String(item.fields.question ?? '')} · 답변 {String(item.fields.answer ?? '').length}자 — {String(item.fields.answer ?? '').slice(0, 60)}{String(item.fields.answer ?? '').length > 60 ? '…' : ''}</small>
+                )}
+              </span>
             </label>
           </li>
         ))}

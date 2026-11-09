@@ -1,15 +1,13 @@
 import { studentDisplayName } from '../../../shared/studentDisplayName'
 import { useMemo, useState, type ReactNode } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import Modal from '../../components/Modal'
-import ResumeSheet from '../../components/ResumeSheet'
 import { getActiveStudentId } from '../../data/students'
 // 정본은 서버다 — 교직원 학생 상세도 **같은 projection** 을 읽는다.
 // 예전의 INITIAL_* 는 전 학생 공통 상수였고 buildProfile 은 연락처를 합성했다. 둘 다 걷었다.
 import { LEVEL_LABELS, toPortfolioView } from '../../data/portfolio'
 import type { ProfileData, Skill, Cert, Language, Award, Project, Resume } from '../../data/portfolio'
-import { createGrowthEntry, deleteGrowthEntry, growthEntries, loadPortfolio,
-         saveGrowthProfile } from '../../../shared/growthStore'
+import { loadPortfolio, saveGrowthProfile } from '../../../shared/growthStore'
 import type { PortfolioDTO } from '../../../shared/growthStore'
 import { useGrowth } from '../../../shared/useRoadmapStore'
 import { useEffect } from 'react'
@@ -18,7 +16,8 @@ import './Portfolio.css'
 import { usePageHead } from '../../components/PageCrumb'
 import PortfolioVersions from './portfolio/PortfolioVersions'
 
-type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'resume' | 'versions'
+// 이력서 탭은 없앴다(2026-11-09 사용자 확정 — 이력서와 포트폴리오는 같은 뜻). 대표 포트폴리오가 그 자리를 맡는다.
+type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'versions'
 
 /** 아직 읽기 전이거나 아무것도 쓰지 않은 상태. 빈 값은 빈 값이다 — 합성하지 않는다. */
 const EMPTY_PROFILE: ProfileData = {
@@ -26,22 +25,22 @@ const EMPTY_PROFILE: ProfileData = {
   email: '', phone: '', gpa: '', major: '', intro: '',
 }
 
-interface TabDef {
-  id: TabId
-  label: string
-}
-
 /** 스킬 분류 — DB 코드다(GROWTH_SKILL_CATEGORY). 한글은 표시용 라벨이다. */
 const SKILL_CATEGORY_LABEL: Record<string, string> = {
   LANGUAGE: '언어', FRAMEWORK: '프레임워크', TOOL: '도구', DATABASE: 'DB', DESIGN: '디자인',
 }
 
-const TABS: TabDef[] = [
+/** 성장 기록의 PROJECT 를 내 성장 화면과 같은 이름으로 부른다(2026-11-09 사용자 확정). */
+const ACTIVITY_LABEL = '수상, 공모전, 외부활동, 개인활동'
+/** 스킬·자격증·활동은 내 성장에서 등록한다 — 포트폴리오는 보여 주기만 한다. */
+const GROWTH_PATH = '/growth'
+const RESUME_PATH = '/jobs/home/resume'
+
+const TABS: { id: TabId; label: string }[] = [
   { id: 'profile',    label: '기본 정보' },
   { id: 'skills',     label: '스킬·자격증' },
-  { id: 'experience', label: '경험·수상' },
+  { id: 'experience', label: '수상·활동' },
   { id: 'documents',  label: '자소서' },
-  { id: 'resume',     label: '이력서' },
   { id: 'versions',   label: '포트폴리오' },
 ]
 
@@ -60,10 +59,19 @@ function Empty({ title, children, action }: { title: string; children?: ReactNod
   )
 }
 
+/** 내 성장으로 보내는 링크 — 등록·수정은 거기서 한다. */
+function GrowthLink({ children = '내 성장에서 등록' }: { children?: ReactNode }) {
+  return (
+    <Link to={GROWTH_PATH} className="pf-action pf-action--sm">
+      {children} <i className="fa-solid fa-arrow-right" aria-hidden="true" />
+    </Link>
+  )
+}
+
 
 /* ── Page ───────────────────────────────────────────────────────── */
 export default function Portfolio() {
-  usePageHead('포트폴리오', '스킬·자격증·수상·자소서·이력서를 한 곳에서 관리하고 PDF로 내보낼 수 있어요.')
+  usePageHead('포트폴리오', '내 성장에 쌓은 기록을 모아 보고, 회사에 낼 포트폴리오를 만들어 대표로 지정할 수 있어요.')
   // 지원 모달의 「포트폴리오 만들기·편집」 링크가 이 탭으로 바로 들어온다.
   const [searchParams] = useSearchParams()
   const [tab, setTab] = useState<TabId>(searchParams.get('tab') === 'versions' ? 'versions' : 'profile')
@@ -90,20 +98,12 @@ export default function Portfolio() {
   const awards = view?.awards ?? []
   const projects = view?.projects ?? []
   const resumes = view?.resumes ?? []
-  const [addSkillOpen, setAddSkillOpen] = useState(false)
-  const [skillForm, setSkillForm] = useState<{ name: string; level: Skill['level']; category: string }>({
-    name: '',
-    level: 3,
-    category: 'LANGUAGE',
-  })
 
-  const setProfile = (next: ProfileData) => {
-    // 학사 유래 값(이름·학과·학점)은 여기서 고치지 않는다(CLAUDE.md 1조).
-    saveGrowthProfile(studentId, { intro: next.intro, email: next.email, phone: next.phone })
-      .catch(() => setError('프로필을 저장하지 못했습니다.'))
-  }
+  // 연락처는 고치지 않는다(나중에 학사 연동값) — 자기소개만 저장하고 연락처는 받은 값 그대로 돌려보낸다.
+  const saveIntro = (intro: string) =>
+    saveGrowthProfile(studentId, { intro, email: profile.email, phone: profile.phone })
+      .catch(() => setError('자기소개를 저장하지 못했습니다.'))
   const [viewResume, setViewResume] = useState<Resume | null>(null)
-  const [exportToast, setExportToast] = useState(false)
 
   const completeness = useMemo(() => {
     let score = 0
@@ -117,40 +117,15 @@ export default function Portfolio() {
     return Math.min(score, 100)
   }, [profile.intro.length, skills.length, certs.length, langs.length, awards.length, projects.length, resumes.length])
 
-  const exportPdf = () => {
-    setExportToast(true)
-    window.setTimeout(() => setExportToast(false), 2200)
-  }
-
-  const addSkill = () => {
-    const name = skillForm.name.trim()
-    if (!name) return
-    // ID 는 서버가 발급한다. Date.now() 로 만든 ID 는 다른 브라우저에서 충돌한다.
-    createGrowthEntry(studentId, { kind: 'SKILL', title: name, categoryCode: skillForm.category,
-                                   content: { level: skillForm.level } })
-      .catch(() => setError('스킬을 저장하지 못했습니다.'))
-    setSkillForm({ name: '', level: 3, category: 'LANGUAGE' })
-    setAddSkillOpen(false)
-  }
-
-  const removeSkill = (id: string) => {
-    const row = growthEntries(studentId, 'SKILL').find(entry => entry.id === id)
-    if (row) deleteGrowthEntry(studentId, row).catch(() => setError('스킬을 삭제하지 못했습니다.'))
-  }
-
-  // 자기소개서는 채용 도메인(dc.job_resume)이 정본이다 — 여기서 지우지 않는다.
-  const removeResume = (_id: string) => setError('자기소개서는 취업지원 > 자기소개서에서 관리합니다.')
-
   const coverName = profile.name ? `${studentDisplayName(profile.name, profile.studentId)}의 포트폴리오` : '나의 포트폴리오'
   const coverLine = [profile.dept, profile.grade, profile.studentId].filter(Boolean).join(' · ')
-  // 머리말의 구성 칸 — 누르면 그 항목이 있는 탭으로 간다.
-  const ledger: { label: string; count: number; tab: TabId }[] = [
-    { label: '스킬', count: skills.length, tab: 'skills' },
-    { label: '자격증', count: certs.length, tab: 'skills' },
-    { label: '어학', count: langs.length, tab: 'skills' },
-    { label: '수상', count: awards.length, tab: 'experience' },
-    { label: '프로젝트', count: projects.length, tab: 'experience' },
-    { label: '자소서', count: resumes.length, tab: 'documents' },
+  // 머리말의 구성 칸 — 누르면 그 항목이 있는 탭으로 간다. 칸마다 내 성장 화면의 카드 색을 따른다.
+  const ledger: { label: string; count: number; tab: TabId; tone: string }[] = [
+    { label: '스킬', count: skills.length, tab: 'skills', tone: 'mint' },
+    { label: '자격증', count: certs.length, tab: 'skills', tone: 'teal' },
+    { label: '어학', count: langs.length, tab: 'skills', tone: 'sky' },
+    { label: '수상·활동', count: projects.length + awards.length, tab: 'experience', tone: 'blue' },
+    { label: '자소서', count: resumes.length, tab: 'documents', tone: 'amber' },
   ]
   const tabCount: Partial<Record<TabId, number>> = {
     skills: skills.length + certs.length + langs.length,
@@ -170,19 +145,19 @@ export default function Portfolio() {
             </div>
           </div>
           <div className="pf-mast-actions">
-            <button type="button" className="pf-action" onClick={() => setTab('resume')}>
-              <i className="fa-regular fa-file-lines" aria-hidden="true" /> 이력서 미리보기
-            </button>
-            <button type="button" className="pf-action pf-action--primary" onClick={exportPdf}>
-              <i className="fa-solid fa-file-pdf" aria-hidden="true" /> 이력서 PDF
+            <Link to={GROWTH_PATH} className="pf-action">
+              <i className="fa-solid fa-seedling" aria-hidden="true" /> 내 성장에서 기록하기
+            </Link>
+            <button type="button" className="pf-action pf-action--primary" onClick={() => setTab('versions')}>
+              <i className="fa-regular fa-file-lines" aria-hidden="true" /> 대표 포트폴리오
             </button>
           </div>
         </div>
         <div className="pf-ledger">
           <div className="pf-score">
             <strong>{completeness}<small>%</small></strong>
-            <span>이력서 완성도</span>
-            <div className="pf-score-bar" role="progressbar" aria-label="이력서 완성도" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completeness}>
+            <span>기록 완성도</span>
+            <div className="pf-score-bar" role="progressbar" aria-label="기록 완성도" aria-valuemin={0} aria-valuemax={100} aria-valuenow={completeness}>
               <i style={{ width: `${completeness}%` }} />
             </div>
           </div>
@@ -190,13 +165,13 @@ export default function Portfolio() {
             <button
               key={cell.label}
               type="button"
-              className={`pf-seg ${cell.count > 0 ? 'is-filled' : 'is-empty'}`}
+              className={`pf-seg pf-tone-${cell.tone} ${cell.count > 0 ? 'is-filled' : 'is-empty'}`}
               onClick={() => setTab(cell.tab)}
               aria-label={`${cell.label} ${cell.count}건 — ${TABS.find(t => t.id === cell.tab)?.label}로 이동`}
             >
               <span>{cell.label}</span>
               <b>{cell.count}</b>
-              {cell.count === 0 && <em>채우기</em>}
+              {cell.count === 0 && <em>비어 있음</em>}
             </button>
           ))}
         </div>
@@ -225,89 +200,14 @@ export default function Portfolio() {
         </nav>
 
         <div className="pf-body">
-          {tab === 'profile' && <ProfileSection key="profile" profile={profile} onChange={setProfile} />}
-          {tab === 'skills' && (
-            <SkillsSection
-              skills={skills}
-              certs={certs}
-              langs={langs}
-              onAddSkill={() => setAddSkillOpen(true)}
-              onRemoveSkill={removeSkill}
-            />
-          )}
+          {tab === 'profile' && <ProfileSection profile={profile} onSaveIntro={saveIntro} />}
+          {tab === 'skills' && <SkillsSection skills={skills} certs={certs} langs={langs} />}
           {tab === 'experience' && <ExperienceSection awards={awards} projects={projects} />}
-          {tab === 'documents' && (
-            <DocumentsSection
-              profile={profile}
-              resumes={resumes}
-              onView={r => setViewResume(r)}
-              onRemove={removeResume}
-              onPreview={() => setTab('resume')}
-            />
-          )}
-          {tab === 'resume' && (
-            <ResumeSheet
-              profile={profile}
-              onProfileChange={setProfile}
-              skills={skills}
-              certs={certs}
-              langs={langs}
-              awards={awards}
-              projects={projects}
-              resumes={resumes}
-              onJumpTab={setTab}
-              onExportPdf={exportPdf}
-            />
-          )}
+          {tab === 'documents' && <DocumentsSection resumes={resumes} onView={r => setViewResume(r)} />}
           {/* 탭을 열 때만 마운트한다 — 다른 탭의 API 호출을 늘리지 않는다. */}
           {versionsOpened && <div hidden={tab !== 'versions'}><PortfolioVersions studentId={studentId} initialId={searchParams.get('edit')} /></div>}
         </div>
       </div>
-
-      {/* Add Skill Modal */}
-      <Modal open={addSkillOpen} onClose={() => setAddSkillOpen(false)} title="스킬 추가" size="sm">
-        <form className="pf-form" onSubmit={event => { event.preventDefault(); addSkill() }}>
-          <label>
-            <span>스킬 이름</span>
-            <input
-              type="text"
-              value={skillForm.name}
-              onChange={e => setSkillForm({ ...skillForm, name: e.target.value })}
-              placeholder="예: Figma, Java, Spring Boot"
-            />
-          </label>
-          <label>
-            <span>분류</span>
-            <select
-              value={skillForm.category}
-              onChange={e => setSkillForm({ ...skillForm, category: e.target.value })}
-            >
-              {Object.entries(SKILL_CATEGORY_LABEL).map(([code, label]) => (
-                <option key={code} value={code}>{label}</option>
-              ))}
-            </select>
-          </label>
-          <label>
-            <span>숙련도 — {LEVEL_LABELS[skillForm.level]}</span>
-            <input
-              type="range"
-              className="pf-range"
-              min={1}
-              max={5}
-              step={1}
-              value={skillForm.level}
-              onChange={e => setSkillForm({ ...skillForm, level: Number(e.target.value) as Skill['level'] })}
-            />
-            <div className="pf-level-marks">
-              {LEVEL_LABELS.slice(1).map(l => <span key={l}>{l}</span>)}
-            </div>
-          </label>
-          <div className="pf-form-actions">
-            <button type="button" className="pf-action" onClick={() => setAddSkillOpen(false)}>취소</button>
-            <button type="submit" className="pf-action pf-action--primary">추가</button>
-          </div>
-        </form>
-      </Modal>
 
       {/* View Resume Modal */}
       <Modal
@@ -319,52 +219,55 @@ export default function Portfolio() {
         {viewResume && (
           <div className="pf-view">
             <div className="pf-view-tags">
-              <span className="pf-badge">{viewResume.category}</span>
+              <span className="pf-badge pf-tone-amber">{viewResume.category}</span>
               {viewResume.isAi && <span className="pf-badge">AI 작성</span>}
               <time>{viewResume.updatedAt}</time>
             </div>
-            <p className="pf-view-info">{viewResume.company} · {viewResume.position}</p>
+            <p className="pf-view-info">{[viewResume.company, viewResume.position].filter(Boolean).join(' · ')}</p>
             <div className="pf-view-content">{viewResume.content}</div>
             <small>총 {viewResume.content.length}자</small>
           </div>
         )}
       </Modal>
-
-      {exportToast && (
-        <div className="pf-toast" role="status">
-          <i className="fa-solid fa-circle-check" />
-          이력서 PDF 내보내기가 시작되었어요. (브라우저 다운로드 폴더 확인)
-        </div>
-      )}
     </main>
   )
 }
 
 /* ── Sections ───────────────────────────────────────────────────── */
 
-function ProfileSection({ profile, onChange }: { profile: ProfileData; onChange: (p: ProfileData) => void }) {
+function ProfileSection({ profile, onSaveIntro }: { profile: ProfileData; onSaveIntro: (intro: string) => void }) {
   const [editing, setEditing] = useState(false)
-  const [form, setForm] = useState<ProfileData>(profile)
+  const [intro, setIntro] = useState(profile.intro)
 
-  const startEdit = () => { setForm(profile); setEditing(true) }
-  const cancel = () => setEditing(false)
-  const save = () => { onChange(form); setEditing(false) }
+  const startEdit = () => { setIntro(profile.intro); setEditing(true) }
+  const save = () => { onSaveIntro(intro); setEditing(false) }
 
   return (
     <div className="pf-stack">
-      <article className="pf-panel">
+      <article className="pf-panel pf-tone-blue">
         <header className="pf-panel-head">
-          <div><h2>자기소개</h2><p>이력서 맨 앞에 들어가는 글입니다. 지원하는 일과 이어지는 경험을 중심으로 적어 주세요.</p></div>
+          <div><h2>자기소개</h2><p>포트폴리오 맨 앞에 들어가는 글입니다. 지원하는 일과 이어지는 경험을 중심으로 적어 주세요.</p></div>
           {!editing && profile.intro && (
             <button type="button" className="pf-action pf-action--sm" onClick={startEdit}><i className="fa-solid fa-pen" aria-hidden="true" /> 고치기</button>
           )}
         </header>
-        {profile.intro
+        {editing ? (
+          <form className="pf-form" onSubmit={event => { event.preventDefault(); save() }}>
+            <label>
+              <span className="pf-sr">자기소개</span>
+              <textarea rows={6} value={intro} onChange={e => setIntro(e.target.value)} autoFocus />
+            </label>
+            <div className="pf-form-actions">
+              <button type="button" className="pf-action" onClick={() => setEditing(false)}>취소</button>
+              <button type="submit" className="pf-action pf-action--primary">저장</button>
+            </div>
+          </form>
+        ) : profile.intro
           ? <p className="pf-prose">{profile.intro}</p>
           : (
             <Empty
               title="아직 자기소개가 없습니다"
-              action={!editing && <button type="button" className="pf-action pf-action--sm" onClick={startEdit}><i className="fa-solid fa-pen" aria-hidden="true" /> 자기소개 쓰기</button>}
+              action={<button type="button" className="pf-action pf-action--sm" onClick={startEdit}><i className="fa-solid fa-pen" aria-hidden="true" /> 자기소개 쓰기</button>}
             >
               한두 문단이면 충분합니다. 쓰고 나면 완성도가 올라갑니다.
             </Empty>
@@ -372,9 +275,9 @@ function ProfileSection({ profile, onChange }: { profile: ProfileData; onChange:
       </article>
 
       <div className="pf-split">
-        <article className="pf-panel">
+        <article className="pf-panel pf-tone-sky">
           <header className="pf-panel-head">
-            <div><h2>학사 정보</h2><p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 기록에서 가져와 여기서는 고칠 수 없습니다.</p></div>
+            <div><h2>학사 정보</h2><p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 기록에서 가져옵니다.</p></div>
           </header>
           <dl className="pf-dl pf-dl--single">
             <div><dt>학교</dt><Value>{profile.school}</Value></div>
@@ -386,51 +289,24 @@ function ProfileSection({ profile, onChange }: { profile: ProfileData; onChange:
           </dl>
         </article>
 
-        <article className="pf-panel">
+        <article className="pf-panel pf-tone-mint">
           <header className="pf-panel-head">
-            <div><h2>연락처</h2><p>이력서와 지원서에 표시됩니다.</p></div>
-            {!editing && <button type="button" className="pf-action pf-action--sm" onClick={startEdit}><i className="fa-solid fa-pen" aria-hidden="true" /> 정보 수정</button>}
+            <div>
+              <h2>연락처</h2>
+              <p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 여기서는 고칠 수 없습니다. 회사마다 다른 연락처는 회사 제출용 포트폴리오에서 바꿀 수 있습니다.</p>
+            </div>
           </header>
-          {editing ? (
-            <form className="pf-form" onSubmit={event => { event.preventDefault(); save() }}>
-              <label>
-                <span>이메일</span>
-                <input type="text" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
-              </label>
-              <label>
-                <span>휴대폰</span>
-                <input type="text" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
-              </label>
-              <label>
-                <span>자기소개</span>
-                <textarea rows={5} value={form.intro} onChange={e => setForm({ ...form, intro: e.target.value })} />
-              </label>
-              <div className="pf-form-actions">
-                <button type="button" className="pf-action" onClick={cancel}>취소</button>
-                <button type="submit" className="pf-action pf-action--primary">저장</button>
-              </div>
-            </form>
-          ) : (
-            <dl className="pf-dl pf-dl--single">
-              <div><dt>이메일</dt><Value>{profile.email}</Value></div>
-              <div><dt>휴대폰</dt><Value>{profile.phone}</Value></div>
-            </dl>
-          )}
+          <dl className="pf-dl pf-dl--single">
+            <div><dt>이메일</dt><Value>{profile.email}</Value></div>
+            <div><dt>휴대폰</dt><Value>{profile.phone}</Value></div>
+          </dl>
         </article>
       </div>
     </div>
   )
 }
 
-interface SkillsSectionProps {
-  skills: Skill[]
-  certs: Cert[]
-  langs: Language[]
-  onAddSkill: () => void
-  onRemoveSkill: (id: string) => void
-}
-
-function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: SkillsSectionProps) {
+function SkillsSection({ skills, certs, langs }: { skills: Skill[]; certs: Cert[]; langs: Language[] }) {
   const byCategory = useMemo(() => {
     const cats: Record<string, Skill[]> = {}
     for (const skill of skills) {
@@ -443,17 +319,14 @@ function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: Skil
 
   return (
     <div className="pf-stack">
-      <article className="pf-panel">
+      <article className="pf-panel pf-tone-mint">
         <header className="pf-panel-head">
-          <div><h2>보유 스킬</h2><p>프로젝트와 학습 활동으로 쌓은 기술 역량입니다. 숙련도는 다섯 칸으로 표시됩니다.</p></div>
-          <button type="button" className="pf-action pf-action--sm" onClick={onAddSkill}><i className="fa-solid fa-plus" aria-hidden="true" /> 스킬 추가</button>
+          <div><h2>보유 스킬</h2><p>내 성장에 등록한 스킬입니다. 숙련도는 다섯 칸으로 표시됩니다.</p></div>
+          <GrowthLink />
         </header>
         {skills.length === 0 ? (
-          <Empty
-            title="등록된 스킬이 없습니다"
-            action={<button type="button" className="pf-action pf-action--sm" onClick={onAddSkill}><i className="fa-solid fa-plus" aria-hidden="true" /> 첫 스킬 추가</button>}
-          >
-            다룰 줄 아는 언어·도구를 숙련도와 함께 남겨 두면 이력서에 분류별로 정리됩니다.
+          <Empty title="등록된 스킬이 없습니다" action={<GrowthLink>내 성장에서 스킬 등록</GrowthLink>}>
+            다룰 줄 아는 언어·도구를 숙련도와 함께 남겨 두면 포트폴리오에 분류별로 정리됩니다.
           </Empty>
         ) : (
           <div>
@@ -467,9 +340,6 @@ function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: Skil
                       <div className="pf-meter" role="img" aria-label={`${s.name} 숙련도 ${s.level}/5`}>
                         {[1, 2, 3, 4, 5].map(lv => <i className={lv <= s.level ? 'on' : ''} key={lv} />)}
                       </div>
-                      <button type="button" className="pf-icon-btn" onClick={() => onRemoveSkill(s.id)} aria-label={`${s.name} 삭제`}>
-                        <i className="fa-regular fa-trash-can" aria-hidden="true" />
-                      </button>
                     </li>
                   ))}
                 </ul>
@@ -480,10 +350,10 @@ function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: Skil
       </article>
 
       <div className="pf-split">
-        <article className="pf-panel">
+        <article className="pf-panel pf-tone-teal">
           <header className="pf-panel-head">
             <div><h2>자격증</h2></div>
-            <button type="button" className="pf-action pf-action--sm" aria-label="자격증 추가"><i className="fa-solid fa-plus" aria-hidden="true" /> 추가</button>
+            <GrowthLink />
           </header>
           {certs.length === 0 ? <Empty title="등록된 자격증이 없습니다" /> : (
             <ul className="pf-records">
@@ -498,10 +368,10 @@ function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: Skil
           )}
         </article>
 
-        <article className="pf-panel">
+        <article className="pf-panel pf-tone-sky">
           <header className="pf-panel-head">
             <div><h2>어학</h2></div>
-            <button type="button" className="pf-action pf-action--sm" aria-label="어학 추가"><i className="fa-solid fa-plus" aria-hidden="true" /> 추가</button>
+            <GrowthLink />
           </header>
           {langs.length === 0 ? <Empty title="등록된 어학 성적이 없습니다" /> : (
             <ul className="pf-records">
@@ -520,20 +390,17 @@ function SkillsSection({ skills, certs, langs, onAddSkill, onRemoveSkill }: Skil
   )
 }
 
-interface ExperienceSectionProps {
-  awards: Award[]
-  projects: Project[]
-}
-
-function ExperienceSection({ awards, projects }: ExperienceSectionProps) {
+function ExperienceSection({ awards, projects }: { awards: Award[]; projects: Project[] }) {
   return (
     <div className="pf-stack">
-      <article className="pf-panel">
+      <article className="pf-panel pf-tone-blue">
         <header className="pf-panel-head">
-          <div><h2>프로젝트</h2><p>맡은 역할과 결과가 드러나게 적으면 이력서에서 가장 먼저 읽힙니다.</p></div>
-          <button type="button" className="pf-action pf-action--sm"><i className="fa-solid fa-plus" aria-hidden="true" /> 프로젝트 추가</button>
+          <div><h2>{ACTIVITY_LABEL}</h2><p>맡은 역할과 결과가 드러나게 적으면 포트폴리오에서 가장 먼저 읽힙니다.</p></div>
+          <GrowthLink />
         </header>
-        {projects.length === 0 ? <Empty title="등록된 프로젝트가 없습니다" /> : (
+        {projects.length === 0 ? (
+          <Empty title="등록된 활동이 없습니다" action={<GrowthLink>내 성장에서 활동 등록</GrowthLink>} />
+        ) : (
           <ol className="pf-projects">
             {projects.map(p => (
               <li key={p.id} className="pf-project">
@@ -557,52 +424,44 @@ function ExperienceSection({ awards, projects }: ExperienceSectionProps) {
         )}
       </article>
 
-      <article className="pf-panel">
-        <header className="pf-panel-head">
-          <div><h2>공모전·수상</h2></div>
-          <button type="button" className="pf-action pf-action--sm"><i className="fa-solid fa-plus" aria-hidden="true" /> 수상 기록 추가</button>
-        </header>
-        {awards.length === 0 ? <Empty title="등록된 수상 기록이 없습니다" /> : (
+      {/* 예전 경로로 쌓인 수상 기록 — 새로 등록하는 곳은 없고 있는 기록만 보여 준다. */}
+      {awards.length > 0 && (
+        <article className="pf-panel pf-tone-amber">
+          <header className="pf-panel-head"><div><h2>수상 기록</h2></div></header>
           <ul className="pf-records">
             {awards.map(a => (
               <li key={a.id}>
                 <div><strong>{a.title}</strong><small>{a.host}</small>{a.description && <p>{a.description}</p>}</div>
-                {a.rank ? <span className="pf-badge pf-badge--warn">{a.rank}</span> : <span />}
+                {a.rank ? <span className="pf-badge">{a.rank}</span> : <span />}
                 <time>{a.date}</time>
               </li>
             ))}
           </ul>
-        )}
-      </article>
+        </article>
+      )}
     </div>
   )
 }
 
-interface DocumentsSectionProps {
-  profile: ProfileData
-  resumes: Resume[]
-  onView: (r: Resume) => void
-  onRemove: (id: string) => void
-  onPreview: () => void
-}
-
-function DocumentsSection({ profile, resumes, onView, onRemove, onPreview }: DocumentsSectionProps) {
+function DocumentsSection({ resumes, onView }: { resumes: Resume[]; onView: (r: Resume) => void }) {
   const aiCount = resumes.filter(r => r.isAi).length
   const manualCount = resumes.filter(r => !r.isAi).length
+  const write = (
+    <Link to={RESUME_PATH} className="pf-action pf-action--sm">
+      <i className="fa-solid fa-pen" aria-hidden="true" /> 자소서 작성하기
+    </Link>
+  )
 
   return (
     <div className="pf-stack">
-      <article className="pf-panel">
+      <article className="pf-panel pf-tone-amber">
         <header className="pf-panel-head">
-          <div><h2>자소서 보관함</h2><p>AI 작성 {aiCount}개 · 직접 작성 {manualCount}개</p></div>
-          <div className="pf-panel-actions">
-            <button type="button" className="pf-action pf-action--sm"><i className="fa-solid fa-pen" aria-hidden="true" /> 직접 작성하기</button>
-            <button type="button" className="pf-action pf-action--sm"><i className="fa-solid fa-wand-magic-sparkles" aria-hidden="true" /> AI로 작성하기</button>
-          </div>
+          <div><h2>자소서 보관함</h2><p>AI 작성 {aiCount}개 · 직접 작성 {manualCount}개 · 회사 제출용 포트폴리오에 문항·답변 그대로 불러올 수 있습니다.</p></div>
+          {write}
         </header>
 
         {resumes.length === 0 ? (
-          <Empty title="아직 등록된 자소서가 없습니다">취업지원 &gt; 자기소개서에서 쓴 글이 여기에 모입니다.</Empty>
+          <Empty title="아직 작성한 자소서가 없습니다" action={write}>취업지원의 자소서 화면에서 쓴 글이 여기에 모입니다.</Empty>
         ) : (
           <ul className="pf-docs">
             {resumes.map(r => (
@@ -613,29 +472,14 @@ function DocumentsSection({ profile, resumes, onView, onRemove, onPreview }: Doc
                     <span className="pf-badge">{r.category}</span>
                     {r.isAi && <span className="pf-badge">AI</span>}
                   </strong>
-                  <span>{r.company} · {r.position}</span>
+                  {(r.company || r.position) && <span>{[r.company, r.position].filter(Boolean).join(' · ')}</span>}
                   <p>{r.content}</p>
                 </button>
                 <span className="pf-doc-meta">{r.updatedAt}<br />{r.content.length}자</span>
-                <button type="button" className="pf-icon-btn" onClick={() => onRemove(r.id)} aria-label={`${r.title} 삭제`}>
-                  <i className="fa-regular fa-trash-can" aria-hidden="true" />
-                </button>
               </li>
             ))}
           </ul>
         )}
-      </article>
-
-      <article className="pf-panel">
-        <header className="pf-panel-head">
-          <div><h2>이력서 요약</h2><p>위 정보를 모아 만든 이력서를 미리 보고 PDF로 내보낼 수 있습니다.</p></div>
-          <button type="button" className="pf-action pf-action--sm" onClick={onPreview}><i className="fa-regular fa-file-lines" aria-hidden="true" /> 이력서 보기</button>
-        </header>
-        <dl className="pf-dl">
-          <div><dt>기본 정보</dt><Value>{[studentDisplayName(profile.name, profile.studentId), profile.dept].filter(Boolean).join(' · ')}</Value></div>
-          <div><dt>학점</dt><Value>{profile.gpa}</Value></div>
-          <div><dt>강조 키워드</dt><dd>AI · 데이터 · 백엔드 · 풀스택</dd></div>
-        </dl>
       </article>
     </div>
   )

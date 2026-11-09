@@ -17,8 +17,9 @@ def key():
 def retire_portfolios():
     """학생당 20벌 상한이 있어 테스트끼리 살아 있는 행을 물려주지 않는다."""
     with pool.connection() as conn:
-        conn.execute('''UPDATE dc.student_portfolio SET deleted_at=now(),deleted_by=student_uid
-          WHERE deleted_at IS NULL''')
+        # 삭제된 벌은 대표일 수 없다(161 CHECK) — 같이 내린다.
+        conn.execute('''UPDATE dc.student_portfolio SET deleted_at=now(),deleted_by=student_uid,
+          is_representative=false WHERE deleted_at IS NULL''')
 
 
 def path(identity='chaewon', portfolio_id=''):

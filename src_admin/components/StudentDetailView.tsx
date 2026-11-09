@@ -39,10 +39,9 @@ import CareerJourneyCard from '../../src_v2/components/CareerJourneyCard'
 // need/mine)이 이 화면의 시안 CSS 와 그대로 맞아서 넘길 것이 없다.
 import CompetencyRadarChart from '../../src_v2/components/CompetencyRadarChart'
 // 포트폴리오 탭은 학생 이력서 화면을 그대로 쓴다 — 값도 같은 단일소스에서 읽는다.
-import ResumeSheet from '../../src_v2/components/ResumeSheet'
-import { toPortfolioView } from '../../src_v2/data/portfolio'
-import { ensurePortfolio } from '../../shared/growthStore'
-import type { PortfolioDTO } from '../../shared/growthStore'
+import PortfolioSheet from '../../shared/PortfolioSheet'
+import { loadRepresentativePortfolio } from '../../shared/portfolioStore'
+import type { PortfolioDetail } from '../../shared/portfolioStore'
 import { hasStudentCache, revalidateStudent } from '../../shared/studentCache'
 import { useGrowth } from '../../shared/useRoadmapStore'
 import StarRoadmapCard from '../../src_v2/components/StarRoadmapCard'
@@ -697,41 +696,27 @@ function GrowthTab({ student }: { student: StudentData }) {
 
 // ── 탭 ⑦: 포트폴리오 ──────────────────────────────────────────────────────
 //
-// 학생의 「마이페이지 > 포트폴리오 > 이력서」(/v2/mypage/portfolio) 화면을 그대로 쓴다.
-// 상담사가 보는 이력서가 학생이 보는 것과 다르면 상담이 성립하지 않으므로
-// 뷰를 다시 만들지 않는다(CLAUDE.md 12조).
-//
-// 읽기 전용이다 — 편집·PDF 콜백을 넘기지 않으면 그 장치가 그려지지 않는다.
-// 「탭에서 편집」 링크도 v2 라우트라 넘기지 않는다(admin 에서는 죽은 링크가 된다).
+// 학생의 「마이페이지 > 포트폴리오」 대표 포트폴리오와 같은 시트(shared/PortfolioSheet)를 쓴다.
+// 상담사가 보는 포트폴리오가 학생이 보는 것과 다르면 상담이 성립하지 않으므로
+// 뷰를 다시 만들지 않는다(CLAUDE.md 12조). 읽기 전용이다.
 
 function PortfolioTab({ student }: { student: StudentData }) {
-  // 학생이 고친 내용을 그대로 본다 — 예전에는 전 학생 공통 상수(INITIAL_*)를 읽어서
-  // 학생이 무엇을 써도 상담사 화면이 바뀌지 않았다. 자기입력 연락처는 본인 전용이라
-  // 서버가 내려주지 않는다(D06 — 현행 열람 범위를 넓히지 않는다).
-  const revision = useGrowth(student.id)
-  const [dto, setDto] = useState<PortfolioDTO | null>(null)
-  const [failed, setFailed] = useState(false)
+  // 2026-11-09 사용자 확정 — 학생이 대표로 지정한 포트폴리오 한 벌을 그대로 본다(연락처 포함, 대표 지정이 공개 동의).
+  // 대표가 아닌 초안은 서버가 주지 않는다. 열람마다 서버가 감사를 남기므로 캐시하지 않는다.
+  const [state, setState] = useState<{ status: 'loading' | 'failed' | 'ready'; doc: PortfolioDetail | null }>(
+    { status: 'loading', doc: null })
   useEffect(() => {
     let alive = true
-    ensurePortfolio(student.id)
-      .then((next: PortfolioDTO) => { if (alive) { setDto(next); setFailed(false) } })
-      .catch(() => { if (alive) setFailed(true) })
+    setState({ status: 'loading', doc: null })
+    loadRepresentativePortfolio(student.id)
+      .then(doc => { if (alive) setState({ status: 'ready', doc }) })
+      .catch(() => { if (alive) setState({ status: 'failed', doc: null }) })
     return () => { alive = false }
-  }, [student.id, revision])
-  if (failed) return <EmptyState title="포트폴리오를 불러오지 못했습니다" message="잠시 후 다시 시도해 주세요." />
-  if (!dto) return <EmptyState title="불러오는 중입니다" message="학생의 포트폴리오를 읽고 있습니다." />
-  const view = toPortfolioView(dto)
-  return (
-    <ResumeSheet
-      profile={view.profile}
-      skills={view.skills}
-      certs={view.certs}
-      langs={view.languages}
-      awards={view.awards}
-      projects={view.projects}
-      resumes={view.resumes}
-    />
-  )
+  }, [student.id])
+  if (state.status === 'failed') return <EmptyState title="포트폴리오를 불러오지 못했습니다" message="잠시 후 다시 시도해 주세요." />
+  if (state.status === 'loading') return <EmptyState title="불러오는 중입니다" message="학생의 대표 포트폴리오를 읽고 있습니다." />
+  if (!state.doc) return <EmptyState title="대표 포트폴리오가 없습니다" message="학생이 아직 대표 포트폴리오를 지정하지 않았습니다." />
+  return <PortfolioSheet document={state.doc.document} files={state.doc.files} />
 }
 
 // ── 탭 ⑧: STAR 트랙 ────────────────────────────────────────────────────────

@@ -45,7 +45,7 @@
   height: 26px; padding: 0 10px;
   border: 1px solid var(--color-border); border-radius: var(--radius-sm);
   background: var(--color-bg);
-  color: var(--pf-ink, #141a26);
+  color: var(--pf-ink, #2c5ae0);
   font-size: 12px; font-weight: 700; cursor: pointer;
 }
 

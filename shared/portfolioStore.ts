@@ -43,9 +43,13 @@ export interface PortfolioDocument { schemaVersion: 1; sections: PortfolioSectio
 export interface PortfolioFile { id: string; name: string; size: number; contentType: string; downloadUrl: string }
 export type PortfolioFiles = Record<string, PortfolioFile>
 
-export interface PortfolioSummary { id: string; title: string; updatedAt: string; version: number; complete: boolean }
+export interface PortfolioSummary {
+  id: string; title: string; updatedAt: string; version: number; complete: boolean
+  /** 학생당 한 벌. 교직원 학생 상세가 이 한 벌만 본다(0011). */
+  representative: boolean
+}
 
-export interface PortfolioDetail extends PortfolioSummary {
+export interface PortfolioDetail extends Omit<PortfolioSummary, 'representative'> {
   document: PortfolioDocument
   missing: string[]
   files: PortfolioFiles
@@ -134,6 +138,20 @@ export async function deletePortfolio(studentId: string, row: PortfolioSummary):
     method: 'POST', body: JSON.stringify({ expectedVersion: row.version }),
   })
   await reloadPortfolios(studentId)
+}
+
+/** 대표 지정·해제. 다른 벌이 대표였으면 서버가 같이 내린다. 판(version)은 바뀌지 않는다. */
+export async function setRepresentative(studentId: string, id: string, representative: boolean): Promise<void> {
+  await api(`${base(studentId)}/${encodeURIComponent(id)}/representative`, {
+    method: 'POST', body: JSON.stringify({ representative }),
+  })
+  await reloadPortfolios(studentId)
+}
+
+/** 대표 포트폴리오. 학생 본인과 학생 상세 권한이 있는 교직원이 같은 경로를 쓴다. 없으면 null.
+ *  교직원 열람마다 감사가 남아야 하므로 캐시하지 않는다. */
+export function loadRepresentativePortfolio(studentId: string): Promise<PortfolioDetail | null> {
+  return api<PortfolioDetail | null>(`/students/${encodeURIComponent(studentId)}/representative-portfolio`)
 }
 
 export function loadPortfolioSource(studentId: string): Promise<PortfolioSource> {

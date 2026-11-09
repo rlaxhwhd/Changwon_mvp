@@ -2,7 +2,8 @@
 
 성장 기록(dc.growth_entry)은 학생당 한 벌의 원본이고, 포트폴리오는 그 복사본이다. 만들 때 복사하며
 버전 안의 수정은 원본을 바꾸지 않는다. 지원 시 제출과 제출본 열람은 jobs.py 가 맡는다.
-교직원은 미제출 초안을 볼 수 없다 — 이 모듈의 모든 경로는 학생 본인 전용이다.
+교직원은 미제출 초안을 볼 수 없다 — 이 모듈의 경로는 학생 본인 전용이다. 예외는 학생이 대표로 지정한
+한 벌뿐이다(2026-11-09 사용자 확정 — 대표 지정이 공개 동의다). 그 경로는 학생 상세 권한으로 열고 감사를 남긴다.
 """
 import re
 from typing import Annotated
@@ -19,7 +20,9 @@ from . import files
 from .auth import principal
 from .db import connection
 from .growth import attachments_of, profile_row
-from .jobs import idempotent, remember, resolve_student
+# 대표 포트폴리오 열람은 학생 상세와 같은 판정(students.1 메뉴 + 범위)을 쓴다. jobs 쪽 해석은 메뉴를 보지 않는다.
+from .growth import resolve_student as resolve_detail_student
+from .jobs import audit_document, idempotent, remember, resolve_student
 from .portfolio_document import (ENROLLMENT_REF, ID_PATTERN, SCHOOL, apply_academic, build_document, check_size,
                                  clean_title, empty_document, fail, file_references, load_certs, missing_fields,
                                  new_item, parse_document, section_of)
@@ -51,6 +54,11 @@ class DeleteBody(BaseModel):
     expectedVersion: int = Field(ge=1)
 
 
+class RepresentBody(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    representative: bool
+
+
 def owner(conn, user, identity):
     if user['kind'] != 'STUDENT':
         fail(403, 'SCOPE_DENIED', '학생 본인만 사용할 수 있습니다.')
@@ -70,22 +78,23 @@ def get_portfolio(conn, uid, portfolio_id, lock=False):
     return row
 
 
-def file_map(conn, document):
+def file_map(conn, document, prefix=None):
+    """prefix 를 주면 모든 파일 URL 을 그 경로로 만든다 — 대표 포트폴리오는 교직원도 열어야 해서 전용 경로를 쓴다."""
     photo, attachments = file_references(document)
     ids = ([photo] if photo else []) + attachments
     if not ids:
         return {}
     rows = conn.execute('SELECT * FROM dc.file_object WHERE id=ANY(%s)', (ids,)).fetchall()
-    return {row['id']: files.file_dto(row, '/api/v1/growth-files/' if row['owner_kind'] == 'GROWTH_ENTRY'
-                                      else '/api/v1/portfolio-files/') for row in rows}
+    return {row['id']: files.file_dto(row, prefix or ('/api/v1/growth-files/' if row['owner_kind'] == 'GROWTH_ENTRY'
+                                                      else '/api/v1/portfolio-files/')) for row in rows}
 
 
-def portfolio_dto(conn, row, student, certs=None):
+def portfolio_dto(conn, row, student, certs=None, prefix=None):
     document = apply_academic(row['document'], student, load_certs(conn, row['student_uid']) if certs is None else certs)
     missing = missing_fields(document)
     return {'id': row['id'], 'title': row['title'], 'document': document, 'version': row['version'],
             'updatedAt': row['updated_at'], 'complete': not missing, 'missing': missing,
-            'files': file_map(conn, document)}
+            'files': file_map(conn, document, prefix)}
 
 
 def check_title(conn, uid, title, own_id=None):
@@ -181,8 +190,11 @@ def source_projection(conn, student, certs):
     programs = conn.execute('''SELECT p.id,p.title,p.summary,p.run_start,p.run_end FROM dc.program_apply a
       JOIN dc.program p ON p.id=a.program_id WHERE a.student_uid=%s AND a.outcome_code='COMPLETED'
       AND a.cancelled_at IS NULL ORDER BY p.run_end DESC NULLS LAST,p.id''', (uid,)).fetchall()
-    resumes = conn.execute('''SELECT id,title,content FROM dc.job_resume WHERE student_uid=%s
-      AND deleted_at IS NULL ORDER BY updated_at DESC,id''', (uid,)).fetchall()
+    # 자소서에는 문항 칸이 없다 — 문항은 쓸 때 고른 분야 라벨이다(2026-11-09 사용자 확정). 라벨 우선순위는 jobs.resume_dto 와 같다.
+    resumes = conn.execute('''SELECT r.id,r.title,r.content,COALESCE(c.label,r.category_label_legacy,'') AS category_label
+      FROM dc.job_resume r
+      LEFT JOIN dc.code_item c ON (c.group_code,c.code)=('JOB_RESUME_CATEGORY',r.category_code)
+      WHERE r.student_uid=%s AND r.deleted_at IS NULL ORDER BY r.updated_at DESC,r.id''', (uid,)).fetchall()
 
     sections = {key: [] for key in ('education', 'training', 'experience', 'language', 'certificate', 'skill',
                                     'award', 'coverLetter', 'document')}
@@ -205,7 +217,7 @@ def source_projection(conn, student, certs):
                                                  'growth:' + row['id']))
     for row in resumes:
         sections['coverLetter'].append(new_item('coverLetter', row['title'], {
-            'question': row['title'], 'answer': row['content']}, 'resume:' + row['id']))
+            'question': row['category_label'] or row['title'], 'answer': row['content']}, 'resume:' + row['id']))
 
     personal = {**section_of(empty_document(), 'personal')['data'],
                 'email': text(profile['contact_email']) if profile else '',
@@ -220,8 +232,8 @@ def source_projection(conn, student, certs):
 def list_portfolios(identity: str, user=Depends(principal, scope='function'),
                     conn=Depends(connection, scope='function')):
     student = owner(conn, user, identity)
-    rows = conn.execute('''SELECT id,title,updated_at AS "updatedAt",version,is_complete AS complete
-      FROM dc.student_portfolio WHERE student_uid=%s AND deleted_at IS NULL ORDER BY updated_at DESC,id''',
+    rows = conn.execute('''SELECT id,title,updated_at AS "updatedAt",version,is_complete AS complete,
+      is_representative AS representative FROM dc.student_portfolio WHERE student_uid=%s AND deleted_at IS NULL ORDER BY updated_at DESC,id''',
       (student['intg_uid'],)).fetchall()
     return {'items': rows, 'limit': PORTFOLIO_LIMIT}
 
@@ -311,10 +323,75 @@ def delete_portfolio(identity: str, portfolio_id: ResourceId, body: DeleteBody,
     if before['version'] != body.expectedVersion:
         fail(409, 'VERSION_CONFLICT', '다른 창에서 먼저 저장했습니다. 최신본을 다시 불러와 주세요.',
              currentVersion=before['version'])
-    conn.execute('''UPDATE dc.student_portfolio SET deleted_at=now(),deleted_by=%s,version=version+1
-      WHERE id=%s AND student_uid=%s''', (uid, portfolio_id, uid))
+    # 삭제된 벌은 대표일 수 없다(CHECK) — 같은 문장에서 대표도 내린다.
+    conn.execute('''UPDATE dc.student_portfolio SET deleted_at=now(),deleted_by=%s,version=version+1,
+      is_representative=false WHERE id=%s AND student_uid=%s''', (uid, portfolio_id, uid))
     record_event(conn, user, portfolio_id, 'DELETE')
     return Response(status_code=204)
+
+
+@router.post('/students/{identity}/portfolios/{portfolio_id}/representative')
+def set_representative(identity: str, portfolio_id: ResourceId, body: RepresentBody,
+                       user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    """대표는 학생당 한 벌이다. 판(version)을 올리지 않는다 — 열린 편집기가 충돌로 막히면 안 된다."""
+    student = owner(conn, user, identity)
+    uid = student['intg_uid']
+    lock_student(conn, uid)
+    target = get_portfolio(conn, uid, portfolio_id, lock=True)
+    if target['is_representative'] == body.representative:
+        return {'id': portfolio_id, 'representative': body.representative}
+    try:
+        if body.representative:
+            # 이전 대표를 먼저 내린다. 부분 unique 는 문장마다 검사하므로 순서가 바뀌면 실패한다.
+            for row in conn.execute('''UPDATE dc.student_portfolio SET is_representative=false
+              WHERE student_uid=%s AND is_representative AND id<>%s RETURNING id''', (uid, portfolio_id)).fetchall():
+                record_event(conn, user, row['id'], 'UNREPRESENT')
+        conn.execute('UPDATE dc.student_portfolio SET is_representative=%s WHERE id=%s AND student_uid=%s',
+                     (body.representative, portfolio_id, uid))
+    except psycopg.errors.UniqueViolation:
+        fail(409, 'REPRESENTATIVE_CONFLICT', '다른 창에서 대표를 바꿨습니다. 새로고침 후 다시 시도해 주세요.')
+    record_event(conn, user, portfolio_id, 'REPRESENT' if body.representative else 'UNREPRESENT')
+    return {'id': portfolio_id, 'representative': body.representative}
+
+
+def representative_row(conn, user, identity):
+    """학생 본인 또는 학생 상세 권한이 있는 교직원. 대표가 없으면 None."""
+    student, _ = resolve_detail_student(conn, user, identity)
+    row = conn.execute('''SELECT * FROM dc.student_portfolio WHERE student_uid=%s AND is_representative
+      AND deleted_at IS NULL''', (student['intg_uid'],)).fetchone()
+    return student, row
+
+
+@router.get('/students/{identity}/representative-portfolio')
+def representative_portfolio(identity: str, user=Depends(principal, scope='function'),
+                             conn=Depends(connection, scope='function')):
+    student, row = representative_row(conn, user, identity)
+    if not row:
+        return None
+    audit_document(conn, user, 'STUDENT_PORTFOLIO', row['id'])
+    return portfolio_dto(conn, row, student, prefix=f'/api/v1/students/{identity}/representative-portfolio/files/')
+
+
+@router.get('/students/{identity}/representative-portfolio/files/{file_id}')
+def representative_portfolio_file(identity: str, file_id: ResourceId, user=Depends(principal, scope='function'),
+                                  conn=Depends(connection, scope='function')):
+    """현재 대표 문서가 참조하는 파일만 연다. 저장 때 check_files 와 같은 소유·슬롯 규칙을 다시 본다."""
+    student, row = representative_row(conn, user, identity)
+    if not row:
+        fail(404, 'NOT_FOUND', '파일을 찾을 수 없습니다.')
+    photo, attachments = file_references(row['document'])
+    if file_id == photo:
+        slots = {('STUDENT_PORTFOLIO', 'PORTFOLIO_PHOTO')}
+    elif file_id in attachments:
+        slots = {('STUDENT_PORTFOLIO', 'PORTFOLIO_DOCUMENT'), ('GROWTH_ENTRY', 'PORTFOLIO_ATTACHMENT')}
+    else:
+        fail(404, 'NOT_FOUND', '파일을 찾을 수 없습니다.')
+    file = conn.execute('''SELECT * FROM dc.file_object WHERE id=%s AND state='READY' AND uploaded_by=%s''',
+                        (file_id, student['intg_uid'])).fetchone()
+    if not file or (file['owner_kind'], file['slot']) not in slots:
+        fail(404, 'NOT_FOUND', '파일을 찾을 수 없습니다.')
+    audit_document(conn, user, 'FILE', file_id)
+    return files.stream(file)
 
 
 @router.get('/students/{identity}/portfolio-source')

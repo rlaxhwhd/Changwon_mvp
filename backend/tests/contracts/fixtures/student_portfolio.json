@@ -6,7 +6,8 @@
     "title": "포트폴리오_v1",
     "updatedAt": "2026-11-06T09:00:00+09:00",
     "version": 2,
-    "complete": false
+    "complete": false,
+    "representative": false
    }
   ],
   "limit": 20

@@ -15,10 +15,10 @@
   font-size: 12px; font-weight: 700; color: var(--color-text);
   cursor: pointer; transition: border-color .15s, color .15s, background .15s;
 }
-.pf-resume-btn--ghost:hover { border-color: var(--pf-ink, #141a26); color: var(--pf-ink, #141a26); }
+.pf-resume-btn--ghost:hover { border-color: var(--pf-ink, #2c5ae0); color: var(--pf-ink, #2c5ae0); }
 .pf-resume-btn--primary {
   border-color: transparent;
-  background: var(--pf-ink, #141a26); color: #fff;
+  background: var(--pf-ink, #2c5ae0); color: #fff;
 }
 .pf-resume-btn--primary:hover { filter: brightness(1.06); }
 
@@ -81,7 +81,7 @@
   align-items: flex-start;
   padding-bottom: 18px;
   /* 2026-11-09 — 이력서 머리말은 잉크 굵은 선으로 닫는다(포트폴리오 재개편과 같은 결). */
-  border-bottom: 2px solid var(--pf-ink, #141a26);
+  border-bottom: 2px solid var(--pf-ink, #2c5ae0);
 }
 
 .pf-resume-name-block { min-width: 0; }
@@ -176,8 +176,8 @@
 }
 
 .pf-resume-block-jump:hover {
-  border-color: var(--pf-ink, #141a26);
-  color: var(--pf-ink, #141a26);
+  border-color: var(--pf-ink, #2c5ae0);
+  color: var(--pf-ink, #2c5ae0);
 }
 
 .pf-resume-block-jump i { font-size: 9px; }
@@ -200,14 +200,14 @@
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 50%;
-  color: var(--pf-ink, #141a26);
+  color: var(--pf-ink, #2c5ae0);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .pf-inline-edit-btn:hover {
-  background: var(--pf-ink, #141a26);
+  background: var(--pf-ink, #2c5ae0);
   color: #fff;
 }
 
@@ -238,7 +238,7 @@
 .pf-inline-edit textarea {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid var(--pf-ink, #141a26);
+  border: 1px solid var(--pf-ink, #2c5ae0);
   border-radius: var(--radius-sm);
   background: var(--color-bg);
   font-size: 12px;
@@ -275,7 +275,7 @@
   gap: 4px;
   height: 30px;
   padding: 0 10px;
-  background: var(--pf-ink, #141a26);
+  background: var(--pf-ink, #2c5ae0);
   border: none;
   border-radius: var(--radius-sm);
   color: #fff;
@@ -413,7 +413,7 @@
 .pf-resume-2col li strong em {
   margin-left: 4px;
   font-style: normal;
-  color: var(--pf-ink, #141a26);
+  color: var(--pf-ink, #2c5ae0);
 }
 
 .pf-resume-2col li span {
@@ -558,7 +558,7 @@
   word-break: break-all;
 }
 
-.pf-resume-proj-link:hover { color: var(--pf-ink, #141a26); }
+.pf-resume-proj-link:hover { color: var(--pf-ink, #2c5ae0); }
 
 /* Attach resume */
 .pf-resume-attach-pick {
