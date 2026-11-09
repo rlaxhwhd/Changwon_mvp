@@ -3,16 +3,15 @@ import type { ActivityItem } from '../data/activityLog'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 성장 활동 기록 타임라인 — 「내 성장」과 라운지가 같은 모양·같은 접기 규칙을 쓴다.
-// 처음에는 최근 3건만 보여 주고, 펼치면 받아 온 기록 전체를 보여 준다.
+// 처음에는 최근 몇 건(기본 3건)만 보여 주고, 펼치면 받아 온 기록 전체를 보여 준다.
+// 「내 성장」은 옆 카드 높이를 채우도록 더 많이 보여 준다(collapsed).
 // 클래스(gh-*)는 growth/GrowthHome.css 가 그린다 — 두 화면 모두 그 시트를 불러온다.
 // ─────────────────────────────────────────────────────────────────────────
 
-const COLLAPSED = 3
-
-export default function ActivityTimeline({ items, error }: { items: ActivityItem[] | null; error: string }) {
+export default function ActivityTimeline({ items, error, collapsed = 3 }: { items: ActivityItem[] | null; error: string; collapsed?: number }) {
   const [open, setOpen] = useState(false)
-  const shown = items && !open ? items.slice(0, COLLAPSED) : items
-  const hidden = items ? items.length - COLLAPSED : 0
+  const shown = items && !open ? items.slice(0, collapsed) : items
+  const hidden = items ? items.length - collapsed : 0
   return <>
     <div className="gh-timeline">
       {error && <p className="gh-empty" role="alert">{error}</p>}

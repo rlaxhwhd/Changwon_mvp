@@ -258,14 +258,14 @@ export default function GrowthHome() {
 
         <article className="gh-card gh-archive">
           <header className="gh-card-head"><div><span className="gh-section-kicker">GROWTH ARCHIVE</span><h2>성장 활동 기록</h2><p>진단, 상담, 로드맵 이행, 비교과, 자격·프로젝트 등록이 자동으로 기록됩니다.</p></div></header>
-          <ActivityTimeline items={activity.items} error={activity.error} />
+          <ActivityTimeline items={activity.items} error={activity.error} collapsed={5} />
         </article>
 
         <aside className="gh-card gh-next">
           <header className="gh-card-head"><div><span className="gh-section-kicker">NEXT CHAPTER</span><h2>다음에 채울 기록</h2><p>로드맵에서 아직 이행하지 않은 항목입니다.</p></div></header>
           {!confirmedPlan ? <p className="gh-empty">상담 후 로드맵이 확정되면 이행할 항목이 여기에 표시됩니다.</p>
             : pendingCells.length === 0 ? <p className="gh-empty">로드맵의 모든 항목을 이행했습니다.</p>
-            : <ul className="gh-pending-list">{pendingCells.map(cell => <li key={cell.id}><span>{axisLabel(cell.axis)}</span><strong>{cell.title}</strong></li>)}</ul>}
+            : <ul className="gh-pending-list">{pendingCells.map(cell => <li key={cell.id} className={`is-${cell.axis}`}><span>{axisLabel(cell.axis)}</span><strong>{cell.title}</strong></li>)}</ul>}
           {confirmedPlan && <Link className="gh-pending-link" to="/roadmap/status">로드맵 진행 현황 보기 <i className="fa-solid fa-arrow-right" /></Link>}
         </aside>
       </section>
