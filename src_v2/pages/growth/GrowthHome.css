@@ -144,12 +144,12 @@
 .gh-portfolio-grid .gh-timeline + .gh-timeline-more { margin-top: auto; }
 .gh-portfolio-grid .gh-timeline:has(+ .gh-timeline-more) { margin-bottom: 10px; }
 /* 다음에 채울 기록 — 축 색은 로드맵 진행 현황(/roadmap/status)의 축 색과 같다.
-   IAP 실행 = 민트 · 핵심역량 수행 = 파랑 · 내 성장 활동 = 바이올렛. 색 면 위라 글자는 흰색이다. */
-.gh-pending-list li.is-IAP    { background: var(--goal-1); }
-.gh-pending-list li.is-CORE   { background: var(--goal-2); }
-.gh-pending-list li.is-GROWTH { background: var(--goal-3); }
+   IAP 실행 = 민트 · 핵심역량 수행 = 파랑 · 내 성장 활동 = 바이올렛. 면은 연한 색, 글자는 축 본색이다. */
+.gh-pending-list li.is-IAP    { --gh-axis: var(--goal-1); background: var(--goal-1-soft); }
+.gh-pending-list li.is-CORE   { --gh-axis: var(--goal-2); background: var(--goal-2-soft); }
+.gh-pending-list li.is-GROWTH { --gh-axis: var(--goal-3); background: var(--goal-3-soft); }
 .gh-pending-list li[class^="is-"] span,
-.gh-pending-list li[class^="is-"] strong { color: #fff; }
+.gh-pending-list li[class^="is-"] strong { color: var(--gh-axis); }
 .gh-pending-list li { padding: 12px 14px; border-radius: 11px; background: var(--gh-soft); }
 .gh-pending-list span, .gh-pending-list strong { display: block; }
 .gh-pending-list span { color: var(--gh-ink); font-size: 12px; font-weight: 850; }
