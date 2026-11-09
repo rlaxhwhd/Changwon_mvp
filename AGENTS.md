@@ -52,9 +52,8 @@
 
 ## 3. DB 구조 및 응답 성능 검토
 
-- DB·SQL·마이그레이션 작업은 [Astra 리뷰어](.claude/agents/codex-astra-db-reviewer.md)가 [postgres-patterns](.claude/skills/postgres-patterns/SKILL.md)와 [database-migrations](.claude/skills/database-migrations/SKILL.md)를 읽고 적용해 승인한다 <span>(2026-11-06 사용자 확정)</span>. 팀장은 두 스킬을 따로 읽지 않아도 된다.
+- DB·SQL·마이그레이션 작업은 [Astra 리뷰어](.claude/agents/codex-astra-db-reviewer.md)가 승인한다 <span>(2026-11-09 사용자 확정 — 스킬 필수 적용 절차 삭제)</span>.
 - 마이그레이션은 Astra 승인 전에 로컬을 포함한 어떤 DB에도 적용하지 않는다. `npm run docker:up`도 적용에 해당한다.
-- Astra를 실행할 수 없어 팀장이 직접 처리할 때는 팀장이 두 스킬을 읽고 적용하며, 그 사실을 작업 기록에 남긴다.
 - 실제 조회 패턴과 데이터 규모를 기준으로 정규화, JSON 사용 범위, FK·UNIQUE·CHECK, 복합·부분 인덱스, 페이지네이션, N+1, 과도한 JOIN·응답 크기를 검토한다.
 - 느리거나 복잡한 주요 조회는 실행 계획과 실제 소요 시간을 확인한다. `EXPLAIN ANALYZE`는 쿼리를 실행하므로 변경 쿼리나 무거운 운영 쿼리에 무심코 적용하지 않는다.
 - 동시 수정·중복 요청·트랜잭션·잠금·권한 범위도 함께 검증한다. 성능을 위해 무결성이나 접근 통제를 제거하지 않는다.
