@@ -85,9 +85,8 @@
 
 .pf-stack { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
 .pf-split { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
-/* 패널 위쪽에 그 항목의 색 띠 — 카드가 어떤 기록인지 색으로 먼저 알린다. */
+/* 항목 색은 띠가 아니라 내용(숙련도 칸·날짜·태그·빈 상태·배지)이 나른다 — 카드 한쪽 색 테두리는 쓰지 않는다. */
 .pf-panel { position: relative; min-width: 0; padding: 24px 28px 28px; overflow: hidden; border: 1px solid var(--pf-line); border-radius: var(--pf-radius); background: var(--pf-paper); box-shadow: 0 2px 8px rgba(22, 28, 45, .04); }
-.pf-panel[class*="pf-tone-"]::before { content: ""; position: absolute; inset: 0 0 auto; height: 3px; background: var(--tone-bar); }
 .pf-panel-head { margin-bottom: 18px; display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .pf-panel-head h2 { margin: 0; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--pf-text); font-size: var(--fs-sub, 18px); font-weight: 800; line-height: 1.35; letter-spacing: -.02em; }
 .pf-panel-head p { max-width: 70ch; margin: 4px 0 0; color: var(--pf-sub); font-size: var(--fs-meta, 13px); line-height: 1.6; }
