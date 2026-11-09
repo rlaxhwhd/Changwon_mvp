@@ -14,6 +14,15 @@
 
 연계는 별도 인계 업무다. 기존 진로취업 상담을 심리상담으로 바꾸거나 삭제하지 않으며, 예약·상담일지·진단 결과를 자동 생성하지 않는다. 처리 완료는 담당자의 연계 처리 완료 표시이며 상담 수료나 치료 결과를 의미하지 않는다. 상세 심리상담 기록은 기존 심리상담 기능에서 관리한다.
 
+## C-5 진단 자동 연계 (2026-11-09)
+
+C-5(PHQ-9·GAD-7) 평균이 10점 이상이면 학생이 제출하는 트랜잭션에서 `dc.psych_screening_referral`에 자동 연계가 쌓인다. 판정 기준은 [DIAGNOSIS_RESULT_CONTRACT.md](DIAGNOSIS_RESULT_CONTRACT.md)에 있다. 수동 연계와 다른 점은 다음과 같다.
+
+- 받는 상담사·연계 사유가 없다. `role_code='psych'` 심리상담사 **전원**에게 알림(`source_kind=PSYCH_SCREENING_REFERRAL`)을 보내고, 이 페이지의 「진단센터 연계 리스트」 카드에 표시한다. 진로취업상담사에게는 보이지 않는다.
+- 심리상담사 누구나 `접수 대기 → 처리 중 → 처리 완료`로 진행하고, 접수자·완료자가 기록된다. 취소는 없다. 이력은 `psych_screening_referral_event`(append-only)에 쌓인다.
+- 응시 회차 1건당 연계 1건이다(`(student_uid,test_id,attempt_no)` 복합 FK·UNIQUE). 수동 연계의 학생당 진행 중 1건 제한과는 독립이다.
+- API: `GET /psych-referrals/screening?page=&status=`, `POST /psych-referrals/screening/{id}/transition`(`ACCEPT`/`COMPLETE`, 기대 `version`). 둘 다 psych 전용이다.
+
 ## DB와 API
 
 마이그레이션 `067_psych_referral.sql`:

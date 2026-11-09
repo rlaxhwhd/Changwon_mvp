@@ -32,7 +32,7 @@ C-CORE → 결과 유형의 후속진단 1종 → CARE 7+ 상담 신청·예약 
 - **임시저장만으로 첫 로드맵을 생성할 수 없다.** [CounselSession.tsx](../src_admin/pages/CounselSession.tsx)의 `handleComplete`와 [roadmap.py](../backend/app/roadmap.py)의 `check_counsel_basis(initial=True)`를 확인했다. 상담 상태 `DONE`이 필요하다.
 - 일지에는 최종 유형·정성진단 5개·선택 상담내용·학생 공개 코멘트를 기록한다. 내부 상담 본문과 정성진단은 학생에게 공개하지 않는다: [COUNSEL_TEMPLATE.md](COUNSEL_TEMPLATE.md), [CounselRecordFields.tsx](../src_admin/components/CounselRecordFields.tsx).
 - 로드맵은 IAP·CORE·GROWTH 3축의 초안으로 생성하고 상담사가 확정하면 학생에게 공개한다. 차트는 **첫 생성** 기준이다. 기존 로드맵의 재생성은 확정 예약 상태의 재상담에서도 가능한 별도 조건이 있다: [roadmap.py](../backend/app/roadmap.py).
-- C5·C6의 유형 매핑은 정의되어 있지만 결과표 항목은 미정이다. 외부 진단 연동·실제 채점·운영 모델 연결이 모두 완료됐다는 뜻은 아니다: [DIAGNOSIS_RESULT_CONTRACT.md](DIAGNOSIS_RESULT_CONTRACT.md).
+- C5는 2026-11-09에 PHQ-9·GAD-7로 확정됐다(사이트 내 응시·평균 10점 이상 심리상담센터 연계): [DIAGNOSIS_RESULT_CONTRACT.md](DIAGNOSIS_RESULT_CONTRACT.md). C6의 결과표 항목은 아직 미정이다. 외부 진단 연동·실제 채점·운영 모델 연결이 모두 완료됐다는 뜻은 아니다: [DIAGNOSIS_RESULT_CONTRACT.md](DIAGNOSIS_RESULT_CONTRACT.md).
 - [ROADMAP_GENERATION.md](ROADMAP_GENERATION.md)의 2026-09-14 완료 설명과 이후 규칙이 다른 부분은, 2026-09-18에 갱신된 PROCESS.md와 현재 원본 코드를 우선했다.
 
 ## Graphify 설치·분석 기록

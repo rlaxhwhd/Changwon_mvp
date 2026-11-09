@@ -1,12 +1,12 @@
 import { studentDisplayName } from '../../shared/studentDisplayName'
 import PageNumbers from '../../shared/components/PageNumbers'
 import { useEffect, useRef, useState } from 'react'
-import { LuArrowRightLeft, LuRefreshCw, LuSearch } from 'react-icons/lu'
+import { LuArrowRightLeft, LuClipboardList, LuRefreshCw, LuSearch } from 'react-icons/lu'
 import EmptyState from '../components/EmptyState'
 import StudentPicker from '../components/StudentPicker'
 import { getActiveUser } from '../data/staff'
-import { loadReferralOptions, loadReferrals, REFERRAL_STATUS, sendReferral, updateReferral } from '../data/psychReferrals'
-import type { Referral, ReferralList, ReferralOptions, ReferralStudent } from '../data/psychReferrals'
+import { loadReferralOptions, loadReferrals, loadScreeningReferrals, REFERRAL_STATUS, sendReferral, updateReferral, updateScreeningReferral } from '../data/psychReferrals'
+import type { Referral, ReferralList, ReferralOptions, ReferralStudent, ScreeningList, ScreeningReferral } from '../data/psychReferrals'
 import './PsychReferrals.css'
 
 const message = (e: unknown) => e instanceof Error ? e.message : '요청을 처리하지 못했습니다.'
@@ -29,6 +29,10 @@ function ReferralPage() {
   const [picking, setPicking] = useState(false)
   const [counselorId, setCounselorId] = useState('')
   const [reasonCode, setReasonCode] = useState('')
+  const [screening, setScreening] = useState<ScreeningList | null>(null)
+  const [screeningPage, setScreeningPage] = useState(1)
+  // C-5 자동 연계 목록은 심리상담사만 받는다 — 역할을 알고 있으니 옵션 응답을 기다리지 않고 함께 부른다.
+  const psych = getActiveUser().role === 'psych'
   const mutation = useRef(false)
 
   useEffect(() => {
@@ -38,8 +42,9 @@ function ReferralPage() {
       if (running || controller.signal.aborted) return
       running = true
       try {
-        const [o, d] = await Promise.all([loadReferralOptions(controller.signal), loadReferrals(page, filter, controller.signal)])
-        if (!controller.signal.aborted) { setOptions(o); setData(d); setError('') }
+        const [o, d, sc] = await Promise.all([loadReferralOptions(controller.signal), loadReferrals(page, filter, controller.signal),
+          psych ? loadScreeningReferrals(screeningPage, controller.signal) : Promise.resolve(null)])
+        if (!controller.signal.aborted) { setOptions(o); setData(d); setScreening(sc); setError('') }
       } catch (e) { if (!controller.signal.aborted) setError(message(e)) }
       finally { running = false }
     }
@@ -48,7 +53,7 @@ function ReferralPage() {
     const timer = window.setInterval(visible, 30_000)
     window.addEventListener('focus', visible)
     return () => { controller.abort(); clearInterval(timer); window.removeEventListener('focus', visible) }
-  }, [page, filter, revision])
+  }, [page, filter, revision, screeningPage, psych])
 
   async function act(work: () => Promise<unknown>, success: string) {
     if (mutation.current) return
@@ -62,6 +67,12 @@ function ReferralPage() {
     const text = action === 'ACCEPT' ? '접수' : action === 'COMPLETE' ? '처리 완료' : '취소'
     if (!window.confirm(`${studentDisplayName(row.studentName, row.studentId)} 학생의 연계를 ${text}하시겠습니까?`)) return
     void act(() => updateReferral(row, action), `${text}했습니다.`)
+  }
+
+  function changeScreening(row: ScreeningReferral, action: 'ACCEPT' | 'COMPLETE') {
+    const text = action === 'ACCEPT' ? '접수' : '처리 완료'
+    if (!window.confirm(`${studentDisplayName(row.studentName, row.studentId)} 학생의 진단 연계를 ${text}하시겠습니까?`)) return
+    void act(() => updateScreeningReferral(row, action), `${text}했습니다.`)
   }
 
   const career = options?.role === 'career'
@@ -98,6 +109,23 @@ function ReferralPage() {
           onPick={picked => { setStudent({ id: picked.id, name: picked.name, studentNo: picked.studentNo, major: picked.major }); setPicking(false) }}
           onClose={() => setPicking(false)} />}
       </section>}
+      {psych && screening && <>
+        <div className="admin-card-head"><h2><LuClipboardList />진단센터 연계 리스트</h2>
+          <span className="admin-field-hint">C-5 진단(PHQ-9·GAD-7) 평균 10점 이상 학생이 자동으로 추가됩니다. 심리상담사 전원이 함께 확인합니다.</span></div>
+        <section className="admin-card">
+          {!screening.items.length ? <EmptyState icon={LuClipboardList} message="진단으로 연계된 학생이 없습니다." /> : <div className="referral-table-wrap"><table className="dc-list-table referral-table">
+            <thead><tr><th>연계일</th><th>학생</th><th>PHQ-9</th><th>GAD-7</th><th>평균</th><th>상태</th><th>처리</th></tr></thead>
+            <tbody>{screening.items.map(row => <tr key={row.id}>
+              <td>{date(row.createdAt)}</td><td><strong>{studentDisplayName(row.studentName, row.studentId)}</strong><small>{row.studentNo}<br />{row.major}</small></td>
+              <td>{row.phq9}점</td><td>{row.gad7}점</td><td><strong>{Number(row.average)}점</strong></td>
+              <td><span className={`admin-chip ${row.status === 'DONE' ? 'admin-chip-done' : row.status === 'PENDING' ? 'admin-chip-wait' : 'admin-chip-ok'}`}>{REFERRAL_STATUS[row.status]}</span>
+                <small>{row.completedAt ? `${date(row.completedAt)} · ${row.completedByName}` : row.acceptedAt ? `${date(row.acceptedAt)} · ${row.acceptedByName}` : ''}</small></td>
+              <td>{row.status === 'PENDING' ? <button className="admin-btn admin-btn-primary sm" disabled={busy} onClick={() => changeScreening(row, 'ACCEPT')}>접수</button>
+                : row.status === 'IN_PROGRESS' ? <button className="admin-btn admin-btn-ghost sm" disabled={busy} onClick={() => changeScreening(row, 'COMPLETE')}>처리 완료</button> : '—'}</td>
+            </tr>)}</tbody></table></div>}
+        </section>
+        {screening.totalCount > 20 && <div className="referral-pagination"><PageNumbers page={screeningPage} pages={Math.ceil(screening.totalCount / 20)} onChange={setScreeningPage} /><span>전체 {screening.totalCount}건</span></div>}
+      </>}
       <div className="admin-card-head"><h2>{career ? '보낸 연계' : '받은 연계'}</h2>
         <label className="admin-form-field">처리 상태<select aria-label="처리 상태" value={filter} onChange={e => { setFilter(e.target.value); setPage(1); setData(null) }}><option value="">전체</option>{Object.entries(REFERRAL_STATUS).map(([key, label]) => <option key={key} value={key}>{label}</option>)}</select></label>
       </div>

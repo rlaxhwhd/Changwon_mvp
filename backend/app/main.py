@@ -30,6 +30,7 @@ from .administration import router as administration_router
 from .metadata import router as metadata_router
 from .diagnosis import router as diagnosis_router
 from .diagnosis_retake import router as diagnosis_retake_router
+from .c5_screening import router as c5_screening_router
 from .hrtest_sync import router as hrtest_router
 from .programs import router as programs_router
 from .survey import router as survey_router
@@ -106,6 +107,7 @@ app.include_router(administration_router, prefix='/api/v1')
 app.include_router(metadata_router, prefix='/api/v1')
 app.include_router(diagnosis_router, prefix='/api/v1')
 app.include_router(diagnosis_retake_router, prefix='/api/v1')
+app.include_router(c5_screening_router, prefix='/api/v1')
 app.include_router(programs_router, prefix='/api/v1')
 app.include_router(survey_router, prefix='/api/v1')
 app.include_router(survey_forms_router, prefix='/api/v1')

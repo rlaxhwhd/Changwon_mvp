@@ -339,12 +339,12 @@ export const DIAGNOSIS_MODULES: DiagnosisModule[] = [
     id: 'C5',
     testId: 'c5',
     name: 'C-5 취약요인 진단검사',
-    factors: [], // 결과표 항목은 사용자 제공 예정.
+    factors: [], // PHQ-9·GAD-7 — bootstrap 이 diagnosis_factor_definition 으로 채운다.
     stageLabel: '후속진단 · 취약관리형',
-    decides: '집중관리 상담 4주제(A17~A20) 설계',
-    desc: '참여 동기와 이탈 위험 요인을 진단해 집중관리 상담의 우선순위를 정합니다.',
-    time: '미정',
-    questions: '문항 확정 전',
+    decides: '심리상담센터 연계 또는 C-CORE 재진단 권유',
+    desc: 'PHQ-9·GAD-7로 최근 2주의 정서 상태를 확인해 필요하면 심리상담센터로 연계합니다.',
+    time: '약 5분',
+    questions: '16문항',
     category: '집중관리',
     art: 'psychology',
     image: '/diagnosis_2.png',

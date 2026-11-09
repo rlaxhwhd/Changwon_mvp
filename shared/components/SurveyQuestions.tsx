@@ -17,7 +17,7 @@ export default function SurveyQuestions({ areas, answers, onChange, disabled = f
       {item.kind === 'TEXT' ? <textarea aria-label={item.prompt} rows={3} maxLength={2000}
         value={String(answers[item.code] ?? '')} placeholder="자유롭게 입력해 주세요."
         onChange={e => onChange(item.code, e.target.value)} />
-        : <div className="survey-options">{SURVEY_SCALE.map(option => (
+        : <div className="survey-options">{(area.options ?? SURVEY_SCALE).map(option => (
           <label key={option.value}>
             <input type="radio" name={`${prefix}-${item.code}`} required value={option.value}
               checked={answers[item.code] === option.value} onChange={() => onChange(item.code, option.value)} />

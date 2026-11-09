@@ -133,6 +133,7 @@ React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 | 전담교수 배정·해제 | ✅ DB | `dc.advisor_assignment` — 활성 1건 부분 unique, 해제는 `released_at`. 교수 열람 범위(`staff_student_scope`)가 배정을 따라간다 |
 | 지도학생 독려 | ✅ DB | `dc.notification(source_kind=ADVISOR_NUDGE)` — 기록이 아니라 알림 |
 | 상담사가 공고 CRUD | ✅ DB | `dc.job_posting` (+ `job_posting_event`) |
+| **C-5(PHQ-9·GAD-7) 제출** | ✅ DB | `POST /diagnosis/c5` → `diagnosis_attempt/result(test_id=c5)` · 평균 ≥10 이면 같은 트랜잭션에서 `dc.psych_screening_referral` + 이벤트 + 심리상담사 전원 알림. 미만은 행 추가 없이 C-CORE 재검사 요청 권유 (160) |
 | **학생이 채용 지원** | ✅ DB | `dc.job_application` (+ `job_application_event`) |
 | **첨부파일 업로드** | ✅ DB+볼륨 | `dc.file_object` — 웹루트 밖 보관, API 가 권한 확인 후 스트리밍 |
 | **관리자가 역할별 메뉴 노출 변경**(/admin/system/menus) | ✅ DB | `PUT /system/auth-roles/{role}/menus` → `dc.menu_auth` 집합 치환 + `admin_event(entity=menu_auth)`. **GNB 노출은 두 SPA 모두 `/metadata` 메뉴만 본다** — navConfig 에 역할 필터를 다시 넣지 않는다(학생 메뉴는 `stu-*`, 089) |
@@ -168,6 +169,7 @@ React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 
 ---
 
+    **유일한 예외: C-5(PHQ-9·GAD-7)** — 사이트 안에서 응시하고 서버가 합산·판정한다(2026-11-09 사용자 확정). → `docs/DIAGNOSIS_RESULT_CONTRACT.md`「C-5 취약요인 진단」
 ## 🛠 구현 규약 <span>(v2 = 실제 버전)</span>
 
 - **`src_v2/`(학생) · `src_admin/`(교직원)만 서비스 버전.** `src/`(v1)은 폐기 예정.

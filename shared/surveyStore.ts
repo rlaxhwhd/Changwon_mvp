@@ -8,7 +8,8 @@ export type SurveyPhase = 'PRE' | 'POST' | 'SATISFACTION'
 /** SCALE = 5점 척도(값 1~5), TEXT = 서술형(값은 문자열, 선택 응답). */
 export type SurveyItemKind = 'SCALE' | 'TEXT'
 export interface SurveyItem { code: string; prompt: string; kind: SurveyItemKind; value: number | string | null }
-export interface SurveyArea { key: string; label: string; items: SurveyItem[] }
+/** options 가 있으면 그 선택지로 그린다(C-5 PHQ-9·GAD-7 의 0~3점). 없으면 5점 척도. */
+export interface SurveyArea { key: string; label: string; items: SurveyItem[]; options?: { value: number; label: string }[] }
 
 export interface SurveyForm {
   programId: string

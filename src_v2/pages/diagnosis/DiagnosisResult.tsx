@@ -29,6 +29,8 @@ const STATUS_LABEL: Record<TestStatus, string> = {
 
 type ResultCheck = { state: 'ready' | 'missing' | 'error'; message?: string }
 const EXTERNAL_TESTS = ['ccore', 'c2', 'c3', 'c4']
+// 외부 검사기관이 아니라 이 사이트의 설문 화면에서 응시·결과 확인하는 검사(2026-11-09 C-5).
+const IN_SITE_TESTS: Record<string, string> = { c5: '/diagnosis/c5' }
 
 async function checkResult(student: ReturnType<typeof getActiveStudent>, testId: string): Promise<ResultCheck> {
   try {
@@ -102,6 +104,7 @@ export default function DiagnosisResult() {
   }
   async function launchTest(testId: string) {
     if (evaluating) return
+    if (IN_SITE_TESTS[testId]) { navigate(IN_SITE_TESTS[testId]); return }
     const popup = window.open('about:blank', '_blank')
     if (popup) popup.opener = null
     setEvaluating(true); setAiError(''); setAiProgress('응시 권한을 확인하고 있습니다.')
@@ -114,6 +117,7 @@ export default function DiagnosisResult() {
   }
   async function viewResult(testId: string) {
     if (evaluating) return
+    if (IN_SITE_TESTS[testId]) { navigate(IN_SITE_TESTS[testId]); return }
     setEvaluating(true); setAiError(''); setAiProgress('진단 결과를 확인하고 있습니다.')
     try {
       if (EXTERNAL_TESTS.includes(testId)) await importDiagnosis(student, testId, true)
@@ -289,8 +293,8 @@ export default function DiagnosisResult() {
 
             <div className="de-card-actions">
               <DiagnosisStartButton testId={result.testId}
-                canStart={!result.historyOnly && result.status !== 'locked' && !!externalDiagnosisLinks[result.testId] && !!retake?.permissions[result.testId]}
-                retestRequired={!result.historyOnly && result.status !== 'locked' && !!externalDiagnosisLinks[result.testId]
+                canStart={!result.historyOnly && result.status !== 'locked' && !!(externalDiagnosisLinks[result.testId] || IN_SITE_TESTS[result.testId]) && !!retake?.permissions[result.testId]}
+                retestRequired={!result.historyOnly && result.status !== 'locked' && !!(externalDiagnosisLinks[result.testId] || IN_SITE_TESTS[result.testId])
                   && !!retake && !retake.permissions[result.testId] && diagnosisAttempts.some(a => a.studentId === student.id && a.testId === result.testId && a.status === '완료')}
                 pending={retake?.requests.some(q => q.testId === result.testId && q.status === 'PENDING') ?? false} busy={evaluating || requesting}
                 onStart={() => void launchTest(result.testId)} onRequest={() => void requestRetake(result.testId)} />

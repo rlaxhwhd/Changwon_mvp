@@ -112,3 +112,55 @@ def transition(referral_id: UUID, body: Transition, user=Depends(principal, scop
     titles = {'ACCEPT': '심리상담센터 연계가 접수되었습니다.', 'COMPLETE': '심리상담센터 연계 처리가 완료되었습니다.', 'CANCEL': '심리상담센터 연계 요청이 취소되었습니다.'}
     notify(conn, row['recipient_uid'] if body.action == 'CANCEL' else row['sender_uid'], referral_id, body.action, titles[body.action])
     return conn.execute(SELECT+' WHERE r.id=%s', (referral_id,)).fetchone()
+
+
+# C-5 진단 자동 연계(160) — 받는 사람·사유 없이 심리상담사 전원이 공유하고 누구든 접수·완료한다.
+SCREENING = '''SELECT r.id,r.status,r.version,r.phq9,r.gad7,(r.phq9+r.gad7)/2.0 AS average,r.created_at AS "createdAt",
+ r.accepted_at AS "acceptedAt",r.completed_at AS "completedAt",
+ p.alias AS "studentId",p.name AS "studentName",s.student_no AS "studentNo",s.major_label AS major,
+ a.name AS "acceptedByName",c.name AS "completedByName"
+ FROM dc.psych_screening_referral r JOIN dc.person p ON p.intg_uid=r.student_uid
+ JOIN dc.student s ON s.intg_uid=r.student_uid LEFT JOIN dc.person a ON a.intg_uid=r.accepted_by
+ LEFT JOIN dc.person c ON c.intg_uid=r.completed_by'''
+
+
+def psych_only(conn, user):
+    if role(conn, user) != 'psych':
+        raise HTTPException(403, '심리상담사만 진단 연계를 처리할 수 있습니다.')
+
+
+@router.get('/psych-referrals/screening')
+def screening_listing(response: Response, page: int = Query(1, ge=1), status: Literal['PENDING','IN_PROGRESS','DONE'] | None = None,
+                      user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    psych_only(conn, user)
+    response.headers['Cache-Control'] = 'no-store'
+    counts = conn.execute('SELECT status,count(*) AS count FROM dc.psych_screening_referral GROUP BY status').fetchall()
+    condition, values = ('WHERE r.status=%s', [status]) if status else ('', [])
+    total = conn.execute('SELECT count(*) AS n FROM dc.psych_screening_referral r '+condition, values).fetchone()['n']
+    rows = conn.execute(SCREENING+' '+condition+' ORDER BY r.created_at DESC,r.id LIMIT 20 OFFSET %s', [*values, (page-1)*20]).fetchall()
+    return {'items': rows, 'totalCount': total, 'counts': {r['status']: r['count'] for r in counts}}
+
+
+class ScreeningTransition(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    action: Literal['ACCEPT','COMPLETE']
+    version: int = Field(ge=1)
+
+
+@router.post('/psych-referrals/screening/{referral_id}/transition')
+def screening_transition(referral_id: UUID, body: ScreeningTransition, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    psych_only(conn, user)
+    row = conn.execute('SELECT * FROM dc.psych_screening_referral WHERE id=%s FOR UPDATE', (referral_id,)).fetchone()
+    if not row:
+        raise HTTPException(404, '연계를 찾을 수 없습니다.')
+    if row['version'] != body.version:
+        raise HTTPException(409, '처리 상태가 변경됐습니다. 새로고침 후 다시 확인해 주세요.')
+    target = {('ACCEPT','PENDING'): ('IN_PROGRESS','accepted'), ('COMPLETE','IN_PROGRESS'): ('DONE','completed')}.get((body.action, row['status']))
+    if not target:
+        raise HTTPException(409, '현재 상태에서는 이 작업을 할 수 없습니다.')
+    status, column = target
+    conn.execute(f'UPDATE dc.psych_screening_referral SET status=%s,{column}_at=now(),{column}_by=%s,version=version+1 WHERE id=%s',
+                 (status, user['intg_uid'], referral_id))
+    conn.execute('INSERT INTO dc.psych_screening_referral_event(referral_id,actor_uid,action) VALUES(%s,%s,%s)',
+                 (referral_id, user['intg_uid'], body.action))
+    return conn.execute(SCREENING+' WHERE r.id=%s', (referral_id,)).fetchone()
