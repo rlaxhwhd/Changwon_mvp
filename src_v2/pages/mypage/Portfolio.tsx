@@ -38,7 +38,7 @@ const RESUME_PATH = '/jobs/home/resume'
 
 const TABS: { id: TabId; label: string }[] = [
   { id: 'profile',    label: '기본 정보' },
-  { id: 'skills',     label: '스킬·자격증' },
+  { id: 'skills',     label: '기술역량·자격증' },
   { id: 'experience', label: '수상·활동' },
   { id: 'documents',  label: '자소서' },
   { id: 'versions',   label: '포트폴리오' },
@@ -121,7 +121,7 @@ export default function Portfolio() {
   const coverLine = [profile.dept, profile.grade, profile.studentId].filter(Boolean).join(' · ')
   // 머리말의 구성 칸 — 누르면 그 항목이 있는 탭으로 간다. 칸마다 내 성장 화면의 카드 색을 따른다.
   const ledger: { label: string; count: number; tab: TabId; tone: string }[] = [
-    { label: '스킬', count: skills.length, tab: 'skills', tone: 'mint' },
+    { label: '기술역량', count: skills.length, tab: 'skills', tone: 'mint' },
     { label: '자격증', count: certs.length, tab: 'skills', tone: 'teal' },
     { label: '어학', count: langs.length, tab: 'skills', tone: 'sky' },
     { label: '수상·활동', count: projects.length + awards.length, tab: 'experience', tone: 'blue' },
@@ -321,11 +321,11 @@ function SkillsSection({ skills, certs, langs }: { skills: Skill[]; certs: Cert[
     <div className="pf-stack">
       <article className="pf-panel pf-tone-mint">
         <header className="pf-panel-head">
-          <div><h2>보유 스킬</h2><p>내 성장에 등록한 스킬입니다. 숙련도는 다섯 칸으로 표시됩니다.</p></div>
+          <div><h2>보유 기술역량</h2><p>내 성장에 등록한 기술역량입니다. 숙련도는 다섯 칸으로 표시됩니다.</p></div>
           <GrowthLink />
         </header>
         {skills.length === 0 ? (
-          <Empty title="등록된 스킬이 없습니다" action={<GrowthLink>내 성장에서 스킬 등록</GrowthLink>}>
+          <Empty title="등록된 기술역량이 없습니다" action={<GrowthLink>내 성장에서 기술역량 등록</GrowthLink>}>
             다룰 줄 아는 언어·도구를 숙련도와 함께 남겨 두면 포트폴리오에 분류별로 정리됩니다.
           </Empty>
         ) : (

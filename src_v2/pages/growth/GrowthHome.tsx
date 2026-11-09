@@ -59,7 +59,7 @@ interface EditorState {
 }
 
 const EDITOR_LABEL: Record<EditorKind, string> = {
-  project: '프로젝트', skill: '스킬', qualification: '자격·어학',
+  project: '프로젝트', skill: '기술역량', qualification: '자격·어학',
 }
 
 export default function GrowthHome() {
@@ -241,10 +241,10 @@ export default function GrowthHome() {
         </aside>
 
         <article className="gh-card gh-skills">
-          <header className="gh-card-head"><div><span className="gh-section-kicker">CAPABILITIES</span><h2>보유 스킬</h2><p>프로젝트와 학습 활동으로 확인된 기술 역량입니다.</p></div><button type="button" className="gh-add-btn" onClick={() => openCreate('skill')}><i className="fa-solid fa-plus" /> 스킬 등록</button></header>
+          <header className="gh-card-head"><div><span className="gh-section-kicker">CAPABILITIES</span><h2>보유 기술역량</h2><p>프로젝트와 학습 활동으로 확인된 기술 역량입니다.</p></div><button type="button" className="gh-add-btn" onClick={() => openCreate('skill')}><i className="fa-solid fa-plus" /> 기술역량 등록</button></header>
           <div className="gh-skill-grid">
             {skills.map((skill, index) => <div className="gh-skill" key={skill.id}><div><strong>{skill.name}</strong><span>{codeLabel('GROWTH_SKILL_CATEGORY', skill.category)}</span></div><div className="gh-skill-controls"><div className="gh-level" aria-label={`${skill.name} 숙련도 ${skill.level}/5`}>{[1, 2, 3, 4, 5].map(level => <i className={level <= skill.level ? 'filled' : ''} key={level} />)}</div><div className="gh-item-actions"><button type="button" onClick={() => openEdit('skill', index)} aria-label={`${skill.name} 수정`}><i className="fa-solid fa-pen" /></button><button type="button" onClick={() => removeItem('skill', index, skill.name)} aria-label={`${skill.name} 삭제`}><i className="fa-regular fa-trash-can" /></button></div></div></div>)}
-            {skills.length === 0 && <p className="gh-empty">등록된 스킬이 없습니다.</p>}
+            {skills.length === 0 && <p className="gh-empty">등록된 기술역량이 없습니다.</p>}
           </div>
         </article>
 
@@ -292,9 +292,9 @@ export default function GrowthHome() {
             )}
             {editor.kind === 'skill' && (
               <>
-                <GrowthCatalogPicker label="스킬" options={skillOptions} onPick={item => setEditor(current => current ? { ...current, fields: { ...current.fields, name: item.label, category: catalogText(item, 'categoryCode') } } : current)} />
+                <GrowthCatalogPicker label="기술역량"options={skillOptions} onPick={item => setEditor(current => current ? { ...current, fields: { ...current.fields, name: item.label, category: catalogText(item, 'categoryCode') } } : current)} />
                 <div className="gh-form-row">
-                  <label><span>스킬명</span><input required maxLength={200} placeholder="예: Python, 엑셀 피벗테이블, AutoCAD" value={editor.fields.name} onChange={event => updateField('name', event.target.value)} /></label>
+                  <label><span>기술역량명</span><input required maxLength={200} placeholder="예: Python, 엑셀 피벗테이블, AutoCAD" value={editor.fields.name} onChange={event => updateField('name', event.target.value)} /></label>
                   <label><span>분류</span><select required value={editor.fields.category} onChange={event => updateField('category', event.target.value)}><option value="" disabled>분류 선택</option>{skillCategories.map(category => <option key={category.code} value={category.code}>{category.label}</option>)}</select></label>
                   <label><span>숙련도 · 자기평가</span><select value={editor.fields.level} onChange={event => updateField('level', event.target.value)}>{['1단계 · 기초 학습', '2단계 · 도움을 받아 활용', '3단계 · 독립적으로 활용', '4단계 · 복잡한 문제 해결', '5단계 · 설계·지도 가능'].map((label, index) => <option value={index + 1} key={label}>{label}</option>)}</select></label>
                 </div>

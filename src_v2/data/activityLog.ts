@@ -36,7 +36,7 @@ const LOOK: Record<string, { type: string; action: string; tone: ActivityItem['t
   GROWTH_CERTIFICATE: { type: '성장 기록', action: '자격증 등록', tone: 'violet' },
   GROWTH_LANGUAGE:    { type: '성장 기록', action: '어학 성적 등록', tone: 'violet' },
   GROWTH_PROJECT:     { type: '성장 기록', action: '프로젝트 등록', tone: 'violet' },
-  GROWTH_SKILL:       { type: '성장 기록', action: '스킬 등록', tone: 'violet' },
+  GROWTH_SKILL:       { type: '성장 기록', action: '기술역량 등록', tone: 'violet' },
   GROWTH_AWARD:       { type: '성장 기록', action: '수상 등록', tone: 'violet' },
   GROWTH_JOURNAL:     { type: '성장 기록', action: '성장경험일지 작성', tone: 'violet' },
 }

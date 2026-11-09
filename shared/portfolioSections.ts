@@ -94,7 +94,7 @@ export const SECTION_DEFS: SectionDef[] = [
     ],
   },
   {
-    key: 'skill', label: '보유 스킬', icon: 'fa-screwdriver-wrench', titleLabel: '스킬명', importable: true,
+    key: 'skill', label: '보유 기술역량', icon: 'fa-screwdriver-wrench', titleLabel: '기술역량명', importable: true,
     fields: [{ key: 'level', label: '숙련도', kind: 'level' }, description],
   },
   {
