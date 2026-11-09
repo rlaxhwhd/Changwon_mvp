@@ -15,10 +15,10 @@
   font-size: 12px; font-weight: 700; color: var(--color-text);
   cursor: pointer; transition: border-color .15s, color .15s, background .15s;
 }
-.pf-resume-btn--ghost:hover { border-color: var(--blue, #356dff); color: var(--blue, #356dff); }
+.pf-resume-btn--ghost:hover { border-color: var(--pf-ink, #141a26); color: var(--pf-ink, #141a26); }
 .pf-resume-btn--primary {
   border-color: transparent;
-  background: var(--blue, #356dff); color: #fff;
+  background: var(--pf-ink, #141a26); color: #fff;
 }
 .pf-resume-btn--primary:hover { filter: brightness(1.06); }
 
@@ -52,7 +52,7 @@
 }
 
 .pf-resume-toolbar-info i {
-  color: var(--blue, #356dff);
+  color: var(--pf-mute, #6b7282);
   font-size: 12px;
 }
 
@@ -80,7 +80,8 @@
   gap: 24px;
   align-items: flex-start;
   padding-bottom: 18px;
-  border-bottom: 1px solid var(--color-border);
+  /* 2026-11-09 — 이력서 머리말은 잉크 굵은 선으로 닫는다(포트폴리오 재개편과 같은 결). */
+  border-bottom: 2px solid var(--pf-ink, #141a26);
 }
 
 .pf-resume-name-block { min-width: 0; }
@@ -125,7 +126,7 @@
 }
 
 .pf-resume-contact i {
-  color: var(--blue, #356dff);
+  color: var(--pf-mute, #6b7282);
   font-size: 12px;
   width: 14px;
 }
@@ -175,8 +176,8 @@
 }
 
 .pf-resume-block-jump:hover {
-  border-color: var(--blue, #356dff);
-  color: var(--blue, #356dff);
+  border-color: var(--pf-ink, #141a26);
+  color: var(--pf-ink, #141a26);
 }
 
 .pf-resume-block-jump i { font-size: 9px; }
@@ -199,14 +200,14 @@
   background: var(--color-bg);
   border: 1px solid var(--color-border);
   border-radius: 50%;
-  color: var(--blue, #356dff);
+  color: var(--pf-ink, #141a26);
   font-size: 12px;
   cursor: pointer;
   transition: all 0.15s;
 }
 
 .pf-inline-edit-btn:hover {
-  background: var(--blue, #356dff);
+  background: var(--pf-ink, #141a26);
   color: #fff;
 }
 
@@ -237,7 +238,7 @@
 .pf-inline-edit textarea {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid var(--blue, #356dff);
+  border: 1px solid var(--pf-ink, #141a26);
   border-radius: var(--radius-sm);
   background: var(--color-bg);
   font-size: 12px;
@@ -274,7 +275,7 @@
   gap: 4px;
   height: 30px;
   padding: 0 10px;
-  background: var(--blue, #356dff);
+  background: var(--pf-ink, #141a26);
   border: none;
   border-radius: var(--radius-sm);
   color: #fff;
@@ -370,7 +371,7 @@
 .pf-resume-skill small {
   font-size: 12px;
   font-weight: 500;
-  color: var(--blue, #356dff);
+  color: var(--pf-sub, #5a6272);
 }
 
 /* 2-col block */
@@ -412,7 +413,7 @@
 .pf-resume-2col li strong em {
   margin-left: 4px;
   font-style: normal;
-  color: var(--blue, #356dff);
+  color: var(--pf-ink, #141a26);
 }
 
 .pf-resume-2col li span {
@@ -557,7 +558,7 @@
   word-break: break-all;
 }
 
-.pf-resume-proj-link:hover { color: var(--blue, #356dff); }
+.pf-resume-proj-link:hover { color: var(--pf-ink, #141a26); }
 
 /* Attach resume */
 .pf-resume-attach-pick {
@@ -634,12 +635,15 @@
 @media print {
   body { background: var(--color-bg); }
   .topbar,
-  .gh-cover,
-  .pf-tabs,
+  .pf-mast,
+  .pf-index,
+  .pf-alert,
   .pf-resume-toolbar,
   .pf-resume-block-actions,
   .pf-inline-edit-btn { display: none !important; }
-  .gh-shell.pf-shell { padding: 0; }
+  .pf-shell { padding: 0; }
+  .pf-layout { display: block; }
+  .pf-stack, .pfe-layout { animation: none; }
   .pf-resume-paper {
     border: none;
     padding: 24px 28px;

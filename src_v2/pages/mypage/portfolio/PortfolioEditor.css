@@ -1,106 +1,106 @@
-/* 포트폴리오 목록·편집기 (pfv-, pfe-) — 카드·버튼·입력 모양은 GrowthHome.css 와 같고, 2단 구성과 입력 격자만 더한다.
-   새 색·폰트를 만들지 않는다. */
+/* 포트폴리오 목록·편집기 (pfv-, pfe-) — 2026-11-09 재개편. 색·버튼·입력은 Portfolio.css 의 pf- 토큰을 쓴다.
+   여기에는 목록 줄, 편집기 2단 구성, 항목 칸만 둔다. 카드 안에 카드를 넣지 않는다 — 항목은 줄로 나눈다. */
 
-/* 목록 */
-.pfv-card { cursor: pointer; }
-.pfv-card:hover { border-color: var(--gh-line); }
-.pf-shell .pfv-body { padding: 14px 17px; }
-.pfv-actions { margin-top: 12px; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; }
-.pfv-actions .gh-item-actions { margin-left: auto; }
-.pf-shell .pfv-actions .gh-add-btn:disabled { opacity: .55; cursor: not-allowed; }
+/* ── 목록 ────────────────────────────────────────────────────────── */
+.pfv-list { margin: 0; padding: 0; border-top: 1px solid var(--pf-line); list-style: none; }
+.pfv-row { padding: 14px 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; border-bottom: 1px solid var(--pf-line); }
+.pfv-open { min-width: 0; padding: 4px 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.pfv-open > strong { display: block; color: var(--pf-ink); font-size: 15px; font-weight: 800; overflow-wrap: anywhere; }
+.pfv-open:hover > strong { text-decoration: underline; text-underline-offset: 3px; }
+.pfv-open:focus-visible { outline: 2px solid var(--pf-accent); outline-offset: 2px; border-radius: 4px; }
+.pfv-open > span { margin-top: 6px; display: flex; align-items: center; flex-wrap: wrap; gap: 10px; }
+.pfv-open time { color: var(--pf-sub); font-size: 12px; }
+.pfv-actions { display: flex; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 
-/* 2단 구성 */
-.pfe-layout { display: grid; grid-template-columns: minmax(0, 1fr) 280px; gap: 16px; align-items: start; }
-.pfe-main { min-width: 0; display: flex; flex-direction: column; gap: 16px; }
-.pfe-main .gh-card-head { flex-wrap: wrap; }
-.pfe-main .gh-card-head h2 { display: flex; align-items: center; gap: 6px; }
-.pfe-desc { margin: 0; color: var(--gh-sub); font-size: 12px; line-height: 1.6; }
-.pfe-hint { display: block; margin-top: 6px; color: var(--gh-sub); font-size: 12px; }
-.pfe-missing { margin: 12px 0 0; color: var(--amber-ink); font-size: 12px; line-height: 1.6; }
-
-.pfe-alert,
-.pfe-notice { padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border: 1px solid var(--gh-border); border-radius: 10px; background: #fbfbfd; font-size: 12px; line-height: 1.6; }
-.pfe-alert { margin: 0; color: #dc4444; }
-.pfe-notice { flex-direction: column; align-items: flex-start; gap: 2px; color: var(--gh-sub); }
-.pfe-notice strong { color: var(--gh-text); }
+/* ── 편집기 2단 구성 ─────────────────────────────────────────────── */
+.pfe-layout { display: grid; grid-template-columns: minmax(0, 1fr) 260px; gap: 20px; align-items: start; }
+.pfe-main { min-width: 0; display: flex; flex-direction: column; gap: 20px; }
+.pfe-desc { margin: 0; color: var(--pf-sub); font-size: 13px; line-height: 1.6; }
+.pfe-hint { display: block; margin-top: 6px; color: var(--pf-mute); font-size: 12px; }
+.pfe-missing { margin: 14px 0 0; padding: 10px 12px; display: flex; align-items: flex-start; gap: 8px; border-radius: var(--pf-radius-sm); background: var(--pf-accent-soft); color: var(--pf-accent); font-size: 13px; font-weight: 600; line-height: 1.6; }
+.pfe-notice { padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; border-radius: var(--pf-radius-sm); background: var(--pf-warn-soft); color: var(--pf-warn); font-size: 13px; line-height: 1.6; }
+.pfe-notice strong { font-weight: 800; }
 
 .pfe-title-bar { display: flex; align-items: flex-end; flex-wrap: wrap; gap: 12px; }
 .pfe-title-bar .pfe-rows { flex: 1; min-width: 240px; grid-template-columns: minmax(0, 1fr); }
-.pfe-title-bar .gh-add-btn { min-height: 42px; }
+.pfe-title-bar .pf-action { min-height: 42px; }
 
 /* 입력 — 라벨 위, 입력 아래. 짧은 칸은 2칸으로 놓고 긴 글은 전체 폭이다. */
 .pfe-rows { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 12px; }
 .pfe-field { min-width: 0; display: flex; flex-direction: column; gap: 7px; }
 .pfe-field--wide { grid-column: 1 / -1; }
-.pfe-label { color: var(--gh-text); font-size: 12px; font-weight: 800; }
+.pfe-label { color: var(--pf-text); font-size: 13px; font-weight: 700; }
 .pfe-value { min-width: 0; }
-.pfe-value input[type="text"],
-.pfe-value select,
-.pfe-value textarea { width: 100%; border: 1px solid var(--gh-border); border-radius: 9px; outline: none; background: #fff; color: var(--gh-text); font: inherit; font-size: 12px; }
-.pfe-value input[type="text"],
-.pfe-value select { height: 42px; padding: 0 12px; }
-.pfe-value textarea { display: block; padding: 11px 12px; line-height: 1.6; resize: vertical; }
-.pfe-value input:focus,
-.pfe-value select:focus,
-.pfe-value textarea:focus { border-color: var(--gh-accent); box-shadow: 0 0 0 3px var(--gh-accent-soft); }
-.pfe-value input[readonly],
-.pfe-value textarea[readonly] { background: var(--gh-muted); color: var(--gh-sub); }
 
-.pfe-file { min-height: 42px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-.pfe-file span { min-width: 0; color: var(--gh-sub); font-size: 12px; word-break: break-all; }
+.pfe-file { min-height: 42px; padding: 8px 8px 8px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; border: 1px dashed var(--pf-line-strong); border-radius: var(--pf-radius-sm); }
+.pfe-file span { min-width: 0; color: var(--pf-sub); font-size: 13px; word-break: break-all; }
 .pfe-file-input { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0, 0, 0, 0); }
 
-.pfe-items { display: flex; flex-direction: column; gap: 12px; }
-.pfe-item { padding: 14px; border: 1px solid var(--gh-border); border-radius: 12px; background: #fff; }
-.pfe-item-head { min-height: 28px; margin-bottom: 8px; display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
-.pfe-item-head .pf-chip { margin-right: auto; }
+/* 항목 — 패널 안에서 줄로 나눈다. 순서 표시가 머리에 선다. */
+.pfe-items { display: flex; flex-direction: column; }
+.pfe-item { padding: 18px 0; border-top: 1px solid var(--pf-line); }
+.pfe-item:first-child { padding-top: 0; border-top: 0; }
+.pfe-item:last-child { padding-bottom: 0; }
+.pfe-item-head { min-height: 32px; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
 .pfe-item-head:empty { display: none; }
+.pfe-item-no { color: var(--pf-mute); font-size: 12px; font-weight: 700; }
+.pfe-item-head .pf-icon-btn { margin-left: auto; }
 
-.pfe-personal { display: flex; align-items: flex-start; gap: 16px; }
-.pfe-photo-col { flex-shrink: 0; width: 104px; display: flex; flex-direction: column; gap: 6px; }
-.pfe-photo-col .gh-add-btn { justify-content: center; }
-.pfe-photo { height: 132px; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--gh-border); border-radius: 10px; background: var(--gh-muted); color: var(--gh-sub); }
+.pfe-personal { display: flex; align-items: flex-start; gap: 20px; }
+.pfe-photo-col { flex-shrink: 0; width: 108px; display: flex; flex-direction: column; gap: 6px; }
+.pfe-photo { height: 136px; display: grid; place-items: center; overflow: hidden; border: 1px solid var(--pf-line); border-radius: var(--pf-radius-sm); background: var(--pf-wash); color: var(--pf-mute); }
 .pfe-photo > i { font-size: 28px; }
 .pfe-photo img { width: 100%; height: 100%; display: block; object-fit: cover; }
 
-/* 오른쪽 항목 패널 */
-.pfe-panel { position: sticky; top: 88px; max-height: calc(100vh - 104px); overflow-y: auto; }
-.pfe-panel-card { padding: 16px; }
-.pfe-panel-title { margin: 0 0 8px; font-size: 14px; font-weight: 800; }
+/* ── 오른쪽 구성 패널 — 이력서에 넣을 항목을 고른다 ─────────────── */
+.pfe-panel { position: sticky; top: 96px; max-height: calc(100vh - 112px); overflow-y: auto; }
+.pfe-panel-card { padding: 18px; }
+.pfe-panel-title { margin: 0 0 4px; color: var(--pf-ink); font-size: 15px; font-weight: 800; }
+.pfe-panel-note { margin: 0 0 10px; color: var(--pf-sub); font-size: 12px; line-height: 1.5; }
 .pfe-panel-toggle { display: none; }
 .pfe-panel-list { margin: 0; padding: 0; display: flex; flex-direction: column; list-style: none; }
-.pfe-panel-list li { min-height: 36px; display: flex; align-items: center; justify-content: space-between; gap: 8px; border-bottom: 1px solid var(--gh-border); color: var(--gh-sub); font-size: 12px; }
-.pfe-panel-list li > span.is-on { color: var(--gh-text); font-weight: 700; }
-.pfe-toggle { flex-shrink: 0; padding: 4px 2px; border: 0; background: none; color: var(--gh-accent); font-size: 12px; font-weight: 800; cursor: pointer; }
-.pfe-toggle.is-remove { color: var(--gh-sub); font-weight: 500; }
-.pfe-toggle:hover { text-decoration: underline; }
+.pfe-panel-list li { min-height: 38px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--pf-line); color: var(--pf-mute); font-size: 13px; }
+.pfe-panel-list li:last-child { border-bottom: 0; }
+.pfe-panel-list li > span { flex: 1; min-width: 0; }
+.pfe-panel-list li > span.is-on { color: var(--pf-ink); font-weight: 700; }
+/* 켜진 항목은 잉크 점, 꺼진 항목은 빈 점 */
+.pfe-dot { width: 8px; height: 8px; flex: none; border: 1.5px solid var(--pf-line-strong); border-radius: 50%; }
+.pfe-dot.is-on { border-color: var(--pf-ink); background: var(--pf-ink); }
+.pfe-toggle { flex-shrink: 0; min-height: 28px; padding: 0 8px; border: 0; border-radius: 6px; background: none; color: var(--pf-ink); font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; transition: background-color .18s var(--pf-ease), color .18s var(--pf-ease); }
+.pfe-toggle:hover { background: var(--pf-wash); }
+.pfe-toggle.is-remove { color: var(--pf-sub); font-weight: 600; }
+.pfe-toggle:focus-visible { outline: 2px solid var(--pf-accent); outline-offset: 1px; }
 
-.pfe-panel-actions { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
-.pfe-btn { min-height: 38px; padding: 0 15px; border: 1px solid var(--gh-border); border-radius: 9px; background: #fff; color: var(--gh-sub); font-size: 12px; font-weight: 800; cursor: pointer; }
-.pfe-btn:hover { border-color: var(--gh-line); color: var(--gh-ink); }
-.pfe-btn:disabled { opacity: .55; cursor: wait; }
-.pfe-btn--primary,
-.pfe-btn--primary:hover { border-color: var(--gh-accent); background: var(--gh-accent); color: #fff; }
-.pfe-saved { min-height: 18px; color: var(--gh-sub); font-size: 12px; text-align: center; }
+.pfe-panel-actions { margin-top: 14px; padding-top: 14px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid var(--pf-line); }
+.pfe-panel-actions .pf-action { width: 100%; }
+.pfe-saved { min-height: 18px; color: var(--pf-sub); font-size: 12px; text-align: center; }
+.pfe-saved.is-dirty { color: var(--pf-accent); font-weight: 700; }
 
-/* 불러오기 모달 */
+/* ── 불러오기 모달 ───────────────────────────────────────────────── */
 .pfe-import-list { max-height: 50vh; margin: 0 0 12px; padding: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; list-style: none; }
-.pfe-import-list label { padding: 10px 12px; display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--gh-border); border-radius: 10px; cursor: pointer; }
-.pfe-import-list input { margin-top: 3px; accent-color: var(--gh-accent); }
+.pfe-import-list label { padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--pf-line); border-radius: var(--pf-radius-sm); cursor: pointer; transition: border-color .18s var(--pf-ease), background-color .18s var(--pf-ease); }
+.pfe-import-list label:hover { border-color: var(--pf-line-strong); }
+.pfe-import-list label:has(input:checked) { border-color: var(--pf-ink); background: var(--pf-wash); }
+.pfe-import-list input { margin-top: 3px; accent-color: var(--pf-ink); }
 .pfe-import-list span { min-width: 0; }
-.pfe-import-list strong { display: block; font-size: 14px; font-weight: 800; }
-.pfe-import-list small { display: block; margin-top: 2px; color: var(--gh-sub); font-size: 12px; word-break: break-word; }
+.pfe-import-list strong { display: block; color: var(--pf-ink); font-size: 14px; font-weight: 700; }
+.pfe-import-list small { display: block; margin-top: 2px; color: var(--pf-sub); font-size: 12px; word-break: break-word; }
 
-@media (max-width: 900px) {
+@media (max-width: 1240px) {
   .pfe-layout { grid-template-columns: minmax(0, 1fr); }
   .pfe-panel { position: static; order: -1; max-height: none; overflow: visible; }
-  .pfe-panel-title { display: none; }
-  .pfe-panel-toggle { width: 100%; height: 36px; padding: 0; display: flex; align-items: center; justify-content: space-between; border: 0; background: none; color: var(--gh-text); font-size: 14px; font-weight: 800; cursor: pointer; }
+  .pfe-panel-title, .pfe-panel-note { display: none; }
+  .pfe-panel-toggle { width: 100%; height: 36px; padding: 0; display: flex; align-items: center; justify-content: space-between; border: 0; background: none; color: var(--pf-ink); font: inherit; font-size: 14px; font-weight: 800; cursor: pointer; }
   .pfe-panel-list { display: none; margin-top: 6px; }
   .pfe-panel-list.is-open { display: flex; }
   .pfe-panel-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
-  .pfe-btn { flex: 1; min-width: 96px; padding: 0 10px; }
+  .pfe-panel-actions .pf-action { width: auto; flex: 1; min-width: 96px; }
   .pfe-saved { order: 3; width: 100%; }
+}
+
+@media (max-width: 760px) {
+  .pfv-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
+  .pfv-actions { justify-content: flex-start; }
 }
 
 @media (max-width: 600px) {

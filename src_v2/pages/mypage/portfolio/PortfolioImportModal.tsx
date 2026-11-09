@@ -69,7 +69,7 @@ export default function PortfolioImportModal({ studentId, sectionKey, document, 
 
   return (
     <Modal open onClose={onClose} title={`${label} — 최신 기록 불러오기`} size="md">
-      {error && <p className="pfe-alert" role="alert">{error}</p>}
+      {error && <p className="pf-alert" role="alert">{error}</p>}
       {!source && !error && <p className="pfe-desc" role="status">불러오는 중…</p>}
       {empty && <p className="pfe-desc">더 불러올 기록이 없습니다.</p>}
       <ul className="pfe-import-list">
@@ -90,9 +90,11 @@ export default function PortfolioImportModal({ studentId, sectionKey, document, 
           </li>
         ))}
       </ul>
-      <div className="gh-form-actions">
-        <button type="button" onClick={onClose}>닫기</button>
-        <button type="submit" disabled={picked.size === 0} onClick={applyPicked}>선택 항목 넣기</button>
+      <div className="pf-form-actions">
+        <button type="button" className="pf-action" onClick={onClose}>닫기</button>
+        <button type="button" className="pf-action pf-action--primary" disabled={picked.size === 0} onClick={applyPicked}>
+          선택 항목 넣기{picked.size > 0 ? ` (${picked.size})` : ''}
+        </button>
       </div>
     </Modal>
   )
