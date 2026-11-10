@@ -1,5 +1,15 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-10 내 성장 대기 항목 축 색상 웹 배포
+
+- origin/dev 39855be까지 확인, f3dd777·c65fe05·39855be의 최종 GrowthHome.css를 깨끗한 git archive 소스로 빌드했다. 로드맵 축 칸과 같은 color-mix(axis-soft 42%, color-bg) 배경, 축 라벨은 축 본색, 항목 제목은 foreground 색이다. 미커밋 타 작업은 제외했다. API·DB·마이그레이션 변경은 없다.
+- TypeScript/Vite 빌드 통과(기존 native-config·큰 번들 경고 유지), 저영향 CSS 변경으로 별도 회귀 테스트는 미실행이다. 꺼진 Docker Desktop을 기동하고 npm run docker:up -- --no-build로 로컬 반영, 백업 local-before-migrate-20261110003023855.dump. 커밋 API·161개 마이그레이션 체크섬과 로컬 감사 일치.
+- 웹만 growth-colors-20261110으로 배포했다. API=c5-portfolio-20261109, RAG=ai-jobs-20261029, 적용 마이그레이션 161개 유지. 백업·Compose 원본·감사 자료는 /opt/dreamcatch/ai/growth-colors-20261110/. web.tar 863651328B SHA256=621f52a5436df964dc0ee04e9dbb3e81eb6a19ca539003c93a38ab83f322f741, 전송 검증 완료. 운영 DB 쓰기·마이그레이션·로컬 데이터 복원은 하지 않았다.
+- API·웹 healthy, nginx 정상. 로컬/서버 API·마이그레이션·전체 스키마 MATCH(11-05에 근거를 남긴 직렬화 차이만 정규화). 최초 전체 데이터 동일 검사는 실패했으며 조사 결과 dc.student_login_session만 3→1건으로 변경됐다. 같은 구간 확인용 실제 학생 재로그인이 있었고, 기존 student_login.login은 이전 쿠키 세션·만료 세션 삭제 후 신규 세션을 만든다. 세션의 개별 원문이나 토큰은 출력하지 않았으며 각 삭제의 원인을 개별 확정하지 않는다. 세션 이외 모든 테이블 건수·전체 값 해시는 동일하다. 감사는 세션만 별도 보고하고 다른 변경은 계속 차단하도록 했다. HTML SHA256 admin=b6c0f6cbc413f426913e548d40fbb63ef386990a35c673766c291ad5ecd8369b, v2=00b07c1fed63b7139c026f09f7a798e311cf7a3040e4bf35e208bf7003cd9f32. 복구는 저장된 Compose와 이전 웹 growth-20261109, 서버 실행 유지.
+- EgoLite 공간 2에서 실제 학생 로그인 후 로컬·서버 내 성장 화면의 DOM 및 세 축 배경/라벨/제목 계산 색상을 확인했다. 로컬·서버 스크린샷을 촬영해 확인했으며 서버는 카드 위치까지 스크롤했다. 확인 구간 HTTP 실패·Runtime 예외는 없다. 업무 기록 쓰기는 하지 않았다. API 응답 시간은 단회 관측으로 성능 개선을 주장하지 않는다.
+- Graft MCP는 현재 노출되지 않아 프로젝트 CLI로 조회, 구조 그래프 OK. 최초 Docker 미기동으로 실패했으나 Docker 기동 후 정상 조회했다. GrowthHome의 인덱스 호출자는 없었고 앱 코드 수정은 하지 않았다. EgoLite 임시 인증서 허용 원복 및 작업 공간 종료 완료. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다.
+
+
 ## 2026-11-09 내 성장·포트폴리오 UI 서버 배포
 
 - origin/dev ddb5d56까지 확인, 916fef4(내 성장 활동 기록·대기 항목 스크롤), 8d42b4d(기술역량 표기), ddb5d56(활동 카드 높이·축별 색상)를 git archive의 깨끗한 소스로 빌드했다. 미커밋 타 작업은 제외했다. 새 API·SQL·마이그레이션은 없다.
