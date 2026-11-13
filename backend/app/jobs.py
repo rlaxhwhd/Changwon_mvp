@@ -1281,7 +1281,7 @@ def resume_dto(row, with_content=True):
     return result
 
 
-RESUME_SELECT = '''SELECT r.*,c.label AS category_label FROM dc.job_resume r
+RESUME_SELECT = '''SELECT r.*,c.label AS category_label,c.payload->>'question' AS category_question FROM dc.job_resume r
  LEFT JOIN dc.code_item c ON (c.group_code,c.code)=('JOB_RESUME_CATEGORY',r.category_code)'''
 
 

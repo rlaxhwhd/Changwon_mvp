@@ -1,6 +1,6 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
-import { useNavigate, useSearchParams } from 'react-router-dom'
-import { evaluateResume, getAllResumes, getLastEvaluation, RESUME_EVENT, type ResumeEvaluation } from './resumeMock'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
+import { evaluateResume, getAllResumes, getLastEvaluation, loadEvaluatedResumeIds, RESUME_EVENT, type ResumeEvaluation } from './resumeMock'
 import './AiConsulting.css'
 import './JobsWorkspace.css'
 import { usePageHead } from '../../components/PageCrumb'
@@ -20,7 +20,12 @@ function subscribeResumes(onChange: () => void) {
   return () => window.removeEventListener(RESUME_EVENT, onChange)
 }
 
+// 「컨설팅 보기」는 같은 화면의 ?resumeId=…&view=last 로 보낸다. 주소가 바뀌면 화면 상태를 처음부터 다시 잡는다.
 export default function AiConsulting() {
+  return <AiConsultingScreen key={useLocation().search} />
+}
+
+function AiConsultingScreen() {
   usePageHead('AI 컨설팅', '작성된 자소서를 AI가 항목별로 분석하고 평가합니다.')
   const navigate = useNavigate()
   const [params] = useSearchParams()
@@ -48,6 +53,18 @@ export default function AiConsulting() {
   }, [lastId])
 
   const selected = resumes.find(resume => resume.id === selectedId)
+  // 선택 목록에서 컨설팅 받은 자소서에 「컨설팅 보기」를 붙인다. 모르면(조회 실패) 붙이지 않는다.
+  const [evaluated, setEvaluated] = useState<Set<string>>(() => new Set())
+  const hasLinked = resumes.some(resume => resume.deepLinked)
+
+  useEffect(() => {
+    if (!hasLinked || lastId) return
+    let alive = true
+    loadEvaluatedResumeIds()
+      .then(ids => { if (alive) setEvaluated(ids) })
+      .catch(() => { /* 보기 버튼만 빠진다 — 새 평가는 그대로 할 수 있다 */ })
+    return () => { alive = false }
+  }, [hasLinked, lastId])
 
   // 평가는 수십 초 걸린다. 같은 내용이면 Deep 이 이전 평가본을 돌려준다(cached) — force 로 다시 평가한다.
   const startEval = async (force = false) => {
@@ -65,6 +82,8 @@ export default function AiConsulting() {
   }
 
   const resetEval = () => {
+    // 주소에 resumeId·view 가 있으면 빈 주소로 보내 화면을 새로 잡는다(목록의 「컨설팅 보기」도 다시 판정).
+    if (params.toString()) { navigate('/jobs/home/consulting'); return }
     setEvaluation(null)
     setError('')
     setSelectedId(null)
@@ -95,8 +114,8 @@ export default function AiConsulting() {
             {resumes.map(resume => {
               const active = selectedId === resume.id
               return (
+                <div key={resume.id} className="ac-pick-row">
                 <button
-                  key={resume.id}
                   className={`ac-pick-item${active ? ' active' : ''}`}
                   aria-pressed={active}
                   onClick={() => setSelectedId(resume.id)}
@@ -118,6 +137,16 @@ export default function AiConsulting() {
                     </div>
                   </div>
                 </button>
+                {evaluated.has(resume.id) && (
+                  <button
+                    type="button"
+                    className="ac-btn-ghost ac-pick-view"
+                    onClick={() => navigate(`/jobs/home/consulting?resumeId=${encodeURIComponent(resume.id)}&view=last`)}
+                  >
+                    <i className="fa-solid fa-clipboard-check" /> 컨설팅 보기
+                  </button>
+                )}
+                </div>
               )
             })}
           </div>

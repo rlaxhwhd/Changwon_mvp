@@ -428,3 +428,37 @@
   .ac-header h1 { font-size: 20px; line-height: 1.3; margin-bottom: 8px; }
   .ac-header p { font-size: 16px; line-height: 1.55; }
 }
+/* 선택 목록 — 컨설팅 받은 자소서 옆 「컨설팅 보기」 */
+.ac-pick-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.ac-pick-row > .ac-pick-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.ac-pick-view {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px;
+  border-radius: var(--radius-md);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .ac-pick-row {
+    flex-direction: column;
+  }
+
+  .ac-pick-view {
+    justify-content: center;
+    padding: 10px 16px;
+  }
+}

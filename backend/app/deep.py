@@ -200,10 +200,12 @@ def cover_fields(row, extras=None):
 
 
 def topic_fields(row):
-    question = row.get('category_label') or row.get('category_label_legacy') or ''
-    if not question:
+    label = row.get('category_label') or row.get('category_label_legacy') or ''
+    if not label:
         raise DeepError(422, '자소서 항목 카테고리를 선택해야 DeepResume에 저장됩니다.')
-    # 기존 Deep 평가 로직은 title 을 질문으로 쓴다 — type·title 모두 질문 문장으로 보낸다.
+    # Deep 평가는 title 을 질문으로, 외부 API 는 type 을 질문으로 쓴다 — 둘 다 분야의 질문 문장
+    # (code_item.payload.question, 마이그레이션 163)으로 보낸다. 질문이 없는 분야만 분야 이름으로.
+    question = row.get('category_question') or label
     return {'type': question, 'title': question, 'body': row['content']}
 
 

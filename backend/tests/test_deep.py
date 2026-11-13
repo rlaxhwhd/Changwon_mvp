@@ -14,6 +14,8 @@ from app.db import pool
 from app.settings import settings
 from test_api import headers
 
+MOTIVE_QUESTION = '우리 회사와 해당 직무에 지원한 동기를 구체적으로 기술해 주십시오.'  # 마이그레이션 163
+
 
 class FakeDeep:
     """Deep 외부 API 의 필요한 부분만. 회원은 학번으로, 자소서는 id 로 구분한다."""
@@ -142,11 +144,14 @@ def test_provider_body_is_never_echoed():
 def test_save_creates_and_updates_the_linked_deep_cover(client, fake):
     resume = create(client)
     assert resume['deepSync'] == {'status': 'SYNCED'} and resume['deepLinked'] and resume['deepSynced']
+    topic = next(iter(fake.covers.values()))['topic'][0]
+    # Deep 평가는 title 을 질문으로 읽는다 — 분야 이름이 아니라 질문 문장(마이그레이션 163)을 보낸다.
+    assert topic['title'] == topic['type'] == MOTIVE_QUESTION
     signup = [c for c in fake.calls if c[1] == 'auth/signup']
     assert len(signup) == 1 and signup[0][2]['name']
     [cover] = fake.covers.values()
     assert (cover['job_type'], cover['company'], cover['supportArea']) == ('경영·사무·금융', '엔잡', '인사')
-    assert cover['topic'][0]['type'] == '지원동기' and cover['topic'][0]['body'] == '본문'
+    assert cover['topic'][0]['type'] == MOTIVE_QUESTION and cover['topic'][0]['body'] == '본문'
 
     updated = client.patch('/api/v1/job-resumes/' + resume['id'], headers=headers('chaewon'), json={
         'title': '고친 제목', 'categoryCode': 'MOTIVE', 'content': '고친 본문', 'jobType': '경영·사무·금융',
