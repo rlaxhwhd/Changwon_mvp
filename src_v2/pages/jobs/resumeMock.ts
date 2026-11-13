@@ -29,6 +29,37 @@ export interface SavedResume {
   createdAt: string
   updatedAt: string
   version: number
+  /** DeepResume 에 사본이 있는가 / 현재 version 까지 반영됐는가 (우리 DB가 정본) */
+  deepLinked: boolean
+  deepSynced: boolean
+}
+
+/** 저장 직후 Deep 반영 결과. FAILED 여도 우리 저장은 완료된 상태다. */
+export interface DeepSync {
+  status: 'SYNCED' | 'FAILED' | 'DISABLED' | 'NOT_LINKED'
+  message?: string
+}
+
+export type SaveResult = SavedResume & { deepSync?: DeepSync }
+
+/** 지원정보 중 우리 DB에 칸이 없는 값 — Deep 자소서에만 전달된다. */
+export interface DeepExtras {
+  industry: string
+  companyType: string
+  experience: string
+  keywords: string[]
+}
+
+export interface ResumeEvaluation {
+  evaluationId: string | null
+  cached: boolean
+  createdAt: string | null
+  scores: { consult: number | null; spellcheck: number | null; human: number | null }
+  items: {
+    order: number | null
+    paragraph: string
+    advice: { quote: string; tone: 'pos' | 'neg' | 'note'; comment: string }[]
+  }[]
 }
 
 export interface ResumeInput {
@@ -67,25 +98,43 @@ export async function loadResumes(): Promise<void> {
 }
 
 /** 새 자소서. createdAt·id 는 서버가 부여한다. */
-export async function createResume(input: ResumeInput): Promise<SavedResume> {
-  const created = await api<SavedResume>('/job-resumes', { method: 'POST', body: JSON.stringify(input) })
+export async function createResume(input: ResumeInput): Promise<SaveResult> {
+  const created = await api<SaveResult>('/job-resumes', { method: 'POST', body: JSON.stringify(input) })
   await loadResumes()
   return created
 }
 
 /** 수정. 다른 창에서 먼저 저장했으면 서버가 409로 거절한다. createdAt 은 유지된다. */
-export async function updateResume(id: string, input: ResumeInput): Promise<SavedResume> {
+export async function updateResume(id: string, input: ResumeInput): Promise<SaveResult> {
   const current = getResumeById(id)
   if (!current) throw new Error('자기소개서를 찾을 수 없습니다.')
-  const updated = await api<SavedResume>(`/job-resumes/${encodeURIComponent(id)}`, {
+  const updated = await api<SaveResult>(`/job-resumes/${encodeURIComponent(id)}`, {
     method: 'PATCH', body: JSON.stringify({ ...input, expectedVersion: current.version }),
   })
   await loadResumes()
   return updated
 }
 
+/** DeepResume AI 이어쓰기. Deep 과 우리 DB에 같은 본문이 저장된 뒤 돌아온다. */
+export async function requestAiDraft(id: string, extras: DeepExtras): Promise<{ resume: SavedResume; generated: string }> {
+  const current = getResumeById(id)
+  if (!current) throw new Error('자기소개서를 찾을 수 없습니다.')
+  const result = await api<{ resume: SavedResume; generated: string }>(`/job-resumes/${encodeURIComponent(id)}/ai-draft`, {
+    method: 'POST', body: JSON.stringify({ ...extras, expectedVersion: current.version }),
+  })
+  await loadResumes()
+  return result
+}
+
+/** DeepResume AI 평가. 결과는 Deep 평가본이 정본이라 우리 DB에 저장하지 않는다. */
+export async function evaluateResume(id: string, force = false): Promise<ResumeEvaluation> {
+  return api<ResumeEvaluation>(`/job-resumes/${encodeURIComponent(id)}/evaluation`, {
+    method: 'POST', body: JSON.stringify({ force }),
+  })
+}
+
 /** 있으면 수정, 없으면 생성. */
-export async function upsertUserResume(input: ResumeInput & { id?: string }): Promise<SavedResume> {
+export async function upsertUserResume(input: ResumeInput & { id?: string }): Promise<SaveResult> {
   const { id, ...rest } = input
   return id && getResumeById(id) ? updateResume(id, rest) : createResume(rest)
 }

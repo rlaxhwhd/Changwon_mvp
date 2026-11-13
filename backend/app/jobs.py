@@ -17,6 +17,7 @@
 """
 import calendar
 import hashlib
+import threading
 from datetime import date, datetime, timedelta
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -26,12 +27,12 @@ from fastapi.encoders import jsonable_encoder
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from . import files
+from . import deep, files
 from .auth import is_counselor, principal, require_staff
 from .portfolio_document import (ID_PATTERN, apply_academic, fail, file_references, load_certs, missing_fields,
                                  snapshot_document)
 from .html_security import clean_html
-from .db import connection
+from .db import connection, pool
 from .gates import employment_gate
 
 router = APIRouter()
@@ -1271,7 +1272,10 @@ def resume_dto(row, with_content=True):
               'jobType': row['job_type_text'] or '', 'position': row['position_text'] or '',
               'categoryCode': row['category_code'], 'categoryLabel': row.get('category_label')
               or row['category_label_legacy'] or '', 'origin': row['origin'],
-              'createdAt': row['created_at'], 'updatedAt': row['updated_at'], 'version': row['version']}
+              'createdAt': row['created_at'], 'updatedAt': row['updated_at'], 'version': row['version'],
+              # DeepResume 반영 여부 — 우리 DB가 정본, Deep 은 같은 본문의 사본이다(마이그레이션 162).
+              'deepLinked': row['deep_cover_id'] is not None,
+              'deepSynced': row['deep_synced_version'] == row['version']}
     if with_content:
         result['content'] = row['content']
     return result
@@ -1279,6 +1283,31 @@ def resume_dto(row, with_content=True):
 
 RESUME_SELECT = '''SELECT r.*,c.label AS category_label FROM dc.job_resume r
  LEFT JOIN dc.code_item c ON (c.group_code,c.code)=('JOB_RESUME_CATEGORY',r.category_code)'''
+
+
+def deep_principal(request: Request, x_dc_identity: str = Header(default=''), x_dc_token: str = Header(default=''),
+                   x_dc_portal: str = Header(default='')):
+    """principal 과 같은 판정을 짧게 빌린 커넥션으로 한다.
+
+    Deep HTTP 는 저장 20초·AI 60초·평가 150초까지 걸린다. 요청 단위 커넥션(principal 의 connection
+    의존성)을 쥔 채 기다리면 풀(max_size=5)이 바닥나 Deep 장애가 사이트 전체 장애가 된다.
+    Deep 을 부르는 엔드포인트는 이 의존성을 쓰고, DB 작업은 pool.connection() 블록 안에서만 한다
+    (counsel_ai·ai_comments 와 같은 방식). 블록은 정상 종료 시 커밋, 예외 시 롤백한다.
+    """
+    with pool.connection() as conn:
+        return principal(request, x_dc_identity, x_dc_token, x_dc_portal, conn=conn)
+
+
+_resume_locks = {}
+_resume_locks_guard = threading.Lock()
+
+
+def resume_lock(resume_id):
+    """같은 자소서의 Deep 반영을 직렬화한다 — 동시 저장이 Deep 자소서를 두 번 만들거나 옛 본문이
+    새 본문을 덮지 않게. 프로세스 잠금이다(uvicorn workers=1 · deep 토큰 캐시와 같은 전제).
+    워커를 늘려도 연결 UPDATE 의 조건이 중복 연결을 막고, 진 쪽이 만든 Deep 자소서는 지운다."""
+    with _resume_locks_guard:
+        return _resume_locks.setdefault(resume_id, threading.Lock())
 
 
 class ResumeBody(BaseModel):
@@ -1322,18 +1351,18 @@ def resume_event(conn, user, resume_id, action, changed):
 
 
 @router.post('/job-resumes', status_code=201)
-def create_resume(body: ResumeBody, user=Depends(principal, scope='function'),
-                  conn=Depends(connection, scope='function')):
+def create_resume(body: ResumeBody, user=Depends(deep_principal)):
     if user['kind'] != 'STUDENT':
         raise HTTPException(403, '학생 본인만 작성할 수 있습니다.')
-    check_code(conn, 'JOB_RESUME_CATEGORY', body.categoryCode, '자기소개서 분야')
     resume_id = 'res_' + uuid4().hex[:12]
-    conn.execute('''INSERT INTO dc.job_resume(id,student_uid,title,company_text,job_type_text,position_text,
-      category_code,content,origin,created_by,updated_by) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'USER',%s,%s)''',
-      (resume_id, user['intg_uid'], body.title, body.company or None, body.jobType or None,
-       body.position or None, body.categoryCode, body.content, user['intg_uid'], user['intg_uid']))
-    resume_event(conn, user, resume_id, 'CREATE', [])
-    return resume_dto(get_resume(conn, user, resume_id))
+    with pool.connection() as conn:  # 블록을 나가며 커밋 — 우리 저장을 Deep 호출 전에 확정한다.
+        check_code(conn, 'JOB_RESUME_CATEGORY', body.categoryCode, '자기소개서 분야')
+        conn.execute('''INSERT INTO dc.job_resume(id,student_uid,title,company_text,job_type_text,position_text,
+          category_code,content,origin,created_by,updated_by) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'USER',%s,%s)''',
+          (resume_id, user['intg_uid'], body.title, body.company or None, body.jobType or None,
+           body.position or None, body.categoryCode, body.content, user['intg_uid'], user['intg_uid']))
+        resume_event(conn, user, resume_id, 'CREATE', [])
+    return saved_with_sync(user, resume_id)
 
 
 @router.get('/job-resumes/{resume_id}')
@@ -1343,35 +1372,162 @@ def resume_detail(resume_id: str, user=Depends(principal, scope='function'),
 
 
 @router.patch('/job-resumes/{resume_id}')
-def update_resume(resume_id: str, body: ResumeUpdate, user=Depends(principal, scope='function'),
-                  conn=Depends(connection, scope='function')):
-    check_code(conn, 'JOB_RESUME_CATEGORY', body.categoryCode, '자기소개서 분야')
-    before = get_resume(conn, user, resume_id, lock=True)
-    if before['version'] != body.expectedVersion:
-        raise HTTPException(409, '다른 창에서 먼저 저장했습니다. 새로 조회한 뒤 수정해 주세요.')
-    changed = [name for name, value in (('title', body.title), ('company', body.company or None),
-               ('jobType', body.jobType or None), ('position', body.position or None),
-               ('categoryCode', body.categoryCode), ('content', body.content))
-               if value != before[{'title': 'title', 'company': 'company_text', 'jobType': 'job_type_text',
-                                   'position': 'position_text', 'categoryCode': 'category_code',
-                                   'content': 'content'}[name]]]
-    # createdAt 은 수정에서 유지한다 — 목록 정렬이 작성 시점을 잃지 않게.
-    conn.execute('''UPDATE dc.job_resume SET title=%s,company_text=%s,job_type_text=%s,position_text=%s,
-      category_code=%s,content=%s,version=version+1,updated_at=now(),updated_by=%s WHERE id=%s''',
-      (body.title, body.company or None, body.jobType or None, body.position or None,
-       body.categoryCode, body.content, user['intg_uid'], resume_id))
-    resume_event(conn, user, resume_id, 'UPDATE', changed)
-    return resume_dto(get_resume(conn, user, resume_id))
+def update_resume(resume_id: str, body: ResumeUpdate, user=Depends(deep_principal)):
+    with pool.connection() as conn:  # 블록을 나가며 커밋 — 우리 저장을 Deep 호출 전에 확정한다.
+        check_code(conn, 'JOB_RESUME_CATEGORY', body.categoryCode, '자기소개서 분야')
+        before = get_resume(conn, user, resume_id, lock=True)
+        if before['version'] != body.expectedVersion:
+            raise HTTPException(409, '다른 창에서 먼저 저장했습니다. 새로 조회한 뒤 수정해 주세요.')
+        changed = [name for name, value in (('title', body.title), ('company', body.company or None),
+                   ('jobType', body.jobType or None), ('position', body.position or None),
+                   ('categoryCode', body.categoryCode), ('content', body.content))
+                   if value != before[{'title': 'title', 'company': 'company_text', 'jobType': 'job_type_text',
+                                       'position': 'position_text', 'categoryCode': 'category_code',
+                                       'content': 'content'}[name]]]
+        # createdAt 은 수정에서 유지한다 — 목록 정렬이 작성 시점을 잃지 않게.
+        conn.execute('''UPDATE dc.job_resume SET title=%s,company_text=%s,job_type_text=%s,position_text=%s,
+          category_code=%s,content=%s,version=version+1,updated_at=now(),updated_by=%s WHERE id=%s''',
+          (body.title, body.company or None, body.jobType or None, body.position or None,
+           body.categoryCode, body.content, user['intg_uid'], resume_id))
+        resume_event(conn, user, resume_id, 'UPDATE', changed)
+    return saved_with_sync(user, resume_id)
 
 
 @router.delete('/job-resumes/{resume_id}')
-def delete_resume(resume_id: str, user=Depends(principal, scope='function'),
-                  conn=Depends(connection, scope='function')):
-    get_resume(conn, user, resume_id, lock=True)
-    conn.execute('UPDATE dc.job_resume SET deleted_at=now(),deleted_by=%s,version=version+1 WHERE id=%s',
-                 (user['intg_uid'], resume_id))
-    resume_event(conn, user, resume_id, 'DELETE', [])
-    return {'id': resume_id, 'deleted': True}
+def delete_resume(resume_id: str, user=Depends(deep_principal)):
+    # 진행 중인 Deep 반영과 직렬화한다 — 반영이 삭제 뒤에 Deep 자소서를 새로 만들지 않게.
+    with resume_lock(resume_id):
+        with pool.connection() as conn:  # 우리 삭제는 Deep 결과와 무관하게 확정한다.
+            row = get_resume(conn, user, resume_id, lock=True)
+            conn.execute('UPDATE dc.job_resume SET deleted_at=now(),deleted_by=%s,version=version+1 WHERE id=%s',
+                         (user['intg_uid'], resume_id))
+            resume_event(conn, user, resume_id, 'DELETE', [])
+        result = {'id': resume_id, 'deleted': True, 'deepSync': {'status': 'NOT_LINKED'}}
+        if row['deep_cover_id'] and deep.enabled():
+            try:
+                deep.delete_cover(user, row['deep_cover_id'])
+                result['deepSync'] = {'status': 'SYNCED'}
+            except deep.DeepError as error:
+                result['deepSync'] = {'status': 'FAILED', 'message': error.message}
+    return result
+
+
+# ── DeepResume 연동 (docs/Deep_API_v7.xlsx · 마이그레이션 162) ─────────────
+# 우리 dc.job_resume 이 정본이다. 저장은 먼저 우리 DB에 확정한 뒤 Deep 에 같은 본문을 보낸다 —
+# Deep 장애가 학생의 저장을 막지 않게 하고, 못 보낸 버전은 다음 저장·AI 작성·평가 때 다시 보낸다.
+
+class DeepExtras(BaseModel):
+    """지원정보 중 우리 DB에 칸이 없는 값. Deep 자소서에만 전달한다."""
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    industry: str = Field(default='', max_length=15)
+    companyType: str = Field(default='', max_length=15)
+    experience: str = Field(default='', max_length=15)
+    keywords: list[str] | None = Field(default=None, max_length=20)
+
+
+class AiDraftBody(DeepExtras):
+    expectedVersion: int = Field(ge=1)
+
+
+class EvaluationBody(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    force: bool = False
+
+
+def deep_http(error):
+    return HTTPException(error.status, error.message)
+
+
+def sync_resume(user, resume_id, extras=None):
+    """Deep 자소서를 우리 현재 version 으로 맞춘다. 커넥션은 읽기·쓰기 순간에만 빌린다."""
+    with resume_lock(resume_id):
+        with pool.connection() as conn:
+            row = get_resume(conn, user, resume_id)
+        if row['deep_synced_version'] == row['version'] and not extras:
+            return row
+        cover_id, topic_id = deep.push_cover(user, row, extras)
+        previous = str(row['deep_cover_id']) if row['deep_cover_id'] else None
+        with pool.connection() as conn:
+            # 보낸 version 을 기록한다. 그사이 우리 저장으로 version 이 올랐으면 다음 반영이 다시 보낸다.
+            linked = conn.execute('''UPDATE dc.job_resume SET deep_cover_id=%s,deep_topic_id=%s,deep_synced_version=%s
+              WHERE id=%s AND deleted_at IS NULL AND deep_cover_id IS NOT DISTINCT FROM %s::uuid''',
+              (cover_id, topic_id, row['version'], resume_id, previous)).rowcount
+            fresh = get_resume(conn, user, resume_id) if linked else None
+        if fresh:
+            return fresh
+        if cover_id != previous:
+            try:  # 삭제됐거나 다른 반영이 먼저 연결했다 — 방금 만든 Deep 자소서는 고아다.
+                deep.delete_cover(user, cover_id)
+            except deep.DeepError:
+                pass
+        raise deep.DeepError(409, '자기소개서가 바뀌어 DeepResume 반영을 다음 저장 때 다시 시도합니다.')
+
+
+def saved_with_sync(user, resume_id):
+    """우리 저장은 이미 커밋됐다. Deep 실패는 저장을 되돌리지 않고 deepSync 로만 알린다."""
+    status = {'status': 'DISABLED'}
+    if deep.enabled():
+        try:
+            sync_resume(user, resume_id)
+            status = {'status': 'SYNCED'}
+        except deep.DeepError as error:
+            status = {'status': 'FAILED', 'message': error.message}
+    with pool.connection() as conn:
+        result = resume_dto(get_resume(conn, user, resume_id))
+    result['deepSync'] = status
+    return result
+
+
+def require_deep(user):
+    if user['kind'] != 'STUDENT':
+        raise HTTPException(403, '학생 본인만 이용할 수 있습니다.')
+    if not deep.enabled():
+        raise HTTPException(503, 'AI 기능은 DeepResume 연동 설정 후 이용할 수 있습니다.')
+
+
+@router.post('/job-resumes/{resume_id}/ai-draft')
+def ai_draft(resume_id: str, body: AiDraftBody, user=Depends(deep_principal)):
+    """Deep AI 이어쓰기. Deep 은 save=true 로 자기 쪽에 저장하고, 같은 본문을 우리 DB에도 저장한다."""
+    require_deep(user)
+    extras = body.model_dump(exclude={'expectedVersion'})
+    try:
+        row = sync_resume(user, resume_id, extras)
+        if row['version'] != body.expectedVersion:
+            raise HTTPException(409, '다른 창에서 먼저 저장했습니다. 새로 조회한 뒤 다시 시도해 주세요.')
+        generated, topic = deep.write_ai(user, row, row['company_text'], row['position_text'])
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+    saved = topic.get('body') if isinstance(topic.get('body'), str) else None
+    content = saved if saved is not None else (row['content'] + (' ' if row['content'] else '') + generated)
+    with pool.connection() as conn:
+        current = get_resume(conn, user, resume_id, lock=True)
+        stale = current['version'] != row['version']
+        if stale:
+            # Deep 에는 이미 붙었다. 반영 표시를 지워 다음 저장이 우리 본문으로 Deep 을 다시 맞추게 한다.
+            conn.execute('UPDATE dc.job_resume SET deep_synced_version=NULL WHERE id=%s', (resume_id,))
+        else:
+            # 같은 문장 안의 version 은 갱신 전 값이다 — 두 칸 모두 version+1 이 된다(CHECK 충족).
+            conn.execute('''UPDATE dc.job_resume SET content=%s,version=version+1,updated_at=now(),updated_by=%s,
+              deep_topic_id=COALESCE(%s::uuid,deep_topic_id),deep_synced_version=version+1 WHERE id=%s''',
+              (content, user['intg_uid'], topic.get('id'), resume_id))
+            resume_event(conn, user, resume_id, 'UPDATE', ['content'])
+            resume = resume_dto(get_resume(conn, user, resume_id))
+    if stale:
+        raise HTTPException(409, 'AI 작성 중에 다른 창에서 저장했습니다. 새로 조회한 뒤 다시 시도해 주세요.')
+    return {'resume': resume, 'generated': generated}
+
+
+@router.post('/job-resumes/{resume_id}/evaluation')
+def evaluate_resume(resume_id: str, body: EvaluationBody, user=Depends(deep_principal)):
+    """Deep AI 평가. 결과는 Deep 평가본이 정본이며 우리 DB에 저장하지 않는다(2026-11-13)."""
+    require_deep(user)
+    try:
+        row = sync_resume(user, resume_id)
+        if not row['content'].strip():
+            raise HTTPException(422, '본문이 비어 있으면 평가할 수 없습니다.')
+        return deep.evaluate(user, row['deep_cover_id'], body.force)
+    except deep.DeepError as error:
+        raise deep_http(error) from None
 
 
 # ── 파일 ────────────────────────────────────────────────────────────────

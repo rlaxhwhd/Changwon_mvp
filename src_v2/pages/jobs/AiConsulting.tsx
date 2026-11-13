@@ -1,31 +1,17 @@
 import { useState, useSyncExternalStore } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { getAllResumes, RESUME_EVENT } from './resumeMock'
+import { evaluateResume, getAllResumes, RESUME_EVENT, type ResumeEvaluation } from './resumeMock'
 import './AiConsulting.css'
 import './JobsWorkspace.css'
 import { usePageHead } from '../../components/PageCrumb'
 
-interface Evaluation {
-  score: number
-  grades: { label: string; score: number; comment: string }[]
-  suggestions: string[]
-}
-
-const MOCK_EVALUATION: Evaluation = {
-  score: 82,
-  grades: [
-    { label: '논리적 구성', score: 85, comment: '서론-본론-결론 구조가 명확합니다.' },
-    { label: '직무 연관성', score: 78, comment: '직무 관련 경험을 더 구체적으로 기술하면 좋겠습니다.' },
-    { label: '차별화 포인트', score: 80, comment: '해커톤 수상 경험이 좋은 차별화 요소입니다.' },
-    { label: '구체성', score: 75, comment: '성과를 수치화한 점이 좋으나 더 많은 구체적 사례가 필요합니다.' },
-    { label: '진정성', score: 88, comment: '지원 동기와 개인 경험이 자연스럽게 연결됩니다.' },
-  ],
-  suggestions: [
-    '직무 관련 기술 스택을 더 구체적으로 언급해보세요.',
-    '인턴십 경험에서 본인만의 기여도를 수치로 표현하면 더 좋습니다.',
-    '마지막 문단에서 입사 후 구체적인 목표를 추가하면 설득력이 높아집니다.',
-  ],
-}
+// DeepResume 평가가 주는 세 지표. 값이 없으면 지어내지 않고 '-' 로 둔다.
+const SCORE_ROWS: { key: keyof ResumeEvaluation['scores']; label: string; comment: string; unit: string }[] = [
+  { key: 'consult', label: 'AI 평가 점수', comment: '문항 질문에 맞게 잘 답했는지 AI가 평가한 점수입니다.', unit: '점' },
+  { key: 'spellcheck', label: '표절 검사 점수', comment: '표절 검사 결과를 점수로 나타냅니다.', unit: '점' },
+  { key: 'human', label: '사람이 쓴 확률', comment: 'AI가 아닌 사람이 작성했을 가능성입니다.', unit: '%' },
+]
+const TONE_ICON = { pos: 'fa-circle-check', neg: 'fa-circle-exclamation', note: 'fa-circle-info' } as const
 
 const scoreColor = (s: number) => (s >= 85 ? '#16A34A' : s >= 75 ? 'var(--color-primary)' : 'var(--color-warning)')
 
@@ -42,21 +28,28 @@ export default function AiConsulting() {
   const [selectedId, setSelectedId] = useState<string | null>(() =>
     resumes.find(resume => resume.id === params.get('resumeId'))?.id ?? (resumes.length === 1 ? resumes[0].id : null))
   const [evaluating, setEvaluating] = useState(false)
-  const [evaluation, setEvaluation] = useState<Evaluation | null>(null)
+  const [evaluation, setEvaluation] = useState<ResumeEvaluation | null>(null)
+  const [error, setError] = useState('')
 
   const selected = resumes.find(resume => resume.id === selectedId)
 
-  const startEval = () => {
+  // 평가는 수십 초 걸린다. 같은 내용이면 Deep 이 이전 평가본을 돌려준다(cached) — force 로 다시 평가한다.
+  const startEval = async (force = false) => {
     if (!selected || evaluating) return
     setEvaluating(true)
-    window.setTimeout(() => {
-      setEvaluation(MOCK_EVALUATION)
+    setError('')
+    try {
+      setEvaluation(await evaluateResume(selected.id, force))
+    } catch (cause: unknown) {
+      setError(cause instanceof Error ? cause.message : 'AI 평가를 받지 못했습니다.')
+    } finally {
       setEvaluating(false)
-    }, 1600)
+    }
   }
 
   const resetEval = () => {
     setEvaluation(null)
+    setError('')
     setSelectedId(null)
   }
 
@@ -68,7 +61,7 @@ export default function AiConsulting() {
           <i className="fa-solid fa-arrow-left" />
         </button>
       </header>
-      <p className="ac-preview-notice">현재는 컨설팅 화면을 확인할 수 있는 예시 결과를 제공합니다. 실제 AI 평가 연동은 준비 중입니다.</p>
+      {error && <p className="ac-preview-notice" role="alert">{error}</p>}
 
       {/* ── 자소서 선택 ── */}
       {!evaluation && !evaluating && (
@@ -114,8 +107,8 @@ export default function AiConsulting() {
 
           <div className="ac-actions">
             <button className="ac-btn-ghost" onClick={() => navigate('/jobs/home')}>취소</button>
-            {resumes.length > 0 && <button className="ac-btn-primary" disabled={!selected} onClick={startEval}>
-              <i className="fa-solid fa-play" /> 평가 예시 보기
+            {resumes.length > 0 && <button className="ac-btn-primary" disabled={!selected} onClick={() => void startEval()}>
+              <i className="fa-solid fa-play" /> AI 평가 받기
             </button>}
           </div>
         </div>
@@ -125,8 +118,8 @@ export default function AiConsulting() {
       {evaluating && (
         <div className="ac-card ac-loading">
           <div className="ac-spinner" />
-          <p>컨설팅 평가 예시를 불러오고 있습니다.</p>
-          <span>실제 자기소개서에 대한 분석 결과가 아닌 화면 확인용 예시입니다.</span>
+          <p>AI가 자기소개서를 평가하고 있습니다.</p>
+          <span>표절 검사와 문항별 분석을 함께 진행해 1~2분 정도 걸릴 수 있습니다.</span>
         </div>
       )}
 
@@ -134,8 +127,11 @@ export default function AiConsulting() {
       {evaluation && selected && (
         <div className="ac-card">
           <h2 className="ac-card-title">
-            <i className="fa-solid fa-clipboard-check" /> AI 컨설팅 평가 예시
+            <i className="fa-solid fa-clipboard-check" /> AI 컨설팅 평가 결과
           </h2>
+          {evaluation.cached && (
+            <p className="ac-card-desc">내용이 바뀌지 않아 이전 평가 결과를 보여 드립니다.</p>
+          )}
 
           <div className="ac-summary">
             <div>
@@ -154,40 +150,46 @@ export default function AiConsulting() {
 
           <div className="ac-result">
             <div className="ac-score-box">
-              <div className="ac-score-num">{evaluation.score}</div>
-              <div className="ac-score-label">종합점수 / 100</div>
+              <div className="ac-score-num">{evaluation.scores.consult ?? '-'}</div>
+              <div className="ac-score-label">AI 평가 점수 / 100</div>
             </div>
 
             <div className="ac-grades">
-              {evaluation.grades.map(grade => (
-                <div key={grade.label} className="ac-grade">
-                  <div className="ac-grade-head">
-                    <span className="ac-grade-label">{grade.label}</span>
-                    <span className="ac-grade-score" style={{ color: scoreColor(grade.score) }}>
-                      {grade.score}점
-                    </span>
+              {SCORE_ROWS.map(row => {
+                const value = evaluation.scores[row.key]
+                return (
+                  <div key={row.key} className="ac-grade">
+                    <div className="ac-grade-head">
+                      <span className="ac-grade-label">{row.label}</span>
+                      <span className="ac-grade-score" style={value === null ? undefined : { color: scoreColor(value) }}>
+                        {value === null ? '-' : `${value}${row.unit}`}
+                      </span>
+                    </div>
+                    <div className="ac-grade-bar">
+                      <span
+                        className="ac-grade-fill"
+                        style={{ width: `${Math.max(0, Math.min(100, value ?? 0))}%`, background: value === null ? undefined : scoreColor(value) }}
+                      />
+                    </div>
+                    <p className="ac-grade-comment">{row.comment}</p>
                   </div>
-                  <div className="ac-grade-bar">
-                    <span
-                      className="ac-grade-fill"
-                      style={{ width: `${grade.score}%`, background: scoreColor(grade.score) }}
-                    />
-                  </div>
-                  <p className="ac-grade-comment">{grade.comment}</p>
-                </div>
-              ))}
+                )
+              })}
             </div>
           </div>
 
           <div className="ac-suggest">
-            <h3><i className="fa-solid fa-lightbulb" /> 개선 제안</h3>
+            <h3><i className="fa-solid fa-lightbulb" /> 문장별 조언</h3>
+            {evaluation.items.every(item => item.advice.length === 0) && <p className="ac-card-desc">조언이 없습니다.</p>}
             <ul>
-              {evaluation.suggestions.map((suggestion, i) => (
-                <li key={i}>
-                  <i className="fa-solid fa-circle-check" />
-                  {suggestion}
+              {evaluation.items.flatMap((item, i) => item.advice.map((advice, j) => (
+                <li key={`${i}-${j}`}>
+                  <i className={`fa-solid ${TONE_ICON[advice.tone]}`} aria-hidden="true" />
+                  <span>
+                    {advice.quote && <q>{advice.quote}</q>} {advice.comment}
+                  </span>
                 </li>
-              ))}
+              )))}
             </ul>
           </div>
 
@@ -195,6 +197,11 @@ export default function AiConsulting() {
             <button className="ac-btn-ghost" onClick={resetEval}>
               <i className="fa-solid fa-arrow-left" /> 다른 자소서 평가
             </button>
+            {evaluation.cached && (
+              <button className="ac-btn-ghost" onClick={() => void startEval(true)}>
+                <i className="fa-solid fa-rotate" /> 다시 평가
+              </button>
+            )}
             <button className="ac-btn-primary" onClick={() => navigate('/jobs/home')}>
               <i className="fa-solid fa-house" /> 홈으로
             </button>

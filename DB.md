@@ -621,6 +621,14 @@ CREATE TABLE dc.org_assignment (
 자소서 ID `r1`·`r2` 를 가리키고 그 행은 append-only 라 사후 재매핑이 불가능하다 —
 `dc.job_resume` 은 그 ID 를 보존한다. 자소서 쪽에 AI 결과 역참조 컬럼을 두지 않는다(규칙 3).
 
+**DeepResume 연동(2026-11-13 · 마이그레이션 162 · 설계 `.ai/handoff-db/0012-job-resume-deep-link`).**
+자소서는 우리 `dc.job_resume` 이 정본이고 Deep 에 같은 본문의 사본을 둔다(우리 1건 = Deep cover 1건·topic 1개,
+`deep_cover_id`·`deep_topic_id`). 저장은 우리 DB를 먼저 커밋한 뒤 Deep 에 보내고, 실패하면 저장은 유지한 채
+`deep_synced_version ≠ version` 으로 남겨 다음 저장·AI 작성·평가 때 다시 보낸다. **AI 평가 결과는 저장하지 않는다**
+(Deep 평가본이 정본). Deep 회원은 학교코드 `changwon.ac.kr`+학번이며 기존 DeepResume 회원과 겹치면 거부한다.
+Deep 을 부르는 엔드포인트는 요청 커넥션을 쥐지 않는다(`deep_principal`) — 외부 대기 중 풀 고갈 방지.
+AI 인터뷰는 영상이 Deep 에만 저장되고 결과표를 API 로 가져올 예정이다(미구현).
+
 2026-10-02 진단·상담·종합·로드맵 AI 코멘트도 기존 `dc.ai_run`·`dc.ai_comment`에 연결했다.
 LLM 생성 후 본문·근거·모델·입력 스냅샷을 원자적으로 저장한 뒤 완료를 반환하고, 화면 진입 시
 최신 저장본을 불러온다. 재생성은 append-only 이력으로 남는다. 2026-10-08 최종 결정으로

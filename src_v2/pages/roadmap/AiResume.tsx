@@ -4,7 +4,7 @@ import Modal from '../../components/Modal'
 import { loadJournalEntries, type Entry } from '../../data/growthJournal'
 import { getActiveStudentId } from '../../data/students'
 import {
-  deleteUserResume, getAllResumes, resumeCategoryOptions, upsertUserResume, type SavedResume,
+  deleteUserResume, getAllResumes, requestAiDraft, resumeCategoryOptions, upsertUserResume, type SavedResume,
 } from '../jobs/resumeMock'
 import { useMetadata } from '../../../shared/useMetadata'
 import './AiResume.css'
@@ -62,6 +62,8 @@ export default function AiResume() {
   const [, bumpList] = useState(0)
   const savedList = getAllResumes()
   const [saveError, setSaveError] = useState('')
+  // 우리 저장은 끝났지만 DeepResume 반영이 실패한 경우의 안내 — 오류와 구분한다.
+  const [deepNotice, setDeepNotice] = useState('')
   const [saving, setSaving] = useState(false)
   const saveInFlight = useRef(false)
   const [openResume, setOpenResume] = useState<SavedResume | null>(null)
@@ -76,8 +78,9 @@ export default function AiResume() {
   const categoryLabelOf = (code: string) => categories.find(c => c.code === code)?.label ?? code
 
   // id·작성일은 서버가 부여한다. 같은 문서를 다시 저장하면 회차가 아니라 수정이다.
-  const saveResume = async (content: string) => {
-    if (!content.trim() || saveInFlight.current) return null
+  // allowEmpty: AI 초안은 빈 본문에서도 시작할 수 있어 먼저 문서를 만든다.
+  const saveResume = async (content: string, allowEmpty = false) => {
+    if ((!allowEmpty && !content.trim()) || saveInFlight.current) return null
     saveInFlight.current = true
     setSaving(true)
     setSaveError('')
@@ -92,6 +95,9 @@ export default function AiResume() {
       content,
       })
       resumeIdRef.current = saved.id
+      setDeepNotice(saved.deepSync?.status === 'FAILED'
+        ? `드림캐치에는 저장했지만 DeepResume에 반영하지 못했습니다. ${saved.deepSync.message ?? ''} 다음 저장 때 다시 반영합니다.`
+        : '')
       bumpList(x => x + 1)
       return saved
     } catch (cause: unknown) {
@@ -124,6 +130,32 @@ export default function AiResume() {
     }).catch((cause: unknown) => {
       setSaveError(cause instanceof Error ? cause.message : '삭제하지 못했습니다.')
     })
+  }
+
+  // DeepResume AI 이어쓰기 — 먼저 지금 글을 저장하고, Deep 이 쓴 문장을 붙인 본문을 양쪽에 저장한다.
+  const handleAiDraft = async () => {
+    if (draftState === 'loading' || saving) return
+    if (!application.occupation) {
+      setSaveError('AI 초안을 받으려면 1단계 지원정보에서 직종을 선택해 주세요.')
+      return
+    }
+    setSaveError('')
+    setDraftState('loading')
+    try {
+      const saved = await saveResume(text, true)
+      if (!saved) { setDraftState(text.trim() ? 'done' : 'idle'); return }
+      const result = await requestAiDraft(saved.id, {
+        industry: application.industry, companyType: application.companyType,
+        experience: application.experience, keywords: application.keywords,
+      })
+      setText(result.resume.content)
+      setDeepNotice('')
+      bumpList(x => x + 1)
+      setDraftState('done')
+    } catch (cause: unknown) {
+      setSaveError(cause instanceof Error ? cause.message : 'AI 초안을 받지 못했습니다.')
+      setDraftState(text.trim() ? 'done' : 'idle')
+    }
   }
 
   const handleGoConsulting = async () => {
@@ -223,7 +255,11 @@ export default function AiResume() {
           <div className="rs-editor-body">
             <textarea
               value={text}
-              onChange={event => setText(event.target.value.slice(0, charLimit))}
+              onChange={event => {
+                // AI 가 쓴 글은 제한을 넘을 수 있다 — 입력으로 몰래 잘라내지 않고, 넘친 상태에서 늘리는 입력만 막는다.
+                const next = event.target.value
+                setText(prev => (next.length > charLimit && next.length > prev.length ? prev : next))
+              }}
               aria-label="자기소개서 내용"
               placeholder="자유롭게 작성하거나 성장일지 경험을 첨부해 자기소개서를 준비해 보세요."
             />
@@ -237,7 +273,7 @@ export default function AiResume() {
                   </div>
                   <p className="rs-loading-title">AI가 자소서 초안을 작성하고 있어요</p>
                   <p className="rs-loading-sub">
-                    첨부하신 성장일지 · <strong>{activeCategory}</strong> 카테고리를 기반으로 문단 구조를 정리 중입니다…
+                    지원정보와 <strong>{categoryLabelOf(activeCategory)}</strong> 항목을 바탕으로 이어 쓰는 중입니다…
                   </p>
                   <div className="rs-loading-bar">
                     <div className="rs-loading-fill" />
@@ -251,11 +287,12 @@ export default function AiResume() {
             <button
               type="button"
               className="rs-primary-btn"
-              disabled
+              onClick={handleAiDraft}
+              disabled={draftState === 'loading' || saving}
               aria-describedby="rs-generation-notice"
             >
               <i className="fa-solid fa-wand-magic-sparkles" />
-              AI 초안 받기 · 연동 준비 중
+              {draftState === 'loading' ? 'AI 작성 중…' : text.trim() ? 'AI로 이어쓰기' : 'AI 초안 받기'}
             </button>
               <button type="button" className="rs-consult-btn" onClick={handleGoConsulting} disabled={!text.trim() || saving}>
                 <i className="fa-solid fa-magnifying-glass-chart" /> 저장 후 AI 컨설팅
@@ -269,7 +306,8 @@ export default function AiResume() {
               <i className="fa-regular fa-floppy-disk" /> {saving ? '저장 중…' : '저장'}
             </button>
           </div>
-          <p id="rs-generation-notice" className="rs-application-hint">AI 생성은 Deepresume 연동 후 이용할 수 있습니다. 직접 작성한 자소서는 저장할 수 있습니다.</p>
+          <p id="rs-generation-notice" className="rs-application-hint">AI 작성은 DeepResume가 제공합니다. 쓰고 있는 글 뒤에 이어 쓰며, 결과는 드림캐치와 DeepResume에 함께 저장됩니다.</p>
+          {deepNotice && <p className="rs-application-hint" role="status">{deepNotice}</p>}
           {saveError && <p className="rs-keyword-error" role="alert">{saveError}</p>}
         </section>
 

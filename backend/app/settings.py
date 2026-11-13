@@ -39,6 +39,10 @@ class Settings(BaseSettings):
     rag_url: str = 'http://rag:8090'
     rag_key_file: str | None = None
     hrtest_key_file: str | None = None
+    # DeepResume 외부 연동(docs/Deep_API_v7.xlsx). 키 파일이 없으면 연동은 꺼진다.
+    deep_key_file: str | None = None
+    deep_api_url: str = 'https://testapi.deepresume.kr'
+    deep_school_code: str = 'changwon.ac.kr'
 
     def connection_kwargs(self) -> dict:
         password = self.db_password

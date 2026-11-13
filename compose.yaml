@@ -42,11 +42,14 @@ services:
       DC_DEVELOPMENT_IDENTITY: "true"
       DC_DEVELOPMENT_TOKEN_FILE: /run/secrets/api_token
       DC_FILE_ROOT: /var/lib/dreamcatch/files
+      # DeepResume 외부 연동 서비스 키(docs/Deep_API_v7.xlsx). 기본 API 주소는 테스트 서버다.
+      DC_DEEP_KEY_FILE: /run/secrets/deep_service_key
     ports:
       - "127.0.0.1:18101:8000"
     secrets:
       - api_db_password
       - api_token
+      - deep_service_key
     volumes:
       - ./backend/var/files:/var/lib/dreamcatch/files
     depends_on:
@@ -111,6 +114,8 @@ secrets:
     file: ./deploy/secrets/api_db_password_local
   api_token:
     file: ./deploy/secrets/api_token
+  deep_service_key:
+    file: ./deploy/secrets/deep_service_key_local
 
 volumes:
   pgdata:
