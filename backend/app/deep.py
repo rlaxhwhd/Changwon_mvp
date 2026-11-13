@@ -246,8 +246,12 @@ def delete_cover(user, cover_id):
         raise failure(response, {400: (409, 'DeepResume에서 진행 중인 컨설팅이 있어 지우지 못했습니다.')})
 
 
-def write_ai(user, row, company, field):
-    payload = {'question': topic_fields(row)['type'], 'save': True, 'mode': 'append', 'text': row['content']}
+def write_ai(user, row, company, field, prompt=''):
+    # 이어쓰기는 쓰지 않는다(2026-11-13) — 빈 글에서 새로 쓰고 Deep 문항을 덮어쓴다.
+    # Deep 에 요청사항 전용 필드가 없어 학생이 적은 「꼭 들어갈 내용」은 tag 로 보낸다(사용자 확정).
+    payload = {'question': topic_fields(row)['type'], 'save': True, 'mode': 'replace', 'text': ''}
+    if prompt:
+        payload['tag'] = prompt
     if row['deep_topic_id']:
         payload['topic_id'] = str(row['deep_topic_id'])
     if company:
@@ -256,7 +260,8 @@ def write_ai(user, row, company, field):
         payload['field'] = field
     response = call(user, 'POST', f"covers/{row['deep_cover_id']}/ai", json=payload, timeout=60)
     if response.status_code != 201:
-        raise failure(response, {503: (502, 'AI 작성에 실패했습니다. 잠시 후 다시 시도해 주세요.')})
+        raise failure(response, {503: (502, 'AI 작성에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
+                                 400: (422, 'DeepResume가 AI 작성 요청을 거부했습니다. 입력한 내용을 확인해 주세요.')})
     data = body(response)
     generated = data.get('generated') if isinstance(data, dict) else None
     if not isinstance(generated, str) or not generated.strip():

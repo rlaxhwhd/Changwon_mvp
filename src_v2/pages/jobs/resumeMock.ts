@@ -116,11 +116,15 @@ export async function updateResume(id: string, input: ResumeInput): Promise<Save
 }
 
 /** DeepResume AI 이어쓰기. Deep 과 우리 DB에 같은 본문이 저장된 뒤 돌아온다. */
-export async function requestAiDraft(id: string, extras: DeepExtras): Promise<{ resume: SavedResume; generated: string }> {
+// 서버 AiDraftBody.prompt 한도와 같다(backend/app/jobs.py AI_PROMPT_MAX_CHARS).
+export const AI_PROMPT_MAX_CHARS = 3000
+
+// 본문을 AI 초안으로 교체한다. prompt = 「자소서에 꼭 들어갈 내용」 — 생성에만 쓰고 저장하지 않는다.
+export async function requestAiDraft(id: string, extras: DeepExtras, prompt: string): Promise<{ resume: SavedResume; generated: string }> {
   const current = getResumeById(id)
   if (!current) throw new Error('자기소개서를 찾을 수 없습니다.')
   const result = await api<{ resume: SavedResume; generated: string }>(`/job-resumes/${encodeURIComponent(id)}/ai-draft`, {
-    method: 'POST', body: JSON.stringify({ ...extras, expectedVersion: current.version }),
+    method: 'POST', body: JSON.stringify({ ...extras, prompt, expectedVersion: current.version }),
   })
   await loadResumes()
   return result

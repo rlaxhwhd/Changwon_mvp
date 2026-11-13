@@ -65,7 +65,8 @@ class FakeDeep:
             if self.on_ai:
                 self.on_ai()
             topic = next(t for t in cover['topic'] if t['id'] == payload['topic_id'])
-            topic['body'] = (payload['text'] + ' ' if payload['text'] else '') + 'AI가 쓴 문장'
+            body = (payload['text'] + ' ' if payload['text'] else '') + 'AI가 쓴 문장'
+            topic['body'] = body if payload.get('mode', 'append') == 'append' else 'AI가 쓴 문장'
             return httpx.Response(201, json={'generated': 'AI가 쓴 문장', 'saved': True, 'topic': topic})
         if path.endswith('/evaluations'):
             return httpx.Response(201, json={
@@ -173,15 +174,23 @@ def test_existing_deepresume_member_is_refused(client, fake):
 
 # ── AI 작성 · 평가 ──────────────────────────────────────────────────────
 
-def test_ai_draft_appends_and_stores_the_same_body_in_both(client, fake):
+def test_ai_draft_replaces_body_from_prompt_and_stores_the_same_body_in_both(client, fake):
     resume = create(client)
+    prompt = '[성장일지 첨부: 동아리 회계]\n결과: 예산 오차 0원'
     response = client.post(f"/api/v1/job-resumes/{resume['id']}/ai-draft", headers=headers('chaewon'), json={
         'expectedVersion': resume['version'], 'industry': '서비스업', 'companyType': '대기업',
-        'experience': '신입', 'keywords': ['성실']})
+        'experience': '신입', 'keywords': ['성실'], 'prompt': prompt})
     assert response.status_code == 200, response.text
     data = response.json()
     assert data['generated'] == 'AI가 쓴 문장'
-    assert data['resume']['content'] == '본문 AI가 쓴 문장' and data['resume']['deepSynced']
+    # 이어쓰기가 아니라 새로 생성 — 기존 본문 「본문」은 초안으로 교체된다.
+    assert data['resume']['content'] == 'AI가 쓴 문장' and data['resume']['deepSynced']
+    [ai_call] = [c for c in fake.calls if c[1].endswith('/ai')]
+    assert (ai_call[2]['mode'], ai_call[2]['text'], ai_call[2]['tag']) == ('replace', '', prompt)
+    # 요청사항은 우리 DB에 남기지 않는다.
+    with pool.connection() as conn:
+        stored = conn.execute('SELECT * FROM dc.job_resume WHERE id=%s', (resume['id'],)).fetchone()
+    assert prompt not in str(stored)
     [cover] = fake.covers.values()
     assert cover['topic'][0]['body'] == data['resume']['content']
     assert (cover['industry_type'], cover['corporate_type'], cover['exp_type'], cover['hashtag']) == \
@@ -189,6 +198,14 @@ def test_ai_draft_appends_and_stores_the_same_body_in_both(client, fake):
     stale = client.post(f"/api/v1/job-resumes/{resume['id']}/ai-draft", headers=headers('chaewon'),
                         json={'expectedVersion': resume['version']})
     assert stale.status_code == 409
+
+
+def test_ai_prompt_over_limit_is_refused_not_truncated(client, fake):
+    resume = create(client)
+    response = client.post(f"/api/v1/job-resumes/{resume['id']}/ai-draft", headers=headers('chaewon'), json={
+        'expectedVersion': resume['version'], 'prompt': '가' * 3001})
+    assert response.status_code == 422
+    assert not [c for c in fake.calls if c[1].endswith('/ai')]
 
 
 def test_save_during_ai_draft_keeps_ours_and_marks_deep_for_resync(client, fake):

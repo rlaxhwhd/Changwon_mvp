@@ -1416,6 +1416,9 @@ def delete_resume(resume_id: str, user=Depends(deep_principal)):
 # 우리 dc.job_resume 이 정본이다. 저장은 먼저 우리 DB에 확정한 뒤 Deep 에 같은 본문을 보낸다 —
 # Deep 장애가 학생의 저장을 막지 않게 하고, 못 보낸 버전은 다음 저장·AI 작성·평가 때 다시 보낸다.
 
+AI_PROMPT_MAX_CHARS = 3000
+
+
 class DeepExtras(BaseModel):
     """지원정보 중 우리 DB에 칸이 없는 값. Deep 자소서에만 전달한다."""
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
@@ -1427,6 +1430,8 @@ class DeepExtras(BaseModel):
 
 class AiDraftBody(DeepExtras):
     expectedVersion: int = Field(ge=1)
+    # 「자소서에 꼭 들어갈 내용」(성장일지 첨부 포함). 생성에만 쓰고 우리 DB에 저장하지 않는다(2026-11-13).
+    prompt: str = Field(default='', max_length=AI_PROMPT_MAX_CHARS)
 
 
 class EvaluationBody(BaseModel):
@@ -1487,18 +1492,18 @@ def require_deep(user):
 
 @router.post('/job-resumes/{resume_id}/ai-draft')
 def ai_draft(resume_id: str, body: AiDraftBody, user=Depends(deep_principal)):
-    """Deep AI 이어쓰기. Deep 은 save=true 로 자기 쪽에 저장하고, 같은 본문을 우리 DB에도 저장한다."""
+    """Deep AI 초안 생성. 본문을 초안으로 교체한다 — Deep 은 save=true 로 자기 쪽에, 같은 본문을 우리 DB에도 저장한다."""
     require_deep(user)
-    extras = body.model_dump(exclude={'expectedVersion'})
+    extras = body.model_dump(exclude={'expectedVersion', 'prompt'})
     try:
         row = sync_resume(user, resume_id, extras)
         if row['version'] != body.expectedVersion:
             raise HTTPException(409, '다른 창에서 먼저 저장했습니다. 새로 조회한 뒤 다시 시도해 주세요.')
-        generated, topic = deep.write_ai(user, row, row['company_text'], row['position_text'])
+        generated, topic = deep.write_ai(user, row, row['company_text'], row['position_text'], body.prompt)
     except deep.DeepError as error:
         raise deep_http(error) from None
     saved = topic.get('body') if isinstance(topic.get('body'), str) else None
-    content = saved if saved is not None else (row['content'] + (' ' if row['content'] else '') + generated)
+    content = saved if saved is not None else generated
     with pool.connection() as conn:
         current = get_resume(conn, user, resume_id, lock=True)
         stale = current['version'] != row['version']

@@ -4,7 +4,8 @@ import Modal from '../../components/Modal'
 import { loadJournalEntries, type Entry } from '../../data/growthJournal'
 import { getActiveStudentId } from '../../data/students'
 import {
-  deleteUserResume, getAllResumes, requestAiDraft, resumeCategoryOptions, upsertUserResume, type SavedResume,
+  AI_PROMPT_MAX_CHARS, deleteUserResume, getAllResumes, requestAiDraft, resumeCategoryOptions, upsertUserResume,
+  type SavedResume,
 } from '../jobs/resumeMock'
 import { useMetadata } from '../../../shared/useMetadata'
 import './AiResume.css'
@@ -54,6 +55,8 @@ export default function AiResume() {
     })
   }
   const [text, setText] = useState('')
+  // 「자소서에 꼭 들어갈 내용」 — AI 초안 생성 때 Deep 에 보낸다. 우리 DB에 저장하지 않는다(2026-11-13).
+  const [brief, setBrief] = useState('')
   const [showHelper, setShowHelper] = useState(true)
   // 일지 ID 는 서버가 발급한 문자열이다 — 학생마다 1,2,3… 이던 숫자는 학생 간에 겹쳤다.
   const [attachedIds, setAttachedIds] = useState<string[]>([])
@@ -132,13 +135,18 @@ export default function AiResume() {
     })
   }
 
-  // DeepResume AI 이어쓰기 — 먼저 지금 글을 저장하고, Deep 이 쓴 문장을 붙인 본문을 양쪽에 저장한다.
+  // DeepResume AI 초안 생성 — 먼저 지금 글을 저장하고, 「꼭 들어갈 내용」으로 새로 쓴 초안으로 본문을 교체해 양쪽에 저장한다.
   const handleAiDraft = async () => {
     if (draftState === 'loading' || saving) return
     if (!application.occupation) {
       setSaveError('AI 초안을 받으려면 1단계 지원정보에서 직종을 선택해 주세요.')
       return
     }
+    if (brief.length > AI_PROMPT_MAX_CHARS) {
+      setSaveError(`자소서에 꼭 들어갈 내용은 ${AI_PROMPT_MAX_CHARS.toLocaleString()}자 이내로 줄여 주세요.`)
+      return
+    }
+    if (text.trim() && !window.confirm('지금 본문을 AI 초안으로 바꿉니다. 계속할까요?')) return
     setSaveError('')
     setDraftState('loading')
     try {
@@ -147,7 +155,7 @@ export default function AiResume() {
       const result = await requestAiDraft(saved.id, {
         industry: application.industry, companyType: application.companyType,
         experience: application.experience, keywords: application.keywords,
-      })
+      }, brief.trim())
       setText(result.resume.content)
       setDeepNotice('')
       bumpList(x => x + 1)
@@ -169,18 +177,22 @@ export default function AiResume() {
   // 탭은 실제로 가진 분야에서 만든다 — 고정 3종을 박아 두면 다른 분야가 숨는다.
   const filterTabs = ['전체', ...Array.from(new Set(savedList.map(r => r.categoryLabel).filter(Boolean)))]
 
+  // 성장일지는 본문이 아니라 「꼭 들어갈 내용」에 붙는다 — AI 초안의 소재로 Deep 에 함께 간다.
+  // 한도를 넘어도 몰래 자르지 않는다. 글자 수가 빨갛게 바뀌고 생성 전에 막는다.
   const attachJournal = (entry: Entry) => {
     if (attachedIds.includes(entry.id)) return
     const snippet = makeJournalSnippet(entry)
     setAttachedIds(prev => [...prev, entry.id])
-    setText(prev => {
-      const next = `${prev}${prev.trim() ? '\n\n' : ''}${snippet}`
-      return next.slice(0, charLimit)
-    })
+    setBrief(prev => `${prev}${prev.trim() ? '\n\n' : ''}${snippet}`)
   }
 
   const detachJournal = (entryId: string) => {
+    const entry = journalEntries.find(item => item.id === entryId)
     setAttachedIds(prev => prev.filter(id => id !== entryId))
+    if (entry) {
+      const snippet = makeJournalSnippet(entry)
+      setBrief(prev => prev.replace(snippet, '').replace(/\n{3,}/g, '\n\n').trim())
+    }
   }
 
   return (
@@ -244,6 +256,25 @@ export default function AiResume() {
             </label>
           </div>
 
+          <div className="rs-brief">
+            <div className="rs-editor-head">
+              <div>
+                <h2><label htmlFor="rs-brief-input">자소서에 꼭 들어갈 내용</label></h2>
+                <p id="rs-brief-desc">강조할 경험·역량·수치를 적거나 아래 성장일지를 첨부하세요. AI가 이 내용을 바탕으로 초안을 새로 씁니다.</p>
+              </div>
+              <span className={brief.length > AI_PROMPT_MAX_CHARS ? 'rs-count-over' : undefined}>
+                {brief.length.toLocaleString()} / {AI_PROMPT_MAX_CHARS.toLocaleString()}자
+              </span>
+            </div>
+            <textarea
+              id="rs-brief-input"
+              value={brief}
+              onChange={event => setBrief(event.target.value)}
+              aria-describedby="rs-brief-desc"
+              placeholder="예: 동아리 회계를 맡아 1년 예산 오차 0원을 만든 경험, 꼼꼼함과 책임감을 강조"
+            />
+          </div>
+
           <div className="rs-editor-head">
             <div>
               <h2>{categoryLabelOf(activeCategory)}</h2>
@@ -261,7 +292,7 @@ export default function AiResume() {
                 setText(prev => (next.length > charLimit && next.length > prev.length ? prev : next))
               }}
               aria-label="자기소개서 내용"
-              placeholder="자유롭게 작성하거나 성장일지 경험을 첨부해 자기소개서를 준비해 보세요."
+              placeholder="직접 작성하거나, 위에 꼭 들어갈 내용을 적고 AI 초안 생성을 눌러 보세요."
             />
 
             {draftState === 'loading' && (
@@ -273,7 +304,7 @@ export default function AiResume() {
                   </div>
                   <p className="rs-loading-title">AI가 자소서 초안을 작성하고 있어요</p>
                   <p className="rs-loading-sub">
-                    지원정보와 <strong>{categoryLabelOf(activeCategory)}</strong> 항목을 바탕으로 이어 쓰는 중입니다…
+                    지원정보와 꼭 들어갈 내용으로 <strong>{categoryLabelOf(activeCategory)}</strong> 초안을 쓰는 중입니다…
                   </p>
                   <div className="rs-loading-bar">
                     <div className="rs-loading-fill" />
@@ -292,7 +323,7 @@ export default function AiResume() {
               aria-describedby="rs-generation-notice"
             >
               <i className="fa-solid fa-wand-magic-sparkles" />
-              {draftState === 'loading' ? 'AI 작성 중…' : text.trim() ? 'AI로 이어쓰기' : 'AI 초안 받기'}
+              {draftState === 'loading' ? 'AI 작성 중…' : 'AI 초안 생성'}
             </button>
               <button type="button" className="rs-consult-btn" onClick={handleGoConsulting} disabled={!text.trim() || saving}>
                 <i className="fa-solid fa-magnifying-glass-chart" /> 저장 후 AI 컨설팅
@@ -306,7 +337,7 @@ export default function AiResume() {
               <i className="fa-regular fa-floppy-disk" /> {saving ? '저장 중…' : '저장'}
             </button>
           </div>
-          <p id="rs-generation-notice" className="rs-application-hint">AI 작성은 DeepResume가 제공합니다. 쓰고 있는 글 뒤에 이어 쓰며, 결과는 드림캐치와 DeepResume에 함께 저장됩니다.</p>
+          <p id="rs-generation-notice" className="rs-application-hint">AI 작성은 DeepResume가 제공합니다. 꼭 들어갈 내용을 바탕으로 초안을 새로 써서 본문을 바꾸며, 본문은 드림캐치와 DeepResume에 함께 저장됩니다.</p>
           {deepNotice && <p className="rs-application-hint" role="status">{deepNotice}</p>}
           {saveError && <p className="rs-keyword-error" role="alert">{saveError}</p>}
         </section>
@@ -315,7 +346,7 @@ export default function AiResume() {
           <div className="rs-section-head">
             <div>
               <h2><i className="fa-solid fa-book-open" /> 성장일지 첨부</h2>
-              <p>내 성장일지에 기록한 경험을 자소서 소재로 첨부할 수 있습니다.</p>
+              <p>첨부한 경험은 「자소서에 꼭 들어갈 내용」에 들어가 AI 초안의 소재가 됩니다.</p>
             </div>
             <span>{attachedEntries.length}개 첨부됨</span>
           </div>

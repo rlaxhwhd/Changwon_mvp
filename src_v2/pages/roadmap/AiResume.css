@@ -153,6 +153,11 @@
   white-space: nowrap;
 }
 
+/* 「자소서에 꼭 들어갈 내용」 — 본문 위 AI 요청사항 칸 */
+.rs-brief { margin-bottom: 20px; }
+.rs-brief textarea { height: 120px; }
+.rs-editor-head > span.rs-count-over { color: var(--color-danger); }
+
 .rs-editor-card textarea {
   width: 100%;
   height: 190px;
