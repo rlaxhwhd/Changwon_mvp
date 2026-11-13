@@ -328,7 +328,11 @@ def evaluate(user, cover_id, force=False):
             503: (502, 'AI 평가에 실패했습니다. 잠시 후 다시 시도해 주세요.'),
             404: (404, 'DeepResume에서 자소서를 찾지 못했습니다. 다시 저장한 뒤 시도해 주세요.'),
         })
-    data = body(response)
+    return evaluation_dto(body(response))
+
+
+def evaluation_dto(data):
+    """평가 실행 응답과 평가 결과 조회(GET evaluations/<id>) 응답은 같은 형식이다."""
     if not isinstance(data, dict) or not isinstance(data.get('consult'), dict):
         raise DeepError(502, 'AI 평가 응답을 확인할 수 없습니다.')
     consult = data['consult']
@@ -343,3 +347,35 @@ def evaluate(user, cover_id, force=False):
                    'advice': parse_advice(c.get('consult_content'))}
                   for c in contents if isinstance(c, dict)],
     }
+
+
+def evaluated_cover_ids(user):
+    """AI 평가를 받은 적이 있는 내 Deep 자소서 id. 목록 카드의 badge_pen 으로 한 번에 판정한다."""
+    response = call(user, 'GET', 'covers')
+    if response.status_code != 200:
+        raise failure(response)
+    data = body(response)
+    if not isinstance(data, list):
+        raise DeepError(502, 'DeepResume 자소서 목록을 확인할 수 없습니다.')
+    return {str(card['id']) for card in data
+            if isinstance(card, dict) and card.get('badge_pen') is True and card.get('id')}
+
+
+def latest_evaluation(user, cover_id):
+    """가장 최근 평가본. 없으면 None. stale = 평가 뒤 Deep 자소서 내용이 바뀌었다."""
+    response = call(user, 'GET', f'covers/{cover_id}/evaluations')
+    if response.status_code == 404:
+        return None
+    if response.status_code != 200:
+        raise failure(response)
+    data = body(response)
+    results = data.get('results') if isinstance(data, dict) else None
+    if not isinstance(results, list):
+        raise DeepError(502, 'AI 평가 목록을 확인할 수 없습니다.')
+    latest = next((r for r in results if isinstance(r, dict) and r.get('evaluation_id')), None)  # 최신순
+    if latest is None:
+        return None
+    response = call(user, 'GET', f"evaluations/{latest['evaluation_id']}")
+    if response.status_code != 200:
+        raise failure(response, {404: (404, '지난 컨설팅 결과를 찾지 못했습니다.')})
+    return {**evaluation_dto(body(response)), 'stale': latest.get('stale') is True}

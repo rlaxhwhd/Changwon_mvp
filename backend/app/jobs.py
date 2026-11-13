@@ -1535,6 +1535,42 @@ def evaluate_resume(resume_id: str, body: EvaluationBody, user=Depends(deep_prin
         raise deep_http(error) from None
 
 
+@router.get('/job-resume-evaluations')
+def evaluated_resumes(user=Depends(deep_principal)):
+    """컨설팅(AI 평가)을 받은 적 있는 본인 자소서 id. 자소서 홈 카드의 「컨설팅 보기/하기」 판정용.
+    Deep 자소서 목록 한 번으로 판정하고, Deep 에 올라간 자소서가 없으면 Deep 을 부르지 않는다."""
+    require_deep(user)
+    with pool.connection() as conn:
+        rows = conn.execute('''SELECT id,deep_cover_id FROM dc.job_resume
+          WHERE student_uid=%s AND deleted_at IS NULL AND deep_cover_id IS NOT NULL''', (user['intg_uid'],)).fetchall()
+    if not rows:
+        return {'items': []}
+    try:
+        evaluated = deep.evaluated_cover_ids(user)
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+    return {'items': [row['id'] for row in rows if str(row['deep_cover_id']) in evaluated]}
+
+
+@router.get('/job-resumes/{resume_id}/evaluation')
+def last_evaluation(resume_id: str, user=Depends(deep_principal)):
+    """가장 최근 컨설팅 결과(Deep 평가본). 새로 평가하지 않으므로 시간당 횟수를 쓰지 않는다.
+    stale = 평가 뒤 본문이 바뀌었다(Deep 판정 또는 아직 Deep 에 반영 안 된 우리 저장)."""
+    require_deep(user)
+    with pool.connection() as conn:
+        row = get_resume(conn, user, resume_id)
+    if not row['deep_cover_id']:
+        raise HTTPException(404, '컨설팅을 받은 적이 없는 자기소개서입니다.')
+    try:
+        result = deep.latest_evaluation(user, row['deep_cover_id'])
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+    if result is None:
+        raise HTTPException(404, '컨설팅을 받은 적이 없는 자기소개서입니다.')
+    result['stale'] = result['stale'] or row['deep_synced_version'] != row['version']
+    return result
+
+
 # ── 파일 ────────────────────────────────────────────────────────────────
 
 @router.post('/job-files', status_code=201)

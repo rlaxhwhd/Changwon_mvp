@@ -48,6 +48,13 @@ class FakeDeep:
             topics = [{**t, 'id': str(uuid.uuid4())} for t in payload.pop('topic', [])]
             self.covers[cover_id] = {**payload, 'id': cover_id, 'topic': topics}
             return httpx.Response(201, json=self.covers[cover_id])
+        if path == 'covers':
+            return httpx.Response(200, json=[{'id': c['id'], 'consulting': 0, 'badge_pen': bool(c.get('evaluations'))}
+                                             for c in self.covers.values()])
+        if path.startswith('evaluations/'):
+            found = next((e for c in self.covers.values() for e in c.get('evaluations', [])
+                          if e['evaluation_id'] == path.split('/')[1]), None)
+            return httpx.Response(200, json=found) if found else httpx.Response(404, json={'detail': 'not found'})
         cover_id = path.split('/')[1]
         cover = self.covers.get(cover_id)
         if cover is None:
@@ -68,13 +75,20 @@ class FakeDeep:
             body = (payload['text'] + ' ' if payload['text'] else '') + 'AI가 쓴 문장'
             topic['body'] = body if payload.get('mode', 'append') == 'append' else 'AI가 쓴 문장'
             return httpx.Response(201, json={'generated': 'AI가 쓴 문장', 'saved': True, 'topic': topic})
+        if path.endswith('/evaluations') and request.method == 'GET':
+            # 최신순. stale = 평가 뒤 본문이 바뀌었다.
+            return httpx.Response(200, json={'cover_id': cover_id, 'results': [
+                {'evaluation_id': e['evaluation_id'], 'created': e['created'], 'stale': e['body'] != cover['topic'][0]['body']}
+                for e in reversed(cover.get('evaluations', []))]})
         if path.endswith('/evaluations'):
-            return httpx.Response(201, json={
+            evaluation = {
                 'evaluation_id': str(uuid.uuid4()), 'cover_id': cover_id, 'cached': False, 'created': '2026-11-13',
                 'consult': {'consult_score': 72, 'spellcheck_score': 95, 'detector': 81},
                 'contents': [{'order': 0, 'paragraph': cover['topic'][0]['body'], 'topic_id': cover['topic'][0]['id'],
                               'consult_content': '<para>원문 구절<span tag="neg">구체적 수치가 없습니다.</span></para>'
-                                                 '<para>좋은 구절<span tag="pos">경험이 직무와 맞습니다.</span></para>'}]})
+                                                 '<para>좋은 구절<span tag="pos">경험이 직무와 맞습니다.</span></para>'}]}
+            cover.setdefault('evaluations', []).append({**evaluation, 'body': cover['topic'][0]['body']})
+            return httpx.Response(201, json=evaluation)
         raise AssertionError(path)
 
 
@@ -239,12 +253,38 @@ def test_evaluation_is_returned_but_not_stored(client, fake):
         assert conn.execute(count, (resume['id'],)).fetchone()['n'] == before
 
 
+def test_home_marks_only_evaluated_resumes_and_shows_their_last_result(client, fake):
+    evaluated, fresh = create(client, content='평가한 본문'), create(client, content='아직 평가 안 함')
+    client.post(f"/api/v1/job-resumes/{evaluated['id']}/evaluation", headers=headers('chaewon'), json={})
+    status = client.get('/api/v1/job-resume-evaluations', headers=headers('chaewon'))
+    assert status.status_code == 200, status.text
+    assert set(status.json()['items']) == {evaluated['id']}
+    calls = len(fake.calls)
+    last = client.get(f"/api/v1/job-resumes/{evaluated['id']}/evaluation", headers=headers('chaewon'))
+    assert last.status_code == 200, last.text
+    assert last.json()['scores'] == {'consult': 72, 'spellcheck': 95, 'human': 81} and last.json()['stale'] is False
+    assert not [c for c in fake.calls[calls:] if c[0] == 'POST'], '지난 결과 보기가 새 평가를 실행했다'
+    assert client.get(f"/api/v1/job-resumes/{fresh['id']}/evaluation", headers=headers('chaewon')).status_code == 404
+
+
+def test_last_result_is_marked_stale_after_the_body_changes(client, fake):
+    resume = create(client, content='평가한 본문')
+    client.post(f"/api/v1/job-resumes/{resume['id']}/evaluation", headers=headers('chaewon'), json={})
+    changed = client.patch('/api/v1/job-resumes/' + resume['id'], headers=headers('chaewon'),
+                           json={'title': 'Deep 연동 자소서', 'categoryCode': 'MOTIVE', 'content': '고친 본문',
+                                 'jobType': '경영·사무·금융', 'expectedVersion': resume['version']})
+    assert changed.status_code == 200, changed.text
+    assert client.get(f"/api/v1/job-resumes/{resume['id']}/evaluation", headers=headers('chaewon')).json()['stale'] is True
+
+
 def test_others_and_staff_cannot_use_deep_actions(client, fake):
     resume = create(client)
     assert client.post(f"/api/v1/job-resumes/{resume['id']}/evaluation", headers=headers('changwon'),
                        json={}).status_code == 404
     assert client.post(f"/api/v1/job-resumes/{resume['id']}/evaluation", headers=headers('career_kim'),
                        json={}).status_code == 403
+    assert client.get(f"/api/v1/job-resumes/{resume['id']}/evaluation", headers=headers('changwon')).status_code == 404
+    assert client.get('/api/v1/job-resume-evaluations', headers=headers('career_kim')).status_code == 403
 
 
 def test_ai_actions_need_configuration(client, monkeypatch):

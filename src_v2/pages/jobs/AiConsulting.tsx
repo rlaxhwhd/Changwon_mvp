@@ -1,6 +1,6 @@
-import { useState, useSyncExternalStore } from 'react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { evaluateResume, getAllResumes, RESUME_EVENT, type ResumeEvaluation } from './resumeMock'
+import { evaluateResume, getAllResumes, getLastEvaluation, RESUME_EVENT, type ResumeEvaluation } from './resumeMock'
 import './AiConsulting.css'
 import './JobsWorkspace.css'
 import { usePageHead } from '../../components/PageCrumb'
@@ -30,6 +30,22 @@ export default function AiConsulting() {
   const [evaluating, setEvaluating] = useState(false)
   const [evaluation, setEvaluation] = useState<ResumeEvaluation | null>(null)
   const [error, setError] = useState('')
+  // 자소서 홈 「컨설팅 보기」(view=last) — 새로 평가하지 않고 지난 결과를 불러온다(시간당 횟수를 쓰지 않음).
+  // 처음 들어올 때 한 번만 정한다 — 「다른 자소서 평가」로 고른 자소서는 새로 평가한다.
+  const [lastId] = useState(() => (params.get('view') === 'last' ? selectedId : null))
+  const [loadingLast, setLoadingLast] = useState(lastId !== null)
+
+  useEffect(() => {
+    if (!lastId) return
+    let alive = true
+    getLastEvaluation(lastId)
+      .then(result => { if (alive) setEvaluation(result) })
+      .catch((cause: unknown) => {
+        if (alive) setError(cause instanceof Error ? cause.message : '지난 컨설팅 결과를 불러오지 못했습니다.')
+      })
+      .finally(() => { if (alive) setLoadingLast(false) })
+    return () => { alive = false }
+  }, [lastId])
 
   const selected = resumes.find(resume => resume.id === selectedId)
 
@@ -37,6 +53,7 @@ export default function AiConsulting() {
   const startEval = async (force = false) => {
     if (!selected || evaluating) return
     setEvaluating(true)
+    setEvaluation(null)
     setError('')
     try {
       setEvaluation(await evaluateResume(selected.id, force))
@@ -64,7 +81,7 @@ export default function AiConsulting() {
       {error && <p className="ac-preview-notice" role="alert">{error}</p>}
 
       {/* ── 자소서 선택 ── */}
-      {!evaluation && !evaluating && (
+      {!evaluation && !evaluating && !loadingLast && (
         <div className="ac-card">
           <h2 className="ac-card-title">컨설팅 받을 자소서 선택</h2>
           <p className="ac-card-desc">평가를 진행할 자소서를 하나 선택해 주세요.</p>
@@ -114,6 +131,13 @@ export default function AiConsulting() {
         </div>
       )}
 
+      {loadingLast && (
+        <div className="ac-card ac-loading">
+          <div className="ac-spinner" />
+          <p>지난 컨설팅 결과를 불러오고 있습니다.</p>
+        </div>
+      )}
+
       {/* ── 평가 중 ── */}
       {evaluating && (
         <div className="ac-card ac-loading">
@@ -132,6 +156,11 @@ export default function AiConsulting() {
           {evaluation.cached && (
             <p className="ac-card-desc">내용이 바뀌지 않아 이전 평가 결과를 보여 드립니다.</p>
           )}
+          {evaluation.stale && (
+            <p className="ac-preview-notice" role="status">
+              이 결과를 받은 뒤 자소서를 고쳤습니다. 지금 본문으로 평가하려면 「다시 평가」를 눌러 주세요.
+            </p>
+          )}
 
           <div className="ac-summary">
             <div>
@@ -146,6 +175,10 @@ export default function AiConsulting() {
               <span className="ac-summary-label">카테고리</span>
               <span className="ac-summary-value">{selected.categoryLabel}</span>
             </div>
+            {evaluation.createdAt && <div>
+              <span className="ac-summary-label">평가일</span>
+              <span className="ac-summary-value">{evaluation.createdAt.slice(0, 10)}</span>
+            </div>}
           </div>
 
           <div className="ac-result">
@@ -197,8 +230,8 @@ export default function AiConsulting() {
             <button className="ac-btn-ghost" onClick={resetEval}>
               <i className="fa-solid fa-arrow-left" /> 다른 자소서 평가
             </button>
-            {evaluation.cached && (
-              <button className="ac-btn-ghost" onClick={() => void startEval(true)}>
+            {(evaluation.cached || evaluation.stale !== undefined) && (
+              <button className="ac-btn-ghost" disabled={evaluating} onClick={() => void startEval(true)}>
                 <i className="fa-solid fa-rotate" /> 다시 평가
               </button>
             )}

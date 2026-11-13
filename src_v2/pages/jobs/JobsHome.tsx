@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Modal from '../../components/Modal'
-import { deleteUserResume, getAllResumes, type SavedResume } from './resumeMock'
+import { deleteUserResume, getAllResumes, loadEvaluatedResumeIds, type SavedResume } from './resumeMock'
 import { useJobStore } from '../../../shared/useJobStore'
 import './JobsHome.css'
 import './JobsWorkspace.css'
@@ -16,6 +16,27 @@ export default function JobsHome() {
   const [, refresh] = useState(0)
   const resumes = getAllResumes()
   const [viewResume, setViewResume] = useState<SavedResume | null>(null)
+  // 컨설팅 받은 자소서 id. null = 아직 모름(조회 중·실패) — 그동안은 「컨설팅 하기」로 둔다.
+  const [evaluated, setEvaluated] = useState<Set<string> | null>(null)
+  const [evaluatedError, setEvaluatedError] = useState('')
+  // Deep 에 올라간 자소서가 있을 때만 묻는다. 목록이 바뀌면(삭제·새 저장) 다시 묻는다.
+  const linkedKey = resumes.filter(resume => resume.deepLinked).map(resume => resume.id).join(',')
+
+  useEffect(() => {
+    if (!linkedKey) { setEvaluated(new Set()); return }
+    let alive = true
+    loadEvaluatedResumeIds()
+      .then(ids => { if (alive) { setEvaluated(ids); setEvaluatedError('') } })
+      .catch((cause: unknown) => {
+        if (alive) setEvaluatedError(cause instanceof Error ? cause.message : '컨설팅 이력을 불러오지 못했습니다.')
+      })
+    return () => { alive = false }
+  }, [linkedKey])
+
+  const openConsulting = (resume: SavedResume) => {
+    const view = evaluated?.has(resume.id)
+    navigate(`/jobs/home/consulting?resumeId=${encodeURIComponent(resume.id)}${view ? '&view=last' : ''}`)
+  }
 
   const removeResume = (id: string) => {
     void deleteUserResume(id).then(() => refresh(x => x + 1)).catch(() => { /* 서버 상태 유지 */ })
@@ -29,6 +50,7 @@ export default function JobsHome() {
         <h2><i className="fa-solid fa-folder-open" /> 작성된 자소서</h2>
         <p>총 {resumes.length}개의 자소서가 저장되어 있습니다.</p>
       </div>
+      {evaluatedError && <p className="jh-notice" role="alert">컨설팅 이력을 불러오지 못했습니다. {evaluatedError}</p>}
 
       {resumes.length === 0 ? (
         <div className="jh-empty">
@@ -64,6 +86,14 @@ export default function JobsHome() {
                 <span><i className="fa-solid fa-calendar" /> {resume.createdAt.slice(0, 10)}</span>
                 <span>{resume.content.length}자</span>
               </div>
+              <button
+                type="button"
+                className={`jh-resume-consult${evaluated?.has(resume.id) ? ' is-view' : ''}`}
+                onClick={e => { e.stopPropagation(); openConsulting(resume) }}
+              >
+                <i className={`fa-solid ${evaluated?.has(resume.id) ? 'fa-clipboard-check' : 'fa-magnifying-glass-chart'}`} />
+                {evaluated?.has(resume.id) ? '컨설팅 보기' : '컨설팅 하기'}
+              </button>
             </article>
           ))}
         </div>

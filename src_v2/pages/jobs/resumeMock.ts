@@ -53,6 +53,8 @@ export interface DeepExtras {
 export interface ResumeEvaluation {
   evaluationId: string | null
   cached: boolean
+  /** 지난 결과 보기에서만 온다 — 평가 뒤 본문이 바뀌었다. */
+  stale?: boolean
   createdAt: string | null
   scores: { consult: number | null; spellcheck: number | null; human: number | null }
   items: {
@@ -128,6 +130,16 @@ export async function requestAiDraft(id: string, extras: DeepExtras, prompt: str
   })
   await loadResumes()
   return result
+}
+
+/** 컨설팅을 받은 적 있는 본인 자소서 id — 자소서 홈 카드의 「컨설팅 보기/하기」. */
+export async function loadEvaluatedResumeIds(): Promise<Set<string>> {
+  return new Set((await api<{ items: string[] }>('/job-resume-evaluations')).items)
+}
+
+/** 가장 최근 컨설팅 결과. 새로 평가하지 않는다. stale = 평가 뒤 본문이 바뀌었다. */
+export async function getLastEvaluation(id: string): Promise<ResumeEvaluation> {
+  return api<ResumeEvaluation>(`/job-resumes/${encodeURIComponent(id)}/evaluation`)
 }
 
 /** DeepResume AI 평가. 결과는 Deep 평가본이 정본이라 우리 DB에 저장하지 않는다. */
