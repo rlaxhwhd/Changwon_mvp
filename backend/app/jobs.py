@@ -1575,12 +1575,20 @@ def last_evaluation(resume_id: str, user=Depends(deep_principal)):
 
 
 # ── AI 인터뷰 — Deep 면접 IFRAME. 영상·질문·평가는 Deep 에만 있다(2026-11-13) ─────────
-# 우리 DB에는 동의와 세션 기록만 남긴다(dc.job_interview_session, 164).
+# 우리 DB에는 동의와 세션 기록만 남긴다(dc.job_interview_consent 165, dc.job_interview_session 164).
 
 # 동의서 원문은 화면(src_v2/pages/jobs/AiInterview.tsx INTERVIEW_CONSENT)이 소유한다.
 # 문구를 바꾸면 양쪽 version 을 함께 올린다 — 서버는 아는 버전·모든 항목 「예」만 받는다.
+# 동의는 학생·버전당 한 번만 받는다(2026-11-16 사용자 지시). 버전이 오르면 다시 받는다.
 INTERVIEW_CONSENT = {'version': '2026-11-16', 'items': ('privacy', 'media', 'provision')}
 ORIGIN_PATTERN = r'^https?://[a-z0-9.-]+(:[0-9]{1,5})?$'
+INTERVIEW_CONSENT_FIND = 'SELECT * FROM dc.job_interview_consent WHERE student_uid=%s AND consent_version=%s'
+
+
+class InterviewConsentBody(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    consentVersion: str = Field(min_length=1, max_length=40)
+    consentAnswers: dict[str, str]
 
 
 class InterviewBody(BaseModel):
@@ -1590,8 +1598,6 @@ class InterviewBody(BaseModel):
     industry: str = Field(min_length=1, max_length=15)
     companyType: str = Field(min_length=1, max_length=15)
     experience: str = Field(min_length=1, max_length=15)
-    consentVersion: str = Field(min_length=1, max_length=40)
-    consentAnswers: dict[str, str]
 
 
 class InterviewFinishBody(BaseModel):
@@ -1607,22 +1613,39 @@ def interview_dto(row):
 
 @router.get('/job-interviews')
 def list_interviews(user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    """본인 AI 인터뷰 이력(최신순). 결과 내용은 Deep 에 있다."""
+    """본인 AI 인터뷰 이력(최신순)과 현재 동의서에 동의했는지. 결과 내용은 Deep 에 있다."""
     if user['kind'] != 'STUDENT':
         raise HTTPException(403, '학생 본인만 조회할 수 있습니다.')
     rows = conn.execute("""SELECT * FROM dc.job_interview_session WHERE student_uid=%s
       ORDER BY created_at DESC LIMIT 50""", (user['intg_uid'],)).fetchall()
-    return {'items': [interview_dto(row) for row in rows]}
+    consent = conn.execute(INTERVIEW_CONSENT_FIND, (user['intg_uid'], INTERVIEW_CONSENT['version'])).fetchone()
+    return {'items': [interview_dto(row) for row in rows], 'consented': consent is not None}
+
+
+@router.post('/job-interview-consent', status_code=201)
+def agree_interview_consent(body: InterviewConsentBody, user=Depends(principal, scope='function'),
+                            conn=Depends(connection, scope='function')):
+    """개인정보 동의를 기록한다. 학생·동의서 버전당 한 번 — 이미 동의했으면 처음 기록을 그대로 둔다."""
+    if user['kind'] != 'STUDENT':
+        raise HTTPException(403, '학생 본인만 동의할 수 있습니다.')
+    if (body.consentVersion != INTERVIEW_CONSENT['version']
+            or set(body.consentAnswers) != set(INTERVIEW_CONSENT['items'])
+            or any(answer != 'yes' for answer in body.consentAnswers.values())):
+        raise HTTPException(422, '개인정보 수집·이용 동의서의 모든 항목에 동의해야 AI 인터뷰를 시작할 수 있습니다.')
+    conn.execute("""INSERT INTO dc.job_interview_consent(student_uid,consent_version,consent_answers)
+      VALUES(%s,%s,%s) ON CONFLICT (student_uid,consent_version) DO NOTHING""",
+      (user['intg_uid'], body.consentVersion, Jsonb(body.consentAnswers)))
+    return {'consented': True}
 
 
 @router.post('/job-interviews', status_code=201)
 def start_interview(body: InterviewBody, request: Request, user=Depends(deep_principal)):
     """동의를 확인하고 Deep 면접 세션을 만든다. 돌려주는 iframeUrl 의 티켓은 60초·1회용이다."""
     require_deep(user)
-    if (body.consentVersion != INTERVIEW_CONSENT['version']
-            or set(body.consentAnswers) != set(INTERVIEW_CONSENT['items'])
-            or any(answer != 'yes' for answer in body.consentAnswers.values())):
-        raise HTTPException(422, '개인정보 수집·이용 동의서의 모든 항목에 동의해야 AI 인터뷰를 시작할 수 있습니다.')
+    with pool.connection() as conn:
+        consent = conn.execute(INTERVIEW_CONSENT_FIND, (user['intg_uid'], INTERVIEW_CONSENT['version'])).fetchone()
+    if not consent:
+        raise HTTPException(422, '개인정보 수집·이용 동의서에 동의해야 AI 인터뷰를 시작할 수 있습니다.')
     # iframe 을 넣는 사이트 주소. 브라우저가 붙이는 Origin 헤더를 쓰고, 허용 여부는 Deep 이 판정한다.
     origin = (request.headers.get('origin') or '').lower()
     if not re.fullmatch(ORIGIN_PATTERN, origin):
@@ -1645,9 +1668,9 @@ def start_interview(body: InterviewBody, request: Request, user=Depends(deep_pri
                 'version': row['version']}
     with pool.connection() as conn:
         conn.execute("""INSERT INTO dc.job_interview_session(id,student_uid,resume_id,resume_snapshot,interview_info,
-          consent_version,consent_answers,deep_session_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)""",
-          (interview_id, user['intg_uid'], row['id'], Jsonb(snapshot), Jsonb(info), body.consentVersion,
-           Jsonb(body.consentAnswers), session_id))
+          consent_version,consent_answers,agreed_at,deep_session_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+          (interview_id, user['intg_uid'], row['id'], Jsonb(snapshot), Jsonb(info), consent['consent_version'],
+           Jsonb(consent['consent_answers']), consent['agreed_at'], session_id))
     return {'id': interview_id, 'iframeUrl': iframe_url}
 
 

@@ -299,10 +299,36 @@ def test_last_result_is_marked_stale_after_the_body_changes(client, fake):
 CONSENT = {'consentVersion': '2026-11-16', 'consentAnswers': {'privacy': 'yes', 'media': 'yes', 'provision': 'yes'}}
 
 
-def start_interview(client, resume, origin='https://dreamcatch.test', **change):
-    body = {'resumeId': resume['id'], 'industry': '서비스업', 'companyType': '중소기업', 'experience': '신입',
-            **CONSENT, **change}
-    return client.post('/api/v1/job-interviews', headers={**headers('chaewon'), 'Origin': origin}, json=body)
+def agree(client, who='chaewon', **change):
+    return client.post('/api/v1/job-interview-consent', headers=headers(who), json={**CONSENT, **change})
+
+
+def start_interview(client, resume, origin='https://dreamcatch.test', who='chaewon', consent=True):
+    if consent:
+        assert agree(client, who).status_code == 201
+    body = {'resumeId': resume['id'], 'industry': '서비스업', 'companyType': '중소기업', 'experience': '신입'}
+    return client.post('/api/v1/job-interviews', headers={**headers(who), 'Origin': origin}, json=body)
+
+
+def test_interview_consent_is_asked_once_per_version(client, fake):
+    # changwon 은 이 테스트 묶음에서 동의하지 않는 학생이다(동의 기록은 지울 수 없어 테스트 DB에 남는다).
+    assert client.get('/api/v1/job-interviews', headers=headers('changwon')).json()['consented'] is False
+    assert agree(client, consentAnswers={'privacy': 'yes', 'media': 'no', 'provision': 'yes'}).status_code == 422
+    assert agree(client, consentAnswers={'privacy': 'yes'}).status_code == 422
+    assert agree(client, consentVersion='2020-01-01').status_code == 422
+    assert agree(client).status_code == 201
+    find = 'SELECT student_uid, consent_version, agreed_at FROM dc.job_interview_consent ORDER BY 1, 2'
+    with pool.connection() as conn:
+        first = conn.execute(find).fetchall()
+    assert agree(client).status_code == 201, '다시 동의해도 거부하지 않는다'
+    with pool.connection() as conn:
+        again = conn.execute(find).fetchall()
+    assert first and again == first, '두 번째 동의가 처음 기록을 바꾸거나 행을 늘렸다'
+    assert client.get('/api/v1/job-interviews', headers=headers('chaewon')).json()['consented'] is True
+    # 한 번 동의했으면 다음 면접은 동의 없이 시작된다.
+    resume = create(client, content='면접에 쓸 본문')
+    assert start_interview(client, resume, consent=False).status_code == 201
+    assert start_interview(client, resume, consent=False).status_code == 201
 
 
 def test_interview_starts_with_consent_and_records_the_session(client, fake):
@@ -316,17 +342,19 @@ def test_interview_starts_with_consent_and_records_the_session(client, fake):
                                       'career': '신입', 'companyName': '엔잡', 'supportDepartment': '인사'}
     with pool.connection() as conn:
         row = conn.execute('SELECT * FROM dc.job_interview_session WHERE id=%s', (started.json()['id'],)).fetchone()
+        consent = conn.execute('SELECT * FROM dc.job_interview_consent WHERE student_uid=%s AND consent_version=%s',
+                               (row['student_uid'], row['consent_version'])).fetchone()
     assert row['consent_version'] == '2026-11-16' and row['consent_answers'] == CONSENT['consentAnswers']
+    assert row['agreed_at'] == consent['agreed_at'], '세션의 동의 시각이 실제 동의 기록과 다르다'
     assert row['resume_snapshot']['title'] == resume['title'] and row['finished_at'] is None
     listed = client.get('/api/v1/job-interviews', headers=headers('chaewon')).json()['items']
     assert listed[0]['id'] == started.json()['id'] and listed[0]['finishedAt'] is None
 
 
-def test_interview_is_refused_without_full_consent_or_allowed_origin(client, fake):
+def test_interview_is_refused_without_consent_or_allowed_origin(client, fake):
     resume = create(client, content='면접에 쓸 본문')
-    partial = {'privacy': 'yes', 'media': 'no', 'provision': 'yes'}
-    assert start_interview(client, resume, consentAnswers=partial).status_code == 422
-    assert start_interview(client, resume, consentVersion='2020-01-01').status_code == 422
+    # 동의한 적 없는 학생은 Deep 을 부르기 전에 막힌다.
+    assert start_interview(client, resume, who='changwon', consent=False).status_code == 422
     assert not fake.sessions, '동의 없이 Deep 면접 세션을 만들었다'
     assert start_interview(client, resume, origin='https://evil.test').status_code == 503
     assert start_interview(client, create(client, content='')).status_code == 422
@@ -344,13 +372,15 @@ def test_interview_finish_is_recorded_once_and_only_for_own_deep_result(client, 
     def finish(interview, result, who='chaewon'):
         return client.post(f'/api/v1/job-interviews/{interview}/finish', headers=headers(who), json={'resultId': result})
 
+    # 결과 id 는 unique 로 남는다 — 테스트 DB에 지난 실행 기록이 있어도 겹치지 않게 실행마다 새로 만든다.
+    r1, r2 = f'r-{uuid.uuid4().hex}', f'r-{uuid.uuid4().hex}'
     assert finish(first, 'r-unknown').status_code == 422, 'Deep 에 없는 결과를 받아들였다'
-    fake.results += ['r-1', 'r-2']
-    assert finish(first, 'r-1', who='changwon').status_code == 404
-    done = finish(first, 'r-1')
+    fake.results += [r1, r2]
+    assert finish(first, r1, who='changwon').status_code == 404
+    done = finish(first, r1)
     assert done.status_code == 200 and done.json()['finishedAt']
-    assert finish(first, 'r-2').json()['finishedAt'] == done.json()['finishedAt'], '종료 기록이 다시 쓰였다'
-    assert finish(second, 'r-1').status_code == 409, '한 면접 결과가 두 기록에 붙었다'
+    assert finish(first, r2).json()['finishedAt'] == done.json()['finishedAt'], '종료 기록이 다시 쓰였다'
+    assert finish(second, r1).status_code == 409, '한 면접 결과가 두 기록에 붙었다'
 
 
 def test_others_and_staff_cannot_use_deep_actions(client, fake):
