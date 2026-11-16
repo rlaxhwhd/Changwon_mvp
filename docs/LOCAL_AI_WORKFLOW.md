@@ -1,5 +1,19 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-16 DeepResume 자소서·인터뷰 API/웹/162~164 서버 배포
+
+- origin/dev=bf58212까지 확인. 794055e(자소서 저장·Deep 사본 동기화·AI 작성/평가), b472319(필수 포함 내용 기반 초안), 82504e6(과거 컨설팅), 84a2167(질문 문장·기존 결과 진입), 831090b(자소서/인터뷰 선택·동의·장치 확인·면접 iframe), 4b06e52·bf58212 문서 정리 포함. git archive bf58212의 깨끗한 소스만 빌드했고 미커밋 타 작업은 제외했다. 최종 fetch에서 추가 기능 커밋 없음.
+- Astra 162 검토 문서 .ai/handoff-db/0012-job-resume-deep-link/architecture-review.md의 조건부 승인을 읽고 짧은 DB 커넥션·외부 호출 분리·resume_lock·동시 수정 시 동기화 표시 해제 구현을 확인했다. 163·164 승인은 각각 84a2167·831090b 커밋 본문에 명시돼 있고 별도 검토 문서는 발견하지 못했다. 적용된 SQL은 수정하지 않았고 중복 리뷰는 실행하지 않았다.
+- 격리 DB dc_regression_20261116030209_5d0698_test에서 143 passed, 584 deselected, 기존 경고 3개(29.72초). Deep 장애·기존 회원 거부·소유권·버전 경합·초안/평가·질문 문장·동의 누락/허용 origin·인터뷰 결과 소유권·종료 멱등성·기존 지원/포트폴리오 회귀 포함. 실제 Deep 서버를 호출하지 않는 가짜 외부 API 테스트다. TypeScript/Vite 통과, 기존 native-config·큰 번들 경고 및 npm 감사 취약점 19개 유지.
+- API는 backend/Dockerfile.company 전체 app/migrations + 기존 CentOS 기반 c5-portfolio-20261109, 웹은 기존 growth-colors-20261110 기반에 검증 HTML을 복사했다. runtime requirements/RAG 소스 변경 없음. npm run docker:up -- --no-build 완료, 로컬 백업 local-before-migrate-20261116030430069.dump. 커밋/로컬 실행/회사 API 파일 해시 일치, 마이그레이션 164개 체크섬 일치. 로컬 DB 복원 참조 dc_release_deep_20261116_ref_test 검증.
+- 서버 백업·Compose 원본·이미지·감사 자료는 /opt/dreamcatch/ai/deep-20261116/. release.tar 1087241216B SHA256=656bbfffb2390232d27de4e7ababf1db82322063cb3c9b6b07fec92a4a61d3b7, 전송 검증 일치. 서버 백업을 dc_deploy_deep_20261116_test에 복원한 뒤 162~164 적용·전체 스키마 일치·데이터 보존을 검증하고 운영에 적용했다. 로컬 데이터를 서버에 복원하지 않았다.
+- 162는 job_resume nullable 연결 컬럼 3개와 CHECK/부분 UNIQUE를 추가한다. 원래 자소서 전체 값 해시는 새 컬럼을 제외하고 동일, 새 연결은 모두 NULL. 163은 JOB_RESUME_CATEGORY 22개 기존 payload에 question만 추가하고 version+1·updated_at 갱신, metadata_revision 정확히 +1. 각 코드의 나머지 값 및 다른 코드 전체 해시는 동일하다. 164는 인터뷰 동의·스냅샷·세션/결과 ID용 빈 테이블, 소유자/날짜 인덱스·세션/결과 UNIQUE·1회 종료 갱신 트리거와 앱 권한을 추가한다. 답변 영상/평가는 저장하지 않는다. 리허설 및 운영 적용 직전/직후 모두 이 변경과 마이그레이션 이력 3건 추가 외 다른 업무 테이블 전체 해시·건수 동일. 화면 검증용 재로그인은 운영 직전 감사 이전에 수행했다.
+- 최종 API/web=deep-20261116 healthy, RAG=ai-jobs-20261029 유지, nginx 정상. 로컬/서버 app·164개 적용 마이그레이션·전체 스키마 MATCH(11-05에 명시한 세 가지 직렬화 표현 차이만 정규화). HTML SHA256 admin=b6c0f6cbc413f426913e548d40fbb63ef386990a35c673766c291ad5ecd8369b, v2=bc3ce44fe6b670f24d766b5f98e19facf0606c335ced76eb856ac453e9bd48fe. 복구는 저장된 Compose와 이전 API=c5-portfolio-20261109·웹=growth-colors-20261110을 사용하고 추가된 컬럼·연결·동의/세션 기록·문항과 적용 이력은 보존한다. 서버 실행 상태 유지.
+- 서버에는 Deep 서비스 키가 없음을 확인했다. 환경별 비밀 유지 원칙에 따라 로컬 키를 무단 복사하지 않았다. 재사용/테스트 API 사용 여부를 사용자에게 비동기 질문했으나 이 배포 검증 시점까지 답변이 없어 기존 설정으로 코드·DB 배포를 완료했다. 런타임 deepEnabled=false, URL=https://testapi.deepresume.kr, schoolCode=changwon.ac.kr. AI 생성·평가·면접 시작은 키 설정 후에만 동작한다. iframe 실제 시작은 외부 허용 origin 등록 여부도 추가 확인이 필요하다. 로컬 .env.local 점검 출력에서 잘못된 키 이름 추출로 연동 키 값이 포함되는 실수가 있어 사용자에게 알렸다. 비밀을 기록/커밋하지 않았으며 키 교체와 서버용 설정 확인이 필요하다.
+- EgoLite 0.6.3.14/가이드 2.2.1, 공간 3에서 로컬과 서버 실제 학생 화면의 자소서/인터뷰 허브·자소서 홈·작성 1단계·인터뷰 준비 화면을 확인했다. 로컬 인터뷰 API job-resumes 14ms/1361B, job-interviews 26ms/312B. 서버 job-resumes 10ms/327B 및 작성 화면 9ms/327B 단회 관측, 모든 외부 AI 호출·가입·문서 저장·평가·녹화·면접 세션 생성은 하지 않았다. 인터뷰 원본 스크린샷(로컬/서버)과 서버 작성 화면을 촬영하고 열어 확인했다. 정상 확인 구간 HTTP 오류·Runtime 예외 없음. 초기에 허브 이동을 a태그로 오인, 작성 1단계에서 textarea를 기다린 자동화 선택자 오류는 원본 snapshot을 확인해 실제 버튼/지원정보 입력으로 교정했다. 앱 오류로 집계하지 않는다. 인증서 임시 허용 원복·작업 공간 종료 완료. 실제 AI/장치 권한/영상/iframe/결과 쓰기는 미검증이며 관련 계약은 위 격리 테스트 범위다.
+- Graft 자동 갱신 후 구조 그래프 OK, saved_with_sync 호출자가 create_resume/update_resume임을 확인했다. 앱 코드를 새로 수정하지 않았다. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다. 기존 첫 로드맵 생성 취소 DELETE 권한 문제는 이번 범위 밖이다.
+
+
 ## 2026-11-10 내 성장 대기 항목 축 색상 웹 배포
 
 - origin/dev 39855be까지 확인, f3dd777·c65fe05·39855be의 최종 GrowthHome.css를 깨끗한 git archive 소스로 빌드했다. 로드맵 축 칸과 같은 color-mix(axis-soft 42%, color-bg) 배경, 축 라벨은 축 본색, 항목 제목은 foreground 색이다. 미커밋 타 작업은 제외했다. API·DB·마이그레이션 변경은 없다.
