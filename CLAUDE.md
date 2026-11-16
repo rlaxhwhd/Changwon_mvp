@@ -1,12 +1,6 @@
 # CLAUDE.md
 
-## Atlas 공유 기억 (2026-10-08 확정)
 
-- 작업 시작 시 Atlas `memory_briefing`을 호출하고, 관련 과거 결정·실패한 접근·미완료 사항은 `memory_search`와 `memory_get`으로 확인한다. 중단 후 재개하거나 장시간 작업한 뒤에는 `memory_changes`로 다른 세션의 변경을 확인한다.
-- 중요한 결정·새로운 사실·실패 원인·구조 이해는 작업 중에도 `memory_remember`로 저장한다. 의미 있는 작업을 마친 최종 응답 전에는 새로 확정된 내용과 검증 결과, 후속 작업에 영향을 주는 미해결 제약·다음 확인 사항이 저장됐는지 확인한다. 단순 계획·파일 변경 목록은 Atlas 자동 기록에 맡기고 중복 저장하지 않는다.
-- 기존 기억을 먼저 조회하고 같은 주제는 동일한 `key`로 갱신한다. 변경된 결정은 대체한 이전 결정과 이유를 명시하며, 날짜·관련 파일·커밋·원본 세션 등 확인 가능한 근거를 남긴다. 검증하지 않은 완료·성능·배포 상태를 확정 사실로 저장하지 않는다.
-- 현재 사용자 지시와 최신 원본 코드·확정 문서를 우선한다. 과거 기억과 충돌하면 원본을 확인하고, 확인되지 않은 내용은 불확실하다고 표시한다. 비밀정보·인증정보·학생 개인정보는 저장하지 않는다.
-- 공유 기억 도구가 없거나 호출에 실패하면 저장·조회했다고 말하지 말고 최종 응답에 미수행 범위를 알린다. 공유 기억을 별도 기억 파일로 복제하지 않으며, 인계 문서는 사용자가 요청한 경우에만 만든다.
 
 > **모든 세션 공통 작업 원칙:** 작업 전에 루트 [AGENTS.md](AGENTS.md)를 읽고 적용한다. 불확실한 사항·분기 질문, 브라우저 네트워크·콘솔 검증, DB 스킬·성능 리뷰에 대한 사용자 확정 지침의 정본이다.
 
@@ -16,10 +10,12 @@
 >
 > **★ API·DB 작업은 ego-browser 로 측정하며 설계한다** <span>(2026-10-21 사용자 확정 · 2026-10-26 Chrome → ego-browser)</span>: 구현 전에 대상 화면의 네트워크를 열어 불필요·중복 API 호출과 응답 시간·크기를 확인하고 그 근거로 설계한다. 구현 후 로컬 Docker에서 같은 동작을 재측정해 비교한다. 정본은 [AGENTS.md「2. 웹 검증」](AGENTS.md) — 도구는 아래 「웹 브라우징은 ego-browser」를 따른다.
 
+> **★ 로컬 반영·배포:** 로컬(Docker)에 반영하거나 CentOS 서버에 배포하기 전에 반드시 [`docs/LOCAL_AI_WORKFLOW.md`](docs/LOCAL_AI_WORKFLOW.md)를 **먼저 읽고 그 절차대로** 한다. 로컬 검증 → 배포 범위 판정 → 서버 반영 → 배포 후 기능 재검증의 정본이다. 로컬 DB와 서버 DB는 적용 이력이 **각각** 있다 — 이미지를 바꿔도 DB는 따라오지 않는다.
+
 국립창원대학교 역량개발관리시스템 **드림캐치(DREAMCATCH)** — 현행 운영 시스템의 **고도화** 프로젝트.
 React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 **뷰포트 — `src_v2/`(학생) 모바일 반응형 · `src_admin/`(교직원) 데스크톱 전용(min-width 1280px)** <span>(2026-09-08)</span>
-**백엔드(FastAPI) + PostgreSQL 구축이 2026-09-08 착수됐다** — 아직 붙지 않았다. 배선 검증용이며 설계는 `DB.md` §8-4.
+
 **프로세스 관련 지시사항이나 질문시 `/grilling` 스킬을 자동 호출한다** <span>(2026-09-07 — 옛 `.agents/skills/grill-me` 는 `.claude/skills/grilling` 으로 옮겨졌다)</span>
 > **이 문서는 "매번 지켜야 할 규칙"만 담는다. 찾아볼 사실은 아래 문서로 간다.**
 > 같은 내용을 여러 문서에 복사하지 않는다 — 한 사실은 한 문서에만 둔다.
@@ -64,6 +60,7 @@ React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 | DB 소유권 경계·이관 전제 | `DB.md` |
 | DB 전환 설계·구축 원안 대조 | **`spec_v1.md` 전체** + `DB.md` §8-3·§8-4·§9 |
 | 현행 근거 원문 | `docs/_analysis/` · `docs/DB_CURRENT.html` |
+| **로컬(Docker) 반영·CentOS 배포** | **`docs/LOCAL_AI_WORKFLOW.md`** — 배포 전에 먼저 읽는다 |
 | 아직 못 정한 것 | `DB.md` §9 **(미결 대장 — 여기 하나뿐)** |
 | 디자인 토큰 | `DESIGN.md` · `UI.md` (새 팔레트·폰트 생성 금지) |
 | 포털별 컨셉·사이트맵 원안 | `STU_README.md`(학생) · `Counsel_README.md`(교직원) |
@@ -130,10 +127,10 @@ React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 | **심리상담사가 신청 없이 남기는 상담 기록** | ✅ DB | `POST /counsel-records/psych` → `counsel_request(type=PSY, DONE, origin=PSY_RECORD)` + `counsel_record` — API 만 남고 화면 진입점은 없다(2026-10-21) |
 | **학생이 오프라인 심리검사 신청** | ✅ DB | `POST /counsel-requests` (type 심리 + `topicCode`=`PSYCH_TEST_KIND`) → 결과 `PUT /psych-tests/{id}` 작성 완료 시 신청 DONE + `counsel_event` COMPLETE (140) |
 | **추가 심리상담신청**(학생 게시글·상담사 확인·대리 등록) | ✅ DB | `dc.psych_extra_request` — 확인은 `confirmed_by/at` 1회, 작성 시점 학생 정보는 `snapshot` (140) |
+| **C-5(PHQ-9·GAD-7) 제출** | ✅ DB | `POST /diagnosis/c5` → `diagnosis_attempt/result(test_id=c5)` · 평균 ≥10 이면 같은 트랜잭션에서 `dc.psych_screening_referral` + 이벤트 + 심리상담사 전원 알림. 미만은 행 추가 없이 C-CORE 재검사 요청 권유 (160) |
 | 전담교수 배정·해제 | ✅ DB | `dc.advisor_assignment` — 활성 1건 부분 unique, 해제는 `released_at`. 교수 열람 범위(`staff_student_scope`)가 배정을 따라간다 |
 | 지도학생 독려 | ✅ DB | `dc.notification(source_kind=ADVISOR_NUDGE)` — 기록이 아니라 알림 |
 | 상담사가 공고 CRUD | ✅ DB | `dc.job_posting` (+ `job_posting_event`) |
-| **C-5(PHQ-9·GAD-7) 제출** | ✅ DB | `POST /diagnosis/c5` → `diagnosis_attempt/result(test_id=c5)` · 평균 ≥10 이면 같은 트랜잭션에서 `dc.psych_screening_referral` + 이벤트 + 심리상담사 전원 알림. 미만은 행 추가 없이 C-CORE 재검사 요청 권유 (160) |
 | **학생이 채용 지원** | ✅ DB | `dc.job_application` (+ `job_application_event`) |
 | **첨부파일 업로드** | ✅ DB+볼륨 | `dc.file_object` — 웹루트 밖 보관, API 가 권한 확인 후 스트리밍 |
 | **관리자가 역할별 메뉴 노출 변경**(/admin/system/menus) | ✅ DB | `PUT /system/auth-roles/{role}/menus` → `dc.menu_auth` 집합 치환 + `admin_event(entity=menu_auth)`. **GNB 노출은 두 SPA 모두 `/metadata` 메뉴만 본다** — navConfig 에 역할 필터를 다시 넣지 않는다(학생 메뉴는 `stu-*`, 089) |
@@ -166,10 +163,10 @@ React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 12. **재생성 금지.** 기존 코드를 재사용할 수 있으면 재사용한다. 같은 기능을 굳이 다시 만들지 않는다.
 13. **★ 순차 게이팅은 데이터층 단일 정책으로 판정한다.** 진단→상담→로드맵→역량강화→취업지원 순서를 화면마다 다시 판단하지 않는다. 잠긴 UI에는 **비활성 + 안내 + 다음 단계 링크**를 준다(빈 화면 금지). → `PROCESS.md` §2
 14. **자체 진단 채점·판정 엔진을 구현하지 않는다.** 우리 회사의 외부 검사 사이트가 확정한 진단 결과·6유형·결과표를 받아 사용한다. 임시 판정 로직을 만들지 않는다. → 위 「사용자 확정 — 심리상담과 외부 진단 결과 연계」(2026-09-11)
+    **유일한 예외: C-5(PHQ-9·GAD-7)** — 사이트 안에서 응시하고 서버가 합산·판정한다(2026-11-09 사용자 확정). → `docs/DIAGNOSIS_RESULT_CONTRACT.md`「C-5 취약요인 진단」
 
 ---
 
-    **유일한 예외: C-5(PHQ-9·GAD-7)** — 사이트 안에서 응시하고 서버가 합산·판정한다(2026-11-09 사용자 확정). → `docs/DIAGNOSIS_RESULT_CONTRACT.md`「C-5 취약요인 진단」
 ## 🛠 구현 규약 <span>(v2 = 실제 버전)</span>
 
 - **`src_v2/`(학생) · `src_admin/`(교직원)만 서비스 버전.** `src/`(v1)은 폐기 예정.
@@ -199,23 +196,6 @@ React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 
 ---
 
-## Skill routing
-
-When the user's request matches an available skill, ALWAYS invoke it using the Skill
-tool as your FIRST action. Do NOT answer directly, do NOT use other tools first.
-
-| 요청 | 스킬 |
-|---|---|
-| 드림캐치 화면·기능·DB 전환 | `dreamcatch-orchestrator` — Opus 팀장 → Astra 설계 리뷰 → Sol 구현 |
-| Bugs, errors, "why is this broken" | `investigate` |
-| Ship, deploy, PR | `ship` · `land-and-deploy` |
-| QA, test the site | `qa` |
-| Code review | `review` · `codex` |
-| Visual audit, design polish | `design-review` · `impeccable` |
-| Architecture review | `plan-eng-review` |
-| Code quality, health check | `health` |
-
-단순 질문·조회는 직접 응답 가능. **사용자가 "하네스 없이/가볍게"라고 하면 팀장이 직접 구현하되 설계 이탈은 `.ai/handoff-db/*/05-implementation.md` 에 남긴다.**
 
 ### 디자인 가드레일
 

@@ -58,3 +58,4 @@ backend/var/
 # Graft: regenerable local code graph and runtime state
 /graft/
 /.graft/
+.atlas/
