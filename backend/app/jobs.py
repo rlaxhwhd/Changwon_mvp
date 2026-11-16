@@ -17,6 +17,7 @@
 """
 import calendar
 import hashlib
+import re
 import threading
 from datetime import date, datetime, timedelta
 from uuid import uuid4
@@ -24,6 +25,7 @@ from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, Header, HTTPException, Path, Query, Request, Response
 from fastapi.encoders import jsonable_encoder
+from psycopg.errors import UniqueViolation
 from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -1569,6 +1571,113 @@ def last_evaluation(resume_id: str, user=Depends(deep_principal)):
         raise HTTPException(404, '컨설팅을 받은 적이 없는 자기소개서입니다.')
     result['stale'] = result['stale'] or row['deep_synced_version'] != row['version']
     return result
+
+
+
+# ── AI 인터뷰 — Deep 면접 IFRAME. 영상·질문·평가는 Deep 에만 있다(2026-11-13) ─────────
+# 우리 DB에는 동의와 세션 기록만 남긴다(dc.job_interview_session, 164).
+
+# 동의서 원문은 화면(src_v2/pages/jobs/AiInterview.tsx INTERVIEW_CONSENT)이 소유한다.
+# 문구를 바꾸면 양쪽 version 을 함께 올린다 — 서버는 아는 버전·모든 항목 「예」만 받는다.
+INTERVIEW_CONSENT = {'version': '2026-11-16', 'items': ('privacy', 'media', 'provision')}
+ORIGIN_PATTERN = r'^https?://[a-z0-9.-]+(:[0-9]{1,5})?$'
+
+
+class InterviewBody(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    resumeId: str = Field(min_length=1, max_length=64)
+    # 우리 자소서에 칸이 없는 지원정보 — Deep 면접 질문 생성에만 쓰인다(Deep 한도 15자).
+    industry: str = Field(min_length=1, max_length=15)
+    companyType: str = Field(min_length=1, max_length=15)
+    experience: str = Field(min_length=1, max_length=15)
+    consentVersion: str = Field(min_length=1, max_length=40)
+    consentAnswers: dict[str, str]
+
+
+class InterviewFinishBody(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    resultId: str = Field(min_length=1, max_length=100)
+
+
+def interview_dto(row):
+    return {'id': row['id'], 'resumeId': row['resume_id'], 'resumeTitle': row['resume_snapshot'].get('title', ''),
+            'company': row['interview_info'].get('companyName', ''), 'createdAt': row['created_at'],
+            'finishedAt': row['finished_at']}
+
+
+@router.get('/job-interviews')
+def list_interviews(user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    """본인 AI 인터뷰 이력(최신순). 결과 내용은 Deep 에 있다."""
+    if user['kind'] != 'STUDENT':
+        raise HTTPException(403, '학생 본인만 조회할 수 있습니다.')
+    rows = conn.execute("""SELECT * FROM dc.job_interview_session WHERE student_uid=%s
+      ORDER BY created_at DESC LIMIT 50""", (user['intg_uid'],)).fetchall()
+    return {'items': [interview_dto(row) for row in rows]}
+
+
+@router.post('/job-interviews', status_code=201)
+def start_interview(body: InterviewBody, request: Request, user=Depends(deep_principal)):
+    """동의를 확인하고 Deep 면접 세션을 만든다. 돌려주는 iframeUrl 의 티켓은 60초·1회용이다."""
+    require_deep(user)
+    if (body.consentVersion != INTERVIEW_CONSENT['version']
+            or set(body.consentAnswers) != set(INTERVIEW_CONSENT['items'])
+            or any(answer != 'yes' for answer in body.consentAnswers.values())):
+        raise HTTPException(422, '개인정보 수집·이용 동의서의 모든 항목에 동의해야 AI 인터뷰를 시작할 수 있습니다.')
+    # iframe 을 넣는 사이트 주소. 브라우저가 붙이는 Origin 헤더를 쓰고, 허용 여부는 Deep 이 판정한다.
+    origin = (request.headers.get('origin') or '').lower()
+    if not re.fullmatch(ORIGIN_PATTERN, origin):
+        raise HTTPException(400, '면접을 여는 사이트 주소를 확인할 수 없습니다.')
+    try:
+        row = sync_resume(user, body.resumeId)
+        if not row['content'].strip():
+            raise HTTPException(422, '본문이 비어 있는 자소서로는 면접 질문을 만들 수 없습니다.')
+        missing = [label for key, label in (('job_type_text', '직종'), ('company_text', '기업명'),
+                                            ('position_text', '지원 직무')) if not (row[key] or '').strip()]
+        if missing:
+            raise HTTPException(422, f"자소서에 {'·'.join(missing)} 정보를 입력한 뒤 다시 시도해 주세요.")
+        info = {'job_type': row['job_type_text'], 'industry_type': body.industry, 'corporate_type': body.companyType,
+                'career': body.experience, 'companyName': row['company_text'], 'supportDepartment': row['position_text']}
+        session_id, iframe_url = deep.create_interview(user, row['deep_cover_id'], info, origin)
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+    interview_id = 'ivs_' + uuid4().hex[:12]
+    snapshot = {'title': row['title'], 'categoryLabel': row.get('category_label') or row['category_label_legacy'] or '',
+                'version': row['version']}
+    with pool.connection() as conn:
+        conn.execute("""INSERT INTO dc.job_interview_session(id,student_uid,resume_id,resume_snapshot,interview_info,
+          consent_version,consent_answers,deep_session_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s)""",
+          (interview_id, user['intg_uid'], row['id'], Jsonb(snapshot), Jsonb(info), body.consentVersion,
+           Jsonb(body.consentAnswers), session_id))
+    return {'id': interview_id, 'iframeUrl': iframe_url}
+
+
+@router.post('/job-interviews/{interview_id}/finish')
+def finish_interview(interview_id: str, body: InterviewFinishBody, user=Depends(deep_principal)):
+    """면접 화면이 알려 온 종료를 기록한다. result_id 는 브라우저가 전한 값이라 Deep 결과 목록으로 확인한다."""
+    require_deep(user)
+    find = 'SELECT * FROM dc.job_interview_session WHERE id=%s AND student_uid=%s'
+    with pool.connection() as conn:
+        row = conn.execute(find, (interview_id, user['intg_uid'])).fetchone()
+    if not row:
+        raise HTTPException(404, 'AI 인터뷰 기록을 찾을 수 없습니다.')
+    if row['finished_at'] is not None:
+        return interview_dto(row)
+    try:
+        known = deep.interview_result_ids(user)
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+    if body.resultId not in known:
+        raise HTTPException(422, 'DeepResume에서 면접 결과를 확인하지 못했습니다.')
+    try:
+        with pool.connection() as conn:
+            # 두 창이 동시에 종료를 알려도 먼저 쓴 쪽만 남는다.
+            conn.execute("""UPDATE dc.job_interview_session SET deep_result_id=%s,finished_at=now()
+              WHERE id=%s AND student_uid=%s AND finished_at IS NULL""",
+              (body.resultId, interview_id, user['intg_uid']))
+            row = conn.execute(find, (interview_id, user['intg_uid'])).fetchone()
+    except UniqueViolation:  # uq_job_interview_session_deep_result — 이미 다른 면접 기록에 붙은 결과다.
+        raise HTTPException(409, '이미 다른 AI 인터뷰 기록에 연결된 면접 결과입니다.') from None
+    return interview_dto(row)
 
 
 # ── 파일 ────────────────────────────────────────────────────────────────

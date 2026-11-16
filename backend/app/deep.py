@@ -381,3 +381,35 @@ def latest_evaluation(user, cover_id):
     if response.status_code != 200:
         raise failure(response, {404: (404, '지난 컨설팅 결과를 찾지 못했습니다.')})
     return {**evaluation_dto(body(response)), 'stale': latest.get('stale') is True}
+
+
+# ── AI 인터뷰(면접 IFRAME) — 영상·결과는 Deep 에만 있다 ───────────────────
+
+def create_interview(user, cover_id, info, parent_origin):
+    """면접 세션을 만들고 (session_id, iframe_url) 을 돌려준다. iframe_url 의 티켓은 60초·1회용이다."""
+    response = call(user, 'POST', 'interview/sessions', timeout=30, json={
+        'parent_origin': parent_origin, 'interview_info': info, 'cover_id': str(cover_id)})
+    if response.status_code != 201:
+        raise failure(response, {
+            'origin_not_allowed': (503, '이 사이트 주소가 DeepResume 면접 허용 도메인에 등록되지 않았습니다. 관리자에게 문의해 주세요.'),
+            'interview_not_enabled': (503, '학교의 AI 인터뷰 사용 설정이 꺼져 있습니다. 관리자에게 문의해 주세요.'),
+            404: (404, 'DeepResume에서 자소서를 찾지 못했습니다. 자소서를 다시 저장한 뒤 시도해 주세요.'),
+            400: (422, 'DeepResume가 면접 정보를 거부했습니다. 입력한 지원 정보를 확인해 주세요.'),
+        })
+    data = body(response)
+    session_id = data.get('session_id') if isinstance(data, dict) else None
+    iframe_url = data.get('iframe_url') if isinstance(data, dict) else None
+    if not session_id or not isinstance(iframe_url, str) or not iframe_url.startswith(('https://', 'http://')):
+        raise DeepError(502, 'AI 인터뷰 응답을 확인할 수 없습니다.')
+    return str(session_id), iframe_url
+
+
+def interview_result_ids(user):
+    """내 면접 결과 id. 화면이 알려 온 종료(result_id)가 정말 본인 결과인지 확인하는 데 쓴다."""
+    response = call(user, 'GET', 'interview/results')
+    if response.status_code != 200:
+        raise failure(response)
+    data = body(response)
+    if not isinstance(data, list):
+        raise DeepError(502, 'AI 인터뷰 결과 목록을 확인할 수 없습니다.')
+    return {str(item['result_id']) for item in data if isinstance(item, dict) and item.get('result_id')}

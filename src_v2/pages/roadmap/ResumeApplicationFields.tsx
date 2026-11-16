@@ -3,8 +3,9 @@ import { useState } from 'react'
 // Deepresume /coverletter/info에서 확인한 외부 서비스 선택지(2026-10-30).
 // 내부 직종 코드와는 다른 계약이므로 임의로 코드 카탈로그에 대응시키지 않는다.
 const OCCUPATIONS = ['경영·사무·금융', '영업·고객상담', '무역·유통', '마케팅·광고·홍보', '서비스', 'IT·전기·전자·통신', '생산·제조·정비', '연구개발·설계', '토목·건설', '디자인', '의료', '미디어·예술·스포츠', '교육', '전문·특수직', '공공·사회봉사']
-const INDUSTRIES = ['서비스업', '금융업', '유통업', 'IT·전기·전자', '제조업', '건설업', '교육업', '의료·제약업', '미디어·광고·홍보', '문화·예술·디자인업', '공공기관·협회']
-const COMPANY_TYPES = ['대기업', '중견기업', '중소기업', '공기업', '외국계', '금융권', '스타트업']
+export const INDUSTRIES = ['서비스업', '금융업', '유통업', 'IT·전기·전자', '제조업', '건설업', '교육업', '의료·제약업', '미디어·광고·홍보', '문화·예술·디자인업', '공공기관·협회']
+export const COMPANY_TYPES = ['대기업', '중견기업', '중소기업', '공기업', '외국계', '금융권', '스타트업']
+export const EXPERIENCES = ['경력', '신입']
 
 export interface ResumeApplication {
   occupation: string
@@ -16,7 +17,7 @@ export interface ResumeApplication {
   keywords: string[]
 }
 
-function ChoiceField({ label, options, value, onChange }: {
+export function ChoiceField({ label, options, value, onChange }: {
   label: string; options: string[]; value: string; onChange: (value: string) => void
 }) {
   return <fieldset className="rs-application-choice">
@@ -60,7 +61,7 @@ export default function ResumeApplicationFields({ value, onChange }: {
       <label className="rs-application-text">기업명
         <input value={value.company} onChange={e => update('company', e.target.value)} placeholder="예: 롯데캐피탈" />
       </label>
-      <ChoiceField label="경력" options={['경력', '신입']} value={value.experience} onChange={next => update('experience', next)} />
+      <ChoiceField label="경력" options={EXPERIENCES} value={value.experience} onChange={next => update('experience', next)} />
       <div className="rs-keyword-field">
         <label htmlFor="rs-keyword">핵심키워드</label>
         <div className="rs-keyword-input">

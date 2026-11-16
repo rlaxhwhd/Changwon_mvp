@@ -1,0 +1,37 @@
+// AI 인터뷰(DeepResume 면접 IFRAME). 영상·질문·평가는 Deep 에만 있고,
+// 우리 서버에는 동의와 세션 기록만 남는다(dc.job_interview_session, 164).
+import { api } from '../../../shared/api'
+
+export interface InterviewSession {
+  id: string
+  resumeId: string
+  resumeTitle: string
+  company: string
+  createdAt: string
+  finishedAt: string | null
+}
+
+export interface InterviewStart {
+  resumeId: string
+  industry: string
+  companyType: string
+  experience: string
+  consentVersion: string
+  consentAnswers: Record<string, 'yes'>
+}
+
+export async function loadInterviews(): Promise<InterviewSession[]> {
+  return (await api<{ items: InterviewSession[] }>('/job-interviews')).items
+}
+
+/** 면접 세션을 만든다. iframeUrl 의 티켓은 60초·1회용이라 받자마자 iframe 에 넣는다. */
+export async function startInterview(input: InterviewStart): Promise<{ id: string; iframeUrl: string }> {
+  return api<{ id: string; iframeUrl: string }>('/job-interviews', { method: 'POST', body: JSON.stringify(input) })
+}
+
+/** 면접 화면이 알려 온 종료(result_id)를 기록한다. 서버가 Deep 결과 목록으로 본인 것인지 확인한다. */
+export async function finishInterview(id: string, resultId: string): Promise<InterviewSession> {
+  return api<InterviewSession>(`/job-interviews/${encodeURIComponent(id)}/finish`, {
+    method: 'POST', body: JSON.stringify({ resultId }),
+  })
+}

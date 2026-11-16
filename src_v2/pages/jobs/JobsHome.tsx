@@ -9,7 +9,7 @@ import { usePageHead } from '../../components/PageCrumb'
 
 /* ── AI 자소서/인터뷰 홈 ─────────────────────────────────────────── */
 export default function JobsHome() {
-  usePageHead('AI 자소서/면접', 'AI가 작성을 도와주고, 완성된 자소서를 평가해드립니다.')
+  usePageHead('AI 자소서', 'AI가 작성을 도와주고, 완성된 자소서를 평가해드립니다.')
   const navigate = useNavigate()
   // 자소서 정본은 서버다 — 삭제하면 AI 자소서 화면에서도 같이 사라진다.
   useJobStore()

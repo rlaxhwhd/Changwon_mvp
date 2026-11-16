@@ -627,7 +627,13 @@ CREATE TABLE dc.org_assignment (
 `deep_synced_version ≠ version` 으로 남겨 다음 저장·AI 작성·평가 때 다시 보낸다. **AI 평가 결과는 저장하지 않는다**
 (Deep 평가본이 정본). Deep 회원은 학교코드 `changwon.ac.kr`+학번이며 기존 DeepResume 회원과 겹치면 거부한다.
 Deep 을 부르는 엔드포인트는 요청 커넥션을 쥐지 않는다(`deep_principal`) — 외부 대기 중 풀 고갈 방지.
-AI 인터뷰는 영상이 Deep 에만 저장되고 결과표를 API 로 가져올 예정이다(미구현).
+Deep 문항 title·type 은 분야 이름이 아니라 분야의 질문 문장(`code_item.payload.question`, 마이그레이션 163)이다.
+
+**AI 인터뷰(2026-11-16 · 마이그레이션 164).** Deep 면접 IFRAME 을 `/v2/jobs/home/interview` 에 넣는다. 영상·질문·평가는
+Deep 에만 있고, 우리 DB에는 **동의와 세션 기록만** 둔다 — `dc.job_interview_session`(누가·언제·어떤 자소서로·동의 버전과 응답,
+Deep session/result id, 자소서·지원정보 스냅샷). 동의·스냅샷은 불변이고 UPDATE 는 종료 기록 1회만 허용한다(트리거).
+종료의 result_id 는 브라우저가 전한 값이라 Deep 결과 목록으로 본인 것인지 확인하고, 한 결과는 한 세션에만 붙는다(unique).
+질문 방식은 자소서 기반만 된다(Deep 외부 API 에 자소서 없이·기업별 면접이 없다). 결과표 화면은 미구현.
 
 2026-10-02 진단·상담·종합·로드맵 AI 코멘트도 기존 `dc.ai_run`·`dc.ai_comment`에 연결했다.
 LLM 생성 후 본문·근거·모델·입력 스냅샷을 원자적으로 저장한 뒤 완료를 반환하고, 화면 진입 시

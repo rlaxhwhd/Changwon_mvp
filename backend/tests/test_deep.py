@@ -23,6 +23,7 @@ class FakeDeep:
     def __init__(self):
         self.members, self.covers, self.calls = set(), {}, []
         self.existing_member = False
+        self.origins, self.sessions, self.results = {'https://dreamcatch.test'}, {}, []
         self.down = False
         self.on_ai = None  # AI 호출 도중에 끼어들 동작(동시 저장 재현)
 
@@ -50,6 +51,17 @@ class FakeDeep:
             topics = [{**t, 'id': str(uuid.uuid4())} for t in payload.pop('topic', [])]
             self.covers[cover_id] = {**payload, 'id': cover_id, 'topic': topics}
             return httpx.Response(201, json=self.covers[cover_id])
+        if path == 'interview/sessions':
+            if payload['parent_origin'] not in self.origins:
+                return httpx.Response(403, json={'code': 'origin_not_allowed'})
+            if payload['cover_id'] not in self.covers:
+                return httpx.Response(404, json={'detail': 'not found'})
+            session_id = str(uuid.uuid4())
+            self.sessions[session_id] = payload
+            return httpx.Response(201, json={'session_id': session_id, 'cover_id': payload['cover_id'], 'expires_in': 60,
+                                             'iframe_url': 'https://front.deep.test/external/interview/launch?ticket=drl_x'})
+        if path == 'interview/results':
+            return httpx.Response(200, json=[{'result_id': r, 'title': 't'} for r in self.results])
         if path == 'covers':
             return httpx.Response(200, json=[{'id': c['id'], 'consulting': 0, 'badge_pen': bool(c.get('evaluations'))}
                                              for c in self.covers.values()])
@@ -280,6 +292,65 @@ def test_last_result_is_marked_stale_after_the_body_changes(client, fake):
                                  'jobType': '경영·사무·금융', 'expectedVersion': resume['version']})
     assert changed.status_code == 200, changed.text
     assert client.get(f"/api/v1/job-resumes/{resume['id']}/evaluation", headers=headers('chaewon')).json()['stale'] is True
+
+
+# ── AI 인터뷰: 동의·세션 기록만 우리 DB, 영상·결과는 Deep ─────────────────
+
+CONSENT = {'consentVersion': '2026-11-16', 'consentAnswers': {'privacy': 'yes', 'media': 'yes', 'provision': 'yes'}}
+
+
+def start_interview(client, resume, origin='https://dreamcatch.test', **change):
+    body = {'resumeId': resume['id'], 'industry': '서비스업', 'companyType': '중소기업', 'experience': '신입',
+            **CONSENT, **change}
+    return client.post('/api/v1/job-interviews', headers={**headers('chaewon'), 'Origin': origin}, json=body)
+
+
+def test_interview_starts_with_consent_and_records_the_session(client, fake):
+    resume = create(client, content='면접에 쓸 본문')
+    started = start_interview(client, resume)
+    assert started.status_code == 201, started.text
+    assert started.json()['iframeUrl'].startswith('https://front.deep.test/')
+    sent = next(iter(fake.sessions.values()))
+    assert sent['parent_origin'] == 'https://dreamcatch.test' and sent['cover_id'] in fake.covers
+    assert sent['interview_info'] == {'job_type': '경영·사무·금융', 'industry_type': '서비스업', 'corporate_type': '중소기업',
+                                      'career': '신입', 'companyName': '엔잡', 'supportDepartment': '인사'}
+    with pool.connection() as conn:
+        row = conn.execute('SELECT * FROM dc.job_interview_session WHERE id=%s', (started.json()['id'],)).fetchone()
+    assert row['consent_version'] == '2026-11-16' and row['consent_answers'] == CONSENT['consentAnswers']
+    assert row['resume_snapshot']['title'] == resume['title'] and row['finished_at'] is None
+    listed = client.get('/api/v1/job-interviews', headers=headers('chaewon')).json()['items']
+    assert listed[0]['id'] == started.json()['id'] and listed[0]['finishedAt'] is None
+
+
+def test_interview_is_refused_without_full_consent_or_allowed_origin(client, fake):
+    resume = create(client, content='면접에 쓸 본문')
+    partial = {'privacy': 'yes', 'media': 'no', 'provision': 'yes'}
+    assert start_interview(client, resume, consentAnswers=partial).status_code == 422
+    assert start_interview(client, resume, consentVersion='2020-01-01').status_code == 422
+    assert not fake.sessions, '동의 없이 Deep 면접 세션을 만들었다'
+    assert start_interview(client, resume, origin='https://evil.test').status_code == 503
+    assert start_interview(client, create(client, content='')).status_code == 422
+    assert start_interview(client, create(client, content='본문', company='')).status_code == 422
+    with pool.connection() as conn:
+        count = conn.execute('SELECT count(*) AS n FROM dc.job_interview_session WHERE resume_id=%s',
+                             (resume['id'],)).fetchone()['n']
+    assert count == 0, '시작하지 못한 면접이 기록됐다'
+
+
+def test_interview_finish_is_recorded_once_and_only_for_own_deep_result(client, fake):
+    resume = create(client, content='면접에 쓸 본문')
+    first, second = start_interview(client, resume).json()['id'], start_interview(client, resume).json()['id']
+
+    def finish(interview, result, who='chaewon'):
+        return client.post(f'/api/v1/job-interviews/{interview}/finish', headers=headers(who), json={'resultId': result})
+
+    assert finish(first, 'r-unknown').status_code == 422, 'Deep 에 없는 결과를 받아들였다'
+    fake.results += ['r-1', 'r-2']
+    assert finish(first, 'r-1', who='changwon').status_code == 404
+    done = finish(first, 'r-1')
+    assert done.status_code == 200 and done.json()['finishedAt']
+    assert finish(first, 'r-2').json()['finishedAt'] == done.json()['finishedAt'], '종료 기록이 다시 쓰였다'
+    assert finish(second, 'r-1').status_code == 409, '한 면접 결과가 두 기록에 붙었다'
 
 
 def test_others_and_staff_cannot_use_deep_actions(client, fake):

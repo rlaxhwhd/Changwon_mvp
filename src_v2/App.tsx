@@ -44,6 +44,8 @@ import JobSupport from './pages/jobs/JobSupport'
 import JobsHome from './pages/jobs/JobsHome'
 import AiResume from './pages/roadmap/AiResume'
 import AiConsulting from './pages/jobs/AiConsulting'
+import JobsHub from './pages/jobs/JobsHub'
+import AiInterview from './pages/jobs/AiInterview'
 import JobDetail from './pages/jobs/JobDetail'
 import Notices from './pages/jobs/Notices'
 
@@ -142,7 +144,10 @@ const router = createBrowserRouter(
         { path: '/jobs',                 loader: studentPageLoader('jobs', 'jobWishlist'), element: <StageGate stage="employment" title="취업지원"><JobSupport scope="internal" /></StageGate> },
         { path: '/jobs/external',        loader: studentPageLoader('jobs', 'jobWishlist'), element: <StageGate stage="employment" title="취업지원"><JobSupport scope="external" /></StageGate> },
         { path: '/jobs/joblist',         element: <ComingSoon title="AI 맞춤채용" /> },
-        { path: '/jobs/home',            loader: studentPageLoader('resumes'), element: <JobsHome /> },
+        // 앞단은 자소서/인터뷰 선택(2026-11-16). 옛 자소서 홈은 /jobs/home/cover 로 내려갔다.
+        { path: '/jobs/home',            element: <JobsHub /> },
+        { path: '/jobs/home/cover',      loader: studentPageLoader('resumes'), element: <JobsHome /> },
+        { path: '/jobs/home/interview',  loader: studentPageLoader('resumes'), element: <AiInterview /> },
         { path: '/jobs/home/resume',     loader: studentPageLoader('resumes'), element: <AiResume /> },
         { path: '/jobs/home/consulting', loader: studentPageLoader('resumes'), element: <AiConsulting /> },
         { path: '/jobs/resume',          element: <Navigate to="/jobs/home" replace /> },

@@ -93,7 +93,7 @@ function AiConsultingScreen() {
     <div className="ac-wrap jobs-workspace">
       {/* 헤더 */}
       <header className="ac-header">
-        <button className="ac-back-btn" onClick={() => navigate('/jobs/home')} aria-label="홈으로">
+        <button className="ac-back-btn" onClick={() => navigate('/jobs/home/cover')} aria-label="홈으로">
           <i className="fa-solid fa-arrow-left" />
         </button>
       </header>
@@ -152,7 +152,7 @@ function AiConsultingScreen() {
           </div>
 
           <div className="ac-actions">
-            <button className="ac-btn-ghost" onClick={() => navigate('/jobs/home')}>취소</button>
+            <button className="ac-btn-ghost" onClick={() => navigate('/jobs/home/cover')}>취소</button>
             {resumes.length > 0 && <button className="ac-btn-primary" disabled={!selected} onClick={() => void startEval()}>
               <i className="fa-solid fa-play" /> AI 평가 받기
             </button>}
@@ -264,7 +264,7 @@ function AiConsultingScreen() {
                 <i className="fa-solid fa-rotate" /> 다시 평가
               </button>
             )}
-            <button className="ac-btn-primary" onClick={() => navigate('/jobs/home')}>
+            <button className="ac-btn-primary" onClick={() => navigate('/jobs/home/cover')}>
               <i className="fa-solid fa-house" /> 홈으로
             </button>
           </div>

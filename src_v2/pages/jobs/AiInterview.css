@@ -1,0 +1,246 @@
+/* ─── AI 인터뷰 (iv- prefix) ───────────────────────────────────────
+   카드·버튼·자소서 선택 목록은 AI 컨설팅(ac-)을 그대로 쓴다. 색은 JobsWorkspace 의
+   파랑(--blue 계열)·민트(--mint 계열) 토큰만 쓴다 — 진행·선택은 파랑, 확인됨·완료는 민트. */
+
+.iv-wrap .ac-card + .ac-card,
+.iv-wrap .ac-actions + .ac-card { margin-top: 16px; }
+
+/* ── 단계 표시 ─────────────────────────────────────────── */
+.iv-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.iv-steps li {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+  font-size: var(--fs-meta, 14px);
+  font-weight: 600;
+}
+
+.iv-steps li > span {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--muted);
+  font-size: 13px;
+}
+
+.iv-steps li.active { color: var(--color-primary); background: var(--blue-soft); border-color: var(--blue-border); }
+.iv-steps li.active > span { background: var(--color-primary); color: var(--card); }
+.iv-steps li.done { color: var(--mint-ink); background: var(--mint-soft); border-color: var(--mint-border); }
+.iv-steps li.done > span { background: var(--mint-ink); color: var(--card); }
+
+/* ── 질문 방식 ─────────────────────────────────────────── */
+.iv-sources {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.iv-source {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  text-align: left;
+}
+
+.iv-source > i { font-size: 20px; color: var(--color-primary); }
+.iv-source strong { font-size: var(--fs-card, 17px); }
+.iv-source span { color: var(--muted-foreground); font-size: var(--fs-meta, 14px); font-weight: 400; }
+.iv-source.active { background: var(--blue-soft); border-color: var(--color-primary); }
+
+.iv-source:disabled { background: var(--muted); color: var(--muted-foreground); }
+.iv-source:disabled > i { color: var(--muted-foreground); }
+.iv-source em {
+  margin-top: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.iv-wrap .ac-pick-item:disabled { background: var(--muted); cursor: not-allowed; }
+.iv-pick-missing { margin-top: 6px; color: var(--amber-ink, var(--color-warning)); font-size: var(--fs-meta, 14px); font-weight: 500; }
+
+/* ── 지난 인터뷰 ───────────────────────────────────────── */
+.iv-history ul { list-style: none; margin: 12px 0 0; padding: 0; }
+.iv-history li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  font-size: var(--fs-body, 15px);
+}
+.iv-history li strong { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.iv-history-date, .iv-history-company { color: var(--muted-foreground); font-size: var(--fs-meta, 14px); }
+.iv-history-state { padding: 2px 10px; border-radius: 999px; background: var(--muted); color: var(--muted-foreground); font-size: 13px; font-weight: 600; }
+.iv-history-state.done { background: var(--mint-soft); color: var(--mint-ink); }
+
+/* ── 동의서 ────────────────────────────────────────────── */
+.iv-consent {
+  margin-top: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.iv-consent h3 { font-size: var(--fs-card, 17px); margin-bottom: 10px; }
+.iv-consent dl { margin: 0; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+.iv-consent dl > div { display: grid; grid-template-columns: 110px minmax(0, 1fr); }
+.iv-consent dl > div + div { border-top: 1px solid var(--border); }
+.iv-consent dt { padding: 10px 12px; background: var(--blue-soft); color: var(--color-primary); font-size: var(--fs-meta, 14px); font-weight: 600; }
+.iv-consent dd { margin: 0; padding: 10px 12px; font-size: var(--fs-meta, 14px); }
+.iv-consent-note { margin: 10px 0; color: var(--muted-foreground); font-size: var(--fs-meta, 14px); }
+
+.iv-consent-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.iv-consent-check input { width: 18px; height: 18px; accent-color: var(--mint-ink); }
+.iv-consent-all {
+  display: flex;
+  margin-top: 14px;
+  padding: 14px 18px;
+  border: 1px solid var(--mint-border);
+  border-radius: 12px;
+  background: var(--mint-soft);
+  color: var(--mint-ink);
+}
+
+/* ── 카메라·마이크 ─────────────────────────────────────── */
+.iv-device {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 18px;
+}
+
+.iv-preview {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--foreground) 92%, var(--blue));
+}
+
+.iv-preview video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+.iv-preview-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--card);
+  font-size: var(--fs-meta, 14px);
+}
+.iv-preview-empty i { font-size: 32px; opacity: .7; }
+
+.iv-checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.iv-checks li {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+.iv-checks li > i { margin-top: 3px; font-size: 18px; color: var(--border); }
+.iv-checks li > div { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.iv-checks li span { color: var(--muted-foreground); font-size: var(--fs-meta, 14px); }
+.iv-checks li.ok { background: var(--mint-soft); border-color: var(--mint-border); }
+.iv-checks li.ok > i { color: var(--mint-ink); }
+
+.iv-meter { height: 8px; margin-top: 6px; border-radius: 999px; background: var(--muted); overflow: hidden; }
+.iv-meter > span { display: block; height: 100%; border-radius: 999px; background: var(--mint); transition: width .08s linear; }
+
+.iv-device-tip {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--blue-soft);
+  color: var(--foreground);
+  font-size: var(--fs-meta, 14px);
+}
+.iv-device-tip i { margin-right: 4px; color: var(--color-primary); }
+
+.iv-btn-mint {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 42px;
+  padding: 10px 16px;
+  border: 1px solid var(--mint-border);
+  border-radius: 10px;
+  background: var(--mint-soft);
+  color: var(--button-mint-ink, var(--mint-ink));
+  cursor: pointer;
+}
+.iv-btn-mint:hover:not(:disabled) { border-color: var(--mint-ink); }
+.iv-btn-mint:disabled { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); }
+
+/* ── 면접 화면 ─────────────────────────────────────────── */
+.iv-live-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.iv-live-head .ac-card-title { flex: 1; }
+.iv-live-state {
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--color-primary);
+  font-size: var(--fs-meta, 14px);
+  font-weight: 600;
+}
+.iv-live-state.started { background: var(--mint-soft); color: var(--mint-ink); }
+
+.iv-frame {
+  display: block;
+  width: 100%;
+  height: 800px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--muted);
+}
+
+/* ── 종료 ──────────────────────────────────────────────── */
+.iv-done { text-align: center; padding: 48px 26px; }
+.iv-done-icon { font-size: 48px; color: var(--mint-ink); }
+.iv-done h2 { margin: 12px 0 6px; font-size: var(--fs-lead, 22px); }
+.iv-done p { color: var(--muted-foreground); }
+.iv-done .ac-actions { justify-content: center; }
+
+@media (max-width: 900px) {
+  .iv-sources, .iv-device { grid-template-columns: minmax(0, 1fr); }
+  .iv-frame { height: 640px; }
+  .iv-live-head { flex-wrap: wrap; }
+}
+
+@media (max-width: 600px) {
+  .iv-consent dl > div { grid-template-columns: minmax(0, 1fr); }
+  .iv-history li { flex-wrap: wrap; }
+  .iv-wrap .ac-actions { flex-wrap: wrap; }
+}

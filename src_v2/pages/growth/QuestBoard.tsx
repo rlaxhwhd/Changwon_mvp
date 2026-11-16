@@ -21,7 +21,7 @@ const activityPath: Record<string, string> = {
   ROADMAP_ITEM: '/roadmap/status', PROGRAM: '/program', CERTIFICATE: '/growth',
   GROWTH_RECORD: '/growth', GROWTH_JOURNAL: '/growth/journal', GROWTH_PROJECT: '/growth',
   MISSION_TOEIC: '/growth/mission', MISSION_NCS_GSAT: '/growth/mission',
-  RESUME_WRITE: '/jobs/home/resume', AI_RESUME: '/jobs/home', JOB_APPLY: '/jobs',
+  RESUME_WRITE: '/jobs/home/resume', AI_RESUME: '/jobs/home/cover', JOB_APPLY: '/jobs',
 }
 const dayKey = () => new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Seoul' }).format(new Date())
 
