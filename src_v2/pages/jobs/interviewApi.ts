@@ -40,6 +40,11 @@ export async function startInterview(input: InterviewStart): Promise<{ id: strin
   return api<{ id: string; iframeUrl: string }>('/job-interviews', { method: 'POST', body: JSON.stringify(input) })
 }
 
+/** DeepResume 응시결과 화면(IFRAME) 주소. 티켓은 60초·1회용이라 받자마자 iframe 에 넣는다. */
+export async function openInterviewResults(): Promise<{ iframeUrl: string }> {
+  return api<{ iframeUrl: string }>('/job-interview-results', { method: 'POST' })
+}
+
 /** 면접 화면이 알려 온 종료(result_id)를 기록한다. 서버가 Deep 결과 목록으로 본인 것인지 확인한다. */
 export async function finishInterview(id: string, resultId: string): Promise<InterviewSession> {
   return api<InterviewSession>(`/job-interviews/${encodeURIComponent(id)}/finish`, {

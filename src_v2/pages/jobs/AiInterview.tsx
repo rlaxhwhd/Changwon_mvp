@@ -382,7 +382,12 @@ export default function AiInterview() {
 
           {history && history.length > 0 && (
             <div className="ac-card iv-history">
-              <h2 className="ac-card-title"><i className="fa-solid fa-clock-rotate-left" /> 지난 AI 인터뷰</h2>
+              <div className="iv-live-head">
+                <h2 className="ac-card-title"><i className="fa-solid fa-clock-rotate-left" /> 지난 AI 인터뷰</h2>
+                <button className="ac-btn-ghost" onClick={() => navigate('/jobs/home/interview/results')}>
+                  <i className="fa-solid fa-square-poll-vertical" /> 결과 보기
+                </button>
+              </div>
               <ul>
                 {history.map(item => (
                   <li key={item.id}>
@@ -519,7 +524,10 @@ export default function AiInterview() {
           {finishNote && <p className="ac-preview-notice" role="alert">{finishNote}</p>}
           <div className="ac-actions">
             <button className="ac-btn-ghost" onClick={restart}><i className="fa-solid fa-rotate" /> 다시 면접 보기</button>
-            <button className="ac-btn-primary" onClick={() => navigate('/jobs/home')}><i className="fa-solid fa-house" /> 처음으로</button>
+            <button className="ac-btn-ghost" onClick={() => navigate('/jobs/home')}><i className="fa-solid fa-house" /> 처음으로</button>
+            <button className="ac-btn-primary" onClick={() => navigate('/jobs/home/interview/results')}>
+              <i className="fa-solid fa-square-poll-vertical" /> 결과 보기
+            </button>
           </div>
         </div>
       )}

@@ -46,6 +46,7 @@ import AiResume from './pages/roadmap/AiResume'
 import AiConsulting from './pages/jobs/AiConsulting'
 import JobsHub from './pages/jobs/JobsHub'
 import AiInterview from './pages/jobs/AiInterview'
+import AiInterviewResults from './pages/jobs/AiInterviewResults'
 import JobDetail from './pages/jobs/JobDetail'
 import Notices from './pages/jobs/Notices'
 
@@ -148,6 +149,7 @@ const router = createBrowserRouter(
         { path: '/jobs/home',            element: <JobsHub /> },
         { path: '/jobs/home/cover',      loader: studentPageLoader('resumes'), element: <JobsHome /> },
         { path: '/jobs/home/interview',  loader: studentPageLoader('resumes'), element: <AiInterview /> },
+        { path: '/jobs/home/interview/results', element: <AiInterviewResults /> },
         { path: '/jobs/home/resume',     loader: studentPageLoader('resumes'), element: <AiResume /> },
         { path: '/jobs/home/consulting', loader: studentPageLoader('resumes'), element: <AiConsulting /> },
         { path: '/jobs/resume',          element: <Navigate to="/jobs/home" replace /> },

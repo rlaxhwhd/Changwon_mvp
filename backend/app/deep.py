@@ -416,6 +416,20 @@ def create_interview(user, cover_id, info, parent_origin):
     return str(session_id), iframe_url
 
 
+def create_result_view(user, parent_origin):
+    """응시결과(면접 응시내역) 화면의 iframe_url. 면접 시작과 같은 60초·1회용 티켓이다."""
+    response = call(user, 'POST', 'interview/results/sessions', json={'parent_origin': parent_origin})
+    if response.status_code != 201:
+        raise failure(response, {
+            'origin_not_allowed': (503, '이 사이트 주소가 DeepResume 면접 허용 도메인에 등록되지 않았습니다. 관리자에게 문의해 주세요.'),
+        })
+    data = body(response)
+    iframe_url = data.get('iframe_url') if isinstance(data, dict) else None
+    if not isinstance(iframe_url, str) or not iframe_url.startswith(('https://', 'http://')):
+        raise DeepError(502, 'AI 인터뷰 결과 화면 응답을 확인할 수 없습니다.')
+    return iframe_url
+
+
 def interview_result_ids(user):
     """내 면접 결과 id. 화면이 알려 온 종료(result_id)가 정말 본인 결과인지 확인하는 데 쓴다."""
     response = call(user, 'GET', 'interview/results')

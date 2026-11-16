@@ -60,6 +60,11 @@ class FakeDeep:
             self.sessions[session_id] = payload
             return httpx.Response(201, json={'session_id': session_id, 'cover_id': payload['cover_id'], 'expires_in': 60,
                                              'iframe_url': 'https://front.deep.test/external/interview/launch?ticket=drl_x'})
+        if path == 'interview/results/sessions':
+            if payload['parent_origin'] not in self.origins:
+                return httpx.Response(403, json={'code': 'origin_not_allowed'})
+            return httpx.Response(201, json={'session_id': str(uuid.uuid4()), 'expires_in': 60,
+                                             'iframe_url': 'https://front.deep.test/external/interview/launch?ticket=drl_r'})
         if path == 'interview/results':
             return httpx.Response(200, json=[{'result_id': r, 'title': 't'} for r in self.results])
         if path == 'covers':
@@ -371,6 +376,15 @@ def test_interview_uses_application_info_saved_on_the_cover(client, fake):
     assert start_interview(client, resume, consent=False).status_code == 201
     sent = next(iter(fake.sessions.values()))['interview_info']
     assert (sent['industry_type'], sent['corporate_type'], sent['career']) == ('제조업', '공기업', '신입')
+
+
+def test_interview_results_screen_address_is_issued_for_allowed_origin_only(client, fake):
+    url = '/api/v1/job-interview-results'
+    opened = client.post(url, headers={**headers('chaewon'), 'Origin': 'https://dreamcatch.test'})
+    assert opened.status_code == 201, opened.text
+    assert opened.json() == {'iframeUrl': 'https://front.deep.test/external/interview/launch?ticket=drl_r'}
+    assert client.post(url, headers={**headers('chaewon'), 'Origin': 'https://evil.test'}).status_code == 503
+    assert client.post(url, headers=headers('chaewon')).status_code == 400, 'Origin 없이 결과 화면을 열었다'
 
 
 def test_interview_is_refused_without_consent_or_allowed_origin(client, fake):

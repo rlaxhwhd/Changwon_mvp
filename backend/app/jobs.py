@@ -1696,6 +1696,19 @@ def start_interview(body: InterviewBody, request: Request, user=Depends(deep_pri
     return {'id': interview_id, 'iframeUrl': iframe_url}
 
 
+@router.post('/job-interview-results', status_code=201)
+def open_interview_results(request: Request, user=Depends(deep_principal)):
+    """Deep 응시결과 화면(IFRAME) 주소. 결과는 Deep 에만 있어 우리 DB에는 아무것도 남기지 않는다."""
+    require_deep(user)
+    origin = (request.headers.get('origin') or '').lower()
+    if not re.fullmatch(ORIGIN_PATTERN, origin):
+        raise HTTPException(400, '결과 화면을 여는 사이트 주소를 확인할 수 없습니다.')
+    try:
+        return {'iframeUrl': deep.create_result_view(user, origin)}
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+
+
 @router.post('/job-interviews/{interview_id}/finish')
 def finish_interview(interview_id: str, body: InterviewFinishBody, user=Depends(deep_principal)):
     """면접 화면이 알려 온 종료를 기록한다. result_id 는 브라우저가 전한 값이라 Deep 결과 목록으로 확인한다."""
