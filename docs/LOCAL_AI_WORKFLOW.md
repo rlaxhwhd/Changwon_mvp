@@ -1,5 +1,17 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-16 AI 인터뷰 동의 1회 API/웹/165 서버 배포
+
+- origin/dev c917e03까지의 변경을 깨끗한 git archive로 빌드했다. 학생·동의서 버전별 1회 동의를 dc.job_interview_consent에 저장하며, 이미 동의하면 화면은 장치 확인으로 넘어간다. 새 동의서 버전이면 새 동의가 필요하다. 새 세션에는 근거 동의의 원래 시각·응답을 복사한다. 미커밋 타 작업은 제외했다.
+- 165의 기존 승인 기록을 발견하지 못해 Astra 리뷰어가 신규 검토했다. `.ai/handoff-db/0013-job-interview-consent/architecture-review.md` ASTRA_APPROVED, work-order revision1, 승인 commit c917e03a8b299d673682d99b08e26cc4ed67972f, SQL SHA256=a6d78ba7b0186751e28876645f117b3edbaa8e6b12babb0766a23f38a7546978. SQL/앱 원본은 바꾸지 않았으며 DB_SCHEMA.md에164~165 설명을 보완했다. 상세 실제 검증 결과는 같은 폴더 verification.md에 기록했다.
+- 격리 DB dc_regression_20261116043627_6fce91_test: 144 passed, 584 deselected, 기존 경고 3개(28.95초). 추가 검증으로 백필 최초 행/동률 순서·불변 트리거·실제 dc_app 최소 권한·두 연결 동시 재동의/최초 시각 보존 및 롤백을 확인했다. TypeScript/Vite 통과(기존 경고 유지). npm run docker:up -- --no-build 완료, 백업 local-before-migrate-20261116043640880.dump. 로컬 실행/회사 API/커밋 원본 app·165개 마이그레이션 일치, dc_release_consent_20261116_ref_test 복원 참조 검증.
+- 서버 DB·Compose 백업과 이미지/감사 자료: /opt/dreamcatch/ai/consent-20261116/. release.tar 1102087168B SHA256=89e7e723a4b655ed4fb80d1bf44e0564c8d3ebe29e77f455c148c4720df1004a, 전송 검증 일치. dc_deploy_consent_20261116_test에 서버 백업 복원→165 적용→전체 스키마/백필/기존 데이터 보존→실행기 재실행 no-op 확인. 로컬 데이터를 서버에 복원하지 않았다.
+- 운영 구 API를 stop -t 240으로 중지하고 exited 0 확인, 정지 구간에 immediate-before.dump 추가 백업·감사→165 적용→전체 스키마·데이터 비교→새 API/웹 consent-20261116 기동. 구 API가 백필 후 세션을 새로 쓰는 공백을 차단했다. 기존 세션의 동의 버전/정확한 세 응답은 유효, 기존 업무 테이블·세션 전체 값과 건수 불변, 새 동의는 가장 이른 세션의 전체 값 해시와 동일. 기존 적용 164개 checksum 보존, 165 한 건 추가. 앱 권한 SELECT/INSERT=true, UPDATE/DELETE/TRUNCATE=false 확인. API/web healthy, nginx 정상, RAG=ai-jobs-20261029 및 기존 DeepResume 활성 설정 유지.
+- 로컬/서버 app·적용165개·전체 스키마 MATCH(11-05의 세 가지 검증된 직렬화 표현만 정규화). HTML SHA256 admin=b6c0f6cbc413f426913e548d40fbb63ef386990a35c673766c291ad5ecd8369b, v2=4200d047f9f14d3ba0acd9e276933b2fb803a5747bdfd59ffc7bd7b426b485d4. 복구는 백업 Compose와 이전 API/웹 deep-20261116을 함께 쓰고 새 동의·세션·165 이력은 보존한다. 구 API 복구 후 다시 배포한다면 그동안 생성된 세션의 누락 동의 보강은 별도 승인 절차가 필요하다. 서버 실행 유지.
+- EgoLite 실제 로컬 기존 동의 학생의 consented=true 및 동의 단계 생략→카메라/마이크 준비 화면을 확인했다. 서버는 실제 학생의 GET /job-interviews 200, items 배열/consented=false boolean과 인터뷰 화면을 확인했다. 로컬 조회 단회38ms/329B, 서버17ms·27ms/330B(두 번째는 검증용 명시 조회), 성능 개선 주장은 없다. 확인 구간 HTTP 실패·Runtime 예외 없음. 스크린샷 촬영 후 열람. 운영 동의를 대리 저장하거나 녹화·외부 면접을 시작하지 않았다. 최초 동의 저장·오류 반환·다른 권한·반복 동의 쓰기는 격리 테스트 범위다. ‘다음’ 정확한 이름 선택자의 자동화 실패는 fresh snapshot 후 CSS로 교정했다. 임시 인증서 허용 원복·공간 종료 완료.
+- Graft 구조 그래프 OK. HTTP 라우트 호출자는 그래프에 없어 프런트 interviewApi의 실제 요청과 원본으로 대조했다. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다. 기존 첫 로드맵 생성 취소 DELETE 권한 문제는 이번 범위 밖이다.
+
+
 ## 2026-11-16 DeepResume 서버 연동 활성화 — 사용자 설정 승인 반영
 
 - 앞선 배포의 deepEnabled=false 상태를 대체한다. 사용자가 비동기 질문에 ‘현재 로컬 키·테스트 API를 서버에도 사용’이라고 명시적으로 답했다. 승인한 로컬 deploy/secrets/deep_service_key_local을 서버 /opt/dreamcatch/secrets/deep_service_key로 SFTP 복사했으며 값·해시는 출력/커밋하지 않고 전송 일치 여부만 내부 검증했다. 파일 소유자는 API의 실제 UID/GID, 모드는 0600이다.
