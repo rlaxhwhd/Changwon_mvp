@@ -1,5 +1,14 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-16 DeepResume 서버 연동 활성화 — 사용자 설정 승인 반영
+
+- 앞선 배포의 deepEnabled=false 상태를 대체한다. 사용자가 비동기 질문에 ‘현재 로컬 키·테스트 API를 서버에도 사용’이라고 명시적으로 답했다. 승인한 로컬 deploy/secrets/deep_service_key_local을 서버 /opt/dreamcatch/secrets/deep_service_key로 SFTP 복사했으며 값·해시는 출력/커밋하지 않고 전송 일치 여부만 내부 검증했다. 파일 소유자는 API의 실제 UID/GID, 모드는 0600이다.
+- 설정 변경 전 Compose는 /opt/dreamcatch/ai/deep-20261116/compose.yaml.before-deep-enable에 보관했다. 서버 Compose에 deep_service_key secret과 DC_DEEP_KEY_FILE, DC_DEEP_API_URL=https://testapi.deepresume.kr, DC_DEEP_SCHOOL_CODE=changwon.ac.kr를 추가했다. Compose config --quiet 통과 후 API만 재생성, API/web healthy. 코드·DB·마이그레이션·다른 서비스는 변경하지 않았다.
+- 실제 서버 런타임에서 deepEnabled=true, keyReadable=true와 URL/학교 코드를 확인했다. 서버에서 TLS 검증을 유지한 무인증 GET /external/v1/의 HTTP 404 응답으로 호스트 연결을 확인했으나 이는 키 인증 성공을 뜻하지 않는다. 실제 Deep 계정 로그인·가입·자소서 전송·생성/평가·면접 녹화는 실행하지 않았다. 앞서 노출됐다고 알린 로컬 키를 사용자가 승인해 재사용했으며 키 교체 필요성은 남는다.
+- EgoLite 공간 4에서 실제 학생 자소서 홈 및 목록 GET 200(18ms/327B), GET /api/v1/job-resume-evaluations 200, 해당 구간 HTTP 실패·Runtime 예외 없음. 학생의 연결된 자소서가 없어 이 조회는 외부 API를 호출하지 않는다. 처음 자동 확인에서 존재하지 않는 /job-resumes/evaluated를 요청해 404를 받았고 원본 라우트 확인 후 올바른 경로로 교정했다. 앱 오류로 집계하지 않는다. 인증서 임시 허용 원복·공간 종료 완료. 실제 AI 호출과 면접 origin 허용 여부는 추가 실사용 확인 범위다.
+- Graft에서 service_key/enabled/client 원본과 구조 그래프 OK를 확인했다. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다. 이 항목에는 비밀 값·학생 개인정보를 기록하지 않는다.
+
+
 ## 2026-11-16 DeepResume 자소서·인터뷰 API/웹/162~164 서버 배포
 
 - origin/dev=bf58212까지 확인. 794055e(자소서 저장·Deep 사본 동기화·AI 작성/평가), b472319(필수 포함 내용 기반 초안), 82504e6(과거 컨설팅), 84a2167(질문 문장·기존 결과 진입), 831090b(자소서/인터뷰 선택·동의·장치 확인·면접 iframe), 4b06e52·bf58212 문서 정리 포함. git archive bf58212의 깨끗한 소스만 빌드했고 미커밋 타 작업은 제외했다. 최종 fetch에서 추가 기능 커밋 없음.
