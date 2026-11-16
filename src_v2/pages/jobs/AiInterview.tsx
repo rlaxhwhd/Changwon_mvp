@@ -1,7 +1,10 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAllResumes, RESUME_EVENT, type SavedResume } from './resumeMock'
-import { agreeInterviewConsent, finishInterview, loadInterviews, startInterview, type InterviewSession } from './interviewApi'
+import {
+  agreeInterviewConsent, finishInterview, loadInterviewInfo, loadInterviews, startInterview,
+  type InterviewInfo, type InterviewSession,
+} from './interviewApi'
 import { ChoiceField, COMPANY_TYPES, EXPERIENCES, INDUSTRIES } from '../roadmap/ResumeApplicationFields'
 import { usePageHead } from '../../components/PageCrumb'
 import '../roadmap/AiResume.css'
@@ -108,7 +111,22 @@ export default function AiInterview() {
   const [companyType, setCompanyType] = useState('')
   const [experience, setExperience] = useState('')
   const resume = resumes.find(item => item.id === resumeId)
-  const setupReady = !!resume && missingForInterview(resume).length === 0 && !!industry && !!companyType && !!experience
+  // 자소서에 저장된 업종·기업형태·경력. 저장된 값은 그대로 쓰고, 비어 있는 것만 아래 카드에서 고른다.
+  // 읽지 못하면 세 가지를 모두 묻는다(서버가 저장된 값을 우선한다).
+  const [saved, setSaved] = useState<{ resumeId: string; info: InterviewInfo } | null>(null)
+  useEffect(() => {
+    if (!resumeId) return
+    let stale = false
+    const blank = { industry: '', companyType: '', experience: '' }
+    loadInterviewInfo(resumeId).catch(() => blank).then(info => { if (!stale) setSaved({ resumeId, info }) })
+    return () => { stale = true }
+  }, [resumeId])
+  const info = saved && saved.resumeId === resumeId ? saved.info : null
+  const chosen = { industry: info?.industry || industry, companyType: info?.companyType || companyType,
+    experience: info?.experience || experience }
+  const askInfo = !!info && (!info.industry || !info.companyType || !info.experience)
+  const setupReady = !!resume && missingForInterview(resume).length === 0 && !!info
+    && !!chosen.industry && !!chosen.companyType && !!chosen.experience
 
   // 2. 동의
   const [agreed, setAgreed] = useState<Record<string, boolean>>({})
@@ -215,7 +233,7 @@ export default function AiInterview() {
     stopDevices()
     setDeviceState('idle')
     try {
-      const created = await startInterview({ resumeId: resume.id, industry, companyType, experience })
+      const created = await startInterview({ resumeId: resume.id, ...chosen })
       setSession(created)
       setLiveState('loading')
       setStep('live')
@@ -341,15 +359,16 @@ export default function AiInterview() {
             </div>
           </div>
 
-          {resume && (
+          {resume && askInfo && (
             <div className="ac-card">
               <h2 className="ac-card-title"><i className="fa-solid fa-building-user" /> 지원 정보</h2>
               <p className="ac-card-desc">
-                {resume.company} · {resume.jobType} · {resume.position} 지원으로 면접을 봅니다. 아래 세 가지를 더 선택해 주세요.
+                {resume.company} · {resume.jobType} · {resume.position} 지원으로 면접을 봅니다.
+                이 자소서에 저장되지 않은 정보만 선택해 주세요.
               </p>
-              <ChoiceField label="업종" options={INDUSTRIES} value={industry} onChange={setIndustry} />
-              <ChoiceField label="기업형태" options={COMPANY_TYPES} value={companyType} onChange={setCompanyType} />
-              <ChoiceField label="경력" options={EXPERIENCES} value={experience} onChange={setExperience} />
+              {!info.industry && <ChoiceField label="업종" options={INDUSTRIES} value={industry} onChange={setIndustry} />}
+              {!info.companyType && <ChoiceField label="기업형태" options={COMPANY_TYPES} value={companyType} onChange={setCompanyType} />}
+              {!info.experience && <ChoiceField label="경력" options={EXPERIENCES} value={experience} onChange={setExperience} />}
             </div>
           )}
 

@@ -103,6 +103,8 @@ class FakeDeep:
                                                  '<para>좋은 구절<span tag="pos">경험이 직무와 맞습니다.</span></para>'}]}
             cover.setdefault('evaluations', []).append({**evaluation, 'body': cover['topic'][0]['body']})
             return httpx.Response(201, json=evaluation)
+        if request.method == 'GET' and path == f'covers/{cover_id}':
+            return httpx.Response(200, json=cover)
         raise AssertionError(path)
 
 
@@ -303,10 +305,13 @@ def agree(client, who='chaewon', **change):
     return client.post('/api/v1/job-interview-consent', headers=headers(who), json={**CONSENT, **change})
 
 
-def start_interview(client, resume, origin='https://dreamcatch.test', who='chaewon', consent=True):
+INTERVIEW_CHOICE = {'industry': '서비스업', 'companyType': '중소기업', 'experience': '신입'}
+
+
+def start_interview(client, resume, origin='https://dreamcatch.test', who='chaewon', consent=True, choice=INTERVIEW_CHOICE):
     if consent:
         assert agree(client, who).status_code == 201
-    body = {'resumeId': resume['id'], 'industry': '서비스업', 'companyType': '중소기업', 'experience': '신입'}
+    body = {'resumeId': resume['id'], **choice}
     return client.post('/api/v1/job-interviews', headers={**headers(who), 'Origin': origin}, json=body)
 
 
@@ -349,6 +354,23 @@ def test_interview_starts_with_consent_and_records_the_session(client, fake):
     assert row['resume_snapshot']['title'] == resume['title'] and row['finished_at'] is None
     listed = client.get('/api/v1/job-interviews', headers=headers('chaewon')).json()['items']
     assert listed[0]['id'] == started.json()['id'] and listed[0]['finishedAt'] is None
+
+
+def test_interview_uses_application_info_saved_on_the_cover(client, fake):
+    resume = create(client, content='면접에 쓸 본문')
+    info = f"/api/v1/job-resumes/{resume['id']}/interview-info"
+    blank = {'industry': '', 'companyType': '', 'experience': ''}
+    assert client.get(info, headers=headers('chaewon')).json() == blank, 'Deep 에 값이 없으면 빈 값으로 알린다'
+    assert client.get(info, headers=headers('changwon')).status_code == 404, '남의 자소서 정보를 읽었다'
+    # 저장된 값이 없고 고르지도 않았으면 Deep 을 부르기 전에 막는다.
+    assert start_interview(client, resume, choice={}).status_code == 422 and not fake.sessions
+    [cover] = fake.covers.values()
+    cover.update(industry_type='제조업', corporate_type='공기업', exp_type=None)
+    assert client.get(info, headers=headers('chaewon')).json() == {'industry': '제조업', 'companyType': '공기업', 'experience': ''}
+    # 저장된 값이 우선이고, 비어 있는 경력만 화면에서 고른 값을 쓴다.
+    assert start_interview(client, resume, consent=False).status_code == 201
+    sent = next(iter(fake.sessions.values()))['interview_info']
+    assert (sent['industry_type'], sent['corporate_type'], sent['career']) == ('제조업', '공기업', '신입')
 
 
 def test_interview_is_refused_without_consent_or_allowed_origin(client, fake):

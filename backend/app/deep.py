@@ -385,6 +385,18 @@ def latest_evaluation(user, cover_id):
 
 # ── AI 인터뷰(면접 IFRAME) — 영상·결과는 Deep 에만 있다 ───────────────────
 
+def cover_application(user, cover_id):
+    """Deep 자소서에 저장된 업종·기업형태·경력. 우리 DB에는 칸이 없다. 없는 값은 빈 문자열."""
+    response = call(user, 'GET', f'covers/{cover_id}')
+    if response.status_code not in (200, 404):
+        raise failure(response)
+    data = body(response) if response.status_code == 200 else {}
+    if not isinstance(data, dict):
+        raise DeepError(502, 'DeepResume 자소서 응답을 확인할 수 없습니다.')
+    fields = (('industry', 'industry_type'), ('companyType', 'corporate_type'), ('experience', 'exp_type'))
+    return {key: data[field].strip() if isinstance(data.get(field), str) else '' for key, field in fields}
+
+
 def create_interview(user, cover_id, info, parent_origin):
     """면접 세션을 만들고 (session_id, iframe_url) 을 돌려준다. iframe_url 의 티켓은 60초·1회용이다."""
     response = call(user, 'POST', 'interview/sessions', timeout=30, json={

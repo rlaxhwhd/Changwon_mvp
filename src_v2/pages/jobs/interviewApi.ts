@@ -28,6 +28,13 @@ export async function agreeInterviewConsent(consentVersion: string, consentAnswe
   await api('/job-interview-consent', { method: 'POST', body: JSON.stringify({ consentVersion, consentAnswers }) })
 }
 
+export type InterviewInfo = Pick<InterviewStart, 'industry' | 'companyType' | 'experience'>
+
+/** 자소서에 저장된 업종·기업형태·경력(DeepResume 자소서 값). 빈 값만 면접 화면이 다시 묻는다. */
+export async function loadInterviewInfo(resumeId: string): Promise<InterviewInfo> {
+  return api<InterviewInfo>(`/job-resumes/${encodeURIComponent(resumeId)}/interview-info`)
+}
+
 /** 면접 세션을 만든다. iframeUrl 의 티켓은 60초·1회용이라 받자마자 iframe 에 넣는다. */
 export async function startInterview(input: InterviewStart): Promise<{ id: string; iframeUrl: string }> {
   return api<{ id: string; iframeUrl: string }>('/job-interviews', { method: 'POST', body: JSON.stringify(input) })

@@ -1594,10 +1594,11 @@ class InterviewConsentBody(BaseModel):
 class InterviewBody(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     resumeId: str = Field(min_length=1, max_length=64)
-    # 우리 자소서에 칸이 없는 지원정보 — Deep 면접 질문 생성에만 쓰인다(Deep 한도 15자).
-    industry: str = Field(min_length=1, max_length=15)
-    companyType: str = Field(min_length=1, max_length=15)
-    experience: str = Field(min_length=1, max_length=15)
+    # 우리 자소서에 칸이 없는 지원정보(Deep 한도 15자). Deep 자소서에 저장된 값을 먼저 쓰고,
+    # 거기 없는 값만 여기서 받는다(GET /job-resumes/{id}/interview-info 가 무엇이 비었는지 알려 준다).
+    industry: str = Field(default='', max_length=15)
+    companyType: str = Field(default='', max_length=15)
+    experience: str = Field(default='', max_length=15)
 
 
 class InterviewFinishBody(BaseModel):
@@ -1638,6 +1639,20 @@ def agree_interview_consent(body: InterviewConsentBody, user=Depends(principal, 
     return {'consented': True}
 
 
+@router.get('/job-resumes/{resume_id}/interview-info')
+def resume_interview_info(resume_id: str, user=Depends(deep_principal)):
+    """자소서에 저장된 업종·기업형태·경력(Deep 자소서 값). 빈 값만 면접 화면이 다시 묻는다."""
+    require_deep(user)
+    with pool.connection() as conn:
+        row = get_resume(conn, user, resume_id)
+    if not row['deep_cover_id']:
+        return {'industry': '', 'companyType': '', 'experience': ''}
+    try:
+        return deep.cover_application(user, row['deep_cover_id'])
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+
+
 @router.post('/job-interviews', status_code=201)
 def start_interview(body: InterviewBody, request: Request, user=Depends(deep_principal)):
     """동의를 확인하고 Deep 면접 세션을 만든다. 돌려주는 iframeUrl 의 티켓은 60초·1회용이다."""
@@ -1658,8 +1673,15 @@ def start_interview(body: InterviewBody, request: Request, user=Depends(deep_pri
                                             ('position_text', '지원 직무')) if not (row[key] or '').strip()]
         if missing:
             raise HTTPException(422, f"자소서에 {'·'.join(missing)} 정보를 입력한 뒤 다시 시도해 주세요.")
-        info = {'job_type': row['job_type_text'], 'industry_type': body.industry, 'corporate_type': body.companyType,
-                'career': body.experience, 'companyName': row['company_text'], 'supportDepartment': row['position_text']}
+        saved = deep.cover_application(user, row['deep_cover_id'])
+        chosen = {key: saved[key] or getattr(body, key) for key in saved}
+        blank = [label for key, label in (('industry', '업종'), ('companyType', '기업형태'), ('experience', '경력'))
+                 if not chosen[key]]
+        if blank:
+            raise HTTPException(422, f"{'·'.join(blank)}을(를) 선택한 뒤 다시 시도해 주세요.")
+        info = {'job_type': row['job_type_text'], 'industry_type': chosen['industry'],
+                'corporate_type': chosen['companyType'], 'career': chosen['experience'],
+                'companyName': row['company_text'], 'supportDepartment': row['position_text']}
         session_id, iframe_url = deep.create_interview(user, row['deep_cover_id'], info, origin)
     except deep.DeepError as error:
         raise deep_http(error) from None
