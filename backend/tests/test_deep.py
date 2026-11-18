@@ -24,6 +24,7 @@ class FakeDeep:
         self.members, self.covers, self.calls = set(), {}, []
         self.existing_member = False
         self.origins, self.sessions, self.results = {'https://dreamcatch.test'}, {}, []
+        self.companies = {'엔잡': ['개발', '디자인'], '엔잡코리아': []}  # 기업별 질문이 등록된 기업 → 직무
         self.down = False
         self.on_ai = None  # AI 호출 도중에 끼어들 동작(동시 저장 재현)
 
@@ -60,6 +61,31 @@ class FakeDeep:
             self.sessions[session_id] = payload
             return httpx.Response(201, json={'session_id': session_id, 'cover_id': payload['cover_id'], 'expires_in': 60,
                                              'iframe_url': 'https://front.deep.test/external/interview/launch?ticket=drl_x'})
+        if path == 'interview/direct/sessions':
+            if payload['parent_origin'] not in self.origins:
+                return httpx.Response(403, json={'code': 'origin_not_allowed'})
+            if payload.get('mode') not in ('no_cover', 'company') or 'cover_id' in payload or 'cover' in payload:
+                return httpx.Response(400, json={'mode': "'no_cover' 또는 'company'"})
+            if payload['mode'] == 'company':
+                if payload.get('company') not in self.companies:
+                    return httpx.Response(404, json={'code': 'company_not_found'})
+                if payload.get('job_category', '전체') not in ('전체', *self.companies[payload['company']]):
+                    return httpx.Response(404, json={'code': 'question_not_found'})
+            session_id = str(uuid.uuid4())
+            self.sessions[session_id] = payload
+            return httpx.Response(201, json={'session_id': session_id, 'mode': payload['mode'], 'expires_in': 60,
+                                             'iframe_url': 'https://front.deep.test/external/interview/launch?ticket=drl_d'})
+        if path == 'interview/companies/search':
+            query, limit = request.url.params.get('q', ''), int(request.url.params.get('limit', 10))
+            if not 1 <= len(query) <= 100 or not 1 <= limit <= 30:
+                return httpx.Response(400, json={'q': '검색어(q)는 1~100자로 보내 주세요.'})
+            names = sorted((n for n in self.companies if query in n), key=lambda n: (not n.startswith(query), n))
+            return httpx.Response(200, json={'query': query, 'companies': names[:limit]})
+        if path == 'interview/companies/job-categories':
+            company = request.url.params.get('company')
+            if company not in self.companies:
+                return httpx.Response(404, json={'code': 'company_not_found', 'detail': '등록되지 않은 기업입니다.'})
+            return httpx.Response(200, json={'company': company, 'job_categories': self.companies[company]})
         if path == 'interview/results/sessions':
             if payload['parent_origin'] not in self.origins:
                 return httpx.Response(403, json={'code': 'origin_not_allowed'})
@@ -303,7 +329,7 @@ def test_last_result_is_marked_stale_after_the_body_changes(client, fake):
 
 # ── AI 인터뷰: 동의·세션 기록만 우리 DB, 영상·결과는 Deep ─────────────────
 
-CONSENT = {'consentVersion': '2026-11-16', 'consentAnswers': {'privacy': 'yes', 'media': 'yes', 'provision': 'yes'}}
+CONSENT = {'consentVersion': '2026-11-18', 'consentAnswers': {'privacy': 'yes', 'media': 'yes', 'provision': 'yes'}}
 
 
 def agree(client, who='chaewon', **change):
@@ -354,7 +380,7 @@ def test_interview_starts_with_consent_and_records_the_session(client, fake):
         row = conn.execute('SELECT * FROM dc.job_interview_session WHERE id=%s', (started.json()['id'],)).fetchone()
         consent = conn.execute('SELECT * FROM dc.job_interview_consent WHERE student_uid=%s AND consent_version=%s',
                                (row['student_uid'], row['consent_version'])).fetchone()
-    assert row['consent_version'] == '2026-11-16' and row['consent_answers'] == CONSENT['consentAnswers']
+    assert row['consent_version'] == '2026-11-18' and row['consent_answers'] == CONSENT['consentAnswers']
     assert row['agreed_at'] == consent['agreed_at'], '세션의 동의 시각이 실제 동의 기록과 다르다'
     assert row['resume_snapshot']['title'] == resume['title'] and row['finished_at'] is None
     listed = client.get('/api/v1/job-interviews', headers=headers('chaewon')).json()['items']
@@ -376,6 +402,55 @@ def test_interview_uses_application_info_saved_on_the_cover(client, fake):
     assert start_interview(client, resume, consent=False).status_code == 201
     sent = next(iter(fake.sessions.values()))['interview_info']
     assert (sent['industry_type'], sent['corporate_type'], sent['career']) == ('제조업', '공기업', '신입')
+
+
+DIRECT_HEADERS = {**headers('chaewon'), 'Origin': 'https://dreamcatch.test'}
+
+
+def test_interview_without_cover_sends_the_typed_application_and_records_the_mode(client, fake):
+    assert agree(client).status_code == 201
+    direct = {'source': 'none', 'jobType': '서비스', 'industry': '서비스업', 'companyType': '중소기업', 'experience': '신입',
+              'company': '엔잡', 'position': '고객상담', 'content': '동아리에서 서버를 만든 경험'}
+    # 빈 필수값은 Deep 을 부르기 전에 막는다. 자소서 기반인데 자소서를 안 고른 것도 같다.
+    assert client.post('/api/v1/job-interviews', headers=DIRECT_HEADERS, json={**direct, 'position': ''}).status_code == 422
+    assert client.post('/api/v1/job-interviews', headers=DIRECT_HEADERS, json={'source': 'cover'}).status_code == 422
+    assert not fake.sessions
+    started = client.post('/api/v1/job-interviews', headers=DIRECT_HEADERS, json=direct)
+    assert started.status_code == 201, started.text
+    sent = next(iter(fake.sessions.values()))
+    assert sent['mode'] == 'no_cover' and 'cover_id' not in sent and sent['interview_content'] == direct['content']
+    assert sent['interview_info'] == {'job_type': '서비스', 'industry_type': '서비스업', 'corporate_type': '중소기업',
+                                      'career': '신입', 'companyName': '엔잡', 'supportDepartment': '고객상담'}
+    with pool.connection() as conn:
+        row = conn.execute('SELECT * FROM dc.job_interview_session WHERE id=%s', (started.json()['id'],)).fetchone()
+    assert row['mode'] == 'no_cover' and row['resume_id'] is None and row['resume_snapshot'] is None
+    assert row['direct_input'] == {'interview_content': direct['content']}
+    listed = client.get('/api/v1/job-interviews', headers=headers('chaewon')).json()['items'][0]
+    assert (listed['mode'], listed['company'], listed['resumeTitle']) == ('no_cover', '엔잡', '')
+
+
+def test_company_interview_uses_registered_companies_and_their_job_categories(client, fake):
+    assert agree(client).status_code == 201
+    search = '/api/v1/job-interview-companies'
+    assert client.get(search, headers=headers('chaewon'), params={'q': '엔잡'}).json() == {'items': ['엔잡', '엔잡코리아']}
+    assert client.get(search, headers=headers('chaewon'), params={'q': ''}).status_code == 422
+    assert client.get(f'{search}/job-categories', headers=headers('chaewon'), params={'company': '엔잡'}).json() == {'items': ['개발', '디자인']}
+    assert client.get(f'{search}/job-categories', headers=headers('chaewon'), params={'company': '없는회사'}).status_code == 404
+    direct = {'source': 'company', 'jobType': 'IT·전기·전자·통신', 'industry': 'IT·전기·전자', 'companyType': '대기업',
+              'experience': '신입', 'company': '엔잡', 'position': '개발팀', 'workTask': '백엔드', 'jobCategory': '개발'}
+    assert client.post('/api/v1/job-interviews', headers=DIRECT_HEADERS, json={**direct, 'company': '없는회사'}).status_code == 404
+    assert client.post('/api/v1/job-interviews', headers=DIRECT_HEADERS, json={**direct, 'jobCategory': '영업'}).status_code == 404
+    with pool.connection() as conn:
+        before = conn.execute("SELECT count(*) AS n FROM dc.job_interview_session WHERE mode='company'").fetchone()['n']
+    started = client.post('/api/v1/job-interviews', headers=DIRECT_HEADERS, json=direct)
+    assert started.status_code == 201, started.text
+    sent = next(iter(fake.sessions.values()))
+    assert (sent['mode'], sent['company'], sent['job_category'], sent['interview_info']['workTask']) == ('company', '엔잡', '개발', '백엔드')
+    with pool.connection() as conn:
+        row = conn.execute('SELECT * FROM dc.job_interview_session WHERE id=%s', (started.json()['id'],)).fetchone()
+        after = conn.execute("SELECT count(*) AS n FROM dc.job_interview_session WHERE mode='company'").fetchone()['n']
+    assert row['mode'] == 'company' and row['direct_input'] == {'company': '엔잡', 'job_category': '개발'}
+    assert after == before + 1, 'Deep 이 거부한 면접이 기록됐다'
 
 
 def test_interview_results_screen_address_is_issued_for_allowed_origin_only(client, fake):

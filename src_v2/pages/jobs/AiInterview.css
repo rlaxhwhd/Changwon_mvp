@@ -67,19 +67,64 @@
 .iv-source strong { font-size: var(--fs-card, 17px); }
 .iv-source span { color: var(--muted-foreground); font-size: var(--fs-meta, 14px); font-weight: 400; }
 .iv-source.active { background: var(--blue-soft); border-color: var(--color-primary); }
+.iv-source:hover:not(.active) { border-color: var(--color-primary); }
 
-.iv-source:disabled { background: var(--muted); color: var(--muted-foreground); }
-.iv-source:disabled > i { color: var(--muted-foreground); }
-.iv-source em {
-  margin-top: 4px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  font-size: 13px;
-  font-style: normal;
-  font-weight: 600;
+/* ── 직접 입력(자소서 없이·기업별) — 텍스트 칸·선택지는 자소서 지원 정보(rs-application-*)를 그대로 쓴다 ── */
+.iv-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px 18px;
+  margin-bottom: 22px;
 }
+.iv-fields small { font-weight: 400; color: var(--muted-foreground); }
+
+.iv-combo { position: relative; min-width: 0; }
+.iv-suggest {
+  position: absolute;
+  z-index: 5;
+  top: 100%;
+  left: 0;
+  right: 0;
+  max-height: 240px;
+  margin: 4px 0 0;
+  padding: 4px;
+  overflow: auto;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--card);
+}
+.iv-suggest button {
+  display: block;
+  width: 100%;
+  padding: 8px 10px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--foreground);
+  font: inherit;
+  font-size: var(--fs-meta, 14px);
+  text-align: left;
+  cursor: pointer;
+}
+.iv-suggest button:hover, .iv-suggest button:focus-visible { background: var(--blue-soft); color: var(--color-primary); }
+.iv-field-hint { margin: 6px 0 0; color: var(--muted-foreground); font-size: 13px; font-weight: 400; }
+
+.iv-textarea textarea {
+  width: 100%;
+  min-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border, var(--border));
+  border-radius: var(--radius-sm, 8px);
+  background: var(--color-bg, var(--card));
+  color: var(--color-navy, var(--foreground));
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.6;
+  resize: vertical;
+}
+.iv-textarea .iv-field-hint { text-align: right; }
 
 .iv-wrap .ac-pick-item:disabled { background: var(--muted); cursor: not-allowed; }
 .iv-pick-missing { margin-top: 6px; color: var(--amber-ink, var(--color-warning)); font-size: var(--fs-meta, 14px); font-weight: 500; }
@@ -234,7 +279,7 @@
 .iv-done .ac-actions { justify-content: center; }
 
 @media (max-width: 900px) {
-  .iv-sources, .iv-device { grid-template-columns: minmax(0, 1fr); }
+  .iv-sources, .iv-device, .iv-fields { grid-template-columns: minmax(0, 1fr); }
   .iv-frame { height: 640px; }
   .iv-live-head { flex-wrap: wrap; }
 }

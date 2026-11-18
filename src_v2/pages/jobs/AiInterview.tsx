@@ -2,10 +2,11 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAllResumes, RESUME_EVENT, type SavedResume } from './resumeMock'
 import {
-  agreeInterviewConsent, finishInterview, loadInterviewInfo, loadInterviews, startInterview,
-  type InterviewInfo, type InterviewSession,
+  agreeInterviewConsent, finishInterview, loadInterviewInfo, loadInterviewJobCategories, loadInterviews,
+  searchInterviewCompanies, startInterview,
+  type InterviewInfo, type InterviewSession, type InterviewSource, type InterviewStart,
 } from './interviewApi'
-import { ChoiceField, COMPANY_TYPES, EXPERIENCES, INDUSTRIES } from '../roadmap/ResumeApplicationFields'
+import { ChoiceField, COMPANY_TYPES, EXPERIENCES, INDUSTRIES, OCCUPATIONS } from '../roadmap/ResumeApplicationFields'
 import { usePageHead } from '../../components/PageCrumb'
 import '../roadmap/AiResume.css'
 import './AiConsulting.css'
@@ -16,13 +17,13 @@ import './JobsWorkspace.css'
 // 서버는 아는 버전에 모든 항목 「예」인 동의만 받는다. 동의는 버전당 한 번만 받고(dc.job_interview_consent),
 // 이미 동의한 학생은 동의 단계를 건너뛴다. version 을 올리면 모두 다시 동의한다.
 const INTERVIEW_CONSENT = {
-  version: '2026-11-16',
+  version: '2026-11-18',
   items: [
     {
       id: 'privacy',
       title: '개인정보 수집·이용 동의',
       rows: [
-        ['수집 항목', '학번, 이름, 학과, 선택한 자기소개서(문항·본문), 지원 정보(직종·업종·기업형태·경력·기업명·지원 직무)'],
+        ['수집 항목', '학번, 이름, 학과, 선택한 자기소개서(문항·본문) 또는 직접 입력한 면접 내용(경험 글), 지원 정보(직종·업종·기업형태·경력·기업명·지원 직무·담당 업무)'],
         ['이용 목적', 'AI 모의면접 질문 생성, 면접 진행, 답변 평가 및 결과 제공'],
         ['보유 기간', '면접 결과 삭제 요청 또는 서비스 이용 종료 시까지'],
       ],
@@ -56,12 +57,14 @@ const STEPS: { id: Step; label: string }[] = [
   { id: 'live', label: 'AI 인터뷰' },
 ]
 
-// 질문을 만드는 방식. DeepResume 외부 API 가 지금 지원하는 것은 자소서 기반뿐이다(Deep_API_v7: 자소서 없이 면접 미구현).
-const SOURCES = [
-  { id: 'cover', icon: 'fa-file-lines', title: '자소서 기반', desc: '저장한 자기소개서 내용으로 질문을 만듭니다.', ready: true },
-  { id: 'none', icon: 'fa-comments', title: '자소서 없이', desc: '직무 공통 질문으로 면접을 봅니다.', ready: false },
-  { id: 'company', icon: 'fa-building', title: '기업별', desc: '지원 기업에 맞춘 질문으로 면접을 봅니다.', ready: false },
-] as const
+// 질문을 만드는 방식(Deep_APII_V2). cover 는 Deep 면접 시작①, none·company 는 면접 시작②(자소서 없음·기업별 질문).
+const SOURCES: { id: InterviewSource; icon: string; title: string; desc: string }[] = [
+  { id: 'cover', icon: 'fa-file-lines', title: '자소서 기반', desc: '저장한 자기소개서 내용으로 질문을 만듭니다.' },
+  { id: 'none', icon: 'fa-comments', title: '자소서 없이', desc: '지원 정보와 경험 글로 직무 공통 질문을 만듭니다.' },
+  { id: 'company', icon: 'fa-building', title: '기업별', desc: '등록된 기업의 실제 면접 질문으로 면접을 봅니다.' },
+]
+const EMPTY_DIRECT = { jobType: '', company: '', position: '', workTask: '', jobCategory: '전체', content: '' }
+const COMPANY_SEARCH_DELAY_MS = 300
 
 // 종료 직후에는 Deep 결과 목록에 아직 안 올라와 있을 수 있다 — 잠깐 기다렸다 다시 기록한다.
 const FINISH_RETRY_MS = [0, 2000, 5000]
@@ -97,7 +100,7 @@ async function recordFinish(id: string, resultId: string): Promise<void> {
 }
 
 export default function AiInterview() {
-  usePageHead('AI 인터뷰', '내 자소서로 AI 면접관과 모의면접을 진행합니다.')
+  usePageHead('AI 인터뷰', '내 자소서나 지원 정보로 AI 면접관과 모의면접을 진행합니다.')
   const navigate = useNavigate()
   const resumes = useSyncExternalStore(subscribeResumes, getAllResumes)
 
@@ -106,11 +109,37 @@ export default function AiInterview() {
   const [history, setHistory] = useState<InterviewSession[] | null>(null)
 
   // 1. 질문 선택
+  const [source, setSource] = useState<InterviewSource>('cover')
   const [resumeId, setResumeId] = useState<string | null>(null)
   const [industry, setIndustry] = useState('')
   const [companyType, setCompanyType] = useState('')
   const [experience, setExperience] = useState('')
   const resume = resumes.find(item => item.id === resumeId)
+  // 자소서 없이·기업별: 자소서 대신 직접 적는 지원 정보.
+  const [direct, setDirect] = useState(EMPTY_DIRECT)
+  const setField = (field: keyof typeof EMPTY_DIRECT) => (value: string) => setDirect(current => ({ ...current, [field]: value }))
+  // 기업별: Deep 에 질문이 등록된 기업만 된다 — 입력이 멈춘 뒤 자동완성을 받고, 목록에서 고른 이름만 인정한다(picked).
+  const [suggestions, setSuggestions] = useState<string[]>([])
+  const [picked, setPicked] = useState<{ company: string; categories: string[] } | null>(null)
+  const companyPicked = source !== 'company' || (!!picked && picked.company === direct.company)
+  useEffect(() => {
+    const query = direct.company.trim()
+    if (source !== 'company' || !query || companyPicked) { setSuggestions([]); return }
+    let stale = false
+    const timer = setTimeout(() => {
+      searchInterviewCompanies(query)
+        .then(items => { if (!stale) setSuggestions(items) })
+        .catch(() => { if (!stale) setSuggestions([]) })
+    }, COMPANY_SEARCH_DELAY_MS)
+    return () => { stale = true; clearTimeout(timer) }
+  }, [source, direct.company, companyPicked])
+  const pickCompany = (company: string) => {
+    setDirect(current => ({ ...current, company, jobCategory: '전체' }))
+    setPicked({ company, categories: [] })
+    loadInterviewJobCategories(company)
+      .then(categories => setPicked(current => (current?.company === company ? { company, categories } : current)))
+      .catch(() => undefined)  // 직무 목록을 못 받으면 「전체」로만 시작한다.
+  }
   // 자소서에 저장된 업종·기업형태·경력. 저장된 값은 그대로 쓰고, 비어 있는 것만 아래 카드에서 고른다.
   // 읽지 못하면 세 가지를 모두 묻는다(서버가 저장된 값을 우선한다).
   const [saved, setSaved] = useState<{ resumeId: string; info: InterviewInfo } | null>(null)
@@ -121,12 +150,14 @@ export default function AiInterview() {
     loadInterviewInfo(resumeId).catch(() => blank).then(info => { if (!stale) setSaved({ resumeId, info }) })
     return () => { stale = true }
   }, [resumeId])
-  const info = saved && saved.resumeId === resumeId ? saved.info : null
+  const info = source === 'cover' && saved && saved.resumeId === resumeId ? saved.info : null
   const chosen = { industry: info?.industry || industry, companyType: info?.companyType || companyType,
     experience: info?.experience || experience }
   const askInfo = !!info && (!info.industry || !info.companyType || !info.experience)
-  const setupReady = !!resume && missingForInterview(resume).length === 0 && !!info
-    && !!chosen.industry && !!chosen.companyType && !!chosen.experience
+  const chosenReady = !!chosen.industry && !!chosen.companyType && !!chosen.experience
+  const setupReady = source === 'cover'
+    ? !!resume && missingForInterview(resume).length === 0 && !!info && chosenReady
+    : chosenReady && !!direct.jobType && !!direct.company.trim() && !!direct.position.trim() && companyPicked
 
   // 2. 동의
   const [agreed, setAgreed] = useState<Record<string, boolean>>({})
@@ -227,13 +258,18 @@ export default function AiInterview() {
   // 면접 화면(IFRAME)이 카메라·마이크를 쓰도록 여기서 쓰던 것은 끄고 세션을 만든다.
   // 버튼 클릭 직후에 iframe 을 열어야 브라우저가 면접관 음성 자동 재생을 허용한다.
   const begin = async () => {
-    if (!resume || starting) return
+    if (!setupReady || starting) return
     setStarting(true)
     setError('')
     stopDevices()
     setDeviceState('idle')
+    const input: InterviewStart = source === 'cover'
+      ? { source, resumeId: resume?.id, ...chosen }
+      : { source, ...chosen, jobType: direct.jobType, company: direct.company.trim(), position: direct.position.trim(),
+          workTask: direct.workTask.trim(),
+          ...(source === 'none' ? { content: direct.content.trim() } : { jobCategory: direct.jobCategory }) }
     try {
-      const created = await startInterview({ resumeId: resume.id, ...chosen })
+      const created = await startInterview(input)
       setSession(created)
       setLiveState('loading')
       setStep('live')
@@ -309,19 +345,77 @@ export default function AiInterview() {
             <h2 className="ac-card-title"><i className="fa-solid fa-list-check" /> 면접 질문 방식</h2>
             <p className="ac-card-desc">어떤 내용으로 면접 질문을 만들지 선택해 주세요.</p>
             <div className="iv-sources" role="radiogroup" aria-label="면접 질문 방식">
-              {SOURCES.map(source => (
-                <button key={source.id} type="button" role="radio" aria-checked={source.ready}
-                  className={`iv-source${source.ready ? ' active' : ''}`} disabled={!source.ready}>
-                  <i className={`fa-solid ${source.icon}`} aria-hidden="true" />
-                  <strong>{source.title}</strong>
-                  <span>{source.desc}</span>
-                  {!source.ready && <em>DeepResume 준비 중</em>}
+              {SOURCES.map(item => (
+                <button key={item.id} type="button" role="radio" aria-checked={source === item.id}
+                  className={`iv-source${source === item.id ? ' active' : ''}`}
+                  onClick={() => { setSource(item.id); setError('') }}>
+                  <i className={`fa-solid ${item.icon}`} aria-hidden="true" />
+                  <strong>{item.title}</strong>
+                  <span>{item.desc}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div className="ac-card">
+          {source !== 'cover' && (
+            <div className="ac-card">
+              <h2 className="ac-card-title"><i className="fa-solid fa-building-user" /> 지원 정보</h2>
+              <p className="ac-card-desc">
+                {source === 'company'
+                  ? '지원 기업을 목록에서 고르면 그 기업에 등록된 실제 면접 질문으로 면접을 봅니다.'
+                  : '자소서 없이 지원 정보와 경험 글을 바탕으로 직무 공통 질문을 만듭니다.'}
+              </p>
+              <div className="iv-fields">
+                <div className="iv-combo">
+                  <label className="rs-application-text">기업명
+                    <input value={direct.company} maxLength={100} autoComplete="off"
+                      placeholder={source === 'company' ? '기업명을 입력하고 목록에서 선택' : '예: 엔잡'}
+                      role={source === 'company' ? 'combobox' : undefined}
+                      aria-autocomplete={source === 'company' ? 'list' : undefined}
+                      aria-expanded={source === 'company' ? suggestions.length > 0 : undefined}
+                      onChange={event => setField('company')(event.target.value)} />
+                  </label>
+                  {source === 'company' && suggestions.length > 0 && (
+                    <ul className="iv-suggest" role="listbox" aria-label="등록된 기업">
+                      {suggestions.map(name => (
+                        <li key={name} role="option" aria-selected={false}>
+                          <button type="button" onClick={() => pickCompany(name)}>{name}</button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                  {source === 'company' && !!direct.company.trim() && !companyPicked && suggestions.length === 0 && (
+                    <p className="iv-field-hint">질문이 등록된 기업만 고를 수 있습니다. 목록에 나오는 기업명을 선택해 주세요.</p>
+                  )}
+                </div>
+                <label className="rs-application-text">지원 직무
+                  <input value={direct.position} maxLength={100} placeholder="예: 개발팀"
+                    onChange={event => setField('position')(event.target.value)} />
+                </label>
+                <label className="rs-application-text">담당 업무 <small>(선택)</small>
+                  <input value={direct.workTask} maxLength={100} placeholder="예: 백엔드"
+                    onChange={event => setField('workTask')(event.target.value)} />
+                </label>
+              </div>
+              {source === 'company' && companyPicked && picked && (
+                <ChoiceField label="직무" options={['전체', ...picked.categories]} value={direct.jobCategory} onChange={setField('jobCategory')} />
+              )}
+              <ChoiceField label="직종" options={OCCUPATIONS} value={direct.jobType} onChange={setField('jobType')} />
+              <ChoiceField label="업종" options={INDUSTRIES} value={industry} onChange={setIndustry} />
+              <ChoiceField label="기업형태" options={COMPANY_TYPES} value={companyType} onChange={setCompanyType} />
+              <ChoiceField label="경력" options={EXPERIENCES} value={experience} onChange={setExperience} />
+              {source === 'none' && (
+                <label className="rs-application-text iv-textarea">경험 글 <small>(선택 · 1,000자 이내)</small>
+                  <textarea value={direct.content} maxLength={1000} rows={5}
+                    placeholder="면접관이 참고할 경험을 적어 주세요. 예: 동아리에서 서버를 만든 경험…"
+                    onChange={event => setField('content')(event.target.value)} />
+                  <span className="iv-field-hint">{direct.content.length} / 1,000</span>
+                </label>
+              )}
+            </div>
+          )}
+
+          {source === 'cover' && <div className="ac-card">
             <h2 className="ac-card-title"><i className="fa-solid fa-file-lines" /> 면접에 쓸 자소서</h2>
             <p className="ac-card-desc">선택한 자소서의 문항과 본문으로 면접관이 질문합니다.</p>
             <div className="ac-pick-list">
@@ -357,7 +451,7 @@ export default function AiInterview() {
                 )
               })}
             </div>
-          </div>
+          </div>}
 
           {resume && askInfo && (
             <div className="ac-card">
@@ -392,7 +486,7 @@ export default function AiInterview() {
                 {history.map(item => (
                   <li key={item.id}>
                     <span className="iv-history-date">{item.createdAt.slice(0, 10)}</span>
-                    <strong>{item.resumeTitle}</strong>
+                    <strong>{item.resumeTitle || (item.mode === 'company' ? '기업별 질문 면접' : '자소서 없이 본 면접')}</strong>
                     <span className="iv-history-company">{item.company}</span>
                     <span className={`iv-history-state${item.finishedAt ? ' done' : ''}`}>{item.finishedAt ? '완료' : '미완료'}</span>
                   </li>

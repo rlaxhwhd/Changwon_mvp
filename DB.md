@@ -633,7 +633,10 @@ Deep 문항 title·type 은 분야 이름이 아니라 분야의 질문 문장(`
 Deep 에만 있고, 우리 DB에는 **동의와 세션 기록만** 둔다 — `dc.job_interview_session`(누가·언제·어떤 자소서로·동의 버전과 응답,
 Deep session/result id, 자소서·지원정보 스냅샷). 동의·스냅샷은 불변이고 UPDATE 는 종료 기록 1회만 허용한다(트리거).
 종료의 result_id 는 브라우저가 전한 값이라 Deep 결과 목록으로 본인 것인지 확인하고, 한 결과는 한 세션에만 붙는다(unique).
-질문 방식은 자소서 기반만 된다(Deep 외부 API 에 자소서 없이·기업별 면접이 없다). 결과표 화면은 미구현.
+**질문 방식 3종(2026-11-18 · 마이그레이션 166, Deep_APII_V2).** 자소서 기반(Deep 면접 시작①) 외에 자소서 없이(`no_cover`)·기업별 질문
+(`company`, Deep 에 질문이 등록된 기업만 — 자동완성·직무 목록 API)을 면접 시작②로 만든다. 세션 행에 `mode` 와 학생이 직접 입력해
+Deep 에 보낸 값의 스냅샷 `direct_input` 을 두고 `resume_id`·`resume_snapshot` 은 자소서 기반일 때만 있다(CHECK). 결과표 화면은
+Deep 응시결과 화면 IFRAME(`POST /job-interview-results`)이며 결과 데이터 API(`GET interview/results[/id]`)의 응답 스키마는 미확인이라 우리 화면·DB 에 두지 않았다.
 **동의는 한 번만 받는다(2026-11-16 · 마이그레이션 165).** `dc.job_interview_consent` — 학생·동의서 버전당 1행, 불변.
 `POST /job-interview-consent` 가 기록하고 `GET /job-interviews` 의 `consented` 로 화면이 동의 단계를 건너뛴다.
 면접 시작은 현재 버전의 동의 행이 있어야 하며, 세션 행의 동의 칸은 그 행을 복사한 스냅샷이다. 동의서 버전을 올리면 다시 받는다.

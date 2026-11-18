@@ -20,6 +20,7 @@ import hashlib
 import re
 import threading
 from datetime import date, datetime, timedelta
+from typing import Literal
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
@@ -1580,7 +1581,7 @@ def last_evaluation(resume_id: str, user=Depends(deep_principal)):
 # 동의서 원문은 화면(src_v2/pages/jobs/AiInterview.tsx INTERVIEW_CONSENT)이 소유한다.
 # 문구를 바꾸면 양쪽 version 을 함께 올린다 — 서버는 아는 버전·모든 항목 「예」만 받는다.
 # 동의는 학생·버전당 한 번만 받는다(2026-11-16 사용자 지시). 버전이 오르면 다시 받는다.
-INTERVIEW_CONSENT = {'version': '2026-11-16', 'items': ('privacy', 'media', 'provision')}
+INTERVIEW_CONSENT = {'version': '2026-11-18', 'items': ('privacy', 'media', 'provision')}
 ORIGIN_PATTERN = r'^https?://[a-z0-9.-]+(:[0-9]{1,5})?$'
 INTERVIEW_CONSENT_FIND = 'SELECT * FROM dc.job_interview_consent WHERE student_uid=%s AND consent_version=%s'
 
@@ -1591,14 +1592,27 @@ class InterviewConsentBody(BaseModel):
     consentAnswers: dict[str, str]
 
 
+# 질문 방식(화면 값) → Deep 면접 방식. cover 는 면접 시작①(interview/sessions), 나머지는 ②(interview/direct/sessions).
+INTERVIEW_MODES = {'cover': 'cover', 'none': 'no_cover', 'company': 'company'}
+
+
 class InterviewBody(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
-    resumeId: str = Field(min_length=1, max_length=64)
-    # 우리 자소서에 칸이 없는 지원정보(Deep 한도 15자). Deep 자소서에 저장된 값을 먼저 쓰고,
-    # 거기 없는 값만 여기서 받는다(GET /job-resumes/{id}/interview-info 가 무엇이 비었는지 알려 준다).
+    source: Literal['cover', 'none', 'company'] = 'cover'
+    # 자소서 기반(cover)만 쓴다.
+    resumeId: str = Field(default='', max_length=64)
+    # 지원정보(Deep 한도 15자). 자소서 기반은 Deep 자소서에 저장된 값을 먼저 쓰고 거기 없는 값만 여기서 받는다
+    # (GET /job-resumes/{id}/interview-info 가 무엇이 비었는지 알려 준다). 자소서 없이·기업별은 모두 여기서 받는다.
     industry: str = Field(default='', max_length=15)
     companyType: str = Field(default='', max_length=15)
     experience: str = Field(default='', max_length=15)
+    # 자소서 없이(none)·기업별(company)만 쓴다 — 자소서 대신 학생이 직접 적는 값(Deep 한도: 직종 15자, 경험 글 1000자, 나머지 100자).
+    jobType: str = Field(default='', max_length=15)
+    company: str = Field(default='', max_length=100)
+    position: str = Field(default='', max_length=100)
+    workTask: str = Field(default='', max_length=100)
+    jobCategory: str = Field(default='', max_length=100)
+    content: str = Field(default='', max_length=1000)
 
 
 class InterviewFinishBody(BaseModel):
@@ -1607,9 +1621,10 @@ class InterviewFinishBody(BaseModel):
 
 
 def interview_dto(row):
-    return {'id': row['id'], 'resumeId': row['resume_id'], 'resumeTitle': row['resume_snapshot'].get('title', ''),
-            'company': row['interview_info'].get('companyName', ''), 'createdAt': row['created_at'],
-            'finishedAt': row['finished_at']}
+    snapshot, direct = row['resume_snapshot'] or {}, row['direct_input'] or {}
+    return {'id': row['id'], 'mode': row['mode'], 'resumeId': row['resume_id'], 'resumeTitle': snapshot.get('title', ''),
+            'company': row['interview_info'].get('companyName') or direct.get('company', ''),
+            'createdAt': row['created_at'], 'finishedAt': row['finished_at']}
 
 
 @router.get('/job-interviews')
@@ -1666,34 +1681,84 @@ def start_interview(body: InterviewBody, request: Request, user=Depends(deep_pri
     if not re.fullmatch(ORIGIN_PATTERN, origin):
         raise HTTPException(400, '면접을 여는 사이트 주소를 확인할 수 없습니다.')
     try:
-        row = sync_resume(user, body.resumeId)
-        if not row['content'].strip():
-            raise HTTPException(422, '본문이 비어 있는 자소서로는 면접 질문을 만들 수 없습니다.')
-        missing = [label for key, label in (('job_type_text', '직종'), ('company_text', '기업명'),
-                                            ('position_text', '지원 직무')) if not (row[key] or '').strip()]
-        if missing:
-            raise HTTPException(422, f"자소서에 {'·'.join(missing)} 정보를 입력한 뒤 다시 시도해 주세요.")
-        saved = deep.cover_application(user, row['deep_cover_id'])
-        chosen = {key: saved[key] or getattr(body, key) for key in saved}
-        blank = [label for key, label in (('industry', '업종'), ('companyType', '기업형태'), ('experience', '경력'))
-                 if not chosen[key]]
-        if blank:
-            raise HTTPException(422, f"{'·'.join(blank)}을(를) 선택한 뒤 다시 시도해 주세요.")
-        info = {'job_type': row['job_type_text'], 'industry_type': chosen['industry'],
-                'corporate_type': chosen['companyType'], 'career': chosen['experience'],
-                'companyName': row['company_text'], 'supportDepartment': row['position_text']}
-        session_id, iframe_url = deep.create_interview(user, row['deep_cover_id'], info, origin)
+        if body.source == 'cover':
+            row, info = cover_interview_info(user, body)
+            direct = None
+            session_id, iframe_url = deep.create_interview(user, row['deep_cover_id'], info, origin)
+        else:
+            row, (info, direct) = None, direct_interview_info(body)
+            session_id, iframe_url = deep.create_direct_interview(user, INTERVIEW_MODES[body.source], info, direct, origin)
     except deep.DeepError as error:
         raise deep_http(error) from None
     interview_id = 'ivs_' + uuid4().hex[:12]
-    snapshot = {'title': row['title'], 'categoryLabel': row.get('category_label') or row['category_label_legacy'] or '',
-                'version': row['version']}
+    snapshot = row and {'title': row['title'], 'categoryLabel': row.get('category_label') or row['category_label_legacy'] or '',
+                        'version': row['version']}
     with pool.connection() as conn:
-        conn.execute("""INSERT INTO dc.job_interview_session(id,student_uid,resume_id,resume_snapshot,interview_info,
-          consent_version,consent_answers,agreed_at,deep_session_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
-          (interview_id, user['intg_uid'], row['id'], Jsonb(snapshot), Jsonb(info), consent['consent_version'],
-           Jsonb(consent['consent_answers']), consent['agreed_at'], session_id))
+        conn.execute("""INSERT INTO dc.job_interview_session(id,student_uid,mode,resume_id,resume_snapshot,interview_info,
+          direct_input,consent_version,consent_answers,agreed_at,deep_session_id) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)""",
+          (interview_id, user['intg_uid'], INTERVIEW_MODES[body.source], row and row['id'], snapshot and Jsonb(snapshot),
+           Jsonb(info), direct and Jsonb(direct), consent['consent_version'], Jsonb(consent['consent_answers']),
+           consent['agreed_at'], session_id))
     return {'id': interview_id, 'iframeUrl': iframe_url}
+
+
+def cover_interview_info(user, body):
+    """자소서 기반: 자소서 값 + Deep 자소서에 저장된 업종·기업형태·경력 → (자소서 행, Deep interview_info)."""
+    if not body.resumeId:
+        raise HTTPException(422, '면접에 쓸 자소서를 선택해 주세요.')
+    row = sync_resume(user, body.resumeId)
+    if not row['content'].strip():
+        raise HTTPException(422, '본문이 비어 있는 자소서로는 면접 질문을 만들 수 없습니다.')
+    missing = [label for key, label in (('job_type_text', '직종'), ('company_text', '기업명'),
+                                        ('position_text', '지원 직무')) if not (row[key] or '').strip()]
+    if missing:
+        raise HTTPException(422, f"자소서에 {'·'.join(missing)} 정보를 입력한 뒤 다시 시도해 주세요.")
+    saved = deep.cover_application(user, row['deep_cover_id'])
+    chosen = {key: saved[key] or getattr(body, key) for key in saved}
+    blank = [label for key, label in (('industry', '업종'), ('companyType', '기업형태'), ('experience', '경력'))
+             if not chosen[key]]
+    if blank:
+        raise HTTPException(422, f"{'·'.join(blank)}을(를) 선택한 뒤 다시 시도해 주세요.")
+    return row, {'job_type': row['job_type_text'], 'industry_type': chosen['industry'],
+                 'corporate_type': chosen['companyType'], 'career': chosen['experience'],
+                 'companyName': row['company_text'], 'supportDepartment': row['position_text']}
+
+
+def direct_interview_info(body):
+    """자소서 없이·기업별: 학생이 직접 적은 지원정보 → (Deep interview_info, 직접 입력 direct_input).
+    빈 필수값은 Deep 을 부르기 전에 막는다. 기업별은 기업 목록(GET /job-interview-companies)에서 고른 이름이어야 한다."""
+    required = (('jobType', '직종'), ('industry', '업종'), ('companyType', '기업형태'), ('experience', '경력'),
+                ('company', '기업명'), ('position', '지원 직무'))
+    blank = [label for key, label in required if not getattr(body, key)]
+    if blank:
+        raise HTTPException(422, f"{'·'.join(blank)}을(를) 입력한 뒤 다시 시도해 주세요.")
+    info = {'job_type': body.jobType, 'industry_type': body.industry, 'corporate_type': body.companyType,
+            'career': body.experience, 'companyName': body.company, 'supportDepartment': body.position}
+    if body.workTask:
+        info['workTask'] = body.workTask
+    # Deep 에 실제로 보내는 값만 남긴다(빈 값은 보내지 않는다 — deep.create_direct_interview 와 같은 규칙).
+    direct = {'interview_content': body.content} if body.source == 'none' else {'company': body.company, 'job_category': body.jobCategory}
+    return info, {key: value for key, value in direct.items() if value}
+
+
+@router.get('/job-interview-companies')
+def search_interview_companies(q: str = Query(min_length=1, max_length=100), user=Depends(deep_principal)):
+    """기업별 질문 면접에 쓸 기업명 자동완성 — Deep 에 질문이 등록된 기업만 나온다(입력이 멈춘 뒤 호출)."""
+    require_deep(user)
+    try:
+        return {'items': deep.search_companies(user, q)}
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+
+
+@router.get('/job-interview-companies/job-categories')
+def interview_job_categories(company: str = Query(min_length=1, max_length=100), user=Depends(deep_principal)):
+    """고른 기업의 직무 목록. 비워 두거나 「전체」면 Deep 이 전체 직무에서 질문을 고른다."""
+    require_deep(user)
+    try:
+        return {'items': deep.job_categories(user, company)}
+    except deep.DeepError as error:
+        raise deep_http(error) from None
 
 
 @router.post('/job-interview-results', status_code=201)

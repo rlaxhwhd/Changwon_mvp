@@ -4,18 +4,44 @@ import { api } from '../../../shared/api'
 
 export interface InterviewSession {
   id: string
-  resumeId: string
+  /** 질문 방식 — cover 자소서 기반 · no_cover 자소서 없이 · company 기업별 질문(Deep_APII_V2, 166) */
+  mode: 'cover' | 'no_cover' | 'company'
+  resumeId: string | null
   resumeTitle: string
   company: string
   createdAt: string
   finishedAt: string | null
 }
 
+/** 화면의 질문 방식. 서버가 Deep 면접 시작①(cover) / ②(none → no_cover, company) 로 나눈다. */
+export type InterviewSource = 'cover' | 'none' | 'company'
+
 export interface InterviewStart {
-  resumeId: string
+  source: InterviewSource
+  /** 자소서 기반만 */
+  resumeId?: string
   industry: string
   companyType: string
   experience: string
+  /** 자소서 없이·기업별만 — 자소서 대신 직접 적는 지원 정보(Deep 한도: 직종 15자, 경험 글 1000자, 나머지 100자) */
+  jobType?: string
+  company?: string
+  position?: string
+  workTask?: string
+  /** 기업별만. 비우거나 「전체」면 전체 직무에서 질문을 고른다. */
+  jobCategory?: string
+  /** 자소서 없이만. 면접관이 참고할 경험 글. */
+  content?: string
+}
+
+/** 기업별 질문이 등록된 기업명 자동완성. 입력이 멈춘 뒤(약 0.3초) 부른다. */
+export async function searchInterviewCompanies(query: string): Promise<string[]> {
+  return (await api<{ items: string[] }>(`/job-interview-companies?q=${encodeURIComponent(query)}`)).items
+}
+
+/** 고른 기업의 직무 목록. 목록에서 고른 기업명 그대로 보낸다. */
+export async function loadInterviewJobCategories(company: string): Promise<string[]> {
+  return (await api<{ items: string[] }>(`/job-interview-companies/job-categories?company=${encodeURIComponent(company)}`)).items
 }
 
 /** 지난 인터뷰와, 현재 동의서 버전에 이미 동의했는지(consented). 동의는 버전당 한 번만 받는다(165). */

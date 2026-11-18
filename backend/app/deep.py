@@ -161,12 +161,13 @@ def token_for(user, refresh=False):
         return _tokens[uid][0]
 
 
-def call(user, method, path, json=None, timeout=20):
+def call(user, method, path, json=None, timeout=20, params=None):
     """Authenticated request. A revoked or expired token is renewed once."""
     for attempt in (0, 1):
         token = token_for(user, refresh=attempt == 1)
         with client(timeout) as session:
-            response = send(session, method, path, json=json, headers={'Authorization': 'Bearer ' + token})
+            response = send(session, method, path, json=json, params=params,
+                            headers={'Authorization': 'Bearer ' + token})
         if response.status_code != 401:
             return response
         forget(user['intg_uid'])
@@ -397,23 +398,67 @@ def cover_application(user, cover_id):
     return {key: data[field].strip() if isinstance(data.get(field), str) else '' for key, field in fields}
 
 
-def create_interview(user, cover_id, info, parent_origin):
-    """면접 세션을 만들고 (session_id, iframe_url) 을 돌려준다. iframe_url 의 티켓은 60초·1회용이다."""
-    response = call(user, 'POST', 'interview/sessions', timeout=30, json={
-        'parent_origin': parent_origin, 'interview_info': info, 'cover_id': str(cover_id)})
-    if response.status_code != 201:
-        raise failure(response, {
-            'origin_not_allowed': (503, '이 사이트 주소가 DeepResume 면접 허용 도메인에 등록되지 않았습니다. 관리자에게 문의해 주세요.'),
-            'interview_not_enabled': (503, '학교의 AI 인터뷰 사용 설정이 꺼져 있습니다. 관리자에게 문의해 주세요.'),
-            404: (404, 'DeepResume에서 자소서를 찾지 못했습니다. 자소서를 다시 저장한 뒤 시도해 주세요.'),
-            400: (422, 'DeepResume가 면접 정보를 거부했습니다. 입력한 지원 정보를 확인해 주세요.'),
-        })
+_INTERVIEW_REFUSALS = {
+    'origin_not_allowed': (503, '이 사이트 주소가 DeepResume 면접 허용 도메인에 등록되지 않았습니다. 관리자에게 문의해 주세요.'),
+    'interview_not_enabled': (503, '학교의 AI 인터뷰 사용 설정이 꺼져 있습니다. 관리자에게 문의해 주세요.'),
+    400: (422, 'DeepResume가 면접 정보를 거부했습니다. 입력한 지원 정보를 확인해 주세요.'),
+}
+_COMPANY_NOT_FOUND = (404, '등록되지 않은 기업입니다. 기업 목록에서 골라 주세요.')
+
+
+def _launch(response):
+    """면접 세션 응답 → (session_id, iframe_url). iframe_url 의 티켓은 60초·1회용이다."""
     data = body(response)
     session_id = data.get('session_id') if isinstance(data, dict) else None
     iframe_url = data.get('iframe_url') if isinstance(data, dict) else None
     if not session_id or not isinstance(iframe_url, str) or not iframe_url.startswith(('https://', 'http://')):
         raise DeepError(502, 'AI 인터뷰 응답을 확인할 수 없습니다.')
     return str(session_id), iframe_url
+
+
+def create_interview(user, cover_id, info, parent_origin):
+    """자소서 기반 면접(면접 시작①) 세션을 만들고 (session_id, iframe_url) 을 돌려준다."""
+    response = call(user, 'POST', 'interview/sessions', timeout=30, json={
+        'parent_origin': parent_origin, 'interview_info': info, 'cover_id': str(cover_id)})
+    if response.status_code != 201:
+        raise failure(response, {**_INTERVIEW_REFUSALS,
+                                 404: (404, 'DeepResume에서 자소서를 찾지 못했습니다. 자소서를 다시 저장한 뒤 시도해 주세요.')})
+    return _launch(response)
+
+
+def create_direct_interview(user, mode, info, direct, parent_origin):
+    """자소서 없이(no_cover)·기업별 질문(company) 면접(면접 시작②, Deep_APII_V2). direct 는 Deep 필드명 그대로의
+    직접 입력값(interview_content / company·job_category)이다 — 빈 값은 보내지 않는다."""
+    response = call(user, 'POST', 'interview/direct/sessions', timeout=30, json={
+        'mode': mode, 'parent_origin': parent_origin, 'interview_info': info,
+        **{key: value for key, value in direct.items() if value}})
+    if response.status_code != 201:
+        raise failure(response, {
+            **_INTERVIEW_REFUSALS, 'company_not_found': _COMPANY_NOT_FOUND,
+            'question_not_found': (404, '이 기업·직무의 면접 질문이 아직 없습니다. 직무를 「전체」로 바꾸거나 다른 기업을 골라 주세요.')})
+    return _launch(response)
+
+
+def _names(response, field, label):
+    if response.status_code != 200:
+        raise failure(response, {'company_not_found': _COMPANY_NOT_FOUND})
+    data = body(response)
+    names = data.get(field) if isinstance(data, dict) else None
+    if not isinstance(names, list) or not all(isinstance(name, str) for name in names):
+        raise DeepError(502, f'{label} 응답을 확인할 수 없습니다.')
+    return names
+
+
+def search_companies(user, query, limit=10):
+    """기업별 질문이 등록된 기업명 자동완성(앞글자 일치 먼저). 질문이 없는 기업은 나오지 않는다."""
+    response = call(user, 'GET', 'interview/companies/search', params={'q': query, 'limit': limit})
+    return _names(response, 'companies', '기업 목록')
+
+
+def job_categories(user, company):
+    """선택한 기업의 직무 목록. 등록되지 않은 기업이면 404."""
+    response = call(user, 'GET', 'interview/companies/job-categories', params={'company': company})
+    return _names(response, 'job_categories', '직무 목록')
 
 
 def create_result_view(user, parent_origin):
