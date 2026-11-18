@@ -104,34 +104,6 @@ export default function PortfolioVersions({ studentId, initialId }: Props) {
     <div className="pf-stack">
       {(error || loadError) && <p className="pf-alert pfs-no-print" role="alert">{error || loadError}</p>}
 
-      {/* 대표 포트폴리오 — 예전 「이력서」 탭 자리. 교직원 학생 상세도 이 한 벌을 본다. */}
-      <article className="pf-panel pf-tone-blue pfv-representative">
-        <header className="pf-panel-head pfs-no-print">
-          <div>
-            <h2>대표 포트폴리오 {representative && <span className="pf-badge">{representative.title}</span>}</h2>
-            <p>목록에서 한 벌을 대표로 지정하면 여기서 미리 보고 PDF로 저장할 수 있습니다. 상담 선생님도 학생 상세에서 이 포트폴리오를 봅니다.</p>
-          </div>
-          {representative && (
-            <div className="pf-panel-actions">
-              <button type="button" className="pf-action pf-action--sm" onClick={() => setEditingId(representative.id)}>
-                <i className="fa-solid fa-pen" aria-hidden="true" /> 편집
-              </button>
-              <button type="button" className="pf-action pf-action--primary pf-action--sm" disabled={needsPhoto} onClick={() => window.print()}>
-                <i className="fa-solid fa-file-pdf" aria-hidden="true" /> PDF 저장
-              </button>
-            </div>
-          )}
-        </header>
-        {representative
-          ? <PortfolioSheet document={representative.document} files={representative.files} onPhotoSettled={() => setPhotoReady(true)} />
-          : (
-            <div className="pf-empty pfs-no-print">
-              <strong>대표 포트폴리오가 없습니다</strong>
-              <span>{rows.length ? '아래 목록에서 「대표로 지정」을 눌러 주세요.' : '먼저 포트폴리오를 하나 만들어 주세요.'}</span>
-            </div>
-          )}
-      </article>
-
       <article className="pf-panel pfs-no-print">
         <header className="pf-panel-head">
           <div>
@@ -184,6 +156,34 @@ export default function PortfolioVersions({ studentId, initialId }: Props) {
             ))}
           </ul>
         )}
+      </article>
+
+      {/* 대표 포트폴리오 — 예전 「이력서」 탭 자리. 교직원 학생 상세도 이 한 벌을 본다. */}
+      <article className="pf-panel pf-tone-blue pfv-representative">
+        <header className="pf-panel-head pfs-no-print">
+          <div>
+            <h2>대표 포트폴리오 {representative && <span className="pf-badge">{representative.title}</span>}</h2>
+            <p>목록에서 한 벌을 대표로 지정하면 여기서 미리 보고 PDF로 저장할 수 있습니다. 상담 선생님도 학생 상세에서 이 포트폴리오를 봅니다.</p>
+          </div>
+          {representative && (
+            <div className="pf-panel-actions">
+              <button type="button" className="pf-action pf-action--sm" onClick={() => setEditingId(representative.id)}>
+                <i className="fa-solid fa-pen" aria-hidden="true" /> 편집
+              </button>
+              <button type="button" className="pf-action pf-action--primary pf-action--sm" disabled={needsPhoto} onClick={() => window.print()}>
+                <i className="fa-solid fa-file-pdf" aria-hidden="true" /> PDF 저장
+              </button>
+            </div>
+          )}
+        </header>
+        {representative
+          ? <PortfolioSheet document={representative.document} files={representative.files} onPhotoSettled={() => setPhotoReady(true)} />
+          : (
+            <div className="pf-empty pfs-no-print">
+              <strong>대표 포트폴리오가 없습니다</strong>
+              <span>{rows.length ? '위 목록에서 「대표로 지정」을 눌러 주세요.' : '먼저 포트폴리오를 하나 만들어 주세요.'}</span>
+            </div>
+          )}
       </article>
 
       <Modal
