@@ -17,6 +17,28 @@ from test_api import headers
 MOTIVE_QUESTION = '우리 회사와 해당 직무에 지원한 동기를 구체적으로 기술해 주십시오.'  # 마이그레이션 163
 
 
+# 실제 Deep 테스트 서버의 GET interview/results/{id} 응답 모양(2026-11-18 관측, 값은 가공).
+RESULT_DETAIL = {
+    'resultTableData': [
+        {'id': 'q-1', 'question': '그 경험이 직무와 어떻게 연관되는지 설명해 주세요.', 'answer': '',
+         'intent_question': '직무 적합성을 평가하기 위함입니다.', 'review': ' 답변이 전혀 없으므로 평가할 수 없음.',
+         'advantages': ' 없음.', 'disadvantages': ' 답변이 없음.', 'improvements': ' 구체적인 경험을 제시해야 합니다.',
+         'best_answer': '회사에서 진행한 프로젝트에서…', 'suitability': 0, 'logic': 0, 'jobsuitability': 0,
+         'filename': 'a.mp4', 'part': 'part 1', 'topic': None, 'coverletter': None},
+        {'id': 'q-2', 'question': '강점과 약점을 말씀해 주세요.', 'answer': '저의 강점은 문제 해결 능력입니다.',
+         'intent_question': '자기 인식 능력을 평가합니다.', 'review': '구체적이다.', 'advantages': '경험이 구체적입니다.',
+         'disadvantages': '약점 언급이 없습니다.', 'improvements': '약점과 보완 노력을 덧붙이세요.', 'best_answer': '…',
+         'suitability': 90, 'logic': 85, 'jobsuitability': 95, 'filename': '', 'part': 'part 1'},
+    ],
+    'evaluation_status': 'completed', 'has_video_evaluation': False,
+    'TotalResultData': {
+        'id': 'r', 'interviewInfo': {'job_type': '마케팅·광고·홍보', 'industry_type': 'IT·전기·전자', 'corporate_type': '공기업',
+                                     'supportDepartment': '개발팀', 'workTask': '백엔드', 'career': '신입', 'companyName': '엔잡'},
+        'evaluation': ' \n\n지원자는 면접 질문에 대한 구체적인 답변을 제공하지 못했습니다.',
+        'suitability': 60, 'logic': 56, 'jobsuitability': 63, 'totalScore': 59, 'created_at': '2026년 11월 18일 13시 55분'},
+}
+
+
 class FakeDeep:
     """Deep 외부 API 의 필요한 부분만. 회원은 학번으로, 자소서는 id 로 구분한다."""
 
@@ -92,7 +114,13 @@ class FakeDeep:
             return httpx.Response(201, json={'session_id': str(uuid.uuid4()), 'expires_in': 60,
                                              'iframe_url': 'https://front.deep.test/external/interview/launch?ticket=drl_r'})
         if path == 'interview/results':
-            return httpx.Response(200, json=[{'result_id': r, 'title': 't'} for r in self.results])
+            return httpx.Response(200, json=[{'evaluation': True, 'result_id': r, 'title': '엔잡', 'supportDepartment': '개발팀',
+                                              'created': '2026. 11. 18 13:48:42'} for r in self.results])
+        if path.startswith('interview/results/'):
+            result_id = path.split('/')[2]
+            if result_id not in self.results:
+                return httpx.Response(404, json={'error': 'TotalResultTable을 찾을 수 없습니다.'})
+            return httpx.Response(200, json=RESULT_DETAIL | {'TotalResultData': RESULT_DETAIL['TotalResultData'] | {'id': result_id}})
         if path == 'covers':
             return httpx.Response(200, json=[{'id': c['id'], 'consulting': 0, 'badge_pen': bool(c.get('evaluations'))}
                                              for c in self.covers.values()])
@@ -329,7 +357,7 @@ def test_last_result_is_marked_stale_after_the_body_changes(client, fake):
 
 # ── AI 인터뷰: 동의·세션 기록만 우리 DB, 영상·결과는 Deep ─────────────────
 
-CONSENT = {'consentVersion': '2026-11-18', 'consentAnswers': {'privacy': 'yes', 'media': 'yes', 'provision': 'yes'}}
+CONSENT = {'consentVersion': '2026-11-18.1', 'consentAnswers': {'privacy': 'yes', 'media': 'yes', 'provision': 'yes'}}
 
 
 def agree(client, who='chaewon', **change):
@@ -349,6 +377,7 @@ def start_interview(client, resume, origin='https://dreamcatch.test', who='chaew
 def test_interview_consent_is_asked_once_per_version(client, fake):
     # changwon 은 이 테스트 묶음에서 동의하지 않는 학생이다(동의 기록은 지울 수 없어 테스트 DB에 남는다).
     assert client.get('/api/v1/job-interviews', headers=headers('changwon')).json()['consented'] is False
+    assert client.get('/api/v1/job-interview-consent', headers=headers('changwon')).json() == {'consented': False}
     assert agree(client, consentAnswers={'privacy': 'yes', 'media': 'no', 'provision': 'yes'}).status_code == 422
     assert agree(client, consentAnswers={'privacy': 'yes'}).status_code == 422
     assert agree(client, consentVersion='2020-01-01').status_code == 422
@@ -361,6 +390,7 @@ def test_interview_consent_is_asked_once_per_version(client, fake):
         again = conn.execute(find).fetchall()
     assert first and again == first, '두 번째 동의가 처음 기록을 바꾸거나 행을 늘렸다'
     assert client.get('/api/v1/job-interviews', headers=headers('chaewon')).json()['consented'] is True
+    assert client.get('/api/v1/job-interview-consent', headers=headers('chaewon')).json() == {'consented': True}
     # 한 번 동의했으면 다음 면접은 동의 없이 시작된다.
     resume = create(client, content='면접에 쓸 본문')
     assert start_interview(client, resume, consent=False).status_code == 201
@@ -380,7 +410,7 @@ def test_interview_starts_with_consent_and_records_the_session(client, fake):
         row = conn.execute('SELECT * FROM dc.job_interview_session WHERE id=%s', (started.json()['id'],)).fetchone()
         consent = conn.execute('SELECT * FROM dc.job_interview_consent WHERE student_uid=%s AND consent_version=%s',
                                (row['student_uid'], row['consent_version'])).fetchone()
-    assert row['consent_version'] == '2026-11-18' and row['consent_answers'] == CONSENT['consentAnswers']
+    assert row['consent_version'] == '2026-11-18.1' and row['consent_answers'] == CONSENT['consentAnswers']
     assert row['agreed_at'] == consent['agreed_at'], '세션의 동의 시각이 실제 동의 기록과 다르다'
     assert row['resume_snapshot']['title'] == resume['title'] and row['finished_at'] is None
     listed = client.get('/api/v1/job-interviews', headers=headers('chaewon')).json()['items']
@@ -451,6 +481,29 @@ def test_company_interview_uses_registered_companies_and_their_job_categories(cl
         after = conn.execute("SELECT count(*) AS n FROM dc.job_interview_session WHERE mode='company'").fetchone()['n']
     assert row['mode'] == 'company' and row['direct_input'] == {'company': '엔잡', 'job_category': '개발'}
     assert after == before + 1, 'Deep 이 거부한 면접이 기록됐다'
+
+
+def test_interview_results_are_listed_and_detailed_from_deep(client, fake):
+    rid = f'r-{uuid.uuid4().hex}'
+    fake.results.append(rid)
+    listed = client.get('/api/v1/job-interview-results', headers=headers('chaewon'))
+    assert listed.status_code == 200, listed.text
+    assert listed.json()['items'][-1] == {'resultId': rid, 'title': '엔잡', 'position': '개발팀',
+                                          'createdAt': '2026. 11. 18 13:48:42', 'evaluated': True}
+    detail = client.get(f'/api/v1/job-interview-results/{rid}', headers=headers('chaewon'))
+    assert detail.status_code == 200, detail.text
+    result = detail.json()
+    assert result['resultId'] == rid and result['status'] == 'completed' and result['createdAt'] == '2026년 11월 18일 13시 55분'
+    assert result['application'] == {'jobType': '마케팅·광고·홍보', 'industry': 'IT·전기·전자', 'companyType': '공기업',
+                                     'experience': '신입', 'company': '엔잡', 'position': '개발팀', 'workTask': '백엔드'}
+    first, second = result['questions']
+    assert first['part'] == 'part 1' and first['answer'] == '' and first['hasVideo'] is True
+    assert first['review'] == '답변이 전혀 없으므로 평가할 수 없음.', 'Deep 의 앞 공백이 그대로 왔다'
+    assert second['scores'] == {'relevance': 90, 'logic': 85, 'jobFit': 95} and second['hasVideo'] is False
+    assert second['strengths'] == '경험이 구체적입니다.' and second['bestAnswer'] == '…'
+    assert result['overall']['scores'] == {'relevance': 60, 'logic': 56, 'jobFit': 63, 'total': 59}
+    assert result['overall']['evaluation'] == '지원자는 면접 질문에 대한 구체적인 답변을 제공하지 못했습니다.'
+    assert client.get('/api/v1/job-interview-results/r-unknown', headers=headers('chaewon')).status_code == 404
 
 
 def test_interview_results_screen_address_is_issued_for_allowed_origin_only(client, fake):

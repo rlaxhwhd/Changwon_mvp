@@ -475,12 +475,29 @@ def create_result_view(user, parent_origin):
     return iframe_url
 
 
-def interview_result_ids(user):
-    """내 면접 결과 id. 화면이 알려 온 종료(result_id)가 정말 본인 결과인지 확인하는 데 쓴다."""
+def interview_results(user):
+    """내 면접 결과 목록(Deep 원본: result_id·title·supportDepartment·created·evaluation). 본인 것만 온다."""
     response = call(user, 'GET', 'interview/results')
     if response.status_code != 200:
         raise failure(response)
     data = body(response)
     if not isinstance(data, list):
         raise DeepError(502, 'AI 인터뷰 결과 목록을 확인할 수 없습니다.')
-    return {str(item['result_id']) for item in data if isinstance(item, dict) and item.get('result_id')}
+    return [item for item in data if isinstance(item, dict) and item.get('result_id')]
+
+
+def interview_result_ids(user):
+    """내 면접 결과 id. 화면이 알려 온 종료(result_id)가 정말 본인 결과인지 확인하는 데 쓴다."""
+    return {str(item['result_id']) for item in interview_results(user)}
+
+
+def interview_result(user, result_id):
+    """면접 결과 상세(Deep 원본: resultTableData[] 질문별 평가, TotalResultData 종합). 본인 것이 아니면 404."""
+    response = call(user, 'GET', f'interview/results/{result_id}')
+    if response.status_code != 200:
+        raise failure(response, {404: (404, 'AI 인터뷰 결과를 찾을 수 없습니다.')})
+    data = body(response)
+    if (not isinstance(data, dict) or not isinstance(data.get('resultTableData'), list)
+            or not isinstance(data.get('TotalResultData'), dict)):
+        raise DeepError(502, 'AI 인터뷰 결과 응답을 확인할 수 없습니다.')
+    return data

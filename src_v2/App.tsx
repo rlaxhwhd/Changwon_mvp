@@ -47,6 +47,9 @@ import AiConsulting from './pages/jobs/AiConsulting'
 import JobsHub from './pages/jobs/JobsHub'
 import AiInterview from './pages/jobs/AiInterview'
 import AiInterviewResults from './pages/jobs/AiInterviewResults'
+import AiInterviewResultList from './pages/jobs/AiInterviewResultList'
+import AiInterviewResult from './pages/jobs/AiInterviewResult'
+import DeepConsentGate from './pages/jobs/DeepConsent'
 import JobDetail from './pages/jobs/JobDetail'
 import Notices from './pages/jobs/Notices'
 
@@ -146,12 +149,15 @@ const router = createBrowserRouter(
         { path: '/jobs/external',        loader: studentPageLoader('jobs', 'jobWishlist'), element: <StageGate stage="employment" title="취업지원"><JobSupport scope="external" /></StageGate> },
         { path: '/jobs/joblist',         element: <ComingSoon title="AI 맞춤채용" /> },
         // 앞단은 자소서/인터뷰 선택(2026-11-16). 옛 자소서 홈은 /jobs/home/cover 로 내려갔다.
-        { path: '/jobs/home',            element: <JobsHub /> },
-        { path: '/jobs/home/cover',      loader: studentPageLoader('resumes'), element: <JobsHome /> },
-        { path: '/jobs/home/interview',  loader: studentPageLoader('resumes'), element: <AiInterview /> },
-        { path: '/jobs/home/interview/results', element: <AiInterviewResults /> },
-        { path: '/jobs/home/resume',     loader: studentPageLoader('resumes'), element: <AiResume /> },
-        { path: '/jobs/home/consulting', loader: studentPageLoader('resumes'), element: <AiConsulting /> },
+        // /jobs/home 하위(AI 자소서·AI 인터뷰)는 외부 서비스(DeepResume)에 정보가 저장되므로 들어올 때 한 번 동의를 받는다(2026-11-18).
+        { path: '/jobs/home',            element: <DeepConsentGate><JobsHub /></DeepConsentGate> },
+        { path: '/jobs/home/cover',      loader: studentPageLoader('resumes'), element: <DeepConsentGate><JobsHome /></DeepConsentGate> },
+        { path: '/jobs/home/interview',  loader: studentPageLoader('resumes'), element: <DeepConsentGate><AiInterview /></DeepConsentGate> },
+        { path: '/jobs/home/interview/results',           element: <DeepConsentGate><AiInterviewResultList /></DeepConsentGate> },
+        { path: '/jobs/home/interview/results/deep',      element: <DeepConsentGate><AiInterviewResults /></DeepConsentGate> },
+        { path: '/jobs/home/interview/results/:resultId', element: <DeepConsentGate><AiInterviewResult /></DeepConsentGate> },
+        { path: '/jobs/home/resume',     loader: studentPageLoader('resumes'), element: <DeepConsentGate><AiResume /></DeepConsentGate> },
+        { path: '/jobs/home/consulting', loader: studentPageLoader('resumes'), element: <DeepConsentGate><AiConsulting /></DeepConsentGate> },
         { path: '/jobs/resume',          element: <Navigate to="/jobs/home" replace /> },
         // 공지사항: /mypage/notices 에서 취업지원 하위로 옮겼다(기존 경로는 하위 호환용 리다이렉트).
         // ⚠ '/jobs/:id' 보다 위에 둔다 — 정적 세그먼트가 먼저 읽히게 해 공고 상세로 새지 않게 한다.

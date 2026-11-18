@@ -1581,7 +1581,8 @@ def last_evaluation(resume_id: str, user=Depends(deep_principal)):
 # 동의서 원문은 화면(src_v2/pages/jobs/AiInterview.tsx INTERVIEW_CONSENT)이 소유한다.
 # 문구를 바꾸면 양쪽 version 을 함께 올린다 — 서버는 아는 버전·모든 항목 「예」만 받는다.
 # 동의는 학생·버전당 한 번만 받는다(2026-11-16 사용자 지시). 버전이 오르면 다시 받는다.
-INTERVIEW_CONSENT = {'version': '2026-11-18', 'items': ('privacy', 'media', 'provision')}
+# 2026-11-18: 동의는 AI 자소서·AI 인터뷰(/jobs/home 하위) 전체에 1회 — 화면 src_v2/pages/jobs/DeepConsent.tsx 가 문구를 소유한다.
+INTERVIEW_CONSENT = {'version': '2026-11-18.1', 'items': ('privacy', 'media', 'provision')}
 ORIGIN_PATTERN = r'^https?://[a-z0-9.-]+(:[0-9]{1,5})?$'
 INTERVIEW_CONSENT_FIND = 'SELECT * FROM dc.job_interview_consent WHERE student_uid=%s AND consent_version=%s'
 
@@ -1636,6 +1637,15 @@ def list_interviews(user=Depends(principal, scope='function'), conn=Depends(conn
       ORDER BY created_at DESC LIMIT 50""", (user['intg_uid'],)).fetchall()
     consent = conn.execute(INTERVIEW_CONSENT_FIND, (user['intg_uid'], INTERVIEW_CONSENT['version'])).fetchone()
     return {'items': [interview_dto(row) for row in rows], 'consented': consent is not None}
+
+
+@router.get('/job-interview-consent')
+def interview_consent_state(user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    """현재 동의서 버전에 동의했는지. AI 자소서·AI 인터뷰 화면에 들어올 때 한 번 확인한다."""
+    if user['kind'] != 'STUDENT':
+        raise HTTPException(403, '학생 본인만 조회할 수 있습니다.')
+    consent = conn.execute(INTERVIEW_CONSENT_FIND, (user['intg_uid'], INTERVIEW_CONSENT['version'])).fetchone()
+    return {'consented': consent is not None}
 
 
 @router.post('/job-interview-consent', status_code=201)
@@ -1757,6 +1767,64 @@ def interview_job_categories(company: str = Query(min_length=1, max_length=100),
     require_deep(user)
     try:
         return {'items': deep.job_categories(user, company)}
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+
+
+def _text(value):
+    return value.strip() if isinstance(value, str) else ''
+
+
+def _score(value):
+    return int(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else 0
+
+
+def interview_result_summary(item):
+    return {'resultId': str(item['result_id']), 'title': _text(item.get('title')), 'position': _text(item.get('supportDepartment')),
+            'createdAt': _text(item.get('created')), 'evaluated': item.get('evaluation') is True}
+
+
+def interview_result_dto(result_id, data):
+    """Deep 결과 상세 → 화면 DTO. 영상 파일(filename)은 Deep 응시내역 화면에서만 볼 수 있어 있음/없음만 알린다."""
+    total = data['TotalResultData']
+    info = total.get('interviewInfo') if isinstance(total.get('interviewInfo'), dict) else {}
+    questions = [{
+        'id': _text(row.get('id')) or str(index), 'part': _text(row.get('part')), 'question': _text(row.get('question')),
+        'answer': _text(row.get('answer')), 'intent': _text(row.get('intent_question')), 'review': _text(row.get('review')),
+        'strengths': _text(row.get('advantages')), 'weaknesses': _text(row.get('disadvantages')),
+        'improvements': _text(row.get('improvements')), 'bestAnswer': _text(row.get('best_answer')),
+        'scores': {'relevance': _score(row.get('suitability')), 'logic': _score(row.get('logic')), 'jobFit': _score(row.get('jobsuitability'))},
+        'hasVideo': bool(_text(row.get('filename'))),
+    } for index, row in enumerate(data['resultTableData']) if isinstance(row, dict)]
+    return {
+        'resultId': result_id, 'status': _text(data.get('evaluation_status')), 'createdAt': _text(total.get('created_at')),
+        'application': {'jobType': _text(info.get('job_type')), 'industry': _text(info.get('industry_type')),
+                        'companyType': _text(info.get('corporate_type')), 'experience': _text(info.get('career')),
+                        'company': _text(info.get('companyName')), 'position': _text(info.get('supportDepartment')),
+                        'workTask': _text(info.get('workTask'))},
+        'questions': questions,
+        'overall': {'evaluation': _text(total.get('evaluation')),
+                    'scores': {'relevance': _score(total.get('suitability')), 'logic': _score(total.get('logic')),
+                               'jobFit': _score(total.get('jobsuitability')), 'total': _score(total.get('totalScore'))}},
+    }
+
+
+@router.get('/job-interview-results')
+def list_interview_results(user=Depends(deep_principal)):
+    """내 AI 인터뷰 결과 목록 — 정본은 Deep 이라 매번 Deep 에서 읽는다(우리 DB에는 결과가 없다)."""
+    require_deep(user)
+    try:
+        return {'items': [interview_result_summary(item) for item in deep.interview_results(user)]}
+    except deep.DeepError as error:
+        raise deep_http(error) from None
+
+
+@router.get('/job-interview-results/{result_id}')
+def get_interview_result(result_id: str = Path(min_length=1, max_length=100), user=Depends(deep_principal)):
+    """AI 인터뷰 결과표(질문별 평가·점수, 종합 평가). Deep 이 본인 것만 돌려준다."""
+    require_deep(user)
+    try:
+        return interview_result_dto(result_id, deep.interview_result(user, result_id))
     except deep.DeepError as error:
         raise deep_http(error) from None
 

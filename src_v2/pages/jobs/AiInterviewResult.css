@@ -1,0 +1,138 @@
+/* ─── AI 인터뷰 결과 (ivr- prefix) ─────────────────────────────────
+   DeepResume 결과표의 구성(지원 정보 → 질문별 카드 → 항목별 점수 도넛 → 종합 결과 막대)을 따른다.
+   색은 JobsWorkspace 의 파랑(--blue 계열)·민트 토큰만 쓴다 — 점수는 파랑, 완료 표시는 민트. 차트는 CSS 로 그린다. */
+
+/* ── 목록 ──────────────────────────────────────────────── */
+.ivr-list { list-style: none; margin: 14px 0 0; padding: 0; }
+.ivr-list li + li { margin-top: 10px; }
+.ivr-list-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 16px 18px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  color: var(--foreground);
+  text-align: left;
+  cursor: pointer;
+}
+.ivr-list-item:hover { border-color: var(--color-primary); }
+.ivr-list-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.ivr-list-body strong { font-size: var(--fs-card, 17px); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ivr-list-meta { color: var(--muted-foreground); font-size: var(--fs-meta, 14px); }
+.ivr-list-meta i { margin-right: 3px; }
+.ivr-list-arrow { color: var(--muted-foreground); }
+
+/* ── 머리 ──────────────────────────────────────────────── */
+.ivr-wrap .ac-card + .ac-card { margin-top: 14px; }
+.ivr-kicker { margin: 0 0 4px; color: var(--color-primary); font-size: var(--fs-meta, 14px); font-weight: 700; }
+.ivr-title { margin: 0; font-size: var(--fs-lead, 22px); font-weight: 800; }
+.ivr-head .iv-live-head { margin-bottom: 4px; }
+.ivr-date { margin: 0 0 16px; color: var(--muted-foreground); font-size: var(--fs-meta, 14px); }
+.ivr-date i { margin-right: 4px; }
+
+.ivr-app {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 18px;
+  margin: 0;
+  border-top: 1px solid var(--border);
+}
+.ivr-app > div { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.ivr-app dt { color: var(--muted-foreground); font-size: 13px; font-weight: 600; }
+.ivr-app dd { margin: 4px 0 0; font-weight: 600; overflow-wrap: anywhere; }
+
+/* ── 구간 제목 ─────────────────────────────────────────── */
+.ivr-section { margin: 28px 0 12px; font-size: var(--fs-card, 17px); font-weight: 800; }
+.ivr-section i { margin-right: 6px; color: var(--color-primary); }
+
+/* ── 질문별 카드 ───────────────────────────────────────── */
+.ivr-q-part { margin: 0 0 12px; color: var(--color-primary); font-size: var(--fs-meta, 14px); font-weight: 800; letter-spacing: .02em; }
+.ivr-question {
+  margin: 0 0 16px;
+  padding: 16px 18px;
+  border: 1px solid var(--blue-border);
+  border-radius: 12px;
+  background: var(--blue-soft);
+  color: var(--color-primary);
+  font-size: var(--fs-body, 15px);
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.ivr-field + .ivr-field { border-top: 1px solid var(--border); }
+.ivr-field { padding: 12px 0; }
+.ivr-field h5 { margin: 0 0 6px; font-size: var(--fs-meta, 14px); font-weight: 800; }
+.ivr-field p { margin: 0; color: var(--foreground); font-size: var(--fs-body, 15px); line-height: 1.7; white-space: pre-line; }
+.ivr-answer { padding: 14px 16px; margin-bottom: 4px; border-radius: 10px; background: var(--muted); }
+.ivr-answer + .ivr-field { border-top: 0; }
+.ivr-empty { color: var(--muted-foreground); }
+
+.ivr-scores-title { margin: 18px 0 12px; font-size: var(--fs-meta, 14px); font-weight: 800; }
+
+/* 도넛 — conic-gradient. --p 는 0~100 점수. */
+.ivr-donuts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.ivr-donut-wrap { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.ivr-donut-wrap > span { color: var(--muted-foreground); font-size: var(--fs-meta, 14px); font-weight: 600; text-align: center; }
+.ivr-donut {
+  --p: 0;
+  display: grid;
+  place-items: center;
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: conic-gradient(var(--color-primary) calc(var(--p) * 1%), var(--muted) 0);
+}
+.ivr-donut::before {
+  content: '';
+  grid-area: 1 / 1;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: var(--card);
+}
+.ivr-donut strong { grid-area: 1 / 1; font-size: 22px; font-weight: 800; color: var(--foreground); }
+.ivr-donut small { margin-left: 1px; font-size: 13px; font-weight: 600; color: var(--muted-foreground); }
+
+.ivr-video {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--mint-soft);
+  color: var(--mint-ink);
+  font-size: var(--fs-meta, 14px);
+}
+.ivr-video .ac-btn-ghost { margin-left: auto; min-height: 36px; padding: 6px 12px; }
+
+/* ── 종합 결과 ─────────────────────────────────────────── */
+.ivr-bars { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 14px; }
+.ivr-bar-head { display: flex; justify-content: space-between; margin-bottom: 6px; font-size: var(--fs-meta, 14px); font-weight: 600; }
+.ivr-bar-head strong { color: var(--color-primary); }
+.ivr-bar { height: 10px; border-radius: 999px; background: var(--muted); overflow: hidden; }
+.ivr-bar > span { display: block; height: 100%; border-radius: 999px; background: var(--color-primary); }
+.ivr-bars li.total { padding-top: 14px; border-top: 1px solid var(--border); }
+.ivr-bars li.total .ivr-bar-head { font-size: var(--fs-body, 15px); font-weight: 800; }
+.ivr-bars li.total .ivr-bar { height: 14px; }
+.ivr-bars li.total .ivr-bar > span { background: var(--mint-ink); }
+
+.ivr-disclaimer { margin: 16px 0 0; color: var(--muted-foreground); font-size: 13px; }
+.ivr-disclaimer i { margin-right: 4px; }
+
+@media (max-width: 900px) {
+  .ivr-app { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 600px) {
+  .ivr-app { grid-template-columns: minmax(0, 1fr); }
+  .ivr-donuts { gap: 8px; }
+  .ivr-donut { width: 88px; height: 88px; }
+  .ivr-donut::before { width: 66px; height: 66px; }
+  .ivr-donut strong { font-size: 19px; }
+  .ivr-list-item { flex-wrap: wrap; }
+}

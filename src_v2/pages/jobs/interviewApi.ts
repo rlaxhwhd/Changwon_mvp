@@ -49,6 +49,11 @@ export async function loadInterviews(): Promise<{ items: InterviewSession[]; con
   return api<{ items: InterviewSession[]; consented: boolean }>('/job-interviews')
 }
 
+/** 현재 동의서 버전에 이미 동의했는지. AI 자소서·AI 인터뷰 화면에 들어올 때 DeepConsentGate 가 한 번 확인한다. */
+export async function loadConsentState(): Promise<{ consented: boolean }> {
+  return api<{ consented: boolean }>('/job-interview-consent')
+}
+
 /** 개인정보 동의를 기록한다. 서버는 아는 버전에 모든 항목 「예」만 받는다. */
 export async function agreeInterviewConsent(consentVersion: string, consentAnswers: Record<string, 'yes'>): Promise<void> {
   await api('/job-interview-consent', { method: 'POST', body: JSON.stringify({ consentVersion, consentAnswers }) })
@@ -64,6 +69,39 @@ export async function loadInterviewInfo(resumeId: string): Promise<InterviewInfo
 /** 면접 세션을 만든다. iframeUrl 의 티켓은 60초·1회용이라 받자마자 iframe 에 넣는다. */
 export async function startInterview(input: InterviewStart): Promise<{ id: string; iframeUrl: string }> {
   return api<{ id: string; iframeUrl: string }>('/job-interviews', { method: 'POST', body: JSON.stringify(input) })
+}
+
+export interface InterviewResultSummary {
+  resultId: string
+  title: string
+  position: string
+  createdAt: string
+  /** AI 평가가 끝났는지. 끝나기 전에는 결과표가 비어 있을 수 있다. */
+  evaluated: boolean
+}
+
+export interface InterviewScores { relevance: number; logic: number; jobFit: number }
+
+export interface InterviewResult {
+  resultId: string
+  status: string
+  createdAt: string
+  application: { jobType: string; industry: string; companyType: string; experience: string; company: string; position: string; workTask: string }
+  questions: {
+    id: string; part: string; question: string; answer: string; intent: string; review: string
+    strengths: string; weaknesses: string; improvements: string; bestAnswer: string; scores: InterviewScores; hasVideo: boolean
+  }[]
+  overall: { evaluation: string; scores: InterviewScores & { total: number } }
+}
+
+/** 내 AI 인터뷰 결과 목록. 정본은 Deep 이라 매번 Deep 에서 읽는다. */
+export async function loadInterviewResults(): Promise<InterviewResultSummary[]> {
+  return (await api<{ items: InterviewResultSummary[] }>('/job-interview-results')).items
+}
+
+/** 결과표 하나(질문별 평가·점수, 종합 평가). 영상은 Deep 응시내역 화면에서만 볼 수 있다. */
+export async function loadInterviewResult(resultId: string): Promise<InterviewResult> {
+  return api<InterviewResult>(`/job-interview-results/${encodeURIComponent(resultId)}`)
 }
 
 /** DeepResume 응시결과 화면(IFRAME) 주소. 티켓은 60초·1회용이라 받자마자 iframe 에 넣는다. */

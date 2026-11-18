@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getAllResumes, RESUME_EVENT, type SavedResume } from './resumeMock'
 import {
-  agreeInterviewConsent, finishInterview, loadInterviewInfo, loadInterviewJobCategories, loadInterviews,
+  finishInterview, loadInterviewInfo, loadInterviewJobCategories, loadInterviews,
   searchInterviewCompanies, startInterview,
   type InterviewInfo, type InterviewSession, type InterviewSource, type InterviewStart,
 } from './interviewApi'
@@ -13,46 +13,10 @@ import './AiConsulting.css'
 import './AiInterview.css'
 import './JobsWorkspace.css'
 
-// 개인정보 수집·이용 동의서. 문구를 바꾸면 version 을 서버(backend/app/jobs.py INTERVIEW_CONSENT)와 함께 올린다.
-// 서버는 아는 버전에 모든 항목 「예」인 동의만 받는다. 동의는 버전당 한 번만 받고(dc.job_interview_consent),
-// 이미 동의한 학생은 동의 단계를 건너뛴다. version 을 올리면 모두 다시 동의한다.
-const INTERVIEW_CONSENT = {
-  version: '2026-11-18',
-  items: [
-    {
-      id: 'privacy',
-      title: '개인정보 수집·이용 동의',
-      rows: [
-        ['수집 항목', '학번, 이름, 학과, 선택한 자기소개서(문항·본문) 또는 직접 입력한 면접 내용(경험 글), 지원 정보(직종·업종·기업형태·경력·기업명·지원 직무·담당 업무)'],
-        ['이용 목적', 'AI 모의면접 질문 생성, 면접 진행, 답변 평가 및 결과 제공'],
-        ['보유 기간', '면접 결과 삭제 요청 또는 서비스 이용 종료 시까지'],
-      ],
-    },
-    {
-      id: 'media',
-      title: '영상·음성 정보 수집·이용 동의',
-      rows: [
-        ['수집 항목', '면접 중 카메라로 촬영한 영상, 마이크로 녹음한 음성'],
-        ['이용 목적', '답변 내용 분석과 면접 평가, 본인의 면접 결과 다시 보기'],
-        ['보유 기간', '면접 결과 삭제 요청 또는 서비스 이용 종료 시까지'],
-      ],
-    },
-    {
-      id: 'provision',
-      title: '개인정보 처리 위탁(제공) 동의',
-      rows: [
-        ['받는 곳', 'DeepResume (AI 면접 서비스 운영사)'],
-        ['제공 항목', '위 개인정보와 영상·음성 정보 전체'],
-        ['이용 목적', 'AI 모의면접 서비스 제공. 면접 영상과 평가 결과는 DeepResume 서버에 저장됩니다.'],
-      ],
-    },
-  ],
-} as const
-
-type Step = 'setup' | 'consent' | 'device' | 'live' | 'done'
+// 개인정보 동의는 /jobs/home 하위에 들어올 때 DeepConsentGate 가 한 번 받는다(2026-11-18) — 여기서는 받지 않는다.
+type Step = 'setup' | 'device' | 'live' | 'done'
 const STEPS: { id: Step; label: string }[] = [
   { id: 'setup', label: '질문 선택' },
-  { id: 'consent', label: '개인정보 동의' },
   { id: 'device', label: '카메라·마이크 확인' },
   { id: 'live', label: 'AI 인터뷰' },
 ]
@@ -159,14 +123,7 @@ export default function AiInterview() {
     ? !!resume && missingForInterview(resume).length === 0 && !!info && chosenReady
     : chosenReady && !!direct.jobType && !!direct.company.trim() && !!direct.position.trim() && companyPicked
 
-  // 2. 동의
-  const [agreed, setAgreed] = useState<Record<string, boolean>>({})
-  const allAgreed = INTERVIEW_CONSENT.items.every(item => agreed[item.id])
-  // 현재 동의서 버전에 이미 동의했는지(서버 기록). 모르면 동의를 받는다 — 다시 동의해도 처음 기록이 남는다.
-  const [consented, setConsented] = useState(false)
-  const [agreeing, setAgreeing] = useState(false)
-
-  // 3. 카메라·마이크
+  // 2. 카메라·마이크
   const videoRef = useRef<HTMLVideoElement>(null)
   const streamRef = useRef<MediaStream | null>(null)
   const audioRef = useRef<{ context: AudioContext; frame: number } | null>(null)
@@ -174,7 +131,7 @@ export default function AiInterview() {
   const [micLevel, setMicLevel] = useState(0)
   const [micHeard, setMicHeard] = useState(false)
 
-  // 4. 면접
+  // 3. 면접
   const [starting, setStarting] = useState(false)
   const [session, setSession] = useState<{ id: string; iframeUrl: string } | null>(null)
   const [liveState, setLiveState] = useState<'loading' | 'ready' | 'started'>('loading')
@@ -182,26 +139,10 @@ export default function AiInterview() {
 
   const refreshHistory = () => {
     loadInterviews()
-      .then(loaded => { setHistory(loaded.items); setConsented(loaded.consented) })
+      .then(loaded => setHistory(loaded.items))
       .catch(() => setHistory(null))
   }
   useEffect(refreshHistory, [])
-
-  const agree = async () => {
-    if (agreeing) return
-    setAgreeing(true)
-    setError('')
-    try {
-      await agreeInterviewConsent(INTERVIEW_CONSENT.version,
-        Object.fromEntries(INTERVIEW_CONSENT.items.map(item => [item.id, 'yes' as const])))
-      setConsented(true)
-      setStep('device')
-    } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : '동의를 저장하지 못했습니다.')
-    } finally {
-      setAgreeing(false)
-    }
-  }
 
   const stopDevices = () => {
     if (audioRef.current) {
@@ -312,7 +253,6 @@ export default function AiInterview() {
 
   const restart = () => {
     setStep('setup')
-    setAgreed({})
     setFinishNote('')
     setError('')
   }
@@ -469,7 +409,7 @@ export default function AiInterview() {
           <div className="ac-actions">
             <button className="ac-btn-ghost" onClick={() => navigate('/jobs/home')}>취소</button>
             <button className="ac-btn-primary" disabled={!setupReady}
-              onClick={() => { setError(''); setStep(consented ? 'device' : 'consent') }}>
+              onClick={() => { setError(''); setStep('device') }}>
               다음 <i className="fa-solid fa-arrow-right" />
             </button>
           </div>
@@ -497,45 +437,7 @@ export default function AiInterview() {
         </>
       )}
 
-      {/* ── 2. 개인정보 동의 ── */}
-      {step === 'consent' && (
-        <div className="ac-card">
-          <h2 className="ac-card-title"><i className="fa-solid fa-shield-halved" /> 개인정보 수집·이용 동의서</h2>
-          <p className="ac-card-desc">
-            AI 인터뷰는 카메라 영상과 마이크 음성을 녹화해 평가합니다. 아래 내용을 읽고 모두 동의해야 시작할 수 있습니다.
-            한 번 동의하면 다음 인터뷰부터는 다시 묻지 않습니다.
-          </p>
-          {INTERVIEW_CONSENT.items.map(item => (
-            <section key={item.id} className="iv-consent">
-              <h3>{item.title}</h3>
-              <dl>
-                {item.rows.map(([term, detail]) => (
-                  <div key={term}><dt>{term}</dt><dd>{detail}</dd></div>
-                ))}
-              </dl>
-              <p className="iv-consent-note">동의를 거부할 수 있으며, 거부하면 AI 인터뷰를 이용할 수 없습니다.</p>
-              <label className="iv-consent-check">
-                <input type="checkbox" checked={!!agreed[item.id]}
-                  onChange={event => setAgreed(current => ({ ...current, [item.id]: event.target.checked }))} />
-                위 내용에 동의합니다.
-              </label>
-            </section>
-          ))}
-          <label className="iv-consent-check iv-consent-all">
-            <input type="checkbox" checked={allAgreed}
-              onChange={event => setAgreed(Object.fromEntries(INTERVIEW_CONSENT.items.map(item => [item.id, event.target.checked])))} />
-            전체 동의
-          </label>
-          <div className="ac-actions">
-            <button className="ac-btn-ghost" onClick={() => setStep('setup')}><i className="fa-solid fa-arrow-left" /> 이전</button>
-            <button className="ac-btn-primary" disabled={!allAgreed || agreeing} onClick={() => void agree()}>
-              {agreeing ? '동의를 저장하는 중…' : '동의하고 다음'} <i className="fa-solid fa-arrow-right" />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ── 3. 카메라·마이크 확인 ── */}
+      {/* ── 2. 카메라·마이크 확인 ── */}
       {step === 'device' && (
         <div className="ac-card">
           <h2 className="ac-card-title"><i className="fa-solid fa-video" /> 카메라·마이크 확인</h2>
@@ -577,7 +479,7 @@ export default function AiInterview() {
             면접을 시작하면 중간에 새로고침하지 마세요. 면접 화면은 한 번만 열 수 있습니다.
           </p>
           <div className="ac-actions">
-            <button className="ac-btn-ghost" onClick={() => { stopDevices(); setDeviceState('idle'); setStep(consented ? 'setup' : 'consent') }}>
+            <button className="ac-btn-ghost" onClick={() => { stopDevices(); setDeviceState('idle'); setStep('setup') }}>
               <i className="fa-solid fa-arrow-left" /> 이전
             </button>
             <button className="iv-btn-mint" disabled={deviceState === 'checking'} onClick={() => void checkDevices()}>
