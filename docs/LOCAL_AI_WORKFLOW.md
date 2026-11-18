@@ -1,5 +1,19 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-18 인터뷰 결과·면접 방식·공통 동의 API/웹/166 배포 및 이미지 정리
+
+- 원격 dev=80321f9까지 확인, caae49d(자소서에 저장된 지원정보), 149244d(Deep 결과 화면), 94462ff(자소서 없이·기업별 면접), 80321f9(결과 목록/상세·AI 자소서/면접 공통 1회 동의)를 깨끗한 git archive로 빌드했다. 미커밋 타 작업은 제외했고 최종 fetch에 추가 기능 커밋은 없었다. 동의서 현재 버전은 2026-11-18.1이며 기존 동의가 있더라도 확장된 수집 범위에 대해 1회 재동의한다.
+- `.ai/handoff-db/0014-job-interview-direct/architecture-review.md` ASTRA_APPROVED revision1 및 verification을 읽었다. 리뷰 승인 뒤 DDL 동일/롤백 주석 정정만 한 최종166 SHA256=62f2712c88eda0e7685516d7469df5f529bbcbcde1765d7176b41273499bdbf3와 일치했다. 별도 중복 리뷰나 적용된 SQL 수정은 하지 않았다. mode cover/no_cover/company 및 direct_input JSONB, 자소서 참조 NULL 허용/CHECK를 추가하고 기존 행은 mode=cover/direct_input=NULL이다. 기존 불변 트리거가 새 컬럼도 보호한다.
+- 격리 DB dc_regression_20261118072930_fc1f08_test: 149 passed, 584 deselected, 기존 경고3개, 25.79초. 직접 면접 필수값/외부 오류/소유권·결과 목록/상세·허용 origin·기존 자소서/동의/지원/포트폴리오 관련 계약을 포함한다. 실제 Deep API 대신 가짜 외부 서버를 사용했다. TypeScript/Vite 통과, 기존 native-config·큰 번들 경고 유지. npm run docker:up -- --no-build 완료, 로컬 백업 local-before-migrate-20261118073016852.dump.
+- 최초 서버는 루트 104G 중 여유20K(100%)였고 모든 healthcheck 대상이 unhealthy, docker exec도 no space left on device로 실패했다. /var/lib/docker는 별도30G 파일시스템으로 여유가 있었으며 루트의 /opt/dreamcatch/ai Docker 압축 백업 누적을 확인했다. 사용자 요청에 따라 오래된 Docker 이미지 태그 및 이미지 압축 파일만 정리했다. DB dump·Compose·감사 자료·볼륨·업무 파일·키는 삭제하지 않았다. 최초 정리 후 기존 서비스들은 재시작 없이 healthy로 회복했다. /univ 등 다른 경로는 조사 중 크기만 확인하고 변경하지 않았다.
+- 정리 결과(배포 후 재정리 포함): image tag 110개, Docker 압축 백업 62개·21853518336B 삭제. API·웹 repo는 생성일 최신 이미지 각각5개(현재 사용 포함), release.tar/web.tar/images.tar 압축 파일은 수정시각 최신5개를 남겼다. 다른 실행 서비스 이미지와 모든 컨테이너 참조 이미지는 보호했다. 부모 레이어가 후속 이미지에 쓰이는 경우 Docker가 유지하며 무차별 prune·강제 rmi·volume 삭제는 하지 않았다. 최종 루트 여유약19G/사용률83%, Docker 파일시스템 여유21G. 초기/최종 inventory와 삭제 manifest는 로컬 _workspace/deploy-interview-20261118/에 있다.
+- 서버 백업/Compose/감사자료는 /opt/dreamcatch/ai/interview-20261118/. release.tar 1116943360B SHA256=d6417d4b4bbc298e3b618f3e2f67677044bc4ffb110c2bae1ec693f4cb490f2d, 전송 검증 일치. 대용량 전송 중 압축 파일도 로컬에 준비했으나 기존 tar 전송이 먼저 완료되어 배포는 원래 tar로 했다. 서버 백업을 dc_deploy_interview_20261118_test에 복원→166 적용→전체 스키마/데이터 보존 비교→실행기 재실행 no-op 확인. 로컬 업무 데이터를 서버에 복원하지 않았다.
+- 운영 구 API stop -t240 후 exited0 확인, 정지 구간 추가 백업 immediate-before.dump 및 감사→166 적용→직후 비교→API/웹 함께 interview-20261118로 기동했다. 기존 업무 테이블 전체값/건수 불변, 세션 원래 컬럼 전체 해시 불변, 새 mode cover/direct_input null 확인. 기존165개 적용 체크섬 보존·166 한 건만 추가. 로컬 소스/실행 API/회사 API 및166개 migration 일치, 복원 참조 dc_release_interview_20261118_ref_test와 서버 전체 스키마 MATCH(11-05의 세 가지 검증된 직렬화 차이만 정규화). API/web healthy, nginx 정상, RAG/LLM/Qdrant/SearxNG/DB도 정상. DeepResume 활성·testapi 주소·학교 코드 유지.
+- 로컬/서버 HTML SHA256 admin=b6c0f6cbc413f426913e548d40fbb63ef386990a35c673766c291ad5ecd8369b, v2=7199f51aba6f662c84092f1a85bf3f54b7e781c7c0be4904549e17c2303031af. 복구는 이전 API/웹 consent-20261116과 저장 Compose를 함께 사용하되, mode<>cover 새 기록이 있으면 이전 API는 NULL 스냅샷을 처리하지 못하므로 돌아가지 않고 forward-fix한다. 166 및 새 면접/동의 데이터는 지우지 않는다. 최신5개 보관 원칙에 따라 아주 오래된 문서의 이미지/압축 파일은 더 이상 서버에 없을 수 있다. 서버 실행 유지.
+- EgoLite 공간5에서 로컬 실제 학생의 동의 완료 경로로 질문 방식3종 선택, 자소서 없이 경험 textarea 및 기업별 지원정보가 표시됨을 확인했다. 로컬·서버 스크린샷을 촬영하고 열어 확인했다. 서버는 실제 로그인 후 확장된 공통 동의서4개 체크박스와 GET /job-interview-consent 200(25ms/319B), 실패 요청/Runtime 예외 없음. 운영 학생에게 대리 동의하지 않아 동의 이후 실제 결과 화면·자동완성·녹화·Deep 세션/결과 조회는 이번 운영 확인 범위 밖이다. 관련 계약은 위 격리 테스트와 기존0014 로컬 검증 근거이며 실제 완료 영상/결과까지 검증했다고 주장하지 않는다. 임시 인증서 허용 원복·작업 공간 종료 완료.
+- Graft 자동갱신 후 구조 그래프 OK. 코드·DB 탐색에 Graft, Postgres 검토 및 브라우저 스킬을 읽고 적용했다. 앱 코드 수정은 하지 않았다. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다.
+
+
 ## 2026-11-16 AI 인터뷰 동의 1회 API/웹/165 서버 배포
 
 - origin/dev c917e03까지의 변경을 깨끗한 git archive로 빌드했다. 학생·동의서 버전별 1회 동의를 dc.job_interview_consent에 저장하며, 이미 동의하면 화면은 장치 확인으로 넘어간다. 새 동의서 버전이면 새 동의가 필요하다. 새 세션에는 근거 동의의 원래 시각·응답을 복사한다. 미커밋 타 작업은 제외했다.
