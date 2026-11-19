@@ -9,7 +9,7 @@
 // 토글이 아니라 원하는 상태를 명시한다 — 연타해도 같은 결과가 된다.
 // ─────────────────────────────────────────────────────────────────────────
 import { api } from '../../shared/api'
-import { loadWishlist, setWishlist, wishlistIds } from '../../shared/jobStore'
+import { loadWishlist, refreshPosting, setWishlist, wishlistIds } from '../../shared/jobStore'
 
 export function getJobWishlist(): string[] {
   return wishlistIds()
@@ -26,6 +26,8 @@ export async function setJobWish(id: string, saved: boolean): Promise<string[]> 
     ? [...getJobWishlist().filter(v => v !== id), id]
     : getJobWishlist().filter(v => v !== id)
   setWishlist(next)
+  // 카드의 「찜 N명」은 서버가 센 값이다 — 그 공고만 다시 읽는다. 실패해도 찜 저장은 이미 끝났다.
+  await refreshPosting(id).catch(() => { /* 다음 화면 이동 때 다시 읽는다 */ })
   return next
 }
 

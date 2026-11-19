@@ -4,7 +4,7 @@ import { DOCUMENT_ACCEPT, IMAGE_ACCEPT } from '../../shared/uploadPolicy'
 // 채용공고 등록·수정 — 정본은 서버(dc.job_posting)다.
 //
 // 바뀐 것 넷:
-//   ① 선택지(기업구분·근무형태·직종·경력·성별·지역)를 여기 배열로 두지 않는다.
+//   ① 선택지(기업구분·근무형태·직종·경력·지역)를 여기 배열로 두지 않는다. 성별은 받지 않는다(항상 성별 무관).
 //      운영 코드는 DB 가 정본이고 화면은 metadataStore 에서 읽는다 — 관리자가
 //      항목을 추가하면 배포 없이 나타난다(DB.md §8-5).
 //   ② 회사명을 직접 입력하거나 과거 공고에서 기업을 고른다. 이름이 같다는 이유로
@@ -115,6 +115,7 @@ export default function JobForm() {
       role: existing.role, tags: existing.tags, salary: existing.salary, location: existing.location,
       jobType: existing.jobType, companyType: existing.companyType, recruitType: existing.recruitType,
       status: existing.status, deadlineMode: existing.deadlineMode, deadline: existing.deadline,
+      deadlineTime: existing.deadlineTime || '23:59',
       applyUrl: existing.applyUrl, urlTitleLink: existing.urlTitleLink, email: existing.email,
       emailApply: existing.emailApply, salaryNegotiable: existing.salaryNegotiable,
       content: existing.content, contentFormat: existing.contentFormat,
@@ -209,6 +210,9 @@ export default function JobForm() {
       jobType: careers[0] ?? draft.jobType,
       // 마감일은 서버가 정한다 — ON_HIRE 는 등록 시점에 한 번만 계산되고 이후 유지된다.
       deadline: draft.deadlineMode === 'DATE' ? draft.deadline : null,
+      deadlineTime: draft.deadlineMode === 'DATE' ? draft.deadlineTime : '23:59',
+      // 성별은 받지 않는다 — 공고는 항상 「성별 무관」이다(2026-11-19). 예전에 고른 값도 저장할 때 비운다.
+      genders: [],
       tags: [
         ...jobLabelsOf(JOB_CODE_GROUPS.employmentType, arr('employmentTypes')),
         ...jobLabelsOf(JOB_CODE_GROUPS.careerType, careers),
@@ -385,16 +389,6 @@ export default function JobForm() {
             </div>
           </Row>
 
-          <Row label="성별">
-            <div className="jf-opts">
-              {jobOptions(JOB_CODE_GROUPS.gender).map(g => (
-                <label key={g.code} className="jf-radio">
-                  <input type="radio" name="gender" checked={arr('genders')[0] === g.code} onChange={() => pickOne('genders', g.code)} /> {g.label}
-                </label>
-              ))}
-            </div>
-          </Row>
-
           <Row label="지역" required>
             <div className="jf-region">
               <select className="jf-select jf-scope" value={regionScope} onChange={e => setRegionScope(e.target.value)}>
@@ -426,6 +420,14 @@ export default function JobForm() {
                 value={draft.deadlineMode === 'DATE' ? draft.deadline ?? '' : ''}
                 disabled={draft.deadlineMode !== 'DATE'}
                 onChange={e => set('deadline', e.target.value || null)}
+              />
+              <input
+                className="jf-input jf-w-time"
+                type="time"
+                aria-label="지원마감 시각"
+                value={draft.deadlineMode === 'DATE' ? draft.deadlineTime : ''}
+                disabled={draft.deadlineMode !== 'DATE'}
+                onChange={e => set('deadlineTime', e.target.value || '23:59')}
               />
               <label className="jf-check">
                 <input

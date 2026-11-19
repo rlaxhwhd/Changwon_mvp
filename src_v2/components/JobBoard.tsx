@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
-  jobDdayLabel, jobHighlights, isJobClosed, sortJobs, JOB_SORTS, JOB_SORT_LABEL,
+  getJobById, jobDdayLabel, jobHighlights, isJobClosed, sortJobs, JOB_SORTS, JOB_SORT_LABEL,
 } from '../../src_admin/data/jobsSource'
 import type { JobPosting, JobSort } from '../../src_admin/data/jobsSource'
 import { JOB_CODE_GROUPS, jobLabelOf, jobLabelsOf } from '../../src_admin/data/schema/job'
@@ -43,6 +43,8 @@ interface JobBoardProps {
   cardAction?: { label: string; onClick: (job: JobPosting) => void }
   /** 지원자 수 — 교직원 화면만 넘긴다. 학생에게는 의미가 없어 안 넘기면 그리지 않는다. */
   applicantCountOf?: (job: JobPosting) => number
+  /** 「찜 N명」을 눌러 찜한 학생 목록을 연다 — 교직원 화면만 넘긴다. 학생은 명수만 본다. */
+  onWishersOpen?: (job: JobPosting) => void
   emptyMain: string
   emptyHint: string
 }
@@ -78,7 +80,7 @@ function postedLabel(job: JobPosting): string {
 
 function deadlineLabel(job: JobPosting): string {
   if (job.deadlineOnHire) return '채용시 마감'
-  return job.deadline ? `~${job.deadline.slice(5).replace('-', '.')}` : '상시'
+  return job.deadline ? `~${job.deadline.slice(5, 10).replace('-', '.')} ${job.deadlineTime || '23:59'}` : '상시'
 }
 
 /** 카드 태그줄 — 근무형태 · 직종 + 특이사항(오늘마감·서류면제) */
@@ -96,7 +98,7 @@ function tagsOf(job: JobPosting): { label: string; kind: 'emp' | 'cat' | 'flag' 
 }
 
 export default function JobBoard({
-  jobs, onOpen, showWish = false, split = true, cardAction, applicantCountOf, emptyMain, emptyHint,
+  jobs, onOpen, showWish = false, split = true, cardAction, applicantCountOf, onWishersOpen, emptyMain, emptyHint,
 }: JobBoardProps) {
   useMetadata()
   const [query, setQuery] = useState('')
@@ -125,6 +127,9 @@ export default function JobBoard({
   const toggleWish = (id: string) => {
     void toggleJobWish(id).then(next => setWished(new Set(next))).catch(() => { /* 서버 상태 유지 */ })
   }
+
+  // 찜 수는 스토어의 최신 값을 본다 — 부모가 목록을 memo 해 두어도 찜 저장 뒤 다시 읽은 공고가 반영된다.
+  const wishCountOf = (job: JobPosting) => getJobById(job.id)?.wishCount ?? job.wishCount ?? 0
 
   // 클릭 대상이 없으면 button 이 아니라 정적 블록으로 그린다 — 눌러도 되는 것처럼 보이지 않게.
   const Tag = onOpen ? 'button' : 'div'
@@ -206,9 +211,29 @@ export default function JobBoard({
             <span>마감 {deadlineLabel(job)}</span>
             {postedLabel(job) && <span>등록 {postedLabel(job)}</span>}
           </span>
-          {applicantCountOf && (
-            <span className="jc-applicants"><i className="fa-solid fa-user-group" /> 지원 {applicantCountOf(job)}명</span>
-          )}
+          <span className="jc-foot-counts">
+            {applicantCountOf && (
+              <span className="jc-applicants"><i className="fa-solid fa-user-group" /> 지원 {applicantCountOf(job)}명</span>
+            )}
+            {onWishersOpen ? (
+              <span
+                role="button"
+                tabIndex={0}
+                className="jc-wishes is-link"
+                aria-label={`찜한 학생 ${wishCountOf(job)}명 목록 보기`}
+                onClick={e => { e.stopPropagation(); onWishersOpen(job) }}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault(); e.stopPropagation(); onWishersOpen(job)
+                  }
+                }}
+              >
+                <i className="fa-solid fa-star" /> 찜 {wishCountOf(job)}명
+              </span>
+            ) : (
+              <span className="jc-wishes"><i className="fa-solid fa-star" /> 찜 {wishCountOf(job)}명</span>
+            )}
+          </span>
         </div>
 
         {cardAction && (

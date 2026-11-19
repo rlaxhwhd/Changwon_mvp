@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { safeHtml } from '../../shared/safeHtml'
 import JobLogo from '../../shared/JobLogo'
 import type { ReactNode } from 'react'
-import { isJobClosed, jobDdayLabel, jobHighlights } from '../../src_admin/data/jobsSource'
+import { isJobClosed, jobDdayLabel, jobDeadlineAt, jobHighlights } from '../../src_admin/data/jobsSource'
 import type { JobPosting } from '../../src_admin/data/jobsSource'
 import { isJobWished, toggleJobWish } from '../data/jobWishlist'
 import { JOB_CODE_GROUPS, RECRUIT_TYPE_LABEL, jobLabelOf, jobLabelsOf } from '../../src_admin/data/schema/job'
@@ -47,8 +47,9 @@ function salaryOf(job: JobPosting): string {
 
 function deadlineOf(job: JobPosting): string {
   // 「채용시 마감」도 실제 날짜가 있다 — 등록 시점에 한 번 정해진 값이다.
-  if (job.deadlineMode === 'ON_HIRE') return job.deadline ? `채용시 마감 (~${job.deadline})` : '채용시 마감'
-  return job.deadline || '상시 모집'
+  const at = jobDeadlineAt(job)
+  if (job.deadlineMode === 'ON_HIRE') return at ? `채용시 마감 (~${at})` : '채용시 마감'
+  return at || '상시 모집'
 }
 
 function regionOf(job: JobPosting): string {
@@ -94,7 +95,8 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
     { label: '근무형태', value: labelsOr(JOB_CODE_GROUPS.employmentType, job.employmentTypes, job.jobType), chip: true },
     { label: '직종', value: join(jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories)) },
     { label: '경력', value: labelsOr(JOB_CODE_GROUPS.careerType, job.careerTypes, job.jobType), chip: true },
-    { label: '성별', value: join(jobLabelsOf(JOB_CODE_GROUPS.gender, job.genders)) },
+    // 성별은 받지 않는다 — 예전 공고에 남은 값이 있어도 항상 성별 무관이다(2026-11-19).
+    { label: '성별', value: '성별 무관' },
     { label: '지역', value: regionOf(job), chip: true },
     { label: '지원마감일', value: deadlineOf(job) },
     { label: '연봉', value: salaryOf(job) },

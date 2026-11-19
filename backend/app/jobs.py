@@ -19,7 +19,7 @@ import calendar
 import hashlib
 import re
 import threading
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, time as dt_time, timedelta
 from typing import Literal
 from uuid import uuid4
 from zoneinfo import ZoneInfo
@@ -51,11 +51,17 @@ OPTION_GROUPS = {'EMPLOYMENT': 'JOB_EMPLOYMENT_TYPE', 'CATEGORY': 'JOB_CATEGORY'
                  'CAREER': 'JOB_CAREER_TYPE', 'GENDER': 'JOB_GENDER', 'REGION': 'JOB_REGION'}
 POSTING_WRITABLE = ('company_id,company_name_snapshot,role,tags,salary_text,location_text,career_primary_code,'
                     'company_type_code,recruit_type,stored_status,deadline_mode,deadline_date,salary_negotiable,'
-                    'url_title_link,email_apply,apply_url,email,content_html,content_format,logo_file_id')
+                    'url_title_link,email_apply,apply_url,email,content_html,content_format,logo_file_id,deadline_time')
+DEFAULT_DEADLINE_TIME = '23:59'
 
 
 def today():
     return datetime.now(SEOUL).date()
+
+
+def now_kst():
+    """마감 판정용 KST 벽시계(분 단위). 마감 판정은 이 시계 하나만 본다 — 테스트가 이것만 고정한다."""
+    return datetime.now(SEOUL).replace(second=0, microsecond=0, tzinfo=None)
 
 
 def plus_one_month(day: date) -> date:
@@ -137,7 +143,8 @@ def remember(conn, user, route, key, digest, result):
 # ── 공고 ────────────────────────────────────────────────────────────────
 
 def effective_status(row):
-    """화면이 보는 상태. 저장된 상태와 마감일이 어긋나면 마감일이 이긴다(KST 당일까지 열림)."""
+    """화면이 보는 상태. 저장된 상태와 마감 일시가 어긋나면 마감 일시가 이긴다.
+    마감 시각은 분 단위다 — 18:00 마감은 18:00:59 까지, 23:59 는 그날 끝까지 열린다(168)."""
     if row['deleted_at']:
         return 'UNAVAILABLE'
     if row['stored_status'] == 'CLOSED':
@@ -145,7 +152,7 @@ def effective_status(row):
     if row['deadline_mode'] != 'ALWAYS':
         if not row['deadline_date']:
             return 'UNKNOWN'
-        if row['deadline_date'] < today():
+        if datetime.combine(row['deadline_date'], row['deadline_time']) < now_kst():
             return 'CLOSED'
     return 'POSTED'
 
@@ -183,11 +190,22 @@ def files_of(conn, posting_ids):
     return grouped
 
 
-def posting_dto(row, options, stages, attachments):
+def wish_counts(conn, posting_ids):
+    """공고별 찜한 학생 수 — 원본(job_wishlist)에서 센다. 공고 행에 집계를 저장하지 않는다(규칙 3)."""
+    counts = dict.fromkeys(posting_ids, 0)
+    if posting_ids:
+        for row in conn.execute('''SELECT posting_id,count(*)::int AS n FROM dc.job_wishlist
+          WHERE posting_id=ANY(%s) GROUP BY posting_id''', (posting_ids,)).fetchall():
+            counts[row['posting_id']] = row['n']
+    return counts
+
+
+def posting_dto(row, options, stages, attachments, wish_count=0):
     return {
         'id': row['id'], 'companyId': row['company_id'], 'company': row['company_name_snapshot'],
         'role': row['role'], 'tags': row['tags'], 'salary': row['salary_text'] or '',
         'location': row['location_text'] or '', 'deadline': row['deadline_date'],
+        'deadlineTime': row['deadline_time'].strftime('%H:%M'), 'wishCount': wish_count,
         'deadlineMode': row['deadline_mode'], 'deadlineOnHire': row['deadline_mode'] == 'ON_HIRE',
         'jobType': row['career_primary_code'], 'applyUrl': row['apply_url'] or '',
         # match 는 근거 없는 순위라 정본에서 뺀다. 학생 화면 호환을 위해 0 으로만 내려보낸다.
@@ -205,7 +223,8 @@ def posting_dto(row, options, stages, attachments):
 def posting_rows(conn, rows):
     ids = [r['id'] for r in rows]
     options, stages, attachments = options_of(conn, ids), stages_of(conn, ids), files_of(conn, ids)
-    return [posting_dto(r, options[r['id']], stages[r['id']], attachments[r['id']]) for r in rows]
+    wishes = wish_counts(conn, ids)
+    return [posting_dto(r, options[r['id']], stages[r['id']], attachments[r['id']], wishes[r['id']]) for r in rows]
 
 
 def get_posting(conn, posting_id, lock=False, include_deleted=False):
@@ -218,6 +237,9 @@ def get_posting(conn, posting_id, lock=False, include_deleted=False):
 
 
 def posting_event(conn, user, posting_id, action, before, after, reason=''):
+    # 찜 수는 공고 속성이 아니라 다른 학생 행위의 집계다 — 이력에 넣으면 찜만으로 UPDATE 차이가 생긴다.
+    before, after = ({k: v for k, v in x.items() if k != 'wishCount'} if isinstance(x, dict) else x
+                     for x in (before, after))
     seq = conn.execute('SELECT COALESCE(max(seq),0)+1 AS n FROM dc.job_posting_event WHERE posting_id=%s',
                        (posting_id,)).fetchone()['n']
     conn.execute('''INSERT INTO dc.job_posting_event(posting_id,seq,action,before_value,after_value,reason,actor_uid)
@@ -402,6 +424,8 @@ class PostingBody(BaseModel):
     status: str = Field(default='POSTED', pattern='^(POSTED|CLOSED)$')
     deadlineMode: str = Field(default='DATE', pattern='^(DATE|ALWAYS|ON_HIRE)$')
     deadline: date | None = None
+    # KST 마감 시각 'HH:MM' — DATE 만 사용자 값을 쓰고 ALWAYS·ON_HIRE 는 서버가 23:59 로 정규화한다.
+    deadlineTime: str = Field(default=DEFAULT_DEADLINE_TIME, pattern=r'^([01]\d|2[0-3]):[0-5]\d$')
     applyUrl: str = Field(default='', max_length=500)
     urlTitleLink: bool = False
     email: str = Field(default='', max_length=200)
@@ -428,6 +452,8 @@ class PostingBody(BaseModel):
             raise ValueError('마감일을 입력해 주세요.')
         if self.deadlineMode == 'ALWAYS' and self.deadline:
             raise ValueError('상시 모집은 마감일을 두지 않습니다.')
+        if self.deadlineMode != 'DATE':
+            self.deadlineTime = DEFAULT_DEADLINE_TIME
         if self.applyUrl and not self.applyUrl.startswith(('http://', 'https://')):
             raise ValueError('지원 링크는 http 또는 https 로 시작해야 합니다.')
         if self.urlTitleLink and not self.applyUrl:
@@ -498,7 +524,7 @@ def posting_values(body, company_id, deadline_date):
             body.role, body.tags, body.salary or None, body.location or None, body.jobType, body.companyType,
             body.recruitType, body.status, body.deadlineMode, deadline_date, body.salaryNegotiable,
             body.urlTitleLink, body.emailApply, body.applyUrl or None, body.email or None,
-            body.content or None, body.contentFormat, body.logoFileId)
+            body.content or None, body.contentFormat, body.logoFileId, dt_time.fromisoformat(body.deadlineTime))
 
 
 @router.post('/jobs', status_code=201)
@@ -1266,6 +1292,27 @@ def remove_wish(posting_id: str, user=Depends(principal, scope='function'),
     conn.execute('DELETE FROM dc.job_wishlist WHERE student_uid=%s AND posting_id=%s',
                  (user['intg_uid'], posting_id))
     return {'postingId': posting_id, 'saved': False}
+
+
+@router.get('/jobs/{posting_id}/wishers')
+def posting_wishers(posting_id: str, user=Depends(principal, scope='function'),
+                    conn=Depends(connection, scope='function')):
+    """공고를 찜한 학생 — 채용 메뉴 보유 교직원만. 학생은 카드의 wishCount(명수)만 본다(2026-11-19 사용자 확정).
+    범위는 지원 목록과 같은 술어다(상담사=전 학생, 그 밖=담당 범위). 응답은 아래 7필드로 제한한다."""
+    require_manage(conn, user)
+    get_posting(conn, posting_id)
+    condition, values = scope_condition(user, 'w')
+    rows = conn.execute(f'''SELECT COALESCE(p.alias,s.intg_uid) AS alias,p.name,s.student_no,s.grade,s.major_label,w.created_at,
+      d.college_name,d.dept_name
+      FROM dc.job_wishlist w JOIN dc.student s ON s.intg_uid=w.student_uid
+      JOIN dc.person p ON p.intg_uid=w.student_uid
+      LEFT JOIN dc.department d ON (d.college_code,d.dept_code)=(s.college_code,s.dept_code)
+      WHERE w.posting_id=%s AND {condition}
+      ORDER BY w.created_at DESC,w.student_uid''', (posting_id, *values)).fetchall()
+    items = [{'studentId': r['alias'], 'name': r['name'], 'studentNo': r['student_no'],
+              'college': r['college_name'], 'department': r['dept_name'] or r['major_label'],
+              'grade': r['grade'], 'wishedAt': r['created_at']} for r in rows]
+    return {'items': items, 'totalCount': len(items)}
 
 
 # ── 자기소개서 ──────────────────────────────────────────────────────────

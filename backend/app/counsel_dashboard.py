@@ -22,6 +22,11 @@ def today():
     return datetime.now(SEOUL).date()
 
 
+def clock():
+    """KST 현재 시각(분 단위) — 채용공고 마감 시각 비교용. 테스트가 today 와 함께 고정한다."""
+    return datetime.now(SEOUL).time().replace(second=0, microsecond=0)
+
+
 def counselor(conn, user):
     require_staff(user)
     row = conn.execute('SELECT role_code FROM dc.staff WHERE intg_uid=%s', (user['intg_uid'],)).fetchone()
@@ -102,8 +107,8 @@ def recruiting_jobs(conn, user, day):
     rows = conn.execute('''SELECT j.id,j.company_name_snapshot AS company,j.role,j.recruit_type,
       j.deadline_mode AS "deadlineMode",j.deadline_date AS deadline
       FROM dc.job_posting j WHERE j.source='manual' AND j.deleted_at IS NULL AND j.stored_status='POSTED'
-      AND (j.deadline_mode='ALWAYS' OR j.deadline_date>=%s)
-      ORDER BY j.posted_at DESC NULLS LAST,j.id''', (day,)).fetchall()
+      AND (j.deadline_mode='ALWAYS' OR j.deadline_date>%s OR (j.deadline_date=%s AND j.deadline_time>=%s))
+      ORDER BY j.posted_at DESC NULLS LAST,j.id''', (day, day, clock())).fetchall()
     recommended = [r for r in rows if r['recruit_type'] == 'RECOMMENDATION']
     general = [r for r in rows if r['recruit_type'] != 'RECOMMENDATION']
     applicants = {}

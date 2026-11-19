@@ -14,8 +14,9 @@ import type {
   JobPosting,
   JobPostingInput,
   JobStatus,
+  JobWisher,
 } from './schema/job'
-import { JOB_HIGHLIGHT_TAGS } from './schema/job'
+import { JOB_CODE_GROUPS, JOB_HIGHLIGHT_TAGS, RECRUIT_TYPE_LABEL, jobLabelsOf } from './schema/job'
 import { api, queryString } from '../../shared/api'
 import { DOCUMENT_ACCEPT, IMAGE_ACCEPT, validateUpload } from '../../shared/uploadPolicy'
 import {
@@ -74,6 +75,52 @@ export function jobDdayLabel(job: JobPosting): string {
   if (diff < 0) return '마감'
   if (diff === 0) return 'D-day'
   return `D-${diff}`
+}
+
+/** 마감 일시 'YYYY-MM-DD HH:MM' — 상시처럼 날짜가 없으면 null. 시각은 서버가 준 KST 값이다. */
+export function jobDeadlineAt(job: JobPosting): string | null {
+  return job.deadline ? `${job.deadline.slice(0, 10)} ${job.deadlineTime || '23:59'}` : null
+}
+
+/** 공고를 찜한 학생 목록 — 교직원 전용. 학생 화면은 wishCount(명수)만 쓴다. */
+export async function loadJobWishers(id: string): Promise<JobWisher[]> {
+  return (await api<{ items: JobWisher[] }>(`/jobs/${encodeURIComponent(id)}/wishers`)).items
+}
+
+/** 등록일(KST) 'YYYY-MM-DD' */
+export function jobPostedDate(job: JobPosting): string {
+  const at = new Date(job.postedAt)
+  return Number.isNaN(at.getTime()) ? (job.postedAt ?? '').slice(0, 10) : at.toLocaleDateString('sv-SE', { timeZone: 'Asia/Seoul' })
+}
+
+const EXPORT_STATUS_LABEL: Record<JobEffectiveStatus, string> = { POSTED: '게시', CLOSED: '마감', UNKNOWN: '확인 필요', UNAVAILABLE: '삭제' }
+
+/**
+ * 교내 공고 목록 내려받기 행 — 등록일(KST)이 from~to(포함)인 공고, 최신 등록순.
+ * 머리글 한 줄을 포함한다. 지원자 수는 지원 스토어를 아는 화면이 넘긴다(순환 import 방지).
+ * 지원 스토어를 읽을 권한이 없으면 null 을 넘긴다 — 모르는 값을 0 으로 위장하지 않고 빈 칸으로 둔다.
+ */
+export function jobExportRows(from: string, to: string, applicantCountOf: ((job: JobPosting) => number) | null): string[][] {
+  const jobs = getInternalJobs()
+    .filter(job => { const day = jobPostedDate(job); return day >= from && day <= to })
+    .sort((a, b) => b.postedAt.localeCompare(a.postedAt))
+  const head = ['번호', '채용유형', '회사명', '공고제목', '근무형태', '직종', '경력', '지역', '연봉', '마감', '상태', '등록일', '지원자 수', '찜한 학생 수']
+  return [head, ...jobs.map((job, index) => [
+    String(index + 1),
+    RECRUIT_TYPE_LABEL[job.recruitType],
+    job.company,
+    job.role,
+    jobLabelsOf(JOB_CODE_GROUPS.employmentType, job.employmentTypes).join(', '),
+    jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories).join(', '),
+    jobLabelsOf(JOB_CODE_GROUPS.careerType, job.careerTypes).join(', '),
+    jobLabelsOf(JOB_CODE_GROUPS.region, job.regions).join(', ') || job.location,
+    job.salaryNegotiable ? '회사내규 및 협의' : job.salary,
+    job.deadlineMode === 'ALWAYS' ? '상시' : `${job.deadlineMode === 'ON_HIRE' ? '채용시 ' : ''}${jobDeadlineAt(job) ?? ''}`.trim(),
+    EXPORT_STATUS_LABEL[job.effectiveStatus] ?? job.effectiveStatus,
+    jobPostedDate(job),
+    applicantCountOf ? String(applicantCountOf(job)) : '',
+    String(job.wishCount ?? 0),
+  ])]
 }
 
 /**
@@ -232,5 +279,5 @@ export async function uploadJobFile(slot: 'LOGO' | 'ATTACHMENT' | 'RESUME', file
 }
 
 export { loadPostings }
-export type { JobPosting, JobStatus, JobPostingInput, JobCompany }
+export type { JobPosting, JobStatus, JobPostingInput, JobCompany, JobWisher }
 export type { RecruitType, JobSource } from './schema/job'

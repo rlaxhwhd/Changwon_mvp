@@ -111,6 +111,7 @@
 .jf-unit { color: var(--jf-text); font-size: 14px; white-space: nowrap; }
 .jf-hint { color: var(--jf-muted); font-size: 13px; white-space: nowrap; }
 .jf-w-narrow { max-width: 200px; }
+.jf-w-time { max-width: 130px; }
 .jf-w-mid { max-width: 280px; }
 
 /* ── 기업 로고 (추천채용 전용) ──

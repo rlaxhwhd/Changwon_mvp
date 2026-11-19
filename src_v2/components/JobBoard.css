@@ -137,6 +137,12 @@
 .jc-foot-dates span + span { padding-left: 10px; border-left: 1px solid var(--jb-line); }
 .jc-applicants { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--jb-ink); white-space: nowrap; }
 .jc-applicants i { color: var(--jb-sub); }
+/* 지원·찜 수 — 오른쪽에 나란히. 찜 별은 카드 머리의 찜 버튼과 같은 색이다. */
+.jc-foot-counts { display: inline-flex; align-items: center; gap: 12px; }
+.jc-wishes { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: var(--jb-ink); white-space: nowrap; }
+.jc-wishes i { color: #f59f00; }
+.jc-wishes.is-link { cursor: pointer; border-radius: 6px; padding: 2px 6px; margin: -2px -6px; }
+.jc-wishes.is-link:hover { background: var(--color-primary-bg, #f8f9fa); color: var(--color-primary, var(--jb-ink)); text-decoration: underline; }
 
 /* 카드 안에서 가장 결정적인 값 — 배지로 올려 제목보다 먼저 눈에 걸리게 한다. */
 .jc-card .jc-dday {

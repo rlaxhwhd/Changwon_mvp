@@ -91,6 +91,8 @@ export interface JobPosting {
   location: string
   /** 마감일 'YYYY-MM-DD'. 상시(ALWAYS)면 null */
   deadline: string | null
+  /** 마감 시각 'HH:MM' (KST). 날짜만 있던 공고는 23:59 — 그날 끝까지 열린다 */
+  deadlineTime: string
   deadlineMode: DeadlineMode
   /** 마감 방식이 ON_HIRE 인가 — 기존 화면 호환용 파생값 */
   deadlineOnHire: boolean
@@ -129,8 +131,21 @@ export interface JobPosting {
   source: JobSource
   postedAt: string
   version: number
+  /** 이 공고를 찜한 학생 수 — dc.job_wishlist 에서 서버가 센다. 누가 찜했는지는 교직원만 본다 */
+  wishCount: number
   /** 학생이 상세를 볼 때만 서버가 실어 준다(취업지원 게이트 판정) */
   applyEligibility?: JobEligibility
+}
+
+/** 공고를 찜한 학생 1명 — 교직원 전용(GET /jobs/{id}/wishers). 학생 화면은 wishCount 만 본다 */
+export interface JobWisher {
+  studentId: string
+  name: string
+  studentNo: string | null
+  college: string | null
+  department: string | null
+  grade: number | null
+  wishedAt: string
 }
 
 export interface JobEligibility {
@@ -162,6 +177,8 @@ export interface JobPostingInput {
   status: JobStatus
   deadlineMode: DeadlineMode
   deadline: string | null
+  /** 'HH:MM' — 마감일(DATE)일 때만 의미가 있다 */
+  deadlineTime: string
   applyUrl: string
   urlTitleLink: boolean
   email: string
@@ -192,6 +209,7 @@ export function blankJob(): JobPostingInput {
     status: 'POSTED',
     deadlineMode: 'DATE',
     deadline: null,
+    deadlineTime: '23:59',
     applyUrl: '',
     urlTitleLink: false,
     email: '',

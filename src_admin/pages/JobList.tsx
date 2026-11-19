@@ -1,8 +1,9 @@
 import { LuInfo, LuPlus } from 'react-icons/lu'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { getJobsByScope, countJobs } from '../data/jobsSource'
-import type { JobScope } from '../data/jobsSource'
+import type { JobPosting, JobScope } from '../data/jobsSource'
+import JobWishersModal from '../components/JobWishersModal'
 import JobBoard from '../../src_v2/components/JobBoard'
 import { summarizeJob } from '../data/jobApplications'
 
@@ -26,6 +27,7 @@ export default function JobList({ scope }: { scope: JobScope }) {
   const copy = SCOPE_COPY[scope]
   const all = useMemo(() => getJobsByScope(scope), [scope])
   const counts = useMemo(() => countJobs(scope), [scope])
+  const [wishersOf, setWishersOf] = useState<JobPosting | null>(null)
 
   return (
     <div className="admin-page">
@@ -59,6 +61,7 @@ export default function JobList({ scope }: { scope: JobScope }) {
           외부 공고는 원본이 외부에 있어 수정 버튼을 주지 않는다. */}
       <JobBoard
         applicantCountOf={job => summarizeJob(job.id).total}
+        onWishersOpen={setWishersOf}
         jobs={all}
         onOpen={job => navigate(`/jobs/${job.id}`)}
         cardAction={scope === 'internal'
@@ -68,6 +71,8 @@ export default function JobList({ scope }: { scope: JobScope }) {
         emptyMain={copy.emptyTitle}
         emptyHint={copy.emptyMessage}
       />
+
+      {wishersOf && <JobWishersModal job={wishersOf} onClose={() => setWishersOf(null)} />}
     </div>
   )
 }
