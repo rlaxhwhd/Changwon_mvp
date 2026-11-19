@@ -620,6 +620,12 @@ CREATE TABLE dc.org_assignment (
 찜한 학생 목록 `GET /jobs/{id}/wishers` 는 채용 메뉴 보유 교직원만, 지원 목록과 같은 범위 술어로 7필드만 준다. 학생은 명수만 본다.
 성별은 받지 않는다 — 폼이 `genders: []` 를 보내 기존 GENDER 옵션 행도 수정 저장 때 지워지고, 화면은 항상 「성별 무관」이다.
 
+**모집요강 템플릿(2026-11-19 · 마이그레이션 169 · 설계 `.ai/handoff-db/0017-job-guide-template`).**
+상담사가 공고 이미지를 그려 붙이던 것을 대신한다. `dc.job_posting.guide_template`(POSTER·HIGHLIGHT·DOCUMENT, NULL=사용 안 함)과
+`guide_fields jsonb`(입력값 17키 — 한 줄 소개·담당업무·근무시간·자격요건·제출서류·전형단계 등)를 공고 행에 둔다. 따로 조회·집계하지 않는 공고 1건의 문서라 별도 표를 두지 않았다.
+회사명·제목·연봉·근무지·근무형태·마감은 기존 컬럼에서 읽고 jsonb 에 복사하지 않는다. 키·길이 검증은 API(`GuideFields`, extra=forbid), DB 는 열거·object·짝(`posting_guide_pair` — 둘 다 NULL 이거나 둘 다 있음)만 지킨다.
+수정은 전체 교체라 폼이 두 값을 반드시 실어 보낸다(빼면 템플릿이 꺼진다). 그리기는 공용 `src_v2/components/JobGuide.tsx` 하나 — 값은 React 텍스트로만 넣는다.
+
 **AI 평가 결과는 새로 만들지 않고 재사용한다.** `dc.ai_run(subject_kind='RESUME')` 이 이미
 자소서 ID `r1`·`r2` 를 가리키고 그 행은 append-only 라 사후 재매핑이 불가능하다 —
 `dc.job_resume` 은 그 ID 를 보존한다. 자소서 쪽에 AI 결과 역참조 컬럼을 두지 않는다(규칙 3).
@@ -659,7 +665,7 @@ LLM 생성 후 본문·근거·모델·입력 스냅샷을 원자적으로 저�
 최종 규칙은 `PROCESS.md`, 최신 배포 및 복구 기록은 `docs/LOCAL_AI_WORKFLOW.md`를 따른다.
 
 - 마이그레이션 `022_job_operations.sql`(DDL·코드) · `023_job_seed.sql`(파생 시드, `seed.py` 가 다시 돌린다)
-- API `backend/app/jobs.py` · `files.py` · `gates.py` · 테스트 `backend/tests/test_jobs.py` · `test_job_wish_deadline.py`(168)
+- API `backend/app/jobs.py` · `files.py` · `gates.py` · 테스트 `backend/tests/test_jobs.py` · `test_job_wish_deadline.py`(168) · `test_job_guide_template.py`(169)
 - 프론트 정본은 `shared/jobStore.ts`. `dc_jobs` · `dc_job_applications` · `dc_job_app_events` ·
   `dc_job_wishlist` · `dc_user_resumes_v1` localStorage 는 폐기됐다 — **소유자를 알 수 없어 수입하지 않았다**
 - **아직 열지 않은 것** — 공통 동의 모델(#43. 포트폴리오 제출은 공개 안내 문구만 있고 동의 이력은 없다) · 본문 inline 이미지의 파일 전환(기존 `data:` URL 은 그대로 둔다)

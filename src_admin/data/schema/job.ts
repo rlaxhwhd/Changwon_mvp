@@ -78,6 +78,47 @@ export interface JobFile {
   downloadUrl: string
 }
 
+/**
+ * 모집요강 템플릿 — 상담사가 입력칸만 채우면 화면이 이 디자인으로 그린다(2026-11-19).
+ * 회사명·제목·연봉·근무지·근무형태·마감은 공고 본 필드에서 읽는다 — 여기 다시 담지 않는다.
+ */
+export type JobGuideTemplate = 'POSTER' | 'HIGHLIGHT' | 'DOCUMENT'
+
+export const JOB_GUIDE_TEMPLATE_LABEL: Record<JobGuideTemplate, string> = {
+  POSTER: '포스터형', HIGHLIGHT: '핵심 숫자형', DOCUMENT: '요강 문서형',
+}
+
+/** 제출서류 1건 — optional 은 「해당자」 서류 */
+export interface JobGuideDoc { name: string; note: string; optional: boolean }
+
+export interface JobGuideFields {
+  headline: string
+  emphasis: string
+  duty: string
+  workHours: string
+  employmentNote: string
+  salaryNote: string
+  qualification: string
+  preferred: string
+  industry: string
+  revenue: string
+  headcount: string
+  address: string
+  applyMethod: string
+  contact: string
+  note: string
+  documents: JobGuideDoc[]
+  steps: string[]
+}
+
+export function blankGuideFields(): JobGuideFields {
+  return {
+    headline: '', emphasis: '', duty: '', workHours: '', employmentNote: '', salaryNote: '',
+    qualification: '', preferred: '', industry: '', revenue: '', headcount: '', address: '',
+    applyMethod: '', contact: '', note: '', documents: [], steps: [],
+  }
+}
+
 /** 채용공고 1건. */
 export interface JobPosting {
   id: string
@@ -133,6 +174,10 @@ export interface JobPosting {
   version: number
   /** 이 공고를 찜한 학생 수 — dc.job_wishlist 에서 서버가 센다. 누가 찜했는지는 교직원만 본다 */
   wishCount: number
+  /** 모집요강 템플릿 — null 이면 템플릿 없이 content 만 그린다 */
+  guideTemplate: JobGuideTemplate | null
+  /** 템플릿 입력값 — 서버가 키를 검증해 저장한다. 옛 공고는 null */
+  guideFields: Partial<JobGuideFields> | null
   /** 학생이 상세를 볼 때만 서버가 실어 준다(취업지원 게이트 판정) */
   applyEligibility?: JobEligibility
 }
@@ -186,6 +231,8 @@ export interface JobPostingInput {
   salaryNegotiable: boolean
   content: string
   contentFormat: 'HTML' | 'TEXT'
+  guideTemplate: JobGuideTemplate | null
+  guideFields: JobGuideFields | null
   logoFileId: string | null
   attachmentFileIds: string[]
   employmentTypes: string[]
@@ -217,6 +264,8 @@ export function blankJob(): JobPostingInput {
     salaryNegotiable: false,
     content: '',
     contentFormat: 'HTML',
+    guideTemplate: null,
+    guideFields: null,
     logoFileId: null,
     attachmentFileIds: [],
     employmentTypes: [],

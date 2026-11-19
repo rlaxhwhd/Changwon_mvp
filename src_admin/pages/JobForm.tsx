@@ -22,7 +22,8 @@ import {
   addJob, getJobById, queryCompanyHistory, removeJob, updateJob, uploadJobFile,
 } from '../data/jobsSource'
 import type { JobCompanyHistory } from '../data/jobsSource'
-import { blankJob, JOB_CODE_GROUPS, jobLabelsOf, jobOptions } from '../data/schema/job'
+import { blankGuideFields, blankJob, JOB_CODE_GROUPS, jobLabelsOf, jobOptions } from '../data/schema/job'
+import JobGuideEditor from '../components/JobGuideEditor'
 import type { JobFile, JobPostingInput, RecruitType } from '../data/schema/job'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
@@ -119,6 +120,9 @@ export default function JobForm() {
       applyUrl: existing.applyUrl, urlTitleLink: existing.urlTitleLink, email: existing.email,
       emailApply: existing.emailApply, salaryNegotiable: existing.salaryNegotiable,
       content: existing.content, contentFormat: existing.contentFormat,
+      // 수정은 전체 교체(PATCH)다 — 여기서 옮기지 않으면 다른 칸만 고쳐 저장해도 템플릿이 지워진다(0017 Astra).
+      guideTemplate: existing.guideTemplate ?? null,
+      guideFields: existing.guideTemplate ? { ...blankGuideFields(), ...existing.guideFields } : null,
       logoFileId: existing.logoFileId, attachmentFileIds: existing.attachments.map(f => f.id),
       employmentTypes: existing.employmentTypes, jobCategories: existing.jobCategories,
       careerTypes: existing.careerTypes, genders: existing.genders, regions: existing.regions,
@@ -496,8 +500,24 @@ export default function JobForm() {
             </div>
           </Row>
 
-          <Row label="모집요강" required top>
-            <RichEditor value={draft.content} onChange={html => set('content', html)} height={320} placeholder="모집요강 내용을 입력해주세요." />
+          <Row label="모집요강 템플릿" top>
+            <JobGuideEditor
+              template={draft.guideTemplate}
+              fields={draft.guideFields}
+              source={{
+                company: displayName || '회사명', role: draft.role || '공고 제목', recruitType: draft.recruitType,
+                salary: draft.salary, salaryNegotiable: draft.salaryNegotiable,
+                location: jobLabelsOf(JOB_CODE_GROUPS.region, regions).join(', ') || draft.location,
+                employmentTypes: draft.employmentTypes, deadline: draft.deadlineMode === 'ALWAYS' ? null : draft.deadline,
+                deadlineTime: draft.deadlineMode === 'DATE' ? draft.deadlineTime : '23:59', deadlineMode: draft.deadlineMode,
+              }}
+              onChange={(template, fields) => setDraft(prev => ({ ...prev, guideTemplate: template, guideFields: fields }))}
+            />
+          </Row>
+
+          <Row label={draft.guideTemplate ? '추가 안내' : '모집요강'} required={!draft.guideTemplate} top>
+            <RichEditor value={draft.content} onChange={html => set('content', html)} height={draft.guideTemplate ? 200 : 320}
+              placeholder={draft.guideTemplate ? '템플릿 아래에 덧붙일 안내가 있으면 입력해주세요. (선택)' : '모집요강 내용을 입력해주세요.'} />
           </Row>
         </section>
 

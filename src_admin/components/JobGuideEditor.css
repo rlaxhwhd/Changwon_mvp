@@ -1,0 +1,58 @@
+/* 채용공고 등록 폼 — 모집요강 템플릿 입력(JobGuideEditor). .jf 폼 토큰(--jf-*) 위에서 그린다. */
+.jge { display: grid; gap: 18px; width: 100%; }
+
+.jge-picker { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.jge-pick {
+  display: grid; gap: 4px; align-content: start; text-align: left; padding: 14px; min-width: 0;
+  border: 1px solid var(--jf-input-border); border-radius: var(--jf-r-input); background: #fff; cursor: pointer;
+  font: inherit; color: var(--jf-text);
+}
+.jge-pick:hover { border-color: var(--jf-primary); }
+.jge-pick:focus-visible { outline: 2px solid var(--jf-primary); outline-offset: 2px; }
+.jge-pick.is-on { border-color: var(--jf-primary); box-shadow: 0 0 0 3px var(--jf-primary-soft); }
+.jge-pick b { font-size: 14px; }
+.jge-pick small { font-size: 12px; color: var(--jf-muted); line-height: 1.45; }
+/* 템플릿 색 견본 — 실제 템플릿의 대표색 */
+.jge-pick i { display: block; height: 6px; border-radius: 3px; margin-bottom: 6px; }
+.jge-pick.is-poster i { background: linear-gradient(90deg, #1F5BFF 60%, #10131A 60%); }
+.jge-pick.is-highlight i { background: linear-gradient(90deg, #E7F4F1 50%, #0F766E 50%); }
+.jge-pick.is-document i { background: linear-gradient(90deg, #1F2A24 40%, #15803D 40% 70%, #EDF3EE 70%); }
+
+.jge-auto { margin: 0; font-size: 13px; color: var(--jf-muted); background: var(--jf-label-bg); padding: 10px 14px; border-radius: var(--jf-r-input); }
+
+.jge-group { margin: 0; padding: 0; border: 0; min-width: 0; }
+.jge-group legend { padding: 0; margin-bottom: 10px; font-size: 14px; font-weight: 700; color: var(--jf-text); }
+.jge-group legend small { font-weight: 400; color: var(--jf-muted); margin-left: 6px; font-size: 12px; }
+.jge-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; }
+.jge-field { display: grid; gap: 6px; min-width: 0; }
+.jge-field.is-wide { grid-column: 1 / -1; }
+.jge-field > span { font-size: 13px; color: var(--jf-muted); }
+.jge-field .jf-input { width: 100%; }
+.jge-textarea { height: auto; min-height: 72px; padding: 10px 12px; line-height: 1.5; resize: vertical; font-family: inherit; }
+
+.jge-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.jge-chip {
+  height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid var(--jf-input-border); background: #fff;
+  font: inherit; font-size: 13px; color: var(--jf-text); cursor: pointer;
+}
+.jge-chip:hover:not(:disabled) { border-color: var(--jf-primary); }
+.jge-chip.is-on { background: var(--jf-primary-soft); border-color: var(--jf-primary); color: var(--jf-primary); font-weight: 600; }
+.jge-chip:disabled { opacity: .5; cursor: not-allowed; }
+.jge-add { display: inline-flex; gap: 6px; }
+.jge-add .jf-input { width: 160px; height: 34px; }
+.jge-add .jf-btn { height: 34px; padding: 0 14px; }
+
+.jge-docs, .jge-steps { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 6px; }
+.jge-docs li { display: grid; grid-template-columns: 140px minmax(0, 260px) auto auto; gap: 12px; align-items: center; }
+.jge-docs b { font-size: 14px; font-weight: 600; }
+.jge-docs .jf-input { height: 34px; }
+.jge-steps { display: flex; flex-wrap: wrap; gap: 8px; }
+.jge-steps li { display: inline-flex; align-items: center; gap: 8px; padding: 4px 6px 4px 4px; border: 1px solid var(--jf-input-border); border-radius: 999px; font-size: 13px; }
+.jge-steps li span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--jf-primary); color: #fff; font-size: 12px; font-weight: 700; }
+.jge-x { border: 0; background: none; color: var(--jf-muted); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; }
+.jge-x:hover { color: var(--jf-text); }
+
+.jge-preview { margin-top: 4px; padding: 20px; background: var(--jf-label-bg); border-radius: var(--jf-r-input); }
+/* 직계 자식만 — 미리보기 안의 템플릿 제목(h3)까지 덮지 않는다 */
+.jge-preview > h3 { margin: 0 0 14px; font-size: 14px; font-weight: 700; }
+.jge-preview > h3 small { font-weight: 400; color: var(--jf-muted); margin-left: 6px; }

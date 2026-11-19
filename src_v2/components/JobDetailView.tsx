@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { safeHtml } from '../../shared/safeHtml'
 import JobLogo from '../../shared/JobLogo'
+import JobGuide from './JobGuide'
 import type { ReactNode } from 'react'
 import { isJobClosed, jobDdayLabel, jobDeadlineAt, jobHighlights } from '../../src_admin/data/jobsSource'
 import type { JobPosting } from '../../src_admin/data/jobsSource'
@@ -174,9 +175,11 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
           <Section title="모집 내용"><KvTable rows={postingRows} /></Section>
 
           <Section title="모집요강">
+            {/* 템플릿을 고른 공고는 입력값으로 그린다(0017). 본문 편집기 내용은 그 아래 「추가 안내」다. */}
+            {job.guideTemplate && <JobGuide template={job.guideTemplate} fields={job.guideFields} source={job} />}
             {job.content
-              ? <div className="jd-content" dangerouslySetInnerHTML={{ __html: safeHtml(job.content) }} />
-              : <p className="jd-empty">등록된 모집요강이 없습니다.</p>}
+              ? <div className={`jd-content${job.guideTemplate ? ' is-extra' : ''}`} dangerouslySetInnerHTML={{ __html: safeHtml(job.content) }} />
+              : !job.guideTemplate && <p className="jd-empty">등록된 모집요강이 없습니다.</p>}
           </Section>
 
           {/* 전형 단계는 상담사가 정의한 공고만 — 없는 절차를 기본값으로 지어내지 않는다. */}

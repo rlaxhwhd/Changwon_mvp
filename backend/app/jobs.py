@@ -20,7 +20,7 @@ import hashlib
 import re
 import threading
 from datetime import date, datetime, time as dt_time, timedelta
-from typing import Literal
+from typing import Annotated, Literal
 from uuid import uuid4
 from zoneinfo import ZoneInfo
 
@@ -28,7 +28,7 @@ from fastapi import APIRouter, Depends, Header, HTTPException, Path, Query, Requ
 from fastapi.encoders import jsonable_encoder
 from psycopg.errors import UniqueViolation
 from psycopg.types.json import Jsonb
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_validator
 
 from . import deep, files
 from .auth import is_counselor, principal, require_staff
@@ -51,7 +51,8 @@ OPTION_GROUPS = {'EMPLOYMENT': 'JOB_EMPLOYMENT_TYPE', 'CATEGORY': 'JOB_CATEGORY'
                  'CAREER': 'JOB_CAREER_TYPE', 'GENDER': 'JOB_GENDER', 'REGION': 'JOB_REGION'}
 POSTING_WRITABLE = ('company_id,company_name_snapshot,role,tags,salary_text,location_text,career_primary_code,'
                     'company_type_code,recruit_type,stored_status,deadline_mode,deadline_date,salary_negotiable,'
-                    'url_title_link,email_apply,apply_url,email,content_html,content_format,logo_file_id,deadline_time')
+                    'url_title_link,email_apply,apply_url,email,content_html,content_format,logo_file_id,deadline_time,'
+                    'guide_template,guide_fields')
 DEFAULT_DEADLINE_TIME = '23:59'
 
 
@@ -213,7 +214,9 @@ def posting_dto(row, options, stages, attachments, wish_count=0):
         'urlTitleLink': row['url_title_link'], 'email': row['email'] or '', 'emailApply': row['email_apply'],
         'salaryNegotiable': row['salary_negotiable'], 'content': row['content_html'] or '',
         'contentFormat': row['content_format'],
-        'logo': '/api/v1/job-files/' + row['logo_file_id'] if row['logo_file_id'] else None,
+        # 저장된 객체를 그대로 — 다시 검증하면 나중에 키를 줄일 때 옛 행 읽기가 깨진다(0017 Astra).
+        'guideTemplate': row['guide_template'], 'guideFields': row['guide_fields'],
+        'logo':'/api/v1/job-files/' + row['logo_file_id'] if row['logo_file_id'] else None,
         'logoFileId': row['logo_file_id'], 'attachments': attachments, 'stages': stages,
         'status': row['stored_status'], 'effectiveStatus': effective_status(row),
         'source': row['source'], 'postedAt': row['posted_at'], 'version': row['version'], **options,
@@ -409,6 +412,39 @@ def delete_company(company_id: str, user=Depends(principal, scope='function'),
 JOB_CONTENT_MAX_CHARS = 20_000_000
 
 
+class GuideDoc(BaseModel):
+    # 중첩 모델은 부모 설정을 물려받지 않는다 — 공백만 있는 서류명을 막으려면 여기서도 다듬는다.
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=60)
+    note: str = Field(default='', max_length=40)
+    optional: bool = False
+
+
+GuideStep = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]
+
+
+class GuideFields(BaseModel):
+    """모집요강 템플릿 입력값(0017). 회사명·연봉·근무지·마감 등은 공고 본 컬럼에서 읽는다 — 여기 두지 않는다."""
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    headline: str = Field(default='', max_length=80)
+    emphasis: str = Field(default='', max_length=20)
+    duty: str = Field(default='', max_length=300)
+    workHours: str = Field(default='', max_length=100)
+    employmentNote: str = Field(default='', max_length=100)
+    salaryNote: str = Field(default='', max_length=100)
+    qualification: str = Field(default='', max_length=500)
+    preferred: str = Field(default='', max_length=500)
+    industry: str = Field(default='', max_length=100)
+    revenue: str = Field(default='', max_length=50)
+    headcount: str = Field(default='', max_length=50)
+    address: str = Field(default='', max_length=200)
+    applyMethod: str = Field(default='', max_length=500)
+    contact: str = Field(default='', max_length=200)
+    note: str = Field(default='', max_length=200)
+    documents: list[GuideDoc] = Field(default_factory=list, max_length=12)
+    steps: list[GuideStep] = Field(default_factory=list, max_length=6)
+
+
 class PostingBody(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     companyId: str | None = None
@@ -433,6 +469,8 @@ class PostingBody(BaseModel):
     salaryNegotiable: bool = False
     content: str = Field(default='', max_length=JOB_CONTENT_MAX_CHARS)
     contentFormat: str = Field(default='HTML', pattern='^(HTML|TEXT)$')
+    guideTemplate: str | None = Field(default=None, pattern='^(POSTER|HIGHLIGHT|DOCUMENT)$')
+    guideFields: GuideFields | None = None
     logoFileId: str | None = None
     attachmentFileIds: list[str] = Field(default_factory=list, max_length=20)
     employmentTypes: list[str] = Field(default_factory=list, max_length=20)
@@ -445,6 +483,11 @@ class PostingBody(BaseModel):
     def consistent(self):
         if self.contentFormat == 'HTML':
             self.content = clean_html(self.content)
+        # 템플릿과 입력값은 짝이다(DB posting_guide_pair) — 끄면 남은 값을 숨겨 저장하지 않고, 켜면 항상 전체 키 객체.
+        if self.guideTemplate is None:
+            self.guideFields = None
+        elif self.guideFields is None:
+            self.guideFields = GuideFields()
         for tag in self.tags:
             if len(tag) > 50:
                 raise ValueError('태그는 50자 이하여야 합니다.')
@@ -524,7 +567,10 @@ def posting_values(body, company_id, deadline_date):
             body.role, body.tags, body.salary or None, body.location or None, body.jobType, body.companyType,
             body.recruitType, body.status, body.deadlineMode, deadline_date, body.salaryNegotiable,
             body.urlTitleLink, body.emailApply, body.applyUrl or None, body.email or None,
-            body.content or None, body.contentFormat, body.logoFileId, dt_time.fromisoformat(body.deadlineTime))
+            body.content or None, body.contentFormat, body.logoFileId, dt_time.fromisoformat(body.deadlineTime),
+            # 값이 없으면 SQL NULL — Jsonb(None) 은 JSON null 이라 object·짝 CHECK 에 걸린다(0017 Astra).
+            body.guideTemplate,
+            Jsonb(body.guideFields.model_dump(mode='json')) if body.guideFields is not None else None)
 
 
 @router.post('/jobs', status_code=201)

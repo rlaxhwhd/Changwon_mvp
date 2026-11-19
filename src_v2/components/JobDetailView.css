@@ -193,6 +193,8 @@
 /* ── 모집요강 본문 (상담사가 입력한 HTML) ───────────────────────────────── */
 .jd-content { font-size: 14px; line-height: 1.75; color: var(--jd-sub); }
 .jd-content > :first-child { margin-top: 0; }
+/* 모집요강 템플릿(JobGuide) 아래에 붙는 추가 안내 */
+.jd-content.is-extra { margin-top: 20px; }
 .jd-content > :last-child { margin-bottom: 0; }
 .jd-content p { margin: 0 0 12px; }
 .jd-content ul, .jd-content ol { margin: 0 0 12px; padding-left: 20px; }
