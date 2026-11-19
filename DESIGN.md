@@ -182,7 +182,7 @@ The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 �
 ```
 
 ### List Table
-열 제목이 있는 목록·현황 표는 `/professor/home` 「학과학생 현황」 표가 기준이다 — `shared/listTable.css`(표 안 글자 14px, 강조선 각 SPA `--primary`, 긴 글 본문 칸만 `dc-cell-long` 왼쪽 정렬, 칸 안 라벨(진단유형·학적·상태)은 여백 2px 8px·줄높이 1.3으로 글자에 맞춤).
+열 제목이 있는 목록·현황 표는 `/professor/home` 「학과학생 현황」 표가 기준이다 — `shared/listTable.css`(표 안 글자 14px, 강조선 각 SPA `--primary`, 긴 글 본문 칸만 `dc-cell-long` 왼쪽 정렬, 칸 안 라벨(진단유형·학적·상태)은 여백 2px 8px·줄높이 1.3으로 글자에 맞추고 굵기 400).
 
 ## 5. Layout Principles
 
