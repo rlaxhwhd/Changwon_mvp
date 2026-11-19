@@ -197,6 +197,12 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | 액션 | 슬롯 확정 · 일정 메모 · 제한일정 등록 |
 | 소스 | `dc_counsel_requests.slot` · `dc_counsel_excluded` (신설, §3-1-⑦) |
 
+> **신청 접수함(`/counsel/requests`) = 상담 일정 한 화면** <span>(2026-11-19, 0015 · 마이그레이션 167)</span> — 옛 「신청 목록 ↔ 상담일정」 토글을 없앴다.
+> 가능 시간대(`/settings/availability`)에 **1시간당 상담 인원**(1~20, 기본 1)을 둔다. 「월 13:00~15:00 2명」 = 13시 2명·14시 2명.
+> 각 시각 칸에 「신청 수/인원」과 그 시각 신청을 함께 보이고, 남은 자리가 있을 때만 「학생 추가」. 시간 미정 신청은 맨 위 「시간 미정」 칸.
+> 인원은 **학생 직접 신청(`/counsel-slots`·`check_slot`)에도 같은 기준** — 대기·확정 건의 동시 진행 최대 수가 인원 이상이면 409. 학생 본인 겹침은 인원과 무관하게 거절.
+> 교수는 인원 입력 화면이 없어 항상 1명.
+
 #### ④ 검사 현황 <span>✅ `/students/diagnostics`</span>
 
 | 항목 | 내용 |

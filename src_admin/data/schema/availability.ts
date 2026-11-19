@@ -15,6 +15,8 @@ export interface AvailabilitySlot {
   start: string
   /** 종료 HH:mm */
   end: string
+  /** 1시간당 상담 인원 — 가능 시간대에만 있다(제한 시간대는 서버가 1을 준다). */
+  capacity?: number
 }
 
 /** 상담사 한 명의 가능 시간대 전체 */

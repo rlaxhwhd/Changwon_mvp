@@ -18,10 +18,13 @@ export default function SettingsAvailability() {
   const [weekday, setWeekday] = useState<WeekdayKey>(1)
   const [start, setStart] = useState('14:00')
   const [end, setEnd] = useState('17:00')
+  const [capacity, setCapacity] = useState(1)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
-  const valid = start !== '' && end !== '' && start < end
+  // 인원은 1시간당 받을 수 있는 상담 수다(서버 한도 1~20과 같다).
+  const validCapacity = Number.isInteger(capacity) && capacity >= 1 && capacity <= 20
+  const valid = start !== '' && end !== '' && start < end && validCapacity
 
   const run = async (action: () => Promise<unknown>) => {
     if (saving) return
@@ -29,7 +32,7 @@ export default function SettingsAvailability() {
     try { await action(); window.location.reload() }
     catch (e) { setError((e as Error).message); setSaving(false) }
   }
-  const handleAdd = () => { if (valid) void run(() => addSlot(counselorId, weekday, start, end)) }
+  const handleAdd = () => { if (valid) void run(() => addSlot(counselorId, weekday, start, end, capacity)) }
   const handleRemove = (slotId: string) => { void run(() => removeSlot(counselorId, slotId)) }
 
   return (
@@ -69,13 +72,19 @@ export default function SettingsAvailability() {
             <span>종료</span>
             <input type="time" value={end} onChange={e => setEnd(e.target.value)} />
           </label>
+          <label className="admin-field">
+            <span>1시간당 인원</span>
+            <input type="number" min={1} max={20} step={1} value={capacity} onChange={e => setCapacity(e.target.valueAsNumber)} />
+          </label>
           <button className="admin-btn admin-btn-primary" disabled={!valid || saving} onClick={handleAdd}>
             <LuPlus /> 추가
           </button>
         </div>
-        {!valid && start !== '' && end !== '' && (
+        {start !== '' && end !== '' && start >= end && (
           <p className="admin-form-hint admin-form-hint-warn">종료 시각은 시작 시각보다 늦어야 합니다.</p>
         )}
+        {!validCapacity && <p className="admin-form-hint admin-form-hint-warn">인원은 1~20명 사이로 입력해 주세요.</p>}
+        <p className="admin-form-hint">예: 월 13:00–15:00 · 2명이면 13시와 14시에 각각 2명까지 상담을 받습니다.</p>
       </section>
 
       <section className="admin-card">
@@ -99,7 +108,7 @@ export default function SettingsAvailability() {
                   <div className="admin-avail-list-slots">
                     {daySlots.map(s => (
                       <span key={s.id} className="admin-avail-slot-tag">
-                        {s.start}–{s.end}
+                        {s.start}–{s.end} · {s.capacity ?? 1}명
                         <button
                           type="button"
                           className="admin-avail-slot-remove"

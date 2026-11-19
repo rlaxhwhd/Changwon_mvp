@@ -148,12 +148,21 @@ def check_slot(conn,staff_uid,student_uid,slot,exclude=''):
     for key in sorted({staff_uid,student_uid}):
         conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',('counsel:'+key,))
     from .counsel_operations import check_personal_schedule
-    check_personal_schedule(conn,staff_uid,slot)
-    conflict=conn.execute('''SELECT 1 FROM dc.counsel_request WHERE id<>%s
+    capacity=check_personal_schedule(conn,staff_uid,slot)
+    # 학생 본인은 한 시각에 한 상담뿐이다. 담당자는 가능 시간대의 1시간당 인원까지 받는다.
+    overlaps=conn.execute('''SELECT student_uid=%s AS mine,counselor_uid=%s AS own,slot_start,slot_end
+      FROM dc.counsel_request WHERE id<>%s
       AND status_code IN ('REQ','CONFIRMED') AND slot_date=%s AND slot_start<%s AND slot_end>%s
-      AND (counselor_uid=%s OR student_uid=%s) LIMIT 1''',(exclude,slot.date,slot.end,slot.start,staff_uid,student_uid)).fetchone()
-    if conflict:
-        raise HTTPException(409,'학생 또는 담당자의 예약 시간과 겹칩니다.')
+      AND (counselor_uid=%s OR student_uid=%s)''',(student_uid,staff_uid,exclude,slot.date,slot.end,slot.start,staff_uid,student_uid)).fetchall()
+    own=[o for o in overlaps if o['own']]
+    # 담당자 자리는 「같은 순간에 진행 중인 건수」의 최댓값으로 센다 — 정시 1시간 슬롯이면 그 시간의 신청 수와 같고,
+    # 일정 변경으로 생긴 긴 일정(13~15시)은 13시·14시 칸을 따로 본다. 인원 1이면 종전의 「겹치면 거절」과 같다.
+    points={slot.start,*(o['slot_start'] for o in own if o['slot_start']>slot.start)}
+    peak=max((sum(o['slot_start']<=p<o['slot_end'] for o in own) for p in points),default=0)
+    student_busy=any(o['mine'] for o in overlaps)
+    if student_busy or peak>=capacity:
+        raise HTTPException(409,'이 시간대의 상담 인원이 모두 찼습니다.' if not student_busy and capacity>1
+                            else '학생 또는 담당자의 예약 시간과 겹칩니다.')
     if datetime.combine(slot.date,slot.start,tzinfo=ZoneInfo('Asia/Seoul'))<=datetime.now(ZoneInfo('Asia/Seoul')):
         raise HTTPException(422,'미래의 상담 시간을 선택해 주세요.')
 

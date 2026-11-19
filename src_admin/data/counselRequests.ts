@@ -187,34 +187,46 @@ export function getRequestById(id: string): CounselRequest | undefined {
 export interface DayScheduleRow {
   time: string
   items: CounselRequest[]
+  /** 그 시각의 1시간당 상담 인원 — 가능 시간대 밖이면 0(학생 추가 불가). */
+  capacity: number
+  /** 그 1시간 칸과 겹치는 신청 수(대기·확정). 필터와 무관하게 센다 — 서버 check_slot 과 같은 기준. */
+  booked: number
 }
+
+const HOLDS_SEAT = (request: CounselRequest) => request.status === '대기' || request.status === '확정'
 
 /**
  * 하루치 시간표를 만든다. 축은 상담사 가능 시간(openHours)이 깔고, 그 밖의 시각에 잡힌
  * 예약도 제 행을 얻는다 — 일정 변경으로 가능 시간 밖에 잡힐 수 있어 빠뜨리면 안 된다.
  * 슬롯 없는 신청은 시간축에 놓을 근거가 없으므로 제외한다.
+ * booked 는 dayRequests(필터 전 그날 전체)로, items 는 visible(필터 후)로 만든다.
  * 화면은 이 배열만 그린다(CLAUDE.md 규칙 10).
  */
 export function buildDaySchedule(
-  requests: CounselRequest[],
-  openHours: string[],
+  dayRequests: CounselRequest[],
+  visible: (request: CounselRequest) => boolean,
+  openHours: { time: string; capacity: number }[],
 ): DayScheduleRow[] {
-  const rows = new Map<string, CounselRequest[]>()
-  for (const hour of openHours) rows.set(hour, [])
+  const hourOf = (request: CounselRequest) => `${request.slot!.start.slice(0, 2)}:00`
+  const rows = new Map<string, DayScheduleRow>()
+  const rowAt = (time: string) => rows.get(time) ?? rows.set(time, { time, items: [], capacity: 0, booked: 0 }).get(time)!
+  for (const hour of openHours) rowAt(hour.time).capacity = hour.capacity
 
-  for (const request of requests) {
-    if (!request.slot) continue
-    const hour = `${request.slot.start.slice(0, 2)}:00`
-    if (!rows.has(hour)) rows.set(hour, [])
-    rows.get(hour)!.push(request)
+  for (const request of dayRequests) {
+    if (request.slot && visible(request)) rowAt(hourOf(request)).items.push(request)
+  }
+  // 자리는 시작 시각이 아니라 구간 겹침으로 센다 — 13~15시 확정 건은 13시·14시 칸을 모두 차지한다
+  // (서버 check_slot · /counsel-slots 와 같은 기준, 0015 Astra 교정).
+  const seats = dayRequests.filter(request => request.slot?.start && HOLDS_SEAT(request))
+  for (const row of rows.values()) {
+    const rowEnd = `${String(Number(row.time.slice(0, 2)) + 1).padStart(2, '0')}:00`
+    row.booked = seats.filter(request => request.slot!.start < rowEnd && request.slot!.end > row.time).length
   }
 
-  return [...rows.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([time, items]) => ({
-      time,
-      items: [...items].sort((a, b) => a.slot!.start.localeCompare(b.slot!.start)),
-    }))
+  return [...rows.values()]
+    .filter(row => row.capacity > 0 || row.items.length > 0)
+    .sort((a, b) => a.time.localeCompare(b.time))
+    .map(row => ({ ...row, items: [...row.items].sort((a, b) => a.slot!.start.localeCompare(b.slot!.start)) }))
 }
 
 // ── 학생 상세 프로필 (상세 보기 모달 단일 구독 소스) ──────────────────────────

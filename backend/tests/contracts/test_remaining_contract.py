@@ -37,4 +37,5 @@ def test_availability_fixture_contract(client):
     for expected in fixtures:
         response=client.get('/api/v1/counsel-schedules/'+expected['counselorId'],headers=headers('career_kim'))
         assert response.status_code==200,response.text
-        assert_same_json_shape(expected['slots'],response.json()['available'])
+        # 167 이 1시간당 인원(capacity)을 더했다. 시드 파일은 seed_source 체크섬 때문에 고치지 않고 계약만 넓힌다.
+        assert_same_json_shape([{**slot,'capacity':1} for slot in expected['slots']],response.json()['available'])

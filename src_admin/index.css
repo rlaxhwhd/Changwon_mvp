@@ -2669,6 +2669,9 @@ input, textarea, select { font-family: var(--font); }
   font-variant-numeric: tabular-nums;
 }
 .counsel-day-row.is-free .counsel-day-time { color: var(--color-caption); font-weight: 700; }
+/* 시각 아래 「신청/인원」 — 남은 자리를 한눈에 본다(가능 시간대 인원, 2026-11-19). */
+.counsel-day-capacity { display: block; margin-top: 2px; color: var(--color-caption); font-size: 11px; font-weight: 600; }
+.counsel-day-items > .counsel-day-free-row { padding-top: 4px; }
 .counsel-day-free { padding-top: 3px; color: var(--color-caption); font-size: 12px; }
 .counsel-day-free-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .counsel-day-free-row .counsel-detail-btn { gap: 4px; }

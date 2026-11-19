@@ -22,6 +22,10 @@ def public_slots(startDate: date, days: int = Query(5,ge=1,le=14), user=Depends(
     staff=conn.execute("SELECT s.intg_uid,p.alias FROM dc.staff s JOIN dc.person p USING(intg_uid) WHERE s.role_code IN ('career','psych','professor')").fetchall()
     slots=conn.execute('SELECT * FROM dc.counsel_schedule_slot').fetchall()
     busy=conn.execute("SELECT counselor_uid,student_uid,slot_date,slot_start,slot_end FROM dc.counsel_request WHERE status_code IN ('REQ','CONFIRMED') AND slot_date>=%s AND slot_date<%s",(startDate,startDate+timedelta(days=days))).fetchall()
+    # 담당자 수 × 일 × 시간 루프가 매번 전체 예약을 훑지 않게 날짜별로 한 번 나눠 둔다(0015 Astra).
+    busy_by_day={}
+    for b in busy:
+        busy_by_day.setdefault(b['slot_date'],[]).append(b)
     now=datetime.now(ZoneInfo('Asia/Seoul'))
     result=[]
     for person in staff:
@@ -32,10 +36,16 @@ def public_slots(startDate: date, days: int = Query(5,ge=1,le=14), user=Depends(
             for hour in range(9,18):
                 begin=time(hour); end=time(hour+1)
                 available=datetime.combine(day,begin,tzinfo=ZoneInfo('Asia/Seoul'))>now
+                # 가능 시간대가 없으면 한 시각에 1명(종전 동작). 있으면 그 시간대의 1시간당 인원.
+                capacity=1
                 if positive:
-                    available=available and any(s['weekday']==weekday and s['start_time']<=begin and s['end_time']>=end for s in positive)
+                    covering=[s for s in positive if s['weekday']==weekday and s['start_time']<=begin and s['end_time']>=end]
+                    available=available and bool(covering)
+                    capacity=covering[0]['capacity'] if covering else 0
                 available=available and not any(s['kind']=='EXCLUDED' and s['weekday']==weekday and s['start_time']<end and s['end_time']>begin for s in own)
-                available=available and not any(b['slot_date']==day and (b['counselor_uid']==person['intg_uid'] or b['student_uid']==user['intg_uid']) and b['slot_start']<end and b['slot_end']>begin for b in busy)
+                overlaps=[b for b in busy_by_day.get(day,()) if b['slot_start']<end and b['slot_end']>begin]
+                available=available and not any(b['student_uid']==user['intg_uid'] for b in overlaps)
+                available=available and sum(b['counselor_uid']==person['intg_uid'] for b in overlaps)<capacity
                 result.append(dict(staffId=person['alias'],date=day,start=begin.strftime('%H:%M'),end=end.strftime('%H:%M'),available=available))
     return {'items':result}
 
@@ -93,6 +103,8 @@ class Slot(Strict):
     weekday: int = Field(ge=0, le=6)
     start: time
     end: time
+    # 1시간당 상담 인원 — 가능 시간대(available)에서만 의미가 있다.
+    capacity: int = Field(1, ge=1, le=20)
 
     @model_validator(mode='after')
     def interval(self):
@@ -108,7 +120,7 @@ class Schedule(Strict):
 
 def schedule_dto(conn, uid):
     row = conn.execute('SELECT version FROM dc.counsel_schedule WHERE staff_uid=%s', (uid,)).fetchone()
-    slots = conn.execute('SELECT id,kind,weekday,to_char(start_time,\'HH24:MI\') AS start,to_char(end_time,\'HH24:MI\') AS end FROM dc.counsel_schedule_slot WHERE staff_uid=%s ORDER BY weekday,start_time,id', (uid,)).fetchall()
+    slots = conn.execute('SELECT id,kind,weekday,to_char(start_time,\'HH24:MI\') AS start,to_char(end_time,\'HH24:MI\') AS end,capacity FROM dc.counsel_schedule_slot WHERE staff_uid=%s ORDER BY weekday,start_time,id', (uid,)).fetchall()
     return {'version': row['version'] if row else 0,
             'available': [{k: v for k, v in s.items() if k != 'kind'} for s in slots if s['kind'] == 'AVAILABLE'],
             'excluded': [{k: v for k, v in s.items() if k != 'kind'} for s in slots if s['kind'] == 'EXCLUDED']}
@@ -138,21 +150,27 @@ def save_schedule(identity: str, kind: Literal['available', 'excluded'], body: S
     conn.execute('DELETE FROM dc.counsel_schedule_slot WHERE staff_uid=%s AND kind=%s', (row['intg_uid'], kind.upper()))
     for slot in ordered:
         # IDs belong to the server; never overwrite another owner's slot ID.
-        conn.execute('INSERT INTO dc.counsel_schedule_slot VALUES(%s,%s,%s,%s,%s,%s)', (str(uuid4()), row['intg_uid'], kind.upper(), slot.weekday, slot.start, slot.end))
+        conn.execute('INSERT INTO dc.counsel_schedule_slot(id,staff_uid,kind,weekday,start_time,end_time,capacity) VALUES(%s,%s,%s,%s,%s,%s,%s)',
+                     (str(uuid4()), row['intg_uid'], kind.upper(), slot.weekday, slot.start, slot.end, slot.capacity if kind == 'available' else 1))
     after = schedule_dto(conn, row['intg_uid'])
     audit(conn, user, 'SCHEDULE', row['intg_uid'], kind.upper(), before, after)
     return after
 
 
 def check_personal_schedule(conn, uid, slot):
+    """제한·가능 시간대를 검사하고 그 시간의 1시간당 상담 인원을 돌려준다."""
     weekday = (slot.date.weekday() + 1) % 7
     excluded = conn.execute("SELECT 1 FROM dc.counsel_schedule_slot WHERE staff_uid=%s AND kind='EXCLUDED' AND weekday=%s AND start_time<%s AND end_time>%s", (uid, weekday, slot.end, slot.start)).fetchone()
     if excluded:
         raise HTTPException(409, '담당자가 등록한 상담 제한 시간입니다.')
-    # No availability rows means no positive restriction; exclusions stay independent.
+    # No availability rows means no positive restriction (one at a time); exclusions stay independent.
     configured = conn.execute("SELECT 1 FROM dc.counsel_schedule_slot WHERE staff_uid=%s AND kind='AVAILABLE' LIMIT 1", (uid,)).fetchone()
-    if configured and not conn.execute("SELECT 1 FROM dc.counsel_schedule_slot WHERE staff_uid=%s AND kind='AVAILABLE' AND weekday=%s AND start_time<=%s AND end_time>=%s", (uid, weekday, slot.start, slot.end)).fetchone():
+    if not configured:
+        return 1
+    covering = conn.execute("SELECT capacity FROM dc.counsel_schedule_slot WHERE staff_uid=%s AND kind='AVAILABLE' AND weekday=%s AND start_time<=%s AND end_time>=%s", (uid, weekday, slot.start, slot.end)).fetchone()
+    if not covering:
         raise HTTPException(409, '담당자의 가능 시간대 밖입니다.')
+    return covering['capacity']
 
 
 def group_row(conn, user, group_id, lock=False):
