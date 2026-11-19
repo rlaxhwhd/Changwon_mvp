@@ -1,5 +1,15 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-19 공개 주소 내부 로그인 장애 — Docker 저장소 복구
+
+- 데모 게이트는 열리지만 학생 로그인이 실패했다. API unhealthy 및 PostgreSQL의 `Read-only file system`을 확인했다. 호스트 커널에는 11-18 15:59경 loop0 쓰기 오류 `-28`(공간 부족), 디렉터리 오류, 21:58:48 journal abort와 read-only remount가 남아 있었다. 루트 공간을 확보한 뒤에도 파일시스템 오류는 자동 복구되지 않았다. 인증 코드나 166 마이그레이션 변경으로 해결한 문제가 아니다.
+- Docker/socket을 중지하고 컨테이너 프로세스 종료를 확인했다. 기존 `/var/lib/dreamcatch-docker-storage.ext4` 전체를 `/backup1/dreamcatch-recovery-20261119/original.ext4`로 복사했다. 두 파일 SHA256 `d97ccb9c8f92a6aa8a6ebdc6dde11f4e0ef68abdc9507f241afe219beb1ce709` 일치 후 별도 `repaired.ext4`를 만들었다. 원본과 백업에는 fsck를 적용하지 않았다.
+- 마운트되지 않은 repaired.ext4에 `e2fsck -p -f`를 적용했다. journal recovery 및 미사용 inode를 가리키던 PostgreSQL core dump 파일 5건의 디렉터리 항목 정리 후 exit 1이었다. 이어 `e2fsck -f -n`의 모든 검사 단계가 exit 0으로 통과했다. 읽기 전용 임시 마운트에서 DB 볼륨 존재를 확인하고 해제한 뒤 Docker 저장소를 전환했다. 호스트에 python3가 없어 fstab 변경 단계가 한 차례 중단됐으며, 당시 Docker는 정지 상태였다. 호스트 python으로 해당 단계만 재개했다.
+- **현재 운영 중인 Docker 저장소 원본은 `/backup1/dreamcatch-recovery-20261119/repaired.ext4`이다. 이름에 recovery가 있어도 백업 정리 대상으로 삭제·이동하면 안 된다.** /etc/fstab의 loop 마운트 경로와 `/etc/systemd/system/var-lib-docker.mount.d/backup-storage.conf`의 Requires/After=backup1.mount를 설정했다. 생성된 mount unit, 실제 losetup 경로, rw 마운트와 쓰기를 확인했다. 재부팅 자체는 실행하지 않았다. 기존 fstab과 Docker storage unit은 같은 복구 디렉터리에 보관했다.
+- 같은 API/웹 interview-20261118 이미지를 재기동했다. PostgreSQL 자동 WAL 복구·checkpoint 후 접속 가능, pg_is_in_recovery=false/transaction_read_only=off, 적용 마이그레이션 166개를 확인했다. 운영 DB 전체 pg_dump 성공(약 13MB), `after-recovery.dump` SHA256 `299792017daa26f5b6d6d2077684b6b20c437e983c38c21342b6a833b1858a6f`. 과거 dump 또는 로컬 DB를 운영에 복원하거나 SQL/마이그레이션을 변경하지 않았다. 전체 데이터의 과거 시점별 동일성·인덱스 무결성까지 검증했다는 의미는 아니다.
+- API/웹/DB/RAG/LLM tunnel/SearXNG healthy, Qdrant 실행을 확인했다. 루트 여유 19GB, 별도 디스크 여유 약 3.2TB, Docker 파일시스템 여유 21GB였다. 복구 후 확인 구간 PostgreSQL PANIC/ERROR/read-only/segfault 기록은 없었다.
+- EgoLite로 사용자 제시 공개 HTTPS 주소의 데모 게이트→내부 학생 로그인→v2/main을 실제 확인하고 스크린샷을 열람했다. 로그인 200/39ms, me 200/34ms, 수집된 초기 API 200, Runtime exception 0이었다. 로그아웃 이동으로 취소된 ERR_ABORTED 1건은 구분했다. 테스트 세션은 마지막에 logout 204로 종료했다. 학생 개인정보·세션 토큰은 이 문서에 기록하지 않는다. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다.
+
 ## 2026-11-18 인터뷰 결과·면접 방식·공통 동의 API/웹/166 배포 및 이미지 정리
 
 - 원격 dev=80321f9까지 확인, caae49d(자소서에 저장된 지원정보), 149244d(Deep 결과 화면), 94462ff(자소서 없이·기업별 면접), 80321f9(결과 목록/상세·AI 자소서/면접 공통 1회 동의)를 깨끗한 git archive로 빌드했다. 미커밋 타 작업은 제외했고 최종 fetch에 추가 기능 커밋은 없었다. 동의서 현재 버전은 2026-11-18.1이며 기존 동의가 있더라도 확장된 수집 범위에 대해 1회 재동의한다.
