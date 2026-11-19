@@ -1,5 +1,16 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-19 상담 시간대별 정원·통합 일정 및 포트폴리오 배치 서버 배포
+
+- origin/dev 최종 fetch=60510df까지 확인했다. 직전 운영 80321f9 이후의 기능 변경 c47d30b(포트폴리오 목록을 대표 포트폴리오 위로), 60510df(시간대별 정원·신청/일정 통합)를 깨끗한 git archive로 빌드했다. 타 세션 미커밋 파일은 보존하고 이미지에 넣지 않았다. API는 backend/Dockerfile.company와 직전 회사 이미지 기반, 웹은 clean TypeScript/Vite 산출물과 직전 CentOS 호환 nginx 기반이다. 이미지 태그는 API/웹 모두 capacity-20261119.
+- 0015 architecture-review ASTRA_APPROVED/work-order revision2 및 로컬 verification을 읽었다. 167의 실행기와 같은 read_text UTF-8 체크섬은 승인값 3b3c2442006bade57d3cb1b740f018b7c0fc1a8d2488e897e93d1271702c359b와 일치했다. git archive는 Windows 설정으로 CRLF 출력해 bytes 해시는 달랐지만 LF로 읽는 실행기 내용은 동일하다. 적용된 SQL이나 승인 SQL은 수정하지 않았다. 로컬 DB의 적용167개·API 소스/회사 이미지/실행 API 일치, 복원 참조 DB dc_release_capacity_20261119_ref_test의 전체 구조도 대조했다. 로컬 Docker는 타 세션에서 이미 반영한167 상태를 확인했으며 재빌드로 미커밋 화면 작업을 덮어쓰지 않았다.
+- 신규 격리 DB dc_regression_20261119021708_e5ce57_test에서 counsel/availability/remaining_migrations 선택: 124 passed, 1 failed, 613 deselected, 기존 경고3개(36.94초). 실패는 test_counsel_history_menu_keeps_existing_contract의 psych 권한 기대값이다. 이전 배포 80321f9를 별도 clean archive와 신규 격리 DB dc_regression_20261119021910_cb8993_test에서 실행해 같은 assertion 실패를 재현했다(1 failed/732 deselected,9.21초). 이번 정원 테스트5건은 통과했다. 기존 메뉴 권한이나 테스트 기대값은 배포 작업에서 바꾸지 않았다. 빌드의 기존 Vite native-config/큰 chunk 경고는 남는다.
+- 운영 저장소의 rw 및 DB 읽기/쓰기·서비스 건강 상태를 먼저 확인했다. 복구한 /backup1/dreamcatch-recovery-20261119/repaired.ext4와 부팅 의존성을 보존했다. 서버 DB/Compose 백업 및 감사자료는 /opt/dreamcatch/ai/capacity-20261119/. gzip 이미지 묶음 706649787B, SHA256 48153910514dccc5b5dc0426779f3a6304a8a11677e276d0348327f5947d6ec6 전송 일치.
+- 서버 백업을 별도 dc_deploy_capacity_20261119_test에 복원→167 적용→전체 canonical schema/업무값 보존→마이그레이션 재실행 no-op 확인 후 운영에 적용했다. API stop -t240/exited0→직전 추가 DB 백업·감사→167→직후 비교→API/웹 함께 교체 순서다. 기존166 체크섬 보존·167 한 건만 추가, 기존 업무 테이블 전체값/건수와 시간대 기존 컬럼 해시 불변, 기존 시간대15건 capacity=1 확인. 로컬 데이터를 운영에 복원하지 않았다.
+- 실행 소스·전체 마이그레이션167개·전체 스키마 MATCH(기존 검증된 직렬화 정규화3종만 사용). API/웹/DB/RAG/LLM tunnel/SearXNG healthy, Qdrant 실행, nginx 설정 정상. clean 웹/서버 HTML SHA256 일치: admin c6adf4ce01c71072f470ca30bae62dc53933807c30116b9c33b070306b48f646, v2 3df19178e15014b936cfd6c5b1f82ab9de63cd645efcdc3a4eaf64c68b068340. 저장소 rw 유지, 여유 root18GB/Docker21GB/backup1약3.2TB. 확인 구간 DB PANIC/read-only/공간 부족/비정상 종료 없음. 복구는 저장 Compose와 직전 API/웹 interview-20261118을 함께 사용하고167·기존/신규 데이터를 유지한다. 구 앱은 capacity>1도 1명으로 취급한다.
+- EgoLite로 로컬 인원 입력 화면, 서버 역할 선택 로그인→가능 시간대의 '1시간당 인원'/기존1명 표시→통합 신청 접수함의 시간대별0/1명/학생 추가를 확인했다. 운영 시간대·예약을 시험용으로 변경하지 않았다. 설정 조회 동일 동작 전16ms/후37ms 각1회, 통합 접수함 일정15ms/events18ms/requests81ms와70ms였다. bootstrap과 페이지 refresh의 requests 2회는 남아 있으며 최적화는 하지 않았다. 정상 인증 후 수집 API는200, Runtime 예외0. 초기 역할 선택 전401은 정상 역할 선택 뒤200으로 확인했다. 자동화의 stale ref/불완전 role/복수 time locator는 fresh snapshot과 고유 CSS로 교정했다.
+- 실제 서버 학생 로그인200/me200 및 포트폴리오 메뉴에서 목록 영역이 대표 영역 위에 오는 빈 목록 경로와 portfolios GET200을 확인했다. 비어 있지 않은 목록 카드와 대표 변경/PDF/신규 생성·예약 정원 저장은 운영에서 실행하지 않았다(정원 판정은 격리 테스트·기존0015 로컬 검증 범위). 로컬/서버 스크린샷 촬영 후 열람, 테스트 학생 세션 logout204. Graft 구조 그래프 OK. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다.
+
 ## 2026-11-19 공개 주소 내부 로그인 장애 — Docker 저장소 복구
 
 - 데모 게이트는 열리지만 학생 로그인이 실패했다. API unhealthy 및 PostgreSQL의 `Read-only file system`을 확인했다. 호스트 커널에는 11-18 15:59경 loop0 쓰기 오류 `-28`(공간 부족), 디렉터리 오류, 21:58:48 journal abort와 read-only remount가 남아 있었다. 루트 공간을 확보한 뒤에도 파일시스템 오류는 자동 복구되지 않았다. 인증 코드나 166 마이그레이션 변경으로 해결한 문제가 아니다.
