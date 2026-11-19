@@ -105,7 +105,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | **상담사** | 29 | 13 | ~48% | §3-1 |
 | **조교** | 7 | 3 | ~55% | §3-2 |
 | 상담센터 총괄 | (상담사 + α) | 0 | 0% | §3-3 |
-| **슈퍼관리자** | 315 | 0 | **0%** | §3-4 |
+| **슈퍼관리자** | 315 | 약 15 | ~5% | §3-4 |
 | **교수** | 33 | 5 | ~15% | §3-5 |
 | **학생** | 약 200 | 27 | ~15% | §3-6 |
 | 비교과 운영자 | 30 | (진로상담사 겸함) | 🔲 | §3-7 |
@@ -130,7 +130,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | 9 | 프로필 설정 | `SettingsProfile` | ✅ |
 | 10 | **재배정 + 처리 이력** | `counselEvents` · 접수함 모달 | ✅ |
 | 11 | **집단상담 / 집단심리검사** | `GroupCounsels` · `/counsel/groups` | ✅ |
-| 12 | **심리검사 결과 작성** | `PsychTests` · `/counsel/psych-tests` <span>(psych 전용)</span> | ✅ |
+| 12 | **심리검사 결과 작성** | `PsychTests` · `/psych/tests` <span>(psych 전용)</span> | ✅ |
 | 13 | **학생 검색 피커** | `StudentPicker` (모달) | ✅ |
 | 14 | **상담일지 인쇄** | `CounselRecordPrint` · `/counsel/records/:id/print` | ✅ |
 | 15 | 기록지 잔여 필드 | `schema/counselRecord.ts` | ⚠️ **⑧ 참조** |
@@ -268,7 +268,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | ★ | **1:1 상담과 별도 도메인이다.** `CounselRequest`에 넣으면 접수함·통계 모수에 섞여 **실적이 이중 계상**된다 |
 | ★ | 역할이 유형을 결정한다 — 진로 → 집단상담 / 심리 → 집단심리검사. 정원 초과·중복·상태 위반은 **로더에서 거부**(FK 없는 DB 전제) |
 
-#### ⑩ 심리검사 결과 작성 <span>✅ `/counsel/psych-tests` · psych 전용</span>
+#### ⑩ 심리검사 결과 작성 <span>✅ `/psych/tests` · psych 전용</span>
 
 | 항목 | 내용 |
 |---|---|
@@ -359,17 +359,17 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 
 ### 3-4. 슈퍼관리자
 
-현행 315화면 중 우리가 만들 영역만. **전용 SPA가 아직 없다 — 커버율 0%.**
+현행 315화면 중 우리가 만들 영역만. 전용 SPA 없이 `src_admin` 의 시스템관리자(`admin`) 역할 화면으로 구현한다.
 
 | 영역 | 화면 | 현행 | 상태 | 우선순위 |
 |---|---|---|---|---|
-| **회원관리** | **조교/교수 학과 배정**(①) · 학생 포트폴리오 · 일반회원 | `Fu/sys_assDept`·`sys_profDept` | ❌ | **1순위** |
-| **권한관리** | 역할 목록 · 사용자별 역할 부여 · 권한 변경 이력 | `SyAm010M`·`SyAm020M` | ❌ | **1순위** |
+| **회원관리** | **조교/교수 학과 배정**(①) · 학생 포트폴리오 · 일반회원 | `Fu/sys_assDept`·`sys_profDept` | ⚠️ 학과 배정 `/members/assistants`·`/members/professors` · 기업회원 `/members/companies` ✅. 학생 포트폴리오·일반회원 ❌ | **1순위** |
+| **권한관리** | 역할 목록 · 사용자별 역할 부여 · 권한 변경 이력 | `SyAm010M`·`SyAm020M` | ⚠️ 역할별 메뉴 노출 `/system/menus` 만. 사용자별 역할 부여 ❌ | **1순위** |
 | **상담 총괄** | 상담사 관리 · 상담 현황(전체) · 전담교수 매칭 · 상담 제한일정 | `CoCt010L`·`CoCm010L`·`CoAm010L`·`CoAm020L` | ❌ | 2순위 |
-| **비교과** | 프로그램 개설현황 · 분류 관리 · 블랙리스트 · 참여후기 | `Ep010L`·`Ep040L`·`EpBlackList`·`/admin/poss` | ⚠️ 진로상담사 화면으로 일부 구현 | 구현 중 |
-| **채용** | 공고 관리 · 지원 현황 · 기업회원 관리 | `/Sa/Re` 계열 | ⚠️ 공고 관리만 | 구현 중 |
-| **시스템** | **공통코드**(`SY_CODE`, §7 운영 화면) · 메뉴 · 게시판 · 배너·팝업 · 접속이력 · **열람 감사로그(신설)** | `SyCm010M`·`SyMn010M`·`SyBd010L` | ❌ | 3순위 |
-| **데이터 분석** | 상담 · 비교과 · 마일리지 구간·순위 6종 | `/Sa/Dt` | ❌ | 3순위 |
+| **비교과** | 프로그램 개설현황 · 분류 관리 · 블랙리스트 · 참여후기 | `Ep010L`·`Ep040L`·`EpBlackList`·`/admin/poss` | ⚠️ 개설현황은 진로상담사 화면, 블랙리스트 `/blacklists/programs` ✅. 참여후기 ❌ | 구현 중 |
+| **채용** | 공고 관리 · 지원 현황 · 기업회원 관리 | `/Sa/Re` 계열 | ✅ 공고 관리 · 지원자 `/jobs/applicants` · 기업회원 `/members/companies`. 교내공고 관리는 등록일 기간으로 공고 목록 엑셀 다운로드, 카드 「찜 N명」을 누르면 찜한 학생 목록(`GET /jobs/{id}/wishers`), 등록 폼은 성별 선택 없이 지원마감 날짜+시각 (2026-11-19 · 168) | — |
+| **시스템** | **공통코드**(`SY_CODE`, §7 운영 화면) · 메뉴 · 게시판 · 배너·팝업 · 접속이력 · **열람 감사로그(신설)** | `SyCm010M`·`SyMn010M`·`SyBd010L` | ⚠️ 공통코드 `/system/codes` · 메뉴 `/system/menus` · 공지 `/notices` · 설문지 `/system/surveys` · 변경 이력 `/system/events` ✅. 배너·팝업 관리 · 접속이력 ❌ | 3순위 |
+| **데이터 분석** | 상담 · 비교과 · 마일리지 구간·순위 6종 | `/Sa/Dt` | ⚠️ 개인통계 `/stats/personal` 만. 전체통계 `/stats/overall` 미구현 | 3순위 |
 | **취업통계** | 취업조사 · 예비조사 · 조사 차수 관리 | `/Sa/St` | ⚠️ 취업 현황 대장만 — `/admin/forecast`(취업예측분석시스템, 151 `dc.employment_report`: 등록·수정·삭제·xlsx 입출력, 2026-11-02). 조사 차수·예비조사 ❌ | 3순위 |
 | 포인트·마일리지 | 지급 기준 · 승인 · 학생별 현황 · 자격증 | `/Sa/Ex` | 🔲 **이관 제외 도메인** — 화면 존치 여부 미정 | — |
 
@@ -416,13 +416,13 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | P1 | 지도학생 목록 | `CaMpSs010L` | `ProfessorAdvisees` | ✅ |
 | P2 | 상담 신청 접수 | — | `ProfessorCounselRequests` | ✅ |
 | P3 | 상담 기록 작성 | `PcMp010M`·`PcMa010M` | `ProfessorCounselRecords` | ✅ |
-| P4 | 상담 제한일정 | `PcMp030L`·`040L`·`CoMp040MonthL` | `ProfessorSchedule` | ✅ |
-| P5 | **상담 노출 설정** | 신설(`CO_PROF` 0행) | `ProfessorProfile` | ✅ |
-| P6 | **온라인 상담**(게시판형) | `PcMpOnlineL`·`onlineConProf` | — | ❌ 학생 §3-6 S4와 짝 |
+| P4 | 상담 제한일정 | `PcMp030L`·`040L`·`CoMp040MonthL` | `ProfessorCounselSettings` · `/professor/counsel/settings` | ✅ |
+| P5 | **상담 노출 설정** | 신설(`CO_PROF` 0행) | `ProfessorCounselSettings` | ✅ |
+| P6 | **온라인 상담**(게시판형) | `PcMpOnlineL`·`onlineConProf` | `ProfessorCounselRecords` · `/professor/counsel/online` | ✅ 학생 §3-6 S4와 짝 |
 | P7 | **오프라인 상담 일괄등록** | `pop_offLineProfContDirNew` | — | ❌ 2025-04 신설된 현행 최신 기능 |
 | P8 | **학생별 역량현황** | `CaMpSs010L`·`010D` | — | ❌ 조교 §3-2-④ · 학생 S8과 동일 데이터 |
 | P9 | 집단상담 작성 | `pop_PcMp010M` | — | ❌ |
-| P10 | 상담내역 목록·상세·인쇄 | `PcMp020L`·`020D`·`010D_Print` | — | ❌ |
+| P10 | 상담내역 목록·상세·인쇄 | `PcMp020L`·`020D`·`010D_Print` | `ProfessorCounselRecords` · `ProfessorCounselDetail` · `ProfessorCounselStats` | ⚠️ 목록·상세·통계 ✅. 인쇄 ❌ |
 | P11 | 역량진단 관리(교수) | `CaMp010L`·`CaMpDm010P` | — | ❌ |
 | P12 | 학생별 진로목표 현황·상세 | `FuAp050A`·`050D` | — | ❌ |
 | P13 | 푸시 전송 | `PcPushSend` | — | ❌ |
@@ -444,8 +444,8 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 |---|---|---|---|
 | S1 | 상담 신청 · 내역 | `CoVi010M`·`CoMs010L` | ✅ `/counsel/career`·`/psych`·`/record` — **게이트 밖이다.** 일반 진로·취업, 심리, 교수 상담은 진단 없이 바로 신청한다. 진단·유형 확정을 요구하는 것은 **CARE 7+ 연계 상담 하나뿐**이다 → `PROCESS.md` §2-1 |
 | S2 | **상담 취소 · 취소사유** | `CoMsCancelPop` | ❌ 상담사측은 구현됨(§3-1-⑧), **학생측 경로 없음** |
-| S3 | **검사 신청** | `CoVi020M` | ❌ 상담과 별개 트랙인 심리검사 단독 신청 |
-| S4 | 지도교수 **온라인 상담**(게시판형) | `CoMs020L`·`030L`·`040L` | ⚠️ `/counsel/professor`는 신청만. 현행은 온·오프라인 2트랙 |
+| S3 | **검사 신청** | `CoVi020M` | ✅ `/counsel/psych-test` — 상담과 별개 트랙인 심리검사 단독 신청 |
+| S4 | 지도교수 **온라인 상담**(게시판형) | `CoMs020L`·`030L`·`040L` | ✅ `/counsel/professor` 에서 온라인·오프라인을 골라 신청 |
 | S5 | 상담내역 인쇄 | `CoMs010Print` | ❌ |
 
 **B. 진단 · 역량**
@@ -453,7 +453,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | # | 기능 | 현행 | 상태 |
 |---|---|---|---|
 | S6 | 진단 결과 열람 | `CaMsDm010R` | ✅ `/diagnosis/employment` |
-| S7 | **진단검사 응시** | `CaMsDm010D` | ❌ **`DiagnosisCenter.tsx`·`PersonalityTest.tsx`가 라우팅 안 됨** — "검사시작"이 갈 곳이 없다 |
+| S7 | **진단검사 응시** | `CaMsDm010D` | ✅ C-CORE·C2~C4 는 외부 검사 사이트(HRTest)로 이동해 응시하고 결과를 가져온다. C5 는 `/diagnosis/c5` 에서 응시 |
 | S8 | **학생별 역량현황** | `CaMsSs010D` | ❌ **`CompetencyCenter.tsx`가 라우팅 안 됨.** 조교 §3-2-④ · 교수 P8과 동일 데이터 |
 | S9 | **핵심역량 시뮬레이션** | `CaMsEp010D`·`010V` | ❌ "이 프로그램 이수 시 역량 +N" — 우리 로드맵과 직결 |
 
@@ -464,18 +464,18 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | S10 | 신청 · 내역 · 찜 | `EpMs010L`·`020L` | ✅ `/program`·`/program/status`(비교과프로그램 현황, 2026-10-22 마이페이지에서 이동) — 2026-10-26 `/growth/program` 에서 독립, 옛 `/growth/program/*`·`/mypage/programs/*` 는 리다이렉트 — **C-CORE·상담·로드맵 선행 완료 후에만 신청 가능**. 중간계층은 진로탐색·진로설정 카테고리만 신청 |
 | S11 | **그룹형(팀) 신청** | `extMyGroup`·`group_app_popup` | ❌ 현행은 개인형/그룹형 2종, 우리는 개인형만 |
 | S12 | **차수(회차) 선택** | `extStep` (`EP_PRM_STEP`) | ✅ 공고 맨 아래 「회차별 프로그램」 표에서 회차별 신청하기 · 목록 카드 「다회차」 라벨 (2026-11-03) |
-| S13 | **만족도조사 응답** | `EpMs040L`·`040D` | ❌ |
+| S13 | **만족도조사 응답** | `EpMs040L`·`040D` | ✅ `/program/:id/survey/:phase` (사전·사후·만족도) |
 | S14 | **참여후기 게시판** | `/user/poss/pgmPoss*` | ❌ |
 
 **D. 취업**
 
 | # | 기능 | 현행 | 상태 |
 |---|---|---|---|
-| S15 | 채용공고 열람 | `ReMs020L` 외 | ✅ `/jobs` |
+| S15 | 채용공고 열람 | `ReMs020L` 외 | ✅ `/jobs` — 카드 별로 찜하고, 카드에 공고별 「찜 N명」이 보인다(학생은 명수만, 누가 찜했는지는 교직원만). 마감은 날짜+시각(기본 23:59, 그 분이 끝날 때까지 접수). 성별은 항상 「성별 무관」 (2026-11-19 · 168) |
 | S16 | **채용 지원 프로세스** | `ReAppD`·`ReAgree`(개인정보동의) | 🔶 지원 경로는 개별 이력서·드림캐치 포트폴리오(159) 두 갈래다. 포트폴리오는 회차별 불변 스냅샷이고 `jobs.4` 권한자와 제출 학생이 열람한다. `APPLICATIONMASTER` 1.7만건 이관과 개인정보동의(`DB.md` #43)는 남았다 |
 | S17 | **MY추천채용** | `ReMs010D`·`MsRd010L` | ❌ |
 | S18 | 채용 카테고리 8종 분화 | 추천/일반/공공기관/인턴십/공모전/교육·박람회/알바/해외 | ⚠️ 우리는 단일 목록 |
-| S19 | **이력서·자소서 첨삭 요청** | `portfolio_resume`·`portfolio_selfHistory` | ❌ `SS_JOB_RES` 워크플로 — 상담사 §3-1-⑤와 짝 |
+| S19 | **이력서·자소서 첨삭 요청** | `portfolio_resume`·`portfolio_selfHistory` | ⚠️ AI 자소서·이력서·컨설팅·면접(`/jobs/home/*`, DeepResume 연동)은 ✅. 상담사 첨삭 워크플로(`SS_JOB_RES`, 상담사 §3-1-⑤와 짝)는 ❌ |
 | S20 | 진로취업카드 · 취업수기 | `SsMsRs010M` · `IpBd010L` | ❌ |
 
 **E. 포트폴리오 세부** <span>(현행 18화면 → 우리 1화면)</span>
@@ -488,8 +488,8 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 
 **G. 공통 인프라 · 결정 필요**
 
-공지·게시판(`Bd`) · 센터안내(`Ki`) · 알림 수신함 · 약관 동의(`SY_AGREE`) — **전부 ❌**
-🔲 **마일리지**(`Ex` 11화면) — 이관 제외 확정. 퀘스트·레벨로 대체할지 없앨지 미정
+공지(`/jobs/notices`) · 알림 수신함(GNB 알림 벨) — ✅ / 약관 동의 — ⚠️ 상담·AI 자소서·AI 면접 동의만 / 게시판(`Bd`) · 센터안내(`Ki`) — ❌
+🔲 **마일리지**(`Ex` 11화면) — 이관 제외 확정. 퀘스트·레벨은 구현됐다(`/growth/quest`)
 🔲 **멘토·멘티**(`Mt` 8화면) — 스코프 포함 여부
 
 ---
