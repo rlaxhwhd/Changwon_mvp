@@ -1,5 +1,12 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-19 채용공고 템플릿 CSS 웹 단독 배포 — 테스트 생략 요청
+
+- origin/dev 최종4fadd9f: JobDetailView.css의 요약 라벨84px 통일, JobGuide.css의 max-width760px 제거만 기능 변경이다. 사용자 지시에 따라 회귀 테스트·브라우저/화면 검증은 생략했다. clean git archive로 TypeScript/Vite·로컬 배포 이미지를 빌드했고 기존 native-config/큰 chunk 경고는 남는다. 미커밋 타 작업은 제외/보존했다.
+- 전체 이미지 대신 clean 빌드의 정적 파일 약14.7MB를 Dockerfile·전체 파일 SHA256 목록과 묶어 전송했다. 서버의 기존 CentOS 호환 job-guide-20261119 웹 이미지에 COPY만 수행해 job-style-20261119를 만들었다. 최초 목록의 Windows CRLF가 Linux 파일명에 포함돼 검증이 실패했으나 컨테이너 교체 전 중단됐으며, LF로 고쳐 재전송·전체 파일 검증 후 진행했다. 최종 artifact.tar.gz SHA256 8d31d946d22268e0b5bb18da1f18602052451e1b3908783199b9b0ee9bce3071. 서버에서는 Node 빌드나 앱 소스 수정을 하지 않았다.
+- /opt/dreamcatch/ai/job-style-20261119/에 이전 Compose/산출물을 보관하고 web 태그만 교체했다. API·DB 컨테이너 ID 불변, 마이그레이션169 상태 유지(신규 적용 없음), 다른 서비스·비밀 유지. 웹/API/DB/RAG/터널/SearXNG healthy, Qdrant 실행, nginx 설정 정상. 로컬 산출물/실행 웹 HTML 해시 일치: admin085d75deb77a2a581f63f091eec4a21243f29674f9272811a26119ba772fd8a8, v2 e6931bd9a15255e39df42369df8f10e014945513733fa0f7d0be121373a0e281. 복구 저장소 rw, root17GB/Docker21GB 여유. 이 상태 확인은 화면/기능 테스트 완료를 뜻하지 않는다. 복구는 저장 Compose의 직전 웹 job-guide-20261119로 web만 재생성한다.
+- Graft 구조 그래프 OK. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다.
+
 ## 2026-11-19 채용공고 마감 시각·찜·다운로드·모집요강 템플릿 서버 배포
 
 - origin/dev 최종 fetch=64a3422. 직전60510df 이후 d23dea1/431f811(공통 표 라벨 폭·글씨), 339df62(마감 시각·찜 집계/목록·다운로드·성별 선택 제거), d4fdbd1(문서), 41dd677(모집요강 템플릿), 64a3422(좁은 폼+우측 sticky 미리보기)를 clean git archive로 빌드했다. 미커밋 타 작업은 보존/제외했다. API는 전체 소스/마이그레이션을 포함한 Dockerfile.company와 기존 CentOS 호환 capacity-20261119 기반, 웹은 clean TypeScript/Vite 산출물과 같은 호환 nginx 기반이다. 새 API/웹 태그 job-guide-20261119.
