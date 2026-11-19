@@ -186,7 +186,9 @@
 }
 /* 요약 카드는 폭이 좁아 1열로 쌓는다 */
 .jd-kv.is-stack { grid-template-columns: minmax(0, 1fr); }
-.jd-kv.is-stack > div { grid-template-columns: 84px minmax(0, 1fr); border-top: 1px solid var(--jd-line); }
+.jd-kv.is-stack > div,
+/* 홀수 개 규칙(118px)이 마지막 줄 라벨만 넓히지 않게 같은 폭으로 덮는다 */
+.jd-kv.is-stack > div:last-child:nth-child(odd) { grid-template-columns: 84px minmax(0, 1fr); border-top: 1px solid var(--jd-line); }
 .jd-kv.is-stack > div:first-child { border-top: 0; }
 .jd-kv.is-stack dd { font-size: 12.5px; }
 

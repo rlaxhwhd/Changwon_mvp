@@ -6,8 +6,9 @@
 .jg {
   container-type: inline-size;
   font-family: inherit;
+  /* 본문 칸을 꽉 채운다 — 폭 상한을 두면 넓은 화면에서 오른쪽만 비어 비대칭으로 보였다(2026-11-19).
+     좁은 폭은 아래 @container 가 한 열로 바꾼다. */
   width: 100%;
-  max-width: 760px;
   overflow: hidden;
   border-radius: 6px;
   line-height: 1.5;
