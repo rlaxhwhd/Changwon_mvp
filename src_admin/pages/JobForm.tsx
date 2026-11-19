@@ -23,7 +23,7 @@ import {
 } from '../data/jobsSource'
 import type { JobCompanyHistory } from '../data/jobsSource'
 import { blankGuideFields, blankJob, JOB_CODE_GROUPS, jobLabelsOf, jobOptions } from '../data/schema/job'
-import JobGuideEditor from '../components/JobGuideEditor'
+import JobGuideEditor, { JobGuidePreview } from '../components/JobGuideEditor'
 import type { JobFile, JobPostingInput, RecruitType } from '../data/schema/job'
 import AdminModal from '../components/AdminModal'
 import EmptyState from '../components/EmptyState'
@@ -271,6 +271,9 @@ export default function JobForm() {
           <span className="is-current">{isEdit ? '채용공고 수정' : '채용공고 등록'}</span>
         </nav>
 
+        {/* 왼쪽 입력 · 오른쪽 모집요강 미리보기(스크롤을 따라온다) — ProgramForm 과 같은 2열 */}
+        <div className="jf-grid">
+          <div className="jf-main">
         {/* ── 기업일반정보 영역 ── */}
         <section className="jf-section">
           <div className="jf-section-head"><h2>기업일반정보 영역</h2></div>
@@ -504,13 +507,6 @@ export default function JobForm() {
             <JobGuideEditor
               template={draft.guideTemplate}
               fields={draft.guideFields}
-              source={{
-                company: displayName || '회사명', role: draft.role || '공고 제목', recruitType: draft.recruitType,
-                salary: draft.salary, salaryNegotiable: draft.salaryNegotiable,
-                location: jobLabelsOf(JOB_CODE_GROUPS.region, regions).join(', ') || draft.location,
-                employmentTypes: draft.employmentTypes, deadline: draft.deadlineMode === 'ALWAYS' ? null : draft.deadline,
-                deadlineTime: draft.deadlineMode === 'DATE' ? draft.deadlineTime : '23:59', deadlineMode: draft.deadlineMode,
-              }}
               onChange={(template, fields) => setDraft(prev => ({ ...prev, guideTemplate: template, guideFields: fields }))}
             />
           </Row>
@@ -530,6 +526,22 @@ export default function JobForm() {
             {busy ? '저장 중…' : saved ? '저장됨' : isEdit ? '수정 저장' : '등록'}
           </button>
           <button type="button" className="jf-btn jf-btn-outline" onClick={() => navigate('/jobs')}>목록</button>
+        </div>
+          </div>
+
+          <aside className="jf-aside">
+            <JobGuidePreview
+              template={draft.guideTemplate}
+              fields={draft.guideFields}
+              source={{
+                company: displayName || '회사명', role: draft.role || '공고 제목', recruitType: draft.recruitType,
+                salary: draft.salary, salaryNegotiable: draft.salaryNegotiable,
+                location: jobLabelsOf(JOB_CODE_GROUPS.region, regions).join(', ') || draft.location,
+                employmentTypes: draft.employmentTypes, deadline: draft.deadlineMode === 'ALWAYS' ? null : draft.deadline,
+                deadlineTime: draft.deadlineMode === 'DATE' ? draft.deadlineTime : '23:59', deadlineMode: draft.deadlineMode,
+              }}
+            />
+          </aside>
         </div>
       </div>
 

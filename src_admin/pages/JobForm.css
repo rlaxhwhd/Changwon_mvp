@@ -43,6 +43,12 @@
 .jf-crumb-sep { color: var(--jf-input-border); }
 .jf-crumbs .is-current { color: var(--jf-primary); font-weight: 600; }
 
+/* ── 2열: 입력 · 미리보기 ── 오른쪽 칸은 ProgramForm(.pf-aside)처럼 스크롤을 따라온다.
+   교직원 화면은 최소 1280 이라 좁은 화면 분기는 두지 않는다. */
+.jf-grid { display: grid; grid-template-columns: minmax(0, 1.62fr) minmax(400px, 1fr); gap: 22px; align-items: start; }
+.jf-main { min-width: 0; }
+.jf-aside { position: sticky; top: calc(var(--gnb-height) + 20px); min-width: 0; }
+
 /* ── 섹션 카드 ── */
 .jf-section {
   background: var(--jf-card-bg);
@@ -103,16 +109,17 @@
 .jf-radio input, .jf-check input { width: 16px; height: 16px; accent-color: var(--jf-primary); cursor: pointer; margin: 0; }
 
 /* 직종 5열 그리드 — 좌측 정렬 고정폭(이미지처럼 균등 컬럼) */
-.jf-grid5 { display: grid; grid-template-columns: repeat(5, 150px); gap: 14px 12px; justify-content: start; }
+.jf-grid5 { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 14px 12px; width: 100%; }
 
-/* ── 인라인 (인풋 + 옆 요소) ── */
-.jf-inline { display: flex; align-items: center; gap: 10px; width: 100%; }
+/* ── 인라인 (인풋 + 옆 요소) ── 왼쪽 칸이 좁아져 안내 문구는 다음 줄로 내려갈 수 있다. */
+.jf-inline { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; width: 100%; }
 .jf-inline .jf-input { flex: 1; min-width: 0; }
 .jf-unit { color: var(--jf-text); font-size: 14px; white-space: nowrap; }
 .jf-hint { color: var(--jf-muted); font-size: 13px; white-space: nowrap; }
-.jf-w-narrow { max-width: 200px; }
-.jf-w-time { max-width: 130px; }
-.jf-w-mid { max-width: 280px; }
+/* 고정 폭 칸 — flex:1 로 늘거나 옆 안내 문구에 밀려 날짜·시각이 잘리지 않게 폭을 못 박는다. */
+.jf-inline .jf-w-narrow { flex: 0 0 170px; }
+.jf-inline .jf-w-time { flex: 0 0 140px; }
+.jf-inline .jf-w-mid { flex: 0 0 200px; }
 
 /* ── 기업 로고 (추천채용 전용) ──
    미리보기는 카드에 실제로 그려지는 40px 타일이 아니라 64px 다 — 등록 화면에서는
@@ -138,7 +145,7 @@
 .jf-logo-error { font-size: 13px; font-weight: 600; color: var(--jf-req); }
 
 /* 지역 2단 */
-.jf-region { display: flex; gap: 10px; width: 100%; }
+.jf-region { display: flex; gap: 10px; width: 100%; max-width: 560px; }
 .jf-region .jf-scope { flex: 0 0 200px; }
 .jf-region .jf-multi { flex: 1; min-width: 0; }
 

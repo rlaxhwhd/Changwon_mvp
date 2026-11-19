@@ -52,7 +52,7 @@ interface Props {
   onChange: (template: JobGuideTemplate | null, fields: JobGuideFields | null) => void
 }
 
-export default function JobGuideEditor({ template, fields, source, onChange }: Props) {
+export default function JobGuideEditor({ template, fields, onChange }: Omit<Props, 'source'>) {
   const f = fields ?? blankGuideFields()
   const [customDoc, setCustomDoc] = useState('')
   const [customStep, setCustomStep] = useState('')
@@ -187,12 +187,20 @@ export default function JobGuideEditor({ template, fields, source, onChange }: P
             <div className="jge-grid">{APPLY.map(field)}</div>
           </fieldset>
 
-          <section className="jge-preview" aria-label="미리보기">
-            <h3>미리보기 <small>학생 화면에 이렇게 보입니다</small></h3>
-            <JobGuide template={template} fields={f} source={source} />
-          </section>
         </>
       )}
     </div>
+  )
+}
+
+/** 등록 폼 오른쪽에 붙는 미리보기 — 스크롤을 따라온다(ProgramForm 썸네일 미리보기와 같은 자리). */
+export function JobGuidePreview({ template, fields, source }: Omit<Props, 'onChange'>) {
+  return (
+    <section className="jge-preview" aria-label="모집요강 미리보기">
+      <h3>모집요강 미리보기 <small>학생 화면에 이렇게 보입니다</small></h3>
+      {template
+        ? <JobGuide template={template} fields={fields ?? blankGuideFields()} source={source} />
+        : <p className="jge-preview-empty">왼쪽 「모집요강 템플릿」에서 템플릿을 고르면 입력한 값으로 공고가 그려집니다.</p>}
+    </section>
   )
 }

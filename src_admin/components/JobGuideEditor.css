@@ -52,7 +52,12 @@
 .jge-x { border: 0; background: none; color: var(--jf-muted); font-size: 18px; line-height: 1; cursor: pointer; padding: 0 4px; }
 .jge-x:hover { color: var(--jf-text); }
 
-.jge-preview { margin-top: 4px; padding: 20px; background: var(--jf-label-bg); border-radius: var(--jf-r-input); }
+/* 폼 오른쪽 sticky 칸 안 — 템플릿이 화면보다 길면 칸 안에서 스크롤한다. */
+.jge-preview {
+  padding: 18px; background: var(--jf-card-bg); border: 1px solid var(--jf-border); border-radius: var(--jf-r);
+  max-height: calc(100vh - var(--gnb-height) - 40px); overflow-y: auto;
+}
+.jge-preview-empty { margin: 0; padding: 28px 16px; text-align: center; font-size: 13px; line-height: 1.6; color: var(--jf-muted); background: var(--jf-label-bg); border-radius: var(--jf-r-input); }
 /* 직계 자식만 — 미리보기 안의 템플릿 제목(h3)까지 덮지 않는다 */
 .jge-preview > h3 { margin: 0 0 14px; font-size: 14px; font-weight: 700; }
 .jge-preview > h3 small { font-weight: 400; color: var(--jf-muted); margin-left: 6px; }
