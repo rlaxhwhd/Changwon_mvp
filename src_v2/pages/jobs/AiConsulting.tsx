@@ -12,9 +12,9 @@ const SCORE_ROWS: { key: keyof ResumeEvaluation['scores']; label: string; commen
   { key: 'human', label: '사람이 쓴 확률', comment: 'AI가 아닌 사람이 작성했을 가능성입니다.', unit: '%' },
 ]
 const TONE = {
-  pos: { icon: 'fa-circle-check', label: '잘한 점' },
-  neg: { icon: 'fa-circle-exclamation', label: '고칠 점' },
-  note: { icon: 'fa-circle-info', label: '참고' },
+  pos: { label: '잘한 점' },
+  neg: { label: '고칠 점' },
+  note: { label: '참고' },
 } as const
 
 // 평가 중 Deep 이 하는 일(Deep_API_v3.xlsx 5번 시트). 진행률은 Deep 이 알려 주지 않으므로 단계를 지어내지 않고 할 일만 보여 준다.
@@ -66,11 +66,58 @@ function EvaluationLoading() {
   )
 }
 
+type Advice = EvaluationItem['advice'][number]
+type Note = Advice & { n: number; at: number }
+type Segment = { text: string; note?: Note }
+
+// 원문에서 첨삭 구절을 찾아 칠할 자리를 정한다. 번호는 원문에 나오는 순서로 매기고,
+// 원문에서 못 찾은 구절(띄어쓰기가 다르거나 겹침)은 칠하지 않고 코멘트 목록 끝에 구절과 함께 둔다.
+function annotate(paragraph: string, advice: Advice[]): { segments: Segment[]; notes: Note[] } {
+  const found: { advice: Advice; start: number; end: number }[] = []
+  const missed: Advice[] = []
+  for (const entry of advice) {
+    const trimmed = (entry.quote ?? '').trim()
+    let start = -1
+    let quote = ''
+    for (const candidate of [trimmed, trimmed.replace(/^["'“‘]+|["'”’.。\s]+$/g, '')]) {
+      if (!candidate) continue
+      start = paragraph.indexOf(candidate)
+      if (start >= 0) { quote = candidate; break }
+    }
+    const end = start + quote.length
+    if (start < 0 || found.some(range => start < range.end && end > range.start)) missed.push(entry)
+    else found.push({ advice: entry, start, end })
+  }
+  found.sort((a, b) => a.start - b.start)
+  const notes: Note[] = [
+    ...found.map((range, i) => ({ ...range.advice, n: i + 1, at: range.start })),
+    ...missed.map((entry, i) => ({ ...entry, n: found.length + i + 1, at: -1 })),
+  ]
+  const segments: Segment[] = []
+  let cursor = 0
+  found.forEach((range, i) => {
+    if (range.start > cursor) segments.push({ text: paragraph.slice(cursor, range.start) })
+    segments.push({ text: paragraph.slice(range.start, range.end), note: notes[i] })
+    cursor = range.end
+  })
+  if (found.length && cursor < paragraph.length) segments.push({ text: paragraph.slice(cursor) })
+  return { segments, notes }
+}
+
 // fallback — v3 이전 평가본은 문항 제목이 없다. 우리 자소서는 문항이 하나라 그 분야 이름을 쓴다.
 function TopicCard({ item, index, fallback }: { item: EvaluationItem; index: number; fallback?: string }) {
   const heading = item.title || item.type || fallback || `문항 ${index + 1}`
   const good = item.advice.filter(advice => advice.tone === 'pos').length
   const fix = item.advice.filter(advice => advice.tone === 'neg').length
+  const { segments, notes } = annotate(item.paragraph ?? '', item.advice)
+  // 원문 표시와 코멘트가 서로 가리킨다 — 한쪽에 올리면 다른 쪽도 같이 강조된다.
+  const [active, setActive] = useState<number | null>(null)
+  const noteId = (n: number) => `ac-note-${index}-${n}`
+  const markId = (n: number) => `ac-mark-${index}-${n}`
+  const hover = (n: number) => ({
+    onMouseEnter: () => setActive(n), onMouseLeave: () => setActive(null),
+    onFocus: () => setActive(n), onBlur: () => setActive(null),
+  })
   return (
     <section className="ac-topic" aria-labelledby={`ac-topic-${index}`}>
       <header className="ac-topic-head">
@@ -80,40 +127,75 @@ function TopicCard({ item, index, fallback }: { item: EvaluationItem; index: num
           <h3 id={`ac-topic-${index}`}>{heading}</h3>
         </div>
         <div className="ac-topic-counts">
-          <span className="pos"><i className="fa-solid fa-circle-check" aria-hidden="true" /> 잘한 점 {good}</span>
-          <span className="neg"><i className="fa-solid fa-circle-exclamation" aria-hidden="true" /> 고칠 점 {fix}</span>
+          <span className="pos">잘한 점 {good}</span>
+          <span className="neg">고칠 점 {fix}</span>
         </div>
       </header>
 
+      <div className={`ac-review${segments.length ? '' : ' is-plain'}`}>
+        {segments.length > 0 && (
+          <div className="ac-doc">
+            <h4>첨삭한 원문</h4>
+            <p className="ac-doc-text">
+              {segments.map((segment, j) => segment.note
+                ? (
+                  <a
+                    key={j}
+                    id={markId(segment.note.n)}
+                    href={`#${noteId(segment.note.n)}`}
+                    className={`ac-mark ${segment.note.tone}${active === segment.note.n ? ' is-active' : ''}`}
+                    aria-label={`${segment.note.n}번 ${TONE[segment.note.tone].label} 코멘트로 이동`}
+                    {...hover(segment.note.n)}
+                  >
+                    {segment.text}<span className="ac-pin" aria-hidden="true">{segment.note.n}</span>
+                  </a>
+                )
+                : <span key={j}>{segment.text}</span>)}
+            </p>
+            <p className="ac-legend" aria-hidden="true">
+              <span className="pos">잘한 점</span><span className="neg">고칠 점</span><span className="note">참고</span>
+            </p>
+          </div>
+        )}
+
+        <div className="ac-notes-wrap">
+          <h4>첨삭 코멘트</h4>
+          {notes.length === 0
+            ? <p className="ac-card-desc">이 문항에는 첨삭 의견이 없습니다.</p>
+            : (
+              <ol className="ac-notes">
+                {notes.map(note => (
+                  <li
+                    key={note.n}
+                    id={noteId(note.n)}
+                    className={`ac-note ${note.tone}${active === note.n ? ' is-active' : ''}`}
+                    {...(note.at >= 0 ? hover(note.n) : {})}
+                  >
+                    {note.at >= 0
+                      ? <a className="ac-pin" href={`#${markId(note.n)}`} aria-label={`원문 ${note.n}번 구절로 이동`}>{note.n}</a>
+                      : <span className="ac-pin">{note.n}</span>}
+                    <div className="ac-note-body">
+                      <span className="ac-note-tag">{TONE[note.tone].label}</span>
+                      {note.at < 0 && note.quote && <q className="ac-note-quote">{note.quote}</q>}
+                      <p>{note.comment}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+        </div>
+      </div>
+
       {item.detail && (
         <div className="ac-topic-block ac-detail">
-          <h4><i className="fa-solid fa-file-lines" aria-hidden="true" /> 문항 종합 평가</h4>
+          <h4>문항 종합 평가</h4>
           <p>{item.detail}</p>
         </div>
       )}
 
-      <div className="ac-topic-block">
-        <h4><i className="fa-solid fa-pen-nib" aria-hidden="true" /> 문장별 첨삭</h4>
-        {item.advice.length === 0
-          ? <p className="ac-card-desc">이 문항에는 첨삭 의견이 없습니다.</p>
-          : (
-            <ol className="ac-advice">
-              {item.advice.map((advice, j) => (
-                <li key={j} className={`ac-advice-item ${advice.tone}`}>
-                  <span className="ac-advice-tag">
-                    <i className={`fa-solid ${TONE[advice.tone].icon}`} aria-hidden="true" /> {TONE[advice.tone].label}
-                  </span>
-                  {advice.quote && <q className="ac-advice-quote">{advice.quote}</q>}
-                  <p className="ac-advice-comment">{advice.comment}</p>
-                </li>
-              ))}
-            </ol>
-          )}
-      </div>
-
       {item.questions.length > 0 && (
         <div className="ac-topic-block">
-          <h4><i className="fa-solid fa-comments" aria-hidden="true" /> 예상 면접 질문</h4>
+          <h4>예상 면접 질문</h4>
           <div className="ac-questions">
             {item.questions.map((question, j) => (
               <details key={j} className="ac-question">
@@ -131,7 +213,8 @@ function TopicCard({ item, index, fallback }: { item: EvaluationItem; index: num
         </div>
       )}
 
-      {item.paragraph && (
+      {/* 원문에 칠할 구절이 없으면 위에 원문이 안 보이므로 접어서라도 보여 준다 */}
+      {item.paragraph && segments.length === 0 && (
         <details className="ac-original">
           <summary><i className="fa-solid fa-align-left" aria-hidden="true" /> 평가한 원문 보기</summary>
           <p>{item.paragraph}</p>
@@ -305,10 +388,16 @@ function AiConsultingScreen() {
 
       {/* ── 평가 결과 ── */}
       {evaluation && selected && (
-        <div className="ac-card">
-          <h2 className="ac-card-title">
-            <i className="fa-solid fa-clipboard-check" /> AI 컨설팅 평가 결과
-          </h2>
+        <div className="ac-card ac-report">
+          <header className="ac-report-head">
+            <h2 className="ac-report-title">{selected.title}</h2>
+            <p className="ac-report-meta">
+              <span>AI 컨설팅 결과</span>
+              <span>{selected.company}</span>
+              <span>{selected.categoryLabel}</span>
+              {evaluation.createdAt && <span>평가일 {evaluation.createdAt.slice(0, 10)}</span>}
+            </p>
+          </header>
           {evaluation.cached && (
             <p className="ac-card-desc">내용이 바뀌지 않아 이전 평가 결과를 보여 드립니다.</p>
           )}
@@ -318,75 +407,31 @@ function AiConsultingScreen() {
             </p>
           )}
 
-          <div className="ac-summary">
-            <div>
-              <span className="ac-summary-label">자소서</span>
-              <span className="ac-summary-value">{selected.title}</span>
-            </div>
-            <div>
-              <span className="ac-summary-label">기업</span>
-              <span className="ac-summary-value">{selected.company}</span>
-            </div>
-            <div>
-              <span className="ac-summary-label">카테고리</span>
-              <span className="ac-summary-value">{selected.categoryLabel}</span>
-            </div>
-            {evaluation.createdAt && <div>
-              <span className="ac-summary-label">평가일</span>
-              <span className="ac-summary-value">{evaluation.createdAt.slice(0, 10)}</span>
-            </div>}
-          </div>
+          {/* 세 점수를 한 줄 장부로 — 맨 앞 AI 평가 점수가 주인공 */}
+          <dl className="ac-ledger">
+            {SCORE_ROWS.map(row => {
+              const value = evaluation.scores[row.key]
+              return (
+                <div key={row.key} className={`ac-ledger-cell${row.key === 'consult' ? ' is-lead' : ''}`}>
+                  <dt>{row.label}</dt>
+                  <dd className="ac-ledger-value" style={value === null ? undefined : { color: scoreColor(value) }}>
+                    {value ?? '-'}{value !== null && <small>{row.key === 'consult' ? '/100' : row.unit}</small>}
+                  </dd>
+                  <dd className="ac-ledger-bar" aria-hidden="true">
+                    <span style={{ width: `${Math.max(0, Math.min(100, value ?? 0))}%`, background: value === null ? undefined : scoreColor(value) }} />
+                  </dd>
+                  <dd className="ac-ledger-note">{row.comment}</dd>
+                </div>
+              )
+            })}
+          </dl>
 
-          <div className="ac-result">
-            <div className="ac-score-box">
-              <div className="ac-score-num">{evaluation.scores.consult ?? '-'}</div>
-              <div className="ac-score-label">AI 평가 점수 / 100</div>
-            </div>
-
-            <div className="ac-grades">
-              {SCORE_ROWS.map(row => {
-                const value = evaluation.scores[row.key]
-                return (
-                  <div key={row.key} className="ac-grade">
-                    <div className="ac-grade-head">
-                      <span className="ac-grade-label">{row.label}</span>
-                      <span className="ac-grade-score" style={value === null ? undefined : { color: scoreColor(value) }}>
-                        {value === null ? '-' : `${value}${row.unit}`}
-                      </span>
-                    </div>
-                    <div className="ac-grade-bar">
-                      <span
-                        className="ac-grade-fill"
-                        style={{ width: `${Math.max(0, Math.min(100, value ?? 0))}%`, background: value === null ? undefined : scoreColor(value) }}
-                      />
-                    </div>
-                    <p className="ac-grade-comment">{row.comment}</p>
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-
-          <ul className="ac-stats">
-            <li className="pos">
-              <i className="fa-solid fa-circle-check" aria-hidden="true" />
-              <strong>{stats.good}</strong><span>잘한 점</span>
-            </li>
-            <li className="neg">
-              <i className="fa-solid fa-circle-exclamation" aria-hidden="true" />
-              <strong>{stats.fix}</strong><span>고칠 점</span>
-            </li>
-            <li>
-              <i className="fa-solid fa-spell-check" aria-hidden="true" />
-              <strong>{evaluation.wrongWords ?? '-'}</strong><span>맞춤법 오류</span>
-            </li>
-            <li>
-              <i className="fa-solid fa-comments" aria-hidden="true" />
-              <strong>{stats.questions}</strong><span>예상 면접 질문</span>
-            </li>
+          <ul className="ac-tally">
+            <li className="pos">잘한 점 <b>{stats.good}</b></li>
+            <li className="neg">고칠 점 <b>{stats.fix}</b></li>
+            <li>맞춤법 오류 <b>{evaluation.wrongWords ?? '-'}</b></li>
+            <li>예상 면접 질문 <b>{stats.questions}</b></li>
           </ul>
-
-          <h3 className="ac-section-title"><i className="fa-solid fa-list-check" aria-hidden="true" /> 문항별 상세 평가</h3>
           {evaluation.items.length === 0 && <p className="ac-card-desc">평가한 문항이 없습니다.</p>}
           {evaluation.items.map((item, i) => (
             <TopicCard key={item.topicId ?? i} item={item} index={i}

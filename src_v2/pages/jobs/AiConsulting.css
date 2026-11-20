@@ -254,168 +254,93 @@
   color: var(--color-text-muted);
 }
 
-/* ── 평가 결과 ────────────────────────────────────────── */
-.ac-summary {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
-  margin: 16px 0 20px;
-  padding: 16px 18px;
-  background: var(--color-surface);
-  border-radius: var(--radius-md);
+/* ── 평가 결과 — 첨삭 리포트 ──────────────────────────────
+   원문에 칠한 구절(번호) ↔ 같은 번호의 코멘트. 잘한 점=파랑, 고칠 점=코랄, 참고=노랑. */
+.ac-report {
+  --ac-pos-ink: color-mix(in srgb, var(--blue) 82%, var(--color-navy));
+  padding: 30px 32px 28px;
 }
 
-.ac-summary-label {
-  display: block;
-  font-size: 16px;
-  color: var(--color-text-muted);
-  margin-bottom: 3px;
-}
+.ac-report-head { padding-bottom: 18px; border-bottom: 1px solid var(--color-border); }
 
-.ac-summary-value {
-  display: block;
-  font-size: 18px;
+.ac-report-title {
+  margin: 0;
+  font-size: 24px;
   font-weight: 800;
+  line-height: 1.4;
   color: var(--color-navy);
+  text-wrap: balance;
+  overflow-wrap: anywhere;
 }
 
-.ac-result {
-  display: flex;
-  gap: 20px;
+.ac-report-meta { display: flex; flex-wrap: wrap; row-gap: 4px; margin: 8px 0 0; font-size: 15px; color: var(--color-text-sub); }
+.ac-report-meta span + span::before {
+  content: '';
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  margin: 0 10px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+  vertical-align: middle;
 }
 
-.ac-score-box {
-  width: 176px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.ac-report > .ac-card-desc,
+.ac-report > .ac-preview-notice { margin: 14px 0 0; }
+
+/* 점수 장부 — 칸을 나란히, 맨 앞 AI 평가 점수만 크게 */
+.ac-ledger {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
+  margin: 22px 0 0;
+  border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
-  color: #fff;
-  padding: 30px 0;
-}
-
-.ac-score-num {
-  font-size: 55px;
-  font-weight: 900;
-  line-height: 1;
-}
-
-.ac-score-label {
-  margin-top: 8px;
-  font-size: 16px;
-  font-weight: 700;
-  opacity: 0.9;
-}
-
-.ac-grades {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.ac-grade-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 16px;
-}
-
-.ac-grade-label {
-  font-weight: 700;
-  color: var(--color-navy);
-}
-
-.ac-grade-score {
-  font-weight: 900;
-}
-
-.ac-grade-bar {
-  height: 8px;
-  background: #EAEEF6;
-  border-radius: 5px;
   overflow: hidden;
-  margin: 6px 0 5px;
 }
 
-.ac-grade-fill {
-  display: block;
-  height: 100%;
-  border-radius: 5px;
+.ac-ledger-cell { display: grid; align-content: start; gap: 8px; padding: 18px 20px; min-width: 0; }
+.ac-ledger-cell + .ac-ledger-cell { border-left: 1px solid var(--color-border); }
+.ac-ledger-cell.is-lead { background: var(--color-surface); }
+.ac-ledger dt { font-size: 14px; font-weight: 700; color: var(--color-text-sub); }
+.ac-ledger dd { margin: 0; }
+
+.ac-ledger-value {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--color-navy);
+  font-variant-numeric: tabular-nums;
 }
 
-.ac-grade-comment {
+.ac-ledger-cell.is-lead .ac-ledger-value { font-size: 44px; }
+.ac-ledger-value small { margin-left: 3px; font-size: 15px; font-weight: 700; letter-spacing: 0; color: var(--color-text-muted); }
+
+.ac-ledger-bar { height: 6px; border-radius: 999px; background: #EAEEF6; overflow: hidden; }
+.ac-ledger-bar span { display: block; height: 100%; border-radius: inherit; background: var(--color-text-muted); }
+.ac-ledger-note { font-size: 13px; line-height: 1.55; color: var(--color-text-sub); }
+
+.ac-tally { list-style: none; display: flex; flex-wrap: wrap; gap: 8px; margin: 14px 0 0; padding: 0; }
+.ac-tally li {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--color-surface);
   font-size: 14px;
-  line-height: 1.55;
   color: var(--color-text-sub);
 }
+.ac-tally b { font-size: 16px; font-weight: 800; color: var(--color-navy); font-variant-numeric: tabular-nums; }
+.ac-tally .pos b { color: var(--ac-pos-ink); }
+.ac-tally .neg b { color: var(--coral-ink); }
 
-/* ── 결과 요약 수치 ───────────────────────────────────── */
-.ac-stats {
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
-  margin: 20px 0 0;
-  padding: 0;
-}
-
-.ac-stats li {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  grid-template-rows: auto auto;
-  column-gap: 10px;
-  align-items: center;
-  padding: 14px 16px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-}
-
-.ac-stats li i {
-  grid-row: 1 / 3;
-  font-size: 20px;
-  color: var(--color-primary);
-}
-
-.ac-stats li.pos i { color: var(--mint-ink); }
-.ac-stats li.neg i { color: var(--color-warning); }
-.ac-stats strong { font-size: 22px; font-weight: 900; color: var(--color-navy); line-height: 1.1; }
-.ac-stats span { font-size: 14px; color: var(--color-text-muted); }
-
-/* ── 문항별 상세 평가 ──────────────────────────────────── */
-.ac-section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 28px 0 12px;
-  font-size: 18px;
-  font-weight: 800;
-  color: var(--color-navy);
-}
-
-.ac-section-title i { color: var(--color-primary); }
-
-.ac-topic {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 20px 22px;
-  background: var(--color-bg);
-}
-
-.ac-topic + .ac-topic,
+/* ── 문항 ──────────────────────────────────────────────── */
+.ac-topic { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--color-border); }
 .ac-topic + .ac-preview-notice { margin-top: 14px; }
 
-.ac-topic-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding-bottom: 14px;
-  border-bottom: 1px solid var(--color-border);
-}
+.ac-topic-head { display: flex; align-items: flex-start; gap: 12px; }
 
 .ac-topic-no {
   flex-shrink: 0;
@@ -431,89 +356,157 @@
 
 .ac-topic-heading { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 .ac-topic-heading .ac-badge { font-size: 13px; }
-.ac-topic-heading h3 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.5; color: var(--color-navy); overflow-wrap: anywhere; }
+.ac-topic-heading h3 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.5; color: var(--color-navy); overflow-wrap: anywhere; }
 
 .ac-topic-counts { flex-shrink: 0; display: flex; gap: 6px; }
+.ac-topic-counts span { padding: 5px 11px; border-radius: 999px; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.ac-topic-counts .pos { background: var(--blue-soft); color: var(--ac-pos-ink); }
+.ac-topic-counts .neg { background: var(--coral-soft); color: var(--coral-ink); }
 
-.ac-topic-counts span {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 4px 10px;
+.ac-review h4,
+.ac-topic-block h4 { margin: 0 0 10px; font-size: 15px; font-weight: 800; color: var(--color-navy); }
+
+/* 원문 왼쪽 · 코멘트 오른쪽 — 좁으면 위아래로 */
+.ac-review {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(300px, 1fr);
+  gap: 22px;
+  align-items: start;
+  margin-top: 20px;
+}
+.ac-review.is-plain { grid-template-columns: minmax(0, 1fr); }
+
+.ac-doc-text {
+  margin: 0;
+  padding: 22px 24px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  font-size: 16px;
+  line-height: 2;
+  color: var(--foreground);
+  white-space: pre-line;
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+.ac-mark {
+  padding: 3px 2px;
+  border-radius: 4px;
+  color: inherit;
+  text-decoration: none;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+  transition: background-color 0.15s ease-out, box-shadow 0.15s ease-out;
+}
+.ac-mark.pos { background: var(--blue-soft); }
+.ac-mark.neg { background: color-mix(in srgb, var(--coral) 16%, var(--color-bg)); }
+.ac-mark.note { background: var(--amber-highlight); }
+.ac-mark.pos.is-active { background: var(--blue-border); }
+.ac-mark.neg.is-active { background: var(--coral-border); }
+.ac-mark.note.is-active { background: var(--amber-border); }
+.ac-mark:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+
+.ac-pin {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  margin-left: 3px;
   border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.ac-topic-counts .pos { background: var(--mint-soft); color: var(--mint-ink); }
-.ac-topic-counts .neg { background: var(--amber-soft); color: var(--amber-ink); }
-
-.ac-topic-block { margin-top: 18px; }
-
-.ac-topic-block h4 {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  margin: 0 0 10px;
-  font-size: 15px;
+  background: var(--color-text-muted);
+  color: #fff;
+  font-size: 12px;
   font-weight: 800;
-  color: var(--color-navy);
+  line-height: 1;
+  text-decoration: none;
+  vertical-align: 2px;
+  font-variant-numeric: tabular-nums;
+}
+.pos > .ac-pin { background: var(--ac-pos-ink); }
+.neg > .ac-pin { background: var(--coral-ink); }
+.note > .ac-pin { background: var(--amber-ink); }
+
+.ac-legend { display: flex; flex-wrap: wrap; gap: 14px; margin: 10px 0 0; font-size: 13px; color: var(--color-text-muted); }
+.ac-legend span::before {
+  content: '';
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+  vertical-align: -1px;
+}
+.ac-legend .pos::before { background: var(--blue-soft); box-shadow: inset 0 0 0 1px var(--blue-border); }
+.ac-legend .neg::before { background: color-mix(in srgb, var(--coral) 16%, var(--color-bg)); box-shadow: inset 0 0 0 1px var(--coral-border); }
+.ac-legend .note::before { background: var(--amber-highlight); box-shadow: inset 0 0 0 1px var(--amber-border); }
+
+.ac-notes {
+  list-style: none;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
 }
 
-.ac-topic-block h4 i { color: var(--color-primary); }
+.ac-note {
+  display: flex;
+  gap: 12px;
+  padding: 14px 10px;
+  border-radius: 8px;
+  scroll-margin-top: calc(var(--gnb-height, 64px) + 16px);
+  transition: background-color 0.15s ease-out;
+}
+.ac-note + .ac-note { box-shadow: 0 -1px 0 var(--color-border); }
+.ac-note.is-active,
+.ac-note:target { background: var(--color-surface); }
+.ac-note > .ac-pin { flex-shrink: 0; margin: 1px 0 0; vertical-align: 0; }
+.ac-note > a.ac-pin:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; }
+.ac-note-body { flex: 1; min-width: 0; }
+.ac-note-tag { font-size: 13px; font-weight: 800; color: var(--color-text-sub); }
+.ac-note.pos .ac-note-tag { color: var(--ac-pos-ink); }
+.ac-note.neg .ac-note-tag { color: var(--coral-ink); }
+.ac-note.note .ac-note-tag { color: var(--amber-ink); }
+.ac-note-quote { display: block; margin-top: 6px; font-size: 14px; line-height: 1.65; color: var(--color-text-sub); }
+.ac-note-quote::before { content: '“'; }
+.ac-note-quote::after { content: '”'; }
+.ac-note p { margin: 4px 0 0; font-size: 15px; line-height: 1.7; color: var(--foreground); word-break: keep-all; overflow-wrap: anywhere; }
+
+.ac-topic-block { margin-top: 24px; }
 
 .ac-detail p {
   margin: 0;
-  padding: 16px 18px;
+  padding: 18px 20px;
   border-radius: var(--radius-md);
   background: var(--blue-wash);
   color: var(--foreground);
   font-size: 15px;
-  line-height: 1.8;
+  line-height: 1.85;
   white-space: pre-line;
+  word-break: keep-all;
 }
 
-/* 문장별 첨삭 — 원문 구절과 코멘트를 한 묶음으로 */
-.ac-advice { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.ac-report ::selection { background: var(--blue-border); color: var(--color-navy); }
 
-.ac-advice-item {
-  padding: 14px 16px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-  background: var(--color-bg);
+@media (max-width: 1100px) {
+  .ac-review { grid-template-columns: minmax(0, 1fr); }
 }
 
-.ac-advice-item.pos { border-color: var(--mint-border); background: color-mix(in srgb, var(--mint-soft) 45%, var(--color-bg)); }
-.ac-advice-item.neg { border-color: var(--amber-border); background: color-mix(in srgb, var(--amber-soft) 55%, var(--color-bg)); }
-
-.ac-advice-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 13px;
-  font-weight: 800;
-  color: var(--color-primary);
+@media (max-width: 900px) {
+  .ac-report { padding: 24px 22px; }
+  .ac-ledger { grid-template-columns: minmax(0, 1fr); }
+  .ac-ledger-cell + .ac-ledger-cell { border-left: 0; border-top: 1px solid var(--color-border); }
+  .ac-ledger-cell.is-lead .ac-ledger-value { font-size: 38px; }
 }
 
-.ac-advice-item.pos .ac-advice-tag { color: var(--mint-ink); }
-.ac-advice-item.neg .ac-advice-tag { color: var(--amber-ink); }
-
-.ac-advice-quote {
-  display: block;
-  margin-top: 8px;
-  padding: 8px 12px;
-  border-radius: 8px;
-  background: var(--color-bg);
-  color: var(--color-text-sub);
-  font-size: 14px;
-  line-height: 1.65;
+@media (max-width: 600px) {
+  .ac-report { padding: 20px 16px; }
+  .ac-report-title { font-size: 20px; }
+  .ac-doc-text { padding: 16px; font-size: 15px; line-height: 1.95; }
+  .ac-notes { padding: 4px 6px; }
 }
-
-.ac-advice-quote::before { content: '“'; }
-.ac-advice-quote::after { content: '”'; }
-
-.ac-advice-comment { margin: 8px 0 0; font-size: 15px; line-height: 1.7; color: var(--foreground); }
 
 /* 예상 면접 질문 — 눌러서 예상 답변을 본다 */
 .ac-questions { display: flex; flex-direction: column; gap: 8px; }
@@ -660,12 +653,10 @@
 }
 
 @media (max-width: 900px) {
-  .ac-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .ac-eval-steps { grid-template-columns: minmax(0, 1fr); }
 }
 
 @media (max-width: 600px) {
-  .ac-topic { padding: 16px; }
   .ac-topic-head { flex-wrap: wrap; }
   .ac-topic-counts { width: 100%; }
   .ac-question p { padding-left: 16px; }
@@ -676,17 +667,6 @@
 @media (max-width: 900px) {
   .ac-wrap {
     padding: 0 18px 32px;
-  }
-  .ac-result {
-    flex-direction: column;
-  }
-  .ac-score-box {
-    width: 100%;
-    padding: 22px 0;
-  }
-  .ac-summary {
-    grid-template-columns: 1fr;
-    gap: 10px;
   }
 }
 
