@@ -30,8 +30,11 @@ const BASIC: FieldSpec[] = [
   { key: 'workHours', label: '근무시간', max: 100, placeholder: '예: 월~금 08:00~17:00' },
   { key: 'employmentNote', label: '채용형태 보충', max: 100, placeholder: '예: 수습 3개월' },
   { key: 'salaryNote', label: '급여 비고', max: 100, placeholder: '예: 평가에 따라 다를 수 있음' },
-  { key: 'qualification', label: '자격요건', max: 500, placeholder: '줄바꿈하면 항목이 나뉩니다', multiline: true },
-  { key: 'preferred', label: '우대사항', max: 500, placeholder: '줄바꿈하면 항목이 나뉩니다', multiline: true },
+]
+// 자격요건·우대사항은 한 칸으로 묶는다 — 포스터형은 지원자격 카드 위/아래로 나눠 그린다(2026-11-20 사용자 요청).
+const QUALIFY: FieldSpec[] = [
+  { key: 'qualification', label: '자격요건', max: 500, placeholder: '예: 관련 전공 졸업(예정)자\n줄바꿈하면 항목이 나뉩니다', multiline: true },
+  { key: 'preferred', label: '우대사항', max: 500, placeholder: '예: 정보처리기사 소지자\n줄바꿈하면 항목이 나뉩니다', multiline: true },
 ]
 const COMPANY: FieldSpec[] = [
   { key: 'industry', label: '업종', max: 100, placeholder: '예: 제조업(냉연강판)' },
@@ -112,7 +115,21 @@ export default function JobGuideEditor({ template, fields, onChange }: Omit<Prop
 
           <fieldset className="jge-group">
             <legend>채용 내용</legend>
-            <div className="jge-grid">{BASIC.map(field)}</div>
+            <div className="jge-grid">
+              {BASIC.map(field)}
+              <div className="jge-field is-wide jge-pair" role="group" aria-label="자격요건/우대사항">
+                <span>자격요건/우대사항</span>
+                <div className="jge-pair-cols">
+                  {QUALIFY.map(spec => (
+                    <label key={spec.key}>
+                      <small>{spec.label}</small>
+                      <textarea className="jf-input jge-textarea" rows={4} maxLength={spec.max} placeholder={spec.placeholder}
+                        value={f[spec.key]} onChange={e => put({ [spec.key]: e.target.value })} />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
           </fieldset>
 
           <fieldset className="jge-group">

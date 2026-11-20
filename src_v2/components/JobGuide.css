@@ -6,6 +6,8 @@
 .jg {
   container-type: inline-size;
   font-family: inherit;
+  /* 띄어쓰기 없는 긴 입력도 공고 폭 안에서 줄바꿈(2026-11-20) */
+  overflow-wrap: anywhere;
   /* 본문 칸을 꽉 채운다 — 폭 상한을 두면 넓은 화면에서 오른쪽만 비어 비대칭으로 보였다(2026-11-19).
      좁은 폭은 아래 @container 가 한 열로 바꾼다. */
   width: 100%;
@@ -52,6 +54,14 @@
 .jg-p-info ul { font-size: 13.5px; line-height: 1.7; }
 .jg-p-info li { position: relative; padding-left: 11px; }
 .jg-p-info li::before { content: ""; position: absolute; left: 0; top: .72em; width: 4px; height: 4px; border-radius: 50%; background: var(--t); }
+/* 모집분야 — 직종(굵게) 아래 담당업무는 「- 」 하위 줄 */
+.jg-p-info .jg-p-role li:not(.is-sub) { font-weight: 700; }
+.jg-p-info .jg-p-role li.is-sub { padding-left: 11px; color: var(--s); }
+.jg-p-info .jg-p-role li.is-sub::before { content: none; }
+/* 지원자격 카드 아래 절반 — 우대사항(아이콘 없이 작은 제목) */
+.jg-p-pref { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--l); }
+.jg-p-info > div > .jg-p-pref:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
+.jg .jg-p-pref h5 { margin: 0 0 4px; font-size: 13.5px; font-weight: 700; color: var(--c); }
 .jg-p-date { font-size: 15px; font-weight: 700; }
 .jg-p-cta { margin: 28px 40px 0; background: var(--c-soft); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .jg-p-go { width: 38px; height: 38px; border-radius: 50%; background: var(--c); display: grid; place-items: center; flex: none; }

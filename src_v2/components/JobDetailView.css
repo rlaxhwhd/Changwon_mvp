@@ -193,7 +193,9 @@
 .jd-kv.is-stack dd { font-size: 12.5px; }
 
 /* ── 모집요강 본문 (상담사가 입력한 HTML) ───────────────────────────────── */
-.jd-content { font-size: 14px; line-height: 1.75; color: var(--jd-sub); }
+/* 띄어쓰기 없는 긴 글(한글 keep-all 포함)도 공고 폭 안에서 줄바꿈한다(2026-11-20 사용자 요청) */
+.jd-content { font-size: 14px; line-height: 1.75; color: var(--jd-sub); min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.jd-content pre { white-space: pre-wrap; }
 .jd-content > :first-child { margin-top: 0; }
 /* 모집요강 템플릿(JobGuide) 아래에 붙는 추가 안내 */
 .jd-content.is-extra { margin-top: 20px; }

@@ -26,6 +26,10 @@ export interface JobGuideSource {
   salaryNegotiable: boolean
   location: string
   employmentTypes: string[]
+  /** 직종 코드 (JOB_CATEGORY) — 포스터형 모집분야의 윗줄 */
+  jobCategories: string[]
+  /** 경력 구분 코드 (JOB_CAREER_TYPE) — 근무형태 옆에 붙인다 */
+  careerTypes: string[]
   deadline: string | null
   deadlineTime: string
   deadlineMode: DeadlineMode
@@ -106,7 +110,11 @@ export default function JobGuide({ template, fields, source }: Props) {
     s: source,
     deadline: deadlineOf(source),
     salary: salaryOf(source),
-    employment: jobLabelsOf(JOB_CODE_GROUPS.employmentType, source.employmentTypes).join(', '),
+    // 근무형태 옆에 경력 구분 — 「정규직 · 신입」(2026-11-20 사용자 요청)
+    employment: [
+      jobLabelsOf(JOB_CODE_GROUPS.employmentType, source.employmentTypes).join(', '),
+      jobLabelsOf(JOB_CODE_GROUPS.careerType, source.careerTypes).join(', '),
+    ].filter(has).join(' · '),
     workplace: has(f.address) ? f.address : source.location,
     docs: (f.documents ?? []).filter(d => has(d.name)),
     steps: (f.steps ?? []).filter(st => has(st)),
@@ -141,15 +149,42 @@ function List({ items }: { items: string[] }) {
   return <ul>{items.map((t, i) => <li key={`${i}-${t}`}>{t}</li>)}</ul>
 }
 
+/** 모집분야 — 직종을 윗줄에, 담당업무를 그 아래 「- 데이터 엔지니어」 하위 줄로(2026-11-20 사용자 요청). */
+function RoleList({ categories, duties }: { categories: string[]; duties: string[] }) {
+  return (
+    <ul className="jg-p-role">
+      {categories.map((t, i) => <li key={`c${i}-${t}`}>{t}</li>)}
+      {duties.map((t, i) => <li key={`d${i}-${t}`} className="is-sub">- {t}</li>)}
+    </ul>
+  )
+}
+
 function Poster(c: Ctx) {
   const { f, s } = c
-  // 담당업무를 적었으면 그것이 모집분야다 — 공고 제목은 위 한 줄 소개 아래에 이미 있다.
-  const role = lines(f.duty).length ? lines(f.duty) : [s.role]
+  // 공고 제목은 위 한 줄 소개 아래에 이미 있다 — 직종·담당업무가 둘 다 없을 때만 제목을 쓴다.
+  const categories = jobLabelsOf(JOB_CODE_GROUPS.category, s.jobCategories)
+  const duties = lines(f.duty)
+  const role = categories.length || duties.length
+    ? <RoleList categories={categories} duties={duties} />
+    : <List items={[s.role]} />
   const qual = lines(f.qualification)
+  const preferred = lines(f.preferred)
   const work = [f.workHours, c.salary, c.workplace].filter(has)
+  // 지원자격 카드 — 위는 자격요건, 아래 절반은 우대사항(아이콘 없이 작은 제목만).
+  const person = (
+    <>
+      {qual.length > 0 && <List items={qual} />}
+      {preferred.length > 0 && (
+        <div className="jg-p-pref">
+          <h5>우대사항</h5>
+          <List items={preferred} />
+        </div>
+      )}
+    </>
+  )
   const cols: { key: string; title: string; body: ReactNode }[] = [
-    { key: 'role', title: '모집분야', body: <List items={role} /> },
-    ...(qual.length ? [{ key: 'person', title: '지원자격', body: <List items={qual} /> }] : []),
+    { key: 'role', title: '모집분야', body: role },
+    ...(qual.length || preferred.length ? [{ key: 'person', title: '지원자격', body: person }] : []),
     ...(work.length ? [{ key: 'clock', title: '근무조건', body: <List items={work} /> }] : []),
     { key: 'calendar', title: '접수기간', body: <p className="jg-p-date">~ {c.deadline.full}</p> },
   ]

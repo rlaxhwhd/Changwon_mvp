@@ -538,7 +538,8 @@ export default function JobForm() {
                 company: displayName || '회사명', role: draft.role || '공고 제목', recruitType: draft.recruitType,
                 salary: draft.salary, salaryNegotiable: draft.salaryNegotiable,
                 location: jobLabelsOf(JOB_CODE_GROUPS.region, regions).join(', ') || draft.location,
-                employmentTypes: draft.employmentTypes, deadline: draft.deadlineMode === 'ALWAYS' ? null : draft.deadline,
+                employmentTypes: draft.employmentTypes, jobCategories: draft.jobCategories, careerTypes: draft.careerTypes,
+                deadline: draft.deadlineMode === 'ALWAYS' ? null : draft.deadline,
                 deadlineTime: draft.deadlineMode === 'DATE' ? draft.deadlineTime : '23:59', deadlineMode: draft.deadlineMode,
               }}
             />
