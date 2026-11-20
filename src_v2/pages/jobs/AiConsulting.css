@@ -289,17 +289,20 @@
 .ac-report > .ac-card-desc,
 .ac-report > .ac-preview-notice { margin: 14px 0 0; }
 
-/* 수치 줄 — 표의 한 행처럼. 색·막대·큰 숫자 없이 같은 크기로 나란히 */
+/* 수치 줄 — 같은 크기 다섯 칸, 라운지 상단 카드처럼 초록·하늘·파랑·핑크·보라를 연하게 */
 .ac-figures {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
   margin: 20px 0 0;
-  border-top: 1px solid var(--color-navy);
-  border-bottom: 1px solid var(--color-border);
 }
 
-.ac-figures > div { min-width: 0; padding: 12px 14px 14px; }
-.ac-figures > div + div { border-left: 1px solid var(--color-border); }
+.ac-figures > div { min-width: 0; padding: 14px 16px 16px; border-radius: var(--radius-md); }
+.ac-figures > div:nth-child(1) { background: var(--mint-soft); }
+.ac-figures > div:nth-child(2) { background: var(--sky-soft); }
+.ac-figures > div:nth-child(3) { background: var(--blue-soft); }
+.ac-figures > div:nth-child(4) { background: var(--pink-soft); }
+.ac-figures > div:nth-child(5) { background: var(--violet-soft); }
 .ac-figures dt { font-size: 13px; font-weight: 600; color: var(--color-text-sub); }
 .ac-figures dd {
   margin: 4px 0 0;
@@ -477,9 +480,7 @@
 @media (max-width: 900px) {
   .ac-report { padding: 24px 22px; }
   .ac-figures { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .ac-figures > div + div { border-left: 0; }
-  .ac-figures > div:nth-child(even) { border-left: 1px solid var(--color-border); }
-  .ac-figures > div:nth-child(n + 3) { border-top: 1px solid var(--color-border); }
+  .ac-figures > div:last-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 600px) {
