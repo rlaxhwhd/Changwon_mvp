@@ -1,5 +1,17 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-20 AI 컨설팅 상세 결과·채용공고 개선 API/웹/170 서버 배포
+
+- origin/dev 최종 fetch=08415ba. 직전4fadd9f 이후 e7513b0(상세 단계 카드/하단 문구 제거), 5a45e3b(Deep v3 문항별 상세평가·예상 면접 질문/답변), 66aa487(지원링크 스킴 보완·PC/모바일 미리보기), 526e0d1(직종·업무 하위 줄·경력 pill·자격/우대 통합·경력무관), 08415ba(포스터 우대 제목15px)를 clean git archive로 빌드했다. 타 세션 미커밋 변경은 제외/보존했다. 전날 CSS 배포 한 건의 테스트 생략 요청은 이번 기능/API/DB 배포에 확대하지 않았다.
+- 0018 architecture-review ASTRA_APPROVED와 교정된 work-order/verification을 읽었다. 170의 실행기 기준 UTF-8 read_text SHA256=11e39378068bd113b85ce040e83b3db54a60ab929a23459e6250c744a187dd85. 승인된 ANY 경력무관1행 INSERT 및 롤백 주석 교정본을 그대로 사용했고 SQL/기존 이력 수정이나 중복 리뷰는 하지 않았다. 로컬은 타 세션 docker:up으로 이미170 적용·실행 중이며 clean 소스/실행 API/회사 API 및170개 마이그레이션 일치, dc_release_ai_consult_20261120_ref_test 복원 참조와 전체 스키마를 대조했다.
+- 신규 격리 DB dc_regression_20261120015705_a54c82_test에서 deep/job/remaining_migrations 선택: 103 passed,658 deselected,기존 경고3개,19.17초. Deep v3/이전 응답 DTO, 상세평가/질문 및 채용공고 링크 정규화·기존 계약을 포함하며 외부 Deep는 테스트 대체 서버를 사용했다. 실제 외부 AI 평가 생성은 호출하지 않았다. TypeScript/Vite 빌드 통과, 기존 native-config/큰 chunk 경고 유지.
+- API는 Dockerfile.company로 전체 소스·마이그레이션을 담아 직전 회사 API 기반으로 로컬 빌드했다. 웹은 clean 정적 파일·새 company.conf.template을 기존 CentOS 호환 웹 기반에 COPY하는 동일 Dockerfile을 로컬/서버에서 빌드했다. 태그는 API/웹 ai-consult-20261120. API 묶음82992827B SHA256=02e535be2384678df1ebaf05e27277168b0f82b283648f981dc72e0b02e33f16, 웹 산출물14668173B SHA256=e34938fb53f6b9b5dd6cec1d3b56e10396323ae66f7f393d9e628b60238bc7b7. 전송 해시와 웹 파일 전체 해시 일치.
+- 백업/Compose/nginx/감사자료 /opt/dreamcatch/ai/ai-consult-20261120/. 서버 백업을 dc_deploy_ai_consult_20261120_test에 복원→170→전체 스키마·업무값 보존→재실행 no-op 확인 후 운영 적용했다. API stop -t240/exited0→추가 직전 백업·감사→170→직후 비교→API/웹 함께 교체했다. 기존169 체크섬·기존 코드 전체값·모든 업무 테이블 값/건수 보존. JOB_CAREER_TYPE ANY/경력무관/sort_order2/active=true만 추가, metadata_revision+1, migration170 한 건만 추가 확인. 로컬 데이터를 운영에 복원하지 않았다.
+- 웹은 /opt/dreamcatch/nginx.conf.template을 bind mount하므로 이미지 변경만으로 새 timeout이 적용되지 않는다. 교체 전에 서버 템플릿이 직전 커밋 company.conf.template과 정확히 같은 것을 확인하고 백업 뒤 새 커밋 템플릿을 반영했다. runtime 설정에서 evaluation 경로 proxy_read_timeout330s 한 건 확인, backend Deep 호출300s(종전150s)와 대응. nginx -t 정상이며 nginx -T 전체 출력으로 비밀을 노출하지 않았다. 환경별 비밀·Deep 연결 설정·나머지 서비스는 유지했다.
+- 실행 소스/적용·파일170개/전체 canonical schema MATCH(기존 검증된 직렬화 정규화3종만 사용). API/웹/DB/RAG/LLM tunnel/SearXNG healthy, Qdrant 실행. clean 웹/서버 HTML SHA256 일치: admin e71b6c0cfd912d8464c1dd75f3202044277a7c8fb2f49418252709630e74dd8f, v2 68d213c160169b378338a3d1c461b9b1938e1566f9ce660f1f23e58be1c195ab. nginx 템플릿 SHA256=9aa0f69952955d59791a0386bb983fd740bd47b18ffb3c0f17644468c3dc3ea0. 기존 복구 저장소 rw 유지, root17GB/Docker21GB 여유.
+- EgoLite 로컬 등록 폼의 경력무관/포스터 PC 미리보기, 서버 역할 선택 로그인 후 등록 폼의 경력무관과 PC·모바일 미리보기 전환을 확인했다. 로컬/서버 스크린샷 촬영·열람, 운영 공고 저장 없이 미저장 미리보기를 폐기하고 목록으로 돌아왔다. 같은 등록 폼 reload의 metadata 전80ms/후145ms 각1회·200, 수집 구간 실패 API/Runtime 예외0(속도 개선 주장 없음). 초기 역할 선택 전 정보 로드 오류는 정상 역할 선택 뒤 해소됐다. 실제 외부 AI 평가가 수 분 걸리는 경로와 실평가 상세 UI는 이번 서버 검증 범위 밖이다.
+- 복구는 저장 Compose의 직전 API job-guide-20261119/웹 job-style-20261119와 nginx.conf.template.before를 함께 사용하며170/ANY·신규 업무 데이터는 지우지 않는다. 이전 API/UI는 상세 v3 필드를 표시하지 않고 평가 대기 시간도 예전 정책으로 돌아간다. Graft 구조 그래프 OK. Atlas 도구 부재로 공유기억 조회·저장은 미수행이다.
+
 ## 2026-11-19 채용공고 템플릿 CSS 웹 단독 배포 — 테스트 생략 요청
 
 - origin/dev 최종4fadd9f: JobDetailView.css의 요약 라벨84px 통일, JobGuide.css의 max-width760px 제거만 기능 변경이다. 사용자 지시에 따라 회귀 테스트·브라우저/화면 검증은 생략했다. clean git archive로 TypeScript/Vite·로컬 배포 이미지를 빌드했고 기존 native-config/큰 chunk 경고는 남는다. 미커밋 타 작업은 제외/보존했다.
