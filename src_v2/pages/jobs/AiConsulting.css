@@ -289,35 +289,71 @@
 .ac-report > .ac-card-desc,
 .ac-report > .ac-preview-notice { margin: 14px 0 0; }
 
-/* 수치 줄 — 같은 크기 다섯 칸, 라운지 상단 카드처럼 초록·하늘·파랑·핑크·보라를 연하게 */
+/* 수치 카드 다섯 장 — 라운지 상단 지표 카드(StudentStatCards)와 같은 결.
+   흰 카드 · 색 입힌 제목 · 오른쪽 위 연한 아이콘 칸. 색은 초록·하늘·파랑·핑크·보라 순서. */
 .ac-figures {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
+  gap: 12px;
   margin: 20px 0 0;
 }
 
-.ac-figures > div { min-width: 0; padding: 14px 16px 16px; border-radius: var(--radius-md); }
-.ac-figures > div:nth-child(1) { background: var(--mint-soft); }
-.ac-figures > div:nth-child(2) { background: var(--sky-soft); }
-.ac-figures > div:nth-child(3) { background: var(--blue-soft); }
-.ac-figures > div:nth-child(4) { background: var(--pink-soft); }
-.ac-figures > div:nth-child(5) { background: var(--violet-soft); }
-.ac-figures dt { font-size: 13px; font-weight: 600; color: var(--color-text-sub); }
-.ac-figures dd {
-  margin: 4px 0 0;
-  font-size: 22px;
+.ac-figures > div {
+  --tone: var(--mint);
+  --tone-soft: var(--mint-soft);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 18px 18px 16px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: var(--color-bg);
+}
+.ac-figures > div:nth-child(2) { --tone: var(--sky); --tone-soft: var(--sky-soft); }
+.ac-figures > div:nth-child(3) { --tone: var(--blue); --tone-soft: var(--blue-soft); }
+.ac-figures > div:nth-child(4) { --tone: var(--pink); --tone-soft: var(--pink-soft); }
+.ac-figures > div:nth-child(5) { --tone: var(--violet); --tone-soft: var(--violet-soft); }
+
+/* 제목 글자에 색 — 흰 바탕에서 읽히게 남색을 조금 섞는다 */
+.ac-figures dt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 14px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.3;
+  color: color-mix(in srgb, var(--tone) 78%, var(--color-navy));
+}
+.ac-figures dt i {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--tone-soft);
+  color: var(--tone);
+  font-size: 15px;
+}
+.ac-figures dd { margin: 0; }
+.ac-figures .ac-figure-value {
+  margin-top: 14px;
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.25;
   color: var(--color-navy);
   font-variant-numeric: tabular-nums;
 }
-.ac-figures small { margin-left: 2px; font-size: 14px; font-weight: 500; color: var(--color-text-muted); }
-.ac-figures a { color: inherit; text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; text-decoration-color: var(--color-border); }
-.ac-figures a:hover { text-decoration-color: currentColor; }
-.ac-figures a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: 4px; }
+.ac-figure-value small { margin-left: 2px; font-size: 14px; font-weight: 700; color: var(--color-text-sub); }
+.ac-figures .ac-figure-foot { margin-top: 6px; font-size: 13px; line-height: 1.5; color: var(--color-text-sub); }
+.ac-figure-foot a { color: color-mix(in srgb, var(--tone) 78%, var(--color-navy)); font-weight: 700; text-decoration: none; }
+.ac-figure-foot a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ac-figure-foot a:focus-visible { outline: 2px solid var(--color-primary); outline-offset: 2px; border-radius: 4px; }
 
-.ac-figures-note { margin: 8px 0 0; font-size: 13px; line-height: 1.6; color: var(--color-text-muted); }
+@media (max-width: 1100px) {
+  .ac-figures { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
 /* ── 문항 ──────────────────────────────────────────────── */
 .ac-topic { margin-top: 30px; padding-top: 26px; border-top: 1px solid var(--color-border); }

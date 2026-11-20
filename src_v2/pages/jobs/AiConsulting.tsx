@@ -6,10 +6,10 @@ import './JobsWorkspace.css'
 import { usePageHead } from '../../components/PageCrumb'
 
 // DeepResume 평가가 주는 세 지표. 값이 없으면 지어내지 않고 '-' 로 둔다.
-const SCORE_ROWS: { key: keyof ResumeEvaluation['scores']; label: string; comment: string; unit: string }[] = [
-  { key: 'consult', label: 'AI 평가 점수', comment: '문항 질문에 맞게 잘 답했는지 AI가 평가한 점수입니다.', unit: '점' },
-  { key: 'spellcheck', label: '표절 검사 점수', comment: '표절 검사 결과를 점수로 나타냅니다.', unit: '점' },
-  { key: 'human', label: '사람이 쓴 확률', comment: 'AI가 아닌 사람이 작성했을 가능성입니다.', unit: '%' },
+const SCORE_ROWS: { key: keyof ResumeEvaluation['scores']; label: string; comment: string; unit: string; icon: string }[] = [
+  { key: 'consult', label: 'AI 평가 점수', comment: '문항 질문에 맞게 잘 답했는지 AI가 평가한 점수입니다.', unit: '점', icon: 'fa-chart-simple' },
+  { key: 'spellcheck', label: '표절 검사 점수', comment: '표절 검사 결과를 점수로 나타냅니다.', unit: '점', icon: 'fa-shield-halved' },
+  { key: 'human', label: '사람이 쓴 확률', comment: 'AI가 아닌 사람이 작성했을 가능성입니다.', unit: '%', icon: 'fa-user-pen' },
 ]
 const TONE = {
   pos: { label: '잘한 점' },
@@ -402,33 +402,35 @@ function AiConsultingScreen() {
             </p>
           )}
 
-          {/* 수치는 표처럼 담담하게 한 줄로 — 색·막대 없이 숫자만. 설명은 아래 한 줄 각주로 */}
+          {/* 라운지 상단 지표 카드(StudentStatCards)와 같은 결 — 흰 카드 · 색 제목 · 연한 아이콘 칸 · 숫자 · 설명 한 줄 */}
           <dl className="ac-figures">
             {SCORE_ROWS.map(row => {
               const value = evaluation.scores[row.key]
               return (
                 <div key={row.key}>
-                  <dt>{row.label}</dt>
-                  <dd>{value ?? '-'}{value !== null && <small>{row.key === 'consult' ? ' / 100' : row.unit}</small>}</dd>
+                  <dt>{row.label}<i className={`fa-solid ${row.icon}`} aria-hidden="true" /></dt>
+                  <dd className="ac-figure-value">
+                    {value ?? '-'}{value !== null && <small>{row.key === 'consult' ? ' / 100' : row.unit}</small>}
+                  </dd>
+                  <dd className="ac-figure-foot">{row.comment}</dd>
                 </div>
               )
             })}
             <div>
-              <dt>맞춤법 오류</dt>
-              <dd>{evaluation.wrongWords ?? '-'}{evaluation.wrongWords !== null && <small>개</small>}</dd>
+              <dt>맞춤법 오류<i className="fa-solid fa-spell-check" aria-hidden="true" /></dt>
+              <dd className="ac-figure-value">{evaluation.wrongWords ?? '-'}{evaluation.wrongWords !== null && <small>개</small>}</dd>
+              <dd className="ac-figure-foot">본문에서 찾은 틀린 단어 수입니다.</dd>
             </div>
             <div>
-              <dt>예상 면접 질문</dt>
-              <dd>
+              <dt>예상 면접 질문<i className="fa-solid fa-comments" aria-hidden="true" /></dt>
+              <dd className="ac-figure-value">{stats.questions}<small>개</small></dd>
+              <dd className="ac-figure-foot">
                 {stats.questions > 0
-                  ? <a href="#ac-questions-0">{stats.questions}<small>개</small></a>
-                  : <>0<small>개</small></>}
+                  ? <a href="#ac-questions-0">질문과 예상 답변 보기</a>
+                  : '이번 결과에는 질문이 없습니다.'}
               </dd>
             </div>
           </dl>
-          <p className="ac-figures-note">
-            {SCORE_ROWS.map(row => `${row.label}: ${row.comment}`).join(' ')}
-          </p>
           {evaluation.items.length === 0 && <p className="ac-card-desc">평가한 문항이 없습니다.</p>}
           {evaluation.items.map((item, i) => (
             <TopicCard key={item.topicId ?? i} item={item} index={i}

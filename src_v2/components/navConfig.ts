@@ -132,11 +132,14 @@ export const NAV_SECTIONS: NavSection[] = [
         label: 'AI 자소서/면접',
         path: '/jobs/home',
         icon: 'fa-file-lines',
+        // ★ 배열 순서 = DB 메뉴 코드(stu-jobs.3.N). 보이는 순서는 DB sort_order 가 정한다(171).
+        //   중간에 끼워 넣으면 이름과 이동 경로가 한 칸씩 밀린다(2026-11-20 「AI 컨설팅」이 자소서 생성으로 가던 원인).
         children: [
-          { label: 'AI 자소서', path: '/jobs/home/cover', icon: 'fa-folder-open' },
           { label: 'AI 자소서 생성', path: '/jobs/home/resume', icon: 'fa-wand-magic-sparkles' },
           { label: 'AI 컨설팅', path: '/jobs/home/consulting', icon: 'fa-magnifying-glass-chart' },
+          { label: 'AI 자소서', path: '/jobs/home/cover', icon: 'fa-folder-open' },
           { label: 'AI 인터뷰', path: '/jobs/home/interview', icon: 'fa-video' },
+          { label: 'AI 인터뷰 결과', path: '/jobs/home/interview/results', icon: 'fa-clipboard-check' },
         ],
       },
       { label: '공지사항', path: '/jobs/notices', icon: 'fa-bullhorn' },
