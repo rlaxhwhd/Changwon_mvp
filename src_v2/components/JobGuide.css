@@ -61,7 +61,7 @@
 /* 지원자격 카드 아래 절반 — 우대사항(아이콘 없이 작은 제목) */
 .jg-p-pref { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--l); }
 .jg-p-info > div > .jg-p-pref:first-child { margin-top: 0; padding-top: 0; border-top: 0; }
-.jg .jg-p-pref h5 { margin: 0 0 4px; font-size: 13.5px; font-weight: 700; color: var(--c); }
+.jg .jg-p-pref h5 { margin: 0 0 4px; font-size: 15px; font-weight: 700; color: var(--c); }
 .jg-p-date { font-size: 15px; font-weight: 700; }
 .jg-p-cta { margin: 28px 40px 0; background: var(--c-soft); border-radius: 12px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .jg-p-go { width: 38px; height: 38px; border-radius: 50%; background: var(--c); display: grid; place-items: center; flex: none; }
