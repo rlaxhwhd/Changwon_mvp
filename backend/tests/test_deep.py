@@ -156,10 +156,16 @@ class FakeDeep:
         if path.endswith('/evaluations'):
             evaluation = {
                 'evaluation_id': str(uuid.uuid4()), 'cover_id': cover_id, 'cached': False, 'created': '2026-11-13',
-                'consult': {'consult_score': 72, 'spellcheck_score': 95, 'detector': 81},
-                'contents': [{'order': 0, 'paragraph': cover['topic'][0]['body'], 'topic_id': cover['topic'][0]['id'],
+                'consult': {'consult_score': 72, 'spellcheck_score': 95, 'detector': 81, 'wrong_words': 2},
+                'contents': [{'order': '1', 'paragraph': cover['topic'][0]['body'], 'topic_id': 'eval-topic-1',
                               'consult_content': '<para>원문 구절<span tag="neg">구체적 수치가 없습니다.</span></para>'
-                                                 '<para>좋은 구절<span tag="pos">경험이 직무와 맞습니다.</span></para>'}]}
+                                                 '<para>좋은 구절<span tag="pos">경험이 직무와 맞습니다.</span></para>'}],
+                # v3 — 상세 평가·예상 질문. 두 번째 질문은 답변 생성 실패(빈 문자열), 세 번째는 형식 오류.
+                'topics': [{'topic_id': 'eval-topic-1', 'type': '지원동기', 'title': '지원 동기를 쓰세요',
+                            'detail': '전체적으로 직무 이해가 드러납니다.',
+                            'questions': [{'id': 'q1', 'topic': 'eval-topic-1', 'question': '왜 지원했나요?', 'answer': '직무가 맞아서입니다.'},
+                                          {'id': 'q2', 'topic': 'eval-topic-1', 'question': '강점은?', 'answer': ''},
+                                          {'id': 'q3', 'question': None}]}]}
             cover.setdefault('evaluations', []).append({**evaluation, 'body': cover['topic'][0]['body']})
             return httpx.Response(201, json=evaluation)
         if request.method == 'GET' and path == f'covers/{cover_id}':
@@ -190,6 +196,15 @@ def create(client, **change):
 
 
 # ── 순수 함수 ────────────────────────────────────────────────────────────
+
+def test_evaluation_before_v3_has_no_detail_or_questions():
+    """v3 이전 평가본(topics·wrong_words 없음)도 그대로 읽는다 — 상세 칸은 비워 둔다."""
+    dto = deep.evaluation_dto({'evaluation_id': 'e', 'created': '2026-11-13', 'consult': {'consult_score': 75.0},
+                               'contents': [{'order': '1', 'topic_id': 't', 'paragraph': '본문', 'consult_content': None}]})
+    assert dto['wrongWords'] is None
+    assert dto['items'] == [{'order': '1', 'topicId': 't', 'type': '', 'title': '', 'paragraph': '본문',
+                             'advice': [], 'detail': None, 'questions': []}]
+
 
 def test_advice_is_parsed_into_text_not_html():
     items = deep.parse_advice('<para>원문<span tag="neg">고칠 점 &amp; 이유</span></para>'
@@ -327,6 +342,12 @@ def test_evaluation_is_returned_but_not_stored(client, fake):
     result = response.json()
     assert result['scores'] == {'consult': 72, 'spellcheck': 95, 'human': 81}
     assert result['items'][0]['advice'][0] == {'quote': '원문 구절', 'tone': 'neg', 'comment': '구체적 수치가 없습니다.'}
+    # v3 상세 결과: 문항 제목·상세 평가·예상 질문(형식이 깨진 질문은 버린다), 틀린 단어 수
+    assert result['wrongWords'] == 2
+    item = result['items'][0]
+    assert (item['type'], item['title'], item['detail']) == ('지원동기', '지원 동기를 쓰세요', '전체적으로 직무 이해가 드러납니다.')
+    assert item['questions'] == [{'question': '왜 지원했나요?', 'answer': '직무가 맞아서입니다.'},
+                                 {'question': '강점은?', 'answer': ''}]
     with pool.connection() as conn:
         assert conn.execute(count, (resume['id'],)).fetchone()['n'] == before
 

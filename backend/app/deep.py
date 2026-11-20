@@ -320,7 +320,8 @@ def _score(value):
 
 
 def evaluate(user, cover_id, force=False):
-    response = call(user, 'POST', f'covers/{cover_id}/evaluations', json={'force': bool(force)}, timeout=150)
+    # v3(Deep_API_v3.xlsx): 문항당 Gemini 7~9회(상세 평가·예상 질문·답변까지) — nginx 평가 경로 330s 안에서 끝낸다.
+    response = call(user, 'POST', f'covers/{cover_id}/evaluations', json={'force': bool(force)}, timeout=300)
     if response.status_code not in (200, 201):
         raise failure(response, {
             'no_topics': (422, '평가할 본문이 없습니다. 자소서를 작성한 뒤 다시 시도해 주세요.'),
@@ -339,17 +340,36 @@ def evaluation_dto(data):
     if not isinstance(data, dict) or not isinstance(data.get('consult'), dict):
         raise DeepError(502, 'AI 평가 응답을 확인할 수 없습니다.')
     consult = data['consult']
-    contents = data.get('contents') if isinstance(data.get('contents'), list) else []
+    contents = [c for c in data.get('contents') or [] if isinstance(c, dict)] if isinstance(data.get('contents'), list) else []
+    # v3 topics[] — 문항별 상세 평가·예상 면접 질문·답변. v3 이전 평가본에는 없다. 생성 실패 시 detail=null·answer=''.
+    topics = [t for t in data.get('topics') or [] if isinstance(t, dict)] if isinstance(data.get('topics'), list) else []
+    by_id = {str(t.get('topic_id')): t for t in topics if t.get('topic_id')}
+
+    def item(index, content):
+        topic = by_id.get(str(content.get('topic_id'))) or (topics[index] if not by_id and index < len(topics) else {})
+        questions = topic.get('questions') if isinstance(topic.get('questions'), list) else []
+        return {'order': content.get('order'), 'topicId': content.get('topic_id'),
+                'type': _text_or_empty(topic.get('type')), 'title': _text_or_empty(topic.get('title')),
+                'paragraph': content.get('paragraph') or '',
+                'advice': parse_advice(content.get('consult_content')),
+                'detail': topic.get('detail') if isinstance(topic.get('detail'), str) and topic['detail'].strip() else None,
+                'questions': [{'question': q['question'], 'answer': _text_or_empty(q.get('answer'))}
+                              for q in questions
+                              if isinstance(q, dict) and isinstance(q.get('question'), str) and q['question'].strip()]}
+
     return {
         'evaluationId': data.get('evaluation_id'), 'cached': data.get('cached') is True,
         'createdAt': data.get('created'),
         'scores': {'consult': _score(consult.get('consult_score')),
                    'spellcheck': _score(consult.get('spellcheck_score')),
                    'human': _score(consult.get('detector'))},
-        'items': [{'order': c.get('order'), 'paragraph': c.get('paragraph') or '',
-                   'advice': parse_advice(c.get('consult_content'))}
-                  for c in contents if isinstance(c, dict)],
+        'wrongWords': _score(consult.get('wrong_words')),
+        'items': [item(i, c) for i, c in enumerate(contents)],
     }
+
+
+def _text_or_empty(value):
+    return value.strip() if isinstance(value, str) else ''
 
 
 def evaluated_cover_ids(user):

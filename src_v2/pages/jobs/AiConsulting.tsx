@@ -11,9 +11,135 @@ const SCORE_ROWS: { key: keyof ResumeEvaluation['scores']; label: string; commen
   { key: 'spellcheck', label: '표절 검사 점수', comment: '표절 검사 결과를 점수로 나타냅니다.', unit: '점' },
   { key: 'human', label: '사람이 쓴 확률', comment: 'AI가 아닌 사람이 작성했을 가능성입니다.', unit: '%' },
 ]
-const TONE_ICON = { pos: 'fa-circle-check', neg: 'fa-circle-exclamation', note: 'fa-circle-info' } as const
+const TONE = {
+  pos: { icon: 'fa-circle-check', label: '잘한 점' },
+  neg: { icon: 'fa-circle-exclamation', label: '고칠 점' },
+  note: { icon: 'fa-circle-info', label: '참고' },
+} as const
 
-const scoreColor = (s: number) => (s >= 85 ? '#16A34A' : s >= 75 ? 'var(--color-primary)' : 'var(--color-warning)')
+// 평가 중 Deep 이 하는 일(Deep_API_v3.xlsx 5번 시트). 진행률은 Deep 이 알려 주지 않으므로 단계를 지어내지 않고 할 일만 보여 준다.
+const EVAL_STEPS = [
+  { icon: 'fa-pen-nib', title: '문장별 첨삭', desc: '문장마다 잘한 점과 고칠 점을 짚습니다.' },
+  { icon: 'fa-user-check', title: '작성 진단', desc: '표절 검사를 하고 사람이 쓴 글일 확률을 계산합니다.' },
+  { icon: 'fa-file-lines', title: '문항 종합 평가', desc: '문항 전체를 읽고 8~10문장으로 평가합니다.' },
+  { icon: 'fa-comments', title: '예상 면접 질문', desc: '이 자소서로 나올 질문 3개와 예상 답변을 만듭니다.' },
+] as const
+
+const scoreColor = (s: number) => (s >= 85 ? 'var(--mint-ink)' : s >= 75 ? 'var(--color-primary)' : 'var(--color-warning)')
+
+type EvaluationItem = ResumeEvaluation['items'][number]
+
+function EvaluationLoading() {
+  const [seconds, setSeconds] = useState(0)
+  useEffect(() => {
+    const timer = window.setInterval(() => setSeconds(value => value + 1), 1000)
+    return () => window.clearInterval(timer)
+  }, [])
+  return (
+    <div className="ac-card ac-eval-loading" role="status" aria-live="polite">
+      <div className="ac-eval-loading-head">
+        <div className="ac-spinner" aria-hidden="true" />
+        <div>
+          <p className="ac-eval-loading-title">AI가 자기소개서를 꼼꼼히 읽고 있습니다</p>
+          <p className="ac-eval-loading-sub">
+            문항 하나에 1~3분 정도 걸립니다 · 경과 {Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}
+          </p>
+        </div>
+      </div>
+      <div className="ac-eval-progress" aria-hidden="true"><span /></div>
+      <ol className="ac-eval-steps">
+        {EVAL_STEPS.map(step => (
+          <li key={step.title}>
+            <i className={`fa-solid ${step.icon}`} aria-hidden="true" />
+            <div>
+              <strong>{step.title}</strong>
+              <span>{step.desc}</span>
+            </div>
+          </li>
+        ))}
+      </ol>
+      <p className="ac-eval-loading-note">
+        <i className="fa-solid fa-circle-info" aria-hidden="true" /> 결과가 나올 때까지 이 화면에 머물러 주세요.
+        화면을 벗어났다면 잠시 뒤 자소서 홈의 「컨설팅 보기」에서 결과를 확인할 수 있습니다.
+      </p>
+    </div>
+  )
+}
+
+// fallback — v3 이전 평가본은 문항 제목이 없다. 우리 자소서는 문항이 하나라 그 분야 이름을 쓴다.
+function TopicCard({ item, index, fallback }: { item: EvaluationItem; index: number; fallback?: string }) {
+  const heading = item.title || item.type || fallback || `문항 ${index + 1}`
+  const good = item.advice.filter(advice => advice.tone === 'pos').length
+  const fix = item.advice.filter(advice => advice.tone === 'neg').length
+  return (
+    <section className="ac-topic" aria-labelledby={`ac-topic-${index}`}>
+      <header className="ac-topic-head">
+        <span className="ac-topic-no">Q{index + 1}</span>
+        <div className="ac-topic-heading">
+          {item.type && item.title && item.type !== item.title && <span className="ac-badge">{item.type}</span>}
+          <h3 id={`ac-topic-${index}`}>{heading}</h3>
+        </div>
+        <div className="ac-topic-counts">
+          <span className="pos"><i className="fa-solid fa-circle-check" aria-hidden="true" /> 잘한 점 {good}</span>
+          <span className="neg"><i className="fa-solid fa-circle-exclamation" aria-hidden="true" /> 고칠 점 {fix}</span>
+        </div>
+      </header>
+
+      {item.detail && (
+        <div className="ac-topic-block ac-detail">
+          <h4><i className="fa-solid fa-file-lines" aria-hidden="true" /> 문항 종합 평가</h4>
+          <p>{item.detail}</p>
+        </div>
+      )}
+
+      <div className="ac-topic-block">
+        <h4><i className="fa-solid fa-pen-nib" aria-hidden="true" /> 문장별 첨삭</h4>
+        {item.advice.length === 0
+          ? <p className="ac-card-desc">이 문항에는 첨삭 의견이 없습니다.</p>
+          : (
+            <ol className="ac-advice">
+              {item.advice.map((advice, j) => (
+                <li key={j} className={`ac-advice-item ${advice.tone}`}>
+                  <span className="ac-advice-tag">
+                    <i className={`fa-solid ${TONE[advice.tone].icon}`} aria-hidden="true" /> {TONE[advice.tone].label}
+                  </span>
+                  {advice.quote && <q className="ac-advice-quote">{advice.quote}</q>}
+                  <p className="ac-advice-comment">{advice.comment}</p>
+                </li>
+              ))}
+            </ol>
+          )}
+      </div>
+
+      {item.questions.length > 0 && (
+        <div className="ac-topic-block">
+          <h4><i className="fa-solid fa-comments" aria-hidden="true" /> 예상 면접 질문</h4>
+          <div className="ac-questions">
+            {item.questions.map((question, j) => (
+              <details key={j} className="ac-question">
+                <summary>
+                  <span className="ac-question-no">Q{j + 1}</span>
+                  <span className="ac-question-text">{question.question}</span>
+                  <i className="fa-solid fa-chevron-down" aria-hidden="true" />
+                </summary>
+                <p className={question.answer ? undefined : 'ac-empty-text'}>
+                  {question.answer || '예상 답변을 만들지 못했습니다.'}
+                </p>
+              </details>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {item.paragraph && (
+        <details className="ac-original">
+          <summary><i className="fa-solid fa-align-left" aria-hidden="true" /> 평가한 원문 보기</summary>
+          <p>{item.paragraph}</p>
+        </details>
+      )}
+    </section>
+  )
+}
 
 function subscribeResumes(onChange: () => void) {
   window.addEventListener(RESUME_EVENT, onChange)
@@ -79,6 +205,13 @@ function AiConsultingScreen() {
     } finally {
       setEvaluating(false)
     }
+  }
+
+  const advice = evaluation?.items.flatMap(item => item.advice) ?? []
+  const stats = {
+    good: advice.filter(entry => entry.tone === 'pos').length,
+    fix: advice.filter(entry => entry.tone === 'neg').length,
+    questions: evaluation?.items.reduce((sum, item) => sum + item.questions.length, 0) ?? 0,
   }
 
   const resetEval = () => {
@@ -168,13 +301,7 @@ function AiConsultingScreen() {
       )}
 
       {/* ── 평가 중 ── */}
-      {evaluating && (
-        <div className="ac-card ac-loading">
-          <div className="ac-spinner" />
-          <p>AI가 자기소개서를 평가하고 있습니다.</p>
-          <span>표절 검사와 문항별 분석을 함께 진행해 1~2분 정도 걸릴 수 있습니다.</span>
-        </div>
-      )}
+      {evaluating && <EvaluationLoading />}
 
       {/* ── 평가 결과 ── */}
       {evaluation && selected && (
@@ -240,20 +367,36 @@ function AiConsultingScreen() {
             </div>
           </div>
 
-          <div className="ac-suggest">
-            <h3><i className="fa-solid fa-lightbulb" /> 문장별 조언</h3>
-            {evaluation.items.every(item => item.advice.length === 0) && <p className="ac-card-desc">조언이 없습니다.</p>}
-            <ul>
-              {evaluation.items.flatMap((item, i) => item.advice.map((advice, j) => (
-                <li key={`${i}-${j}`}>
-                  <i className={`fa-solid ${TONE_ICON[advice.tone]}`} aria-hidden="true" />
-                  <span>
-                    {advice.quote && <q>{advice.quote}</q>} {advice.comment}
-                  </span>
-                </li>
-              )))}
-            </ul>
-          </div>
+          <ul className="ac-stats">
+            <li className="pos">
+              <i className="fa-solid fa-circle-check" aria-hidden="true" />
+              <strong>{stats.good}</strong><span>잘한 점</span>
+            </li>
+            <li className="neg">
+              <i className="fa-solid fa-circle-exclamation" aria-hidden="true" />
+              <strong>{stats.fix}</strong><span>고칠 점</span>
+            </li>
+            <li>
+              <i className="fa-solid fa-spell-check" aria-hidden="true" />
+              <strong>{evaluation.wrongWords ?? '-'}</strong><span>맞춤법 오류</span>
+            </li>
+            <li>
+              <i className="fa-solid fa-comments" aria-hidden="true" />
+              <strong>{stats.questions}</strong><span>예상 면접 질문</span>
+            </li>
+          </ul>
+
+          <h3 className="ac-section-title"><i className="fa-solid fa-list-check" aria-hidden="true" /> 문항별 상세 평가</h3>
+          {evaluation.items.length === 0 && <p className="ac-card-desc">평가한 문항이 없습니다.</p>}
+          {evaluation.items.map((item, i) => (
+            <TopicCard key={item.topicId ?? i} item={item} index={i}
+              fallback={evaluation.items.length === 1 ? selected.categoryLabel : undefined} />
+          ))}
+          {evaluation.items.length > 0 && stats.questions === 0 && evaluation.items.every(item => !item.detail) && (
+            <p className="ac-preview-notice" role="status">
+              이 결과에는 문항 종합 평가와 예상 면접 질문이 없습니다. 이전 방식으로 평가한 결과일 수 있으니 다시 평가하면 함께 받아 볼 수 있습니다.
+            </p>
+          )}
 
           <div className="ac-actions">
             <button className="ac-btn-ghost" onClick={resetEval}>

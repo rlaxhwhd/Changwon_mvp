@@ -57,10 +57,20 @@ export interface ResumeEvaluation {
   stale?: boolean
   createdAt: string | null
   scores: { consult: number | null; spellcheck: number | null; human: number | null }
+  /** 틀린 단어 수. 모르면 null. */
+  wrongWords: number | null
   items: {
-    order: number | null
+    order: string | number | null
+    topicId: string | null
+    /** 문항 항목·제목 — v3 이전 평가본에는 빈 문자열. */
+    type: string
+    title: string
     paragraph: string
     advice: { quote: string; tone: 'pos' | 'neg' | 'note'; comment: string }[]
+    /** 문항 종합 평가(8~10문장). v3 이전 평가본이거나 생성에 실패하면 null. */
+    detail: string | null
+    /** 예상 면접 질문 최대 3개. 답변 생성에 실패하면 answer 는 빈 문자열. */
+    questions: { question: string; answer: string }[]
   }[]
 }
 

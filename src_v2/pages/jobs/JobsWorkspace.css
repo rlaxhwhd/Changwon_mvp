@@ -21,7 +21,7 @@
 .jobs-workspace :is(.rs-application-choice legend, .rs-application-text, .rs-keyword-field > label, .rs-steps li) { font-size: var(--fs-body); font-weight: 600; }
 .jobs-workspace .rs-step-heading { font-size: var(--fs-lead); }
 .jobs-workspace :is(.rs-application-heading h2, .rs-editor-head h2, .rs-section-head h2, .rs-doc-head h2, .rs-helper-head span, .jh-section-head h2) { font-size: var(--fs-card); }
-.jobs-workspace :is(.rs-editor-head p, .rs-section-head p, .rs-journal-item p, .rs-doc-meta, .rs-doc-preview, .rs-doc-bottom, .jh-section-head p, .jh-resume-meta, .jh-resume-foot, .ac-card-desc, .ac-pick-meta, .ac-grade-comment, .ac-suggest li) { font-size: var(--fs-body); }
+.jobs-workspace :is(.rs-editor-head p, .rs-section-head p, .rs-journal-item p, .rs-doc-meta, .rs-doc-preview, .rs-doc-bottom, .jh-section-head p, .jh-resume-meta, .jh-resume-foot, .ac-card-desc, .ac-pick-meta, .ac-grade-comment) { font-size: var(--fs-body); }
 .jobs-workspace :is(.rs-editor-head > span, .rs-category-select span, .rs-title-input > span, .rs-section-head > span, .rs-journal-item small, .ac-pick-date, .ac-badge) { font-size: var(--fs-meta); font-weight: 500; }
 .jobs-workspace :is(.rs-title-input > input, .rs-category-select select, .rs-editor-card textarea) { font-size: var(--fs-body); font-weight: 400; }
 .jobs-workspace .rs-category-select { margin-bottom: 0; }
@@ -72,7 +72,7 @@
 .jobs-workspace .ac-pick-radio { margin-top: 4px; }
 .jobs-workspace .ac-pick-head { justify-content: space-between; flex-wrap: wrap; }
 .jobs-workspace .ac-score-box { background: var(--blue-soft); color: var(--color-primary); }
-.jobs-workspace :is(.ac-summary-value, .ac-suggest h3, .ac-loading p) { font-size: var(--fs-card); font-weight: 700; }
+.jobs-workspace :is(.ac-summary-value, .ac-loading p) { font-size: var(--fs-card); font-weight: 700; }
 .jobs-workspace :is(.ac-summary-label, .ac-score-label) { font-size: var(--fs-meta); font-weight: 500; }
 .jobs-workspace .ac-preview-notice { padding: 12px 16px; margin-bottom: 20px; background: var(--muted); color: var(--muted-foreground); border: 1px solid var(--border); border-radius: var(--radius-sm); font-size: var(--fs-body); }
 .jobs-workspace .ac-empty { display: grid; justify-items: center; gap: 12px; padding: 36px 16px; text-align: center; color: var(--muted-foreground); }
