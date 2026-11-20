@@ -113,7 +113,6 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
     { label: '마감일', value: deadlineOf(job) },
   ])
 
-  const stages = [...(job.stages ?? [])].sort((a, b) => a.order - b.order)
   const attachments = job.attachments ?? []
 
   return (
@@ -181,20 +180,7 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
               ? <div className={`jd-content${job.guideTemplate ? ' is-extra' : ''}`} dangerouslySetInnerHTML={{ __html: safeHtml(job.content) }} />
               : !job.guideTemplate && <p className="jd-empty">등록된 모집요강이 없습니다.</p>}
           </Section>
-
-          {/* 전형 단계는 상담사가 정의한 공고만 — 없는 절차를 기본값으로 지어내지 않는다. */}
-          {stages.length > 0 && (
-            <Section title="전형 절차">
-              <ol className="jd-stages">
-                {stages.map((stage, index) => (
-                  <li key={stage.id}>
-                    <span className="jd-stage-no">{index + 1}</span>
-                    <span className="jd-stage-name">{stage.name}</span>
-                  </li>
-                ))}
-              </ol>
-            </Section>
-          )}
+          {/* 「전형 절차」 카드는 두지 않는다 — 전형은 모집요강(템플릿)에 적는다(2026-11-20 사용자 요청). */}
         </main>
 
         <aside className="jd-side">
@@ -245,11 +231,6 @@ export default function JobDetailView({ job, back, action, showHeading = true, s
           )}
         </aside>
       </div>
-
-      <p className="jd-note">
-        <Icon name="info" />
-        상세 공고 내용은 등록된 정보를 기준으로 제공됩니다.
-      </p>
     </div>
   )
 }
@@ -287,7 +268,6 @@ const ICONS: Record<string, ReactNode> = {
   won: <><circle cx="12" cy="12" r="9" /><path d="M7.5 9.5l2 5 2.5-5 2.5 5 2-5M7 12.5h10" /></>,
   heart: <path d="M12 20.3l-1.4-1.3C5.9 14.8 3 12.2 3 8.9 3 6.4 5 4.5 7.5 4.5c1.5 0 2.9.7 3.7 1.8l.8 1 .8-1c.8-1.1 2.2-1.8 3.7-1.8C19 4.5 21 6.4 21 8.9c0 3.3-2.9 5.9-7.6 10.1z" />,
   'heart-fill': <path d="M12 20.3l-1.4-1.3C5.9 14.8 3 12.2 3 8.9 3 6.4 5 4.5 7.5 4.5c1.5 0 2.9.7 3.7 1.8l.8 1 .8-1c.8-1.1 2.2-1.8 3.7-1.8C19 4.5 21 6.4 21 8.9c0 3.3-2.9 5.9-7.6 10.1z" fill="currentColor" stroke="none" />,
-  info: <><circle cx="12" cy="12" r="9" /><path d="M12 16.5v-5M12 8h.01" /></>,
 }
 
 function Icon({ name }: { name: keyof typeof ICONS }) {
