@@ -25,8 +25,6 @@ const EVAL_STEPS = [
   { icon: 'fa-comments', title: '예상 면접 질문', desc: '이 자소서로 나올 질문 3개와 예상 답변을 만듭니다.' },
 ] as const
 
-const scoreColor = (s: number) => (s >= 85 ? 'var(--mint-ink)' : s >= 75 ? 'var(--color-primary)' : 'var(--color-warning)')
-
 type EvaluationItem = ResumeEvaluation['items'][number]
 
 function EvaluationLoading() {
@@ -194,7 +192,7 @@ function TopicCard({ item, index, fallback }: { item: EvaluationItem; index: num
       )}
 
       {item.questions.length > 0 && (
-        <div className="ac-topic-block">
+        <div className="ac-topic-block" id={`ac-questions-${index}`}>
           <h4>예상 면접 질문</h4>
           <div className="ac-questions">
             {item.questions.map((question, j) => (
@@ -290,10 +288,7 @@ function AiConsultingScreen() {
     }
   }
 
-  const advice = evaluation?.items.flatMap(item => item.advice) ?? []
   const stats = {
-    good: advice.filter(entry => entry.tone === 'pos').length,
-    fix: advice.filter(entry => entry.tone === 'neg').length,
     questions: evaluation?.items.reduce((sum, item) => sum + item.questions.length, 0) ?? 0,
   }
 
@@ -407,31 +402,33 @@ function AiConsultingScreen() {
             </p>
           )}
 
-          {/* 세 점수를 한 줄 장부로 — 맨 앞 AI 평가 점수가 주인공 */}
-          <dl className="ac-ledger">
+          {/* 수치는 표처럼 담담하게 한 줄로 — 색·막대 없이 숫자만. 설명은 아래 한 줄 각주로 */}
+          <dl className="ac-figures">
             {SCORE_ROWS.map(row => {
               const value = evaluation.scores[row.key]
               return (
-                <div key={row.key} className={`ac-ledger-cell${row.key === 'consult' ? ' is-lead' : ''}`}>
+                <div key={row.key}>
                   <dt>{row.label}</dt>
-                  <dd className="ac-ledger-value" style={value === null ? undefined : { color: scoreColor(value) }}>
-                    {value ?? '-'}{value !== null && <small>{row.key === 'consult' ? '/100' : row.unit}</small>}
-                  </dd>
-                  <dd className="ac-ledger-bar" aria-hidden="true">
-                    <span style={{ width: `${Math.max(0, Math.min(100, value ?? 0))}%`, background: value === null ? undefined : scoreColor(value) }} />
-                  </dd>
-                  <dd className="ac-ledger-note">{row.comment}</dd>
+                  <dd>{value ?? '-'}{value !== null && <small>{row.key === 'consult' ? ' / 100' : row.unit}</small>}</dd>
                 </div>
               )
             })}
+            <div>
+              <dt>맞춤법 오류</dt>
+              <dd>{evaluation.wrongWords ?? '-'}{evaluation.wrongWords !== null && <small>개</small>}</dd>
+            </div>
+            <div>
+              <dt>예상 면접 질문</dt>
+              <dd>
+                {stats.questions > 0
+                  ? <a href="#ac-questions-0">{stats.questions}<small>개</small></a>
+                  : <>0<small>개</small></>}
+              </dd>
+            </div>
           </dl>
-
-          <ul className="ac-tally">
-            <li className="pos">잘한 점 <b>{stats.good}</b></li>
-            <li className="neg">고칠 점 <b>{stats.fix}</b></li>
-            <li>맞춤법 오류 <b>{evaluation.wrongWords ?? '-'}</b></li>
-            <li>예상 면접 질문 <b>{stats.questions}</b></li>
-          </ul>
+          <p className="ac-figures-note">
+            {SCORE_ROWS.map(row => `${row.label}: ${row.comment}`).join(' ')}
+          </p>
           {evaluation.items.length === 0 && <p className="ac-card-desc">평가한 문항이 없습니다.</p>}
           {evaluation.items.map((item, i) => (
             <TopicCard key={item.topicId ?? i} item={item} index={i}
