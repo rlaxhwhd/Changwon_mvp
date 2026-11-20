@@ -488,6 +488,24 @@ def test_unknown_codes_and_invalid_input_are_refused(client):
                        json=posting_body(companyId='cmp_nope')).status_code == 422
 
 
+def test_apply_url_without_scheme_gets_https_and_url_email_are_optional(client):
+    company = new_company(client, '링크검증 ' + uuid4().hex[:6])
+    made = client.post('/api/v1/jobs', headers={**headers('career_kim'), **key()},
+                       json=posting_body(companyId=company['id'], applyUrl=' www.example.com/jobs ', email=''))
+    assert made.status_code == 201, made.text
+    assert made.json()['applyUrl'] == 'https://www.example.com/jobs'
+    assert made.json()['email'] == ''
+    blank = client.post('/api/v1/jobs', headers={**headers('career_kim'), **key()},
+                        json=posting_body(companyId=company['id'], applyUrl='', email=''))
+    assert blank.status_code == 201 and blank.json()['applyUrl'] == ''
+    port = client.post('/api/v1/jobs', headers={**headers('career_kim'), **key()},
+                       json=posting_body(companyId=company['id'], applyUrl='example.com:8080/apply'))
+    assert port.status_code == 201 and port.json()['applyUrl'] == 'https://example.com:8080/apply'
+    for bad in ('ftp://example.com', 'data:text/html,x', 'www.exa mple.com'):
+        assert client.post('/api/v1/jobs', headers={**headers('career_kim'), **key()},
+                           json=posting_body(companyId=company['id'], applyUrl=bad)).status_code == 422, bad
+
+
 def test_posting_logo_preview_replace_and_preserve_by_another_manager(client):
     from app.jobs import bind_files
     import base64

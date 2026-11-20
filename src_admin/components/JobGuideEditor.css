@@ -55,8 +55,23 @@
 /* 폼 오른쪽 sticky 칸 안 — 템플릿이 화면보다 길면 칸 안에서 스크롤한다. */
 .jge-preview {
   padding: 18px; background: var(--jf-card-bg); border: 1px solid var(--jf-border); border-radius: var(--jf-r);
-  max-height: calc(100vh - var(--gnb-height) - 40px); overflow-y: auto;
+  /* 아래 PC/모바일 버튼(38px + 간격 10px)까지 한 화면에 들어오게 그만큼 뺀다. */
+  max-height: calc(100vh - var(--gnb-height) - 40px - 48px); overflow-y: auto;
 }
+/* 실제 폭(760·375)으로 그린 템플릿을 칸 폭에 맞게 줄인다 — 높이는 JS 가 줄어든 값으로 맞춘다. */
+.jge-stage { position: relative; overflow: hidden; }
+.jge-frame { transform-origin: top left; }
+.jge-frame.is-mobile { margin: 0 auto; transform-origin: top center; box-shadow: 0 0 0 1px var(--jf-border); border-radius: 6px; }
+
+.jge-views { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.jge-view {
+  height: 38px; border: 1px solid var(--jf-input-border); border-radius: var(--jf-r-input); background: #fff;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--jf-text); cursor: pointer;
+}
+.jge-view:hover { border-color: var(--jf-primary); }
+.jge-view:focus-visible { outline: 2px solid var(--jf-primary); outline-offset: 2px; }
+.jge-view.is-on { background: var(--jf-primary-soft); border-color: var(--jf-primary); color: var(--jf-primary); }
+
 .jge-preview-empty { margin: 0; padding: 28px 16px; text-align: center; font-size: 13px; line-height: 1.6; color: var(--jf-muted); background: var(--jf-label-bg); border-radius: var(--jf-r-input); }
 /* 직계 자식만 — 미리보기 안의 템플릿 제목(h3)까지 덮지 않는다 */
 .jge-preview > h3 { margin: 0 0 14px; font-size: 14px; font-weight: 700; }

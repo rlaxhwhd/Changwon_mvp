@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useLayoutEffect, useRef, useState } from 'react'
 import JobGuide from '../../src_v2/components/JobGuide'
 import type { JobGuideSource } from '../../src_v2/components/JobGuide'
 import { JOB_GUIDE_TEMPLATE_LABEL, blankGuideFields } from '../data/schema/job'
@@ -193,14 +193,59 @@ export default function JobGuideEditor({ template, fields, onChange }: Omit<Prop
   )
 }
 
+// 미리보기 화면 폭 — PC 는 학생 상세 본문 칸 근처, 모바일은 흔한 폰 폭.
+// 템플릿은 컨테이너 폭으로 배치를 바꾸므로(@container 600px) 이 폭으로 그린 뒤 칸에 맞게 줄여 보여 준다.
+const VIEW_WIDTH = { pc: 760, mobile: 375 } as const
+type PreviewView = keyof typeof VIEW_WIDTH
+
 /** 등록 폼 오른쪽에 붙는 미리보기 — 스크롤을 따라온다(ProgramForm 썸네일 미리보기와 같은 자리). */
 export function JobGuidePreview({ template, fields, source }: Omit<Props, 'onChange'>) {
+  const [view, setView] = useState<PreviewView>('pc')
+  const stageRef = useRef<HTMLDivElement>(null)
+  const frameRef = useRef<HTMLDivElement>(null)
+  const [fit, setFit] = useState({ scale: 1, height: 0 })
+
+  // 줄인 배율과 줄어든 높이를 잰다 — transform 은 자리를 차지하지 않으므로 바깥 높이를 직접 맞춘다.
+  useLayoutEffect(() => {
+    const stage = stageRef.current
+    const frame = frameRef.current
+    if (!stage || !frame) return
+    const measure = () => {
+      const scale = Math.min(1, stage.clientWidth / VIEW_WIDTH[view])
+      setFit({ scale, height: frame.offsetHeight * scale })
+    }
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(stage)
+    observer.observe(frame)
+    return () => observer.disconnect()
+  }, [view, template])
+
   return (
-    <section className="jge-preview" aria-label="모집요강 미리보기">
-      <h3>모집요강 미리보기 <small>학생 화면에 이렇게 보입니다</small></h3>
-      {template
-        ? <JobGuide template={template} fields={fields ?? blankGuideFields()} source={source} />
-        : <p className="jge-preview-empty">왼쪽 「모집요강 템플릿」에서 템플릿을 고르면 입력한 값으로 공고가 그려집니다.</p>}
-    </section>
+    <>
+      <section className="jge-preview" aria-label="모집요강 미리보기">
+        <h3>모집요강 미리보기 <small>{view === 'pc' ? 'PC' : '모바일'} 학생 화면에 이렇게 보입니다</small></h3>
+        {template
+          ? (
+            <div ref={stageRef} className="jge-stage" style={{ height: fit.height || undefined }}>
+              <div ref={frameRef} className={`jge-frame is-${view}`}
+                style={{ width: VIEW_WIDTH[view], transform: `scale(${fit.scale})` }}>
+                <JobGuide template={template} fields={fields ?? blankGuideFields()} source={source} />
+              </div>
+            </div>
+          )
+          : <p className="jge-preview-empty">왼쪽 「모집요강 템플릿」에서 템플릿을 고르면 입력한 값으로 공고가 그려집니다.</p>}
+      </section>
+      {template && (
+        <div className="jge-views" role="group" aria-label="미리보기 화면 크기">
+          {(['pc', 'mobile'] as const).map(v => (
+            <button key={v} type="button" aria-pressed={view === v}
+              className={`jge-view${view === v ? ' is-on' : ''}`} onClick={() => setView(v)}>
+              {v === 'pc' ? 'PC 화면' : '모바일 화면'}
+            </button>
+          ))}
+        </div>
+      )}
+    </>
   )
 }

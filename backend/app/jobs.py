@@ -497,8 +497,14 @@ class PostingBody(BaseModel):
             raise ValueError('상시 모집은 마감일을 두지 않습니다.')
         if self.deadlineMode != 'DATE':
             self.deadlineTime = DEFAULT_DEADLINE_TIME
-        if self.applyUrl and not self.applyUrl.startswith(('http://', 'https://')):
-            raise ValueError('지원 링크는 http 또는 https 로 시작해야 합니다.')
+        # 지원 링크는 비워도 되고 www.… 처럼 스킴 없이 써도 된다 — 스킴이 없으면 https:// 를 붙여 저장한다(2026-11-20).
+        # http·https 가 아닌 스킴(javascript: 등)은 거절한다. 'host:8080' 처럼 콜론 뒤가 숫자면 포트로 본다.
+        self.applyUrl = self.applyUrl.strip()
+        if self.applyUrl and not self.applyUrl.lower().startswith(('http://', 'https://')):
+            if re.match(r'^[a-z][a-z0-9+.-]*:(?!\d)', self.applyUrl, re.IGNORECASE) or re.search(r'\s', self.applyUrl):
+                raise ValueError('지원 링크 형식을 확인해 주세요. (예: www.example.com)')
+            self.applyUrl = 'https://' + self.applyUrl
+        self.email = self.email.strip()
         if self.urlTitleLink and not self.applyUrl:
             raise ValueError('제목 링크를 쓰려면 지원 링크가 필요합니다.')
         if self.emailApply and not self.email:

@@ -350,11 +350,12 @@ export default function JobForm() {
           </Row>
 
           <Row label="URL 등록">
-            <input className="jf-input" value={draft.applyUrl} onChange={e => set('applyUrl', e.target.value)} placeholder="https://www.example.com" />
+            {/* 선택 입력 — www.… 로 써도 서버가 https:// 를 붙여 저장한다. */}
+            <input className="jf-input" value={draft.applyUrl} onChange={e => set('applyUrl', e.target.value)} placeholder="www.example.com (선택)" />
           </Row>
 
-          <Row label="Email" required>
-            <input className="jf-input" type="email" value={draft.email} onChange={e => set('email', e.target.value)} placeholder="example@company.com" />
+          <Row label="Email">
+            <input className="jf-input" type="email" value={draft.email} onChange={e => set('email', e.target.value)} placeholder="example@company.com (선택)" />
           </Row>
         </section>
 
