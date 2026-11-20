@@ -1,5 +1,16 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-20 AI 컨설팅 디자인·학생 하위 메뉴 API/웹/171·172 서버 배포
+
+- origin/dev f87e8f3까지 확인: 03cf7c4 상세평가 주석/강조 연결, 3b95fdd 점수 행, 54c50c0 색상, f87e8f3 라운지형 점수 카드와 AI 자소서/생성/컨설팅/인터뷰/결과 메뉴를 포함한다. clean archive로 빌드하고 타 세션 미커밋 변경은 보존했다. 후속 안전 보정 cebd49c도 dev에 푸시했다.
+- Astra 0019 revision1 승인 후 적용. 로컬에 이미171이 적용되어 있으므로 불변 유지했고, 새172로 해당 auth_role.version을 증가시켜 배포 전 메뉴관리 화면의 전체 권한 덮어쓰기를 차단한다. 171 SHA256=0a6bba04176920ca9d80cf16b64dbc16359bfff7521dd744ca45fc6fde7ca433,172 SHA256=103b73675a56b41486d3264130f0efa790f85f0257b04ff736e77a3c5e9f8758.
+- 로컬 npm run docker:up -- --no-build의 백업/172 적용/전체 healthy 확인. 신규 격리 DB dc_regression_20261120062652_27f368_test에서 jobs_ai_menus/administration/remaining_migrations 17 passed,745 deselected,기존 경고3개. 새 테스트는 다섯 경로/정렬·오래된 version 저장409·현재 version 동일권한 저장200을 검증한다. 넓은 menu 선택은16passed/2failed; 상담기록 psych grant 기대값과 개발 로드맵 권한 기대값 실패는 직전08415ba clean archive+새 격리 DB에서도 동일2건 재현했다. 기존 실패를 이번 변경의 통과로 간주하지 않았다.
+- API/웹 ai-menu-20261120. API Dockerfile.company에 전체 소스/172개 마이그레이션 포함. clean TypeScript/Vite 빌드 통과(기존 native-config/큰 chunk 경고 유지). API archive SHA256 af6f62f16d9137213e766826f7ff30b56a5ce4a1cfe3fbd72f3abe86eccc62d2,웹 정적 artifact SHA256 b6bacd4be1ec5000b7cda38d30216a53d27c22cb1f659448c997c88e551b7445. 전송/파일 해시 검증. 환경별 비밀·nginx 호스트 템플릿 유지.
+- 서버 /opt/dreamcatch/ai/ai-menu-20261120/에 DB dump·Compose·nginx·전후 감사 보존. 서버 백업을 dc_deploy_ai_menu_20261120_test에 복원해171+172→전체 구조/값 대조→runner 재실행 no-op 리허설 통과. 운영 API drain/exited0→직전 추가 dump→171+172 한 transaction→값 대조→API/웹 교체. 신규 메뉴3개/부모 역할 grant/기존2개 sort+version/해당 역할 version/metadata_revision/schema_migration만 변경, 모든 다른 업무값 및 기존170체크섬 보존. 로컬 데이터를 운영에 복원하지 않았다.
+- 실행 소스·172개 적용/파일·전체 canonical schema MATCH(기존 검증된 직렬화 정규화만 사용). API/웹/DB/RAG/LLM/SearXNG healthy, Qdrant running, nginx -t 통과. 로컬/서버 HTML SHA256 admin e71b6c0cfd912d8464c1dd75f3202044277a7c8fb2f49418252709630e74dd8f,v2 fb08ed43d978b51014b12f6e1c1e49443f626ec77004c6a877d627fb82108946. Docker 저장소 rw,root17GB/Docker21GB 여유.
+- EgoLite 로컬에서 기존 평가 결과 조회와 새 점수 카드 screenshot 열람. 서버 실제 학생 로그인/상단 하위 메뉴5개 순서·각 경로·동의 진입을 snapshot/screenshot으로 확인했다. 동의를 대신 등록하지 않았으므로 서버 상세 결과는 동의 화면 이후 미검증. 외부 AI 생성 없이 기존 결과만 로컬 조회했다. 수집된 로컬/서버 실패API 및 Runtime예외0. 검증 학생 로그아웃204 완료. 성능 개선은 측정/주장하지 않는다.
+- 복구: 저장 Compose의 API/웹 ai-consult-20261120으로 되돌리고 additive171/172·학생 기록·증가한 역할 version은 유지한다. Atlas 도구 부재로 공유기억 조회/저장 미수행. 추가 인계용 기억 파일은 만들지 않았다.
+
 ## 2026-11-20 AI 컨설팅 상세 결과·채용공고 개선 API/웹/170 서버 배포
 
 - origin/dev 최종 fetch=08415ba. 직전4fadd9f 이후 e7513b0(상세 단계 카드/하단 문구 제거), 5a45e3b(Deep v3 문항별 상세평가·예상 면접 질문/답변), 66aa487(지원링크 스킴 보완·PC/모바일 미리보기), 526e0d1(직종·업무 하위 줄·경력 pill·자격/우대 통합·경력무관), 08415ba(포스터 우대 제목15px)를 clean git archive로 빌드했다. 타 세션 미커밋 변경은 제외/보존했다. 전날 CSS 배포 한 건의 테스트 생략 요청은 이번 기능/API/DB 배포에 확대하지 않았다.
