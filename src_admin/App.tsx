@@ -61,7 +61,7 @@ import ProfessorCounselDetail from './pages/ProfessorCounselDetail'
 import ProfessorCounselStats from './pages/ProfessorCounselStats'
 import ProfessorHome from './pages/ProfessorHome'
 import NotReady from './pages/NotReady'
-import PersonalStats from './pages/PersonalStats'
+import StatsDashboard from './pages/StatsDashboard'
 import { getActiveUser } from './data/staff'
 import { staffPageLoader } from './data/staffPageData'
 import PageDataError from './components/PageDataError'
@@ -177,10 +177,10 @@ const router = createBrowserRouter(
                 { path: '/counsel/records', element: <CounselHistory /> },
                 { path: '/counsel/groups', loader: staffPageLoader(['career', 'psych'], 'groups'), element: <GroupCounsels /> },
                 { path: '/counsel/stats', element: <CounselStats /> },
-                // 통계 현황(148) — 홈에서 옮긴 개인통계. 전체통계는 메뉴 자리만 있다.
+                // 통계 현황(148) — 한 대시보드에 「내 통계 / 전체 통계」 토글. 메뉴 두 자리는 범위 프리셋이다(2026-11-23).
                 { path: '/stats', element: <Navigate to="/stats/personal" replace /> },
-                { path: '/stats/personal', element: <PersonalStats /> },
-                { path: '/stats/overall', element: <NotReady title="전체통계" /> },
+                { path: '/stats/personal', loader: staffPageLoader(['career', 'psych'], 'departments'), element: <StatsDashboard scope="mine" /> },
+                { path: '/stats/overall', loader: staffPageLoader(['career', 'psych'], 'departments'), element: <StatsDashboard scope="all" /> },
                 { path: '/diagnosis/status', element: <DiagnosisStatus /> },
                 { path: '/diagnosis/manage', element: <DiagnosisManagement /> },
                 { path: '/students', element: <Navigate to="/students/all" replace /> },

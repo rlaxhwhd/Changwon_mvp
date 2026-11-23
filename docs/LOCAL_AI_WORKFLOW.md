@@ -1,5 +1,11 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-23 통계 현황 대시보드 API/웹 로컬 반영
+
+- 새 읽기 전용 집계 `GET /stats/overview`(backend/app/stats.py)와 `/admin/stats/personal`·`/admin/stats/overall` 한 화면(내 통계/전체 통계 토글, 영역 탭 진단·상담·로드맵·비교과·채용, 필터 기간·단과대·학과·학년·진단유형). 새 테이블·마이그레이션 없음이라 Astra 리뷰 없이 진행. 차트는 SVG·CSS 키트(src_admin/components/charts/StatsCharts.tsx)로 세로막대·선·가로순위·누적·분할막대·히트맵·미터·퍼널·KPI 타일, 카드마다 「표」 전환.
+- 테스트 DB에서 tests/test_stats_overview.py 8 passed. test_counsel_dashboard의 jobs 분할 1건 실패는 변경 전(stash)에서도 동일 — 이번 변경과 무관.
+- `npm run docker:up` 3회(차트 폭·학과 로더·정수 눈금 수정), 백업 local-before-migrate-20261123045817581.dump, 전체 healthy. EgoLite 1440px에서 career_kim 5영역·범위 토글·1년 프리셋·학과(단대 5→전자공학과)·유형(T2) 필터·초기화·표 전환·툴팁, psych_lee 「심리상담」 탭과 상담 종류 카드 미노출 확인. 조건 변경당 /stats/overview 1회(18~130ms), 필터 연타 시 이전 요청 abort(ERR_ABORTED 1건은 의도), Runtime 예외·콘솔 오류 0, 가로 넘침 없음. 서버 배포는 하지 않았다.
+
 ## 2026-11-20 AI 컨설팅 디자인·학생 하위 메뉴 API/웹/171·172 서버 배포
 
 - origin/dev f87e8f3까지 확인: 03cf7c4 상세평가 주석/강조 연결, 3b95fdd 점수 행, 54c50c0 색상, f87e8f3 라운지형 점수 카드와 AI 자소서/생성/컨설팅/인터뷰/결과 메뉴를 포함한다. clean archive로 빌드하고 타 세션 미커밋 변경은 보존했다. 후속 안전 보정 cebd49c도 dev에 푸시했다.

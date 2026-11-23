@@ -369,7 +369,7 @@ export function queryStudents(scope: AccessScope, params: ListParams): Promise<P
 | **비교과** | 프로그램 개설현황 · 분류 관리 · 블랙리스트 · 참여후기 | `Ep010L`·`Ep040L`·`EpBlackList`·`/admin/poss` | ⚠️ 개설현황은 진로상담사 화면, 블랙리스트 `/blacklists/programs` ✅. 참여후기 ❌ | 구현 중 |
 | **채용** | 공고 관리 · 지원 현황 · 기업회원 관리 | `/Sa/Re` 계열 | ✅ 공고 관리 · 지원자 `/jobs/applicants` · 기업회원 `/members/companies`. 교내공고 관리는 등록일 기간으로 공고 목록 엑셀 다운로드, 카드 「찜 N명」을 누르면 찜한 학생 목록(`GET /jobs/{id}/wishers`), 등록 폼은 성별 선택 없이 지원마감 날짜+시각 (2026-11-19 · 168). 모집요강은 템플릿 3종 중 하나를 고르고 입력칸만 채우면 실시간 미리보기와 같은 모양으로 학생 화면에 그려진다 (169) | — |
 | **시스템** | **공통코드**(`SY_CODE`, §7 운영 화면) · 메뉴 · 게시판 · 배너·팝업 · 접속이력 · **열람 감사로그(신설)** | `SyCm010M`·`SyMn010M`·`SyBd010L` | ⚠️ 공통코드 `/system/codes` · 메뉴 `/system/menus` · 공지 `/notices` · 설문지 `/system/surveys` · 변경 이력 `/system/events` ✅. 배너·팝업 관리 · 접속이력 ❌ | 3순위 |
-| **데이터 분석** | 상담 · 비교과 · 마일리지 구간·순위 6종 | `/Sa/Dt` | ⚠️ 개인통계 `/stats/personal` 만. 전체통계 `/stats/overall` 미구현 | 3순위 |
+| **데이터 분석** | 상담 · 비교과 · 마일리지 구간·순위 6종 | `/Sa/Dt` | ✅ 통계 현황 대시보드 `/stats/personal`(내 통계)·`/stats/overall`(전체 통계) — 한 화면의 범위 토글. `GET /stats/overview?area&scope&from&to&college&dept&grade&type` 가 진단·상담·로드맵·비교과·채용 영역을 한 번에 한 영역씩 집계하고(읽기 전용, 저장 없음), 누적 파이프라인(진단→상담→로드맵→비교과→채용)을 함께 준다. 차트는 SVG·CSS 키트(`components/charts/StatsCharts.tsx`), 카드마다 「표」 전환 (2026-11-23). 마일리지는 STAR 미운영으로 제외 | — |
 | **취업통계** | 취업조사 · 예비조사 · 조사 차수 관리 | `/Sa/St` | ⚠️ 취업 현황 대장만 — `/admin/forecast`(취업예측분석시스템, 151 `dc.employment_report`: 등록·수정·삭제·xlsx 입출력, 2026-11-02). 조사 차수·예비조사 ❌ | 3순위 |
 | 포인트·마일리지 | 지급 기준 · 승인 · 학생별 현황 · 자격증 | `/Sa/Ex` | 🔲 **이관 제외 도메인** — 화면 존치 여부 미정 | — |
 
