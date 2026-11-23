@@ -23,8 +23,7 @@
 
 .rs-header,
 .rs-editor-card,
-.rs-journal-card,
-.rs-helper-card {
+.rs-journal-card {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);
@@ -79,15 +78,8 @@
   font-weight: 800;
 }
 
-.rs-header-actions .tip {
-  border-color: #fde68a;
-  background: #fffbeb;
-  color: var(--color-warning);
-}
-
 .rs-editor-card,
-.rs-journal-card,
-.rs-helper-card {
+.rs-journal-card {
   padding: 18px;
   margin-bottom: 16px;
 }
@@ -131,7 +123,6 @@
 
 .rs-editor-head h2,
 .rs-section-head h2,
-.rs-helper-head span,
 .rs-doc-head h2 {
   color: var(--color-navy);
   font-size: 20px;
@@ -153,7 +144,7 @@
   white-space: nowrap;
 }
 
-/* 「자소서에 꼭 들어갈 내용」 — 본문 위 AI 요청사항 칸 */
+/* 「포함 내용」 — AI 초안 생성에 보내는 요청사항 칸 */
 .rs-brief { margin-bottom: 20px; }
 .rs-brief textarea { height: 120px; }
 .rs-editor-head > span.rs-count-over { color: var(--color-danger); }
@@ -306,56 +297,51 @@
   color: var(--color-text-muted);
 }
 
-.rs-helper-card {
-  padding: 0;
-  overflow: hidden;
-}
-
-.rs-helper-head {
-  width: 100%;
-  min-height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 16px;
-  background: var(--color-surface);
-}
-
-.rs-helper-head i {
-  color: var(--color-primary);
-}
-
-.rs-helper-grid {
+/* 작성 가이드 팝업 — 단계 번호 목록 */
+.rs-guide {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 12px;
-  padding: 16px;
+  gap: 14px;
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  counter-reset: rs-guide;
 }
 
-.rs-helper-grid button {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 14px;
-  text-align: left;
+.rs-guide li {
+  position: relative;
+  padding-left: 38px;
+  counter-increment: rs-guide;
 }
 
-.rs-helper-grid i {
+.rs-guide li::before {
+  content: counter(rs-guide);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--color-primary-bg);
   color: var(--color-primary);
+  font-size: 14px;
+  font-weight: 800;
 }
 
-.rs-helper-grid strong {
+.rs-guide strong {
+  display: block;
   color: var(--color-navy);
   font-size: 16px;
+  font-weight: 700;
+  line-height: 26px;
 }
 
-.rs-helper-grid span {
+.rs-guide p {
+  margin: 2px 0 0;
   color: var(--color-text-sub);
-  font-size: 16px;
-  line-height: 1.5;
+  font-size: 15px;
+  line-height: 1.55;
 }
 
 .rs-doc-head {
@@ -479,9 +465,6 @@
     grid-template-columns: 1fr;
   }
 
-  .rs-helper-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* RESPONSIVE-HERO-AUTO */
@@ -647,9 +630,10 @@
   box-shadow: 0 0 0 3px rgba(46, 91, 255, 0.12);
 }
 
+/* 예시 글자는 입력값과 헷갈리지 않게 연하게 — jobs-workspace 의 muted(#565e6d)는 입력 글자만큼 진하다 */
 .rs-title-input > input::placeholder {
-  color: var(--color-text-muted);
-  font-weight: 500;
+  color: color-mix(in srgb, var(--muted-foreground) 50%, #fff);
+  font-weight: 400;
 }
 
 /* ─── AI 컨설팅으로 이동 버튼 ─────────────────────────────────── */
