@@ -4,6 +4,8 @@
 대상 schema: `dc`  
 실행 가능한 DDL 정본: `backend/migrations/*.sql`
 
+2026-11-23 채용 조회·통계 메뉴·시군구(173–175, Astra 승인 `.ai/handoff-db/0020-stats-jobs-release/` revision 1): `job_posting_view`는 `(posting_id, viewed_on, student_uid)` PK와 공고·학생 FK로 학생별 KST 하루 조회 1회를 기록하며 앱에는 SELECT/INSERT만 허용한다. `stats.2` 메뉴는 `stats` 역할 권한을 이어받고 해당 `auth_role.version`을 올린다. `JOB_REGION_DISTRICT`는 기존 `code_item` 부모 FK로 `JOB_REGION`에 연결하고 `job_posting_option`의 CHECK·생성식에 `DISTRICT`를 추가한다. 기존 REGION 옵션과 비어 있지 않은 legacy는 보존한다. 175의 생성식 변경은 PostgreSQL 17 이상·테이블 rewrite를 전제로 하며 배포 후 ANALYZE한다. 배포 중 메뉴·코드·채용 쓰기를 중지하고, 복구 시 추가 이력·옵션을 보존한다. 구 앱의 공고 저장은 DISTRICT를 지울 수 있어 앱 롤백 중 채용 쓰기를 금지한다. 통계 집계는 원천 조회이며 새 파생 저장 표는 없다.
+
 2026-11-20 채용공고 경력 「경력무관」(170, Astra 승인 `.ai/handoff-db/0018-job-career-any/`): `code_item`에 `('JOB_CAREER_TYPE','ANY','경력무관',sort_order=2)` 1행만 추가한다. 스키마 변경 없음. `job_posting_option`·`job_posting.career_primary_code` 복합 FK가 그대로 받는다. 롤백: 옵션·대표 경력·`code_item_event` 사용이 0이면 DELETE 후 `metadata_revision` 수동 증가, 사용 중이면 `is_active=false`.
 
 2026-11-18 AI 인터뷰 질문 방식(166, Astra 승인 `.ai/handoff-db/0014-job-interview-direct/`): `job_interview_session`에 `mode text NOT NULL DEFAULT 'cover'`(`cover`/`no_cover`/`company`)와 `direct_input jsonb`(학생이 직접 입력해 DeepResume 면접 시작②에 보낸 값 — `interview_content` 또는 `company`·`job_category`, 빈 값 제외)를 추가하고 `resume_id`·`resume_snapshot`의 NOT NULL을 해제한다. CHECK `ck_job_interview_mode_resume`((mode='cover') = (resume_id IS NOT NULL), resume_id NULL ⇔ resume_snapshot NULL)·`ck_job_interview_mode_input`((mode='cover') = (direct_input IS NULL)). 기존 행은 모두 `cover`. 불변 트리거·인덱스·권한은 164 그대로(새 컬럼도 to_jsonb 비교로 불변). 롤백: `mode<>'cover'` 행이 0이면 앱만 되돌리고 166은 둔다, 0이 아니면 forward-fix(컬럼 DROP은 기록을 잃으므로 하지 않는다).
