@@ -226,12 +226,10 @@ export default function AiResume() {
           <button type="button" className="rs-outline-btn" onClick={() => goToStep(1)}>
             <i className="fa-solid fa-arrow-left" aria-hidden="true" /> 이전: 지원정보
           </button>
+          <button type="button" className="rs-outline-btn" onClick={() => setGuideOpen(true)}>
+            <i className="fa-regular fa-circle-question" aria-hidden="true" /> 작성 가이드
+          </button>
         </div>
-        <header className="rs-header">
-          <div className="rs-header-actions">
-            <button type="button" onClick={() => setGuideOpen(true)}><i className="fa-regular fa-circle-question" /> 작성 가이드</button>
-          </div>
-        </header>
 
         <section className="rs-editor-card">
           <div className="rs-title-row">
