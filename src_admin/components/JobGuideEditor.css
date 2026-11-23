@@ -32,7 +32,7 @@
 .jge-pair-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .jge-pair-cols label { display: grid; gap: 4px; min-width: 0; }
 .jge-pair-cols small { font-size: 12px; font-weight: 600; color: var(--jf-muted); }
-.jge-textarea { height: auto; min-height: 72px; padding: 10px 12px; line-height: 1.5; resize: vertical; font-family: inherit; }
+.jge-textarea { height: auto; min-height: 72px; padding: 10px 12px; line-height: 1.5; resize: none; font-family: inherit; }
 
 .jge-chips { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .jge-chip {
