@@ -61,8 +61,13 @@ export default function JobGuideEditor({ template, fields, onChange }: Omit<Prop
   const [customStep, setCustomStep] = useState('')
   const put = (next: Partial<JobGuideFields>) => onChange(template, { ...f, ...next })
 
-  // 템플릿을 바꿔도 입력값은 그대로 — 끌 때만 비운다(서버도 끄면 값을 저장하지 않는다).
-  const pick = (next: JobGuideTemplate | null) => onChange(next, next ? f : null)
+  // 템플릿을 바꿔도 입력값은 그대로. 끄면 저장값은 비우지만(서버도 끄면 저장하지 않는다)
+  // 화면은 기억해 두었다가 다시 켜면 되살린다 — 「사용 안 함」을 잠깐 눌렀다고 입력이 사라지면 안 된다.
+  const stash = useRef<JobGuideFields | null>(null)
+  const pick = (next: JobGuideTemplate | null) => {
+    if (!next) stash.current = f
+    onChange(next, next ? (fields ?? stash.current ?? f) : null)
+  }
 
   const hasDoc = (name: string) => f.documents.some(d => d.name === name)
   const toggleDoc = (name: string) => put({
