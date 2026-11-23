@@ -16,7 +16,7 @@ import type {
   JobStatus,
   JobWisher,
 } from './schema/job'
-import { JOB_CODE_GROUPS, JOB_HIGHLIGHT_TAGS, RECRUIT_TYPE_LABEL, jobLabelsOf } from './schema/job'
+import { JOB_CODE_GROUPS, JOB_HIGHLIGHT_TAGS, RECRUIT_TYPE_LABEL, jobLabelsOf, regionText } from './schema/job'
 import { api, queryString } from '../../shared/api'
 import { DOCUMENT_ACCEPT, IMAGE_ACCEPT, validateUpload } from '../../shared/uploadPolicy'
 import {
@@ -115,7 +115,7 @@ export function jobExportRows(jobs: JobPosting[], applicantsOf: ((job: JobPostin
     jobLabelsOf(JOB_CODE_GROUPS.employmentType, job.employmentTypes).join(', '),
     jobLabelsOf(JOB_CODE_GROUPS.category, job.jobCategories).join(', '),
     jobLabelsOf(JOB_CODE_GROUPS.careerType, job.careerTypes).join(', '),
-    jobLabelsOf(JOB_CODE_GROUPS.region, job.regions).join(', ') || job.location,
+    regionText(job.regions, job.districts) || job.location,
     job.salaryNegotiable ? '회사내규 및 협의' : job.salary,
     job.deadlineMode === 'ALWAYS' ? '상시' : `${job.deadlineMode === 'ON_HIRE' ? '채용시 ' : ''}${jobDeadlineAt(job) ?? ''}`.trim(),
     EXPORT_STATUS_LABEL[job.effectiveStatus] ?? job.effectiveStatus,

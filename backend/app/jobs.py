@@ -46,9 +46,10 @@ OPEN_STATUSES = ('APPLIED', 'IN_PROGRESS')
 SYSTEM_STAGES = (('REVIEW', '서류 검토'), ('FORWARD', '기업 전달'))
 DEFAULT_STAGES = ('서류 전형', '면접 전형', '최종 결과')
 OPTION_KINDS = {'employmentTypes': 'EMPLOYMENT', 'jobCategories': 'CATEGORY',
-                'careerTypes': 'CAREER', 'genders': 'GENDER', 'regions': 'REGION'}
+                'careerTypes': 'CAREER', 'genders': 'GENDER', 'regions': 'REGION', 'districts': 'DISTRICT'}
 OPTION_GROUPS = {'EMPLOYMENT': 'JOB_EMPLOYMENT_TYPE', 'CATEGORY': 'JOB_CATEGORY',
-                 'CAREER': 'JOB_CAREER_TYPE', 'GENDER': 'JOB_GENDER', 'REGION': 'JOB_REGION'}
+                 'CAREER': 'JOB_CAREER_TYPE', 'GENDER': 'JOB_GENDER', 'REGION': 'JOB_REGION',
+                 'DISTRICT': 'JOB_REGION_DISTRICT'}
 POSTING_WRITABLE = ('company_id,company_name_snapshot,role,tags,salary_text,location_text,career_primary_code,'
                     'company_type_code,recruit_type,stored_status,deadline_mode,deadline_date,salary_negotiable,'
                     'url_title_link,email_apply,apply_url,email,content_html,content_format,logo_file_id,deadline_time,'
@@ -490,6 +491,8 @@ class PostingBody(BaseModel):
     careerTypes: list[str] = Field(default_factory=list, max_length=20)
     genders: list[str] = Field(default_factory=list, max_length=10)
     regions: list[str] = Field(default_factory=list, max_length=20)
+    # 시·군·구(JOB_REGION_DISTRICT, 175). 그 시·도는 regions 에도 있어야 한다 — 시·도 필터가 regions 만 본다.
+    districts: list[str] = Field(default_factory=list, max_length=40)
 
     @model_validator(mode='after')
     def consistent(self):
@@ -548,6 +551,11 @@ def validate_options(conn, body):
     for field, kind in OPTION_KINDS.items():
         for code in getattr(body, field):
             check_code(conn, OPTION_GROUPS[kind], code, '분류')
+    if body.districts:
+        parents = {r['code']: r['up_code'] for r in conn.execute('''SELECT code,up_code FROM dc.code_item
+          WHERE group_code='JOB_REGION_DISTRICT' AND code=ANY(%s)''', (body.districts,)).fetchall()}
+        if any(parents.get(code) not in body.regions for code in body.districts):
+            raise HTTPException(422, '시·군·구를 고르면 그 시·도도 지역에 함께 들어가야 합니다.')
     check_code(conn, 'JOB_CAREER_TYPE', body.jobType, '경력 구분')
     check_code(conn, 'JOB_COMPANY_TYPE', body.companyType, '기업 구분')
 

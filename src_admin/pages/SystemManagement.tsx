@@ -10,7 +10,9 @@ import type { Notice } from '../../src_v2/data/notices'
 
 type Page<T> = { items: T[]; totalCount: number; page: number; pageSize: number }
 type Group = { group_code: string; label: string; managed_by: string; fixed_codes: boolean }
-type Item = { group_code: string; code: string; label: string; sort_order: number; is_active: boolean; payload: Record<string, unknown>; version: number }
+type Item = { group_code: string; code: string; label: string; sort_order: number; is_active: boolean; payload: Record<string, unknown>; version: number; up_code?: string | null }
+/** 상위 코드를 고르는 계층 그룹 → 부모 그룹 (서버 administration.PARENT_GROUPS 와 같은 표) */
+const PARENT_GROUPS: Record<string, string> = { JOB_REGION_DISTRICT: 'JOB_REGION' }
 type Assignment = { id: string; staff_uid: string; college_code: string; dept_code: string; role_code: string; valid_from: string; valid_to: string | null; is_active: boolean; version: number }
 type Department = { college_code: string; dept_code: string; college_name: string; dept_name: string; course: string }
 type Staff = { intg_uid: string; name: string; role_code: string }
@@ -48,6 +50,8 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
   const [order, setOrder] = useState(0)
   const [active, setActive] = useState(true)
   const [payload, setPayload] = useState('{}')
+  const [upCode, setUpCode] = useState('')
+  const [upFilter, setUpFilter] = useState('')
   const [reason, setReason] = useState('')
   const [history, setHistory] = useState<Record<string, unknown>[] | null>(null)
   const [error, setError] = useState('')
@@ -57,20 +61,24 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
   const [reload, setReload] = useState(0)
   const definition = groups.find(x => x.group_code === group)
   const semester = parseSemesterCode(code)
+  const parentGroup = PARENT_GROUPS[group]
+  const parentOptions = parentGroup ? codeItems.filter(item => item.group_code === parentGroup).sort((a, b) => a.sort_order - b.sort_order) : []
+  const parentLabel = (value?: string | null) => parentOptions.find(item => item.code === value)?.label ?? value ?? ''
 
   useEffect(() => {
     let cancelled = false
     setLoading(true); setError(''); setEditing(null); setHistory(null)
     // 메뉴 탭은 MenuVisibility 가 역할·메뉴를 직접 조회한다.
     if (tab === 'menus') { setLoading(false); return }
-    const path = tab === 'notices' ? `/system/notices?page=${page}` : tab === 'codes' ? `/system/code-groups/${group}/items?page=${page}`
+    const path = tab === 'notices' ? `/system/notices?page=${page}` : tab === 'codes'
+      ? `/system/code-groups/${group}/items?page=${page}${PARENT_GROUPS[group] && upFilter ? `&upCode=${encodeURIComponent(upFilter)}` : ''}`
       : `/system/${tab === 'assignments' ? 'org-assignments' : tab === 'issues' ? 'import-issues' : 'events'}?page=${page}`
     Promise.all([api<Group[]>('/system/code-groups'), api<Page<Item | Assignment | Record<string, unknown>>>(path)])
       .then(([definitions, result]) => { if (!cancelled) { setGroups(definitions); setData(result) } })
       .catch(e => { if (!cancelled) setError(e.message) })
       .finally(() => { if (!cancelled) setLoading(false) })
     return () => { cancelled = true }
-  }, [tab, group, page, reload])
+  }, [tab, group, page, reload, upFilter])
 
   async function run(action: () => Promise<void>) {
     if (saving) return
@@ -82,6 +90,7 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
   function edit(item: Item) {
     setEditing(item); setCode(item.code); setLabel(item.label); setOrder(item.sort_order)
     setActive(item.is_active); setPayload(JSON.stringify(item.payload, null, 2)); setReason('')
+    setUpCode(item.up_code ?? upFilter)
   }
   return <div className="admin-page system-management">
     <header className="admin-page-head"><div><h1 className="admin-page-title">{HEAD[tab][0]}</h1><p className="admin-page-desc">{HEAD[tab][1]}</p></div></header>
@@ -90,21 +99,24 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
     {loading ? <p role="status">DB에서 조회 중입니다…</p> : <>
       {tab === 'notices' && <NoticeManagement rows={data.items as unknown as (Notice & { version: number })[]} saved={() => setReload(n => n + 1)} />}
       {tab === 'codes' && <>
-        <label>코드 그룹 <select value={group} onChange={e => { setGroup(e.target.value); setPage(1) }}>{groups.map(g => <option key={g.group_code} value={g.group_code}>{g.label} ({g.group_code})</option>)}</select></label>
+        <label>코드 그룹 <select value={group} onChange={e => { setGroup(e.target.value); setPage(1); setUpFilter('') }}>{groups.map(g => <option key={g.group_code} value={g.group_code}>{g.label} ({g.group_code})</option>)}</select></label>
+        {parentGroup && <>{' '}<label>상위 코드 <select value={upFilter} onChange={e => { setUpFilter(e.target.value); setPage(1) }}>
+          <option value="">전체</option>{parentOptions.map(item => <option key={item.code} value={item.code}>{item.label}</option>)}
+        </select></label></>}
         {group === 'QUEST_SEMESTER' && <p>학년도별 1학기·2학기 운영 기간을 등록합니다. 퀘스트 관리 → 학기 편성에서 등록한 학기를 고르면 그 기간에 학생에게 표시되고 XP가 지급됩니다. 일일 퀘스트 XP도 방학을 포함해 학기 종료일까지 지급됩니다.</p>}
         <>
         <p>{group === 'QUEST_XP_REWARD' ? '일일·월간·학기 퀘스트의 지급 XP를 수정할 수 있습니다. 변경 전 지급 이력은 유지됩니다.' : definition?.managed_by === 'STRUCTURAL' ? '상태 전이에 사용하는 구조 코드입니다. 조회만 가능합니다.' : definition?.fixed_codes ? '코드값은 고정입니다. 명칭과 정렬을 수정할 수 있습니다.' : '항목을 추가하거나 수정할 수 있습니다. 폐지한 항목은 이력 보존을 위해 비활성 상태로 남습니다.'}</p>
         {definition?.managed_by === 'OPERATIONAL' && !definition.fixed_codes && <button className="btn btn-primary" onClick={() => edit(group === 'QUEST_SEMESTER'
           ? { group_code: group, ...semesterIdentity(new Date().getFullYear(), 1), sort_order: 0, is_active: true, payload: { startDate: '', endDate: '' }, version: 0 }
           : { group_code: group, code: '', label: '', sort_order: 0, is_active: true, payload: group === 'COUNSEL_TOPIC' ? {type:'T1',goal:''} : {}, version: 0 })}>항목 추가</button>}
-        <table className="dc-list-table data-table"><thead><tr><th>코드</th><th>명칭</th><th>정렬</th><th>사용</th><th>관리</th></tr></thead><tbody>
-          {(data.items as Item[]).map(item => <tr key={item.code}><td>{item.code}</td><td>{item.label}</td><td>{item.sort_order}</td><td>{item.is_active ? '사용' : '비활성'}</td><td>
+        <table className="dc-list-table data-table"><thead><tr><th>코드</th>{parentGroup && <th>상위</th>}<th>명칭</th><th>정렬</th><th>사용</th><th>관리</th></tr></thead><tbody>
+          {(data.items as Item[]).map(item => <tr key={item.code}><td>{item.code}</td>{parentGroup && <td>{parentLabel(item.up_code)}</td>}<td>{item.label}</td><td>{item.sort_order}</td><td>{item.is_active ? '사용' : '비활성'}</td><td>
             <button className="btn btn-secondary" disabled={definition?.managed_by === 'STRUCTURAL'} onClick={() => edit(item)}>수정</button>{' '}
             <button className="btn btn-secondary" onClick={() => { void api<Page<Record<string, unknown>>>(`/system/code-groups/${group}/items/${item.code}/events`).then(result => setHistory(result.items)).catch(e => setError(e.message)) }}>최근 변경 이력</button>
           </td></tr>)}
         </tbody></table>
         {editing && <form onSubmit={e => { e.preventDefault(); void run(async () => {
-          await api(`/system/code-groups/${group}/items/${encodeURIComponent(code)}`, {method:'PUT',body:JSON.stringify({expectedVersion:editing.version,label,sortOrder:order,isActive:active,payload:JSON.parse(payload),reason})})
+          await api(`/system/code-groups/${group}/items/${encodeURIComponent(code)}`, {method:'PUT',body:JSON.stringify({expectedVersion:editing.version,label,sortOrder:order,isActive:active,payload:JSON.parse(payload),reason,...(parentGroup ? {upCode} : {})})})
           await loadMetadata(); setEditing(null)
         }) }}>
           <fieldset disabled={saving}><legend>{editing.version ? '코드 항목 수정' : '코드 항목 추가'}</legend>
@@ -114,6 +126,9 @@ export default function SystemManagement({ tab }: { tab: SystemTab }) {
               <label>학기 <select value={semester?.term ?? 1} onChange={e => { const next = semesterIdentity(semester?.year ?? new Date().getFullYear(), Number(e.target.value) as 1 | 2); setCode(next.code); setLabel(next.label) }}><option value={1}>1학기</option><option value={2}>2학기</option></select></label>{' '}
               <span>코드 <code>{code}</code> (자동)</span>{' '}
             </> : <><label>코드 <input required value={code} disabled={editing.version > 0} onChange={e => setCode(e.target.value)} pattern="[A-Z0-9_]+" maxLength={64} /></label>{' '}</>}
+            {parentGroup && <><label>상위 코드 <select required value={upCode} onChange={e => setUpCode(e.target.value)}>
+              <option value="">선택</option>{parentOptions.filter(item => item.is_active || item.code === upCode).map(item => <option key={item.code} value={item.code}>{item.label}</option>)}
+            </select></label>{' '}</>}
             <label>명칭 <input required value={label} maxLength={200} onChange={e => setLabel(e.target.value)} /></label>{' '}
             <label>정렬 <input type="number" min={0} max={100000} value={order} onChange={e => setOrder(Number(e.target.value))} /></label>{' '}
             <label><input type="checkbox" checked={active} disabled={definition?.fixed_codes} onChange={e => setActive(e.target.checked)} /> 사용</label>

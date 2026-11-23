@@ -688,3 +688,16 @@ def test_oversized_upload_stops_reading_instead_of_buffering(client, monkeypatch
         leaked = conn.execute("SELECT count(*) AS n FROM dc.file_object WHERE original_name='huge.pdf'"
                               ).fetchone()['n']
     assert leaked == 0, '거절한 업로드가 저장됐다'
+
+
+def test_posting_districts_need_their_region(client):
+    """175 — 시·군·구는 DISTRICT 로 쌓이고 DTO 에 실린다. 그 시·도가 regions 에 없거나 비활성이면 거절한다."""
+    posting = new_posting(client, regions=['GYEONGNAM', 'SEOUL'], districts=['GYEONGNAM_0135'])
+    assert sorted(posting['regions']) == ['GYEONGNAM', 'SEOUL'] and posting['districts'] == ['GYEONGNAM_0135']
+    company = new_company(client, '검증 ' + uuid4().hex[:6])['id']
+    refused = client.post('/api/v1/jobs', headers={**headers('career_kim'), **key()},
+                          json=posting_body(companyId=company, regions=['SEOUL'], districts=['GYEONGNAM_0135']))
+    assert refused.status_code == 422, refused.text
+    inactive = client.post('/api/v1/jobs', headers={**headers('career_kim'), **key()},
+                           json=posting_body(companyId=company, regions=['GYEONGBUK'], districts=['GYEONGBUK_0122']))
+    assert inactive.status_code == 422, inactive.text

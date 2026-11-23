@@ -3,6 +3,8 @@ import { api } from './api'
 export interface CodeItem {
   group_code: string; code: string; label: string; sort_order: number
   is_active: boolean; payload: Record<string, unknown>
+  /** 계층 코드의 부모 코드(시·도 → 시·군·구, 175). 대부분 null */
+  up_code?: string | null
 }
 export const codeItems: CodeItem[] = []
 export interface MenuItem { menu_code: string; label: string; route: string; sort_order: number; is_active: boolean }

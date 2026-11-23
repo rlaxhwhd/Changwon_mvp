@@ -40,6 +40,8 @@ export const JOB_CODE_GROUPS = {
   careerType: 'JOB_CAREER_TYPE',
   gender: 'JOB_GENDER',
   region: 'JOB_REGION',
+  /** 시·군·구 — 부모 시·도는 up_code (175) */
+  district: 'JOB_REGION_DISTRICT',
   resumeCategory: 'JOB_RESUME_CATEGORY',
 } as const
 
@@ -60,6 +62,31 @@ export function jobLabelOf(group: string, code: string | null | undefined): stri
 
 export function jobLabelsOf(group: string, codes: string[] | undefined): string[] {
   return (codes ?? []).map(code => jobLabelOf(group, code)).filter(Boolean)
+}
+
+/** 시·도 하나에 딸린 사용 중인 시·군·구 */
+export function districtOptions(region: string): JobOption[] {
+  return codeItems
+    .filter(item => item.group_code === JOB_CODE_GROUPS.district && item.is_active && item.up_code === region)
+    .sort((a, b) => a.sort_order - b.sort_order)
+    .map(item => ({ code: item.code, label: item.label }))
+}
+
+/** 시·군·구의 부모 시·도 코드 */
+export function districtParent(code: string): string | null {
+  return codeItems.find(item => item.group_code === JOB_CODE_GROUPS.district && item.code === code)?.up_code ?? null
+}
+
+/**
+ * 지역 표시 문구 — 시·군·구를 고른 시·도는 「경남 창원시」, 아니면 「경남」.
+ * 시·군·구의 시·도는 regions 에도 들어 있다(서버 검증).
+ */
+export function regionText(regions: string[] | undefined, districts: string[] | undefined): string {
+  return (regions ?? []).flatMap(region => {
+    const name = jobLabelOf(JOB_CODE_GROUPS.region, region)
+    const picked = (districts ?? []).filter(code => districtParent(code) === region)
+    return picked.length ? picked.map(code => `${name} ${jobLabelOf(JOB_CODE_GROUPS.district, code)}`) : [name]
+  }).filter(Boolean).join(', ')
 }
 
 /**
@@ -165,6 +192,8 @@ export interface JobPosting {
   genders: string[]
   /** 근무 지역 코드 (JOB_REGION) */
   regions: string[]
+  /** 근무 시·군·구 코드 (JOB_REGION_DISTRICT) — 그 시·도는 regions 에도 있다 */
+  districts: string[]
   /** 전형 단계 — 추천채용 공고만 실체가 있다 */
   stages: HiringStage[]
   status: JobStatus
@@ -242,6 +271,7 @@ export interface JobPostingInput {
   careerTypes: string[]
   genders: string[]
   regions: string[]
+  districts: string[]
 }
 
 /** 새 공고 폼 초기값 */
@@ -275,5 +305,6 @@ export function blankJob(): JobPostingInput {
     careerTypes: [],
     genders: [],
     regions: [],
+    districts: [],
   }
 }

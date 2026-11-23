@@ -153,3 +153,27 @@ def test_student_metadata_follows_student_role_menus(client):
     visible={m['menu_code'] for m in client.get('/api/v1/metadata',headers=headers('chaewon')).json()['menus']}
     assert 'stu-jobs.4' not in visible and 'stu-jobs.3' in visible
     assert not {m['menu_code'] for m in client.get('/api/v1/metadata',headers=headers('career_kim')).json()['menus']}&{'stu-lounge'}
+
+
+def test_region_district_codes_need_a_parent_region(client):
+    """175 — 시·군·구는 상위 시·도(up_code)를 골라야 저장되고, 메타데이터·필터에 부모가 실린다."""
+    head=headers('system-admin')
+    code='GYEONGNAM_T'+uuid4().hex[:6].upper()
+    path=f'/api/v1/system/code-groups/JOB_REGION_DISTRICT/items/{code}'
+    body=dict(expectedVersion=0,label='검증군',sortOrder=99,isActive=True,payload={},reason='test')
+    assert client.put(path,headers=head,json=body).status_code==422
+    assert client.put(path,headers=head,json={**body,'upCode':'NOWHERE'}).status_code==422
+    saved=client.put(path,headers=head,json={**body,'upCode':'GYEONGNAM'})
+    assert saved.status_code==200,saved.text
+    assert (saved.json()['up_group_code'],saved.json()['up_code'])==('JOB_REGION','GYEONGNAM')
+    listed=client.get('/api/v1/system/code-groups/JOB_REGION_DISTRICT/items?upCode=GYEONGNAM&pageSize=100',headers=head).json()
+    assert code in {row['code'] for row in listed['items']} and {row['up_code'] for row in listed['items']}=={'GYEONGNAM'}
+    item=next(i for i in client.get('/api/v1/metadata',headers=headers('career_kim')).json()['items'] if i['code']==code)
+    assert item['up_code']=='GYEONGNAM'
+    # 운영 원본에서 옮긴 행 — 창원시(현행 0135)는 경남 아래, 대전 구는 경기도가 아니라 대전 아래다.
+    rows={i['code']:i for i in client.get('/api/v1/metadata',headers=head).json()['items'] if i['group_code']=='JOB_REGION_DISTRICT'}
+    assert rows['GYEONGNAM_0135']['up_code']=='GYEONGNAM' and rows['DAEJEON_0226']['up_code']=='DAEJEON'
+    # 계층이 아닌 그룹은 상위 코드를 받지 않는다.
+    other=client.put('/api/v1/system/code-groups/JOB_REGION/items/T'+uuid4().hex[:6].upper(),headers=head,
+                     json={**body,'upCode':'GYEONGNAM'})
+    assert other.status_code==422

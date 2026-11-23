@@ -47,6 +47,11 @@ class CodeChange(Change):
     sortOrder: int = Field(ge=0, le=100000)
     isActive: bool = True
     payload: dict = Field(default_factory=dict)
+    upCode: str | None = Field(default=None, max_length=64)
+
+
+# 상위 코드를 고르는 계층 그룹 → 부모 그룹. 부모는 code_item.up_group_code/up_code(FK)로 잇는다.
+PARENT_GROUPS = {'JOB_REGION_DISTRICT': 'JOB_REGION'}
 
 
 @router.get('/system/code-groups')
@@ -56,7 +61,10 @@ def groups(user=Depends(administrator, scope='function'), conn=Depends(connectio
 
 @router.get('/system/code-groups/{group}/items')
 def items(group: str, page: int=Query(1, ge=1), pageSize: int=Query(20, ge=1, le=100),
+          upCode: str=Query('', max_length=64),
           user=Depends(administrator, scope='function'), conn=Depends(connection, scope='function')):
+    if upCode:
+        return page_result(conn,'dc.code_item','group_code=%s AND up_code=%s',[group,upCode],page,pageSize,'sort_order,code')
     return page_result(conn,'dc.code_item','group_code=%s',[group],page,pageSize,'sort_order,code')
 
 
@@ -140,11 +148,23 @@ def save_item(group: str, code: str, data: CodeChange,
         raise HTTPException(422, '이 그룹의 프로세스 속성은 배포로 관리합니다.')
     if len(json.dumps(data.payload,ensure_ascii=False))>10000:
         raise HTTPException(422, '부가속성이 너무 큽니다.')
-    after=conn.execute('''INSERT INTO dc.code_item(group_code,code,label,sort_order,is_active,payload,updated_by)
-      VALUES(%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(group_code,code) DO UPDATE SET
+    parent_group = PARENT_GROUPS.get(group)
+    if parent_group:
+        # 사용 중인 항목은 사용 중인 부모 아래에만 둔다. 비활성 항목은 부모가 비활성이어도 이름·정렬을 고칠 수 있다.
+        if not data.upCode or not conn.execute('SELECT 1 FROM dc.code_item WHERE group_code=%s AND code=%s'
+                + (' AND is_active' if data.isActive else ''), (parent_group, data.upCode)).fetchone():
+            raise HTTPException(422, '상위 코드를 선택해 주세요.')
+        up = (parent_group, data.upCode)
+    else:
+        up = (before['up_group_code'], before['up_code']) if before else (None, None)
+        if data.upCode not in (None, up[1]):
+            raise HTTPException(422, '이 그룹은 상위 코드를 바꿀 수 없습니다.')
+    after=conn.execute('''INSERT INTO dc.code_item(group_code,code,label,sort_order,is_active,payload,updated_by,up_group_code,up_code)
+      VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(group_code,code) DO UPDATE SET
       label=excluded.label,sort_order=excluded.sort_order,is_active=excluded.is_active,payload=excluded.payload,
+      up_group_code=excluded.up_group_code,up_code=excluded.up_code,
       updated_by=excluded.updated_by,updated_at=now(),version=dc.code_item.version+1 RETURNING *''',
-      (group,code,data.label,data.sortOrder,data.isActive,Jsonb(data.payload),user['intg_uid'])).fetchone()
+      (group,code,data.label,data.sortOrder,data.isActive,Jsonb(data.payload),user['intg_uid'],*up)).fetchone()
     action='CREATE' if not before else ('UPDATE' if before['is_active']==data.isActive else ('REACTIVATE' if data.isActive else 'DEACTIVATE'))
     conn.execute('''INSERT INTO dc.code_item_event(group_code,code,action,before,after,reason,changed_by)
       VALUES(%s,%s,%s,%s,%s,%s,%s)''',

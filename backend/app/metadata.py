@@ -56,7 +56,8 @@ def metadata(user=Depends(principal,scope='function'),conn=Depends(connection,sc
           ORDER BY m.sort_order,m.menu_code''',(user['intg_uid'],user['intg_uid'])).fetchall()
     with _lock:
         if revision!=_revision:
-            _items=conn.execute('SELECT group_code,code,label,sort_order,is_active,payload FROM dc.code_item ORDER BY sort_order,code').fetchall()
+            # up_code — 계층 코드(시·도 → 시·군·구 JOB_REGION_DISTRICT, 175)의 부모. 대부분 null.
+            _items=conn.execute('SELECT group_code,code,label,sort_order,is_active,payload,up_code FROM dc.code_item ORDER BY sort_order,code').fetchall()
             _survey_forms=published_forms(conn)
             _revision=revision
         factors=conn.execute('''SELECT d.test_code,d.factor_code,c.label,d.secondary_label,c.sort_order

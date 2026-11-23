@@ -144,8 +144,21 @@
 .jf-logo-side .jf-hint { white-space: normal; }
 .jf-logo-error { font-size: 13px; font-weight: 600; color: var(--jf-req); }
 
-/* 지역 2단 */
+/* 지역 2단(시·도 → 시·군·구) + 고른 지역 칩 */
+.jf-region-wrap { display: flex; flex-direction: column; gap: 10px; width: 100%; }
 .jf-region { display: flex; gap: 10px; width: 100%; max-width: 560px; }
+.jf-region-chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.jf-region-chips li {
+  display: inline-flex; align-items: center; gap: 4px;
+  height: 30px; padding: 0 4px 0 12px;
+  border: 1px solid var(--jf-input-border); border-radius: 999px;
+  font-size: 13px; color: var(--jf-text); background: var(--jf-label-bg);
+}
+.jf-region-chips button {
+  width: 22px; height: 22px; border: 0; border-radius: 50%;
+  background: transparent; color: var(--jf-muted); font-size: 15px; line-height: 1; cursor: pointer;
+}
+.jf-region-chips button:hover, .jf-region-chips button:focus-visible { background: var(--jf-primary-soft); color: var(--jf-text); outline: none; }
 .jf-region .jf-scope { flex: 0 0 200px; }
 .jf-region .jf-multi { flex: 1; min-width: 0; }
 

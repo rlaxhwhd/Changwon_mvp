@@ -22,7 +22,9 @@ import {
   addJob, getJobById, queryCompanyHistory, removeJob, updateJob, uploadJobFile,
 } from '../data/jobsSource'
 import type { JobCompanyHistory } from '../data/jobsSource'
-import { blankGuideFields, blankJob, JOB_CODE_GROUPS, jobLabelsOf, jobOptions } from '../data/schema/job'
+import {
+  blankGuideFields, blankJob, districtOptions, districtParent, JOB_CODE_GROUPS, jobLabelOf, jobLabelsOf, jobOptions, regionText,
+} from '../data/schema/job'
 import JobGuideEditor, { JobGuidePreview } from '../components/JobGuideEditor'
 import type { JobFile, JobPostingInput, RecruitType } from '../data/schema/job'
 import AdminModal from '../components/AdminModal'
@@ -32,7 +34,7 @@ import { useMetadata } from '../../shared/useMetadata'
 import './JobForm.css'
 import JobLogo from '../../shared/JobLogo'
 
-type ArrayKey = 'employmentTypes' | 'jobCategories' | 'careerTypes' | 'genders' | 'regions'
+type ArrayKey = 'employmentTypes' | 'jobCategories' | 'careerTypes' | 'genders' | 'regions' | 'districts'
 
 const NEW_COMPANY = '__new__'
 
@@ -126,6 +128,7 @@ export default function JobForm() {
       logoFileId: existing.logoFileId, attachmentFileIds: existing.attachments.map(f => f.id),
       employmentTypes: existing.employmentTypes, jobCategories: existing.jobCategories,
       careerTypes: existing.careerTypes, genders: existing.genders, regions: existing.regions,
+      districts: existing.districts ?? [],
     }
     : blankJob()))
   const [companySearchOpen, setCompanySearchOpen] = useState(false)
@@ -136,7 +139,7 @@ export default function JobForm() {
       ? { id: existing.logoFileId, name: '기업 로고', size: 0, contentType: '', downloadUrl: existing.logo }
       : null)
   const [attachments, setAttachments] = useState<JobFile[]>(existing?.attachments ?? [])
-  const [regionScope, setRegionScope] = useState('대한민국 전지역')
+  const [regionPick, setRegionPick] = useState('')
   const [saved, setSaved] = useState(false)
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState<{ ok: boolean; title: string; text: string } | null>(null)
@@ -170,6 +173,23 @@ export default function JobForm() {
       [key]: prev[key].includes(value) ? prev[key].filter(v => v !== value) : [...prev[key], value],
     }))
   const pickOne = (key: ArrayKey, value: string) => set(key, [value])
+  // 지역: 「시·도 전체」는 시·도만, 시·군·구는 그 시·도와 함께 담는다(시·도 필터는 regions 만 본다).
+  const inRegion = (codes: string[], region: string) => codes.filter(code => districtParent(code) === region)
+  const pickRegion = (region: string, value: string) => setDraft(prev => {
+    const regions = prev.regions.includes(region) ? prev.regions : [...prev.regions, region]
+    if (value === '*') return { ...prev, regions, districts: prev.districts.filter(code => districtParent(code) !== region) }
+    if (!prev.districts.includes(value)) return { ...prev, regions, districts: [...prev.districts, value] }
+    const districts = prev.districts.filter(code => code !== value)
+    return { ...prev, districts, regions: inRegion(districts, region).length ? regions : regions.filter(r => r !== region) }
+  })
+  const dropDistrict = (region: string, code: string) => setDraft(prev => {
+    const districts = prev.districts.filter(c => c !== code)
+    return { ...prev, districts, regions: inRegion(districts, region).length ? prev.regions : prev.regions.filter(r => r !== region) }
+  })
+  const dropRegion = (region: string) => setDraft(prev => ({
+    ...prev, regions: prev.regions.filter(r => r !== region),
+    districts: prev.districts.filter(code => districtParent(code) !== region),
+  }))
 
   const upload = async (slot: 'LOGO' | 'ATTACHMENT', file: File | undefined) => {
     if (!file) return
@@ -193,6 +213,7 @@ export default function JobForm() {
 
   const displayName = companyName.trim()
   const regions = arr('regions')
+  const districts = arr('districts')
   const canSave = displayName !== '' && draft.role.trim() !== '' && !saved && !busy
 
   const handleSave = async (goList: boolean) => {
@@ -210,7 +231,7 @@ export default function JobForm() {
         ? { displayName, companyTypeCode: draft.companyType }
         : undefined,
       // 지역은 코드로 저장하고 표시 문구는 라벨에서 만든다.
-      location: jobLabelsOf(JOB_CODE_GROUPS.region, regions).join(', ') || draft.location,
+      location: regionText(regions, districts) || draft.location,
       jobType: careers[0] ?? draft.jobType,
       // 마감일은 서버가 정한다 — ON_HIRE 는 등록 시점에 한 번만 계산되고 이후 유지된다.
       deadline: draft.deadlineMode === 'DATE' ? draft.deadline : null,
@@ -398,25 +419,42 @@ export default function JobForm() {
           </Row>
 
           <Row label="지역" required>
-            <div className="jf-region">
-              <select className="jf-select jf-scope" value={regionScope} onChange={e => setRegionScope(e.target.value)}>
-                <option>대한민국 전지역</option>
-                <option>지역 선택</option>
-              </select>
-              <select
-                className="jf-select jf-multi"
-                value=""
-                onChange={e => { if (e.target.value) toggle('regions', e.target.value) }}
-              >
-                <option value="">
-                  {regions.length
-                    ? `${jobLabelsOf(JOB_CODE_GROUPS.region, regions).join(', ')} 등`
-                    : '지역을 선택하세요'}
-                </option>
-                {jobOptions(JOB_CODE_GROUPS.region).map(r => (
-                  <option key={r.code} value={r.code}>{regions.includes(r.code) ? `✓ ${r.label}` : r.label}</option>
-                ))}
-              </select>
+            <div className="jf-region-wrap">
+              <div className="jf-region">
+                <select className="jf-select jf-scope" aria-label="시·도" value={regionPick} onChange={e => setRegionPick(e.target.value)}>
+                  <option value="">시·도 선택</option>
+                  {jobOptions(JOB_CODE_GROUPS.region).map(r => (
+                    <option key={r.code} value={r.code}>{regions.includes(r.code) ? `✓ ${r.label}` : r.label}</option>
+                  ))}
+                </select>
+                <select
+                  className="jf-select jf-multi"
+                  aria-label="시·군·구"
+                  value=""
+                  disabled={!regionPick}
+                  onChange={e => { if (e.target.value) pickRegion(regionPick, e.target.value) }}
+                >
+                  <option value="">{regionPick ? '시·군·구를 고르면 아래에 추가됩니다' : '시·도를 먼저 고르세요'}</option>
+                  {regionPick && <option value="*">{jobLabelOf(JOB_CODE_GROUPS.region, regionPick)} 전체</option>}
+                  {regionPick && districtOptions(regionPick).map(d => (
+                    <option key={d.code} value={d.code}>{districts.includes(d.code) ? `✓ ${d.label}` : d.label}</option>
+                  ))}
+                </select>
+              </div>
+              {regions.length > 0 && (
+                <ul className="jf-region-chips" aria-label="선택한 지역">
+                  {regions.flatMap(region => {
+                    const name = jobLabelOf(JOB_CODE_GROUPS.region, region)
+                    const picked = inRegion(districts, region)
+                    return picked.length
+                      ? picked.map(code => (
+                        <li key={code}>{name} {jobLabelOf(JOB_CODE_GROUPS.district, code)}
+                          <button type="button" aria-label={`${name} ${jobLabelOf(JOB_CODE_GROUPS.district, code)} 빼기`} onClick={() => dropDistrict(region, code)}>×</button></li>))
+                      : [<li key={region}>{name} 전체
+                        <button type="button" aria-label={`${name} 전체 빼기`} onClick={() => dropRegion(region)}>×</button></li>]
+                  })}
+                </ul>
+              )}
             </div>
           </Row>
 
@@ -537,7 +575,7 @@ export default function JobForm() {
               source={{
                 company: displayName || '회사명', role: draft.role || '공고 제목', recruitType: draft.recruitType,
                 salary: draft.salary, salaryNegotiable: draft.salaryNegotiable,
-                location: jobLabelsOf(JOB_CODE_GROUPS.region, regions).join(', ') || draft.location,
+                location: regionText(regions, districts) || draft.location,
                 employmentTypes: draft.employmentTypes, jobCategories: draft.jobCategories, careerTypes: draft.careerTypes,
                 deadline: draft.deadlineMode === 'ALWAYS' ? null : draft.deadline,
                 deadlineTime: draft.deadlineMode === 'DATE' ? draft.deadlineTime : '23:59', deadlineMode: draft.deadlineMode,
