@@ -132,6 +132,7 @@ React 19 + TypeScript 5.9 + Vite 8 두 SPA + FastAPI + PostgreSQL.
 | 지도학생 독려 | ✅ DB | `dc.notification(source_kind=ADVISOR_NUDGE)` — 기록이 아니라 알림 |
 | 상담사가 공고 CRUD | ✅ DB | `dc.job_posting` (+ `job_posting_event`) |
 | **학생이 채용 지원** | ✅ DB | `dc.job_application` (+ `job_application_event`) |
+| **학생이 채용공고 상세 열람** | ✅ DB | `POST /jobs/{id}/views` → `dc.job_posting_view` — 학생·날짜(KST)당 1행, 교직원 열람은 세지 않음. 조회수는 행 수(`viewCount`)로 읽는다 (173) |
 | **첨부파일 업로드** | ✅ DB+볼륨 | `dc.file_object` — 웹루트 밖 보관, API 가 권한 확인 후 스트리밍 |
 | **관리자가 역할별 메뉴 노출 변경**(/admin/system/menus) | ✅ DB | `PUT /system/auth-roles/{role}/menus` → `dc.menu_auth` 집합 치환 + `admin_event(entity=menu_auth)`. **GNB 노출은 두 SPA 모두 `/metadata` 메뉴만 본다** — navConfig 에 역할 필터를 다시 넣지 않는다(학생 메뉴는 `stu-*`, 089) |
 

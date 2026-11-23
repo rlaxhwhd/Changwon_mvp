@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
-import { getJobById } from '../../../src_admin/data/jobsSource'
+import { getJobById, recordJobView } from '../../../src_admin/data/jobsSource'
 import {
   APPLICATION_STATUS_LABEL,
   applyToJob,
@@ -26,6 +26,8 @@ export default function JobDetail() {
   // 제출 서류를 고르는 모달 — 서류 없이 지원되던 것을 여기서 막는다.
   const [applyOpen, setApplyOpen] = useState(false)
   const job = id ? getJobById(id) : undefined
+  // 조회수(173) — 서버가 학생·날짜당 1회만 센다. 집계용 기록이라 실패해도 학생 화면을 막지 않는다.
+  useEffect(() => { if (id) recordJobView(id).catch(() => undefined) }, [id])
   // 시안(public_t/job.png)처럼 머리글은 '채용공고 상세', 직무명은 히어로가 갖는다.
   usePageHead('채용공고 상세', '공고 내용을 확인하고 지원을 준비하세요.')
 

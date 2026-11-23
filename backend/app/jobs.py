@@ -201,12 +201,23 @@ def wish_counts(conn, posting_ids):
     return counts
 
 
-def posting_dto(row, options, stages, attachments, wish_count=0):
+def view_counts(conn, posting_ids):
+    """공고별 조회수 — 학생·날짜(KST)당 1행인 job_posting_view 에서 센다(173). 공고 행에 저장하지 않는다."""
+    counts = dict.fromkeys(posting_ids, 0)
+    if posting_ids:
+        for row in conn.execute('''SELECT posting_id,count(*)::int AS n FROM dc.job_posting_view
+          WHERE posting_id=ANY(%s) GROUP BY posting_id''', (posting_ids,)).fetchall():
+            counts[row['posting_id']] = row['n']
+    return counts
+
+
+def posting_dto(row, options, stages, attachments, wish_count=0, view_count=0):
     return {
         'id': row['id'], 'companyId': row['company_id'], 'company': row['company_name_snapshot'],
         'role': row['role'], 'tags': row['tags'], 'salary': row['salary_text'] or '',
         'location': row['location_text'] or '', 'deadline': row['deadline_date'],
         'deadlineTime': row['deadline_time'].strftime('%H:%M'), 'wishCount': wish_count,
+        'viewCount': view_count,
         'deadlineMode': row['deadline_mode'], 'deadlineOnHire': row['deadline_mode'] == 'ON_HIRE',
         'jobType': row['career_primary_code'], 'applyUrl': row['apply_url'] or '',
         # match 는 근거 없는 순위라 정본에서 뺀다. 학생 화면 호환을 위해 0 으로만 내려보낸다.
@@ -226,8 +237,9 @@ def posting_dto(row, options, stages, attachments, wish_count=0):
 def posting_rows(conn, rows):
     ids = [r['id'] for r in rows]
     options, stages, attachments = options_of(conn, ids), stages_of(conn, ids), files_of(conn, ids)
-    wishes = wish_counts(conn, ids)
-    return [posting_dto(r, options[r['id']], stages[r['id']], attachments[r['id']], wishes[r['id']]) for r in rows]
+    wishes, views = wish_counts(conn, ids), view_counts(conn, ids)
+    return [posting_dto(r, options[r['id']], stages[r['id']], attachments[r['id']], wishes[r['id']], views[r['id']])
+            for r in rows]
 
 
 def get_posting(conn, posting_id, lock=False, include_deleted=False):
@@ -240,8 +252,8 @@ def get_posting(conn, posting_id, lock=False, include_deleted=False):
 
 
 def posting_event(conn, user, posting_id, action, before, after, reason=''):
-    # 찜 수는 공고 속성이 아니라 다른 학생 행위의 집계다 — 이력에 넣으면 찜만으로 UPDATE 차이가 생긴다.
-    before, after = ({k: v for k, v in x.items() if k != 'wishCount'} if isinstance(x, dict) else x
+    # 찜·조회 수는 공고 속성이 아니라 다른 학생 행위의 집계다 — 이력에 넣으면 찜·조회만으로 UPDATE 차이가 생긴다.
+    before, after = ({k: v for k, v in x.items() if k not in ('wishCount', 'viewCount')} if isinstance(x, dict) else x
                      for x in (before, after))
     seq = conn.execute('SELECT COALESCE(max(seq),0)+1 AS n FROM dc.job_posting_event WHERE posting_id=%s',
                        (posting_id,)).fetchone()['n']
@@ -714,6 +726,17 @@ def posting_detail(posting_id: str, user=Depends(principal, scope='function'),
     if user['kind'] == 'STUDENT':
         result['applyEligibility'] = employment_gate(conn, user['intg_uid'])
     return result
+
+
+@router.post('/jobs/{posting_id}/views', status_code=204)
+def record_view(posting_id: str, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    """학생이 공고 상세를 열었다 — 학생·날짜(KST)당 1회만 센다. 교직원 열람은 세지 않는다."""
+    if user['kind'] != 'STUDENT':
+        return Response(status_code=204)
+    get_posting(conn, posting_id)
+    conn.execute('''INSERT INTO dc.job_posting_view(posting_id,student_uid) VALUES(%s,%s)
+      ON CONFLICT DO NOTHING''', (posting_id, user['intg_uid']))
+    return Response(status_code=204)
 
 
 # ── 전형 단계 ────────────────────────────────────────────────────────────

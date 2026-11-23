@@ -174,6 +174,8 @@ export interface JobPosting {
   version: number
   /** 이 공고를 찜한 학생 수 — dc.job_wishlist 에서 서버가 센다. 누가 찜했는지는 교직원만 본다 */
   wishCount: number
+  /** 학생 조회수 — 학생·날짜(KST)당 1회(dc.job_posting_view, 173). 교직원 열람은 세지 않는다 */
+  viewCount: number
   /** 모집요강 템플릿 — null 이면 템플릿 없이 content 만 그린다 */
   guideTemplate: JobGuideTemplate | null
   /** 템플릿 입력값 — 서버가 키를 검증해 저장한다. 옛 공고는 null */

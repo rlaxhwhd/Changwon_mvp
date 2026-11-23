@@ -82,6 +82,11 @@ export function jobDeadlineAt(job: JobPosting): string | null {
   return job.deadline ? `${job.deadline.slice(0, 10)} ${job.deadlineTime || '23:59'}` : null
 }
 
+/** 학생이 공고 상세를 열었다 — 서버가 학생·날짜당 1회만 센다(교직원 호출은 무시). */
+export async function recordJobView(id: string): Promise<void> {
+  await api<void>(`/jobs/${encodeURIComponent(id)}/views`, { method: 'POST' })
+}
+
 /** 공고를 찜한 학생 목록 — 교직원 전용. 학생 화면은 wishCount(명수)만 쓴다. */
 export async function loadJobWishers(id: string): Promise<JobWisher[]> {
   return (await api<{ items: JobWisher[] }>(`/jobs/${encodeURIComponent(id)}/wishers`)).items
@@ -96,15 +101,12 @@ export function jobPostedDate(job: JobPosting): string {
 const EXPORT_STATUS_LABEL: Record<JobEffectiveStatus, string> = { POSTED: '게시', CLOSED: '마감', UNKNOWN: '확인 필요', UNAVAILABLE: '삭제' }
 
 /**
- * 교내 공고 목록 내려받기 행 — 등록일(KST)이 from~to(포함)인 공고, 최신 등록순.
- * 머리글 한 줄을 포함한다. 지원자 수는 지원 스토어를 아는 화면이 넘긴다(순환 import 방지).
+ * 교내공고 관리 표의 내려받기 행 — 화면이 거른 순서 그대로. 머리글 한 줄을 포함한다.
+ * 지원·최종합격 수는 지원 스토어를 아는 화면이 넘긴다(순환 import 방지).
  * 지원 스토어를 읽을 권한이 없으면 null 을 넘긴다 — 모르는 값을 0 으로 위장하지 않고 빈 칸으로 둔다.
  */
-export function jobExportRows(from: string, to: string, applicantCountOf: ((job: JobPosting) => number) | null): string[][] {
-  const jobs = getInternalJobs()
-    .filter(job => { const day = jobPostedDate(job); return day >= from && day <= to })
-    .sort((a, b) => b.postedAt.localeCompare(a.postedAt))
-  const head = ['번호', '채용유형', '회사명', '공고제목', '근무형태', '직종', '경력', '지역', '연봉', '마감', '상태', '등록일', '지원자 수', '찜한 학생 수']
+export function jobExportRows(jobs: JobPosting[], applicantsOf: ((job: JobPosting) => { total: number; passed: number }) | null): string[][] {
+  const head = ['번호', '채용유형', '회사명', '공고제목', '근무형태', '직종', '경력', '지역', '연봉', '마감', '상태', '등록일', '조회수', '지원자 수', '최종합격', '찜한 학생 수']
   return [head, ...jobs.map((job, index) => [
     String(index + 1),
     RECRUIT_TYPE_LABEL[job.recruitType],
@@ -118,7 +120,9 @@ export function jobExportRows(from: string, to: string, applicantCountOf: ((job:
     job.deadlineMode === 'ALWAYS' ? '상시' : `${job.deadlineMode === 'ON_HIRE' ? '채용시 ' : ''}${jobDeadlineAt(job) ?? ''}`.trim(),
     EXPORT_STATUS_LABEL[job.effectiveStatus] ?? job.effectiveStatus,
     jobPostedDate(job),
-    applicantCountOf ? String(applicantCountOf(job)) : '',
+    String(job.viewCount ?? 0),
+    applicantsOf ? String(applicantsOf(job).total) : '',
+    applicantsOf ? String(applicantsOf(job).passed) : '',
     String(job.wishCount ?? 0),
   ])]
 }
