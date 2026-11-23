@@ -182,6 +182,7 @@ const ALL_SECTIONS: NavSection[] = [
     children: [
       { label: '개인통계', path: '/stats/personal', icon: LuChartNoAxesColumn },
       { label: '전체통계', path: '/stats/overall', icon: LuChartNoAxesColumn },
+      { label: 'KPI통계', path: '/stats/kpi', icon: LuChartNoAxesColumn },
     ],
   },
 

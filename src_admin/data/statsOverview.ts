@@ -84,21 +84,24 @@ export function statsQuery(area: StatsArea, scope: StatsScope, f: StatsFilters):
   })
 }
 
-/** 조건이 바뀌면 다시 조회. 조회 중에는 이전 데이터를 유지하고 loading 만 올린다. */
-export function useStatsOverview(area: StatsArea, scope: StatsScope, filters: StatsFilters, identity: string) {
-  const query = statsQuery(area, scope, filters)
-  const [state, setState] = useState<{ data: StatsOverview | null; error: string; loading: boolean }>({ data: null, error: '', loading: true })
+/** 통계 조회 공통 — 경로가 바뀌면 다시 조회. 조회 중에는 이전 데이터를 유지하고 loading 만 올린다. */
+export function useStatsResource<T>(path: string, identity: string) {
+  const [state, setState] = useState<{ data: T | null; error: string; loading: boolean }>({ data: null, error: '', loading: true })
   const [revision, setRevision] = useState(0)
   useEffect(() => {
     const controller = new AbortController()
     setState(prev => ({ ...prev, loading: true }))
-    api<StatsOverview>(`/stats/overview?${query}`, { signal: controller.signal })
+    api<T>(path, { signal: controller.signal })
       .then(data => { if (!controller.signal.aborted) setState({ data, error: '', loading: false }) })
       .catch(error => {
         if (controller.signal.aborted) return
         setState(prev => ({ data: prev.data, loading: false, error: error instanceof Error ? error.message : '통계를 조회하지 못했습니다.' }))
       })
     return () => controller.abort()
-  }, [query, identity, revision])
+  }, [path, identity, revision])
   return { ...state, refresh: () => setRevision(v => v + 1) }
+}
+
+export function useStatsOverview(area: StatsArea, scope: StatsScope, filters: StatsFilters, identity: string) {
+  return useStatsResource<StatsOverview>(`/stats/overview?${statsQuery(area, scope, filters)}`, identity)
 }

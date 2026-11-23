@@ -1,8 +1,7 @@
-import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { LuRotateCcw } from 'react-icons/lu'
-import { departments } from '../../shared/departmentStore'
-import { STUDENT_TYPES, TYPE_PENDING_LABEL, type StudentType } from '../../src_v2/data/careerProcess'
+import type { StudentType } from '../../src_v2/data/careerProcess'
+import StatsFilterBar from '../components/StatsFilterBar'
 import { getActiveUser } from '../data/staff'
 import { typeColorVar } from '../data/studentRoster'
 import {
@@ -22,12 +21,7 @@ import {
 // ─────────────────────────────────────────────────────────────────────────
 
 const SCOPE_PATH: Record<StatsScope, string> = { mine: '/stats/personal', all: '/stats/overall' }
-const PRESETS = [{ label: '1개월', months: 1 }, { label: '3개월', months: 3 }, { label: '6개월', months: 6 }, { label: '1년', months: 12 }]
 const DOW = ['월', '화', '수', '목', '금', '토', '일']
-
-const pad = (n: number) => String(n).padStart(2, '0')
-const dayKey = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
-const monthsAgo = (months: number) => { const d = new Date(); d.setMonth(d.getMonth() - months); return dayKey(d) }
 const pctText = (v: number) => `${v}%`
 
 /** 상태·유형처럼 값 자체가 색을 갖는 범례 — 필터로 항목이 줄어도 색이 바뀌지 않는다. */
@@ -41,17 +35,6 @@ const STATUS_COLOR: Record<string, string> = {
 const colorByKey = (key: string, index: number) => STATUS_COLOR[key] ?? seriesColor(index)
 const typeColor = (key: string) => key === 'NONE' ? 'var(--text-cap)' : typeColorVar(key as StudentType)
 
-function DotDateInput({ label, value, min, max, onChange }: { label: string; value: string; min?: string; max?: string; onChange: (v: string) => void }) {
-  const ref = useRef<HTMLInputElement>(null)
-  return (
-    <span className="admin-dot-date">
-      <input ref={ref} type="date" aria-label={label} value={value} min={min} max={max} required
-        onClick={() => ref.current?.showPicker?.()} onChange={e => { if (e.target.value) onChange(e.target.value) }} />
-      <span aria-hidden="true">{value.replaceAll('-', '.')}</span>
-    </span>
-  )
-}
-
 export default function StatsDashboard({ scope }: { scope: StatsScope }) {
   const me = getActiveUser()
   const navigate = useNavigate()
@@ -59,20 +42,7 @@ export default function StatsDashboard({ scope }: { scope: StatsScope }) {
   const [filters, setFilters] = useState<StatsFilters>(defaultStatsFilters)
   const { data, error, loading, refresh } = useStatsOverview(area, scope, filters, me.id)
 
-  const colleges = useMemo(() => {
-    const seen = new Map<string, string>()
-    for (const d of departments) seen.set(d.collegeCode, d.collegeName)
-    return [...seen.entries()].sort(([a], [b]) => a.localeCompare(b))
-  }, [])
-  const depts = useMemo(() => {
-    const seen = new Map<string, string>()
-    for (const d of departments) if (!filters.college || d.collegeCode === filters.college) seen.set(d.deptCode, d.deptName)
-    return [...seen.entries()].sort(([, a], [, b]) => a.localeCompare(b, 'ko'))
-  }, [filters.college])
-
   const set = (patch: Partial<StatsFilters>) => setFilters(f => ({ ...f, ...patch }))
-  const today = dayKey(new Date())
-  const activePreset = PRESETS.find(p => filters.to === today && filters.from === monthsAgo(p.months))
   const areaLabel = (a: StatsArea) => a === 'counsel' && me.role === 'psych' ? '심리상담' : STATS_AREAS.find(x => x.value === a)!.label
 
   return (
@@ -92,39 +62,7 @@ export default function StatsDashboard({ scope }: { scope: StatsScope }) {
         </div>
       </header>
 
-      {/* 필터 한 줄 — 아래 모든 수치·차트가 같은 조건을 본다 */}
-      <section className="sd-filterbar" aria-label="통계 필터">
-        <div className="sd-filter-group">
-          <span className="sd-filter-label">기간</span>
-          <div className="sd-chips">
-            {PRESETS.map(p => <button key={p.label} type="button" className={`sd-chip${activePreset?.label === p.label ? ' active' : ''}`}
-              onClick={() => set({ from: monthsAgo(p.months), to: today })}>{p.label}</button>)}
-          </div>
-          <span className="admin-date-range">
-            <DotDateInput label="시작일" value={filters.from} max={filters.to} onChange={v => set({ from: v })} />~
-            <DotDateInput label="종료일" value={filters.to} min={filters.from} onChange={v => set({ to: v })} />
-          </span>
-        </div>
-        <label className="admin-select"><span>단과대학</span>
-          <select value={filters.college} onChange={e => set({ college: e.target.value, dept: '' })}>
-            <option value="">전체</option>{colleges.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-          </select></label>
-        <label className="admin-select"><span>학과</span>
-          <select value={filters.dept} onChange={e => set({ dept: e.target.value })}>
-            <option value="">전체</option>{depts.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-          </select></label>
-        <label className="admin-select"><span>학년</span>
-          <select value={filters.grade} onChange={e => set({ grade: e.target.value })}>
-            <option value="">전체</option>{[1, 2, 3, 4].map(g => <option key={g} value={g}>{g}학년</option>)}
-          </select></label>
-        <label className="admin-select"><span>진단유형</span>
-          <select value={filters.type} onChange={e => set({ type: e.target.value })}>
-            <option value="">전체</option>
-            {STUDENT_TYPES.map(t => <option key={t.code} value={t.code}>{t.code} {t.label}</option>)}
-            <option value="NONE">{TYPE_PENDING_LABEL}</option>
-          </select></label>
-        <button type="button" className="admin-btn sd-reset" onClick={() => setFilters(defaultStatsFilters())}><LuRotateCcw /> 초기화</button>
-      </section>
+      <StatsFilterBar filters={filters} onChange={set} onReset={() => setFilters(defaultStatsFilters())} />
 
       {error && <p role="alert" className="sd-error">{data ? '최신 조회에 실패해 이전 결과를 표시합니다.' : '통계를 조회하지 못했습니다.'} {error}
         <button type="button" className="admin-btn" onClick={refresh}>다시 조회</button></p>}

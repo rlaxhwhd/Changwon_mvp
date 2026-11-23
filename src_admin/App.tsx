@@ -62,6 +62,7 @@ import ProfessorCounselStats from './pages/ProfessorCounselStats'
 import ProfessorHome from './pages/ProfessorHome'
 import NotReady from './pages/NotReady'
 import StatsDashboard from './pages/StatsDashboard'
+import StatsKpi from './pages/StatsKpi'
 import { getActiveUser } from './data/staff'
 import { staffPageLoader } from './data/staffPageData'
 import PageDataError from './components/PageDataError'
@@ -181,6 +182,7 @@ const router = createBrowserRouter(
                 { path: '/stats', element: <Navigate to="/stats/personal" replace /> },
                 { path: '/stats/personal', loader: staffPageLoader(['career', 'psych'], 'departments'), element: <StatsDashboard scope="mine" /> },
                 { path: '/stats/overall', loader: staffPageLoader(['career', 'psych'], 'departments'), element: <StatsDashboard scope="all" /> },
+                { path: '/stats/kpi', loader: staffPageLoader(['career', 'psych'], 'departments'), element: <StatsKpi /> },
                 { path: '/diagnosis/status', element: <DiagnosisStatus /> },
                 { path: '/diagnosis/manage', element: <DiagnosisManagement /> },
                 { path: '/students', element: <Navigate to="/students/all" replace /> },

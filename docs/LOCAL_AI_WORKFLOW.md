@@ -1,5 +1,11 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-23 KPI통계·기간 필터 정리 API/웹/174 로컬 반영
+
+- 새 메뉴 「KPI통계」(/stats/kpi, 174 `stats.2` — Astra 승인, 변경 없음)와 읽기 전용 집계 `GET /stats/kpi`(backend/app/stats_kpi.py): 재학생 = `dc.student_login_source` 재학(0001) 기준 7단계 참여 퍼널, 최저 전환 구간 자동 진단, 사용자 상세 지표표 27행(목표 = 코드 상수 `INDICATORS`; COSS·만족도조사·HR 파워링크·고용정보원·공시·사후관리는 「집계 전」; 대플 행 제외; 졸특 분모는 졸업자만, 졸업예정은 학사 연동 후). 역량향상률은 비교과 사전·사후 설문 쌍의 평균 증가율, 프로그램 만족도는 만족도 설문 100점 환산, 기업정보플랫폼 구축률은 `dc.company` 수/50.
+- 통계 현황·KPI통계가 같은 필터 한 줄(`components/StatsFilterBar.tsx`)을 쓴다 — 기간 프리셋(개월)은 사용자 지시로 빼고 달력 날짜만 남겼다.
+- 테스트 DB에 174 적용 후 tests/test_stats_kpi.py 2 + test_stats_overview.py 9 passed. 로컬은 `npm run docker:up`(174 자동 적용)으로 반영, 서버 배포는 하지 않았다.
+
 ## 2026-11-23 통계 현황 대시보드 API/웹 로컬 반영
 
 - 새 읽기 전용 집계 `GET /stats/overview`(backend/app/stats.py)와 `/admin/stats/personal`·`/admin/stats/overall` 한 화면(내 통계/전체 통계 토글, 영역 탭 진단·상담·로드맵·비교과·채용, 필터 기간·단과대·학과·학년·진단유형). 새 테이블·마이그레이션 없음이라 Astra 리뷰 없이 진행. 차트는 SVG·CSS 키트(src_admin/components/charts/StatsCharts.tsx)로 세로막대·선·가로순위·누적·분할막대·히트맵·미터·퍼널·KPI 타일, 카드마다 「표」 전환.

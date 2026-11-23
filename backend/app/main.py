@@ -23,6 +23,7 @@ from .academic_students import router as academic_students_router
 from .counsel import router as counsel_router
 from .counsel_dashboard import router as counsel_dashboard_router
 from .stats import router as stats_router
+from .stats_kpi import router as stats_kpi_router
 from .psych_referrals import router as psych_referrals_router
 from .counsel_records import router as record_router
 from .psych_tests import router as psych_tests_router
@@ -101,6 +102,7 @@ app.include_router(academic_students_router, prefix='/api/v1')
 app.include_router(counsel_router, prefix='/api/v1')
 app.include_router(counsel_dashboard_router, prefix='/api/v1')
 app.include_router(stats_router, prefix='/api/v1')
+app.include_router(stats_kpi_router, prefix='/api/v1')
 app.include_router(psych_referrals_router, prefix='/api/v1')
 app.include_router(record_router, prefix='/api/v1')
 app.include_router(psych_tests_router, prefix='/api/v1')

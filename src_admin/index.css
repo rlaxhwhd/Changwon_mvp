@@ -2984,3 +2984,33 @@ input, textarea, select { font-family: var(--font); }
 .sd-meter-track i { display: block; height: 100%; border-radius: var(--radius-pill); background: var(--blue); }
 .sd-meter-track i.full { background: var(--orange); }
 .sd-meters small { display: block; margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--text-cap); }
+
+/* ═══ KPI통계 (/stats/kpi) — 7단계 퍼널 + 목표 대비 실적 표 ═════════════════ */
+.kpi-funnel { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; list-style: none; margin: 4px 0 0; padding: 0; }
+.kpi-funnel-stage { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+.kpi-funnel-bar { display: flex; align-items: flex-end; width: 100%; height: 120px; }
+.kpi-funnel-bar i { display: block; width: 100%; height: var(--h); border-radius: 4px 4px 0 0; background: var(--c); }
+.kpi-funnel-stage.is-na .kpi-funnel-bar i { background: var(--border); }
+.kpi-funnel-label { font-size: 13px; font-weight: 700; color: var(--text-sub); }
+.kpi-funnel-value { font-size: 15px; font-weight: 800; color: var(--text); font-variant-numeric: tabular-nums; }
+.kpi-funnel-stage.is-na .kpi-funnel-value { font-size: 12px; color: var(--text-cap); }
+.kpi-diagnosis { margin-top: 14px; padding: 12px 16px; border: 1px solid var(--yellow); border-radius: var(--radius-md); background: var(--yellow-bg); color: var(--on-yellow); font-size: 13px; font-weight: 600; line-height: 1.6; }
+.kpi-diagnosis strong, .kpi-diagnosis b { font-weight: 800; }
+.kpi-table-wrap { max-height: none; }
+.kpi-table th:first-child, .kpi-table td:first-child { text-align: left; }
+.kpi-table td { vertical-align: middle; }
+.kpi-table .kpi-name, .kpi-table .kpi-formula, .kpi-table .kpi-stage-cell { text-align: left; }
+.kpi-table .kpi-num { text-align: right; white-space: nowrap; }
+.kpi-stage-cell { font-weight: 800; color: var(--text); white-space: nowrap; }
+.kpi-group-start td { border-top: 1px solid var(--border); }
+.kpi-stage-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+.kpi-name { font-weight: 700; color: var(--text); white-space: nowrap; }
+.kpi-name small { color: var(--text-cap); cursor: help; }
+.kpi-formula { font-size: 12px; color: var(--text-sub); }
+.kpi-trend { display: block; width: 120px; height: 8px; border-radius: var(--radius-pill); background: var(--divider); overflow: hidden; }
+.kpi-trend i { display: block; height: 100%; border-radius: var(--radius-pill); }
+.kpi-status { display: inline-block; padding: 3px 9px; border: 1px solid; border-radius: var(--radius-xs); font-size: 12px; font-weight: 800; white-space: nowrap; }
+.kpi-status-ok { color: var(--on-green); border-color: var(--green); background: var(--green-bg); }
+.kpi-status-warn { color: var(--on-orange); border-color: var(--orange); background: var(--orange-bg); }
+.kpi-status-alert { color: var(--on-red); border-color: var(--red); background: var(--red-bg); }
+.kpi-status-none, .kpi-status-na { color: var(--text-cap); border-color: var(--border); background: var(--muted); }
