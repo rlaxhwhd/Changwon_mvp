@@ -5,6 +5,7 @@
 - 「신청 시 추가 정보 설정」의 「개인정보 동의서」 유형은 현행 드림캐치 팝업(EpMnAddReqArt.do)에 보이는 양식 그대로다(`shared/components/ProgramConsentForm.tsx` — 개인정보 수집·이용 동의서 · 고유식별정보 제공 동의 · 불이익 안내 확인 · 안내사항 · 신청자). 문구가 고정이라 상담사가 적는 값은 없고(제 3자 제공·제공받는자 입력은 사용자 지시로 뺐다), 상담사 팝업은 미리보기만 보여 준다. 공고당 동의서 1개. DB 구조 변경 없음(`dc.program.application_questions` jsonb 그대로).
 - 객관식(선택형·복수 선택형)은 현행처럼 답변 항목을 줄마다 +/− 로 늘리고 줄인다(옛 「한 줄에 하나씩」 textarea 제거). 유형을 바꾸면 답변 항목을 비운다.
 - 학생 신청서(`ProgramApplyModal`)의 동의서는 **상담사가 동의서 항목을 넣은 공고에서만** 나온다(2026-11-24 사용자 지시 — 전에는 항상 나왔다). 세 항목의 예/아니오는 `consents{agreeCollect,agreeIdent,agreeNotice}` 로 저장되고, 모두 「예」면 CONSENT 질문의 답이 `yes`, 하나라도 「아니오」면 `no`. 동의서 없는 공고는 `consents` 가 `{}`. 동의서 바탕은 흰색(회색 금지). 옛 `agree3rd` 는 더 이상 보내지 않는다(엑셀 내보내기의 제 3자 열은 빈칸).
+- 동의서 조작은 상담 동의서(`CounselConsentModal`)와 맞췄다 — 항목마다 「동의하십니까? [예] [아니오]」 알약 라디오, 아래 「모두 동의」 버튼(세 항목을 한 번에 「예」, 다시 누르면 해제), 「신청자 : 이름 [서명]」 버튼(누르면 서명한 것으로 본다 → `consents.signed=true`). 세 항목 응답 + 서명이 있어야 「신청」이 열린다. 상담사 미리보기는 같은 모양을 비활성으로 보여 주고 설명 문구는 뺐다. 옛 체크박스 전체동의(`.pam-agree-all`)는 없앴다. 로컬 Docker·ego-browser에서 미리보기 라디오 6개·버튼 비활성, 학생 신청 서명 전 비활성→서명 후 신청, DB `{agreeCollect,agreeIdent,agreeNotice:yes, signed:true}` 확인, 콘솔 오류·예외 0.
 - 테스트 DB: tests/test_program_content.py·test_programs.py·test_program_roster_upload.py 34 passed. 로컬 Docker 반영 후 ego-browser(1440px)로 상담사 팝업(항목 +/−, 동의서 미리보기, 동의서 중복 선택 불가)과 학생 신청(제공받는 자 「○○기업」 표시, 복수 선택 답변·동의 yes 저장) 확인, 콘솔 오류·예외 0. 검증용 공고는 지웠다. 서버 배포는 하지 않았다.
 
 ## 2026-11-23 누적 통계·채용공고·AI 자소서 API/웹/173~175 서버 배포

@@ -925,7 +925,6 @@ export default function ProgramForm() {
                   <button type="button" className="pf-btn-danger-soft pf-extra-del" onClick={() => removeExtra(item.id)}><LuTrash2 style={{ width: 14, height: 14 }} /> 삭제</button>
                   {item.type === 'CONSENT' && <div className="pf-extra-consent">
                     <ProgramConsentForm />
-                    <span className="pf-help">현행 드림캐치 동의서 양식 그대로입니다. 학생 신청서에 이 동의서가 나오고 항목마다 예/아니오를 받습니다.</span>
                   </div>}
                 </div>
               ))}

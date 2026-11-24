@@ -3,21 +3,26 @@ import './ProgramConsentForm.css'
 /**
  * 비교과 신청서의 「개인정보 동의서」 — 현행 드림캐치 신청 시 추가정보 팝업(EpMnAddReqArt.do)의 양식을 그대로 옮겼다
  * (수집·이용 동의서 · 고유식별정보 제공 동의 · 불이익 안내 확인 · 안내사항 · 신청자). 문구는 고정이라 상담사가 적는 값이 없다.
- * 상담(CounselConsentModal)·AI 자소서(DeepConsent) 동의서와 별개 양식이다.
- * `onChange` 없이 부르면 예/아니오 없이 양식만 보여 준다(상담사 미리보기).
+ * 상담(CounselConsentModal)·AI 자소서(DeepConsent) 동의서와 별개 양식이지만 조작 모양은 맞춘다
+ * — 예/아니오 알약 라디오, 아래 「모두 동의」, 「신청자 : 이름 [서명]」(누르면 서명한 것으로 본다).
+ * `onChange` 없이 부르면 같은 모양을 비활성으로 보여 준다(상담사 미리보기).
  */
 export type ProgramConsentKey = 'agreeCollect' | 'agreeIdent' | 'agreeNotice'
-export type ProgramConsentAnswers = Partial<Record<ProgramConsentKey, 'yes' | 'no'>>
+export type ProgramConsentAnswers = Partial<Record<ProgramConsentKey, 'yes' | 'no'>> & { signed?: boolean }
 export const PROGRAM_CONSENT_KEYS: ProgramConsentKey[] = ['agreeCollect', 'agreeIdent', 'agreeNotice']
 
 export default function ProgramConsentForm({ value = {}, onChange, applicantName }: {
   value?: ProgramConsentAnswers; onChange?: (next: ProgramConsentAnswers) => void; applicantName?: string
 }) {
+  const readOnly = !onChange
+  const allAgreed = PROGRAM_CONSENT_KEYS.every(k => value[k] === 'yes')
   const yesNo = (name: ProgramConsentKey) => <div className="program-consent-yn">
-    <span>동의하십니까?</span>
-    {onChange
-      ? (['yes', 'no'] as const).map(v => <label key={v}><input type="radio" name={`program-consent-${name}`} checked={value[name] === v} onChange={() => onChange({ ...value, [name]: v })} />{v === 'yes' ? '예' : '아니오'}</label>)
-      : <span>예 / 아니오</span>}
+    <span className="program-consent-yn-q">동의하십니까?</span>
+    {(['yes', 'no'] as const).map(v => <label key={v} className={value[name] === v ? 'on' : ''}>
+      <input type="radio" name={`program-consent-${name}`} checked={value[name] === v} disabled={readOnly}
+        onChange={() => onChange?.({ ...value, [name]: v })} />
+      <span>{v === 'yes' ? '예' : '아니오'}</span>
+    </label>)}
   </div>
   return <div className="program-consent">
     <section className="program-consent-box">
@@ -54,6 +59,18 @@ export default function ProgramConsentForm({ value = {}, onChange, applicantName
         <li>4. 국립창원대학교 취업전략센터 및 대학일자리플러스센터는 수집된 정보를 통해 동의자의 재학 중 고용서비스를 안내‧제공하고 졸업 후 취업현황을 파악하여 미취업 상태의 동의자에게 고용서비스를 제공합니다.<br />본인은 위 개인정보 수집‧이용‧제3자 제공, 불이익 안내의 동의 또는 확인 여부에 대하여 위와 같이 선택하였음을 확인 합니다.</li>
       </ol>
     </div>
-    <p className="program-consent-applicant">신청자 : <strong>{applicantName ?? ''}</strong></p>
+    <button type="button" className={`program-consent-all${allAgreed ? ' on' : ''}`} aria-pressed={allAgreed} disabled={readOnly}
+      onClick={() => onChange?.(allAgreed
+        ? { signed: value.signed }
+        : { ...value, agreeCollect: 'yes', agreeIdent: 'yes', agreeNotice: 'yes' })}>
+      <span className="program-consent-all-mark" aria-hidden="true">✓</span> 모두 동의
+    </button>
+    <div className="program-consent-applicant">
+      <span>신청자 : <strong>{applicantName ?? ''}</strong></span>
+      <button type="button" className={`program-consent-sign${value.signed ? ' on' : ''}`} aria-pressed={!!value.signed} disabled={readOnly}
+        onClick={() => onChange?.({ ...value, signed: !value.signed })}>
+        {value.signed ? '✓ 서명 완료' : '서명'}
+      </button>
+    </div>
   </div>
 }

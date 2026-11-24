@@ -18,7 +18,7 @@ interface Props {
   onSubmit: (payload: {
     routeCode: string
     motive: string
-    /** 동의서 4종의 예/아니오 — 상담사가 동의서 항목을 넣은 공고에서만 채워진다. */
+    /** 동의서 3항목의 예/아니오와 서명 여부 — 상담사가 동의서 항목을 넣은 공고에서만 채워진다. */
     consents: ProgramConsentAnswers
     answers: ApplicationAnswers
   }) => void
@@ -67,9 +67,7 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
     })
   }
 
-  const allAnswered = !consentQuestion || PROGRAM_CONSENT_KEYS.every(k => consents[k])
-  const allAgreed = PROGRAM_CONSENT_KEYS.every(k => consents[k] === 'yes')
-  const setAllAgreed = (on: boolean) => changeConsents(on ? { agreeCollect: 'yes', agreeIdent: 'yes', agreeNotice: 'yes' } : {})
+  const allAnswered = !consentQuestion || (PROGRAM_CONSENT_KEYS.every(k => consents[k]) && !!consents.signed)
   const canSubmit = routeCode !== '' && motive.trim() !== '' && allAnswered && !saving && !uploading && questionsAnswered(questions, answers)
 
   const handleSubmit = () => {
@@ -156,12 +154,8 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
         <div className="pam-section-title">
           <i className="fa-regular fa-file-lines" /> 개인정보 동의서
         </div>
-        {/* 현행 신청 시 추가정보 팝업의 동의서 양식 그대로 — 문구 고정, 예/아니오만 받는다 */}
+        {/* 현행 신청 시 추가정보 팝업의 동의서 양식 그대로 — 문구 고정. 예/아니오·모두 동의·서명은 컴포넌트 안에 있다 */}
         <ProgramConsentForm value={consents} onChange={changeConsents} applicantName={studentDisplayName(STUDENT.name, STUDENT.studentId)} />
-        <label className="pam-agree-all">
-          <input type="checkbox" checked={allAgreed} onChange={e => setAllAgreed(e.target.checked)} />
-          위 개인정보 수집·이용·고유식별정보 제공·불이익 안내에 모두 동의합니다 (전체동의)
-        </label>
       </div>}
 
       <div className="pam-actions">
