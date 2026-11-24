@@ -4,7 +4,7 @@ import Modal from './Modal'
 import { getActiveStudent } from '../data/students'
 import { collegeOf } from '../../src_admin/data/colleges'
 import './ProgramApplyModal.css'
-import { CONSENT_DEFAULT_RECIPIENT, questionsAnswered, type ApplicationAnswers, type ApplicationQuestion } from '../../shared/programContent'
+import { questionsAnswered, type ApplicationAnswers, type ApplicationQuestion } from '../../shared/programContent'
 import ProgramApplicationQuestions from '../../shared/components/ProgramApplicationQuestions'
 import ProgramConsentForm from '../../shared/components/ProgramConsentForm'
 import { catalogOptions } from '../data/growthInputCatalog'
@@ -18,10 +18,8 @@ interface Props {
   onSubmit: (payload: {
     routeCode: string
     motive: string
-    agree3rd: 'yes' | 'no'
-    agreeCollect: 'yes' | 'no'
-    agreeIdent: 'yes' | 'no'
-    agreeNotice: 'yes' | 'no'
+    /** 동의서 4종의 예/아니오 — 상담사가 동의서 항목을 넣은 공고에서만 채워진다. */
+    consents: Partial<Record<'agree3rd' | 'agreeCollect' | 'agreeIdent' | 'agreeNotice', 'yes' | 'no'>>
     answers: ApplicationAnswers
   }) => void
 }
@@ -67,7 +65,8 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
 
   const handleClose = () => { if (!saving && !uploading) { reset(); onClose() } }
 
-  // 상담사가 설정한 제 3자 제공 동의서(CONSENT 질문)는 아래 고정 동의서 자리에 보여 주고, 예/아니오를 그 질문의 답으로 함께 남긴다.
+  // 동의서 묶음(제 3자 제공·수집이용·고유식별·불이익 안내)은 상담사가 「신청 시 추가 정보」에 동의서 항목을 넣은
+  // 공고에서만 나온다(2026-11-24 사용자 지시). 제 3자 제공의 예/아니오는 그 CONSENT 질문의 답으로도 남긴다.
   const consentQuestion = questions.find(q => q.type === 'CONSENT')
   const otherQuestions = questions.filter(q => q.type !== 'CONSENT')
   const change3rd = (value: YN) => {
@@ -75,7 +74,7 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
     if (consentQuestion) setAnswers(prev => ({ ...prev, [consentQuestion.id]: value }))
   }
 
-  const allAnswered = agree3rd && agreeCollect && agreeIdent && agreeNotice
+  const allAnswered = !consentQuestion || (agree3rd && agreeCollect && agreeIdent && agreeNotice)
   const allAgreed = agree3rd === 'yes' && agreeCollect === 'yes' && agreeIdent === 'yes' && agreeNotice === 'yes'
   const setAllAgreed = (on: boolean) => {
     const value: YN = on ? 'yes' : ''
@@ -88,10 +87,10 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
     onSubmit({
       routeCode,
       motive: motive.trim(),
-      agree3rd: agree3rd as 'yes' | 'no',
-      agreeCollect: agreeCollect as 'yes' | 'no',
-      agreeIdent: agreeIdent as 'yes' | 'no',
-      agreeNotice: agreeNotice as 'yes' | 'no',
+      consents: consentQuestion ? {
+        agree3rd: agree3rd as 'yes' | 'no', agreeCollect: agreeCollect as 'yes' | 'no',
+        agreeIdent: agreeIdent as 'yes' | 'no', agreeNotice: agreeNotice as 'yes' | 'no',
+      } : {},
       answers,
     })
   }
@@ -161,14 +160,19 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
         />
       </div>
 
-      {/* ── 개인정보 제3자 제공 동의서 ── */}
+      {otherQuestions.length > 0 && <div className="pam-section">
+        <h3 className="pam-section-title">신청 시 추가정보</h3>
+        <ProgramApplicationQuestions questions={otherQuestions} answers={answers} onChange={setAnswers} onBusyChange={setUploading} />
+      </div>}
+
+      {consentQuestion && <>
+      {/* ── 개인정보 제3자 제공 동의서 — 제공받는 자 세 번째 줄은 상담사가 적은 값 ── */}
       <div className="pam-section">
         <div className="pam-section-title">
           <i className="fa-regular fa-id-card" /> 개인정보 제3자 제공 동의서
         </div>
         <div className="pam-doc">
-          {/* 제공받는 자 세 번째 줄은 상담사가 공고의 「신청 시 추가 정보」(CONSENT 질문)에 적은 값이다. */}
-          <ProgramConsentForm recipient={consentQuestion?.content || CONSENT_DEFAULT_RECIPIENT} />
+          <ProgramConsentForm recipient={consentQuestion.content} />
           <YesNo value={agree3rd} onChange={change3rd} name="pam-agree-3rd" />
         </div>
       </div>
@@ -239,11 +243,6 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
         </div>
       </div>
 
-      {otherQuestions.length > 0 && <div className="pam-section">
-        <h3 className="pam-section-title">신청 시 추가정보</h3>
-        <ProgramApplicationQuestions questions={otherQuestions} answers={answers} onChange={setAnswers} onBusyChange={setUploading} />
-      </div>}
-
       {/* ── 안내사항 ── */}
       <div className="pam-section">
         <div className="pam-section-title">
@@ -264,6 +263,7 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
           위 개인정보 제3자 제공·수집·이용·고유식별정보 제공·불이익 안내에 모두 동의합니다 (전체동의)
         </label>
       </div>
+      </>}
 
       <div className="pam-actions">
         <button className="pam-btn-ghost" onClick={handleClose}>닫기</button>

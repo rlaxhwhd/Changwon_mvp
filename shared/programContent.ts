@@ -26,9 +26,6 @@ export const QUESTION_TYPES: Record<ApplicationQuestion['type'], string> = {
 }
 /** CONSENT 질문의 제목은 고정이고(현행과 같다), `content` 에는 세 번째 제공받는 자만 담는다. */
 export const CONSENT_QUESTION_TITLE = '개인정보 제 3자 제공 동의서'
-/** 상담사가 동의서를 설정하지 않은 공고의 학생 신청서에 쓰는 제공받는 자. */
-export const CONSENT_DEFAULT_RECIPIENT = '국립창원대학교 국립대학육성사업단, 위탁업체'
-
 export async function uploadProgramFile(file: File, application = false): Promise<ProgramFile> {
   validateUpload(file, DOCUMENT_ACCEPT)
   return api<ProgramFile>(`/program-files?slot=${application ? 'PROGRAM_APPLICATION_ATTACHMENT' : 'PROGRAM_ATTACHMENT'}&name=${encodeURIComponent(file.name)}`,

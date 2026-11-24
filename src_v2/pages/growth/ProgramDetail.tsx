@@ -67,13 +67,12 @@ export default function ProgramDetail() {
   // 여기서 미리 성공을 알리면 저장되지 않은 신청이 완료로 보인다.
   const handleApplySubmit = (payload: {
     routeCode: string; motive: string
-    agree3rd: 'yes' | 'no'; agreeCollect: 'yes' | 'no'
-    agreeIdent: 'yes' | 'no'; agreeNotice: 'yes' | 'no'
+    consents: Partial<Record<'agree3rd' | 'agreeCollect' | 'agreeIdent' | 'agreeNotice', 'yes' | 'no'>>
     answers: import('../../../shared/programContent').ApplicationAnswers
   }) => {
     if (saving) return
     setSaving(true)
-    const { routeCode, motive, answers, ...consents } = payload
+    const { routeCode, motive, answers, consents } = payload
     applyToProgram(programId, { routeCode, motive, consents, answers, round: applyRound ?? 1 })
       .then(() => {
         setApplyOpen(false)

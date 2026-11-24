@@ -110,7 +110,7 @@
 /* ─── 동의서 박스 ─── */
 .pam-doc {
   padding: 14px 16px;
-  background: var(--color-surface);
+  background: var(--color-bg); /* 동의서는 회색 바탕을 쓰지 않는다(2026-11-24 사용자 지시) */
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
   font-size: 14px;
