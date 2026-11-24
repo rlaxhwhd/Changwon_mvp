@@ -1,10 +1,15 @@
-/* 비교과 「개인정보 제 3자 제공 동의서」 — 학생(src_v2)·상담사(src_admin) 양쪽에서 쓰므로 토큰은 폴백을 둔다. */
-.program-consent { font-size: 14px; line-height: 1.65; color: var(--color-text-sub, #4b5563); }
-.program-consent p { margin: 0 0 10px; }
-.program-consent-h { font-weight: 800; color: var(--color-navy, #111827); margin: 12px 0 6px; }
+/* 비교과 「개인정보 동의서」 — 학생(src_v2)·상담사(src_admin) 양쪽에서 쓰므로 토큰은 폴백을 둔다. 바탕은 흰색(회색 금지). */
+.program-consent { display: flex; flex-direction: column; gap: 14px; font-size: 14px; line-height: 1.65; color: var(--color-text-sub, #4b5563); background: #fff; }
+.program-consent p { margin: 0 0 8px; }
+.program-consent-box { border: 1px solid var(--color-border, #dde2e8); border-top: 2px solid var(--color-primary, #7C5CFC); border-radius: 6px; padding: 0 16px 12px; background: #fff; }
+.program-consent-box h4 { margin: 0 -16px 12px; padding: 10px 16px; text-align: center; font-size: 15px; font-weight: 700; color: var(--color-navy, #111827); background: var(--color-primary-bg, #f3f0ff); }
+.program-consent-h { font-weight: 800; color: var(--color-navy, #111827); margin: 10px 0 6px; }
 .program-consent-table { width: 100%; border-collapse: collapse; margin: 6px 0 12px; }
-.program-consent-table th, .program-consent-table td { border: 1px solid var(--color-border, #dde2e8); padding: 9px 12px; vertical-align: middle; font-size: 14px; line-height: 1.55; }
-.program-consent-table th { text-align: center; background: var(--color-primary-bg, #eef2ff); color: var(--color-text-sub, #4b5563); font-weight: 700; }
+.program-consent-table th, .program-consent-table td { border: 1px solid var(--color-border, #dde2e8); padding: 9px 12px; vertical-align: middle; text-align: center; font-size: 14px; line-height: 1.55; }
+.program-consent-table th { background: var(--color-primary-bg, #f3f0ff); color: var(--color-text-sub, #4b5563); font-weight: 700; }
 .program-consent-table td { font-weight: 500; }
-.program-consent-table input { width: 100%; height: 36px; padding: 0 10px; border: 1px solid var(--color-border, #cbd2dc); border-radius: 6px; font: inherit; box-sizing: border-box; }
-.program-consent-law { text-align: center; }
+.program-consent-yn { display: flex; justify-content: center; align-items: center; gap: 16px; margin-top: 6px; font-weight: 700; color: var(--color-navy, #111827); }
+.program-consent-yn label { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; cursor: pointer; }
+.program-consent-notice ol { margin: 0; padding: 0; list-style: none; }
+.program-consent-notice li { margin: 2px 0; }
+.program-consent-applicant { text-align: right; margin: 0; }

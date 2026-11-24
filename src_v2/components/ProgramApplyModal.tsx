@@ -6,7 +6,7 @@ import { collegeOf } from '../../src_admin/data/colleges'
 import './ProgramApplyModal.css'
 import { questionsAnswered, type ApplicationAnswers, type ApplicationQuestion } from '../../shared/programContent'
 import ProgramApplicationQuestions from '../../shared/components/ProgramApplicationQuestions'
-import ProgramConsentForm from '../../shared/components/ProgramConsentForm'
+import ProgramConsentForm, { PROGRAM_CONSENT_KEYS, type ProgramConsentAnswers } from '../../shared/components/ProgramConsentForm'
 import { catalogOptions } from '../data/growthInputCatalog'
 
 interface Props {
@@ -19,18 +19,9 @@ interface Props {
     routeCode: string
     motive: string
     /** 동의서 4종의 예/아니오 — 상담사가 동의서 항목을 넣은 공고에서만 채워진다. */
-    consents: Partial<Record<'agree3rd' | 'agreeCollect' | 'agreeIdent' | 'agreeNotice', 'yes' | 'no'>>
+    consents: ProgramConsentAnswers
     answers: ApplicationAnswers
   }) => void
-}
-
-type YN = 'yes' | 'no' | ''
-
-function YesNo({ value, onChange, name }: { value: YN; onChange: (v: YN) => void; name: string }) {
-  return <div className="pam-yn">
-    <label><input type="radio" name={name} checked={value === 'yes'} onChange={() => onChange('yes')} />예</label>
-    <label><input type="radio" name={name} checked={value === 'no'} onChange={() => onChange('no')} />아니오</label>
-  </div>
 }
 
 export default function ProgramApplyModal({ open, onClose, programTitle, onSubmit, questions = [], saving = false }: Props) {
@@ -50,36 +41,35 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
   const routes = catalogOptions('PROGRAM_APPLY_ROUTE')
   const [routeCode, setRouteCode] = useState('')
   const [motive, setMotive] = useState('')
-  const [agree3rd, setAgree3rd] = useState<YN>('')
-  const [agreeCollect, setAgreeCollect] = useState<YN>('')
-  const [agreeIdent, setAgreeIdent] = useState<YN>('')
-  const [agreeNotice, setAgreeNotice] = useState<YN>('')
+  const [consents, setConsents] = useState<ProgramConsentAnswers>({})
   const [answers, setAnswers] = useState<ApplicationAnswers>({})
   const [uploading, setUploading] = useState(false)
 
   const reset = () => {
     setRouteCode(''); setMotive('')
-    setAgree3rd(''); setAgreeCollect(''); setAgreeIdent(''); setAgreeNotice('')
+    setConsents({})
     setAnswers({})
   }
 
   const handleClose = () => { if (!saving && !uploading) { reset(); onClose() } }
 
-  // 동의서 묶음(제 3자 제공·수집이용·고유식별·불이익 안내)은 상담사가 「신청 시 추가 정보」에 동의서 항목을 넣은
-  // 공고에서만 나온다(2026-11-24 사용자 지시). 제 3자 제공의 예/아니오는 그 CONSENT 질문의 답으로도 남긴다.
+  // 동의서(수집·이용·고유식별·불이익 안내 — 현행 양식 그대로)는 상담사가 「신청 시 추가 정보」에 동의서 항목을 넣은
+  // 공고에서만 나온다(2026-11-24 사용자 지시). 세 항목이 모두 「예」면 그 CONSENT 질문의 답을 yes, 하나라도 「아니오」면 no 로 남긴다.
   const consentQuestion = questions.find(q => q.type === 'CONSENT')
   const otherQuestions = questions.filter(q => q.type !== 'CONSENT')
-  const change3rd = (value: YN) => {
-    setAgree3rd(value)
-    if (consentQuestion) setAnswers(prev => ({ ...prev, [consentQuestion.id]: value }))
+  const changeConsents = (next: ProgramConsentAnswers) => {
+    setConsents(next)
+    if (!consentQuestion) return
+    const done = PROGRAM_CONSENT_KEYS.every(k => next[k])
+    setAnswers(prev => {
+      const rest = Object.fromEntries(Object.entries(prev).filter(([k]) => k !== consentQuestion.id))
+      return done ? { ...rest, [consentQuestion.id]: PROGRAM_CONSENT_KEYS.every(k => next[k] === 'yes') ? 'yes' : 'no' } : rest
+    })
   }
 
-  const allAnswered = !consentQuestion || (agree3rd && agreeCollect && agreeIdent && agreeNotice)
-  const allAgreed = agree3rd === 'yes' && agreeCollect === 'yes' && agreeIdent === 'yes' && agreeNotice === 'yes'
-  const setAllAgreed = (on: boolean) => {
-    const value: YN = on ? 'yes' : ''
-    change3rd(value); setAgreeCollect(value); setAgreeIdent(value); setAgreeNotice(value)
-  }
+  const allAnswered = !consentQuestion || PROGRAM_CONSENT_KEYS.every(k => consents[k])
+  const allAgreed = PROGRAM_CONSENT_KEYS.every(k => consents[k] === 'yes')
+  const setAllAgreed = (on: boolean) => changeConsents(on ? { agreeCollect: 'yes', agreeIdent: 'yes', agreeNotice: 'yes' } : {})
   const canSubmit = routeCode !== '' && motive.trim() !== '' && allAnswered && !saving && !uploading && questionsAnswered(questions, answers)
 
   const handleSubmit = () => {
@@ -87,10 +77,7 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
     onSubmit({
       routeCode,
       motive: motive.trim(),
-      consents: consentQuestion ? {
-        agree3rd: agree3rd as 'yes' | 'no', agreeCollect: agreeCollect as 'yes' | 'no',
-        agreeIdent: agreeIdent as 'yes' | 'no', agreeNotice: agreeNotice as 'yes' | 'no',
-      } : {},
+      consents: consentQuestion ? consents : {},
       answers,
     })
   }
@@ -165,105 +152,17 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
         <ProgramApplicationQuestions questions={otherQuestions} answers={answers} onChange={setAnswers} onBusyChange={setUploading} />
       </div>}
 
-      {consentQuestion && <>
-      {/* ── 개인정보 제3자 제공 동의서 — 제공받는 자 세 번째 줄은 상담사가 적은 값 ── */}
-      <div className="pam-section">
+      {consentQuestion && <div className="pam-section">
         <div className="pam-section-title">
-          <i className="fa-regular fa-id-card" /> 개인정보 제3자 제공 동의서
+          <i className="fa-regular fa-file-lines" /> 개인정보 동의서
         </div>
-        <div className="pam-doc">
-          <ProgramConsentForm recipient={consentQuestion.content} />
-          <YesNo value={agree3rd} onChange={change3rd} name="pam-agree-3rd" />
-        </div>
-      </div>
-
-      {/* ── 개인정보 수집·이용 동의서 ── */}
-      <div className="pam-section">
-        <div className="pam-section-title">
-          <i className="fa-regular fa-file-lines" /> 개인정보 수집·이용 동의서
-        </div>
-        <div className="pam-doc">
-          <p>
-            국립창원대학교 취업전략센터 및 대학일자리플러스센터는 이 프로그램과 관련하여 아래와 같이
-            개인정보를 수집·이용하고자 합니다. 내용을 자세히 읽으신 후 동의 여부를 결정하여 주십시오.
-          </p>
-          <p>
-            본인은 많은 취업 기회를 가질 수 있도록 대학·고용복지플러스센터를 통하여 취업정보·컨설팅,
-            채용연계 등 고용서비스를 제공받기 위해 「개인정보보호법」 제 15조에 따라 개인정보 제공
-            (개인정보처리자로부터 수집·이용 및 제공을 포함)에 동의합니다.
-          </p>
-          <p className="pam-doc-h">□ 개인정보 수집·이용 목적</p>
-          <table className="pam-table pam-table-doc">
-            <thead>
-              <tr><th>항목</th><th>수집·이용 목적</th><th>보유·이용기간</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>
-                  (신청일 기준) 성명, 주민등록번호, 주소(주민등록상, 실거주지), 연락처,
-                  신청일 기준 학년, 졸업예정년월, 전공(학과, 계열)
-                </td>
-                <td>취업지원 서비스 제공</td>
-                <td>졸업(예정)일로부터 5년</td>
-              </tr>
-            </tbody>
-          </table>
-          <p className="pam-q">동의하십니까?</p>
-          <YesNo value={agreeCollect} onChange={setAgreeCollect} name="pam-agree-collect" />
-        </div>
-      </div>
-
-      {/* ── 고유식별정보 제공 동의 ── */}
-      <div className="pam-section">
-        <div className="pam-section-title">
-          <i className="fa-regular fa-shield-halved" /> 고유식별정보 제공에 대한 동의 여부
-        </div>
-        <div className="pam-doc">
-          <p>
-            본인은 취업지원서비스를 받으려는 자로서 「개인정보보호법」 제 24조에 따라 본인의
-            고유식별정보 제공(개인정보처리자로부터 수집·이용 및 제공을 포함)에 동의합니다.
-          </p>
-          <p className="pam-q">동의하십니까?</p>
-          <YesNo value={agreeIdent} onChange={setAgreeIdent} name="pam-agree-ident" />
-        </div>
-      </div>
-
-      {/* ── 불이익 안내 확인 ── */}
-      <div className="pam-section">
-        <div className="pam-section-title">
-          <i className="fa-regular fa-circle-exclamation" /> 불이익 안내 확인 여부
-        </div>
-        <div className="pam-doc">
-          <p>
-            참여자는 "국립창원대학교 취업전략센터 및 대학일자리플러스센터"에서 수집하는 고유식별정보에
-            대해 동의를 거부할 권리가 있으며, 동의 거부 시에는 취업지원 서비스 안내가 제한됩니다.
-          </p>
-          <p className="pam-q">동의하십니까?</p>
-          <YesNo value={agreeNotice} onChange={setAgreeNotice} name="pam-agree-notice" />
-        </div>
-      </div>
-
-      {/* ── 안내사항 ── */}
-      <div className="pam-section">
-        <div className="pam-section-title">
-          <i className="fa-regular fa-circle-info" /> 안내사항
-        </div>
-        <ol className="pam-notice-list">
-          <li>정보 관리 및 보호의 주체는 국립창원대학교 취업전략센터 및 대학일자리플러스센터 관련 종사자입니다.</li>
-          <li>동의한 정보는 본인확인(전자서명)을 통해 열람 및 동의 내역에 대한 정정이 가능하며, 동의의 정정 및 취소를 원할 경우 처리 절차에 따라 처리됩니다.</li>
-          <li>수집된 개인정보는 원칙적으로 보유기간 경과 후 지체 없이 파기합니다. 단, 관계 법령(공공기록에 관한 법률)에 따라 필요시 일정기간 저장 후 파기됩니다.</li>
-          <li>국립창원대학교 취업전략센터 및 대학일자리플러스센터는 수집된 정보를 통해 동의자의 재학 중 고용서비스를 안내·제공하고, 졸업 후 취업현황을 파악하여 미취업 상태의 동의자에게 고용서비스를 제공합니다.</li>
-        </ol>
-        <p className="pam-confirm">
-          본인은 위 개인정보 수집·이용·제3자 제공, 불이익 안내의 동의 또는 확인 여부에 대하여
-          위와 같이 선택하였음을 확인합니다.
-        </p>
+        {/* 현행 신청 시 추가정보 팝업의 동의서 양식 그대로 — 문구 고정, 예/아니오만 받는다 */}
+        <ProgramConsentForm value={consents} onChange={changeConsents} applicantName={studentDisplayName(STUDENT.name, STUDENT.studentId)} />
         <label className="pam-agree-all">
           <input type="checkbox" checked={allAgreed} onChange={e => setAllAgreed(e.target.checked)} />
-          위 개인정보 제3자 제공·수집·이용·고유식별정보 제공·불이익 안내에 모두 동의합니다 (전체동의)
+          위 개인정보 수집·이용·고유식별정보 제공·불이익 안내에 모두 동의합니다 (전체동의)
         </label>
-      </div>
-      </>}
+      </div>}
 
       <div className="pam-actions">
         <button className="pam-btn-ghost" onClick={handleClose}>닫기</button>

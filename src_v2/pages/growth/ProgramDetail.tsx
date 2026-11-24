@@ -67,7 +67,7 @@ export default function ProgramDetail() {
   // 여기서 미리 성공을 알리면 저장되지 않은 신청이 완료로 보인다.
   const handleApplySubmit = (payload: {
     routeCode: string; motive: string
-    consents: Partial<Record<'agree3rd' | 'agreeCollect' | 'agreeIdent' | 'agreeNotice', 'yes' | 'no'>>
+    consents: import('../../../shared/components/ProgramConsentForm').ProgramConsentAnswers
     answers: import('../../../shared/programContent').ApplicationAnswers
   }) => {
     if (saving) return

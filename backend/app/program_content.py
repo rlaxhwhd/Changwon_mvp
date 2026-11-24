@@ -24,9 +24,6 @@ class ApplicationQuestion(BaseModel):
                 not self.options or any(not x or len(x) > 300 for x in self.options)
                 or len(set(self.options)) != len(self.options)):
             raise ValueError('객관식 질문에는 중복되지 않는 선택지를 입력해 주세요.')
-        # 제 3자 제공 동의서 — 문구는 화면(shared/components/ProgramConsentForm)이 고정으로 갖고, content 는 제공받는 자만 담는다.
-        if self.type == 'CONSENT' and not self.content:
-            raise ValueError('개인정보 제 3자 제공 동의서의 제공받는 자를 입력해 주세요.')
         return self
 
 

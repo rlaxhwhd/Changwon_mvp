@@ -289,7 +289,7 @@ export default function ProgramForm() {
   const hasConsent = extraDraft.some(q => q.type === 'CONSENT')
   const extraValid = extraDraft.every(q => q.question.trim()
     && (!['SINGLE', 'MULTIPLE'].includes(q.type) || (q.options.length > 0 && q.options.every(x => x.trim()) && new Set(q.options.map(x => x.trim())).size === q.options.length))
-    && (q.type !== 'CONSENT' || q.content.trim()))
+    )
     && extraDraft.filter(q => q.type === 'CONSENT').length <= 1
   const addAttachments = async (selected: File[]) => {
     if (uploading) return
@@ -920,13 +920,13 @@ export default function ProgramForm() {
                         <button type="button" className="pf-extra-option-btn" aria-label="항목 삭제" title="항목 삭제" disabled={item.options.length <= 1} onClick={() => patchExtra(item.id, { options: item.options.filter((_, i) => i !== index) })}><LuMinus /></button>
                       </div>)}
                     </div>}
-                    {item.type === 'CONSENT' && <div className="pf-extra-consent">
-                      <ProgramConsentForm recipient={item.content} recipientInput={<input aria-label="제공받는자" value={item.content} maxLength={100} placeholder="제공받는자 (예: ○○기업)" onChange={e => patchExtra(item.id, { content: e.target.value })} />} />
-                      <span className="pf-help">개인정보 수집·이용, 고유식별정보 제공, 불이익 안내 동의는 모든 신청서에 기본으로 들어갑니다. 여기서는 제 3자 제공 동의서의 제공받는 자만 적습니다.</span>
-                    </div>}
                     {item.type === 'FILE' && <label>최대 파일 개수 <input type="number" min={1} max={5} value={item.maxFiles} onChange={e => patchExtra(item.id, { maxFiles: Number(e.target.value) })} /><span className="pf-help">문서·이미지·ZIP, 파일당 10MB 이하</span></label>}
                   </div>
                   <button type="button" className="pf-btn-danger-soft pf-extra-del" onClick={() => removeExtra(item.id)}><LuTrash2 style={{ width: 14, height: 14 }} /> 삭제</button>
+                  {item.type === 'CONSENT' && <div className="pf-extra-consent">
+                    <ProgramConsentForm />
+                    <span className="pf-help">현행 드림캐치 동의서 양식 그대로입니다. 학생 신청서에 이 동의서가 나오고 항목마다 예/아니오를 받습니다.</span>
+                  </div>}
                 </div>
               ))}
             </div>

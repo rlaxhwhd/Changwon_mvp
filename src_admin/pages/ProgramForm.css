@@ -339,8 +339,8 @@
 .pf-extra-option-btn:hover { background: #E1EBFF; }
 .pf-extra-option-btn:disabled { opacity: .4; cursor: not-allowed; }
 .pf-extra-option-btn svg { width: 15px; height: 15px; }
-/* 제 3자 제공 동의서 미리보기 — 문구는 고정이고 제공받는자 한 칸만 입력한다 */
-.pf-extra-consent { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; padding: 12px 14px; border: 1px solid var(--pf-border); border-radius: 10px; background: var(--pf-surface); }
+/* 개인정보 동의서 미리보기 — 현행 양식 그대로, 입력칸 없음. 행 전체 폭(유형 칸부터 삭제 버튼까지)을 쓴다 */
+.pf-extra-consent { grid-column: 2 / -1; display: flex; flex-direction: column; gap: 8px; padding: 12px 14px; border: 1px solid var(--pf-border); border-radius: 10px; background: var(--pf-surface); }
 .pf-extra-consent .program-consent { --color-text-sub: var(--pf-text-2); --color-navy: var(--pf-text); --color-border: var(--pf-border); --color-primary-bg: var(--pf-primary-soft); font-size: 13px; }
 .pf-modal-foot { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
 .pf-modal-foot .pf-btn { min-width: 96px; height: 42px; }
