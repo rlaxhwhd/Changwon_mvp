@@ -11,7 +11,8 @@ import ProgramSurveySelect from '../components/ProgramSurveySelect'
 import RichEditor from '../components/RichEditor'
 import { DOCUMENT_ACCEPT, IMAGE_ACCEPT, validateUpload } from '../../shared/uploadPolicy'
 import { getActiveUser, STAFF_USERS } from '../data/staff'
-import { QUESTION_TYPES, noticeParts, uploadProgramFile, type ApplicationQuestion, type ProgramFile } from '../../shared/programContent'
+import { CONSENT_QUESTION_TITLE, QUESTION_TYPES, noticeParts, uploadProgramFile, type ApplicationQuestion, type ProgramFile } from '../../shared/programContent'
+import ProgramConsentForm from '../../shared/components/ProgramConsentForm'
 import { addProgram, getProgramById, updateProgram } from '../data/programs'
 import { competencySurveyGroups, pinnedSurveyForm, satisfactionSurveySummary } from '../data/schema/program'
 import type { ProgramRound } from '../data/schema/program'
@@ -278,7 +279,18 @@ export default function ProgramForm() {
   const addExtra = () => setExtraDraft(prev => [...prev, { id: `extra_${crypto.randomUUID()}`, type: 'TEXT', question: '', required: false, options: [], content: '', maxFiles: 1 }])
   const removeExtra = (id: string) => setExtraDraft(prev => prev.filter(x => x.id !== id))
   const patchExtra = (id: string, patch: Partial<ExtraItem>) => setExtraDraft(prev => prev.map(x => (x.id === id ? { ...x, ...patch } : x)))
-  const extraValid = extraDraft.every(q => q.question.trim() && (!['SINGLE', 'MULTIPLE'].includes(q.type) || (q.options.length > 0 && q.options.every(x => x.trim()) && new Set(q.options.map(x => x.trim())).size === q.options.length)))
+  /** 유형을 바꾸면 현행처럼 답변항목을 비우고, 객관식은 빈 항목 한 줄에서, 동의서는 고정 제목으로 시작한다. */
+  const changeExtraType = (item: ExtraItem, type: ExtraItem['type']) => patchExtra(item.id, {
+    type, content: '',
+    options: ['SINGLE', 'MULTIPLE'].includes(type) ? [''] : [],
+    question: type === 'CONSENT' ? CONSENT_QUESTION_TITLE : item.type === 'CONSENT' ? '' : item.question,
+  })
+  const patchOption = (item: ExtraItem, index: number, value: string) => patchExtra(item.id, { options: item.options.map((x, i) => (i === index ? value : x)) })
+  const hasConsent = extraDraft.some(q => q.type === 'CONSENT')
+  const extraValid = extraDraft.every(q => q.question.trim()
+    && (!['SINGLE', 'MULTIPLE'].includes(q.type) || (q.options.length > 0 && q.options.every(x => x.trim()) && new Set(q.options.map(x => x.trim())).size === q.options.length))
+    && (q.type !== 'CONSENT' || q.content.trim()))
+    && extraDraft.filter(q => q.type === 'CONSENT').length <= 1
   const addAttachments = async (selected: File[]) => {
     if (uploading) return
     if (attachments.length + selected.length > 20) { setSaveError('첨부파일은 최대 20개입니다.'); return }
@@ -892,16 +904,26 @@ export default function ProgramForm() {
                   <span className="pf-extra-handle" aria-hidden="true"><LuGripVertical /></span>
                   <div className="pf-extra-col">
                     <span>유형 선택</span>
-                    <select aria-label="질문 유형" className="pf-select" value={item.type} onChange={e => patchExtra(item.id, { type: e.target.value as ExtraItem['type'] })}>
-                      {Object.entries(QUESTION_TYPES).map(([key, label]) => <option key={key} value={key}>{label}</option>)}
+                    <select aria-label="질문 유형" className="pf-select" value={item.type} onChange={e => changeExtraType(item, e.target.value as ExtraItem['type'])}>
+                      {Object.entries(QUESTION_TYPES).map(([key, label]) => <option key={key} value={key} disabled={key === 'CONSENT' && hasConsent && item.type !== 'CONSENT'}>{label}</option>)}
                     </select>
                     <label><input type="checkbox" checked={item.required} onChange={e => patchExtra(item.id, { required: e.target.checked })} /> 필수 응답</label>
                   </div>
                   <div className="pf-extra-col">
                     <span>질문 내용</span>
-                    <input className="pf-input" value={item.question} onChange={e => patchExtra(item.id, { question: e.target.value })} placeholder="질문 내용을 입력해주세요." />
-                    {['SINGLE', 'MULTIPLE'].includes(item.type) && <textarea aria-label="선택지 (한 줄에 하나)" className="pf-input" placeholder="선택지를 한 줄에 하나씩 입력" value={item.options.join('\n')} onChange={e => patchExtra(item.id, { options: e.target.value.split('\n') })} />}
-                    {item.type === 'CONSENT' && <textarea aria-label="동의서 내용" className="pf-input" placeholder="동의서 내용" value={item.content} onChange={e => patchExtra(item.id, { content: e.target.value })} />}
+                    <input className="pf-input" value={item.question} disabled={item.type === 'CONSENT'} onChange={e => patchExtra(item.id, { question: e.target.value })} placeholder="질문 내용을 입력해주세요." />
+                    {['SINGLE', 'MULTIPLE'].includes(item.type) && <div className="pf-extra-options">
+                      <span>답변 항목</span>
+                      {item.options.map((option, index) => <div key={index} className="pf-extra-option">
+                        <input className="pf-input" aria-label={`답변 항목 ${index + 1}`} value={option} maxLength={100} placeholder={`${index + 1}번 답변 항목`} onChange={e => patchOption(item, index, e.target.value)} />
+                        <button type="button" className="pf-extra-option-btn" aria-label="항목 추가" title="항목 추가" onClick={() => patchExtra(item.id, { options: [...item.options.slice(0, index + 1), '', ...item.options.slice(index + 1)] })}><LuPlus /></button>
+                        <button type="button" className="pf-extra-option-btn" aria-label="항목 삭제" title="항목 삭제" disabled={item.options.length <= 1} onClick={() => patchExtra(item.id, { options: item.options.filter((_, i) => i !== index) })}><LuMinus /></button>
+                      </div>)}
+                    </div>}
+                    {item.type === 'CONSENT' && <div className="pf-extra-consent">
+                      <ProgramConsentForm recipient={item.content} recipientInput={<input aria-label="제공받는자" value={item.content} maxLength={100} placeholder="제공받는자 (예: ○○기업)" onChange={e => patchExtra(item.id, { content: e.target.value })} />} />
+                      <span className="pf-help">개인정보 수집·이용, 고유식별정보 제공, 불이익 안내 동의는 모든 신청서에 기본으로 들어갑니다. 여기서는 제 3자 제공 동의서의 제공받는 자만 적습니다.</span>
+                    </div>}
                     {item.type === 'FILE' && <label>최대 파일 개수 <input type="number" min={1} max={5} value={item.maxFiles} onChange={e => patchExtra(item.id, { maxFiles: Number(e.target.value) })} /><span className="pf-help">문서·이미지·ZIP, 파일당 10MB 이하</span></label>}
                   </div>
                   <button type="button" className="pf-btn-danger-soft pf-extra-del" onClick={() => removeExtra(item.id)}><LuTrash2 style={{ width: 14, height: 14 }} /> 삭제</button>

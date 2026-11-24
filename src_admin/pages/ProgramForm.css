@@ -321,13 +321,27 @@
 .pf-modal-desc { font-size: 13.5px; color: var(--pf-muted); margin-bottom: 16px; }
 .pf-modal-add { display: flex; justify-content: flex-end; margin-bottom: 14px; }
 .pf-extra-list { display: flex; flex-direction: column; gap: 14px; }
-.pf-extra-row { display: grid; grid-template-columns: 20px 1fr 1.3fr auto; gap: 12px; align-items: start; padding: 14px; border: 1px solid var(--pf-border); border-radius: 12px; background: #FBFCFE; }
+.pf-extra-row { display: grid; grid-template-columns: 20px minmax(200px, 1fr) minmax(0, 1.3fr) auto; gap: 12px; align-items: start; padding: 14px; border: 1px solid var(--pf-border); border-radius: 12px; background: #FBFCFE; }
 .pf-extra-handle { color: var(--pf-placeholder); margin-top: 34px; cursor: grab; }
 .pf-extra-handle svg { width: 16px; height: 16px; }
 .pf-extra-col { display: flex; flex-direction: column; gap: 6px; }
 .pf-extra-col > span { font-size: 12.5px; font-weight: 600; color: var(--pf-text-2); }
 .pf-extra-sublink { font-size: 12.5px; color: var(--pf-primary); font-weight: 600; margin-top: 2px; }
 .pf-extra-del { align-self: flex-start; margin-top: 24px; }
+/* 객관식 답변 항목 — 현행처럼 줄마다 +/− 로 늘리고 줄인다 */
+.pf-extra-options { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+.pf-extra-option { display: grid; grid-template-columns: 1fr 34px 34px; gap: 6px; align-items: center; }
+.pf-extra-option .pf-input { height: 40px; }
+.pf-extra-option-btn {
+  height: 34px; width: 34px; display: inline-flex; align-items: center; justify-content: center;
+  background: var(--pf-primary-soft); color: var(--pf-primary); border: 0; border-radius: 8px; cursor: pointer;
+}
+.pf-extra-option-btn:hover { background: #E1EBFF; }
+.pf-extra-option-btn:disabled { opacity: .4; cursor: not-allowed; }
+.pf-extra-option-btn svg { width: 15px; height: 15px; }
+/* 제 3자 제공 동의서 미리보기 — 문구는 고정이고 제공받는자 한 칸만 입력한다 */
+.pf-extra-consent { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; padding: 12px 14px; border: 1px solid var(--pf-border); border-radius: 10px; background: var(--pf-surface); }
+.pf-extra-consent .program-consent { --color-text-sub: var(--pf-text-2); --color-navy: var(--pf-text); --color-border: var(--pf-border); --color-primary-bg: var(--pf-primary-soft); font-size: 13px; }
 .pf-modal-foot { display: flex; justify-content: center; gap: 10px; margin-top: 22px; }
 .pf-modal-foot .pf-btn { min-width: 96px; height: 42px; }
 

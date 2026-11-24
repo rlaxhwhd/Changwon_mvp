@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { type ApplicationAnswers, type ApplicationQuestion, type ProgramFile, uploadProgramFile } from '../programContent'
 import { DOCUMENT_ACCEPT } from '../uploadPolicy'
+import ProgramConsentForm from './ProgramConsentForm'
 import './ProgramApplicationQuestions.css'
 
 export default function ProgramApplicationQuestions({ questions, answers, onChange, onBusyChange }: {
@@ -38,7 +39,7 @@ export default function ProgramApplicationQuestions({ questions, answers, onChan
             change(q.id, q.type === 'SINGLE' ? option : e.target.checked ? [...current, option] : current.filter(x => x !== option))
           }} />{option}
       </label>)}
-      {q.type === 'CONSENT' && <><p className="program-question-consent">{q.content}</p>{[['yes', '동의합니다'], ['no', '동의하지 않습니다']].map(([value, label]) => <label key={value}><input type="radio" name={`program-${q.id}`} checked={answers[q.id] === value} onChange={() => change(q.id, value)} />{label}</label>)}</>}
+      {q.type === 'CONSENT' && <><ProgramConsentForm recipient={q.content} />{[['yes', '동의합니다'], ['no', '동의하지 않습니다']].map(([value, label]) => <label key={value}><input type="radio" name={`program-${q.id}`} checked={answers[q.id] === value} onChange={() => change(q.id, value)} />{label}</label>)}</>}
       {q.type === 'FILE' && <>
         <p>문서·이미지·ZIP / 파일당 10MB 이하 / 최대 {q.maxFiles}개</p>
         <input aria-label={q.question} type="file" multiple={q.maxFiles > 1} accept={DOCUMENT_ACCEPT} onChange={e => { void attach(q, Array.from(e.target.files ?? [])); e.target.value = '' }} />

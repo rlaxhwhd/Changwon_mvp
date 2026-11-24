@@ -28,8 +28,8 @@ def update(client, program, **patch):
 
 
 def question(kind='TEXT', **patch):
-    return dict(id='question_a', type=kind, question='지원 시 추가 질문', required=True,
-                options=[], content='', maxFiles=1, **patch)
+    return {**dict(id='question_a', type=kind, question='지원 시 추가 질문', required=True,
+                   options=[], content='', maxFiles=1), **patch}
 
 
 def upload(client, identity='career_kim', slot='PROGRAM_ATTACHMENT'):
@@ -55,6 +55,8 @@ def test_invalid_same_day_times_and_choices_rejected(client):
     p = new_program(client, startDate='2026-09-30', endDate='2026-09-30')
     assert update(client, p, startTime='17:00', endTime='10:00').status_code == 422
     assert update(client, p, applicationQuestions=[question('SINGLE')]).status_code == 422
+    assert update(client, p, applicationQuestions=[question('CONSENT')]).status_code == 422  # 제공받는 자 없음
+    assert update(client, p, applicationQuestions=[question('CONSENT', content='○○기업')]).status_code == 200
 
 
 def test_required_answers_saved_with_question_snapshot(client, rollback_content):

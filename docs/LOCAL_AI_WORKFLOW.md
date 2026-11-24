@@ -1,5 +1,12 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-24 비교과 신청 시 추가 정보 — 제 3자 제공 동의서 양식·객관식 답변 항목 로컬 반영
+
+- 「신청 시 추가 정보 설정」의 개인정보 동의서 유형이 현행 드림캐치 팝업(EpMnAddReqArt.do)의 「개인정보 제 3자 제공 동의서」 문구를 그대로 쓴다(`shared/components/ProgramConsentForm.tsx`). 제목은 고정이고 상담사는 세 번째 제공받는 자(현행 SUPP_COMP)만 적는다 — 질문 JSON의 `content` 가 그 값이며, 서버는 CONSENT 에 `content` 가 비면 422. 공고당 동의서 1개. DB 구조 변경 없음(`dc.program.application_questions` jsonb 그대로).
+- 객관식(선택형·복수 선택형)은 현행처럼 답변 항목을 줄마다 +/− 로 늘리고 줄인다(옛 「한 줄에 하나씩」 textarea 제거). 유형을 바꾸면 답변 항목을 비운다.
+- 학생 신청서(`ProgramApplyModal`)의 고정 제 3자 동의서 자리에 상담사가 적은 제공받는 자가 들어가고, 예/아니오가 그 CONSENT 질문의 답(`yes`/`no`)으로 함께 저장된다. 설정하지 않은 공고는 기존 문구(국립대학육성사업단, 위탁업체)를 그대로 보여 준다.
+- 테스트 DB: tests/test_program_content.py·test_programs.py·test_program_roster_upload.py 34 passed. 로컬 Docker 반영 후 ego-browser(1440px)로 상담사 팝업(항목 +/−, 동의서 미리보기, 동의서 중복 선택 불가)과 학생 신청(제공받는 자 「○○기업」 표시, 복수 선택 답변·동의 yes 저장) 확인, 콘솔 오류·예외 0. 검증용 공고는 지웠다. 서버 배포는 하지 않았다.
+
 ## 2026-11-23 누적 통계·채용공고·AI 자소서 API/웹/173~175 서버 배포
 
 - 최종 fetch 기능소스 a89fb88: ca36884 AI 자소서 초안 전 요약/가이드 팝업,791cbca 가이드 버튼,5ddcab3 교내공고 관리 필터 표/조회수,6daa3a0 통계 현황,71b5101 KPI/달력 기간,0b0fcd0 시군구 지역 코드,f90f55b textarea 높이,a89fb88 템플릿 끄기/켜기 입력 보존을 모두 포함한다. clean git archive로 빌드하고 타 세션 CLAUDE.md와 untracked 자료를 보존했다. c9faafb에 Astra 승인문서와 DB_SCHEMA.md 보완을 dev 푸시했다. 앱/SQL 추가 수정은 하지 않았다.

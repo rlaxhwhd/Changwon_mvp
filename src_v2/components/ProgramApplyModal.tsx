@@ -4,8 +4,9 @@ import Modal from './Modal'
 import { getActiveStudent } from '../data/students'
 import { collegeOf } from '../../src_admin/data/colleges'
 import './ProgramApplyModal.css'
-import { questionsAnswered, type ApplicationAnswers, type ApplicationQuestion } from '../../shared/programContent'
+import { CONSENT_DEFAULT_RECIPIENT, questionsAnswered, type ApplicationAnswers, type ApplicationQuestion } from '../../shared/programContent'
 import ProgramApplicationQuestions from '../../shared/components/ProgramApplicationQuestions'
+import ProgramConsentForm from '../../shared/components/ProgramConsentForm'
 import { catalogOptions } from '../data/growthInputCatalog'
 
 interface Props {
@@ -66,11 +67,19 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
 
   const handleClose = () => { if (!saving && !uploading) { reset(); onClose() } }
 
+  // 상담사가 설정한 제 3자 제공 동의서(CONSENT 질문)는 아래 고정 동의서 자리에 보여 주고, 예/아니오를 그 질문의 답으로 함께 남긴다.
+  const consentQuestion = questions.find(q => q.type === 'CONSENT')
+  const otherQuestions = questions.filter(q => q.type !== 'CONSENT')
+  const change3rd = (value: YN) => {
+    setAgree3rd(value)
+    if (consentQuestion) setAnswers(prev => ({ ...prev, [consentQuestion.id]: value }))
+  }
+
   const allAnswered = agree3rd && agreeCollect && agreeIdent && agreeNotice
   const allAgreed = agree3rd === 'yes' && agreeCollect === 'yes' && agreeIdent === 'yes' && agreeNotice === 'yes'
   const setAllAgreed = (on: boolean) => {
     const value: YN = on ? 'yes' : ''
-    setAgree3rd(value); setAgreeCollect(value); setAgreeIdent(value); setAgreeNotice(value)
+    change3rd(value); setAgreeCollect(value); setAgreeIdent(value); setAgreeNotice(value)
   }
   const canSubmit = routeCode !== '' && motive.trim() !== '' && allAnswered && !saving && !uploading && questionsAnswered(questions, answers)
 
@@ -158,39 +167,9 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
           <i className="fa-regular fa-id-card" /> 개인정보 제3자 제공 동의서
         </div>
         <div className="pam-doc">
-          <p>
-            국립창원대학교 취업전략센터 및 대학일자리플러스센터는 이 프로그램과 관련하여 아래와 같이
-            개인정보를 제 3자에게 제공하고자 합니다. 내용을 자세히 읽으신 후 동의 여부를 결정하여 주십시오.
-          </p>
-          <p className="pam-doc-h">□ 개인정보 제 3자 제공 내역</p>
-          <table className="pam-table pam-table-doc">
-            <thead>
-              <tr><th>제공받는자</th><th>항목</th><th>제공목적</th><th>보유이용기간</th></tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td rowSpan={2}>한국고용정보원<br />고용노동부<br />(고용복지+센터)</td>
-                <td rowSpan={2}>
-                  (신청일 기준) 성명, 연락처, 소속 대학, 주소(주민등록상, 실거주지),
-                  신청일 기준 학년, 졸업 예정년월, 전공(학과, 계열), 주민등록번호 등
-                </td>
-                <td>고용보험 피보험자격 현황 조회</td>
-                <td rowSpan={2}>졸업(예정)일로부터 5년</td>
-              </tr>
-              <tr>
-                <td>취업정보, 컨설팅 등 취업지원 서비스 안내</td>
-              </tr>
-              <tr>
-                <td>국립창원대학교 국립대학육성사업단, 위탁업체</td>
-                <td colSpan={2}>진로·취업지원 프로그램 운영 및 학생지도</td>
-                <td>졸업(예정)일로부터 5년</td>
-              </tr>
-            </tbody>
-          </table>
-          <p>
-            본인은 「개인정보보호법」 제 17조에 따라 본인의 개인정보를 제 3자에게 제공하는 것을 동의합니다.
-          </p>
-          <YesNo value={agree3rd} onChange={setAgree3rd} name="pam-agree-3rd" />
+          {/* 제공받는 자 세 번째 줄은 상담사가 공고의 「신청 시 추가 정보」(CONSENT 질문)에 적은 값이다. */}
+          <ProgramConsentForm recipient={consentQuestion?.content || CONSENT_DEFAULT_RECIPIENT} />
+          <YesNo value={agree3rd} onChange={change3rd} name="pam-agree-3rd" />
         </div>
       </div>
 
@@ -260,9 +239,9 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
         </div>
       </div>
 
-      {questions.length > 0 && <div className="pam-section">
+      {otherQuestions.length > 0 && <div className="pam-section">
         <h3 className="pam-section-title">신청 시 추가정보</h3>
-        <ProgramApplicationQuestions questions={questions} answers={answers} onChange={setAnswers} onBusyChange={setUploading} />
+        <ProgramApplicationQuestions questions={otherQuestions} answers={answers} onChange={setAnswers} onBusyChange={setUploading} />
       </div>}
 
       {/* ── 안내사항 ── */}
