@@ -112,7 +112,7 @@
 }
 
 .crm-btn-primary {
-  background: var(--color-cta, #8f74fd);
+  background: var(--color-cta, #3b82f6);
   color: #fff;
   border: none;
   transition: opacity 0.15s;
@@ -140,7 +140,7 @@
   display: grid; place-items: center; flex: none;
   width: 20px; height: 20px; margin-top: 1px;
   border-radius: 6px;
-  background: var(--violet-soft, #f0edff); color: var(--violet, #7c5cfc);
+  background: var(--violet-soft, #e8f1ff); color: var(--violet, #3b82f6);
   font-size: 12px; font-weight: 800;
 }
 .crm-intake-answer { min-height: 76px; }

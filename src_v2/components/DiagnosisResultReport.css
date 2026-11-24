@@ -7,8 +7,8 @@
    ───────────────────────────────────────────────────────────────────────── */
 .drr {
   container-type: inline-size;
-  --drr-accent: #7C5CFC;
-  --drr-accent-soft: #F0EDFF;
+  --drr-accent: #3B82F6;
+  --drr-accent-soft: #E8F1FF;
   --drr-text: #1D2433;
   --drr-sub: #5F6B7A;
   --drr-border: #E2E6EC;

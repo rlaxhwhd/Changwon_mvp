@@ -63,15 +63,15 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
       <defs>
         {/* 홀로그램 메인 그라데이션 */}
         <linearGradient id="dr-holo-main" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%"   stopColor="#7B6EFF" stopOpacity="0.9" />
+          <stop offset="0%"   stopColor="#1A5FCC" stopOpacity="0.9" />
           <stop offset="30%"  stopColor="#4A90FF" stopOpacity="0.85" />
           <stop offset="60%"  stopColor="#00D4FF" stopOpacity="0.8" />
-          <stop offset="100%" stopColor="#A78BFA" stopOpacity="0.9" />
+          <stop offset="100%" stopColor="#3B82F6" stopOpacity="0.9" />
         </linearGradient>
         {/* 광택 오버레이 */}
         <linearGradient id="dr-holo-sheen" x1="100%" y1="0%" x2="0%" y2="100%">
           <stop offset="0%"   stopColor="#ffffff" stopOpacity="0.35" />
-          <stop offset="40%"  stopColor="#C4B5FD" stopOpacity="0.15" />
+          <stop offset="40%"  stopColor="#CBD8FF" stopOpacity="0.15" />
           <stop offset="100%" stopColor="#38BDF8" stopOpacity="0.25" />
         </linearGradient>
         {/* 방사형 내부 광원 */}
@@ -124,7 +124,7 @@ function HoloRadar({ axes }: { axes: { label: string; value: number }[] }) {
       {/* 꼭짓점 도트 */}
       {dataPoints.map(({ x, y }, i) => (
         <g key={i}>
-          <circle cx={x} cy={y} r="5" fill="#7B6EFF" fillOpacity="0.25" />
+          <circle cx={x} cy={y} r="5" fill="#3B82F6" fillOpacity="0.25" />
           <circle cx={x} cy={y} r="3" fill="url(#dr-holo-main)" />
         </g>
       ))}

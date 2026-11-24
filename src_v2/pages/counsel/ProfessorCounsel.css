@@ -291,7 +291,7 @@
   .pc-offline-calendar {
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-accent, #d8d2f8) transparent;
+    scrollbar-color: var(--scrollbar-accent, #cbd8ff) transparent;
   }
 }
 

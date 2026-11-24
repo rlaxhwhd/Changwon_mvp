@@ -74,7 +74,7 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   font-size: var(--fs-label, 12px); font-weight: 800; color: var(--muted-foreground, #565e6d);
 }
-.st-axis-more:hover { color: var(--primary, #7c5cfc); }
+.st-axis-more:hover { color: var(--primary, #1a5fcc); }
 .st-axis h3 {
   display: flex; align-items: center; gap: 8px; margin-bottom: var(--space-3, 12px);
   font-size: var(--fs-meta, 13px); font-weight: 900; color: var(--foreground, #181c25);

@@ -47,9 +47,9 @@
   --gradient-button-surface: #f3fffc;
 }
 .gradient-button-step-4 {
-  --gradient-button-ink: #43308a;
-  --gradient-button-stops: #4f46e5, #a78bfa, #eef2ff, #60a5fa, #4f46e5;
-  --gradient-button-surface: #f8f7ff;
+  --gradient-button-ink: #1a5fcc;
+  --gradient-button-stops: #1a5fcc, #60a5fa, #eef4ff, #3b82f6, #1a5fcc;
+  --gradient-button-surface: #f5f9ff;
 }
 .gradient-button-label { position: relative; z-index: 2; display: flex; align-items: center; justify-content: center; }
 .gradient-button:focus-visible { outline: 3px solid var(--gradient-button-ink); outline-offset: 4px; }

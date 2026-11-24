@@ -214,9 +214,9 @@
   font-weight: 700;
   padding: 3px 9px;
   border-radius: 20px;
-  background: #F3E8FF;
-  color: #7C3AED;
-  border: 1px solid #DDD6FE;
+  background: var(--blue-soft);
+  color: var(--primary);
+  border: 1px solid var(--blue-border);
 }
 
 .pa-multi-badge i { font-size: 13px; }

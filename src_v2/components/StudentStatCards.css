@@ -56,16 +56,16 @@
 }
 /* 필수교과(STAR 트랙) — 진단완료와 같은 형이고 색만 다르다.
    amber 가 남아 있었지만 #f5a524 는 흰 배경 대비가 2:1 이라 막대 옆 % 숫자가 안 읽힌다.
-   violet 은 4.4:1 이라 안전하고, STAR 4장(mint·sky·violet·pink)에서 서로 구분된다. */
+   파랑 잉크(#1a5fcc)는 6.2:1 이라 안전하고, STAR 4장(mint·sky·blue·pink)에서 서로 구분된다. */
 .ssc-card.is-course {
-  --stat-color: #7c5cfc;  /* violet */
-  --stat-soft:  #f0edff;
-  --stat-alt:   #7c5cfc;
+  --stat-color: #1a5fcc;  /* blue ink (옛 violet) */
+  --stat-soft:  #e8f1ff;
+  --stat-alt:   #1a5fcc;
 }
 .ssc-card.is-level {
-  --stat-color: #7c5cfc;  /* violet */
-  --stat-soft:  #f0edff;
-  --stat-alt:   #356dff;  /* XP 막대 끝 — 시안의 violet→blue 그라데이션 */
+  --stat-color: #1a5fcc;  /* blue ink (옛 violet) */
+  --stat-soft:  #e8f1ff;
+  --stat-alt:   #17a9e6;  /* XP 막대 끝 — blue→sky 그라데이션 */
 }
 
 /* ── 카드 ── */
@@ -257,8 +257,8 @@
   --type-ink:   #f5a524;
 }
 .ssc-channels > span:nth-child(2) {
-  --type-color: #7c5cfc;  /* violet */
-  --type-ink:   #7c5cfc;
+  --type-color: #3b82f6;  /* blue (옛 violet) */
+  --type-ink:   #1a5fcc;
 }
 .ssc-channels > span:nth-child(3) {
   --type-color: #20b486;  /* mint */

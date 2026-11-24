@@ -7,9 +7,9 @@
      새 색을 만들지 않는다. 양끝과 가운데는 각 SPA 팔레트의 본색을 그대로 쓰고,
      사이 네 칸은 그 사이를 oklab 으로 고르게 이은 값이다. 그래서 이 띠는
      v2 에서는 v2 색으로, admin 에서는 admin 색으로 자동으로 맞춰진다. */
-  --cj-c1: var(--mint,   #20b486);
-  --cj-c4: var(--blue,   #356dff);
-  --cj-c7: var(--violet, #7c5cfc);
+  --cj-c1: var(--mint,   #24b37a);
+  --cj-c4: var(--sky,    #17a9e6);
+  --cj-c7: var(--violet, #3b82f6);
   --cj-c2: color-mix(in oklab, var(--cj-c1) 67%, var(--cj-c4));
   --cj-c3: color-mix(in oklab, var(--cj-c1) 33%, var(--cj-c4));
   --cj-c5: color-mix(in oklab, var(--cj-c4) 67%, var(--cj-c7));
@@ -178,6 +178,6 @@
     overflow-y: hidden;
     padding-bottom: 8px;
     scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-accent, #d8d2f8) transparent;
+    scrollbar-color: var(--scrollbar-accent, #cbd8ff) transparent;
   }
 }

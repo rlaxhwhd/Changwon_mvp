@@ -3,7 +3,7 @@
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
-  border-top: 2px solid var(--primary, #7c5cfc);
+  border-top: 2px solid var(--primary, #1a5fcc);
   font-size: 14px;
 }
 .pxw-table th,

@@ -23,7 +23,7 @@
      마감 공고가 강조된 것처럼 보라색으로 물든다. 반드시 --color-surface 로 잇는다. */
   --jd-flat: var(--color-section-bg, var(--color-surface));
   --jd-hero-1: var(--deep-start, #242a3b);
-  --jd-hero-2: var(--deep-end, #5042a8);
+  --jd-hero-2: var(--deep-end, #1a5fcc);
   /* 지원 버튼 채움색. 학생 = 채용 갈래 초록(--apply-cta) / 교직원 = 자기 강조색. */
   --jd-fill: var(--apply-cta, var(--color-primary));
 
@@ -53,7 +53,7 @@
 }
 .jd-recruit-tag.is-rec {
   border-color: transparent;
-  background: var(--violet-soft, #f0edff); color: var(--violet, #7c5cfc);
+  background: var(--violet-soft, #e8f1ff); color: var(--violet, #3b82f6);
 }
 
 /* ── 히어로 배너 ────────────────────────────────────────────────────────── */
@@ -181,7 +181,7 @@
 }
 .jd-kv-chip {
   padding: 2px 9px; border-radius: 999px;
-  background: var(--violet-soft, #f0edff); color: var(--violet, #7c5cfc);
+  background: var(--violet-soft, #e8f1ff); color: var(--violet, #3b82f6);
   font-size: 12px; font-weight: 800;
 }
 /* 요약 카드는 폭이 좁아 1열로 쌓는다 */
@@ -233,8 +233,8 @@
   font-family: inherit; font-size: 14px; font-weight: 800;
   cursor: pointer;
 }
-.jd-wish:hover { background: var(--violet-soft, #f0edff); }
-.jd-wish.is-on { background: var(--violet-soft, #f0edff); }
+.jd-wish:hover { background: var(--violet-soft, #e8f1ff); }
+.jd-wish.is-on { background: var(--violet-soft, #e8f1ff); }
 .jd-wish .jd-icon { width: 17px; height: 17px; }
 
 /* 호스트 페이지(학생 '지원하기' / 교직원 '공고 수정')가 이 클래스로 버튼을 넣는다. */

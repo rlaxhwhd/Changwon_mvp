@@ -13,17 +13,22 @@ The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 �
 - Pretendard Variable as the body font for all running text
 - Heading weight 700, letter-spacing -0.64px
 - Light/white background (#f7f8fb) as the primary canvas
-- Primary accent `#7c5cfc` used for CTAs and brand highlights
+- Primary accent `#1a5fcc` ink / `#3b82f6` CTA fill (admin blue, 2026-11-24 — was violet `#7c5cfc`)
 - 8 shadow level(s) detected — tinted shadows
 - Rounded corners (12px+) creating a friendly, approachable feel
 - Tags: light, rounded, accented, sans-serif
 
 ## 2. Color Palette & Roles
 
+> **2026-11-24 사용자 지시 — 학생 포털 보라 → admin 파랑.** 학생 브랜드색을 admin 팔레트(`src_admin/index.css`)에 맞췄다:
+> 잉크 `--primary` `#1a5fcc`(admin `--on-blue`), 버튼 채움 `--cta` `#3b82f6`(admin `--blue`), 민트 `--mint` `#24b37a`(admin `--green`).
+> `--violet*` 토큰 이름은 남아 있지만 값은 파랑이다. 보라와 파랑이 한 세트였던 색 칸(로드맵 3축·진단 5종·지표·하루 3종)은 옛 파랑 칸을 `--sky`·`--amber` 로 옮겼다.
+> 아래 표의 보라 값은 시안 추출 당시 기록이다 — 현재 값의 정본은 `src_v2/index.css` 1층.
+
 ### Primary
-- **Primary Accent** (`#7c5cfc`) · `--color-primary`: Brand color, link text, interactive highlights, icon/border ink.
-- **CTA Fill** (`#8f74fd`) · `--cta` / `--color-cta`: solid button backgrounds only. One step softer (pastel) than the accent. Kept separate so button fills can lighten without dragging violet *text* below its contrast floor — the accent stays `#7c5cfc` as ink.
-- **Secondary Accent** (`#356dff`) · `--color-secondary`: Secondary brand, hover states, complementary highlights.
+- **Primary Accent** (`#1a5fcc`) · `--color-primary`: Brand color, link text, interactive highlights, icon/border ink.
+- **CTA Fill** (`#3b82f6`) · `--cta` / `--color-cta`: solid button backgrounds only. Lighter than the ink; kept separate so the fill never becomes *text* below its contrast floor — the ink stays `#1a5fcc`.
+- **Secondary Accent** (`#17a9e6` sky) · categorical partner of blue where both appear in one set.
 - **Background** (`#f7f8fb`) · `--color-bg`: Page background, primary canvas.
 - **Background Secondary** (`#f1f3f6`) · `--color-bg-secondary`: Cards, surfaces, alternating sections.
 
@@ -229,7 +234,7 @@ The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 �
 ### Do
 - Use `#f7f8fb` as the primary background color
 - Use `Pretendard Variable` for all headings and `Pretendard Variable` for body text
-- Use `#7c5cfc` as the single dominant accent/CTA color
+- Use blue (`#1a5fcc` ink, `#3b82f6` fill) as the single dominant accent/CTA color — no violet
 - Maintain `8px` as the base spacing unit — all gaps should be multiples
 - Use rounded corners (`12px`+) consistently for all interactive elements
 - Apply the shadow system for elevation — use the extracted shadow values
@@ -264,16 +269,16 @@ The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 �
 ```
 Background:  #f7f8fb
 Text:        #181c25
-Accent:      #7c5cfc
-Secondary:   #356dff
+Accent:      #1a5fcc (fill #3b82f6)
+Secondary:   #17a9e6
 Border:      #f1f3f6
 ```
 
 ### Example Prompts
 
-1. "Build a hero section with a `#f7f8fb` background, `Pretendard Variable` heading in `#181c25`, and a `#7c5cfc` CTA button with 50px radius."
+1. "Build a hero section with a `#f7f8fb` background, `Pretendard Variable` heading in `#181c25`, and a `#3b82f6` CTA button with 50px radius."
 2. "Create a pricing card using background `#f1f3f6`, border `#f1f3f6`, `Pretendard Variable` for text, and 24px padding."
-3. "Design a navigation bar — `#f7f8fb` background, `#181c25` links, `#7c5cfc` for active state."
+3. "Design a navigation bar — `#f7f8fb` background, `#181c25` links, `#1a5fcc` for active state."
 4. "Build a feature grid with 3 columns, 24px gap, each card using the card component style."
 5. "Create a footer with `#181c25` background, `#f7f8fb` text, and 16px padding."
 
@@ -304,18 +309,18 @@ Border:      #f1f3f6
 | `--muted-foreground` | `#565e6d` |
 | `--border` | `#e2e6ec` |
 | `--input` | `#d8dde5` |
-| `--ring` | `#7c5cfc` |
-| `--primary` | `#7c5cfc` |
+| `--ring` | `var(--primary)` |
+| `--primary` | `#1a5fcc` |
 | `--primary-foreground` | `#ffffff` |
-| `--cta` | `#8f74fd` |
-| `--cta-hover` | `#7d5efb` |
-| `--cta-shadow` | `rgba(143, 116, 253, .22)` |
-| `--blue` | `#356dff` |
-| `--blue-soft` | `#eaf0ff` |
-| `--violet` | `#7c5cfc` |
-| `--violet-soft` | `#f0edff` |
-| `--mint` | `#20b486` |
-| `--mint-soft` | `#e5f8f2` |
+| `--cta` | `#3b82f6` |
+| `--cta-hover` | `#1a5fcc` |
+| `--cta-shadow` | `rgba(59, 130, 246, .22)` |
+| `--blue` | `#3b82f6` |
+| `--blue-soft` | `#e8f1ff` |
+| `--violet` | `#3b82f6` (이름만 violet) |
+| `--violet-soft` | `#e8f1ff` |
+| `--mint` | `#24b37a` |
+| `--mint-soft` | `#dff5ea` |
 | `--coral` | `#ff6b6b` |
 | `--coral-soft` | `#fff0f0` |
 | `--amber` | `#f5a524` |
@@ -326,9 +331,9 @@ Border:      #f1f3f6
 | `--pink-soft` | `#fdebf6` |
 | `--teal` | `#14b8a6` |
 | `--teal-soft` | `#e6faf7` |
-| `--violet-border` | `#d9d0ff` |
-| `--violet-border-strong` | `#cec3ff` |
-| `--violet-hover` | `#6848ec` |
+| `--violet-border` | `#cbd8ff` |
+| `--violet-border-strong` | `color-mix(in srgb, var(--violet) 40%, #fff)` |
+| `--violet-hover` | `#1a5fcc` |
 | ... | *(21 more)* |
 
 ### Spacing Variables
@@ -346,13 +351,13 @@ Border:      #f1f3f6
 | `--stat-1-soft` | `var(--mint-soft)` |
 | `--stat-2` | `var(--sky)` |
 | `--stat-2-soft` | `var(--sky-soft)` |
-| `--stat-3` | `var(--blue)` |
-| `--stat-3-soft` | `var(--blue-soft)` |
+| `--stat-3` | `var(--amber)` |
+| `--stat-3-soft` | `var(--amber-soft)` |
 | `--stat-4` | `var(--pink)` |
 | `--stat-4-soft` | `var(--pink-soft)` |
 | `--stat-5` | `var(--violet)` |
 | `--stat-5-soft` | `var(--violet-soft)` |
-| `--stat-5-alt` | `var(--blue)` |
+| `--stat-5-alt` | `var(--sky)` |
 | `--journey-done` | `var(--mint)` |
 | `--journey-done-soft` | `var(--mint-soft)` |
 | `--journey-current` | `var(--violet)` |

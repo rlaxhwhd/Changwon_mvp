@@ -23,7 +23,7 @@ import { getDiagnosisChartSections, summaryLevel } from '../data/diagnosisChart'
 
 const DIAGNOSIS_COLORS: Record<string, number> = { ccore: 1, c2: 2, c3: 3, c4: 4 }
 const DIAGNOSIS_PALETTE: Record<number, [string, string]> = {
-  1: ['#7c5cfc', '#f0edff'], 2: ['#356dff', '#eaf0ff'],
+  1: ['#3b82f6', '#e8f1ff'], 2: ['#17a9e6', '#e7f7fd'],
   3: ['#20b486', '#e5f8f2'], 4: ['#f5a524', '#fff6df'],
 }
 

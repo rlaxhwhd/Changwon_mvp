@@ -5,7 +5,7 @@
   font: inherit; font-size: 13px; cursor: pointer;
 }
 .diagnosis-attempt-select:focus-visible,
-.diagnosis-history-track:focus-visible { outline: 2px solid var(--color-primary, #7C5CFC); outline-offset: 3px; }
+.diagnosis-history-track:focus-visible { outline: 2px solid var(--color-primary, #1a5fcc); outline-offset: 3px; }
 .diagnosis-history { min-width: 0; width: 100%; }
 .diagnosis-history-heading { margin-bottom: 16px; }
 .diagnosis-history-heading h3 { margin: 0; font-size: 18px; font-weight: 800; }
@@ -23,7 +23,7 @@
 .diagnosis-history-attempt-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 18px; padding-bottom: 14px; border-bottom: 1px solid var(--color-border, #E2E6EC); }
 .diagnosis-history-attempt-head strong { font-size: 20px; font-weight: 800; }
 .diagnosis-history-attempt-head time { font-size: 13px; color: var(--color-text-secondary, #5F6B7A); }
-.diagnosis-history-attempt-head > span { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--color-primary, #7C5CFC); }
+.diagnosis-history-attempt-head > span { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--color-primary, #1a5fcc); }
 .diagnosis-history-attempt .drr-banner { flex-wrap: wrap; }
 .diagnosis-history-attempt .drr-banner-headline { white-space: normal; }
 .diagnosis-history-empty { padding: 28px 16px; text-align: center; color: var(--color-text-secondary, #5F6B7A); }

@@ -7,20 +7,20 @@
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 32px;
-  border: 1px solid var(--violet-border, #d9d0ff);
+  border: 1px solid var(--violet-border, #cbd8ff);
   border-radius: var(--radius-lg, 12px);
   /* 진행 방향(초록 → 보라)을 배경에도 옅게 깐다 — 여정 카드 색 띠와 같은 축이다. */
   background:
     linear-gradient(120deg,
       color-mix(in srgb, var(--mint, #20b486) 6%, var(--card, #fff)),
       var(--card, #fff) 45%,
-      color-mix(in srgb, var(--violet, #7c5cfc) 8%, var(--card, #fff)));
+      color-mix(in srgb, var(--violet, #3b82f6) 8%, var(--card, #fff)));
 }
 
 .nsb-kicker {
   display: inline-block;
   margin: 0 0 8px;
-  color: var(--violet, #7c5cfc);
+  color: var(--violet, #3b82f6);
   font-size: 12px;
   font-weight: 800;
   letter-spacing: .04em;
@@ -50,7 +50,7 @@
 }
 
 .nsb-secondary a {
-  color: var(--violet, #7c5cfc);
+  color: var(--violet, #3b82f6);
   font-weight: 800;
   text-decoration: none;
   white-space: nowrap;
@@ -89,7 +89,7 @@
   gap: 8px;
   padding: 12px 22px;
   border-radius: var(--radius-sm, 10px);
-  background: var(--cta, #8f74fd);
+  background: var(--cta, #3b82f6);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
@@ -97,7 +97,7 @@
   text-decoration: none;
 }
 
-.nsb-cta:hover { background: var(--cta-hover, #7d5efb); }
+.nsb-cta:hover { background: var(--cta-hover, #1a5fcc); }
 
 @media (max-width: 1080px) {
   .nsb {

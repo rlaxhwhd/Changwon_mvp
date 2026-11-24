@@ -608,7 +608,7 @@
 }
 
 /* 예약·신청 버튼 — 갈래 색의 파스텔.
-   흰 글자 대비 3.4~3.7:1 로, 앱 CTA(--cta #8f74fd 3.45:1)와 같은 기준이다.
+   흰 글자 대비 3.4~3.7:1 로, 앱 CTA(--cta #3b82f6 3.7:1)와 같은 기준이다.
    그 기준은 '큰 글씨(18.66px 이상 굵게)'를 전제하므로 20px/700 을 함께 고정한다 —
    크기를 줄이면 대비 근거가 무너진다. */
 .cc-reserve-btn {
@@ -984,7 +984,7 @@
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
-    scrollbar-color: var(--scrollbar-accent, #d8d2f8) transparent;
+    scrollbar-color: var(--scrollbar-accent, #cbd8ff) transparent;
   }
 
   /* 1100 블록의 840 대신 압축한 칸 합계(시간열 56 + 5일×104 = 576)를 최소폭으로 둔다.

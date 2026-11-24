@@ -80,12 +80,12 @@
 }
 
 .lock-notice-steps .is-now {
-  background: var(--violet-soft, #f0edff);
-  color: var(--violet, #7c5cfc);
+  background: var(--violet-soft, #e8f1ff);
+  color: var(--violet, #3b82f6);
   font-weight: 700;
 }
 .lock-notice-steps .is-now b {
-  background: var(--violet, #7c5cfc);
+  background: var(--violet, #3b82f6);
   color: #fff;
 }
 
@@ -95,11 +95,11 @@
   gap: 8px;
   padding: 12px 22px;
   border-radius: var(--radius-sm, 10px);
-  background: var(--cta, #8f74fd);
+  background: var(--cta, #3b82f6);
   color: #fff;
   font-size: 14px;
   font-weight: 700;
   text-decoration: none;
 }
 
-.lock-notice-cta:hover { background: var(--cta-hover, #7d5efb); }
+.lock-notice-cta:hover { background: var(--cta-hover, #1a5fcc); }
