@@ -40,7 +40,7 @@
 .jg-p-card { position: relative; align-self: center; justify-self: center; width: min(100%, 210px); aspect-ratio: 3 / 4.1; margin-top: 44px; }
 .jg-p-strap { position: absolute; left: 50%; top: -58px; width: 44px; height: 88px; transform: translateX(-50%); border: 10px solid var(--c); border-bottom: 0; border-radius: 24px 24px 0 0; }
 .jg-p-clip { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); width: 40px; height: 14px; border-radius: 4px; background: #C9CFDA; }
-.jg-p-badge { position: absolute; inset: 30px 0 0; border-radius: 16px; background: linear-gradient(160deg, #FFFFFF, #EEF2F8); border: 1px solid #D9DFE9; display: grid; place-content: center; text-align: center; gap: 8px; padding: 14px; }
+.jg-p-badge { position: absolute; inset: 30px 0 0; border-radius: 16px; background: var(--card, #fff); border: 1px solid #D9DFE9; display: grid; place-content: center; text-align: center; gap: 8px; padding: 14px; }
 .jg-p-badge b { font-weight: 900; color: var(--c); font-size: 22px; line-height: 1.05; }
 .jg-p-badge span { font-size: 13px; font-weight: 700; }
 .jg-p-badge small { font-size: 11px; color: var(--s); }

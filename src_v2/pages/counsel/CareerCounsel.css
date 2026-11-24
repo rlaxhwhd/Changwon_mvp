@@ -365,7 +365,7 @@
 
 .cc-counselor-row.active {
   border: 1px solid var(--cc-ink);
-  background: linear-gradient(90deg, var(--color-bg), #f4f7ff);
+  background: var(--blue-wash);
   box-shadow: inset 0 0 0 1px rgba(46, 91, 255, 0.08);
 }
 
@@ -515,7 +515,7 @@
 
 .cc-slot-reserved {
   border-color: #e0e0e0;
-  background: linear-gradient(180deg, #f7f7f7, #eeeeee);
+  background: var(--muted);
   color: var(--color-text-sub);
 }
 

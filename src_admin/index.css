@@ -61,6 +61,7 @@
   --purple: #8B63D9;  --purple-bg: #EFE6FB;  --on-purple: #6739B8;
   --blue:   #3B82F6;  --blue-bg:   #E8F1FF;  --on-blue:   #1A5FCC;
   --teal:   #1FA7A5;  --teal-bg:   #DDF6F5;  --on-teal:   #0E7573;
+  --sky-tint: #EBFAFF;   /* 보조 연한 면 — 링크 행 hover·안내 영역(2026-11-24, DESIGN.md §2 Assist). 글자색 금지 */
   --yellow: #F2B544;  --yellow-bg: #FFF5DE;  --on-yellow: #8A5D0A;
 
   /* ── 그래프 채움 ─────────────────────────────────────────────

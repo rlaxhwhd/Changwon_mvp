@@ -1,4 +1,4 @@
-.dc-ai-comment { --ai-primary: #7353ea; --ai-deep: #524fa1; --ai-blue: #2f5efb; --ai-magenta: #b853ea; --ai-sky: #00a6ff; margin: 20px 0; padding: 22px; border: 1px solid #e9ebf0; border-top: 3px solid var(--ai-primary); border-radius: 12px; background: #fff; color: #191f28; font-size: 14px; line-height: 1.65; }
+.dc-ai-comment { --ai-primary: var(--cta, var(--color-primary, #3b82f6)); --ai-deep: var(--cta-hover, var(--primary-hover, #1a5fcc)); --ai-blue: var(--ai-deep); --ai-magenta: var(--ai-primary); --ai-sky: var(--sky, var(--teal, #17a9e6)); margin: 20px 0; padding: 22px; border: 1px solid #e9ebf0; border-top: 3px solid var(--ai-primary); border-radius: 12px; background: #fff; color: #191f28; font-size: 14px; line-height: 1.65; }
 .dc-ai-comment-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .dc-ai-comment-head strong { font-size: 16px; color: var(--ai-deep); }
 .dc-ai-comment-head p { margin: 4px 0 0; color: #66717e; }

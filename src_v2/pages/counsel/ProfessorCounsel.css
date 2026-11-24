@@ -91,7 +91,7 @@
   margin-bottom: 16px;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--color-bg) 0%, #f3f7ff 100%);
+  background: var(--color-bg);
 }
 
 .pc-avatar {

@@ -14,12 +14,7 @@
 .pn-page .jd-hero {
   --jd-hero-1: var(--deep-start, #242a3b);
   --jd-hero-2: var(--blue, #356dff);
-  background: linear-gradient(
-    118deg,
-    var(--jd-hero-1) 0%,
-    var(--jd-hero-2) 85%,
-    var(--sky, #17a9e6) 100%
-  );
+  background: var(--jd-hero-2);
 }
 
 /* 썸네일이 있을 때만 왼쪽을 희게 연다.
@@ -36,13 +31,12 @@
      썸네일 모서리를 물어뜯는다.
      가운데 「연한 블루」는 새 색이 아니라 두 토큰의 혼색이다 — 팔레트의 blue 계열
      연한 값(--blue-soft·--blue-wash)은 흰 바탕용이라 배너에 깔면 흰 글자가 사라진다. */
+  /* 그라데이션 없이 두 면으로 끊는다 — 왼쪽 흰 면(썸네일) / 오른쪽 파랑 단색(2026-11-24) */
   background: linear-gradient(
     to right,
     #fff 0, #fff 288px,
-    var(--sky, #17a9e6) 288px,
-    color-mix(in srgb, var(--sky, #17a9e6) 50%, var(--blue, #356dff)) 52%,
-    var(--blue, #356dff) 80%,
-    var(--blue, #356dff) 100%
+    var(--blue, #3b82f6) 288px,
+    var(--blue, #3b82f6) 100%
   );
 }
 
@@ -130,8 +124,7 @@
     background: linear-gradient(
       to right,
       #fff 0, #fff 228px,
-      var(--sky, #17a9e6) 228px,
-      color-mix(in srgb, var(--sky, #17a9e6) 50%, var(--blue, #356dff)) 55%,
+      var(--blue, #3b82f6) 228px,
       var(--blue, #356dff) 82%,
       var(--blue, #356dff) 100%
     );

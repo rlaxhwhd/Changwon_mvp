@@ -9,9 +9,7 @@
   min-height: 178px;
   margin: 24px 0 24px;
   padding: 34px 44px 32px;
-  background:
-    radial-gradient(circle at 74% 36%, rgba(46, 91, 255, 0.16), transparent 30%),
-    linear-gradient(108deg, #ffffff 0%, #f8faff 42%, var(--color-primary-bg) 100%);
+  background: var(--card, #fff);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);

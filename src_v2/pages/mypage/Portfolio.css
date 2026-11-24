@@ -45,7 +45,7 @@
 
 /* ── 머리말 — 이름이 문서의 제목이다 ─────────────────────────────── */
 .pf-mast { margin-bottom: 28px; padding: 28px 32px 0; border: 1px solid var(--blue-border); border-radius: var(--pf-radius);
-  background: linear-gradient(125deg, var(--pf-paper) 0%, var(--pf-paper) 45%, var(--sky-soft) 78%, var(--blue-soft) 100%); }
+  background: var(--pf-paper); }
 .pf-mast-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .pf-mast-id { min-width: 0; display: flex; align-items: center; gap: 18px; }
 .pf-monogram { width: 60px; height: 60px; flex: none; display: grid; place-items: center; border-radius: 16px; background: linear-gradient(135deg, var(--blue), var(--sky)); color: #fff; font-size: var(--fs-sub, 18px); font-weight: 800; letter-spacing: -.02em; box-shadow: 0 10px 24px color-mix(in srgb, var(--blue) 22%, transparent); }

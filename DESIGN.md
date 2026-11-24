@@ -32,6 +32,9 @@ The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 �
 - **Background** (`#f7f8fb`) · `--color-bg`: Page background, primary canvas.
 - **Background Secondary** (`#f1f3f6`) · `--color-bg-secondary`: Cards, surfaces, alternating sections.
 
+### Assist
+- **Sky Tint** (`#ebfaff`) · `--sky-tint`: 보조 연한 면 — 링크 행·선택 가능한 목록 행의 hover, 안내 영역 배경. 글자색으로 쓰지 않는다(2026-11-24 추가, 두 포털 공통).
+
 ### Text
 - **Text Primary** (`#181c25`) · `--color-text`: Headings and body text.
 - **Text Secondary** (`#666666`) · `--color-text-secondary`: Muted text, captions, placeholders.
@@ -85,106 +88,126 @@ The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 �
 
 ## 4. Component Stylings
 
-### Primary Button
+> **2026-11-24 — 카드·버튼 규격은 참고 디자인(DESIGN_v1, 사람인 포털)의 컴포넌트 구조를 따른다.**
+> 가져온 것은 **구조**(테두리로 면 나누기·높이 단계·여백·상태·포커스 링)뿐이다. **색·폰트·radius 는 이 문서의 우리 토큰을 그대로 쓴다**
+> (색 §2·§10, 폰트 §3, radius `src_v2/index.css` 형태 스케일 12·10·8·6·pill). 참고 디자인의 AI 그라데이션 버튼은 들이지 않는다(그라데이션 금지).
+> 공용 컴포넌트로 옮기기 전까지 화면별 클래스는 이 규격으로 맞춰 간다.
+
+### 공통 규칙
+- **면은 테두리로 나눈다.** 카드에 그림자·그라데이션을 쓰지 않는다(1px `--border` 또는 연한 면 `--muted`·`--blue-wash`·`--sky-tint`). 떠 있는 컨트롤(캐러셀 화살표 등) 하나만 `--shadow-raise`.
+- **포커스 링은 모든 컨트롤에 같다** — `outline: 2px solid var(--primary); outline-offset: 2px;` (작은 글자 링크는 `border-radius: 4px`).
+- **hover 와 pressed 는 같은 상태다.** 색만 바뀌고 크기·위치는 움직이지 않는다. 전환은 즉시(길어도 150ms).
+- **비활성**은 `opacity: .5; cursor: not-allowed;` — 색을 따로 만들지 않는다.
+- 높이 단계는 **32 · 40 · 52** 세 가지다(작은 보조 · 기본 · 검색처럼 큰 입력).
+
+### Primary Button — 채움 (주 행동 1개)
 
 ```css
 .btn-primary {
-  background: #f2f4f7;
-  color: #344054;
-  border-radius: 50px;
-  padding: 0px 0px;
-  font-size: 16px;
-  font-weight: 400;
-  border: none;
-  cursor: pointer;
+  height: 40px;              /* 큰 CTA 52px */
+  padding: 0 16px;
+  border: 0;
+  border-radius: var(--radius-md);   /* 10px */
+  background: var(--cta);            /* #3b82f6 */
+  color: var(--primary-foreground);  /* #fff */
+  font: 700 14px/1 var(--font);
 }
+.btn-primary:hover,
+.btn-primary:active { background: var(--cta-hover); }  /* #1a5fcc */
 ```
+화면당 주 행동 하나에만 쓴다. 나머지 행동은 아래 외곽선·텍스트 버튼으로 낮춘다.
 
-### Ghost Button
+### Outline Button — 외곽선 (보조 행동 · 참고 디자인의 「기업서비스」 버튼)
 
 ```css
-.btn-ghost {
+.btn-outline {
+  height: 32px;              /* 기본 크기 행동과 나란히 둘 때 40px */
+  padding: 0 12px;
+  border: 1px solid var(--border);   /* #e2e6ec */
+  border-radius: var(--radius-md);
   background: transparent;
-  color: #ff6b6b;
-  border-radius: 8px;
-  padding: 0px 10px;
-  font-size: 12px;
-  font-weight: 700;
-  border: none;
-  cursor: pointer;
+  color: var(--foreground);          /* 대비 확보 — 회색 글자 금지 */
+  font: 700 13px/1 var(--font);
 }
+.btn-outline:hover,
+.btn-outline:active { background: var(--muted); }      /* #f1f3f6 */
 ```
 
-### Ghost Button 2
+### Text Button — 글자 버튼 (메뉴·로그인류 링크 · 참고 디자인의 「전체메뉴」「로그인」)
 
 ```css
-.btn-ghost-2 {
-  background: transparent;
-  color: #667085;
-  border-radius: 24px;
-  padding: 4px 4px;
-  font-size: 16px;
-  font-weight: 400;
-  border: none;
-  cursor: pointer;
+.btn-text {
+  height: 40px;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--foreground);
+  font: 400 14px/24px var(--font);   /* 메뉴처럼 찾아야 하는 이름은 700 */
 }
+.btn-text:hover,
+.btn-text:active { color: var(--primary); }            /* 아이콘도 같은 색 */
 ```
 
-### Filled Button
+### Icon Button — 원형 (캐러셀 화살표 · 참고 디자인의 「다음」)
 
 ```css
-.btn-filled {
-  background: #0f172a;
-  color: #181c25;
-  border-radius: 0px;
-  padding: 1px 6px;
-  font-size: 16px;
-  font-weight: 400;
-  border: none;
-  cursor: pointer;
+.btn-icon {
+  width: 40px; height: 40px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-raise);   /* 사진·카드 위에 떠 있을 때만 */
 }
 ```
 
-### Filled Button 2
+### Search Field — 큰 외곽선 입력 (참고 디자인의 헤더 검색)
 
 ```css
-.btn-filled-2 {
-  background: #f2f4f7;
-  color: #475467;
-  border-radius: 50px;
-  padding: 0px 0px;
-  font-size: 20px;
-  font-weight: 400;
-  border: none;
-  cursor: pointer;
+.search-field {
+  height: 52px;
+  padding: 0 20px;
+  gap: 12px;                         /* 문구와 아이콘 사이 */
+  border: 2px solid var(--primary);  /* 화면의 대표 입력 하나만 2px 브랜드 테두리 */
+  border-radius: var(--radius-pill);
+  background: var(--card);
 }
 ```
 
-### Filled Button 3
-
-```css
-.btn-filled-3 {
-  background: #ffffff;
-  color: #181c25;
-  border-radius: 12px;
-  padding: 12px 12px;
-  font-size: 16px;
-  font-weight: 400;
-  border: 1px solid rgb(234, 236, 240);
-  cursor: pointer;
-}
-```
-
-### Card
+### Card — 기본 카드
 
 ```css
 .card {
-  background: #ffffff;
-  border-radius: 20px;
-  padding: 24px;
-  box-shadow: rgba(15, 23, 42, 0.24) 0px 32px 80px 0px;
+  padding: 24px 24px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);      /* 12px */
+  background: var(--card);           /* 단색 흰 면 — 그라데이션·그림자 없음 */
 }
 ```
+
+### Compact Card — 목록 카드 (공고·프로그램 격자)
+- 기본 카드와 같고 `padding: 16px 24px;` — 격자에서 카드 높이를 고정할 때 쓴다.
+
+### Featured Card — 강조 카드
+- 기본 카드에서 테두리만 `1px solid var(--primary)` 로 바꾼다. 배경색·배지로 강조하지 않는다. 한 격자에서 몇 개만 쓴다.
+
+### Link Row Card — 안내 링크 행 (참고 디자인의 인사말 패널 링크)
+
+```css
+.link-row {
+  padding: 16px 0 16px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--muted);                                   /* #f1f3f6 */
+}
+.link-row:hover {
+  background: var(--sky-tint);                                /* #ebfaff */
+  border-color: color-mix(in srgb, var(--sky) 30%, transparent);
+}
+```
+
+### Dark Card — 진한 강조 카드 (오늘 할 일·목표 카드)
+- 배경 `var(--deep-end)` 단색 · 글자 흰색 · 테두리 없음. 한 화면에 하나만.
 
 ### List Table
 열 제목이 있는 목록·현황 표는 `/professor/home` 「학과학생 현황」 표가 기준이다 — `shared/listTable.css`(표 안 글자 14px, 강조선 각 SPA `--primary`, 긴 글 본문 칸만 `dc-cell-long` 왼쪽 정렬, 칸 안 라벨(진단유형·학적·상태)은 여백 2px 8px·줄높이 1.3으로 글자에 맞추고 굵기 400).
@@ -327,6 +350,7 @@ Border:      #f1f3f6
 | `--amber-soft` | `#fff6df` |
 | `--sky` | `#17a9e6` |
 | `--sky-soft` | `#e7f7fd` |
+| `--sky-tint` | `#ebfaff` |
 | `--pink` | `#e85aad` |
 | `--pink-soft` | `#fdebf6` |
 | `--teal` | `#14b8a6` |

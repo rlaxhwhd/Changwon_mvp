@@ -8,11 +8,7 @@
 .pr-reco {
   margin-bottom: 22px;
   padding: 22px 24px;
-  background:
-    radial-gradient(circle at 4% 0%,   color-mix(in srgb, var(--violet) 15%, transparent), transparent 40%),
-    radial-gradient(circle at 97% 4%,  color-mix(in srgb, var(--blue)   13%, transparent), transparent 34%),
-    radial-gradient(circle at 80% 106%, color-mix(in srgb, var(--mint)  14%, transparent), transparent 44%),
-    var(--color-bg);
+  background: var(--color-bg);
   border: 1px solid var(--violet-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
@@ -269,10 +265,7 @@
   align-items: center;
   gap: 12px;
   padding: 48px 24px 44px;
-  background:
-    radial-gradient(circle at 10% 6%,  color-mix(in srgb, var(--violet) 13%, transparent), transparent 46%),
-    radial-gradient(circle at 90% 96%, color-mix(in srgb, var(--mint)   13%, transparent), transparent 46%),
-    var(--color-bg);
+  background: var(--color-bg);
   border: 1px solid var(--blue-border);
   border-radius: var(--radius-md);
 }

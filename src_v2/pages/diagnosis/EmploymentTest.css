@@ -10,9 +10,7 @@
   grid-template-columns: minmax(560px, 0.84fr) minmax(560px, 1.16fr);
   align-items: center;
   gap: 0;
-  background:
-    radial-gradient(circle at 74% 52%, rgba(46, 91, 255, 0.10), transparent 38%),
-    var(--color-surface);
+  background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);

@@ -106,7 +106,7 @@
 /* ── Progress Card ──────────────────────────────────────────────── */
 .gsb-card {
   margin: auto 12px 20px;
-  background: linear-gradient(140deg, var(--color-navy) 0%, #2A3F8F 100%);
+  background: var(--color-navy);
   border-radius: var(--radius-md);
   padding: 16px;
   color: #fff;

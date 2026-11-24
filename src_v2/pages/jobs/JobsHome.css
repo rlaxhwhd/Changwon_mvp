@@ -208,12 +208,12 @@
 }
 
 .jh-action--create {
-  background: linear-gradient(120deg, #5B4BE0 0%, #8B7BFF 100%);
+  background: var(--cta);
   box-shadow: 0 12px 28px rgba(91, 75, 224, 0.28);
 }
 
 .jh-action--consult {
-  background: linear-gradient(120deg, #12A87A 0%, #2BD4A0 100%);
+  background: var(--mint-ink);
   box-shadow: 0 12px 28px rgba(18, 168, 122, 0.26);
 }
 

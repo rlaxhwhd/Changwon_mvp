@@ -4,7 +4,7 @@
   gap: 14px;
   margin-top: 18px;
   padding: 14px 18px;
-  background: linear-gradient(135deg, var(--color-bg) 0%, var(--color-surface) 60%, var(--color-primary-bg) 100%);
+  background: var(--color-bg);
   border: 1px solid var(--color-surface-alt);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-sm);

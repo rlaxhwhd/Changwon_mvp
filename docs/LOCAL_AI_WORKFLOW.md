@@ -1,5 +1,12 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-24 카드 배경 그라데이션 제거·종합 AI 코멘트 토큰화·카드/버튼 규격·--sky-tint
+
+- 사용자 지시: 라운지 종합 AI 코멘트 버튼을 토큰(var)으로, 카드 배경 그라데이션은 전부 단색으로. `shared/AiCommentCard.css` 의 보라 직접값(#7353ea 등)을 `--cta`·`--cta-hover`(학생 파랑) / `--color-primary`·`--primary-hover`(교직원 초록) 폴백 체인으로 바꿨고, 라운지의 돌던 네온 테두리(conic-gradient)를 걷었다.
+- 카드·배너·히어로 배경 그라데이션 약 35곳을 단색으로(학생 Main·AiLounge·GrowthHome·ProgramDetail·ProgramReco·JobsHome·Portfolio 등 + admin 학생상세 목표 카드 2·AI 추천 카드). 진한 카드는 `--deep-end`, 연한 카드는 `--card`·`--blue-wash`. 진행 막대·도넛·이미지 위 어둡게 깔기·잠금 흐림·마스크·스피너·버튼(GradientButton)·작은 아이콘 칩은 카드 배경이 아니라 남겼다.
+- DESIGN.md §4 를 참고 디자인(DESIGN_v1, 사람인)의 카드·버튼 구조로 다시 썼다 — 색·폰트·radius 는 우리 토큰 유지. 보조색 `--sky-tint` #ebfaff 를 두 포털 `:root` 와 DESIGN.md §2 Assist·§10 에 추가.
+- 로컬 Docker·ego-browser(1440px): 학생 main·lounge·growth·jobs 에서 160×60 이상 요소의 배경 그라데이션 0건, 종합 AI 코멘트 상단선·버튼 rgb(59,130,246), 콘솔 오류·예외 0. 서버 배포는 하지 않았다.
+
 ## 2026-11-24 학생 포털 보라 → admin 파랑 토큰 로컬 반영
 
 - 사용자 지시: 학생은 보라가 주색이고 admin은 초록·파랑이 주색이니 admin 기준으로 맞춘다. `src_v2/index.css` 1층 값만 바꿨다 — `--primary` #1a5fcc(admin `--on-blue`), `--cta` #3b82f6(admin `--blue`), `--violet*`·`--blue` 도 admin 파랑, `--mint` #24b37a·`--mint-ink` #157a52(admin 초록). 토큰 이름(`--violet*`)은 그대로라 화면 CSS 수정 없이 일괄 전환된다. 정본 기록은 `DESIGN.md` §2 머리말.

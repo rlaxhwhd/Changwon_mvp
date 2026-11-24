@@ -44,6 +44,7 @@
   --coral:  #ff6b6b;  --coral-soft:  #fff0f0;
   --amber:  #f5a524;  --amber-soft:  #fff6df;
   --sky:    #17a9e6;  --sky-soft:    #e7f7fd;
+  --sky-tint: #ebfaff;   /* 보조 연한 면 — 링크 행 hover·안내 영역(2026-11-24, DESIGN.md §2 Assist) */
   --pink:   #e85aad;  --pink-soft:   #fdebf6;
   --teal:   #14b8a6;  --teal-soft:   #e6faf7;
 

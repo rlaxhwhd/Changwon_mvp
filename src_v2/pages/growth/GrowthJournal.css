@@ -647,9 +647,7 @@
   min-height: 160px;
   margin: 24px 0 20px;
   padding: 30px 40px 28px;
-  background:
-    radial-gradient(circle at 74% 36%, color-mix(in srgb, var(--gj-teal) 16%, transparent), transparent 30%),
-    linear-gradient(108deg, #ffffff 0%, var(--gj-accent-wash) 100%);
+  background: var(--card, #fff);
   border: 1px solid var(--gj-accent-border);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);

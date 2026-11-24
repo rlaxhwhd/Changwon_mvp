@@ -68,10 +68,10 @@
   border-radius: var(--radius-lg, 12px);
   /* 배너 이미지(public/job-temp.png). 이미지에 흰 여백과 둥근 모서리가 함께 들어 있어
      106% 로 살짝 키워 좌우 흰 테두리를 화면 밖으로 밀어낸다.
-     아래 그라데이션은 폴백 — 이미지를 못 받아도 흰 글자 대비가 유지된다. */
+     아래 단색은 폴백 — 이미지를 못 받아도 흰 글자 대비가 유지된다. */
   background:
     url('/job-temp.png') center / 106% auto no-repeat,
-    linear-gradient(118deg, var(--jd-hero-1), var(--jd-hero-2));
+    var(--jd-hero-2);
   color: #fff;
 }
 /* 마감이어도 배너 색을 바꾸지 않는다 — 탁한 회보라가 되고, 상태는 우측 '마감' 배지가 이미 말한다. */
@@ -282,7 +282,7 @@
      폴백으로 두었던 그라데이션만 깐다(흰 글자 대비는 그라데이션 기준으로 잡혀 있다). */
   .jd-hero {
     grid-template-columns: auto minmax(0, 1fr);
-    background: linear-gradient(118deg, var(--jd-hero-1), var(--jd-hero-2));
+    background: var(--jd-hero-2);
   }
   .jd-hero-stats { grid-column: 1 / -1; grid-template-columns: repeat(3, auto); justify-content: start; gap: 22px; padding: 16px 0 0; border-top: 1px solid rgba(255, 255, 255, .2); }
   .jd-body { grid-template-columns: minmax(0, 1fr); }

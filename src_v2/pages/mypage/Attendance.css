@@ -175,7 +175,7 @@
 
 /* 출석 완료 */
 .att-cal-cell.attended {
-  background: linear-gradient(160deg, #EAF1FF 0%, #DCE7FF 100%);
+  background: var(--blue-soft);
   border-color: var(--color-primary-light, #93b5fb);
   box-shadow: 0 4px 12px rgba(46, 91, 255, 0.10);
 }
