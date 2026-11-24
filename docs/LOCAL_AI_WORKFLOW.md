@@ -1,5 +1,16 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-24 비교과 동의서·공용 UI·학생 파랑 팔레트 웹 서버 배포
+
+- origin/dev 최종 fetch9624c70. 직전a89fb88 이후081da1c/ b5fc3d0/916adb7/52f9e19 비교과 신청 동의서·선택 답변,ea91eae 학생 파랑 팔레트,53c44d6 카드 배경/토큰,a7ffe6d 공용 버튼·카드·달력,9624c70 오늘 할일/진단 버튼을 모두 포함한다. clean archive로 빌드했으며 타 세션 CLAUDE.md/untracked 자료를 보존했다. DESIGN.md의 커밋된 규격도 산출물에 포함된다.
+- API 앱·마이그레이션·requirements·Compose/nginx 변경 없음. 새 DB 리뷰/SQL 적용 없이 웹만 교체했다. 원본 API/175개 SQL과 기존 회사 API stats-jobs-20261123 해시 일치; 로컬/서버의 적용175 체크섬 및 전체 canonical schema MATCH(기존 정규화만). 서버 API와 DB 컨테이너 ID는 배포 전후 동일하며 DB 업무 데이터 교체/마이그레이션은 하지 않았다.
+- 신규 격리 DB dc_regression_20261124060757_567689_test에서 program_content/programs/program_roster_upload 39 passed,738 deselected,기존 경고3개(6.06초). TypeScript/Vite/Docker 웹 빌드 통과. 변경된 동의 consents 및 필수 답변의 기존 API 계약을 검증했다. 운영 비교과 신청 제출·신규 공고 저장은 검증 중 수행하지 않았다.
+- 로컬 웹 admin HTML은 처음부터 clean 빌드와 같았고 v2는 달라, 이전 web:local을 before-ui-consent-20261124로 보존하고 clean 이미지로 교체했다. npm run docker:up -- --no-build의 백업/175 skip/전체 healthy 통과,백업 local-before-migrate-20261124061033281.dump. 기존 로컬 API와 다른 서비스는 이 명령의 환경 설정대로 재기동됐으나 서버는 web만 교체했다.
+- 서버 태그 dreamcatch-web:ui-consent-20261124. clean 정적 파일+company template을 기존 CentOS 기반에 COPY,전체 파일 manifest/전송 SHA 검증. web-artifact14688311B SHA256 f97f912deeda21b255f300d71f28ce437dcf87c58ab45dab84472f0c25c228ae. /opt/dreamcatch/ai/ui-consent-20261124/에 DB dump/restore-list·Compose·nginx·전후 감사 보존. 환경별 비밀/nginx 호스트 bind template/API stats-jobs-20261123/DB175는 유지했다.
+- 로컬/서버 HTML SHA256 admin bb5bddfb668b9aaf4ccdba728d18338f5649bb99cd293b798dbb9ce90f3cf37b,v2 8fd1687b374da068e9c7419700183da783f2d73d997b5e0bcac9000316a04789 일치. nginx -t 정상,web/API/DB/RAG/LLM/SearXNG healthy,Qdrant running. Docker 저장소rw/root17GB/Docker21GB 여유 유지. 배포는 web 단독 up -d --no-deps; API 쓰기 중지는 없었다.
+- EgoLite 로컬/서버에서 지정된 완료 테스트 계정 로그인·라운지 screenshot 열람,primary#1a5fcc/cta#3b82f6 및 서버 가로넘침 없음 확인. 교직원 새 비교과 폼→추가 설정→개인정보 동의서 미리보기·예/아니오 라디오6개를 snapshot/screenshot으로 확인했고 미저장 입력은 폐기했다. 로컬/서버 수집 구간 실패API/Runtime예외0,테스트 학생 세션 로그아웃204 완료. 기존 구현 세션의 신청/서명 저장 검증은 문서에 있으나 이번 운영 검증은 실제 신청 제출 없이 미리보기·정적 UI·로그인까지만 수행했다. 전체 페이지/모든 달력/모바일 및 실제 AI 생성은 이번 검증 범위 밖이다.
+- 롤백은 저장 Compose의 web태그 stats-jobs-20261123으로 돌리고 web만 재기동한다. API/DB175·업무 기록·환경별 비밀은 유지한다. Graft 관련 경로 조회 완료. Atlas 공유 기억 도구 부재로 조회/저장은 미수행이다.
+
 ## 2026-11-24 공용 버튼·카드·달력 규격(shared/ui) 로컬 반영
 
 - 사용자 지시: 화면마다 다른 버튼·카드·달력을 공용 규격으로. `shared/ui/ui.css`(두 포털 main.tsx import) + `Button.tsx`·`Card.tsx` 신설. 규격은 DESIGN.md §4(높이 32·40·52, 모서리 버튼 10·카드 12, 포커스 링 2px, 그림자·그라데이션 없음), 색은 포털 토큰(학생 파랑 · 교직원 초록).
