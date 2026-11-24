@@ -1604,6 +1604,8 @@
   line-height: 20px;
   text-align: center;
 }
+/* 진한 카드(오늘 할 일) 위에서는 흰 글자로 — 회색 글자는 파랑 면에서 읽히지 않는다. */
+.mn-page .hero-todo .todo-empty { border-color: rgba(255, 255, 255, .4); color: rgba(255, 255, 255, .92); }
 
 /* 할 일 칸이 링크가 됐다 — 밑줄·색 상속만 되돌린다(모양은 .todo-item 그대로). */
 .mn-page a.todo-item { color: inherit; text-decoration: none; }

@@ -29,7 +29,7 @@
 html body :is(.jam-btn-primary, .jam-btn-ghost, .crm-btn-primary, .crm-btn-ghost,
   .ccm-btn-primary, .ccm-btn-ghost, .rr-btn-primary, .rr-btn-ghost, .ac-btn-primary, .ac-btn-ghost,
   .rs-primary-btn, .rs-outline-btn, .gj-btn-primary, .qb-button, .lm-button, .pf-resume-btn,
-  .counsel-primary-btn, .counsel-outline-btn) {
+  .counsel-primary-btn, .counsel-outline-btn, .de-start-btn, .de-type-request-btn) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -56,14 +56,14 @@ html body :is(.jam-btn-primary, .jam-btn-ghost, .crm-btn-primary, .crm-btn-ghost
 /* ─── 채움 — 주 행동 ────────────────────────────────────────────── */
 .dc-btn--primary,
 html body :is(.jam-btn-primary, .crm-btn-primary, .ccm-btn-primary, .rr-btn-primary, .ac-btn-primary,
-  .rs-primary-btn, .gj-btn-primary, .qb-button--primary, .lm-primary, .pf-resume-btn--primary, .counsel-primary-btn) {
+  .rs-primary-btn, .gj-btn-primary, .qb-button--primary, .lm-primary, .pf-resume-btn--primary, .counsel-primary-btn, .de-start-action > .de-start-btn) {
   border-color: var(--ui-accent);
   background: var(--ui-accent);
   color: var(--ui-on-accent);
 }
 :is(.dc-btn--primary,
   html body :is(.jam-btn-primary, .crm-btn-primary, .ccm-btn-primary, .rr-btn-primary, .ac-btn-primary,
-  .rs-primary-btn, .gj-btn-primary, .qb-button--primary, .lm-primary, .pf-resume-btn--primary, .counsel-primary-btn)):is(:hover, :active):not(:disabled) {
+  .rs-primary-btn, .gj-btn-primary, .qb-button--primary, .lm-primary, .pf-resume-btn--primary, .counsel-primary-btn, .de-start-action > .de-start-btn)):is(:hover, :active):not(:disabled) {
   border-color: var(--ui-accent-hover);
   background: var(--ui-accent-hover);
   color: var(--ui-on-accent);
@@ -77,7 +77,7 @@ html body :is(.jam-btn-primary, .crm-btn-primary, .ccm-btn-primary, .rr-btn-prim
 .dc-btn--outline,
 html body :is(.jam-btn-ghost, .crm-btn-ghost, .ccm-btn-ghost, .rr-btn-ghost, .ac-btn-ghost, .rs-outline-btn,
   .qb-button:not(.qb-button--primary), .lm-button:not(.lm-primary), .pf-resume-btn--ghost,
-  .counsel-outline-btn:not(.is-danger, .is-danger-solid)) {
+  .counsel-outline-btn:not(.is-danger, .is-danger-solid), .de-card-actions > .de-start-btn, .de-type-request-btn) {
   border-color: var(--ui-line);
   background: var(--ui-surface);
   color: var(--ui-ink);
@@ -85,7 +85,7 @@ html body :is(.jam-btn-ghost, .crm-btn-ghost, .ccm-btn-ghost, .rr-btn-ghost, .ac
 :is(.dc-btn--outline,
   html body :is(.jam-btn-ghost, .crm-btn-ghost, .ccm-btn-ghost, .rr-btn-ghost, .ac-btn-ghost, .rs-outline-btn,
   .qb-button:not(.qb-button--primary), .lm-button:not(.lm-primary), .pf-resume-btn--ghost,
-  .counsel-outline-btn:not(.is-danger, .is-danger-solid))):is(:hover, :active):not(:disabled) {
+  .counsel-outline-btn:not(.is-danger, .is-danger-solid), .de-card-actions > .de-start-btn, .de-type-request-btn)):is(:hover, :active):not(:disabled) {
   border-color: var(--ui-line);
   background: var(--ui-soft);
   color: var(--ui-ink);
@@ -107,12 +107,12 @@ html body :is(.jam-btn-ghost, .crm-btn-ghost, .ccm-btn-ghost, .rr-btn-ghost, .ac
 html body :is(.jam-btn-primary, .jam-btn-ghost, .crm-btn-primary, .crm-btn-ghost,
   .ccm-btn-primary, .ccm-btn-ghost, .rr-btn-primary, .rr-btn-ghost, .ac-btn-primary, .ac-btn-ghost,
   .rs-primary-btn, .rs-outline-btn, .gj-btn-primary, .qb-button, .lm-button, .pf-resume-btn,
-  .counsel-primary-btn, .counsel-outline-btn):disabled {
+  .counsel-primary-btn, .counsel-outline-btn, .de-start-btn, .de-type-request-btn):disabled {
   opacity: .5;
   cursor: not-allowed;
 }
 html body :is(.jam-btn-primary, .crm-btn-primary, .ccm-btn-primary, .rr-btn-primary, .ac-btn-primary,
-  .rs-primary-btn, .gj-btn-primary, .qb-button--primary, .lm-primary, .pf-resume-btn--primary, .counsel-primary-btn):disabled {
+  .rs-primary-btn, .gj-btn-primary, .qb-button--primary, .lm-primary, .pf-resume-btn--primary, .counsel-primary-btn, .de-start-action > .de-start-btn):disabled {
   border-color: var(--ui-accent);
   background: var(--ui-accent);
   color: var(--ui-on-accent);
@@ -122,7 +122,7 @@ html body :is(.jam-btn-primary, .crm-btn-primary, .ccm-btn-primary, .rr-btn-prim
   .jam-btn-primary, .jam-btn-ghost, .crm-btn-primary, .crm-btn-ghost,
   .ccm-btn-primary, .ccm-btn-ghost, .rr-btn-primary, .rr-btn-ghost, .ac-btn-primary, .ac-btn-ghost,
   .rs-primary-btn, .rs-outline-btn, .gj-btn-primary, .qb-button, .lm-button, .pf-resume-btn,
-  .counsel-primary-btn, .counsel-outline-btn, .jd-apply-btn):focus-visible {
+  .counsel-primary-btn, .counsel-outline-btn, .de-start-btn, .de-type-request-btn, .jd-apply-btn):focus-visible {
   outline: 2px solid var(--ui-focus);
   outline-offset: 2px;
 }
