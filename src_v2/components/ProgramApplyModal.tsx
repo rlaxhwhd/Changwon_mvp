@@ -6,6 +6,7 @@ import { collegeOf } from '../../src_admin/data/colleges'
 import './ProgramApplyModal.css'
 import { questionsAnswered, type ApplicationAnswers, type ApplicationQuestion } from '../../shared/programContent'
 import ProgramApplicationQuestions from '../../shared/components/ProgramApplicationQuestions'
+import Button from '../../shared/ui/Button'
 import ProgramConsentForm, { PROGRAM_CONSENT_KEYS, type ProgramConsentAnswers } from '../../shared/components/ProgramConsentForm'
 import { catalogOptions } from '../data/growthInputCatalog'
 
@@ -159,10 +160,10 @@ export default function ProgramApplyModal({ open, onClose, programTitle, onSubmi
       </div>}
 
       <div className="pam-actions">
-        <button className="pam-btn-ghost" onClick={handleClose}>닫기</button>
-        <button className="pam-btn-primary" onClick={handleSubmit} disabled={!canSubmit}>
+        <Button onClick={handleClose}>닫기</Button>
+        <Button variant="primary" onClick={handleSubmit} disabled={!canSubmit}>
           신청
-        </button>
+        </Button>
       </div>
     </Modal>
   )

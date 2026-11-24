@@ -918,8 +918,8 @@ select:focus-visible {
 
 /* ─── Button — 시안 변주가 전부다. 새 변주를 만들지 말 것. ────────── */
 .button {
-  min-height: 36px;
-  padding: 0 14px;
+  min-height: 40px;
+  padding: 0 16px;
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   background: var(--card);
@@ -936,9 +936,9 @@ select:focus-visible {
 .button .icon { width: 16px; height: 16px; }
 
 .button:hover {
-  border-color: var(--violet-border);
-  color: var(--primary);
-  background: var(--violet-soft);
+  border-color: var(--border);
+  color: var(--foreground);
+  background: var(--muted);
 }
 
 .button.primary {
@@ -960,7 +960,7 @@ select:focus-visible {
   pointer-events: none;
 }
 
-.button.sm { min-height: 30px; padding: 0 10px; font-size: var(--fs-meta); }
+.button.sm { min-height: 32px; padding: 0 12px; font-size: var(--fs-meta); }
 
 /* 캐러셀 이동 */
 .carousel-button {

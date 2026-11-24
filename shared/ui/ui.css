@@ -1,0 +1,172 @@
+/* ═══════════════════════════════════════════════════════════════════
+   공용 UI 규격 — 버튼 · 카드 · 달력 (DESIGN.md §4, 2026-11-24)
+   학생(src_v2)·교직원(src_admin) 두 포털이 같이 불러 쓴다(main.tsx).
+
+   1) 새 화면은 .dc-btn / .dc-card (또는 shared/ui/Button·Card 컴포넌트)를 쓴다.
+   2) 화면마다 따로 있던 버튼·카드 클래스는 아래 「연결」 목록으로 같은 규격을 받는다.
+      화면 CSS 가 나중에 실려도 이기도록 html body 접두로 우선순위를 올렸다.
+      화면을 고칠 때 옛 클래스를 .dc-* 로 바꾸고 이 목록에서 지워 나간다.
+   색은 포털 토큰을 따른다 — 학생 파랑(--cta) · 교직원 초록(--primary).
+   ═══════════════════════════════════════════════════════════════════ */
+:root {
+  --ui-accent:       var(--cta, var(--primary));
+  --ui-accent-hover: var(--cta-hover, var(--primary-hover));
+  --ui-accent-soft:  var(--violet-soft, var(--primary-soft));
+  --ui-on-accent:    #fff;
+  --ui-ink:          var(--foreground, var(--text));
+  --ui-line:         var(--border);
+  --ui-surface:      var(--card, var(--bg-card));
+  --ui-soft:         var(--muted);
+  --ui-focus:        var(--primary);
+  --ui-danger:       var(--coral-ink, var(--on-red));
+  --ui-danger-soft:  var(--coral-soft, var(--red-bg));
+  --ui-radius-btn:   10px;
+  --ui-radius-card:  12px;
+}
+
+/* ─── 버튼 뼈대 ─────────────────────────────────────────────────── */
+.dc-btn,
+html body :is(.jam-btn-primary, .jam-btn-ghost, .crm-btn-primary, .crm-btn-ghost,
+  .ccm-btn-primary, .ccm-btn-ghost, .rr-btn-primary, .rr-btn-ghost, .ac-btn-primary, .ac-btn-ghost,
+  .rs-primary-btn, .rs-outline-btn, .gj-btn-primary, .qb-button, .lm-button, .pf-resume-btn,
+  .counsel-primary-btn, .counsel-outline-btn) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: auto;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid transparent;
+  border-radius: var(--ui-radius-btn);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: none;
+  transform: none;
+  filter: none;
+  opacity: 1;
+  transition: background-color .12s, border-color .12s, color .12s;
+}
+
+/* ─── 채움 — 주 행동 ────────────────────────────────────────────── */
+.dc-btn--primary,
+html body :is(.jam-btn-primary, .crm-btn-primary, .ccm-btn-primary, .rr-btn-primary, .ac-btn-primary,
+  .rs-primary-btn, .gj-btn-primary, .qb-button--primary, .lm-primary, .pf-resume-btn--primary, .counsel-primary-btn) {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent);
+  color: var(--ui-on-accent);
+}
+:is(.dc-btn--primary,
+  html body :is(.jam-btn-primary, .crm-btn-primary, .ccm-btn-primary, .rr-btn-primary, .ac-btn-primary,
+  .rs-primary-btn, .gj-btn-primary, .qb-button--primary, .lm-primary, .pf-resume-btn--primary, .counsel-primary-btn)):is(:hover, :active):not(:disabled) {
+  border-color: var(--ui-accent-hover);
+  background: var(--ui-accent-hover);
+  color: var(--ui-on-accent);
+  box-shadow: none;
+  transform: none;
+  filter: none;
+  opacity: 1;
+}
+
+/* ─── 외곽선 — 보조 행동 ─────────────────────────────────────────── */
+.dc-btn--outline,
+html body :is(.jam-btn-ghost, .crm-btn-ghost, .ccm-btn-ghost, .rr-btn-ghost, .ac-btn-ghost, .rs-outline-btn,
+  .qb-button:not(.qb-button--primary), .lm-button:not(.lm-primary), .pf-resume-btn--ghost,
+  .counsel-outline-btn:not(.is-danger, .is-danger-solid)) {
+  border-color: var(--ui-line);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+}
+:is(.dc-btn--outline,
+  html body :is(.jam-btn-ghost, .crm-btn-ghost, .ccm-btn-ghost, .rr-btn-ghost, .ac-btn-ghost, .rs-outline-btn,
+  .qb-button:not(.qb-button--primary), .lm-button:not(.lm-primary), .pf-resume-btn--ghost,
+  .counsel-outline-btn:not(.is-danger, .is-danger-solid))):is(:hover, :active):not(:disabled) {
+  border-color: var(--ui-line);
+  background: var(--ui-soft);
+  color: var(--ui-ink);
+}
+
+/* ─── 글자 버튼 · 위험 · 크기 ───────────────────────────────────── */
+.dc-btn--text { min-height: 40px; padding: 0 4px; border-color: transparent; background: none; color: var(--ui-ink); font-weight: 400; }
+.dc-btn--text:is(:hover, :active):not(:disabled) { color: var(--ui-focus); }
+
+.dc-btn--danger { border-color: var(--ui-line); background: var(--ui-surface); color: var(--ui-danger); }
+.dc-btn--danger:is(:hover, :active):not(:disabled) { border-color: var(--ui-danger); background: var(--ui-danger-soft); }
+
+.dc-btn--sm { min-height: 32px; padding: 0 12px; font-size: 13px; }
+.dc-btn--lg { min-height: 52px; padding: 0 24px; font-size: 16px; }
+.dc-btn--block { width: 100%; }
+
+/* ─── 상태 — 비활성 · 포커스 (전 버튼 공통) ─────────────────────── */
+.dc-btn:disabled, .dc-btn[aria-disabled='true'],
+html body :is(.jam-btn-primary, .jam-btn-ghost, .crm-btn-primary, .crm-btn-ghost,
+  .ccm-btn-primary, .ccm-btn-ghost, .rr-btn-primary, .rr-btn-ghost, .ac-btn-primary, .ac-btn-ghost,
+  .rs-primary-btn, .rs-outline-btn, .gj-btn-primary, .qb-button, .lm-button, .pf-resume-btn,
+  .counsel-primary-btn, .counsel-outline-btn):disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+html body :is(.jam-btn-primary, .crm-btn-primary, .ccm-btn-primary, .rr-btn-primary, .ac-btn-primary,
+  .rs-primary-btn, .gj-btn-primary, .qb-button--primary, .lm-primary, .pf-resume-btn--primary, .counsel-primary-btn):disabled {
+  border-color: var(--ui-accent);
+  background: var(--ui-accent);
+  color: var(--ui-on-accent);
+}
+
+:is(.dc-btn, .button, .admin-btn,
+  .jam-btn-primary, .jam-btn-ghost, .crm-btn-primary, .crm-btn-ghost,
+  .ccm-btn-primary, .ccm-btn-ghost, .rr-btn-primary, .rr-btn-ghost, .ac-btn-primary, .ac-btn-ghost,
+  .rs-primary-btn, .rs-outline-btn, .gj-btn-primary, .qb-button, .lm-button, .pf-resume-btn,
+  .counsel-primary-btn, .counsel-outline-btn, .jd-apply-btn):focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 2px;
+}
+
+/* ─── 카드 ──────────────────────────────────────────────────────── */
+.dc-card {
+  min-width: 0;
+  padding: 24px 24px 20px;
+  border: 1px solid var(--ui-line);
+  border-radius: var(--ui-radius-card);
+  background: var(--ui-surface);
+  color: var(--ui-ink);
+}
+.dc-card--compact  { padding: 16px 24px; }
+.dc-card--featured { border-color: var(--ui-focus); }
+.dc-card--dark     { border-color: transparent; background: var(--deep-end, var(--on-blue)); color: #fff; }
+.dc-card--link     { display: block; padding: 16px 20px; background: var(--ui-soft); text-decoration: none; }
+.dc-card--link:is(:hover, :active) { border-color: color-mix(in srgb, var(--sky, var(--teal)) 30%, transparent); background: var(--sky-tint); }
+
+/* 연결 — 화면별 카드의 모서리·그림자만 규격으로 맞춘다(안쪽 여백은 화면 배치가 정한다). */
+html body :is(.gsb-card, .al-page .area-card, .cc-track-card, .pc-mode-card, .de-test-card, .gh-card, .gml-card, .pa-card,
+  .pb-card, .pcg-card, .rs-progress-card, .jh-hub-card, .att-card, .aj-stat-card, .aj-job-card, .aj-right-card,
+  .rs-editor-card, .rs-journal-card, .rs-doc-card, .counsel-template-card) {
+  border-radius: var(--ui-radius-card);
+  box-shadow: none;
+}
+
+/* ─── 달력 — 월 달력 4종의 날짜 칸·이동 버튼을 같은 규격으로 ─────────────
+   공용 월 달력은 shared/components/HistoryCalendar(.cs-*) 다. 출석(.att-*)·퀘스트(.qb-*)·
+   교직원 상담 신청(.counsel-calendar-*)은 기능이 달라 따로 두되 모양은 여기서 맞춘다:
+   오늘 = 강조색 테두리 · 선택 = 연한 강조 면 + 강조색 테두리 · hover = 연한 회색 면 · 모서리 8px. */
+html body :is(.cs-calendar-days button, .counsel-calendar-grid button, .qb-calendar td span, .att-cal-cell) { border-radius: 8px; }
+html body :is(.cs-calendar-days button, .counsel-calendar-grid button) { color: var(--ui-ink); }
+html body :is(.cs-calendar-days button, .counsel-calendar-grid button):hover { background: var(--ui-soft); }
+html body :is(.cs-calendar-days .is-today, .qb-calendar .is-today, .att-cal-cell.today) { border-color: var(--ui-focus); color: var(--ui-focus); font-weight: 800; }
+html body :is(.cs-calendar-days .is-selected, .counsel-calendar-grid button.is-selected) { border-color: var(--ui-accent); background: var(--ui-accent-soft); color: var(--ui-focus); font-weight: 800; }
+html body .qb-calendar .is-checked { border-color: var(--ui-accent); background: var(--ui-accent); color: var(--ui-on-accent); }
+html body .att-cal-cell.attended { border-color: var(--ui-accent); background: var(--ui-accent-soft); box-shadow: none; }
+html body .att-cell-mark { background: var(--ui-accent); box-shadow: none; }
+html body .cs-calendar .cs-panel-head h2 { color: var(--ui-ink); }
+html body .cs-dot-done { background: var(--mint-ink, var(--on-green)); }
+html body :is(.cs-month-nav button, .qb-calendar-heading button, .counsel-calendar-nav button) {
+  display: inline-grid; place-items: center; width: 32px; height: 32px; padding: 0;
+  border: 1px solid var(--ui-line); border-radius: 50%; background: var(--ui-surface); color: var(--ui-ink); cursor: pointer;
+}
+html body :is(.cs-month-nav button, .qb-calendar-heading button, .counsel-calendar-nav button):hover { background: var(--ui-soft); }
+html body :is(.cs-month-nav button, .qb-calendar-heading button, .counsel-calendar-nav button, .cs-calendar-days button, .counsel-calendar-grid button):focus-visible { outline: 2px solid var(--ui-focus); outline-offset: 2px; }

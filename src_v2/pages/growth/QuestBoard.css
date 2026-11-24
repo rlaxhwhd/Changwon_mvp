@@ -17,7 +17,7 @@
 .qb-toolbar h2 { font-size: 32px; font-weight: 700; letter-spacing: -.02em; line-height: 44px; }
 .qb-toolbar p { color: var(--qb-sub); font-size: 13px; margin-top: 8px; }
 .qb-actions { justify-content: flex-end; flex-wrap: wrap; gap: 8px; }
-.qb-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 16px; border: 1px solid var(--qb-border); border-radius: 8px; background: #fff; color: var(--qb-text); font-size: 13px !important; font-weight: 650 !important; }
+.qb-button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 42px; padding: 10px 16px; border: 1px solid var(--qb-border); border-radius: 8px; background: #fff; color: var(--qb-text); font-size: 14px; font-weight: 700; }
 .qb-button:hover { background: var(--blue-soft); border-color: var(--blue-border); }
 .qb-button--primary { background: var(--blue); border-color: var(--blue); color: #fff; }
 .qb-button--primary:hover { background: color-mix(in srgb, var(--blue) 88%, #172d55); color: #fff; }

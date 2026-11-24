@@ -91,7 +91,10 @@ The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 �
 > **2026-11-24 — 카드·버튼 규격은 참고 디자인(DESIGN_v1, 사람인 포털)의 컴포넌트 구조를 따른다.**
 > 가져온 것은 **구조**(테두리로 면 나누기·높이 단계·여백·상태·포커스 링)뿐이다. **색·폰트·radius 는 이 문서의 우리 토큰을 그대로 쓴다**
 > (색 §2·§10, 폰트 §3, radius `src_v2/index.css` 형태 스케일 12·10·8·6·pill). 참고 디자인의 AI 그라데이션 버튼은 들이지 않는다(그라데이션 금지).
-> 공용 컴포넌트로 옮기기 전까지 화면별 클래스는 이 규격으로 맞춰 간다.
+> **구현 위치(2026-11-24):** `shared/ui/ui.css`(두 포털 `main.tsx` 가 불러온다) · `shared/ui/Button.tsx` · `shared/ui/Card.tsx`.
+> 새 화면은 `<Button variant="primary|outline|text|danger" size="sm|md|lg">` 와 `<Card variant="compact|featured|dark|link">`(= `.dc-btn`·`.dc-card`)를 쓰고 화면 전용 버튼·카드 클래스를 새로 만들지 않는다.
+> 옛 화면별 클래스(`.crm-btn-*`·`.ac-btn-*`·`.counsel-*-btn` 등)는 `ui.css` 의 「연결」 목록으로 같은 규격을 받는다 — 화면을 고칠 때 `.dc-*` 로 바꾸고 목록에서 지운다(첫 이전: 비교과 신청서).
+> 월 달력은 `shared/components/HistoryCalendar` 가 공용이고, 출석·퀘스트·교직원 상담 신청 달력은 날짜 칸 모양(오늘·선택·hover·이동 버튼)만 `ui.css` 로 맞춘다.
 
 ### 공통 규칙
 - **면은 테두리로 나눈다.** 카드에 그림자·그라데이션을 쓰지 않는다(1px `--border` 또는 연한 면 `--muted`·`--blue-wash`·`--sky-tint`). 떠 있는 컨트롤(캐러셀 화살표 등) 하나만 `--shadow-raise`.

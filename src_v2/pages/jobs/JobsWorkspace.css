@@ -26,21 +26,21 @@
 .jobs-workspace :is(.rs-title-input > input, .rs-category-select select, .rs-editor-card textarea) { font-size: var(--fs-body); font-weight: 400; }
 .jobs-workspace .rs-category-select { margin-bottom: 0; }
 .jobs-workspace :is(.rs-doc-card h3, .rs-journal-item strong, .ac-pick-title) { font-size: var(--fs-card); font-weight: 700; }
-.jobs-workspace :is(.rs-primary-btn, .rs-consult-btn, .rs-save-btn, .rs-step-actions button, .rs-step-back button, .ac-btn-primary, .ac-btn-ghost) { min-height: 42px; height: auto; padding: 10px 16px; font-size: var(--fs-body); font-weight: 600; box-shadow: none; }
-.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary) { background: var(--color-primary); color: var(--card); border: 1px solid var(--color-primary); border-radius: 10px; box-shadow: 0 3px 8px color-mix(in srgb, var(--blue) 12%, transparent); }
-.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):hover:not(:disabled) { background: color-mix(in srgb, var(--color-primary) 88%, var(--foreground)); transform: translateY(-1px); box-shadow: 0 5px 12px color-mix(in srgb, var(--blue) 18%, transparent); }
+.jobs-workspace :is(.rs-primary-btn, .rs-consult-btn, .rs-save-btn, .rs-step-actions button, .rs-step-back button, .ac-btn-primary, .ac-btn-ghost) { min-height: 40px; height: auto; padding: 0 16px; font-size: var(--fs-body); font-weight: 700; box-shadow: none; }
+.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary) { background: var(--cta); color: var(--primary-foreground); border: 1px solid var(--cta); border-radius: 10px; box-shadow: none; }
+.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):hover:not(:disabled) { background: var(--cta-hover); border-color: var(--cta-hover); transform: none; box-shadow: none; }
 .jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):active:not(:disabled) { transform: translateY(0); box-shadow: none; }
 .jobs-workspace .rs-consult-btn { border: 1px solid var(--mint-border); color: var(--button-mint-ink); background: var(--mint-soft); border-radius: 10px; }
 .jobs-workspace .rs-consult-btn:hover:not(:disabled) { background: color-mix(in srgb, var(--mint-soft) 88%, var(--mint)); border-color: var(--mint-ink); box-shadow: none; }
 .jobs-workspace :is(.rs-consult-btn, .rs-save-btn):disabled { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); box-shadow: none; }
 .jobs-workspace .rs-save-btn { background: var(--card); color: var(--button-mint-ink); border: 1px solid var(--mint-border); border-radius: 10px; }
 .jobs-workspace .rs-save-btn:hover:not(:disabled) { background: var(--mint-soft); border-color: var(--mint-ink); box-shadow: none; }
-.jobs-workspace :is(.rs-outline-btn, .ac-btn-ghost) { color: var(--muted-foreground); background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
-.jobs-workspace :is(.rs-outline-btn, .ac-btn-ghost):hover:not(:disabled) { color: var(--color-primary); background: var(--blue-soft); border-color: var(--blue-border); }
+.jobs-workspace :is(.rs-outline-btn, .ac-btn-ghost) { color: var(--foreground); background: var(--card); border: 1px solid var(--border); border-radius: 10px; }
+.jobs-workspace :is(.rs-outline-btn, .ac-btn-ghost):hover:not(:disabled) { color: var(--foreground); background: var(--muted); border-color: var(--border); }
 .jobs-workspace .rs-journal-item button { background: var(--card); color: var(--color-primary); border: 1px solid var(--blue-border); border-radius: 8px; }
 .jobs-workspace .rs-journal-item button:hover:not(:disabled) { background: var(--blue-soft); border-color: var(--color-primary); }
 .jobs-workspace .rs-journal-item button:disabled { color: var(--muted-foreground); background: var(--muted); border-color: var(--border); }
-.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):disabled { background: var(--muted); color: var(--muted-foreground); border-color: var(--border); box-shadow: none; opacity: 1; }
+.jobs-workspace :is(.rs-primary-btn, .ac-btn-primary):disabled { box-shadow: none; opacity: .5; cursor: not-allowed; }
 .jobs-workspace .rs-editor-actions { flex-wrap: wrap; }
 .jobs-workspace :is(.rs-doc-tabs button.active, .rs-status.writing) { color: var(--color-primary); background: var(--blue-soft); border-color: var(--blue-border); }
 .jobs-workspace .rs-section-head > span { color: var(--mint-ink); background: var(--mint-soft); }
