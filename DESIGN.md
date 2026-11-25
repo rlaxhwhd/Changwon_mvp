@@ -25,10 +25,21 @@ The hero section leads with "안녕하세요, 김민서님.오늘의 커리어 �
 > `--violet*` 토큰 이름은 남아 있지만 값은 파랑이다. 보라와 파랑이 한 세트였던 색 칸(로드맵 3축·진단 5종·지표·하루 3종)은 옛 파랑 칸을 `--sky`·`--amber` 로 옮겼다.
 > 아래 표의 보라 값은 시안 추출 당시 기록이다 — 현재 값의 정본은 `src_v2/index.css` 1층.
 
+### 색 계층 — 주 색상 / 하위 색상 (2026-11-25 사용자 확정)
+
+| 계층 | 색 | 토큰 | 쓰는 곳 |
+|---|---|---|---|
+| **1차 · 주 색상** | 진한 파랑 `#1a5fcc` | `--primary` (`--color-primary`) | 제목·소제목·강조 — 강조 단어(이름·수치), 섹션 키커, 링크·아이콘, 선택 표시·포커스 링. 버튼 채움은 같은 계열 `#3b82f6`(`--cta`), hover 는 `#1a5fcc` |
+| **2차 · 하위 색상** | 하늘 `#17a9e6` | `--sky` | 1차를 받치는 하위 계층 — 보조 아이콘·배지·태그, 진행 막대·차트의 두 번째 계열, 보조 안내 면(`--sky-soft` `#e7f7fd` · `--sky-tint` `#ebfaff`) |
+
+- 한 화면의 강조는 1차가 주인이다. 2차는 1차보다 넓거나 세게 쓰지 않는다.
+- 2차 `#17a9e6` 은 흰 바탕 글자 대비가 2.7:1 이라 **글자색으로 쓰지 않는다** — 하위 계층 글자는 `--sky-ink`(진한 하늘) 를 쓴다.
+- 1차·2차 밖의 파랑을 새로 들이지 않는다. `#1890ff` 는 2026-11-25 시험 후 쓰지 않기로 했다.
+
 ### Primary
 - **Primary Accent** (`#1a5fcc`) · `--color-primary`: Brand color, link text, interactive highlights, icon/border ink.
 - **CTA Fill** (`#3b82f6`) · `--cta` / `--color-cta`: solid button backgrounds only. Lighter than the ink; kept separate so the fill never becomes *text* below its contrast floor — the ink stays `#1a5fcc`.
-- **Secondary Accent** (`#17a9e6` sky) · categorical partner of blue where both appear in one set.
+- **Secondary Accent** (`#17a9e6`) · `--sky`: 2차 하위 색상 — 위 「색 계층」 표. 채움·아이콘·막대용이고 글자는 `--sky-ink`.
 - **Background** (`#f7f8fb`) · `--color-bg`: Page background, primary canvas.
 - **Background Secondary** (`#f1f3f6`) · `--color-bg-secondary`: Cards, surfaces, alternating sections.
 
