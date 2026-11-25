@@ -2164,52 +2164,10 @@
 .al-page .competency-chart { display: grid; justify-items: center; width: 100%; min-width: 0; }
 .al-page .competency-chart .radar { max-width: 100%; height: auto; }
 
-/* ═══ 디자인 가이드 적용 — 라운지 (DESIGN.md §2 색 계층 · §4 카드·버튼, 2026-11-25) ═══
-   · 제목·소제목 글자는 검정(--foreground).
-   · 1차 진한 파랑(--primary #1a5fcc)은 강조 — 강조 단어·키커·링크.
-   · 색으로 구분하는 값(진단·상담·지표 항목)은 그 색을 진하게 섞은 글자로 쓴다 — 본색(#17a9e6 하늘 등)을 글자에 쓰지 않는다.
-     숫자 자체는 검정이고, 색은 점·막대·아이콘이 맡는다.
-   · 진한 카드는 화면에 하나(목표 직무). 그림자 없음. 버튼은 40px · 모서리 10 · 14px/700. */
-.al-page { --al-ink-mix: #0b1a33; }
-
-/* 제목은 검정 */
-.al-page .dc-ai-comment-head strong,
-.al-page .goal-plan-head b { color: var(--foreground); }
-
-/* 1차 강조 */
-.al-page .welcome h1 span,
-.al-page .type-copy b,
-.al-page .ssc-kicker,
-.al-page .cj-kicker,
-.al-page .cj-step.is-current > b,
-.al-page .gh-card .gh-section-kicker,
-.al-page .gh-head-actions a,
-.al-page .gh-timeline-more { color: var(--primary); }
-
-/* 수치는 검정 — 색은 막대·점이 말한다 */
-.al-page .ssc-meter b,
-.al-page .ssc-channels em,
-.al-page .counseling-detail-total { color: var(--foreground); }
-
-/* 색으로 구분하는 글자 — 본색을 진하게 섞어 읽히게 */
-.al-page .diagnosis-result-name small,
-.al-page .diagnosis-primary-result,
-.al-page .diagnosis-result-tags span { color: color-mix(in srgb, var(--result-color) 55%, var(--al-ink-mix)); }
-.al-page .counseling-record .badge { color: color-mix(in srgb, var(--counsel-color) 55%, var(--al-ink-mix)); }
-.al-page .goal-task-status.planned { color: var(--amber-ink); }
-
-/* 진한 카드는 목표 직무 하나 — 「로드맵 진행」 띠는 연한 파랑 면으로 */
+/* ═══ 로드맵 진행 띠 — 연한 파랑 면 (2026-11-25 사용자 확정) ═══
+   진한 카드는 「목표 직무」 하나만 두고, 옆 「로드맵 진행」 띠는 연한 파랑 면 + 흰 버튼으로 받친다. */
 .al-page .goal-coach { border: 1px solid var(--blue-border); background: var(--blue-wash); color: var(--foreground); }
 .al-page .goal-coach-icon { border-color: var(--blue-border); background: var(--card); color: var(--primary); }
 .al-page .goal-coach-copy p { color: var(--muted-foreground); }
 .al-page .goal-coach-actions .button { border-color: var(--border); background: var(--card); color: var(--foreground); }
 .al-page .goal-coach-actions .button:hover { background: var(--muted); }
-
-/* 그림자 없음 · 버튼 규격 */
-.al-page .tab-trigger.active { box-shadow: none; outline: 1px solid var(--border); }
-.al-page .dc-ai-comment button:not(.dc-ai-comment-more) { min-height: 40px; padding: 0 16px; border-radius: 10px; font-size: 14px; font-weight: 700; }
-
-/* 카드 테두리 — 기본 1px 회색, 강조 카드(나의 진로 여정)만 1px 주 색상. 색 띠 테두리는 쓰지 않는다. */
-.al-page .cj-card { border-color: var(--primary); }
-.al-page .todo-card { border-color: var(--border); }
-.al-page .dashboard-grid > .dc-ai-comment { border: 1px solid var(--border); }
