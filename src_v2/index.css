@@ -55,6 +55,7 @@
   /* 짙은 면(목표 카드 등) · 차트 보조 */
   --deep-start: #242a3b;
   --deep-end:   #1a5fcc;
+  --slate:      #475067;   /* 차분한 진한 면 — 메인 「오늘 할 일」 카드(2026-11-25 사용자 선택, 참고 팔레트 slate) */
   --deep-muted: #d8dbeb;
   --chart-reference: #aeb7c5;
   --scrollbar-accent: #cbd8ff;
