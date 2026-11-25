@@ -2163,3 +2163,29 @@
 
 .al-page .competency-chart { display: grid; justify-items: center; width: 100%; min-width: 0; }
 .al-page .competency-chart .radar { max-width: 100%; height: auto; }
+
+/* ── 브랜드 색 시험 적용 — 라운지만 #1890ff (2026-11-25 사용자 요청, main 과 비교용) ──
+   채움·테두리·강조는 #1890ff, 작은 글자 잉크는 한 단계 진한 #096dd9 (#1890ff 글자는 흰 바탕 대비 3.0:1 이라 본문 글자로 쓰지 않는다).
+   연한 면·테두리는 같은 파랑 계열 단계(#e6f7ff · #91d5ff)를 쓴다.
+   :root 에서 이미 풀린 별칭(--color-*·--ui-*)도 여기서 다시 잇는다. 채택하면 src_v2/index.css 1층으로 옮기고 이 블록은 지운다. */
+.al-page {
+  --primary: #096dd9;
+  --cta: #1890ff;
+  --cta-hover: #096dd9;
+  --cta-shadow: rgba(24, 144, 255, .22);
+  --violet: #1890ff;  --violet-soft: #e6f7ff;
+  --blue: #1890ff;    --blue-soft: #e6f7ff;
+  --violet-border: #91d5ff;  --blue-border: #91d5ff;
+  --violet-hover: #096dd9;
+  --violet-wash: #e6f7ff;  --blue-wash: #e6f7ff;
+  --deep-end: #096dd9;
+  --ring: var(--primary);
+  --color-primary: var(--primary);
+  --color-cta: var(--cta);
+  --color-primary-bg: #e6f7ff;
+  --color-surface-alt: #e6f7ff;
+  --ui-accent: var(--cta);
+  --ui-accent-hover: var(--cta-hover);
+  --ui-accent-soft: #e6f7ff;
+  --ui-focus: var(--primary);
+}
