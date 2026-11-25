@@ -196,6 +196,9 @@
   --jb-cols: 56px 148px minmax(240px, 1fr) 120px 132px 110px 116px;
   border-top: 1px solid var(--jb-line);
 }
+/* 교직원 목록 — 마감기한 뒤에 찜 열 하나를 더 둔다. */
+.jb-list--wish { --jb-cols: 56px 148px minmax(240px, 1fr) 120px 132px 110px 116px 84px; }
+.jb-row-wish { white-space: nowrap; }
 .jb-head,
 .jb-row {
   display: grid;

@@ -131,6 +131,27 @@ export default function JobBoard({
   // 찜 수는 스토어의 최신 값을 본다 — 부모가 목록을 memo 해 두어도 찜 저장 뒤 다시 읽은 공고가 반영된다.
   const wishCountOf = (job: JobPosting) => getJobById(job.id)?.wishCount ?? job.wishCount ?? 0
 
+  // 「찜 N명」 — 추천채용 카드와 일반채용 행이 같이 쓴다. 교직원(onWishersOpen)은 눌러서 찜한 학생 목록을 연다.
+  // 카드·행이 button 이라 안쪽은 span role=button 으로 둔다(button 중첩 금지).
+  const wishBadge = (job: JobPosting) => onWishersOpen ? (
+    <span
+      role="button"
+      tabIndex={0}
+      className="jc-wishes is-link"
+      aria-label={`찜한 학생 ${wishCountOf(job)}명 목록 보기`}
+      onClick={e => { e.stopPropagation(); onWishersOpen(job) }}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault(); e.stopPropagation(); onWishersOpen(job)
+        }
+      }}
+    >
+      <i className="fa-solid fa-star" /> 찜 {wishCountOf(job)}명
+    </span>
+  ) : (
+    <span className="jc-wishes"><i className="fa-solid fa-star" /> 찜 {wishCountOf(job)}명</span>
+  )
+
   // 클릭 대상이 없으면 button 이 아니라 정적 블록으로 그린다 — 눌러도 되는 것처럼 보이지 않게.
   const Tag = onOpen ? 'button' : 'div'
   const openProps = (job: JobPosting) =>
@@ -215,24 +236,7 @@ export default function JobBoard({
             {applicantCountOf && (
               <span className="jc-applicants"><i className="fa-solid fa-user-group" /> 지원 {applicantCountOf(job)}명</span>
             )}
-            {onWishersOpen ? (
-              <span
-                role="button"
-                tabIndex={0}
-                className="jc-wishes is-link"
-                aria-label={`찜한 학생 ${wishCountOf(job)}명 목록 보기`}
-                onClick={e => { e.stopPropagation(); onWishersOpen(job) }}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault(); e.stopPropagation(); onWishersOpen(job)
-                  }
-                }}
-              >
-                <i className="fa-solid fa-star" /> 찜 {wishCountOf(job)}명
-              </span>
-            ) : (
-              <span className="jc-wishes"><i className="fa-solid fa-star" /> 찜 {wishCountOf(job)}명</span>
-            )}
+            {wishBadge(job)}
           </span>
         </div>
 
@@ -284,6 +288,8 @@ export default function JobBoard({
           <b className={`jc-dday${closed ? ' is-closed' : ''}`}>{dday}</b>
           <time>{deadlineLabel(job)}</time>
         </span>
+        {/* 찜 열은 교직원 목록에만 — 학생 목록은 열 구성을 바꾸지 않는다. */}
+        {onWishersOpen && <span className="jb-row-wish">{wishBadge(job)}</span>}
       </Tag>
     )
   }
@@ -335,7 +341,7 @@ export default function JobBoard({
                 <h2 className="jb-section"><i className="fa-solid fa-list-ul" /> 일반채용 <em>{general.length}</em></h2>
               )}
               {split ? (
-                <section className="jb-list" aria-label="일반채용">
+                <section className={`jb-list${onWishersOpen ? ' jb-list--wish' : ''}`} aria-label="일반채용">
                   {/* 열 이름 — 행이 표 모양인데 머리글이 없으면 각 칸이 무슨 값인지 읽히지 않는다.
                       열 폭은 .jb-list 의 --jb-cols 하나로 머리글·행이 같이 쓴다. */}
                   <div className="jb-head">
@@ -346,6 +352,7 @@ export default function JobBoard({
                     <span>지역</span>
                     <span>연봉</span>
                     <span>마감기한</span>
+                    {onWishersOpen && <span>찜</span>}
                   </div>
                   {general.map((job, i) => row(job, i + 1))}
                 </section>
