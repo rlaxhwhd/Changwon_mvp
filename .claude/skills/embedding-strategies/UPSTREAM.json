@@ -1,0 +1,8 @@
+{
+    "repository":  "https://github.com/wshobson/agents",
+    "commit":  "c96b5f6552dba32e4492307493ee613581430715",
+    "path":  "plugins/llm-application-dev/skills/embedding-strategies",
+    "license":  "MIT",
+    "installedOn":  "2026-11-25",
+    "note":  "Upstream skill and supporting references are unmodified; this metadata and LICENSE.upstream were added for provenance."
+}

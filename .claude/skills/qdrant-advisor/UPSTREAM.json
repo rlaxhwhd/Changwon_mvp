@@ -1,0 +1,8 @@
+{
+    "repository":  "https://github.com/qdrant/skills",
+    "commit":  "78ea845ee6f649a7d2aebfec718a0a1b76eaaf04",
+    "path":  "meta/qdrant-advisor",
+    "license":  "Apache-2.0",
+    "installedOn":  "2026-11-25",
+    "note":  "Upstream skill and supporting references are unmodified; this metadata and LICENSE.upstream were added for provenance."
+}
