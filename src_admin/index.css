@@ -1315,6 +1315,10 @@ input, textarea, select { font-family: var(--font); }
 .admin-program-filter-submit { margin-left: auto; }
 .admin-program-list-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; font-size: 13px; color: var(--color-text-secondary); }
 .admin-program-list-bar strong { color: var(--color-danger); }
+/* 그룹 프로그램 등록 — 프로그램 등록과 구분되게 기본 초록보다 20% 연하게 */
+.admin-program-group-btn { background: color-mix(in srgb, var(--color-primary) 80%, #fff); }
+.admin-program-group-btn:hover { background: color-mix(in srgb, var(--color-primary-hover) 80%, #fff); }
+.admin-program-group-btn:active { background: color-mix(in srgb, var(--color-primary-pressed) 80%, #fff); }
 
 /* 체크박스형 필터 — .admin-select와 같은 줄에 정렬된다 */
 .admin-check { display: flex; align-items: center; gap: 7px; padding: 9px 0; cursor: pointer; }

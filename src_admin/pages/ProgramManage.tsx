@@ -116,14 +116,6 @@ export default function ProgramManage() {
           <h1 className="admin-page-title">프로그램 관리</h1>
           <p className="admin-page-desc">등록된 비교과 프로그램의 운영 현황을 확인합니다.</p>
         </div>
-        <div className="admin-head-actions">
-          <Link to="/programs/new" className="admin-btn admin-btn-primary">
-            <LuPlus /> 프로그램 등록
-          </Link>
-          <button type="button" className="admin-btn admin-btn-primary">
-            <LuPlus /> 그룹 프로그램 등록
-          </button>
-        </div>
       </header>
 
       <form className="admin-card admin-program-filter" onSubmit={search}>
@@ -185,9 +177,17 @@ export default function ProgramManage() {
       <section className="admin-card">
         <div className="admin-program-list-bar">
           <span>Total <strong>{visible.length}</strong> ea</span>
-          <button type="button" className="admin-btn admin-btn-primary sm" disabled={downloading || visible.length === 0} onClick={downloadStudents}>
-            <LuDownload /> {downloading ? '내려받는 중…' : '엑셀 다운로드(학생)'}
-          </button>
+          <div className="admin-head-actions">
+            <Link to="/programs/new" className="admin-btn admin-btn-primary sm">
+              <LuPlus /> 프로그램 등록
+            </Link>
+            <button type="button" className="admin-btn admin-btn-primary admin-program-group-btn sm">
+              <LuPlus /> 그룹 프로그램 등록
+            </button>
+            <button type="button" className="admin-btn admin-btn-primary sm" disabled={downloading || visible.length === 0} onClick={downloadStudents}>
+              <LuDownload /> {downloading ? '내려받는 중…' : '엑셀 다운로드(학생)'}
+            </button>
+          </div>
         </div>
         {downloadError && <p role="alert" className="admin-form-hint-warn">{downloadError}</p>}
         {visible.length === 0 && programs.length > 0 ? (
