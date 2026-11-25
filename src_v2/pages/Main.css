@@ -1209,7 +1209,7 @@
 
 .mn-page .hero-todo {
   border-color: transparent;
-  background: var(--deep-end);
+  background: #1890ff;   /* 브랜드 색 시험(2026-11-25) — 라운지 #1890ff 와 같이 본다. 채택 시 index.css 토큰으로 옮긴다 */
   color: #ffffff;
 }
 
