@@ -12,7 +12,6 @@ export default function JobsHub() {
     <div className="jh-wrap jobs-workspace">
       <div className="jh-hub">
         <button type="button" className="jh-hub-card jh-hub-card--cover" onClick={() => navigate('/jobs/home/cover')}>
-          <span className="jh-hub-icon"><i className="fa-solid fa-file-pen" /></span>
           <strong>AI 자소서</strong>
           <p>AI와 함께 자기소개서 초안을 만들고, 완성한 자소서를 컨설팅받습니다.</p>
           <ul>
@@ -23,7 +22,6 @@ export default function JobsHub() {
         </button>
 
         <button type="button" className="jh-hub-card jh-hub-card--interview" onClick={() => navigate('/jobs/home/interview')}>
-          <span className="jh-hub-icon"><i className="fa-solid fa-video" /></span>
           <strong>AI 인터뷰</strong>
           <p>내 자소서를 바탕으로 AI 면접관이 질문하고, 답변을 녹화해 평가합니다.</p>
           <ul>

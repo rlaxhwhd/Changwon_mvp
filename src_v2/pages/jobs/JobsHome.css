@@ -409,15 +409,6 @@
 .jh-hub-card ul { list-style: none; margin: 4px 0 8px; padding: 0; display: flex; flex-direction: column; gap: 6px; font-weight: 500; }
 .jh-hub-card li i { margin-right: 6px; }
 
-.jh-hub-icon {
-  display: grid;
-  place-items: center;
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  font-size: 24px;
-}
-
 .jh-hub-go {
   margin-top: auto;
   display: inline-flex;
@@ -429,13 +420,11 @@
 }
 
 .jh-hub-card--cover { border-color: var(--blue-border); }
-.jh-hub-card--cover .jh-hub-icon { background: var(--blue-soft); color: var(--color-primary); }
 .jh-hub-card--cover li i { color: var(--color-primary); }
 .jh-hub-card--cover .jh-hub-go { background: var(--color-primary); color: var(--card); }
 .jh-hub-card--cover:hover { background: var(--blue-soft); border-color: var(--color-primary); }
 
 .jh-hub-card--interview { border-color: var(--mint-border); }
-.jh-hub-card--interview .jh-hub-icon { background: var(--mint-soft); color: var(--mint-ink); }
 .jh-hub-card--interview li i { color: var(--mint-ink); }
 .jh-hub-card--interview .jh-hub-go { background: var(--mint-ink); color: var(--card); }
 .jh-hub-card--interview:hover { background: var(--mint-soft); border-color: var(--mint-ink); }
