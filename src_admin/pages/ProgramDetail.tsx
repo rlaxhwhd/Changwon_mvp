@@ -40,7 +40,7 @@ import ProgramRosterUpload from '../components/ProgramRosterUpload'
 import { downloadApiFile } from '../../shared/api'
 import { downloadXlsx } from '../../shared/xlsx'
 import { toRosterRows } from '../data/programExport'
-import { programRates } from '../data/programRates'
+import { applicantRates, programRates } from '../data/programRates'
 import type { ProgramApplicant } from '../data/schema/program'
 import { SURVEY_EXPORT_LABEL, downloadSurveyExport, type SurveyPhase } from '../../shared/surveyStore'
 
@@ -70,7 +70,7 @@ function outcomeChipClass(outcome: string | undefined): string {
 }
 
 /** 비율 한 개를 원형 그래프로 보이는 정사각형 카드. */
-function RateCard({ label, rate, detail, tone }: { label: string; rate: number; detail: string; tone: 'info' | 'success' }) {
+function RateCard({ label, rate, detail, tone }: { label: string; rate: number; detail: string; tone: 'info' | 'success' | 'danger' }) {
   return (
     <div className="admin-program-rate-card">
       <span className="admin-program-rate-label">{label}</span>
@@ -114,6 +114,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   const addRound = rounds.length === 1 ? 1 : roundFilter
   const listLabel = mode === 'applicants' ? '신청자' : '선발자'
   const rates = programRates(selectedList)
+  const applyRates = applicantRates(applicants)
   const hasFiles = currentList.some(a => a.applicationAnswers?.some(answer => answer.files?.length))
 
   const waitingCount = applicants.filter(a => selectionOf(a) === 'PENDING').length
@@ -205,12 +206,16 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
           <h2><LuClipboardCheck /> 신청 현황</h2>
         </div>
         <div className="admin-program-summary">
-          {mode === 'selected' && (
-            <div className="admin-program-rates">
+          {/* 두 탭 모두 원형 그래프 2개 + 인원 카드 4개 — 신청자 관리는 취소율·선발율, 선발자 관리는 참여율·이수율 */}
+          <div className="admin-program-rates">
+            {mode === 'selected' ? <>
               <RateCard label="참여율" rate={rates.participationRate} detail={`참여 ${rates.participants} / 선발 ${rates.selected}명`} tone="info" />
               <RateCard label="이수율" rate={rates.completionRate} detail={`수료 ${rates.completed} / 참여 ${rates.participants}명`} tone="success" />
-            </div>
-          )}
+            </> : <>
+              <RateCard label="취소율" rate={applyRates.cancelRate} detail={`취소 ${applyRates.cancelled} / 신청 ${applyRates.total}명`} tone="danger" />
+              <RateCard label="선발율" rate={applyRates.selectionRate} detail={`선발 ${applyRates.selected} / 신청 ${applyRates.total}명`} tone="success" />
+            </>}
+          </div>
           <div className="admin-program-summary-main">
             <div className="admin-stat-grid compact">
               <div className="admin-stat-card">
