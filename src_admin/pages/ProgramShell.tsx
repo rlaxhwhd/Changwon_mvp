@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { LuChartColumn, LuFrown, LuGraduationCap, LuList, LuPencil, LuSmile, LuUserCheck, LuUsers, LuUserX } from 'react-icons/lu'
 import { Link, NavLink, Outlet, useLocation, useNavigate, useParams } from 'react-router-dom'
-import { getProgramById, pendingApplicants, selectedApplicants } from '../data/programs'
+import { getProgramById, selectedApplicants } from '../data/programs'
 import type { Program } from '../data/schema/program'
 import { categoryLabel } from '../data/schema/program'
 import EmptyState from '../components/EmptyState'
@@ -66,7 +66,7 @@ export default function ProgramShell() {
   }
 
   // 탭 카운트는 각 탭이 실제로 보여주는 목록 길이와 같아야 한다 — 판정은 데이터층 한 곳.
-  const pendingCount = pendingApplicants(program).length
+  const pendingCount = program.applicants.length
   const selectedCount = selectedApplicants(program).length
   const tabClass = ({ isActive }: { isActive: boolean }) => `admin-tab${isActive ? ' active' : ''}`
 

@@ -13,6 +13,7 @@ import EmptyState from '../components/EmptyState'
 import StudentDetailModal from '../components/StudentDetailModal'
 import './TestAdminHome.css'
 import { categoryLabel } from '../data/schema/program'
+import { codeLabel } from '../../shared/metadataStore'
 
 // ─────────────────────────────────────────────────────────────────────────
 // 상담사 홈: 운영 수치·목록·브리핑은 counsel-dashboard API의 DB 조회 결과다.
@@ -149,16 +150,26 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                   shownPrograms.map(p => (
                     <Link key={p.id} to={`/programs/${p.id}`} className="prog">
                       <span className="id">
-                        <span className="code">{p.code}</span>
-                        <span className={`badge ${p.tint}`}>{categoryLabel(p.category)}</span>
+                        <span className="ttl">{p.title}</span>
                         <span className="today">오늘 <b>{p.todayCount}</b>명 신청</span>
                       </span>
-                      <span className="nm">{p.title}</span>
-                      <span className="row">
-                        <span className="lb">신청 / 모집{p.applyEnd ? ` · ${p.applyEnd} 마감` : ''}</span>
-                        <span className="n">{p.applied}<u> / {p.capacity}명</u></span>
+                      <span className="meta">
+                        <span className="mgr">{p.manager || '담당자 미지정'}</span>
+                        <span className={`badge ${p.tint}`}>{categoryLabel(p.category)}</span>
+                        {p.middleCategory && <span className="badge sub">{codeLabel('PROGRAM_MIDDLE_CATEGORY', p.middleCategory)}</span>}
+                        {p.applyEnd && <span className="end">{p.applyEnd} 마감</span>}
                       </span>
-                      <span className="bar"><i className={p.solid} style={bar(p.ratio)} /></span>
+                      {/* 신청 = 상태와 관계없는 전체 신청 / 신청인원 설정값, 선발 = 선발 / 선발인원 설정값 — 한 줄에 나란히 */}
+                      <span className="meters">
+                        <span className="meter">
+                          <span className="row"><span className="lb">신청</span><span className="n">{p.applied}<u> / {p.capacity}명</u></span></span>
+                          <span className="bar"><i className={p.solid} style={bar(p.ratio)} /></span>
+                        </span>
+                        <span className="meter">
+                          <span className="row"><span className="lb">선발</span><span className="n">{p.selected}<u> / {p.selectionCapacity ?? '-'}명</u></span></span>
+                          <span className="bar"><i className="b-green" style={bar(p.selectedRatio)} /></span>
+                        </span>
+                      </span>
                     </Link>
                   ))
                 )}

@@ -231,11 +231,6 @@ export function selectionOf(applicant: ProgramApplicant): SelectionStatus {
   return applicant.selectionStatus ?? 'PENDING'
 }
 
-/** '신청자 관리' 목록 — 선발된 학생은 선발자 관리로 넘어가므로 여기서 빠진다. */
-export function pendingApplicants(program: Program): ProgramApplicant[] {
-  return program.applicants.filter(a => selectionOf(a) !== 'SELECTED')
-}
-
 /** '선발자 관리' 목록 */
 export function selectedApplicants(program: Program): ProgramApplicant[] {
   return program.applicants.filter(a => selectionOf(a) === 'SELECTED')

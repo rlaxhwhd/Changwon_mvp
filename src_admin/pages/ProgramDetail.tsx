@@ -17,7 +17,6 @@ import {
   uploadApplicants,
   downloadApplicationFiles,
   selectionOf,
-  pendingApplicants,
   selectedApplicants,
   programRounds,
 } from '../data/programs'
@@ -110,8 +109,8 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
   const inRound = (a: ProgramApplicant) => roundFilter === 0 || (a.round ?? 1) === roundFilter
   const applicants = program.applicants
   const selectedList = selectedApplicants(program)
-  // 선발되면 선발자 관리로 넘어간다 — 신청자 관리에는 남지 않는다.
-  const currentList = (mode === 'applicants' ? pendingApplicants(program) : selectedList).filter(inRound)
+  // 신청자 관리는 상태(대기·선발·탈락·취소)와 관계없이 전체 신청을 보여 준다 — 선발돼도 남는다(2026-11-26, 운영 화면과 같다).
+  const currentList = (mode === 'applicants' ? applicants : selectedList).filter(inRound)
   const addRound = rounds.length === 1 ? 1 : roundFilter
   const listLabel = mode === 'applicants' ? '신청자' : '선발자'
   const rates = programRates(selectedList)
@@ -218,7 +217,7 @@ export default function ProgramDetail({ mode }: { mode: Mode }) {
                 <span className="admin-stat-icon"><LuUsers /></span>
                 <div className="admin-stat-body">
                   <span className="admin-stat-label">신청자</span>
-                  <span className="admin-stat-value">{program.applyCount}<em>명</em></span>
+                  <span className="admin-stat-value">{applicants.length}<em>명</em></span>
                 </div>
               </div>
               <div className="admin-stat-card">

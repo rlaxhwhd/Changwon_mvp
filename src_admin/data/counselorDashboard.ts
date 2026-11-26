@@ -22,7 +22,9 @@ export interface Dashboard {
   timeline: StoredCounselRequest[]
   intake: StoredCounselRequest[]
   /** 모집중 비교과 전체, 마감 임박 순(진로상담사만) */
-  programs: { id: string; title: string; category: string; capacity: number; applied: number; todayCount: number; applyEnd: string | null }[]
+  /** applied = 상태와 관계없는 전체 신청(취소 포함), selected = 선발. manager = 담당자 이름(여럿이면 쉼표) */
+  programs: { id: string; title: string; category: string; middleCategory: string | null; manager: string | null
+    capacity: number; selectionCapacity: number | null; applied: number; selected: number; todayCount: number; applyEnd: string | null }[]
   programCount: number
   roadmap: { total: number; pending: number } | null
   psychTests: { total: number; pending: number } | null
@@ -186,7 +188,8 @@ export function getIntake(data: Dashboard) {
 }
 
 export function getRecruitingPrograms(data: Dashboard) {
-  return data.programs.map((p, i) => ({ ...p, code: p.id.toUpperCase(), ratio: pct(p.applied, p.capacity),
+  return data.programs.map((p, i) => ({ ...p, ratio: pct(p.applied, p.capacity),
+    selectedRatio: p.selectionCapacity ? pct(p.selected, p.selectionCapacity) : 0,
     solid: ['b-teal', 'b-blue', 'b-purple'][i % 3], tint: ['s-teal', 's-blue', 's-purple'][i % 3] }))
 }
 

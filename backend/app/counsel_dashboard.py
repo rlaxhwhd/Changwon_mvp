@@ -85,11 +85,21 @@ def dashboard(request: Request, response: Response, user=Depends(principal, scop
     jobs = None
     if role == 'career':
         # 모집중 비교과 전체(2026-10-29) — 학생 「신청 가능」과 같은 술어, 마감 임박 순.
-        programs = conn.execute('''SELECT p.id,p.title,p.category_code AS category,p.capacity,p.apply_end AS "applyEnd",
-          COALESCE(c.applied,0) AS applied,
-          (SELECT count(*) FROM dc.program_apply a WHERE a.program_id=p.id AND a.cancelled_at IS NULL
-           AND a.selection_code<>'CANCELLED' AND (a.applied_at AT TIME ZONE 'Asia/Seoul')::date=%s) AS "todayCount"
-          FROM dc.program p LEFT JOIN dc.program_application_counts c ON c.program_id=p.id
+        # 신청 = 상태(대기·선발·탈락·취소)와 관계없이 신청·등록된 전체 행(2026-11-26 사용자 확정 — 운영 신청자관리 Total 과 같다).
+        # 선발 = 유효 신청 중 선발. 담당자는 지정 담당자 이름을 순서대로, 없으면 공고의 담당자 문자열.
+        # 세 집계는 program_apply_pkey(program_id,…) 한 번의 범위 스캔으로 낸다 — program_application_counts 뷰를
+        # 조인하면 전 프로그램의 신청을 매번 집계한다. selected 술어는 그 뷰의 selected 와 같다.
+        programs = conn.execute('''SELECT p.id,p.title,p.category_code AS category,
+          p.middle_category_code AS "middleCategory",p.capacity,p.selection_capacity AS "selectionCapacity",
+          p.apply_end AS "applyEnd",c.applied,c.selected,
+          COALESCE((SELECT string_agg(n.name,', ' ORDER BY m.position) FROM dc.program_manager m
+            JOIN dc.person n ON n.intg_uid=m.staff_uid WHERE m.program_id=p.id),p.manager) AS manager,
+          c."todayCount"
+          FROM dc.program p CROSS JOIN LATERAL (SELECT count(*) AS applied,
+            count(*) FILTER(WHERE a.cancelled_at IS NULL AND a.selection_code='SELECTED') AS selected,
+            count(*) FILTER(WHERE a.cancelled_at IS NULL AND a.selection_code<>'CANCELLED'
+              AND (a.applied_at AT TIME ZONE 'Asia/Seoul')::date=%s) AS "todayCount"
+            FROM dc.program_apply a WHERE a.program_id=p.id) c
           WHERE p.status_code='RECRUITING' AND (p.apply_end IS NULL OR
            (p.apply_end + COALESCE(p.apply_end_time,'23:59:59.999999'::time)) AT TIME ZONE 'Asia/Seoul' >= now())
           ORDER BY p.apply_end NULLS LAST,p.id LIMIT 50''', (day,)).fetchall()
