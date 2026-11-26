@@ -61,6 +61,11 @@
   padding: 18px; background: var(--jf-card-bg); border: 1px solid var(--jf-border); border-radius: var(--jf-r);
   /* 아래 PC/모바일 버튼(38px + 간격 10px)까지 한 화면에 들어오게 그만큼 뺀다. */
   max-height: calc(100vh - var(--gnb-height) - 40px - 48px); overflow-y: auto;
+  /* 스크롤바 자리를 늘 비워 둔다 — 템플릿이 칸 높이를 넘는 순간 스크롤바가 폭을 먹으면
+     축소 배율이 줄고 → 높이가 줄어 스크롤바가 사라지고 → 폭이 돌아오는 순환으로 미리보기가 떨렸다(2026-11-26). */
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: var(--jf-input-border) transparent;
 }
 /* 실제 폭(760·375)으로 그린 템플릿을 칸 폭에 맞게 줄인다 — 높이는 JS 가 줄어든 값으로 맞춘다. */
 .jge-stage { position: relative; overflow: hidden; }
