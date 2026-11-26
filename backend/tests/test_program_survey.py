@@ -148,7 +148,7 @@ def test_survey_disabled_program_and_unknown_phase(client):
 
 def cells(sheet_xml):
     import re
-    return [re.findall(r'<t xml:space="preserve">(.*?)</t>', row) for row in re.findall(r'<row>(.*?)</row>', sheet_xml)]
+    return [re.findall(r'<t xml:space="preserve">(.*?)</t>', row) for row in re.findall(r'<row[^>]*>(.*?)</row>', sheet_xml)]
 
 
 def test_export_pre_post_workbooks_follow_template_and_blank_unselected_areas(client):

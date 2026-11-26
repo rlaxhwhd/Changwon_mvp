@@ -6,7 +6,6 @@
 import hashlib
 import re
 from datetime import date, datetime, time
-from itertools import chain
 from tempfile import SpooledTemporaryFile
 from urllib.parse import quote
 from uuid import uuid4
@@ -349,6 +348,9 @@ EXPORT_HEADER = ['번호', '프로그램명', '차수', '운영기간', '이름'
                  '학년(현재기준)', '학적/구분(현재기준)', '휴대전화', 'EMAIL', '상태', '신청일', '성별', '첨부파일', '지원동기',
                  '모집경로', '개인정보동의여부', '개인정보제3자제공동의']
 CONSENT_LABEL = {'yes': '예', 'no': '아니오'}
+# 학생 1명 1줄 명단에서 신청과 무관한 칸 — 이름·학번·대학·학과·현재 학년·현재 학적·휴대전화·EMAIL·성별.
+DISTINCT_STUDENT_COLUMNS = {EXPORT_HEADER.index(h) for h in
+                            ('이름', '학번', '대학', '학과', '학년(현재기준)', '학적/구분(현재기준)', '휴대전화', 'EMAIL', '성별')}
 
 
 class StudentExportBody(BaseModel):
@@ -356,6 +358,8 @@ class StudentExportBody(BaseModel):
     programIds: list[str] = Field(min_length=1, max_length=100000)
     # 비어 있으면 취소까지 포함한 모든 학생이다.
     statuses: list[str] = Field(default_factory=list, max_length=len(STUDENT_STATES))
+    # 학생 1명 1줄(통계 「수료인원(순인원)」 명단). 신청마다 다른 칸은 한 칸에 줄바꿈으로 나란히 적는다.
+    distinct: bool = False
 
     @model_validator(mode='after')
     def known_statuses(self):
@@ -411,7 +415,7 @@ def export_students(body: StudentExportBody, user=Depends(principal, scope='func
     ids = list(dict.fromkeys(body.programIds))
     with conn.cursor(name='program_student_export') as cursor:
         # 운영기간은 신청한 차수의 것이다. 시각은 차수에 비어 있어도 1차 값으로 메우지 않는다.
-        cursor.execute(f'''SELECT g.title,a.round_no,a.snapshot,a.consents,a.motive,a.apply_path,a.applied_at,
+        cursor.execute(f'''SELECT a.student_uid,g.title,a.round_no,a.snapshot,a.consents,a.motive,a.apply_path,a.applied_at,
           a.cancelled_at,a.selection_code,a.outcome_code,a.absence_points,p.name,s.student_no,s.major_label,
           COALESCE(h.grade,s.grade) AS grade,COALESCE(h.status,s.detail->>'enrollmentStatus','재학') AS student_status,
           d.college_name,x.sex_code,
@@ -432,11 +436,22 @@ def export_students(body: StudentExportBody, user=Depends(principal, scope='func
             nonlocal total
             for total, row in enumerate(cursor, start=1):
                 yield export_row(total, row, labels)
+
+        def distinct_rows():
+            # 학생별로 모은다(처음 나온 순서). 학생 칸은 첫 신청 값, 신청 칸은 신청 순서대로 줄바꿈으로 잇는다.
+            nonlocal total
+            grouped = {}
+            for row in cursor:
+                grouped.setdefault(row['student_uid'], []).append(export_row(0, row, labels))
+            for total, applications in enumerate(grouped.values(), start=1):
+                first = applications[0]
+                yield [total, *(first[i] if i in DISTINCT_STUDENT_COLUMNS else
+                                '\n'.join(str(app[i]) for app in applications) for i in range(1, len(first)))]
         total = 0
-        output = workbook_sheets([(EXPORT_TITLE, [EXPORT_TITLE], chain([EXPORT_HEADER], rows()))])
+        output = workbook_sheets([(EXPORT_TITLE, EXPORT_HEADER, distinct_rows() if body.distinct else rows(), EXPORT_TITLE)])
     # 연락처가 든 명단이라 누가 언제 받았는지 남긴다. 학번·연락처는 넣지 않는다.
     audit(conn, user, 'program_student_export', 'students', None,
-          {'programCount': len(ids), 'statuses': body.statuses, 'rowCount': total}, '학생 명단 엑셀 다운로드')
+          {'programCount': len(ids), 'statuses': body.statuses, 'distinct': body.distinct, 'rowCount': total}, '학생 명단 엑셀 다운로드')
 
     def chunks():
         try:

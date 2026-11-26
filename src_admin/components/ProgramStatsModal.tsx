@@ -14,7 +14,9 @@ import './ProgramStatsModal.css'
 // 프로그램 관리 「통계확인」 — 집계는 data/programStats 가 하고 여기서는 그린다.
 // 체크를 해제한 프로그램은 전체 행·그래프·엑셀에서 빠진다(요청: 50개 중 2개를 빼면 48개로 다시 계산).
 
-const ROSTER_KINDS: RosterKind[] = ['participants', 'notCompleted', 'completed']
+const ROSTER_KINDS: RosterKind[] = ['participants', 'notCompleted', 'completed', 'uniqueCompleted']
+const rowCount = (row: ProgramStatRow, kind: RosterKind) =>
+  kind === 'uniqueCompleted' ? new Set(row.completedStudentIds).size : row[kind]
 const stamp = () => new Date().toISOString().slice(0, 10).replaceAll('-', '')
 const fileSafe = (name: string) => name.replace(/[\\/:*?"<>|]/g, '_')
 
@@ -73,7 +75,8 @@ export default function ProgramStatsModal({ programs, onClose }: { programs: Pro
 
   const roster = (kind: RosterKind, targets: ProgramStatRow[], name: string) => {
     setDownloading(`${kind}:${name}`); setDownloadError('')
-    downloadStudentRoster(targets.map(r => r.program.id), ROSTER_STATES[kind], `${fileSafe(name)}_${ROSTER_LABEL[kind]}_${stamp()}.xlsx`)
+    downloadStudentRoster(targets.map(r => r.program.id), ROSTER_STATES[kind], `${fileSafe(name)}_${ROSTER_LABEL[kind]}_${stamp()}.xlsx`,
+      kind === 'uniqueCompleted')
       .catch((error: unknown) => setDownloadError(error instanceof Error ? error.message : '명단을 내려받지 못했습니다.'))
       .finally(() => setDownloading(''))
   }
@@ -137,8 +140,7 @@ export default function ProgramStatsModal({ programs, onClose }: { programs: Pro
                     <tr key={row.program.id} className={off ? 'is-off' : undefined}>
                       <td className="pstats-check"><input type="checkbox" checked={!off} onChange={() => toggle(row.program.id)} aria-label={`${row.program.title} 반영`} /></td>
                       <td className="pstats-title"><strong>{row.program.title}</strong><small>{row.program.fiscalYear} · {programPeriod(row.program)}</small></td>
-                      {ROSTER_KINDS.map(kind => <Fragment key={kind}>{countCell(kind, row[kind], [row], row.program.title)}</Fragment>)}
-                      <td className="pstats-num">{new Set(row.completedStudentIds).size.toLocaleString()}</td>
+                      {ROSTER_KINDS.map(kind => <Fragment key={kind}>{countCell(kind, rowCount(row, kind), [row], row.program.title)}</Fragment>)}
                       {METRICS.map(m => <td key={m.key} className="pstats-num"><MetricValue value={row.metrics[m.key]} unit={m.unit} /></td>)}
                     </tr>
                   )
@@ -149,7 +151,6 @@ export default function ProgramStatsModal({ programs, onClose }: { programs: Pro
                   <td className="pstats-check" />
                   <td className="pstats-title"><strong>전체</strong><small>{totals.programs}개 프로그램 · 지표는 값이 있는 프로그램만 평균</small></td>
                   {ROSTER_KINDS.map(kind => <Fragment key={kind}>{countCell(kind, totals[kind], included, `비교과_${totals.programs}개`)}</Fragment>)}
-                  <td className="pstats-num" title="여러 프로그램을 수료한 학생은 한 번만 셉니다">{totals.uniqueCompleted.toLocaleString()}</td>
                   {METRICS.map(m => {
                     const average = totals.metrics[m.key]
                     return (

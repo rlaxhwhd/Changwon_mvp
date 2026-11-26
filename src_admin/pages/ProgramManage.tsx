@@ -1,4 +1,4 @@
-import { LuChartColumn, LuClipboardList, LuDownload, LuPin, LuPlus } from 'react-icons/lu'
+import { LuClipboardList, LuDownload, LuPin, LuPlus } from 'react-icons/lu'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
@@ -6,9 +6,6 @@ import EmptyState from '../components/EmptyState'
 import { getPrograms, sortByPriority, updateProgram, removeProgram } from '../data/programs'
 import AdminModal from '../components/AdminModal'
 import ProgramStatsModal from '../components/ProgramStatsModal'
-import { EXPORT_TARGETS, EXPORT_TARGET_LABEL, getApplicantExportRows, toApplicantRows } from '../data/programExport'
-import type { ExportTarget } from '../data/programExport'
-import { downloadXlsx } from '../../shared/xlsx'
 import type { Program } from '../data/schema/program'
 import { categoryLabel, programCategories, programMiddleCategories } from '../data/schema/program'
 import { codeLabel } from '../../shared/metadataStore'
@@ -33,7 +30,6 @@ export default function ProgramManage() {
   const navigate = useNavigate()
   const [programs, setPrograms] = useState<Program[]>(() => sortByPriority(getPrograms()))
   const [checked, setChecked] = useState<Set<string>>(new Set())
-  const [target, setTarget] = useState<ExportTarget>('applicants')
   const [deleting, setDeleting] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleteError, setDeleteError] = useState('')
@@ -60,9 +56,13 @@ export default function ProgramManage() {
     setDownloadError('')
   }
 
+  // 학생 명단 엑셀 하나로 받는다(2026-11-26 — 선택 시 뜨던 신청/선발 명단 다운로드를 합쳤다).
+  // 대상: 고른 프로그램이 있으면 그것만, 없으면 목록 전체. 학생: 학생상태에 체크한 값(없으면 취소까지 전부).
+  const selectedPrograms = visible.filter(p => checked.has(p.id))
   const downloadStudents = () => {
     setDownloading(true); setDownloadError('')
-    downloadStudentRoster(visible.map(p => p.id), filters.studentStates, `비교과_관리_학생_${today.replaceAll('-', '')}.xlsx`)
+    const targets = selectedPrograms.length ? selectedPrograms : visible
+    downloadStudentRoster(targets.map(p => p.id), draft.studentStates, `비교과_관리_학생_${today.replaceAll('-', '')}.xlsx`)
       .catch((error: unknown) => setDownloadError(error instanceof Error ? error.message : '엑셀 다운로드에 실패했습니다.'))
       .finally(() => setDownloading(false))
   }
@@ -101,15 +101,6 @@ export default function ProgramManage() {
     setDeleting(false)
     if (failures.length) setDeleteError(failures.join('\n'))
     else setDeleteOpen(false)
-  }
-
-  // 명단 조립은 데이터층(programExport)이 하고, 여기서는 파일로만 만든다.
-  const exportCount = getApplicantExportRows([...checked], target).length
-
-  const downloadExcel = () => {
-    const ids = [...checked]
-    if (ids.length === 0) return
-    downloadXlsx(`비교과_${EXPORT_TARGET_LABEL[target]}_${today.replaceAll('-', '')}.xlsx`, toApplicantRows(ids, target))
   }
 
   return (
@@ -179,7 +170,7 @@ export default function ProgramManage() {
 
       <section className="admin-card">
         <div className="admin-program-list-bar">
-          <span>Total <strong>{visible.length}</strong> ea</span>
+          <span>Total <strong>{visible.length}</strong> ea{selectedPrograms.length > 0 && <> · <strong>{selectedPrograms.length}</strong>개 선택</>}</span>
           <div className="admin-head-actions">
             <Link to="/programs/new" className="admin-btn admin-btn-primary sm">
               <LuPlus /> 프로그램 등록
@@ -187,9 +178,14 @@ export default function ProgramManage() {
             <button type="button" className="admin-btn admin-btn-primary admin-program-group-btn sm">
               <LuPlus /> 그룹 프로그램 등록
             </button>
-            <button type="button" className="admin-btn admin-btn-primary sm" disabled={downloading || visible.length === 0} onClick={downloadStudents}>
+            <button type="button" className="admin-btn admin-btn-primary sm" disabled={downloading || visible.length === 0} onClick={downloadStudents}
+              title="선택한 프로그램(없으면 목록 전체)의 학생 명단 — 학생상태에 체크한 학생만">
               <LuDownload /> {downloading ? '내려받는 중…' : '엑셀 다운로드(학생)'}
             </button>
+            <button type="button" className="admin-btn admin-btn-danger sm" disabled={selectedPrograms.length === 0}
+              onClick={() => { setDeleteError(''); setDeleteOpen(true) }}>선택 삭제</button>
+            <button type="button" className="admin-btn admin-btn-ghost sm" disabled={selectedPrograms.length === 0}
+              onClick={() => setStatsPrograms(selectedPrograms)}>통계확인</button>
           </div>
         </div>
         {downloadError && <p role="alert" className="admin-form-hint-warn">{downloadError}</p>}
@@ -204,36 +200,6 @@ export default function ProgramManage() {
           />
         ) : (
           <>
-            {checked.size > 0 && (
-              <div className="admin-bulkbar">
-                <span className="admin-bulkbar-count">
-                  <strong>{checked.size}</strong>개 프로그램 선택됨 · 명단 <strong>{exportCount}</strong>명
-                </span>
-                <select
-                  className="admin-bulk-select"
-                  value={target}
-                  onChange={e => setTarget(e.target.value as ExportTarget)}
-                  aria-label="내려받을 명단"
-                >
-                  {EXPORT_TARGETS.map(t => (
-                    <option key={t} value={t}>{EXPORT_TARGET_LABEL[t]}</option>
-                  ))}
-                </select>
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-primary sm"
-                  onClick={downloadExcel}
-                  disabled={exportCount === 0}
-                >
-                  <LuDownload /> 엑셀 다운로드
-                </button>
-                <button type="button" className="admin-btn admin-btn-danger sm" onClick={() => { setDeleteError(''); setDeleteOpen(true) }}>선택 삭제</button>
-                <button type="button" className="admin-btn sm" onClick={() => setStatsPrograms(visible.filter(p => checked.has(p.id)))}>
-                  <LuChartColumn /> 통계확인
-                </button>
-              </div>
-            )}
-
           <div className="admin-roster admin-program-manage-roster">
             <div className="admin-roster-head">
               <span className="admin-check-cell">

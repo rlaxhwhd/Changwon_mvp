@@ -49,15 +49,17 @@ export interface ProgramStatRow {
   metrics: Record<MetricKey, number | null>
 }
 
-/** 인원 숫자를 누르면 받는 명단 — 서버 명단 엑셀(POST /programs/export)의 학생상태로 고른다. */
-export type RosterKind = 'participants' | 'notCompleted' | 'completed'
+/** 인원 숫자를 누르면 받는 명단 — 서버 명단 엑셀(POST /programs/export)의 학생상태로 고른다.
+ *  순인원은 같은 수료 명단을 학생 1명 1줄로 받는다(distinct). */
+export type RosterKind = 'participants' | 'notCompleted' | 'completed' | 'uniqueCompleted'
 export const ROSTER_STATES: Record<RosterKind, StudentState[]> = {
   participants: ['COMPLETED', 'NOT_COMPLETED', 'ATTENDED'],
   notCompleted: ['NOT_COMPLETED', 'ATTENDED'],
   completed: ['COMPLETED'],
+  uniqueCompleted: ['COMPLETED'],
 }
 export const ROSTER_LABEL: Record<RosterKind, string> = {
-  participants: '참가인원', notCompleted: '미수료인원', completed: '수료인원',
+  participants: '참가인원', notCompleted: '미수료인원', completed: '수료인원(중복인원)', uniqueCompleted: '수료인원(순인원)',
 }
 
 /** 서버 한도(1000건)씩 나눠 묻는다. 결과는 프로그램 id → 요약. */
@@ -166,7 +168,6 @@ export function statsSheetRows(rows: ProgramStatRow[]): string[][] {
   const shares = (title: string, list: Share[]) => [[], [`${title} — 수료인원(중복인원) ${breakdown.total}명 기준`], ['구분', '인원', '비율(%)'],
     ...list.map(s => [s.label, String(s.count), String(s.percent)])]
   return [header, ...body, total,
-    ['※ 지표의 전체값은 그 지표가 있는 프로그램만의 평균입니다. 만족도는 100점 환산(5점 평균 × 20)입니다.'],
     ...shares('학년별 비율', breakdown.grade), ...shares('단과대학별 비율', breakdown.college)]
 }
 

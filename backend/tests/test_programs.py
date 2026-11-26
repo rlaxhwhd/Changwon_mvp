@@ -108,7 +108,38 @@ def test_student_export_needs_the_manage_menu_and_is_audited(client):
         events = conn.execute("""SELECT after_value FROM dc.admin_event WHERE entity='program_student_export'
           ORDER BY changed_at DESC""").fetchall()
     assert len(events) == list(before.values())[0] + 1
-    assert events[0]['after_value'] == {'programCount': 1, 'statuses': [], 'rowCount': 1}
+    assert events[0]['after_value'] == {'programCount': 1, 'statuses': [], 'distinct': False, 'rowCount': 1}
+
+
+def test_distinct_completed_roster_is_one_row_per_student_and_sheets_fit_their_values(client):
+    from io import BytesIO
+    from zipfile import ZipFile
+    first, second = new_program(client, capacity=5), new_program(client, capacity=5)
+    head = headers('career_kim')
+    for program, students in ((first, ('chaewon', 'changwon')), (second, ('chaewon',))):
+        base = f"/api/v1/programs/{program['id']}/applications"
+        for student in students:
+            assert apply_as(client, student, program['id']).status_code == 201
+        assert client.post(base + '/selection', headers=head, json={'studentIds': list(students), 'selection': 'SELECTED'}).status_code == 200
+        assert client.post(base + '/outcome', headers=head, json={'studentIds': list(students), 'outcome': 'COMPLETED', 'absencePoints': 0}).status_code == 200
+    body = {'programIds': [first['id'], second['id']], 'statuses': ['COMPLETED']}
+    plain = read_workbook(client.post('/api/v1/programs/export', headers=head, json=body).content)[0]
+    assert len(plain) == 2 + 3  # 수료인원(중복) 3줄
+    response = client.post('/api/v1/programs/export', headers=head, json={**body, 'distinct': True})
+    assert response.status_code == 200, response.text
+    rows = read_workbook(response.content)[0]
+    assert rows[0] == [EXPORT_TITLE] and rows[1] == EXPORT_HEADER and len(rows) == 2 + 2  # 순인원 2명
+    column = {name: i for i, name in enumerate(EXPORT_HEADER)}
+    both = next(row for row in rows[2:] if '\n' in row[column['프로그램명']])
+    assert both[column['프로그램명']] == f"{first['title']}\n{second['title']}"
+    assert both[column['상태']] == '수료\n수료' and '\n' not in both[column['학번']]
+    assert sorted(row[column['번호']] for row in rows[2:]) == ['1', '2']
+    # 모든 엑셀: 머리글 서식(회색·굵게)·열 너비·줄 높이가 값에 맞춰 들어간다.
+    with ZipFile(BytesIO(response.content)) as book:
+        assert 'FFD9D9D9' in book.read('xl/styles.xml').decode()
+        sheet = book.read('xl/worksheets/sheet1.xml').decode()
+    assert '<cols>' in sheet and 'customWidth="1"' in sheet
+    assert '<row r="2" ht="' in sheet and '<c s="2" t="inlineStr"><is><t xml:space="preserve">번호' in sheet
 
 
 def test_program_lists_carry_no_contact_fields(client):

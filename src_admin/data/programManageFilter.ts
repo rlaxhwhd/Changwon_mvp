@@ -90,10 +90,11 @@ export function filterPrograms(programs: Program[], filters: ProgramManageFilter
     && (!filters.studentStates.length || program.applicants.some(a => filters.studentStates.some(s => matchesStudentState(a, s)))))
 }
 
-/** 목록에 남은 프로그램의 학생 명단을 받는다. 학생상태를 안 고르면 취소까지 모든 학생이다. */
-export async function downloadStudentRoster(programIds: string[], statuses: StudentState[], filename: string): Promise<void> {
+/** 프로그램들의 학생 명단을 받는다. 학생상태를 안 고르면 취소까지 모든 학생이다.
+ *  distinct 면 학생 1명 1줄(여러 신청은 한 칸에 줄바꿈) — 통계의 「수료인원(순인원)」 명단. */
+export async function downloadStudentRoster(programIds: string[], statuses: StudentState[], filename: string, distinct = false): Promise<void> {
   const response = await fetch('/api/v1/programs/export', {
-    method: 'POST', body: JSON.stringify({ programIds, statuses }),
+    method: 'POST', body: JSON.stringify({ programIds, statuses, distinct }),
     headers: { 'Content-Type': 'application/json', 'X-DC-Portal': 'admin', 'X-DC-Identity': localStorage.getItem('dc_active_staff') ?? '' },
   })
   if (!response.ok) {
