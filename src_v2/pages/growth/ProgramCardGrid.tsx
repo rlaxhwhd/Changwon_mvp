@@ -56,6 +56,12 @@ export default function ProgramCardGrid({ programs, onSelect, wished, onToggleWi
                 </div>
               </div>
             </button>
+            {/* 상단 고정 공고 표시 — 찜 하트가 있던 우측 상단 자리. 하트는 같은 세로 열의 우측 하단으로 내려간다. */}
+            {program.pinned && (
+              <span className="pcg-pin" title="상단 고정" aria-label="상단 고정">
+                <i className="fa-solid fa-thumbtack" aria-hidden="true" />
+              </span>
+            )}
             {onToggleWish && (
               <button
                 type="button"

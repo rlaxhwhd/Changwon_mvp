@@ -98,9 +98,26 @@
    한 카드 안에서는 한 색이다 — 줄마다 색을 가르면 13px 아이콘 3개가 서로 다투기만 한다. */
 .pcg-meta i { width: 15px; color: var(--pcg-cat-ink, var(--color-primary)); }
 
-.pcg-wish {
+/* 상단 고정 핀 — 배지 줄 오른쪽. 아래 찜 하트와 같은 34px 열에 두어 세로로 줄이 맞는다. */
+.pcg-pin {
   position: absolute;
   top: 176px;
+  right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  /* admin :root 에는 --color-text-muted 가 없어 admin 의 3단 텍스트색 --text-cap 으로 폴백한다. */
+  color: var(--color-text-muted, var(--text-cap));
+  font-size: 18px;
+  pointer-events: none;
+}
+
+/* 찜 하트 — 카드 우측 하단. 위의 고정 핀과 같은 세로 열이다. */
+.pcg-wish {
+  position: absolute;
+  bottom: 14px;
   right: 14px;
   display: flex;
   align-items: center;
