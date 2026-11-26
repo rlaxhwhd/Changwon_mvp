@@ -22,7 +22,7 @@ export interface Dashboard {
   timeline: StoredCounselRequest[]
   intake: StoredCounselRequest[]
   /** 모집중 비교과 전체, 마감 임박 순(진로상담사만) */
-  /** applied = 상태와 관계없는 전체 신청(취소 포함), selected = 선발. manager = 담당자 이름(여럿이면 쉼표) */
+  /** applied = 취소를 뺀 유효 신청(선발 포함), selected = 선발. manager = 담당자 이름(여럿이면 쉼표) */
   programs: { id: string; title: string; category: string; middleCategory: string | null; manager: string | null
     capacity: number; selectionCapacity: number | null; applied: number; selected: number; todayCount: number; applyEnd: string | null }[]
   programCount: number

@@ -159,7 +159,7 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
                         {p.middleCategory && <span className="badge sub">{codeLabel('PROGRAM_MIDDLE_CATEGORY', p.middleCategory)}</span>}
                         {p.applyEnd && <span className="end">{p.applyEnd} 마감</span>}
                       </span>
-                      {/* 신청 = 상태와 관계없는 전체 신청 / 신청인원 설정값, 선발 = 선발 / 선발인원 설정값 — 한 줄에 나란히 */}
+                      {/* 신청 = 유효 신청(취소 제외) / 신청인원 설정값, 선발 = 선발 / 선발인원 설정값 — 한 줄에 나란히 */}
                       <span className="meters">
                         <span className="meter">
                           <span className="row"><span className="lb">신청</span><span className="n">{p.applied}<u> / {p.capacity}명</u></span></span>

@@ -58,8 +58,7 @@ def test_all_surfaces_share_counts_without_exposing_other_students(client):
     cancelled = client.post(f"/api/v1/programs/{p['id']}/applications/selection", headers=headers('career_kim'),
                             json={'studentIds': ['chaewon'], 'selection': 'CANCELLED'})
     assert cancelled.status_code == 200
-    # 교직원 홈의 「신청」은 취소까지 포함한 전체 신청 행이다(2026-11-26 사용자 확정). 상세·통계는 유효 신청 기준 그대로.
-    assert counts() == (0, 1, 0)
+    assert counts() == (0, 0, 0)
 
 
 def test_first_come_auto_selects_with_pre_survey_and_idempotent_replay(client):
