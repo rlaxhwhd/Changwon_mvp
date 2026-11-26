@@ -16,10 +16,12 @@ router = APIRouter()
 
 @router.get('/departments')
 def departments(user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    rows = conn.execute('''SELECT college_code,dept_code,college_name,dept_name,course
+    # 학사 학과 투영 전체(비활성 포함 — 옛 배정·학생 라벨 조회용). 드롭다운은 active 만 고른다.
+    rows = conn.execute('''SELECT college_code,dept_code,college_name,dept_name,course,univ_code,is_active
       FROM dc.department ORDER BY college_code,dept_code''').fetchall()
     return [dict(collegeCode=r['college_code'], deptCode=r['dept_code'], collegeName=r['college_name'],
-                 deptName=r['dept_name'], course=r['course']) for r in rows]
+                 deptName=r['dept_name'], course=r['course'], univCode=r['univ_code'], active=r['is_active'])
+            for r in rows]
 
 
 def public_professors(conn):

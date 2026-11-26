@@ -22,19 +22,21 @@ def owner():
 @pytest.fixture
 def number():
     with owner() as conn:
-        for code, name, parent in [('5', '공과대학', '0000'), ('414', '컴퓨터공학과', '5')]:
-            conn.execute('''INSERT INTO academic.v_dep_inf_all(dept_cd,dept_nm,dept_up_cd,use_yn)
-              SELECT %s,%s,%s,'Y' WHERE NOT EXISTS(SELECT 1 FROM academic.v_dep_inf_all WHERE dept_cd=%s)''',
-                         (code, name, parent, code))
+        # 테스트 DB 의 학사 원본 대역(전산원 사본). 학과 (5,414) 는 시드에 있다.
+        conn.execute('''INSERT INTO academic.dc_v_col_inf(col_code,col_name,col_short_name,use_flag)
+          SELECT '5','공과대학','공대','1' WHERE NOT EXISTS(SELECT 1 FROM academic.dc_v_col_inf WHERE col_code='5')''')
+        conn.execute('''INSERT INTO academic.dc_v_dept_inf(dept_code,col_code,dept_name,class3,day_flag,degree_code,gubun_code,use_flag,univ_code)
+          SELECT '414','5','컴퓨터공학과','1','1','1','0','1','00'
+          WHERE NOT EXISTS(SELECT 1 FROM academic.dc_v_dept_inf WHERE dept_code='414')''')
     return str(90000000 + int(uuid4().hex[:8], 16) % 9999999)
 
 
 def register(number, apply=True, **overrides):
     assert settings.db_name.endswith('_test')
     values = dict(student_no=number, student_name='등록 테스트', college_name='공과대학',
-                  dept_name='컴퓨터공학과', service_college='C07', service_dept='C07-07',
+                  dept_name='컴퓨터공학과', service_college='5', service_dept='414',
                   academic_college='5', academic_dept='414', grade='3', gpa='3.5',
-                  sex_code='0001', apply='true' if apply else 'false')
+                  sex_code='0', apply='true' if apply else 'false')
     values.update(overrides)
     args = ['docker', 'exec', '-i', 'dreamcatch-dev-db', 'psql', '-X', '-U', 'postgres', '-d', settings.db_name]
     for key, value in values.items():
@@ -82,7 +84,7 @@ def test_register_reapply_preserves_existing_history(number):
     assert register(number).returncode == 0
     with owner() as conn:
         assert conn.execute('SELECT count(*) FROM dc.person WHERE intg_uid=%s', (number,)).fetchone()[0] == 1
-        assert conn.execute('SELECT count(*) FROM academic.v_usr_inf WHERE intg_uid=%s', (number,)).fetchone()[0] == 1
+        assert conn.execute('SELECT count(*) FROM academic.local_usr_inf WHERE intg_uid=%s', (number,)).fetchone()[0] == 1
         assert conn.execute('SELECT count(*) FROM dc.diagnosis_attempt WHERE student_uid=%s', (number,)).fetchone()[0] == 1
 
 
@@ -96,4 +98,4 @@ def test_register_collision_and_invalid_organization_rollback(number):
     with owner() as conn:
         assert conn.execute('SELECT name FROM dc.person WHERE intg_uid=%s', (number,)).fetchone()[0] == 'Unrelated fixture'
         assert not conn.execute('SELECT 1 FROM dc.student WHERE intg_uid=%s', (number,)).fetchone()
-        assert not conn.execute('SELECT 1 FROM academic.v_usr_inf WHERE intg_uid=%s', (number,)).fetchone()
+        assert not conn.execute('SELECT 1 FROM academic.local_usr_inf WHERE intg_uid=%s', (number,)).fetchone()

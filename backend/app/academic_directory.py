@@ -10,8 +10,9 @@ router = APIRouter()
 Dataset = Literal['people', 'organizations', 'counselors', 'assistant-assignments', 'joint-appointments']
 # Identifiers are code constants, never supplied by the requester.
 DATASETS = {
-    'people': ('dc.academic_people', "concat_ws(' ',intg_uid,name,orgid,orgz_nm,daehak_cd,hakbu_cd,major_cd)", 'intg_uid'),
-    'organizations': ('dc.academic_organizations', "concat_ws(' ',dept_cd,dept_nm,dept_up_cd,univ_code)", 'dept_cd'),
+    # 전산원 뷰에서는 intg_uid·dept_cd 가 단독으로 유일하지 않다(교직원 중복 행, 학과·전공 코드 겹침) — 정렬 키를 넓혀 페이지를 고정한다.
+    'people': ('dc.academic_people', "concat_ws(' ',intg_uid,emp_no,name,orgid,orgz_nm,daehak_cd,hakbu_cd,major_cd)", 'intg_uid,emp_no,user_ty_cd'),
+    'organizations': ('dc.academic_organizations', "concat_ws(' ',dept_cd,dept_nm,dept_up_cd,univ_code)", 'lvl,dept_cd'),
     'counselors': ('dc.academic_counselors', "concat_ws(' ',conid,name,con_comp_nm)", 'conid'),
     'assistant-assignments': ('dc.academic_assistant_assignments', "concat_ws(' ',usr_id,usr_nm,dept_cd,major_cd)", 'usr_id,dept_cd,major_cd'),
     'joint-appointments': ('dc.academic_joint_appointments', 'row_to_json(v)::text', 'row_to_json(v)::text'),

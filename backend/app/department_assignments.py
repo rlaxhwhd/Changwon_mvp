@@ -17,7 +17,7 @@ CANDIDATES = '''SELECT * FROM dc.department_staff_candidates
  s.profile->>'mobile',s.profile->>'phone',s.profile->>'dept',true
  FROM dc.staff s JOIN dc.person p USING(intg_uid)
  WHERE s.role_code IN ('assistant','professor') AND NOT EXISTS (
- SELECT 1 FROM dc.department_staff_candidates c WHERE c.staff_uid=s.intg_uid)'''
+ SELECT 1 FROM dc.department_staff_candidates c WHERE c.staff_uid=s.intg_uid AND c.role_code=s.role_code)'''
 
 TARGETS = '''SELECT * FROM dc.department_assignment_targets
  UNION SELECT * FROM dc.department_assignment_whole_targets
@@ -32,7 +32,8 @@ ACTIVE_PROFESSOR_ORGS = f'''SELECT DISTINCT a.staff_uid,d.college_name,d.dept_na
  UNION SELECT DISTINCT a.staff_uid,t.college_name,t.dept_name
  FROM dc.department_staff_assignment a JOIN ({TARGETS}) t USING(college_code,dept_code,major_code)
  WHERE a.role_code='professor' AND a.is_active AND a.legacy_id IS NULL
- AND NOT EXISTS(SELECT 1 FROM dc.department_staff_candidates c WHERE c.staff_uid=a.staff_uid AND NOT c.is_active)'''
+ AND NOT EXISTS(SELECT 1 FROM dc.department_staff_candidates c WHERE c.staff_uid=a.staff_uid
+   AND c.role_code=a.role_code AND NOT c.is_active)'''
 
 
 def pattern(q):
@@ -69,7 +70,7 @@ def listing(role: Role, q: str = Query('', max_length=100), college: str = Query
         assignments = conn.execute(f'''SELECT a.*,COALESCE(c.name,a.snapshot->>'name',a.staff_uid) AS name,
           COALESCE(c.employee_no,a.snapshot->>'employee_no',a.staff_uid) AS employee_no,
           COALESCE(c.mobile,a.snapshot->>'mobile') AS mobile,COALESCE(c.phone,a.snapshot->>'phone') AS phone
-          FROM dc.department_staff_assignment a LEFT JOIN ({CANDIDATES}) c ON c.staff_uid=a.staff_uid
+          FROM dc.department_staff_assignment a LEFT JOIN ({CANDIDATES}) c ON c.staff_uid=a.staff_uid AND c.role_code=a.role_code
           LEFT JOIN dc.org_assignment legacy ON legacy.id=a.legacy_id
           WHERE a.role_code=%s AND a.is_active AND a.dept_code=ANY(%s)
           AND (a.legacy_id IS NULL OR (legacy.is_active AND legacy.valid_from<=CURRENT_DATE

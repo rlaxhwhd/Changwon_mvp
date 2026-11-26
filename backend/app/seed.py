@@ -65,7 +65,8 @@ def seed(root: Path) -> dict:
         departments = read('src_admin/data/departments.seed.json')
         for d in departments:
             insert(conn, 'department', dict(college_code=d['collegeCode'], dept_code=d['deptCode'],
-                   college_name=d['collegeName'], dept_name=d['deptName'], course=d['course']))
+                   college_name=d['collegeName'], dept_name=d['deptName'], course=d['course'],
+                   univ_code=d.get('univCode'), is_active=d.get('active', True)))
         # 학생 fixture 는 상세 프로필 3명뿐이다. 로스터 더미(studentsRoster.json·counselSeedStudents.json)는
         # 2026-09-11 퇴역했다(062) — 실제 학생은 학사 미러(academic.*)에서 들어온다. 더미를 다시 만들지 않는다.
         details = [read(f'src_v2/data/students/{name}.json') for name in ('chaewon', 'changwon', 'jiwoo')]
@@ -131,7 +132,14 @@ def seed(root: Path) -> dict:
         for derived in ('034_diagnosis_factor_backfill.sql','038_counsel_fixture_backfill.sql',
                         '043_student_department_backfill.sql','046_advisor_assignment_backfill.sql','048_main_popup_seed.sql','050_prof_counsel_record_backfill.sql','051_professor_organization.sql',
                         '103_survey_form_backfill.sql'):
-            conn.execute((Path(__file__).resolve().parents[1] / 'migrations' / derived).read_text(encoding='utf-8'))
+            body = (Path(__file__).resolve().parents[1] / 'migrations' / derived).read_text(encoding='utf-8')
+            if derived == '046_advisor_assignment_backfill.sql':
+                # 적용된 046 은 고칠 수 없다. 조교 fixture 의 자체 C-코드 학과를 176 과 같은 학사 코드로 바꿔 실행한다.
+                for old, new in (("'C07:C07-07'", "'5:414'"), ("'C05:C05-03'", "'8:205'")):
+                    if old not in body:
+                        raise RuntimeError(f'046 seed rewrite target missing: {old}')
+                    body = body.replace(old, new)
+            conn.execute(body)
         from .seed_operations import seed_notices
         seed_notices(conn)
         # Retired demo data stays available only to isolated regression fixtures.

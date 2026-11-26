@@ -1,1 +1,7 @@
 deploy/frontend/*.sh text eol=lf
+# dc.seed_source 원장은 파일 바이트의 sha256 이다(176). 작업본 줄바꿈이 바뀌면 app.seed 가 멈춘다.
+backend/seeds/admin/departments.seed.json text eol=lf
+backend/seeds/admin/deptAssigns.seed.json text eol=lf
+backend/seeds/v2/academic/curriculum.json text eol=lf
+backend/seeds/v2/academic/subjects.json text eol=lf
+backend/seeds/v2/academic/studentAcademic.json text eol=lf

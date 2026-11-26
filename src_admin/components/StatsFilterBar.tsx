@@ -24,15 +24,19 @@ function DotDateInput({ label, value, min, max, onChange }: { label: string; val
 export default function StatsFilterBar({ filters, onChange, onReset }: {
   filters: StatsFilters; onChange: (patch: Partial<StatsFilters>) => void; onReset: () => void
 }) {
+  // 선택지는 사용 중인 학사 학과만 낸다(비활성은 라벨 조회용). 같은 이름이 여럿이면 과정을 붙여 구별한다.
   const colleges = useMemo(() => {
     const seen = new Map<string, string>()
-    for (const d of departments) seen.set(d.collegeCode, d.collegeName)
+    for (const d of departments) if (d.active) seen.set(d.collegeCode, d.collegeName)
     return [...seen.entries()].sort(([a], [b]) => a.localeCompare(b))
   }, [])
   const depts = useMemo(() => {
-    const seen = new Map<string, string>()
-    for (const d of departments) if (!filters.college || d.collegeCode === filters.college) seen.set(d.deptCode, d.deptName)
-    return [...seen.entries()].sort(([, a], [, b]) => a.localeCompare(b, 'ko'))
+    const scoped = departments.filter(d => d.active && (!filters.college || d.collegeCode === filters.college))
+    const names = new Map<string, number>()
+    for (const d of scoped) names.set(d.deptName, (names.get(d.deptName) ?? 0) + 1)
+    return scoped
+      .map(d => [d.deptCode, (names.get(d.deptName) ?? 0) > 1 && d.course ? `${d.deptName} (${d.course})` : d.deptName] as [string, string])
+      .sort(([, a], [, b]) => a.localeCompare(b, 'ko'))
   }, [filters.college])
 
   return (

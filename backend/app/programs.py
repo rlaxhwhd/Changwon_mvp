@@ -390,7 +390,8 @@ def export_row(number, row, labels):
             snapshot.get('grade') or row['grade'] or '', snapshot.get('studentStatus') or row['student_status'],
             row['grade'] or '', row['student_status'], row['mobile'] or '', row['email'] or '',
             export_state(row, labels), row['applied_at'].astimezone(SEOUL).strftime('%Y.%m.%d %H:%M'),
-            {'0001': '남', '0002': '여'}.get(row['sex_code'], ''),
+            # 학사 성별 원값: '0' 남 · 그 외 여 · 없음은 빈칸.
+            ('남' if row['sex_code'] == '0' else '여') if row['sex_code'] else '',
             'Y' if any(answer.get('files') for answer in answers) else 'N',
             row['motive'] or '', row['apply_path'] or '',
             CONSENT_LABEL.get(consents.get('agreeCollect'), ''), CONSENT_LABEL.get(consents.get('agree3rd'), '')]

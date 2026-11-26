@@ -15,7 +15,8 @@ def seed(conn):
     existing = conn.execute('SELECT name,kind,source FROM dc.person WHERE intg_uid=%s', (UID,)).fetchone()
     if existing and dict(existing) != dict(name='김태정',kind='STUDENT',source='local'):
         raise RuntimeError('An unrelated service identity already exists; refusing to overwrite')
-    dept = conn.execute("SELECT * FROM dc.department WHERE college_code='C05' AND dept_code='C05-03' AND dept_name='경영학과'").fetchone()
+    # 학사 학과 코드(0021): 경영대학(8) 경영학과(205).
+    dept = conn.execute("SELECT * FROM dc.department WHERE college_code='8' AND dept_code='205' AND dept_name='경영학과'").fetchone()
     if not dept:
         raise RuntimeError('Business administration department mapping is missing')
     conn.execute('''INSERT INTO dc.student_login_override

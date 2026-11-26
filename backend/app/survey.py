@@ -343,7 +343,7 @@ def submit_survey(program_id: str, phase: str, body: SubmitBody, user=Depends(pr
       ORDER BY decided_at DESC,id DESC LIMIT 1''', (student['intg_uid'],)).fetchone()
     # 제출 시점 학적을 복사한다(CLAUDE.md 규칙 2) — 학년이 올라가도 그때의 응답으로 남는다.
     organization = conn.execute('''SELECT d.college_name,
-      CASE x.sex_code WHEN '0001' THEN '남자' WHEN '0002' THEN '여자' END AS sex
+      CASE WHEN x.sex_code='0' THEN '남자' WHEN NULLIF(x.sex_code,'') IS NOT NULL THEN '여자' END AS sex
       FROM (SELECT 1) one
       LEFT JOIN dc.department d ON d.college_code=%s AND d.dept_code=%s
       LEFT JOIN dc.academic_student_details x ON x.intg_uid=%s''',

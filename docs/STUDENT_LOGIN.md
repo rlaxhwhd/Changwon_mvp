@@ -1,5 +1,21 @@
 # SSO 도입 전 학생 로그인
 
+## 전산원 DC_V_* 전환 (2026-11-25, migration 176 · handoff 0021) — 현재 규칙
+
+이 절이 아래 2026-09-11 기록을 대체한다(옛 기록은 이력으로 남긴다).
+
+- 원본: `academic.usr_inf` = 전산원 사본 `academic.dc_v_usr_inf`(INTRANET.DC_V_USR_INF) ∪ 로컬 인원 `academic.local_usr_inf`. 같은 INTG_UID 는 원본이 우선이지만, 충돌 자체는 동기화가 공개 전에 막는다(전체 미공개).
+- 학생 = `USER_TY_CD='0001'` **학적 상태 무관 전체**(재학·휴학·수료·제적·졸업·미상, 사용자 확정). 교원 0002·직원 0003·조교 0004 는 로그인하지 못한다. 옛 신분코드 `1101/1102/1201/1202` 는 더 이상 쓰지 않는다.
+- 학과 = `HAKBU_CD`(학사 학과 코드), 단대 = **그 학과의 `COL_CODE`**(학생 `DAEHAK_CD` 아님 — 개편 전 졸업생 10,430명이 다르다). 옛 투영이 `MAJOR_CD` 를 학과에 넣던 버그를 고쳤다. 첫 로그인 때 `(college_code, dept_code)` 쌍이 `dc.department` 에 있으면 연결한다.
+- 로그인 번호: `dc.fixture_student_login` 의 번호(20990001→20211304, 20990002→20196208 등)를 **먼저 uid 로 풀고** `intg_uid` 단일 조건으로 찾는다(`dc_v_usr_inf(intg_uid)` 인덱스). 그 밖의 학생은 학번(INTG_UID) 그대로. 이 조회는 앱 계정 `dc_app` 으로 돌므로 `dc.fixture_student_login` SELECT 권한이 필요하다(178 — 빠지면 모든 학생 로그인이 500).
+- `dc.fixture_student_login_source` 와 별도 fixture 로그인 경로는 **폐기**했다. 가짜 테스트 학생 7명(20441231·20661231·20771231·20881231·20991231·20211304·20196208)은 로컬 DB 에서 `backend/scripts/seed_local_academic_test_students.sql`(로컬 전용, `-v apply=true -v confirm_local=yes`)이 `academic.local_usr_inf` 에 학사 형식으로 넣는다 — 빈 학사 칸은 같은 학과·학부·재학 실학생 1명의 값(연락처 포함, 사용자 확정)으로 채운다. **이 스크립트를 돌리지 않은 DB(신규 테스트 DB·서버)에서는 fixture 로그인이 되지 않는다.**
+- 같은 스크립트가 시드 fixture 2명의 학과를 먼저 바로잡는다(2026-11-26 팀장 확정): 옛 자체 코드가 처음부터 라벨·로드맵·전담교수와 달랐다(C05-05 세무학과 ↔ 컴퓨터공학과, C03-01 법학과 ↔ 경영학과). 김채원 20211304 → 5/414 컴퓨터공학과, 김창원 20196208 → 8/205 경영학과. 변경은 `dc.org_code_remap`(reason `fixture_correction`)에 남는다. 시드 `studentAcademic.json` 은 여전히 214·201 이라 신규 DB 는 이 스크립트를 돌려야 맞춰진다.
+- 로컬 인원은 `local_override=true` 로 보여 `dc.person.source='local'` 로 등록된다(이미 있는 행은 그대로). 외부 발송(SMS·메일)을 붙이면 `origin='local'` 인원은 반드시 제외한다 — 복사된 연락처는 실제 학생 것이다.
+- `dc.student_login_override`(20180001 → 5/714 전자공학과, 20261231 → 8/205 경영학과)는 유지한다. 학과 코드만 학사 코드로 바뀌었다.
+- 학사 출신 `dc.student` 의 학과 코드·학과명은 동기화 때 `dc.refresh_department_from_academic()` 이 학사 값과 맞춘다(전과 학생은 새 학과 스코프로 옮겨간다). 바뀐 행은 `dc.org_code_remap` 에 남는다.
+
+## 2026-09-11 기록 (이력)
+
 ## 명시적 로컬 테스트 학생 (2026-09-11 추가)
 
 - 김채원: `20990001` / `!`, 기존 내부 ID와 alias `chaewon` 유지.

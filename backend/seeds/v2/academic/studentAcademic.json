@@ -1,7 +1,7 @@
 [
   {
     "studentId": "chaewon",
-    "deptCode": "C05-05",
+    "deptCode": "214",
     "entryYear": "2021",
     "certs": [
       {
@@ -70,7 +70,7 @@
   },
   {
     "studentId": "changwon",
-    "deptCode": "C03-01",
+    "deptCode": "201",
     "entryYear": "2019",
     "certs": [
       {
@@ -157,7 +157,7 @@
   },
   {
     "studentId": "jiwoo",
-    "deptCode": "C05-05",
+    "deptCode": "214",
     "entryYear": "2026",
     "certs": [],
     "jobInterests": [],

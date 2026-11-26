@@ -327,7 +327,8 @@ export default function StudentChargeTable({
             <input type="month" value={graduationTo} min={graduationFrom || undefined} onChange={e => onFilter(setGraduationTo)(e.target.value)} />
           </label>
           <fieldset className="academic-sex-filter"><legend>성별</legend>
-            {[['','전체'],['0001','남자'],['0002','여자']].map(([value,label]) =>
+            {/* 학사 성별 원값: '0' 남 · 그 외 여 — '1' 은 서버가 '0' 이 아닌 값으로 거른다 */}
+            {[['','전체'],['0','남자'],['1','여자']].map(([value,label]) =>
               <label key={value}><input type="radio" name="academic-sex" value={value} checked={sex===value} onChange={() => onFilter(setSex)(value)} /> {label} </label>)}
           </fieldset>
         </>}

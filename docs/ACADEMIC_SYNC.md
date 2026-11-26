@@ -1,5 +1,61 @@
 # 학사 원본 복제
 
+## 전산원 DC_V_* 뷰 (2026-11-25 전환, migration 176 · handoff 0021) — 현재 원천
+
+이 절이 현재 정본이다. 아래 「2026-09-11 기록」은 옛 9개 미러의 이력이며, 그 테이블은 롤백 경로로만 남아 있고 앱이 읽지 않는다(삭제 기한 `DB.md` §9 #46).
+
+- **원천**: dreamcatch 계정 → `@V_BRDB` 링크 대상의 `INTRANET`(USR·ADD_JOB_PART·COL·DEPT·MAJOR·ORG·PART)·`REQUEST`(STU_SUGANG·SUBJ·CURRI·CAP·STU_CAP·USR_MAJOR·CODE·LECT_OPEN·LECT_CAP) 뷰 16개. 명세 `backend/academic/dc_view_columns.json`(`ALL_TAB_COLUMNS@V_BRDB` 2026-11-25, LECT_OPEN/LECT_CAP 은 엑셀 추정). SQL 은 메타 SELECT 1종 + 뷰별 명시 컬럼 SELECT 만 허용한다.
+- **사본**: `academic.dc_v_<view>`(PK·NOT NULL 없음, 원본 중복 보존, CHAR 패딩 보존). 로컬 테스트 인원 `academic.local_usr_inf` 는 동기화가 건드리지 않고, `academic.usr_inf` 가 둘을 합친다(`origin` = source|local).
+- **실행**(PowerShell, 저장소 루트 — 비밀번호는 Git 제외 secrets 파일, 값을 출력하지 않는다):
+
+```powershell
+$academicJdbc = Get-ChildItem "$env:APPDATA/DBeaverData/drivers" -Recurse -Filter 'ojdbc11-*.jar' | Select-Object -First 1 -ExpandProperty FullName
+backend/.venv/Scripts/python.exe backend/scripts/sync_academic.py --source dc-views `
+  --oracle-url 'jdbc:oracle:thin:@//203.246.1.146:1521/dream' --oracle-user dreamcatch `
+  --oracle-password-file deploy/secrets/oracle_password_local `
+  --jvm "$env:LOCALAPPDATA/DBeaver/jre/bin/server/jvm.dll" --jdbc $academicJdbc `
+  --pg-password-file deploy/secrets/postgres_password_local
+```
+
+  옵션: `--query-timeout`(뷰별, 기본 120초) · `--long-query-timeout`(STU_SUGANG, 기본 1800초) · `--fetch-size`(기본 5000). Oracle 로그인 실패는 재시도하지 않는다(계정 잠금 위험).
+- **절차**: 세션 advisory lock → 메타 대조 → 뷰마다 autocommit 세션 임시 테이블에 COPY 하며 순서 무관 가산 다중집합 해시(행 sha256 의 합 mod 2^256 + 행 수)로 원본 스트림과 사본을 대조 → 메타 재대조 → 공개 전 검사 → **짧은 공개 트랜잭션 하나**(큰 테이블부터 DELETE+INSERT, 마지막에 `dc.refresh_department_from_academic()`, `academic.sync_run` 기록 `source_label='DC_VIEWS'`) → 공개한 테이블 ANALYZE(STU_SUGANG 은 VACUUM ANALYZE).
+- **중단(전체 미공개)**: 컬럼 드리프트, 지난 공개 때 행이 있던 뷰의 missing, 20% 초과 행 감소, 값 대조 실패, 학생(`USER_TY_CD='0001'`) INTG_UID 중복, DEPT_CODE 중복, COL_CODE 중복, **사본 USR 와 `local_usr_inf` 의 INTG_UID 충돌**. 실패해도 직전 공개본이 그대로 남는다.
+- **건너뜀**: 원본에 없는 뷰는 `missing`, 처음 보인 엑셀 추정 뷰가 명세와 다르면 `drift_new`(그 뷰만, 명세 교체는 새 마이그레이션). (행 수, 해시)가 지난 공개와 같고 대상 행 수도 같으면 `unchanged`(DELETE+INSERT 생략).
+- **보고만**: haksa.md §2 논리 키 중복 건수, 「같은 사번·다른 이름」 건수(`checks.empNoSharedByDifferentNames`). 행 값은 출력하지 않는다.
+- **학과 투영**: `dc.department` = 학사 학과(`(COL_CODE, DEPT_CODE)`, `dept_code` 단독 유일). refresh 는 빈 원본이면 거부, 학과 단대 이동은 키를 제자리 UPDATE(학생·조직배정 FK `ON UPDATE CASCADE`, 배정·override 는 같은 문장에서), 사라진 학과는 삭제하지 않고 `is_active=false`, 마지막에 학사 출신 `dc.student` 의 학과 코드·라벨을 학사 값에 맞춘다. 바뀐 행은 append-only `dc.org_code_remap` 에 남는다. `course` = `CODE_INF(CODE_GRP='UNIV_CD')` 표시명.
+- **로컬 적용 순서(고정)**: 백업 → `python -m app.migrate`(176) → `sync_academic.py --source dc-views` → `backend/scripts/seed_local_academic_test_students.sql`(리허설 후 `-v apply=true -v confirm_local=yes`) → `npm run docker:up` → 화면 검증. 176 만 적용하고 동기화 전이면 `dc.department` 는 C-코드 이관 대상 63행뿐이다.
+- **SUGANG 비용**: 갱신마다 사본만큼 dead tuple 과 WAL 이 생긴다(첫 적재 실측은 아래). 현재 SUGANG 을 읽는 앱 경로는 없다.
+
+### 첫 적재 결과 (로컬 `dreamcatch`, 2026-11-25)
+
+- 1차 실행: 14개 뷰 스테이징·대조는 끝났으나 공개 트랜잭션의 학과 투영이 `DEPT_INF.USE_FLAG` NULL 행에서 `dc.department.is_active` NOT NULL 위반으로 실패 → **전체 롤백(공개 없음)**. migration 177 로 `is_active = COALESCE(USE_FLAG='1', false)` 수정.
+- 2차 실행(177 적용 후): **14개 공개 · 2개 missing(LECT_OPEN·LECT_CAP)**, 컬럼 드리프트 0, 값 대조 전부 일치.
+
+| 뷰 | 행 수 | 추출(초) |
+|---|---:|---:|
+| INTRANET.DC_V_USR_INF | 117,378 | 28.3 |
+| INTRANET.DC_V_ADD_JOB_PART | 17 | 0.0 |
+| INTRANET.DC_V_COL_INF | 16 | 0.0 |
+| INTRANET.DC_V_DEPT_INF | 595 | 0.2 |
+| INTRANET.DC_V_MAJOR_INF | 782 | 0.2 |
+| INTRANET.DC_V_ORG_INF | 180 | 0.0 |
+| INTRANET.DC_V_PART_INF | 875 | 0.1 |
+| REQUEST.DC_V_STU_SUGANG_INF | 4,326,226 | 453.1 (스테이징 대조 포함 515.9) |
+| REQUEST.DC_V_SUBJ_INF | 34,193 | 2.6 |
+| REQUEST.DC_V_CURRI_INF | 54,092 | 5.5 |
+| REQUEST.DC_V_CAP_INF | 390 | 0.1 |
+| REQUEST.DC_V_STU_CAP_INF | 97,715 | 6.2 |
+| REQUEST.DC_V_USR_MAJOR_INF | 23,133 | 2.2 |
+| REQUEST.DC_V_CODE_INF | 352 | 0.1 |
+
+- 공개 트랜잭션 11.5초, 공개 WAL 약 0.94GB(944,575,248 B). SUGANG 힙 418MB · 인덱스 62MB · 합계 480MB(첫 적재 — 갱신 후 dead tuple 로 약 2배 예상).
+- 공개 전 검사: 학생 INTG_UID 중복 0 · DEPT_CODE 중복 0 · COL_CODE 중복 0 · 로컬 충돌 0. 보고: USR INTG_UID 중복 1(교직원) · SUGANG 논리 키 중복 32 · 같은 사번·다른 이름 1 · 그 밖 0.
+- 학과 투영: `dc.department` 595(활성 389), 단대 이동 0, 단대 미연결 0, 학사 출신 학생 조직 정합 11건. 학생 로그인 투영 106,108(원본 106,101 + 로컬 7), 학과·단대 NULL 0.
+- 3차(같은 날 재실행): 13개 `unchanged`(공개 1.1초, WAL 약 98MB), USR_INF 만 원본 값이 바뀌어 재공개(행 수 동일, UPD_DT 갱신 없음 — 재조회로 해시 결정성 확인). UPD_DT 로 증분 판정하지 않는다.
+- 행 값은 콘솔·로그에 남기지 않았다(건수·코드·해시만). sync_run 의 뷰별 sha256 은 다음 실행의 `unchanged` 판정 근거다.
+
+## 2026-09-11 기록 (옛 9개 미러 · 이력)
+
 2026-09-11 사용자 지시에 따라 원본 Oracle에는 SELECT만 실행한다.
 초기 원천은 기존 DREAMCATCH의 9개 학사 미러 테이블이며 BRDB 직접 연결이 아니다.
 로컬 PostgreSQL `academic`에 원본 전체를 보존한다. 관리자 조회 화면은 `dc.academic_*`

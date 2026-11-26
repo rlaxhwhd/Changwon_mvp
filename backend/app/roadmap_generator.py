@@ -307,10 +307,11 @@ def recommendation_input(conn, student, counsel):
     academic = conn.execute('''SELECT COALESCE(NULLIF(a.dept_name,''),d.dept_nm,m.dept_nm) AS major,
       c.dept_nm AS college,o.dept_nm AS second_major
       FROM dc.student_login_source a JOIN dc.academic_people p USING(intg_uid)
-      LEFT JOIN dc.academic_organizations d ON d.dept_cd=p.hakbu_cd
-      LEFT JOIN dc.academic_organizations m ON m.dept_cd=a.dept_code
-      LEFT JOIN dc.academic_organizations c ON c.dept_cd=a.college_code
-      LEFT JOIN dc.academic_organizations o ON o.dept_cd=p.major_cd2
+      -- (lvl, dept_cd) 쌍이 조직 키다 — 전공 코드와 학과 코드가 겹친다(0021).
+      LEFT JOIN dc.academic_organizations d ON d.lvl='2' AND d.dept_cd=p.hakbu_cd
+      LEFT JOIN dc.academic_organizations m ON m.lvl='2' AND m.dept_cd=a.dept_code
+      LEFT JOIN dc.academic_organizations c ON c.lvl='1' AND c.dept_cd=a.college_code
+      LEFT JOIN dc.academic_organizations o ON o.lvl='3' AND o.dept_cd=p.major_cd2
       WHERE a.intg_uid=%s LIMIT 1''', (uid,)).fetchone()
     growth = conn.execute('''SELECT kind_code AS kind,category_code AS category,title,
       COALESCE(occurred_on::text,date_text) AS date,tags,content FROM dc.growth_entry

@@ -1,4 +1,4 @@
-"""Run against an isolated *_test copy containing the academic mirror."""
+"""Run against an isolated *_test DB. Academic rows go to the DC_V_* source stand-in or academic.local_usr_inf (0021)."""
 import hashlib
 from pathlib import Path
 from uuid import uuid4
@@ -8,6 +8,7 @@ import pytest
 
 from app.settings import settings
 from test_api import headers
+from academic_test_support import add_academic_dept, add_academic_user
 
 TEST_STUDENT_NO = 'test-' + uuid4().hex[:12]
 NEW_STUDENT_NO = 'new-' + uuid4().hex[:12]
@@ -34,9 +35,9 @@ def owner():
 def academic_login_student():
     # Synthetic mirror input, not a dependency on a developer's imported data.
     with owner() as conn:
-        conn.execute('''INSERT INTO academic.v_usr_inf
-          (intg_uid,login_id,user_ty_cd,usr_nm,orgz_nm,stu_schgr,daehak_cd,major_cd)
-          VALUES(%s,%s,'1101','홍길동','전자공학과','2','C07','C07-10')''', (TEST_STUDENT_NO, TEST_STUDENT_NO))
+        add_academic_dept(conn, '5', '공과대학', '714', '전자공학과')
+        add_academic_user(conn, TEST_STUDENT_NO, usr_nm='홍길동', stu_schgr='2', hofc_sta_cd='0001',
+                          univ_cd='00', daehak_cd='5', hakbu_cd='714')
 
 
 def test_invalid_login_and_header_bypass(client):
@@ -82,8 +83,9 @@ def test_session_expiry(client):
 
 def test_first_academic_login_provisions_once_and_excludes_staff(client):
     with owner() as conn:
-        conn.execute("INSERT INTO academic.v_usr_inf(intg_uid,login_id,user_ty_cd,usr_nm,orgz_nm,stu_schgr) VALUES (%s,%s,'1101','로그인 테스트','전자공학과','2')", (NEW_STUDENT_NO, NEW_STUDENT_NO))
-        conn.execute("INSERT INTO academic.v_usr_inf(intg_uid,user_ty_cd,usr_nm) VALUES (%s,'1301','교원 테스트')", (STAFF_LOGIN_ID,))
+        add_academic_user(conn, NEW_STUDENT_NO, usr_nm='로그인 테스트', stu_schgr='2', hofc_sta_cd='0001', hakbu_cd='714')
+        add_academic_user(conn, STAFF_LOGIN_ID, user_ty_cd='0002', usr_nm='교원 테스트', emp_no='T' + STAFF_LOGIN_ID[-8:],
+                          hofc_sta_cd='0006', hakbu_cd='714')
     client.cookies.clear()
     assert login(client, number=STAFF_LOGIN_ID).status_code == 401
     assert login(client, number=NEW_STUDENT_NO).status_code == 200
@@ -93,3 +95,54 @@ def test_first_academic_login_provisions_once_and_excludes_staff(client):
         assert conn.execute("SELECT source FROM dc.person WHERE intg_uid=%s", (NEW_STUDENT_NO,)).fetchone()[0] == 'academic'
     assert client.get('/api/v1/bootstrap/profiles', headers=student_headers()).json()['students'][0]['grade'] == 2
     client.post('/api/v1/auth/student/logout', headers=student_headers())
+
+
+def test_first_login_links_the_academic_department_pair(client):
+    with owner() as conn:
+        row = conn.execute("SELECT college_code,dept_code,major_label FROM dc.student WHERE intg_uid=%s", (NEW_STUDENT_NO,)).fetchone()
+    # 학과 = HAKBU_CD, 단대 = 그 학과의 COL_CODE(학생 DAEHAK_CD 가 아니다).
+    assert row == ('5', '714', '전자공학과')
+
+
+def test_graduates_log_in_but_any_status_student_only(client):
+    graduate, unknown = 'grad-' + uuid4().hex[:10], 'nostat-' + uuid4().hex[:10]
+    assistant = 'asst-' + uuid4().hex[:8]
+    with owner() as conn:
+        add_academic_user(conn, graduate, usr_nm='졸업생', hofc_sta_cd='0005', hakbu_cd='714')
+        add_academic_user(conn, unknown, usr_nm='학적미상', hofc_sta_cd=None, hakbu_cd='714')
+        add_academic_user(conn, assistant, user_ty_cd='0004', usr_nm='조교', emp_no='A' + uuid4().hex[:8])
+    client.cookies.clear()
+    assert login(client, number=graduate).status_code == 200
+    assert login(client, number=unknown).status_code == 200
+    assert login(client, number=assistant).status_code == 401
+    client.post('/api/v1/auth/student/logout', headers=student_headers())
+
+
+def test_fixture_number_override_and_source_precedence(client):
+    local_uid, number = '2' + str(uuid4().int)[:7], 'fx-' + uuid4().hex[:8]
+    with owner() as conn:
+        # 로컬 인원 + 로그인 번호(fixture). 로그인은 번호를 uid 로 먼저 푼다.
+        add_academic_user(conn, local_uid, local=True, usr_nm='로컬 학생', hofc_sta_cd='0001', hakbu_cd='714')
+        conn.execute("INSERT INTO dc.person(intg_uid,alias,name,kind,source) VALUES(%s,%s,'로컬 학생','STUDENT','fixture')", (local_uid, local_uid))
+        conn.execute("INSERT INTO dc.student(intg_uid,student_no,major_label) VALUES(%s,%s,'전자공학과')", (local_uid, number))
+        conn.execute('INSERT INTO dc.fixture_student_login(student_no,student_uid) VALUES(%s,%s)', (number, local_uid))
+        source = conn.execute('SELECT student_no,local_override FROM dc.student_login_source WHERE intg_uid=%s', (local_uid,)).fetchone()
+        assert source == (number, True)
+    client.cookies.clear()
+    response = login(client, number=number)
+    assert response.status_code == 200, response.text
+    assert response.json()['id'] == local_uid
+    client.post('/api/v1/auth/student/logout', headers=student_headers())
+    with owner() as conn:
+        # 학사 override 가 이름·학과를 이긴다.
+        conn.execute('''INSERT INTO dc.student_login_override(intg_uid,name,college_code,dept_code,college_name,dept_name)
+          VALUES(%s,'덮어쓴 이름','5','714','공과대학','전자공학과')''', (TEST_STUDENT_NO,))
+        assert conn.execute('SELECT name,local_override FROM dc.student_login_source WHERE intg_uid=%s',
+                            (TEST_STUDENT_NO,)).fetchone() == ('덮어쓴 이름', True)
+        conn.rollback()
+    with owner() as conn:
+        # 같은 번호가 원본에 생기면 원본이 이긴다(동기화는 이 충돌을 공개 전에 막는다 — 뷰는 방어선이다).
+        add_academic_user(conn, local_uid, usr_nm='원본 학생', hofc_sta_cd='0001', hakbu_cd='714')
+        rows = conn.execute('SELECT name FROM dc.student_login_source WHERE intg_uid=%s', (local_uid,)).fetchall()
+        assert rows == [('원본 학생',)]
+        conn.rollback()

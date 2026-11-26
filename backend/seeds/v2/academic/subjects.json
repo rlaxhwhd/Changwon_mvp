@@ -3,7 +3,7 @@
     "curiNum": "CSE1001",
     "curiNm": "컴퓨터프로그래밍I",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -11,7 +11,7 @@
     "curiNum": "CSE1002",
     "curiNm": "컴퓨터프로그래밍II",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -19,7 +19,7 @@
     "curiNum": "CSE1003",
     "curiNm": "이산수학",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -27,7 +27,7 @@
     "curiNum": "CSE1004",
     "curiNm": "컴퓨터개론",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -35,7 +35,7 @@
     "curiNum": "CSE2001",
     "curiNm": "자료구조",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -43,7 +43,7 @@
     "curiNum": "CSE2002",
     "curiNm": "알고리즘",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -51,7 +51,7 @@
     "curiNum": "CSE2003",
     "curiNm": "객체지향프로그래밍",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -59,7 +59,7 @@
     "curiNum": "CSE2004",
     "curiNm": "컴퓨터구조",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -67,7 +67,7 @@
     "curiNum": "CSE2005",
     "curiNm": "데이터베이스",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -75,7 +75,7 @@
     "curiNum": "CSE2006",
     "curiNm": "웹프로그래밍",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -83,7 +83,7 @@
     "curiNum": "CSE2007",
     "curiNm": "확률과통계",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -91,7 +91,7 @@
     "curiNum": "CSE3001",
     "curiNm": "운영체제",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -99,7 +99,7 @@
     "curiNum": "CSE3002",
     "curiNm": "컴퓨터네트워크",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -107,7 +107,7 @@
     "curiNum": "CSE3003",
     "curiNm": "소프트웨어공학",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -115,7 +115,7 @@
     "curiNum": "CSE3004",
     "curiNm": "오픈소스소프트웨어",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -123,7 +123,7 @@
     "curiNum": "CSE3005",
     "curiNm": "모바일프로그래밍",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -131,7 +131,7 @@
     "curiNum": "CSE3006",
     "curiNm": "데이터마이닝",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -139,7 +139,7 @@
     "curiNum": "CSE3007",
     "curiNm": "서버프로그래밍",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -147,7 +147,7 @@
     "curiNum": "CSE4001",
     "curiNm": "캡스톤디자인I",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -155,7 +155,7 @@
     "curiNum": "CSE4002",
     "curiNm": "캡스톤디자인II",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -163,7 +163,7 @@
     "curiNum": "CSE4003",
     "curiNm": "빅데이터처리",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -171,7 +171,7 @@
     "curiNum": "CSE4004",
     "curiNm": "정보보호",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -179,7 +179,7 @@
     "curiNum": "CSE4005",
     "curiNm": "클라우드컴퓨팅",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -187,7 +187,7 @@
     "curiNum": "CSE4006",
     "curiNm": "인공지능",
     "cdtNum": 3,
-    "openDeptCd": "C05-05",
+    "openDeptCd": "214",
     "gradDiv": "학부",
     "active": true
   },
@@ -195,7 +195,7 @@
     "curiNum": "BUS1001",
     "curiNm": "경영학원론",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -203,7 +203,7 @@
     "curiNum": "BUS1002",
     "curiNm": "회계원리",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -211,7 +211,7 @@
     "curiNum": "BUS1003",
     "curiNm": "경제학원론",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -219,7 +219,7 @@
     "curiNum": "BUS2001",
     "curiNm": "마케팅원론",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -227,7 +227,7 @@
     "curiNum": "BUS2002",
     "curiNm": "조직행동론",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -235,7 +235,7 @@
     "curiNum": "BUS2003",
     "curiNm": "재무관리",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -243,7 +243,7 @@
     "curiNum": "BUS2004",
     "curiNm": "경영통계",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -251,7 +251,7 @@
     "curiNum": "BUS2005",
     "curiNm": "경영정보시스템",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -259,7 +259,7 @@
     "curiNum": "BUS3001",
     "curiNm": "마케팅관리",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -267,7 +267,7 @@
     "curiNum": "BUS3002",
     "curiNm": "소비자행동론",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -275,7 +275,7 @@
     "curiNum": "BUS3003",
     "curiNm": "브랜드관리",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -283,7 +283,7 @@
     "curiNum": "BUS3004",
     "curiNm": "광고론",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -291,7 +291,7 @@
     "curiNum": "BUS3005",
     "curiNm": "디지털마케팅",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -299,7 +299,7 @@
     "curiNum": "BUS4001",
     "curiNm": "마케팅전략",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -307,7 +307,7 @@
     "curiNum": "BUS4002",
     "curiNm": "경영전략",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -315,7 +315,7 @@
     "curiNum": "BUS4003",
     "curiNm": "창업론",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -323,7 +323,7 @@
     "curiNum": "BUS4004",
     "curiNm": "마케팅조사",
     "cdtNum": 3,
-    "openDeptCd": "C03-01",
+    "openDeptCd": "201",
     "gradDiv": "학부",
     "active": true
   },
@@ -331,7 +331,7 @@
     "curiNum": "IDS2001",
     "curiNm": "서비스디자인",
     "cdtNum": 3,
-    "openDeptCd": "C08-01",
+    "openDeptCd": "142",
     "gradDiv": "학부",
     "active": true
   },

@@ -9,6 +9,7 @@ from app.xlsx_export import read_workbook
 from test_api import headers
 from test_programs import apply_as, new_program
 from test_psych_referrals import db  # noqa: F401
+from academic_test_support import add_academic_user, update_academic_user
 
 
 def test_star_name_markers_match_membership_and_student_scope(client, db):
@@ -23,10 +24,7 @@ def test_star_name_markers_match_membership_and_student_scope(client, db):
     for row in members:
         # This regression DB does not mirror the full academic source. Supply a
         # matching academic identity inside this rollback-only transaction.
-        db.execute('''INSERT INTO academic.v_usr_inf(intg_uid,login_id,usr_nm,user_ty_cd,hofc_sta_cd,stu_schgr,orgz_nm)
-          SELECT %s,%s,%s,'1101','0001','3','Test Major'
-          WHERE NOT EXISTS(SELECT 1 FROM academic.v_usr_inf WHERE intg_uid=%s)''',
-          (row['intg_uid'],row['student_no'],row['name'],row['intg_uid']))
+        add_academic_user(db, row['intg_uid'], usr_nm=row['name'], hofc_sta_cd='0001', stu_schgr='3')
         mine=client.get('/api/v1/bootstrap/profiles',headers=headers(row['alias']))
         assert mine.status_code==200
         assert set(mine.json()['starStudentKeys'])=={row['intg_uid'],row['alias'],row['student_no']}
@@ -41,15 +39,14 @@ def test_star_name_markers_match_membership_and_student_scope(client, db):
 def test_program_export_reads_academic_record_and_keeps_the_application_snapshot(client, db):
     row = db.execute("""SELECT s.intg_uid,s.student_no,p.name FROM dc.student s JOIN dc.person p USING(intg_uid)
       WHERE p.alias='chaewon'""").fetchone()
-    db.execute('''INSERT INTO academic.v_usr_inf(intg_uid,login_id,usr_nm,user_ty_cd,orgz_nm)
-      SELECT %s,%s,%s,'1101','Test Major' WHERE NOT EXISTS(SELECT 1 FROM academic.v_usr_inf WHERE intg_uid=%s)''',
-      (row['intg_uid'], row['student_no'], row['name'], row['intg_uid']))
-    change = """UPDATE academic.v_usr_inf SET hofc_sta_cd=%s,stu_schgr=%s,hp='010-0000-0000',
-      email='test@example.test',sex='0002' WHERE intg_uid=%s"""
-    db.execute(change, ('0002', '2', row['intg_uid']))
+    add_academic_user(db, row['intg_uid'], usr_nm=row['name'])
+    def change(status, grade):
+        update_academic_user(db, row['intg_uid'], hofc_sta_cd=status, stu_schgr=grade, hp='010-0000-0000',
+                             email='test@example.test', sex='1')
+    change('0002', '2')
     program = new_program(client, capacity=5)
     assert apply_as(client, 'chaewon', program['id']).status_code == 201
-    db.execute(change, ('0005', '4', row['intg_uid']))
+    change('0005', '4')
     response = client.post('/api/v1/programs/export', headers=headers('career_kim'),
                            json={'programIds': [program['id']], 'statuses': []})
     assert response.status_code == 200, response.text
@@ -77,15 +74,14 @@ def test_care7_filter_matches_confirmed_roadmaps_and_home(client, db):
 
 @pytest.fixture
 def academic_rows(db):
-    for index, (kind, status) in enumerate([
-        ('1101', '0001'), ('1101', '0002'), ('1102', '0005'),
-        ('1201', '0001'), ('1202', '0004'), ('1202', '0003'),
+    # 학생(0001)은 학적 상태 무관 전체. 과정은 UNIV_CD: 00 학부·90 전문학사(학부) / 01 석사·02 박사(대학원).
+    for index, (univ, status) in enumerate([
+        ('00', '0001'), ('90', '0002'), ('00', '0005'),
+        ('01', '0001'), ('02', '0004'), ('02', '0003'),
     ], start=1):
         uid = f'roster-test-{index}'
-        db.execute('''INSERT INTO academic.v_usr_inf
-          (intg_uid,login_id,usr_nm,user_ty_cd,hofc_sta_cd,stu_schgr,orgz_nm,sex,grade,out_dt)
-          VALUES(%s,%s,'Roster Test',%s,%s,%s,'Roster Major','0002',3.75,'20260220')''',
-          (uid, uid, kind, status, None if index == 6 else '1'))
+        add_academic_user(db, uid, usr_nm='Roster Test', hofc_sta_cd=status, univ_cd=univ,
+                          stu_schgr=None if index == 5 else '1', sex='1', grade=3.75, out_dt='20260220')
     return 'roster-test-'
 
 
@@ -135,7 +131,7 @@ def test_gender_graduation_ranges_and_page_sizes(client, db, academic_rows):
         r=client.get('/api/v1/academic-students',headers=headers('career_kim'),params={'pageSize':size})
         assert r.status_code == 200
         assert r.json()['pageSize'] == size
-    params={'filters.sex':'0002','filters.graduationFrom':'2026-02','filters.graduationTo':'2026-02'}
+    params={'filters.sex':'1','filters.graduationFrom':'2026-02','filters.graduationTo':'2026-02'}
     r=client.get('/api/v1/academic-students',headers=headers('career_kim'),params=params)
     assert r.status_code == 200, r.text
     assert r.json()['totalCount'] == 1  # OUT_DT on non-graduates is not a graduation date.
@@ -159,12 +155,13 @@ def test_unenrolled_detail_and_excel_share_filters(client, db, academic_rows):
     assert (quest['level'],quest['xpInLevel'],quest['xpPerLevel'],quest['atCap'])==(0,0,1000,False)
     assert quest['levelCap']==(25 if quest['grade'] else None)
     for code, expected in (('Y', True), ('N', False), (None, None)):
-        db.execute('UPDATE academic.v_usr_inf SET for_yn=%s WHERE intg_uid=%s', (code, uid))
+        update_academic_user(db, uid, for_yn=code)
         assert client.get('/api/v1/academic-students/'+uid,headers=headers('career_kim')).json()['foreigner'] is expected
     assert client.get('/api/v1/academic-students/'+uid,headers=headers('chaewon')).status_code==403
     # Excel strings preserve leading zeroes and cannot execute formula-like names.
-    db.execute("UPDATE academic.v_usr_inf SET usr_nm='=1+1',login_id='00123' WHERE intg_uid=%s",(uid,))
-    r=client.post('/api/v1/academic-students/export',headers=headers('career_kim'), json={'ids':[uid,uid]},
+    # 학번은 학사 INTG_UID 다 — 선행 0 학번을 가진 졸업생 한 명을 따로 둔다.
+    add_academic_user(db, '00123', usr_nm='=1+1', hofc_sta_cd='0005', univ_cd='00')
+    r=client.post('/api/v1/academic-students/export',headers=headers('career_kim'), json={'ids':['00123','00123']},
                  params={'filters.status':'졸업','pageSize':1,'page':9})
     assert r.status_code == 200, r.text if r.status_code!=200 else ''
     assert 'spreadsheetml' in r.headers['content-type']

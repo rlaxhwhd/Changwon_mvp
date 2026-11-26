@@ -11,11 +11,10 @@ from xml.etree import ElementTree
 def test_diagnosed_metadata_matches_original_population_and_all_options(client, db, academic_rows):
     # Mirror seeded service identities in the academic source, alongside six
     # unrelated academic-only students supplied by academic_rows.
-    db.execute("""INSERT INTO academic.v_usr_inf
-      (intg_uid,login_id,usr_nm,user_ty_cd,hofc_sta_cd,stu_schgr,orgz_nm)
-      SELECT s.intg_uid,s.student_no,p.name,'1101','0001','3','Diagnosed Major'
+    db.execute("""INSERT INTO academic.dc_v_usr_inf(intg_uid,usr_nm,user_ty_cd,hofc_sta_cd,stu_schgr)
+      SELECT s.intg_uid,p.name,'0001','0001','3'
       FROM dc.student s JOIN dc.person p USING(intg_uid)
-      WHERE NOT EXISTS(SELECT 1 FROM academic.v_usr_inf a WHERE a.intg_uid=s.intg_uid)""")
+      WHERE NOT EXISTS(SELECT 1 FROM academic.usr_inf a WHERE a.intg_uid=s.intg_uid)""")
     expected = db.execute(ROSTER + """ SELECT * FROM roster
       WHERE EXISTS(SELECT 1 FROM dc.diagnosis_attempt d WHERE d.student_uid=roster.intg_uid
         AND d.status_code IN ('DONE','REVIEW','INCOMPLETE'))""").fetchall()

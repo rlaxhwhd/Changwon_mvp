@@ -10,6 +10,7 @@ from app.gates import diagnosis_gate
 from app.db import pool
 from app.roadmap import check_counsel_basis
 from test_api import headers
+from academic_test_support import add_academic_dept, add_academic_user
 from test_hrtest import item
 from test_psych_referrals import db  # noqa: F401
 
@@ -170,9 +171,7 @@ def test_followup_request_validation_and_student_only(client, db):
 def test_diagnosed_roster_and_metadata_use_same_filter(client, db):
     who = student(db)
     uid = who['intg_uid']
-    db.execute('''INSERT INTO academic.v_usr_inf(intg_uid,login_id,usr_nm,user_ty_cd,hofc_sta_cd,stu_schgr,orgz_nm)
-      SELECT %s,%s,'Retake Test','1101','0001','3','Test Major'
-      WHERE NOT EXISTS(SELECT 1 FROM academic.v_usr_inf WHERE intg_uid=%s)''', (uid, who['student_no'], uid))
+    add_academic_user(db, uid, usr_nm='Retake Test', hofc_sta_cd='0001', stu_schgr='3')
     db.execute('SET LOCAL ROLE dc_app')
     response = client.get('/api/v1/academic-students?filters.diagnosed=Y', headers=headers('psych_lee'))
     assert response.status_code == 200, response.text

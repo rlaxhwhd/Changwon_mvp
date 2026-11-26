@@ -54,13 +54,13 @@ class AcademicDirectoryTest(unittest.TestCase):
             response = self.get(dataset + '?pageSize=2')
             self.assertEqual(response.status_code, 200)
             self.assertEqual(len(response.json()['items']), min(2, response.json()['totalCount']))
-        first = self.get('people?category=professor&state=89&pageSize=2').json()
-        second = self.get('people?category=professor&state=89&pageSize=2&page=2').json()
-        self.assertTrue(all(row['category'] == 'professor' and row['hofc_sta_cd'] == '89' for row in first['items']))
+        first = self.get('people?category=professor&state=0006&pageSize=2').json()
+        second = self.get('people?category=professor&state=0006&pageSize=2&page=2').json()
+        self.assertTrue(all(row['category'] == 'professor' and row['hofc_sta_cd'] == '0006' for row in first['items']))
         self.assertTrue(set(row['intg_uid'] for row in first['items']).isdisjoint(row['intg_uid'] for row in second['items']))
         with pool.connection() as conn:
             conn.execute('SET TRANSACTION READ ONLY')
-            expected = conn.execute("SELECT count(*) AS n FROM dc.academic_people WHERE category='professor' AND hofc_sta_cd='89'").fetchone()['n']
+            expected = conn.execute("SELECT count(*) AS n FROM dc.academic_people WHERE category='professor' AND hofc_sta_cd='0006'").fetchone()['n']
         self.assertEqual(first['totalCount'], expected)
         self.assertEqual(self.get('people?q=nonexistent_directory_test_8f722c').json()['items'], [])
 

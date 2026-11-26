@@ -12,9 +12,6 @@
 // 이 파일에 학과명 리터럴을 늘리지 말 것. 데이터는 seed JSON(또는 DB)에만 둔다.
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** 학위 과정 — 현행 V_DEP_INF_ALL 의 과정 구분(학부/대학원). */
-export type DegreeCourse = '학부' | '석사' | '박사'
-
 /** 학과 1건 = 트리의 잎 노드 */
 export interface DepartmentNode {
   /** 소속 단대 코드 (현행 DAEHAK_CD / UNIV_CODE) — 잠정값, 이관 시 실코드로 치환 */
@@ -25,6 +22,10 @@ export interface DepartmentNode {
   deptCode: string
   /** 학과명 */
   deptName: string
-  /** 과정 구분. 미지정이면 학부로 본다(현행 학부 데이터가 대다수) */
-  course?: DegreeCourse
+  /** 과정 표시명 — 학사 공통코드 UNIV_CD 의 이름(학부·석사·박사·특수대학원…). 동명 학과를 구별할 때 붙인다 */
+  course?: string
+  /** 학사 과정 코드(UNIV_CODE). 자체 학과에는 없다 */
+  univCode?: string | null
+  /** 학사 USE_FLAG='1'. 비활성 학과는 옛 배정·학생 라벨 조회에만 쓰고 선택지에 내지 않는다 */
+  active: boolean
 }

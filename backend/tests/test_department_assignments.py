@@ -1,6 +1,7 @@
 from app.db import pool
 from test_api import headers
 from test_student_login import owner
+from academic_test_support import add_academic_dept, add_academic_user
 from uuid import uuid4
 import pytest
 
@@ -63,16 +64,18 @@ def test_assignment_access_and_pagination(client):
 @pytest.mark.parametrize('role', ['assistant', 'professor'])
 def test_major_assignment_never_grants_other_major(client, role):
     suffix=uuid4().hex[:8]
-    college,dept,major,other=('TC'+suffix,'TD'+suffix,'TM'+suffix,'TO'+suffix)
+    # 학사 원본 대역의 폭(COL_CODE 2·DEPT_CODE 8·MAJOR_CODE 8)에 맞춘 코드.
+    college,dept,major,other=('Z'+suffix[0],'D'+suffix[1:],'M'+suffix[1:],'N'+suffix[1:])
     student1,student2='student-a-'+suffix,'student-b-'+suffix
     with owner() as conn:
         conn.execute("INSERT INTO dc.department VALUES(%s,%s,'Test College','Test Department','test')",(college,dept))
-        for code,parent,level,name in [(college,'0000','1','Test College'),(dept,college,'2','Test Department'),(major,dept,'3','Major A'),(other,dept,'3','Major B')]:
-            conn.execute("INSERT INTO academic.v_dep_inf_all(dept_cd,dept_up_cd,lvl,dept_nm,use_yn) VALUES(%s,%s,%s,%s,'Y')",(code,parent,level,name))
+        add_academic_dept(conn, college, 'Test College', dept, 'Test Department')
+        for code,name in [(major,'Major A'),(other,'Major B')]:
+            conn.execute("INSERT INTO academic.dc_v_major_inf(major_code,major_name,dept_code,use_flag,gubun_code) VALUES(%s,%s,%s,'1','1')",(code,name,dept))
         for uid,major_code in [(student1,major),(student2,other)]:
             conn.execute("INSERT INTO dc.person(intg_uid,alias,name,kind,source) VALUES(%s,%s,'Scope test','STUDENT','local')",(uid,uid))
             conn.execute("INSERT INTO dc.student(intg_uid,student_no,major_label,college_code,dept_code) VALUES(%s,%s,'Test',%s,%s)",(uid,uid,college,dept))
-            conn.execute("INSERT INTO academic.v_usr_inf(intg_uid,usr_nm,major_cd) VALUES(%s,'Scope test',%s)",(uid,major_code))
+            add_academic_user(conn, uid, usr_nm='Scope test', hakbu_cd=dept, major_cd=major_code)
     head=headers('system-admin')
     person=client.get(BASE+'/candidates',params={'role':role},headers=head).json()['items'][0]
     body=dict(role=role,collegeCode=college,deptCode=dept,majorCode=major,staffUid=person['staff_uid'])
@@ -92,3 +95,27 @@ def test_major_assignment_never_grants_other_major(client, role):
         assert not conn.execute('SELECT 1 FROM dc.department_assignment_student_scope WHERE staff_uid=%s AND student_uid=%s',(person['staff_uid'],student1)).fetchone()
         assert conn.execute('SELECT 1 FROM dc.department_assignment_student_scope WHERE staff_uid=%s AND student_uid=%s',(person['staff_uid'],student2)).fetchone()
     assert client.post(BASE+'/'+second.json()['id']+'/release',json={'expectedVersion':1},headers=head).status_code==200
+
+
+def test_one_employee_number_keeps_both_roles(client):
+    """한 사번이 퇴직 조교 행과 재직 교원 행을 모두 가져도 교원 배정의 스코프는 살아 있다(역할까지 맞춘 비활성 판정)."""
+    suffix=uuid4().hex[:7]
+    emp_no,college,dept='E'+suffix,'Y'+suffix[0],'R'+suffix
+    student='student-e-'+suffix
+    with owner() as conn:
+        conn.execute("INSERT INTO dc.department VALUES(%s,%s,'Role College','Role Department','test')",(college,dept))
+        add_academic_dept(conn, college, 'Role College', dept, 'Role Department')
+        add_academic_user(conn, 'asst-'+suffix, user_ty_cd='0004', emp_no=emp_no, usr_nm='Two Roles', hofc_sta_cd='00007')
+        add_academic_user(conn, 'prof-'+suffix, user_ty_cd='0002', emp_no=emp_no, usr_nm='Two Roles', hofc_sta_cd='0006')
+        conn.execute("INSERT INTO dc.person(intg_uid,alias,name,kind,source) VALUES(%s,%s,'Two Roles','STAFF','academic')",(emp_no,'two-roles-'+suffix))
+        conn.execute("INSERT INTO dc.staff(intg_uid,role_code,profile) VALUES(%s,'professor','{}')",(emp_no,))
+        conn.execute("INSERT INTO dc.person(intg_uid,alias,name,kind,source) VALUES(%s,%s,'Scope test','STUDENT','local')",(student,student))
+        conn.execute("INSERT INTO dc.student(intg_uid,student_no,major_label,college_code,dept_code) VALUES(%s,%s,'Test',%s,%s)",(student,student,college,dept))
+        roles=conn.execute('SELECT role_code,is_active FROM dc.department_staff_candidates WHERE staff_uid=%s ORDER BY role_code',(emp_no,)).fetchall()
+        assert roles==[('assistant',False),('professor',True)]
+    head=headers('system-admin')
+    result=client.post(BASE,json=dict(role='professor',collegeCode=college,deptCode=dept,majorCode='',staffUid=emp_no),headers=head)
+    assert result.status_code==201,result.text
+    with pool.connection() as conn:
+        assert conn.execute('SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s',(emp_no,student)).fetchone()
+    assert client.post(BASE+'/'+result.json()['id']+'/release',json={'expectedVersion':1},headers=head).status_code==200

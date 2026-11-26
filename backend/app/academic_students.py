@@ -13,7 +13,7 @@ from .jobs import MENU_PREDICATE
 from .students import HIGH, CORE
 from .quests import XP_PER_LEVEL, LEVELS_PER_GRADE, GRADE_CAP_XP
 from .xlsx_export import workbook
-from .student_contact import ACADEMIC_GRADE, ACADEMIC_STATUS, CONTACT_CTE, STAGES
+from .student_contact import ACADEMIC_GRADE, ACADEMIC_LEVEL, ACADEMIC_STATUS, CONTACT_CTE, SEX_LABEL, STAGES
 
 router = APIRouter()
 
@@ -28,23 +28,19 @@ ROSTER = '''WITH service AS MATERIALIZED (
   FROM dc.student_list v
 ), roster AS (
   SELECT a.intg_uid, a.student_no, a.name,
-    COALESCE(NULLIF(a.dept_name,''),d.dept_nm,m.dept_nm,'소속 미등록') AS major_label,
-    c.dept_nm AS college_name,
-    x.sex_code, CASE x.sex_code WHEN '0001' THEN '남자' WHEN '0002' THEN '여자' ELSE '없음' END AS sex,
+    COALESCE(NULLIF(a.dept_name,''),'소속 미등록') AS major_label,
+    a.college_name,
+    x.sex_code, ''' + SEX_LABEL + ''' AS sex,
     CASE WHEN a.hofc_sta_cd='0005' AND x.out_dt ~ '^[0-9]{4}(0[1-9]|1[0-2])(0[1-9]|[12][0-9]|3[01])$'
       THEN substring(x.out_dt,1,4)||'-'||substring(x.out_dt,5,2) END AS graduation_month,
     ''' + ACADEMIC_GRADE + ''' AS grade,
-    CASE WHEN a.user_ty_cd IN ('1201','1202') THEN '대학원' ELSE '학부' END AS academic_level,
+    ''' + ACADEMIC_LEVEL + ''' AS academic_level,
     ''' + ACADEMIC_STATUS + ''' AS status,
     v.student_type,v.type_label,v.tier,x.academic_gpa::text AS gpa,COALESCE(v.progress,0) AS progress,
     COALESCE(v.program_count,0) AS program_count,COALESCE(v.counsel_count,0) AS counsel_count,
     COALESCE(v.star,false) AS star,COALESCE(v.has_roadmap,false) AS has_roadmap
   FROM dc.student_login_source a
-  JOIN dc.academic_people p USING(intg_uid)
   JOIN dc.academic_student_details x USING(intg_uid)
-  LEFT JOIN dc.academic_organizations d ON d.dept_cd=p.hakbu_cd
-  LEFT JOIN dc.academic_organizations m ON m.dept_cd=a.dept_code
-  LEFT JOIN dc.academic_organizations c ON c.dept_cd=a.college_code
   LEFT JOIN service v USING(intg_uid)
 )'''
 
@@ -102,9 +98,13 @@ def filters(request, q):
     contact = request.query_params.get('filters.contact')
     if contact in STAGES:
         where.append('intg_uid IN (' + CONTACT_CTE + ' SELECT intg_uid FROM contact WHERE ' + STAGES[contact] + ')')
+    # 학사 성별은 '0' 남 · 그 외 여(haksa.md). '1' 필터는 '0' 이 아닌 값(NULL 제외)으로 읽는다.
+    sex = request.query_params.get('filters.sex')
+    if sex:
+        where.append("sex_code='0'" if sex == '0' else "sex_code<>'0'")
     for field, column in {'major':'major_label','grade':'grade::text',
                           'studentType':'student_type','status':'status','academicLevel':'academic_level',
-                          'sex':'sex_code','college':'college_name'}.items():
+                          'college':'college_name'}.items():
         value = request.query_params.get('filters.' + field)
         if value:
             where.append(f'{column}=%s')

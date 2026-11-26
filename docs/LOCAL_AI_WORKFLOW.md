@@ -1,5 +1,14 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-25~26 학사 전산원 DC_V_* 전환·조직코드 통일(176~178) 로컬 반영 — 서버 미배포
+
+- 핸드오프 `.ai/handoff-db/0021-academic-dc-view-cutover/`(work-order rev2·Astra 승인·사후 리뷰·178 리뷰·implementation·verification). 로컬 `dreamcatch` 에 전산원 14개 뷰 실적재(LECT_OPEN·LECT_CAP 은 ORA-00942 로 미제공), 176·177(Sol)·178(팀장, Astra 승인) 적용. 백업 `_workspace/backups/dreamcatch-before-0021-20261125-164553.dump`, `local-before-migrate-20261125085145897.dump`.
+- 격리 회귀: 변경 전 10 failed/765 passed → 변경 후 10 failed/779 passed, 실패 10건은 같은 테스트·같은 메시지(기존 실패). `npx tsc -b` exit 0. `npm run docker:up` 전체 healthy.
+- `docker:up` 후 EgoLite 에서 **모든 학생 로그인 500** 발견 — 앱 계정 `dc_app` 에 `dc.fixture_student_login` 권한 누락(테스트는 소유자 계정이라 통과). 178 + `dc_app` 역할 회귀 테스트로 고쳤다(178 없이 실패·있으면 통과 확인).
+- 로컬 테스트 학생 스크립트(`backend/scripts/seed_local_academic_test_students.sql`)가 시드 fixture 2명의 자기모순 학과(세무학과·법학과 코드 ↔ 컴퓨터공학과·경영학과 라벨)를 바로잡는다. 재실행 쓰기 0건.
+- 재측정(EgoLite·curl, 기준선 `baseline.md` 대비): 학생 7명 로그인 200(14~33ms)·학과 정상, `/v2/main` 두 검증 학생 API 9~10건 실패 0·콘솔 오류 0. 교직원 5역할 8화면 실패 0·콘솔 오류 0. 로스터 1쪽 1.71~2.16s → 1.37~1.40s(학생 92,521 → 106,108), 검색 0.31~0.41s, `/departments` 10KB → 94KB(595행).
+- 원본 관찰: `DC_V_COL_INF` 단대 코드 `0` 의 이름이 공백 — 그 아래 4학과(문화테크노학과 136·1001, 문화융합기술협동과정 1712·2708, 학생 93명)가 단대 없이 보인다. 이름을 지어 넣지 않았다(전산원 확인 대상).
+
 ## 2026-11-24 비교과 동의서·공용 UI·학생 파랑 팔레트 웹 서버 배포
 
 - origin/dev 최종 fetch9624c70. 직전a89fb88 이후081da1c/ b5fc3d0/916adb7/52f9e19 비교과 신청 동의서·선택 답변,ea91eae 학생 파랑 팔레트,53c44d6 카드 배경/토큰,a7ffe6d 공용 버튼·카드·달력,9624c70 오늘 할일/진단 버튼을 모두 포함한다. clean archive로 빌드했으며 타 세션 CLAUDE.md/untracked 자료를 보존했다. DESIGN.md의 커밋된 규격도 산출물에 포함된다.

@@ -1,0 +1,80 @@
+old_college,old_dept,old_college_name,old_dept_name,action,new_college,new_dept,new_college_name,new_dept_name,rule,referenced_rows
+C01,C01-01,인문대학,국어국문학과,MAP,1,101,인문대학,국어국문학과,"name+college,univ 00",6
+C01,C01-02,인문대학,영어영문학과,MAP,1,102,인문대학,영어영문학과,"name+college,univ 00",4
+C01,C01-03,인문대학,독어독문학과,MAP,1,103,인문대학,독어독문학과,"name+college,univ 00",0
+C01,C01-04,인문대학,불어불문학과,MAP,1,104,인문대학,불어불문학과,"name+college,univ 00",0
+C01,C01-05,인문대학,일어일문학과,MAP,1,106,인문대학,일어일문학과,"name+college,univ 00",0
+C01,C01-06,인문대학,사학과,MAP,1,105,인문대학,사학과,"name+college,univ 00",0
+C01,C01-07,인문대학,철학과,MAP,1,108,인문대학,철학과,"name+college,univ 00",8
+C01,C01-08,인문대학,유아교육학과,DELETE,,,,,no academic dept; unreferenced,0
+C01,C01-09,인문대학,특수교육학과,DELETE,,,,,no academic dept; unreferenced,0
+C01,C01-10,인문대학,인문계열자율전공학부,DELETE,,,,,no academic dept; unreferenced,0
+C02,C02-01,예술대학,음악과,MAP,6,701,예술대학,음악과,"name+college,univ 00",0
+C02,C02-02,예술대학,미술학과,MAP,6,702,예술대학,미술학과,"name+college,univ 00",0
+C02,C02-03,예술대학,산업디자인학과,MAP,6,703,예술대학,산업디자인학과,"name+college,univ 00",0
+C02,C02-04,예술대학,무용학과,MAP,6,705,예술대학,무용학과,"name+college,univ 00",0
+C03,C03-01,사회과학대학,법학과,MAP,2,201,사회과학대학,법학과,"name+college,univ 00",44
+C03,C03-02,사회과학대학,"행정학과(주,야)",MAP,2,202,사회과학대학,행정학과,manual(day_flag=1 / closest major),4
+C03,C03-03,사회과학대학,국제관계학과,MAP,2,208,사회과학대학,국제관계학과,"name+college,univ 00",0
+C03,C03-04,사회과학대학,중국학과,MAP,2,211,사회과학대학,중국학과,"name+college,univ 00",0
+C03,C03-05,사회과학대학,사회학과,MAP,2,210,사회과학대학,사회학과,"name+college,univ 00",4
+C03,C03-06,사회과학대학,미디어커뮤니케이션학과,MAP,2,221,사회과학대학,미디어커뮤니케이션학과,"name+college,univ 00",0
+C03,C03-07,사회과학대학,사회복지학과,MAP,2,487,사회과학대학,사회복지학과,"name+college,univ 00",0
+C03,C03-08,사회과학대학,사회계열 자울전공학부,DELETE,,,,,no academic dept; unreferenced,0
+C04,C04-01,본부대학,신산업융합경영학과(야),DELETE,,,,,no academic dept; unreferenced,0
+C04,C04-02,본부대학,자산경영빅데이터학과,MAP,10,918,본부,자산경영빅데이터학과,"name+college,univ 00",0
+C04,C04-03,본부대학,빅데이터창업비즈니스학과,MAP,10,920,본부,빅데이터창업비즈니스학과,"name+college,univ 00",0
+C04,C04-04,본부대학,에너지융합공학과,MAP,10,923,본부,에너지융합공학과,"name+college,univ 00",0
+C04,C04-05,본부대학,사림아너스학부,MAP,10,137,본부,사림아너스학부,"name+college,univ 00",0
+C05,C05-01,경영대학,글로벌비지니스학부,DELETE,,,,,no academic dept; unreferenced,0
+C05,C05-02,경영대학,국제무역학과,MAP,8,212,경영대학,국제무역학과,manual(day_flag=1 / closest major),1
+C05,C05-03,경영대학,경영학과,MAP,8,205,경영대학,경영학과,"name+college,univ 00",13
+C05,C05-04,경영대학,회계학과,MAP,8,206,경영대학,회계학과,"name+college,univ 00",2
+C05,C05-05,경영대학,세무학과,MAP,8,214,경영대학,세무학과,"name+college,univ 00",58
+C05,C05-06,경영대학,"국제무역학과(주,야)",DELETE,,,,,no academic dept; unreferenced,0
+C05,C05-07,경영대학,경영계열 자울전공학부,DELETE,,,,,no academic dept; unreferenced,0
+C06,C06-01,자연과학대학,통계학과,MAP,4,309,자연과학대학,통계학과,"name+college,univ 00",0
+C06,C06-02,자연과학대학,의류학과,MAP,4,307,자연과학대학,의류학과,"name+college,univ 00",0
+C06,C06-03,자연과학대학,식품영양학과,MAP,4,308,자연과학대학,식품영양학과,"name+college,univ 00",0
+C06,C06-04,자연과학대학,체육학과,MAP,4,704,자연과학대학,체육학과,"name+college,univ 00",0
+C06,C06-05,자연과학대학,간호학과,MAP,4,334,자연과학대학,간호학과,"name+college,univ 00",0
+C06,C06-06,자연과학대학,스마트헬스케어학과,MAP,4,921,자연과학대학,스마트헬스케어학과,"name+college,univ 00",0
+C07,C07-01,공과대학,산업시스템공학과,MAP,5,405,공과대학,산업시스템공학과,"name+college,univ 00",0
+C07,C07-02,공과대학,스마트오션모빌리티공학과,MAP,5,439,공과대학,스마트오션모빌리티공학과,"name+college,univ 00",0
+C07,C07-03,공과대학,스마트그린공학부 환경에너지공학전공,MAP,5,425,공과대학,스마트그린공학부 환경에너지공학전공,"name+college,univ 00",0
+C07,C07-04,공과대학,스마트그린공학부 건설시스템공학전공,MAP,5,426,공과대학,스마트그린공학부 건설시스템공학전공,"name+college,univ 00",0
+C07,C07-05,공과대학,건축학부 건축공학전공,MAP,5,442,공과대학,건축학부 건축공학전공,"name+college,univ 00",0
+C07,C07-06,공과대학,건축학부 건축학전공,MAP,5,441,공과대학,건축학부 건축학전공,"name+college,univ 00",0
+C07,C07-07,공과대학,컴퓨터공학과,MAP,5,414,공과대학,컴퓨터공학과,"name+college,univ 00",11
+C07,C07-08,공과대학,정보통신공학과,MAP,5,413,공과대학,정보통신공학과,"name+college,univ 00",0
+C07,C07-09,공과대학,전기공학,DELETE,,,,,no academic dept; unreferenced,0
+C07,C07-10,공과대학,전자공학과,MAP,5,714,공과대학,전자공학과,"name+college,univ 00",6
+C07,C07-11,공과대학,지능로봇융합공학과,MAP,5,715,공과대학,지능로봇융합공학과,"name+college,univ 00",0
+C07,C07-12,공과대학,신소재공학부,MAP,5,505,공과대학,신소재공학부,"name+college,univ 00",0
+C07,C07-13,공과대학,첨단소재융합공학과(신설),DELETE,,,,,no academic dept; unreferenced,0
+C07,C07-14,공과대학,재료금속공학과(신설),DELETE,,,,,no academic dept; unreferenced,0
+C07,C07-15,공과대학,메카융합공학과(야),DELETE,,,,,no academic dept; unreferenced,0
+C07,C07-16,공과대학,공학계열자율전공학부,DELETE,,,,,no academic dept; unreferenced,0
+C08,C08-01,글로컬첨단과학대학,이학융합학부,MAP,11,142,글로컬첨단과학기술대학,이학융합학부,"name+college,univ 00",2
+C08,C08-02,글로컬첨단과학대학,공학융합학부,MAP,11,143,글로컬첨단과학기술대학,공학융합학부,"name+college,univ 00",0
+C08,C08-03,글로컬첨단과학대학,기계공학부,MAP,11,154,글로컬첨단과학기술대학,기계공학부,"name+college,univ 00",4
+C08,C08-04,글로컬첨단과학대학,우주항공공학부,MAP,11,144,글로컬첨단과학기술대학,우주항공공학부,"name+college,univ 00",0
+C08,C08-05,글로컬첨단과학대학,반도체물리학과,MAP,11,146,글로컬첨단과학기술대학,반도체물리학과,"name+college,univ 00",0
+C08,C08-06,글로컬첨단과학대학,수리과학과,MAP,11,156a,글로컬첨단과학기술대학,기초과학부 수리과학전공,manual(day_flag=1 / closest major),4
+C08,C08-07,글로컬첨단과학대학,에너지화학과,DELETE,,,,,no academic dept; unreferenced,0
+C08,C08-08,글로컬첨단과학대학,생명과학과,DELETE,,,,,no academic dept; unreferenced,0
+C08,C08-09,글로컬첨단과학대학,미생물생명공학과,MAP,11,164,글로컬첨단과학기술대학,미생물생명공학과,"name+college,univ 00",0
+C08,C08-10,글로컬첨단과학대학,생명보건학과,MAP,11,165,글로컬첨단과학기술대학,생명보건학과,"name+college,univ 00",0
+C08,C08-11,글로컬첨단과학대학,메타융합콘텐츠학부,MAP,11,157,글로컬첨단과학기술대학,메타융합콘텐츠학부,"name+college,univ 00",0
+C08,C08-12,글로컬첨단과학대학,기술경영공학과,MAP,11,153,글로컬첨단과학기술대학,기술경영공학과,"name+college,univ 00",0
+C09,C09-01,GAST-기계공학대학,스마트제조융합공학과,MAP,13,619,GAST-기계공학대학,스마트제조융합공학과,"name+college,univ 00",0
+C09,C09-02,GAST-기계공학대학,에너지기계공학과,MAP,13,610,GAST-기계공학대학,에너지기계공학과,"name+college,univ 00",0
+C09,C09-03,GAST-기계공학대학,모빌리티기계공학과,MAP,13,611,GAST-기계공학대학,모빌리티기계공학과,"name+college,univ 00",0
+C09,C09-04,GAST-기계공학대학,원자력기계공학과,MAP,13,620,GAST-기계공학대학,원자력기계공학과,"name+college,univ 00",0
+C09,C09-05,GAST-기계공학대학,우주항공공학부,MAP,13,609,GAST-기계공학대학,우주항공공학부,"name+college,univ 00",0
+C09,C09-06,GAST-기계공학대학,기계항공자율전공학부,MAP,13,621,GAST-기계공학대학,기계항공자율전공학부,"name+college,univ 00",0
+C10,C10-01,GAST-인공지능대학,인공지능공학과,MAP,12,605,GAST-인공지능대학,인공지능공학과,"name+college,univ 00",0
+C10,C10-02,GAST-인공지능대학,인공지능화학공학과,MAP,12,606,GAST-인공지능대학,인공지능화학공학과,"name+college,univ 00",0
+C10,C10-03,GAST-인공지능대학,AI생명과학과,MAP,12,607,GAST-인공지능대학,AI생명과학과,"name+college,univ 00",0
+C10,C10-04,GAST-인공지능대학,AI 전기공학과,DELETE,,,,,no academic dept; unreferenced,0
+C10,C10-05,GAST-인공지능대학,지능로봇융합공학과,MAP,12,603,GAST-인공지능대학,지능로봇융합공학과,"name+college,univ 00",0

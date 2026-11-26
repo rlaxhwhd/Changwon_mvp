@@ -20,7 +20,8 @@ from .xlsx_export import read_workbook, workbook_sheets
 router = APIRouter()
 
 MONTH = r'^[0-9]{4}-(0[1-9]|1[0-2])$'
-SEX = "CASE r.sex_code WHEN '0001' THEN '남' WHEN '0002' THEN '여' END"
+# 저장된 sex_code 는 스냅샷이다 — 0021 이전 행은 옛 미러 '0001'/'0002', 이후는 학사 원값('0' 남 · 그 외 여).
+SEX = "CASE WHEN r.sex_code IN ('0','0001') THEN '남' WHEN NULLIF(r.sex_code,'') IS NOT NULL THEN '여' END"
 SELECT = f'''SELECT r.id,r.survey_year AS "surveyYear",r.intg_uid AS "intgUid",r.student_no AS "studentNo",
   r.student_name AS name,r.college_name AS "collegeName",r.dept_name AS "deptName",{SEX} AS sex,
   r.graduation_month AS "graduationMonth",r.company_name AS "companyName",r.duty,
@@ -119,7 +120,7 @@ def students(q: str = Query(min_length=1, max_length=50), user=Depends(administr
     condition, value = ('student_no LIKE %s', q+'%') if q.isdigit() else ('name ILIKE %s', like(q))
     conn.execute('SET LOCAL jit=off')
     rows = conn.execute(ROSTER+f''' SELECT student_no AS "studentNo",name,college_name AS "collegeName",
-      major_label AS "deptName",CASE sex_code WHEN '0001' THEN '남' WHEN '0002' THEN '여' END AS sex,
+      major_label AS "deptName",CASE WHEN sex_code='0' THEN '남' WHEN NULLIF(sex_code,'') IS NOT NULL THEN '여' END AS sex,
       graduation_month AS "graduationMonth",status FROM roster WHERE {condition}
       ORDER BY name NULLS LAST,student_no LIMIT 50''', (value,)).fetchall()
     return dict(items=rows)

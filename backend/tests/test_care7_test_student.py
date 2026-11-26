@@ -2,6 +2,7 @@ from app.seed_care7_test_student import seed, UID, COURSE
 from app.students import profile
 from test_psych_referrals import db  # noqa: F401
 from test_api import headers
+from academic_test_support import add_academic_user
 
 
 def student(conn):
@@ -22,12 +23,11 @@ def test_fixture_is_idempotent_and_scores_come_from_completion(db):
 
 
 def test_login_uses_local_override_without_modifying_academic_source(client, db):
-    db.execute('''INSERT INTO academic.v_usr_inf(intg_uid,login_id,user_ty_cd,usr_nm,orgz_nm,stu_schgr)
-      VALUES(%s,%s,'1101','Original academic name','전자공학과','3')''', (UID, UID))
-    original = db.execute('SELECT to_jsonb(a) AS raw FROM academic.v_usr_inf a WHERE intg_uid=%s',(UID,)).fetchone()['raw']
+    add_academic_user(db, UID, usr_nm='Original academic name', hofc_sta_cd='0001', stu_schgr='3', hakbu_cd='270')
+    original = db.execute('SELECT to_jsonb(a) AS raw FROM academic.dc_v_usr_inf a WHERE intg_uid=%s',(UID,)).fetchone()['raw']
     seed(db)
     response=client.post('/api/v1/auth/student/login',headers=headers(UID),json={'studentNo':UID,'password':'!'})
     assert response.status_code==200
     assert response.json()['name']=='김태정'
     assert response.json()['grade']==2
-    assert original==db.execute('SELECT to_jsonb(a) AS raw FROM academic.v_usr_inf a WHERE intg_uid=%s',(UID,)).fetchone()['raw']
+    assert original==db.execute('SELECT to_jsonb(a) AS raw FROM academic.dc_v_usr_inf a WHERE intg_uid=%s',(UID,)).fetchone()['raw']

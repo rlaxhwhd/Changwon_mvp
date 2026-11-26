@@ -9,6 +9,7 @@ from app.employment_report import month_cell
 from app.xlsx_export import read_workbook, workbook_sheets
 from test_api import headers
 from test_psych_referrals import db  # noqa: F401
+from academic_test_support import add_academic_dept, add_academic_user
 
 URL = '/api/v1/forecast/employments'
 ADMIN = headers('system-admin')
@@ -16,11 +17,11 @@ ADMIN = headers('system-admin')
 
 @pytest.fixture
 def grads(db):
+    add_academic_dept(db, '98', 'Forecast College', '9898', 'Forecast Major')
     for index in (1, 2):
-        db.execute('''INSERT INTO academic.v_usr_inf
-          (intg_uid,login_id,usr_nm,user_ty_cd,hofc_sta_cd,stu_schgr,orgz_nm,sex,out_dt)
-          VALUES(%s,%s,%s,'1101','0005','4','Forecast Major','0001','20260220')''',
-          (f'forecast-test-{index}', f'99887766{index}', f'Forecast Grad {index}'))
+        # 학번 = 학사 INTG_UID. 성별은 학사 원값('0' 남).
+        add_academic_user(db, f'99887766{index}', usr_nm=f'Forecast Grad {index}', hofc_sta_cd='0005', stu_schgr='4',
+                          hakbu_cd='9898', sex='0', out_dt='20260220')
     return ['998877661', '998877662']
 
 

@@ -55,10 +55,11 @@ def login(body: Login, request: Request, response: Response, x_dc_token: str = H
     if not secrets.compare_digest(body.password.get_secret_value().encode(), b'!'):
         raise HTTPException(401, '학번 또는 비밀번호가 올바르지 않습니다.')
     number = body.studentNo.strip()
+    # 로컬 로그인 번호(fixture)를 먼저 학사 uid 로 풀고 uid 단일 조건으로 찾는다 — intg_uid 인덱스를 탄다.
+    # 학사 원본(dc_v_usr_inf)과 로컬 인원(local_usr_inf)이 한 뷰에 있어 별도 fixture 경로가 없다.
     rows = conn.execute('''SELECT * FROM dc.student_login_source
-      WHERE student_no=%s OR intg_uid=%s LIMIT 2''', (number, number)).fetchall()
-    if not rows:
-        rows = conn.execute('SELECT * FROM dc.fixture_student_login_source WHERE student_no=%s', (number,)).fetchall()
+      WHERE intg_uid=COALESCE((SELECT student_uid FROM dc.fixture_student_login WHERE student_no=%s),%s)
+      LIMIT 2''', (number, number)).fetchall()
     if len(rows) != 1:
         raise HTTPException(401, '학번 또는 비밀번호가 올바르지 않습니다.')
     student = enroll_student(conn, rows[0])

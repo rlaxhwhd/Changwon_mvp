@@ -854,41 +854,46 @@ DB로 바꿀 때 **화면을 한 줄도 고치지 않는 것**이 이 seam의 �
 
 ### 7-2. 신분 코드 `UserType` <span>★ 대학원 지원의 1차 관문</span>
 
-`V_USR_INF.USER_TY_CD` (학사DB 발급, 4자리). **집합 상수로만 쓴다.**
+**2026-11-25 전산원 뷰 전환(0021, migration 176) 이후 정본은 `INTRANET.DC_V_USR_INF`다.** 신분(`USER_TY_CD`)과 학적(`HOFC_STA_CD`)·과정(`UNIV_CD`)이 분리됐다 — 옛 4자리 코드가 섞어 담던 「재학/졸업 × 학부/대학원」을 세 컬럼의 조합으로 판정한다. **집합 상수로만 쓴다.**
 
-| 우리 코드 | 라벨 | `USER_TY_CD` | 세션 1글자 |
+| 우리 코드 | 라벨 | 판정(전산원 원값) | 세션 1글자 |
 |---|---|---|---|
-| `STU_UG` | 재학생-학부 | `1101` | `S` |
-| `STU_UG_ALUM` | 졸업생-학부 | `1102` | `S` |
-| `STU_GR` | **재학생-대학원** | `1201` | `S` |
-| `STU_GR_ALUM` | **졸업생-대학원** | `1202` | `S` |
-| `FACULTY` | 교원 | `1301` | `P` |
-| `STAFF` | 직원 | `1401` | `M` |
-| `ASSISTANT` | 조교 | `1501` | `A` |
-| `COUNSELOR` | 상담사 | — (`COM_CON_INF` 조회 후 덮어씀) | `T` |
+| `STU_UG` | 재학생-학부 | `USER_TY_CD='0001'` + `HOFC_STA_CD IN('0001','0002')` + 학부 과정 | `S` |
+| `STU_UG_ALUM` | 졸업생-학부 | `0001` + `HOFC_STA_CD IN('0003','0004','0005')` + 학부 과정 | `S` |
+| `STU_GR` | **재학생-대학원** | `0001` + 재학·휴학 + 대학원 과정 | `S` |
+| `STU_GR_ALUM` | **졸업생-대학원** | `0001` + 수료·제적·졸업 + 대학원 과정 | `S` |
+| `FACULTY` | 교원 | `0002` | `P` |
+| `STAFF` | 직원 | `0003` | `M` |
+| `ASSISTANT` | 조교 | `0004` | `A` |
+| `COUNSELOR` | 상담사 | — (`COM_CON_INF` 조회 후 덮어씀 — 0021 이후 옛 코드로 동결된 legacy) | `T` |
+
+과정: 대학원 = `UNIV_CD IN('01'~'12','91','92')`, 학부 = `00`·`90`(전문학사, 팀장 확정 2026-11-25)·NULL — §7-4. 옛 코드 `1101/1102/1201/1202/1301/1401/1501` 은 옛 미러(`academic.v_usr_inf`) 전용이며 앱은 더 이상 읽지 않는다.
 
 **필수 집합 상수** — 화면·로더는 이것만 쓴다.
 
 ```ts
-export const STUDENT_ENROLLED = ['STU_UG', 'STU_GR'] as const   // 재학생 전체 ★ 기본값
+export const STUDENT_ENROLLED = ['STU_UG', 'STU_GR'] as const   // 재학생 전체 ★ 기본값 — SQL: user_ty_cd='0001' AND hofc_sta_cd IN('0001','0002')
 export const STUDENT_ALL      = ['STU_UG','STU_UG_ALUM','STU_GR','STU_GR_ALUM'] as const
 export const STUDENT_UG_ONLY  = ['STU_UG'] as const              // 학부 한정이 정책일 때만
 ```
 
+> 학생 로그인은 `STUDENT_ALL`(학적 상태 무관 `USER_TY_CD='0001'` 전체, 사용자 확정 2026-11-25)이다 — `docs/STUDENT_LOGIN.md`.
+>
 > ⚠️ **현행의 `1101` 리터럴 229곳을 그대로 옮기면 대학원생이 다시 사라진다.** 이관 시 각 지점을 위 집합으로 치환하되, **`STUDENT_UG_ONLY`를 쓰는 곳은 "왜 학부만인지" 주석을 남긴다**(예: 학부 기준 취업통계).
 
 ### 7-3. 학적·재직 상태 `EnrollStatus`
 
-`V_USR_INF.HOFC_STA_CD` + `SY_CODE` 그룹 `0034`.
+`DC_V_USR_INF.HOFC_STA_CD`(전산원 원값, 0021 이후). 옛 미러의 재직 `89`·퇴직 `90` 은 쓰지 않는다.
 
-| 코드 | 라벨 | 현행 | 비고 |
+| 코드 | 라벨 | 전산원 원값 | 비고 |
 |---|---|---|---|
 | `ENROLLED` | 재학 | `0001` | **목록 기본 필터** |
-| `LEAVE` | 휴학 | | |
-| `GRADUATED` | 졸업 | | `V_USR_INF`에 대량 누적 |
-| `COMPLETED` | 수료 | | 대학원 수료생 — 대학원 지원 시 누락 주의 |
-| `EXPELLED` | 제적·자퇴 | `OUT_STAT` | |
-| `EMPLOYED` / `RETIRED` | 재직 / 퇴직 | `89` / `90` | **교직원 전용** — 같은 컬럼을 학생/교직원이 공유한다 |
+| `LEAVE` | 휴학 | `0002` | |
+| `COMPLETED` | 수료 | `0003` | 대학원 수료생 — 대학원 지원 시 누락 주의 |
+| `EXPELLED` | 제적 | `0004` | |
+| `GRADUATED` | 졸업 | `0005` | 대량 누적 |
+| `EMPLOYED` / `RETIRED` | 재직 / 퇴직 | `0006` / `00007` | **교직원 전용**. `00007` 은 휴직·퇴직이 섞일 수 있다(haksa.md §4 — 전산원 확인 대상) |
+| — | 미상 | NULL | 학생 56행(2026-11-25 실측). 로그인은 허용, 화면 라벨 「미상」 |
 
 ### 7-4. 과정 구분 `CourseType` <span>★ 대학원 지원의 2차 관문</span>
 
@@ -900,7 +905,10 @@ export const STUDENT_UG_ONLY  = ['STU_UG'] as const              // 학부 한�
 | `MASTER` | 대학원 석사 | `01` | 364 |
 | `DOCTOR` | 대학원 박사 | `02` | 69 |
 | `PROFESSIONAL` | 전문·특수대학원 | `03`~`12` | 226 |
-| `ETC` | 기타 | `90` | 21 |
+| `ETC` | 전문학사 | `90` | 21 — **학부로 분류**(팀장 확정 2026-11-25, 0021) |
+| `INTEGRATED` | 석박통합 | `91`·`92` | 전산원 뷰에서 확인 — 대학원으로 분류 |
+
+> 0021 이후 학생의 과정은 `DC_V_USR_INF.UNIV_CD`, 학과의 과정은 `DC_V_DEPT_INF.UNIV_CODE` 이고 표시명은 `DC_V_CODE_INF(CODE_GRP='UNIV_CD')` 다. `academicLevel` 응답 계약은 `'학부'|'대학원'` 두 값뿐이다.
 
 ### 7-5. 조직 종류 `DeptKind`
 

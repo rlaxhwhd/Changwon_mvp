@@ -5,8 +5,9 @@
 -- Back up first. Rehearse with apply=false, then apply=true. Re-running is safe.
 -- Recovery: the inserts do not replace existing records. Retain the account
 -- after activity starts; any removal must be a reviewed forward data migration.
--- Full academic snapshot replacement can remove the mirror-only fixture, while
--- its fallback login remains. Re-run this migration to restore the roster row.
+-- 0021: the academic row goes to academic.local_usr_inf (local identities; the DC_V_*
+-- sync never deletes it). Organization codes are academic codes (service = academic pair).
+-- sex_code is the academic SEX value ('0' male, '1' female).
 \set ON_ERROR_STOP on
 BEGIN;
 SET LOCAL lock_timeout='5s';
@@ -24,14 +25,14 @@ DECLARE t record;
 BEGIN
   SELECT * INTO STRICT t FROM requested_test_student;
   IF t.uid !~ '^[0-9]{8}$' OR t.name='' OR t.grade NOT BETWEEN 1 AND 10
-     OR t.gpa < 0 OR t.sex_code NOT IN ('0001','0002') THEN
+     OR t.gpa < 0 OR t.sex_code NOT IN ('0','1') OR t.grade > 9 THEN
     RAISE EXCEPTION 'Invalid synthetic student profile';
   END IF;
   IF NOT EXISTS (SELECT 1 FROM dc.department WHERE college_code=t.service_college
       AND dept_code=t.service_dept AND college_name=t.college_name AND dept_name=t.dept_name)
-     OR NOT EXISTS (SELECT 1 FROM dc.academic_organizations WHERE dept_cd=t.academic_college
+     OR NOT EXISTS (SELECT 1 FROM dc.academic_organizations WHERE lvl='1' AND dept_cd=t.academic_college
       AND dept_nm=t.college_name)
-     OR NOT EXISTS (SELECT 1 FROM dc.academic_organizations WHERE dept_cd=t.academic_dept
+     OR NOT EXISTS (SELECT 1 FROM dc.academic_organizations WHERE lvl='2' AND dept_cd=t.academic_dept
       AND dept_up_cd=t.academic_college AND dept_nm=t.dept_name) THEN
     RAISE EXCEPTION 'Synthetic account organization contract does not match';
   END IF;
@@ -43,9 +44,9 @@ BEGIN
      OR EXISTS (SELECT 1 FROM dc.fixture_student_login WHERE (student_uid=t.uid OR student_no=t.uid)
       AND NOT (student_uid=t.uid AND student_no=t.uid))
      OR EXISTS (SELECT 1 FROM dc.student_login_override WHERE intg_uid=t.uid)
-     OR EXISTS (SELECT 1 FROM academic.v_usr_inf WHERE (intg_uid=t.uid OR login_id=t.uid)
-      AND (intg_uid IS DISTINCT FROM t.uid OR login_id IS DISTINCT FROM t.uid
-        OR uuid IS DISTINCT FROM 'requested-test-student')) THEN
+     OR EXISTS (SELECT 1 FROM academic.dc_v_usr_inf WHERE intg_uid=t.uid)
+     OR EXISTS (SELECT 1 FROM academic.local_usr_inf WHERE intg_uid=t.uid
+      AND note IS DISTINCT FROM 'requested-test-student') THEN
     RAISE EXCEPTION 'Requested synthetic account collides with an existing identity';
   END IF;
 END $$;
@@ -59,18 +60,17 @@ SELECT uid,uid,dept_name,grade,service_college,service_dept,
 FROM requested_test_student ON CONFLICT DO NOTHING;
 INSERT INTO dc.fixture_student_login(student_no,student_uid)
 SELECT uid,uid FROM requested_test_student ON CONFLICT DO NOTHING;
-INSERT INTO academic.v_usr_inf(intg_uid,login_id,usr_nm,user_ty_cd,hofc_sta_cd,stu_schgr,
-                               orgid,orgz_nm,daehak_cd,hakbu_cd,major_cd,grade,sex,uuid)
-SELECT uid,uid,name,'1101','0001',grade::text,academic_dept,dept_name,
-       academic_college,academic_dept,academic_dept,gpa,sex_code,'requested-test-student'
-FROM requested_test_student t
-WHERE NOT EXISTS (SELECT 1 FROM academic.v_usr_inf a WHERE a.intg_uid=t.uid);
+INSERT INTO academic.local_usr_inf(intg_uid,usr_nm,user_ty_cd,hofc_sta_cd,stu_schgr,univ_cd,
+                                   daehak_cd,hakbu_cd,grade,sex,note)
+SELECT uid,name,'0001','0001',grade::text,'00',academic_college,academic_dept,gpa,sex_code,
+       'requested-test-student'
+FROM requested_test_student ON CONFLICT (intg_uid) DO NOTHING;
 DO $$ BEGIN
   IF (SELECT count(*) FROM requested_test_student t
       JOIN dc.student_login_source a ON a.intg_uid=t.uid
       JOIN dc.academic_people p ON p.intg_uid=t.uid
       JOIN dc.academic_student_details x ON x.intg_uid=t.uid
-      JOIN dc.academic_organizations c ON c.dept_cd=a.college_code
+      JOIN dc.academic_organizations c ON c.lvl='1' AND c.dept_cd=a.college_code
       JOIN dc.student s ON s.intg_uid=t.uid
       WHERE a.student_no=t.uid AND a.name=t.name AND a.stu_schgr=t.grade::text
         AND a.hofc_sta_cd='0001' AND a.dept_code=t.academic_dept
