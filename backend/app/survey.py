@@ -185,6 +185,54 @@ def satisfaction_stats(program_id: str, user=Depends(principal, scope='function'
             'participation': dict(counts), 'total': score_summary(all_values), 'areas': areas, 'comments': comments}
 
 
+class SummaryBody(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    programIds: list[str] = Field(min_length=1, max_length=1000)
+
+
+@router.post('/programs/survey-summary')
+def survey_summary(body: SummaryBody, user=Depends(principal, scope='function'),
+                   conn=Depends(connection, scope='function')):
+    """프로그램 관리 「통계확인」 — 여러 프로그램의 만족도(100점 환산)와 진로·직무·취업 향상률을 한 번에.
+    프로그램마다 각 탭 통계와 같은 식이다. 만족도 = 척도 문항 평균 × 20.
+    향상률 = 사전·사후를 모두 낸 학생의 문항 쌍으로 (사후 평균 - 사전 평균) / 사전 평균 × 100, 영역 묶음(진로·직무·취업)별.
+    조사를 실시하지 않았거나 응답(쌍)이 없으면 None — 0 으로 꾸미지 않는다. 화면은 None 인 프로그램을 평균에서 뺀다.
+    n 은 사람 수다(만족도 = 응답자, 향상률 = 사전·사후를 모두 낸 학생) — 탭 통계의 n(답·문항 쌍 수)과 다르다.
+    만족도는 ×20 뒤에 한 번만 반올림하므로 탭의 반올림된 평균×20 과 0.1 차이 날 수 있다."""
+    require_staff(user)
+    ids = list(dict.fromkeys(body.programIds))
+    satisfaction = {r['program_id']: r for r in conn.execute('''SELECT p.id AS program_id,
+      round(avg(s.value)*20,1) AS score,count(DISTINCT r.id)::int AS n
+      FROM dc.program p
+      JOIN dc.survey_response r ON r.program_id=p.id AND r.phase='SATISFACTION'
+      JOIN dc.survey_form_item fi ON fi.form_id=p.satisfaction_form_id
+      JOIN dc.survey_answer s ON s.response_id=r.id AND s.item_code=fi.item_code
+      WHERE p.id=ANY(%s) AND p.satisfaction_survey AND s.value IS NOT NULL
+      GROUP BY p.id''', (ids,)).fetchall()}
+    growth = {}
+    for r in conn.execute('''SELECT p.id AS program_id,a.payload->>'group' AS grp,
+      avg(sa.value) AS pre_avg,avg(sb.value) AS post_avg,count(DISTINCT pre.student_uid)::int AS n
+      FROM dc.program p
+      JOIN dc.survey_form_item fi ON fi.form_id=p.competency_form_id AND fi.area_code=ANY(p.competency_areas)
+      JOIN dc.code_item a ON (a.group_code,a.code)=('SURVEY_AREA',fi.area_code)
+      JOIN dc.survey_response pre ON pre.program_id=p.id AND pre.phase='PRE'
+      JOIN dc.survey_response post ON (post.program_id,post.student_uid,post.phase)=(p.id,pre.student_uid,'POST')
+      JOIN dc.survey_answer sa ON sa.response_id=pre.id AND sa.item_code=fi.item_code
+      JOIN dc.survey_answer sb ON sb.response_id=post.id AND sb.item_code=fi.item_code
+      WHERE p.id=ANY(%s) AND p.competency_survey AND sa.value IS NOT NULL AND sb.value IS NOT NULL
+      GROUP BY p.id,a.payload->>'group' ''', (ids,)).fetchall():
+        pre, post = float(r['pre_avg']), float(r['post_avg'])
+        growth.setdefault(r['program_id'], {})[r['grp']] = {
+            'improvement': round((post - pre) / pre * 100, 1) if pre else None, 'n': r['n']}
+
+    def score(program_id):
+        row = satisfaction.get(program_id)
+        return {'score': float(row['score']), 'n': row['n']} if row else None
+
+    return {'items': [{'programId': pid, 'satisfaction': score(pid),
+                       'growth': {grp: growth.get(pid, {}).get(grp) for grp in SURVEY_GROUP_LABEL}} for pid in ids]}
+
+
 @router.get('/programs/{program_id}/survey/{phase}/export.xlsx')
 def survey_export(program_id: str, phase: str, user=Depends(principal, scope='function'),
                   conn=Depends(connection, scope='function')):

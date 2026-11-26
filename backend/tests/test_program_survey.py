@@ -228,3 +228,39 @@ def test_satisfaction_survey_scale_and_text_items_stats_and_export(client):
     assert rows[1][6:] == ['4'] * 16 + ['강사님이 좋았어요', ''] and rows[2][6:] == ['2'] * 16 + ['', '']
     plain = new_program(client, satisfactionSurvey=False, capacity=2)
     assert client.get(f"/api/v1/programs/{plain['id']}/survey/SATISFACTION/export.xlsx", headers=headers('career_kim')).status_code == 409
+
+
+def test_survey_summary_matches_tab_stats_and_leaves_missing_surveys_empty(client):
+    """프로그램 관리 「통계확인」 — 여러 프로그램을 한 번에. 탭 통계와 같은 값이고, 조사가 없으면 None."""
+    future = (date.today() + timedelta(days=30)).isoformat()
+    growth = new_program(client, competencySurvey=True, competencyAreas=AREAS, runStartDate=future, capacity=3)
+    for student, pre, post in (('chaewon', 2, 3), ('changwon', 4, 5)):
+        assert apply_as(client, student, growth['id']).status_code == 201
+        select_and_complete(client, growth['id'], student)
+        assert submit(client, growth['id'], 'PRE', pre, student).status_code == 201
+        select_and_complete(client, growth['id'], student, complete=True)
+        assert submit(client, growth['id'], 'POST', post, student).status_code == 201
+    liked = new_program(client, satisfactionSurvey=True, competencySurvey=False, competencyAreas=[], capacity=3)
+    for student, value in (('chaewon', 4), ('changwon', 2)):
+        assert apply_as(client, student, liked['id']).status_code == 201
+        select_and_complete(client, liked['id'], student, complete=True)
+        scale = [i['code'] for a in form(client, liked['id'], 'SATISFACTION', student)['areas'] for i in a['items'] if i['kind'] == 'SCALE']
+        assert client.post(f"/api/v1/programs/{liked['id']}/survey/SATISFACTION", headers=headers(student),
+                           json={'answers': {c: value for c in scale}}).status_code == 201
+    plain = new_program(client, capacity=2)
+    url = '/api/v1/programs/survey-summary'
+    ids = [growth['id'], liked['id'], plain['id'], growth['id']]
+    assert client.post(url, headers=headers('chaewon'), json={'programIds': ids}).status_code == 403
+    assert client.post(url, headers=headers('career_kim'), json={'programIds': []}).status_code == 422
+    response = client.post(url, headers=headers('career_kim'), json={'programIds': ids})
+    assert response.status_code == 200, response.text
+    items = response.json()['items']
+    assert [i['programId'] for i in items] == [growth['id'], liked['id'], plain['id']]  # 중복 제거, 순서 유지
+    # 진로·직무 모두 사전 (2+4)/2=3 → 사후 4 = 33.3% (탭 통계와 같은 식), 고르지 않은 취업은 None
+    tab = client.get(f"/api/v1/programs/{growth['id']}/survey/stats", headers=headers('career_kim')).json()
+    assert items[0]['growth'] == {'CAREER': {'improvement': 33.3, 'n': 2}, 'JOB': {'improvement': 33.3, 'n': 2}, 'EMPLOY': None}
+    assert tab['areas'][0]['improvement'] == 33.3 and items[0]['satisfaction'] is None
+    # 만족도 척도 평균 (4+2)/2=3 → 100점 환산 60.0, 응답 2건
+    assert items[1] == {'programId': liked['id'], 'satisfaction': {'score': 60.0, 'n': 2},
+                        'growth': {'CAREER': None, 'JOB': None, 'EMPLOY': None}}
+    assert items[2]['satisfaction'] is None and set(items[2]['growth'].values()) == {None}

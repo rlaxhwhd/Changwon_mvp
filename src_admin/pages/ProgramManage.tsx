@@ -1,10 +1,11 @@
-import { LuClipboardList, LuDownload, LuPin, LuPlus } from 'react-icons/lu'
+import { LuChartColumn, LuClipboardList, LuDownload, LuPin, LuPlus } from 'react-icons/lu'
 import { useState } from 'react'
 import type { FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import EmptyState from '../components/EmptyState'
 import { getPrograms, sortByPriority, updateProgram, removeProgram } from '../data/programs'
 import AdminModal from '../components/AdminModal'
+import ProgramStatsModal from '../components/ProgramStatsModal'
 import { EXPORT_TARGETS, EXPORT_TARGET_LABEL, getApplicantExportRows, toApplicantRows } from '../data/programExport'
 import type { ExportTarget } from '../data/programExport'
 import { downloadXlsx } from '../../shared/xlsx'
@@ -40,6 +41,8 @@ export default function ProgramManage() {
   const [filters, setFilters] = useState<ProgramManageFilters>(EMPTY_PROGRAM_FILTERS)
   const [downloading, setDownloading] = useState(false)
   const [downloadError, setDownloadError] = useState('')
+  // 통계 모달은 연 순간의 선택을 붙잡는다 — 모달 안에서 체크를 풀어도 목록 선택은 그대로다.
+  const [statsPrograms, setStatsPrograms] = useState<Program[] | null>(null)
   const today = new Date().toISOString().slice(0, 10)
   const visible = filterPrograms(programs, filters, today)
   const fiscalYears = [...new Set(programs.map(p => p.fiscalYear).filter(Boolean))].sort().reverse()
@@ -225,6 +228,9 @@ export default function ProgramManage() {
                   <LuDownload /> 엑셀 다운로드
                 </button>
                 <button type="button" className="admin-btn admin-btn-danger sm" onClick={() => { setDeleteError(''); setDeleteOpen(true) }}>선택 삭제</button>
+                <button type="button" className="admin-btn sm" onClick={() => setStatsPrograms(visible.filter(p => checked.has(p.id)))}>
+                  <LuChartColumn /> 통계확인
+                </button>
               </div>
             )}
 
@@ -302,6 +308,7 @@ export default function ProgramManage() {
           </>
         )}
       </section>
+      {statsPrograms && <ProgramStatsModal programs={statsPrograms} onClose={() => setStatsPrograms(null)} />}
       {deleteOpen && <AdminModal title="프로그램 삭제" onClose={() => { if (!deleting) setDeleteOpen(false) }}>
         <p>선택한 {checked.size}개 프로그램과 신청 기록을 삭제합니다. 삭제한 데이터는 복구할 수 없습니다.</p>
         <p>이수 결과·로드맵·설문 등 연결된 이력이 있으면 삭제되지 않습니다.</p>
