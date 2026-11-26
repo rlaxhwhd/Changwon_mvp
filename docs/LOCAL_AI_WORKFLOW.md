@@ -1,5 +1,12 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-26 교수·조교 학과 배정 범위 학사 학생 전체로 확장(179) 로컬 반영 — 서버 미배포
+
+- 핸드오프 `.ai/handoff-db/0022-staff-academic-dept-scope/`(work-order rev2·Astra 조건부 승인·implementation·verification). `npm run docker:migrate` 로 179 적용(백업 `_workspace/db-backups/local-before-migrate-20261126010946843.dump`), `docker:up` 전체 healthy.
+- 격리 회귀 10 failed/788 passed — 실패 집합이 변경 전과 같다(diff 0). `npx tsc -b` exit 0.
+- EgoLite: 교수 「학생 검색」 5 → 2,142명, 조교 「학생 현황」 6 → 5,531명(재학 기본). 목록 116~212ms·메타 271~360ms, 「보기」 403 → 200. 실패 요청 0·콘솔 오류 0. 상담사 전체 학생 목록 1.23~1.34s(회귀 없음).
+- ⚠️ nginx 가 SPA HTML 에 `Cache-Control` 을 주지 않아 브라우저가 전날 열었던 딥링크를 옛 번들로 열 수 있다 — 검증은 캐시 끔으로 한다. 배포 설정 후속 후보.
+
 ## 2026-11-25~26 학사 전산원 DC_V_* 전환·조직코드 통일(176~178) 로컬 반영 — 서버 미배포
 
 - 핸드오프 `.ai/handoff-db/0021-academic-dc-view-cutover/`(work-order rev2·Astra 승인·사후 리뷰·178 리뷰·implementation·verification). 로컬 `dreamcatch` 에 전산원 14개 뷰 실적재(LECT_OPEN·LECT_CAP 은 ORA-00942 로 미제공), 176·177(Sol)·178(팀장, Astra 승인) 적용. 백업 `_workspace/backups/dreamcatch-before-0021-20261125-164553.dump`, `local-before-migrate-20261125085145897.dump`.

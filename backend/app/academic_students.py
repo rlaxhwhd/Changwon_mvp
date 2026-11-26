@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from .auth import principal, require_staff, is_counselor, student_access
+from .auth import principal, require_staff, is_counselor, staff_may_read, student_access
 from .db import connection
 from .jobs import MENU_PREDICATE
 from .students import HIGH, CORE
@@ -45,10 +45,23 @@ ROSTER = '''WITH service AS MATERIALIZED (
 )'''
 
 
-def roster_query(diagnosed=False):
+# 교수·조교(0022): 배정 범위를 roster CTE 안 한 곳에만 건다 — 목록·메타 집계·옵션·diagnosed 변형이
+# 같은 모집단을 본다. roster CTE 의 유일한 자리표시자이므로 값 목록 맨 앞에 교직원 uid 를 둔다.
+STAFF_SCOPE = '''
+  WHERE EXISTS(SELECT 1 FROM dc.staff_student_scope g WHERE g.staff_uid=%s AND g.student_uid=a.intg_uid)
+)'''
+
+
+def roster_query(diagnosed=False, scoped=False):
     """Diagnosis filters need identity/type/STAR, not per-student activity totals."""
-    if not diagnosed:
-        return ROSTER
+    query = diagnosed_roster() if diagnosed else ROSTER
+    if scoped:
+        assert query.endswith('LEFT JOIN service v USING(intg_uid)\n)')
+        query = query[:-2] + STAFF_SCOPE
+    return query
+
+
+def diagnosed_roster():
     academic = ROSTER[ROSTER.index('), roster AS ('):]
     return '''WITH diagnosed_students AS MATERIALIZED (
       SELECT DISTINCT student_uid AS intg_uid FROM dc.diagnosis_attempt
@@ -81,12 +94,20 @@ RETAKE_PENDING = "EXISTS(SELECT 1 FROM dc.diagnosis_retake q WHERE q.student_uid
 
 
 def authorize(conn, user):
+    """True when the viewer is limited to their own student scope (professor·assistant, 0022)."""
     require_staff(user)
-    if not conn.execute(MENU_PREDICATE, ('students.1', user['intg_uid'], user['intg_uid'])).fetchone()['ok']:
+    if conn.execute(MENU_PREDICATE, ('students.1', user['intg_uid'], user['intg_uid'])).fetchone()['ok']:
+        scoped = False
+    elif conn.execute("SELECT 1 FROM dc.staff WHERE intg_uid=%s AND role_code IN ('professor','assistant')",
+                      (user['intg_uid'],)).fetchone():
+        # 범위 뷰의 학과 배정 가지와 같은 근거(dc.staff.role_code)로 판정한다.
+        scoped = True
+    else:
         raise HTTPException(403, '전체 학생 목록 조회 권한이 없습니다.')
     # These read-model joins trigger costly LLVM compilation for a short paged query.
     # Keep this transaction-local; do not change database-wide tuning.
     conn.execute('SET LOCAL jit=off')
+    return scoped
 
 
 def filters(request, q):
@@ -132,8 +153,8 @@ def filters(request, q):
 
 @router.get('/academic-students/metadata')
 def metadata(diagnosed: bool = False, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    authorize(conn, user)
-    roster = roster_query(diagnosed)
+    scoped = authorize(conn, user)
+    roster = roster_query(diagnosed, scoped)
     pending = RETAKE_PENDING if diagnosed else 'false'
     row = conn.execute(roster + f''' SELECT count(*) AS total,
       count(*) FILTER(WHERE tier='하위') AS "focusCount",
@@ -149,7 +170,7 @@ def metadata(diagnosed: bool = False, user=Depends(principal, scope='function'),
       ARRAY(SELECT status FROM roster GROUP BY status ORDER BY status) AS statuses,
       (SELECT json_object_agg(college_name, majors) FROM (SELECT college_name, array_agg(major_label ORDER BY major_label) AS majors
         FROM (SELECT college_name COLLATE "C" AS college_name, major_label COLLATE "C" AS major_label
-          FROM roster WHERE college_name IS NOT NULL GROUP BY 1,2) p GROUP BY college_name) c) AS "collegeMajors" FROM roster''').fetchone()
+          FROM roster WHERE college_name IS NOT NULL GROUP BY 1,2) p GROUP BY college_name) c) AS "collegeMajors" FROM roster''', [user['intg_uid']] if scoped else None).fetchone()
     # collegeMajors — 대학을 고르면 학과 목록을 그 대학 소속으로 좁힌다. 학과 트리 이름 매칭이 아니라 학적 행의 (대학, 학과) 쌍이다.
     # 9만 행을 기본(한국어) 정렬로 묶으면 5초 넘게 걸려 "C" 정렬로 묶는다(2026-10-28 측정 +5.8s → +0.1s).
     return {'summary': {k: row[k] for k in ('total','focusCount','highRiskCount','coreCareCount','starCount','care7Count','retakePendingCount')},
@@ -160,7 +181,7 @@ def metadata(diagnosed: bool = False, user=Depends(principal, scope='function'),
 def students(request: Request, page: int = Query(1, ge=1), pageSize: int = Query(100, ge=1, le=300),
              q: str = Query('', max_length=200), user=Depends(principal, scope='function'),
              conn=Depends(connection, scope='function')):
-    authorize(conn, user)
+    scoped = authorize(conn, user)
     condition, values = filters(request, q)
     diagnosed = request.query_params.get('filters.diagnosed') == 'Y'
     items = 'to_jsonb(p)'
@@ -169,13 +190,14 @@ def students(request: Request, page: int = Query(1, ge=1), pageSize: int = Query
         joins = PAGE_METRICS
         items = "to_jsonb(p) || jsonb_build_object('progress',COALESCE(metrics.progress,0),'has_roadmap',COALESCE(metrics.has_roadmap,false),'program_count',COALESCE(metrics.program_count,0),'counsel_count',COALESCE(metrics.counsel_count,0))"
     # Count and page share one snapshot; ties remain stable between pages.
-    result = conn.execute(roster_query(diagnosed) + f''', filtered AS MATERIALIZED (
+    result = conn.execute(roster_query(diagnosed, scoped) + f''', filtered AS MATERIALIZED (
       SELECT * FROM roster WHERE {condition}
     ), paged AS MATERIALIZED (SELECT * FROM filtered ORDER BY name NULLS LAST,student_no,intg_uid LIMIT %s OFFSET %s)
     SELECT (SELECT count(*) FROM filtered) AS total,
       COALESCE((SELECT jsonb_agg({items} ORDER BY p.name NULLS LAST,p.student_no,p.intg_uid) FROM paged p {joins}),'[]'::jsonb) AS items''',
-      [*values, pageSize, (page-1)*pageSize]).fetchone()
-    readable = {r['student_uid'] for r in conn.execute('''SELECT student_uid FROM dc.staff_student_scope
+      [*([user['intg_uid']] if scoped else []), *values, pageSize, (page-1)*pageSize]).fetchone()
+    # 범위 모드의 행은 모두 범위 안이다 — 열람 가능 여부를 다시 묻지 않는다.
+    readable = set() if scoped else {r['student_uid'] for r in conn.execute('''SELECT student_uid FROM dc.staff_student_scope
       WHERE staff_uid=%s AND student_uid=ANY(%s) UNION SELECT student_uid FROM dc.counsel_request
       WHERE counselor_uid=%s AND student_uid=ANY(%s)''',
       (user['intg_uid'], [r['intg_uid'] for r in result['items']],
@@ -185,7 +207,7 @@ def students(request: Request, page: int = Query(1, ge=1), pageSize: int = Query
              sex=r['sex'],sexCode=r['sex_code'],graduationMonth=r['graduation_month'],gpa=r['gpa'],
              academicLevel=r['academic_level'],status=r['status'],studentType=r['student_type'],star=r['star'],
              tier=r['tier'],progress=r['progress'],hasRoadmap=r['has_roadmap'],hasDetail=False,
-             canReadDetail=is_counselor(user) or r['intg_uid'] in readable,
+             canReadDetail=scoped or is_counselor(user) or r['intg_uid'] in readable,
              programCount=r['program_count'],counselCount=r['counsel_count']) for r in result['items']],
             'totalCount': result['total'], 'page': page, 'pageSize': pageSize}
 
@@ -197,7 +219,9 @@ class StudentExportSelection(BaseModel):
 @router.post('/academic-students/export')
 def export(request: Request, body: StudentExportSelection, q: str = Query('', max_length=200),
            user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    authorize(conn, user)
+    if authorize(conn, user):
+        # 교수·조교 화면에는 내보내기가 없다 — 범위 열람을 내보내기로 넓히지 않는다.
+        raise HTTPException(403, '학생 목록 내보내기 권한이 없습니다.')
     condition, values = filters(request, q)
     condition += ' AND intg_uid = ANY(%s)'
     values.append(list(dict.fromkeys(body.ids)))
@@ -227,7 +251,7 @@ def export(request: Request, body: StudentExportSelection, q: str = Query('', ma
 
 @router.get('/academic-students/{identity}')
 def detail(identity: str, optional: bool = False, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
-    authorize(conn, user)
+    scoped = authorize(conn, user)
     row = conn.execute(ROSTER+' SELECT * FROM roster WHERE intg_uid=%s', (identity,)).fetchone()
     if not row:
         # Other entry points use the service alias. Resolve it on the server,
@@ -236,6 +260,9 @@ def detail(identity: str, optional: bool = False, user=Depends(principal, scope=
         if person:
             identity = person['intg_uid']
             row = conn.execute(ROSTER+' SELECT * FROM roster WHERE intg_uid=%s', (identity,)).fetchone()
+    if row and scoped and not staff_may_read(conn, user, identity):
+        # 범위 밖은 학사 행이 없는 학생과 같은 응답 — 존재 여부를 알리지 않는다.
+        row = None
     if not row:
         if optional:
             # Legacy service-only fixtures have no academic source. Only allow
@@ -275,4 +302,6 @@ def detail(identity: str, optional: bool = False, user=Depends(principal, scope=
       collegeName=row['college_name'],grade=row['grade'],academicLevel=row['academic_level'],
       status=row['status'],sex=row['sex'],foreigner=foreigner,graduationMonth=row['graduation_month'],gpa=row['gpa'],
       studentType=row['student_type'],diagnosisCount=diagnoses,counsels=counsels,programs=programs,
-      progress=row['progress'],hasRoadmap=row['has_roadmap'])
+      progress=row['progress'],hasRoadmap=row['has_roadmap'],
+      # 서비스 학생 행이 있을 때만 화면이 범위 프로필(/students/{id})을 다시 읽는다 — 미이용 학사 학생의 404 왕복 제거(0022).
+      hasServiceProfile=grade_xp is not None)

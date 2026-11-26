@@ -9,7 +9,9 @@ import {
   enrollStatusClass,
 } from '../data/studentRoster'
 import type { RosterStudent } from '../data/studentRoster'
+import { queryAcademicStudents, fetchAcademicStudentMetadata } from '../data/academicStudents'
 import { totalPages } from '../data/query'
+import type { ListParams, Paginated } from '../data/query'
 import { useListData } from '../hooks/useListData'
 import EmptyState from './EmptyState'
 import StudentDetailModal from './StudentDetailModal'
@@ -19,9 +21,12 @@ import StudentDetailModal from './StudentDetailModal'
 // '보기'는 공유 StudentDetailView를 xl 모달로 띄운다(상담사 상세 페이지와 동일 화면).
 //   - departments: 조회 스코프(데이터 층에서 필터, 화면 filter 금지)
 //   - viewerRole: 상세 열람 권한(professor·assistant = 읽기 전용 전탭)
+//   - professorId 없이 professor·assistant 가 보면 학사 로스터(/academic-students) — 배정 학과의
+//     학사 학생 전체(서비스 미이용 포함, 범위는 서버가 건다). 지도학생(professorId)은 /students 그대로.
 // ─────────────────────────────────────────────────────────────────────────
 const ALL = '전체'
 const PAGE_SIZE = 10
+type RosterQuery = ListParams & { departments?: string[]; studentIds?: string[]; professorId?: string }
 
 interface StudentRosterTableProps {
   departments: string[]
@@ -33,11 +38,13 @@ interface StudentRosterTableProps {
 }
 
 export default function StudentRosterTable({ departments, studentIds, professorId, title, subtitle, viewerRole }: StudentRosterTableProps) {
+  const academic = !professorId && (viewerRole === 'professor' || viewerRole === 'assistant')
 
   const [query, setQuery] = useState('')
   const [major, setMajor] = useState(ALL)
   const [grade, setGrade] = useState(ALL)
-  const [status, setStatus] = useState(ALL)
+  // 학사 로스터는 졸업생까지 수천 명이라 「재학」을 기본으로 둔다(「전체」 선택 가능).
+  const [status, setStatus] = useState(academic ? '재학' : ALL)
   const [page, setPage] = useState(1)
   const [selected, setSelected] = useState<RosterStudent | null>(null)
 
@@ -49,21 +56,21 @@ export default function StudentRosterTable({ departments, studentIds, professorI
   useEffect(() => {
     let cancelled=false
     setMetadataError('')
-    fetchRosterMetadata(departments,studentIds,professorId).then(value => { if (!cancelled) setMetadata(value) })
+    const load = academic ? fetchAcademicStudentMetadata() : fetchRosterMetadata(departments,studentIds,professorId)
+    load.then(value => { if (!cancelled) setMetadata(value) })
       .catch(e => { if (!cancelled) setMetadataError(e.message) })
     return () => { cancelled=true }
-  },[scopeKey,metadataRetry])
+  },[scopeKey,metadataRetry,academic])
   const options = metadata?.options ?? {majors:[],grades:[],types:[],tiers:[],statuses:[]}
   const summary = metadata?.summary
 
   // 서버(목업) 조회 — useListData가 useEffect+레이스 cleanup 담당. DB 전환 시 훅 내부만 교체.
-  const { data: result, isLoading: loading, error, refetch } = useListData(queryStudentRoster, {
+  const loader: (params: RosterQuery) => Promise<Paginated<RosterStudent>> = academic ? queryAcademicStudents : queryStudentRoster
+  const { data: result, isLoading: loading, error, refetch } = useListData(loader, {
     page,
     pageSize: PAGE_SIZE,
     q: query,
-    departments,
-    studentIds,
-    professorId,
+    ...(academic ? {} : { departments, studentIds, professorId }),
     filters: {
       major: major === ALL ? undefined : major,
       grade: grade === ALL ? undefined : grade,

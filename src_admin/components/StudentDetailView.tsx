@@ -834,6 +834,11 @@ function AcademicServiceDetail(props: StudentDetailViewProps & { academicData: A
   const [tab, setTab] = useState<TabKey>(props.initialTab ?? 'diagnosis')
   useEffect(() => {
     let cancelled = false
+    // 서비스 학생 행이 없는 학사 학생은 범위 프로필이 없다 — 404 왕복 없이 학사 요약만 그린다(0022).
+    if (props.academicData.hasServiceProfile === false) {
+      setProfile(null)
+      return () => { cancelled = true }
+    }
     loadStudentProfile(props.studentId)
       .then(value => { if (!cancelled) setProfile(value) })
       .catch(e => {

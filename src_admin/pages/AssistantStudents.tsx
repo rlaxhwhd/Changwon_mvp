@@ -6,7 +6,7 @@ export default function AssistantStudents() {
     <StudentRosterTable
       departments={[]}
       title="담당 학과 학생 현황"
-      subtitle="현재 유효한 학과 배정에 따른 학생"
+      subtitle="현재 유효한 학과 배정에 따른 학사 학생(서비스 미이용 포함)"
       viewerRole="assistant"
     />
   )

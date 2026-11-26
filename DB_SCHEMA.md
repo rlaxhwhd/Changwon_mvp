@@ -134,6 +134,7 @@ erDiagram
 ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration 인덱스와 실제 DDL을 따른다.
 
 권한 범위 `dc.staff_student_scope` 는 테이블이 아니라 **뷰**다(009). `fixture_student_scope`(개발 fixture 명시 부여) ∪ `org_assignment` 파생(교직원↔학과, 학생의 `(college_code,dept_code)` 로 조인) ∪ `advisor_assignment` 활성 행(교수↔학생 1:1, 0003 예정). 권한을 행으로 복사해 동기화하지 않는다 — 배정 표가 곧 권한이다.
+**179(0022, Astra 조건부 승인 · 로컬 적용·팀장 검증 2026-11-26, 서버 미배포)**: 다섯 번째 가지 `department_academic` 추가 — 활성 학과 배정(`dc.department_academic_grant` = `org_assignment` ∪ `department_staff_assignment`)의 **학사 학생 전체**(`dc.department_academic_student_scope`, 서비스 행 `dc.student` 유무 무관). `student_login_source` 와 같은 소속 규칙(학과=HAKBU_CD, 단대=그 학과 COL_CODE, override 우선)을 `hakbu_cd`·`intg_uid` 인덱스 순서로 다시 쓴 것이며 결과 동일성은 계약 테스트가 지킨다 — `student_login_source` 에 직접 조인하면 COALESCE 때문에 학과 술어가 인덱스로 못 내려간다. 같은 쌍이 여러 source 로 나올 수 있으므로 소비처는 EXISTS·집합으로만 읽는다.
 
 `dc.seed_source.path` 는 **최초 import 시점의 원본 경로를 보관하는 키**다(`src_v2/data/…`·`src_admin/data/…`). 시드 파일의 물리 위치가 `backend/seeds/{v2,admin}/` 로 옮겨져도(0003) 키는 바뀌지 않는다 — `import_issue.source_path` FK 와 013·023·026·038 의 backfill 리터럴이 이 키를 참조한다. `seed.py` 가 물리 경로 → 키 매핑을 담당한다.
 

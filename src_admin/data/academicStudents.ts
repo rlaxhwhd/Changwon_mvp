@@ -25,6 +25,8 @@ export interface AcademicStudentDetail extends RosterStudent {
   programs: { id: string; title: string; date: string; completed: boolean }[]
   /** 학년 성장 레벨 — 학생 라운지와 같은 값(서버 XP 원장 파생). */
   quest: QuestLevel
+  /** 서비스 학생 행(dc.student) 유무 — false 면 범위 프로필을 조회하지 않는다. */
+  hasServiceProfile?: boolean
 }
 
 export function fetchAcademicStudentDetail(id: string): Promise<AcademicStudentDetail | null> {

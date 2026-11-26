@@ -40,19 +40,23 @@ def is_counselor(user):
     return user['kind'] == 'STAFF' and (user.get('profile') or {}).get('role') in ('career', 'psych')
 
 
+def staff_may_read(conn, user, student_uid: str) -> bool:
+    """Non-counselor staff read rule: explicit scope grant or own counsel request.
+    Shared by student_access and the academic roster detail (0022) — one SQL, not copies."""
+    # Explicit grants, never department-name matching.
+    return conn.execute('''SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s
+      UNION ALL SELECT 1 FROM dc.counsel_request WHERE counselor_uid=%s AND student_uid=%s LIMIT 1''',
+      (user['intg_uid'],student_uid,user['intg_uid'],student_uid)).fetchone() is not None
+
+
 def student_access(conn, user, identity: str):
     student = conn.execute('SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid) WHERE p.alias=%s OR s.intg_uid=%s', (identity,identity)).fetchone()
     if not student:
         raise HTTPException(404, '학생을 찾을 수 없습니다.')
     if user['kind']=='STUDENT' and user['intg_uid']!=student['intg_uid']:
         raise HTTPException(404, '학생을 찾을 수 없습니다.')
-    if user['kind']=='STAFF' and not is_counselor(user):
-        # Development fixtures only. Explicit grants, never department-name matching.
-        allowed = conn.execute('''SELECT 1 FROM dc.staff_student_scope WHERE staff_uid=%s AND student_uid=%s
-          UNION ALL SELECT 1 FROM dc.counsel_request WHERE counselor_uid=%s AND student_uid=%s LIMIT 1''',
-          (user['intg_uid'],student['intg_uid'],user['intg_uid'],student['intg_uid'])).fetchone()
-        if not allowed:
-            raise HTTPException(404, '학생을 찾을 수 없습니다.')
+    if user['kind']=='STAFF' and not is_counselor(user) and not staff_may_read(conn, user, student['intg_uid']):
+        raise HTTPException(404, '학생을 찾을 수 없습니다.')
     return student
 
 
