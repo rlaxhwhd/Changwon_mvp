@@ -90,7 +90,20 @@ function withEmphasis(text: string, word: string | undefined): ReactNode {
   return <>{text.slice(0, at)}<em>{word}</em>{text.slice(at + word.length)}</>
 }
 
+/**
+ * 외부 지원 링크의 href — 서버와 같은 규칙(jobs.normalize_link)으로 다시 거른다.
+ * 저장 전 미리보기에는 www.… 그대로 들어오므로 https:// 를 붙이고, http·https 가 아닌 스킴은 링크로 만들지 않는다.
+ */
+function linkHref(raw: string | undefined): string | null {
+  const url = (raw ?? '').trim()
+  if (!url || /\s/.test(url)) return null
+  if (/^https?:\/\//i.test(url)) return url
+  if (/^[a-z][a-z0-9+.-]*:(?!\d)/i.test(url)) return null
+  return `https://${url}`
+}
+
 type Doc = JobGuideFields['documents'][number]
+interface ApplyLink { key: string; label: string; href: string }
 
 interface Ctx {
   f: Partial<JobGuideFields>
@@ -101,6 +114,7 @@ interface Ctx {
   workplace: string
   docs: Doc[]
   steps: string[]
+  links: ApplyLink[]
 }
 
 export default function JobGuide({ template, fields, source }: Props) {
@@ -118,6 +132,13 @@ export default function JobGuide({ template, fields, source }: Props) {
     workplace: has(f.address) ? f.address : source.location,
     docs: (f.documents ?? []).filter(d => has(d.name)),
     steps: (f.steps ?? []).filter(st => has(st)),
+    links: ([
+      ['portal', '취업포털 공고 바로가기', f.portalUrl],
+      ['homepage', '자사 홈페이지 공고 바로가기', f.homepageUrl],
+    ] as const).flatMap(([key, label, raw]) => {
+      const href = linkHref(raw)
+      return href ? [{ key, label, href }] : []
+    }),
   }
   if (template === 'POSTER') return <Poster {...ctx} />
   if (template === 'HIGHLIGHT') return <Highlight {...ctx} />
@@ -128,12 +149,23 @@ function employmentLine(c: Ctx): string {
   return [c.employment, c.f.employmentNote].filter(has).join(' · ')
 }
 
-function docLabel(d: Doc): string {
-  return [d.name, d.note ? `(${d.note})` : '', d.optional ? '(해당자)' : ''].filter(Boolean).join(' ')
-}
-
 function docNote(d: Doc): string {
   return [d.note, d.optional ? '해당자' : ''].filter(Boolean).join(' · ')
+}
+
+/** 외부 지원 링크 — 새 탭으로 연다. 공고 화면(학생 상세·등록 미리보기)을 떠나지 않게 한다. */
+function ApplyLinks({ links }: { links: ApplyLink[] }) {
+  if (links.length === 0) return null
+  return (
+    <div className="jg-links">
+      {links.map(l => (
+        <a key={l.key} href={l.href} target="_blank" rel="noopener noreferrer">
+          {l.label}
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M18 14v5H5V6h5" /></svg>
+        </a>
+      ))}
+    </div>
+  )
 }
 
 // ── 1. 포스터형 ──────────────────────────────────────────────────────────
@@ -169,7 +201,10 @@ function Poster(c: Ctx) {
     : <List items={[s.role]} />
   const qual = lines(f.qualification)
   const preferred = lines(f.preferred)
-  const work = [f.workHours, c.salary, c.workplace].filter(has)
+  // 근무지 상세(도로명 주소)는 아래 근무 정보 칸에 따로 나온다 — 근무조건에는 지역만 둔다.
+  const work = [f.workHours, c.salary, s.location].filter(has)
+  const detail = ([['근로자 수', f.headcount], ['근무부서', f.department], ['근무지 상세', f.address]] as [string, string | undefined][])
+    .filter((r): r is [string, string] => has(r[1]))
   // 지원자격 카드 — 위는 자격요건, 아래 절반은 우대사항(아이콘 없이 작은 제목만).
   const person = (
     <>
@@ -189,8 +224,6 @@ function Poster(c: Ctx) {
     { key: 'calendar', title: '접수기간', body: <p className="jg-p-date">~ {c.deadline.full}</p> },
   ]
   const pill = employmentLine(c)
-  const docs = c.docs.map(docLabel).join(', ')
-  const cta = [docs && `${docs}을(를) 첨부해 주세요.`, f.applyMethod].filter(has).join(' ')
   return (
     <article className="jg jg-poster" aria-label="모집요강">
       <div className="jg-p-top">
@@ -223,11 +256,32 @@ function Poster(c: Ctx) {
         ))}
       </div>
 
-      {cta && (
+      {/* 근무 정보·제출서류 — 4칸 요약 아래 한 단을 더 둔다(2026-11-26 사용자 요청). 둘 다 비면 그리지 않는다. */}
+      {(detail.length > 0 || c.docs.length > 0) && (
+        <div className="jg-p-detail">
+          {detail.length > 0 && (
+            <section>
+              <h4>근무 정보</h4>
+              <dl>{detail.map(([k, v]) => <div key={k}><dt>{k}</dt><dd>{v}</dd></div>)}</dl>
+            </section>
+          )}
+          {c.docs.length > 0 && (
+            <section>
+              <h4>제출서류</h4>
+              <ul>
+                {c.docs.map((d, i) => <li key={`${i}-${d.name}`}>{d.name}{docNote(d) && <i>{docNote(d)}</i>}</li>)}
+              </ul>
+            </section>
+          )}
+        </div>
+      )}
+
+      {(has(f.applyMethod) || c.links.length > 0) && (
         <div className="jg-p-cta">
           <span className="jg-p-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 12h15M13 6l6 6-6 6" /></svg></span>
           <strong>지금 바로 지원하세요!</strong>
-          <p>{cta}</p>
+          {has(f.applyMethod) && <p>{f.applyMethod}</p>}
+          <ApplyLinks links={c.links} />
         </div>
       )}
 
@@ -254,7 +308,7 @@ function Highlight(c: Ctx) {
   const size = [f.revenue && `연매출 ${f.revenue}`, f.headcount && `근로자 ${f.headcount}`].filter(has).join(' · ')
   const kv = ([
     ['담당업무', f.duty], ['근무시간', f.workHours], ['자격요건', f.qualification], ['우대사항', f.preferred],
-    ['근무지', c.workplace], ['회사규모', size],
+    ['근무지', c.workplace], ['근무부서', f.department], ['회사규모', size],
   ] as [string, string | undefined][]).filter((r): r is [string, string] => has(r[1]))
   const meta = [s.company, f.industry].filter(has).join(' · ')
   return (
@@ -304,10 +358,11 @@ function Highlight(c: Ctx) {
             </ul>
           </section>
         )}
-        {has(f.applyMethod) && (
+        {(has(f.applyMethod) || c.links.length > 0) && (
           <section>
             <h4>신청방법</h4>
-            <p className="jg-h-text">{f.applyMethod}</p>
+            {has(f.applyMethod) && <p className="jg-h-text">{f.applyMethod}</p>}
+            <ApplyLinks links={c.links} />
           </section>
         )}
         {c.steps.length > 0 && (
@@ -353,7 +408,7 @@ function DocumentGuide(c: Ctx) {
     ['담당업무', f.duty], ['채용형태', employmentLine(c)],
     ['급여', [c.salary, f.salaryNote].filter(has).join('\n')], ['근무시간', f.workHours],
     ['자격요건', f.qualification], ['우대사항', f.preferred], ['업종', f.industry],
-    ['근무지', c.workplace], ['회사규모', size],
+    ['근무지', c.workplace], ['근무부서', f.department], ['회사규모', size],
   ] as [string, string | undefined][]).filter((r): r is [string, string] => has(r[1]))
   const half = Math.ceil(rows.length / 2)
   return (
@@ -371,7 +426,7 @@ function DocumentGuide(c: Ctx) {
         </div>
       )}
 
-      {(c.docs.length > 0 || has(f.applyMethod)) && (
+      {(c.docs.length > 0 || has(f.applyMethod) || c.links.length > 0) && (
         <div className="jg-d-band">
           {c.docs.length > 0 && (
             <div>
@@ -385,10 +440,11 @@ function DocumentGuide(c: Ctx) {
               </ul>
             </div>
           )}
-          {has(f.applyMethod) && (
+          {(has(f.applyMethod) || c.links.length > 0) && (
             <div>
               <h4>신청방법</h4>
-              <p>{f.applyMethod}</p>
+              {has(f.applyMethod) && <p>{f.applyMethod}</p>}
+              <ApplyLinks links={c.links} />
             </div>
           )}
         </div>

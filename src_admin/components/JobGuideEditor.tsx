@@ -21,7 +21,7 @@ const DOC_PRESETS = ['이력서', '자기소개서', '성적증명서', '졸업(
 const STEP_PRESETS = ['서류전형', '인적성검사', '필기시험', '면접전형(1차)', '면접전형(2차)', '합격자 발표']
 
 type TextKey = Exclude<keyof JobGuideFields, 'documents' | 'steps'>
-interface FieldSpec { key: TextKey; label: string; max: number; placeholder: string; multiline?: boolean }
+interface FieldSpec { key: TextKey; label: string; max: number; placeholder: string; multiline?: boolean; wide?: boolean; url?: boolean }
 
 const BASIC: FieldSpec[] = [
   { key: 'headline', label: '한 줄 소개', max: 80, placeholder: '예: 함께 성장할 철강판매관리 인재를 찾습니다' },
@@ -40,7 +40,11 @@ const COMPANY: FieldSpec[] = [
   { key: 'industry', label: '업종', max: 100, placeholder: '예: 제조업(냉연강판)' },
   { key: 'revenue', label: '매출액', max: 50, placeholder: '예: 3,600억원' },
   { key: 'headcount', label: '근로자 수', max: 50, placeholder: '예: 110명' },
-  { key: 'address', label: '근무지 상세', max: 200, placeholder: '비우면 지역 값을 씁니다' },
+  { key: 'department', label: '근무부서', max: 100, placeholder: '예: 영업본부 철강판매팀' },
+  { key: 'address', label: '근무지 상세', max: 200, placeholder: '도로명 주소. 예: 경상남도 창원시 의창구 창원대학로 20', wide: true },
+  // 스킴 없이 www.… 로 써도 서버가 https:// 를 붙여 저장한다(지원 링크와 같은 규칙).
+  { key: 'portalUrl', label: '취업포털 공고 주소', max: 500, placeholder: '예: 사람인 공고 주소 www.saramin.co.kr/zf_user/jobs/view?rec_idx=…', wide: true, url: true },
+  { key: 'homepageUrl', label: '자사 홈페이지 공고 주소', max: 500, placeholder: '예: www.company.co.kr/recruit', wide: true, url: true },
 ]
 const APPLY: FieldSpec[] = [
   { key: 'applyMethod', label: '신청방법', max: 500, placeholder: '예: 서류를 첨부해 드림캐치에서 지원', multiline: true },
@@ -86,13 +90,13 @@ export default function JobGuideEditor({ template, fields, onChange }: Omit<Prop
   }
 
   const field = (spec: FieldSpec) => (
-    <label key={spec.key} className={`jge-field${spec.multiline ? ' is-wide' : ''}`}>
+    <label key={spec.key} className={`jge-field${spec.multiline || spec.wide ? ' is-wide' : ''}`}>
       <span>{spec.label}</span>
       {spec.multiline
         ? <textarea className="jf-input jge-textarea" rows={3} maxLength={spec.max} placeholder={spec.placeholder}
             value={f[spec.key]} onChange={e => put({ [spec.key]: e.target.value })} />
-        : <input className="jf-input" maxLength={spec.max} placeholder={spec.placeholder}
-            value={f[spec.key]} onChange={e => put({ [spec.key]: e.target.value })} />}
+        : <input className="jf-input" maxLength={spec.max} placeholder={spec.placeholder} inputMode={spec.url ? 'url' : undefined}
+            value={f[spec.key] ?? ''} onChange={e => put({ [spec.key]: e.target.value })} />}
     </label>
   )
 

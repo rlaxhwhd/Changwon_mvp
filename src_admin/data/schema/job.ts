@@ -131,6 +131,11 @@ export interface JobGuideFields {
   revenue: string
   headcount: string
   address: string
+  department: string
+  /** 취업포털(사람인 등) 공고 주소 — 포스터형 「지금 바로 지원하세요」 링크 */
+  portalUrl: string
+  /** 자사 홈페이지 공고 주소 */
+  homepageUrl: string
   applyMethod: string
   contact: string
   note: string
@@ -142,7 +147,7 @@ export function blankGuideFields(): JobGuideFields {
   return {
     headline: '', emphasis: '', duty: '', workHours: '', employmentNote: '', salaryNote: '',
     qualification: '', preferred: '', industry: '', revenue: '', headcount: '', address: '',
-    applyMethod: '', contact: '', note: '', documents: [], steps: [],
+    department: '', portalUrl: '', homepageUrl: '', applyMethod: '', contact: '', note: '', documents: [], steps: [],
   }
 }
 

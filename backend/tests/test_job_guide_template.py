@@ -8,8 +8,8 @@ from test_api import headers
 from test_jobs import key, new_company, new_posting, posting_body
 
 GUIDE_KEYS = {'headline', 'emphasis', 'duty', 'workHours', 'employmentNote', 'salaryNote', 'qualification',
-              'preferred', 'industry', 'revenue', 'headcount', 'address', 'applyMethod', 'contact', 'note',
-              'documents', 'steps'}
+              'preferred', 'industry', 'revenue', 'headcount', 'address', 'department', 'portalUrl', 'homepageUrl',
+              'applyMethod', 'contact', 'note', 'documents', 'steps'}
 FIELDS = {'headline': '함께 성장할 인재를 찾습니다', 'emphasis': '성장', 'duty': '철강판매관리',
           'workHours': '월~금 08:00~17:00', 'qualification': '영업직무 희망자 누구나',
           'documents': [{'name': ' 이력서 ', 'note': '자유양식'}, {'name': '자격증 사본', 'optional': True}],
@@ -61,6 +61,21 @@ def test_invalid_template_input_is_422(client, bad):
     response = client.post('/api/v1/jobs', headers={**headers('career_kim'), **key()},
                            json=posting_body(createCompany={'displayName': '템플릿 검증'}, **bad))
     assert response.status_code == 422, response.text
+
+
+def test_apply_links_get_a_scheme_and_unsafe_schemes_are_422(client):
+    posting = new_posting(client, guideTemplate='POSTER', guideFields={
+        'department': ' 영업본부 ', 'portalUrl': 'www.saramin.co.kr/zf_user/jobs/view?rec_idx=1',
+        'homepageUrl': 'http://example.com/recruit'})
+    fields = posting['guideFields']
+    assert fields['department'] == '영업본부'
+    assert fields['portalUrl'] == 'https://www.saramin.co.kr/zf_user/jobs/view?rec_idx=1'
+    assert fields['homepageUrl'] == 'http://example.com/recruit'
+    for bad in ({'portalUrl': 'javascript:alert(1)'}, {'homepageUrl': 'example .com'}, {'portalUrl': 'x' * 501}):
+        response = client.post('/api/v1/jobs', headers={**headers('career_kim'), **key()},
+                               json=posting_body(createCompany={'displayName': '링크 검증'},
+                                                 guideTemplate='POSTER', guideFields=bad))
+        assert response.status_code == 422, response.text
 
 
 def test_fields_without_template_and_legacy_body_store_sql_null(client):

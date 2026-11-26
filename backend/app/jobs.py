@@ -425,6 +425,17 @@ def delete_company(company_id: str, user=Depends(principal, scope='function'),
 JOB_CONTENT_MAX_CHARS = 20_000_000
 
 
+def normalize_link(value: str, message: str) -> str:
+    """외부 링크 — 비워도 되고 www.… 처럼 스킴 없이 써도 된다. 스킴이 없으면 https:// 를 붙인다(2026-11-20).
+    http·https 가 아닌 스킴(javascript: 등)과 공백 섞인 값은 거절한다. 'host:8080' 처럼 콜론 뒤가 숫자면 포트로 본다."""
+    value = value.strip()
+    if value and not value.lower().startswith(('http://', 'https://')):
+        if re.match(r'^[a-z][a-z0-9+.-]*:(?!\d)', value, re.IGNORECASE) or re.search(r'\s', value):
+            raise ValueError(message)
+        value = 'https://' + value
+    return value
+
+
 class GuideDoc(BaseModel):
     # 중첩 모델은 부모 설정을 물려받지 않는다 — 공백만 있는 서류명을 막으려면 여기서도 다듬는다.
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
@@ -451,11 +462,21 @@ class GuideFields(BaseModel):
     revenue: str = Field(default='', max_length=50)
     headcount: str = Field(default='', max_length=50)
     address: str = Field(default='', max_length=200)
+    department: str = Field(default='', max_length=100)
+    # 취업포털(사람인 등)·자사 홈페이지 공고 주소 — 포스터형 「지금 바로 지원하세요」에 링크로 나간다(2026-11-26).
+    portalUrl: str = Field(default='', max_length=500)
+    homepageUrl: str = Field(default='', max_length=500)
     applyMethod: str = Field(default='', max_length=500)
     contact: str = Field(default='', max_length=200)
     note: str = Field(default='', max_length=200)
     documents: list[GuideDoc] = Field(default_factory=list, max_length=12)
     steps: list[GuideStep] = Field(default_factory=list, max_length=6)
+
+    @model_validator(mode='after')
+    def links(self):
+        self.portalUrl = normalize_link(self.portalUrl, '취업포털 공고 주소 형식을 확인해 주세요. (예: www.saramin.co.kr/...)')
+        self.homepageUrl = normalize_link(self.homepageUrl, '자사 홈페이지 공고 주소 형식을 확인해 주세요. (예: www.example.com/recruit)')
+        return self
 
 
 class PostingBody(BaseModel):
@@ -512,13 +533,7 @@ class PostingBody(BaseModel):
             raise ValueError('상시 모집은 마감일을 두지 않습니다.')
         if self.deadlineMode != 'DATE':
             self.deadlineTime = DEFAULT_DEADLINE_TIME
-        # 지원 링크는 비워도 되고 www.… 처럼 스킴 없이 써도 된다 — 스킴이 없으면 https:// 를 붙여 저장한다(2026-11-20).
-        # http·https 가 아닌 스킴(javascript: 등)은 거절한다. 'host:8080' 처럼 콜론 뒤가 숫자면 포트로 본다.
-        self.applyUrl = self.applyUrl.strip()
-        if self.applyUrl and not self.applyUrl.lower().startswith(('http://', 'https://')):
-            if re.match(r'^[a-z][a-z0-9+.-]*:(?!\d)', self.applyUrl, re.IGNORECASE) or re.search(r'\s', self.applyUrl):
-                raise ValueError('지원 링크 형식을 확인해 주세요. (예: www.example.com)')
-            self.applyUrl = 'https://' + self.applyUrl
+        self.applyUrl = normalize_link(self.applyUrl, '지원 링크 형식을 확인해 주세요. (예: www.example.com)')
         self.email = self.email.strip()
         if self.urlTitleLink and not self.applyUrl:
             raise ValueError('제목 링크를 쓰려면 지원 링크가 필요합니다.')
