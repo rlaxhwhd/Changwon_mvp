@@ -138,7 +138,7 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
 
             {/* 비교과프로그램 현황 — 모집중 전체, 마감 임박 순. 진로상담사 전용 */}
             {isCareer && (
-              <div className="card">
+              <div className="card ruled-card">
                 <div className="card-hd">
                   <h2>비교과프로그램 현황</h2>
                   <div className="right"><span className="badge s-green">모집중 {data.programCount}개</span></div>
@@ -331,7 +331,7 @@ function HomeContent({ data, error }: { data: Dashboard; error: string }) {
 
             {/* 채용공고 현황 — 마감 전 교내 공고를 추천·일반으로 가른다. 진로상담사 전용 */}
             {jobs && (
-              <div className="card job-board">
+              <div className="card job-board ruled-card">
                 <div className="card-hd"><h2>채용공고 현황</h2></div>
                 <section aria-label="추천 채용 현황">
                   <h3>추천 채용 <span>{jobs.recommendedTotal}건</span></h3>
