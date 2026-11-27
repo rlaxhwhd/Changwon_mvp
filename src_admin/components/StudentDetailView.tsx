@@ -7,7 +7,7 @@ import { fetchAcademicStudentDetail, academicStudentStats, type AcademicStudentD
 import type { IconType } from 'react-icons'
 import {
   LuArrowRight, LuBook, LuBoxes, LuBriefcase, LuCalendarCheck, LuChartColumn, LuChartLine,
-  LuCircleDot, LuClipboardCheck, LuFolderOpen, LuFrown, LuGraduationCap,
+  LuCircleDot, LuClipboardCheck, LuFolderOpen, LuFrown, LuGraduationCap, LuIdCard,
   LuListChecks, LuMessagesSquare, LuPencilRuler, LuRoute, LuRotateCw, LuSparkles, LuSprout,
   LuStar, LuTrophy, LuWorkflow, LuX,
 } from 'react-icons/lu'
@@ -81,7 +81,7 @@ const PHASE_ICONS: Record<string, IconType> = {
   'fa-rotate': LuRotateCw,
 }
 
-export type TabKey = 'diagnosis' | 'counsel' | 'roadmap' | 'program' | 'gap' | 'growth' | 'portfolio' | 'star'
+export type TabKey = 'basic' | 'diagnosis' | 'counsel' | 'roadmap' | 'program' | 'gap' | 'growth' | 'portfolio' | 'star'
 
 interface TabDef {
   key: TabKey
@@ -92,6 +92,8 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
+  // 학적 기본값(단과대학·학과·전공·학년·학적·졸업·평점) — 현행 포트폴리오 화면처럼 첫 탭에 둔다.
+  { key: 'basic', label: '기본사항', icon: LuIdCard, psychAllowed: true },
   { key: 'diagnosis', label: '진단·유형', icon: LuClipboardCheck, psychAllowed: true },
   { key: 'counsel', label: '상담', icon: LuMessagesSquare, psychAllowed: true },
   { key: 'roadmap', label: '로드맵 진행', icon: LuRoute, psychAllowed: false },
@@ -119,6 +121,58 @@ function CardHead({ title, desc, action }: { title: string; desc?: string; actio
       </div>
       {action && <div data-slot="card-action">{action}</div>}
     </div>
+  )
+}
+
+/** 라벨/값 표 한 칸 — 값이 없으면 「없음」(이 화면의 빈 값 표기).
+ *  값 칸은 공용 정렬 정책(shared/tableAlignment.css)의 본문 칸 예외(dc-cell-long)로 왼쪽 정렬, 라벨은 가운데. */
+function InfoCell({ label, value, span }: { label: string; value: ReactNode; span?: boolean }) {
+  return <>
+    <th scope="row">{label}</th>
+    <td className="dc-cell-long" colSpan={span ? 3 : undefined}>{value === '' || value == null ? '없음' : value}</td>
+  </>
+}
+
+// ── 탭 ⓪: 기본사항 ─────────────────────────────────────────────────────────
+
+interface BasicInfo {
+  college?: string | null
+  department?: string | null
+  level?: string | null
+  majorName?: string | null
+  grade?: number | null
+  status?: string | null
+  /** 졸업생은 졸업년월, 아니면 졸업예정년월 */
+  graduation?: string | null
+  gpa?: string | null
+  foreigner?: boolean | null
+}
+
+function basicInfoOf(data: AcademicStudentDetail): BasicInfo {
+  return {
+    college: data.collegeName, department: data.major, level: data.academicLevel, majorName: data.majorName,
+    grade: data.grade, status: data.status, graduation: data.graduationMonth ?? data.graduationExpectedMonth, gpa: data.gpa,
+    foreigner: data.foreigner,
+  }
+}
+
+function BasicInfoTab({ info }: { info: BasicInfo }) {
+  const department = info.department ? `${info.department}${info.level ? ` (${info.level})` : ''}` : ''
+  return (
+    <section className="sdv-info-table" role="tabpanel" aria-label="기본사항">
+      <table>
+        <colgroup><col className="sdv-info-th" /><col /><col className="sdv-info-th" /><col /></colgroup>
+        <tbody>
+          <tr><InfoCell label="단과대학" value={info.college} /><InfoCell label="학부/학과" value={department} /></tr>
+          <tr><InfoCell label="전공" value={info.majorName} /><InfoCell label="학년" value={info.grade} /></tr>
+          <tr><InfoCell label="학적" value={info.status} /><InfoCell label="졸업(예정)년도" value={info.graduation} /></tr>
+          <tr>
+            <InfoCell label="평균평점" value={info.gpa ? `${info.gpa} / 4.5` : ''} />
+            <InfoCell label="외국인" value={info.foreigner == null ? '' : info.foreigner ? '예' : '아니오'} />
+          </tr>
+        </tbody>
+      </table>
+    </section>
   )
 }
 
@@ -838,7 +892,7 @@ function AcademicStudentContent(props: StudentDetailViewProps) {
 function AcademicServiceDetail(props: StudentDetailViewProps & { academicData: AcademicStudentDetail }) {
   const [profile, setProfile] = useState<StudentData | null | undefined>(undefined)
   const [error, setError] = useState('')
-  const [tab, setTab] = useState<TabKey>(props.initialTab ?? 'diagnosis')
+  const [tab, setTab] = useState<TabKey>(props.initialTab ?? 'basic')
   useEffect(() => {
     let cancelled = false
     // 서비스 학생 행이 없는 학사 학생은 범위 프로필이 없다 — 404 왕복 없이 학사 요약만 그린다(0022).
@@ -864,7 +918,8 @@ function AcademicServiceDetail(props: StudentDetailViewProps & { academicData: A
     <AcademicStudentHeader data={props.academicData} action={props.headerAction} />
     <StudentStatCards stats={academicStudentStats(props.academicData)} />
     <StudentDetailTabs activeTab={tab} onChange={setTab} />
-    {tab === 'program' ? <ProgramTab studentId={props.studentId} academicRecords={props.academicData.programs} />
+    {tab === 'basic' ? <BasicInfoTab info={basicInfoOf(props.academicData)} />
+      : tab === 'program' ? <ProgramTab studentId={props.studentId} academicRecords={props.academicData.programs} />
       : tab === 'counsel' && props.academicData.counsels.length ? <section className="admin-card" role="tabpanel">
         <ul>{props.academicData.counsels.map(c => <li key={c.id}>
           {c.date} · {c.type} · {{ REQ: '신청', CONFIRMED: '확정', DONE: '완료' }[c.status]}
@@ -905,20 +960,19 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
       </div>
       {action}
     </header>
-    <dl className="sdv-idbar sdv-academic-idbar">
-      <div><dt>학번</dt><dd>{data.studentNo || '없음'}</dd></div>
-      <div><dt>대학</dt><dd>{data.collegeName || '없음'}</dd></div>
-      <div><dt>학과</dt><dd>{data.major || '없음'}</dd></div>
-      <div><dt>학부/대학원</dt><dd>{data.academicLevel || '없음'}</dd></div>
-      <div><dt>학년 / 학적</dt><dd>{data.grade == null ? '없음' : `${data.grade}학년`} / {data.status}</dd></div>
-      <div><dt>성별</dt><dd>{data.sex || '없음'}</dd></div>
-      <div><dt>외국인</dt><dd>{data.foreigner == null ? '없음' : data.foreigner ? '예' : '아니오'}</dd></div>
-      <div><dt>졸업년월</dt><dd>{data.graduationMonth || '없음'}</dd></div>
-      <div><dt>학점</dt><dd>{data.gpa ?? '없음'}</dd></div>
-      <div><dt>휴대폰</dt><dd>{data.mobile || '없음'}</dd></div>
-      <div><dt>이메일</dt><dd title={data.email || undefined}>{data.email || '없음'}</dd></div>
-      <div><dt>주소</dt><dd title={address || undefined}>{address || '없음'}</dd></div>
-    </dl>
+    {/* 인적사항 — 현행 포트폴리오 화면 배치(성명·학번 / 주소 / 생년월일·성별 / 핸드폰·이메일).
+        학적 값·외국인 여부는 「기본사항」 탭. */}
+    <section className="sdv-info-table sdv-info-person" aria-label="인적사항">
+      <table>
+        <colgroup><col className="sdv-info-th" /><col /><col className="sdv-info-th" /><col /></colgroup>
+        <tbody>
+          <tr><InfoCell label="성명" value={data.name} /><InfoCell label="학번" value={data.studentNo} /></tr>
+          <tr><InfoCell label="주소" value={address} span /></tr>
+          <tr><InfoCell label="생년월일" value={data.birthDate?.replaceAll('-', '.')} /><InfoCell label="성별" value={data.sex} /></tr>
+          <tr><InfoCell label="핸드폰" value={data.mobile} /><InfoCell label="이메일" value={data.email} /></tr>
+        </tbody>
+      </table>
+    </section>
   </>
 }
 
@@ -1055,6 +1109,9 @@ function StudentDetailContent({ studentId, role, headerAction, initialTab, couns
 
       <StudentDetailTabs activeTab={activeTab} onChange={setTab} />
 
+      {/* 학사 행이 없는 서비스 전용 학생은 프로필의 학과·학년·학점만 있다. */}
+      {activeTab === 'basic' && <BasicInfoTab info={academicData ? basicInfoOf(academicData)
+        : { department: student.major, grade: student.grade, gpa: student.gpa == null ? null : String(student.gpa) }} />}
       {activeTab === 'diagnosis' && <DiagnosisTab student={student} />}
       {activeTab === 'counsel' && <CounselTab studentId={student.id} />}
       {activeTab === 'roadmap' && <RoadmapTab student={student} canEdit={canEdit} counselRequestId={counselRequestId} />}

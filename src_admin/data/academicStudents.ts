@@ -19,6 +19,12 @@ export interface AcademicStudentDetail extends RosterStudent {
   /** 학사 for_yn — Y/N 밖의 값은 null(미상). */
   foreigner: boolean | null
   graduationMonth: string | null
+  /** 학사 전공명(MAJOR_CD) — 학과(major)와 별개. 없으면 null. */
+  majorName: string | null
+  /** 학사 졸업예정년월(GRAD_EXP_YM) 「YYYY-MM」 — 졸업생은 graduationMonth 를 쓴다. */
+  graduationExpectedMonth: string | null
+  /** 학사 생년월일 「YYYY-MM-DD」 — 원천 열 이름은 AGE 지만 값은 YYYYMMDD(0024 백엔드가 채운다). 오기 전에는 없다. */
+  birthDate?: string | null
   diagnosisCount: number
   /** careTrack 은 진로취업 행에만 있다 — 심리·교수 상담은 null 로 온다. */
   counsels: { id: string; type: string; status: 'REQ' | 'CONFIRMED' | 'DONE'; date: string; careTrack: CareTrack | null }[]

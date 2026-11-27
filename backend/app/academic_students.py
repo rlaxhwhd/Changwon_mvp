@@ -287,9 +287,16 @@ def detail(identity: str, optional: bool = False, user=Depends(principal, scope=
     diagnoses = conn.execute("SELECT count(*) AS n FROM dc.diagnosis_attempt WHERE student_uid=%s AND status_code='DONE'", (identity,)).fetchone()['n']
     # 외국인 여부·연락처·주소는 상세에서만 쓰여 목록용 roster 에 넣지 않고 한 행만 읽는다. Y/N 밖의 값은 미상(None).
     # 연락처·주소(0023)는 범위 검사를 통과한 이 상세에서만 나간다 — ROSTER·목록·export 에 넣지 않는다.
-    details = conn.execute('''SELECT foreigner_code,mobile,email,post_code,address
+    details = conn.execute('''SELECT foreigner_code,mobile,email,post_code,address,grad_exp_ym
       FROM dc.academic_student_details WHERE intg_uid=%s''', (identity,)).fetchone() or {}
     foreigner = {'Y': True, 'N': False}.get(details.get('foreigner_code'))
+    # 전공(MAJOR_CD)은 학과(HAKBU_CD)와 별개다 — 기본사항 탭의 「전공」. 전공 코드는 MAJOR_INF 에서 고유하다(782/782).
+    major = conn.execute('''SELECT o.dept_nm FROM dc.academic_people p
+      JOIN dc.academic_organizations o ON o.lvl='3' AND o.dept_cd=p.major_cd::text
+      WHERE p.intg_uid=%s''', (identity,)).fetchone()
+    # 졸업예정년월(GRAD_EXP_YM, YYYYMM) — 졸업생은 graduationMonth 가 있고, 재학생은 이 값이 채워진 경우만 있다.
+    expected = details.get('grad_exp_ym') or ''
+    expected = f'{expected[:4]}-{expected[4:]}' if len(expected) == 6 and expected.isdigit() and '01' <= expected[4:] <= '12' else None
     # 성장 레벨 — 학생 라운지(/quests/dashboard)와 같은 학년 기준 값. 학년 XP 는 원장에서 파생한다.
     grade_xp = conn.execute('''SELECT s.grade,coalesce(sum(e.granted_xp),0)::bigint AS xp FROM dc.student s
       LEFT JOIN dc.growth_xp_event e ON e.student_uid=s.intg_uid AND e.grade=s.grade
@@ -303,6 +310,7 @@ def detail(identity: str, optional: bool = False, user=Depends(principal, scope=
     return dict(quest=quest,id=identity,studentNo=row['student_no'],name=row['name'],major=row['major_label'],star=row['star'],
       collegeName=row['college_name'],grade=row['grade'],academicLevel=row['academic_level'],
       status=row['status'],sex=row['sex'],foreigner=foreigner,graduationMonth=row['graduation_month'],gpa=row['gpa'],
+      majorName=major['dept_nm'] if major else None,graduationExpectedMonth=expected,
       studentType=row['student_type'],diagnosisCount=diagnoses,counsels=counsels,programs=programs,
       progress=row['progress'],hasRoadmap=row['has_roadmap'],
       # 서비스 학생 행이 있을 때만 화면이 범위 프로필(/students/{id})을 다시 읽는다 — 미이용 학사 학생의 404 왕복 제거(0022).
