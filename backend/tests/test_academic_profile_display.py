@@ -174,7 +174,7 @@ def test_app_role_reads_both_views_and_columns_are_additive(db, w):
 def test_academic_core_competency_is_raw_and_keys_are_unchanged(client, db, w):
     db.execute('SET LOCAL ROLE dc_app')
     mine = get(client, f"/students/{w['s']}", w['s'])
-    assert mine['coreCompetencySource'] == 'ACADEMIC'
+    assert mine['coreCompetencySource'] == 'ACADEMIC_PROGRAM'   # 0026: 교과+비교과 합산 뷰(비교과 0 이면 교과값 그대로)
     assert mine['coreCompetencyScores'] == {'LOCAL_LEADER': 12.0, 'CREATIVE': 5.0, 'CONVERGENCE': 7.5,
                                             'COMMUNICATION': 0.0, 'GLOBAL': 147.0}
     assert all(isinstance(v, float) for v in mine['coreCompetencyScores'].values())
@@ -185,9 +185,9 @@ def test_academic_core_competency_is_raw_and_keys_are_unchanged(client, db, w):
     # 교직원 부팅 묶음도 같은 값이다.
     boot = get(client, '/bootstrap/profiles', 'career_kim')
     row = next(r for r in boot['students'] + boot['counselOwners'] if r['id'] == w['s'])
-    assert (row['coreCompetencyScores'], row['coreCompetencySource']) == (mine['coreCompetencyScores'], 'ACADEMIC')
+    assert (row['coreCompetencyScores'], row['coreCompetencySource']) == (mine['coreCompetencyScores'], 'ACADEMIC_PROGRAM')
     for r in boot['students'] + boot['counselOwners']:
-        assert r['coreCompetencySource'] in (None, 'DEVELOPMENT_CARE7_TEST', 'ACADEMIC')
+        assert r['coreCompetencySource'] in (None, 'DEVELOPMENT_CARE7_TEST', 'ACADEMIC_PROGRAM')
 
 
 # §4-3

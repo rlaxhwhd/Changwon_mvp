@@ -334,11 +334,11 @@ function ProfileSection({ profile, competency, onSaveIntro }: { profile: Profile
         <header className="pf-panel-head">
           <div>
             <h2>핵심역량</h2>
-            <p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 기록(교과·비교과 이수 누계)에서 가져옵니다.</p>
+            <p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 교과 이수와 이뤄드림 비교과 이수 기록을 합산합니다.</p>
           </div>
         </header>
         {competency.length === 0
-          ? <Empty title="학사 핵심역량 점수가 아직 없습니다" />
+          ? <Empty title="핵심역량 점수가 아직 없습니다" />
           : (
             <dl className="pf-dl">
               {competency.map(axis => (

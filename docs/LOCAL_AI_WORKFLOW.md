@@ -1,5 +1,11 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-27 핵심역량 교과+비교과 합산(183) 로컬 반영 — 업체 수집 전·서버 미배포
+
+- 0026(rev2, Astra 조건부 승인): migration 183 — 스키마 `eco`(이뤄드림 사본 3표, `dc_app` 권한 없음)와 합산 뷰 `dc.student_core_competency_combined`. 프로필 API `coreCompetencySource='ACADEMIC_PROGRAM'`, 마이페이지·메인·교직원 상세 문구 갱신. 업체 수집기 `backend/scripts/sync_eco_competency.py`(dry-run 기본) — **업체 접속·`--publish` 는 아직 하지 않았다**(로컬 `eco` 0행 → 화면은 교과만 보인다).
+- `npm run docker:migrate`(백업 `_workspace/db-backups/local-before-migrate-20261127063915888.dump`) → `npm run docker:up` 전체 healthy. 격리 전체 회귀 `dc_regression_20261127063402_b2af89_test` 10 failed/871 passed/2 skipped — 기준선 `dc_regression_20261127053353_38f602_test` 와 실패 집합 diff 0(+28 = 새 계약·수집기 시험). `npx tsc -b` 통과.
+- 서버 배포 시: 웹+API+마이그레이션 183(새 스키마·표·뷰, 데이터 변경 없음, 180 선행). 서버 `eco` 는 비어 있는 채로 시작하며 수집은 별도 지시. 기록 `.ai/handoff-db/0026-core-competency-merge/implementation.md`.
+
 ## 2026-11-27 학사 증명사진 프록시(182) 로컬 반영 — 서버 미배포
 
 - 0025(rev3, Astra 조건부 승인): migration 182 — `dc.academic_student_details` 끝에 `photo_file`(source 원천만). 학생 마이페이지 마스트헤드·교직원 학생상세 인적사항 왼쪽에 증명사진. 브라우저는 우리 API(`/students/{id}/academic-photo`·`/academic-students/{id}/photo`)만 부르고, 서버가 권한 검사 뒤 `ACADEMIC_PHOTO_BASE_URL`(기본 `http://chains.changwon.ac.kr/onestop/haksa/photo/`)에서 받아 저장 없이 내려준다.

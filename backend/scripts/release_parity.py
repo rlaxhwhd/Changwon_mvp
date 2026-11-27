@@ -35,28 +35,28 @@ def snapshot(include_data=False):
         for query in [
             """SELECT n.nspname,c.relname,c.relkind,c.relowner::regrole::text,c.relacl::text
                FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-               WHERE n.nspname IN ('dc','academic') ORDER BY 1,2""",
+               WHERE n.nspname IN ('dc','academic','eco') ORDER BY 1,2""",
             """SELECT table_schema,table_name,column_name,ordinal_position,data_type,
                udt_schema,udt_name,character_maximum_length,numeric_precision,numeric_scale,
                is_nullable,column_default FROM information_schema.columns
-               WHERE table_schema IN ('dc','academic') ORDER BY 1,2,4""",
+               WHERE table_schema IN ('dc','academic','eco') ORDER BY 1,2,4""",
             """SELECT n.nspname,c.relname,k.conname,pg_get_constraintdef(k.oid)
                FROM pg_constraint k JOIN pg_class c ON c.oid=k.conrelid
                JOIN pg_namespace n ON n.oid=c.relnamespace
-               WHERE n.nspname IN ('dc','academic') ORDER BY 1,2,3""",
+               WHERE n.nspname IN ('dc','academic','eco') ORDER BY 1,2,3""",
             """SELECT schemaname,tablename,indexname,indexdef FROM pg_indexes
-               WHERE schemaname IN ('dc','academic') ORDER BY 1,2,3""",
+               WHERE schemaname IN ('dc','academic','eco') ORDER BY 1,2,3""",
             """SELECT schemaname,viewname,definition FROM pg_views
-               WHERE schemaname IN ('dc','academic') ORDER BY 1,2""",
+               WHERE schemaname IN ('dc','academic','eco') ORDER BY 1,2""",
             """SELECT n.nspname,p.proname,pg_get_function_identity_arguments(p.oid),
                pg_get_functiondef(p.oid) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace
-               WHERE n.nspname IN ('dc','academic') AND p.prokind IN ('f','p') ORDER BY 1,2,3""",
+               WHERE n.nspname IN ('dc','academic','eco') AND p.prokind IN ('f','p') ORDER BY 1,2,3""",
             """SELECT n.nspname,c.relname,t.tgname,pg_get_triggerdef(t.oid),t.tgenabled
                FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
                JOIN pg_namespace n ON n.oid=c.relnamespace
-               WHERE n.nspname IN ('dc','academic') AND NOT t.tgisinternal ORDER BY 1,2,3""",
+               WHERE n.nspname IN ('dc','academic','eco') AND NOT t.tgisinternal ORDER BY 1,2,3""",
             """SELECT schemaname,tablename,policyname,roles,cmd,qual,with_check FROM pg_policies
-               WHERE schemaname IN ('dc','academic') ORDER BY 1,2,3""",
+               WHERE schemaname IN ('dc','academic','eco') ORDER BY 1,2,3""",
         ]:
             definitions.append(conn.execute(query).fetchall())
         result['schema_hash'] = hashlib.sha256(json.dumps(definitions, default=str,
@@ -65,7 +65,7 @@ def snapshot(include_data=False):
             result['data'] = {}
             tables = conn.execute("""SELECT n.nspname,c.relname FROM pg_class c
                 JOIN pg_namespace n ON n.oid=c.relnamespace
-                WHERE n.nspname IN ('dc','academic') AND c.relkind='r' ORDER BY 1,2""").fetchall()
+                WHERE n.nspname IN ('dc','academic','eco') AND c.relkind='r' ORDER BY 1,2""").fetchall()
             for schema, table in tables:
                 count, digest = conn.execute(sql.SQL("""SELECT count(*),
                     md5(coalesce(string_agg(h,'' ORDER BY h),''))

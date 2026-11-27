@@ -1,5 +1,6 @@
 // 핵심역량 그래프는 프로필 API가 제공하는 DB 점수만 표시한다.
-// 학사 원점수(coreCompetencySource='ACADEMIC', 0023)는 100점 환산·목표선이 없다 —
+// 원점수(교과 학사 CORE + 비교과 이뤄드림 합산 'ACADEMIC_PROGRAM', 0026 · 옛 학사 단독 'ACADEMIC', 0023)는
+// 100점 환산·목표선이 없다 —
 // 그래프는 본인 최고 축을 바깥 테두리로 그린 모양(plot)만 보이고, 숫자는 원점수 그대로다.
 // 개발 테스트 점수(0~100)는 기존처럼 점수 = 그래프, 계층 목표선과 갭을 쓴다.
 import { COMPETENCY_LABELS, COMPETENCY_ORDER } from '../lib/scoring'
@@ -35,11 +36,17 @@ export function getCompetencyScores(student: StudentData): Record<Competency, nu
   return Object.fromEntries(COMPETENCY_ORDER.map(key => [key, stored[DB_CODES[key]]])) as Record<Competency, number>
 }
 
+/** 원점수(환산 없음·목표선 없음) 출처인가. 판정은 여기 한 곳에서만 한다 — 리터럴 비교를 화면에 두지 않는다.
+ *  'ACADEMIC' 은 배포 전환 중 이전 응답 캐시 대비로만 남긴다(API 는 0026 부터 'ACADEMIC_PROGRAM' 만 낸다). */
+export function isRawCompetencySource(source: string | null | undefined): boolean {
+  return source === 'ACADEMIC_PROGRAM' || source === 'ACADEMIC'
+}
+
 /** 학생 1명의 5대 핵심역량 축. 순서는 COMPETENCY_ORDER 를 따른다. */
 export function getCompetencyAxes(student: StudentData): CompetencyAxisView[] {
   const scores = getCompetencyScores(student)
   if (!scores) return []
-  if (student.coreCompetencySource === 'ACADEMIC') {
+  if (isRawCompetencySource(student.coreCompetencySource)) {
     const peak = Math.max(...COMPETENCY_ORDER.map(key => scores[key]))
     return COMPETENCY_ORDER.map(key => ({
       key,

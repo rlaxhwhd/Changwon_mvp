@@ -593,7 +593,7 @@ function GapTab({ student, radar }: { student: StudentData; radar: CompetencyRad
       <div className="dashboard-grid">
         <section data-slot="card" className="competency-card col-7">
           <CardHead title="5대 핵심역량" desc={raw
-            ? '학사 핵심역량 원점수(교과·비교과 이수 누계)입니다. 그래프는 학생의 가장 높은 역량을 기준으로 그립니다.'
+            ? '교과(학사)·비교과(이뤄드림) 이수 누계를 합한 원점수입니다. 그래프는 학생의 가장 높은 역량을 기준으로 그립니다.'
             : '현재 수준과 목표 도달선을 비교합니다. 점수는 이수한 교과·비교과에 내포된 역량 배점에서 산출됩니다.'} />
           <div data-slot="card-content">
             <div className="chart-layout">

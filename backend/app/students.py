@@ -71,14 +71,14 @@ def profile(conn,row):
         data['coreCompetencyScores']={s['competency_code']:s['score'] for s in examples}
         data['coreCompetencySource']='DEVELOPMENT_CARE7_TEST'
         return data
-    # 학사 핵심역량 원점수(0023). 100점 환산·목표선 없음 — 화면이 본인 최고 축 기준으로 그린다.
-    # 5행·5코드일 때만 그린다(원천의 코드 중복은 보고형 검사뿐이라 부분·중복 점수로 그리지 않는다).
-    academic=conn.execute('SELECT competency_code,score FROM dc.academic_student_core_competency WHERE student_uid=%s',
+    # 핵심역량 원점수 = 교과(학사 CORE, 0023) + 비교과(이뤄드림 지급 합, 0026). 100점 환산·목표선 없음 —
+    # 화면이 본인 최고 축 기준으로 그린다. 대상 제외·부분 합 금지는 뷰가 판정하고, 여기선 5행·5코드만 방어 확인한다.
+    combined=conn.execute('SELECT competency_code,score FROM dc.student_core_competency_combined WHERE student_uid=%s',
                           (row['intg_uid'],)).fetchall()
-    academic_scores={r['competency_code']:float(r['score']) for r in academic}
-    if len(academic)==5 and len(academic_scores)==5:
-        data['coreCompetencyScores']=academic_scores
-        data['coreCompetencySource']='ACADEMIC'
+    combined_scores={r['competency_code']:float(r['score']) for r in combined}
+    if len(combined)==5 and len(combined_scores)==5:
+        data['coreCompetencyScores']=combined_scores
+        data['coreCompetencySource']='ACADEMIC_PROGRAM'
         return data
     scores=conn.execute('''SELECT competency_code,accumulated_points
       FROM dc.student_core_competency_points WHERE student_uid=%s''',(row['intg_uid'],)).fetchall()

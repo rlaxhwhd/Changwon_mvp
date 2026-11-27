@@ -73,3 +73,15 @@
 마이그레이션 후 개발 환경에서 소유자 권한으로 `python -m app.seed_core_competency_examples`를 실행한다. alias·내부 ID·서비스 학번·이름·fixture 여부를 모두 확인하며 재실행 시 기존 점수를 덮어쓰지 않는다. 학번은 김채원 20990001, 김창원 20990002다. 기존 DB를 다른 PC로 옮길 때는 이 테이블도 포함된 DB 백업을 복원한다. Git pull만으로 로컬 DB 행은 이동하지 않는다.
 
 프로필은 개발 환경의 fixture에 5축이 모두 있을 때만 점수를 반환한다. 출처 `DEVELOPMENT_CARE7_TEST`는 유지하고, 사용자 요청에 따라 메인·라운지의 예시 점수 안내 문구만 제거했다. 운영 환경에서는 이 테이블 값을 그래프에 제공하지 않는다. 복구 시 해당 두 학생의 개발 전용 행만 제거하면 기존 배점 누락 상태로 돌아간다. 자세한 검증은 [학생·라운지 변경 기록](STUDENT_LOUNGE_2026-09-28.md)을 참조한다.
+
+## 이뤄드림 비교과 합산 (183, 2026-11-27 · 0026)
+
+5대 핵심역량은 하나다. 교과 이수분은 전산원 `DC_V_STU_CAP_INF` CORE(180 뷰 `dc.academic_student_core_competency`), 비교과 이수분은 이뤄드림(업체) `VW_ECO_ROADMAP_APPLICATION.skill_scores` 지급 점수다. 화면 점수는 축마다 **교과 + 비교과 원점수 합**이며 환산·백분위·100점 정규화·목표선은 없다(0023 확정 유지). 상세 설계·조건은 `.ai/handoff-db/0026-core-competency-merge/`.
+
+- **원천 사본(스키마 `eco`, `dc_app` 권한 없음):** `eco.roadmap_application`(지급 이력이 있는 신청서 원값, 키 = 업체 `application_id`) · `eco.roadmap_application_skill_point`(`skill_scores` 원소 1개 = 1행, essential 1~5·child 0·point ≥0 유한 CHECK, `(student_id, essential) INCLUDE (point)` 인덱스) · `eco.sync_run`(집계만, append-only). 화면 합계는 지급 행 표만 읽는다(읽기 시점 JSON 파싱 없음).
+- **읽기 뷰:** `dc.student_core_competency_combined(student_uid, competency_code, academic_score, program_score, score)` — 점조회 전용(`WHERE student_uid = $1`), 소유자 권한, `dc_app` SELECT. essential 1~5 → `LOCAL_LEADER·CREATIVE·CONVERGENCE·COMMUNICATION·GLOBAL`(번호 대응, 이름 매칭 아님). 프로필 API 는 `coreCompetencySource='ACADEMIC_PROGRAM'` 으로 낸다(옛 `'ACADEMIC'` 은 더 내지 않는다). 프론트 원점수 판정은 `src_v2/data/competency.ts` 의 `isRawCompetencySource()` 한 곳이다.
+- **대상·제외 규칙:** 학사 원본 학생(`academic.dc_v_usr_inf`, `user_ty_cd='0001'`)만. `origin='local'` 계정·`dc.student_login_override` 계정·`dc.fixture_student_login` 계정은 실학생 값을 받지 않는다(가명 계정에 실학생 점수가 붙지 않게 — 182 사진과 같은 원칙). 교과 행이 있는데 5행·5코드가 아니면(부분·중복·NULL) 그 학생은 비교과가 있어도 점수를 내지 않는다(부분 합 금지). 두 원천 모두 없으면 점수 없음, 한쪽이라도 있으면 5축 전부(없는 축 0).
+- **인정 조건:** 업체 명세 「지급 = 인정」 — 신청 상태·완료 여부로 다시 판정하지 않는다(확인 대기 `DB.md` §9 #48).
+- **수집:** `backend/scripts/sync_eco_competency.py` 를 호스트에서 수동 실행한다(의존성 `backend/requirements-academic.txt` 의 `PyMySQL==1.1.1`). 기본은 dry-run(업체 읽기·검증·집계 보고만, PG 쓰기 0), `--publish` 를 명시해야 공개한다. 업체 접속 값은 `--vendor-env-file`(기본 `.env.local`)의 `pro_ip`·`pro_id`·`pro_pw` 세 키만 읽고 출력·로그·실행 기록 어디에도 남기지 않는다. 업체 쪽은 고정 문 4개(`max_execution_time`·`START TRANSACTION READ ONLY`·SELECT·`COMMIT`)만 실행한다. 검증을 하나라도 어기면 전체 중단·기존 사본 유지(학번 형식 위반 행만 제외·건수 보고). 공개는 세션 advisory lock → 하한(20% 초과 감소·0행이면 중단) → 한 트랜잭션 DELETE+COPY·건수 재확인(TRUNCATE 금지) → ANALYZE 순서이고, 중단은 `eco.sync_run` 에 `ABORTED`(분류 코드·건수만)로 남는다. 업체 title 기대 문자열 `EXPECTED_TITLES` 를 첫 dry-run 보고의 실제 값으로 고정하기 전까지 `--publish` 는 업체 접속 전에 거부된다.
+- **운영 순서:** 학사 동기화(`sync_academic.py`) 뒤에 실행하면 학사 사본에 새로 들어온 학생이 바로 매칭된다(보고의 `academicUnmatchedStudents` 로 추적). 화면 비교과 점수는 마지막 `--publish` 시점 기준이다(자동 주기 실행 없음). 서버 DB 의 `eco` 는 서버 배포·수집 지시 전까지 비어 있고 그때 화면은 교과만 보인다(정상).
+- **롤백(수동, 순서 중요, CASCADE 금지):** migration 183 머리말 ①→②→③ — API·프론트를 180 읽기·`'ACADEMIC'` 으로 먼저 되돌리고, 합산 뷰, `eco` 표 3개와 스키마 순으로 제거한다. 업체 사본은 재수집으로 복구된다. 180 뷰·학사 사본은 건드리지 않는다.

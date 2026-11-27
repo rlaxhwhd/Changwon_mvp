@@ -2,7 +2,7 @@
 
 Run from backend with the usual DC_DB_* settings:
   python scripts/audit_schema.py --output var/schema-audit.json
-Only dc/academic are inspected. Row counts are planner estimates, not COUNT(*).
+Only dc/academic/eco are inspected. Row counts are planner estimates, not COUNT(*).
 """
 import argparse
 import hashlib
@@ -22,7 +22,7 @@ QUERIES = {
       c.reltuples::bigint AS estimated_rows, pg_total_relation_size(c.oid) AS bytes,
       c.relrowsecurity AS rls
       FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace
-      WHERE n.nspname IN ('dc','academic') AND c.relkind IN ('r','p','v','m')
+      WHERE n.nspname IN ('dc','academic','eco') AND c.relkind IN ('r','p','v','m')
       ORDER BY 1,2""",
     'columns': """SELECT n.nspname AS schema,c.relname AS table_name,a.attname AS name,
       a.attnum AS position,format_type(a.atttypid,a.atttypmod) AS type,
@@ -31,25 +31,25 @@ QUERIES = {
       FROM pg_attribute a JOIN pg_class c ON c.oid=a.attrelid
       JOIN pg_namespace n ON n.oid=c.relnamespace
       LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
-      WHERE n.nspname IN ('dc','academic') AND c.relkind IN ('r','p')
+      WHERE n.nspname IN ('dc','academic','eco') AND c.relkind IN ('r','p')
       AND a.attnum>0 AND NOT a.attisdropped ORDER BY 1,2,a.attnum""",
     'constraints': """SELECT n.nspname AS schema,t.relname AS table_name,c.conname AS name,
       c.contype AS type,c.convalidated AS validated,pg_get_constraintdef(c.oid) AS definition
       FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid
       JOIN pg_namespace n ON n.oid=t.relnamespace
-      WHERE n.nspname IN ('dc','academic') ORDER BY 1,2,3""",
+      WHERE n.nspname IN ('dc','academic','eco') ORDER BY 1,2,3""",
     'indexes': """SELECT n.nspname AS schema,t.relname AS table_name,c.relname AS name,
       i.indisvalid AS valid,i.indisready AS ready,pg_get_indexdef(i.indexrelid) AS definition,
       pg_relation_size(i.indexrelid) AS bytes,s.idx_scan
       FROM pg_index i JOIN pg_class t ON t.oid=i.indrelid
       JOIN pg_class c ON c.oid=i.indexrelid JOIN pg_namespace n ON n.oid=t.relnamespace
       LEFT JOIN pg_stat_user_indexes s ON s.indexrelid=i.indexrelid
-      WHERE n.nspname IN ('dc','academic') ORDER BY 1,2,3""",
+      WHERE n.nspname IN ('dc','academic','eco') ORDER BY 1,2,3""",
     'fk_without_full_prefix_index': """SELECT n.nspname AS schema,t.relname AS table_name,
       c.conname AS name,pg_get_constraintdef(c.oid) AS definition
       FROM pg_constraint c JOIN pg_class t ON t.oid=c.conrelid
       JOIN pg_namespace n ON n.oid=t.relnamespace
-      WHERE n.nspname IN ('dc','academic') AND c.contype='f' AND NOT EXISTS (
+      WHERE n.nspname IN ('dc','academic','eco') AND c.contype='f' AND NOT EXISTS (
         SELECT 1 FROM pg_index i JOIN pg_class ic ON ic.oid=i.indexrelid
         JOIN pg_am am ON am.oid=ic.relam
         WHERE i.indrelid=c.conrelid AND i.indisvalid AND i.indisready
@@ -62,19 +62,19 @@ QUERIES = {
       t.tgenabled AS enabled,pg_get_triggerdef(t.oid) AS definition
       FROM pg_trigger t JOIN pg_class c ON c.oid=t.tgrelid
       JOIN pg_namespace n ON n.oid=c.relnamespace
-      WHERE n.nspname IN ('dc','academic') AND NOT t.tgisinternal ORDER BY 1,2,3""",
+      WHERE n.nspname IN ('dc','academic','eco') AND NOT t.tgisinternal ORDER BY 1,2,3""",
     'grants': """SELECT table_schema AS schema,table_name,grantee,privilege_type
       FROM information_schema.role_table_grants
-      WHERE table_schema IN ('dc','academic') AND grantee IN ('dc_app','PUBLIC')
+      WHERE table_schema IN ('dc','academic','eco') AND grantee IN ('dc_app','PUBLIC')
       ORDER BY 1,2,3,4""",
     'views': """SELECT schemaname AS schema,viewname AS name,definition
-      FROM pg_views WHERE schemaname IN ('dc','academic') ORDER BY 1,2""",
+      FROM pg_views WHERE schemaname IN ('dc','academic','eco') ORDER BY 1,2""",
     'duplicate_indexes': """SELECT n.nspname AS schema,t.relname AS table_name,
       a.indexrelid::regclass::text AS first_index,b.indexrelid::regclass::text AS second_index
       FROM pg_index a JOIN pg_index b ON a.indrelid=b.indrelid AND a.indexrelid<b.indexrelid
       JOIN pg_class t ON t.oid=a.indrelid JOIN pg_namespace n ON n.oid=t.relnamespace
       JOIN pg_class ac ON ac.oid=a.indexrelid JOIN pg_class bc ON bc.oid=b.indexrelid
-      WHERE n.nspname IN ('dc','academic') AND ac.relam=bc.relam
+      WHERE n.nspname IN ('dc','academic','eco') AND ac.relam=bc.relam
       AND a.indkey=b.indkey AND a.indclass=b.indclass AND a.indcollation=b.indcollation
       AND a.indoption=b.indoption AND a.indnkeyatts=b.indnkeyatts
       AND a.indisunique=b.indisunique AND a.indnullsnotdistinct=b.indnullsnotdistinct
