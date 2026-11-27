@@ -49,8 +49,9 @@ const TABS: { id: TabId; label: string }[] = [
 ]
 
 /** 비어 있으면 「-」 대신 옅은 「미입력」으로 둔다 — 빈 값과 값을 한눈에 가른다. */
-function Value({ children }: { children: string }) {
-  return children ? <dd>{children}</dd> : <dd className="is-blank">미입력</dd>
+function Value({ children, wide }: { children: string; wide?: boolean }) {
+  const cls = [wide && 'is-wide', !children && 'is-blank'].filter(Boolean).join(' ') || undefined
+  return <dd className={cls}>{children || '미입력'}</dd>
 }
 
 function Empty({ title, children, action }: { title: string; children?: ReactNode; action?: ReactNode }) {
@@ -125,10 +126,8 @@ export default function Portfolio() {
   }, [profile.intro.length, skills.length, certs.length, langs.length, awards.length, projects.length, resumes.length])
 
   const coverName = profile.name ? `${studentDisplayName(profile.name, profile.studentId)}의 포트폴리오` : '나의 포트폴리오'
-  // 학사 증명사진(0025) — 경로가 있을 때만 요청한다. 로딩 중·실패면 이름 모노그램을 그대로 보인다.
+  // 학사 증명사진(0025) — 경로가 있을 때만 요청한다. 로딩 중·실패면 「사진 없음」을 보인다.
   const photoUrl = dto?.profile.academic?.photoUrl ?? null
-  const monogram = profile.name.slice(-2)
-  const coverLine = [profile.dept, profile.grade, profile.studentId].filter(Boolean).join(' · ')
   // 머리말의 구성 칸 — 누르면 그 항목이 있는 탭으로 간다. 칸마다 내 성장 화면의 카드 색을 따른다.
   const ledger: { label: string; count: number; tab: TabId; tone: string }[] = [
     { label: '기술역량', count: skills.length, tab: 'skills', tone: 'mint' },
@@ -147,18 +146,7 @@ export default function Portfolio() {
     <main className="pf-shell">
       <section className="pf-mast" aria-labelledby="portfolio-title">
         <div className="pf-mast-top">
-          <div className="pf-mast-id">
-            {photoUrl
-              ? <div className="pf-monogram pf-monogram--photo">
-                  <ProtectedImage src={photoUrl} alt={`${profile.name} 증명사진`}
-                    fallback={<span aria-hidden="true">{monogram}</span>} />
-                </div>
-              : <div className="pf-monogram" aria-hidden="true">{monogram}</div>}
-            <div>
-              <h2 id="portfolio-title">{coverName}</h2>
-              {coverLine && <p className="pf-mast-meta">{coverLine}</p>}
-            </div>
-          </div>
+          <h2 id="portfolio-title">{coverName}</h2>
           <div className="pf-mast-actions">
             <Link to={GROWTH_PATH} className="pf-action">
               <i className="fa-solid fa-seedling" aria-hidden="true" /> 내 성장에서 기록하기
@@ -167,6 +155,25 @@ export default function Portfolio() {
               <i className="fa-regular fa-file-lines" aria-hidden="true" /> 대표 포트폴리오
             </button>
           </div>
+        </div>
+        {/* 인적사항 — 교직원 학생 상세(StudentDetailView 인적사항)와 같은 배치: 증명사진 왼쪽 + 표, 한 테두리(2026-11-27 사용자 지시).
+            학과·학년·학번 한 줄 요약은 이 표가 대신한다. */}
+        <div className="pf-person">
+          <div className="pf-id-photo">
+            {photoUrl
+              ? <ProtectedImage src={photoUrl} alt={`${profile.name} 증명사진`} fallback={<span>사진 없음</span>} />
+              : <span>사진 없음</span>}
+          </div>
+          <dl className="pf-person-table" aria-label="인적사항">
+            <dt>성명</dt><Value>{studentDisplayName(profile.name, profile.studentId)}</Value>
+            <dt>학번</dt><Value>{profile.studentId}</Value>
+            <dt>학과</dt><Value>{profile.dept}</Value>
+            <dt>학년</dt><Value>{profile.grade}</Value>
+            <dt>생년월일</dt><Value>{profile.birthDate}</Value>
+            <dt>휴대폰</dt><Value>{profile.academicPhone || profile.phone}</Value>
+            <dt>이메일</dt><Value wide>{profile.academicEmail || profile.email}</Value>
+            <dt>주소</dt><Value wide>{profile.address}</Value>
+          </dl>
         </div>
         <div className="pf-ledger">
           <div className="pf-score">

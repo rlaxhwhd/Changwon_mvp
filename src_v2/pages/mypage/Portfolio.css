@@ -47,13 +47,23 @@
 .pf-mast { margin-bottom: 28px; padding: 28px 32px 0; border: 1px solid var(--blue-border); border-radius: var(--pf-radius);
   background: var(--pf-paper); }
 .pf-mast-top { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
-.pf-mast-id { min-width: 0; display: flex; align-items: center; gap: 18px; }
-.pf-monogram { width: 60px; height: 60px; flex: none; display: grid; place-items: center; border-radius: 16px; background: linear-gradient(135deg, var(--blue), var(--sky)); color: #fff; font-size: var(--fs-sub, 18px); font-weight: 800; letter-spacing: -.02em; box-shadow: 0 10px 24px color-mix(in srgb, var(--blue) 22%, transparent); }
-.pf-monogram--photo { overflow: hidden; }
-.pf-monogram--photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
-.pf-mast h2 { margin: 0; color: var(--pf-text); font-size: var(--fs-metric, 24px); font-weight: 800; line-height: 1.3; letter-spacing: -.03em; text-wrap: balance; }
-.pf-mast-meta { margin: 6px 0 0; color: var(--pf-sub); font-size: var(--fs-meta, 13px); }
+.pf-mast h2 { min-width: 0; margin: 0; color: var(--pf-text); font-size: var(--fs-metric, 24px); font-weight: 800; line-height: 1.3; letter-spacing: -.03em; text-wrap: balance; }
 .pf-mast-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* 인적사항 — 증명사진과 표가 한 테두리 안에서 한 표처럼 보인다(교직원 학생 상세 .sdv-person 과 같은 배치).
+   사진 칸은 표 높이만큼 늘어나고, 사진은 그 칸을 잘라 채운다. */
+.pf-person { display: flex; align-items: stretch; margin-top: 20px; border: 1px solid var(--pf-line-strong); border-radius: var(--pf-radius-sm); overflow: hidden; background: var(--pf-paper); }
+.pf-id-photo { flex: none; width: 150px; display: grid; place-items: center; border-right: 1px solid var(--pf-line-strong); background: var(--pf-wash); color: var(--pf-mute); font-size: var(--fs-label, 12px); }
+.pf-id-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.pf-person-table { flex: 1; min-width: 0; margin: 0; display: grid; grid-template-columns: 96px minmax(0, 1fr) 96px minmax(0, 1fr); }
+.pf-person-table > dt,
+.pf-person-table > dd { min-width: 0; margin: 0; padding: 10px 14px; display: flex; align-items: center; border-bottom: 1px solid var(--pf-line); }
+.pf-person-table > dt { border-right: 1px solid var(--pf-line); background: var(--pf-wash); color: var(--pf-sub); font-size: var(--fs-meta, 13px); font-weight: 700; }
+.pf-person-table > dd { color: var(--pf-text); font-weight: 600; overflow-wrap: anywhere; }
+.pf-person-table > dd:nth-of-type(odd):not(.is-wide) { border-right: 1px solid var(--pf-line); }
+.pf-person-table > dd.is-wide { grid-column: span 3; }
+.pf-person-table > dd.is-blank { color: var(--pf-mute); font-weight: 500; }
+.pf-person-table > :nth-last-child(-n+2) { border-bottom: 0; }
 
 /* 구성 현황 — 칸을 누르면 그 항목으로 간다. 채운 칸은 위에 그 항목 색의 선이 생긴다. */
 .pf-ledger { margin-top: 24px; display: grid; grid-template-columns: 176px repeat(5, minmax(0, 1fr)); border-top: 1px solid var(--pf-line); }
@@ -229,7 +239,13 @@
   .pf-mast { padding: 20px 20px 0; }
   .pf-mast-top { flex-direction: column; align-items: stretch; gap: 16px; }
   .pf-mast-actions .pf-action { flex: 1; }
-  .pf-monogram { width: 52px; height: 52px; border-radius: 14px; font-size: var(--fs-card, 16px); }
+  /* 좁은 화면 — 사진을 표 위 한 칸으로 올리고 표는 2열(항목·값)로 접는다. */
+  .pf-person { flex-direction: column; }
+  .pf-id-photo { width: auto; min-height: 120px; padding: 16px; border-right: 0; border-bottom: 1px solid var(--pf-line-strong); }
+  .pf-id-photo img { width: 112px; height: auto; aspect-ratio: 3 / 4; border-radius: 4px; }
+  .pf-person-table { grid-template-columns: 84px minmax(0, 1fr); }
+  .pf-person-table > dd:nth-of-type(odd):not(.is-wide) { border-right: 0; }
+  .pf-person-table > dd.is-wide { grid-column: auto; }
   .pf-mast h2 { font-size: var(--fs-lead, 20px); }
   .pf-ledger { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .pf-seg { padding: 12px 10px 14px; border-bottom: 1px solid var(--pf-line); }
