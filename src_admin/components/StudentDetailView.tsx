@@ -974,8 +974,8 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
       </div>
       {action}
     </header>
-    {/* 인적사항 — 현행 포트폴리오 화면 배치(증명사진 왼쪽(0025) / 성명·학번 / 주소 / 생년월일·성별 / 핸드폰·이메일 / 집전화(0024)).
-        학적 값·외국인 여부는 「기본사항」 탭. */}
+    {/* 인적사항 — 현행 포트폴리오 화면 배치(증명사진 왼쪽(0025) / 성명·학번 / 주소 / 생년월일·성별 / 핸드폰·이메일).
+        집전화는 현행 화면처럼 넣지 않는다(2026-11-27 사용자 지시). 학적 값·외국인 여부는 「기본사항」 탭. */}
     <div className="sdv-person">
       {/* 증명사진은 범위 검사를 거치는 프록시 경로로만 읽는다. 경로가 없으면 요청하지 않는다. */}
       <div className="sdv-id-photo">
@@ -991,7 +991,6 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
             <tr><InfoCell label="주소" value={address} span /></tr>
             <tr><InfoCell label="생년월일" value={data.birthDate?.replaceAll('-', '.')} /><InfoCell label="성별" value={data.sex} /></tr>
             <tr><InfoCell label="핸드폰" value={data.mobile} /><InfoCell label="이메일" value={data.email} /></tr>
-            <tr><InfoCell label="집전화" value={data.homePhone} span /></tr>
           </tbody>
         </table>
       </section>
