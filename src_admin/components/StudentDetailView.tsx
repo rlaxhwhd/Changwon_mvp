@@ -38,7 +38,7 @@ import CareerJourneyCard from '../../src_v2/components/CareerJourneyCard'
 // 레이더 좌표 계산은 학생 화면과 같은 한 벌만 둔다 — 기본 클래스 이름(radar/grid/axis/
 // need/mine)이 이 화면의 시안 CSS 와 그대로 맞아서 넘길 것이 없다.
 import CompetencyRadarChart from '../../src_v2/components/CompetencyRadarChart'
-import { formatCompetencyScore } from '../../src_v2/data/competency'
+import { COMPETENCY_FULL_SCORE, formatCompetencyScore } from '../../src_v2/data/competency'
 // 포트폴리오 탭은 학생 이력서 화면을 그대로 쓴다 — 값도 같은 단일소스에서 읽는다.
 import PortfolioSheet from '../../shared/PortfolioSheet'
 import ProtectedImage from '../../shared/ProtectedImage'
@@ -586,14 +586,14 @@ function ProgramTab({ studentId, academicRecords }: { studentId: string; academi
 // ── 탭 ⑤: 역량 GAP ─────────────────────────────────────────────────────────
 
 function GapTab({ student, radar }: { student: StudentData; radar: CompetencyRadar }) {
-  // 학사 원점수(0023)는 목표선이 없다 — 목표 마커·범례·갭을 숨기고 원점수를 보인다. 막대는 본인 최고 축 기준(plot).
+  // 학사 원점수(0023)는 목표선이 없다 — 목표 마커·범례·갭을 숨기고 원점수를 보인다. 막대는 축 만점 120 기준(plot), 넘으면 is-over.
   const raw = radar.axes.length > 0 && radar.axes.some(a => a.target == null)
   return (
     <>
       <div className="dashboard-grid">
         <section data-slot="card" className="competency-card col-7">
           <CardHead title="5대 핵심역량" desc={raw
-            ? '교과(학사)·비교과(이뤄드림) 이수 누계를 합한 원점수입니다. 그래프는 학생의 가장 높은 역량을 기준으로 그립니다.'
+            ? `교과(학사)·비교과(이뤄드림) 이수 누계를 합한 원점수입니다. 그래프는 축마다 ${COMPETENCY_FULL_SCORE}점을 끝으로 그리고, 넘은 축은 바깥으로 뻗어 보입니다.`
             : '현재 수준과 목표 도달선을 비교합니다. 점수는 이수한 교과·비교과에 내포된 역량 배점에서 산출됩니다.'} />
           <div data-slot="card-content">
             <div className="chart-layout">
@@ -608,8 +608,8 @@ function GapTab({ student, radar }: { student: StudentData; radar: CompetencyRad
                 {radar.axes.map(a => (
                   <div key={a.key} className="axis-row">
                     {a.label}
-                    <span className="axis-track">
-                      <i style={{ width: `${a.plot}%` }} />
+                    <span className={a.over ? 'axis-track is-over' : 'axis-track'}>
+                      <i style={{ width: `${Math.min(a.plot, 100)}%` }} />
                       {a.target != null && <u style={{ left: `${a.target}%` }} />}
                     </span>
                     {a.gap == null

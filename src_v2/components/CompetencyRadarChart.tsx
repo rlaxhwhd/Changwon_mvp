@@ -15,6 +15,9 @@ import { LockedContent } from './LockedContent'
 // ─────────────────────────────────────────────────────────────────────────
 
 const CX = 150, CY = 140, R = 96
+/** 축 만점(120)을 넘은 원점수가 바깥 테두리를 뚫고 나가는 최대 길이(%) — 점수가 얼마든 여기서 멈춘다.
+ *  라벨(R + 22)과 겹치지 않는 한도다. 넘은 축 끝에는 점(over 표시)을 찍는다. */
+const OVER_REACH = 110
 
 /** i번째 축의 꼭짓점 — 12시에서 시작해 시계방향. */
 function point(i: number, n: number, r: number) {
@@ -22,10 +25,10 @@ function point(i: number, n: number, r: number) {
   return { x: CX + r * Math.cos(angle), y: CY + r * Math.sin(angle) }
 }
 
-function polygon(values: number[], n: number): string {
+function polygon(values: number[], n: number, max = 100): string {
   return values
     .map((v, i) => {
-      const p = point(i, n, (Math.max(0, Math.min(100, v)) / 100) * R)
+      const p = point(i, n, (Math.max(0, Math.min(max, v)) / 100) * R)
       return `${p.x.toFixed(1)},${p.y.toFixed(1)}`
     })
     .join(' ')
@@ -84,9 +87,16 @@ export default function CompetencyRadarChart({ axes, classes, currentFill, child
       {!empty && targets && <polygon className={c.target} points={polygon(targets, n)} />}
       {!empty && <polygon
         className={c.current}
-        points={polygon(axes.map(a => a.plot), n)}
+        points={polygon(axes.map(a => a.plot), n, OVER_REACH)}
         fill={currentFill ? `url(#${currentFill})` : undefined}
       />}
+      {/* 만점(120)을 넘은 축 — 테두리 밖 꼭짓점에 점을 찍어 「뚫고 나감」을 보인다. 두 SPA 공용이라 색은 속성으로 준다. */}
+      {!empty && axes.map((a, i) => {
+        if (!a.over) return null
+        const p = point(i, n, (OVER_REACH / 100) * R)
+        return <circle key={a.key} className="competency-over-dot" cx={p.x.toFixed(1)} cy={p.y.toFixed(1)} r={4.5}
+          fill="var(--card, #fff)" stroke="var(--competency-current, var(--violet))" strokeWidth={2.5} />
+      })}
       {labels.map((a, i) => {
         const p = point(i, n, R + 22)
         const dx = p.x - CX

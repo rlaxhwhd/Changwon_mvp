@@ -385,6 +385,16 @@
   background: linear-gradient(90deg, var(--competency-current), var(--competency-growth));
 }
 
+/* 축 만점(120)을 넘은 막대 — 회색 트랙 끝을 화살촉으로 뚫고 나간다(2026-11-27 사용자 지시). 점수는 상한이 없어 길이는 일정하다. */
+.mn-page .axis-track.is-over { overflow: visible; }
+.mn-page .axis-track.is-over > i {
+  width: calc(100% + 12px) !important;
+  height: calc(100% + 6px);
+  margin-top: -3px;
+  border-radius: 0;
+  clip-path: polygon(0 3px, calc(100% - 9px) 3px, calc(100% - 9px) 0, 100% 50%, calc(100% - 9px) 100%, calc(100% - 9px) calc(100% - 3px), 0 calc(100% - 3px));
+}
+
 .mn-page .program-card-shell [data-slot="card-content"] {
   padding-top: 16px;
 }
