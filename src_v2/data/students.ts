@@ -31,6 +31,14 @@ export interface TargetCompany {
   matchScore: number
   requirements: TargetReq[]
 }
+/** 목표 기업의 이름·직무 — 객체이고 그 값이 공백 아닌 문자열일 때만 준다. 아니면 ''.
+ *  서버는 확정 계획이 없으면 {} 를, 상담사가 기업을 비운 계획이면 생성 모델의 요약 문자열을 그대로 내려보낸다(0027).
+ *  타입(TargetCompany)과 런타임 모양이 다르므로 화면은 필드를 직접 읽지 말고 이 함수를 거친다. */
+export function targetCompanyField(value: unknown, field: 'name' | 'role'): string {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return ''
+  const text = (value as Record<string, unknown>)[field]
+  return typeof text === 'string' ? text.trim() : ''
+}
 export interface SWItem { label: string; value: number; type: 'strength' | 'weakness' }
 /** 성장 레벨 카드 값. 승급 산식이 확정되면 이 구조를 데이터 층에서 계산해 채운다. */
 export interface GrowthLevel {
@@ -361,7 +369,7 @@ export function getCounselOwners(): CounselOwner[] {
     studentType: getStudentType(s),
     gpa: s.gpa,
     language: s.language,
-    targetCompanySummary: `${s.targetCompany.name} · ${s.targetCompany.role}`,
+    targetCompanySummary: [targetCompanyField(s.targetCompany, 'name'), targetCompanyField(s.targetCompany, 'role')].filter(Boolean).join(' · ') || '—',
     roadmapSummary: deriveRoadmapSummary(s.phases),
     counselorQuestions: s.counselorQuestions ?? [],
     competencyScore: s.competencyScore,

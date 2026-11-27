@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { getActiveStudent, getStudentTypeMeta } from '../../data/students'
+import { getActiveStudent, getStudentTypeMeta, targetCompanyField } from '../../data/students'
 import { typeLabel } from '../../data/careerProcess'
 // 로드맵은 새로 그리지 않는다 — 상담사 편집기와 같은 공용 3축 보드다.
 import RoadmapAxisBoard from '../../components/RoadmapAxisBoard'
@@ -119,7 +119,7 @@ export default function RoadmapStatus() {
         </div>
         <div className="rs-meta-item">
           <span className="rs-meta-key">목표 회사</span>
-          <span className="rs-meta-val">{student.targetCompany.name}</span>
+          <span className="rs-meta-val">{targetCompanyField(student.targetCompany, 'name') || '미정'}</span>
         </div>
         <div className="rs-meta-item">
           <span className="rs-meta-key">진단 유형</span>
@@ -131,7 +131,8 @@ export default function RoadmapStatus() {
         </div>
         <div className="rs-meta-item">
           <span className="rs-meta-key">목표 회사 매칭</span>
-          <span className="rs-meta-val rs-meta-val--accent">{student.targetCompany.matchScore}%</span>
+          {/* 매칭 점수는 시드 목업에만 있다 — 실제 계획(문자열·{})에는 없으므로 「undefined%」 대신 「-」. */}
+          <span className="rs-meta-val rs-meta-val--accent">{Number.isFinite(student.targetCompany?.matchScore) ? `${student.targetCompany.matchScore}%` : '-'}</span>
         </div>
       </section>
 

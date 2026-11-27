@@ -9,6 +9,7 @@
 // 둘 다 있으면 로드맵이 이긴다. 학생 값은 지우지 않고 화면에서만 숨긴다.
 // ─────────────────────────────────────────────────────────────────────────
 import type { GrowthProfile } from '../../shared/growthStore'
+import { targetCompanyField } from './students'
 
 export interface GrowthTargetCompany {
   name: string
@@ -17,11 +18,8 @@ export interface GrowthTargetCompany {
 
 export function growthTargetCompany(student: { targetCompany?: unknown },
                                     profile: Pick<GrowthProfile, 'targetCompany'> | null | undefined): GrowthTargetCompany | null {
-  const roadmap = student.targetCompany
-  if (roadmap && typeof roadmap === 'object' && !Array.isArray(roadmap)) {
-    const name = (roadmap as { name?: unknown }).name
-    if (typeof name === 'string' && name.trim() !== '') return { name: name.trim(), source: 'ROADMAP' }
-  }
+  const roadmap = targetCompanyField(student.targetCompany, 'name')
+  if (roadmap) return { name: roadmap, source: 'ROADMAP' }
   const self = profile?.targetCompany
   return self ? { name: self, source: 'SELF' } : null
 }

@@ -80,8 +80,9 @@ export interface RoadmapEnvelope {
 const plans = new Map<string, RoadmapEnvelope>()
 const pending = new Map<string, Promise<void>>()
 
-function publish(): void {
-  window.dispatchEvent(new Event(ROADMAP_EVENT))
+/** read=true 는 읽기 적재 알림이다 — 바뀜에만 반응하는 구독자(활동 기록 재조회)는 detail.read 로 건너뛴다. */
+function publish(read = false): void {
+  window.dispatchEvent(new CustomEvent(ROADMAP_EVENT, { detail: { read } }))
 }
 
 /** 지금 적재된 계획. 화면·셀렉터의 유일한 읽기 경로. 아직 안 읽었으면 undefined. */
@@ -89,7 +90,7 @@ export function roadmapEnvelope(studentId: string): RoadmapEnvelope | undefined 
   return plans.get(studentId)
 }
 
-export async function loadRoadmap(studentId: string): Promise<void> {
+export async function loadRoadmap(studentId: string, afterWrite = false): Promise<void> {
   const token = beginStudentFetch('roadmap', studentId)
   const base = `/students/${encodeURIComponent(studentId)}/roadmap`
   const envelope = await api<Omit<RoadmapEnvelope, 'events'>>(base)
@@ -99,7 +100,7 @@ export async function loadRoadmap(studentId: string): Promise<void> {
   }
   plans.set(studentId, { ...envelope, events })
   touchStudentCache('roadmap', studentId, token)
-  publish()
+  publish(!afterWrite)
 }
 
 /** 신선한 캐시는 그대로 쓰고, 오래됐으면 기존 값을 보여주며 뒤에서 다시 읽는다.
@@ -123,7 +124,7 @@ export function clearRoadmapCache(): void {
 
 async function refresh(studentId: string): Promise<void> {
   plans.delete(studentId)
-  await loadRoadmap(studentId)
+  await loadRoadmap(studentId, true)
 }
 
 function key(): Record<string, string> {
@@ -311,7 +312,7 @@ export function roadmapCapability(): RoadmapMenuCapability {
 
 export async function loadRoadmapCapability(): Promise<void> {
   menuCapability = await api<RoadmapMenuCapability>('/roadmap/capabilities')
-  publish()
+  publish(true)
 }
 
 let requests: RoadmapChangeRequest[] = []
@@ -338,7 +339,7 @@ export async function loadRoadmapRequests(): Promise<void> {
   const page = await queryRoadmapRequests({ pageSize: 100 })
   requests = page.items
   requestSummary = page.summary
-  publish()
+  publish(true)
 }
 
 export async function createRoadmapRequest(studentId: string,

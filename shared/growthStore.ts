@@ -120,8 +120,10 @@ const errors = new Map<string, string>()
 let cacheEpoch = 0
 let wishlist: { programId: string; wished: boolean; version: number }[] = []
 
-function publish(): void {
-  window.dispatchEvent(new Event(GROWTH_EVENT))
+/** read=true 는 「서버에서 읽어 왔다」일 뿐 무엇이 바뀐 게 아니다 — 화면은 다시 그리고, 바뀜에만 반응하는
+ *  구독자(활동 기록 재조회)는 건너뛴다(detail.read). 쓰기 뒤 refresh 는 read 표시 없이 알린다. */
+function publish(read = false): void {
+  window.dispatchEvent(new CustomEvent(GROWTH_EVENT, { detail: { read } }))
 }
 
 export function growthState(studentId: string): GrowthState | undefined {
@@ -146,7 +148,7 @@ async function allEntries(base: string): Promise<GrowthEntry[]> {
   }
 }
 
-export async function loadGrowth(studentId: string): Promise<void> {
+export async function loadGrowth(studentId: string, afterWrite = false): Promise<void> {
   const epoch = cacheEpoch
   const token = beginStudentFetch('growth', studentId)
   const base = `/students/${encodeURIComponent(studentId)}/growth`
@@ -160,7 +162,7 @@ export async function loadGrowth(studentId: string): Promise<void> {
   errors.delete(studentId)
   states.set(studentId, { profile, entries, summary, star })
   touchStudentCache('growth', studentId, token)
-  publish()
+  publish(!afterWrite)
 }
 
 /** reload 는 「오래됐으면 다시 읽는다」다 — 신선한 캐시는 그대로 쓴다(studentCache 재검증 규칙). */
@@ -169,7 +171,7 @@ export function ensureGrowth(studentId: string, reload = false): void {
   if (states.has(studentId) && (!reload || isStudentFresh('growth', studentId))) return
   const epoch = cacheEpoch
   const task = loadGrowth(studentId)
-    .catch(() => { if (epoch !== cacheEpoch) return; errors.set(studentId, '성장 기록을 불러오지 못했습니다. 다시 시도해 주세요.'); publish() })
+    .catch(() => { if (epoch !== cacheEpoch) return; errors.set(studentId, '성장 기록을 불러오지 못했습니다. 다시 시도해 주세요.'); publish(true) })
     .finally(() => { if (epoch === cacheEpoch) pending.delete(studentId) })
   pending.set(studentId, task)
 }
@@ -196,7 +198,7 @@ async function refresh(studentId: string): Promise<void> {
   states.delete(studentId)
   // 포트폴리오는 성장 항목에서 파생된다 — 같은 쓰기가 둘 다 바꾼다.
   invalidateStudent('portfolio', studentId)
-  await loadGrowth(studentId)
+  await loadGrowth(studentId, true)
 }
 
 function key(): Record<string, string> {
@@ -327,7 +329,7 @@ export function wishedProgramIds(): string[] {
 
 export async function loadWishlist(): Promise<void> {
   wishlist = (await api<{ items: typeof wishlist }>('/program-wishlist')).items
-  publish()
+  publish(true)
 }
 
 export async function setWish(programId: string, wished: boolean): Promise<void> {

@@ -60,7 +60,12 @@ export function useActivityLog(studentId: string, limit = 30) {
   const [error, setError] = useState('')
   const [revision, setRevision] = useState(0)
   useEffect(() => {
-    const bump = () => setRevision(value => value + 1)
+    // 원천 스토어가 「읽어 왔다」만 알린 이벤트(detail.read)는 건너뛴다 — 바뀐 것이 없는데 다시 부르면
+    // 화면 진입마다 활동 기록을 두 번 읽는다(2026-11-27 측정). 읽기 표시가 없는 이벤트는 예전처럼 다시 읽는다.
+    const bump = (event: Event) => {
+      if ((event as CustomEvent<{ read?: boolean }>).detail?.read) return
+      setRevision(value => value + 1)
+    }
     SOURCE_EVENTS.forEach(name => window.addEventListener(name, bump))
     return () => SOURCE_EVENTS.forEach(name => window.removeEventListener(name, bump))
   }, [])
