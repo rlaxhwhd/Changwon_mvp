@@ -87,6 +87,8 @@ export interface GrowthProfile {
   /** 자기입력 연락처. 본인만 받는다 — 합성 기본값을 만들지 않는다. */
   email: string | null
   phone: string | null
+  /** 학생이 직접 적은 목표 기업(0027). 로드맵 값이 아니다 — 화면 우선순위는 data/growthTargetCompany 가 정한다. */
+  targetCompany: string | null
   version: number
   capabilities: { canEdit: boolean }
 }
@@ -172,6 +174,12 @@ export function ensureGrowth(studentId: string, reload = false): void {
   pending.set(studentId, task)
 }
 
+/** 버전 충돌(409) 뒤 강제로 다시 읽는다 — 방금 읽은 캐시는 신선해서 ensureGrowth(id, true) 만으로는 다시 읽지 않는다. */
+export function reloadGrowth(studentId: string): void {
+  invalidateStudent('growth', studentId)
+  ensureGrowth(studentId, true)
+}
+
 export function clearGrowthCache(): void {
   cacheEpoch += 1
   states.clear()
@@ -213,8 +221,10 @@ export interface EntryInput {
   certId?: string | null
 }
 
+/** 보낸 키만 바뀐다(0027) — 생략은 유지, null 은 지움. undefined 키는 JSON.stringify 가 빼므로 생략이 된다. */
 export async function saveGrowthProfile(studentId: string,
-                                        input: { intro: string; email?: string | null; phone?: string | null }): Promise<void> {
+                                        input: { intro?: string; email?: string | null; phone?: string | null;
+                                                 targetCompany?: string | null }): Promise<void> {
   await api(`/students/${encodeURIComponent(studentId)}/growth/profile`, {
     method: 'PATCH', headers: key(),
     body: JSON.stringify({ ...input, expectedVersion: profileVersion(studentId) }),

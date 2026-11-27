@@ -28,7 +28,7 @@ MAJOR_COLUMNS = ['student_uid', 'major_seq', 'type_code', 'type_label', 'major_c
 ACADEMIC_KEYS = {'mobile', 'email', 'postCode', 'address', 'homePhone', 'birthDate', 'admissionDate',
                  'completedSemesters', 'graduationExpectedMonth', 'majors', 'photoUrl'}
 GROWTH_PROFILE_KEYS = {'name', 'studentNo', 'school', 'dept', 'grade', 'gpa', 'intro', 'version', 'email', 'phone',
-                       'capabilities'}
+                       'capabilities', 'targetCompany'}   # 0027: 학생이 직접 적은 목표 기업
 
 
 def caps(db, uid, rows):

@@ -134,7 +134,10 @@ def profile_dto(student, row, owner, contact=None):
             'dept': student['major_label'], 'grade': student['grade'],
             'gpa': str(academic_gpa) if academic_gpa is not None else detail.get('gpa'),
             'credits': float(credits) if credits is not None else None,
-            'intro': row['intro'] if row else '', 'version': row['version'] if row else 0}
+            'intro': row['intro'] if row else '', 'version': row['version'] if row else 0,
+            # 학생이 직접 적은 목표 기업(0027) — intro 와 같은 공개 범위. 확정 로드맵 기업과의 우선순위는 화면 셀렉터가 정한다.
+            # 부트 프로필(students.py)·회사 제출 문서(student_portfolio.py)에는 싣지 않는다.
+            'targetCompany': row['target_company'] if row else None}
     # 자기입력 연락처는 본인 전용으로 시작한다. 교직원 화면에 새로 열지 않는다(D06).
     data['email'] = (row['contact_email'] if row else None) if owner else None
     data['phone'] = (row['contact_phone'] if row else None) if owner else None
@@ -167,12 +170,18 @@ def ensure_profile(conn, user, uid, expected_version, transaction_id):
     return row
 
 
+PROFILE_FIELDS = ('intro', 'email', 'phone', 'targetCompany')
+
+
 class ProfileBody(BaseModel):
+    """보낸 키만 바꾼다(0027). 생략한 필드는 기존 값을 유지하고, null·'' 은 지움이다(intro 는 '')."""
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
     expectedVersion: int = Field(ge=0)
     intro: str = Field(default='', max_length=5000)
     email: str | None = Field(default=None, max_length=320)
     phone: str | None = Field(default=None, max_length=40)
+    # 한 줄 값이다 — 제어문자(C0·DEL·C1)는 거부한다. DB CHECK([[:cntrl:]])와 같은 범위.
+    targetCompany: str | None = Field(default=None, max_length=200, pattern=r'^[^\x00-\x1f\x7f-\x9f]*$')
 
 
 @router.get('/students/{identity}/growth/profile')
@@ -200,7 +209,13 @@ def academic_photo(identity: str, user=Depends(pooled_principal)):
 def update_profile(identity: str, body: ProfileBody, idempotency_key: str = Header(min_length=8, max_length=200),
                    user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
     route = 'PATCH /students/growth/profile'
-    digest, saved = idempotent(conn, user, route, idempotency_key, identity + body.model_dump_json())
+    sent = body.model_fields_set
+    # 바꿀 것이 없는 요청이 version 만 올리고 이벤트를 남기지 않게 한다(0027).
+    if not sent & set(PROFILE_FIELDS):
+        fail(422, 'INVALID_FIELD', '바꿀 항목을 보내 주세요.')
+    # 생략과 null 이 다른 요청이 되도록 보낸 키만으로 digest 를 만든다(0027 C3).
+    digest, saved = idempotent(conn, user, route, idempotency_key,
+                               identity + body.model_dump_json(exclude_unset=True))
     if saved:
         return saved
     student, owner = resolve_student(conn, user, identity)
@@ -208,15 +223,25 @@ def update_profile(identity: str, body: ProfileBody, idempotency_key: str = Head
     uid = student['intg_uid']
     transaction_id = uuid4()
     before = ensure_profile(conn, user, uid, body.expectedVersion, transaction_id)
-    row = conn.execute('''UPDATE dc.growth_profile SET intro=%s,contact_email=%s,contact_phone=%s,
+
+    # 네 열을 항상 SET 하되, 보내지 않은 필드는 잠근 before 값을 그대로 쓴다(SQL 문 하나).
+    def pick(field, value, column):
+        return value if field in sent else before[column]
+
+    row = conn.execute('''UPDATE dc.growth_profile SET intro=%s,contact_email=%s,contact_phone=%s,target_company=%s,
       version=version+1,updated_at=now(),updated_by=%s WHERE student_uid=%s RETURNING *''',
-      (body.intro, body.email or None, body.phone or None, user['intg_uid'], uid)).fetchone()
+      (pick('intro', body.intro, 'intro'), pick('email', body.email or None, 'contact_email'),
+       pick('phone', body.phone or None, 'contact_phone'),
+       pick('targetCompany', body.targetCompany or None, 'target_company'), user['intg_uid'], uid)).fetchone()
+
+    def snapshot(r):
+        return {'intro': r['intro'], 'email': r['contact_email'], 'phone': r['contact_phone'],
+                'targetCompany': r['target_company']}
+
     conn.execute('''INSERT INTO dc.growth_event(student_uid,action,profile_version_before,
       profile_version_after,before_value,after_value,actor_uid,transaction_id)
       VALUES(%s,'PROFILE_UPDATE',%s,%s,%s,%s,%s,%s)''',
-      (uid, before['version'], row['version'],
-       Jsonb({'intro': before['intro'], 'email': before['contact_email'], 'phone': before['contact_phone']}),
-       Jsonb({'intro': row['intro'], 'email': row['contact_email'], 'phone': row['contact_phone']}),
+      (uid, before['version'], row['version'], Jsonb(snapshot(before)), Jsonb(snapshot(row)),
        user['intg_uid'], transaction_id))
     return remember(conn, user, route, idempotency_key, digest,
                     {**profile_dto(student, row, owner), 'capabilities': {'canEdit': True}})

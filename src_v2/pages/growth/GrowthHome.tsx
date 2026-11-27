@@ -1,4 +1,3 @@
-import { studentDisplayName } from '../../../shared/studentDisplayName'
 // ★ 이 화면에 있던 공통 초기 상수(SKILLS·PROJECTS·QUALIFICATIONS·GROWTH_RECORDS)를 걷었다.
 //   useStoredList 가 mount 직후 그 상수를 **학생별 키에 그대로 저장**해서, 아무도 쓴 적 없는
 //   실적이 모든 학생에게 자기 것처럼 보였다. 정본은 서버(dc.growth_entry)이고, 소유자가
@@ -18,7 +17,10 @@ import { catalogOptions, catalogText } from '../../data/growthInputCatalog'
 import GrowthCatalogPicker from '../../components/GrowthCatalogPicker'
 import { codeLabel } from '../../../shared/metadataStore'
 import { useMetadata } from '../../../shared/useMetadata'
-import { createGrowthEntry, deleteGrowthEntry, growthEntries, updateGrowthEntry } from '../../../shared/growthStore'
+import { createGrowthEntry, deleteGrowthEntry, growthEntries, growthLoadError, growthState, reloadGrowth,
+         saveGrowthProfile, updateGrowthEntry } from '../../../shared/growthStore'
+import { ApiError } from '../../../shared/api'
+import { growthTargetCompany } from '../../data/growthTargetCompany'
 import type { GrowthEntry } from '../../../shared/growthStore'
 import { useGrowth, useRoadmap } from '../../../shared/useRoadmapStore'
 import './GrowthHome.css'
@@ -87,7 +89,12 @@ export default function GrowthHome() {
   const completedPhases = student.phases.filter(phase => phase.status === 'done').length
   // 목표는 확정 로드맵이 덮어쓴 값(targetRole·targetCompany)이 정본이다 — 시드 전용 finalRoadmap 을 읽지 않는다.
   const goalRole = student.targetRole || '미정'
-  const goalCompany = student.targetCompany?.name || '미정'
+  // 목표 기업 = 확정 로드맵에서 정한 기업, 없으면 학생이 직접 적은 기업(0027). 판정은 셀렉터 하나만 한다.
+  const growthProfile = growthState(student.id)?.profile
+  const target = growthTargetCompany(student, growthProfile)
+  const goalCompany = target?.name || '미정'
+  // null = 입력 칸이 닫혀 있다. 저장 실패·충돌 때는 입력값을 그대로 둔다.
+  const [companyDraft, setCompanyDraft] = useState<string | null>(null)
   // 다음에 채울 기록 = 확정 로드맵에서 아직 이행하지 않은 칸. 라운지 「목표 달성 계획」과 같은 정본이다.
   const plan = roadmapEnvelope(student.id)?.roadmap
   const confirmedPlan = plan?.confirmed ? plan : null
@@ -133,6 +140,34 @@ export default function GrowthHome() {
     if (kind === 'qualification') run(deleteGrowthEntry(student.id, certRows[index]))
   }
 
+  // 목표 기업 저장·지우기 — 서버 응답을 기다린 뒤 닫는다. 실패는 머리말 아래 알림으로 남긴다.
+  const saveCompany = async (value: string | null) => {
+    if (saving) return
+    setSaving(true); setError('')
+    try {
+      await saveGrowthProfile(student.id, { targetCompany: value })
+      setCompanyDraft(null)
+    } catch (cause) {
+      if (cause instanceof ApiError && cause.code === 'VERSION_CONFLICT') {
+        setError('다른 곳에서 성장 기록이 바뀌었습니다. 새로 불러온 뒤 다시 저장해 주세요.')
+        reloadGrowth(student.id)
+      } else {
+        setError(cause instanceof Error ? cause.message : '목표 기업을 저장하지 못했습니다. 다시 시도해 주세요.')
+      }
+    } finally { setSaving(false) }
+  }
+
+  const submitCompany = (event: FormEvent) => {
+    event.preventDefault()
+    const value = companyDraft?.trim() ?? ''
+    if (value) void saveCompany(value)
+  }
+
+  const removeCompany = (name: string) => {
+    if (!window.confirm(`목표 기업 '${name}'을(를) 지울까요?`)) return
+    void saveCompany(null)
+  }
+
   const updateField = (name: string, value: string) => {
     setEditor(current => current ? { ...current, fields: { ...current.fields, [name]: value } } : current)
   }
@@ -175,11 +210,42 @@ export default function GrowthHome() {
     <main className="gh-shell">
       <section className="gh-cover" aria-labelledby="growth-title">
         <div className="gh-cover-profile">
-          <div className="gh-avatar" aria-hidden="true">{student.name.slice(-2)}</div>
-          <div>
-            <span className="gh-eyebrow">{isSenior ? 'CAREER PORTFOLIO' : 'MY GROWTH RECORD'}</span>
-            <h2 id="growth-title">{studentDisplayName(student.name, student.id)}의 {isSenior ? '성장 포트폴리오' : '성장 기록'}</h2>
-            <p>{student.major} · {student.grade}학년 · {student.studentNo}</p>
+          <span className="gh-eyebrow">{isSenior ? 'CAREER PORTFOLIO' : 'MY GROWTH RECORD'}</span>
+          <div className="gh-target">
+            <span className="gh-target-label" id="growth-title">목표 기업</span>
+            {target?.source === 'ROADMAP' ? (
+              <>
+                <strong className="gh-target-name">{target.name}</strong>
+                <small className="gh-target-note"><i className="fa-solid fa-route" aria-hidden="true" /> 로드맵에서 정한 목표</small>
+              </>
+            ) : companyDraft !== null ? (
+              <form className="gh-target-form" onSubmit={submitCompany}>
+                <input aria-labelledby="growth-title" maxLength={200} autoFocus disabled={saving}
+                       placeholder="가고 싶은 기업 이름" value={companyDraft}
+                       onChange={event => setCompanyDraft(event.target.value)} />
+                <div className="gh-target-actions">
+                  <button type="submit" disabled={saving || !companyDraft.trim()}>{saving ? '저장 중…' : '저장'}</button>
+                  <button type="button" disabled={saving} onClick={() => { setCompanyDraft(null); setError('') }}>취소</button>
+                </div>
+              </form>
+            ) : target ? (
+              <>
+                <strong className="gh-target-name">{target.name}</strong>
+                <div className="gh-target-actions">
+                  <button type="button" disabled={saving} onClick={() => setCompanyDraft(target.name)}>고치기</button>
+                  <button type="button" disabled={saving} onClick={() => removeCompany(target.name)}>지우기</button>
+                </div>
+              </>
+            ) : growthProfile?.capabilities.canEdit ? (
+              <>
+                <p className="gh-target-empty">목표 기업을 추가해 보세요</p>
+                <button type="button" className="gh-target-add" onClick={() => { setError(''); setCompanyDraft('') }}>
+                  <i className="fa-solid fa-plus" aria-hidden="true" /> 목표 기업 추가
+                </button>
+              </>
+            ) : (
+              <p className="gh-target-empty">{growthLoadError(student.id) ?? (growthProfile ? '미정' : '불러오는 중…')}</p>
+            )}
           </div>
         </div>
         <div className="gh-cover-copy">

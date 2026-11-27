@@ -18,12 +18,25 @@
   background: var(--card);
 }
 .gh-cover::after { content: ""; position: absolute; width: 260px; height: 260px; right: -90px; top: -120px; border: 52px solid color-mix(in srgb, var(--sky) 9%, transparent); border-radius: 50%; pointer-events: none; }
-.gh-cover-profile { display: flex; align-items: center; gap: 18px; min-width: 0; }
-.gh-avatar { width: 76px; height: 76px; flex: 0 0 auto; display: grid; place-items: center; border-radius: 22px; color: #fff; background: linear-gradient(135deg, var(--blue), var(--sky)); font-size: 20px; font-weight: 700; box-shadow: 0 12px 28px color-mix(in srgb, var(--blue) 22%, transparent); }
+/* 0027: 왼쪽 칸 = 위에 표지(MY GROWTH RECORD), 그 아래 목표 기업. 이름·학과 줄은 걷었다. */
+.gh-cover-profile { align-self: stretch; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.gh-cover-profile > .gh-eyebrow { margin-bottom: 0; }
+.gh-target { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; min-width: 0; }
+.gh-target-label { color: var(--gh-sub); font-size: 12px; font-weight: 800; }
+.gh-target-name { max-width: 100%; font-size: 24px; line-height: 1.35; letter-spacing: -.03em; font-weight: 900; overflow-wrap: anywhere; }
+.gh-target-note { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 999px; background: var(--gh-accent-soft); color: var(--gh-accent); font-size: 12px; font-weight: 800; }
+.gh-target-empty { margin: 0; color: var(--gh-sub); font-size: 14px; line-height: 1.5; }
+.gh-target-form { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.gh-target-form input { width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--gh-border); border-radius: 9px; background: #fff; color: var(--gh-text); font: inherit; font-size: 14px; outline: none; }
+.gh-target-form input:focus { border-color: var(--gh-accent); box-shadow: 0 0 0 3px var(--gh-accent-soft); }
+.gh-target-actions { display: flex; flex-wrap: wrap; gap: 6px; }
+.gh-target-actions button, .gh-target-add { min-height: 32px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--gh-accent-border); border-radius: 9px; background: #fff; color: var(--gh-accent); font-size: 12px; font-weight: 850; white-space: nowrap; cursor: pointer; }
+.gh-target-actions button:not([type="submit"]):hover:not(:disabled), .gh-target-add:hover { background: var(--gh-accent-soft); }
+.gh-target-actions button[type="submit"] { border-color: var(--gh-accent); background: var(--gh-accent); color: #fff; }
+.gh-target-actions button:disabled { opacity: .55; cursor: wait; }
 .gh-eyebrow, .gh-section-kicker { display: block; margin-bottom: 6px; color: var(--gh-accent); font-size: 12px; line-height: 1.4; letter-spacing: .1em; font-weight: 900; }
 .gh-card .gh-section-kicker { color: var(--gh-ink); }
 .gh-cover h1 { margin: 0; font-size: 28px; line-height: 1.35; letter-spacing: -.03em; font-weight: 900; }
-.gh-cover-profile p { margin: 8px 0 0; color: var(--gh-sub); font-size: 12px; }
 .gh-cover-copy { padding-left: 32px; border-left: 1px solid var(--gh-border); }
 .gh-cover-copy > strong { display: block; font-size: 16px; line-height: 1.45; font-weight: 850; }
 .gh-cover-copy > p { margin: 9px 0 16px; color: var(--gh-sub); font-size: 12px; line-height: 1.7; }
