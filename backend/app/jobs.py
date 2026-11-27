@@ -32,6 +32,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, model_vali
 
 from . import deep, files
 from .auth import is_counselor, principal, require_staff
+from .auth import pooled_principal as deep_principal
 from .portfolio_document import (ID_PATTERN, apply_academic, fail, file_references, load_certs, missing_fields,
                                  snapshot_document)
 from .html_security import clean_html
@@ -1437,19 +1438,6 @@ def resume_dto(row, with_content=True):
 
 RESUME_SELECT = '''SELECT r.*,c.label AS category_label,c.payload->>'question' AS category_question FROM dc.job_resume r
  LEFT JOIN dc.code_item c ON (c.group_code,c.code)=('JOB_RESUME_CATEGORY',r.category_code)'''
-
-
-def deep_principal(request: Request, x_dc_identity: str = Header(default=''), x_dc_token: str = Header(default=''),
-                   x_dc_portal: str = Header(default='')):
-    """principal 과 같은 판정을 짧게 빌린 커넥션으로 한다.
-
-    Deep HTTP 는 저장 20초·AI 60초·평가 150초까지 걸린다. 요청 단위 커넥션(principal 의 connection
-    의존성)을 쥔 채 기다리면 풀(max_size=5)이 바닥나 Deep 장애가 사이트 전체 장애가 된다.
-    Deep 을 부르는 엔드포인트는 이 의존성을 쓰고, DB 작업은 pool.connection() 블록 안에서만 한다
-    (counsel_ai·ai_comments 와 같은 방식). 블록은 정상 종료 시 커밋, 예외 시 롤백한다.
-    """
-    with pool.connection() as conn:
-        return principal(request, x_dc_identity, x_dc_token, x_dc_portal, conn=conn)
 
 
 _resume_locks = {}

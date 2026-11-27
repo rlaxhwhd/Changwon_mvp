@@ -41,6 +41,7 @@ import CompetencyRadarChart from '../../src_v2/components/CompetencyRadarChart'
 import { formatCompetencyScore } from '../../src_v2/data/competency'
 // 포트폴리오 탭은 학생 이력서 화면을 그대로 쓴다 — 값도 같은 단일소스에서 읽는다.
 import PortfolioSheet from '../../shared/PortfolioSheet'
+import ProtectedImage from '../../shared/ProtectedImage'
 import { loadRepresentativePortfolio } from '../../shared/portfolioStore'
 import type { PortfolioDetail } from '../../shared/portfolioStore'
 import { hasStudentCache, revalidateStudent } from '../../shared/studentCache'
@@ -973,20 +974,28 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
       </div>
       {action}
     </header>
-    {/* 인적사항 — 현행 포트폴리오 화면 배치(성명·학번 / 주소 / 생년월일·성별 / 핸드폰·이메일 / 집전화(0024)).
+    {/* 인적사항 — 현행 포트폴리오 화면 배치(증명사진 왼쪽(0025) / 성명·학번 / 주소 / 생년월일·성별 / 핸드폰·이메일 / 집전화(0024)).
         학적 값·외국인 여부는 「기본사항」 탭. */}
-    <section className="sdv-info-table sdv-info-person" aria-label="인적사항">
-      <table>
-        <colgroup><col className="sdv-info-th" /><col /><col className="sdv-info-th" /><col /></colgroup>
-        <tbody>
-          <tr><InfoCell label="성명" value={data.name} /><InfoCell label="학번" value={data.studentNo} /></tr>
-          <tr><InfoCell label="주소" value={address} span /></tr>
-          <tr><InfoCell label="생년월일" value={data.birthDate?.replaceAll('-', '.')} /><InfoCell label="성별" value={data.sex} /></tr>
-          <tr><InfoCell label="핸드폰" value={data.mobile} /><InfoCell label="이메일" value={data.email} /></tr>
-          <tr><InfoCell label="집전화" value={data.homePhone} span /></tr>
-        </tbody>
-      </table>
-    </section>
+    <div className="sdv-person">
+      {/* 증명사진은 범위 검사를 거치는 프록시 경로로만 읽는다. 경로가 없으면 요청하지 않는다. */}
+      <div className="sdv-id-photo">
+        {data.photoUrl
+          ? <ProtectedImage src={data.photoUrl} alt={`${data.name} 증명사진`} fallback={<span>사진 없음</span>} />
+          : <span>사진 없음</span>}
+      </div>
+      <section className="sdv-info-table sdv-info-person" aria-label="인적사항">
+        <table>
+          <colgroup><col className="sdv-info-th" /><col /><col className="sdv-info-th" /><col /></colgroup>
+          <tbody>
+            <tr><InfoCell label="성명" value={data.name} /><InfoCell label="학번" value={data.studentNo} /></tr>
+            <tr><InfoCell label="주소" value={address} span /></tr>
+            <tr><InfoCell label="생년월일" value={data.birthDate?.replaceAll('-', '.')} /><InfoCell label="성별" value={data.sex} /></tr>
+            <tr><InfoCell label="핸드폰" value={data.mobile} /><InfoCell label="이메일" value={data.email} /></tr>
+            <tr><InfoCell label="집전화" value={data.homePhone} span /></tr>
+          </tbody>
+        </table>
+      </section>
+    </div>
   </>
 }
 

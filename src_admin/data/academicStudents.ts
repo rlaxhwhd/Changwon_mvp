@@ -47,6 +47,8 @@ export interface AcademicStudentDetail extends RosterStudent {
   email: string | null
   postCode: string | null
   address: string | null
+  /** 학사 증명사진 프록시 경로(0025) — 범위 안 상세에서만 온다. null 이면 요청하지 않는다. */
+  photoUrl: string | null
 }
 
 export function fetchAcademicStudentDetail(id: string): Promise<AcademicStudentDetail | null> {

@@ -17,6 +17,7 @@ import { useEffect } from 'react'
 import './Portfolio.css'
 import { usePageHead } from '../../components/PageCrumb'
 import PortfolioVersions from './portfolio/PortfolioVersions'
+import ProtectedImage from '../../../shared/ProtectedImage'
 
 // 이력서 탭은 없앴다(2026-11-09 사용자 확정 — 이력서와 포트폴리오는 같은 뜻). 대표 포트폴리오가 그 자리를 맡는다.
 type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'versions'
@@ -124,6 +125,9 @@ export default function Portfolio() {
   }, [profile.intro.length, skills.length, certs.length, langs.length, awards.length, projects.length, resumes.length])
 
   const coverName = profile.name ? `${studentDisplayName(profile.name, profile.studentId)}의 포트폴리오` : '나의 포트폴리오'
+  // 학사 증명사진(0025) — 경로가 있을 때만 요청한다. 로딩 중·실패면 이름 모노그램을 그대로 보인다.
+  const photoUrl = dto?.profile.academic?.photoUrl ?? null
+  const monogram = profile.name.slice(-2)
   const coverLine = [profile.dept, profile.grade, profile.studentId].filter(Boolean).join(' · ')
   // 머리말의 구성 칸 — 누르면 그 항목이 있는 탭으로 간다. 칸마다 내 성장 화면의 카드 색을 따른다.
   const ledger: { label: string; count: number; tab: TabId; tone: string }[] = [
@@ -144,7 +148,12 @@ export default function Portfolio() {
       <section className="pf-mast" aria-labelledby="portfolio-title">
         <div className="pf-mast-top">
           <div className="pf-mast-id">
-            <div className="pf-monogram" aria-hidden="true">{profile.name.slice(-2)}</div>
+            {photoUrl
+              ? <div className="pf-monogram pf-monogram--photo">
+                  <ProtectedImage src={photoUrl} alt={`${profile.name} 증명사진`}
+                    fallback={<span aria-hidden="true">{monogram}</span>} />
+                </div>
+              : <div className="pf-monogram" aria-hidden="true">{monogram}</div>}
             <div>
               <h2 id="portfolio-title">{coverName}</h2>
               {coverLine && <p className="pf-mast-meta">{coverLine}</p>}

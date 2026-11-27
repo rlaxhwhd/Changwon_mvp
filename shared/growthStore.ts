@@ -66,6 +66,8 @@ export interface GrowthAcademic {
   /** YYYY-MM — 졸업사정 등록자만 있다. */
   graduationExpectedMonth: string | null
   majors: GrowthAcademicMajor[]
+  /** 학사 증명사진 프록시 경로(0025) — 본인 전용. 사진 값이 없으면 null 이고 그때는 요청하지 않는다. */
+  photoUrl: string | null
 }
 
 export interface GrowthProfile {

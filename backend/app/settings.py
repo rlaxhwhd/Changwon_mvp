@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import Field, SecretStr, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -43,6 +43,18 @@ class Settings(BaseSettings):
     deep_key_file: str | None = None
     deep_api_url: str = 'https://testapi.deepresume.kr'
     deep_school_code: str = 'changwon.ac.kr'
+    # 학사 증명사진 서버(0025). 파일명(학사 뷰 photo)을 뒤에 붙여 서버가 받아 권한 검사 뒤 내려준다.
+    # 빈 문자열이면 사진 기능이 꺼진다(photoUrl=null, 사진 엔드포인트 404) — 서버가 이 주소에 못 닿을 때 끈다.
+    academic_photo_base_url: str = 'http://chains.changwon.ac.kr/onestop/haksa/photo/'
+
+    @field_validator('academic_photo_base_url')
+    @classmethod
+    def _photo_base(cls, value):
+        # 경로가 붙는 사고를 막는다 — http(s) 로 시작하고 / 로 끝나며 쿼리·조각이 없어야 한다.
+        if value and (not value.startswith(('http://', 'https://')) or not value.endswith('/')
+                      or '?' in value or '#' in value):
+            raise ValueError('academic_photo_base_url 은 http(s)://… 로 시작하고 / 로 끝나야 하며 ?·# 를 쓸 수 없습니다.')
+        return value
 
     def connection_kwargs(self) -> dict:
         password = self.db_password

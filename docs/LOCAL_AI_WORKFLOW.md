@@ -1,5 +1,11 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-27 학사 증명사진 프록시(182) 로컬 반영 — 서버 미배포
+
+- 0025(rev3, Astra 조건부 승인): migration 182 — `dc.academic_student_details` 끝에 `photo_file`(source 원천만). 학생 마이페이지 마스트헤드·교직원 학생상세 인적사항 왼쪽에 증명사진. 브라우저는 우리 API(`/students/{id}/academic-photo`·`/academic-students/{id}/photo`)만 부르고, 서버가 권한 검사 뒤 `ACADEMIC_PHOTO_BASE_URL`(기본 `http://chains.changwon.ac.kr/onestop/haksa/photo/`)에서 받아 저장 없이 내려준다.
+- `npm run docker:migrate`(백업 `_workspace/db-backups/local-before-migrate-20261127053842328.dump`) → `npm run docker:up` 전체 healthy. 격리 전체 회귀 `dc_regression_20261127053353_38f602_test` 10 failed/843 passed/2 skipped — 기준선과 실패 집합 diff 0. `npx tsc -b` 통과.
+- 서버 배포 시: 웹+API+마이그레이션 182(뷰 열 추가, 데이터 변경 없음, 181 선행). **서버에서 chains 로 http 아웃바운드가 되는지 먼저 확인**하고, 안 되면 `ACADEMIC_PHOTO_BASE_URL=` 빈 값으로 끈다. 검증 기록 `.ai/handoff-db/0025-academic-photo/verification.md`.
+
 ## 2026-11-27 학사 생년월일·입학일·이수학기·졸업예정·집전화·다전공 표시(181) 로컬 반영 — 서버 미배포
 
 - 0024(rev4, Astra 조건부 승인): migration 181 — `dc.academic_student_details` 에 4열 추가, 새 뷰 `dc.academic_student_majors`. 학생 마이페이지 「학사 정보」(다전공·생년월일·입학일·이수학기·졸업예정)·「연락처」(집전화), 교직원 학생상세 인적사항 표(집전화)·「기본사항」 탭(입학일·이수학기·다전공). 생년월일·졸업예정 칸은 동시 세션 커밋 `6779c96`(학생상세 재배치) 화면이 같은 응답 키를 읽는다. 증명사진은 이미지 경로 미확정으로 보류.

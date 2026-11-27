@@ -4,7 +4,7 @@ from pathlib import Path
 from fastapi import Depends, Header, HTTPException, Request
 import hashlib
 
-from .db import connection
+from .db import connection, pool
 from .settings import settings
 
 
@@ -35,6 +35,19 @@ def principal(request: Request, x_dc_identity: str = Header(default=''), x_dc_to
         raise HTTPException(401, '학번과 비밀번호로 로그인하세요.')
     return user
 
+
+def pooled_principal(request: Request, x_dc_identity: str = Header(default=''), x_dc_token: str = Header(default=''),
+                     x_dc_portal: str = Header(default='')):
+    """principal 과 같은 판정을 짧게 빌린 커넥션으로 한다.
+
+    Deep HTTP 는 저장 20초·AI 60초·평가 150초까지 걸린다. 요청 단위 커넥션(principal 의 connection
+    의존성)을 쥔 채 기다리면 풀(max_size=5)이 바닥나 Deep 장애가 사이트 전체 장애가 된다.
+    Deep 을 부르는 엔드포인트는 이 의존성을 쓰고, DB 작업은 pool.connection() 블록 안에서만 한다
+    (counsel_ai·ai_comments 와 같은 방식). 블록은 정상 종료 시 커밋, 예외 시 롤백한다.
+    학사 사진 프록시(0025)도 같은 이유로 이 의존성을 쓴다(jobs.deep_principal 에서 옮김).
+    """
+    with pool.connection() as conn:
+        return principal(request, x_dc_identity, x_dc_token, x_dc_portal, conn=conn)
 
 def is_counselor(user):
     return user['kind'] == 'STAFF' and (user.get('profile') or {}).get('role') in ('career', 'psych')

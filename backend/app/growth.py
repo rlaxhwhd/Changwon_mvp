@@ -13,6 +13,7 @@
 import re
 from uuid import uuid4
 from datetime import date
+from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from fastapi.encoders import jsonable_encoder
@@ -20,8 +21,9 @@ from psycopg.types.json import Jsonb
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from . import files
-from .auth import principal
-from .db import connection
+from .academic_photo import academic_photo_name, photo_name, photo_response
+from .auth import pooled_principal, principal
+from .db import connection, pool
 from .jobs import idempotent, remember
 from .roadmap import fail, has_menu
 
@@ -93,9 +95,10 @@ def academic_contact(conn, uid):
 
     호출처는 학생 본인 GET(/growth/profile·/portfolio)과 범위 검사 뒤의 학사 상세(academic_students.detail)뿐이다.
     두 뷰를 한 스냅샷으로 읽어 sync 공개와 엇갈린 조합이 나오지 않는다. 학사 행이 없으면 None.
+    0025: 증명사진은 내부 키 hasPhoto(불리언)만 싣는다 — 파일명은 dict 에도 넣지 않고, URL 은 각 DTO 가 조립한다.
     """
     row = conn.execute('''SELECT d.foreigner_code, d.mobile, d.email, d.post_code, d.address, d.grad_exp_ym,
-             d.admission_date, d.completed_semesters, d.birth_date, d.home_phone,
+             d.admission_date, d.completed_semesters, d.birth_date, d.home_phone, d.photo_file,
              (SELECT coalesce(jsonb_agg(jsonb_build_object('typeCode', m.type_code, 'typeLabel', m.type_label,
                        'majorCode', m.major_code, 'majorName', m.major_name, 'statusLabel', m.status_label)
                      ORDER BY m.major_seq, m.type_code), '[]'::jsonb)
@@ -118,6 +121,7 @@ def academic_contact(conn, uid):
         # 코드 키(typeCode·majorCode)는 라벨 폴백에만 쓰고 응답에 내지 않는다.
         'majors': [{'typeLabel': m['typeLabel'] or m['typeCode'], 'majorName': m['majorName'] or m['majorCode'],
                     'statusLabel': m['statusLabel'] or None} for m in row['majors']],
+        'hasPhoto': photo_name(row['photo_file']) is not None,
     }
 
 
@@ -139,6 +143,9 @@ def profile_dto(student, row, owner, contact=None):
     data['academic'] = None
     if owner and contact is not None:
         data['academic'] = {key: contact[key] for key in ACADEMIC_PROFILE_KEYS}
+        # 증명사진은 파일명이 아니라 본인 전용 프록시 경로만 낸다(0025). 공통 함수의 hasPhoto 는 응답에 싣지 않는다.
+        data['academic']['photoUrl'] = (f"/api/v1/students/{quote(student['intg_uid'], safe='')}/academic-photo"
+                                        if contact['hasPhoto'] else None)
     return data
 
 
@@ -176,6 +183,17 @@ def get_profile(identity: str, user=Depends(principal, scope='function'),
     # 읽기가 행을 만들지 않는다. 미생성은 version=0 으로 표현한다.
     return {**profile_dto(student, profile_row(conn, student['intg_uid']), owner, contact),
             'capabilities': {'canEdit': owner}}
+
+
+@router.get('/students/{identity}/academic-photo')
+def academic_photo(identity: str, user=Depends(pooled_principal)):
+    """학사 증명사진 — 학생 본인만(0025). 상류를 기다리는 동안 DB 커넥션을 쥐지 않는다:
+    권한·파일명은 짧게 빌린 커넥션 블록 안에서만 읽고, 블록을 나온 뒤 사진 서버를 부른다."""
+    with pool.connection() as conn:
+        student, owner = resolve_student(conn, user, identity)
+        require_owner(owner, '학사 사진 열람')
+        name = academic_photo_name(conn, student['intg_uid'])
+    return photo_response(name)
 
 
 @router.patch('/students/{identity}/growth/profile')

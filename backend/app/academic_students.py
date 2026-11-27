@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from .auth import principal, require_staff, is_counselor, staff_may_read, student_access
-from .db import connection
+from .academic_photo import photo_name, photo_response
+from .auth import pooled_principal, principal, require_staff, is_counselor, staff_may_read, student_access
+from .db import connection, pool
 from .growth import academic_contact
 from .jobs import MENU_PREDICATE
 from .students import HIGH, CORE
@@ -250,20 +251,46 @@ def export(request: Request, body: StudentExportSelection, q: str = Query('', ma
         headers={'Content-Disposition': "attachment; filename*=UTF-8''"+quote('학생목록.xlsx'), 'Cache-Control':'no-store'})
 
 
-@router.get('/academic-students/{identity}')
-def detail(identity: str, optional: bool = False, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+def academic_subject(conn, user, identity, lookup):
+    """detail()·photo 공통: authorize → intg_uid 직접 → 서비스 alias 해석 → 범위. 범위 밖은 row=None(존재 비노출).
+    lookup(uid) 는 학사 행 1개 또는 None — detail 은 ROSTER 를, photo 는 가벼운 점조회를 넘긴다."""
     scoped = authorize(conn, user)
-    row = conn.execute(ROSTER+' SELECT * FROM roster WHERE intg_uid=%s', (identity,)).fetchone()
+    row = lookup(identity)
     if not row:
         # Other entry points use the service alias. Resolve it on the server,
         # then run the identical academic read model and activity aggregation.
         person = conn.execute('SELECT intg_uid FROM dc.person WHERE alias=%s AND kind=\'STUDENT\'', (identity,)).fetchone()
         if person:
             identity = person['intg_uid']
-            row = conn.execute(ROSTER+' SELECT * FROM roster WHERE intg_uid=%s', (identity,)).fetchone()
+            row = lookup(identity)
     if row and scoped and not staff_may_read(conn, user, identity):
         # 범위 밖은 학사 행이 없는 학생과 같은 응답 — 존재 여부를 알리지 않는다.
         row = None
+    return identity, row
+
+
+# 사진 경로의 존재 판정 — ROSTER 와 같은 조건(student_login_source ⋈ academic_student_details)이되
+# service CTE(전체 student_list)를 돌지 않는 점조회.
+PHOTO_LOOKUP = '''SELECT d.photo_file FROM dc.student_login_source a
+  JOIN dc.academic_student_details d USING(intg_uid) WHERE a.intg_uid=%s'''
+
+
+@router.get('/academic-students/{identity}/photo')
+def photo(identity: str, user=Depends(pooled_principal)):
+    """학사 증명사진(0025) — detail() 과 같은 권한·범위 판정. 범위 밖은 학사 행 없음과 같은 404.
+    상류를 기다리는 동안 DB 커넥션을 쥐지 않는다: 판정·파일명은 블록 안, 사진 서버 호출은 블록 밖."""
+    with pool.connection() as conn:
+        _, row = academic_subject(conn, user, identity, lambda uid: conn.execute(PHOTO_LOOKUP, (uid,)).fetchone())
+        if not row:
+            raise HTTPException(404, '학사 학생정보가 없습니다.')
+        name = photo_name(row['photo_file'])
+    return photo_response(name)
+
+
+@router.get('/academic-students/{identity}')
+def detail(identity: str, optional: bool = False, user=Depends(principal, scope='function'), conn=Depends(connection, scope='function')):
+    identity, row = academic_subject(
+        conn, user, identity, lambda uid: conn.execute(ROSTER+' SELECT * FROM roster WHERE intg_uid=%s', (uid,)).fetchone())
     if not row:
         if optional:
             # Legacy service-only fixtures have no academic source. Only allow
@@ -315,4 +342,6 @@ def detail(identity: str, optional: bool = False, user=Depends(principal, scope=
       hasServiceProfile=grade_xp is not None,
       mobile=details.get('mobile'),email=details.get('email'),postCode=details.get('postCode'),address=details.get('address'),
       homePhone=details.get('homePhone'),birthDate=details.get('birthDate'),admissionDate=details.get('admissionDate'),
-      completedSemesters=details.get('completedSemesters'),majors=details.get('majors', []))
+      completedSemesters=details.get('completedSemesters'),majors=details.get('majors', []),
+      # 증명사진(0025) — 파일명이 아니라 범위 검사를 거치는 프록시 경로만. 경로의 id 는 응답 id 와 같다.
+      photoUrl=f"/api/v1/academic-students/{quote(identity, safe='')}/photo" if details.get('hasPhoto') else None)

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { apiResponse } from './api'
 
 interface Props {
@@ -7,10 +7,12 @@ interface Props {
   alt: string
   /** 로드가 끝나면(실패 포함) 부른다 — 인쇄는 이 뒤에 해야 사진이 빠지지 않는다. */
   onSettled?: () => void
+  /** 주면 로딩 중·실패 때 이것을 그린다(학사 증명사진의 모노그램·「사진 없음」). 없으면 기본 안내 문구. */
+  fallback?: ReactNode
 }
 
 /** 파일 API 는 사용자 인증 헤더가 필요해 <img src> 로 열리지 않는다. blob 으로 읽어 넘긴다. */
-export default function ProtectedImage({ src, alt, onSettled }: Props) {
+export default function ProtectedImage({ src, alt, onSettled, fallback }: Props) {
   const [url, setUrl] = useState<string | null>(null)
   const [failed, setFailed] = useState(false)
   useEffect(() => {
@@ -30,6 +32,7 @@ export default function ProtectedImage({ src, alt, onSettled }: Props) {
     // onSettled 는 호출마다 새 함수다. 이미지를 다시 읽을 이유가 아니다.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src])
+  if (fallback !== undefined && (failed || !url)) return <>{fallback}</>
   if (failed) return <span role="img" aria-label={alt}>사진을 불러오지 못했습니다.</span>
   return url ? <img src={url} alt={alt} onLoad={() => onSettled?.()} /> : <span role="status">사진 로딩 중</span>
 }

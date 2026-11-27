@@ -21,10 +21,12 @@ DETAIL_COLUMNS = ['intg_uid', 'sex_code', 'academic_gpa', 'out_dt', 'foreigner_c
                   'grad_exp_ym', 'isu_grade', 'curri_year']
 DETAIL_COLUMNS_0023 = ['post_code', 'address']
 DETAIL_COLUMNS_0024 = ['admission_date', 'completed_semesters', 'birth_date', 'home_phone']
+DETAIL_COLUMNS_0025 = ['photo_file']
 MAJOR_COLUMNS = ['student_uid', 'major_seq', 'type_code', 'type_label', 'major_code', 'major_name', 'status_code',
                  'status_label']
+# 0025: 증명사진 프록시 경로 photoUrl 이 더해져 정확히 11키다(이 학생들은 사진 값이 없어 null).
 ACADEMIC_KEYS = {'mobile', 'email', 'postCode', 'address', 'homePhone', 'birthDate', 'admissionDate',
-                 'completedSemesters', 'graduationExpectedMonth', 'majors'}
+                 'completedSemesters', 'graduationExpectedMonth', 'majors', 'photoUrl'}
 GROWTH_PROFILE_KEYS = {'name', 'studentNo', 'school', 'dept', 'grade', 'gpa', 'intro', 'version', 'email', 'phone',
                        'capabilities'}
 
@@ -134,7 +136,8 @@ def expected_majors(w):
 def expected_academic(w):
     return {'mobile': w['mobile'], 'email': w['email'], 'postCode': w['post'], 'address': w['address'],
             'homePhone': w['tel'], 'birthDate': w['birth'].isoformat(), 'admissionDate': w['admission'].isoformat(),
-            'completedSemesters': 6, 'graduationExpectedMonth': '2027-02', 'majors': expected_majors(w)}
+            'completedSemesters': 6, 'graduationExpectedMonth': '2027-02', 'majors': expected_majors(w),
+            'photoUrl': None}
 
 
 # 학사 상세 최상위 키 — 0023·6779c96(majorName·graduationExpectedMonth) 기존 키 + 0024 다섯 키.
@@ -143,17 +146,18 @@ DETAIL_KEYS_BEFORE_0024 = {'quest', 'id', 'studentNo', 'name', 'major', 'star', 
                            'studentType', 'diagnosisCount', 'counsels', 'programs', 'progress', 'hasRoadmap',
                            'hasServiceProfile', 'mobile', 'email', 'postCode', 'address'}
 DETAIL_KEYS_0024 = {'homePhone', 'birthDate', 'admissionDate', 'completedSemesters', 'majors'}
+DETAIL_KEYS_0025 = {'photoUrl'}
 
 EMPTY_ACADEMIC = {'mobile': None, 'email': None, 'postCode': None, 'address': None, 'homePhone': None,
                   'birthDate': None, 'admissionDate': None, 'completedSemesters': None,
-                  'graduationExpectedMonth': None, 'majors': []}
+                  'graduationExpectedMonth': None, 'majors': [], 'photoUrl': None}
 
 
 # §4-1
 def test_app_role_reads_both_views_and_columns_are_additive(db, w):
     columns = [r['column_name'] for r in db.execute('''SELECT column_name FROM information_schema.columns
       WHERE table_schema='dc' AND table_name=%s ORDER BY ordinal_position''', ('academic_student_details',)).fetchall()]
-    assert columns == DETAIL_COLUMNS + DETAIL_COLUMNS_0023 + DETAIL_COLUMNS_0024   # 0024: 끝에만 4열
+    assert columns == DETAIL_COLUMNS + DETAIL_COLUMNS_0023 + DETAIL_COLUMNS_0024 + DETAIL_COLUMNS_0025   # 0024: 4열·0025: 1열, 끝에만
     cap_columns = [r['column_name'] for r in db.execute('''SELECT column_name FROM information_schema.columns
       WHERE table_schema='dc' AND table_name='academic_student_core_competency' ORDER BY ordinal_position''').fetchall()]
     assert cap_columns == ['student_uid', 'competency_code', 'score']
@@ -337,7 +341,7 @@ def test_0024_duplicate_code_or_major_master_rows_do_not_multiply_majors(client,
 
 
 # 0024 §4-2 · §4-3 · §4-8 · §4-9 · §4-10
-def test_0024_owner_academic_has_exactly_ten_keys_with_formats_and_boundaries(client, db, w):
+def test_0024_owner_academic_has_exactly_eleven_keys_with_formats_and_boundaries(client, db, w):
     db.execute('SET LOCAL ROLE dc_app')
     for path in ("/students/{}/growth/profile", "/students/{}/portfolio"):
         body = get(client, path.format(w['s']), w['s'])
@@ -396,7 +400,7 @@ def test_0024_academic_detail_carries_new_fields_in_scope_only(client, db, w):
     new_keys = ('homePhone', 'birthDate', 'admissionDate', 'completedSemesters', 'graduationExpectedMonth', 'majors')
     for who in ('career_kim', w['prof']):
         detail = get(client, f"/academic-students/{w['s']}", who)
-        assert set(detail) == DETAIL_KEYS_BEFORE_0024 | DETAIL_KEYS_0024
+        assert set(detail) == DETAIL_KEYS_BEFORE_0024 | DETAIL_KEYS_0024 | DETAIL_KEYS_0025
         # 학생 본인 GET 과 같은 함수 — 같은 값이다. 0023 연락처·외국인 키는 그대로.
         assert {k: detail[k] for k in new_keys} == {k: expected_academic(w)[k] for k in new_keys}
         assert (detail['mobile'], detail['email'], detail['postCode'], detail['address']) == contact_strings(w)
