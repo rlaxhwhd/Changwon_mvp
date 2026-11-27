@@ -12,7 +12,7 @@
 //
 // 신원(이름·학과·학년·학점)은 학사 유래라 우리가 만들지 않는다(CLAUDE.md 1조).
 // ─────────────────────────────────────────────────────────────────────────
-import { loadPortfolio } from '../../shared/growthStore'
+import { academicMajorText, loadPortfolio } from '../../shared/growthStore'
 import type { GrowthEntry, PortfolioDTO, PortfolioResume } from '../../shared/growthStore'
 
 export interface ProfileData {
@@ -33,6 +33,14 @@ export interface ProfileData {
   /** 학사 이수학점 — 「n학점」 */
   credits: string
   major: string
+  /** 학사 생년월일·입학일(YYYY-MM-DD)·이수학기(「n학기」)·졸업예정(YYYY-MM)·집전화(0024). 없으면 빈 값. */
+  birthDate: string
+  admissionDate: string
+  completedSemesters: string
+  expectedGraduation: string
+  homePhone: string
+  /** 학사 다전공 — 「복수전공 경영학과 · 이수 중」. 취소·포기도 상태 라벨과 함께 그대로 보인다. */
+  majors: string[]
   intro: string
 }
 
@@ -151,6 +159,12 @@ export function toPortfolioView(dto: PortfolioDTO): PortfolioView {
       gpa: dto.profile.gpa ? `${dto.profile.gpa} / 4.5` : '',
       credits: dto.profile.credits == null ? '' : `${dto.profile.credits}학점`,
       major: dto.profile.dept,
+      birthDate: academic?.birthDate ?? '',
+      admissionDate: academic?.admissionDate ?? '',
+      completedSemesters: academic?.completedSemesters == null ? '' : `${academic.completedSemesters}학기`,
+      expectedGraduation: academic?.graduationExpectedMonth ?? '',
+      homePhone: academic?.homePhone ?? '',
+      majors: (academic?.majors ?? []).map(academicMajorText),
       intro: dto.profile.intro,
     },
     skills: dto.skills.map(entry => ({

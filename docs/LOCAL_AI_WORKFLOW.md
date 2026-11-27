@@ -1,5 +1,11 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-27 학사 생년월일·입학일·이수학기·졸업예정·집전화·다전공 표시(181) 로컬 반영 — 서버 미배포
+
+- 0024(rev4, Astra 조건부 승인): migration 181 — `dc.academic_student_details` 에 4열 추가, 새 뷰 `dc.academic_student_majors`. 학생 마이페이지 「학사 정보」(다전공·생년월일·입학일·이수학기·졸업예정)·「연락처」(집전화), 교직원 학생상세 인적사항 표(집전화)·「기본사항」 탭(입학일·이수학기·다전공). 생년월일·졸업예정 칸은 동시 세션 커밋 `6779c96`(학생상세 재배치) 화면이 같은 응답 키를 읽는다. 증명사진은 이미지 경로 미확정으로 보류.
+- `npm run docker:migrate`(백업 `_workspace/db-backups/local-before-migrate-20261127031734011.dump`) → `npm run docker:up` 전체 healthy, API `dc_app` 접속. 격리 전체 회귀 `dc_regression_20261127031348_374b5d_test` 10 failed/807 passed/2 skipped — 0023 기준선과 실패 집합 diff 0. `npx tsc -b` 통과.
+- 서버 배포 시: 웹+API+마이그레이션 181(뷰 열 추가·읽기 뷰 추가, 데이터 변경 없음). 180 이 먼저 적용돼 있어야 한다. 검증 기록 `.ai/handoff-db/0024-academic-profile-more/verification.md`.
+
 ## 2026-11-27 학사 GPA·핵심역량·연락처·주소 화면 표시(180) 로컬 반영 — 서버 미배포
 
 - 0023(rev3, Astra 조건부 승인): migration 180 — `dc.academic_student_details` 에 `post_code`·`address` 추가, 새 뷰 `dc.academic_student_core_competency`(학사 CORE 원점수). 학생 마이페이지(포트폴리오 기본 정보)에 GPA·이수학점·휴대폰·이메일·주소·핵심역량 원점수, 메인·라운지 역량 그래프는 원점수+본인 최고 축 기준(목표선 없음), 교직원 학사 상세 헤더에 휴대폰·이메일·주소, 「역량 GAP」은 원점수면 목표·갭 숨김. `/students/{id}` GPA 는 정책 미설정·detail 없음일 때 학사 평점.

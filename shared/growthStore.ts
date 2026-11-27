@@ -40,6 +40,34 @@ export interface GrowthEntry {
   files: GrowthFile[]
 }
 
+/** 학사 다전공 한 행 — 상태 라벨이 없으면 null(원천 상태 NULL). */
+export interface GrowthAcademicMajor {
+  typeLabel: string
+  majorName: string
+  statusLabel: string | null
+}
+
+/** 다전공 한 줄 — 「복수전공 경영학과 · 이수 중」. 학생 마이페이지와 교직원 학생상세가 같이 쓴다. */
+export function academicMajorText(major: GrowthAcademicMajor): string {
+  return [`${major.typeLabel} ${major.majorName}`, major.statusLabel].filter(Boolean).join(' · ')
+}
+
+export interface GrowthAcademic {
+  mobile: string | null
+  email: string | null
+  postCode: string | null
+  address: string | null
+  homePhone: string | null
+  /** YYYY-MM-DD */
+  birthDate: string | null
+  /** YYYY-MM-DD */
+  admissionDate: string | null
+  completedSemesters: number | null
+  /** YYYY-MM — 졸업사정 등록자만 있다. */
+  graduationExpectedMonth: string | null
+  majors: GrowthAcademicMajor[]
+}
+
 export interface GrowthProfile {
   name: string
   studentNo: string
@@ -50,8 +78,9 @@ export interface GrowthProfile {
   gpa: string | null
   /** 학사 이수학점(0023). */
   credits: number | null
-  /** 학사 휴대폰·이메일·주소(0023). 학생 본인 GET 에만 값이 있다 — 교직원·PATCH 응답은 null. */
-  academic: { mobile: string | null; email: string | null; postCode: string | null; address: string | null } | null
+  /** 학사 휴대폰·이메일·주소(0023)와 집전화·생년월일·입학일·이수학기·졸업예정·다전공(0024).
+   *  학생 본인 GET 에만 값이 있다 — 교직원·PATCH 응답은 null. */
+  academic: GrowthAcademic | null
   intro: string
   /** 자기입력 연락처. 본인만 받는다 — 합성 기본값을 만들지 않는다. */
   email: string | null

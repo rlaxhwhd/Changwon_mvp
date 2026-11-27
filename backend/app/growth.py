@@ -10,6 +10,7 @@
   · 채용 포트폴리오 제출: 회사 제출용 문서는 student_portfolio.py, 제출은 jobs 가 맡는다.
 없는 정책을 임시 판정 로직으로 채우지 않는다(CLAUDE.md 14조).
 """
+import re
 from uuid import uuid4
 from datetime import date
 
@@ -66,10 +67,58 @@ def profile_row(conn, uid, lock=False):
                         + (' FOR UPDATE' if lock else ''), (uid,)).fetchone()
 
 
+ACADEMIC_PROFILE_KEYS = ('mobile', 'email', 'postCode', 'address', 'homePhone', 'birthDate', 'admissionDate',
+                         'completedSemesters', 'graduationExpectedMonth', 'majors')
+GRAD_EXP_YM = re.compile(r'\d{4}(0[1-9]|1[0-2])')
+
+
+def academic_text(value):
+    """학사 문자열 원값 — 앞뒤 공백을 걷고 빈 값이면 None."""
+    return (value or '').strip() or None
+
+
+def academic_date(value):
+    """학사 YYYYMMDD → YYYY-MM-DD. 달력에 없는 날짜·형식 위반은 None."""
+    value = value or ''
+    if len(value) != 8 or not value.isdigit():
+        return None
+    try:
+        return date(int(value[:4]), int(value[4:6]), int(value[6:])).isoformat()
+    except ValueError:
+        return None
+
+
 def academic_contact(conn, uid):
-    """학사 휴대폰·이메일·주소(0023). 학생 본인 GET(/growth/profile·/portfolio)에서만 부른다."""
-    return conn.execute('SELECT mobile,email,post_code,address FROM dc.academic_student_details WHERE intg_uid=%s',
-                        (uid,)).fetchone()
+    """학사 연락처·주소(0023) + 졸업예정·입학일·이수학기·생년월일·집전화·다전공(0024)을 한 문장으로 읽는다.
+
+    호출처는 학생 본인 GET(/growth/profile·/portfolio)과 범위 검사 뒤의 학사 상세(academic_students.detail)뿐이다.
+    두 뷰를 한 스냅샷으로 읽어 sync 공개와 엇갈린 조합이 나오지 않는다. 학사 행이 없으면 None.
+    """
+    row = conn.execute('''SELECT d.foreigner_code, d.mobile, d.email, d.post_code, d.address, d.grad_exp_ym,
+             d.admission_date, d.completed_semesters, d.birth_date, d.home_phone,
+             (SELECT coalesce(jsonb_agg(jsonb_build_object('typeCode', m.type_code, 'typeLabel', m.type_label,
+                       'majorCode', m.major_code, 'majorName', m.major_name, 'statusLabel', m.status_label)
+                     ORDER BY m.major_seq, m.type_code), '[]'::jsonb)
+              FROM dc.academic_student_majors m WHERE m.student_uid = d.intg_uid) AS majors
+      FROM dc.academic_student_details d WHERE d.intg_uid = %s''', (uid,)).fetchone()
+    if row is None:
+        return None
+    expected = row['grad_exp_ym'] or ''
+    semesters = row['completed_semesters']
+    return {
+        'foreigner': {'Y': True, 'N': False}.get(row['foreigner_code']),
+        # 0023 연락처·주소는 그때 규칙 그대로(빈 문자열 → None). 집전화는 공백만 있는 원값이 있어 strip 한다.
+        'mobile': row['mobile'] or None, 'email': row['email'] or None,
+        'postCode': row['post_code'] or None, 'address': row['address'] or None,
+        'homePhone': academic_text(row['home_phone']),
+        'birthDate': academic_date(row['birth_date']),
+        'admissionDate': academic_date(row['admission_date']),
+        'completedSemesters': int(semesters) if semesters is not None and semesters == int(semesters) else None,
+        'graduationExpectedMonth': f'{expected[:4]}-{expected[4:]}' if GRAD_EXP_YM.fullmatch(expected) else None,
+        # 코드 키(typeCode·majorCode)는 라벨 폴백에만 쓰고 응답에 내지 않는다.
+        'majors': [{'typeLabel': m['typeLabel'] or m['typeCode'], 'majorName': m['majorName'] or m['majorCode'],
+                    'statusLabel': m['statusLabel'] or None} for m in row['majors']],
+    }
 
 
 def profile_dto(student, row, owner, contact=None):
@@ -85,11 +134,11 @@ def profile_dto(student, row, owner, contact=None):
     # 자기입력 연락처는 본인 전용으로 시작한다. 교직원 화면에 새로 열지 않는다(D06).
     data['email'] = (row['contact_email'] if row else None) if owner else None
     data['phone'] = (row['contact_phone'] if row else None) if owner else None
-    # 학사 연락처·주소는 본인 GET 에서만 contact 로 받는다. PATCH 응답은 멱등 표에 저장되므로 싣지 않는다.
+    # 학사 연락처·주소·학적 값은 본인 GET 에서만 contact 로 받는다. PATCH 응답은 멱등 표에 저장되므로 싣지 않는다.
+    # 명시한 키만 고른다 — contact 의 foreigner 는 교직원 학사 상세 전용이다(0024).
     data['academic'] = None
     if owner and contact is not None:
-        data['academic'] = {'mobile': contact['mobile'] or None, 'email': contact['email'] or None,
-                            'postCode': contact['post_code'] or None, 'address': contact['address'] or None}
+        data['academic'] = {key: contact[key] for key in ACADEMIC_PROFILE_KEYS}
     return data
 
 

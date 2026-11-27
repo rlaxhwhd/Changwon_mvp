@@ -19,7 +19,7 @@ import { STUDENTS, getCounselOwnerById, getStudentType, getStudentTypeMeta } fro
 import type { StudentData } from '../../src_v2/data/students'
 import { STUDENT_TYPE_MAP, areaOf, typeLabel } from '../../src_v2/data/careerProcess'
 import GrowthLoadNotice from '../../shared/GrowthLoadNotice'
-import { growthState } from '../../shared/growthStore'
+import { academicMajorText, growthState, type GrowthAcademicMajor } from '../../shared/growthStore'
 import { CATEGORY_LABEL, loadJournalEntries } from '../../src_v2/data/growthJournal'
 import { loadRosterStudent, rosterStudentOf, enrollStatusClass, studentTypeClass } from '../data/studentRoster'
 import type { RosterStudent } from '../data/studentRoster'
@@ -146,13 +146,18 @@ interface BasicInfo {
   graduation?: string | null
   gpa?: string | null
   foreigner?: boolean | null
+  /** 「YYYY-MM-DD」 — 화면은 점 표기 */
+  admissionDate?: string | null
+  completedSemesters?: number | null
+  majors?: GrowthAcademicMajor[]
 }
 
 function basicInfoOf(data: AcademicStudentDetail): BasicInfo {
   return {
     college: data.collegeName, department: data.major, level: data.academicLevel, majorName: data.majorName,
     grade: data.grade, status: data.status, graduation: data.graduationMonth ?? data.graduationExpectedMonth, gpa: data.gpa,
-    foreigner: data.foreigner,
+    foreigner: data.foreigner, admissionDate: data.admissionDate, completedSemesters: data.completedSemesters,
+    majors: data.majors,
   }
 }
 
@@ -169,6 +174,14 @@ function BasicInfoTab({ info }: { info: BasicInfo }) {
           <tr>
             <InfoCell label="평균평점" value={info.gpa ? `${info.gpa} / 4.5` : ''} />
             <InfoCell label="외국인" value={info.foreigner == null ? '' : info.foreigner ? '예' : '아니오'} />
+          </tr>
+          <tr>
+            <InfoCell label="입학일" value={info.admissionDate?.replaceAll('-', '.')} />
+            <InfoCell label="이수학기" value={info.completedSemesters == null ? '' : `${info.completedSemesters}학기`} />
+          </tr>
+          <tr>
+            <InfoCell label="다전공" span
+              value={info.majors?.length ? info.majors.map((major, index) => <div key={index}>{academicMajorText(major)}</div>) : ''} />
           </tr>
         </tbody>
       </table>
@@ -960,7 +973,7 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
       </div>
       {action}
     </header>
-    {/* 인적사항 — 현행 포트폴리오 화면 배치(성명·학번 / 주소 / 생년월일·성별 / 핸드폰·이메일).
+    {/* 인적사항 — 현행 포트폴리오 화면 배치(성명·학번 / 주소 / 생년월일·성별 / 핸드폰·이메일 / 집전화(0024)).
         학적 값·외국인 여부는 「기본사항」 탭. */}
     <section className="sdv-info-table sdv-info-person" aria-label="인적사항">
       <table>
@@ -970,6 +983,7 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
           <tr><InfoCell label="주소" value={address} span /></tr>
           <tr><InfoCell label="생년월일" value={data.birthDate?.replaceAll('-', '.')} /><InfoCell label="성별" value={data.sex} /></tr>
           <tr><InfoCell label="핸드폰" value={data.mobile} /><InfoCell label="이메일" value={data.email} /></tr>
+          <tr><InfoCell label="집전화" value={data.homePhone} span /></tr>
         </tbody>
       </table>
     </section>

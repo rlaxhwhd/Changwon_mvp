@@ -24,7 +24,8 @@ type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'versions'
 /** 아직 읽기 전이거나 아무것도 쓰지 않은 상태. 빈 값은 빈 값이다 — 합성하지 않는다. */
 const EMPTY_PROFILE: ProfileData = {
   name: '', studentId: '', school: '국립창원대학교', dept: '', grade: '',
-  email: '', phone: '', academicEmail: '', academicPhone: '', address: '', gpa: '', credits: '', major: '', intro: '',
+  email: '', phone: '', academicEmail: '', academicPhone: '', address: '', gpa: '', credits: '', major: '',
+  birthDate: '', admissionDate: '', completedSemesters: '', expectedGraduation: '', homePhone: '', majors: [], intro: '',
 }
 
 /** 스킬 분류 — DB 코드다(GROWTH_SKILL_CATEGORY). 한글은 표시용 라벨이다. */
@@ -292,6 +293,16 @@ function ProfileSection({ profile, competency, onSaveIntro }: { profile: Profile
             <div><dt>GPA</dt><Value>{profile.gpa}</Value></div>
             <div><dt>이수학점</dt><Value>{profile.credits}</Value></div>
             <div><dt>주전공</dt><Value>{profile.major}</Value></div>
+            <div>
+              <dt>다전공</dt>
+              {profile.majors.length
+                ? <dd>{profile.majors.map((major, index) => <div key={index}>{major}</div>)}</dd>
+                : <Value>{''}</Value>}
+            </div>
+            <div><dt>생년월일</dt><Value>{profile.birthDate}</Value></div>
+            <div><dt>입학일</dt><Value>{profile.admissionDate}</Value></div>
+            <div><dt>이수학기</dt><Value>{profile.completedSemesters}</Value></div>
+            <div><dt>졸업예정</dt><Value>{profile.expectedGraduation}</Value></div>
           </dl>
         </article>
 
@@ -304,6 +315,7 @@ function ProfileSection({ profile, competency, onSaveIntro }: { profile: Profile
           </header>
           <dl className="pf-dl pf-dl--single">
             <div><dt>휴대폰</dt><Value>{profile.academicPhone || profile.phone}</Value></div>
+            <div><dt>집전화</dt><Value>{profile.homePhone}</Value></div>
             <div><dt>이메일</dt><Value>{profile.academicEmail || profile.email}</Value></div>
             <div><dt>주소</dt><Value>{profile.address}</Value></div>
           </dl>
