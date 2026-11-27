@@ -296,16 +296,14 @@ function ProfileSection({ profile, competency, onSaveIntro }: { profile: Profile
           )}
       </article>
 
-      <div className="pf-split">
+      <div className="pf-split pf-split--top">
         <article className="pf-panel pf-tone-sky">
           <header className="pf-panel-head">
             <div><h2>학사 정보</h2><p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 기록에서 가져옵니다.</p></div>
           </header>
-          <dl className="pf-dl pf-dl--single">
+          {/* 학과·학년·학번·생년월일은 머리말 인적사항 표에 있어 여기서 뺐다(2026-11-27 사용자 지시). */}
+          <dl className="pf-dl">
             <div><dt>학교</dt><Value>{profile.school}</Value></div>
-            <div><dt>학과</dt><Value>{profile.dept}</Value></div>
-            <div><dt>학년</dt><Value>{profile.grade}</Value></div>
-            <div><dt>학번</dt><Value>{profile.studentId}</Value></div>
             <div><dt>GPA</dt><Value>{profile.gpa}</Value></div>
             <div><dt>이수학점</dt><Value>{profile.credits}</Value></div>
             <div><dt>주전공</dt><Value>{profile.major}</Value></div>
@@ -315,45 +313,31 @@ function ProfileSection({ profile, competency, onSaveIntro }: { profile: Profile
                 ? <dd>{profile.majors.map((major, index) => <div key={index}>{major}</div>)}</dd>
                 : <Value>{''}</Value>}
             </div>
-            <div><dt>생년월일</dt><Value>{profile.birthDate}</Value></div>
             <div><dt>입학일</dt><Value>{profile.admissionDate}</Value></div>
             <div><dt>이수학기</dt><Value>{profile.completedSemesters}</Value></div>
             <div><dt>졸업예정</dt><Value>{profile.expectedGraduation}</Value></div>
           </dl>
         </article>
 
-        <article className="pf-panel pf-tone-mint">
+        {/* 연락처 카드 자리 — 휴대폰·이메일·주소는 모두 머리말 인적사항 표로 옮겨 카드가 비었다. 그 자리에 핵심역량을 둔다(2026-11-27 사용자 지시). */}
+        <article className="pf-panel pf-tone-teal">
           <header className="pf-panel-head">
             <div>
-              <h2>연락처</h2>
-              <p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 기록에서 가져옵니다. 회사마다 다른 연락처는 회사 제출용 포트폴리오에서 바꿀 수 있습니다.</p>
+              <h2>핵심역량</h2>
+              <p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 교과 이수와 이뤄드림 비교과 이수 기록을 합산합니다.</p>
             </div>
           </header>
-          <dl className="pf-dl pf-dl--single">
-            <div><dt>휴대폰</dt><Value>{profile.academicPhone || profile.phone}</Value></div>
-            <div><dt>이메일</dt><Value>{profile.academicEmail || profile.email}</Value></div>
-            <div><dt>주소</dt><Value>{profile.address}</Value></div>
-          </dl>
+          {competency.length === 0
+            ? <Empty title="핵심역량 점수가 아직 없습니다" />
+            : (
+              <dl className="pf-dl">
+                {competency.map(axis => (
+                  <div key={axis.key}><dt>{axis.label}</dt><Value>{formatCompetencyScore(axis.score)}</Value></div>
+                ))}
+              </dl>
+            )}
         </article>
       </div>
-
-      <article className="pf-panel pf-tone-teal">
-        <header className="pf-panel-head">
-          <div>
-            <h2>핵심역량</h2>
-            <p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 교과 이수와 이뤄드림 비교과 이수 기록을 합산합니다.</p>
-          </div>
-        </header>
-        {competency.length === 0
-          ? <Empty title="핵심역량 점수가 아직 없습니다" />
-          : (
-            <dl className="pf-dl">
-              {competency.map(axis => (
-                <div key={axis.key}><dt>{axis.label}</dt><Value>{formatCompetencyScore(axis.score)}</Value></div>
-              ))}
-            </dl>
-          )}
-      </article>
     </div>
   )
 }

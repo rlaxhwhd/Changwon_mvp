@@ -130,12 +130,15 @@
 .pf-source { display: inline-flex; align-items: center; gap: 6px; color: var(--pf-mute); font-size: var(--fs-label, 12px); }
 .pf-prose { max-width: 72ch; margin: 0; color: var(--pf-text); font-size: var(--fs-body, 14px); line-height: 1.8; white-space: pre-wrap; text-wrap: pretty; }
 
-.pf-dl { margin: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 32px; }
-.pf-dl--single { grid-template-columns: minmax(0, 1fr); }
-.pf-dl > div { padding: 12px 0; display: grid; grid-template-columns: 88px minmax(0, 1fr); gap: 12px; border-bottom: 1px solid var(--pf-line); }
-.pf-dl dt { color: var(--pf-sub); font-size: var(--fs-meta, 13px); }
-.pf-dl dd { margin: 0; color: var(--pf-text); font-size: var(--fs-body, 14px); font-weight: 700; overflow-wrap: anywhere; }
+/* 학사 정보·핵심역량 — 머리말 인적사항 표(.pf-person-table)와 같은 표 모양: 테두리 하나, 항목 칸은 회색 바탕(2026-11-27 사용자 지시). */
+.pf-dl { margin: 0; display: grid; grid-template-columns: minmax(0, 1fr); border: 1px solid var(--pf-line-strong); border-radius: var(--pf-radius-sm); overflow: hidden; }
+.pf-dl > div { display: grid; grid-template-columns: 120px minmax(0, 1fr); border-bottom: 1px solid var(--pf-line); }
+.pf-dl > div:last-child { border-bottom: 0; }
+.pf-dl dt { padding: 10px 14px; display: flex; align-items: center; border-right: 1px solid var(--pf-line); background: var(--pf-wash); color: var(--pf-sub); font-size: var(--fs-meta, 13px); font-weight: 700; }
+.pf-dl dd { margin: 0; padding: 10px 14px; color: var(--pf-text); font-size: var(--fs-body, 14px); font-weight: 600; overflow-wrap: anywhere; }
 .pf-dl dd.is-blank { color: var(--pf-mute); font-weight: 500; }
+/* 기본 정보 탭 윗줄 — 오른쪽 핵심역량 카드는 내용 높이만큼만 차지한다(왼쪽 학사 정보 높이로 늘리지 않는다). */
+.pf-split--top { align-items: start; }
 
 .pf-empty { margin: 0; padding: 28px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; border: 1px dashed var(--tone-line); border-radius: var(--pf-radius-sm); background: color-mix(in srgb, var(--tone-soft) 55%, var(--pf-paper)); color: var(--pf-sub); font-size: var(--fs-meta, 13px); line-height: 1.6; text-align: center; }
 .pf-empty strong { color: var(--pf-text); font-size: var(--fs-body, 14px); }
@@ -254,7 +257,8 @@
   .pf-seg::before { left: 10px; right: 10px; }
   .pf-panel { padding: 20px 18px 22px; }
   .pf-panel-head { flex-wrap: wrap; }
-  .pf-split, .pf-dl { grid-template-columns: minmax(0, 1fr); }
+  .pf-split { grid-template-columns: minmax(0, 1fr); }
+  .pf-dl > div { grid-template-columns: 104px minmax(0, 1fr); }
   .pf-skill-row { grid-template-columns: minmax(0, 1fr); gap: 8px; }
   .pf-skill-row > h3 { margin: 0; }
   .pf-skill-list { grid-template-columns: minmax(0, 1fr); }
