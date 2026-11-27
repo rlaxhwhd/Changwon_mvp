@@ -1406,24 +1406,27 @@
 }
 
 .mn-page .hero-competency .competency-layout {
-  grid-template-columns: 200px minmax(0, 1fr);
+  /* 2026-11-27 사용자 지시 — 축 이름이 안 보인다: 레이더를 키우고 막대는 세로 1열로 세운다.
+     레이더 칸은 그림(240px)보다 넓다 — 좌우 축 이름이 viewBox 밖으로 나가므로 그 여백이다. */
+  grid-template-columns: 300px minmax(0, 1fr);
   gap: 24px;
 }
 
 .mn-page .hero-competency .radar-chart {
-  width: 188px;
+  width: 240px;
   height: auto;
   aspect-ratio: auto;
 }
 
 .mn-page .hero-competency .radar-label {
-  font-size: 12px;
-  font-weight: 500;
+  /* viewBox 300 → 240px 로 줄어 그려지므로 17 은 화면에서 약 13.6px 이다. */
+  font-size: 17px;
+  font-weight: 600;
 }
 
 .mn-page .hero-competency .axis-list {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px 16px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
 }
 
 .mn-page .hero-competency .competency-legend {
@@ -1444,7 +1447,7 @@
 
 .mn-page .hero-competency .axis-head b,
 .mn-page .hero-competency .axis-head strong {
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .mn-page .hero-competency .axis-head strong {
@@ -1975,11 +1978,11 @@
   }
 
   .mn-page .hero-competency .radar-chart {
-    width: min(100%, 260px);
+    width: min(100%, 240px);
   }
 
   .mn-page .hero-competency .radar-label {
-    font-size: 12px;
+    font-size: 17px;
   }
 }
 
