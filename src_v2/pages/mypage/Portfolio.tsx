@@ -324,7 +324,6 @@ function ProfileSection({ profile, competency, onSaveIntro }: { profile: Profile
           </header>
           <dl className="pf-dl pf-dl--single">
             <div><dt>휴대폰</dt><Value>{profile.academicPhone || profile.phone}</Value></div>
-            <div><dt>집전화</dt><Value>{profile.homePhone}</Value></div>
             <div><dt>이메일</dt><Value>{profile.academicEmail || profile.email}</Value></div>
             <div><dt>주소</dt><Value>{profile.address}</Value></div>
           </dl>
