@@ -76,7 +76,7 @@
 
 ## 이뤄드림 비교과 합산 (183, 2026-11-27 · 0026)
 
-5대 핵심역량은 하나다. 교과 이수분은 전산원 `DC_V_STU_CAP_INF` CORE(180 뷰 `dc.academic_student_core_competency`), 비교과 이수분은 이뤄드림(업체) `VW_ECO_ROADMAP_APPLICATION.skill_scores` 지급 점수다. 화면 점수는 축마다 **교과 + 비교과 원점수 합**이며 환산·백분위·100점 정규화·목표선은 없다(0023 확정 유지). 그래프는 축마다 **120점을 만점(바깥 테두리)으로** 그린다(2026-11-27 사용자 지시, 잠정 — 「120점이 장학금 주는 점수인 것 같다」. 확인되면 `COMPETENCY_FULL_SCORE` 한 곳만 고친다). 120은 상한이 아니다 — 200점도 정상이며, 넘은 축은 레이더에서 테두리 밖 점, 막대에서 화살촉으로 뚫고 나가게 그린다. 숫자는 원점수 그대로다. 상세 설계·조건은 `.ai/handoff-db/0026-core-competency-merge/`.
+5대 핵심역량은 하나다. 교과 이수분은 전산원 `DC_V_STU_CAP_INF` CORE(180 뷰 `dc.academic_student_core_competency`), 비교과 이수분은 이뤄드림(업체) `VW_ECO_ROADMAP_APPLICATION.skill_scores` 지급 점수다. 화면 점수는 축마다 **교과 + 비교과 원점수 합**이며 환산·백분위·100점 정규화·목표선은 없다(0023 확정 유지). 상세 설계·조건은 `.ai/handoff-db/0026-core-competency-merge/`.
 
 - **원천 사본(스키마 `eco`, `dc_app` 권한 없음):** `eco.roadmap_application`(지급 이력이 있는 신청서 원값, 키 = 업체 `application_id`) · `eco.roadmap_application_skill_point`(`skill_scores` 원소 1개 = 1행, essential 1~5·child 0·point ≥0 유한 CHECK, `(student_id, essential) INCLUDE (point)` 인덱스) · `eco.sync_run`(집계만, append-only). 화면 합계는 지급 행 표만 읽는다(읽기 시점 JSON 파싱 없음).
 - **읽기 뷰:** `dc.student_core_competency_combined(student_uid, competency_code, academic_score, program_score, score)` — 점조회 전용(`WHERE student_uid = $1`), 소유자 권한, `dc_app` SELECT. essential 1~5 → `LOCAL_LEADER·CREATIVE·CONVERGENCE·COMMUNICATION·GLOBAL`(번호 대응, 이름 매칭 아님). 프로필 API 는 `coreCompetencySource='ACADEMIC_PROGRAM'` 으로 낸다(옛 `'ACADEMIC'` 은 더 내지 않는다). 프론트 원점수 판정은 `src_v2/data/competency.ts` 의 `isRawCompetencySource()` 한 곳이다.

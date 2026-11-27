@@ -6,7 +6,7 @@ import CareerJourneyCard from '../components/CareerJourneyCard'
 import NextStepBanner from '../components/NextStepBanner'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
 import { buildCareerJourney } from '../data/careerProcess'
-import { COMPETENCY_FULL_SCORE, formatCompetencyScore, getCompetencyAxes, isRawCompetencySource } from '../data/competency'
+import { formatCompetencyScore, getCompetencyAxes } from '../data/competency'
 import { getTodayTasks } from '../data/todayTasks'
 import { getActiveStudent } from '../data/students'
 import { getPipelineState } from '../data/pipeline'
@@ -154,12 +154,13 @@ export default function Main() {
                   </CompetencyRadarChart>
                 </div>
                 {competencyAxes.length > 0 && <div className="competency-side">
-                  <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span>{competencyAxes.every(axis => axis.target != null) && <span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 수준</span>}{isRawCompetencySource(student.coreCompetencySource) && <span>교과·비교과 이수 누계 원점수 · 그래프는 축마다 {COMPETENCY_FULL_SCORE}점 기준</span>}</div>
+                  {/* 범례는 목표선이 있을 때(개발 테스트 점수)만 — 학사 원점수에는 「나의 현재」·출처 문구를 두지 않는다(2026-11-27 사용자 지시). */}
+                  {competencyAxes.every(axis => axis.target != null) && <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 수준</span></div>}
                   <div className="axis-list">
                     {competencyAxes.map(axis => (
                       <div key={axis.key} className="axis-item">
                         <div className="axis-head"><b>{axis.label}</b><strong>{formatCompetencyScore(axis.score)}</strong></div>
-                        <div className={axis.over ? 'axis-track is-over' : 'axis-track'}><i style={{ '--value': `${Math.min(axis.plot, 100)}%` } as React.CSSProperties}></i></div>
+                        <div className="axis-track"><i style={{ '--value': `${axis.plot}%` } as React.CSSProperties}></i></div>
                       </div>
                     ))}
                   </div>
