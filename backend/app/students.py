@@ -30,6 +30,13 @@ def profile(conn,row):
     gpa=conn.execute('SELECT * FROM dc.student_gpa(%s)',(row['intg_uid'],)).fetchone()
     data['gpa']=gpa['gpa']
     data['gpaSource']=gpa['source']
+    # 0023 rev3 — 정책 미설정(legacy_detail)인데 detail 평점이 없으면 학사 평점으로 채운다.
+    # 마이페이지·포트폴리오 문서(growth.profile_dto·apply_academic)와 같은 값이 된다. 정책 활성 결과는 건드리지 않는다.
+    if gpa['source']=='legacy_detail' and gpa['gpa'] is None:
+        academic_gpa=conn.execute('SELECT academic_gpa FROM dc.academic_student_details WHERE intg_uid=%s',(row['intg_uid'],)).fetchone()
+        if academic_gpa and academic_gpa['academic_gpa'] is not None:
+            data['gpa']=str(academic_gpa['academic_gpa'])
+            data['gpaSource']='academic'
     # 계획의 축·칸은 전용 API(/students/{id}/roadmap)만 내려준다. 여기서 함께 실으면
     # 초안·검토중 계획과 AI 근거가 권한 검사 없이 새어 나가고 정본이 두 벌이 된다.
     # roadmapOutcome 은 생성 provider 의 입력이라 화면에 내려보내지 않는다.
@@ -63,6 +70,15 @@ def profile(conn,row):
     if len(examples)==5:
         data['coreCompetencyScores']={s['competency_code']:s['score'] for s in examples}
         data['coreCompetencySource']='DEVELOPMENT_CARE7_TEST'
+        return data
+    # 학사 핵심역량 원점수(0023). 100점 환산·목표선 없음 — 화면이 본인 최고 축 기준으로 그린다.
+    # 5행·5코드일 때만 그린다(원천의 코드 중복은 보고형 검사뿐이라 부분·중복 점수로 그리지 않는다).
+    academic=conn.execute('SELECT competency_code,score FROM dc.academic_student_core_competency WHERE student_uid=%s',
+                          (row['intg_uid'],)).fetchall()
+    academic_scores={r['competency_code']:float(r['score']) for r in academic}
+    if len(academic)==5 and len(academic_scores)==5:
+        data['coreCompetencyScores']=academic_scores
+        data['coreCompetencySource']='ACADEMIC'
         return data
     scores=conn.execute('''SELECT competency_code,accumulated_points
       FROM dc.student_core_competency_points WHERE student_uid=%s''',(row['intg_uid'],)).fetchall()

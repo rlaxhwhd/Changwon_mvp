@@ -6,7 +6,7 @@ import CareerJourneyCard from '../components/CareerJourneyCard'
 import NextStepBanner from '../components/NextStepBanner'
 import CompetencyRadarChart from '../components/CompetencyRadarChart'
 import { buildCareerJourney } from '../data/careerProcess'
-import { getCompetencyAxes } from '../data/competency'
+import { formatCompetencyScore, getCompetencyAxes } from '../data/competency'
 import { getTodayTasks } from '../data/todayTasks'
 import { getActiveStudent } from '../data/students'
 import { getPipelineState } from '../data/pipeline'
@@ -154,12 +154,12 @@ export default function Main() {
                   </CompetencyRadarChart>
                 </div>
                 {competencyAxes.length > 0 && <div className="competency-side">
-                  <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span><span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 수준</span></div>
+                  <div className="competency-legend" aria-label="차트 범례"><span><i style={{ background: 'linear-gradient(90deg, var(--competency-current), var(--competency-growth))' } as React.CSSProperties}></i>나의 현재</span>{competencyAxes.every(axis => axis.target != null) && <span><i style={{ background: 'var(--competency-target)' } as React.CSSProperties}></i>목표 수준</span>}{student.coreCompetencySource === 'ACADEMIC' && <span>학사 핵심역량 원점수 · 그래프는 내 가장 높은 역량 기준</span>}</div>
                   <div className="axis-list">
                     {competencyAxes.map(axis => (
                       <div key={axis.key} className="axis-item">
-                        <div className="axis-head"><b>{axis.label}</b><strong>{axis.score}</strong></div>
-                        <div className="axis-track"><i style={{ '--value': `${axis.score}%` } as React.CSSProperties}></i></div>
+                        <div className="axis-head"><b>{axis.label}</b><strong>{formatCompetencyScore(axis.score)}</strong></div>
+                        <div className="axis-track"><i style={{ '--value': `${axis.plot}%` } as React.CSSProperties}></i></div>
                       </div>
                     ))}
                   </div>

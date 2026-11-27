@@ -234,6 +234,8 @@ ERD의 세부 보조·코드·권한·AI·파일 테이블은 아래 migration �
 
 2026-09-16 경험일지 보완(092): 기존 `growth_entry(kind_code=JOURNAL)`·`growth_event`를 학생/상담사/자소서가 공유한다. 학생별/종류별 정렬 인덱스를 추가했다. 권한·API·검증·복구는 [경험일지 연결 명세](docs/GROWTH_JOURNAL.md)를 따른다.
 
+2026-11-27 학사 GPA·핵심역량·연락처 표시(180, 0023 — Astra 조건부 승인, 로컬 적용·팀장 검증 2026-11-27, 서버 미배포): `dc.academic_student_details` 끝에 학사 `post AS post_code`·`addr1 AS address` 를 붙인다(OR REPLACE, ACL 유지). 새 읽기 뷰 `dc.academic_student_core_competency(student_uid, competency_code, score)` 는 `academic.dc_v_stu_cap_inf` CORE 원점수를 ACE1~5 고정 대응으로 `dc.core_competency` 코드에 붙인다(100점 환산 없음, 점수 NULL 행 제외, 소유자 권한·`dc_app` SELECT). 학번당 행 수는 DB 제약이 아니라 동기화 공개 전 차단 검사(`studentIntgUidDuplicates`·`localIntgUidCollisions`)가 보장하고, 핵심역량 코드 중복은 보고형 검사뿐이라 API 가 「5행·5코드」일 때만 쓴다. 학사 연락처·주소는 학생 본인 포트폴리오 GET 과 범위 검사된 `GET /academic-students/{id}` 에서만 나가며 목록·export·`dc.idempotency` 에는 들어가지 않는다.
+
 2026-11-06 프로그램 관리 필터·학생 명단(158, 로컬 적용 완료): `dc.program.certificate_issued`(참여 인증서 발급, 기본 true — 기존 행의 true 는 추정값이다)를 더했다. `dc.academic_student_details` 끝에 학사 `hp AS mobile`·`email` 을 붙였다. 연락처는 `POST /programs/export` 만 읽고 목록 응답에는 없다. 호출은 상담사이면서 `programs.1` 메뉴가 있어야 하고 `admin_event(entity=program_student_export)` 에 건수만 남는다. `program_apply.snapshot` 에 학사 기준 `studentStatus` 를 더했다.
 
 2026-10-28 학생 외국인 여부(147, 로컬 적용 완료): `dc.academic_student_details`에 학사 `v_usr_inf.for_yn`을 `foreigner_code`(Y/N)로 덧붙였다(원본 쓰기·권한 확대 없음). `GET /academic-students/{id}`가 `foreigner`(true/false, 그 밖 null)를 내고 학생 상세 모달 식별 바에 표시한다. 목록 roster에는 넣지 않았다. 같은 날 `/academic-students/metadata`에 `options.collegeMajors`(`{대학: [학과]}`, 학적 행의 대학·학과 쌍)를 더했다 — 대학 필터를 고르면 학과 옵션을 좁힌다.

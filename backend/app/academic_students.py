@@ -285,9 +285,11 @@ def detail(identity: str, optional: bool = False, user=Depends(principal, scope=
         WHERE a.student_uid=h.intg_uid AND a.program_id=h.program_id)
       ORDER BY date DESC,id''', (identity,identity)).fetchall()
     diagnoses = conn.execute("SELECT count(*) AS n FROM dc.diagnosis_attempt WHERE student_uid=%s AND status_code='DONE'", (identity,)).fetchone()['n']
-    # 외국인 여부는 상세에서만 쓰여 목록용 roster 에 넣지 않고 한 행만 읽는다. Y/N 밖의 값은 미상(None).
-    foreigner = conn.execute('SELECT foreigner_code FROM dc.academic_student_details WHERE intg_uid=%s', (identity,)).fetchone()
-    foreigner = {'Y': True, 'N': False}.get(foreigner['foreigner_code'] if foreigner else None)
+    # 외국인 여부·연락처·주소는 상세에서만 쓰여 목록용 roster 에 넣지 않고 한 행만 읽는다. Y/N 밖의 값은 미상(None).
+    # 연락처·주소(0023)는 범위 검사를 통과한 이 상세에서만 나간다 — ROSTER·목록·export 에 넣지 않는다.
+    details = conn.execute('''SELECT foreigner_code,mobile,email,post_code,address
+      FROM dc.academic_student_details WHERE intg_uid=%s''', (identity,)).fetchone() or {}
+    foreigner = {'Y': True, 'N': False}.get(details.get('foreigner_code'))
     # 성장 레벨 — 학생 라운지(/quests/dashboard)와 같은 학년 기준 값. 학년 XP 는 원장에서 파생한다.
     grade_xp = conn.execute('''SELECT s.grade,coalesce(sum(e.granted_xp),0)::bigint AS xp FROM dc.student s
       LEFT JOIN dc.growth_xp_event e ON e.student_uid=s.intg_uid AND e.grade=s.grade
@@ -304,4 +306,6 @@ def detail(identity: str, optional: bool = False, user=Depends(principal, scope=
       studentType=row['student_type'],diagnosisCount=diagnoses,counsels=counsels,programs=programs,
       progress=row['progress'],hasRoadmap=row['has_roadmap'],
       # 서비스 학생 행이 있을 때만 화면이 범위 프로필(/students/{id})을 다시 읽는다 — 미이용 학사 학생의 404 왕복 제거(0022).
-      hasServiceProfile=grade_xp is not None)
+      hasServiceProfile=grade_xp is not None,
+      mobile=details.get('mobile') or None,email=details.get('email') or None,
+      postCode=details.get('post_code') or None,address=details.get('address') or None)

@@ -38,6 +38,7 @@ import CareerJourneyCard from '../../src_v2/components/CareerJourneyCard'
 // 레이더 좌표 계산은 학생 화면과 같은 한 벌만 둔다 — 기본 클래스 이름(radar/grid/axis/
 // need/mine)이 이 화면의 시안 CSS 와 그대로 맞아서 넘길 것이 없다.
 import CompetencyRadarChart from '../../src_v2/components/CompetencyRadarChart'
+import { formatCompetencyScore } from '../../src_v2/data/competency'
 // 포트폴리오 탭은 학생 이력서 화면을 그대로 쓴다 — 값도 같은 단일소스에서 읽는다.
 import PortfolioSheet from '../../shared/PortfolioSheet'
 import { loadRepresentativePortfolio } from '../../shared/portfolioStore'
@@ -517,18 +518,22 @@ function ProgramTab({ studentId, academicRecords }: { studentId: string; academi
 // ── 탭 ⑤: 역량 GAP ─────────────────────────────────────────────────────────
 
 function GapTab({ student, radar }: { student: StudentData; radar: CompetencyRadar }) {
+  // 학사 원점수(0023)는 목표선이 없다 — 목표 마커·범례·갭을 숨기고 원점수를 보인다. 막대는 본인 최고 축 기준(plot).
+  const raw = radar.axes.length > 0 && radar.axes.some(a => a.target == null)
   return (
     <>
       <div className="dashboard-grid">
         <section data-slot="card" className="competency-card col-7">
-          <CardHead title="5대 핵심역량" desc="현재 수준과 목표 도달선을 비교합니다. 점수는 이수한 교과·비교과에 내포된 역량 배점에서 산출됩니다." />
+          <CardHead title="5대 핵심역량" desc={raw
+            ? '학사 핵심역량 원점수(교과·비교과 이수 누계)입니다. 그래프는 학생의 가장 높은 역량을 기준으로 그립니다.'
+            : '현재 수준과 목표 도달선을 비교합니다. 점수는 이수한 교과·비교과에 내포된 역량 배점에서 산출됩니다.'} />
           <div data-slot="card-content">
             <div className="chart-layout">
               <div>
                 <CompetencyRadarChart axes={radar.axes} />
                 <div className="legend">
                   <span><i style={{ background: 'var(--violet)' }} />나의 현재</span>
-                  <span><i style={{ background: 'var(--coral)' }} />목표 수준</span>
+                  {!raw && <span><i style={{ background: 'var(--coral)' }} />목표 수준</span>}
                 </div>
               </div>
               <div className="axis-list">
@@ -536,12 +541,14 @@ function GapTab({ student, radar }: { student: StudentData; radar: CompetencyRad
                   <div key={a.key} className="axis-row">
                     {a.label}
                     <span className="axis-track">
-                      <i style={{ width: `${a.score}%` }} />
-                      <u style={{ left: `${a.target}%` }} />
+                      <i style={{ width: `${a.plot}%` }} />
+                      {a.target != null && <u style={{ left: `${a.target}%` }} />}
                     </span>
-                    <span className="gap-value" style={a.gap >= 0 ? { color: 'var(--mint)' } : undefined}>
-                      {a.gap >= 0 ? `+${a.gap}` : a.gap}
-                    </span>
+                    {a.gap == null
+                      ? <span className="gap-value">{formatCompetencyScore(a.score)}</span>
+                      : <span className="gap-value" style={a.gap >= 0 ? { color: 'var(--mint)' } : undefined}>
+                          {a.gap >= 0 ? `+${a.gap}` : a.gap}
+                        </span>}
                   </div>
                 ))}
               </div>
@@ -881,7 +888,13 @@ function StudentDetailTabs({ activeTab, onChange }: { activeTab: TabKey; onChang
   </div>
 }
 
+/** 학사 주소 — 「(우편번호) 주소」. 둘 다 없으면 빈 값. */
+function academicAddress(data: AcademicStudentDetail): string {
+  return [data.postCode ? `(${data.postCode})` : '', data.address ?? ''].filter(Boolean).join(' ')
+}
+
 function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; action?: ReactNode }) {
+  const address = academicAddress(data)
   return <>
     <header className="admin-page-head">
       <div className="admin-detail-id">
@@ -902,6 +915,9 @@ function AcademicStudentHeader({ data, action }: { data: AcademicStudentDetail; 
       <div><dt>외국인</dt><dd>{data.foreigner == null ? '없음' : data.foreigner ? '예' : '아니오'}</dd></div>
       <div><dt>졸업년월</dt><dd>{data.graduationMonth || '없음'}</dd></div>
       <div><dt>학점</dt><dd>{data.gpa ?? '없음'}</dd></div>
+      <div><dt>휴대폰</dt><dd>{data.mobile || '없음'}</dd></div>
+      <div><dt>이메일</dt><dd title={data.email || undefined}>{data.email || '없음'}</dd></div>
+      <div><dt>주소</dt><dd title={address || undefined}>{address || '없음'}</dd></div>
     </dl>
   </>
 }

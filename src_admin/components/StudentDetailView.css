@@ -1557,6 +1557,10 @@
 .sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(n + 5) { grid-column: span 4; border-top: 1px solid var(--border); }
 .sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(1),
 .sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(5) { border-left: 0; }
+/* 셋째 줄(0023) — 휴대폰·이메일 5열씩, 주소는 길어서 10열. */
+.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(n + 10) { grid-column: span 5; }
+.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(12) { grid-column: span 10; }
+.sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(10) { border-left: 0; }
 @media (max-width: 600px) {
   .sdv .sdv-idbar.sdv-academic-idbar { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sdv .sdv-idbar.sdv-academic-idbar > div, .sdv .sdv-idbar.sdv-academic-idbar > div:nth-child(n + 5) { grid-column: auto; border-left: 1px solid var(--border); }

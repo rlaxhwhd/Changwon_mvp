@@ -27,6 +27,11 @@ export interface AcademicStudentDetail extends RosterStudent {
   quest: QuestLevel
   /** 서비스 학생 행(dc.student) 유무 — false 면 범위 프로필을 조회하지 않는다. */
   hasServiceProfile?: boolean
+  /** 학사 연락처·주소(0023) — 범위 안 상세에서만 온다. 목록·내보내기에는 없다. */
+  mobile: string | null
+  email: string | null
+  postCode: string | null
+  address: string | null
 }
 
 export function fetchAcademicStudentDetail(id: string): Promise<AcademicStudentDetail | null> {

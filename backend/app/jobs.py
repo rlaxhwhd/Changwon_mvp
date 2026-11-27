@@ -110,8 +110,11 @@ def scope_condition(user, alias='a'):
 
 
 def resolve_student(conn, user, identity):
-    """채용에서 쓰는 학생 해석. staff_student_scope 만 본다(과거 상담 담당 우회 없음)."""
-    student = conn.execute('''SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid)
+    """채용에서 쓰는 학생 해석. staff_student_scope 만 본다(과거 상담 담당 우회 없음).
+    학사 평점·이수학점 두 열만 싣는다(0023, 포트폴리오 문서 GPA). 연락처·주소는 싣지 않는다."""
+    student = conn.execute('''SELECT s.*,p.alias,p.name,x.academic_gpa,x.isu_grade AS academic_credits
+      FROM dc.student s JOIN dc.person p USING(intg_uid)
+      LEFT JOIN dc.academic_student_details x USING(intg_uid)
       WHERE p.alias=%s OR s.intg_uid=%s''', (identity, identity)).fetchone()
     if not student:
         raise HTTPException(404, '학생을 찾을 수 없습니다.')
@@ -984,7 +987,10 @@ def apply(posting_id: str, body: ApplyBody, idempotency_key: str = Header(min_le
     gate = employment_gate(conn, user['intg_uid'])
     if not gate['eligible']:
         raise HTTPException(403, gate['reasons'][0]['message'])
-    student = conn.execute('''SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid)
+    # 제출 스냅샷의 GPA 가 포트폴리오 화면과 같도록 resolve_student 와 같은 두 열을 싣는다(0023).
+    student = conn.execute('''SELECT s.*,p.alias,p.name,x.academic_gpa,x.isu_grade AS academic_credits
+      FROM dc.student s JOIN dc.person p USING(intg_uid)
+      LEFT JOIN dc.academic_student_details x USING(intg_uid)
       WHERE s.intg_uid=%s''', (user['intg_uid'],)).fetchone()
     existing = conn.execute('SELECT * FROM dc.job_application WHERE posting_id=%s AND student_uid=%s FOR UPDATE',
                             (posting_id, user['intg_uid'])).fetchone()

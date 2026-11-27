@@ -46,7 +46,12 @@ export interface GrowthProfile {
   school: string
   dept: string
   grade: number | null
+  /** 학사 평점이 있으면 그 값(0023), 없으면 기존 학생 레코드 값. */
   gpa: string | null
+  /** 학사 이수학점(0023). */
+  credits: number | null
+  /** 학사 휴대폰·이메일·주소(0023). 학생 본인 GET 에만 값이 있다 — 교직원·PATCH 응답은 null. */
+  academic: { mobile: string | null; email: string | null; postCode: string | null; address: string | null } | null
   intro: string
   /** 자기입력 연락처. 본인만 받는다 — 합성 기본값을 만들지 않는다. */
   email: string | null

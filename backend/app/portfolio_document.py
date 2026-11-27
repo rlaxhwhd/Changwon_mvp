@@ -238,7 +238,10 @@ def apply_academic(document: dict, student, certs) -> dict:
     for item in others:
         if item['sourceRef'] == ENROLLMENT_REF:
             item['sourceRef'] = None
-    gpa = detail.get('gpa')
+    # 학사 평점 우선(0023) — 마이페이지와 같은 값. 학생은 growth·jobs 의 resolve 가 academic_gpa 를 싣는다.
+    gpa = student.get('academic_gpa')
+    if gpa is None:
+        gpa = detail.get('gpa')
     # 학사 키만 덮어쓴다. degree·track 등 나머지는 학사 원본에 없는 학생 입력이다.
     enrollment['title'] = SCHOOL
     enrollment['fields'].update(schoolName=SCHOOL, major=student['major_label'] or '',

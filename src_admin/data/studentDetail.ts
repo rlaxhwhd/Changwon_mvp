@@ -43,13 +43,13 @@ export interface CompetencyRadar {
   overall: number
   /** 종합 목표선 */
   overallTarget: number
-  /** 갭이 가장 큰 축 (보강 1순위) */
+  /** 갭이 가장 큰 축 (보강 1순위). 학사 원점수처럼 목표선이 없으면 그래프 값(plot)이 가장 낮은 축 */
   weakest: CompetencyAxis
 }
 
 export function getCompetencyRadar(student: StudentData): CompetencyRadar {
   const axes = getCompetencyAxes(student)
-  const weakest = axes.reduce((lo, a) => (a.gap < lo.gap ? a : lo), axes[0])
+  const weakest = axes.reduce((lo, a) => ((a.gap ?? a.plot) < (lo.gap ?? lo.plot) ? a : lo), axes[0])
   return {
     axes,
     overall: getCompetencyOverall(student),

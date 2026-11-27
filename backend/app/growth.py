@@ -35,7 +35,10 @@ ENTRY_COLUMNS = ('kind_code,category_code,title,occurred_on,date_text,date_preci
 
 def resolve_student(conn, user, identity):
     """본인이거나, 학생 상세 메뉴와 담당 범위를 모두 통과한 교직원."""
-    student = conn.execute('''SELECT s.*,p.alias,p.name FROM dc.student s JOIN dc.person p USING(intg_uid)
+    # 학사 평점·이수학점 두 열만 싣는다(0023). 연락처·주소는 여러 경로가 공유하는 이 함수에 싣지 않는다.
+    student = conn.execute('''SELECT s.*,p.alias,p.name,x.academic_gpa,x.isu_grade AS academic_credits
+      FROM dc.student s JOIN dc.person p USING(intg_uid)
+      LEFT JOIN dc.academic_student_details x USING(intg_uid)
       WHERE p.alias=%s OR s.intg_uid=%s''', (identity, identity)).fetchone()
     if not student:
         fail(404, 'NOT_FOUND', '학생을 찾을 수 없습니다.')
@@ -63,15 +66,30 @@ def profile_row(conn, uid, lock=False):
                         + (' FOR UPDATE' if lock else ''), (uid,)).fetchone()
 
 
-def profile_dto(student, row, owner):
+def academic_contact(conn, uid):
+    """학사 휴대폰·이메일·주소(0023). 학생 본인 GET(/growth/profile·/portfolio)에서만 부른다."""
+    return conn.execute('SELECT mobile,email,post_code,address FROM dc.academic_student_details WHERE intg_uid=%s',
+                        (uid,)).fetchone()
+
+
+def profile_dto(student, row, owner, contact=None):
     # 학사 유래 값은 학생 레코드에서 온다. 여기서 만들지 않는다(CLAUDE.md 1조).
     detail = student['detail'] or {}
+    # 학사 평점이 있으면 그것을(학사 상세 gpa 의 ::text 와 같은 표기), 없으면 기존 detail 값(0023).
+    academic_gpa, credits = student.get('academic_gpa'), student.get('academic_credits')
     data = {'name': student['name'], 'studentNo': student['student_no'], 'school': '국립창원대학교',
-            'dept': student['major_label'], 'grade': student['grade'], 'gpa': detail.get('gpa'),
+            'dept': student['major_label'], 'grade': student['grade'],
+            'gpa': str(academic_gpa) if academic_gpa is not None else detail.get('gpa'),
+            'credits': float(credits) if credits is not None else None,
             'intro': row['intro'] if row else '', 'version': row['version'] if row else 0}
     # 자기입력 연락처는 본인 전용으로 시작한다. 교직원 화면에 새로 열지 않는다(D06).
     data['email'] = (row['contact_email'] if row else None) if owner else None
     data['phone'] = (row['contact_phone'] if row else None) if owner else None
+    # 학사 연락처·주소는 본인 GET 에서만 contact 로 받는다. PATCH 응답은 멱등 표에 저장되므로 싣지 않는다.
+    data['academic'] = None
+    if owner and contact is not None:
+        data['academic'] = {'mobile': contact['mobile'] or None, 'email': contact['email'] or None,
+                            'postCode': contact['post_code'] or None, 'address': contact['address'] or None}
     return data
 
 
@@ -105,8 +123,9 @@ class ProfileBody(BaseModel):
 def get_profile(identity: str, user=Depends(principal, scope='function'),
                 conn=Depends(connection, scope='function')):
     student, owner = resolve_student(conn, user, identity)
+    contact = academic_contact(conn, student['intg_uid']) if owner else None
     # 읽기가 행을 만들지 않는다. 미생성은 version=0 으로 표현한다.
-    return {**profile_dto(student, profile_row(conn, student['intg_uid']), owner),
+    return {**profile_dto(student, profile_row(conn, student['intg_uid']), owner, contact),
             'capabilities': {'canEdit': owner}}
 
 
@@ -676,7 +695,8 @@ def portfolio(identity: str, user=Depends(principal, scope='function'),
       sc.cert_no AS "certNo",sc.verified FROM dc.student_cert sc JOIN dc.cert c USING(cert_id)
       WHERE sc.intg_uid=%s AND sc.acquired_dt IS NOT NULL ORDER BY sc.acquired_dt DESC,c.cert_id''',
       (uid,)).fetchall()
-    return {'profile': profile_dto(student, profile, owner), **sections, 'resumes': resumes,
+    contact = academic_contact(conn, uid) if owner else None
+    return {'profile': profile_dto(student, profile, owner, contact), **sections, 'resumes': resumes,
             'academicCerts': academic, 'version': profile['version'] if profile else 0,
             'capabilities': {'canEdit': owner}}
 

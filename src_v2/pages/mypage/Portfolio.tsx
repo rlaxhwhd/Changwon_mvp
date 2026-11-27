@@ -2,7 +2,9 @@ import { studentDisplayName } from '../../../shared/studentDisplayName'
 import { useMemo, useState, type ReactNode } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import Modal from '../../components/Modal'
-import { getActiveStudentId } from '../../data/students'
+import { getActiveStudent, getActiveStudentId } from '../../data/students'
+import { formatCompetencyScore, getCompetencyAxes } from '../../data/competency'
+import type { CompetencyAxisView } from '../../data/competency'
 // 정본은 서버다 — 교직원 학생 상세도 **같은 projection** 을 읽는다.
 // 예전의 INITIAL_* 는 전 학생 공통 상수였고 buildProfile 은 연락처를 합성했다. 둘 다 걷었다.
 import { LEVEL_LABELS, toPortfolioView } from '../../data/portfolio'
@@ -22,7 +24,7 @@ type TabId = 'profile' | 'skills' | 'experience' | 'documents' | 'versions'
 /** 아직 읽기 전이거나 아무것도 쓰지 않은 상태. 빈 값은 빈 값이다 — 합성하지 않는다. */
 const EMPTY_PROFILE: ProfileData = {
   name: '', studentId: '', school: '국립창원대학교', dept: '', grade: '',
-  email: '', phone: '', gpa: '', major: '', intro: '',
+  email: '', phone: '', academicEmail: '', academicPhone: '', address: '', gpa: '', credits: '', major: '', intro: '',
 }
 
 /** 스킬 분류 — DB 코드다(GROWTH_SKILL_CATEGORY). 한글은 표시용 라벨이다. */
@@ -98,10 +100,13 @@ export default function Portfolio() {
   const awards = view?.awards ?? []
   const projects = view?.projects ?? []
   const resumes = view?.resumes ?? []
+  // 학사 핵심역량 원점수 — 메인·라운지와 같은 학생 프로필 셀렉터(0023).
+  const competencyAxes = getCompetencyAxes(getActiveStudent())
 
-  // 연락처는 고치지 않는다(나중에 학사 연동값) — 자기소개만 저장하고 연락처는 받은 값 그대로 돌려보낸다.
+  // 연락처는 고치지 않는다 — 자기소개만 저장하고 자기입력 연락처는 서버가 준 원값 그대로 돌려보낸다.
+  // 학사 연락처(profile.academic)를 자기입력 칸에 써 넣지 않는다(0023).
   const saveIntro = (intro: string) =>
-    saveGrowthProfile(studentId, { intro, email: profile.email, phone: profile.phone })
+    saveGrowthProfile(studentId, { intro, email: dto?.profile.email ?? null, phone: dto?.profile.phone ?? null })
       .catch(() => setError('자기소개를 저장하지 못했습니다.'))
   const [viewResume, setViewResume] = useState<Resume | null>(null)
 
@@ -200,7 +205,7 @@ export default function Portfolio() {
         </nav>
 
         <div className="pf-body">
-          {tab === 'profile' && <ProfileSection profile={profile} onSaveIntro={saveIntro} />}
+          {tab === 'profile' && <ProfileSection profile={profile} competency={competencyAxes} onSaveIntro={saveIntro} />}
           {tab === 'skills' && <SkillsSection skills={skills} certs={certs} langs={langs} />}
           {tab === 'experience' && <ExperienceSection awards={awards} projects={projects} />}
           {tab === 'documents' && <DocumentsSection resumes={resumes} onView={r => setViewResume(r)} />}
@@ -235,7 +240,7 @@ export default function Portfolio() {
 
 /* ── Sections ───────────────────────────────────────────────────── */
 
-function ProfileSection({ profile, onSaveIntro }: { profile: ProfileData; onSaveIntro: (intro: string) => void }) {
+function ProfileSection({ profile, competency, onSaveIntro }: { profile: ProfileData; competency: CompetencyAxisView[]; onSaveIntro: (intro: string) => void }) {
   const [editing, setEditing] = useState(false)
   const [intro, setIntro] = useState(profile.intro)
 
@@ -285,6 +290,7 @@ function ProfileSection({ profile, onSaveIntro }: { profile: ProfileData; onSave
             <div><dt>학년</dt><Value>{profile.grade}</Value></div>
             <div><dt>학번</dt><Value>{profile.studentId}</Value></div>
             <div><dt>GPA</dt><Value>{profile.gpa}</Value></div>
+            <div><dt>이수학점</dt><Value>{profile.credits}</Value></div>
             <div><dt>주전공</dt><Value>{profile.major}</Value></div>
           </dl>
         </article>
@@ -293,15 +299,34 @@ function ProfileSection({ profile, onSaveIntro }: { profile: ProfileData; onSave
           <header className="pf-panel-head">
             <div>
               <h2>연락처</h2>
-              <p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 여기서는 고칠 수 없습니다. 회사마다 다른 연락처는 회사 제출용 포트폴리오에서 바꿀 수 있습니다.</p>
+              <p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 기록에서 가져옵니다. 회사마다 다른 연락처는 회사 제출용 포트폴리오에서 바꿀 수 있습니다.</p>
             </div>
           </header>
           <dl className="pf-dl pf-dl--single">
-            <div><dt>이메일</dt><Value>{profile.email}</Value></div>
-            <div><dt>휴대폰</dt><Value>{profile.phone}</Value></div>
+            <div><dt>휴대폰</dt><Value>{profile.academicPhone || profile.phone}</Value></div>
+            <div><dt>이메일</dt><Value>{profile.academicEmail || profile.email}</Value></div>
+            <div><dt>주소</dt><Value>{profile.address}</Value></div>
           </dl>
         </article>
       </div>
+
+      <article className="pf-panel pf-tone-teal">
+        <header className="pf-panel-head">
+          <div>
+            <h2>핵심역량</h2>
+            <p className="pf-source"><i className="fa-solid fa-lock" aria-hidden="true" /> 학사 기록(교과·비교과 이수 누계)에서 가져옵니다.</p>
+          </div>
+        </header>
+        {competency.length === 0
+          ? <Empty title="학사 핵심역량 점수가 아직 없습니다" />
+          : (
+            <dl className="pf-dl">
+              {competency.map(axis => (
+                <div key={axis.key}><dt>{axis.label}</dt><Value>{formatCompetencyScore(axis.score)}</Value></div>
+              ))}
+            </dl>
+          )}
+      </article>
     </div>
   )
 }

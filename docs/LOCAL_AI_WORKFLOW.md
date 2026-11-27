@@ -1,5 +1,11 @@
 # 로컬 개발과 CentOS 배포
 
+## 2026-11-27 학사 GPA·핵심역량·연락처·주소 화면 표시(180) 로컬 반영 — 서버 미배포
+
+- 0023(rev3, Astra 조건부 승인): migration 180 — `dc.academic_student_details` 에 `post_code`·`address` 추가, 새 뷰 `dc.academic_student_core_competency`(학사 CORE 원점수). 학생 마이페이지(포트폴리오 기본 정보)에 GPA·이수학점·휴대폰·이메일·주소·핵심역량 원점수, 메인·라운지 역량 그래프는 원점수+본인 최고 축 기준(목표선 없음), 교직원 학사 상세 헤더에 휴대폰·이메일·주소, 「역량 GAP」은 원점수면 목표·갭 숨김. `/students/{id}` GPA 는 정책 미설정·detail 없음일 때 학사 평점.
+- `npm run docker:migrate`(백업 `_workspace/db-backups/local-before-migrate-20261127011359360.dump`) → `npm run docker:up` 전체 healthy, API `dc_app` 접속 확인. 회귀 `dc_regression_20261127010942_aba24e_test` 10 failed/799 passed/2 skipped — 0022 기준선과 실패 집합 diff 0. 대상 선택 165 passed(`dc_regression_20261127012158_e3c831_test`). `npx tsc -b` 통과.
+- 서버 배포 시: 웹+API+마이그레이션 180(DB 객체 추가·뷰 열 추가, 데이터 변경 없음). 서버 `academic.dc_v_stu_cap_inf` 적재 여부를 먼저 확인한다(없으면 역량은 잠김 유지). 검증 기록 `.ai/handoff-db/0023-academic-profile-display/verification.md`.
+
 ## 2026-11-26 학사 DC_V 전환·교수/조교 범위 및 비교과·채용 UI 서버 배포
 
 - 원격 dev 최종 fetch `7ffbbb0`까지 확인. 직전 운영 `9624c70` 이후 라운지 디자인 최종판(db5c166/fcac6f9), 학사 DC_V 전환(fd2a02d), 교수·조교 범위(ae48f57), 비교과 신청 집계/신청자 유지/통계 링/고정 카드(7b611cd/97372ec/f1e9e5a/b1efc45), 채용 찜/근무부서·지원 링크/미리보기 흔들림(a498a79/4a737cb/7ffbbb0)과 관련 커밋을 모두 포함했다. RAG_VECTOR.md·스킬 추가는 기획/문서 변경이며 RAG·Qdrant 런타임 교체는 하지 않았다. clean git archive로 빌드하고 타 세션 CLAUDE.md 및 미추적 자료를 제외했다.

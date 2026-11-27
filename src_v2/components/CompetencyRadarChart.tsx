@@ -1,3 +1,4 @@
+import { formatCompetencyScore } from '../data/competency'
 import type { CompetencyAxisView } from '../data/competency'
 import { COMPETENCY_ORDER, COMPETENCY_LABELS } from '../lib/scoring'
 import { LockedContent } from './LockedContent'
@@ -58,7 +59,9 @@ export default function CompetencyRadarChart({ axes, classes, currentFill, child
   const n = empty ? COMPETENCY_ORDER.length : axes.length
   const labels = empty ? COMPETENCY_ORDER.map(key => ({ key, label: COMPETENCY_LABELS[key] })) : axes
 
-  const label = `${n}대 핵심역량 — ${axes.map(a => `${a.label} ${a.score}`).join(', ')}`
+  const label = `${n}대 핵심역량 — ${axes.map(a => `${a.label} ${formatCompetencyScore(a.score)}`).join(', ')}`
+  // 목표선은 모든 축에 있을 때만 그린다 — 학사 원점수에는 목표선이 없다(0023).
+  const targets = axes.every(a => a.target != null) ? axes.map(a => a.target as number) : null
 
   const chart = (
     <svg className={c.svg} viewBox="0 0 300 280" role="img" aria-label={label}>
@@ -78,10 +81,10 @@ export default function CompetencyRadarChart({ axes, classes, currentFill, child
         const p = point(i, n, R)
         return <line key={i} className={c.axis} x1={CX} y1={CY} x2={p.x.toFixed(1)} y2={p.y.toFixed(1)} />
       })}
-      {!empty && <polygon className={c.target} points={polygon(axes.map(a => a.target), n)} />}
+      {!empty && targets && <polygon className={c.target} points={polygon(targets, n)} />}
       {!empty && <polygon
         className={c.current}
-        points={polygon(axes.map(a => a.score), n)}
+        points={polygon(axes.map(a => a.plot), n)}
         fill={currentFill ? `url(#${currentFill})` : undefined}
       />}
       {labels.map((a, i) => {

@@ -21,10 +21,17 @@ export interface ProfileData {
   school: string
   dept: string
   grade: string
-  /** 자기입력 연락처. 본인에게만 내려온다 — 없으면 빈 값이다. */
+  /** 자기입력 연락처. 본인에게만 내려온다 — 없으면 빈 값이다. 저장할 때는 이 원값을 돌려보낸다. */
   email: string
   phone: string
+  /** 학사 연락처·주소(0023) — 본인 GET 에만 온다. 화면은 학사 값을 먼저 보이고 없으면 자기입력을 보인다. */
+  academicEmail: string
+  academicPhone: string
+  /** 「(우편번호) 주소」 */
+  address: string
   gpa: string
+  /** 학사 이수학점 — 「n학점」 */
+  credits: string
   major: string
   intro: string
 }
@@ -128,6 +135,7 @@ function toResume(row: PortfolioResume): Resume {
 
 /** 서버 projection 을 화면 형태로 옮긴다. 값을 만들어 채우지 않는다. */
 export function toPortfolioView(dto: PortfolioDTO): PortfolioView {
+  const academic = dto.profile.academic
   return {
     profile: {
       name: dto.profile.name,
@@ -137,7 +145,11 @@ export function toPortfolioView(dto: PortfolioDTO): PortfolioView {
       grade: dto.profile.grade === null ? '' : `${dto.profile.grade}학년`,
       email: dto.profile.email ?? '',
       phone: dto.profile.phone ?? '',
+      academicEmail: academic?.email ?? '',
+      academicPhone: academic?.mobile ?? '',
+      address: [academic?.postCode ? `(${academic.postCode})` : '', academic?.address ?? ''].filter(Boolean).join(' '),
       gpa: dto.profile.gpa ? `${dto.profile.gpa} / 4.5` : '',
+      credits: dto.profile.credits == null ? '' : `${dto.profile.credits}학점`,
       major: dto.profile.dept,
       intro: dto.profile.intro,
     },
